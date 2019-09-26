@@ -70,6 +70,8 @@ typedef PangoContext LingoContext;
 #define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
 #define lingo_layout_new(a) pango_layout_new(a)
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
+#define lingo_layout_set_height(a, b) pango_layout_set_height(a, b)
+#define lingo_layout_set_width(a, b) pango_layout_set_height(a, b)
 
 #define LINGO_IS_LAYOUT(a) PANGO_IS_LAYOUT(a)
 #define LINGO_IS_CONTEXT(a) PANGO_IS_CONTEXT(a)

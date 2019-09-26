@@ -4314,11 +4314,11 @@ boolean youtube_select_format(lives_remote_clip_request_t *req) {
 
 //// message area functions
 
-static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
+static int reqheight = -1; // presumed height of msg_area
+static int vmarg = 0;
+
+static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
   // "scroll" the message area so that the last message appears at the bottom
-#if GTK_CHECK_VERSION(3, 18, 0)
-  LiVESAllocation all;
-#endif
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
 
@@ -4327,29 +4327,32 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   int nlines;
 
   static int last_height = -1;
-  if (!prefs->show_msg_area) return;
-  if (mainw->n_messages <= 0) return;
+  g_print("in scrollto\n");
+  if (!prefs->show_msg_area) return FALSE;
+  if (mainw->n_messages <= 0) return FALSE;
 
-  if (!LIVES_IS_WIDGET(widget)) return;
+  if (!LIVES_IS_WIDGET(widget)) return FALSE;
 
-  height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - MSG_AREA_VMARGIN;
+  height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - vmarg;
+  if (reqheight != -1) height = reqheight;
   width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
   g_print("GET  LINGO xx %d %d\n", width, height);
-  if (width < 32 || height < 32) return;
-
-  if (msgno < 0) msgno = 0;
-  if (msgno >= mainw->n_messages) msgno = mainw->n_messages - 1;
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
   if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
+
+  if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
+
+  if (msgno < 0) msgno = 0;
+  if (msgno >= mainw->n_messages) msgno = mainw->n_messages - 1;
 
   // redraw the layout ///////////////////////
   lives_widget_set_font_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
   g_print("GET  LINGO\n");
-  if (!LINGO_IS_LAYOUT(layout)) return;
+  if (!LINGO_IS_LAYOUT(layout) || layout == NULL) return FALSE;
 
   lingo_layout_get_size(layout, NULL, &lh, 0, 0);
   lh /= LINGO_SCALE;
@@ -4379,13 +4382,14 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_height", LIVES_INT_TO_POINTER(lh + .5));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_lines", LIVES_INT_TO_POINTER(nlines));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout_last", LIVES_INT_TO_POINTER(msgno));
+  return TRUE;
 }
 
 
 EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   lives_painter_t *cr;
   int lheight, llines, llast, lineheight;
-  int width, height, overflowx, overflowy;
+  int width, height, overflowx = 0, overflowy = 0, xoverflowy;
 
   static int wiggle_room = 0;
   static int last_height = -1;
@@ -4393,7 +4397,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
   int scr_width = GUI_SCREEN_WIDTH;
   int scr_height = GUI_SCREEN_HEIGHT;
-  int bx, by, obx, oby, w, h, posx, posy;
+  int bx, by, w, h, posx, posy;
 
   LingoLayout *layout;
 
@@ -4407,85 +4411,95 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 
   width = lives_widget_get_allocation_width(widget);
   height = lives_widget_get_allocation_height(widget);
-
+  
   // the expose event for the message area is a good opportunity to recheck the window size
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
 
   llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_last"));
 
-  get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
+  if (mainw->multitrack == NULL) {
+  
+    get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
-  w = mainw->assumed_width;
-  if (w == -1) w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
-  h = mainw->assumed_height;
-  if (h == -1) h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
+    w = mainw->assumed_width;
+    if (w == -1) w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
+    h = mainw->assumed_height;
+    if (h == -1) h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
-  overflowx = w - (scr_width - bx);
-  overflowy = h - (scr_height - by);
+    overflowx = w - (scr_width);
+    overflowy = h - (scr_height);
+
+    GdkRectangle rect;
+    gdk_window_get_frame_extents(lives_widget_get_xwindow(mainw->LiVES), &rect);
+    xoverflowy = rect.height - lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
+    if (xoverflowy > overflowy) overflowy = xoverflowy;
 #define DEBUG_OVERFLOW
 #ifdef DEBUG_OVERFLOW
-  g_print("overflow2 is %d : %d %d %d X %d : %d %d %d\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by);
+    g_print("overflow2 is %d : %d %d %d X %d : %d %d %d\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by);
 #endif
 
-  if (overflowx != 0 || overflowy != 0) {
+    /* int toph = lives_widget_get_allocation_height(mainw->top_vbox) + by; */
+    /* if (mainw->multitrack == NULL && overflowy == 0) { */
+    /*   if (toph < h) { */
+    /*     overflowy = toph - h; */
+    /*   } */
+    /* } */
+
+    if (overflowx != 0 || overflowy != 0) {
 #ifdef DEBUG_OVERFLOW
-    g_print("overflow is %d X %d : %d %d\n", overflowx, overflowy, width, height);
+      g_print("overflow is %d X %d : %d %d\n", overflowx, overflowy, width, height);
 #endif
-    width -= overflowx;
-    height -= overflowy;
+      width -= overflowx;
+      height -= overflowy;
 
-    w -= overflowx;
-    h -= overflowy;
+      w -= overflowx;
+      h -= overflowy;
 
-    mainw->assumed_width = w;
-    mainw->assumed_height = h;
+      mainw->assumed_width = w;
+      mainw->assumed_height = h;
 
-    if (!prefs->open_maximised) {
-      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
-      lives_xwindow_get_origin(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &posx, &posy);
-      g_print("2MOVE to %d X %d\n", posx, posy);
+      if (!prefs->open_maximised) {
+	lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+	lives_xwindow_get_origin(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &posx, &posy);
+	g_print("2MOVE to %d X %d\n", posx, posy);
+      }
+
+      reset_message_area(FALSE);
+      lives_widget_hide(widget);
+      lives_widget_hide(mainw->message_box);
+
+      if (!prefs->open_maximised) {
+	if (overflowx > 0) posx -= overflowx;
+	else posx = -overflowx;
+	if (posx < 0) posx = 0;
+	if (overflowy > 0) posy = overflowy - posy;
+	if (posy < 0) posy = 0;
+
+	if (posx > mainw->gui_posx) posx = mainw->gui_posx;
+	if (posy > mainw->gui_posy) posy = mainw->gui_posy;
+
+	//posx = -bx;
+	//posy = - by;
+
+	g_print("MOVE to %d X %d\n", posx, posy);
+	lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
+
+	mainw->gui_posx = posx;
+	mainw->gui_posy = posy;
+      }
+
+      if (height > 0 && width > 0) {
+	//g_print("NEW SIZE %d\n", height - 4);
+	lives_widget_set_size_request(widget, -1, height);
+      }
+
+      lives_widget_show_all(mainw->message_box);
+      lives_widget_context_update();
+      if (!prefs->open_maximised)
+	lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
+      return FALSE;
     }
-
-    reset_message_area(FALSE);
-    lives_widget_hide(widget);
-    lives_widget_hide(mainw->message_box);
-
-    if (!prefs->open_maximised) {
-      if (overflowx > 0) posx -= overflowx;
-      else posx = -overflowx;
-      if (posx < 0) posx = 0;
-      if (overflowy > 0) posy = overflowy - posy;
-      if (posy < 0) posy = 0;
-
-      if (posx > mainw->gui_posx) posx = mainw->gui_posx;
-      if (posy > mainw->gui_posy) posy = mainw->gui_posy;
-
-      //posx = -bx;
-      //posy = - by;
-
-      g_print("MOVE to %d X %d\n", posx, posy);
-      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-
-      mainw->gui_posx = posx;
-      mainw->gui_posy = posy;
-    }
-
-    if (height > 0 && width > 0) {
-      //g_print("NEW SIZE %d\n", height - 4);
-      lives_widget_set_size_request(widget, -1, height - 4);
-      lives_widget_set_size_request(mainw->msg_scrollbar, -1, height - 4);
-      lives_widget_set_size_request(mainw->message_box, width - 4, height);
-    }
-
-    //lives_widget_show(widget);
-    lives_widget_show_all(mainw->message_box);
-    // add this back in first if it breaks..
-    //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    lives_widget_context_update();
-    if (!prefs->open_maximised)
-      lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), posx, posy);
-    return FALSE;
   }
 
   if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
@@ -4504,6 +4518,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   if (lheight == 0) {
     return FALSE;
   }
+
   if (height != last_height) wiggle_room = 0;
   last_height = height;
 
@@ -4550,8 +4565,8 @@ EXPOSE_FN_END
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget *widget, LiVESAdjustment *adj) {
   g_print("STE %d\n", mainw->n_messages);
-  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
-  expose_msg_area(widget, NULL, NULL);
+  if (msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj))
+    expose_msg_area(widget, NULL, NULL);
 }
 
 
@@ -4560,8 +4575,8 @@ void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
   LiVESWidget *widget = (LiVESWidget *)userdata;
   double val = lives_adjustment_get_value(adj);
   //g_print("val is %f rnd %d\n", val, (int)(val + .5));
-  msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj);
-  expose_msg_area(widget, NULL, NULL);
+  if (msg_area_scroll_to(widget, (int)(val + .5), FALSE, adj))
+    expose_msg_area(widget, NULL, NULL);
 }
 
 

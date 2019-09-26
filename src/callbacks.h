@@ -210,6 +210,7 @@ void on_preview_clicked(LiVESButton *, livespointer);
 void on_recent_activate(LiVESMenuItem *, livespointer);
 
 boolean config_event(LiVESWidget *, LiVESXEventConfigure *, livespointer);
+boolean config_event2(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 
 void changed_fps_during_pb(LiVESSpinButton *, livespointer);
 

@@ -1122,6 +1122,7 @@ typedef struct {
   volatile boolean is_exiting; ///< set during shutdown (inverse of only_close then)
 
   ulong pw_scroll_func;
+  boolean msg_area_configed;
 
 #ifdef ENABLE_JACK
   jack_driver_t *jackd; ///< jack audio playback device
@@ -1422,7 +1423,7 @@ typedef struct {
   int gui_posx;
   int gui_posy;
 
-#define DEF_IDLE_MAX 10000
+#define DEF_IDLE_MAX 100
 
   int idlemax;
   ////////////////////

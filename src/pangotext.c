@@ -244,14 +244,14 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     h /= LINGO_SCALE;
     w /= LINGO_SCALE;
 
-#ifdef DEBUG_MSGS
+    //#ifdef DEBUG_MSGS
     g_print("Sizes %d %d window, %d %d layout ()\n", width, height, w, h);
-#endif
+    //#endif
 
     if (h > height) {
-#ifdef DEBUG_MSGS
+      //#ifdef DEBUG_MSGS
       g_print("Too high !\n");
-#endif
+      //#endif
 
 #ifdef MUST_FIT
       while (h > height) {
@@ -269,7 +269,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
         g_print("Testing with:%s:\n", testtext);
 #endif
-        pango_layout_set_width(layout, width * LINGO_SCALE);
+        lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h, 0, 0);
 

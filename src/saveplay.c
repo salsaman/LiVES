@@ -3142,7 +3142,7 @@ void play_file(void) {
     load_start_image(cfile->start);
     load_end_image(cfile->end);
   }
-  if (prefs->show_msg_area) {
+  if (prefs->show_msg_area && mainw->multitrack == NULL) {
     if (mainw->idlemax == 0) {
       lives_idle_add(resize_message_area, NULL);
     }

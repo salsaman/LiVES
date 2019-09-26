@@ -20,10 +20,7 @@
 #define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
 
 #define MSG_AREA_VMARGIN 10
-#define LAYOUT_SIZE_MIN 32
-
-#define OVERFLOW_MIN_X -1
-#define OVERFLOW_MIN_Y -1
+#define LAYOUT_SIZE_MIN 0
 
 void draw_little_bars(double ptrtime, int which);
 double lives_ce_update_timeline(int frame, double x);  ///< pointer position in timeline

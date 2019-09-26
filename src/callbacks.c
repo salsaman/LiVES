@@ -439,7 +439,7 @@ void lives_exit(int signum) {
           reset_message_area(FALSE);
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           if (mainw->idlemax == 0) {
-            lives_idle_add(resize_message_area, LIVES_INT_TO_POINTER(1));
+            lives_idle_add(resize_message_area, NULL);
           }
           mainw->idlemax = DEF_IDLE_MAX;
         }
@@ -8995,6 +8995,11 @@ EXPOSE_FN_DECL(expose_raud_event, widget, user_data) {
 }
 EXPOSE_FN_END
 
+boolean config_event2(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
+  mainw->msg_area_configed = TRUE;
+  return FALSE;
+}
+
 
 boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
   int scr_width = GUI_SCREEN_WIDTH;
@@ -9015,10 +9020,6 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     mainw->old_scr_width = scr_width;
     mainw->old_scr_height = scr_height;
     mainw->configured = TRUE;
-    if (prefs->show_msg_area && mainw->multitrack == NULL) {
-      mainw->idlemax = DEF_IDLE_MAX;
-      lives_idle_add(resize_message_area, LIVES_INT_TO_POINTER(1));
-    }
   }
   return FALSE;
 }

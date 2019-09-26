@@ -2194,6 +2194,7 @@ void create_LiVES(void) {
   else lives_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
+  lives_widget_set_vexpand(mainw->msg_area, TRUE);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);

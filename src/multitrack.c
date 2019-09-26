@@ -2586,11 +2586,6 @@ void scroll_tracks(lives_mt *mt, int top_track, boolean set_value) {
   lives_widget_show_all(mt->timeline_table);
   lives_widget_queue_draw(mt->vpaned);
 
-  /* if (prefs->show_msg_area) { */
-  /*   mainw->idlemax = DEF_IDLE_MAX; */
-  /*   lives_idle_add(resize_message_area, NULL); */
-  /* } */
-
   if (mt->is_ready) {
     mt->no_expose = FALSE;
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -9265,18 +9260,14 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   reset_clipmenu();
   mainw->last_dprint_file = -1;
 
-  if (prefs->gui_monitor > 0) {
-    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  /* if (prefs->gui_monitor > 0) { */
+  /*   lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
+  /* } */
 
   lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
 
   if (prefs->show_gui && prefs->open_maximised) {
-    int wx, wy;
-    lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &wx, &wy);
-    if (prefs->gui_monitor == 0 && (wx > 0 || wy > 0)) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
-    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   d_print(_("====== Switched to Clip Edit mode ======\n"));
@@ -9295,8 +9286,10 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     load_start_image(0);
     load_end_image(0);
     if (prefs->show_msg_area) {
+      reset_message_area(FALSE);
+      if (mainw->idlemax == 0)
+	lives_idle_add(resize_message_area, NULL);
       mainw->idlemax = DEF_IDLE_MAX;
-      lives_idle_add(resize_message_area, NULL);
     }
   }
 
@@ -9317,7 +9310,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
 
-  msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
+  //msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
   if (!mainw->recoverable_layout) sensitize();
 
@@ -11079,13 +11072,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   mainw->is_ready = TRUE;
 
-  /* if (prefs->show_gui && prefs->open_maximised) { */
-  /*   int wx, wy; */
-  /*   lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
-  /*   lives_window_get_position(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &wx, &wy); */
-  /*   if (prefs->gui_monitor == 0 && (wx > 0 || wy > 0)) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0); */
-  /*   lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
-  /* } */
+  if (prefs->show_gui && prefs->open_maximised) {
+     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
 
   // calls widget_context_update() ///////////////////////
   set_mt_play_sizes(multi, cfile->hsize, cfile->vsize);
@@ -11145,8 +11134,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   d_print(_("====== Switched to Multitrack mode ======\n"));
 
   if (prefs->show_msg_area) {
+    if (mainw->idlemax == 0) 
+      lives_idle_add(resize_message_area, NULL);
     mainw->idlemax = DEF_IDLE_MAX;
-    lives_idle_add(resize_message_area, LIVES_INT_TO_POINTER(1));
   }
 
   mt_show_current_frame(multi, FALSE);

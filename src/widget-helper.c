@@ -10843,7 +10843,7 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer user_data) {
 }
 
 
-EXPOSE_FN_DECL(draw_cool_toggle, widget) {
+EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
   // connect expose event to this
   lives_painter_t *cr;
 

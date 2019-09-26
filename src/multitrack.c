@@ -1386,7 +1386,7 @@ static void redraw_eventbox(lives_mt *mt, LiVESWidget *eventbox) {
 }
 
 
-static EXPOSE_FN_DECL(expose_track_event, eventbox) {
+static EXPOSE_FN_DECL(expose_track_event, eventbox, user_data) {
   lives_painter_t *cr;
 
   lives_mt *mt = (lives_mt *)user_data;
@@ -17642,7 +17642,7 @@ void draw_region(lives_mt *mt) {
 }
 
 
-static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline) {
+static EXPOSE_FN_DECL(expose_timeline_reg_event, timeline, user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   LiVESList *tl_marks = mt->tl_marks;
 
@@ -17787,7 +17787,7 @@ static void draw_soundwave(LiVESWidget *ebox, lives_painter_surface_t *surf, int
 }
 
 
-static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox) {
+static EXPOSE_FN_DECL(mt_expose_audtrack_event, ebox, user_data) {
   lives_mt *mt = (lives_mt *)user_data;
 
   lives_painter_surface_t *bgimage;

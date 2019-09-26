@@ -5869,7 +5869,7 @@ void donate_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-EXPOSE_FN_DECL(expose_fsplayarea_event, widget) {
+EXPOSE_FN_DECL(expose_fsplayarea_event, widget, user_data) {
   LiVESPixbuf *pixbuf = (LiVESPixbuf *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "pixbuf");
 
   lives_painter_t *cr;
@@ -8765,7 +8765,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton *spinbutton, livespointer u
 
 
 // for the timer bars
-EXPOSE_FN_DECL(expose_vid_event, widget) {
+EXPOSE_FN_DECL(expose_vid_event, widget, user_data) {
   int ex, ey, ew, eh;
   int width;
 
@@ -8917,7 +8917,7 @@ static void redraw_raudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
 }
 
 
-EXPOSE_FN_DECL(expose_laud_event, widget) {
+EXPOSE_FN_DECL(expose_laud_event, widget, user_data) {
   int ex, ey, ew, eh;
 
   if (mainw->recoverable_layout) return FALSE;
@@ -8957,7 +8957,7 @@ EXPOSE_FN_DECL(expose_laud_event, widget) {
 EXPOSE_FN_END
 
 
-EXPOSE_FN_DECL(expose_raud_event, widget) {
+EXPOSE_FN_DECL(expose_raud_event, widget, user_data) {
   int ex, ey, ew, eh;
 
   if (mainw->recoverable_layout) return FALSE;

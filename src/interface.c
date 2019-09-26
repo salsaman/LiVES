@@ -4382,7 +4382,7 @@ static void msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute
 }
 
 
-EXPOSE_FN_DECL(expose_msg_area, widget) {
+EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   lives_painter_t *cr;
   int lheight, llines, llast, lineheight;
   int width, height, overflowx, overflowy;

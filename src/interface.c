@@ -4327,7 +4327,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   int nlines;
 
   static int last_height = -1;
-  g_print("in scrollto\n");
+
   if (!prefs->show_msg_area) return FALSE;
   if (mainw->n_messages <= 0) return FALSE;
 
@@ -4336,7 +4336,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   height = lives_widget_get_allocation_height(LIVES_WIDGET(widget)) - vmarg;
   if (reqheight != -1) height = reqheight;
   width = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
-  g_print("GET  LINGO xx %d %d\n", width, height);
+  //g_print("GET  LINGO xx %d %d\n", width, height);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
   if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
@@ -4351,7 +4351,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   lives_widget_set_font_size(widget, LIVES_WIDGET_STATE_NORMAL, lives_textsize_to_string(prefs->msg_textsize));
 
   layout = layout_nth_message_at_bottom(msgno, width, height, LIVES_WIDGET(widget), &nlines);
-  g_print("GET  LINGO\n");
+  //g_print("GET  LINGO\n");
   if (!LINGO_IS_LAYOUT(layout) || layout == NULL) return FALSE;
 
   lingo_layout_get_size(layout, NULL, &lh, 0, 0);
@@ -4440,13 +4440,6 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 #ifdef DEBUG_OVERFLOW
     g_print("overflow2 is %d : %d %d %d X %d : %d %d %d\n", overflowx, w, scr_width, bx, overflowy, h, scr_height, by);
 #endif
-
-    /* int toph = lives_widget_get_allocation_height(mainw->top_vbox) + by; */
-    /* if (mainw->multitrack == NULL && overflowy == 0) { */
-    /*   if (toph < h) { */
-    /*     overflowy = toph - h; */
-    /*   } */
-    /* } */
 
     if (overflowx != 0 || overflowy != 0) {
 #ifdef DEBUG_OVERFLOW

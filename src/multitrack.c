@@ -4099,7 +4099,6 @@ void mt_zoom_out(LiVESMenuItem *menuitem, livespointer user_data) {
 void paned_position(LiVESObject *object, livespointer pspec, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   mt->opts.vpaned_pos = lives_paned_get_position(LIVES_PANED(object));
-  reset_message_area(TRUE);
 }
 
 
@@ -8712,22 +8711,21 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->message_box = mainw->message_box = lives_hbox_new(FALSE, 0);
 
   // msg_area NOT showing for gtk+2.x
-  mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mt->sw_func);
-  mainw->sw_func = mt->sw_func;
-  lives_signal_handler_block(mt->msg_area, mt->sw_func);
-
-  lives_widget_set_events(mt->msg_area, LIVES_SCROLL_MASK);
-
-  lives_widget_set_app_paintable(mt->msg_area, TRUE);
-  lives_container_set_border_width(LIVES_CONTAINER(mt->message_box), 0);
-  lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_area, TRUE, TRUE, 0);
-
-  mt->msg_scrollbar = mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
-  lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_scrollbar, FALSE, TRUE, 0);
-
-  mt->msg_adj = mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mt->msg_scrollbar));
-
   if (prefs->show_msg_area) {
+    mt->msg_area = mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mt->sw_func);
+    mainw->sw_func = mt->sw_func;
+    lives_signal_handler_block(mt->msg_area, mt->sw_func);
+
+    lives_widget_set_events(mt->msg_area, LIVES_SCROLL_MASK);
+
+    lives_widget_set_app_paintable(mt->msg_area, TRUE);
+    lives_container_set_border_width(LIVES_CONTAINER(mt->message_box), 0);
+    lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_area, TRUE, TRUE, 0);
+    mt->msg_scrollbar = mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
+
+    lives_box_pack_start(LIVES_BOX(mt->message_box), mt->msg_scrollbar, FALSE, TRUE, 0);
+    mt->msg_adj = mainw->msg_adj = lives_range_get_adjustment(LIVES_RANGE(mt->msg_scrollbar));
+
     lives_signal_connect_after(LIVES_GUI_OBJECT(mt->msg_adj),
                                LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(msg_area_scroll),
@@ -8737,8 +8735,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                          LIVES_GUI_CALLBACK(on_msg_area_scroll),
                          (livespointer)mt->msg_adj);
 
-    lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, TRUE);
-  } else lives_object_ref_sink(mt->message_box);
+  } else {
+    mt->msg_area = mt->msg_scrollbar = NULL;
+    mt->msg_adj = NULL;
+  }
+
+  lives_paned_pack(2, LIVES_PANED(mt->vpaned), mt->message_box, TRUE, TRUE);
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_prevclip), mt, NULL));
@@ -9286,7 +9288,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     load_start_image(0);
     load_end_image(0);
     if (prefs->show_msg_area) {
-      reset_message_area(FALSE);
       if (mainw->idlemax == 0)
         lives_idle_add(resize_message_area, NULL);
       mainw->idlemax = DEF_IDLE_MAX;
@@ -9309,8 +9310,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   }
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
-
-  //msg_area_scroll_to_end(mainw->msg_area, mainw->msg_adj);
 
   if (!mainw->recoverable_layout) sensitize();
 
@@ -11085,7 +11084,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
-  lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
+  if (multi->msg_area != NULL) lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
 
   lives_widget_context_update();
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

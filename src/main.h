@@ -1153,7 +1153,6 @@ void switch_to_file(int old_file, int new_file);
 void do_quick_switch(int new_file);
 void switch_audio_clip(int new_file, boolean activate);
 void resize(double scale);
-void do_start_messages(void);
 boolean set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
 void set_record(void);

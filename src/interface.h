@@ -33,6 +33,7 @@ void msg_area_scroll_to_end(LiVESWidget *, LiVESAdjustment *);
 boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user_data);
 
 EXPOSE_FN_PROTOTYPE(expose_msg_area);
+boolean get_screen_usable_size(int *w, int *h);
 
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
 LiVESWidget *create_opensel_dialog(void);

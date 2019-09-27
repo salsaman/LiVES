@@ -74,6 +74,8 @@
 #define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
 #define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))
 
+#define MIN_MSG_AREA_SCRNHEIGHT 720
+
 /// default size for generators
 #define DEF_GEN_WIDTH 1024
 #define DEF_GEN_HEIGHT 720
@@ -1423,7 +1425,7 @@ typedef struct {
   int gui_posx;
   int gui_posy;
 
-#define DEF_IDLE_MAX 200
+#define DEF_IDLE_MAX 100
 
   int idlemax;
   ////////////////////

@@ -461,7 +461,7 @@ void create_LiVES(void) {
 
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
-  lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_START);
+  //lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_FILL);
 
   // top_vbox contains the following:
   // - menu_hbox -> menubar -> menuitems
@@ -3448,7 +3448,7 @@ void block_expose(void) {
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
+  if (mainw->msg_area != NULL) lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
 #endif
 }
 
@@ -3461,7 +3461,7 @@ void unblock_expose(void) {
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
-  lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func);
+  if (mainw->msg_area != NULL) lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func);
 #endif
 }
 

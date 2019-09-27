@@ -7226,7 +7226,12 @@ void weed_deinit_effect(int hotkey) {
       // for internal, continue where we should
       if (is_realtime_aplayer(prefs->audio_player)) {
         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
-        else switch_audio_clip(mainw->pre_src_audio_file, TRUE);
+        else {
+          if (mainw->pre_src_audio_file == -1) {
+            // audio doesn't follow clip switches and we were playing this...
+            mainw->cancelled = CANCEL_AUD_END;
+          }
+        }
       }
     }
   }

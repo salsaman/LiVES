@@ -809,7 +809,8 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     if (newval == prefs->max_messages) goto fail3;
     if (newval < mainw->n_messages && newval >= 0) {
       free_n_msgs(mainw->n_messages - newval);
-      msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
+      if (prefs->show_msg_area)
+        msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
     prefs->max_messages = newval;
     goto success3;
@@ -880,7 +881,7 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
   if (!strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
     if (idx == prefs->msg_textsize) goto fail4;
     prefs->msg_textsize = idx;
-    if (mainw->msg_adj != NULL) {
+    if (prefs->show_msg_area) {
       msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
     }
     goto success4;

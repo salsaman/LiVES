@@ -990,6 +990,7 @@ load_done:
   if (mainw->multitrack == NULL) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
+    lives_widget_queue_draw(mainw->LiVES);
   } else {
     lives_mt *multi = mainw->multitrack;
     mainw->multitrack = NULL; // allow getting of afilesize

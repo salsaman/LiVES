@@ -1508,8 +1508,8 @@ static void init_omc_macros(void) {
   omc_macros[PREV_CLIP_SELECT].macro_text = lives_strdup(_("Switch foreground to previous clip"));
 
   omc_macros[SET_FPS_RATIO].msg = lives_strdup("/video/fps/ratio/set");
-  omc_macros[SET_FPS_RATIO].macro_text = lives_strdup(_("Set video framerate to ratio <fps_ratio>"));
-  omc_macros[SET_FPS_RATIO].info_text = lives_strdup(_("Set the framerate ratio of the foreground clip to <(float) fps_ratio>"));
+  omc_macros[SET_FPS_RATIO].macro_text = lives_strdup(_("Set video framerate to ratio <fps__ratio>"));
+  omc_macros[SET_FPS_RATIO].info_text = lives_strdup(_("Set the framerate ratio of the foreground clip to <(float) fps__ratio>"));
   omc_macros[SET_FPS_RATIO].nparams = 1;
 
   omc_macros[RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
@@ -1619,7 +1619,7 @@ static void init_omc_macros(void) {
   omc_macros[SET_FPS_RATIO].vald[0] = 1.;
   omc_macros[SET_FPS_RATIO].maxd[0] = 10.;
   // TRANSLATORS: short form of "frames per second"
-  omc_macros[SET_FPS_RATIO].pname[0] = lives_strdup(_("fps_ratio"));
+  omc_macros[SET_FPS_RATIO].pname[0] = lives_strdup(_("fps__ratio"));
 
   // clip retrigger
   omc_macros[RETRIGGER_CLIP].ptypes[0] = OMC_PARAM_INT;

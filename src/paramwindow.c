@@ -445,7 +445,7 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
     if (has_video_chans_in(filter, FALSE))
       lives_box_pack_start(LIVES_BOX(hbox), hbox2, FALSE, FALSE, widget_opts.packing_width);
 
-    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Crossfade audio"))),
+    checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Crossfade audio"))),
                   weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
                   weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE,
                   LIVES_BOX(hbox2), (tmp2 = lives_strdup(

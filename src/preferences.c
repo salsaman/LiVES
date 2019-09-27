@@ -1493,7 +1493,7 @@ boolean apply_prefs(boolean skip_warn) {
         tmp = lives_filename_to_utf8(workdir, -1, NULL, NULL, NULL);
 #ifndef IS_MINGW
         msg = lives_strdup_printf(
-                _("Unable to create or write to the new working directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p %s; "
+                _("Unable to create or write to the new working directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p '%s'"
                   "\n\nThe directory will not be changed now.\n"),
                 tmp, tmp);
 #else
@@ -3805,7 +3805,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path: "), prefs->weed_plugin_path,
+  prefsw->wpp_entry = lives_standard_direntry_new(_("Weed plugin path"), prefs->weed_plugin_path,
                       LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4004,7 +4004,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_warnings), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  prefsw->spinbutton_warn_ds = lives_standard_spin_button_new(_("Warn if diskspace falls below: "),
+  prefsw->spinbutton_warn_ds = lives_standard_spin_button_new(_("Warn if available diskspace falls below: "),
                                (double)prefs->ds_warn_level / 1000000.,
                                (double)prefs->ds_crit_level / 1000000.,
                                DS_WARN_CRIT_MAX, 1., 10., 0,

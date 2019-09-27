@@ -5292,7 +5292,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       int achans = weed_get_int_value(event_list, WEED_LEAF_AUDIO_CHANNELS, &error);
       if (achans >= 0 && mt != NULL) {
         if (achans > 2) {
-          char *err = lives_strdup_printf(_("\nThis latout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
+          char *err = lives_strdup_printf(_("\nThis layout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
           d_print(err);
           do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
           lives_free(err);

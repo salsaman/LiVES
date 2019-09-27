@@ -521,7 +521,7 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
 
-  pthread_mutex_init(&mainw->audio_resync_mutex, NULL);
+  pthread_mutex_init(&mainw->audio_resync_mutex, &mattr);
 
   pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
 

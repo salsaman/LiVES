@@ -11002,17 +11002,13 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
     }
   }
   gdk_window_get_frame_extents(lives_widget_get_xwindow(win), &rect);
-  g_print("F.EXT = %d\n", rect.height);
+  //g_print("F.EXT = %d\n", rect.height);
   gdk_window_get_origin(lives_widget_get_xwindow(win), &wx, &wy);
   if (bx != NULL) {
     *bx = rect.width - lives_widget_get_allocation_width(win);
-    //*bx = rect.x;
-    //if (rect.x == 0) *bx = 0;
   }
   if (by != NULL) {
     *by = rect.height - lives_widget_get_allocation_height(win);
-    //*by = rect.y;
-    if (rect.y == 0) *by = 0;
   }
   return TRUE;
 #endif

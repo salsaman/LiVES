@@ -9267,7 +9267,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
 
   if (prefs->show_gui && prefs->open_maximised) {
-     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   d_print(_("====== Switched to Clip Edit mode ======\n"));
@@ -9288,7 +9288,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     if (prefs->show_msg_area) {
       reset_message_area(FALSE);
       if (mainw->idlemax == 0)
-	lives_idle_add(resize_message_area, NULL);
+        lives_idle_add(resize_message_area, NULL);
       mainw->idlemax = DEF_IDLE_MAX;
     }
   }
@@ -11073,7 +11073,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   mainw->is_ready = TRUE;
 
   if (prefs->show_gui && prefs->open_maximised) {
-     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
   // calls widget_context_update() ///////////////////////
@@ -11134,7 +11134,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   d_print(_("====== Switched to Multitrack mode ======\n"));
 
   if (prefs->show_msg_area) {
-    if (mainw->idlemax == 0) 
+    if (mainw->idlemax == 0)
       lives_idle_add(resize_message_area, NULL);
     mainw->idlemax = DEF_IDLE_MAX;
   }

@@ -19,7 +19,7 @@
 /// clip edit vid/aud bar height
 #define CE_AUDBAR_HEIGHT ((int)(16. * widget_opts.scale))
 
-#define MSG_AREA_VMARGIN 10
+#define MSG_AREA_VMARGIN 0
 #define LAYOUT_SIZE_MIN 0
 
 void draw_little_bars(double ptrtime, int which);

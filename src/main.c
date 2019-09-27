@@ -2717,41 +2717,31 @@ static boolean open_yuv4m_startup(livespointer data) {
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   int bx, by;
-  
+
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
     mainw->idlemax = 0;
     return FALSE;
   }
 
-  if (mainw->idlemax == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
-  
+  if (mainw->idlemax-- == DEF_IDLE_MAX) mainw->msg_area_configed = FALSE;
+
   get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-  if (--mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
+  if (mainw->idlemax == DEF_IDLE_MAX / 2 && prefs->open_maximised && (by > 0 || bx > 0)) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     mainw->assumed_height = mainw->assumed_width = -1;
     return TRUE;
   }
 
-  if (mainw->msg_area_configed && !(prefs->open_maximised && (by > 0 || bx > 0))) mainw->idlemax = 0;
+  if (mainw->msg_area_configed) mainw->idlemax = 0;
 
-  if (mainw->assumed_height != -1 &&
-      mainw->assumed_height != lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) &&
-      mainw->idlemax > 0) return TRUE;
+  if (mainw->idlemax > 0 && mainw->assumed_height != -1 &&
+      mainw->assumed_height != lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET)) return TRUE;
   if (mainw->idlemax > 0 && lives_widget_get_allocation_height(mainw->end_image) != mainw->ce_frame_height) return TRUE;
-  /* if (data != NULL) { */
-  /*   LingoLayout *layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->msg_area), "layout"); */
-  /*   if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout); */
-  /*   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->msg_area), "layout", NULL); */
-  /* } */
-  g_print("IDLE CALL\n");
+
   mainw->idlemax = 0;
   mainw->assumed_height = mainw->assumed_width = -1;
   reset_message_area(TRUE);
-  if (data != NULL) {
-    g_print("CALL DPRINT\n");
-    d_print("");
-  }
   return FALSE;
 }
 
@@ -3107,18 +3097,18 @@ static boolean lives_startup(livespointer data) {
     if (mainw->current_file == -1) {
       resize(1.);
       if (prefs->show_msg_area) {
-	reset_message_area(FALSE);
-	if (mainw->idlemax == 0) 
-	  lives_idle_add(resize_message_area, NULL);
-	mainw->idlemax = DEF_IDLE_MAX * 10;
+        reset_message_area(FALSE);
+        if (mainw->idlemax == 0)
+          lives_idle_add(resize_message_area, NULL);
+        mainw->idlemax = DEF_IDLE_MAX * 10;
       }
     }
     lives_widget_context_update();
 
     draw_little_bars(0., 0);
     lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
-			       LIVES_GUI_CALLBACK(config_event2),
-			       NULL);
+                               LIVES_GUI_CALLBACK(config_event2),
+                               NULL);
 
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
@@ -7551,6 +7541,7 @@ void load_frame_image(int frame) {
       //lives_widget_context_update();
       if (mainw->multitrack == NULL) {
         if (prefs->show_msg_area && !mainw->only_close) {
+          reset_message_area(FALSE);
           if (mainw->idlemax == 0) {
             lives_idle_add(resize_message_area, NULL);
           }

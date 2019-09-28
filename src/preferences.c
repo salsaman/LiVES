@@ -1585,7 +1585,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (forcesmon != prefs->force_single_monitor) {
     prefs->force_single_monitor = forcesmon;
     set_boolean_pref(PREF_FORCE_SINGLE_MONITOR, forcesmon);
-    get_monitors();
+    get_monitors(FALSE);
     if (capable->nmonitors == 0) resize_widgets_for_monitor(TRUE);
   }
 
@@ -2903,7 +2903,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   pfsm = prefs->force_single_monitor;
   prefs->force_single_monitor = FALSE;
-  get_monitors();
+  get_monitors(FALSE);
   nmons = capable->nmonitors;
 
   add_hsep_to_box(LIVES_BOX(prefsw->vbox_right_gui));
@@ -2925,7 +2925,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                              1., 1., 0, LIVES_BOX(hbox), NULL);
 
   prefs->force_single_monitor = pfsm;
-  get_monitors();
+  get_monitors(FALSE);
 
   add_fill_to_box(LIVES_BOX(hbox));
 

@@ -9002,24 +9002,31 @@ boolean config_event2(LiVESWidget *widget, LiVESXEventConfigure *event, livespoi
 
 
 boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
-  int scr_width = GUI_SCREEN_WIDTH;
-  int scr_height = GUI_SCREEN_HEIGHT;
-
-  if (mainw->configured) {
-    if (scr_width != mainw->old_scr_width || scr_height != mainw->old_scr_height) {
-      mainw->old_scr_width = scr_width;
-      mainw->old_scr_height = scr_height;
+  if (!mainw->configured) {
+    lives_widget_set_events(mainw->eventbox, LIVES_SCROLL_MASK);
+    if (prefs->show_msg_area) {
+      lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
+                                 LIVES_GUI_CALLBACK(config_event2),
+                                 NULL);
+      lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
+      lives_signal_handler_unblock(mainw->msg_area, mainw->sw_func);
+    }
+    mainw->configured = TRUE;
+    return FALSE;
+  }
+  if (widget == LIVES_MAIN_WINDOW_WIDGET) {
+    int scr_width = GUI_SCREEN_WIDTH;
+    int scr_height = GUI_SCREEN_HEIGHT;
+    get_monitors(FALSE);
+    if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
+      g_print("RESIZE\n");
       resize_widgets_for_monitor(FALSE);
-    } else if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL && !mainw->preview &&
-               !mainw->recoverable_layout) {
+    }
+  } else {
+    if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL && !mainw->preview &&
+        !mainw->recoverable_layout) {
       get_play_times();
     }
-  }
-
-  if (!mainw->configured) {
-    mainw->old_scr_width = scr_width;
-    mainw->old_scr_height = scr_height;
-    mainw->configured = TRUE;
   }
   return FALSE;
 }

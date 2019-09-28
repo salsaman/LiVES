@@ -266,8 +266,7 @@ void catch_sigint(int signum) {
 }
 
 
-void get_monitors(void) {
-
+void get_monitors(boolean reset) {
 #ifdef GUI_GTK
   GSList *dlist, *dislist;
   GdkDisplay *disp;
@@ -325,7 +324,11 @@ void get_monitors(void) {
       nmonitors = gdk_screen_get_n_monitors(screen);
       for (j = 0; j < nmonitors; j++) {
         GdkRectangle rect;
+#if GTK_CHECK_VERSION(3, 4, 0)
+        gdk_screen_get_monitor_workarea(screen, j, &(rect));
+#else
         gdk_screen_get_monitor_geometry(screen, j, &(rect));
+#endif
         mainw->mgeom[idx].x = rect.x;
         mainw->mgeom[idx].y = rect.y;
         mainw->mgeom[idx].width = rect.width;
@@ -381,6 +384,8 @@ void get_monitors(void) {
 
   if (prefs->force_single_monitor) capable->nmonitors = 1; // force for clone mode
 
+  if (!reset) return;
+
   prefs->gui_monitor = 0;
   prefs->play_monitor = 1;
 
@@ -408,6 +413,17 @@ void get_monitors(void) {
 
   mainw->old_scr_width = GUI_SCREEN_WIDTH;
   mainw->old_scr_height = GUI_SCREEN_HEIGHT;
+
+  prefs->screen_scale = get_double_pref(PREF_SCREEN_SCALE);
+  if (prefs->screen_scale == 0.) {
+    prefs->screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
+    prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
+  }
+
+  if (GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) prefs->show_msg_area = TRUE;
+  else prefs->show_msg_area = FALSE;
+
+  widget_opts_rescale(prefs->screen_scale);
 }
 
 
@@ -742,18 +758,7 @@ static boolean pre_init(void) {
 
   prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
 
-  get_monitors();
-
-  prefs->screen_scale = get_double_pref(PREF_SCREEN_SCALE);
-  if (prefs->screen_scale == 0.) {
-    prefs->screen_scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
-    prefs->screen_scale = (prefs->screen_scale - 1.) * 1.5 + 1.;
-  }
-
-  if (GUI_SCREEN_HEIGHT >= MIN_MSG_AREA_SCRNHEIGHT) prefs->show_msg_area = TRUE;
-  else prefs->show_msg_area = FALSE;
-
-  widget_opts_rescale(prefs->screen_scale);
+  get_monitors(TRUE);
 
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
@@ -834,7 +839,7 @@ static boolean pre_init(void) {
 }
 
 
-static void replace_with_delegates(void) {
+void replace_with_delegates(void) {
   weed_plant_t *filter;
 
   lives_rfx_t *rfx;
@@ -1274,6 +1279,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->assumed_height = mainw->assumed_width = -1;
   mainw->gui_posx = mainw->gui_posy = 1000000;
   mainw->idlemax = 0;
+  mainw->reconfig = FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -2718,6 +2724,7 @@ boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
   int bx, by;
+  g_print("RME\n");
 
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
@@ -2743,7 +2750,7 @@ boolean resize_message_area(livespointer data) {
   mainw->idlemax = 0;
   mainw->assumed_height = mainw->assumed_width = -1;
   reset_message_area(TRUE);
-  if (isfirst) d_print("");
+  if (isfirst && mainw->current_file == -1) d_print("");
   isfirst = FALSE;
   return FALSE;
 }
@@ -2832,6 +2839,7 @@ static boolean lives_startup(livespointer data) {
     future_prefs->audio_src = prefs->audio_src;
 
     splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
+    LIVES_MAIN_WINDOW_WIDGET = NULL;
 
     create_LiVES();
 
@@ -3105,7 +3113,6 @@ static boolean lives_startup(livespointer data) {
     if (mainw->current_file == -1) {
       resize(1.);
       if (prefs->show_msg_area) {
-        reset_message_area(FALSE);
         if (mainw->idlemax == 0)
           lives_idle_add(resize_message_area, NULL);
         mainw->idlemax = DEF_IDLE_MAX;
@@ -3113,10 +3120,6 @@ static boolean lives_startup(livespointer data) {
     }
 
     draw_little_bars(0., 0);
-    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
-                               LIVES_GUI_CALLBACK(config_event2),
-                               NULL);
-
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
     lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
@@ -7544,7 +7547,7 @@ void load_frame_image(int frame) {
       if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
     if (!LIVES_IS_PLAYING) {
-      if (mainw->multitrack == NULL) {
+      if (mainw->multitrack == NULL && !mainw->reconfig) {
         if (prefs->show_msg_area && !mainw->only_close) {
           //reset_message_area(FALSE);
           if (mainw->idlemax == 0) {

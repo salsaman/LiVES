@@ -6,6 +6,16 @@
 
 // code for drawing the main window
 
+#if HAVE_SYSTEM_WEED
+#include <weed/weed.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-host.h>
+#else
+#include "../libweed/weed.h"
+#include "../libweed/weed-utils.h"
+#include "../libweed/weed-host.h"
+#endif
+
 #include "main.h"
 #include "callbacks.h"
 #include "interface.h"
@@ -75,6 +85,9 @@ void load_theme_images(void) {
       height = lives_pixbuf_get_height(pixbuf);
 
       if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT, &width, &height);
+
+      width *= prefs->screen_scale;
+      height *= prefs->screen_scale;
 
       mainw->imsep = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
       lives_object_unref(pixbuf);
@@ -365,6 +378,7 @@ void create_LiVES(void) {
   int i;
   int dpw;
   boolean woat;
+  boolean new_lives = FALSE;
 
   stop_closure = NULL;
   fullscreen_closure = NULL;
@@ -379,9 +393,15 @@ void create_LiVES(void) {
   mute_audio_closure = NULL;
   ping_pong_closure = NULL;
 
-  LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
+  if (LIVES_MAIN_WINDOW_WIDGET == NULL) {
+    new_lives = TRUE;
+    LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
 
+    mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
+                         LIVES_GUI_CALLBACK(config_event),
+                         NULL);
+  }
   ////////////////////////////////////
 
   mainw->double_size = FALSE;
@@ -438,6 +458,9 @@ void create_LiVES(void) {
 
 #endif
 
+  if (!new_lives) {
+    lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
+  }
   mainw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   mainw->layout_textbuffer = lives_text_buffer_new();
@@ -445,22 +468,23 @@ void create_LiVES(void) {
   mainw->affected_layouts_map = NULL;
 
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
-
+  if (new_lives) {
 #ifdef GUI_GTK
-  // TODO - can we use just DEFAULT_DROP ?
-  gtk_drag_dest_set(LIVES_MAIN_WINDOW_WIDGET, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
-                    (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
+    // TODO - can we use just DEFAULT_DROP ?
+    gtk_drag_dest_set(LIVES_MAIN_WINDOW_WIDGET, GTK_DEST_DEFAULT_ALL, mainw->target_table, 2,
+                      (GdkDragAction)(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_LINK));
 
-  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
-                       LIVES_GUI_CALLBACK(drag_from_outside),
-                       NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DRAG_DATA_RECEIVED_SIGNAL,
+                         LIVES_GUI_CALLBACK(drag_from_outside),
+                         NULL);
 
 #endif
 
-  if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), prefs->open_decorated);
-
+    if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), prefs->open_decorated);
+  }
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
+
   //lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_FILL);
 
   // top_vbox contains the following:
@@ -1870,8 +1894,6 @@ void create_LiVES(void) {
   vbox4 = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox99), vbox4, FALSE, TRUE, 0);
 
-  lives_widget_set_events(mainw->eventbox, LIVES_SCROLL_MASK);
-
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
                        NULL);
@@ -2194,14 +2216,13 @@ void create_LiVES(void) {
   else lives_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
+  lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
+
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
   lives_widget_apply_theme3(mainw->msg_area, LIVES_WIDGET_STATE_NORMAL);
   lives_box_pack_start(LIVES_BOX(mainw->message_box), mainw->msg_area, TRUE, TRUE, 0);
-
-  if (prefs->show_msg_area)
-    lives_widget_set_events(mainw->msg_area, LIVES_SCROLL_MASK);
 
   mainw->msg_scrollbar = lives_vscrollbar_new(NULL);
   lives_box_pack_end(LIVES_BOX(mainw->message_box), mainw->msg_scrollbar, FALSE, TRUE, 0);
@@ -2381,20 +2402,18 @@ void create_LiVES(void) {
     }
   }
 
-  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
-                       LIVES_GUI_CALLBACK(on_LiVES_delete_event),
-                       NULL);
+  if (new_lives) {
+    lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
+                         LIVES_GUI_CALLBACK(on_LiVES_delete_event),
+                         NULL);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_PRESS_EVENT,
-                       LIVES_GUI_CALLBACK(key_press_or_release),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
-                       LIVES_GUI_CALLBACK(key_press_or_release),
-                       NULL);
-
-  mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
-                       LIVES_GUI_CALLBACK(config_event),
-                       NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_PRESS_EVENT,
+                         LIVES_GUI_CALLBACK(key_press_or_release),
+                         NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_KEY_RELEASE_EVENT,
+                         LIVES_GUI_CALLBACK(key_press_or_release),
+                         NULL);
+  }
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb),
                        NULL);
@@ -2924,13 +2943,14 @@ void create_LiVES(void) {
                        LIVES_INT_TO_POINTER(2));
 
   lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
-  mainw->laudio_drawable = NULL;
-  mainw->raudio_drawable = NULL;
-  mainw->video_drawable = NULL;
+  if (new_lives) {
+    mainw->laudio_drawable = NULL;
+    mainw->raudio_drawable = NULL;
+    mainw->video_drawable = NULL;
+  }
   mainw->plug = NULL;
-
   lives_widget_set_can_focus(mainw->message_box, TRUE);
-  lives_widget_grab_focus(mainw->message_box);
+  if (new_lives) lives_widget_grab_focus(mainw->message_box);
 }
 
 
@@ -3444,7 +3464,7 @@ void block_expose(void) {
   // unresponsive
   mainw->draw_blocked = TRUE;
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_handler_block(mainw->video_draw, mainw->config_func);
+  //lives_signal_handler_block(mainw->video_draw, mainw->config_func);
   lives_signal_handler_block(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_block(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_block(mainw->raudio_draw, mainw->raudbar_func);
@@ -3457,7 +3477,7 @@ void unblock_expose(void) {
   // unblock expose/config events
   mainw->draw_blocked = FALSE;
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_signal_handler_unblock(mainw->video_draw, mainw->config_func);
+  //lives_signal_handler_unblock(mainw->video_draw, mainw->config_func);
   lives_signal_handler_unblock(mainw->video_draw, mainw->vidbar_func);
   lives_signal_handler_unblock(mainw->laudio_draw, mainw->laudbar_func);
   lives_signal_handler_unblock(mainw->raudio_draw, mainw->raudbar_func);
@@ -3757,38 +3777,92 @@ void play_window_set_title(void) {
 
 void resize_widgets_for_monitor(boolean do_get_play_times) {
   // resize widgets if we are aware that monitor resolution has changed
+  LiVESList *list;
+  int i, current_file;
+  boolean need_mt = FALSE, fake_evlist;
 
-  mainw->old_scr_width = GUI_SCREEN_WIDTH;
-  mainw->old_scr_height = GUI_SCREEN_HEIGHT;
+  mainw->reconfig = TRUE;
+  mainw->suppress_dprint = TRUE;
+  mainw->idlemax = 0;
+  lives_widget_context_update();
 
-  widget_opts.scale = (double)GUI_SCREEN_WIDTH / (double)SCREEN_SCALE_DEF_WIDTH;
-  widget_opts_rescale(widget_opts.scale);
+  get_monitors(TRUE);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
-  if (mainw->multitrack == NULL) {
+  if (mainw->multitrack != NULL) {
+    if (mainw->multitrack->event_list == NULL) {
+      weed_plant_t *event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
+      weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
+      weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
+      weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
+      mainw->multitrack->event_list = event_list;
+      fake_evlist = TRUE;
+    }
+    multitrack_delete(mainw->multitrack, FALSE);
+    need_mt = TRUE;
+  }
+  //
+  current_file = mainw->current_file;
+  lives_widget_unparent(mainw->top_vbox);
+  lives_widget_context_update();
+
+  create_LiVES();
+  mainw->configured = FALSE;
+  mainw->assumed_width = mainw->assumed_height = -1;
+  mainw->gui_posx = mainw->gui_posy = 1000000;
+  for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
+    if (i == FX_CANDIDATE_AUDIO_VOL) continue;
+    mainw->fx_candidates[i].delegate = -1;
+    mainw->fx_candidates[i].list = NULL;
+    mainw->fx_candidates[i].func = 0l;
+    mainw->fx_candidates[i].rfx = NULL;
+  }
+  add_rfx_effects(RFX_STATUS_ANY);
+  replace_with_delegates();
+  show_lives();
+  list = mainw->cliplist;
+  mainw->cliplist = NULL;
+  while (list != NULL) {
+    mainw->current_file = LIVES_POINTER_TO_INT(list->data);
+    add_to_clipmenu();
+    list = list->next;
+  }
+  set_interactive(mainw->interactive);
+  mainw->is_ready = TRUE;
+  mainw->go_away = FALSE;
+#if GTK_CHECK_VERSION(3, 0, 0)
+  if (!mainw->foreign && prefs->show_gui) {
+    calibrate_sepwin_size();
+  }
+#endif
+  if (!need_mt) {
+    lives_widget_context_update();
+    if (current_file != -1) switch_clip(1, current_file, TRUE);
     if (prefs->open_maximised && prefs->show_gui) {
       resize(1);
     }
-    if (do_get_play_times) {
-      if (mainw->laudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-      if (mainw->raudio_drawable != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0));
-      get_play_times();
+    if (mainw->play_window != NULL) {
+      resize_play_window();
     }
   } else {
-    if ((prefs->gui_monitor != 0 || capable->nmonitors <= 1) && prefs->open_maximised) {
-      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    config_event(NULL, NULL, NULL);
+    on_multitrack_activate(NULL, NULL);
+    if (fake_evlist) {
+      wipe_layout(mainw->multitrack);
     }
-    set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   }
 
-  if (mainw->play_window != NULL) {
-    resize_play_window();
+  lives_widget_context_update();
+  mainw->suppress_dprint = FALSE;
+  d_print(_("GUI size changed to %d X %d\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+  if (prefs->open_maximised && prefs->show_gui) {
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
-  reset_message_area(TRUE);
+  lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
+  mainw->reconfig = FALSE;
 }
 
 

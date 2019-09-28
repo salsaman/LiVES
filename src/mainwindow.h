@@ -1425,9 +1425,11 @@ typedef struct {
   int gui_posx;
   int gui_posy;
 
-#define DEF_IDLE_MAX 100
+#define DEF_IDLE_MAX 50
 
   int idlemax;
+
+  boolean reconfig;
   ////////////////////
 } mainwindow;
 

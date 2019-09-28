@@ -531,7 +531,6 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
   if (event_list == NULL) {
     event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
     if (event_list == NULL) return NULL;
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
     error = weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     error = weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);

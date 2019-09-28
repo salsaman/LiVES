@@ -348,7 +348,6 @@ static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_l
   weed_plant_serialise(fd, event_list, mem);
 
   while (!mainw->write_failed && event != NULL) {
-
     next = weed_get_voidptr_value(event, WEED_LEAF_NEXT, &error);
     weed_leaf_delete(event, WEED_LEAF_NEXT);
 
@@ -9224,9 +9223,16 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   mainw->multitrack = NULL;
   mainw->event_list = NULL;
 
-  if (future_prefs->audio_src == AUDIO_SRC_EXT) {
-    // switch back to external audio
-    pref_factory_bool(PREF_REC_EXT_AUDIO, TRUE, FALSE);
+  lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
+  lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
+
+  for (i = 1; i < MAX_FILES; i++) {
+    if (mainw->files[i] != NULL) {
+      if (mainw->files[i]->event_list != NULL) {
+        event_list_free(mainw->files[i]->event_list);
+      }
+      mainw->files[i]->event_list = NULL;
+    }
   }
 
   if (prefs->show_gui) {
@@ -9240,19 +9246,18 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
       mainw->msg_area = mainw_msg_area;
       mainw->msg_adj = mainw_msg_adj;
       mainw->msg_scrollbar = mainw_msg_scrollbar;
+      if (mainw->reconfig) return TRUE;
       show_lives();
       unblock_expose();
       resize(1.);
     }
   }
 
-  for (i = 1; i < MAX_FILES; i++) {
-    if (mainw->files[i] != NULL) {
-      if (mainw->files[i]->event_list != NULL) {
-        event_list_free(mainw->files[i]->event_list);
-      }
-      mainw->files[i]->event_list = NULL;
-    }
+  if (mainw->reconfig) return TRUE;
+
+  if (future_prefs->audio_src == AUDIO_SRC_EXT) {
+    // switch back to external audio
+    pref_factory_bool(PREF_REC_EXT_AUDIO, TRUE, FALSE);
   }
 
   lives_widget_hide(mainw->playframe);
@@ -9266,7 +9271,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   /*   lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)); */
   /* } */
 
-  lives_window_remove_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mt->accel_group);
 
   if (prefs->show_gui && prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -9308,8 +9312,6 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     lives_free(title);
     lives_free(xtrabit);
   }
-
-  lives_window_add_accel_group(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->accel_group);
 
   if (!mainw->recoverable_layout) sensitize();
 
@@ -9624,6 +9626,8 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
 
     track_rect *block;
 
+    if (mainw->reconfig) mt->was_undo_redo = TRUE;
+
     for (j = 0; j < MAX_TRACKS; j++) {
       tracks[j] = 0;
       avels[j] = 0.;
@@ -9874,7 +9878,6 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
   set_timeline_end_secs(mt, mt->end_secs);
 
   if (!mt->was_undo_redo) {
-
     set_track_labels(mt);
 
     if (mt->is_ready) {
@@ -11081,7 +11084,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   redraw_all_event_boxes(multi);
 
-  lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
+  if (multi->opts.pertrack_audio) {
+    lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->insa_checkbutton));
+  }
   lives_toggle_button_toggle(LIVES_TOGGLE_BUTTON(multi->snapo_checkbutton));
 
   if (multi->msg_area != NULL) lives_signal_handler_unblock(multi->msg_area, multi->sw_func);
@@ -11129,6 +11134,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   set_interactive(mainw->interactive);
+  if (mainw->reconfig) return FALSE;
 
   d_print(_("====== Switched to Multitrack mode ======\n"));
 

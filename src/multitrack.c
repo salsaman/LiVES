@@ -9298,15 +9298,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   lives_free(mt);
 
-  if (mainw->play_window != NULL) {
-    char *xtrabit, *title;
-    resize_play_window();
-    if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-    else xtrabit = lives_strdup("");
-    title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-    lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-    lives_free(title);
-    lives_free(xtrabit);
+  if (prefs->sepwin_type == SEPWIN_TYPE_STICKY && mainw->sep_win) {
+    make_play_window();
   }
 
   if (!mainw->recoverable_layout) sensitize();

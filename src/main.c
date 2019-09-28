@@ -326,8 +326,8 @@ void get_monitors(boolean reset) {
         gdk_screen_get_monitor_geometry(screen, j, &(rect));
         mainw->mgeom[idx].x = rect.x;
         mainw->mgeom[idx].y = rect.y;
-        mainw->mgeom[idx].phys_width = rect.width;
-        mainw->mgeom[idx].phys_height = rect.height;
+        mainw->mgeom[idx].width = mainw->mgeom[idx].phys_width = rect.width;
+        mainw->mgeom[idx].height = mainw->mgeom[idx].phys_height = rect.height;
         mainw->mgeom[idx].mouse_device = NULL;
         mainw->mgeom[idx].dpi = dpi;
         mainw->mgeom[idx].scale = scale;
@@ -337,9 +337,6 @@ void get_monitors(boolean reset) {
           mainw->mgeom[idx].width = rect.width;
           mainw->mgeom[idx].height = rect.height;
         }
-#else
-        mainw->mgeom[idx].width = mainw->mgeom[idx].phys_width;
-        mainw->mgeom[idx].height = mainw->mgeom[idx].phys_height;
 #endif
 #if LIVES_HAS_DEVICE_MANAGER
         // get (virtual) mouse device for this screen

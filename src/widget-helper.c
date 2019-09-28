@@ -1304,24 +1304,25 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
 #if GTK_CHECK_VERSION(3, 24, 0)
     // special tweaks
-    if (GTK_IS_FRAME(widget)) {
-      selector = "label";
-    }
+    if (selector == NULL) {
+      if (GTK_IS_FRAME(widget)) {
+        selector = "label";
+      }
 
-    if (GTK_IS_TEXT_VIEW(widget)) {
-      selector = "text";
-      /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
-      /* lives_free(css_string); */
-      /* css_string = tmp; */
-    }
+      if (GTK_IS_TEXT_VIEW(widget)) {
+        selector = "text";
+        /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
+        /* lives_free(css_string); */
+        /* css_string = tmp; */
+      }
 
-    if (GTK_IS_SPIN_BUTTON(widget)) {
-      selector = "*";
-      /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
-      /* lives_free(css_string); */
-      /* css_string = tmp; */
+      if (GTK_IS_SPIN_BUTTON(widget)) {
+        selector = "*";
+        /* tmp = lives_strdup_printf("%s %s text {\n %s: %s;}\n", css_string, wname, detail, value); */
+        /* lives_free(css_string); */
+        /* css_string = tmp; */
+      }
     }
-
 #endif
 
     if (selector == NULL) wname = lives_strdup_printf("#%s%s", widget_name, state_str);
@@ -8906,7 +8907,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   lives_entry_set_activates_default(LIVES_ENTRY(spinbutton), TRUE);
   lives_entry_set_has_frame(LIVES_ENTRY(spinbutton), TRUE);
-
+  lives_entry_set_alignment(LIVES_ENTRY(spinbutton), 0.2);
 #ifdef GUI_GTK
   gtk_spin_button_set_update_policy(LIVES_SPIN_BUTTON(spinbutton), GTK_UPDATE_ALWAYS);
   gtk_spin_button_set_numeric(LIVES_SPIN_BUTTON(spinbutton), TRUE);

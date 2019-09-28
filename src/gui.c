@@ -297,7 +297,7 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_apply_theme(mainw->framebar, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme(mainw->framecounter, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -1923,7 +1923,9 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
+  widget_opts.apply_theme = FALSE;
   mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
+  widget_opts.apply_theme = TRUE;
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);

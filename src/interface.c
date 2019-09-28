@@ -4596,7 +4596,6 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       if (height > 0 && width > 0) {
         //g_print("NEW SIZE %d\n", height - 4);
         lives_widget_set_size_request(widget, width, height);
-        lives_widget_set_size_request(widget, width, height);
         reqheight = height;
         reqwidth = width;
       }

@@ -86,9 +86,10 @@ void load_theme_images(void) {
 
       if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT, &width, &height);
 
-      width *= prefs->screen_scale;
-      height *= prefs->screen_scale;
-
+      if (prefs->screen_scale < 1.) {
+        width *= prefs->screen_scale;
+        height *= prefs->screen_scale;
+      }
       mainw->imsep = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
       lives_object_unref(pixbuf);
     }
@@ -295,6 +296,8 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
 
   lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
+
+  lives_widget_apply_theme(mainw->framebar, LIVES_WIDGET_STATE_NORMAL);
 
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
@@ -2210,6 +2213,7 @@ void create_LiVES(void) {
   lives_widget_set_margin_bottom(mainw->raudio_draw, widget_opts.packing_height * 4);
 
   mainw->message_box = lives_hbox_new(FALSE, 0);
+  lives_widget_set_app_paintable(mainw->message_box, TRUE);
   lives_widget_set_vexpand(mainw->message_box, TRUE);
   if (prefs->show_msg_area)
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
@@ -2956,6 +2960,7 @@ void create_LiVES(void) {
 
 void show_lives(void) {
   const char *mtext;
+  int i;
 
   lives_widget_show_all(mainw->top_vbox);
 
@@ -2989,14 +2994,10 @@ void show_lives(void) {
     lives_widget_hide(mainw->recent_menu);
   }
 
-  mtext = lives_menu_item_get_text(mainw->recent[0]);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent[0]);
-  mtext = lives_menu_item_get_text(mainw->recent[1]);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent[1]);
-  mtext = lives_menu_item_get_text(mainw->recent[2]);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent[2]);
-  mtext = lives_menu_item_get_text(mainw->recent[3]);
-  if (!strlen(mtext)) lives_widget_hide(mainw->recent[3]);
+  for (i = 0; i < N_RECENT_FILES; i++) {
+    mtext = lives_menu_item_get_text(mainw->recent[i]);
+    if (!strlen(mtext)) lives_widget_hide(mainw->recent[i]);
+  }
 
   if (!capable->has_composite || !capable->has_convert) {
     lives_widget_hide(mainw->merge);
@@ -3415,6 +3416,7 @@ void fullscreen_internal(void) {
 
     lives_widget_hide(mainw->t_bckground);
     lives_widget_hide(mainw->t_double);
+    lives_widget_hide(mainw->message_box);
 
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
@@ -3426,6 +3428,7 @@ void fullscreen_internal(void) {
 
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), &width, &height);
+    height -= 2; // necessary, or screen expands too much (!?)
 
     // expand the inner box to fit this
     lives_widget_set_size_request(mainw->top_vbox, width, height);
@@ -3788,10 +3791,6 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
 
   get_monitors(TRUE);
 
-  if (prefs->gui_monitor != 0) {
-    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
-
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->event_list == NULL) {
       weed_plant_t *event_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
@@ -3812,7 +3811,6 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   create_LiVES();
   mainw->configured = FALSE;
   mainw->assumed_width = mainw->assumed_height = -1;
-  mainw->gui_posx = mainw->gui_posy = 1000000;
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     if (i == FX_CANDIDATE_AUDIO_VOL) continue;
     mainw->fx_candidates[i].delegate = -1;
@@ -3834,7 +3832,7 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   mainw->is_ready = TRUE;
   mainw->go_away = FALSE;
 #if GTK_CHECK_VERSION(3, 0, 0)
-  if (!mainw->foreign && prefs->show_gui) {
+  if (!mainw->foreign) {
     calibrate_sepwin_size();
   }
 #endif
@@ -3858,8 +3856,10 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   lives_widget_context_update();
   mainw->suppress_dprint = FALSE;
   d_print(_("GUI size changed to %d X %d\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-  if (prefs->open_maximised && prefs->show_gui) {
+  if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  } else {
+    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
   lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
   mainw->reconfig = FALSE;
@@ -3983,6 +3983,8 @@ void resize_play_window(void) {
 #endif
 
   if (mainw->play_window == NULL) return;
+
+  mainw->ignore_screen_size = mainw->fs;
 
   if (lives_widget_is_visible(mainw->play_window)) {
     width = lives_widget_get_allocation_width(mainw->play_window);
@@ -4331,6 +4333,7 @@ void resize_play_window(void) {
 
 void kill_play_window(void) {
   // plug our player back into internal window
+  mainw->ignore_screen_size = FALSE;
 
   if (mainw->ce_thumbs) {
     end_ce_thumb_mode();
@@ -4623,51 +4626,13 @@ void splash_end(void) {
 }
 
 
-void reset_message_area(boolean expand) {
-  int height;
-  if (!prefs->show_msg_area) return;
+void reset_message_area(void) {
+  if (!prefs->show_msg_area || mainw->multitrack != NULL) return;
   if (!mainw->is_ready || !prefs->show_gui) return;
-  if (!expand) {
-    // need to shrink the message_box then re-expand it after redrawing the widgets
-    // otherwise the main window can expand beyond the bottom of the screen
-    lives_widget_set_size_request(mainw->message_box, -1, 1);
-    lives_widget_set_size_request(mainw->msg_area, -1, 1);
-    lives_widget_set_size_request(mainw->msg_scrollbar, -1, 1);
-  }
-
-  if (expand) {
-    // re-expand the message area to fit the empty space at the bottom
-    if (mainw->multitrack == NULL) {
-      int tv_height;
-#if GTK_CHECK_VERSION(3, 18, 0)
-      LiVESAllocation all;
-      gtk_widget_get_clip(mainw->top_vbox, &all);
-      if (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) != all.height)
-        tv_height = all.height - MSG_AREA_VMARGIN;
-      else tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
-#else
-      tv_height = lives_widget_get_allocation_height(LIVES_WIDGET(mainw->top_vbox)) - MSG_AREA_VMARGIN;
-#endif
-      height = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) - tv_height +
-               lives_widget_get_allocation_height(mainw->message_box) - lives_widget_get_allocation_height(mainw->menu_hbox);
-    } else {
-      height = lives_widget_get_allocation_height(mainw->multitrack->vpaned) - lives_paned_get_position(LIVES_PANED(mainw->multitrack->vpaned));
-    }
-
-    if (height > 0) {
-      lives_widget_show_all(mainw->message_box);
-      lives_widget_set_size_request(mainw->message_box, -1, height);
-      lives_widget_set_size_request(mainw->msg_area, -1, height);
-      lives_widget_set_size_request(mainw->msg_scrollbar, -1, height);
-    } else {
-      lives_widget_hide(mainw->message_box);
-    }
-    lives_widget_context_update();
-    mainw->assumed_height = mainw->assumed_width = -1;
-    msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
-#if !GTK_CHECK_VERSION(3, 0, 0)
-    expose_msg_area(mainw->msg_area, NULL, NULL);
-#endif
-  }
+  // need to shrink the message_box then re-expand it after redrawing the widgets
+  // otherwise the main window can expand beyond the bottom of the screen
+  lives_widget_set_size_request(mainw->message_box, -1, 1);
+  lives_widget_set_size_request(mainw->msg_area, -1, 1);
+  lives_widget_set_size_request(mainw->msg_scrollbar, -1, 1);
 }
 

@@ -280,7 +280,6 @@ void get_monitors(boolean reset) {
   double scale, dpi;
   int nscreens, nmonitors;
   register int i, j, idx = 0;
-
   lives_freep((void **)&mainw->mgeom);
 
   dlist = dislist = gdk_display_manager_list_displays(gdk_display_manager_get());
@@ -324,18 +323,25 @@ void get_monitors(boolean reset) {
       nmonitors = gdk_screen_get_n_monitors(screen);
       for (j = 0; j < nmonitors; j++) {
         GdkRectangle rect;
-#if GTK_CHECK_VERSION(3, 4, 0)
-        gdk_screen_get_monitor_workarea(screen, j, &(rect));
-#else
         gdk_screen_get_monitor_geometry(screen, j, &(rect));
-#endif
         mainw->mgeom[idx].x = rect.x;
         mainw->mgeom[idx].y = rect.y;
-        mainw->mgeom[idx].width = rect.width;
-        mainw->mgeom[idx].height = rect.height;
+        mainw->mgeom[idx].phys_width = rect.width;
+        mainw->mgeom[idx].phys_height = rect.height;
         mainw->mgeom[idx].mouse_device = NULL;
         mainw->mgeom[idx].dpi = dpi;
         mainw->mgeom[idx].scale = scale;
+#if GTK_CHECK_VERSION(3, 4, 0)
+        if (!mainw->ignore_screen_size) {
+          gdk_screen_get_monitor_workarea(screen, j, &(rect));
+          mainw->mgeom[idx].width = rect.width;
+          mainw->mgeom[idx].height = rect.height;
+          g_print("CCCVALS %p %d %d %d %d\n", screen, idx, j, rect.width, rect.height);
+        }
+#else
+        mainw->mgeom[idx].width = mainw->mgeom[idx].phys_width;
+        mainw->mgeom[idx].height = mainw->mgeom[idx].phys_height;
+#endif
 #if LIVES_HAS_DEVICE_MANAGER
         // get (virtual) mouse device for this screen
         for (k = 0; k < lives_list_length(devlist); k++) {
@@ -1277,9 +1283,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->flush_audio_tc = 0;
 
   mainw->assumed_height = mainw->assumed_width = -1;
-  mainw->gui_posx = mainw->gui_posy = 1000000;
   mainw->idlemax = 0;
   mainw->reconfig = FALSE;
+  mainw->ignore_screen_size = FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -2724,7 +2730,6 @@ boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
   static boolean isfirst = TRUE;
   int bx, by;
-  g_print("RME\n");
 
   if (!prefs->show_gui || LIVES_IS_PLAYING || mainw->is_processing || mainw->is_rendering || !prefs->show_msg_area) {
     mainw->assumed_height = mainw->assumed_width = -1;
@@ -2749,7 +2754,10 @@ boolean resize_message_area(livespointer data) {
 
   mainw->idlemax = 0;
   mainw->assumed_height = mainw->assumed_width = -1;
-  reset_message_area(TRUE);
+  msg_area_scroll(LIVES_ADJUSTMENT(mainw->msg_adj), mainw->msg_area);
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  expose_msg_area(mainw->msg_area, NULL, NULL);
+#endif
   if (isfirst && mainw->current_file == -1) d_print("");
   isfirst = FALSE;
   return FALSE;
@@ -7505,10 +7513,7 @@ void load_frame_image(int frame) {
     if (cfile->frames == 0) {
       zero_spinbuttons();
     }
-    if (!LIVES_IS_PLAYING) {
-      reset_message_area(FALSE);
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    }
+
     resize(1);
 
     if (LIVES_IS_PLAYING) {
@@ -7549,7 +7554,7 @@ void load_frame_image(int frame) {
     if (!LIVES_IS_PLAYING) {
       if (mainw->multitrack == NULL && !mainw->reconfig) {
         if (prefs->show_msg_area && !mainw->only_close) {
-          //reset_message_area(FALSE);
+          reset_message_area(); // necessary
           if (mainw->idlemax == 0) {
             lives_idle_add(resize_message_area, NULL);
           }

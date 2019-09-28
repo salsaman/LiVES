@@ -305,6 +305,8 @@ typedef struct {
   int y;
   int width;
   int height;
+  int phys_width;
+  int phys_height;
   LiVESXDevice *mouse_device; ///< unused for gtk+ < 3.0.0
   LiVESXDisplay *disp;
   LiVESXScreen *screen;
@@ -1422,14 +1424,13 @@ typedef struct {
   int assumed_width;
   int assumed_height;
 
-  int gui_posx;
-  int gui_posy;
-
 #define DEF_IDLE_MAX 50
 
   int idlemax;
 
   boolean reconfig;
+
+  boolean ignore_screen_size;
   ////////////////////
 } mainwindow;
 

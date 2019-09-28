@@ -10979,7 +10979,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_get_inner_size(LiVESWindow *win
   gdk_window_get_frame_extents(lives_widget_get_xwindow(LIVES_WIDGET(win)), &rect);
   gdk_window_get_origin(lives_widget_get_xwindow(LIVES_WIDGET(win)), &wx, &wy);
   if (x != NULL) *x = mainw->mgeom[widget_opts.monitor].width - (wx - rect.x) * 2;
-  if (y != NULL) *y = mainw->mgeom[widget_opts.monitor].height - wy;
+  if (y != NULL) *y = mainw->mgeom[widget_opts.monitor].height;
   return TRUE;
 #endif
   return FALSE;

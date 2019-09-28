@@ -962,8 +962,7 @@ int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   if (is_realtime_aplayer(prefs->audio_player) && (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE ||
       *time_source == LIVES_TIME_SOURCE_SOUNDCARD)) {
-    if (((prefs->audio_src == AUDIO_SRC_INT && cfile->achans > 0) || prefs->audio_src == AUDIO_SRC_EXT) &&
-        (!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
+    if ((!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
         (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
       // get time from soundcard
       // this is done so as to synch video stream with the audio
@@ -978,8 +977,9 @@ int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
 #ifdef ENABLE_JACK
       if (prefs->audio_player == AUD_PLAYER_JACK &&
-          ((mainw->jackd != NULL && mainw->jackd->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->jackd_read != NULL &&
-              mainw->jackd_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+          ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd != NULL && mainw->jackd->in_use &&
+            IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) ||
+           (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL && mainw->jackd_read->in_use))) {
         if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           return lives_jack_get_time(mainw->jackd_read);
@@ -989,8 +989,9 @@ int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_player == AUD_PLAYER_PULSE &&
-          ((mainw->pulsed != NULL && mainw->pulsed->in_use && prefs->audio_src == AUDIO_SRC_INT) || (mainw->pulsed_read != NULL &&
-              mainw->pulsed_read->in_use && prefs->audio_src == AUDIO_SRC_EXT))) {
+          ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed != NULL && mainw->pulsed->in_use &&
+            IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0) ||
+           (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use))) {
         if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           return lives_pulse_get_time(mainw->pulsed_read);

@@ -2895,7 +2895,10 @@ void play_file(void) {
       lives_widget_show(mainw->sep_image);
     }
 
-    lives_widget_show(mainw->message_box);
+    if (prefs->show_msg_area && mainw->multitrack == NULL) {
+      lives_widget_show(mainw->message_box);
+      reset_message_area(); // necessary
+    }
 
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
     lives_widget_show(mainw->frame1);
@@ -2912,9 +2915,9 @@ void play_file(void) {
                             lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH)) {
       // the screen grew too much...remaximise it
       lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      /* mainw->noswitch = TRUE; */
-      /* lives_widget_context_update(); */
-      /* mainw->noswitch = FALSE; */
+      mainw->noswitch = TRUE;
+      lives_widget_context_update();
+      mainw->noswitch = FALSE;
       if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
       if (prefs->open_maximised)
         lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));

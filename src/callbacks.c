@@ -436,7 +436,7 @@ void lives_exit(int signum) {
         mt_sensitise(mainw->multitrack);
       } else {
         if (prefs->show_msg_area) {
-          reset_message_area(FALSE);
+          reset_message_area();
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           if (mainw->idlemax == 0) {
             lives_idle_add(resize_message_area, NULL);
@@ -5027,7 +5027,7 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_freep((void **)&set_name);
     } else {
       if (user_data == NULL) {
-        if (mainw->current_file != -1)
+        if (mainw->cliplist != NULL)
           if (!do_reload_set_query()) return NULL;
         reload_set(set_name);
         lives_free(set_name);
@@ -6909,7 +6909,6 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           if (palette->style & STYLE_1) {
             lives_widget_show_all(mainw->sep_image);
           }
-          reset_message_area(TRUE);
           lives_widget_show_all(mainw->message_box);
         }
       }
@@ -9019,7 +9018,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     int scr_height = GUI_SCREEN_HEIGHT;
     get_monitors(FALSE);
     if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
-      g_print("RESIZE\n");
+      g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
       resize_widgets_for_monitor(FALSE);
     }
   } else {

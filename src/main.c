@@ -336,7 +336,6 @@ void get_monitors(boolean reset) {
           gdk_screen_get_monitor_workarea(screen, j, &(rect));
           mainw->mgeom[idx].width = rect.width;
           mainw->mgeom[idx].height = rect.height;
-          g_print("CCCVALS %p %d %d %d %d\n", screen, idx, j, rect.width, rect.height);
         }
 #else
         mainw->mgeom[idx].width = mainw->mgeom[idx].phys_width;

@@ -72,6 +72,7 @@ boolean do_workdir_query(void) {
 
     if (response == LIVES_RESPONSE_CANCEL) return FALSE;
 
+    // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
 
     if (strcmp(dirname + strlen(dirname) - 1, LIVES_DIR_SEP)) {
@@ -136,8 +137,8 @@ boolean do_workdir_query(void) {
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
 
-  set_pref(PREF_WORKING_DIR, prefs->workdir);
-  set_pref(PREF_SESSION_WORKDIR, prefs->workdir);
+  set_string_pref(PREF_WORKING_DIR, prefs->workdir);
+  set_string_pref(PREF_SESSION_WORKDIR, prefs->workdir);
 
   lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
@@ -156,13 +157,13 @@ static void on_init_aplayer_toggled(LiVESToggleButton *tbutton, livespointer use
 
   switch (audp) {
   case AUD_PLAYER_PULSE:
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
     break;
   case AUD_PLAYER_JACK:
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
     break;
   case AUD_PLAYER_SOX:
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     break;
   }
 }
@@ -261,7 +262,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton0), TRUE);
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton0), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -279,7 +280,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
   if (prefs->audio_player == AUD_PLAYER_JACK || !capable->has_pulse_audio || prefs->audio_player == -1) {
     prefs->audio_player = AUD_PLAYER_JACK;
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton1), TRUE);
-    set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton1), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -298,7 +299,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
     if (prefs->audio_player == AUD_PLAYER_SOX) {
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton2), TRUE);
-      set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
     }
 
     lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -518,7 +519,7 @@ boolean do_startup_tests(boolean tshoot) {
   // test if sox can convert raw 44100 -> wav 22050
   add_test(table, 1, _("Checking if sox can convert audio"), success);
 
-  if (!tshoot) set_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_PNG);
+  if (!tshoot) set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_PNG);
 
   get_temp_handle(mainw->first_free_file, TRUE);
@@ -660,7 +661,7 @@ boolean do_startup_tests(boolean tshoot) {
 
   get_location(mp_cmd, mppath, PATH_MAX);
   lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
-  set_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
+  set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
 
   msg = lives_strdup_printf(_("Checking if %s can convert audio"), mp_cmd);
   add_test(table, 3, msg, success2);
@@ -801,7 +802,7 @@ boolean do_startup_tests(boolean tshoot) {
     pass_test(table, 5);
     if (!success3) {
       if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_PNG)) imgext_switched = TRUE;
-      set_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
+      set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_JPEG);
       lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
     }
   } else {

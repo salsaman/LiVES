@@ -106,7 +106,7 @@
 #define FRAMEBLANK_MIN_HEIGHT ((int)(180. * widget_opts.scale))
 #define FRAMEBLANK_MAX_HEIGHT ((int)(400. * widget_opts.scale))
 
-#define IMSEP_MAX_HEIGHT ((int)(86. * widget_opts.scale))
+#define IMSEP_MAX_HEIGHT ((int)(64. * widget_opts.scale))
 #define IMSEP_MAX_WIDTH (GUI_SCREEN_WIDTH - 20)
 
 #define MAIN_SPIN_SPACER ((int)52. * widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
@@ -1424,7 +1424,7 @@ typedef struct {
   int assumed_width;
   int assumed_height;
 
-#define DEF_IDLE_MAX 50
+#define DEF_IDLE_MAX 1
 
   int idlemax;
 

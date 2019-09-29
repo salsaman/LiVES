@@ -127,7 +127,7 @@ static void cleanup_set_dir(const char *set_name) {
   if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, set_name)) {
     prefs->ar_clipset = FALSE;
     memset(prefs->ar_clipset_name, 0, 1);
-    set_pref(PREF_AR_CLIPSET, "");
+    set_string_pref(PREF_AR_CLIPSET, "");
   }
 }
 
@@ -739,7 +739,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
   if (prefs->save_directories) {
-    set_pref_utf8(PREF_VID_LOAD_DIR, mainw->vid_load_dir);
+    set_utf8_pref(PREF_VID_LOAD_DIR, mainw->vid_load_dir);
   }
 
   mainw->cancelled = CANCEL_NONE;
@@ -852,7 +852,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   pref = lives_strdup_printf("%s%d", PREF_RECENT, pno);
 
-  get_pref_utf8(pref, file, PATH_MAX);
+  get_utf8_pref(pref, file, PATH_MAX);
 
   lives_free(pref);
 
@@ -1705,7 +1705,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
-  set_pref(PREF_GUI_THEME, prefs->theme);
+  set_string_pref(PREF_GUI_THEME, prefs->theme);
 
   load_theme_images();
   pref_change_images();
@@ -1873,8 +1873,8 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_widget_destroy(cdsw->dialog);
           lives_free(cdsw);
 
-          if (prefs->ar_clipset) set_pref(PREF_AR_CLIPSET, set_name);
-          else set_pref(PREF_AR_CLIPSET, "");
+          if (prefs->ar_clipset) set_string_pref(PREF_AR_CLIPSET, set_name);
+          else set_string_pref(PREF_AR_CLIPSET, "");
           mainw->no_exit = FALSE;
           mainw->leave_recovery = FALSE;
           on_save_set_activate(NULL, (tmp = U82F(set_name)));
@@ -1903,7 +1903,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_widget_destroy(cdsw->dialog);
     lives_free(cdsw);
 
-    set_pref(PREF_AR_CLIPSET, "");
+    set_string_pref(PREF_AR_CLIPSET, "");
     prefs->ar_clipset = FALSE;
 
     if (mainw->multitrack != NULL) {
@@ -4456,7 +4456,7 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
 
       if (prefsw == NULL && strcmp(prefs->encoder.name, future_prefs->encoder.name)) {
         lives_snprintf(prefs->encoder.name, 64, "%s", future_prefs->encoder.name);
-        set_pref(PREF_ENCODER, prefs->encoder.name);
+        set_string_pref(PREF_ENCODER, prefs->encoder.name);
         lives_snprintf(prefs->encoder.of_restrict, 1024, "%s", future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs = future_prefs->encoder.of_allowed_acodecs;
       }
@@ -6301,7 +6301,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *chooser, LiVESSList *fnames) {
     lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
     if (prefs->save_directories) {
-      set_pref_utf8(PREF_VID_LOAD_DIR, mainw->vid_load_dir);
+      set_utf8_pref(PREF_VID_LOAD_DIR, mainw->vid_load_dir);
     }
 
     mainw->cancelled = CANCEL_NONE;
@@ -7967,7 +7967,7 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
   }
 
   if (prefs->save_directories) {
-    set_pref_utf8(PREF_AUDIO_DIR, mainw->audio_dir);
+    set_utf8_pref(PREF_AUDIO_DIR, mainw->audio_dir);
   }
   if (!prefs->conserve_space) {
     cfile->undo_action = UNDO_NEW_AUDIO;
@@ -9014,16 +9014,18 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
     return FALSE;
   }
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
-    int scr_width = GUI_SCREEN_WIDTH;
-    int scr_height = GUI_SCREEN_HEIGHT;
-    get_monitors(FALSE);
-    if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
-      g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-      resize_widgets_for_monitor(FALSE);
+    if (!mainw->ignore_screen_size) {
+      int scr_width = GUI_SCREEN_WIDTH;
+      int scr_height = GUI_SCREEN_HEIGHT;
+      get_monitors(FALSE);
+      if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
+        g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+        resize_widgets_for_monitor(FALSE);
+      }
+      return FALSE;
     }
-  } else {
-    if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL && !mainw->preview &&
-        !mainw->recoverable_layout) {
+    if (CURRENT_CLIP_IS_VALID && !mainw->go_away && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL &&
+        !mainw->preview) {
       get_play_times();
     }
   }
@@ -10378,7 +10380,7 @@ void on_encoder_ofmt_changed(LiVESCombo *combo, livespointer user_data) {
         lives_snprintf(prefs->encoder.of_desc, 128, "%s", future_prefs->encoder.of_desc);
         lives_snprintf(prefs->encoder.of_restrict, 1024, "%s", future_prefs->encoder.of_restrict);
         prefs->encoder.of_allowed_acodecs = future_prefs->encoder.of_allowed_acodecs;
-        set_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name);
+        set_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name);
       }
     }
     set_acodec_list_from_allowed(prefsw, rdet);

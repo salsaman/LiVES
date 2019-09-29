@@ -210,10 +210,12 @@ int lives_system(const char *com, boolean allow_error) {
 }
 
 
-size_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen) {
+ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buflen) {
   // runs com, fills buff with a NUL terminated string (total length <= buflen)
   // returns number of bytes read. If an error occurs during popen or fread
   // then mainw->com_failed is set, and if allow_error is FALSE then an an error dialog is displayed to the user
+
+  // on error we return err as a -ve number
 
   FILE *fp;
   size_t bytes_read = 0;
@@ -258,7 +260,7 @@ size_t lives_popen(const char *com, boolean allow_error, char *buff, size_t bufl
     if (msg != NULL) lives_free(msg);
   }
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-
+  if (err != 0) return -ABS(err);
   return bytes_read;
 }
 
@@ -2654,7 +2656,7 @@ void remove_layout_files(LiVESList *map) {
 
         // and we dont want to try reloading this next time
         prefs->ar_layout = FALSE;
-        set_pref(PREF_AR_LAYOUT, "");
+        set_string_pref(PREF_AR_LAYOUT, "");
         memset(prefs->ar_layout_name, 0, 1);
       }
       lives_free(fname);
@@ -2851,7 +2853,7 @@ boolean switch_aud_to_jack(boolean set_in_prefs) {
 #endif
   }
   prefs->audio_player = AUD_PLAYER_JACK;
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+  if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
 
   if (mainw->is_ready && mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -2896,7 +2898,7 @@ boolean switch_aud_to_pulse(boolean set_in_prefs) {
       lives_widget_set_sensitive(mainw->vol_toolitem, TRUE);
 
       prefs->audio_player = AUD_PLAYER_PULSE;
-      if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+      if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
       lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
 
       if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL)
@@ -2938,9 +2940,9 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
 
   prefs->audio_player = AUD_PLAYER_SOX;
   get_pref_default(PREF_SOX_COMMAND, prefs->audio_play_command, 256);
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
+  if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-  set_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
+  set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
 
   if (mainw->is_ready) {
     /* //ubuntu / Unity has a hissy fit if you hide things in the menu !
@@ -2992,7 +2994,7 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
 
 void switch_aud_to_none(boolean set_in_prefs) {
   prefs->audio_player = AUD_PLAYER_NONE;
-  if (set_in_prefs) set_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
+  if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_NONE);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
 
   if (mainw->is_ready) {
@@ -3780,47 +3782,47 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
         mtext = lives_menu_item_get_text(mainw->recent[2]);
         lives_menu_item_set_text(mainw->recent[3], mtext, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[3], mtext, FALSE);
-        set_pref_utf8(PREF_RECENT4, mtext);
+        set_utf8_pref(PREF_RECENT4, mtext);
 
         mtext = lives_menu_item_get_text(mainw->recent[1]);
         lives_menu_item_set_text(mainw->recent[2], mtext, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[2], mtext, FALSE);
-        set_pref_utf8(PREF_RECENT3, mtext);
+        set_utf8_pref(PREF_RECENT3, mtext);
 
         mtext = lives_menu_item_get_text(mainw->recent[0]);
         lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-        set_pref_utf8(PREF_RECENT2, mtext);
+        set_utf8_pref(PREF_RECENT2, mtext);
 
         lives_menu_item_set_text(mainw->recent[0], file, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-        set_pref_utf8(PREF_RECENT1, file);
+        set_utf8_pref(PREF_RECENT1, file);
       } else {
         // #3 in list
         mtext = lives_menu_item_get_text(mainw->recent[1]);
         lives_menu_item_set_text(mainw->recent[2], mtext, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[2], mtext, FALSE);
-        set_pref_utf8(PREF_RECENT3, mtext);
+        set_utf8_pref(PREF_RECENT3, mtext);
 
         mtext = lives_menu_item_get_text(mainw->recent[0]);
         lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-        set_pref_utf8(PREF_RECENT2, mtext);
+        set_utf8_pref(PREF_RECENT2, mtext);
 
         lives_menu_item_set_text(mainw->recent[0], file, FALSE);
         if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-        set_pref_utf8(PREF_RECENT1, file);
+        set_utf8_pref(PREF_RECENT1, file);
       }
     } else {
       // #2 in list
       mtext = lives_menu_item_get_text(mainw->recent[0]);
       lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
       if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-      set_pref_utf8(PREF_RECENT2, mtext);
+      set_utf8_pref(PREF_RECENT2, mtext);
 
       lives_menu_item_set_text(mainw->recent[0], file, FALSE);
       if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-      set_pref_utf8(PREF_RECENT1, file);
+      set_utf8_pref(PREF_RECENT1, file);
     }
   } else {
     // I'm number 1, so why change ;-)

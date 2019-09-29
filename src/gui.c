@@ -297,8 +297,6 @@ void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColo
   lives_widget_apply_theme(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(mainw->pf_grid, LIVES_WIDGET_STATE_NORMAL, colb);
 
-  lives_widget_apply_theme(mainw->framecounter, LIVES_WIDGET_STATE_NORMAL);
-
   lives_widget_set_bg_color(lives_widget_get_parent(mainw->framebar), LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_bg_color(mainw->framebar, LIVES_WIDGET_STATE_NORMAL, colb);
 
@@ -383,6 +381,9 @@ void create_LiVES(void) {
   boolean woat;
   boolean new_lives = FALSE;
 
+  mainw->configured = FALSE;
+  mainw->assumed_width = mainw->assumed_height = -1;
+
   stop_closure = NULL;
   fullscreen_closure = NULL;
   dblsize_closure = NULL;
@@ -399,6 +400,7 @@ void create_LiVES(void) {
   if (LIVES_MAIN_WINDOW_WIDGET == NULL) {
     new_lives = TRUE;
     LIVES_MAIN_WINDOW_WIDGET = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+    lives_container_set_border_width(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), 0);
     if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), widget_opts.screen);
 
     mainw->config_func = lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_CONFIGURE_EVENT,
@@ -487,6 +489,7 @@ void create_LiVES(void) {
   }
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
+  lives_container_set_border_width(LIVES_CONTAINER(mainw->top_vbox), 0);
 
   //lives_widget_set_valign(mainw->top_vbox, LIVES_ALIGN_FILL);
 
@@ -664,22 +667,22 @@ void create_LiVES(void) {
 
   // since we are still initialising, we need to check if we can read prefs
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_pref_utf8(PREF_RECENT1, buff, 32768);
+    get_utf8_pref(PREF_RECENT1, buff, 32768);
   }
   widget_opts.mnemonic_label = FALSE;
   mainw->recent[0] = lives_standard_menu_item_new_with_label(buff);
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_pref_utf8(PREF_RECENT2, buff, 32768);
+    get_utf8_pref(PREF_RECENT2, buff, 32768);
   }
   mainw->recent[1] = lives_standard_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_pref_utf8(PREF_RECENT3, buff, 32768);
+    get_utf8_pref(PREF_RECENT3, buff, 32768);
   }
   mainw->recent[2] = lives_standard_menu_item_new_with_label(buff);
 
   if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_pref_utf8(PREF_RECENT4, buff, 32768);
+    get_utf8_pref(PREF_RECENT4, buff, 32768);
   }
   mainw->recent[3] = lives_standard_menu_item_new_with_label(buff);
   widget_opts.mnemonic_label = TRUE;
@@ -1923,9 +1926,7 @@ void create_LiVES(void) {
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->banner, TRUE, TRUE, 0);
 
-  widget_opts.apply_theme = FALSE;
   mainw->framecounter = lives_standard_entry_new("", "", FCWIDTHCHARS, FCWIDTHCHARS, NULL, NULL);
-  widget_opts.apply_theme = TRUE;
 
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->framecounter, FALSE, TRUE, 0);
   lives_entry_set_editable(LIVES_ENTRY(mainw->framecounter), FALSE);
@@ -2420,6 +2421,9 @@ void create_LiVES(void) {
                          LIVES_GUI_CALLBACK(key_press_or_release),
                          NULL);
   }
+  mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
+                       LIVES_GUI_CALLBACK(config_event),
+                       NULL);
   mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb),
                        NULL);
@@ -3782,8 +3786,9 @@ void play_window_set_title(void) {
 
 void resize_widgets_for_monitor(boolean do_get_play_times) {
   // resize widgets if we are aware that monitor resolution has changed
+  // (or at least try our best...)
   LiVESList *list;
-  int i, current_file;
+  int i, current_file = mainw->current_file;
   boolean need_mt = FALSE, fake_evlist;
 
   mainw->reconfig = TRUE;
@@ -3805,14 +3810,12 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     multitrack_delete(mainw->multitrack, FALSE);
     need_mt = TRUE;
   }
-  //
-  current_file = mainw->current_file;
+
   lives_widget_unparent(mainw->top_vbox);
   lives_widget_context_update();
 
   create_LiVES();
-  mainw->configured = FALSE;
-  mainw->assumed_width = mainw->assumed_height = -1;
+
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     if (i == FX_CANDIDATE_AUDIO_VOL) continue;
     mainw->fx_candidates[i].delegate = -1;
@@ -3820,9 +3823,12 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     mainw->fx_candidates[i].func = 0l;
     mainw->fx_candidates[i].rfx = NULL;
   }
+
   add_rfx_effects(RFX_STATUS_ANY);
   replace_with_delegates();
+
   show_lives();
+
   list = mainw->cliplist;
   mainw->cliplist = NULL;
   while (list != NULL) {
@@ -3830,7 +3836,9 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     add_to_clipmenu();
     list = list->next;
   }
+
   set_interactive(mainw->interactive);
+
   mainw->is_ready = TRUE;
   mainw->go_away = FALSE;
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -3838,17 +3846,17 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
     calibrate_sepwin_size();
   }
 #endif
+
   if (!need_mt) {
     lives_widget_context_update();
     if (current_file != -1) switch_clip(1, current_file, TRUE);
-    if (prefs->open_maximised && prefs->show_gui) {
+    else {
       resize(1);
     }
     if (mainw->play_window != NULL) {
       resize_play_window();
     }
   } else {
-    config_event(NULL, NULL, NULL);
     on_multitrack_activate(NULL, NULL);
     if (fake_evlist) {
       wipe_layout(mainw->multitrack);
@@ -3856,8 +3864,10 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   }
 
   lives_widget_context_update();
+
   mainw->suppress_dprint = FALSE;
   d_print(_("GUI size changed to %d X %d\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+
   if (prefs->open_maximised) {
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   } else {
@@ -3865,6 +3875,8 @@ void resize_widgets_for_monitor(boolean do_get_play_times) {
   }
   lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
   mainw->reconfig = FALSE;
+
+  if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_ERROR;
 }
 
 
@@ -4101,8 +4113,6 @@ void resize_play_window(void) {
 
       // init the playback plugin, unless there is a possibility of wrongly sized frames (i.e. during a preview)
       if (mainw->vpp != NULL && (!mainw->preview || mainw->multitrack != NULL)) {
-        boolean fixed_size = FALSE;
-
         mainw->ptr_x = mainw->ptr_y = -1;
         if (pmonitor == 0) {
           // fullscreen playback on all screens (of first display)
@@ -4128,7 +4138,6 @@ void resize_play_window(void) {
           if (!mainw->vpp->capabilities & VPP_CAN_RESIZE) {
             mainw->pwidth = mainw->vpp->fwidth;
             mainw->pheight = mainw->vpp->fheight;
-            fixed_size = TRUE;
 
             // * leave this alone !
             lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
@@ -4195,7 +4204,7 @@ void resize_play_window(void) {
 
         if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
             (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
-             mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight * (fixed_size ? 1 : prefs->virt_height),
+             mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
              fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')

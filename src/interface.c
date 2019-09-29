@@ -2875,7 +2875,6 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
                                           LIVES_STOCK_LABEL_CANCEL, LIVES_RESPONSE_CANCEL,
                                           LIVES_STOCK_LABEL_SAVE, LIVES_RESPONSE_ACCEPT,
                                           NULL);
-
   }
 
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
@@ -2907,7 +2906,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
   if (extra_widget != NULL && extra_widget != LIVES_MAIN_WINDOW_WIDGET) {
     gtk_file_chooser_set_extra_widget(LIVES_FILE_CHOOSER(chooser), extra_widget);
     if (palette->style & STYLE_1) {
-      GtkWidget *parent = lives_widget_get_parent(extra_widget);
+      LiVESWidget *parent = lives_widget_get_parent(extra_widget);
 
       while (parent != NULL) {
         lives_widget_set_fg_color(parent, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -4442,7 +4441,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
   llast = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_last"));
 
   if (mainw->multitrack == NULL) {
-    GdkRectangle rect;
+    LiVESRectangle rect;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
     int bx, by, w = -1, h = -1, posx, posy;
@@ -4467,7 +4466,7 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
       gui_posx = gui_posy = 1000000;
     }
 
-    gdk_window_get_frame_extents(lives_widget_get_xwindow(mainw->LiVES), &rect);
+    lives_xwindow_get_frame_extents(lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET), &rect);
 
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
 
@@ -4478,10 +4477,8 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
     h = mainw->assumed_height;
     if (h == -1) h = hh;
 
-    overflowx = w - (scr_width - bx) + ((mainw->assumed_width == -1) ? 0 : (lives_widget_get_allocation_width(
-                                          LIVES_MAIN_WINDOW_WIDGET) - mainw->assumed_width));
-    overflowy = h - (scr_height - by) + ((mainw->assumed_height == -1) ? 0 : (lives_widget_get_allocation_height(
-                                           LIVES_MAIN_WINDOW_WIDGET) - mainw->assumed_height));
+    overflowx = ww - (scr_width - bx);
+    overflowy = hh - (scr_height - by);
 #ifdef DEBUG_OVERFLOW
     g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height, ABS(overflowy), vmin);
 #endif

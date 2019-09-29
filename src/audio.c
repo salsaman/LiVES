@@ -1345,6 +1345,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate;
 
+      // we add a small random factor here, so half the time we round up, half the time we round down
+      // otherwise we would be gradually losing or gaining samples
       tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT32)) *
                in_asamps[track] * in_achans[track];
 

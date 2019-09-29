@@ -36,6 +36,11 @@ typedef enum {
   LIVES_DISPLAY_TYPE_WAYLAND
 } lives_display_t;
 
+typedef struct {
+  int x, y;
+  int width, height;
+} LiVESRectangle;
+
 // values below are multiplied by scale
 #define W_PACKING_WIDTH  10 // packing width for widgets with labels
 #define W_PACKING_HEIGHT 6 // packing height for widgets
@@ -781,6 +786,7 @@ boolean lives_widget_process_updates(LiVESWidget *, boolean upd_children);
 boolean lives_xwindow_process_all_updates(void);
 
 boolean lives_xwindow_get_origin(LiVESXWindow *, int *posx, int *posy);
+boolean lives_xwindow_get_frame_extents(LiVESXWindow *, LiVESRectangle *);
 
 LiVESAccelGroup *lives_accel_group_new(void);
 boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,

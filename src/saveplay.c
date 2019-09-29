@@ -143,57 +143,16 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
   // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
-  FILE *infofile;
-  int alarm_handle;
-  int retval;
-  boolean timeout;
   char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                         get_image_ext_for_type(cfile->img_type), mainw->opening_loc, is_audio);
   lives_free(tmp);
-
-  mainw->com_failed = FALSE;
-  lives_rm(cfile->info_file);
-  lives_system(com, FALSE);
+  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
-
   if (mainw->com_failed) {
+    mainw->com_failed = FALSE;
     return FALSE;
   }
-
-  if (mainw->opening_loc)
-    return do_progress_dialog(TRUE, TRUE, _("Examining file header"));
-
-  threaded_dialog_spin(0.);
-
-  do {
-    retval = 0;
-    timeout = FALSE;
-    clear_mainw_msg();
-
-    alarm_handle = lives_alarm_set(LIVES_LONGEST_TIMEOUT);
-
-    while (!((infofile = fopen(cfile->info_file, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-      threaded_dialog_spin(0.);
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (infofile != NULL) {
-      timeout = FALSE;
-      mainw->read_failed = FALSE;
-      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-      fclose(infofile);
-    }
-
-    if (timeout || mainw->read_failed) {
-      retval = do_read_failed_error_s_with_retry(cfile->info_file, NULL, NULL);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  threaded_dialog_spin(0.);
   return TRUE;
 }
 
@@ -1049,45 +1008,10 @@ static void save_subs_to_file(lives_clip_t *sfile, char *fname) {
 boolean get_handle_from_info_file(int index) {
   // called from get_new_handle to get the 'real' file handle
   // because until we know the handle we can't use the normal info file yet
+  char *com = lives_strdup_printf("%s new", prefs->backend_sync);
 
-  // return FALSE if we time out or get an error or the user cancels
-
-  FILE *infofile;
-  int alarm_handle;
-  int retval;
-  boolean timeout;
-
-  do {
-    retval = 0;
-    timeout = FALSE;
-    clear_mainw_msg();
-
-    alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-
-    while (!((infofile = fopen(mainw->first_info_file, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (infofile != NULL) {
-      timeout = FALSE;
-      mainw->read_failed = FALSE;
-      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-      fclose(infofile);
-    }
-
-    if (timeout || mainw->read_failed) {
-      retval = do_read_failed_error_s_with_retry(mainw->first_info_file, NULL, NULL);
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  if (retval == LIVES_RESPONSE_CANCEL) {
-    mainw->read_failed = FALSE;
-    return FALSE;
-  }
-
-  lives_rm(mainw->first_info_file);
+  lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  lives_free(com);
 
   if (!strncmp(mainw->msg, "error|", 6)) {
     handle_backend_errors();
@@ -1146,7 +1070,7 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(filename);
   get_dirname(mainw->image_dir);
   if (prefs->save_directories) {
-    set_pref_utf8(PREF_IMAGE_DIR, mainw->image_dir);
+    set_utf8_pref(PREF_IMAGE_DIR, mainw->image_dir);
   }
 }
 
@@ -1268,7 +1192,7 @@ void save_file(int clip, int start, int end, const char *filename) {
     lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", n_file_name);
     get_dirname(mainw->vid_save_dir);
     if (prefs->save_directories) {
-      set_pref_utf8(PREF_VID_SAVE_DIR, mainw->vid_save_dir);
+      set_utf8_pref(PREF_VID_SAVE_DIR, mainw->vid_save_dir);
     }
     lives_free(ttl);
   } else n_file_name = lives_strdup(filename);
@@ -3190,7 +3114,6 @@ boolean get_temp_handle(int index, boolean create) {
 
   // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
 
-  char *com;
   boolean is_unique;
   int current_file = mainw->current_file;
 
@@ -3204,17 +3127,11 @@ boolean get_temp_handle(int index, boolean create) {
 
     is_unique = TRUE;
 
-    com = lives_strdup_printf("%s new %d", prefs->backend_sync, capable->mainpid);
-
-    lives_system(com, TRUE);
-
-    lives_free(com);
     // ignore return value here, as it will be dealt with in get_handle_from_info_file()
     mainw->current_file = current_file;
 
     //get handle from info file, we will also malloc a new "file" struct here
     if (!get_handle_from_info_file(index)) {
-      // timed out
       lives_freep((void **)&mainw->files[index]);
       mainw->current_file = current_file;
       return FALSE;
@@ -3930,7 +3847,6 @@ boolean write_headers(lives_clip_t *file) {
 
 boolean read_headers(const char *file_name) {
   // file_name is only used to get the file size on the disk
-  FILE *infofile;
   char **array;
   char buff[1024];
   char version[32];
@@ -3942,12 +3858,10 @@ boolean read_headers(const char *file_name) {
   int version_hash;
   int pieces;
   int header_fd;
-  int alarm_handle;
   int retval2;
 
   lives_clip_details_t detail;
 
-  boolean timeout;
   boolean retval, retvala;
 
   ssize_t sizhead = 8 * 4 + 8 + 8;
@@ -3968,7 +3882,6 @@ boolean read_headers(const char *file_name) {
       if (get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
         int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
         char *tmp;
-        int alarm_handle;
 
         // use new style header (LiVES 0.9.6+)
         lives_free(old_hdrfile);
@@ -3977,8 +3890,8 @@ boolean read_headers(const char *file_name) {
         com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
                                   (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
 
-        mainw->com_failed = FALSE;
-        lives_system(com, FALSE);
+        lives_popen(com, FALSE, buff, 1024);
+
         lives_free(com);
         lives_free(tmp);
 
@@ -3987,40 +3900,10 @@ boolean read_headers(const char *file_name) {
           return FALSE;
         }
 
-        do {
-          retval2 = LIVES_RESPONSE_OK;
-          timeout = FALSE;
-          memset(buff, 0, 1);
-
-          alarm_handle = lives_alarm_set(LIVES_LONGEST_TIMEOUT);
-
-          while (!((infofile = fopen(cfile->info_file, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-            lives_usleep(prefs->sleep_time);
-          }
-
-          lives_alarm_clear(alarm_handle);
-
-          if (infofile != NULL) {
-            timeout = FALSE;
-            mainw->read_failed = FALSE;
-            lives_fgets(buff, 1024, infofile);
-            fclose(infofile);
-          }
-
-          if (timeout || mainw->read_failed) {
-            retval2 = do_read_failed_error_s_with_retry(cfile->info_file, NULL, NULL);
-          }
-        } while (retval2 == LIVES_RESPONSE_RETRY);
-
-        if (retval2 == LIVES_RESPONSE_CANCEL) {
-          return FALSE;
-        }
-
         pieces = get_token_count(buff, '|');
 
         if (pieces > 3) {
           array = lives_strsplit(buff, "|", pieces);
-
           cfile->f_size = strtol(array[1], NULL, 10);
           cfile->afilesize = strtol(array[2], NULL, 10);
           if (cfile->clip_type == CLIP_TYPE_DISK) {
@@ -4044,104 +3927,105 @@ boolean read_headers(const char *file_name) {
         if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
 
         threaded_dialog_spin(0.);
+        do {
+          detail = CLIP_DETAILS_HEADER_VERSION;
+          retval = get_clip_value(mainw->current_file, detail, &cfile->header_version, 16);
+          if (retval) {
+            detail = CLIP_DETAILS_BPP;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->bpp, 0);
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_FPS;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->fps, 0);
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_PB_FPS;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->pb_fps, 0);
+            if (!retval) {
+              retval = TRUE;
+              cfile->pb_fps = cfile->fps;
+            }
+          }
+          if (retval) {
+            retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno, 0);
+            if (!retval) {
+              retval = TRUE;
+              cfile->frameno = 1;
+            }
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_WIDTH;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->hsize, 0);
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_HEIGHT;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->vsize, 0);
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_CLIPNAME;
+            get_clip_value(mainw->current_file, detail, cfile->name, CLIP_NAME_MAXLEN);
+          }
+          if (retval) {
+            detail = CLIP_DETAILS_FILENAME;
+            get_clip_value(mainw->current_file, detail, cfile->file_name, PATH_MAX);
+          }
 
-        detail = CLIP_DETAILS_HEADER_VERSION;
-        retval = get_clip_value(mainw->current_file, detail, &cfile->header_version, 16);
-        if (retval) {
-          detail = CLIP_DETAILS_BPP;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->bpp, 0);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_FPS;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->fps, 0);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_PB_FPS;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->pb_fps, 0);
+          if (retval) {
+            detail = CLIP_DETAILS_ACHANS;
+            retvala = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
+            if (!retvala) cfile->achans = 0;
+          }
+
+          if (cfile->achans == 0) retvala = FALSE;
+          else retvala = TRUE;
+
+          if (retval && retvala) {
+            detail = CLIP_DETAILS_ARATE;
+            retvala = get_clip_value(mainw->current_file, detail, &cfile->arps, 0);
+          }
+
+          if (!retvala) cfile->arps = cfile->achans = cfile->arate = cfile->asampsize = 0;
+          if (cfile->arps == 0) retvala = FALSE;
+
+          if (retvala && retval) {
+            detail = CLIP_DETAILS_PB_ARATE;
+            retvala = get_clip_value(mainw->current_file, detail, &cfile->arate, 0);
+            if (!retvala) {
+              retvala = TRUE;
+              cfile->arate = cfile->arps;
+            }
+          }
+          if (retvala && retval) {
+            detail = CLIP_DETAILS_ASIGNED;
+            retval = get_clip_value(mainw->current_file, detail, &asigned, 0);
+          }
+          if (retvala && retval) {
+            detail = CLIP_DETAILS_AENDIAN;
+            retval = get_clip_value(mainw->current_file, detail, &aendian, 0);
+          }
+
+          cfile->signed_endian = asigned + aendian;
+
+          if (retvala && retval) {
+            detail = CLIP_DETAILS_ASAMPS;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->asampsize, 0);
+          }
           if (!retval) {
-            retval = TRUE;
-            cfile->pb_fps = cfile->fps;
-          }
-        }
-        if (retval) {
-          retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno, 0);
-          if (!retval) {
-            retval = TRUE;
-            cfile->frameno = 1;
-          }
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_WIDTH;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->hsize, 0);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_HEIGHT;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->vsize, 0);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_CLIPNAME;
-          get_clip_value(mainw->current_file, detail, cfile->name, CLIP_NAME_MAXLEN);
-        }
-        if (retval) {
-          detail = CLIP_DETAILS_FILENAME;
-          get_clip_value(mainw->current_file, detail, cfile->file_name, PATH_MAX);
-        }
-
-        if (retval) {
-          detail = CLIP_DETAILS_ACHANS;
-          retvala = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
-          if (!retvala) cfile->achans = 0;
-        }
-
-        if (cfile->achans == 0) retvala = FALSE;
-        else retvala = TRUE;
-
-        if (retval && retvala) {
-          detail = CLIP_DETAILS_ARATE;
-          retvala = get_clip_value(mainw->current_file, detail, &cfile->arps, 0);
-        }
-
-        if (!retvala) cfile->arps = cfile->achans = cfile->arate = cfile->asampsize = 0;
-        if (cfile->arps == 0) retvala = FALSE;
-
-        if (retvala && retval) {
-          detail = CLIP_DETAILS_PB_ARATE;
-          retvala = get_clip_value(mainw->current_file, detail, &cfile->arate, 0);
-          if (!retvala) {
-            retvala = TRUE;
-            cfile->arate = cfile->arps;
-          }
-        }
-        if (retvala && retval) {
-          detail = CLIP_DETAILS_ASIGNED;
-          retval = get_clip_value(mainw->current_file, detail, &asigned, 0);
-        }
-        if (retvala && retval) {
-          detail = CLIP_DETAILS_AENDIAN;
-          retval = get_clip_value(mainw->current_file, detail, &aendian, 0);
-        }
-
-        cfile->signed_endian = asigned + aendian;
-
-        if (retvala && retval) {
-          detail = CLIP_DETAILS_ASAMPS;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->asampsize, 0);
-        }
-
-        get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 256);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 256);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 256);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_KEYWORDS, cfile->keywords, 1024);
-        get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
-        if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE; // user must have forced this
-
-        if (!retval) {
-          if (mainw->cached_list != NULL) {
-            retval2 = do_header_missing_detail_error(mainw->current_file, detail);
+            if (mainw->cached_list != NULL) {
+              retval2 = do_header_missing_detail_error(mainw->current_file, detail);
+            } else {
+              retval2 = do_header_read_error_with_retry(mainw->current_file);
+            }
           } else {
-            retval2 = do_header_read_error_with_retry(mainw->current_file);
+            get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 256);
+            get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 256);
+            get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 256);
+            get_clip_value(mainw->current_file, CLIP_DETAILS_KEYWORDS, cfile->keywords, 1024);
+            get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
+            if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE; // user must have forced this
+            return TRUE;
           }
-        } else return TRUE;
+        } while (retval2 == LIVES_RESPONSE_RETRY);
       } else {
         if (mainw->cached_list != NULL) {
           retval2 = do_header_missing_detail_error(mainw->current_file, CLIP_DETAILS_FRAMES);
@@ -4151,6 +4035,7 @@ boolean read_headers(const char *file_name) {
       }
     } while (retval2 == LIVES_RESPONSE_RETRY);
     if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
+    return TRUE;
   }
 
   // old style headers (pre 0.9.6)
@@ -4233,42 +4118,13 @@ boolean read_headers(const char *file_name) {
 
   com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
-  mainw->com_failed = FALSE;
-  lives_system(com, FALSE);
+
+  lives_popen(com, FALSE, buff, 1024);
   lives_free(com);
   lives_free(tmp);
 
   if (mainw->com_failed) {
     mainw->com_failed = FALSE;
-    return FALSE;
-  }
-
-  do {
-    retval2 = LIVES_RESPONSE_OK;
-    timeout = FALSE;
-
-    alarm_handle = lives_alarm_set(LIVES_LONGEST_TIMEOUT);
-
-    while (!((infofile = fopen(cfile->info_file, "r")) && !(timeout = lives_alarm_get(alarm_handle)))) {
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-
-    if (infofile != NULL) {
-      timeout = FALSE;
-      mainw->read_failed = FALSE;
-      lives_fgets(buff, 1024, infofile);
-      fclose(infofile);
-    }
-
-    if (timeout || mainw->read_failed) {
-      retval2 = do_read_failed_error_s_with_retry(cfile->info_file, NULL, NULL);
-    }
-  } while (retval2 == LIVES_RESPONSE_RETRY);
-
-  if (retval2 == LIVES_RESPONSE_CANCEL) {
-    mainw->read_failed = FALSE;
     return FALSE;
   }
 
@@ -5122,11 +4978,11 @@ manual_locate:
         for (i = 0; i < 4; i++) {
           char *tmp;
           char *pref = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
-          get_pref_utf8(pref, file, PATH_MAX);
+          get_utf8_pref(pref, file, PATH_MAX);
           tmp = subst(file, orig_filename, sfile->file_name);
           if (lives_utf8_strcmp(tmp, file)) {
             lives_snprintf(file, PATH_MAX, "%s", tmp);
-            set_pref_utf8(pref, file);
+            set_utf8_pref(pref, file);
             lives_menu_item_set_text(mainw->recent[i], file, FALSE);
             if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[i], file, FALSE);
           }
@@ -5668,7 +5524,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   lives_pgid_t lpid = capable->mainpid;
 
-  // ask backend to find the lates recovery file which is not owned by a running version of LiVES
+  // ask backend to find the latest recovery file which is not owned by a running version of LiVES
   com = lives_strdup_printf("%s get_recovery_file %d %d %s recovery %d", prefs->backend_sync, luid, lgid,
                             capable->myname, capable->mainpid);
 

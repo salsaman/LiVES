@@ -1116,6 +1116,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_origin(LiVESXWindow *xwin,
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_xwindow_get_frame_extents(LiVESXWindow *xwin, LiVESRectangle *rect) {
+#ifdef GUI_GTK
+  gdk_window_get_frame_extents(xwin, (GdkRectangle *)rect);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_reparent(LiVESWidget *widget, LiVESWidget *new_parent) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 14, 0)
@@ -8569,9 +8578,8 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
   lives_widget_set_show_hide_parent(vbox);
 
   hbox = lives_hbox_new(FALSE, 0);
-  if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) add_spring_to_box(LIVES_BOX(vbox), 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
-  if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) add_spring_to_box(LIVES_BOX(vbox), 0);
+  if (!LIVES_SHOULD_EXPAND_EXTRA_FOR(vbox)) lives_widget_set_valign(hbox, LIVES_ALIGN_CENTER);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, LIVES_SHOULD_EXPAND_FOR(vbox) ? widget_opts.packing_height / 2 : 0);
   lives_widget_set_show_hide_parent(hbox);
   return hbox;
 }
@@ -9072,6 +9080,7 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
   widget_opts.last_label = NULL;
 
   entry = lives_entry_new();
+  lives_widget_set_valign(entry, LIVES_ALIGN_CENTER);
 
   lives_widget_set_font_size(entry, LIVES_WIDGET_STATE_NORMAL, widget_opts.font_size);
 

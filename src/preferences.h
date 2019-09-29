@@ -248,8 +248,6 @@ typedef struct {
 
   boolean osc_start;
 
-  int virt_height; ///< n screens vert.
-
   boolean concat_images;
 
   boolean render_audio;
@@ -933,19 +931,24 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
 boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const char *strval, boolean permanent);
 
 boolean has_pref(const char *key);
-int get_pref(const char *key, char *val, int maxlen);
+
 int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
-int get_pref_utf8(const char *key, char *val, int maxlen);
-void get_pref_default(const char *key, char *val, int maxlen);
+void get_pref_default(const char *key, char *val, int maxlen); // valid only for select prefs (PREF_SOX_COMMAND)
+
+int get_utf8_pref(const char *key, char *val, int maxlen);
+int get_string_pref(const char *key, char *val, int maxlen);
 boolean get_boolean_pref(const char *key);
 double get_double_pref(const char *key);
 int get_int_pref(const char *key);
 LiVESList *get_list_pref(const char *key);
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol);
 boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
-int set_pref(const char *key, const char *value);
-int set_pref_utf8(const char *key, const char *value);
-int delete_pref(const char *key);
+
+boolean get_boolean_prefd(const char *key, boolean defval);
+int get_int_prefd(const char *key, int defval);
+
+int set_string_pref(const char *key, const char *value);
+int set_utf8_pref(const char *key, const char *value);
 int set_boolean_pref(const char *key, boolean value);
 int set_double_pref(const char *key, double value);
 int set_int_pref(const char *key, int value);
@@ -954,6 +957,7 @@ int set_list_pref(const char *key, LiVESList *values);
 int set_colour_pref(const char *key, lives_colRGBA64_t *lcol);
 void set_theme_pref(const char *themefile, const char *key, const char *value);
 void set_theme_colour_pref(const char *themefile, const char *key, lives_colRGBA64_t *lcol);
+
 boolean apply_prefs(boolean skip_warnings);
 void save_future_prefs(void);
 

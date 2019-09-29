@@ -1226,6 +1226,7 @@ int process_one(boolean visible) {
             cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
 
             // see if we need to fill an audio buffer
+            // TODO - we should hand this off to another thread to do
 #ifdef ENABLE_JACK
             if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
               mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
@@ -1334,6 +1335,7 @@ int process_one(boolean visible) {
       }
 
 #ifdef ENABLE_JACK
+      // TODO - we should hand this off to another thread to do
       // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
         fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);

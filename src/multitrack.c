@@ -940,7 +940,7 @@ boolean recover_layout(void) {
     }
   } else {
     mainw->multitrack->auto_reloading = TRUE;
-    set_pref(PREF_AR_LAYOUT, ""); // in case we crash...
+    set_string_pref(PREF_AR_LAYOUT, ""); // in case we crash...
     loaded = mt_load_recovery_layout(mainw->multitrack);
     mainw->multitrack->auto_reloading = FALSE;
     mt_sensitise(mainw->multitrack);
@@ -5622,7 +5622,7 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
     if (resp == 1 && !exiting) {
       // wipe
       prefs->ar_layout = FALSE;
-      set_pref(PREF_AR_LAYOUT, "");
+      set_string_pref(PREF_AR_LAYOUT, "");
       memset(prefs->ar_layout_name, 0, 1);
     }
   }
@@ -5746,7 +5746,7 @@ void mt_set_autotrans(int idx) {
 
   // set pref
   atrans_hash = make_weed_hashname(prefs->atrans_fx, FALSE, FALSE);
-  set_pref(PREF_CURRENT_AUTOTRANS, atrans_hash);
+  set_string_pref(PREF_CURRENT_AUTOTRANS, atrans_hash);
   lives_free(atrans_hash);
   mouse_mode_context(mainw->multitrack);
 }
@@ -6561,19 +6561,19 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   memset(buff, 0, 1);
   widget_opts.mnemonic_label = FALSE;
 
-  get_pref_utf8(PREF_RECENT1, buff, 32768);
+  get_utf8_pref(PREF_RECENT1, buff, 32768);
 
   mt->recent[0] = lives_standard_menu_item_new_with_label(buff);
 
-  get_pref_utf8(PREF_RECENT2, buff, 32768);
+  get_utf8_pref(PREF_RECENT2, buff, 32768);
 
   mt->recent[1] = lives_standard_menu_item_new_with_label(buff);
 
-  get_pref_utf8(PREF_RECENT3, buff, 32768);
+  get_utf8_pref(PREF_RECENT3, buff, 32768);
 
   mt->recent[2] = lives_standard_menu_item_new_with_label(buff);
 
-  get_pref_utf8(PREF_RECENT4, buff, 32768);
+  get_utf8_pref(PREF_RECENT4, buff, 32768);
 
   mt->recent[3] = lives_standard_menu_item_new_with_label(buff);
 
@@ -8685,14 +8685,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   if (prefs->ar_layout && mt->event_list == NULL && !mainw->recoverable_layout) {
     char *eload_file = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, prefs->ar_layout_name, NULL);
     mt->auto_reloading = TRUE;
-    set_pref(PREF_AR_LAYOUT, ""); // in case we crash...
+    set_string_pref(PREF_AR_LAYOUT, ""); // in case we crash...
     mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
     mt->auto_reloading = FALSE;
     lives_free(eload_file);
     if (mt->event_list != NULL) {
       mt_init_tracks(mt, TRUE);
       remove_markers(mt->event_list);
-      set_pref(PREF_AR_LAYOUT, prefs->ar_layout_name);
+      set_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name);
     } else {
       prefs->ar_layout = FALSE;
       memset(prefs->ar_layout_name, 0, 1);
@@ -19403,11 +19403,11 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   if (!ar_layout) {
     prefs->ar_layout = FALSE;
-    set_pref(PREF_AR_LAYOUT, "");
+    set_string_pref(PREF_AR_LAYOUT, "");
     memset(prefs->ar_layout_name, 0, 1);
   } else {
     prefs->ar_layout = TRUE;
-    set_pref(PREF_AR_LAYOUT, layout_name);
+    set_string_pref(PREF_AR_LAYOUT, layout_name);
     lives_snprintf(prefs->ar_layout_name, PATH_MAX, "%s", xlayout_name);
   }
 
@@ -21056,12 +21056,12 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
     if (!ar_layout) {
       prefs->ar_layout = FALSE;
-      set_pref(PREF_AR_LAYOUT, "");
+      set_string_pref(PREF_AR_LAYOUT, "");
       memset(prefs->ar_layout_name, 0, 1);
     } else {
       if (!mainw->recoverable_layout) {
         prefs->ar_layout = TRUE;
-        set_pref(PREF_AR_LAYOUT, mt->layout_name);
+        set_string_pref(PREF_AR_LAYOUT, mt->layout_name);
         lives_snprintf(prefs->ar_layout_name, 128, "%s", mt->layout_name);
       }
     }
@@ -21119,7 +21119,7 @@ void wipe_layout(lives_mt *mt) {
   recover_layout_cancelled(FALSE);
 
   if (strlen(mt->layout_name) > 0 && !strcmp(mt->layout_name, prefs->ar_layout_name)) {
-    set_pref(PREF_AR_LAYOUT, "");
+    set_string_pref(PREF_AR_LAYOUT, "");
     memset(prefs->ar_layout_name, 0, 1);
     prefs->ar_layout = FALSE;
   }

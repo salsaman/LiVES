@@ -2181,11 +2181,7 @@ void do_need_mplayer_mpv_dialog(void) {
 
 
 void do_audio_warning(void) {
-#ifdef ALLOW_MPV
   do_error_dialog(_("Audio was not loaded; please install mplayer or mplayer2 if you expected audio for this clip.\n"));
-#else
-  do_error_dialog(_("Audio was not loaded; please install mplayer,mplayer2 or mpv if you expected audio for this clip.\n"));
-#endif
 }
 
 

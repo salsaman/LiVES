@@ -1489,10 +1489,10 @@ if (defined($ARGV[0])) {
 		}
 		if ($is_mpv) {
 		    if ($img_ext eq ".jpg") {
-			$img_fmt="--vo image:format=jpg:jpeg-quality=$quality";
+			$img_fmt="--vo=image --vo-image-format=jpg --vo-image-jpeg-quality=$quality";
 		    }
 		    else {
-			$img_fmt="--vo image:format=png:png-compression=$compression";
+			$img_fmt="--vo=image --vo-image-format=png --vo-image-png-compression=$compression";
 		    }
 		}
 		else {
@@ -1654,15 +1654,6 @@ if (defined($ARGV[0])) {
 
 	    if ($img_ext eq ".png" || $type eq "png") {
 		$bpp=32;
-	    }
-
-	    unless (1 || $withsound ne "-1" || $achans==0) {
-		# try as best we can to sync sound and video for a selection
-		$audio_out=&clip_audio(0.3,1000000.);
-		if (!$panic) {
-		    smog_rename("$audio_out","audio");
-		}
-		$audio_out="audio";
 	    }
 
 	    if ($count == 0 || $type eq "jpeg" || $type eq "png" || $type eq "Audio") {

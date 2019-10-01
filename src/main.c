@@ -2538,7 +2538,6 @@ capability *get_capabilities(void) {
   if (strlen(string)) capable->has_mpv = TRUE;
 
   get_location(EXEC_CONVERT, string, 256);
-
   if (strlen(string)) capable->has_convert = TRUE;
 
   get_location(EXEC_COMPOSITE, string, 256);
@@ -2602,8 +2601,6 @@ capability *get_capabilities(void) {
       capable->has_midistartstop = TRUE;
     }
   }
-
-  capable->ncpus = 0;
 
 #ifdef IS_DARWIN
   kerr = host_processor_info(mach_host_self(), PROCESSOR_BASIC_INFO, &numProcessors, &processorInfo, &numProcessorInfo);

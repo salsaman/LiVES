@@ -8453,7 +8453,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // store the current key/mode state
   rte_keymodes_backup(prefs->rte_keys_virtual);
 
-  com = lives_strdup_printf("%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb, trigopt, mute,
+  com = lives_strdup_printf("/usr/bin/%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb,
+                            trigopt, mute,
                             debug);
 
   mainw->alives_pgid = lives_fork(com);

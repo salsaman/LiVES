@@ -283,9 +283,10 @@ sub get_format_request {
 
 
 sub get_num_procs {
-    my $result=`cat /proc/cpuinfo|grep processor`;
-
-    $result=(split (/\n/,$result))[-1];
-    $result=(split (/: /,$result))[1];
-    return ++$result;
+    $threads=`/bin/grep processor /proc/cpuinfo | wc -l`;
+    $threads=int($threads);
+    if ($threads==0) {
+	$threads=1;
+    }
+    return $threads;
 }

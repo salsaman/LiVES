@@ -2276,7 +2276,7 @@ void get_frames_sizes(int fileno, int frame) {
   if ((pixbuf = pull_lives_pixbuf(fileno, frame, get_image_ext_for_type(mainw->files[fileno]->img_type), 0))) {
     sfile->hsize = lives_pixbuf_get_width(pixbuf);
     sfile->vsize = lives_pixbuf_get_height(pixbuf);
-    lives_object_unref(pixbuf);
+    lives_widget_object_unref(pixbuf);
   }
 }
 
@@ -4296,7 +4296,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     else myval = lives_strdup_printf("%.8f", *(double *)val);
     // dont need to block this because it does nothing during non-playback, and we shouldnt be updating clip details during playback
     if (which == mainw->current_file &&
-        mainw->is_ready) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)myval);
+        mainw->is_ready) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
     if (mainw->files[which]->ratio_fps && (mainw->files[which]->pb_fps == mainw->files[which]->fps))

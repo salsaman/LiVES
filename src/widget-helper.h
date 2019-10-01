@@ -192,11 +192,14 @@ boolean lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 
 // object funcs.
 
-boolean lives_object_ref(livespointer); ///< increase refcount by one
-boolean lives_object_unref(livespointer); ///< decrease refcount by one: if refcount==0, object is destroyed
+boolean lives_widget_object_ref(livespointer); ///< increase refcount by one
+boolean lives_widget_object_unref(livespointer); ///< decrease refcount by one: if refcount==0, object is destroyed
 
 // remove any "floating" reference and add a new ref
-boolean lives_object_ref_sink(livespointer);
+boolean lives_widget_object_ref_sink(livespointer);
+
+// set data and free it later
+void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data);
 
 // lives_pixbuf functions
 
@@ -301,7 +304,7 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
-LiVESWidget *lives_button_get_label_widget(LiVESButton *);
+const char *lives_button_get_label(LiVESButton *);
 
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);
@@ -792,7 +795,7 @@ LiVESAccelGroup *lives_accel_group_new(void);
 boolean lives_accel_group_connect(LiVESAccelGroup *, uint32_t key, LiVESXModifierType mod, LiVESAccelFlags flags,
                                   LiVESWidgetClosure *closure);
 boolean lives_accel_group_disconnect(LiVESAccelGroup *, LiVESWidgetClosure *closure);
-boolean lives_accel_groups_activate(LiVESObject *object, uint32_t key, LiVESXModifierType mod);
+boolean lives_accel_groups_activate(LiVESWidgetObject *object, uint32_t key, LiVESXModifierType mod);
 
 boolean lives_widget_add_accelerator(LiVESWidget *, const char *accel_signal, LiVESAccelGroup *accel_group,
                                      uint32_t accel_key, LiVESXModifierType accel_mods, LiVESAccelFlags accel_flags);
@@ -1030,6 +1033,8 @@ void lives_cool_toggled(LiVESWidget *tbutton, livespointer);
 boolean unhide_cursor(LiVESXWindow *);
 void hide_cursor(LiVESXWindow *);
 
+boolean set_tooltips_state(LiVESWidget *widget, boolean state);
+
 boolean get_border_size(LiVESWidget *win, int *bx, int *by);
 boolean lives_window_get_inner_size(LiVESWindow *, int *x, int *y);
 
@@ -1047,6 +1052,8 @@ boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetStat
 boolean lives_accel_path_disconnect(LiVESAccelGroup *, const char *path);
 
 boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
+
+boolean lives_widget_nullify_with(LiVESWidget *, void **);
 
 #endif // cplusplus
 

@@ -67,18 +67,21 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
 
-boolean grabkeys_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean grabkeys_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
+                          livespointer user_data);  ///< for accel groups
 boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data);  ///< for widgets
 
-boolean rte_on_off_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean rte_on_off_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
+                            livespointer user_data);  ///< for accel groups
 boolean rte_on_off_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
-boolean rtemode_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);  ///< for accel groups
+boolean rtemode_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
+                         livespointer user_data);  ///< for accel groups
 boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///< for widgets
 
-boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc);
 

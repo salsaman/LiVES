@@ -7,13 +7,13 @@
 #ifndef HAS_LIVES_RFX_BUILDER_H
 #define HAS_LIVES_RFX_BUILDER_H
 
-#define RFX_BUILDER "build-lives-rfx-plugin"
+#define EXEC_RFX_BUILDER "build-lives-rfx-plugin"
 
 /// must match whatever is in RFX_BUILDER
 #define RFX_VERSION "1.8"
 
 /// this definition must match with smogrify
-#define RFX_BUILDER_MULTI "build-lives-rfx-plugin-multi"
+#define EXEC_RFX_BUILDER_MULTI "build-lives-rfx-plugin-multi"
 
 /// default script extension when saving
 #define RFXBUILDER_SCRIPT_SUFFIX "script"

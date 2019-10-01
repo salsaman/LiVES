@@ -210,7 +210,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
   layout = lingo_layout_new(ctx);
   if (layout == NULL || !LINGO_IS_LAYOUT(layout)) {
-    lives_object_unref(ctx);
+    lives_widget_object_unref(ctx);
     return NULL;
   }
 
@@ -354,7 +354,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   g_print("|%s| FINAL !!\n", readytext);
 #endif
   lives_free(readytext);
-  lives_object_unref(ctx);
+  lives_widget_object_unref(ctx);
   return layout;
 #endif
   return NULL;
@@ -516,7 +516,7 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   lives_painter_to_layer(cr, layer);
 
-  if (layout) lives_object_unref(layout);
+  if (layout) lives_widget_object_unref(layout);
 
   //surface = lives_painter_get_target(cr);
   //src = lives_painter_image_surface_get_data(surface);

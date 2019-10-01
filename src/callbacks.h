@@ -127,8 +127,6 @@ void on_ok_button1_clicked(LiVESButton *, livespointer);
 
 void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
 
-void open_sel_range_activate(void);
-
 void on_location_select(LiVESButton *, livespointer);
 
 void on_utube_select(lives_remote_clip_request_t *req);
@@ -236,7 +234,7 @@ void on_back_pressed(LiVESButton *, livespointer);
 
 void on_forward_pressed(LiVESButton *, livespointer);
 
-boolean dirchange_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer area_enum);
+boolean dirchange_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer area_enum);
 
 void on_capture_activate(LiVESMenuItem *, livespointer);
 
@@ -256,11 +254,11 @@ void on_backup_activate(LiVESMenuItem *, livespointer);
 
 void on_record_perf_activate(LiVESMenuItem *, livespointer);
 
-boolean record_toggle_callback(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean record_toggle_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
 
-boolean fps_reset_callback(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean fps_reset_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
 
-boolean mute_audio_callback(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean mute_audio_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
 
 boolean on_stop_activate_by_del(LiVESWidget *, LiVESXEvent *, livespointer);
 
@@ -322,11 +320,11 @@ void on_insertwsound_toggled(LiVESToggleButton *, livespointer);
 
 void on_showfct_activate(LiVESMenuItem *, livespointer);
 
-void on_boolean_toggled(LiVESObject *, livespointer);
+void on_boolean_toggled(LiVESWidgetObject *, livespointer);
 
 void on_audio_toggled(LiVESWidget *, livespointer);
 
-void on_showsubs_toggled(LiVESObject *, livespointer);
+void on_showsubs_toggled(LiVESWidgetObject *, livespointer);
 
 void on_show_messages_activate(LiVESMenuItem *, livespointer);
 
@@ -354,17 +352,17 @@ void autolives_toggle(LiVESMenuItem *, livespointer);
 
 void on_preview_spinbutton_changed(LiVESSpinButton *, livespointer);
 
-boolean prevclip_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);
+boolean prevclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean nextclip_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);
+boolean nextclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean freeze_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);
+boolean freeze_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean storeclip_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);
+boolean storeclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean nervous_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer);
+boolean nervous_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
-boolean show_sync_callback(LiVESAccelGroup *, LiVESObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
+boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
 boolean on_save_set_activate(LiVESMenuItem *, livespointer);
 

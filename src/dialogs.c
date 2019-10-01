@@ -3337,7 +3337,8 @@ char *get_new_install_msg(void) {
 
 
 void do_no_autolives_error(void) {
-  do_error_dialog(_("\nYou must have autolives.pl installed and in your path to use this toy.\nConsult your package distributor.\n"));
+  do_error_dialogf(_("\nYou must have %s installed and in your path to use this toy.\nConsult your package distributor.\n"),
+                   EXEC_AUTOLIVES_PL);
 }
 
 

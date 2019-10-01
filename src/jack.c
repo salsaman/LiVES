@@ -136,7 +136,7 @@ options = (jack_options_t)((int)options | (int)JackNoStartServer);
     if (!lives_file_test(prefs->jack_aserver, LIVES_FILE_TEST_EXISTS)) {
       char *com;
       char jackd_loc[PATH_MAX];
-      get_location("jackd", jackd_loc, PATH_MAX);
+      get_location(EXEC_JACKD, jackd_loc, PATH_MAX);
       if (strlen(jackd_loc)) {
         com = lives_strdup_printf("echo \"%s -d %s\">\"%s\"", jackd_loc, JACK_DRIVER_NAME, prefs->jack_aserver);
         lives_system(com, FALSE);

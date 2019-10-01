@@ -625,7 +625,7 @@ void load_framedraw_image(LiVESPixbuf *pixbuf) {
 
     mainw->fd_layer_orig = weed_layer_create(0, 0, NULL, WEED_PALETTE_END);
 
-    if (!pixbuf_to_layer(mainw->fd_layer_orig, pixbuf)) lives_object_unref(pixbuf);
+    if (!pixbuf_to_layer(mainw->fd_layer_orig, pixbuf)) lives_widget_object_unref(pixbuf);
   }
 
   if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
@@ -675,7 +675,7 @@ void redraw_framedraw_image(void) {
 
   if (pixbuf != NULL) {
     // convert pixbuf back to layer (layer_to_pixbuf destroys it)
-    if (!pixbuf_to_layer(mainw->fd_layer, pixbuf)) lives_object_unref(pixbuf);
+    if (!pixbuf_to_layer(mainw->fd_layer, pixbuf)) lives_widget_object_unref(pixbuf);
   }
 }
 

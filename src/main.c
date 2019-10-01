@@ -581,50 +581,56 @@ static boolean pre_init(void) {
   if (!mainw->foreign) {
     char *tmp, *tmp2, *err;
     // fatal errors
-    if (!capable->smog_version_correct) {
+    if (!capable->has_perl) {
       startup_message_fatal(
-        _("\nAn incorrect version of smogrify was found in your path.\n\n"
+        _("\nPerl must be installed and in your path.\n\n"
           "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
     } else {
-      if (!capable->can_write_to_home) {
-        startup_message_fatal((tmp = lives_strdup_printf(
-                                       _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
-                                       capable->home_dir)));
-        lives_free(tmp);
+      if (!capable->smog_version_correct) {
+        startup_message_fatal(
+          _("\nAn incorrect version of smogrify was found in your path.\n\n"
+            "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
       } else {
-        if (!capable->has_smogrify) {
-          err = lives_strdup(
-                  _("\n`smogrify` must be in your path, and be executable\n\n"
-                    "Please review the README file which came with this package\nbefore running LiVES.\n"));
-          startup_message_fatal(err);
-          lives_free(err);
+        if (!capable->can_write_to_home) {
+          startup_message_fatal((tmp = lives_strdup_printf(
+                                         _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
+                                         capable->home_dir)));
+          lives_free(tmp);
         } else {
-          if (!capable->can_read_from_config) {
-            err = lives_strdup_printf(
-                    _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
-                    (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-            lives_free(tmp);
+          if (!capable->has_smogrify) {
+            err = lives_strdup(
+                    _("\n`smogrify` must be in your path, and be executable\n\n"
+                      "Please review the README file which came with this package\nbefore running LiVES.\n"));
             startup_message_fatal(err);
             lives_free(err);
           } else {
-            if (!capable->can_write_to_config) {
+            if (!capable->can_read_from_config) {
               err = lives_strdup_printf(
-                      _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-                        "Please check the file permissions for this file and directory\nand try again.\n"),
+                      _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
                       (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
               lives_free(tmp);
               startup_message_fatal(err);
               lives_free(err);
             } else {
-              if (!capable->can_write_to_config_new) {
+              if (!capable->can_write_to_config) {
                 err = lives_strdup_printf(
-                        _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+                        _("\nLiVES was unable to write to its configuration file\n%s\n\n"
                           "Please check the file permissions for this file and directory\nand try again.\n"),
-                        (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
+                        (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
                 lives_free(tmp);
-                lives_free(tmp2);
                 startup_message_fatal(err);
                 lives_free(err);
+              } else {
+                if (!capable->can_write_to_config_new) {
+                  err = lives_strdup_printf(
+                          _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+                            "Please check the file permissions for this file and directory\nand try again.\n"),
+                          (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
+                  lives_free(tmp);
+                  lives_free(tmp2);
+                  startup_message_fatal(err);
+                  lives_free(err);
+                }
               }
             }
           }
@@ -748,6 +754,8 @@ static boolean pre_init(void) {
 
   future_prefs->jack_opts = get_int_pref(PREF_JACK_OPTS);
   prefs->jack_opts = future_prefs->jack_opts;
+
+  prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
   mainw->mgeom = NULL;
 
@@ -1276,6 +1284,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->idlemax = 0;
   mainw->reconfig = FALSE;
+
+  mainw->fsp_func = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -1420,15 +1430,15 @@ static void lives_init(_ign_opts *ign_opts) {
       memset(mppath, 0, 1);
 
       if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
-        get_location("mplayer", mppath, PATH_MAX);
+        get_location(EXEC_MPLAYER, mppath, PATH_MAX);
       }
 
       if (!strlen(prefs->video_open_command) && capable->has_mplayer2) {
-        get_location("mplayer2", mppath, PATH_MAX);
+        get_location(EXEC_MPLAYER2, mppath, PATH_MAX);
       }
 
       if (!strlen(prefs->video_open_command) && capable->has_mpv) {
-        get_location("mpv", mppath, PATH_MAX);
+        get_location(EXEC_MPV, mppath, PATH_MAX);
       }
 
       if (strlen(mppath)) {
@@ -1755,8 +1765,6 @@ static void lives_init(_ign_opts *ign_opts) {
       if (capable->has_jackd) naudp++;
       if (capable->has_pulse_audio) naudp++;
       if (capable->has_sox_play) naudp++;
-      if (capable->has_mplayer) naudp++;
-      if (capable->has_mplayer2) naudp++;
 
       if (naudp > 1) {
         if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
@@ -1910,11 +1918,9 @@ static void do_start_messages(void) {
   show_detected_or_not(capable->has_mplayer, "mplayer");
   if (!capable->has_mplayer) {
     show_detected_or_not(capable->has_mplayer2, "mplayer2");
-#ifdef ALLOW_MPV
     if (!capable->has_mplayer2) {
       show_detected_or_not(capable->has_mpv, "mpv");
     }
-#endif
   }
   show_detected_or_not(capable->has_convert, "convert");
   show_detected_or_not(capable->has_composite, "composite");
@@ -1995,8 +2001,6 @@ static void do_start_messages(void) {
 #endif
 
   d_print(_("Gui screen size is %d X %d, scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, widget_opts.scale);
-
-  d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
 }
 
 
@@ -2298,6 +2302,13 @@ capability *get_capabilities(void) {
 #endif
 
   capable = (capability *)lives_malloc(sizeof(capability));
+  capable->has_perl = FALSE;
+
+  get_location(EXEC_PERL, string, 256);
+  if (!strlen(string)) {
+    return capable;
+  }
+  capable->has_perl = TRUE;
 
   // this is _compile time_ bits, not runtime bits
   capable->cpu_bits = 32;
@@ -2517,78 +2528,76 @@ capability *get_capabilities(void) {
 
   if (!capable->can_write_to_workdir) return capable;
 
-  get_location(AUDIO_PLAYER_MPLAYER, string, 256);
+  get_location(EXEC_MPLAYER, string, 256);
   if (strlen(string)) capable->has_mplayer = TRUE;
 
-  get_location(AUDIO_PLAYER_MPLAYER2, string, 256);
+  get_location(EXEC_MPLAYER2, string, 256);
   if (strlen(string)) capable->has_mplayer2 = TRUE;
 
-#ifdef ALLOW_MPV
-  get_location("mpv", string, 256);
+  get_location(EXEC_MPV, string, 256);
   if (strlen(string)) capable->has_mpv = TRUE;
-#endif
 
-  get_location("convert", string, 256);
+  get_location(EXEC_CONVERT, string, 256);
 
   if (strlen(string)) capable->has_convert = TRUE;
 
-  get_location("composite", string, 256);
+  get_location(EXEC_COMPOSITE, string, 256);
   if (strlen(string)) capable->has_composite = TRUE;
 
-  get_location("identify", string, 256);
+  get_location(EXEC_IDENTIFY, string, 256);
   if (strlen(string)) capable->has_identify = TRUE;
 
   ///////////////////////////////////////////////////////
 
-  get_location("play", string, 256);
+  get_location(EXEC_PLAY, string, 256);
   if (strlen(string)) capable->has_sox_play = TRUE;
 
-  get_location(AUDIO_PLAYER_SOX, string, 256);
+  get_location(EXEC_SOX, string, 256);
   if (strlen(string)) capable->has_sox_sox = TRUE;
 
-  get_location("dvgrab", string, 256);
+  get_location(EXEC_DVGRAB, string, 256);
   if (strlen(string)) capable->has_dvgrab = TRUE;
 
-  get_location("cdda2wav", string, 256);
+  get_location(EXEC_CDDA2WAV, string, 256);
   if (strlen(string)) capable->has_cdda2wav = TRUE;
   else {
-    get_location("icedax", string, 256);
+    get_location(EXEC_ICEDAX, string, 256);
     if (strlen(string)) capable->has_cdda2wav = TRUE;
   }
 
-  get_location("jackd", string, 256);
+  get_location(EXEC_JACKD, string, 256);
   if (strlen(string)) capable->has_jackd = TRUE;
 
-  get_location("gdb", string, 256);
+  get_location(EXEC_GDB, string, 256);
   if (strlen(string)) capable->has_gdb = TRUE;
 
-  get_location("ssh-askpass", string, 256);
+  get_location(EXEC_SSH_ASKPASS, string, 256);
   if (strlen(string)) capable->has_ssh_askpass = TRUE;
 
-  get_location("youtube-dl", string, 256);
+  get_location(EXEC_YOUTUBE_DL, string, 256);
   if (strlen(string)) capable->has_youtube_dl = TRUE;
 
-  get_location("pulseaudio", string, 256);
+  get_location(EXEC_PULSEAUDIO, string, 256);
   if (strlen(string)) capable->has_pulse_audio = TRUE;
 
-  get_location("python", string, 256);
+  get_location(EXEC_PYTHON, string, 256);
   if (strlen(string)) {
     capable->has_python = TRUE;
-    capable->python_version = get_version_hash("python -V 2>&1", " ", 1);
+    capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
   }
 
-  get_location("xwininfo", string, 256);
+  get_location(EXEC_XWININFO, string, 256);
   if (strlen(string)) capable->has_xwininfo = TRUE;
 
-  get_location("gconftool-2", string, 256);
+  get_location(EXEC_GCONFTOOL_2, string, 256);
   if (strlen(string)) capable->has_gconftool_2 = TRUE;
 
-  get_location("xdg-screensaver", string, 256);
+  get_location(EXEC_XDG_SCREENSAVER, string, 256);
   if (strlen(string)) capable->has_xdg_screensaver = TRUE;
 
-  get_location("midistart", string, 256);
+  get_location(EXEC_MIDISTART, string, 256);
   if (strlen(string)) {
-    get_location("midistop", string, 256);
+    get_location(EXEC_MIDISTOP, string, 256);
     if (strlen(string)) {
       capable->has_midistartstop = TRUE;
     }
@@ -2789,15 +2798,19 @@ static boolean lives_startup(livespointer data) {
 
     if (!ign_opts.ign_aplayer) {
       get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
-      if (!strcmp(buff, AUDIO_PLAYER_NONE))
+      if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
         prefs->audio_player = AUD_PLAYER_NONE;  // experimental
-      if (!strcmp(buff, AUDIO_PLAYER_SOX))
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+      } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
         prefs->audio_player = AUD_PLAYER_SOX;
-      if (!strcmp(buff, AUDIO_PLAYER_JACK))
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
+      } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
         prefs->audio_player = AUD_PLAYER_JACK;
-      if (!strcmp(buff, AUDIO_PLAYER_PULSE))
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+      } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
         prefs->audio_player = AUD_PLAYER_PULSE;
-      lives_snprintf(prefs->aplayer, 512, "%s", buff);
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+      }
     }
 
 #ifdef HAVE_PULSE_AUDIO
@@ -2893,21 +2906,12 @@ static boolean lives_startup(livespointer data) {
           else startup_message_nonfatal(capable->startup_msg);
         } else {
           // non-fatal errors
-#ifdef ALLOW_MPV
           if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
             startup_message_nonfatal_dismissable(
               _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
                 "You may wish to install one of these to use LiVES more fully.\n"),
               WARN_MASK_NO_MPLAYER);
           }
-#else
-          if (!capable->has_mplayer && !capable->has_mplayer2 && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
-            startup_message_nonfatal_dismissable(
-              _("\nLiVES was unable to locate 'mplayer' or 'mplayer2'. "
-                "You may wish to install one of these to use LiVES more fully.\n"),
-              WARN_MASK_NO_MPLAYER);
-          }
-#endif
           if (!capable->has_convert) {
             startup_message_nonfatal_dismissable(
               _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
@@ -3103,6 +3107,8 @@ static boolean lives_startup(livespointer data) {
     d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
   }
 
+  d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
+
   if (mainw->multitrack == NULL) {
     if (mainw->current_file == -1) {
       resize(1.);
@@ -3216,7 +3222,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -3425,7 +3431,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             apl_valid = TRUE;
 #endif
           }
-          if (!strcmp(buff, AUDIO_PLAYER_PULSE)) {
+          if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
 #ifdef HAVE_PULSE_AUDIO
             prefs->audio_player = AUD_PLAYER_PULSE;
             set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
@@ -3434,7 +3440,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
           }
           if (apl_valid) ign_opts.ign_aplayer = TRUE;
-          else lives_printerr(_("Invalid audio player %s\n"), buff);
+          else {
+            char *errmsg = lives_strdup_printf(_("Invalid audio player %s"), buff);
+            LIVES_ERROR(errmsg);
+            lives_free(errmsg);
+          }
           continue;
         }
         if (!strcmp(charopt, "asource")) {
@@ -3676,7 +3686,7 @@ void sensitize(void) {
 #ifdef LIBAV_TRANSCODE
   lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
-  lives_widget_set_sensitive(mainw->backup, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->backup, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO && capable->has_encoder_plugins);
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
   lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
@@ -3689,14 +3699,14 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->insert, !(clipboard == NULL));
   lives_widget_set_sensitive(mainw->merge, (clipboard != NULL && !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO));
   lives_widget_set_sensitive(mainw->xdelete, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->playall, !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->m_playbutton, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->playall, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->m_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->m_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
   lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
   if (mainw->preview_box != NULL) {
-    lives_widget_set_sensitive(mainw->p_playbutton, !CURRENT_CLIP_IS_CLIPBOARD);
+    lives_widget_set_sensitive(mainw->p_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
     lives_widget_set_sensitive(mainw->p_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
     lives_widget_set_sensitive(mainw->p_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
     lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
@@ -3772,20 +3782,20 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
   lives_widget_set_sensitive(mainw->loop_continue, TRUE);
   lives_widget_set_sensitive(mainw->load_audio, TRUE);
-  lives_widget_set_sensitive(mainw->load_subs, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->load_subs, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->erase_subs, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->subt != NULL);
   if (capable->has_cdda2wav && strlen(prefs->cdplay_device)) lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
-  lives_widget_set_sensitive(mainw->change_speed, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->change_speed, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->close, !CURRENT_CLIP_IS_CLIPBOARD);
+  lives_widget_set_sensitive(mainw->close, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_all, !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->select_start_only, TRUE);
-  lives_widget_set_sensitive(mainw->select_end_only, TRUE);
-  lives_widget_set_sensitive(mainw->select_from_start, TRUE);
-  lives_widget_set_sensitive(mainw->select_to_end, TRUE);
+  lives_widget_set_sensitive(mainw->select_all, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_start_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_end_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_from_start, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_to_end, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #ifdef HAVE_YUV4MPEG
   lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
@@ -4065,18 +4075,31 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
 
   if (cr == NULL) return;
   if (pixbuf != NULL) {
-    int width = lives_pixbuf_get_width(pixbuf);
-    int height = lives_pixbuf_get_height(pixbuf);
-    int cx = (rwidth - width) / 2;
-    int cy = (rheight - height) / 2;
+    int width = lives_pixbuf_get_width(pixbuf), owidth = width, cx;
+    int height = lives_pixbuf_get_height(pixbuf), oheight = height, cy;
 
-    if (cx < 0) cx = 0;
+    if (prefs->ce_maxspect) {
+      calc_maxspect(rwidth, rheight, &width, &height);
+
+      width = (width >> 1) << 1;
+      height = (height >> 1) << 1;
+
+      if (width > owidth && height > oheight) {
+        width = owidth;
+        height = oheight;
+      }
+    }
+
+    cx = (rwidth - width) / 2;
+    cy = (rheight - height) / 2;
 
     if (prefs->funky_widgets) {
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
       lives_painter_rectangle(cr, cx - 1, cy - 1,
                               width + 2,
                               height + 2);
+
+      // frame
       lives_painter_stroke(cr);
     }
 
@@ -4215,7 +4238,7 @@ void load_start_image(int frame) {
     }
     if (start_pixbuf != NULL) {
       if (LIVES_IS_WIDGET_OBJECT(start_pixbuf)) {
-        lives_object_unref(start_pixbuf);
+        lives_widget_object_unref(start_pixbuf);
       }
     }
     threaded_dialog_spin(0.);
@@ -4268,7 +4291,7 @@ void load_start_image(int frame) {
     }
     if (start_pixbuf != NULL) {
       if (LIVES_IS_WIDGET_OBJECT(start_pixbuf)) {
-        lives_object_unref(start_pixbuf);
+        lives_widget_object_unref(start_pixbuf);
       }
     }
 
@@ -4407,7 +4430,7 @@ void load_end_image(int frame) {
     }
     if (end_pixbuf != NULL) {
       if (LIVES_IS_WIDGET_OBJECT(end_pixbuf)) {
-        lives_object_unref(end_pixbuf);
+        lives_widget_object_unref(end_pixbuf);
       }
     }
     threaded_dialog_spin(0.);
@@ -4461,7 +4484,7 @@ void load_end_image(int frame) {
     }
     if (end_pixbuf != NULL) {
       if (LIVES_IS_WIDGET_OBJECT(end_pixbuf)) {
-        lives_object_unref(end_pixbuf);
+        lives_widget_object_unref(end_pixbuf);
       }
     }
 
@@ -4520,7 +4543,7 @@ void load_preview_image(boolean update_always) {
     }
     pixbuf = lives_pixbuf_scale_simple(mainw->camframe, mainw->pwidth, mainw->pheight, LIVES_INTERP_BEST);
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), pixbuf, NULL);
-    if (pixbuf != NULL) lives_object_unref(pixbuf);
+    if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
     mainw->preview_frame = 1;
     lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton), 1, 1);
@@ -4649,7 +4672,7 @@ void load_preview_image(boolean update_always) {
       break;
     }
   }
-  if (pixbuf != NULL) lives_object_unref(pixbuf);
+  if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->preview_image, (livespointer)expose_pim, NULL);
   if (mainw->stop_emmission == mainw->preview_image)
@@ -4987,8 +5010,8 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
   if (!gdk_pixbuf_loader_close(pbload, &gerror)) return FALSE;
 
   pixbuf = gdk_pixbuf_loader_get_pixbuf(pbload);
-  lives_object_ref(pixbuf);
-  if (pbload != NULL) lives_object_unref(pbload);
+  lives_widget_object_ref(pixbuf);
+  if (pbload != NULL) lives_widget_object_unref(pbload);
 
 #endif
 
@@ -5029,7 +5052,7 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
   } else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
 
   if (!pixbuf_to_layer(layer, pixbuf)) {
-    lives_object_unref(pixbuf);
+    lives_widget_object_unref(pixbuf);
   }
 
   return TRUE;
@@ -5477,7 +5500,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
     threaded_dialog_spin(0.);
     // TODO - could use resize plugin here
     pixbuf2 = lives_pixbuf_scale_simple(pixbuf, width, height, interp);
-    if (pixbuf != NULL) lives_object_unref(pixbuf);
+    if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
     threaded_dialog_spin(0.);
     pixbuf = pixbuf2;
   }
@@ -6882,7 +6905,7 @@ void load_frame_image(int frame) {
              mainw->current_file != mainw->scrap_file)
       get_play_times();
 
-    if (pixbuf != NULL) lives_object_unref(pixbuf);
+    if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
 
     // format is now msg|timecode|fgclip|fgframe|fgfps|
     lives_notify(LIVES_OSC_NOTIFY_FRAME_SYNCH, (const char *)
@@ -6957,7 +6980,7 @@ void load_frame_image(int frame) {
         lives_painter_paint(cr);
         lives_painter_destroy(cr);
 
-        if (pixbuf != NULL) lives_object_unref(pixbuf);
+        if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
         cfile->frames = frame;
       } else {
         do_error_dialog(_("LiVES was unable to capture this image\n\n"));
@@ -7021,67 +7044,6 @@ void load_frame_image(int frame) {
     boolean need_new_blend_file = FALSE;
     int index = -1;
     int old_file = mainw->current_file;
-
-    if (!LIVES_IS_PLAYING) {
-      if (mainw->current_file != mainw->scrap_file) desensitize();
-      lives_widget_set_sensitive(mainw->playall, FALSE);
-      lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
-      lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
-      lives_widget_set_sensitive(mainw->m_loopbutton, FALSE);
-      lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-      if (mainw->preview_box != NULL) {
-        lives_widget_set_sensitive(mainw->p_playbutton, FALSE);
-        lives_widget_set_sensitive(mainw->p_playselbutton, FALSE);
-        lives_widget_set_sensitive(mainw->p_loopbutton, FALSE);
-        lives_widget_set_sensitive(mainw->p_rewindbutton, FALSE);
-      }
-      lives_widget_set_sensitive(mainw->rewind, FALSE);
-      lives_widget_set_sensitive(mainw->select_submenu, FALSE);
-      lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
-      lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
-      lives_widget_set_sensitive(mainw->lock_selwidth, FALSE);
-      lives_widget_set_sensitive(mainw->show_file_info, FALSE);
-      lives_widget_set_sensitive(mainw->show_file_comments, FALSE);
-      lives_widget_set_sensitive(mainw->rename, FALSE);
-      lives_widget_set_sensitive(mainw->open, TRUE);
-      lives_widget_set_sensitive(mainw->capture, TRUE);
-      lives_widget_set_sensitive(mainw->preferences, TRUE);
-      lives_widget_set_sensitive(mainw->dsize, !mainw->fs);
-      lives_widget_set_sensitive(mainw->rev_clipboard, !(clipboard == NULL));
-      lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard == NULL));
-      lives_widget_set_sensitive(mainw->playclip, !(clipboard == NULL));
-      lives_widget_set_sensitive(mainw->paste_as_new, !(clipboard == NULL));
-      lives_widget_set_sensitive(mainw->open_sel, TRUE);
-      lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
-      lives_widget_set_sensitive(mainw->open_vcd_menu, TRUE);
-      lives_widget_set_sensitive(mainw->full_screen, TRUE);
-#ifdef HAVE_WEBM
-      lives_widget_set_sensitive(mainw->open_loc_menu, TRUE);
-#else
-      lives_widget_set_sensitive(mainw->open_loc, TRUE);
-#endif
-      lives_widget_set_sensitive(mainw->open_device_menu, TRUE);
-      lives_widget_set_sensitive(mainw->recent_menu, TRUE);
-      lives_widget_set_sensitive(mainw->restore, TRUE);
-      lives_widget_set_sensitive(mainw->toy_tv, TRUE);
-      lives_widget_set_sensitive(mainw->autolives, TRUE);
-      lives_widget_set_sensitive(mainw->toy_random_frames, TRUE);
-      lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
-      lives_widget_set_sensitive(mainw->vj_reset, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
-      lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->frame_index != NULL);
-      lives_widget_set_sensitive(mainw->clear_ds, TRUE);
-      lives_widget_set_sensitive(mainw->midi_learn, TRUE);
-      lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
-      lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
-      lives_widget_set_sensitive(mainw->mt_menu, TRUE);
-      lives_widget_set_sensitive(mainw->unicap, TRUE);
-      lives_widget_set_sensitive(mainw->firewire, TRUE);
-      lives_widget_set_sensitive(mainw->tvdev, TRUE);
-      lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
-#ifdef HAVE_YUV4MPEG
-      lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
-#endif
-    }
 
     //update the bar text
     if (CURRENT_CLIP_IS_VALID) {
@@ -7322,6 +7284,11 @@ void load_frame_image(int frame) {
         mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
         mt_clip_select(mainw->multitrack, TRUE);
       }
+    }
+    if (!LIVES_IS_PLAYING && !mainw->is_processing && !mainw->preview) {
+      // TODO *****: check this is valid for all calls
+      if (mainw->multitrack != NULL) mt_sensitise(mainw->multitrack);
+      else sensitize();
     }
   }
 

@@ -1,6 +1,6 @@
 // yuv4mpeg.c
 // LiVES
-// (c) G. Finch 2004 - 2016 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -103,7 +103,6 @@ static void *y4frame_thread(void *arg) {
       memmove(buff, buff + 1, 4);
       fill_read(yuv4mpeg->fd, buff + 4, 1);
     } while (strncmp(buff, "FRAME", 5));
-
   }
 
   do {
@@ -174,7 +173,6 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
         close(yuv4mpeg->fd);
         yuv4mpeg->fd = -1;
       }
-
       return FALSE;
     }
 
@@ -538,8 +536,7 @@ void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
 // advantages would be: - no longer necessary to have mjpegtools
 // - multiple copies of LiVES could share the same input at (almost) zero cost
 
-
-// for each of thes functions:
+// for each of these functions:
 // - prompt user for name of device, etc.
 
 // check if device already opened, if so exit
@@ -574,7 +571,7 @@ void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_tvcardw_t *tvcardw;
 
-  if (!capable->has_mplayer && !capable->has_mplayer2) {
+  if (!HAS_EXTERNAL_PLAYER || USE_MPV) {
     do_need_mplayer_dialog();
     return;
   }

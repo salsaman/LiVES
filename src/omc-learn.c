@@ -1009,7 +1009,7 @@ static char *get_chan_string(const char *string) {
 
 static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mnode, const char *string, omclearn_w *omclw) {
   LiVESWidget *label, *combo;
-  LiVESObject *spinadj;
+  LiVESWidgetObject *spinadj;
 
   LiVESCellRenderer *renderer;
   LiVESTreeViewColumn *column;
@@ -1171,7 +1171,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   if (renderer != NULL) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(renderer), "colnum", LIVES_UINT_TO_POINTER(OFFS1_COLUMN));
 
-    spinadj = (LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+    spinadj = (LiVESWidgetObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
     g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
@@ -1190,7 +1190,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_spin_new();
 
   if (renderer != NULL) {
-    spinadj = (LiVESObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
+    spinadj = (LiVESWidgetObject *)lives_adjustment_new(1., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
     g_object_set(renderer, "width-chars", 12, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,
@@ -1211,7 +1211,7 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   renderer = lives_cell_renderer_spin_new();
 
   if (renderer != NULL) {
-    spinadj = (LiVESObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
+    spinadj = (LiVESWidgetObject *)lives_adjustment_new(0., -100000., 100000., 1., 10., 0);
 
 #ifdef GUI_GTK
     g_object_set(renderer, "width-chars", 7, "mode", GTK_CELL_RENDERER_MODE_EDITABLE,

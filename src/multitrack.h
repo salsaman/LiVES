@@ -420,11 +420,11 @@ struct _mt {
   LiVESWidget *insa_checkbutton;
   LiVESWidget *snapo_checkbutton;
 
-  LiVESObject *spinbutton_in_adj;
-  LiVESObject *spinbutton_out_adj;
+  LiVESWidgetObject *spinbutton_in_adj;
+  LiVESWidgetObject *spinbutton_out_adj;
 
-  LiVESObject *hadjustment;
-  LiVESObject *node_adj;
+  LiVESWidgetObject *hadjustment;
+  LiVESWidgetObject *node_adj;
 
   LiVESList *audio_draws; ///< list of audio boxes, 0 == backing audio, 1 == track 0 audio, etc.
 
@@ -433,7 +433,7 @@ struct _mt {
 
   LiVESAccelGroup *accel_group;
   LiVESList *video_draws; ///< list of video timeline eventboxes, in layer order
-  LiVESObject *vadjustment;
+  LiVESWidgetObject *vadjustment;
 
   LiVESXDisplay *display;
 
@@ -855,7 +855,7 @@ void tc_to_re(LiVESMenuItem *, livespointer mt);
 void rs_to_tc(LiVESMenuItem *, livespointer mt);
 void re_to_tc(LiVESMenuItem *, livespointer mt);
 
-boolean mt_mark_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean mt_mark_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
 
 void multitrack_clear_marks(LiVESMenuItem *, livespointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
@@ -975,8 +975,8 @@ void mt_delete_clips(lives_mt *, int file);
 void mt_init_clips(lives_mt *, int orig_file, boolean add);
 
 // key shortcuts
-boolean mt_prevclip(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
-boolean mt_nextclip(LiVESAccelGroup *, LiVESObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean mt_prevclip(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
+boolean mt_nextclip(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer);
 
 typedef enum {
   /* default to warn about */

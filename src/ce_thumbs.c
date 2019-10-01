@@ -393,7 +393,7 @@ void start_ce_thumb_mode(void) {
 
     thumb_image = lives_image_new();
     lives_image_set_from_pixbuf(LIVES_IMAGE(thumb_image), thumbnail);
-    if (thumbnail != NULL) lives_object_unref(thumbnail);
+    if (thumbnail != NULL) lives_widget_object_unref(thumbnail);
     lives_container_add(LIVES_CONTAINER(clip_boxes[count]), align);
 
     if (rcount > 0) {

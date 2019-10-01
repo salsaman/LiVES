@@ -360,7 +360,7 @@ if (defined($ARGV[0])) {
             &rc_set_if_not_set("ce_maxspect", "true");
             &rc_set_if_not_set("lives_warning_mask", 797696);
 	    # bits 19,18,13,11 and 10
-            &rc_set_if_not_set("dl_bandwidth_K", 512);
+            &rc_set_if_not_set("dl_bandwidth_K", 5000);
             &rc_set_if_not_set("show_player_stats", "false");
             &rc_set_if_not_set("show_toolbar", "true");
             &rc_set_if_not_set("encoder_acodec", 1);
@@ -803,7 +803,7 @@ if (defined($ARGV[0])) {
                 exit 1;
             }
             if (!($vsize*$hsize)||$hsize==-1) {
-                &sig_complete(0,0);
+                &sig_complete_stdout(0,0);
                 exit 0;
             }
 
@@ -817,7 +817,7 @@ if (defined($ARGV[0])) {
             else {
                 smog_system("$smog_convert_command -antialias \"$file\" -resize $hsize"."x"."$vsize\\! $img_prefix\"$curworkdir/$name$img_ext\" > $nulfile 2>&1");
             }
-            &sig_complete($hsize,$vsize);
+            &sig_complete_stdout($hsize,$vsize);
             exit 0;
         }
 
@@ -1388,7 +1388,7 @@ if (defined($ARGV[0])) {
                 if (!$is_mpv) {
                     $ss = " -ss $ARGV[5] ";
                 } else {
-                    $ss = " -start=$ARGV[5] ";
+                    $ss = " --start=$ARGV[5] ";
                 }
             }
             $stframes = "";
@@ -1398,7 +1398,7 @@ if (defined($ARGV[0])) {
                 if (!$is_mpv) {
                     $stframes = " -frames $ARGV[6] ";
                 } else {
-                    $stframes = " -frames=$ARGV[6] ";
+                    $stframes = " --frames=$ARGV[6] ";
                 }
             }
 
@@ -1410,7 +1410,7 @@ if (defined($ARGV[0])) {
                 if ($extra_params eq "sendbandwidth") {
                     $bandwidth = &rc_get("dl_bandwidth_K");
                     if ($bandwidth eq "") {
-                        $bandwidth = 64;
+                        $bandwidth = 10000000;
                     }
                     $band = "-bandwidth $bandwidth"."000";
                     $extra_params = "";
@@ -1462,7 +1462,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if ($is_mpv) {
-		$aformnew="-audio-format=s16";
+		$aformnew="--audio-format=s16";
 	    }
 
 	    $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
@@ -1481,7 +1481,7 @@ if (defined($ARGV[0])) {
 		}
 		else {
 		    if ($is_mpv) {
-			$channs="-audio-channels=$achans";
+			$channs="--audio-channels=$achans";
 		    }
 		    else {
 			$channs="-channels $achans";
@@ -1489,10 +1489,10 @@ if (defined($ARGV[0])) {
 		}
 		if ($is_mpv) {
 		    if ($img_ext eq ".jpg") {
-			$img_fmt="-vo image:format=jpg:jpeg-quality=$quality";
+			$img_fmt="--vo image:format=jpg:jpeg-quality=$quality";
 		    }
 		    else {
-			$img_fmt="-vo image:format=png:png-compression=$compression";
+			$img_fmt="--vo image:format=png:png-compression=$compression";
 		    }
 		}
 		else {
@@ -1508,29 +1508,43 @@ if (defined($ARGV[0])) {
 		    $osd="-osdlevel 0";
 		    $threadopts="-lavdopts o=threads=$threads";
 		    $noframedrop="-noframedrop";
-		    $vcnull="-vc null";
 		    $audcom="-ao pcm:fast:$wavhead";
 		}
 		else {
-		    $osd="-osd-level=0";
-		    $threadopts="-vd-lavc-threads=$threads";
-		    $noframedrop="-framedrop=no";
-		    $vcnull="--no-video";
-		    $audcom="-ao=pcm:$wavhead";
+		    $osd="--osd-level=0";
+		    $threadopts="--vd-lavc-threads=$threads";
+		    $noframedrop="--framedrop=no";
+		    $audcom="--ao=pcm:$wavhead";
 		}
 
-		if ($withsound eq "0") {
-		    #video only
-		    $syscom="$mplay_command -quiet $band $osd $img_fmt $threadopts -fps 1000000. $ss $stframes $noframedrop -ao null \"$file\" $extra_params <$nulfile";
-		}
-		elsif ($withsound eq "1") {
-		    #video and audio
-		    $syscom=$mplay_command . " -quiet $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $stframes $audcom $channs $aformnew -mc 0"
-                        . "  \"$file\" $extra_params <$nulfile";
-		}
-		else {
-		    #audio only 
-		    $syscom=$mplay_command . " -quiet $band -vo null $vcnull $ss $stframes $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
+		if (!$is_mpv) {
+		    if ($withsound eq "0") {
+			#video only
+			$syscom="$mplay_command -quiet -noconfig all $band $osd $img_fmt $threadopts -fps 1000000. $ss $stframes $noframedrop -ao null \"$file\" $extra_params <$nulfile";
+		    }
+		    elsif ($withsound eq "1") {
+			#video and audio
+			$syscom=$mplay_command . " -quiet -noconfig all $band $osd -fps 1000000. $img_fmt $ss $threadopts $noframedrop $stframes $audcom $channs $aformnew -mc 0"
+			    . "  \"$file\" $extra_params <$nulfile";
+		    }
+		    else {
+			#audio only
+			$syscom=$mplay_command . " -quiet -noconfig all $band -vo null $ss $stframes $audcom $aformnew $channs \"$file\" $extra_params <$nulfile";
+		    }
+		} else {
+		    if ($withsound eq "0") {
+			#video only
+			$syscom="$mplay_command --no-config --quiet $osd $img_fmt $threadopts --fps=1000000. $ss $stframes $noframedrop --ao=null \"$file\" $extra_params";
+		    }
+		    elsif ($withsound eq "1") {
+			#video and audio
+			$syscom=$mplay_command . " --no-config --quiet $osd --fps=1000000. $img_fmt $ss $threadopts $noframedrop $stframes $audcom $channs $aformnew --mc=0"
+			    . "  \"$file\" $extra_params";
+		    }
+		    else {
+			#audio only
+			$syscom=$mplay_command . " --no-config --quiet --vo=null $ss $stframes $audcom $aformnew $channs \"$file\" $extra_params";
+		    }
 		}
 		if (defined($DEBUG_OPEN)) {
 		    print STDERR "open command for $handle is: $syscom\n";
@@ -1608,14 +1622,14 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # if the last frame has zero size, delete it
-	    if ($count>0) {
+	    if ($count > 0) {
 		$name=&mkname($count);
 		while ($count > 0 && -f "$name$img_ext" && -z "$name$img_ext") {
 		    unlink "$name$img_ext";
 		    $name=&mkname(--$count);
 		}
-		if ($count==0) {
-		    if ($img_ext==".png") {
+		if ($count == 0) {
+		    if ($img_ext == ".png") {
 			&sig_error("Your version of mplayer/ffmpeg may be broken","See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"," ", \
 				   "You can work around this by switching to jpeg output in Preferences/Decoding.");
 		    }
@@ -1626,7 +1640,7 @@ if (defined($ARGV[0])) {
 		    $name=&mkname(1);
 		    $imresact="none";
 		    &get_image_size("$name$img_ext");
-		    if ($panic||$hsize==-1) {
+		    if ($panic || $hsize==-1) {
 			unlink $pidfile;
 			&sig_error;
 		    }
@@ -1634,7 +1648,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if (-f $audio_in) {
-		smog_rename( "$audio_in","$audio_out");
+		smog_rename("$audio_in", "$audio_out");
 		$af_size = -s $audio_out;
 	    }
 
@@ -1646,12 +1660,12 @@ if (defined($ARGV[0])) {
 		# try as best we can to sync sound and video for a selection
 		$audio_out=&clip_audio(0.3,1000000.);
 		if (!$panic) {
-		    smog_rename( "$audio_out","audio");
+		    smog_rename("$audio_out","audio");
 		}
 		$audio_out="audio";
 	    }
 
-	    if ($count==0||$type eq "jpeg"||$type eq "png"||$type eq "Audio") {
+	    if ($count == 0 || $type eq "jpeg" || $type eq "png" || $type eq "Audio") {
 		# we could have audio or images
 		if (-f $audio_out) {
 		    # just in case...
@@ -1662,13 +1676,13 @@ if (defined($ARGV[0])) {
 		    exit 1;
 		}
 
-		if ($af_size>0||$count>0) {
-		    &sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
+		if ($af_size>0 || $count > 0) {
+		    &sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, $endian, $af_size, $title, $author, $comment);
 		    exit 0;
 		}
 		# should have audio then
 		if (!($type eq "Audio")) {
-		    if (!defined($DEBUG_OPEN)&&$withsound>=0) {
+		    if (!defined($DEBUG_OPEN) && $withsound >= 0) {
 			print STDERR "\nFailed to open file - I tried:\n\n $syscom\n";
 			if (!$is_mpv) {
 			    print STDERR "\nMaybe you are missing a library in mplayer (or it is not a valid media file) ?\n";
@@ -1683,7 +1697,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # mplayer seems to sometimes output one extra frame for jpg
-	    if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG)&&($count==$xframes+1)&&(($frames eq "")||(!($frames eq "") && ($count<$ARGV[4])||($ARGV[3]==0)))) {
+	    if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG) && ($count == $xframes + 1) && (($frames eq "") || (!($frames eq "") && ($count < $ARGV[4]) || ($ARGV[3] == 0)))) {
 		$name=&mkname($count);
 		unlink "$name$img_ext";
 		$count--;
@@ -1694,16 +1708,16 @@ if (defined($ARGV[0])) {
 		if ($fps<1) {
 		    $tfps=1;
 		}
-		if ($ARGV[3]>=(1/$tfps)) {
+		if ($ARGV[3] >= (1 / $tfps)) {
 		    # if we opened a selection, mplayer wrongly outputs frame 1,
 		    # so we usually need to delete it
 
 		    #TODO ** - check if this is still the case
 
-		    for ($i=2;$i<=$count;$i++) {
+		    for ($i=2; $i <= $count; $i++) {
 			$from=&mkname($i);
 			$to=&mkname($i-1);
-			smog_rename( "$from$img_ext", "$to$img_ext");
+			smog_rename("$from$img_ext", "$to$img_ext");
 		    }
 		    $count--;
 		}
@@ -1716,7 +1730,7 @@ if (defined($ARGV[0])) {
 
 	    $af_size= -s $audio_out;
 	    if (-d $curworkdir) {
-		&sig_complete($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
+		&sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, $endian, $af_size, $title, $author, $comment);
 	    }
 	    exit 0;
 	}
@@ -1749,7 +1763,7 @@ if (defined($ARGV[0])) {
 
 	    smog_chdir("$curworkdir");
 
-	    &sig_complete_stdout($handle,$count,$type,$hsize,$vsize,$bpp,$fps,$f_size,$arate,$achans,$asamps,$signed,$endian,$af_size,$title,$author,$comment);
+	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, $endian, $af_size, $title, $author, $comment);
 
 	    exit 0;
 	}
@@ -2853,6 +2867,7 @@ if (defined($ARGV[0])) {
 	    exit 0;
 	}
 
+
 	if ($command eq "fs_preview") {
 	    $win = $ARGV[2];
 	    $hsize = $ARGV[3];
@@ -2862,13 +2877,43 @@ if (defined($ARGV[0])) {
 	    $file = $ARGV[7];
 	    $extra_params = $ARGV[8];
 	    $mplayer_command = &get_mplayer_location;
-
-	    $com = "\"$mplayer_command\" -quiet -wid $win -vo x11 -ss $start_time -frames $preview_frames \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
-
+	    $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    $threads=int($threads);
+	    if ($threads==0) {
+		$threads=1;
+	    }
+	    if ($preview_frames >= 0) {
+		if (!$is_mpv) {
+		    if ($preview_frames > 0) {
+			$framestr = "-frames $preview_frames";
+		    } else {
+			$framestr = "";
+		    }
+		    $threadopts="-lavdopts o=threads=$threads";
+		    $com = "\"$mplayer_command\" -vo x11 -zoom -really-quiet -noconfig all -osdlevel 0 -wid $win $threadopts -vf dsize=$hsize:$vsize:0 -ss $start_time $framestr \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
+		} else {
+		    if ($preview_frames > 0) {
+			$framestr = "--frames=$preview_frames";
+		    } else {
+			$framestr = "";
+		    }
+		    $threadopts="--vd-lavc-threads=$threads";
+		    $com = "\"$mplayer_command\" --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win --vf=dsize=$hsize:$vsize:0 $threadopts --start=$start_time $framestr \"$file\" $extra_params >$nulfile 2>&1";
+		}
+	    } else {
+		#audio only
+		if (!$is_mpv) {
+		    $com = "\"$mplayer_command\" -really-quiet -noconfig all -vo null \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
+		} else {
+		    $com = "\"$mplayer_command\" --really-quiet --no-config --vo=null \"$file\" $extra_params >$nulfile 2>&1";
+		}
+	    }
+	    //print "COM is $com\n";
 	    smog_system($com);
 	    &sig_complete;
 	    exit 0;
 	}
+
 
 	if ($command eq "mv_mgk") {
 	    unlink "$curworkdir/pause";
@@ -5139,10 +5184,10 @@ sub get_mplayer_info {
 
     if (defined($is_remote) && ($is_remote > 0)) {
 	# remote files might be streams, so we need to cache a bit before we can identify them
-        $com = "$mplay_command -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+        $com = "$mplay_command -nconfig all -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 
     } else {
-        $com = "$mplay_command -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+        $com = "$mplay_command -noconfig all -identify -vo null -ao null -frames 0 -nocache \"$file\" > $file_ident 2>$nulfile <$nulfile";
     }
 
     $smerr = smog_system($com);
@@ -5159,7 +5204,7 @@ sub get_mplayer_info {
         chomp($length);
 
         if ($length eq "0" && !(defined($is_remote) && ($is_remote > 0))) {
-            $com = "$mplay_command -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+            $com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
 
             $smerr = smog_system($com);
 

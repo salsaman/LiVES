@@ -1699,10 +1699,10 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
         // move p%d up so when we remove the row the numbering is ok
         entry2 = rfxbuilder->entry[i];
         ebox = lives_widget_get_parent(rfxbuilder->entry[i]);
-        lives_object_ref(entry2);
+        lives_widget_object_ref(entry2);
         lives_widget_unparent(entry2);
         lives_container_add(LIVES_CONTAINER(ebox), entry);
-        lives_object_unref(entry);
+        lives_widget_object_unref(entry);
         entry = entry2;
 #endif
 
@@ -1721,7 +1721,7 @@ void on_table_delete_row(LiVESButton *button, livespointer user_data) {
 
 #if LIVES_TABLE_IS_GRID
         entry = rfxbuilder->entry[i];
-        lives_object_ref(entry);
+        lives_widget_object_ref(entry);
         lives_widget_unparent(entry);
         lives_grid_remove_row(LIVES_GRID(rfxbuilder->table), i);
 #else
@@ -2708,8 +2708,8 @@ void on_code_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
 
-  lives_object_ref(lives_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow)));
-  lives_object_ref(lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow)));
+  lives_widget_object_ref(lives_scrolled_window_get_hadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow)));
+  lives_widget_object_ref(lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(scrolledwindow)));
 
   lives_text_view_set_editable(LIVES_TEXT_VIEW(rfxbuilder->code_textview), TRUE);
   lives_text_view_set_wrap_mode(LIVES_TEXT_VIEW(rfxbuilder->code_textview), LIVES_WRAP_WORD);
@@ -3599,7 +3599,7 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
 
 
 LiVESList *get_script_section(const char *section, const char *file, boolean strip) {
-  char *com = lives_strdup_printf("\"%s\" -get \"%s\" \"%s\"", RFX_BUILDER, section, file);
+  char *com = lives_strdup_printf("\"%s\" -get \"%s\" \"%s\"", EXEC_RFX_BUILDER, section, file);
   LiVESList *list = get_plugin_result(com, "\n", FALSE, strip);
   lives_free(com);
   return list;
@@ -3652,18 +3652,18 @@ boolean check_builder_programs(void) {
   char loc[32];
   char *msg;
 
-  get_location(RFX_BUILDER, loc, 32);
+  get_location(EXEC_RFX_BUILDER, loc, 32);
   if (!strlen(loc)) {
     msg = lives_strdup_printf(_("\n\nLiVES was unable to find the program %s.\nPlease check this program is in your path and executable.\n"),
-                              RFX_BUILDER);
+                              EXEC_RFX_BUILDER);
     do_blocking_error_dialog(msg);
     lives_free(msg);
     return FALSE;
   }
-  get_location(RFX_BUILDER_MULTI, loc, 32);
+  get_location(EXEC_RFX_BUILDER_MULTI, loc, 32);
   if (!strlen(loc)) {
     msg = lives_strdup_printf(_("\n\nLiVES was unable to find the program %s.\nPlease check this program is in your path and executable.\n"),
-                              RFX_BUILDER_MULTI);
+                              EXEC_RFX_BUILDER_MULTI);
     do_blocking_error_dialog(msg);
     lives_free(msg);
     return FALSE;
@@ -4547,7 +4547,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
     lives_widget_set_sensitive(mainw->run_test_rfx_submenu, TRUE);
     lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->run_test_rfx_submenu), mainw->run_test_rfx_menu);
   } else {
-    lives_object_ref_sink(mainw->run_test_rfx_menu);
+    lives_widget_object_ref_sink(mainw->run_test_rfx_menu);
   }
 
   threaded_dialog_spin(0.);

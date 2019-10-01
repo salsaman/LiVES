@@ -328,7 +328,6 @@ typedef struct {
 
 typedef  void *(*fn_ptr)(void *ptr);
 
-#define ALLOW_MPV
 #define ALLOW_PNG24
 
 /// this struct is used only when physically resampling frames on the disk
@@ -740,6 +739,7 @@ typedef struct {
   boolean can_write_to_workdir;
 
   // the following may need checking before use
+  boolean has_perl;
   boolean has_dvgrab;
   boolean has_sox_play;
   boolean has_sox_sox;
@@ -805,7 +805,10 @@ typedef struct {
 } capability;
 
 /// some shared structures
-extern capability *capable;
+capability *capable;
+
+#define USE_MPV (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv)
+#define HAS_EXTERNAL_PLAYER (capable->has_mplayer || capable->has_mplayer2 || capable->has_mpv)
 
 #ifdef ENABLE_JACK
 #include "jack.h"

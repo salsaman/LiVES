@@ -350,91 +350,96 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
 // key callback functions - ones which have keys and need wrappers
 
-boolean slower_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_slower_pressed(NULL, user_data);
   return TRUE;
 }
 
 
-boolean faster_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_faster_pressed(NULL, user_data);
   return TRUE;
 }
 
 
-boolean skip_back_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean skip_back_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                           livespointer user_data) {
   on_back_pressed(NULL, user_data);
   return TRUE;
 }
 
 
-boolean skip_forward_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean skip_forward_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                              livespointer user_data) {
   on_forward_pressed(NULL, user_data);
   return TRUE;
 }
 
 
-boolean stop_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean stop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_stop_activate(NULL, NULL);
   return TRUE;
 }
 
 
-boolean fullscreen_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                            livespointer user_data) {
   on_full_screen_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean sepwin_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_sepwin_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean loop_cont_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean loop_cont_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                           livespointer user_data) {
   on_loop_button_activate(NULL, NULL);
   return TRUE;
 }
 
 
-boolean ping_pong_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean ping_pong_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                           livespointer user_data) {
   on_ping_pong_activate(NULL, NULL);
   return TRUE;
 }
 
 
-boolean fade_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean fade_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_fade_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean showfct_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean showfct_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), prefs->hide_framebar);
   return TRUE;
 }
 
 
-boolean showsubs_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean showsubs_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs), !prefs->show_subtitles);
   return TRUE;
 }
 
 
-boolean loop_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean loop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), !mainw->loop);
   return TRUE;
 }
 
 
-boolean dblsize_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean dblsize_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   on_double_size_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean rec_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rec_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),
                                    !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf)));
   return TRUE;

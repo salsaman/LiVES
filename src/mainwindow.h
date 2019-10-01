@@ -327,7 +327,31 @@ enum {
   NUM_LIVES_STRING_CONSTANTS
 };
 
-#define BIN_YOUTUBE_DL "youtube-dl"
+// executables
+#define EXEC_PERL "perl"
+#define EXEC_PYTHON "python"
+#define EXEC_YOUTUBE_DL "youtube-dl"
+#define EXEC_MPLAYER "mplayer"
+#define EXEC_MPLAYER2 "mplayer2"
+#define EXEC_MPV "mpv"
+#define EXEC_JACKD "jackd"
+#define EXEC_PULSEAUDIO "pulseaudio"
+#define EXEC_CONVERT "convert"
+#define EXEC_COMPOSITE "composite"
+#define EXEC_IDENTIFY "identify"
+#define EXEC_PLAY "play"
+#define EXEC_SOX "sox"
+#define EXEC_DVGRAB "dvgrab"
+#define EXEC_CDDA2WAV "cdda2wav"
+#define EXEC_ICEDAX "icedax"
+#define EXEC_GDB "gdb"
+#define EXEC_SSH_ASKPASS "ssh-askpass"
+#define EXEC_XWININFO "xwininfo"
+#define EXEC_GCONFTOOL_2 "gconftool-2"
+#define EXEC_XDG_SCREENSAVER "xdg-screensaver"
+#define EXEC_MIDISTART "midistart"
+#define EXEC_MIDISTOP "midistop"
+#define EXEC_AUTOLIVES_PL "autolives.pl"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
@@ -752,6 +776,7 @@ typedef struct {
   ulong mute_audio_func;
   ulong fullscreen_cb_func;
   ulong sepwin_cb_func;
+  ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong sw_func; ///< scrolledwindow expose func
 
   // for jack transport
@@ -929,6 +954,7 @@ typedef struct {
   LiVESWidget *fs_playarea;
   LiVESWidget *fs_playalign;
   LiVESWidget *fs_playframe;
+  LiVESWidget *fs_playimg;
 
   /// for the framedraw special widget - TODO - use a sub-struct
   LiVESWidget *framedraw; ///< the eventbox

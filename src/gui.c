@@ -69,9 +69,9 @@ void load_theme_images(void) {
 
   pixbuf = lives_pixbuf_new_from_file(mainw->sepimg_path, &error);
 
-  if (mainw->imsep != NULL) lives_object_unref(mainw->imsep);
+  if (mainw->imsep != NULL) lives_widget_object_unref(mainw->imsep);
   mainw->imsep = NULL;
-  if (mainw->imframe != NULL) lives_object_unref(mainw->imframe);
+  if (mainw->imframe != NULL) lives_widget_object_unref(mainw->imframe);
   mainw->imframe = NULL;
 
   if (error != NULL) {
@@ -91,7 +91,7 @@ void load_theme_images(void) {
         height *= prefs->screen_scale;
       }
       mainw->imsep = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
-      lives_object_unref(pixbuf);
+      lives_widget_object_unref(pixbuf);
     }
 
     lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->sep_image), mainw->imsep);
@@ -114,7 +114,7 @@ void load_theme_images(void) {
         if (height > FRAMEBLANK_MAX_HEIGHT) height = FRAMEBLANK_MAX_HEIGHT;
 
         mainw->imframe = lives_pixbuf_scale_simple(pixbuf, width, height, LIVES_INTERP_BEST);
-        lives_object_unref(pixbuf);
+        lives_widget_object_unref(pixbuf);
       }
     }
   }
@@ -469,10 +469,11 @@ void create_LiVES(void) {
   mainw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
   mainw->layout_textbuffer = lives_text_buffer_new();
-  lives_object_ref(mainw->layout_textbuffer);
+  lives_widget_object_ref(mainw->layout_textbuffer);
   mainw->affected_layouts_map = NULL;
 
   lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
+
   if (new_lives) {
 #ifdef GUI_GTK
     // TODO - can we use just DEFAULT_DROP ?
@@ -639,8 +640,9 @@ void create_LiVES(void) {
 #endif
 
 #ifdef HAVE_YUV4MPEG
+  // TODO: mpv
   if (capable->has_dvgrab) {
-    if (capable->has_mplayer || capable->has_mplayer2) {
+    if (HAS_EXTERNAL_PLAYER && !USE_MPV) {
       lives_container_add(LIVES_CONTAINER(submenu), mainw->firewire);
 
       lives_signal_connect(LIVES_GUI_OBJECT(mainw->firewire), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -1770,7 +1772,7 @@ void create_LiVES(void) {
       lives_container_add(LIVES_CONTAINER(mainw->vol_label), label);
       lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_label), -1);
     }
-  } else lives_object_unref(adj);
+  } else lives_widget_object_unref(adj);
 
   mainw->vol_toolitem = LIVES_WIDGET(lives_tool_item_new());
 
@@ -1894,6 +1896,7 @@ void create_LiVES(void) {
 
   mainw->eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, FALSE, FALSE, 0);
+  lives_widget_add_events(mainw->eventbox, LIVES_SCROLL_MASK);
 
   lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox99);
 
@@ -1911,7 +1914,7 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(mainw->framebar), mainw->vps_label, FALSE, FALSE, widget_opts.packing_width);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
-  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 1, -FPS_MAX, FPS_MAX, 0.1, 1., 3,
+  mainw->spinbutton_pb_fps = lives_standard_spin_button_new(NULL, 0., -FPS_MAX, FPS_MAX, 0.1, 1., 3,
                              LIVES_BOX(mainw->framebar), _("Vary the video speed"));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
@@ -2023,9 +2026,9 @@ void create_LiVES(void) {
   mainw->play_image = lives_image_new_from_pixbuf(NULL);
 
   lives_widget_show(mainw->play_image); // needed to get size
-  lives_object_ref(mainw->play_image);
+  lives_widget_object_ref(mainw->play_image);
 
-  lives_object_ref_sink(mainw->play_image);
+  lives_widget_object_ref_sink(mainw->play_image);
 
   mainw->hbox3 = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->hbox3, FALSE, FALSE, 0);
@@ -2220,11 +2223,17 @@ void create_LiVES(void) {
   lives_widget_set_vexpand(mainw->message_box, TRUE);
   if (prefs->show_msg_area)
     lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->message_box, TRUE, TRUE, 0);
-  else lives_object_ref_sink(mainw->message_box);
+  else lives_widget_object_ref_sink(mainw->message_box);
 
   mainw->msg_area = lives_standard_drawing_area_new(LIVES_GUI_CALLBACK(expose_msg_area), &mainw->sw_func);
-  lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
+  //lives_signal_handler_block(mainw->msg_area, mainw->sw_func);
 
+  if (prefs->show_msg_area) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
+                               LIVES_GUI_CALLBACK(config_event2),
+                               NULL);
+    lives_widget_add_events(mainw->msg_area, GDK_SMOOTH_SCROLL_MASK);
+  }
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mainw->message_box), 0);
@@ -3031,14 +3040,14 @@ void set_interactive(boolean interactive) {
   LiVESList *list;
 
   if (!interactive) {
-    lives_object_ref(mainw->menubar);
+    lives_widget_object_ref(mainw->menubar);
     lives_widget_unparent(mainw->menubar);
     lives_widget_hide(mainw->btoolbar);
     lives_widget_set_sensitive(mainw->menubar, FALSE);
     lives_widget_set_sensitive(mainw->btoolbar, FALSE);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->hruler);
     if (mainw->multitrack != NULL) {
-      lives_object_ref(mainw->multitrack->menubar);
+      lives_widget_object_ref(mainw->multitrack->menubar);
       lives_widget_unparent(mainw->multitrack->menubar);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, mainw->multitrack->timeline);
       lives_widget_set_sensitive(mainw->multitrack->menubar, FALSE);
@@ -3076,7 +3085,7 @@ void set_interactive(boolean interactive) {
   } else {
     if (lives_widget_get_parent(mainw->menubar) == NULL) {
       //lives_box_pack_start(LIVES_BOX(mainw->menu_hbox), mainw->menubar, FALSE, FALSE, 0);
-      //lives_object_unref(mainw->menubar);
+      //lives_widget_object_unref(mainw->menubar);
     }
     lives_widget_show(mainw->btoolbar);
     lives_widget_set_sensitive(mainw->menubar, TRUE);
@@ -3088,7 +3097,7 @@ void set_interactive(boolean interactive) {
       lives_set_cursor_style(LIVES_CURSOR_CENTER_PTR, mainw->multitrack->timeline);
       if (lives_widget_get_parent(mainw->multitrack->menubar) == NULL) {
         lives_box_pack_start(LIVES_BOX(mainw->multitrack->menu_hbox), mainw->multitrack->menubar, FALSE, FALSE, 0);
-        lives_object_unref(mainw->multitrack->menubar);
+        lives_widget_object_unref(mainw->multitrack->menubar);
       }
       lives_widget_show_all(mainw->multitrack->menubar);
 
@@ -3523,7 +3532,7 @@ void make_preview_box(void) {
   char *tmp, *tmp2;
 
   mainw->preview_box = lives_vbox_new(FALSE, 0);
-  lives_object_ref(mainw->preview_box);
+  lives_widget_object_ref(mainw->preview_box);
 
   eventbox = lives_event_box_new();
   lives_widget_set_events(eventbox, LIVES_SCROLL_MASK);
@@ -3895,7 +3904,6 @@ void make_play_window(void) {
   }
 
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
-  //  lives_window_set_hide_titlebar_when_maximized(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET),TRUE);
 
   if (prefs->show_gui) {
     LiVESWindow *transient;
@@ -4559,7 +4567,7 @@ void splash_init(void) {
 
     lives_box_pack_start(LIVES_BOX(vbox), splash_img, TRUE, TRUE, 0);
 
-    if (splash_pix != NULL) lives_object_unref(splash_pix);
+    if (splash_pix != NULL) lives_widget_object_unref(splash_pix);
 
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
     mainw->splash_label = lives_standard_label_new("");

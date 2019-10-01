@@ -1210,7 +1210,7 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   if (type == 1) {
     frame = lives_standard_frame_new(_("Current"), 0., FALSE);
 
-    lives_box_pack_start(LIVES_BOX(vboxx), frame, TRUE, TRUE, 0);
+    lives_box_pack_start(LIVES_BOX(vboxx), frame, FALSE, TRUE, 0);
 
     hbox2 = lives_hbox_new(FALSE, 0);
     lives_container_add(LIVES_CONTAINER(frame), hbox2);
@@ -1634,7 +1634,7 @@ void create_new_pb_speed(short type) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));
 
-  vbox = lives_vbox_new(FALSE, 0);
+  vbox = lives_vbox_new(FALSE, widget_opts.packing_height * 2);
 
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
 
@@ -1694,6 +1694,8 @@ void create_new_pb_speed(short type) {
                        (_("Change the _audio speed as well"), FALSE, LIVES_BOX(ca_hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
+
+  add_fill_to_box(LIVES_BOX(vbox));
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);

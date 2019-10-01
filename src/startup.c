@@ -612,7 +612,6 @@ boolean do_startup_tests(boolean tshoot) {
   // check for mplayer presence
   success2 = TRUE;
 
-#ifdef ALLOW_MPV
   add_test(table, 2, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"), TRUE);
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
@@ -623,14 +622,6 @@ boolean do_startup_tests(boolean tshoot) {
     success2 = FALSE;
   }
 
-#else
-  add_test(table, 2, _("Checking for \"mplayer\" or \"mplayer2\" presence"), TRUE);
-
-  if (!capable->has_mplayer && !capable->has_mplayer2) {
-    success2 = fail_test(table, 2, _("You should install mplayer or mplayer2 to be able to use all the decoding features in LiVES"));
-  }
-
-#endif
   if (!success2) {
     if (!success) {
       lives_widget_destroy(dialog);
@@ -655,9 +646,9 @@ boolean do_startup_tests(boolean tshoot) {
 
   // check if mplayer can decode audio
 
-  if (capable->has_mplayer) mp_cmd = AUDIO_PLAYER_MPLAYER;
-  else if (capable->has_mplayer2) mp_cmd = AUDIO_PLAYER_MPLAYER2;
-  else mp_cmd = "mpv";
+  if (capable->has_mplayer) mp_cmd = EXEC_MPLAYER;
+  else if (capable->has_mplayer2) mp_cmd = EXEC_MPLAYER2;
+  else mp_cmd = EXEC_MPV;
 
   get_location(mp_cmd, mppath, PATH_MAX);
   lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
@@ -684,11 +675,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (res == 0) {
     pass_test(table, 3);
   } else {
-#ifdef ALLOW_MPV
     fail_test(table, 3, _("You should install mplayer,mplayer2 or mpv with pcm/wav support"));
-#else
-    fail_test(table, 3, _("You should install mplayer or mplayer2 with pcm/wav support"));
-#endif
   }
 
   // check if mplayer can decode to png/(alpha)

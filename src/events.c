@@ -2126,12 +2126,12 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
 
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(e_rec_dialog));
 
-  vbox = lives_vbox_new(FALSE, 0);
+  vbox = lives_vbox_new(FALSE, widget_opts.packing_height * 4);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
 
   label = lives_standard_label_new(_("Events were recorded. What would you like to do with them ?"));
 
-  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, TRUE, 0 * 2);
+  lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, TRUE, 0);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -2180,6 +2180,8 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+
+  add_fill_to_box(LIVES_BOX(vbox));
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(set_render_choice),
@@ -3512,7 +3514,7 @@ lives_render_error_t render_events(boolean reset) {
               pixbuf = mainw->scrap_pixbuf;
             } else {
               if (mainw->scrap_pixbuf != NULL) {
-                lives_object_unref(mainw->scrap_pixbuf);
+                lives_widget_object_unref(mainw->scrap_pixbuf);
                 mainw->scrap_pixbuf = NULL;
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
@@ -3800,7 +3802,7 @@ lives_render_error_t render_events(boolean reset) {
 
       // if our pixbuf came from scrap file, and next frame is also from scrap file with same frame number, save the pixbuf and re-use it
       if (scrap_track != -1) mainw->scrap_pixbuf = pixbuf;
-      else if (pixbuf != NULL) lives_object_unref(pixbuf);
+      else if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
       break;
     case WEED_EVENT_HINT_FILTER_INIT:
       // effect init
@@ -4368,7 +4370,7 @@ boolean render_to_clip(boolean new_clip) {
     }
     mainw->event_list = NULL;
     if (mainw->scrap_pixbuf != NULL) {
-      lives_object_unref(mainw->scrap_pixbuf);
+      lives_widget_object_unref(mainw->scrap_pixbuf);
       mainw->scrap_pixbuf = NULL;
     }
     if (new_clip) {

@@ -8931,7 +8931,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
         LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
         weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-        lives_object_unref(pixbuf);
+        lives_widget_object_unref(pixbuf);
       } else {
         if (gusrc_array[0] != NULL) lives_free(gusrc_array[0]);
         if (!contig) {
@@ -9051,7 +9051,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
         LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
         weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-        lives_object_unref(pixbuf);
+        lives_widget_object_unref(pixbuf);
       } else {
         if (gusrc_array[0] != NULL) lives_free(gusrc_array[0]);
         if (!contig) {
@@ -9629,7 +9629,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
         LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
         weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-        lives_object_unref(pixbuf);
+        lives_widget_object_unref(pixbuf);
       } else {
         if (gusrc_array[0] != NULL) lives_free(gusrc_array[0]);
         if (!contig) {
@@ -9757,7 +9757,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
         LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
         weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-        lives_object_unref(pixbuf);
+        lives_widget_object_unref(pixbuf);
       } else {
         if (gusrc_array[0] != NULL) lives_free(gusrc_array[0]);
         if (!contig) {
@@ -9894,7 +9894,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
     if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
       LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-      lives_object_unref(pixbuf);
+      lives_widget_object_unref(pixbuf);
     } else {
       lives_free(gusrc);
     }
@@ -10805,7 +10805,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, lives_pixbuf_get_rowstride(new_pixbuf));
     }
 
-    lives_object_unref(pixbuf);
+    lives_widget_object_unref(pixbuf);
 
     break;
   default:
@@ -10824,7 +10824,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   }
 
   if (new_pixbuf != NULL) {
-    if (!pixbuf_to_layer(layer, new_pixbuf)) lives_object_unref(new_pixbuf);
+    if (!pixbuf_to_layer(layer, new_pixbuf)) lives_widget_object_unref(new_pixbuf);
   }
 
   return retval;
@@ -11134,7 +11134,7 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
   /* code example:
 
   if (pixbuf != NULL) {
-    if (!pixbuf_to_layer(layer, pixbuf)) lives_object_unref(pixbuf);
+    if (!pixbuf_to_layer(layer, pixbuf)) lives_widget_object_unref(pixbuf);
     // else do NOT unref the pixbuf !!!!
   }
 
@@ -11539,7 +11539,7 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
           LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
           weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-          if (pixbuf != NULL) lives_object_unref(pixbuf);
+          if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
         } else {
           for (i = 0; i < pd_elements; i++) {
             if (pixel_data[i] != NULL) lives_free(pixel_data[i]);
@@ -11624,5 +11624,5 @@ void insert_blank_frames(int sfileno, int nframes, int after) {
 
   sfile->frames += nframes;
 
-  if (blankp != NULL) lives_object_unref(blankp);
+  if (blankp != NULL) lives_widget_object_unref(blankp);
 }

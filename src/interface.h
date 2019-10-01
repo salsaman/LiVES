@@ -36,7 +36,8 @@ EXPOSE_FN_PROTOTYPE(expose_msg_area);
 boolean get_screen_usable_size(int *w, int *h);
 
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
-LiVESWidget *create_opensel_dialog(void);
+LiVESWidget *create_opensel_dialog(double frames, double fps);
+
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
 
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button,

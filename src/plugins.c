@@ -3579,7 +3579,7 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
   // call RFX_BUILDER program to compile the script, passing parameters input_filename and output_directory
-  com = lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s", RFX_BUILDER, rfxfile, prefs->workdir, LIVES_DEVNULL);
+  com = lives_strdup_printf("\"%s\" \"%s\" \"%s\" >%s", EXEC_RFX_BUILDER, rfxfile, prefs->workdir, LIVES_DEVNULL);
   res = lives_system(com, TRUE);
   lives_free(com);
 

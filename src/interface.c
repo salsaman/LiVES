@@ -69,6 +69,8 @@ static void pv_sel_changed(LiVESFileChooser *chooser, livespointer user_data) {
   LiVESSList *slist = lives_file_chooser_get_filenames(chooser);
   LiVESWidget *pbutton = (LiVESWidget *)user_data;
 
+  end_fs_preview();
+
   if (slist == NULL || lives_slist_nth_data(slist, 0) == NULL || lives_slist_length(slist) > 1 ||
       !(lives_file_test((char *)lives_slist_nth_data(slist, 0), LIVES_FILE_TEST_IS_REGULAR))) {
     lives_widget_set_sensitive(pbutton, FALSE);
@@ -255,7 +257,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   char *filename;
 
-  double offset = 0;
   double allocwidth;
   double allocheight;
   double atime;
@@ -651,12 +652,12 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   if (which == 0) {
     // playback cursors
     if (LIVES_IS_PLAYING) {
-      if (cfile->frames > 0) {
-        draw_little_bars((mainw->actual_frame - 1.) / cfile->fps, 0);
-      }
-      if (cfile->frames == 0) {
-        lives_ce_update_timeline(0, offset);
-      }
+      //      if (cfile->frames > 0) {
+      draw_little_bars((mainw->actual_frame - 1.) / cfile->fps, 0);
+      /* } */
+      /* if (cfile->frames == 0) { */
+      /*   lives_ce_update_timeline(0, offset); */
+      /* } */
     }
 
     if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {
@@ -936,32 +937,56 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
       preview_type == LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
     mainw->fs_playframe = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
-    mainw->fs_playalign = lives_alignment_new(0., 0., 1., 1.);
+    mainw->fs_playalign = lives_alignment_new(0.5, 0.5, 1., 1.);
+
+    mainw->fs_playimg = lives_image_new_from_pixbuf(NULL);
+    lives_widget_set_no_show_all(mainw->fs_playimg, TRUE);
+    lives_widget_set_app_paintable(mainw->fs_playimg, TRUE);
+
     mainw->fs_playarea = lives_event_box_new();
+
+    lives_widget_nullify_with(widget, (void **)&mainw->fs_playframe);
+    lives_widget_nullify_with(widget, (void **)&mainw->fs_playarea);
+    lives_widget_nullify_with(widget, (void **)&mainw->fs_playalign);
+    lives_widget_nullify_with(widget, (void **)&mainw->fs_playimg);
+
+    lives_widget_apply_theme(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_apply_theme(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_set_fg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+
+    lives_widget_apply_theme(mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL);
 
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->fs_playarea), "pixbuf", NULL);
 
-    lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), widget_opts.border_width);
+    lives_container_set_border_width(LIVES_CONTAINER(mainw->fs_playframe), 0);
 
-    lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, FALSE, 0);
+    lives_box_pack_start(for_preview, mainw->fs_playframe, FALSE, TRUE, 0);
 
-    lives_widget_set_size_request(mainw->fs_playarea, DEFAULT_FRAME_HSIZE_UNSCALED / 2, DEFAULT_FRAME_VSIZE_UNSCALED / 2);
-
+    if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
+      lives_widget_set_size_request(mainw->fs_playframe,
+                                    (int)(DEFAULT_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2,
+                                    (int)(DEFAULT_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2);
+    } else {
+      lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
+    }
     lives_container_add(LIVES_CONTAINER(mainw->fs_playframe), mainw->fs_playalign);
     lives_container_add(LIVES_CONTAINER(mainw->fs_playalign), mainw->fs_playarea);
-
-    lives_widget_set_bg_color(mainw->fs_playarea, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-    lives_widget_set_bg_color(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL, &palette->black);
-
-  } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = NULL; // AUDIO_ONLY
+    lives_container_add(LIVES_CONTAINER(mainw->fs_playarea), mainw->fs_playimg);
+  } else mainw->fs_playframe = mainw->fs_playalign = mainw->fs_playarea = mainw->fs_playimg = NULL; // AUDIO_ONLY
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
-    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview any selected video, image or audio file"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selected Video, Image or Audio File"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
-    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview any selected audio file"));
+    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the Selected Audio File"));
   } else if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the video"));
+    widget_opts.expand = LIVES_EXPAND_NONE;
+    preview_button = lives_button_new_with_label(_("\nClick here to _Preview the Selection\n"));
+    lives_widget_apply_theme(preview_button, LIVES_WIDGET_STATE_NORMAL);
+    lives_widget_set_hexpand(mainw->fs_playframe, TRUE);
+    lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
+    lives_widget_set_halign(preview_button, LIVES_ALIGN_CENTER);
+    lives_widget_set_size_request(preview_button, DEF_BUTTON_WIDTH * 4, -1);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
   } else {
     preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the file"));
   }
@@ -976,7 +1001,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
                        LIVES_GUI_CALLBACK(on_fs_preview_clicked),
                        LIVES_INT_TO_POINTER(preview_type));
 
-  if (LIVES_IS_FILE_CHOOSER(widget)) {
+  if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
     lives_widget_set_sensitive(preview_button, FALSE);
 
     lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_SELECTION_CHANGED_SIGNAL,
@@ -1167,7 +1192,7 @@ xprocess *create_processing(const char *text) {
 
   procw->stop_button = NULL;
 
-  if (mainw->current_file > -1) {
+  if (CURRENT_CLIP_IS_VALID) {
     if (cfile->opening_loc
 #ifdef ENABLE_JACK
         || mainw->jackd_read != NULL
@@ -1181,7 +1206,6 @@ xprocess *create_processing(const char *text) {
                            LIVES_RESPONSE_ACCEPT); // used only for open location and for audio recording
       lives_widget_set_can_default(procw->stop_button, TRUE);
     }
-
 
     if (cfile->nokeep) procw->pause_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("Paus_e"),
           LIVES_RESPONSE_ACCEPT);
@@ -1849,7 +1873,7 @@ _insertw *create_insert_dialog(void) {
 }
 
 
-LiVESWidget *create_opensel_dialog(void) {
+LiVESWidget *create_opensel_dialog(double frames, double fps) {
   LiVESWidget *opensel_dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
@@ -1859,60 +1883,101 @@ LiVESWidget *create_opensel_dialog(void) {
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
 
+  LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
+  double tottime = 0.;
+
+  char *text;
+
+  if (fps > 0.) tottime = frames / fps;
+
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(opensel_dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
+  lives_window_add_accel_group(LIVES_WINDOW(opensel_dialog), accel_group);
+
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(opensel_dialog));
 
   vbox = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
+  lives_widget_set_size_request(LIVES_WIDGET(opensel_dialog), RFX_WINSIZE_H, RFX_WINSIZE_V);
 
-  table = lives_table_new(2, 2, FALSE);
-  lives_box_pack_start(LIVES_BOX(vbox), table, TRUE, TRUE, widget_opts.packing_height);
+  table = lives_table_new(2, 3, FALSE);
+  lives_table_set_column_homogeneous(LIVES_TABLE(table), FALSE);
+  lives_box_pack_start(LIVES_BOX(vbox), table, FALSE, TRUE, widget_opts.packing_height * 4);
 
-  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height * 2);
+  lives_table_set_row_spacings(LIVES_TABLE(table), widget_opts.packing_height * 4);
 
   label = lives_standard_label_new(_("Selection start time (sec)"));
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
-                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_END);
+
+  if (frames > 0. && fps > 0.)
+    text = lives_strdup_printf(_("[ maximum =  %.2f ]"), tottime);
+  else text = lives_strdup("");
+  label = lives_standard_label_new(text);
+  lives_free(text);
+
+  lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_START);
 
   label = lives_standard_label_new(_("Number of frames to open"));
   lives_table_attach(LIVES_TABLE(table), label, 0, 1, 1, 2,
-                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
                      (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_END);
 
-  spinbutton = lives_standard_spin_button_new(NULL, 0., 0., 1000000000., 1., 10., 2, NULL, NULL);
+  if (frames > 0.)
+    text = lives_strdup_printf(_("[ maximum =  %d ]"), (int)frames);
+  else text = lives_strdup("");
+  label = lives_standard_label_new(text);
+  lives_free(text);
+
+  lives_table_attach(LIVES_TABLE(table), label, 2, 3, 1, 2,
+                     (LiVESAttachOptions)(LIVES_FILL | LIVES_EXPAND),
+                     (LiVESAttachOptions)(0), 0, 0);
+  lives_widget_set_halign(label, LIVES_ALIGN_START);
+
+  spinbutton = lives_standard_spin_button_new(NULL, mainw->fx1_val, 0., tottime, 1., 1., 2, NULL, NULL);
+  lives_widget_set_halign(spinbutton, LIVES_ALIGN_START);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
                              LIVES_INT_TO_POINTER(1));
 
   lives_table_attach(LIVES_TABLE(table), spinbutton, 1, 2, 0, 1,
-                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                     (LiVESAttachOptions)(LIVES_EXPAND), widget_opts.packing_height * 4 + 2, 0);
+                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(0), widget_opts.packing_height * 2 + 2, 0);
 
-  spinbutton = lives_standard_spin_button_new(NULL, 1000., 1., (double)LIVES_MAXINT, 1., 10., 0, NULL, NULL);
+  spinbutton = lives_standard_spin_button_new(NULL, (double)mainw->fx2_val, 1., (double)frames, 1., 1., 0, NULL, NULL);
+  lives_widget_set_halign(spinbutton, LIVES_ALIGN_START);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
                              LIVES_INT_TO_POINTER(2));
 
   lives_table_attach(LIVES_TABLE(table), spinbutton, 1, 2, 1, 2,
-                     (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
-                     (LiVESAttachOptions)(LIVES_EXPAND), widget_opts.packing_height * 4 + 2, 0);
+                     (LiVESAttachOptions)(LIVES_FILL),
+                     (LiVESAttachOptions)(0), widget_opts.packing_height * 2 + 2, 0);
+
+  widget_add_preview(opensel_dialog, LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_BOX(vbox), LIVES_PREVIEW_TYPE_RANGE);
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(opensel_dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
+
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
   okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(opensel_dialog), LIVES_STOCK_OK, NULL,
              LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
-
-  widget_add_preview(opensel_dialog, LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_BOX(dialog_vbox), LIVES_PREVIEW_TYPE_RANGE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_cancel_opensel_clicked),
@@ -1921,6 +1986,12 @@ LiVESWidget *create_opensel_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_opensel_range_ok_clicked),
                        NULL);
+
+  lives_window_set_resizable(LIVES_WINDOW(opensel_dialog), TRUE);
+
+  if (prefs->open_maximised || prefs->fileselmax) {
+    lives_window_maximize(LIVES_WINDOW(opensel_dialog));
+  }
 
   lives_widget_show_all(opensel_dialog);
 
@@ -2877,6 +2948,10 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
                                           NULL);
   }
 
+  if (prefs->fileselmax) {
+    lives_window_maximize(LIVES_WINDOW(chooser));
+  }
+
   gtk_file_chooser_set_local_only(LIVES_FILE_CHOOSER(chooser), TRUE);
 
   if (dir != NULL) {
@@ -2918,6 +2993,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   if (mainw->is_ready && palette->style & STYLE_1) {
     lives_widget_set_bg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    lives_widget_set_fg_color(chooser, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     set_child_colour(chooser, FALSE);
   }
 
@@ -3023,7 +3099,6 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
                      LIVES_BOX(lives_dialog_get_content_area(LIVES_DIALOG(chooser))),
                      LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(chooser))),
                      preview_type);
-
 
   if (prefs->fileselmax) {
     int scr_width = GUI_SCREEN_WIDTH;
@@ -3315,7 +3390,7 @@ static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointe
     if (LINGO_IS_LAYOUT(layout)) {
       lingo_painter_show_layout(cr, layout);
     }
-    if (LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
+    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
   }
 
   lives_painter_fill(cr);
@@ -3337,7 +3412,7 @@ LiVESTextView *create_output_textview(void) {
                               NULL);
 #endif
 
-  lives_object_ref(textview);
+  lives_widget_object_ref(textview);
   return LIVES_TEXT_VIEW(textview);
 }
 
@@ -3349,7 +3424,7 @@ static void pair_add(LiVESWidget *table, const char *key, const char *meaning) {
   LiVESWidget *align;
 
   label = lives_standard_label_new(key);
-  align = lives_alignment_new(0., 0., 0., 0.);
+  align = lives_alignment_new(0., .5, 0., 0.);
   lives_container_add(LIVES_CONTAINER(align), label);
 
   if (meaning != NULL) {
@@ -3358,7 +3433,7 @@ static void pair_add(LiVESWidget *table, const char *key, const char *meaning) {
                        (LiVESAttachOptions)(0), 0, 0);
 
     label = lives_standard_label_new(meaning);
-    align = lives_alignment_new(0., 0., 0., 0.);
+    align = lives_alignment_new(0., .5, 0., 0.);
     lives_container_add(LIVES_CONTAINER(align), label);
 
     lives_table_attach(LIVES_TABLE(table), align, 1, 40, currow, currow + 1,
@@ -3762,10 +3837,10 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   boolean onlyfree = TRUE;
 
   if (!capable->has_youtube_dl) {
-    get_location(BIN_YOUTUBE_DL, string, 256);
+    get_location(EXEC_YOUTUBE_DL, string, 256);
     if (strlen(string)) capable->has_youtube_dl = TRUE;
     if (!capable->has_youtube_dl) {
-      do_program_not_found_error(BIN_YOUTUBE_DL);
+      do_program_not_found_error(EXEC_YOUTUBE_DL);
       return NULL;
     }
   }
@@ -3781,7 +3856,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   msg = lives_strdup_printf(_("To open a clip from Youtube or another video site, LiVES will first download it with %s.\n"
-                              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"), BIN_YOUTUBE_DL);
+                              "PLEASE MAKE SURE YOU HAVE THE MOST RECENT VERSION OF THAT TOOL INSTALLED !"), EXEC_YOUTUBE_DL);
   label = lives_standard_label_new(msg);
   lives_free(msg);
 
@@ -3792,16 +3867,19 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
-  msg = lives_strdup_printf(_("<--- Auto update %s ? (will require your password.)"), BIN_YOUTUBE_DL);
+  msg = lives_strdup_printf(_("<--- Auto update %s ? (will require authorization.)"), EXEC_YOUTUBE_DL);
   checkbutton_update = lives_standard_check_button_new(msg, FALSE, LIVES_BOX(hbox), NULL);
   lives_free(msg);
 
   if (!capable->has_ssh_askpass) {
-    get_location("ssh-askpass", string, 256);
+    get_location(EXEC_SSH_ASKPASS, string, 256);
     if (strlen(string)) capable->has_ssh_askpass = TRUE;
     if (!capable->has_ssh_askpass) {
+      char *text = lives_strdup_printf(_(" (REQUIRES %s )."), (tmp = lives_ascii_strup(EXEC_SSH_ASKPASS, -1)));
       lives_widget_set_sensitive(checkbutton_update, FALSE);
-      label = lives_standard_label_new(_(" (REQUIRES SSH-ASKPASS)."));
+      lives_free(tmp);
+      label = lives_standard_label_new(text);
+      lives_free(text);
       lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
     }
   }
@@ -4351,7 +4429,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   //g_print("GET  LINGO xx %d %d\n", width, height);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
-  if (layout != NULL && LIVES_IS_OBJECT(layout)) lives_object_unref(layout);
+  if (layout != NULL && LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;
@@ -4564,9 +4642,9 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
         mainw->assumed_height = rect.height - overflowy - by;
       }
 
-      reset_message_area();
-      lives_widget_hide(widget);
-      lives_widget_hide(mainw->message_box);
+      /* reset_message_area(); */
+      /* lives_widget_hide(widget); */
+      /* lives_widget_hide(mainw->message_box); */
 
       if (!prefs->open_maximised) {
         if (overflowx > 0) posx -= overflowx;
@@ -4670,8 +4748,8 @@ EXPOSE_FN_END
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget *widget, LiVESAdjustment *adj) {
-  if (msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj))
-    expose_msg_area(widget, NULL, NULL);
+  if (msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj));
+  // expose_msg_area(widget, NULL, NULL);
 }
 
 
@@ -4688,8 +4766,11 @@ void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
 boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
   // mouse scroll callback
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
-  if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
-  else lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
-  expose_msg_area(widget, NULL, NULL);
+  if (event->delta_y != 0)
+    lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + event->delta_y);
+  else {
+    if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
+    if (event->direction == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
+  }
   return FALSE;
 }

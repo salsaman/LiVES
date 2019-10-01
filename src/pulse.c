@@ -1582,7 +1582,7 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
     return FALSE;
   }
   lives_alarm_clear(alarm_handle);
-  if (frame > afile->frames) frame = afile->frames;
+  if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
   pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;

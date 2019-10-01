@@ -59,7 +59,7 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *, int argc, char **argv);
 /// object should have g_set_object_data "param_number" set to parameter number
 ///
 /// (0 based, -ve for init onchanges)
-LiVESList *do_onchange(LiVESObject *object, lives_rfx_t *) WARN_UNUSED;
+LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *) WARN_UNUSED;
 LiVESList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
 void update_weed_color_value(weed_plant_t *, int pnum, int c1, int c2, int c3, int c4);

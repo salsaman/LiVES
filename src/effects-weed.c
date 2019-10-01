@@ -701,7 +701,7 @@ void update_host_info(weed_plant_t *inst) {
     weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
     break;
   case AUD_PLAYER_PULSE:
-    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_PULSE_AUDIO);
+    weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
     break;
   case AUD_PLAYER_NONE:
     weed_set_string_value(hinfo, WEED_LEAF_HOST_AUDIO_PLAYER, AUDIO_PLAYER_NONE);

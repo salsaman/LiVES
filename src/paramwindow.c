@@ -3000,7 +3000,7 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
 }
 
 
-LiVESList *do_onchange(LiVESObject *object, lives_rfx_t *rfx) {
+LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *rfx) {
   LiVESList *retvals;
 
   int which = LIVES_POINTER_TO_INT(lives_widget_object_get_data(object, "param_number"));

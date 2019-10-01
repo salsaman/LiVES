@@ -377,7 +377,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
     if (sfile->frame_index[i - 1] >= 0) {
       oname = NULL;
 
-      if (pbr != NULL && pixbuf != NULL) lives_object_unref(pixbuf);
+      if (pbr != NULL && pixbuf != NULL) lives_widget_object_unref(pixbuf);
 
       pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
                                          q_gint64((i - 1.) / sfile->fps, sfile->fps), sfile->hsize, sfile->vsize, LIVES_INTERP_BEST);
@@ -399,7 +399,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       lives_freep((void **)&oname);
 
       if (pbr == NULL) {
-        if (pixbuf != NULL) lives_object_unref(pixbuf);
+        if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
         pixbuf = NULL;
       }
 

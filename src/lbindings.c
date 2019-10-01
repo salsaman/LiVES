@@ -426,7 +426,6 @@ static boolean call_file_choose_with_preview(livespointer data) {
     chooser = choose_file_with_preview(fdata->dir, fdata->title, NULL, preview_type);
     response = lives_dialog_run(LIVES_DIALOG(chooser));
     end_fs_preview();
-    mainw->fs_playarea = NULL;
 
     if (response == LIVES_RESPONSE_ACCEPT) {
       fname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));

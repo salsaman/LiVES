@@ -678,7 +678,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         }
       } while (retval == LIVES_RESPONSE_RETRY);
 
-      lives_object_unref(pixbuf);
+      lives_widget_object_unref(pixbuf);
 
       if (cfile->clip_type == CLIP_TYPE_FILE) {
         cfile->frame_index[i - 1] = -1;
@@ -973,7 +973,8 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 ////////////////////////////////////////////////////////////////////
 // keypresses
 
-boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                            livespointer user_data) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
   // in automode we don't add the effect parameters in ce_thumbs mode
@@ -1084,7 +1085,7 @@ boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_da
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
   if (fx != -1) {
@@ -1103,7 +1104,7 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t key
 }
 
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
   return TRUE;
@@ -1117,7 +1118,7 @@ boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data
 }
 
 
-boolean rtemode_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
   // "m" mode key
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, -1);
@@ -1141,7 +1142,8 @@ boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data)
 }
 
 
-boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                            livespointer user_data) {
   int old_file = mainw->current_file;
 
   if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->noswitch || mainw->blend_file == -1 ||

@@ -3,6 +3,7 @@ Version 3.0.3
 Ensure audio is always rendered when it should be after recording.
 Implement experimental auto gamma correction.
 Optimise communication with commandline plugins using popen().
+Fix screen / window sizing issues.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
@@ -11,10 +12,13 @@ Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Workaround since swscale cannot handle YUV888 or YUVA8888 palettes.
 Permit switching audio source with no clips loaded (bugfix).
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
+Fix recursive mutex issue with the audio_resync mutex.
+Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Fix label layouts for RFX windows.
 Add colour selection for blurzoom effect, improve the effect.
 Improve a/v sync when changing playback direction.
+Add preference to disable tooltips.
 Various minor fixes and interface tweaks.
 Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 

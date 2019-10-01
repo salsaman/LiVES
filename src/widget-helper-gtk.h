@@ -121,7 +121,8 @@ typedef gconstpointer                     livesconstpointer;
 
 typedef GClosure                          LiVESWidgetClosure;
 
-typedef GObject LiVESObject;
+//typedef GObject LiVESWidgetObject;
+typedef GObject LiVESWidgetObject;
 
 typedef GLogLevelFlags LiVESLogLevelFlags;
 
@@ -168,6 +169,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_strsplit(a, b, c) g_strsplit(a, b, c)
 #define lives_strfreev(a) g_strfreev(a)
 #define lives_strdup(a) g_strdup(a)
+#define lives_ascii_strup(a, b) g_ascii_strup(a, b)
 #define lives_ascii_strcasecmp(a, b) g_ascii_strcasecmp(a, b)
 #define lives_ascii_strncasecmp(a, b, c) g_ascii_strncasecmp(a, b, c)
 #define lives_strconcat(a, ...) g_strconcat(a, __VA_ARGS__)
@@ -338,10 +340,10 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #else
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
 #define LIVES_WIDGET_EXPOSE_EVENT "expose_event"
-#define LIVES_GUI_OBJECT_CLASS(a) GTK_OBJECT_CLASS(a)
 #endif
 
 #define lives_widget_object_set_data(a, b, c) g_object_set_data(a, b, c)
+#define lives_widget_object_set_data_full(a, b, c, d) g_object_set_data_full(a, b, c, d)
 #define lives_widget_object_get_data(a, b) g_object_get_data(a, b)
 
 #define lives_widget_object_set(a, b, c) g_object_set(a, b, c, NULL)
@@ -389,11 +391,11 @@ typedef GdkFilterReturn LiVESFilterReturn;
 #define LIVES_WIDGET_LEAVE_NOTIFY_EVENT "leave-notify-event"
 #define LIVES_WIDGET_FOCUS_OUT_EVENT "focus-out-event"
 #define LIVES_WIDGET_DELETE_EVENT "delete-event"
-#define LIVES_WIDGET_DESTROY_EVENT "destroy"
 #define LIVES_WIDGET_KEY_PRESS_EVENT "key-press-event"
 #define LIVES_WIDGET_KEY_RELEASE_EVENT "key-release-event"
 
 // signals
+#define LIVES_WIDGET_DESTROY_SIGNAL "destroy"
 #define LIVES_WIDGET_CLICKED_SIGNAL "clicked"
 #define LIVES_WIDGET_TOGGLED_SIGNAL "toggled"
 #define LIVES_WIDGET_CHANGED_SIGNAL "changed"
@@ -866,6 +868,8 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_IS_TABLE(widget) GTK_IS_TABLE(widget)
 #endif
 
+#define LIVES_LAYOUT LIVES_TABLE
+
 #define LIVES_RANGE(widget) GTK_RANGE(widget)
 
 #define LIVES_EDITABLE(widget) GTK_EDITABLE(widget)
@@ -873,7 +877,6 @@ typedef GdkInterpType                     LiVESInterpType;
 #define LIVES_XEVENT(event) GDK_EVENT(event)
 
 #define LIVES_IS_WIDGET_OBJECT(object) G_IS_OBJECT(object)
-#define LIVES_IS_OBJECT(object) G_IS_OBJECT(object)
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)
 #define LIVES_IS_WINDOW(widget) GTK_IS_WINDOW(widget)
 #define LIVES_IS_XWINDOW(widget) GDK_IS_WINDOW(widget)

@@ -7,7 +7,7 @@
 #ifndef HAS_LIVES_PREFS_H
 #define HAS_LIVES_PREFS_H
 
-#define PREFS_PANED_POS ((int)(200.*widget_opts.scale))
+#define PREFS_PANED_POS ((int)(300.*widget_opts.scale))
 
 // for mainw->prefs_changed
 #define PREFS_THEME_CHANGED (1<<0)
@@ -44,11 +44,9 @@ typedef struct {
 #define AUDIO_PLAYER_NONE "none"
 #define AUDIO_PLAYER_SOX "sox"
 #define AUDIO_PLAYER_JACK "jack"
-#define AUDIO_PLAYER_PULSE "pulse"
-#define AUDIO_PLAYER_PULSE_AUDIO "pulseaudio" // display version
 
-#define AUDIO_PLAYER_MPLAYER "mplayer"
-#define AUDIO_PLAYER_MPLAYER2 "mplayer2"
+#define AUDIO_PLAYER_PULSE "pulse" ///< used in pref and for external players (e.g -ao pulse, -aplayer pulse)
+#define AUDIO_PLAYER_PULSE_AUDIO "pulseaudio" ///< used for display, alternate pref and alternate startup opt (-aplayer pulseaudio)
 
   char aplayer[512]; // name, eg. "jack","pulse","sox"
 
@@ -394,6 +392,8 @@ typedef struct {
   boolean load_rfx_builtin;
 
   boolean apply_gamma;
+
+  boolean show_tooltips;
 } _prefs;
 
 enum {
@@ -607,6 +607,7 @@ typedef struct {
   LiVESWidget *checkbutton_nobord;
   LiVESWidget *checkbutton_concat_images;
   LiVESWidget *checkbutton_show_asrc;
+  LiVESWidget *checkbutton_show_ttips;
   LiVESWidget *checkbutton_hfbwnp;
   LiVESWidget *forcesmon;
   LiVESWidget *forcesmon_hbox;
@@ -907,6 +908,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_CONSERVE_SPACE "conserve_space"
 #define PREF_PUSH_AUDIO_TO_GENS "push_audio_to_gens"
 #define PREF_APPLY_GAMMA "apply_gamma"
+#define PREF_SHOW_TOOLTIPS "show_tooltips"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

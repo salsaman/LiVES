@@ -1,6 +1,6 @@
 // RGBdelay.c
 // weed plugin
-// (c) G. Finch (salsaman) 2011
+// (c) G. Finch (salsaman) 2011 - 2019
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -17,12 +17,14 @@
 #include "../../libweed/weed-effects.h"
 #endif
 
+#include <stdlib.h>
+
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions = 2; // number of different weed api versions supported
 static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
-static int package_version = 1; // version of this package
+static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -42,45 +44,45 @@ typedef struct {
   int ccache;
   unsigned char **cache;
   int *is_bgr;
+  unsigned char lut[3][256];
 } _sdata;
 
 
-static int RGBd_init(weed_plant_t *inst) {
-  int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error), *gui, *ptmpl;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int ncache = weed_get_int_value(in_params[0], "value", &error);
-  register int i;
-
-  _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
-
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
-  ncache++; // add 1 for current frame
-
-  sdata->is_bgr = weed_malloc(ncache * sizeof(int));
-
-  if (sdata->is_bgr == NULL) {
-    weed_free(sdata);
-    return WEED_ERROR_MEMORY_ALLOCATION;
+static void make_lut(unsigned char *lut, double val) {
+  int i;
+  for (i = 0; i < 256; i++) {
+    lut[i] = (unsigned char)((double)i * val + .5);
   }
+}
 
-  for (i = 0; i < ncache; i++) {
-    sdata->is_bgr[i] = 0;
-  }
 
+static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
   // create frame cache
+  int i;
+  int oldsize = sdata->tcache;
 
-  sdata->cache = (unsigned char **)weed_malloc(ncache * sizeof(unsigned char *));
+  for (i = oldsize; i > newsize; i--) {
+    if (sdata->cache[i - 1] != NULL) {
+      weed_free(sdata->cache[i - 1]);
+    }
+  }
+
+  sdata->tcache = 0;
+
+  if (newsize == 0) {
+    weed_free(sdata->cache);
+    sdata->cache = NULL;
+    return WEED_NO_ERROR;
+  }
+
+  sdata->cache = (unsigned char **)realloc(sdata->cache, newsize * sizeof(unsigned char *));
   if (sdata->cache == NULL) {
     weed_free(sdata->is_bgr);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  for (i = 0; i < ncache; i++) {
+  for (i = oldsize; i < newsize; i++) {
     sdata->cache[i] = weed_malloc(width * height * 3);
     if (sdata->cache[i] == NULL) {
       for (--i; i >= 0; i--) weed_free(sdata->cache[i]);
@@ -90,16 +92,40 @@ static int RGBd_init(weed_plant_t *inst) {
       return WEED_ERROR_MEMORY_ALLOCATION;
     }
   }
+  sdata->tcache = newsize;
+  return WEED_NO_ERROR;
+}
 
-  sdata->ccache = 0;
-  sdata->tcache = ncache;
 
-  ncache *= 4;
+static int RGBd_init(weed_plant_t *inst) {
+  int error;
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error), *gui, *ptmpl;
+  int maxcache = weed_get_int_value(in_params[0], "value", &error);
+  register int i;
+
+  _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
+
+  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+
+  sdata->ccache = sdata->tcache = 0;
+  sdata->cache = NULL;
+  sdata->is_bgr = weed_malloc(maxcache * sizeof(int));
+
+  if (sdata->is_bgr == NULL) {
+    weed_free(sdata);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  for (i = 0; i < maxcache; i++) {
+    sdata->is_bgr[i] = 0;
+  }
+
+  maxcache *= 4;
 
   for (i = 0; i < 205; i++) {
     ptmpl = weed_get_plantptr_value(in_params[i], "template", &error);
     gui = weed_parameter_template_get_gui(ptmpl);
-    weed_set_boolean_value(gui, "hidden", i > ncache ? WEED_TRUE : WEED_FALSE);
+    weed_set_boolean_value(gui, "hidden", i > maxcache ? WEED_TRUE : WEED_FALSE);
   }
 
   weed_free(in_params);
@@ -124,24 +150,43 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
   int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
   unsigned char *end = src + height * irowstride;
+  unsigned char *tmpcache = NULL;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
   register int i, j;
-  void *tmptr = NULL;
   double tstra = 0., tstrb = 0., tstrc = 0., cstr, cstra, cstrb, cstrc;
   int a = 1, b = 2, c = 3, crossed;
   size_t x = 0;
   int inplace = (src == dst);
   int b1, b2, b3;
+  int maxcache = weed_get_int_value(in_params[0], "value", &error);
+  int maxneeded = 0;
 
-  for (i = sdata->ccache; i > 0; i--) {
-    if (i == sdata->tcache) continue;
+  if (maxcache < 0) maxcache = 0;
+  if (maxcache > 50) maxcache = 50;
 
-    if (i == sdata->tcache - 1 || i == sdata->ccache) {
-      tmptr = sdata->cache[0];
-      sdata->cache[0] = sdata->cache[i]; // recycle last frame
+  for (i = 1; i < maxcache; i++) {
+    if (weed_get_boolean_value(in_params[i * 4 + 1], "value", &error) == WEED_TRUE ||
+        weed_get_boolean_value(in_params[i * 4 + 2], "value", &error) == WEED_TRUE ||
+        weed_get_boolean_value(in_params[i * 4 + 3], "value", &error) == WEED_TRUE) {
+      maxneeded = i + 1;
     }
-    sdata->cache[i] = sdata->cache[i - 1];
-    sdata->is_bgr[i] = sdata->is_bgr[i - 1];
+  }
+
+  if (maxneeded != sdata->tcache) {
+    int ret = realloc_cache(sdata, maxneeded, width, height);
+    if (ret != WEED_NO_ERROR) return ret;
+    if (sdata->ccache > sdata->tcache) sdata->ccache = sdata->tcache;
+  }
+
+  if (sdata->ccache > 0) {
+    tmpcache = sdata->cache[sdata->ccache - 1];
+  }
+
+  for (i = sdata->tcache; i >= 0; i--) {
+    if (i > 0 && i < sdata->ccache) {
+      sdata->cache[i] = sdata->cache[i - 1];
+      sdata->is_bgr[i] = sdata->is_bgr[i - 1];
+    }
 
     // normalise the blend strength for each colour channel
     if (weed_get_boolean_value(in_params[i * 4 + 1], "value", &error) == WEED_TRUE) {
@@ -160,7 +205,9 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
   }
 
-  if (tmptr != NULL) sdata->cache[1] = tmptr; // value of cache[0] got squished
+  if (sdata->ccache > 0) {
+    sdata->cache[0] = tmpcache;
+  }
 
   if (palette == WEED_PALETTE_BGR24) {
     // red/blue values swapped
@@ -169,7 +216,17 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     c = 1;
   } else sdata->is_bgr[0] = 0;
 
-  sdata->ccache += (sdata->ccache < sdata->tcache);
+  if (sdata->ccache < sdata->tcache) {
+    // do nothing until we have cached enough frames
+    for (; src < end; src += irowstride) {
+      weed_memcpy(sdata->cache[0] + x, src, width);
+      if (!inplace) weed_memcpy(dst, src, width);
+      dst += orowstride;
+      x += width;
+    }
+    sdata->ccache++;
+    return WEED_NO_ERROR;
+  }
 
   osrc = src;
   odst = dst;
@@ -200,15 +257,19 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     cstrb = cstr / tstrb;
     cstrc = cstr / tstrc;
 
+    make_lut(sdata->lut[0], cstra);
+    make_lut(sdata->lut[1], cstrb);
+    make_lut(sdata->lut[2], cstrc);
+
     for (; src < end; src += irowstride) {
-      weed_memcpy(sdata->cache[0] + x, src, width);
+      if (sdata->tcache > 0) weed_memcpy(sdata->cache[0] + x, src, width);
 
       for (i = 0; i < width; i += 3) {
-        if (b1 == WEED_TRUE) dst[i] = ((double)src[i] * cstra + .5);
+        if (b1 == WEED_TRUE) dst[i] = sdata->lut[0][src[i]];
         else if (inplace) dst[i] = 0;
-        if (b2 == WEED_TRUE) dst[i + 1] = ((double)src[i + 1] * cstrb + .5);
+        if (b2 == WEED_TRUE) dst[i + 1] = sdata->lut[1][src[i + 1]];
         else if (inplace) dst[i + 1] = 0;
-        if (b3 == WEED_TRUE) dst[i + 2] = ((double)src[i + 2] * cstrc + .5);
+        if (b3 == WEED_TRUE) dst[i + 2] = sdata->lut[2][src[i + 2]];
         else if (inplace) dst[i + 2] = 0;
       }
       x += width;
@@ -248,11 +309,15 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       cstra = cstr / tstrc;
     }
 
+    make_lut(sdata->lut[0], cstra);
+    make_lut(sdata->lut[1], cstrb);
+    make_lut(sdata->lut[2], cstrc);
+
     for (; src < end; src += irowstride) {
       for (i = 0; i < width; i += 3) {
-        if (b1 == WEED_TRUE) dst[i] += ((double)sdata->cache[j][x + (crossed ? (i + 2) : i)] * cstra + .5);
-        if (b2 == WEED_TRUE) dst[i + 1] += ((double)sdata->cache[j][x + i + 1] * cstrb + .5);
-        if (b3 == WEED_TRUE) dst[i + 2] += ((double)sdata->cache[j][x + (crossed ? i : (i + 2))] * cstrc + .5);
+        if (b1 == WEED_TRUE) dst[i] += sdata->lut[0][sdata->cache[j][x + (crossed ? (i + 2) : i)]];
+        if (b2 == WEED_TRUE) dst[i + 1] += sdata->lut[1][sdata->cache[j][x + i + 1]];
+        if (b3 == WEED_TRUE) dst[i + 2] += sdata->lut[2][sdata->cache[j][x + (crossed ? i : (i + 2))]];
       }
       x += width;
       dst += orowstride;
@@ -273,6 +338,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       dst += orowstride;
     }
   }
+  weed_free(in_params);
   return WEED_NO_ERROR;
 }
 
@@ -280,12 +346,13 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 static int RGBd_deinit(weed_plant_t *inst) {
   int error, i;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-
   if (sdata != NULL) {
     if (sdata->cache != NULL) {
-      for (i = 0; i < sdata->tcache; i++) weed_free(sdata->cache[i]);
-      weed_free(sdata->cache);
+      for (i = 0; i < sdata->tcache; i++) {
+        weed_free(sdata->cache[i]);
+      }
     }
+    weed_free(sdata->cache);
 
     if (sdata->is_bgr != NULL) weed_free(sdata->is_bgr);
 
@@ -314,7 +381,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     char label[256];
     int i, j;
 
-    in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size", 20, 0, 50);
+    in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size (max)", 20, 0, 50);
     weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
     for (i = 1; i < 205; i += 4) {

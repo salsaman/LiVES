@@ -16,5 +16,4 @@ void do_startup_interface_query(void);
 
 void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
 
-
 #endif

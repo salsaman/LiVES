@@ -8,6 +8,7 @@
 
 #include "main.h"
 #include "interface.h"
+#include "startup.h"
 
 static boolean allpassed;
 

@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_STARTUP_H
 #define HAS_LIVES_STARTUP_H
 
+#define LIVES_TEST_VIDEO_NAME "vidtest.avi"
+
 boolean do_workdir_query(void);
 boolean do_audio_choice_dialog(short startup_phase);
 boolean do_startup_tests(boolean tshoot);

@@ -4067,6 +4067,15 @@ WIDGET_HELPER_GLOBAL_INLINE const char *lives_button_get_label(LiVESButton *butt
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_clicked(LiVESButton *button) {
+#ifdef GUI_GTK
+  gtk_button_clicked(button);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_relief(LiVESButton *button, LiVESReliefStyle rstyle) {
 #ifdef GUI_GTK
   gtk_button_set_relief(button, rstyle);

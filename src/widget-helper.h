@@ -305,6 +305,7 @@ LiVESWidget *lives_button_new_with_label(const char *label);
 
 boolean lives_button_set_label(LiVESButton *, const char *label);
 const char *lives_button_get_label(LiVESButton *);
+boolean lives_button_clicked(LiVESButton *);
 
 boolean lives_button_set_relief(LiVESButton *, LiVESReliefStyle);
 boolean lives_button_set_image(LiVESButton *, LiVESWidget *image);

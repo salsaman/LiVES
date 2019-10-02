@@ -3695,6 +3695,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
   com = lives_strdup_printf("%s backup %s %d %d %d %s", prefs->backend, sfile->handle, withsound,
                             start, end, (tmp = lives_filename_from_utf8(full_file_name, -1, NULL, NULL, NULL)));
+  lives_free(tmp);
 
   // TODO
   mainw->current_file = clip;
@@ -3703,7 +3704,7 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   cfile->nopreview = TRUE;
   mainw->com_failed = FALSE;
   lives_system(com, FALSE);
-  lives_free(tmp);
+  lives_free(com);
 
   if (mainw->com_failed) {
     mainw->com_failed = FALSE;
@@ -3721,14 +3722,10 @@ void backup_file(int clip, int start, int end, const char *file_name) {
 
     // cancelled - clear up files
     cfile->nopreview = FALSE;
-    lives_free(com);
 
     // using restore details in the 'wrong' way here...it will also clear files
     com = lives_strdup_printf("%s restore_details %s", prefs->backend, cfile->handle);
-    lives_rm(cfile->info_file);
-
-    lives_system(com, FALSE);
-    // auto-d
+    lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
     lives_free(com);
 
     //save_clip_values(mainw->current_file);
@@ -3737,7 +3734,6 @@ void backup_file(int clip, int start, int end, const char *file_name) {
   }
 
   cfile->nopreview = FALSE;
-  lives_free(com);
 
   mainw->current_file = current_file;
 

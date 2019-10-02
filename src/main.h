@@ -57,8 +57,6 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #define ENABLE_OSC2
 
-#define BACKEND_NAME "smogrify"
-
 #ifndef GUI_QT
 #define GUI_GTK
 #define LIVES_PAINTER_IS_CAIRO
@@ -177,6 +175,7 @@ typedef int lives_pgid_t;
 #define LIVES_CONFIG_DIR ".lives-dir/"
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_WORK_NAME "livesprojects"
+#define LIVES_RESOURCES_DIR "resources"
 
 #define LIVES_DEVICE_DIR "/dev/"
 
@@ -853,6 +852,8 @@ capability *capable;
 #include "preferences.h"
 
 extern mainwindow *mainw;
+
+#define BACKEND_NAME EXEC_SMOGRIFY
 
 // internal player clock
 #include <sys/time.h>

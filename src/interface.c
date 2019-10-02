@@ -931,6 +931,12 @@ void draw_little_bars(double ptrtime, int which) {
 }
 
 
+static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+  lives_button_clicked(LIVES_BUTTON(user_data));
+  return FALSE;
+}
+
+
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
   LiVESWidget *preview_button = NULL;
 
@@ -949,6 +955,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     lives_widget_nullify_with(widget, (void **)&mainw->fs_playarea);
     lives_widget_nullify_with(widget, (void **)&mainw->fs_playalign);
     lives_widget_nullify_with(widget, (void **)&mainw->fs_playimg);
+    lives_widget_set_events(mainw->fs_playframe, LIVES_BUTTON_PRESS_MASK);
 
     lives_widget_apply_theme(mainw->fs_playframe, LIVES_WIDGET_STATE_NORMAL);
     lives_widget_apply_theme(mainw->fs_playalign, LIVES_WIDGET_STATE_NORMAL);
@@ -992,6 +999,9 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
   }
 
   lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playframe), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+		       LIVES_GUI_CALLBACK(on_fsp_click),
+		       LIVES_INT_TO_POINTER(preview_type));
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     add_deinterlace_checkbox(for_deint);
@@ -999,7 +1009,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
   lives_signal_connect(LIVES_GUI_OBJECT(preview_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_fs_preview_clicked),
-                       LIVES_INT_TO_POINTER(preview_type));
+                       preview_button);
 
   if (LIVES_IS_FILE_CHOOSER(widget) && preview_type != LIVES_PREVIEW_TYPE_RANGE) {
     lives_widget_set_sensitive(preview_button, FALSE);

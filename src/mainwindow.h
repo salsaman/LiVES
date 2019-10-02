@@ -328,6 +328,7 @@ enum {
 };
 
 // executables
+#define EXEC_SMOGRIFY "smogrify"
 #define EXEC_PERL "perl"
 #define EXEC_PYTHON "python"
 #define EXEC_YOUTUBE_DL "youtube-dl"

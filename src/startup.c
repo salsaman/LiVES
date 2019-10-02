@@ -414,7 +414,7 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
 
 
 LIVES_LOCAL_INLINE char *get_resource(char *fname) {
-  return lives_build_filename(prefs->prefix_dir, DATA_DIR, "resources", fname, NULL);
+  return lives_build_filename(prefs->prefix_dir, DATA_DIR, LIVES_RESOURCES_DIR, fname, NULL);
 }
 
 
@@ -706,7 +706,7 @@ boolean do_startup_tests(boolean tshoot) {
 
     lives_rm(cfile->info_file);
 
-    rname = get_resource("vidtest.avi");
+    rname = get_resource(LIVES_TEST_VIDEO_NAME);
 
     com = lives_strdup_printf("%s open_test \"%s\" %s \"%s\" 0 png", prefs->backend_sync, cfile->handle, prefs->video_open_command,
                               (tmp = lives_filename_from_utf8(rname, -1, NULL, NULL, NULL)));

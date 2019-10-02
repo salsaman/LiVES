@@ -3171,7 +3171,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   }
 
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
-  y
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->spinbutton_max_disp_vtracks = lives_standard_spin_button_new(_("Maximum number of visible tracks"), prefs->max_disp_vtracks,

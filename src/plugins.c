@@ -2839,7 +2839,7 @@ void rfx_free_all(void) {
 }
 
 
-void param_copy(lives_param_t *src, lives_param_t *dest, boolean full) {
+void param_copy(lives_param_t *dest, lives_param_t *src, boolean full) {
   // rfxbuilder.c uses this to copy params to a temporary copy and back again
 
   dest->name = lives_strdup(src->name);

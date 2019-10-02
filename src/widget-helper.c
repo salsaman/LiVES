@@ -225,12 +225,23 @@ LiVESWidget *prettify_button(LiVESWidget *button) {
                              LIVES_GUI_CALLBACK(widget_state_cb),
                              NULL);
   widget_state_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
+  lives_widget_apply_theme2(button, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
   return button;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data) {
   lives_widget_object_set_data_full(obj, key, data, _lives_free);
+}
+
+
+static void lives_list_free_cb(livespointer list) {
+  lives_list_free((LiVESList *)list);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_list(LiVESWidgetObject *obj, const char *key, LiVESList *list) {
+  lives_widget_object_set_data_full(obj, key, list, lives_list_free_cb);
 }
 
 
@@ -8343,13 +8354,74 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
 }
 
 
+///////////////// lives_layout ////////////////////////
+
+WIDGET_HELPER_LOCAL_INLINE void lives_layout_attach(LiVESLayout *layout, LiVESWidget *widget, int start, int end, int row) {
+  lives_table_attach(layout, widget, start, end, row, row + 1,
+                     (LiVESAttachOptions)(LIVES_FILL | (LIVES_SHOULD_EXPAND_EXTRA_WIDTH ? LIVES_EXPAND : 0)),
+                     (LiVESAttachOptions)(0), 0, 0);
+}
+
+
+static LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWidget *widget) {
+  LiVESList *xwidgets = (LiVESList *)lives_widget_object_steal_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
+  LiVESWidget *box = lives_layout_row_new(layout);
+  int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
+  int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
+  lives_widget_object_ref(LIVES_WIDGET_OBJECT(box));
+  lives_widget_unparent(box);
+  lives_layout_attach(layout, box, 0, columns, row);
+  lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
+  xwidgets = lives_list_prepend(xwidgets, box);
+  lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "layout_row", LIVES_INT_TO_POINTER(row));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "expansion", LIVES_INT_TO_POINTER(widget_opts.expand));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "justification", LIVES_INT_TO_POINTER(widget_opts.justify));
+  if (widget != NULL) {
+    lives_layout_pack(LIVES_BOX(box), widget);
+    return widget;
+  } else return box;
+}
+
+
+static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
+  LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
+  lives_table_resize(LIVES_TABLE(layout), rows, columns);
+  while (xwidgets != NULL) {
+    LiVESWidget *widget = (LiVESWidget *)xwidgets->data;
+    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_row"));
+    int expansion = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "expansion"));
+    LiVESJustification justification = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "justification"));
+    int woe = widget_opts.expand;
+    LiVESJustification woj = widget_opts.justify;
+    lives_widget_object_ref(widget);
+    lives_widget_unparent(widget);
+    widget_opts.expand = expansion;
+    widget_opts.justify = justification;
+    lives_layout_attach(layout, widget, 0, columns, row);
+    widget_opts.expand = woe;
+    widget_opts.justify = woj;
+    lives_widget_object_unref(widget);
+    xwidgets = xwidgets->next;
+  }
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVESWidget *widget) {
+  lives_box_pack_start(box, widget, TRUE, TRUE, LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width : 0);
+  lives_widget_set_halign(widget, lives_justify_to_align(widget_opts.justify));
+  return widget;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
   LiVESWidget *layout = lives_table_new(0, 0, TRUE);
   if (LIVES_IS_VBOX(box)) {
-    lives_box_pack_start(box, layout, widget_opts.expand & LIVES_EXPAND_EXTRA_HEIGHT, TRUE,
+    lives_box_pack_start(box, layout, LIVES_SHOULD_EXPAND_EXTRA_HEIGHT, TRUE,
                          LIVES_SHOULD_EXPAND_HEIGHT ? widget_opts.packing_height : 0);
   } else {
-    lives_box_pack_start(box, layout, widget_opts.expand & LIVES_EXPAND_EXTRA_WIDTH, TRUE,
+    lives_box_pack_start(box, layout, LIVES_SHOULD_EXPAND_EXTRA_WIDTH, TRUE,
                          LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width : 0);
   }
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(1));
@@ -8357,14 +8429,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
-  if (LIVES_SHOULD_EXPAND_WIDTH)
+  if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
     lives_table_set_col_spacings(LIVES_TABLE(layout), widget_opts.packing_width);
   lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
   return layout;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESTable *layout) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout *layout) {
   LiVESWidget *hbox = lives_hbox_new(FALSE, 0);
 #if GTK_CHECK_VERSION(3, 0, 0)
   LiVESWidget *widget = hbox;
@@ -8374,7 +8446,6 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESTable *layou
   LiVESWidget *widget = alignment;
   lives_container_add(LIVES_CONTAINER(alignment), hbox);
 #endif
-
   int nadded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "widgets_added")) + 1;
   int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
   int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
@@ -8383,24 +8454,47 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESTable *layou
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "columns", LIVES_INT_TO_POINTER(columns));
   }
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-  lives_table_resize(layout, row, columns);
-
-  lives_table_attach(LIVES_TABLE(layout), widget, nadded - 1, nadded, row, row + 1,
-                     (LiVESAttachOptions)(LIVES_FILL),
-                     (LiVESAttachOptions)(0), 0, 0);
+  lives_layout_resize(layout, row, columns);
+  lives_layout_attach(layout, widget, nadded - 1, nadded, row);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(nadded));
-  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(hbox, LIVES_ALIGN_CENTER);
   return hbox;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE int lives_layout_add_row(LiVESTable *layout) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_row_new(LiVESLayout *layout) {
   int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows")) + 1;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(rows));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
-  return rows;
+  return lives_layout_hbox_new(layout);
 }
 
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_label(LiVESLayout *layout, const char *text, boolean horizontal) {
+  LiVESWidget *label = lives_label_new(text);
+  if (horizontal) return lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), label);
+  return lives_layout_expansion_row_new(layout, label);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_fill(LiVESLayout *layout, boolean horizontal) {
+  return lives_layout_add_label(layout, NULL, horizontal);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout *layout, boolean horizontal) {
+  LiVESWidget *separator;
+  LiVESJustification woj = widget_opts.justify;
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  if (!horizontal) lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), (separator = lives_vseparator_new()));
+  else {
+    LiVESWidget *hbox = lives_layout_expansion_row_new(layout, NULL);
+    separator = add_hsep_to_box(LIVES_BOX(hbox));
+  }
+  widget_opts.justify = woj;
+  return separator;
+}
+
+////////////////////////////////////////////////////////////////////
 
 LiVESWidget *lives_standard_button_new(void) {
   return prettify_button(lives_button_new());
@@ -8517,10 +8611,7 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
 LiVESWidget *lives_standard_label_new(const char *text) {
   LiVESWidget *label = NULL;
   label = lives_label_new(text);
-  if (widget_opts.justify == LIVES_JUSTIFY_DEFAULT) lives_widget_set_halign(label, LIVES_ALIGN_START);
-  else if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
-  else if (widget_opts.justify == LIVES_JUSTIFY_FILL) lives_widget_set_halign(label, LIVES_ALIGN_FILL);
-  else lives_widget_set_halign(label, LIVES_ALIGN_END);
+  lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
   if (widget_opts.apply_theme) {
     // non functional in gtk 3.18
     set_child_dimmed_colour(label, BUTTON_DIM_VAL);
@@ -8627,6 +8718,13 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
 }
 
 
+LIVES_GLOBAL_INLINE LiVESAlign lives_justify_to_align(LiVESJustification justify) {
+  if (justify == LIVES_JUSTIFY_DEFAULT) return LIVES_ALIGN_START;
+  if (justify == LIVES_JUSTIFY_CENTER) return LIVES_ALIGN_CENTER;
+  else return LIVES_ALIGN_END;
+}
+
+
 static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widget) {
   LiVESWidget *label;
   LiVESWidget *eventbox = lives_event_box_new();
@@ -8638,9 +8736,7 @@ static LiVESWidget *make_label_eventbox(const char *labeltext, LiVESWidget *widg
 
   widget_opts.last_label = label;
   lives_container_add(LIVES_CONTAINER(eventbox), label);
-  if (widget_opts.justify == LIVES_JUSTIFY_LEFT) lives_widget_set_halign(label, LIVES_ALIGN_START);
-  if (widget_opts.justify == LIVES_JUSTIFY_CENTER) lives_widget_set_halign(label, LIVES_ALIGN_CENTER);
-  if (widget_opts.justify == LIVES_JUSTIFY_RIGHT) lives_widget_set_halign(label, LIVES_ALIGN_END);
+  lives_widget_set_halign(label, lives_justify_to_align(widget_opts.justify));
 
   if (LIVES_IS_TOGGLE_BUTTON(widget)) {
     lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_BUTTON_PRESS_EVENT,
@@ -8765,7 +8861,6 @@ LiVESWidget *lives_standard_check_button_new(const char *labeltext, boolean acti
 
     if (!widget_opts.swap_label && eventbox != NULL)
       lives_box_pack_start(LIVES_BOX(hbox), eventbox, FALSE, FALSE, packing_width);
-
   }
 
   if (widget_opts.apply_theme) {
@@ -10104,6 +10199,13 @@ boolean widget_helper_init(void) {
     widget_opts.image_filter[i] = NULL;
     lives_list_free_all(&xlist);
   }
+
+#ifdef GUI_GTK
+  // I think this is correct...
+  if (gtk_widget_get_default_direction() == GTK_TEXT_DIR_RTL) widget_opts.default_justify = LIVES_JUSTIFY_RIGHT;
+#endif
+
+  widget_opts.justify = widget_opts.default_justify;
   return TRUE;
 }
 
@@ -10501,6 +10603,21 @@ WIDGET_HELPER_GLOBAL_INLINE void set_child_alt_colour(LiVESWidget *widget, boole
   // if set_all is FALSE, we only set labels (and ignore labels in buttons)
 
   set_child_alt_colour_internal(widget, LIVES_INT_TO_POINTER(set_all));
+}
+
+
+static void set_child_alt_colour_internal_prelight(LiVESWidget *widget, livespointer data) {
+  lives_widget_apply_theme2(widget, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
+  if (LIVES_IS_CONTAINER(widget)) {
+    lives_container_forall(LIVES_CONTAINER(widget), set_child_alt_colour_internal_prelight, NULL);
+  }
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void set_child_alt_colour_prelight(LiVESWidget *widget) {
+  // set widget and all children widgets
+  // if set_all is FALSE, we only set labels (and ignore labels in buttons)
+  set_child_alt_colour_internal_prelight(widget, NULL);
 }
 
 
@@ -11167,8 +11284,8 @@ void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free
 LiVESWidget *add_hsep_to_box(LiVESBox *box) {
   LiVESWidget *hseparator = lives_hseparator_new();
   int packing_height = widget_opts.packing_height;
-  if (LIVES_SHOULD_EXPAND_EXTRA_FOR(box)) packing_height *= 2;
-  lives_box_pack_start(box, hseparator, LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
+  if (LIVES_IS_HBOX(box)) packing_height = 0;
+  lives_box_pack_start(box, hseparator, LIVES_IS_HBOX(box) || LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
   lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   return hseparator;

@@ -175,6 +175,7 @@ int lives_painter_image_surface_get_stride(lives_painter_surface_t *);
 lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surface_t *);
 
 // utils
+LiVESAlign lives_justify_to_align(LiVESJustification justification);
 
 boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
@@ -200,6 +201,9 @@ boolean lives_widget_object_ref_sink(livespointer);
 
 // set data and free it later
 void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data);
+
+// set list and free it later (but not the list data)
+void lives_widget_object_set_data_list(LiVESWidgetObject *obj, const char *key, LiVESList *list);
 
 // lives_pixbuf functions
 
@@ -856,10 +860,14 @@ void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
 LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith);
 
-// this is not the same as a GtkLayout
+// this is not the same as a GtkLayout !!
 LiVESWidget *lives_layout_new(LiVESBox *);
-LiVESWidget *lives_layout_hbox_new(LiVESTable *);
-int lives_layout_add_row(LiVESTable *layout);
+LiVESWidget *lives_layout_hbox_new(LiVESLayout *);
+LiVESWidget *lives_layout_row_new(LiVESLayout *);
+LiVESWidget *lives_layout_pack(LiVESHBox *, LiVESWidget *);
+LiVESWidget *lives_layout_add_label(LiVESLayout *, const char *text, boolean horizontal);
+LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);
+LiVESWidget *lives_layout_add_separator(LiVESLayout *, boolean horizontal);
 
 boolean lives_button_grab_default_special(LiVESWidget *);
 
@@ -962,6 +970,7 @@ void set_child_dimmed_colour2(LiVESWidget *widget, int dim); // dimmed m & b for
 
 // like set_child_colour, but with menu and bars colours
 void set_child_alt_colour(LiVESWidget *, boolean set_all);
+void set_child_alt_colour_prelight(LiVESWidget *);
 
 void lives_widget_apply_theme3(LiVESWidget *, LiVESWidgetState state); // info base/text
 void set_child_colour3(LiVESWidget *, boolean set_all);
@@ -1181,7 +1190,7 @@ const widget_opts_t def_widget_opts = {
   NULL, ///< last_label
   NULL, ///< transient window
   LIVES_JUSTIFY_LEFT, ///< justify
-  LIVES_JUSTIFY_LEFT, ///< default justify
+  LIVES_JUSTIFY_LEFT, ///< default justify (should this be RIGHT for rtl ?)
   LIVES_FONT_SIZE_MEDIUM, ///< default font size
   NULL, ///< image_filter
   "", ///< title_prefix

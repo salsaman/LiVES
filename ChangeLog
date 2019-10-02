@@ -7,6 +7,8 @@ Fix screen / window sizing issues.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
+Improvements to Fileselector preview / selection opener.
+Smoother playback.
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Workaround since swscale cannot handle YUV888 or YUVA8888 palettes.

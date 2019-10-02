@@ -189,6 +189,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_list_nth(list, i) g_list_nth(list, i)
 #define lives_list_length(list) g_list_length(list)
 #define lives_list_free(list) g_list_free(list)
+#define _lives_list_free g_list_free
 #define lives_list_append(list, data) g_list_append(list, data)
 #define lives_list_prepend(list, data) g_list_prepend(list, data)
 #define lives_list_find(list, data) g_list_find(list, data)
@@ -345,6 +346,7 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define lives_widget_object_set_data(a, b, c) g_object_set_data(a, b, c)
 #define lives_widget_object_set_data_full(a, b, c, d) g_object_set_data_full(a, b, c, d)
 #define lives_widget_object_get_data(a, b) g_object_get_data(a, b)
+#define lives_widget_object_steal_data(a, b) g_object_steal_data(a, b)
 
 #define lives_widget_object_set(a, b, c) g_object_set(a, b, c, NULL)
 #define lives_widget_object_get(a, b, c) g_object_get(a, b, c, NULL)
@@ -522,6 +524,8 @@ typedef GtkGrid                           LiVESTable;
 #else
 typedef GtkTable                          LiVESTable;
 #endif
+
+#define LiVESLayout LiVESTable
 
 typedef GtkEditable                       LiVESEditable;
 

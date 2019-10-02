@@ -4152,7 +4152,7 @@ void load_start_image(int frame) {
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5;
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;
@@ -4347,7 +4347,7 @@ void load_end_image(int frame) {
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5;
     if (LIVES_IS_PLAYING && mainw->double_size) {
       hsize /= 2;
       vsize /= 2;

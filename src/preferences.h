@@ -436,6 +436,7 @@ typedef struct {
 
   LiVESWidget *prefs_list;
   LiVESWidget *prefs_table;
+  LiVESWidget *tlabel;
   LiVESWidget *vbox_right_gui;
   LiVESWidget *vbox_right_multitrack;
   LiVESWidget *vbox_right_decoding;

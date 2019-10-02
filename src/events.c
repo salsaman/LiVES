@@ -5220,7 +5220,7 @@ void rdetw_spinf_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
                                LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget *extra) {
   // add video options to multitrack enter, etc
-  LiVESWidget *vbox, *hbox;
+  LiVESWidget *vbox, *hbox, *layout;
   LiVESWidget *frame = lives_standard_frame_new(_("Video"), 0., FALSE);
 
   double width_step = 4.;
@@ -5229,14 +5229,15 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(frame), vbox);
 
-  hbox = lives_hbox_new(FALSE, widget_opts.packing_width * 5);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  layout = lives_layout_new(LIVES_BOX(vbox));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   *spwidth = lives_standard_spin_button_new
              (_("_Width"), defwidth, width_step, MAX_FRAME_WIDTH, width_step, width_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spwidth), width_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(*spwidth));
 
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   *spheight = lives_standard_spin_button_new
               (_("_Height"), defheight, height_step, MAX_FRAME_WIDTH, height_step, height_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(*spheight), height_step);
@@ -5245,11 +5246,11 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   // add aspect button ?
   if (add_aspect && CURRENT_CLIP_IS_VALID) {
     // add "aspectratio" widget
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
     add_aspect_ratio_button(LIVES_SPIN_BUTTON(rdet->spinbutton_width), LIVES_SPIN_BUTTON(rdet->spinbutton_height), LIVES_BOX(hbox));
   }
 
-  hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
 
   *spfps = lives_standard_spin_button_new
            (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);

@@ -35,6 +35,7 @@ typedef struct {
   pa_proplist *pa_props;
 
   volatile pa_usec_t usec_start;
+  volatile pa_usec_t extrausec;
 
   int str_idx;
 

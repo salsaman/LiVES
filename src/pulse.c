@@ -54,12 +54,23 @@ static void pulse_server_cb(pa_context *c, const pa_server_info *info, void *use
 
 
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
-  fprintf(stderr, "PA Stream underrun. \n");
+  fprintf(stderr, "PA Stream underrun.\n");
 }
 
 
 static void stream_overflow_callback(pa_stream *s, void *userdata) {
-  fprintf(stderr, "Stream overrun. \n");
+  fprintf(stderr, "Stream overrun.\n");
+}
+
+
+static void stream_moved_callback(pa_stream *s, void *userdata) {
+  //pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
+  fprintf(stderr, "Stream moved. \n");
+}
+
+
+static void stream_buffer_attr_callback(pa_stream *s, void *userdata) {
+  //fprintf(stderr, "Stream ba changed. \n");
 }
 
 
@@ -334,6 +345,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
       return;
     }
+
+    // time interpolation
+    pulsed->extrausec += (float)nbytes / (float)(pulsed->out_arate * pulsed->out_achans * pulsed->out_asamps) * 1000000000.;
 
     if (LIVES_LIKELY(pulseFramesAvailable > 0 && (pulsed->read_abuf > -1 ||
                      (pulsed->aPlayPtr != NULL
@@ -613,6 +627,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               boolean update_sbuffer = FALSE;
               if (pulsed->sound_buffer == pulsed->aPlayPtr->data) update_sbuffer = TRUE;
               pulsed->aPlayPtr->data = lives_try_realloc(pulsed->aPlayPtr->data, nbytes);
+              g_print("realloc 2\n");
               if (update_sbuffer) pulsed->sound_buffer = pulsed->aPlayPtr->data;
               if (pulsed->aPlayPtr->data != NULL) {
                 memset(pulsed->aPlayPtr->data, 0, in_bytes);
@@ -964,6 +979,9 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     }
     return;
   }
+
+  // time interpolation
+  pulsed->extrausec += (float)rbytes / (float)(pulsed->in_arate * pulsed->in_achans * pulsed->in_asamps) * 1000000000.;
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
 
@@ -1341,6 +1359,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
 
     pa_threaded_mainloop_lock(pa_mloop);
+    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
+    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
+    pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
+    pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
+
     // set write callback
     pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
 
@@ -1366,8 +1389,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pdriver->is_corked = TRUE;
     prb = 0;
 
-    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, NULL);
-    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, NULL);
+    pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
+    pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
+
+    pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
+    pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE |
@@ -1519,13 +1545,15 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pulsed->frames_written = 0;
   mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;
+  pulsed->extrausec = 0;
 }
 
 
 uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
-  pa_usec_t usec;
+  pa_usec_t usec, retusec;
+  static pa_usec_t last_usec = 0;
   boolean timeout;
   int alarm_handle;
   int err;
@@ -1553,7 +1581,14 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 #endif
   lives_alarm_clear(alarm_handle);
   if (timeout) return -1;
-  return (uint64_t)((usec - pulsed->usec_start) * USEC_TO_TICKS);
+
+  retusec = usec;
+  if (last_usec > 0 && usec <= last_usec) {
+    retusec += pulsed->extrausec;
+  } else pulsed->extrausec = 0;
+  last_usec = usec;
+
+  return (uint64_t)((retusec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 
 

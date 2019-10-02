@@ -1611,6 +1611,8 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
 uint64_t lives_jack_get_time(jack_driver_t *jackd) {
   // get the time in ticks since playback started
   volatile aserver_message_t *msg = jackd->msgq;
+  jack_nframes_t frames, retframes;
+  static jack_nframes_t last_frames = 0;
 
   if (msg != NULL && msg->command == ASERVER_CMD_FILE_SEEK) {
     boolean timeout;
@@ -1622,7 +1624,15 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd) {
     lives_alarm_clear(alarm_handle);
   }
 
-  return (uint64_t)((jack_frame_time(jackd->client) - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
+  frames = jack_frame_time(jackd->client);
+
+  retframes = frames;
+  if (last_frames > 0 && frames <= last_frames) {
+    retframes += jackd->frames_written;
+  } else jackd->frames_written = 0;
+  last_frames = frames;
+
+  return (uint64_t)((frames - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
                       jackd->client)) * USEC_TO_TICKS);
 }
 

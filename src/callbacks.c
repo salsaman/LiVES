@@ -5944,21 +5944,17 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   char *dfile;
   char *ltext = NULL;
 
-  if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    if (mainw->in_fs_preview) {
-      end_fs_preview();
-      return;
-    }
-  } else {
-    lives_widget_set_sensitive(widget, FALSE);
+  if (mainw->in_fs_preview) {
+    end_fs_preview();
+    return;
   }
 
-  if (mainw->in_fs_preview) {
-    dfile = lives_strdup_printf("thm%d", pid);
-    lives_kill_subprocesses(dfile, TRUE);
-    lives_free(dfile);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-  }
+  /* if (mainw->in_fs_preview) { */
+  /*   dfile = lives_strdup_printf("thm%d", pid); */
+  /*   lives_kill_subprocesses(dfile, TRUE); */
+  /*   lives_free(dfile); */
+  /*   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE); */
+  /* } */
 
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     // open selection
@@ -6220,14 +6216,15 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     return;
   }
 
+  tmp = lives_strdup(_("\nStop Preview\n"));
+  ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_button_set_label(LIVES_BUTTON(widget), tmp);
   if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    char *tmp = lives_strdup(_("\nStop Preview\n"));
-    ltext = lives_strdup(lives_button_get_label(LIVES_BUTTON(widget)));
-    widget_opts.expand = LIVES_EXPAND_NONE;
-    lives_button_set_label(LIVES_BUTTON(widget), tmp);
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_free(tmp);
   }
+  lives_free(tmp);
+
   // loop here until preview has finished, or the user presses OK or Cancel
 
   while ((!(ifile = fopen(info_file, "r"))) && mainw->in_fs_preview && mainw->fc_buttonresponse == LIVES_RESPONSE_NONE) {
@@ -6236,12 +6233,10 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
     lives_usleep(prefs->sleep_time);
   }
 
-  if (preview_type == LIVES_PREVIEW_TYPE_RANGE) {
-    widget_opts.expand = LIVES_EXPAND_NONE;
-    lives_button_set_label(LIVES_BUTTON(widget), ltext);
-    widget_opts.expand = LIVES_EXPAND_DEFAULT;
-    lives_free(ltext);
-  }
+  widget_opts.expand = LIVES_EXPAND_NONE;
+  lives_button_set_label(LIVES_BUTTON(widget), ltext);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;
+  lives_free(ltext);
 
   if (ifile != NULL) {
     fclose(ifile);

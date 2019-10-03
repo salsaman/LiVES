@@ -2032,9 +2032,9 @@ static boolean on_mt_timeline_scroll(LiVESWidget *widget, LiVESXEventScroll *eve
 
   cval = lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
 
-  if (event->direction == LIVES_SCROLL_UP) {
+  if (event->direction == LIVES_SCROLL_UP || event->delta_y < 0) {
     if (--cval < 0) return FALSE;
-  } else if (event->direction == LIVES_SCROLL_DOWN) {
+  } else if (event->direction == LIVES_SCROLL_DOWN || event->delta_y > 0) {
     if (++cval >= lives_list_length(mt->video_draws)) return FALSE;
   }
 
@@ -7850,7 +7850,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->top_eventbox, FALSE, FALSE, 0);
 
   lives_widget_add_events(mt->top_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK |
-                          LIVES_SCROLL_MASK);
+                          LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->top_eventbox), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
@@ -8221,7 +8221,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // poly clip scroll
   mt->clip_scroll = lives_scrolled_window_new(NULL, NULL);
   lives_widget_object_ref(mt->clip_scroll);
-  lives_widget_set_events(mt->clip_scroll, LIVES_SCROLL_MASK);
+  lives_widget_set_events(mt->clip_scroll, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
   lives_signal_connect(LIVES_GUI_OBJECT(mt->clip_scroll), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
                        mt);
@@ -8646,7 +8646,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        (livespointer)mt);
 
   lives_widget_add_events(mt->tl_eventbox, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK |
-                          LIVES_SCROLL_MASK);
+                          LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
   mt->mouse_mot2 = lives_signal_connect(LIVES_GUI_OBJECT(mt->tl_eventbox), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
                                         LIVES_GUI_CALLBACK(on_track_move),
                                         (livespointer)mt);
@@ -8721,7 +8721,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
     mainw->sw_func = mt->sw_func;
     lives_signal_handler_block(mt->msg_area, mt->sw_func);
 
-    lives_widget_set_events(mt->msg_area, LIVES_SCROLL_MASK);
+    lives_widget_set_events(mt->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
     lives_widget_set_app_paintable(mt->msg_area, TRUE);
     lives_container_set_border_width(LIVES_CONTAINER(mt->message_box), 0);

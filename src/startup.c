@@ -361,7 +361,7 @@ static void add_test(LiVESWidget *table, int row, char *ttext, boolean noskip) {
     lives_widget_show(image);
   }
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_context_update();
 }
 
 

@@ -8313,6 +8313,10 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
   wtmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
 
   wtmpl = wtmpls[i];
+  if (wtmpl == NULL) {
+    lives_free(wtmpls);
+    return TRUE;
+  }
 
   if (weed_plant_has_leaf(wtmpl, WEED_LEAF_FLAGS)) flags = weed_get_int_value(wtmpl, WEED_LEAF_FLAGS, &error);
   if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GUI)) gui = weed_get_plantptr_value(wtmpl, WEED_LEAF_GUI, &error);

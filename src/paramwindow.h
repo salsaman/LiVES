@@ -21,6 +21,8 @@ typedef struct {
 #define GIW_KNOB_WIDTH ((int)(40.*widget_opts.scale))
 #define GIW_KNOB_HEIGHT ((int)(40.*widget_opts.scale))
 
+#define DEF_SLIDER_WIDTH ((int)(200.*widget_opts.scale))
+
 void on_paramwindow_ok_clicked(LiVESButton *, lives_rfx_t *);
 void on_paramwindow_cancel_clicked(LiVESButton *, lives_rfx_t *);
 void on_paramwindow_cancel_clicked2(LiVESButton *, lives_rfx_t *);

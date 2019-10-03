@@ -2889,7 +2889,7 @@ if (defined($ARGV[0])) {
 			$framestr = "";
 		    }
 		    $threadopts="--vd-lavc-threads=$threads";
-		    $com = "\"$mplayer_command\" --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win --vf=dsize=$hsize:$vsize:0 $threadopts --start=$start_time $framestr \"$file\" $extra_params >$nulfile 2>&1";
+		    $com = "\"$mplayer_command\" --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win $threadopts --start=$start_time $framestr \"$file\" $extra_params >$nulfile 2>&1";
 		}
 	    } else {
 		#audio only

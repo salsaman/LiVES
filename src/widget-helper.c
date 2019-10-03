@@ -8367,26 +8367,27 @@ static LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWid
   LiVESList *xwidgets = (LiVESList *)lives_widget_object_steal_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
   LiVESWidget *box = lives_layout_row_new(layout);
   int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
-  int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
+  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
   lives_widget_object_ref(LIVES_WIDGET_OBJECT(box));
   lives_widget_unparent(box);
-  lives_layout_attach(layout, box, 0, columns, row);
+  lives_layout_attach(layout, box, 0, columns, rows - 1);
   lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
+  if (widget != NULL) lives_layout_pack(LIVES_BOX(box), widget);
   xwidgets = lives_list_prepend(xwidgets, box);
   lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "layout_row", LIVES_INT_TO_POINTER(row));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "layout_row", LIVES_INT_TO_POINTER(rows) - 1);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "expansion", LIVES_INT_TO_POINTER(widget_opts.expand));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "justification", LIVES_INT_TO_POINTER(widget_opts.justify));
-  if (widget != NULL) {
-    lives_layout_pack(LIVES_BOX(box), widget);
-    return widget;
-  } else return box;
+  if (widget != NULL) return widget;
+  return box;
 }
 
 
 static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
   LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
   lives_table_resize(LIVES_TABLE(layout), rows, columns);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cols", LIVES_INT_TO_POINTER(columns));
   while (xwidgets != NULL) {
     LiVESWidget *widget = (LiVESWidget *)xwidgets->data;
     int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_row"));
@@ -8409,7 +8410,18 @@ static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVESWidget *widget) {
-  lives_box_pack_start(box, widget, TRUE, TRUE, LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width : 0);
+  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
+  if (layout != NULL) {
+    LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
+    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows")) - 1;
+    // remove any expansion widgets on this row
+    if (xwidgets != NULL) {
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xwidgets->data), "layout_row")) == row) {
+        lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
+      }
+    }
+  }
+  lives_box_pack_start(box, widget, TRUE, TRUE, LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width >> 1 : 0);
   lives_widget_set_halign(widget, lives_justify_to_align(widget_opts.justify));
   return widget;
 }
@@ -8446,25 +8458,27 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout *layo
   LiVESWidget *widget = alignment;
   lives_container_add(LIVES_CONTAINER(alignment), hbox);
 #endif
-  int nadded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "widgets_added")) + 1;
-  int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
+  int nadded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "widgets_added"));
+  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
   int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
-  if (nadded > columns) {
-    columns = nadded;
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "columns", LIVES_INT_TO_POINTER(columns));
-  }
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-  lives_layout_resize(layout, row, columns);
-  lives_layout_attach(layout, widget, nadded - 1, nadded, row);
+  if (++nadded > columns) lives_layout_resize(layout, rows, nadded);
+  lives_layout_attach(layout, widget, nadded - 1, nadded, rows - 1);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(nadded));
   return hbox;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_row_new(LiVESLayout *layout) {
+WIDGET_HELPER_GLOBAL_INLINE int lives_layout_add_row(LiVESLayout *layout) {
   int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows")) + 1;
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(rows));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
+  return rows;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_row_new(LiVESLayout *layout) {
+  lives_layout_add_row(layout);
   return lives_layout_hbox_new(layout);
 }
 
@@ -8485,11 +8499,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
   LiVESWidget *separator;
   LiVESJustification woj = widget_opts.justify;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  if (!horizontal) lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), (separator = lives_vseparator_new()));
-  else {
-    LiVESWidget *hbox = lives_layout_expansion_row_new(layout, NULL);
-    separator = add_hsep_to_box(LIVES_BOX(hbox));
-  }
+  if (!horizontal) separator = lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), lives_vseparator_new());
+  else separator = add_hsep_to_box(LIVES_BOX(lives_layout_expansion_row_new(layout, NULL)));
   widget_opts.justify = woj;
   return separator;
 }
@@ -10006,7 +10017,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
     expand = LIVES_SHOULD_EXPAND_EXTRA_FOR(hbox);
 
-    if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width;
+    if (LIVES_SHOULD_EXPAND_WIDTH) packing_width = widget_opts.packing_width >> 1;
   }
 
   colr.red = LIVES_WIDGET_COLOR_SCALE_65535(rgba->red);
@@ -10045,6 +10056,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
       lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, packing_width);
       if (parent_is_layout) {
         hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
+        widget_opts.justify = LIVES_JUSTIFY_RIGHT;
       }
     }
 
@@ -10117,6 +10129,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (parent_is_layout) {
+      widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
       hbox = make_inner_hbox(LIVES_BOX(hbox));
     }
     lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, FALSE, packing_width * 2.);
@@ -10127,6 +10140,10 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha", spinbutton_alpha);
 
     lives_widget_set_show_hide_parent(cbutton);
+  }
+
+  if (parent_is_layout) {
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   }
 
   lives_signal_connect(LIVES_GUI_OBJECT(cbutton), LIVES_WIDGET_COLOR_SET_SIGNAL,

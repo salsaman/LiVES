@@ -864,6 +864,7 @@ LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingto
 LiVESWidget *lives_layout_new(LiVESBox *);
 LiVESWidget *lives_layout_hbox_new(LiVESLayout *);
 LiVESWidget *lives_layout_row_new(LiVESLayout *);
+int lives_layout_add_row(LiVESLayout *layout);
 LiVESWidget *lives_layout_pack(LiVESHBox *, LiVESWidget *);
 LiVESWidget *lives_layout_add_label(LiVESLayout *, const char *text, boolean horizontal);
 LiVESWidget *lives_layout_add_fill(LiVESLayout *, boolean horizontal);

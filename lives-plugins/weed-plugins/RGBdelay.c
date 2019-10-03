@@ -413,7 +413,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     gui = weed_filter_class_get_gui(filter_class);
     rfx_strings[0] = "layout|p0";
     rfx_strings[1] = "layout|hseparator|";
-    rfx_strings[2] = "layout|\"  R\"|fill|\"         G \"|fill|\"         B \"|fill|\"Blend Strength\"|fill|";
+    rfx_strings[2] = "layout|\"  R\"|\"         G \"|\"         B \"|fill|fill|\"Blend Strength\"|fill|";
 
     for (i = 3; i < 54; i++) {
       rfx_strings[i] = weed_malloc(1024);

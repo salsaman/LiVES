@@ -1896,7 +1896,7 @@ void create_LiVES(void) {
 
   mainw->eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox, FALSE, FALSE, 0);
-  lives_widget_add_events(mainw->eventbox, LIVES_SCROLL_MASK);
+  lives_widget_add_events(mainw->eventbox, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
 
   lives_container_add(LIVES_CONTAINER(mainw->eventbox), vbox99);
 
@@ -2232,7 +2232,7 @@ void create_LiVES(void) {
     lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->msg_area), LIVES_WIDGET_CONFIGURE_EVENT,
                                LIVES_GUI_CALLBACK(config_event2),
                                NULL);
-    lives_widget_add_events(mainw->msg_area, GDK_SMOOTH_SCROLL_MASK);
+    lives_widget_add_events(mainw->msg_area, LIVES_SMOOTH_SCROLL_MASK | LIVES_SCROLL_MASK);
   }
   lives_widget_set_vexpand(mainw->msg_area, TRUE);
   lives_widget_set_app_paintable(mainw->msg_area, TRUE);
@@ -3535,7 +3535,7 @@ void make_preview_box(void) {
   lives_widget_object_ref(mainw->preview_box);
 
   eventbox = lives_event_box_new();
-  lives_widget_set_events(eventbox, LIVES_SCROLL_MASK);
+  lives_widget_set_events(eventbox, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
 
   lives_signal_connect(LIVES_GUI_OBJECT(eventbox), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),
@@ -3912,7 +3912,7 @@ void make_play_window(void) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), transient);
   }
 
-  lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK);
+  lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
   //gtk_window_set_position(LIVES_WINDOW(mainw->play_window),GTK_WIN_POS_CENTER_ALWAYS);

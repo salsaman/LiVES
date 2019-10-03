@@ -4781,7 +4781,7 @@ boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livesp
     lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + event->delta_y);
   else {
     if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
-    if (event->direction == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
+    if (event->direction == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
   }
   return FALSE;
 }

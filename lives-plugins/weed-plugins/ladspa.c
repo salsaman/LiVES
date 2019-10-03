@@ -666,12 +666,12 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           // if we have 0,1 or 2 input channels, 1 outputs
           // 1 input, 0 or 2 outputs
 
+          stcount = 0;
           if ((ninchs < 2 && noutchs < 2 && (ninchs + noutchs > 0)) || noutchs == 1) {
             dual = WEED_TRUE;
-            stcount = 1;
+            if (ninps > 0) stcount = 2;
           } else {
             dual = WEED_FALSE;
-            stcount = 0;
           }
 
           oninchs = ninchs;
@@ -705,12 +705,13 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           if (ninps > 0) {
             // add extra in 2 extra params for "link channels"
             in_params = (weed_plant_t **)weed_malloc((++ninps + stcount * 2) * sizeof(weed_plant_t *));
-            in_params[ninps + stcount * 2 - 1] = NULL;
+            in_params[ninps + stcount - 1] = NULL;
             if (dual == WEED_TRUE) {
               in_params[ninps - 1] = weed_switch_init("link", "_Link left and right parameters", WEED_TRUE);
               gui = weed_parameter_template_get_gui(in_params[ninps - 1]);
               weed_set_int_value(gui, "copy_value_to", ninps);
               sprintf(rfx_strings[0], "layout|p%d|", ninps - 1);
+              sprintf(rfx_strings[1], "layout|hseparator|");
 
               // link it to a dummy param which is hidden and reinit - this allows the value to be updated and the plugin to be reinited at any time
               in_params[ninps] = weed_switch_init("link dummy", "linkdummy", WEED_TRUE);

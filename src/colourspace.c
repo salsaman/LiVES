@@ -11196,6 +11196,8 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels(pixbuf);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, in_pixel_data);
     weed_set_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, pixbuf);
+    palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
+    if (weed_palette_is_rgb_palette(palette)) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
     return TRUE;
   }
 #endif

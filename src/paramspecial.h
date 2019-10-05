@@ -48,6 +48,8 @@ typedef struct {
 #define ASPECT_BUTTON_WIDTH 32
 #define ASPECT_BUTTON_HEIGHT 32
 
+#include "multitrack.h"
+
 void init_special(void);
 
 void add_to_special(const char *special_string, lives_rfx_t *);
@@ -73,6 +75,8 @@ void setmergealign(void);
 void set_aspect_ratio_widgets(lives_param_t *w, lives_param_t *h);
 
 boolean is_perchannel_multi(lives_rfx_t *rfx, int pnum);
+
+LiVESPixbuf *mt_framedraw(lives_mt *, weed_plant_t *layer);
 
 lives_special_mergealign_t mergealign;
 

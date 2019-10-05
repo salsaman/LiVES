@@ -6,8 +6,10 @@
 // functions for the 'framedraw' widget - lets users draw on frames :-)
 
 #ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-host.h>
 #include <weed/weed-palettes.h>
 #else
+#include "../libweed/weed-host.h"
 #include "../libweed/weed-palettes.h"
 #endif
 
@@ -81,9 +83,11 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, TRUE);
   lives_widget_set_sensitive(mainw->framedraw_scale, TRUE);
 
-  if (mainw->framedraw_frame > cfile->start && !(cfile->start == 0 && mainw->framedraw_frame == 1))
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start);
-  else {
+  if (!(cfile->start == 0 && mainw->framedraw_frame == 1)) {
+    mainw->fd_max_frame = cfile->start;
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
+  } else {
+    mainw->fd_max_frame = 1;
     load_rfx_preview(rfx);
   }
 
@@ -111,9 +115,9 @@ static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx = rfx;
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                             LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
-                             framedraw);
+  mainw->fd_spin_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                        LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
+                        framedraw);
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_opscale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(framedraw_redraw_cb),
                              framedraw);
@@ -143,7 +147,8 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
   lives_widget_set_bg_color(mainw->fd_frame, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
   lives_widget_set_bg_color(fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
 
-  framedraw_redraw(framedraw, TRUE, NULL);
+  if (mainw->fd_layer != NULL)
+    framedraw_redraw(framedraw, TRUE, mainw->fd_layer_orig);
 }
 
 
@@ -176,7 +181,7 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
 
 
 static boolean expose_fd_event(LiVESWidget *widget, LiVESXEventExpose ev) {
-  redraw_framedraw_image();
+  redraw_framedraw_image(mainw->fd_layer);
   return TRUE;
 }
 
@@ -259,8 +264,9 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
     lives_widget_set_fg_color(mainw->framedraw, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   }
 
-  lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_EXPOSE_EVENT,
-                             LIVES_GUI_CALLBACK(expose_fd_event), NULL);
+  if (mainw->multitrack == NULL)
+    lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_EXPOSE_EVENT,
+                               LIVES_GUI_CALLBACK(expose_fd_event), NULL);
 
   // mask colour and opacity controls
   mainw->framedraw_maskbox = lives_hbox_new(FALSE, 2);
@@ -272,7 +278,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), mainw->framedraw_opscale, TRUE, TRUE, 0);
   opcol = lives_rgba_col_new(0, 0, 0, 65535);
   cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"), FALSE, &opcol, NULL, NULL, NULL, NULL);
-  mainw->framedraw_cbutton = cbutton; // stop compiler complaining
+  mainw->framedraw_cbutton = cbutton;
 
   hbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -285,6 +291,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(LIVES_WIDGET(box))), "rfx");
   mainw->framedraw_preview = lives_standard_button_new_from_stock(LIVES_STOCK_REFRESH, _("_Preview"));
   lives_box_pack_start(LIVES_BOX(hbox), mainw->framedraw_preview, TRUE, FALSE, 0);
+  lives_widget_set_no_show_all(mainw->framedraw_preview, TRUE);
 
   hbox = lives_hbox_new(FALSE, 2);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -298,16 +305,24 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 
   lives_widget_show_all(vbox);
 
-  if (!add_preview_button) {
-    lives_widget_hide(mainw->framedraw_preview);
+  if (add_preview_button) {
+    lives_widget_show(mainw->framedraw_preview);
   }
 
   lives_widget_hide(mainw->framedraw_maskbox);
 }
 
 
-void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload, LiVESPixbuf *pixbuf) {
-  // this will draw the overlay and optionally reload the image
+weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload, weed_plant_t *layer) {
+  // overlay framedrawing on a layer
+  // if called from multitrack then the preview layer is passed in via mt_framedraw()
+  // from c.e, layer is mainw->fd_orig_layer
+
+  // if reload is TRUE then we reload the frame from current file into mainw->fd_layer_orig
+
+  // the input layer is copied if non-NULL (mainw->fd_layer_orig -> mainw->fd_layer)
+
+  // the output layer is returned (mainw->fd_layer)
 
   int fd_height;
   int fd_width;
@@ -317,15 +332,19 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   lives_painter_t *cr;
 
-  if (mainw->current_file < 1 || cfile == NULL) return;
+  if (mainw->current_file < 1 || cfile == NULL) return NULL;
 
   if (framedraw->rfx->source_type == LIVES_RFX_SOURCE_RFX)
-    if (noupdate) return;
+    if (noupdate) return NULL; // static volatile
 
-  fd_width = lives_widget_get_allocation_width(mainw->framedraw);
-  fd_height = lives_widget_get_allocation_height(mainw->framedraw);
-
-  if (fd_width < 4 || fd_height < 4) return;
+  if (mainw->multitrack == NULL) {
+    fd_width = lives_widget_get_allocation_width(mainw->framedraw);
+    fd_height = lives_widget_get_allocation_height(mainw->framedraw);
+  } else {
+    fd_width = lives_widget_get_allocation_width(mainw->play_image);
+    fd_height = lives_widget_get_allocation_height(mainw->play_image);
+  }
+  if (fd_width < 4 || fd_height < 4) return NULL;
 
   width = cfile->hsize;
   height = cfile->vsize;
@@ -336,24 +355,42 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
   calc_maxspect(fd_width, fd_height, &width, &height);
 
   // copy from orig, resize
-  // copy orig layer to layer
+
+  if (reload || layer == NULL) {
+    // forced reload: get frame from clip, and set in mainw->fd_layer_orig
+    const char *img_ext;
+    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    if (framedraw->rfx->num_in_channels > 0 && !(framedraw->rfx->props & RFX_PROPS_MAY_RESIZE)) {
+      img_ext = LIVES_FILE_EXT_PRE;
+    } else {
+      img_ext = get_image_ext_for_type(cfile->img_type);
+    }
+
+    layer =  mainw->fd_layer_orig = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+    if (!pull_frame(mainw->fd_layer_orig, img_ext, 0)) {
+      weed_plant_free(mainw->fd_layer_orig);
+      mainw->fd_layer_orig = NULL;
+      return NULL;
+    }
+  }
+
+  // copy orig layer to new layer
   if (mainw->fd_layer != NULL) {
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
   }
 
-  if (reload || mainw->fd_layer_orig == NULL) load_framedraw_image(pixbuf);
+  mainw->fd_layer_orig = layer;
+  mainw->fd_layer = weed_layer_copy(NULL, layer);
+  gamma_correct_layer(WEED_GAMMA_SRGB, mainw->fd_layer);
 
-  mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
   // resize to correct size
-
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_END, 0);
+  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
+               WEED_PALETTE_BGRA32, 0);
 
   cr = layer_to_lives_painter(mainw->fd_layer);
 
   // draw on the lives_painter
-
-  // her we dont offset because we are drawing in the pixbuf, not the widget
 
   switch (framedraw->type) {
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
@@ -451,19 +488,20 @@ void framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload,
 
   lives_painter_to_layer(cr, mainw->fd_layer);
 
-  lives_painter_destroy(cr);
+  if (mainw->multitrack == NULL)
+    redraw_framedraw_image(mainw->fd_layer);
 
-  redraw_framedraw_image();
+  // update the widget
+  return mainw->fd_layer;
 }
 
 
 void load_rfx_preview(lives_rfx_t *rfx) {
   // load a preview of an rfx (rendered effect) in clip editor
 
-  LiVESPixbuf *pixbuf;
   FILE *infofile = NULL;
 
-  int max_frame = 0, tot_frames = 0;
+  int tot_frames = 0;
   int vend = cfile->start;
   int retval;
   int alarm_handle;
@@ -472,8 +510,14 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   boolean retb;
   boolean timeout;
 
-  weed_timecode_t tc;
   const char *img_ext;
+
+  if (mainw->framedraw_frame > mainw->fd_max_frame) {
+    lives_signal_handler_block(mainw->framedraw_spinbutton, mainw->fd_spin_func);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
+    lives_signal_handler_unblock(mainw->framedraw_spinbutton, mainw->fd_spin_func);
+    lives_widget_context_update();
+  }
 
   if (mainw->framedraw_frame == 0) mainw->framedraw_frame = 1;
 
@@ -542,12 +586,12 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   if (strncmp(mainw->msg, "completed", 9)) {
     if (rfx->num_in_channels > 0) {
-      max_frame = atoi(mainw->msg);
+      mainw->fd_max_frame = atoi(mainw->msg);
     } else {
       int numtok = get_token_count(mainw->msg, '|');
       if (numtok > 4) {
         char **array = lives_strsplit(mainw->msg, "|", numtok);
-        max_frame = atoi(array[0]);
+        mainw->fd_max_frame = atoi(array[0]);
         cfile->hsize = atoi(array[1]);
         cfile->vsize = atoi(array[2]);
         cfile->fps = cfile->pb_fps = strtod(array[3], NULL);
@@ -557,12 +601,12 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       }
     }
   } else {
-    max_frame = cfile->end;
+    mainw->fd_max_frame = cfile->end;
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (max_frame > 0) {
+  if (mainw->fd_max_frame > 0) {
     if (rfx->num_in_channels == 0) {
       int maxlen = calc_spin_button_width(1., (double)tot_frames, 0);
       lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1, tot_frames);
@@ -571,112 +615,78 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       lives_widget_queue_draw(mainw->framedraw_scale);
     }
 
-    if (mainw->framedraw_frame > max_frame) {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), max_frame);
+    if (mainw->framedraw_frame > mainw->fd_max_frame) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
       mainw->current_file = current_file;
       return;
     }
   }
 
-  if (rfx->num_in_channels > 0) {
+  mainw->fd_layer_orig = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+  if (rfx->num_in_channels > 0 && !(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     img_ext = LIVES_FILE_EXT_PRE;
   } else {
     img_ext = get_image_ext_for_type(cfile->img_type);
   }
-
-  tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
-  pixbuf = pull_lives_pixbuf_at_size(mainw->current_file, mainw->framedraw_frame, (char *)img_ext,
-                                     tc, (double)cfile->hsize,
-                                     (double)cfile->vsize, LIVES_INTERP_BEST);
-
-  load_framedraw_image(pixbuf);
-  redraw_framedraw_image();
-
+  if (!pull_frame(mainw->fd_layer_orig, img_ext, 0)) {
+    weed_plant_free(mainw->fd_layer_orig);
+    mainw->fd_layer_orig = NULL;
+  } else {
+    if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
+    mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
+    gamma_correct_layer(WEED_GAMMA_SRGB, mainw->fd_layer);
+    redraw_framedraw_image(mainw->fd_layer);
+  }
   mainw->current_file = current_file;
 }
 
 
-void load_framedraw_image(LiVESPixbuf *pixbuf) {
-  // this is for the single frame framedraw widget
-  // it should be called whenever mainw->framedraw_frame changes
-  // the pixbuf will be loaded if it is NULL
-  // then it is converted to fd_layer_orig
+void redraw_framedraw_image(weed_plant_t *layer) {
+  // layer should be mainw->fd_frame
+  // size layer, convert palette
+  // create a pixbuf
+  // then draw it in frame
+  // changes 'layer' itself
 
-  weed_timecode_t tc;
-
-  if (mainw->framedraw_frame > cfile->frames) mainw->framedraw_frame = cfile->frames;
-
-  if (pixbuf == NULL) {
-    const char *img_ext = get_image_ext_for_type(cfile->img_type);
-
-    // can happen if we preview for rendered generators
-    if ((mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file) && mainw->framedraw_frame == 0) return;
-
-    tc = ((mainw->framedraw_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
-    pixbuf = pull_lives_pixbuf_at_size(mainw->current_file, mainw->framedraw_frame, img_ext, tc,
-                                       (double)cfile->hsize, (double)cfile->vsize,
-                                       LIVES_INTERP_BEST);
-  }
-
-  if (pixbuf != NULL) {
-    if (mainw->fd_layer_orig != NULL) {
-      weed_layer_free(mainw->fd_layer_orig);
-    }
-
-    mainw->fd_layer_orig = weed_layer_create(0, 0, NULL, WEED_PALETTE_END);
-
-    if (!pixbuf_to_layer(mainw->fd_layer_orig, pixbuf)) lives_widget_object_unref(pixbuf);
-  }
-
-  if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
-  mainw->fd_layer = NULL;
-}
-
-
-void redraw_framedraw_image(void) {
-  lives_painter_t *cr;
-  LiVESPixbuf *pixbuf;
+  lives_painter_t *cr, *cr2;
 
   int fd_width = lives_widget_get_allocation_width(mainw->framedraw);
   int fd_height = lives_widget_get_allocation_height(mainw->framedraw);
 
-  int width, height;
+  int width, height, cx, cy;
 
-  if (mainw->fd_layer_orig == NULL) return;
+  if (layer == NULL) return;
 
   if (mainw->current_file < 1 || cfile == NULL) return;
+
+  cr2 = lives_painter_create_from_widget(LIVES_WIDGET(mainw->framedraw));
+  if (cr2 == NULL) return;
 
   width = cfile->hsize;
   height = cfile->vsize;
 
   calc_maxspect(fd_width, fd_height, &width, &height);
 
-  // copy orig layer to layer
-  if (mainw->fd_layer == NULL) mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
-
   // resize to correct size
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, WEED_PALETTE_RGBA32, 0);
+  resize_layer(layer, width, height, LIVES_INTERP_BEST, capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
+               WEED_PALETTE_BGRA32, 0);
 
-  // force to RGBA32
-  convert_layer_palette(mainw->fd_layer, WEED_PALETTE_RGBA32, 0);
+  cr = layer_to_lives_painter(layer);
 
-  // layer to pixbuf
-  pixbuf = layer_to_pixbuf(mainw->fd_layer);
+  cx = (fd_width - width) / 2;
+  cy = (fd_height - height) / 2;
 
-  // get lives_painter for window
-  cr = lives_painter_create_from_widget(mainw->framedraw);
+  lives_painter_set_source_surface(cr2, lives_painter_get_target(cr), cx, cy);
+  lives_painter_rectangle(cr2, cx, cy,
+                          width,
+                          height);
+  lives_painter_fill(cr2);
 
-  if (cr != NULL) {
-    // set source pixbuf for lives_painter
-    lives_painter_set_source_pixbuf(cr, pixbuf, (fd_width - width) >> 1, (fd_height - height) >> 1);
-    lives_painter_paint(cr);
-    lives_painter_destroy(cr);
-  }
+  lives_painter_destroy(cr2);
 
-  if (pixbuf != NULL) {
-    // convert pixbuf back to layer (layer_to_pixbuf destroys it)
-    if (!pixbuf_to_layer(mainw->fd_layer, pixbuf)) lives_widget_object_unref(pixbuf);
-  }
+  lives_painter_to_layer(cr, layer);
+
+  lives_painter_destroy(cr);
 }
 
 
@@ -832,7 +842,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   noupdate = FALSE;
 
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
 
   return FALSE;
 }
@@ -957,7 +967,7 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   }
 
   noupdate = FALSE;
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
 
   return FALSE;
 }
@@ -983,7 +993,7 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
     }
   }
 
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
   return FALSE;
 }
 
@@ -992,7 +1002,7 @@ void after_framedraw_widget_changed(LiVESWidget *widget, lives_special_framedraw
   if (mainw->block_param_updates || noupdate) return;
 
   // redraw mask when spin values change
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
   if (mainw->framedraw_reset != NULL) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
@@ -1043,5 +1053,5 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
 
   noupdate = FALSE;
 
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
 }

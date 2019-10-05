@@ -3219,7 +3219,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -4705,6 +4705,8 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   unsigned char *mem, *ptr;
   unsigned char **row_ptrs;
 
+  double file_gamma;
+
   size_t bsize = fread(ibuff, 1, 8, fp), framesize;
   boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
 
@@ -4713,6 +4715,8 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   int rowstrides[1];
 
   int flags = 0, error;
+
+  png_uint_32 gamma;
 
   register int i;
 
@@ -4762,10 +4766,24 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
 
-  // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
+  gamma = png_get_gAMA(png_ptr, info_ptr, &file_gamma);
+
+  if (gamma == 0 || fabs(file_gamma - 1. / 2.2) < .001)
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+  else if (file_gamma == 1.0)
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+
+#ifdef PNG_GAMMA_LINEAR
+  if (gamma == PNG_DEFAULT_sRGB)
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+  else if (gamma == PNG_GAMMA_LINEAR)
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+#endif
+
+  // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   if (color_type == PNG_COLOR_TYPE_PALETTE)
     png_set_palette_to_rgb(png_ptr);
 
@@ -4924,6 +4942,11 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
   }
 #endif
+
+  if (get_layer_gamma(layer) == WEED_GAMMA_LINEAR)
+    png_set_gAMA(png_ptr, info_ptr, 1.0);
+  else
+    png_set_gAMA(png_ptr, info_ptr, 1.0 / 2.2);
 
   png_write_info(png_ptr, info_ptr);
 
@@ -5163,8 +5186,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
         height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
       }
-      if (width == 0) width = 4;
-      if (height == 0) height = 4;
+      if (width == 0) width = DEFAULT_FRAME_HSIZE_UNSCALED;
+      if (height == 0) height = DEFAULT_FRAME_VSIZE_UNSCALED;
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
       weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
       if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {

@@ -643,9 +643,6 @@ typedef struct {
   int def_width;
   int def_height;
 
-  /// for the framedraw preview - TODO use lives_framedraw_t array
-  int framedraw_frame;
-
   /////////////////////////////////////////////////
 
   // end of static-ish info
@@ -970,6 +967,11 @@ typedef struct {
 
   weed_plant_t *fd_layer_orig; ///< original layer uneffected
   weed_plant_t *fd_layer; ///< framedraw preview layer
+
+  int framedraw_frame; ///< current displayed frame
+  int fd_max_frame; ///< max effected / generated frame
+
+  ulong fd_spin_func;
 
   LiVESWidget *hbox3;  ///< hbox with start / end spins and selection label (C.E.)
 

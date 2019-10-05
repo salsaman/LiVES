@@ -1387,7 +1387,6 @@ lives_cancel_t check_for_bad_ffmpeg(void);
 //callbacks.c
 
 // paramspecial.c
-LiVESPixbuf *mt_framedraw(lives_mt *, LiVESPixbuf *);
 
 // effects-weed.c
 livespointer _lives_malloc(size_t size) GNU_MALLOC;

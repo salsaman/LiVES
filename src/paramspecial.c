@@ -166,8 +166,8 @@ void fd_tweak(lives_rfx_t *rfx) {
       lives_widget_set_sensitive(mainw->framedraw_scale, TRUE);
     }
   }
-  if (framedraw.type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) {
-    lives_widget_show(mainw->framedraw_maskbox);
+  if (framedraw.type != LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) {
+    lives_widget_set_no_show_all(mainw->framedraw_maskbox, TRUE);
   }
 }
 
@@ -605,7 +605,9 @@ void setmergealign(void) {
 }
 
 
-LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
+LiVESPixbuf *mt_framedraw(lives_mt *mt, weed_plant_t *layer) {
+  LiVESPixbuf *pixbuf = NULL;
+
   if (framedraw.added) {
     switch (framedraw.type) {
     case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
@@ -620,14 +622,12 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, LiVESPixbuf *pixbuf) {
       break;
     }
 
-    framedraw_redraw(&framedraw, TRUE, pixbuf);
-
+    // draw on top of layer
+    mainw->fd_layer = framedraw_redraw(&framedraw, FALSE, layer);
+    convert_layer_palette(mainw->fd_layer, WEED_PALETTE_RGB24, 0);
     pixbuf = layer_to_pixbuf(mainw->fd_layer);
-
     weed_plant_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
-
-    return pixbuf;
   }
   return pixbuf;
 }

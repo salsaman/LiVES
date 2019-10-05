@@ -1935,9 +1935,9 @@ void track_select(lives_mt *mt) {
     // must be done in this order: interpolate, update, preview
     xx = get_track_index(mt, tc);
     if (mt->track_index != -1) {
-      if (mt->current_track >= 0) {
-        interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc);
-      }
+      /* if (mt->current_track >= 0) { */
+      /*    interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc); */
+      /* } */
       if (!xx) {
         boolean aprev = mt->opts.fx_auto_preview;
         mt->opts.fx_auto_preview = FALSE;
@@ -1947,7 +1947,7 @@ void track_select(lives_mt *mt) {
         mt->opts.fx_auto_preview = aprev;
       }
       if (mt->current_track >= 0) {
-        set_params_unchanged(mt->current_rfx);
+        //set_params_unchanged(mt->current_rfx);
         mt_show_current_frame(mt, FALSE);
       }
       if (mt->fx_params_label != NULL) {
@@ -3088,7 +3088,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
         backup_host_tags(mt->event_list, curr_tc);
       }
 
-      // pass quickly through events_list, switching on and off effects an interpolating at current time
+      // pass quickly through events_list, switching on and off effects and interpolating at current time
       get_audio_and_effects_state_at(mt->event_list, mt->pb_start_event, FALSE, mt->exact_preview);
 
       // if we are previewing a specific effect we also need to init it
@@ -3189,7 +3189,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   } else needs_clear = TRUE;
 
   if (mainw->frame_layer != NULL) {
-    LiVESPixbuf *pixbuf;
+    LiVESPixbuf *pixbuf = NULL;
     int weed_error;
 
     mainw->pwidth = mt->outwidth;
@@ -3201,11 +3201,8 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
 
-    pixbuf = layer_to_pixbuf(mainw->frame_layer);
-    weed_layer_free(mainw->frame_layer);
-    mainw->frame_layer = NULL;
-
-    if (mt->framedraw != NULL) pixbuf = mt_framedraw(mt, pixbuf);
+    if (mt->framedraw != NULL) pixbuf = mt_framedraw(mt, mainw->frame_layer);
+    if (pixbuf == NULL) pixbuf = layer_to_pixbuf(mainw->frame_layer);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     // set frame_pixbuf, this gets painted in in expose_event
@@ -8281,7 +8278,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_fg_color(mt->fx_contents_box, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
 
   dph = widget_opts.packing_height;
-  widget_opts.packing_height = 0;
+  widget_opts.packing_height >>= 1;
   add_hsep_to_box(LIVES_BOX(mt->fx_contents_box));
   widget_opts.packing_height = dph;
 
@@ -8447,8 +8444,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, widget_opts.packing_width);
 
   mt->in_image = lives_image_new();
+  mt->in_frame = lives_alignment_new(0.5, 0.5, 1., 1.);
   mt->in_frame = lives_frame_new(NULL);
-  //lives_widget_set_vexpand(mt->in_frame, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mt->in_frame), 1);
 
   lives_container_add(LIVES_CONTAINER(mt->in_frame), mt->in_image);
@@ -8498,7 +8495,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->out_image = lives_image_new();
   mt->out_frame = lives_frame_new(NULL);
-  lives_widget_set_vexpand(mt->out_frame, TRUE);
   lives_container_set_border_width(LIVES_CONTAINER(mt->out_frame), 1);
 
   lives_container_add(LIVES_CONTAINER(mt->out_frame), mt->out_image);
@@ -11571,7 +11567,7 @@ static void update_in_image(lives_mt *mt) {
     frame_start = mainw->files[filenum]->start;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->in_image), lives_widget_get_allocation_height(mt->in_image), &width, &height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->in_frame) - 4, lives_widget_get_allocation_height(mt->in_frame) - 4, &width, &height);
 
   thumb = make_thumb(mt, filenum, width, height, frame_start, FALSE);
   lives_image_set_from_pixbuf(LIVES_IMAGE(mt->in_image), thumb);
@@ -11597,7 +11593,7 @@ static void update_out_image(lives_mt *mt, weed_timecode_t end_tc) {
     frame_end = mainw->files[filenum]->end;
   }
 
-  calc_maxspect(lives_widget_get_allocation_width(mt->in_image), lives_widget_get_allocation_height(mt->in_image), &width, &height);
+  calc_maxspect(lives_widget_get_allocation_width(mt->out_frame) - 4, lives_widget_get_allocation_height(mt->out_frame) - 4, &width, &height);
 
   thumb = make_thumb(mt, filenum, width, height, frame_end, FALSE);
   lives_image_set_from_pixbuf(LIVES_IMAGE(mt->out_image), thumb);
@@ -21732,17 +21728,18 @@ static void on_amixer_reset_clicked(LiVESButton *button, lives_mt *mt) {
   // copy vols to slider vals
 
   for (i = 0; i < amixer->nchans; i++) {
+    double val = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE;
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       lives_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
-      giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]), (double)LIVES_POINTER_TO_INT
-                            (lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE);
+      giw_vslider_set_value(GIW_VSLIDER(amixer->ch_sliders[i]), val);
       lives_signal_handler_unblock(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
     } else {
 #endif
       lives_signal_handler_block(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
-      lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]), (double)LIVES_POINTER_TO_INT
-                            (lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE);
+      lives_range_set_value(LIVES_RANGE(amixer->ch_sliders[i]), val);
+      //lives_scale_add_mark(LIVES_SCALE(amixer->ch_sliders[i]), val, LIVES_POS_LEFT, NULL);
+      //lives_scale_add_mark(LIVES_SCALE(amixer->ch_sliders[i]), val, LIVES_POS_RIGHT, NULL);
       lives_signal_handler_unblock(lives_range_get_adjustment(LIVES_RANGE(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
 #if ENABLE_GIW
     }

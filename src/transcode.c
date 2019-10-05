@@ -42,6 +42,13 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   // convert to the plugin's palette
   convert_layer_palette(layer, vpp->palette, vpp->YUV_clamping);
 
+  if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+    if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
+      gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+    else
+      gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+  }
+
   // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
   compact_rowstrides(layer);
 
@@ -49,7 +56,7 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   pd_array = weed_layer_get_pixel_data(layer);
 
   if (pd_array != NULL) {
-    // send pixel data to the vidoe frame renderer
+    // send pixel data to the video frame renderer
     error = !(*vpp->render_frame)(weed_layer_get_width(layer),
                                   weed_layer_get_height(layer),
                                   timecode, pd_array, NULL, NULL);
@@ -300,6 +307,8 @@ boolean transcode(int start, int end) {
     // get frame, send it
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
+
+    gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
 
     error = send_layer(frame_layer, vpp, currticks);
 

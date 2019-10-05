@@ -20,7 +20,7 @@
 void widget_add_framedraw(LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height);
 
 /// redraw when exposed/frame number changes
-void framedraw_redraw(lives_special_framedraw_rect_t *, boolean reload_image, LiVESPixbuf *);
+weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *, boolean reload_image, weed_plant_t *layer);
 
 /// callback for widgets
 void after_framedraw_widget_changed(LiVESWidget *, lives_special_framedraw_rect_t *);
@@ -42,7 +42,7 @@ void load_framedraw_image(LiVESPixbuf *);
 void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 
 /// just redraw the frame
-void redraw_framedraw_image(void);
+void redraw_framedraw_image(weed_plant_t *layer);
 
 /// reset button
 void on_framedraw_reset_clicked(LiVESButton *, lives_special_framedraw_rect_t *);

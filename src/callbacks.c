@@ -9440,8 +9440,8 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
   if (mt != NULL) {
     // multitrack mode
     if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) {
-      if (event->direction == LIVES_SCROLL_UP || event->delta_y < 0) mt_zoom_in(NULL, mt);
-      else if (event->direction == LIVES_SCROLL_DOWN || event->delta_y > 0) mt_zoom_out(NULL, mt);
+      if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) mt_zoom_in(NULL, mt);
+      else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) mt_zoom_out(NULL, mt);
       return FALSE;
     }
 
@@ -9455,8 +9455,8 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
 
       if (widget == mt->clip_scroll || window == lives_widget_get_xwindow(mt->poly_box)) {
         // scroll fwd / back in clips
-        if (event->direction == LIVES_SCROLL_UP || event->delta_y < 0) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
-        else if (event->direction == LIVES_SCROLL_DOWN || event->delta_y > 0) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+        if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) mt_prevclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
+        else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) mt_nextclip(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
       }
     }
     return FALSE;
@@ -9470,10 +9470,11 @@ boolean on_mouse_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespoin
   if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_SHIFT_MASK) type = 2; // bg
   else if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) type = 0; // fg or bg
 
-  if (event->direction == LIVES_SCROLL_UP ||
-      event->delta_y < 0) prevclip_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(type));
-  else if (event->direction == LIVES_SCROLL_DOWN ||
-           event->delta_y > 0) nextclip_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(type));
+  if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) prevclip_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+        LIVES_INT_TO_POINTER(type));
+  else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) nextclip_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+        LIVES_INT_TO_POINTER(type));
+
   return FALSE;
 }
 

@@ -1947,9 +1947,14 @@ void create_LiVES(void) {
   lives_box_pack_start(LIVES_BOX(vbox4), mainw->pf_grid, FALSE, FALSE, 0);
 #else
   // for gtk+ 2.x
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox4), hbox, FALSE, FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
   alignment = lives_alignment_new(0.5, 0.5, 1.0, 1.0);
   lives_container_add(LIVES_CONTAINER(alignment), mainw->pf_grid);
-  lives_box_pack_start(LIVES_BOX(vbox4), alignment, FALSE, FALSE, 0);
+  add_spring_to_box(LIVES_BOX(hbox), 0);
+  lives_box_pack_start(LIVES_BOX(hbox), alignment, TRUE, TRUE, 0);
+  lives_widget_set_halign(alignment, LIVES_ALIGN_CENTER);
 #endif
 #endif
 

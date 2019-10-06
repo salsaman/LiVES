@@ -296,6 +296,7 @@ typedef GdkDevice                         LiVESXDevice;
 #define LIVES_KEY_RELEASE GDK_KEY_RELEASE
 #define LIVES_KEY_PRESS GDK_KEY_PRESS
 
+#define LiVESScrollDirection GdkScrollDirection
 #define LIVES_SCROLL_UP   GDK_SCROLL_UP
 #define LIVES_SCROLL_DOWN GDK_SCROLL_DOWN
 
@@ -340,6 +341,7 @@ typedef GdkDeviceManager                  LiVESXDeviceManager;
 #define LIVES_GUI_OBJECT(a)                     a
 #else
 #define LIVES_GUI_OBJECT(a)                     GTK_OBJECT(a)
+#define LIVES_GUI_OBJECT_CLASS(a)               GTK_OBJECT_CLASS(a)
 #define LIVES_WIDGET_EXPOSE_EVENT "expose_event"
 #endif
 
@@ -724,6 +726,9 @@ typedef GdkEventMask LiVESEventMask;
 #if GTK_CHECK_VERSION(3, 4, 0)
 #define LIVES_TOUCH_MASK GDK_TOUCH_MASK
 #define LIVES_SMOOTH_SCROLL_MASK GDK_SMOOTH_SCROLL_MASK
+#else
+#define LIVES_TOUCH_MASK 0
+#define LIVES_SMOOTH_SCROLL_MASK 0
 #endif
 
 #define LIVES_ALL_EVENTS_MASK GDK_ALL_EVENTS_MASK
@@ -878,7 +883,7 @@ typedef GdkInterpType                     LiVESInterpType;
 
 #define LIVES_EDITABLE(widget) GTK_EDITABLE(widget)
 
-#define LIVES_XEVENT(event) GDK_EVENT(event)
+#define LIVES_XEVENT(event) ((GdkEvent *)(event))
 
 #define LIVES_IS_WIDGET_OBJECT(object) G_IS_OBJECT(object)
 #define LIVES_IS_WIDGET(widget) GTK_IS_WIDGET(widget)

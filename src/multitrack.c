@@ -2032,9 +2032,9 @@ static boolean on_mt_timeline_scroll(LiVESWidget *widget, LiVESXEventScroll *eve
 
   cval = lives_adjustment_get_value(lives_range_get_adjustment(LIVES_RANGE(mt->scrollbar)));
 
-  if (event->direction == LIVES_SCROLL_UP || event->delta_y < 0) {
+  if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) {
     if (--cval < 0) return FALSE;
-  } else if (event->direction == LIVES_SCROLL_DOWN || event->delta_y > 0) {
+  } else if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) {
     if (++cval >= lives_list_length(mt->video_draws)) return FALSE;
   }
 
@@ -12775,9 +12775,10 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     tc = get_event_timecode(mt->init_event);
 
     if (fx_dialog[1] != NULL) {
-      lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
-      lives_widget_destroy(fx_dialog[1]);
-      on_paramwindow_cancel_clicked2(NULL, rfx);
+      lives_rfx_t *rfx = fx_dialog[1]->rfx;
+      lives_widget_destroy(fx_dialog[1]->dialog);
+      on_paramwindow_cancel_clicked(NULL, rfx);
+      lives_freep((void **)&fx_dialog[1]);
     }
 
     get_track_index(mt, tc);

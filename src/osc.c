@@ -4520,10 +4520,10 @@ boolean lives_osc_cb_rte_setparam(void *context, int arglen, const void *vargs, 
   weed_instance_unref(inst);
 
   if (fx_dialog[1] != NULL) {
-    lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
+    lives_rfx_t *rfx = fx_dialog[1]->rfx;
     if (!rfx->is_template) {
-      int keyw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-      int modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+      int keyw = fx_dialog[1]->key;
+      int modew = fx_dialog[1]->mode;
       if (keyw == effect_key && modew == rte_key_getmode(effect_key))
         mainw->vrfx_update = rfx;
     }

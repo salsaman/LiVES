@@ -177,6 +177,8 @@ lives_painter_format_t lives_painter_image_surface_get_format(lives_painter_surf
 // utils
 LiVESAlign lives_justify_to_align(LiVESJustification justification);
 
+LiVESScrollDirection lives_get_scroll_direction(LiVESXEventScroll *event);
+
 boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
 

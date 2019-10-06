@@ -3207,18 +3207,13 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_arrow_new(LiVESArrowType arrow_ty
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_halign(LiVESWidget *widget, LiVESAlign align) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-#if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_LABEL(widget)) {
     if (align == LIVES_ALIGN_START) gtk_label_set_xalign(LIVES_LABEL(widget), 0.);
     if (align == LIVES_ALIGN_CENTER) gtk_label_set_xalign(LIVES_LABEL(widget), 0.5);
     if (align == LIVES_ALIGN_END) gtk_label_set_xalign(LIVES_LABEL(widget), 1.);
   } else gtk_widget_set_halign(widget, align);
 #else
-  gtk_widget_set_halign(widget, align);
-#endif
-#else
-  if (!LIVES_IS_LABEL(widget)) return FALSE;
-  else {
+  if (LIVES_IS_LABEL(widget)) {
     float xalign, yalign;
     gtk_misc_get_alignment(GTK_MISC(widget), &xalign, &yalign);
     switch (align) {
@@ -3234,9 +3229,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_halign(LiVESWidget *widget,
     default:
       return FALSE;
     }
+    return TRUE;
   }
 #endif
-  return TRUE;
 #endif
   return FALSE;
 }
@@ -8160,7 +8155,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_scale(LiVESImage *image, int wid
     LiVESPixbuf *new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, interp_type);
     lives_image_set_from_pixbuf(image, new_pixbuf);
     //if (LIVES_IS_WIDGET_OBJECT(pixbuf)) lives_widget_object_unref(pixbuf);
-    //if (new_pixbuf != NULL && LIVES_IS_WIDGET_OBJECT(new_pixbuf)) lives_widget_object_unref(new_pixbuf);
+    if (new_pixbuf != NULL && LIVES_IS_WIDGET_OBJECT(new_pixbuf)) lives_widget_object_unref(new_pixbuf);
   }
   return TRUE;
 }
@@ -8372,7 +8367,7 @@ static LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWid
   lives_widget_unparent(box);
   lives_layout_attach(layout, box, 0, columns, rows - 1);
   lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
-  if (widget != NULL) lives_layout_pack(LIVES_BOX(box), widget);
+  if (widget != NULL) lives_layout_pack(LIVES_HBOX(box), widget);
   xwidgets = lives_list_prepend(xwidgets, box);
   lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "layout_row", LIVES_INT_TO_POINTER(rows) - 1);
@@ -8421,7 +8416,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVES
       }
     }
   }
-  lives_box_pack_start(box, widget, TRUE, TRUE, LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width >> 1 : 0);
+  lives_box_pack_start(LIVES_BOX(box), widget, TRUE, TRUE, LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width >> 1 : 0);
   lives_widget_set_halign(widget, lives_justify_to_align(widget_opts.justify));
   return widget;
 }
@@ -8485,7 +8480,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_row_new(LiVESLayout *layou
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_label(LiVESLayout *layout, const char *text, boolean horizontal) {
   LiVESWidget *label = lives_label_new(text);
-  if (horizontal) return lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), label);
+  if (horizontal) return lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(layout)), label);
   return lives_layout_expansion_row_new(layout, label);
 }
 
@@ -8499,7 +8494,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_add_separator(LiVESLayout 
   LiVESWidget *separator;
   LiVESJustification woj = widget_opts.justify;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
-  if (!horizontal) separator = lives_layout_pack(LIVES_BOX(lives_layout_hbox_new(layout)), lives_vseparator_new());
+  if (!horizontal) separator = lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(layout)), lives_vseparator_new());
   else separator = add_hsep_to_box(LIVES_BOX(lives_layout_expansion_row_new(layout, NULL)));
   widget_opts.justify = woj;
   return separator;
@@ -8729,10 +8724,31 @@ static LiVESWidget *make_inner_hbox(LiVESBox *box) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESAlign lives_justify_to_align(LiVESJustification justify) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESAlign lives_justify_to_align(LiVESJustification justify) {
   if (justify == LIVES_JUSTIFY_DEFAULT) return LIVES_ALIGN_START;
   if (justify == LIVES_JUSTIFY_CENTER) return LIVES_ALIGN_CENTER;
   else return LIVES_ALIGN_END;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE LiVESScrollDirection lives_get_scroll_direction(LiVESXEventScroll *event) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 4, 0)
+  double dx, dy;
+  if (gdk_event_get_scroll_deltas(LIVES_XEVENT(event), &dx, &dy)) {
+    if (dy < 0.) return LIVES_SCROLL_UP;
+    if (dy > 0.) return LIVES_SCROLL_DOWN;
+  }
+#endif
+#if GTK_CHECK_VERSION(3, 2, 0)
+  LiVESScrollDirection direction;
+  gdk_event_get_scroll_direction(LIVES_XEVENT(event), &direction);
+  return direction;
+#else
+  return event->direction;
+#endif
+#endif
+  return LIVES_SCROLL_UP;
 }
 
 
@@ -8818,7 +8834,7 @@ boolean lives_widget_set_show_hide_with(LiVESWidget *widget, LiVESWidget *other)
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_widget_set_show_hide_parent(LiVESWidget *widget) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_show_hide_parent(LiVESWidget *widget) {
   LiVESWidget *parent = lives_widget_get_parent(widget);
   if (parent != NULL) return lives_widget_set_show_hide_with(widget, parent);
   return FALSE;
@@ -10032,6 +10048,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
 
   lives_color_button_set_use_alpha(LIVES_COLOR_BUTTON(cbutton), use_alpha);
   lives_color_button_set_color(LIVES_COLOR_BUTTON(cbutton), &colr);
+  lives_widget_apply_theme(cbutton, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_apply_theme2(cbutton, LIVES_WIDGET_STATE_PRELIGHT, TRUE);
 
 #if !LIVES_WIDGET_COLOR_HAS_ALPHA
   if (use_alpha)

@@ -1548,10 +1548,10 @@ boolean pconx_chain_data(int key, int mode) {
         }
 
         if (fx_dialog[1] != NULL && !reinit_inst) {
-          lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
+          lives_rfx_t *rfx = fx_dialog[1]->rfx;
           if (!rfx->is_template) {
-            int keyw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-            int modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+            int keyw = fx_dialog[1]->key;
+            int modew = fx_dialog[1]->mode;
             if (keyw == key && modew == mode)
               // ask the main thread to update the param window
               mainw->vrfx_update = rfx;

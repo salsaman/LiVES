@@ -3219,7 +3219,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -4061,19 +4061,24 @@ void procw_desensitize(void) {
 
 
 void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *cairo) {
+  int rwidth, rheight, width, height, owidth, oheight;
+
 #if GTK_CHECK_VERSION(3, 0, 0)
-  int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(image));
-  int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(image));
-
   lives_painter_t *cr;
-
+  int cx, cy;
   if (cairo == NULL) cr = lives_painter_create_from_widget(LIVES_WIDGET(image));
   else cr = cairo;
-
   if (cr == NULL) return;
+#else
+  LiVESPixbuf *xpixbuf;
+#endif
+
+  rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(image));
+  rheight = lives_widget_get_allocation_height(LIVES_WIDGET(image));
+
   if (pixbuf != NULL) {
-    int width = lives_pixbuf_get_width(pixbuf), owidth = width, cx;
-    int height = lives_pixbuf_get_height(pixbuf), oheight = height, cy;
+    owidth = width = lives_pixbuf_get_width(pixbuf);
+    oheight = height = lives_pixbuf_get_height(pixbuf);
 
     if (prefs->ce_maxspect) {
       calc_maxspect(rwidth, rheight, &width, &height);
@@ -4086,10 +4091,12 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
         height = oheight;
       }
     }
+  }
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+  if (pixbuf != NULL) {
     cx = (rwidth - width) / 2;
     cy = (rheight - height) / 2;
-
     if (prefs->funky_widgets) {
       lives_painter_set_source_rgb_from_lives_rgba(cr, &palette->frame_surround);
       lives_painter_rectangle(cr, cx - 1, cy - 1,
@@ -4104,14 +4111,19 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
     lives_painter_rectangle(cr, cx, cy,
                             width,
                             height);
-
   } else {
     lives_painter_render_background(LIVES_WIDGET(image), cr, 0, 0, rwidth, rheight);
   }
   lives_painter_fill(cr);
   if (cairo == NULL) lives_painter_destroy(cr);
 #else
-  lives_image_set_from_pixbuf(image, pixbuf);
+  if (pixbuf != NULL) {
+    if (prefs->ce_maxspect && width > 0 && height > 0) {
+      xpixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, get_interp_value(prefs->pb_quality));
+    } else xpixbuf = pixbuf;
+    lives_image_set_from_pixbuf(image, xpixbuf);
+    if (xpixbuf != pixbuf) lives_widget_object_unref(xpixbuf);
+  } else lives_image_set_from_pixbuf(image, NULL);
 #endif
 }
 
@@ -4165,7 +4177,6 @@ void load_start_image(int frame) {
     lives_widget_set_vexpand(mainw->frame1, FALSE);
 
     lives_widget_set_hexpand(mainw->eventbox3, TRUE);
-    //lives_widget_set_vexpand(mainw->eventbox3, TRUE);
   }
 
   if (CURRENT_CLIP_IS_VALID && (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV)) {
@@ -8015,9 +8026,9 @@ void load_frame_image(int frame) {
       lives_widget_set_size_request(mainw->start_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
       lives_widget_set_size_request(mainw->end_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
 
-      lives_widget_set_size_request(mainw->playarea, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->pl_eventbox, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
       lives_widget_set_size_request(mainw->playframe, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->pl_eventbox, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->playarea, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
 
       // IMPORTANT (or the entire image will not be shown)
       lives_widget_set_size_request(mainw->play_image, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);

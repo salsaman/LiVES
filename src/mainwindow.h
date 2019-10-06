@@ -1491,9 +1491,21 @@ typedef struct {
   LiVESList *trans_list;
 } _merge_opts;
 
-extern _merge_opts *merge_opts;
 
-LiVESWidget *fx_dialog[2];
+typedef struct {
+  LiVESWidget *dialog;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *okbutton;
+  LiVESWidget *resetbutton;
+  lives_rfx_t *rfx;
+  int key;
+  int mode;
+} _fx_dialog;
+
+
+_merge_opts *merge_opts;
+
+_fx_dialog *fx_dialog[2];
 
 #ifndef IS_MINGW
 #define LIVES_SIGKILL SIGKILL

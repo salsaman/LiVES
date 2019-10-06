@@ -1512,10 +1512,10 @@ reinit:
       set_param_gui_readonly(inst);
       if (fx_dialog[1] != NULL) {
         // redraw GUI if necessary
-        rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
+        rfx = fx_dialog[1]->rfx;
         if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source == inst) {
-          int keyw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-          int modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+          int keyw = fx_dialog[1]->key;
+          int modew = fx_dialog[1]->mode;
 
           // do updates from WEED_LEAF_GUI
           rfx_params_free(rfx);
@@ -6772,9 +6772,8 @@ boolean weed_init_effect(int hotkey) {
   // TODO - unblock template channel changes
 
   // if the param window is already open, use instance from there
-  if (fx_dialog[1] != NULL && LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key")) == hotkey &&
-      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode")) == key_modes[hotkey]) {
-    lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
+  if (fx_dialog[1] != NULL && fx_dialog[1]->key == hotkey && fx_dialog[1]->mode == key_modes[hotkey]) {
+    lives_rfx_t *rfx = fx_dialog[1]->rfx;
 
     new_instance = (weed_plant_t *)rfx->source;
     // add 2 refs since we will remove one below
@@ -7282,8 +7281,7 @@ deinit3:
   }
 
   // if the param window is already open, show any reinits now
-  if (fx_dialog[1] != NULL && LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key")) == hotkey &&
-      LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode")) == key_modes[hotkey]) {
+  if (fx_dialog[1] != NULL && fx_dialog[1]->key == hotkey && fx_dialog[1]->mode == key_modes[hotkey]) {
     redraw_pwindow(hotkey, key_modes[hotkey]);
   }
 

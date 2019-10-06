@@ -68,11 +68,6 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
     aspect.width_param = &rfx->params[atoi(array[1])];
     aspect.height_param = &rfx->params[atoi(array[2])];
   } else if (!strcmp(array[0], "mergealign")) {
-    // align start/end
-    /*    if (fx_dialog[1]!=NULL) {
-      lives_strfreev(array);
-      return;
-      }*/
     mergealign.start_param = &rfx->params[atoi(array[1])];
     mergealign.end_param = &rfx->params[atoi(array[2])];
     mergealign.rfx = rfx;

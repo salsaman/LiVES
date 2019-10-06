@@ -790,8 +790,8 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
       }
       set_tooltips_state(mainw->top_vbox, newval);
       if (mainw->multitrack != NULL) set_tooltips_state(mainw->multitrack->top_vbox, newval);
-      if (fx_dialog[0] != NULL) set_tooltips_state(fx_dialog[0], newval);
-      if (fx_dialog[1] != NULL) set_tooltips_state(fx_dialog[1], newval);
+      if (fx_dialog[0] != NULL && LIVES_IS_WIDGET(fx_dialog[0]->dialog)) set_tooltips_state(fx_dialog[0]->dialog, newval);
+      if (fx_dialog[1] != NULL && LIVES_IS_WIDGET(fx_dialog[1]->dialog)) set_tooltips_state(fx_dialog[1]->dialog, newval);
       if (rte_window != NULL) set_tooltips_state(rte_window, newval);
     }
     // turn off after, or we cannot nullify the ttips

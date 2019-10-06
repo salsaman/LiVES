@@ -1840,10 +1840,10 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   filter_mutex_unlock(key);
 
   if (fx_dialog[1] != NULL) {
-    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
-    lives_widget_destroy(fx_dialog[1]);
+    rfx = fx_dialog[1]->rfx;
+    lives_widget_destroy(fx_dialog[1]->dialog);
     on_paramwindow_cancel_clicked(NULL, rfx);
-    fx_dialog[1] = NULL;
+    lives_freep((void **)&fx_dialog[1]);
   }
 
   rfx = weed_to_rfx(inst, FALSE);
@@ -1858,9 +1858,9 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   // record the key so we know whose parameters to record later
   weed_set_int_value((weed_plant_t *)rfx->source, WEED_LEAF_HOST_KEY, key);
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key", LIVES_INT_TO_POINTER(key));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode", LIVES_INT_TO_POINTER(mode));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx", rfx);
+  fx_dialog[1]->key = key;
+  fx_dialog[1]->mode = mode;
+  fx_dialog[1]->rfx = rfx;
   weed_instance_unref(inst);
 }
 
@@ -2479,11 +2479,11 @@ void redraw_pwindow(int key, int mode) {
   int i;
 
   if (fx_dialog[1] != NULL) {
-    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
-    button = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "button");
+    rfx = fx_dialog[1]->rfx;
+    button = fx_dialog[1]->cancelbutton;
     if (!rfx->is_template) {
-      keyw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-      modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+      keyw = fx_dialog[1]->key;
+      modew = fx_dialog[1]->mode;
     }
     if (rfx->is_template || (key == keyw && mode == modew)) {
       // rip out the contents
@@ -2492,7 +2492,7 @@ void redraw_pwindow(int key, int mode) {
       // so, we should note the widget that received the signal and the signal type
       // then stop emmission of the signal before destroying it
 
-      content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
+      content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog));
       child_list = lives_container_get_children(LIVES_CONTAINER(content_area));
       for (i = 0; i < lives_list_length(child_list); i++) {
         LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
@@ -2509,9 +2509,9 @@ void redraw_pwindow(int key, int mode) {
 
 void restore_pwindow(lives_rfx_t *rfx) {
   if (fx_dialog[1] != NULL) {
-    make_param_box(LIVES_VBOX(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]))), rfx);
-    lives_widget_show_all(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1])));
-    lives_widget_queue_draw(fx_dialog[1]);
+    make_param_box(LIVES_VBOX(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog))), rfx);
+    lives_widget_show_all(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog)));
+    lives_widget_queue_draw(fx_dialog[1]->dialog);
   }
 }
 
@@ -2524,12 +2524,12 @@ void update_pwindow(int key, int i, LiVESList *list) {
   int keyw, modew;
 
   if (fx_dialog[1] != NULL) {
-    keyw = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-    modew = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+    keyw = fx_dialog[1]->key;
+    modew = fx_dialog[1]->mode;
     if (key == keyw) {
       if ((inst = rte_keymode_get_instance(key + 1, modew)) == NULL) return;
       weed_instance_unref(inst);
-      rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
+      rfx = fx_dialog[1]->rfx;
       mainw->block_param_updates = TRUE;
       set_param_from_list(list, &rfx->params[i], 0, TRUE, TRUE);
       mainw->block_param_updates = FALSE;
@@ -2544,10 +2544,10 @@ void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_rfx_t *rfx;
 
   if (fx_dialog[1] != NULL) {
-    rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "rfx");
-    lives_widget_destroy(fx_dialog[1]);
+    rfx = fx_dialog[1]->rfx;
+    lives_widget_destroy(fx_dialog[1]->dialog);
     on_paramwindow_cancel_clicked(NULL, rfx);
-    fx_dialog[1] = NULL;
+    lives_freep((void **)&fx_dialog[1]);
   }
 
   rfx = weed_to_rfx(filter, TRUE);
@@ -2564,8 +2564,8 @@ void rte_set_key_defs(LiVESButton *button, lives_rfx_t *rfx) {
   }
 
   if (rfx->num_params > 0) {
-    key = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-    mode = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+    key = fx_dialog[1]->key;
+    mode = fx_dialog[1]->mode;
     set_key_defaults((weed_plant_t *)rfx->source, key, mode);
   }
 }
@@ -2611,15 +2611,12 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
       }
     }
   }
-
-  //on_paramwindow_cancel_clicked(button, rfx);
-  //fx_dialog[1] = NULL;
 }
 
 
 void rte_set_defs_cancel(LiVESButton *button, lives_rfx_t *rfx) {
   on_paramwindow_cancel_clicked(button, rfx);
-  fx_dialog[1] = NULL;
+  lives_freep((void **)&fx_dialog[1]);
 }
 
 
@@ -2631,19 +2628,19 @@ void rte_reset_defs_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   LiVESList *child_list;
 
-  LiVESWidget *pbox, *fxdialog, *cancelbutton, *content_area;
+  LiVESWidget *pbox, *cancelbutton;
+
+  boolean is_generic_defs = FALSE;
+  boolean add_pcons = FALSE;
 
   int error;
   int nchans;
 
   int poffset = 0, ninpar, x;
 
-  boolean is_generic_defs = FALSE;
-  boolean add_pcons = FALSE;
-
   register int i;
 
-  cancelbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "cancelbutton");
+  cancelbutton = fx_dialog[1]->cancelbutton;
 
   if (cancelbutton != NULL) is_generic_defs = TRUE;
 
@@ -2715,21 +2712,18 @@ resetdefs1:
       }
     }
   } else {
-    int key = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "key"));
-    int mode = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(fx_dialog[1]), "mode"));
+    int key = fx_dialog[1]->key;
+    int mode = fx_dialog[1]->mode;
     set_key_defaults(inst, key, mode);
   }
 
-  fxdialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
-  if (!LIVES_IS_WIDGET(fxdialog)) return;
-  pbox = lives_dialog_get_content_area(LIVES_DIALOG(fxdialog));
+  if (!LIVES_IS_WIDGET(fx_dialog[1]->dialog)) return;
+  pbox = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog));
 
   // redraw the window
-
-  content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]));
-  child_list = lives_container_get_children(LIVES_CONTAINER(content_area));
+  child_list = lives_container_get_children(LIVES_CONTAINER(pbox));
   // remove focus from any widget we are ripping out
-  lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
+  lives_container_set_focus_child(LIVES_CONTAINER(pbox), NULL);
   for (i = 0; i < lives_list_length(child_list); i++) {
     LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
     if (lives_widget_is_ancestor(LIVES_WIDGET(button), widget)) continue;
@@ -2738,12 +2732,10 @@ resetdefs1:
 
   if (child_list != NULL) lives_list_free(child_list);
 
-  //if (cancelbutton != NULL) lives_widget_set_sensitive(cancelbutton, FALSE);
-
   make_param_box(LIVES_VBOX(pbox), rfx);
   lives_widget_show_all(pbox);
 
-  lives_widget_queue_draw(fxdialog);
+  lives_widget_queue_draw(fx_dialog[1]->dialog);
 }
 
 

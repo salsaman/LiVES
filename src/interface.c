@@ -4777,11 +4777,7 @@ void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
 boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
   // mouse scroll callback
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
-  if (event->delta_y != 0)
-    lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + event->delta_y);
-  else {
-    if (event->direction == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
-    if (event->direction == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
-  }
+  if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
+  if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
   return FALSE;
 }

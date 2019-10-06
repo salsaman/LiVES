@@ -221,6 +221,11 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
   mainw->effects_paused = FALSE;
 
+  if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
+    // pull a batch of frames for the backend to start processing
+    cfile->fx_frame_pump = cfile->start;
+  } else cfile->fx_frame_pump = 0;
+
   if (is_preview) {
     cfile->undo_start = oundo_start;
     cfile->undo_end = oundo_end;
@@ -292,11 +297,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     lives_snprintf(effectstring, 128, tmp, _(rfx->action_desc), cfile->undo_start, cfile->undo_end);
   }
   lives_free(tmp);
-
-  if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
-    // pull a batch of frames for the backend to start processing
-    cfile->fx_frame_pump = cfile->start;
-  } else cfile->fx_frame_pump = 0;
 
   if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
     if (rfx->status == RFX_STATUS_WEED) {

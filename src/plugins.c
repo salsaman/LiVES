@@ -3633,7 +3633,8 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
 
     // now we build our window and get param values
     if (vbox == NULL) {
-      LiVESWidget *dialog = on_fx_pre_activate(rfx, TRUE, NULL);
+      _fx_dialog *fxdialog = on_fx_pre_activate(rfx, TRUE, NULL);
+      LiVESWidget *dialog = fxdialog->dialog;
       if (prefs->show_gui) {
         lives_window_set_transient_for(LIVES_WINDOW(dialog), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       }
@@ -3647,6 +3648,7 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
         // marshall our params for passing to the plugin
         res_string = param_marshall(rfx, FALSE);
       }
+      lives_freep((void **)&fx_dialog[1]);
     } else {
       make_param_box(vbox, rfx);
     }

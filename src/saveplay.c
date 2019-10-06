@@ -1326,8 +1326,8 @@ void save_file(int clip, int start, int end, const char *filename) {
 
     if (extra_params == NULL) {
       if (fx_dialog[1] != NULL) {
-        lives_widget_destroy(fx_dialog[1]);
-        fx_dialog[1] = NULL;
+        lives_widget_destroy(fx_dialog[1]->dialog);
+        lives_freep((void **)&fx_dialog[1]);
       }
       lives_free(fps_string);
       switch_to_file(mainw->current_file, current_file);

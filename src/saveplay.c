@@ -2719,6 +2719,19 @@ void play_file(void) {
 
   mainw->video_seek_ready = FALSE;
 
+  // stop the audio players
+#ifdef ENABLE_JACK
+  if (audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+    mainw->jackd->in_use = FALSE;
+  }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+    mainw->pulsed->in_use = FALSE;
+  }
+#endif
+
+
   // terminate autolives if running
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
 
@@ -2963,8 +2976,6 @@ void play_file(void) {
     if (timeout)  {
       handle_audio_timeout();
     }
-    mainw->jackd->in_use = FALSE;
-
     if (has_audio_buffers) {
       free_jack_audio_buffers();
       audio_free_fnames();
@@ -2985,8 +2996,6 @@ void play_file(void) {
     }
 
     lives_alarm_clear(alarm_handle);
-
-    mainw->pulsed->in_use = FALSE;
 
     if (has_audio_buffers) {
       free_pulse_audio_buffers();

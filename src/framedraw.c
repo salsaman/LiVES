@@ -24,6 +24,7 @@
 // set by mouse button press
 static double xstart, ystart;
 static double xcurrent, ycurrent;
+static double xinit, yinit;
 static volatile boolean b1_held;
 
 static volatile boolean noupdate = FALSE;
@@ -107,7 +108,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 
 
 static void framedraw_redraw_cb(LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
-  framedraw_redraw(framedraw, FALSE, NULL);
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
 }
 
 
@@ -123,7 +124,7 @@ static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton
     if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
     lives_widget_context_update();
     load_rfx_preview(framedraw->rfx);
-  } else framedraw_redraw(framedraw, TRUE, NULL);
+  } else framedraw_redraw(framedraw, NULL);
   if (fx_dialog[0] != NULL) {
     if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
     if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
@@ -167,7 +168,7 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
   lives_widget_set_bg_color(fbord_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->light_red);
 
   if (mainw->fd_layer != NULL)
-    framedraw_redraw(framedraw, TRUE, mainw->fd_layer_orig);
+    framedraw_redraw(framedraw, mainw->fd_layer_orig);
 }
 
 
@@ -336,16 +337,16 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 }
 
 
-weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolean reload, weed_plant_t *layer) {
+weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_plant_t *layer) {
   // overlay framedrawing on a layer
+  // if layer is NULL then we reload the frame from current file into mainw->fd_layer_orig
   // if called from multitrack then the preview layer is passed in via mt_framedraw()
+  // for overlaying we pass in mainw->fd_layer_orig again
   // from c.e, layer is mainw->fd_orig_layer
-
-  // if reload is TRUE then we reload the frame from current file into mainw->fd_layer_orig
-
-  // the input layer is copied if non-NULL (mainw->fd_layer_orig -> mainw->fd_layer)
-
-  // the output layer is returned (mainw->fd_layer)
+  //
+  // the input layer is copied: (mainw->fd_layer_orig -> mainw->fd_layer)
+  // mainw->fd_layer is drawn over, resized, gamma corrected and painted
+  // the output layer is also returned (mainw->fd_layer)
 
   int fd_height;
   int fd_width;
@@ -379,7 +380,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
 
   // copy from orig, resize
 
-  if (reload || layer == NULL) {
+  if (layer == NULL) {
     // forced reload: get frame from clip, and set in mainw->fd_layer_orig
     const char *img_ext;
     if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
@@ -389,10 +390,9 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
       img_ext = get_image_ext_for_type(cfile->img_type);
     }
 
-    layer =  mainw->fd_layer_orig = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
-    if (!pull_frame(mainw->fd_layer_orig, img_ext, 0)) {
-      weed_plant_free(mainw->fd_layer_orig);
-      mainw->fd_layer_orig = NULL;
+    layer = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+    if (!pull_frame(layer, img_ext, 0)) {
+      weed_plant_free(layer);
       return NULL;
     }
   }
@@ -451,12 +451,12 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
     }
 
     if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
-      lives_painter_set_source_rgb(cr, 1., 0., 0.);
+      lives_painter_set_source_rgb(cr, 1., 0., 0.);  // TODO - make colour configurable
       lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf, yendf);
       lives_painter_stroke(cr);
     } else {
       if (b1_held) {
-        lives_painter_set_source_rgb(cr, 1., 0., 0.);
+        lives_painter_set_source_rgb(cr, 1., 0., 0.); // TODO - make colour configurable
         lives_painter_rectangle(cr, xstartf - 1., ystartf - 1., xendf - xstartf + 2., yendf - ystartf + 2.);
         lives_painter_stroke(cr);
       }
@@ -471,42 +471,50 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
       lives_painter_set_fill_rule(cr, LIVES_PAINTER_FILL_RULE_EVEN_ODD);
       lives_painter_fill(cr);
     }
-
     break;
+
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
+    if (framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT) {
+      if (framedraw->xstart_param->dp == 0) {
+        xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        xstartf = xstartf / (double)cfile->hsize * (double)width;
+      } else {
+        xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+        xstartf = xstartf * (double)width;
+      }
 
-    if (framedraw->xstart_param->dp == 0) {
-      xstartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
-      xstartf = xstartf / (double)cfile->hsize * (double)width;
+      if (framedraw->ystart_param->dp == 0) {
+        ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+        ystartf = ystartf / (double)cfile->vsize * (double)height;
+      } else {
+        ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+        ystartf = ystartf * (double)height;
+      }
     } else {
-      xstartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
-      xstartf = xstartf * (double)width;
+      if (b1_held) {
+        xstartf = xcurrent * width;
+        ystartf = ycurrent * height;
+      } else {
+        xstartf = 0.5 * width;
+        ystartf = 0.5 * height;
+      }
     }
+    // draw a crosshair
+    lives_painter_set_source_rgb(cr, 1., 0., 0.); // TODO - make colour configurable
 
-    if (framedraw->ystart_param->dp == 0) {
-      ystartf = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-      ystartf = ystartf / (double)cfile->vsize * (double)height;
-    } else {
-      ystartf = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
-      ystartf = ystartf * (double)height;
-    }
-
-    lives_painter_set_source_rgb(cr, 1., 0., 0.);
-
-    lives_painter_move_to(cr, xstartf, ystartf - 3);
-    lives_painter_line_to(cr, xstartf, ystartf + 3);
+    lives_painter_move_to(cr, xstartf, ystartf - CROSSHAIR_SIZE);
+    lives_painter_line_to(cr, xstartf, ystartf + CROSSHAIR_SIZE);
 
     lives_painter_stroke(cr);
 
-    lives_painter_move_to(cr, xstartf - 3, ystartf);
-    lives_painter_line_to(cr, xstartf + 3, ystartf);
+    lives_painter_move_to(cr, xstartf - CROSSHAIR_SIZE, ystartf);
+    lives_painter_line_to(cr, xstartf + CROSSHAIR_SIZE, ystartf);
 
     lives_painter_stroke(cr);
-
     break;
 
   default:
-
     break;
   }
 
@@ -514,6 +522,22 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
 
   if (mainw->multitrack == NULL)
     redraw_framedraw_image(mainw->fd_layer);
+  else {
+    LiVESPixbuf *pixbuf;
+    resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST,
+                 WEED_PALETTE_RGB24, 0);
+    convert_layer_palette(mainw->fd_layer, WEED_PALETTE_RGB24, 0);
+    pixbuf = layer_to_pixbuf(mainw->fd_layer);
+    weed_layer_free(mainw->fd_layer);
+    mainw->fd_layer = NULL;
+#if GTK_CHECK_VERSION(3, 0, 0)
+    // set frame_pixbuf, this gets painted in in expose_event
+    mainw->multitrack->frame_pixbuf = pixbuf;
+#else
+    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
+#endif
+    lives_widget_queue_draw(mainw->multitrack->play_box);
+  }
 
   // update the widget
   return mainw->fd_layer;
@@ -522,7 +546,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, boolea
 
 void load_rfx_preview(lives_rfx_t *rfx) {
   // load a preview of an rfx (rendered effect) in clip editor
-
+  weed_plant_t *layer;
   FILE *infofile = NULL;
 
   int tot_frames = 0;
@@ -642,25 +666,25 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     }
 
     if (mainw->framedraw_frame > mainw->fd_max_frame) {
-      // lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
       mainw->current_file = current_file;
       return;
     }
   }
 
-  mainw->fd_layer_orig = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+  layer = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
   if (rfx->num_in_channels > 0 && !(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     img_ext = LIVES_FILE_EXT_PRE;
   } else {
     img_ext = get_image_ext_for_type(cfile->img_type);
   }
-  if (!pull_frame(mainw->fd_layer_orig, img_ext, 0)) {
-    weed_plant_free(mainw->fd_layer_orig);
-    mainw->fd_layer_orig = NULL;
+  if (!pull_frame(layer, img_ext, 0)) {
+    weed_plant_free(layer);
   } else {
+    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    mainw->fd_layer_orig = layer;
     if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
-    gamma_correct_layer(WEED_GAMMA_SRGB, mainw->fd_layer);
     redraw_framedraw_image(mainw->fd_layer);
   }
   mainw->current_file = current_file;
@@ -712,11 +736,8 @@ void redraw_framedraw_image(weed_plant_t *layer) {
                           width,
                           height);
   lives_painter_fill(cr2);
-
   lives_painter_destroy(cr2);
-
   lives_painter_to_layer(cr, layer);
-
   lives_painter_destroy(cr);
 }
 
@@ -743,7 +764,9 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->play_box);
     }
     break;
+
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_CROSSHAIR, mainw->framedraw);
     } else {
@@ -753,7 +776,6 @@ boolean on_framedraw_enter(LiVESWidget *widget, LiVESXEventCrossing *event, live
 
   default:
     break;
-
   }
   return FALSE;
 }
@@ -825,6 +847,17 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   noupdate = TRUE;
 
   switch (framedraw->type) {
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT:
+    if (framedraw->xstart_param->dp > 0)
+      xinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+    else
+      xinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]));
+    if (framedraw->ystart_param->dp > 0)
+      yinit = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+    else
+      yinit = (double)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]));
+    break;
+
   case LIVES_PARAM_SPECIAL_TYPE_SINGLEPOINT:
     if (framedraw->xstart_param->dp > 0)
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xstart);
@@ -834,8 +867,8 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ystart);
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
-
     break;
+
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
     xend = yend = 0.;
@@ -860,6 +893,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(yend * (double)cfile->vsize + .5));
 
     break;
+
   default:
     break;
   }
@@ -873,7 +907,7 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
 
   noupdate = FALSE;
 
-  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
 
   return FALSE;
 }
@@ -950,9 +984,6 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
       }
     }
   }
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  lives_widget_context_update();
-#endif
   break;
 
   case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
@@ -986,12 +1017,36 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ycurrent * (double)cfile->vsize + .5));
       }
     }
-
     break;
+
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
+    double offs_x, offs_y;
+    double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+    if (scale == 0.) break;
+
+    offs_x = (xcurrent - xstart) / scale;
+    if (framedraw->xstart_param->dp > 0) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit - offs_x);
+    } else {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xinit - offs_x) * (double)cfile->hsize + .5));
+    }
+
+    offs_y = (ycurrent - ystart) / scale;
+    if (framedraw->xstart_param->dp > 0) {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit - offs_y);
+    } else {
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yinit - offs_y) * (double)cfile->vsize + .5));
+    }
+    break;
+  }
 
   default:
     break;
   }
+
+#if !GTK_CHECK_VERSION(3, 0, 0)
+  lives_widget_context_update();
+#endif
 
   if (mainw->framedraw_reset != NULL) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
@@ -1001,7 +1056,7 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   }
 
   noupdate = FALSE;
-  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
 
   return FALSE;
 }
@@ -1017,16 +1072,44 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
   if (framedraw == NULL) return FALSE;
   if (mainw->multitrack != NULL && mainw->multitrack->track_index == -1) return FALSE;
 
-  if ((framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT ||
-       framedraw->type == LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK) &&
-      (mainw->multitrack == NULL || mainw->multitrack->cursor_style == 0)) {
+  switch (framedraw->type) {
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT:
+  case LIVES_PARAM_SPECIAL_TYPE_RECT_DEMASK:
     if (mainw->multitrack == NULL) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, widget);
-    } else {
+    } else if (mainw->multitrack->cursor_style == 0) {
       lives_set_cursor_style(LIVES_CURSOR_TOP_LEFT_CORNER, mainw->multitrack->play_box);
     }
+    break;
+
+  case LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT: {
+    double offs_x, offs_y;
+    double scale = lives_spin_button_get_value(LIVES_SPIN_BUTTON(framedraw->scale_param->widgets[0]));
+    if (scale == 0.) break;
+
+    if (xcurrent == xstart) {
+      offs_x = (xcurrent - 0.5) / scale;
+      if (framedraw->xstart_param->dp > 0) {
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit + offs_x);
+      } else {
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xinit + offs_x) * (double)cfile->hsize + .5));
+      }
+    }
+    if (ycurrent == ystart) {
+      offs_y = (ycurrent - 0.5) / scale;
+      if (framedraw->xstart_param->dp > 0) {
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit + offs_y);
+      } else {
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yinit + offs_y) * (double)cfile->vsize + .5));
+      }
+    }
+    break;
   }
-  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
+
+  default:
+    break;
+  }
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
   return FALSE;
 }
 
@@ -1035,7 +1118,7 @@ void after_framedraw_widget_changed(LiVESWidget *widget, lives_special_framedraw
   if (mainw->block_param_updates || noupdate) return;
 
   // redraw mask when spin values change
-  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
   if (mainw->framedraw_reset != NULL) {
     lives_widget_set_sensitive(mainw->framedraw_reset, TRUE);
   }
@@ -1090,7 +1173,7 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
 
   noupdate = FALSE;
 
-  framedraw_redraw(framedraw, FALSE, mainw->fd_layer_orig);
+  framedraw_redraw(framedraw, mainw->fd_layer_orig);
   if (fx_dialog[0] != NULL) {
     if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
     if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);

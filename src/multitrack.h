@@ -514,6 +514,8 @@ struct _mt {
 
   boolean in_sensitise;
 
+  boolean sel_locked;
+
   lives_rfx_t *current_rfx;
 
   char layout_name[PATH_MAX];
@@ -792,6 +794,7 @@ void on_split_activate(LiVESMenuItem *, livespointer mt);
 void scroll_tracks(lives_mt *, int top_track, boolean set_value);
 boolean track_arrow_pressed(LiVESWidget *ahbox, LiVESXEventButton *, livespointer mt);
 void track_select(lives_mt *);  ///< must call after setting mt->current_track
+void mt_selection_lock(LiVESMenuItem *, livespointer user_data); ///< lock the time selection
 boolean mt_track_is_audio(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid backing audio track
 boolean mt_track_is_video(lives_mt *, int ntrack); ///< return TRUE if ntrack is a valid video track
 

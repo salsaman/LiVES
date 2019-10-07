@@ -96,6 +96,12 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       framedraw.xstart_param = &rfx->params[atoi(array[2])];
       framedraw.ystart_param = &rfx->params[atoi(array[3])];
       framedraw.stdwidgets = 2;
+    } else if (!strcmp(array[1], "scaledpoint")) {
+      framedraw.type = LIVES_PARAM_SPECIAL_TYPE_SCALEDPOINT;
+      framedraw.xstart_param = &rfx->params[atoi(array[2])];
+      framedraw.ystart_param = &rfx->params[atoi(array[3])];
+      framedraw.scale_param = &rfx->params[atoi(array[4])];
+      framedraw.stdwidgets = 3;
     }
 
     if (num_widgets > framedraw.stdwidgets) framedraw.extra_params =
@@ -234,8 +240,9 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     if (framedraw.stdwidgets > 0 && !framedraw.added) {
       if (framedraw.xstart_param != NULL && framedraw.xstart_param->widgets[0] != NULL &&
           framedraw.ystart_param != NULL && framedraw.ystart_param->widgets[0] != NULL) {
-        if (framedraw.stdwidgets == 2 || (framedraw.xend_param != NULL && framedraw.xend_param->widgets[0] != NULL &&
-                                          framedraw.yend_param != NULL && framedraw.yend_param->widgets[0] != NULL)) {
+        if (framedraw.stdwidgets == 2 || (framedraw.stdwidgets == 3 && framedraw.scale_param != NULL &&
+                                          framedraw.scale_param->widgets[0] != NULL) || (framedraw.xend_param != NULL && framedraw.xend_param->widgets[0] != NULL &&
+                                              framedraw.yend_param != NULL && framedraw.yend_param->widgets[0] != NULL)) {
           if (mainw->multitrack == NULL) {
             framedraw_connect(&framedraw, cfile->hsize, cfile->vsize, rfx); // turn passive preview->active
             framedraw_add_reset(LIVES_VBOX(LIVES_WIDGET(pbox)), &framedraw);
@@ -618,11 +625,7 @@ LiVESPixbuf *mt_framedraw(lives_mt *mt, weed_plant_t *layer) {
     }
 
     // draw on top of layer
-    mainw->fd_layer = framedraw_redraw(&framedraw, FALSE, layer);
-    convert_layer_palette(mainw->fd_layer, WEED_PALETTE_RGB24, 0);
-    pixbuf = layer_to_pixbuf(mainw->fd_layer);
-    weed_plant_free(mainw->fd_layer);
-    mainw->fd_layer = NULL;
+    framedraw_redraw(&framedraw, layer);
   }
   return pixbuf;
 }

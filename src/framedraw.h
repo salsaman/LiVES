@@ -16,11 +16,13 @@
 // internal padding in pixels for LiVESFrame
 #define FD_HT_ADJ 12
 
+#define CROSSHAIR_SIZE 5 ///< pixel size for crosshair "arms"
+
 /// call this to add framedraw widget to an hbox
 void widget_add_framedraw(LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height, lives_rfx_t *);
 
 /// redraw when exposed/frame number changes
-weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *, boolean reload_image, weed_plant_t *layer);
+weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *, weed_plant_t *layer);
 
 /// callback for widgets
 void after_framedraw_widget_changed(LiVESWidget *, lives_special_framedraw_rect_t *);

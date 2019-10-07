@@ -2501,6 +2501,7 @@ LiVESWidget *make_param_window_dialog(int pnum, rfx_build_window_t *rfxbuilder) 
   spsublist = lives_list_append(spsublist, (livespointer)"rectdemask");
   spsublist = lives_list_append(spsublist, (livespointer)"multirect");
   spsublist = lives_list_append(spsublist, (livespointer)"singlepoint");
+  spsublist = lives_list_append(spsublist, (livespointer)"scaledpoint");
 
   rfxbuilder->paramw_spsub_combo = lives_standard_combo_new(_("Special _Subtype:         "), spsublist, LIVES_BOX(dialog_vbox), NULL);
   lives_list_free(spsublist);
@@ -2557,10 +2558,29 @@ void on_paramw_kw_changed(LiVESCombo *combo, livespointer user_data) {
 }
 
 
+static void paramw_set_splabel(LiVESLabel *label, int npars) {
+  int i;
+  char *tmpx;
+
+  if (npars == 1) {
+    tmpx = lives_strdup(_("Linked parameter:    "));
+  } else {
+    char example[256] = "0";
+    for (i = 1; i < npars; i++) {
+      char *xnew = lives_strdup_printf("|%d", i);
+      lives_strappend(example, 256, xnew);
+      lives_free(xnew);
+    }
+    tmpx = lives_strdup_printf(_("Linked parameters [%d] (example %s) :"), npars, example);
+  }
+  lives_label_set_text(label, tmpx);
+  lives_free(tmpx);
+}
+
+
 void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   int npars;
-  char *tmpx;
   char *ctext = lives_combo_get_active_text(combo);
 
   if (!strcmp(ctext, "framedraw")) {
@@ -2570,12 +2590,11 @@ void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
   } else {
     if (!strcmp(ctext, "fileread") || !strcmp(ctext, "filewrite") || !strcmp(ctext, "password")) npars = 1;
     else npars = 2;
-    lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label),
-                         (tmpx = lives_strdup_printf(_("Linked parameters (%d):    "), npars)));
-    lives_free(tmpx);
+    paramw_set_splabel(LIVES_LABEL(rfxbuilder->paramw_rest_label), npars);
     lives_widget_hide(lives_widget_get_parent(rfxbuilder->paramw_spsub_combo));
-    lives_widget_grab_focus(rfxbuilder->paramw_rest_entry);
   }
+
+  lives_widget_grab_focus(rfxbuilder->paramw_rest_entry);
 
   lives_free(ctext);
 }
@@ -2584,13 +2603,16 @@ void on_paramw_sp_changed(LiVESCombo *combo, livespointer user_data) {
 void on_paramw_spsub_changed(LiVESCombo *combo, livespointer user_data) {
   rfx_build_window_t *rfxbuilder = (rfx_build_window_t *)user_data;
   char *ctext = lives_combo_get_active_text(combo);
+  int npars = 0;
 
   if (!strcmp(ctext, "rectdemask") || !strcmp(ctext, "multirect")) {
-    lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label), (_("Linked parameters (4):    ")));
+    npars = 4;
   } else if (!strcmp(ctext, "singlepoint")) {
-    lives_label_set_text(LIVES_LABEL(rfxbuilder->paramw_rest_label), (_("Linked parameters (2):    ")));
+    npars = 2;
+  } else if (!strcmp(ctext, "scaledpoint")) {
+    npars = 3;
   }
-
+  paramw_set_splabel(LIVES_LABEL(rfxbuilder->paramw_rest_label), npars);
   lives_free(ctext);
 }
 

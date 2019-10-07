@@ -18,10 +18,11 @@ typedef struct {
   lives_param_special_t type;
   lives_param_t *xstart_param;
   lives_param_t *ystart_param;
+  lives_param_t *scale_param;
   lives_param_t *xend_param;
   lives_param_t *yend_param;
 
-  int stdwidgets; // 2 for singlepoint, 4 for demask, multirect
+  int stdwidgets; // 2 for singlepoint, 3 for scaledpoint, 4 for demask, multirect
   int *extra_params;
   int num_extra;
   LiVESWidget **extra_widgets;

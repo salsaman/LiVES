@@ -9,7 +9,7 @@
 ########################################################
 # this will auto-generate a LiVES-Perl plugin from the info in $file
 
-$rfx_version="1.8.1";
+$rfx_version="1.8.2";
 
 if ($ARGV[0] eq "-get") {
     $section=$ARGV[1];

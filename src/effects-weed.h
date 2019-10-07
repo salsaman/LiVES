@@ -50,6 +50,7 @@ typedef enum {
 #define WEED_LEAF_FILTERS "filters"
 #define WEED_LEAF_MAINTAINER "maintainer"
 #define WEED_LEAF_HOST_INFO "host_info"
+#define WEED_LEAF_PACKAGE_NAME "package_name"
 
 // host info
 #define WEED_LEAF_API_VERSION "api_version"

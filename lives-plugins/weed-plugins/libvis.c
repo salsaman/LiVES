@@ -275,7 +275,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
     weed_plant_t *out_chantmpls[2];
     char *name = NULL;
-    char fullname[256];
+    char fullname[PATH_MAX];
     weed_plant_t *filter_class;
     weed_plant_t *in_params[2];
     const char *listeners[] = {"None", "Alsa", "ESD", "Jack", "Mplayer", "Auto", NULL};
@@ -294,6 +294,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     if (lpp == NULL) return NULL;
+
+    weed_set_string_value(plugin_info, "package_name", "libvisual");
 
     // set hints for host
     weed_set_int_value(in_chantmpls[0], "audio_channels", 2);
@@ -334,7 +336,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     out_chantmpls[1] = NULL;
 
     while ((name = (char *)visual_actor_get_next_by_name_nogl(name)) != NULL) {
-      snprintf(fullname, 256, "libvisual: %s", name);
+      snprintf(fullname, PATH_MAX, "%s", name);
       in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
       weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
       out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);

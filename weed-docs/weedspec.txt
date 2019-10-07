@@ -10,7 +10,7 @@ API Version Changes
 130 - added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 131 - added WEED_FILTER_PROCESS_LAST, removed WEED_COLORSPACE_HSV
 132 - added threading hint, and later WEED_CHANNEL_ALPHA_PREMULT
-133 - added gamma correction
+133 - added gamma correction, package_name
 
 Changelog:
 21/04/06 salsaman.
@@ -607,6 +607,7 @@ values itself.
 
 '''Optional leaves''':[[BR]]
 
+ * "package_name" : WEED_SEED_STRING : for wrapper filters, the name of the package which is wrapped, e.g. "frei0r"
  * "maintainer"	  : WEED_SEED_STRING : maintainer of plugin package
  * "url"	  : WEED_SEED_STRING : URL of plugin package
 

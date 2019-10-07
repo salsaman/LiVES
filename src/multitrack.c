@@ -7099,7 +7099,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       } else if (enabled_in_channels(filter, FALSE) == 1 && enabled_out_channels(filter, FALSE) == 1) {
         // add all filter effects to submenus
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);
-
+        //xyzzy;
         if (!is_pure_audio(filter, FALSE)) {
           lives_container_add(LIVES_CONTAINER(submenu_menuv), menuitem);
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "idx", LIVES_INT_TO_POINTER(sorted));
@@ -7127,7 +7127,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_GUI_CALLBACK(mt_add_region_effect),
                                (livespointer)mt);
         }
-
       } else if (enabled_in_channels(filter, FALSE) == 2 && enabled_out_channels(filter, FALSE) == 1) {
         // add all transitions to submenus
         menuitem = lives_standard_image_menu_item_new_with_label(fxname);

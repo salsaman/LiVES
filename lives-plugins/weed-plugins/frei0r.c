@@ -345,6 +345,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     close(2);
 #endif
 
+    weed_set_string_value(plugin_info, "package_name", "Frei0r");
     num_filters = 0;
 
     if (fpp != NULL) {
@@ -874,7 +875,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           f0r_destruct(f0r_inst);
 #endif
 
-          snprintf(weed_name, PATH_MAX, "Frei0r: %s", f0rinfo.name);
+          snprintf(weed_name, PATH_MAX, "%s", f0rinfo.name);
           pversion = f0rinfo.major_version * 1000 + f0rinfo.minor_version;
 
           filter_class = weed_filter_class_init(weed_name, "Frei0r developers", pversion, 0, &frei0r_init, &frei0r_process,

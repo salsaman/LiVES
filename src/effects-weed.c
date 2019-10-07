@@ -4739,9 +4739,9 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   char cwd[PATH_MAX];
 
-  char *pwd;
+  char *pwd, *tmp;
 
-  char *filter_name;
+  char *filter_name, *package_name;
 
   register int i;
 
@@ -4792,6 +4792,11 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
       filters = weed_get_plantptr_array(plugin_info, WEED_LEAF_FILTERS, &error);
 
+      if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
+        package_name = lives_strdup_printf("%s: ", (tmp = weed_get_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, &error)));
+        lives_free(tmp);
+      } else package_name = lives_strdup("");
+
       oidx = idx;
       phashnames = NULL;
       phashes = 0;
@@ -4800,7 +4805,9 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
         mode++;
         filter = filters[mode];
 
-        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+        filter_name = lives_strdup_printf("%s%s:", package_name, (tmp = weed_get_string_value(filter, WEED_LEAF_NAME, &error)));
+        lives_free(tmp);
+
         if (!(reason = check_for_lives(filter, idx))) {
           boolean dup = FALSE, pdup = FALSE;
 
@@ -4900,6 +4907,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       }
       lives_freep((void **)&phashnames);
       lives_freep((void **)&filters);
+      lives_free(package_name);
     }
   } else lives_printerr(_("Info: Unable to load plugin %s\nError was: %s\n"), plugin_path, dlerror());
 
@@ -4942,7 +4950,7 @@ static void merge_dupes(void) {
 
 
 static void make_fx_defs_menu(int num_weed_compounds) {
-  weed_plant_t *filter;
+  weed_plant_t *filter, *pinfo;
 
   LiVESWidget *menuitem, *menu = mainw->rte_defs;
   LiVESWidget *pkg_menu;
@@ -4975,17 +4983,23 @@ static void make_fx_defs_menu(int num_weed_compounds) {
       hidden = TRUE;
     else hidden = FALSE;
 
-    if ((pkgstring = strstr(filter_name, ": ")) != NULL) {
-      // package effect
-      if (pkg != NULL && strncmp(pkg, filter_name, strlen(pkg))) {
-        lives_free(pkg);
-        pkg = NULL;
+    pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+    if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME))
+      pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
+    else pkgstring = NULL;
+
+    if (pkgstring != NULL) {
+      // new package
+      if (pkg != NULL && strcmp(pkg, pkgstring)) {
+        pkg_menu_list = add_sorted_list_to_menu(LIVES_MENU(menu), pkg_menu_list);
+        lives_list_free(pkg_menu_list);
+        pkg_menu_list = NULL;
         menu = mainw->rte_defs;
+        lives_freep((void **)&pkg);
       }
+
       if (pkg == NULL) {
-        pkg = filter_name;
-        filter_name = lives_strdup(pkg);
-        memset(pkgstring, 0, 1);
+        pkg = pkgstring;
         /* TRANSLATORS: example " - LADSPA plugins -" */
         pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
         // create new submenu
@@ -4994,7 +5008,6 @@ static void make_fx_defs_menu(int num_weed_compounds) {
         pkg_menu = lives_standard_menu_item_new_with_label(pkgstring);
         widget_opts.mnemonic_label = TRUE;
         lives_container_add(LIVES_CONTAINER(mainw->rte_defs), pkg_menu);
-        //lives_menu_reorder_child(LIVES_MENU(mainw->rte_defs), pkg_menu, pkg_posn++);
 
         pkg_submenu = lives_menu_new();
         lives_menu_item_set_submenu(LIVES_MENU_ITEM(pkg_menu), pkg_submenu);
@@ -5007,9 +5020,10 @@ static void make_fx_defs_menu(int num_weed_compounds) {
         lives_widget_show(pkg_menu);
         lives_widget_show(pkg_submenu);
         lives_free(pkgstring);
+
+        // add to submenu
+        menu = pkg_submenu;
       }
-      // add to submenu
-      menu = pkg_submenu;
     } else {
       pkg_menu_list = add_sorted_list_to_menu(LIVES_MENU(menu), pkg_menu_list);
       lives_list_free(pkg_menu_list);
@@ -5017,7 +5031,6 @@ static void make_fx_defs_menu(int num_weed_compounds) {
       lives_freep((void **)&pkg);
       menu = mainw->rte_defs;
     }
-
     filter_type = weed_filter_get_type(filter, TRUE, FALSE);
     string = lives_strdup_printf("%s (%s)", filter_name, filter_type);
 

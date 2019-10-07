@@ -569,6 +569,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     close(1);
     close(2);
 #endif
+    weed_set_string_value(plugin_info, "package_name", "LADSPA");
 
     while (1) {
       // split by :
@@ -916,7 +917,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
             }
           }
 
-          snprintf(weed_name, PATH_MAX, "LADSPA: %s", laddes->Name);
+          snprintf(weed_name, PATH_MAX, "%s", laddes->Name);
 
           filter_class = weed_filter_class_init(weed_name, "LADSPA developers", 0, 0, &ladspa_init, &ladspa_process, &ladspa_deinit,
                                                 in_chantmpls, out_chantmpls, in_params, out_params);

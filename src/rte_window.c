@@ -2009,20 +2009,19 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
 static LiVESTreeStore *tstore = NULL;
 
 static LiVESTreeModel *rte_window_fx_model(void) {
-
+  weed_plant_t *pinfo;
   LiVESTreeIter iter1, iter2, iter3;
-
-  // fill names of our effects
-  int fx_idx = 0;
 
   LiVESList *list = extended_name_list;
   LiVESList *pname_list = name_list;
   LiVESList *phash_list = hash_list;
 
   lives_fx_cat_t cat;
-  int error;
 
   char *pkg = NULL, *pkgstring, *fxname, *typestr;
+
+  int fx_idx = 0;
+  int error;
 
   if (tstore != NULL) return (LiVESTreeModel *)tstore;
 
@@ -2054,17 +2053,22 @@ static LiVESTreeModel *rte_window_fx_model(void) {
                                  enabled_out_channels(filter, TRUE));
     typestr = lives_fx_cat_to_text(cat, TRUE);
 
-    if ((pkgstring = strstr(fxname, ": ")) != NULL) {
+    pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+    if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME))
+      pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
+    else pkgstring = NULL;
+
+    if (pkgstring != NULL) {
       // package effect
-      if (pkg != NULL && strncmp(pkg, fxname, strlen(pkg))) {
+      if (pkg != NULL && strcmp(pkg, pkgstring)) {
         // new package
         lives_freep((void **)&pkg);
       }
+
       if (pkg == NULL) {
         // add package to menu
-        pkg = fxname;
-        fxname = lives_strdup(pkg);
-        memset(pkgstring, 0, 1);
+        pkg = pkgstring;
+
         /* TRANSLATORS: example " - LADSPA plugins -" */
         pkgstring = lives_strdup_printf(_(" - %s plugins -"), pkg);
         lives_tree_store_prepend(tstore, &iter1, NULL);
@@ -2075,12 +2079,11 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
       // get a new or existing iterator for the category (set in iter2)
       lives_tree_store_find_iter(tstore, EXTENDED_NAME_COLUMN, typestr, &iter1, &iter2);
-
       lives_tree_store_append(tstore, &iter3, &iter2);
       lives_tree_store_set(tstore, &iter3, EXTENDED_NAME_COLUMN, list->data, NAME_COLUMN, fxname,
                            HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
     } else {
-      if (pkg != NULL) lives_freep((void **)&pkg);
+      //if (pkg != NULL) lives_freep((void **)&pkg);
       // get a new or existing iterator for the category
       lives_tree_store_find_iter(tstore, EXTENDED_NAME_COLUMN, typestr, NULL, &iter1);
 
@@ -2088,7 +2091,6 @@ static LiVESTreeModel *rte_window_fx_model(void) {
       lives_tree_store_set(tstore, &iter2, EXTENDED_NAME_COLUMN, list->data, NAME_COLUMN, fxname,
                            HASH_COLUMN, lives_list_nth_data(hash_list, fx_idx), -1);
     }
-
     lives_free(fxname);
     lives_free(typestr);
 

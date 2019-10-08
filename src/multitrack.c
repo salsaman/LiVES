@@ -978,8 +978,26 @@ LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
 
 
 LIVES_INLINE void set_params_unchanged(lives_rfx_t *rfx) {
-  int i;
-  for (i = 0; i < rfx->num_params; i++) rfx->params[i].changed = FALSE;
+  weed_plant_t *wparam;
+  weed_plant_t *inst = rfx->source;
+  int i, j, error;
+
+  for (i = 0; i < rfx->num_params; i++) {
+    rfx->params[i].changed = FALSE;
+    if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
+      if (is_perchannel_multiw(wparam)) {
+        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+          int num_vals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
+          int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
+          for (j = 0; j < num_vals; j++) {
+            if (ign[j] == WEED_FALSE) ign[j] = WEED_TRUE;
+          }
+          weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, num_vals, ign);
+          lives_free(ign);
+        }
+      }
+    }
+  }
 }
 
 
@@ -1953,7 +1971,8 @@ void track_select(lives_mt *mt) {
       }
       if (mt->current_track >= 0) {
         //set_params_unchanged(mt->current_rfx);
-        mt_show_current_frame(mt, FALSE);
+        //mt_show_current_frame(mt, FALSE);
+        if (mt->framedraw != NULL) mt_framedraw(mt, mainw->fd_layer_orig);
       }
       if (mt->fx_params_label != NULL) {
         char *ltext = mt_params_label(mt);
@@ -7854,7 +7873,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_m, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(mt_mark_callback), (livespointer)mt, NULL));
-
 
   mt->top_eventbox = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mt->xtravbox), mt->top_eventbox, FALSE, FALSE, 0);
@@ -16732,6 +16750,7 @@ void mt_sensitise(lives_mt *mt) {
 
 void mt_swap_play_pause(lives_mt *mt, boolean put_pause) {
   LiVESWidget *tmp_img = NULL;
+  LiVESWidgetClosure *freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback), NULL, NULL);
 
   if (put_pause) {
 #if GTK_CHECK_VERSION(2, 6, 0)
@@ -16741,10 +16760,14 @@ void mt_swap_play_pause(lives_mt *mt, boolean put_pause) {
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Pause (p)"));
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK,
+                              (LiVESAccelFlags)0, freeze_closure);
+
   } else {
     tmp_img = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mt->btoolbar)));
     lives_menu_item_set_text(mt->playall, _("_Play from Timeline Position"), TRUE);
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all (p)"));
+    lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mt->accel_group), freeze_closure);
   }
 
   if (tmp_img != NULL) lives_widget_show(tmp_img);
@@ -18716,7 +18739,6 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
                                 get_event_timecode(mt->init_event), mt->fps);
 
   int *tracks;
-  int *ign;
 
   char *tmp, *tmp2;
   char *filter_name;
@@ -18750,22 +18772,21 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     weed_set_voidptr_value(pchange, WEED_LEAF_INIT_EVENT, mt->init_event);
     weed_set_int_value(pchange, WEED_LEAF_INDEX, i);
     if (is_perchannel_multiw(param)) {
-      int num_vals, j;
-      if (mt->track_index == -1) {
-        weed_plant_free(pchange);
-        continue;
-      }
       has_multi = TRUE;
-      num_vals = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
-      ign = (int *)lives_malloc(num_vals * sizint);
-      for (j = 0; j < num_vals; j++) {
-        if (j == mt->track_index) {
-          ign[j] = WEED_FALSE;
-          was_changed = TRUE;
-        } else ign[j] = WEED_TRUE;
+      if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
+        int j;
+        int num_vals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
+        int *ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+        weed_set_boolean_array(pchange, WEED_LEAF_IGNORE, num_vals, ign);
+        for (j = 0; j < num_vals; j++) {
+          if (ign[j] == WEED_FALSE) {
+            was_changed = TRUE;
+            ign[j] = WEED_TRUE;
+          }
+        }
+        weed_set_boolean_array(param, WEED_LEAF_IGNORE, num_vals, ign);
+        lives_free(ign);
       }
-      weed_set_boolean_array(pchange, WEED_LEAF_IGNORE, num_vals, ign);
-      lives_free(ign);
     } else was_changed = TRUE;
 
     weed_leaf_copy(pchange, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);

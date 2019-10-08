@@ -9672,7 +9672,8 @@ int rte_get_numfilters(boolean inc_dupes) {
 
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index) {
   // for a multi valued parameter or pchange, we will fill WEED_LEAF_VALUE up to element index with WEED_LEAF_NEW_DEFAULT
-
+  // we will also create the ignore array if there is not one. The values of this are set to WEED_TRUE if the user
+  // updates the values for that channel, so we know which values to set for interpolation later.
   // paramtmpl must be supplied, since pchanges do not have one directly
 
   int i, error, hint;
@@ -9684,76 +9685,87 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
   int *colsis, *coli;
   int vcount;
   double *colsds, *cold;
+  boolean *ign_array = NULL;
 
   hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
-
-  vcount = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
+  vcount = num_vals;
   if (index >= vcount) vcount = ++index;
 
   switch (hint) {
   case WEED_HINT_INTEGER:
-    new_defi = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-    valis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
-    nvalis = (int *)lives_malloc(vcount * sizint);
-    for (i = 0; i < vcount; i++) {
-      if (i < num_vals && i < index) nvalis[i] = valis[i];
-      else if (i <= num_vals && i > index) nvalis[i] = valis[i - 1];
-      else nvalis[i] = new_defi;
+    if (vcount > num_vals) {
+      new_defi = weed_get_int_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      valis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
+      nvalis = (int *)lives_malloc(vcount * sizint);
+      for (i = 0; i < vcount; i++) {
+        if (i < num_vals && i < index) nvalis[i] = valis[i];
+        else if (i <= num_vals && i > index) nvalis[i] = valis[i - 1];
+        else nvalis[i] = new_defi;
+      }
+      weed_set_int_array(param, WEED_LEAF_VALUE, vcount, nvalis);
+      lives_free(valis);
+      lives_free(nvalis);
     }
-    weed_set_int_array(param, WEED_LEAF_VALUE, vcount, nvalis);
-    lives_free(valis);
-    lives_free(nvalis);
     break;
   case WEED_HINT_FLOAT:
-    new_defd = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-    valds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
-    nvalds = (double *)lives_malloc(vcount * sizdbl);
-    for (i = 0; i < vcount; i++) {
-      if (i < num_vals && i < index) nvalds[i] = valds[i];
-      else if (i <= num_vals && i > index) nvalds[i] = valds[i - 1];
-      else nvalds[i] = new_defd;
-    }
-    weed_set_double_array(param, WEED_LEAF_VALUE, vcount, nvalds);
+    if (vcount > num_vals) {
+      new_defd = weed_get_double_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      valds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
+      nvalds = (double *)lives_malloc(vcount * sizdbl);
+      for (i = 0; i < vcount; i++) {
+        if (i < num_vals && i < index) nvalds[i] = valds[i];
+        else if (i <= num_vals && i > index) nvalds[i] = valds[i - 1];
+        else nvalds[i] = new_defd;
+      }
+      weed_set_double_array(param, WEED_LEAF_VALUE, vcount, nvalds);
 
-    lives_free(valds);
-    lives_free(nvalds);
+      lives_free(valds);
+      lives_free(nvalds);
+    }
     break;
   case WEED_HINT_SWITCH:
-    new_defi = weed_get_boolean_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-    valis = weed_get_boolean_array(param, WEED_LEAF_VALUE, &error);
-    nvalis = (int *)lives_malloc(vcount * sizint);
-    for (i = 0; i < vcount; i++) {
-      if (i < num_vals && i < index) nvalis[i] = valis[i];
-      else if (i <= num_vals && i > index) nvalis[i] = valis[i - 1];
-      else nvalis[i] = new_defi;
+    if (vcount > num_vals) {
+      new_defi = weed_get_boolean_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      valis = weed_get_boolean_array(param, WEED_LEAF_VALUE, &error);
+      nvalis = (int *)lives_malloc(vcount * sizint);
+      for (i = 0; i < vcount; i++) {
+        if (i < num_vals && i < index) nvalis[i] = valis[i];
+        else if (i <= num_vals && i > index) nvalis[i] = valis[i - 1];
+        else nvalis[i] = new_defi;
+      }
+      weed_set_boolean_array(param, WEED_LEAF_VALUE, vcount, nvalis);
+      lives_free(valis);
+      lives_free(nvalis);
     }
-    weed_set_boolean_array(param, WEED_LEAF_VALUE, vcount, nvalis);
-    lives_free(valis);
-    lives_free(nvalis);
     break;
   case WEED_HINT_TEXT:
-    new_defs = weed_get_string_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
-    valss = weed_get_string_array(param, WEED_LEAF_VALUE, &error);
-    nvalss = (char **)lives_malloc(vcount * sizeof(char *));
-    for (i = 0; i < vcount; i++) {
-      if (i < num_vals && i < index) nvalss[i] = valss[i];
-      else if (i <= num_vals && i > index) nvalss[i] = valss[i - 1];
-      else nvalss[i] = new_defs;
-    }
-    weed_set_string_array(param, WEED_LEAF_VALUE, vcount, nvalss);
+    if (vcount > num_vals) {
+      new_defs = weed_get_string_value(paramtmpl, WEED_LEAF_NEW_DEFAULT, &error);
+      valss = weed_get_string_array(param, WEED_LEAF_VALUE, &error);
+      nvalss = (char **)lives_malloc(vcount * sizeof(char *));
+      for (i = 0; i < vcount; i++) {
+        if (i < num_vals && i < index) nvalss[i] = valss[i];
+        else if (i <= num_vals && i > index) nvalss[i] = valss[i - 1];
+        else nvalss[i] = new_defs;
+      }
+      weed_set_string_array(param, WEED_LEAF_VALUE, vcount, nvalss);
 
-    for (i = 0; i < index; i++) {
-      lives_free(nvalss[i]);
-    }
+      for (i = 0; i < index; i++) {
+        lives_free(nvalss[i]);
+      }
 
-    lives_free(valss);
-    lives_free(nvalss);
+      lives_free(valss);
+      lives_free(nvalss);
+    }
     break;
   case WEED_HINT_COLOR:
     cspace = weed_get_int_value(paramtmpl, WEED_LEAF_COLORSPACE, &error);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
-      index *= 3;
+      num_vals /= 3;
+      vcount = num_vals;
+      index--;
+      if (index >= vcount) vcount = ++index;
       vcount *= 3;
       if (weed_leaf_seed_type(paramtmpl, WEED_LEAF_NEW_DEFAULT) == WEED_SEED_INT) {
         colsis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
@@ -9810,8 +9822,26 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
         lives_free(colsds);
         lives_free(nvalds);
       }
+      vcount /= 3;
     }
     break;
+  }
+
+  if (is_perchannel_multiw(param)) {
+    int *ign = NULL;
+    int num_vals = 0;
+    if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
+      ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+      num_vals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
+    }
+    if (index > num_vals) {
+      ign = (int *)lives_realloc(ign, index * sizint);
+      for (i = num_vals; i < index; i++) {
+        ign[i] = WEED_TRUE;
+      }
+      weed_set_boolean_array(param, WEED_LEAF_IGNORE, vcount, ign);
+      lives_free(ign);
+    }
   }
 }
 

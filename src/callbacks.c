@@ -4579,7 +4579,7 @@ boolean fps_reset_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
 
-  if (!LIVES_IS_PLAYING) return TRUE;
+  if (!LIVES_IS_PLAYING || mainw->multitrack != NULL) return TRUE;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(cfile->frameno);
@@ -9885,6 +9885,10 @@ void on_forward_pressed(LiVESButton *button, livespointer user_data) {
 
 
 boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  if (mainw->multitrack != NULL && (LIVES_IS_PLAYING || mainw->multitrack->is_paused)) {
+    on_playall_activate(NULL, NULL);
+    return TRUE;
+  }
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return TRUE;
   if (!LIVES_IS_PLAYING || (mainw->is_processing && cfile->is_loaded)) return TRUE;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return TRUE;

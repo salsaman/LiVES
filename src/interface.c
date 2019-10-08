@@ -3534,6 +3534,14 @@ void do_keys_window(void) {
   pair_add(textwindow->table, (tmp = lives_strdup(("m"))), (tmp2 = lives_strdup(_("switch effect mode (when effect has keyboard grab)\n"))));
   lives_free(tmp);
   lives_free(tmp2);
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-alt-1"))), (tmp2 = lives_strdup(_("grab keyboard for effect key 1\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-alt-2"))), (tmp2 = lives_strdup(_("grab keyboard for effect key 2\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table, (tmp = lives_strdup(_("...etc...\n"))), NULL);
+  lives_free(tmp);
   pair_add(textwindow->table, (tmp = lives_strdup(("t"))),
            (tmp2 = lives_strdup(_("enter text parameter (when effect has keyboard grab)\n"))));
   lives_free(tmp);

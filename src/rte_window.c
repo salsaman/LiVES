@@ -2592,7 +2592,7 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
         rgbp = (lives_colRGB48_t *)rfx->params[i].value;
-        update_weed_color_value(filter, i, rgbp->red, rgbp->green, rgbp->blue, 0);
+        update_weed_color_value(filter, i, rgbp->red, rgbp->green, rgbp->blue, 0, rfx);
         break;
       case LIVES_PARAM_STRING:
         weed_set_string_value(ptmpl, WEED_LEAF_HOST_DEFAULT, (char *)rfx->params[i].value);

@@ -1936,6 +1936,18 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
         numvals = index + 1;
       }
 
+      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
+        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
+          if (index >= 0 && index < nvals) {
+            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
+            ign[index] = WEED_FALSE;
+            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
+            lives_free(ign);
+          }
+        }
+      }
+
       valis = weed_get_boolean_array(wparam, WEED_LEAF_VALUE, &error);
       valis[index] = new_bool;
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
@@ -2058,6 +2070,18 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         numvals = index + 1;
       }
 
+      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
+        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
+          if (index >= 0 && index < nvals) {
+            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
+            ign[index] = WEED_FALSE;
+            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
+            lives_free(ign);
+          }
+        }
+      }
+
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
       if (weed_leaf_seed_type(wparam, WEED_LEAF_VALUE) == WEED_SEED_DOUBLE) {
@@ -2132,7 +2156,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 }
 
 
-void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int c3, int c4) {
+void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int c3, int c4, lives_rfx_t *rfx) {
   weed_plant_t *ptmpl;
   weed_plant_t *param = NULL;
 
@@ -2200,6 +2224,18 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
           numvals = (index + 1) * 3;
         }
 
+        if (mainw->multitrack != NULL && is_perchannel_multi(rfx, pnum)) {
+          if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
+            int nvals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
+            if (index >= 0 && index < nvals) {
+              int *ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+              ign[index] = WEED_FALSE;
+              weed_set_boolean_array(param, WEED_LEAF_IGNORE, nvals, ign);
+              lives_free(ign);
+            }
+          }
+        }
+
         valis = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
         valis[index * 3] = cols[0];
         valis[index * 3 + 1] = cols[1];
@@ -2241,6 +2277,18 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
           weed_plant_t *paramtmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
           fill_param_vals_to(param, paramtmpl, index);
           numvals = (index + 1) * 3;
+        }
+
+        if (mainw->multitrack != NULL && is_perchannel_multi(rfx, pnum)) {
+          if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
+            int nvals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
+            if (index >= 0 && index < nvals) {
+              int *ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+              ign[index] = WEED_FALSE;
+              weed_set_boolean_array(param, WEED_LEAF_IGNORE, nvals, ign);
+              lives_free(ign);
+            }
+          }
         }
 
         valds = weed_get_double_array(param, WEED_LEAF_VALUE, &error);
@@ -2293,7 +2341,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE)  {
       update_weed_color_value(inst, param_number,
-                              new_red, old_value.green, old_value.blue, 0);
+                              new_red, old_value.green, old_value.blue, 0, rfx);
       copyto = set_copy_to(inst, param_number, TRUE);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
@@ -2361,7 +2409,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
 
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(inst, param_number, old_value.red, new_green, old_value.blue, 0);
+      update_weed_color_value(inst, param_number, old_value.red, new_green, old_value.blue, 0, rfx);
 
       copyto = set_copy_to(inst, param_number, TRUE);
 
@@ -2429,7 +2477,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
 
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(inst, param_number, old_value.red, old_value.green, new_blue, 0);
+      update_weed_color_value(inst, param_number, old_value.red, old_value.green, new_blue, 0, rfx);
       copyto = set_copy_to(inst, param_number, TRUE);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
@@ -2597,6 +2645,18 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
         numvals = index + 1;
       }
 
+      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
+        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
+          if (index >= 0 && index < nvals) {
+            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
+            ign[index] = WEED_FALSE;
+            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
+            lives_free(ign);
+          }
+        }
+      }
+
       valss = weed_get_string_array(wparam, WEED_LEAF_VALUE, &error);
       valss[index] = lives_strdup((char *)param->value);
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
@@ -2697,6 +2757,18 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
         weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
         fill_param_vals_to(wparam, paramtmpl, index);
         numvals = index + 1;
+      }
+
+      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
+        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
+          if (index >= 0 && index < nvals) {
+            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
+            ign[index] = WEED_FALSE;
+            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
+            lives_free(ign);
+          }
+        }
       }
 
       valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);

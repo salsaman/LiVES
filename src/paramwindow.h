@@ -67,7 +67,7 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *, int argc, char **argv);
 LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *) WARN_UNUSED;
 LiVESList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
-void update_weed_color_value(weed_plant_t *, int pnum, int c1, int c2, int c3, int c4);
+void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int c3, int c4, lives_rfx_t *);
 
 void update_visual_params(lives_rfx_t *r, boolean update_hidden);
 

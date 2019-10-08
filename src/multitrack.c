@@ -1970,9 +1970,6 @@ void track_select(lives_mt *mt) {
     // must be done in this order: interpolate, update, preview
     xx = get_track_index(mt, tc);
     if (mt->track_index != -1) {
-      /* if (mt->current_track >= 0) { */
-      /*    interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc); */
-      /* } */
       if (!xx) {
         boolean aprev = mt->opts.fx_auto_preview;
         mt->opts.fx_auto_preview = FALSE;
@@ -1982,8 +1979,6 @@ void track_select(lives_mt *mt) {
         mt->opts.fx_auto_preview = aprev;
       }
       if (mt->current_track >= 0) {
-        //set_params_unchanged(mt->current_rfx);
-        //mt_show_current_frame(mt, FALSE);
         if (mt->framedraw != NULL) mt_framedraw(mt, mainw->fd_layer_orig);
       }
       if (mt->fx_params_label != NULL) {

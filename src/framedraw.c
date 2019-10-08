@@ -399,12 +399,16 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
     if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
   }
+  else {
+    if (mainw->fd_layer_orig != NULL && mainw->fd_layer_orig != layer) {
+      weed_layer_free(mainw->fd_layer_orig);
+      mainw->fd_layer_orig = layer;
+    }
+  }
 
   // copy orig layer to new layer
   if (mainw->fd_layer != NULL) {
-    ////
     weed_layer_free(mainw->fd_layer);
-    ////
     mainw->fd_layer = NULL;
   }
 

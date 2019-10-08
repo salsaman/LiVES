@@ -115,12 +115,13 @@ static void framedraw_redraw_cb(LiVESWidget *widget, lives_special_framedraw_rec
 static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton, lives_special_framedraw_rect_t *framedraw) {
   // update the single frame/framedraw preview
   // after the "frame number" spinbutton has changed
+  lives_signal_handler_block(mainw->framedraw_spinbutton, mainw->fd_spin_func);
   if (fx_dialog[0] != NULL) {
     if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, FALSE);
     if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, FALSE);
   }
   mainw->framedraw_frame = lives_spin_button_get_value_as_int(spinbutton);
-  if (lives_widget_is_visible(mainw->framedraw_preview)) {
+  if (!(framedraw->rfx->props & RFX_PROPS_MAY_RESIZE)) {
     if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
     lives_widget_context_update();
     load_rfx_preview(framedraw->rfx);
@@ -129,6 +130,7 @@ static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton
     if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
     if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
   }
+  lives_signal_handler_unblock(mainw->framedraw_spinbutton, mainw->fd_spin_func);
 }
 
 
@@ -383,7 +385,6 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   if (layer == NULL) {
     // forced reload: get frame from clip, and set in mainw->fd_layer_orig
     const char *img_ext;
-    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
     if (framedraw->rfx->num_in_channels > 0 && !(framedraw->rfx->props & RFX_PROPS_MAY_RESIZE)) {
       img_ext = LIVES_FILE_EXT_PRE;
     } else {
@@ -395,15 +396,18 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
       weed_plant_free(layer);
       return NULL;
     }
+    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    mainw->fd_layer_orig = layer;
   }
 
   // copy orig layer to new layer
   if (mainw->fd_layer != NULL) {
+    ////
     weed_layer_free(mainw->fd_layer);
+    ////
     mainw->fd_layer = NULL;
   }
 
-  mainw->fd_layer_orig = layer;
   mainw->fd_layer = weed_layer_copy(NULL, layer);
   gamma_correct_layer(WEED_GAMMA_SRGB, mainw->fd_layer);
 
@@ -685,7 +689,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   if (!pull_frame(layer, img_ext, 0)) {
     weed_plant_free(layer);
   } else {
-    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    if (mainw->fd_layer_orig != NULL && mainw->fd_layer_orig != layer) weed_layer_free(mainw->fd_layer_orig);
     mainw->fd_layer_orig = layer;
     if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = weed_layer_copy(NULL, mainw->fd_layer_orig);
@@ -740,8 +744,8 @@ void redraw_framedraw_image(weed_plant_t *layer) {
                           width,
                           height);
   lives_painter_fill(cr2);
-  lives_painter_destroy(cr2);
   lives_painter_to_layer(cr, layer);
+  lives_painter_destroy(cr2);
   lives_painter_destroy(cr);
 }
 

@@ -1580,6 +1580,8 @@ boolean add_mt_param_box(lives_mt *mt) {
 
   weed_timecode_t tc;
 
+  LiVESWidget *label;
+
   double fx_start_time, fx_end_time;
   double cur_time = mt->ptr_time;
 
@@ -1603,9 +1605,12 @@ boolean add_mt_param_box(lives_mt *mt) {
   }
 
   mt->fx_box = lives_vbox_new(FALSE, 0);
-  lives_box_pack_end(LIVES_BOX(mt->fx_base_box), mt->fx_box, TRUE, TRUE, 0);
+  label = lives_label_new("");
+  lives_widget_apply_theme2(label, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_box_pack_start(LIVES_BOX(mt->fx_box), label, FALSE, TRUE, widget_opts.packing_height);
+  lives_widget_set_no_show_all(label, TRUE);
 
-  ltext = mt_params_label(mt);
+  lives_box_pack_end(LIVES_BOX(mt->fx_base_box), mt->fx_box, TRUE, TRUE, 0);
 
   lives_signal_handlers_block_by_func(mt->node_spinbutton, (livespointer)on_node_spin_value_changed, (livespointer)mt);
   lives_spin_button_configure(LIVES_SPIN_BUTTON(mt->node_spinbutton), cur_time - fx_start_time, 0.,
@@ -1618,6 +1623,13 @@ boolean add_mt_param_box(lives_mt *mt) {
   res = make_param_box(LIVES_VBOX(mt->fx_box), mt->current_rfx);
   widget_opts.packing_height = dph;
   widget_opts.border_width = dbw;
+
+  ltext = mt_params_label(mt);
+
+  if (mt->framedraw != NULL) {
+    lives_label_set_text(LIVES_LABEL(label), _("<--- Some parameters can be altered by clicking / dragging in the Preview window"));
+    lives_widget_show(label);
+  }
 
   widget_opts.mnemonic_label = FALSE;
   lives_label_set_text(LIVES_LABEL(mt->fx_params_label), ltext);

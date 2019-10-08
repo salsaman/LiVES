@@ -560,6 +560,7 @@ LiVESWidget *lives_toggle_tool_button_new(void);
 boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
 boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
 
+int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
 LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);

@@ -41,12 +41,12 @@ int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), osrc = src;
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), *osrc = src;
   unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
 
   int pal = weed_get_int_value(in_channel, "current_palette", &error);
 
-  int width = weed_get_int_value(in_channel, "width", &error);
+  int width = weed_get_int_value(in_channel, "width", &error), widthx;
   int height = weed_get_int_value(in_channel, "height", &error);
 
   int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
@@ -125,7 +125,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &tzoom_process, NULL,
                                  in_chantmpls, out_chantmpls, in_params, NULL);
 
-    weed_plant_t *gui = weed_filter_class_get_gui(filter_class);
+    weed_plant_t *gui = weed_filter_class_get_gui(filter_class), *pgui;
 
     // define RFX layout
     char *rfx_strings[] = {"layout|p0|", "layout|p1|p2|", "special|framedraw|scaledpoint|1|2|"};
@@ -133,6 +133,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_set_string_value(gui, "layout_scheme", "RFX");
     weed_set_string_value(gui, "rfx_delim", "|");
     weed_set_string_array(gui, "rfx_strings", 3, rfx_strings);
+
+    pgui = weed_parameter_template_get_gui(in_params[0]);
+    weed_set_double_value(pgui, "step_size", 0.1);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

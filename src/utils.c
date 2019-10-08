@@ -4568,13 +4568,6 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 }
 
 
-static int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
-  if (LIVES_POINTER_TO_INT(fwd))
-    return strcmp(lives_utf8_collate_key(a, -1), lives_utf8_collate_key(b, -1));
-  return strcmp(lives_utf8_collate_key(b, -1), lives_utf8_collate_key(a, -1));
-}
-
-
 LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd) {
   return lives_list_sort_with_data(list, lives_utf8_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
 }

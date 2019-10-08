@@ -9001,7 +9001,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
       }
       return FALSE;
     }
-    if (CURRENT_CLIP_IS_VALID && !mainw->go_away && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL &&
+    if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL &&
         !mainw->preview) {
       get_play_times();
     }

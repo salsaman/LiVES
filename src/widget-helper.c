@@ -10279,12 +10279,24 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_queue_draw_and_update(LiVESWidg
 }
 
 
-static int lives_utf8_menu_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
+int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
+  // do not inline !
+  int ret;
+  char *tmp1, *tmp2;
   if (LIVES_POINTER_TO_INT(fwd))
-    return strcmp(lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)a), -1),
-                  lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)b), -1));
-  return strcmp(lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)b), -1),
-                lives_utf8_collate_key(lives_menu_item_get_text((LiVESWidget *)a), -1));
+    ret = strcmp((tmp1 = lives_utf8_collate_key(a, -1)),
+                 (tmp2 = lives_utf8_collate_key(b, -1)));
+  else
+    ret = strcmp((tmp1 = lives_utf8_collate_key(b, -1)),
+                 (tmp2 = lives_utf8_collate_key(a, -1)));
+  lives_free(tmp1);
+  lives_free(tmp2);
+  return ret;
+}
+
+
+static int lives_utf8_menu_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer fwd) {
+  return lives_utf8_strcmpfunc(lives_menu_item_get_text((LiVESWidget *)a), lives_menu_item_get_text((LiVESWidget *)b), fwd);
 }
 
 

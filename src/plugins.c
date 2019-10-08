@@ -2728,7 +2728,7 @@ LiVESList *array_to_string_list(char **array, int offset, int len) {
 
 
 static int cmp_menu_entries(livesconstpointer a, livesconstpointer b) {
-  return strcmp(lives_utf8_collate_key(((lives_rfx_t *)a)->menu_text, -1), lives_utf8_collate_key(((lives_rfx_t *)b)->menu_text, -1));
+  return lives_utf8_strcmpfunc(((lives_rfx_t *)a)->menu_text, ((lives_rfx_t *)b)->menu_text, LIVES_INT_TO_POINTER(TRUE));
 }
 
 

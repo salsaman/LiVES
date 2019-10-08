@@ -9685,7 +9685,6 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
   int *colsis, *coli;
   int vcount;
   double *colsds, *cold;
-  boolean *ign_array = NULL;
 
   hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
   vcount = num_vals;
@@ -9828,19 +9827,19 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index)
   }
 
   if (is_perchannel_multiw(param)) {
-    int *ign = NULL;
+    int *ign_array = NULL;
     int num_vals = 0;
     if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
-      ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+      ign_array = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
       num_vals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
     }
     if (index > num_vals) {
-      ign = (int *)lives_realloc(ign, index * sizint);
+      ign_array = (int *)lives_realloc(ign_array, index * sizint);
       for (i = num_vals; i < index; i++) {
-        ign[i] = WEED_TRUE;
+        ign_array[i] = WEED_TRUE;
       }
-      weed_set_boolean_array(param, WEED_LEAF_IGNORE, vcount, ign);
-      lives_free(ign);
+      weed_set_boolean_array(param, WEED_LEAF_IGNORE, vcount, ign_array);
+      lives_free(ign_array);
     }
   }
 }

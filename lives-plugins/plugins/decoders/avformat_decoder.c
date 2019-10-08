@@ -291,7 +291,8 @@ skip_probe:
   priv->last_frame = -1;
   priv->black_fill = FALSE;
 
-  priv->needs_packet = TRUE;
+  av_init_packet(&priv->packet);
+  priv->needs_packet = FALSE;
 
   /* Open it */
   if (avformat_open_input(&priv->ic, cdata->URI, priv->fmt, NULL)) {
@@ -1185,6 +1186,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     do {
       if (priv->needs_packet) {
         do {
+          av_packet_unref(&priv->packet);
+          av_init_packet(&priv->packet);
           ret = av_read_frame(priv->ic, &priv->packet);
 
 #ifdef DEBUG

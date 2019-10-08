@@ -1300,9 +1300,9 @@ void create_LiVES(void) {
   //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->normalize_audio);
   //lives_widget_set_sensitive(mainw->normalize_audio, FALSE);
 
-  mainw->adj_audio_sync = lives_standard_menu_item_new_with_label(_("_Adjust Audio Sync..."));
+  //mainw->adj_audio_sync = lives_standard_menu_item_new_with_label(_("_Adjust Audio Sync..."));
   //lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->adj_audio_sync);
-  lives_widget_set_sensitive(mainw->adj_audio_sync, FALSE);
+  //lives_widget_set_sensitive(mainw->adj_audio_sync, FALSE);
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Info"));
   lives_container_add(LIVES_CONTAINER(mainw->menubar), menuitem);

@@ -193,7 +193,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   LingoContext *ctx;
   weed_plant_t *msg;
 
-  char *readytext, *testtext, *newtext = NULL, *tmp, *xx;
+  char *readytext, *testtext = NULL, *newtext = NULL, *tmp, *xx;
   int w = 0, h = 0, pw;
   int error;
   int totlines = 0;
@@ -324,7 +324,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         /*   nscale = 0.5; */
         /* } */
         /* if (jumpval > 1) jumpval = (int)(jumpval * nscale + .9); */
-        lives_free(tmp);
+        lives_free(newtext);
+        newtext = tmp;
       }
 #ifdef DEBUG_MSGS
       g_print("Width OK now\n");
@@ -339,6 +340,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     newtext = NULL;
     lives_free(readytext);
     readytext = testtext;
+    testtext = NULL;
 #ifdef DEBUG_MSGS
     g_print("|%s| passed size tests\n", readytext);
 #endif
@@ -346,7 +348,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
   }
 
   // result is now in readytext
-  lingo_layout_set_text(layout, readytext, -1);
+  //lingo_layout_set_text(layout, readytext, -1);
 
   if (linecount != NULL) *linecount = totlines;
 
@@ -518,7 +520,6 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   if (layout) lives_widget_object_unref(layout);
 
-  lives_painter_destroy(cr);
   return layer;
 }
 

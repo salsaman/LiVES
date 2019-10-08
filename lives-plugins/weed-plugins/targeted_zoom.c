@@ -55,7 +55,7 @@ int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   weed_plant_t **in_params;
 
-  double offsx, offsy, scale;
+  double offsx, offsy, scale, scalex;
 
   int dx, dy;
 
@@ -94,13 +94,16 @@ int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   }
 
   widthx = width * psize;
+  scalex = scale * psize;
 
   for (y = offset; y < dheight; y++) {
     dy = (int)(offsy + (double)y / scale + .5);
+    if (dy > height - 1) dy = height - 1;
     src = osrc + dy * irowstride;
 
     for (x = 0; x < widthx; x += psize) {
-      dx = (int)(offsx + (double)x / scale + .5);
+      dx = (int)(offsx + (double)x / scalex + .5);
+      //if (dx > width - 1) dx = width - 1;
       weed_memcpy(dst + x, src + dx * psize, psize);
     }
     dst += orowstride;

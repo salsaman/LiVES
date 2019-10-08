@@ -2551,7 +2551,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
   }
 
   for (i = num_params - 1; i >= 0; i--) {
-    if (i < leave && in_pchanges[i] != NULL) {
+    if (i < leave && in_pchanges != NULL && in_pchanges[i] != NULL) {
       // maintain existing values
       pchain[i] = in_pchanges[i];
       continue;
@@ -2578,8 +2578,9 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
     weed_add_plant_flags((weed_plant_t *)pchain[i], WEED_LEAF_READONLY_PLUGIN);
 
     insert_param_change_event_at(event_list, init_event, (weed_plant_t *)pchain[i]);
-
   }
+
+  if (in_pchanges != NULL) lives_free(in_pchanges);
 
   if (!is_inst) {
     weed_in_params_free(in_params, num_params);
@@ -3167,7 +3168,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) {
         if ((num_in_channels = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) > 0) {
-          bitmpl = (weed_plant_t **)weed_malloc(num_in_channels * sizeof(weed_plant_t *));
+          bitmpl = (weed_plant_t **)lives_malloc(num_in_channels * sizeof(weed_plant_t *));
           citmpl = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
           if (num_in_channels != num_in_count) LIVES_ERROR("num_in_count != num_in_channels");
           for (i = 0; i < num_in_channels; i++) {
@@ -3185,7 +3186,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       if (weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
         if ((num_out_channels = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) > 0) {
           cotmpl = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-          botmpl = (weed_plant_t **)weed_malloc(num_out_channels * sizeof(weed_plant_t *));
+          botmpl = (weed_plant_t **)lives_malloc(num_out_channels * sizeof(weed_plant_t *));
           for (i = 0; i < num_out_channels; i++) {
             botmpl[i] = weed_plant_copy(cotmpl[i]);
             if (!weed_plant_has_leaf(cotmpl[i], WEED_LEAF_HOST_DISABLED) ||
@@ -3832,7 +3833,7 @@ lives_render_error_t render_events(boolean reset) {
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) {
         if ((num_in_channels = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) > 0) {
-          bitmpl = (weed_plant_t **)weed_malloc(num_in_channels * sizeof(weed_plant_t *));
+          bitmpl = (weed_plant_t **)lives_malloc(num_in_channels * sizeof(weed_plant_t *));
           citmpl = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &weed_error);
           if (num_in_channels != num_in_count) LIVES_ERROR("num_in_count != num_in_channels");
           for (i = 0; i < num_in_channels; i++) {
@@ -3850,7 +3851,7 @@ lives_render_error_t render_events(boolean reset) {
       if (weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
         if ((num_out_channels = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) > 0) {
           cotmpl = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &weed_error);
-          botmpl = (weed_plant_t **)weed_malloc(num_out_channels * sizeof(weed_plant_t *));
+          botmpl = (weed_plant_t **)lives_malloc(num_out_channels * sizeof(weed_plant_t *));
           for (i = 0; i < num_out_channels; i++) {
             botmpl[i] = weed_plant_copy(cotmpl[i]);
             if (!weed_plant_has_leaf(cotmpl[i], WEED_LEAF_HOST_DISABLED) ||

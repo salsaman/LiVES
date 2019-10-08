@@ -202,12 +202,14 @@ boolean lives_widget_object_unref(livespointer); ///< decrease refcount by one: 
 // remove any "floating" reference and add a new ref
 boolean lives_widget_object_ref_sink(livespointer);
 
-// set data and free it later
-void lives_widget_object_set_data_auto(LiVESWidgetObject *obj, const char *key, livespointer data);
+// set string data and free it later
+void lives_widget_object_set_data_auto(LiVESWidgetObject *, const char *key, livespointer data);
 
 // set list and free it later (but not the list data)
-void lives_widget_object_set_data_list(LiVESWidgetObject *obj, const char *key, LiVESList *list);
+void lives_widget_object_set_data_list(LiVESWidgetObject *, const char *key, LiVESList *list);
 
+// set widget object and unref it later
+void lives_widget_object_set_data_widget_object(LiVESWidgetObject *, const char *key, livespointer other);
 // lives_pixbuf functions
 
 int lives_pixbuf_get_width(const LiVESPixbuf *);

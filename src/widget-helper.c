@@ -151,7 +151,7 @@ static void widget_state_cb(LiVESWidgetObject *object, livespointer pspec, lives
     if (label != NULL) {
       float dimval;
       LiVESWidgetColor dimmed_fg;
-      LiVESList *list;
+      LiVESList *list, *olist;
       // if we have a label we CAN set the text colours for TOOL_buttons
       // as well as the outline colour
       if (!lives_widget_is_sensitive(widget)) {
@@ -169,7 +169,7 @@ static void widget_state_cb(LiVESWidgetObject *object, livespointer pspec, lives
       }
       // menutoolbuttons will also have an arrow
       // since CSS selectors are borked we have to find it by brute force
-      list = lives_container_get_children(LIVES_CONTAINER(widget));
+      olist = list = lives_container_get_children(LIVES_CONTAINER(widget));
       while (list != NULL) {
         widget = (LiVESWidget *)list->data;
         if (LIVES_IS_VBOX(widget)) {
@@ -177,6 +177,7 @@ static void widget_state_cb(LiVESWidgetObject *object, livespointer pspec, lives
         }
         list = list->next;
       }
+      lives_list_free(olist);
       widget_opts.apply_theme = woat;
       return;
     }
@@ -242,6 +243,17 @@ static void lives_list_free_cb(livespointer list) {
 
 WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_list(LiVESWidgetObject *obj, const char *key, LiVESList *list) {
   lives_widget_object_set_data_full(obj, key, list, lives_list_free_cb);
+}
+
+
+static void lives_widget_object_unref_cb(livespointer obj) {
+  lives_widget_object_unref((LiVESWidgetObject *)obj);
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_widget_object(LiVESWidgetObject *obj, const char *key, livespointer other) {
+
+  lives_widget_object_set_data_full(obj, key, other, lives_widget_object_unref_cb);
 }
 
 
@@ -1287,8 +1299,10 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
   }
 
 #ifdef GTK_TEXT_VIEW_CSS_BUG
-  if (GTK_IS_TEXT_VIEW(widget)) wname = lives_strdup("GtkTextView");
-  else {
+  if (GTK_IS_TEXT_VIEW(widget)) {
+    lives_freep((void **)&widget_name);
+    widget_name = lives_strdup("GtkTextView");
+  } else {
 #endif
     switch (state) {
     // TODO: gtk+ 3.x can set multiple states
@@ -1370,7 +1384,6 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
   lives_free(widget_name);
   css_string = g_strdup_printf(" %s {\n %s: %s;}\n", wname, detail, value);
-
 
 #if !GTK_CHECK_VERSION(3, 24, 0)
   // special tweaks
@@ -8616,6 +8629,7 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
     colref = gdk_rgba_to_string(act_color);
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background", "none");
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
+    lives_free(colref);
   }
 #endif
   return notebook;
@@ -8959,9 +8973,11 @@ LiVESToolItem *lives_standard_menu_tool_button_new(LiVESWidget *icon, const char
         }
         lives_widget_set_bg_color(widget, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
         list2 = list2->next;
+        lives_list_free(children2);
       }
       list = list->next;
     }
+    lives_list_free(children);
   }
 #endif
 #ifdef GUI_QT

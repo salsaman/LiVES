@@ -4945,7 +4945,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
 void weed_memory_init(void) {
 #ifndef IS_LIBLIVES
-  weed_init(110, (weed_malloc_f)_lives_malloc, (weed_free_f)_lives_free, (weed_memcpy_f)lives_memcpy, (weed_memset_f)lives_memset);
+  weed_init(133, (weed_malloc_f)_lives_malloc, (weed_free_f)_lives_free, (weed_memcpy_f)lives_memcpy, (weed_memset_f)lives_memset);
 #endif
 }
 

@@ -1183,6 +1183,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     lives_list_free_all(&hints);
     lives_free(lstring);
     lives_free(sstring);
+    lives_free(istring);
   }
 
   mainw->block_param_updates = TRUE; // block framedraw updates until all parameter widgets have been created

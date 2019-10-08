@@ -50,6 +50,7 @@ typedef enum {
 #define WEED_LEAF_FILTERS "filters"
 #define WEED_LEAF_MAINTAINER "maintainer"
 #define WEED_LEAF_HOST_INFO "host_info"
+#define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
 #define WEED_LEAF_PACKAGE_NAME "package_name"
 
 // host info
@@ -216,7 +217,7 @@ char *weed_filter_extended_name(weed_plant_t *filter, boolean add_subcats) WARN_
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
                          boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
-int weed_get_idx_for_hashname(const char *hashname, boolean fullname);  ///< fullname includes author and version
+int weed_get_idx_for_hashname(const char *hashname, boolean fullname) GNU_CONST;  ///< fullname includes author and version
 int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
 int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);

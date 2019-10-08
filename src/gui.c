@@ -4500,9 +4500,7 @@ void remove_from_clipmenu(void) {
 #endif
 
   if (!CURRENT_CLIP_IS_VALID) return;
-  lives_container_remove(LIVES_CONTAINER(mainw->clipsmenu), cfile->menuentry);
-  if (LIVES_IS_WIDGET(cfile->menuentry))
-    lives_widget_destroy(cfile->menuentry);
+  lives_widget_unparent(cfile->menuentry);
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);

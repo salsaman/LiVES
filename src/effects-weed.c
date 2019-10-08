@@ -2591,6 +2591,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     else if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_PIXBUF_SRC))
       weed_leaf_delete(channel, WEED_LEAF_HOST_PIXBUF_SRC);
 
+    if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC))
+      weed_set_voidptr_value(channel, WEED_LEAF_HOST_SURFACE_SRC,
+                             weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, &error));
+    else if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_SURFACE_SRC))
+      weed_leaf_delete(channel, WEED_LEAF_HOST_SURFACE_SRC);
+
     if (prefs->apply_gamma) {
       // gamma correction
       if (filter_flags & WEED_FILTER_HINT_SRGB)
@@ -2699,6 +2705,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                                      weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error));
             else if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_PIXBUF_SRC))
               weed_leaf_delete(channel, WEED_LEAF_HOST_PIXBUF_SRC);
+
+            if (weed_plant_has_leaf(def_channel, WEED_LEAF_HOST_SURFACE_SRC))
+              weed_set_voidptr_value(channel, WEED_LEAF_HOST_SURFACE_SRC,
+                                     weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, &error));
+            else if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_SURFACE_SRC))
+              weed_leaf_delete(channel, WEED_LEAF_HOST_SURFACE_SRC);
 
             if (weed_palette_is_alpha_palette(palette)) {
               // protect our in- channel from being freed()
@@ -2826,9 +2838,11 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
   }
 
-  // do gamma correction of any integer RGB(A) parameters
-  gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB) || !prefs->apply_gamma) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, TRUE);
-  gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB) || !prefs->apply_gamma) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, FALSE);
+  if (prefs->apply_gamma) {
+    // do gamma correction of any integer RGB(A) parameters
+    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB)) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, TRUE);
+    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB)) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, FALSE);
+  }
 
   if (CURRENT_CLIP_IS_VALID)
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
@@ -2937,6 +2951,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
                              weed_get_voidptr_value(channel, WEED_LEAF_HOST_PIXBUF_SRC, &error));
     else if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC))
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+
+    if (weed_plant_has_leaf(channel, WEED_LEAF_HOST_SURFACE_SRC))
+      weed_set_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC,
+                             weed_get_voidptr_value(channel, WEED_LEAF_HOST_SURFACE_SRC, &error));
+    else if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC))
+      weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
 
     chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, &error);
 
@@ -4786,7 +4806,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       }
 
       weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
-      weed_set_string_value(plugin_info, WEED_LEAF_NAME, plugin_name); // for hashname
+      weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, plugin_name); // for hashname
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, dir);
       weed_add_plant_flags(plugin_info, WEED_LEAF_READONLY_PLUGIN);
 
@@ -9269,7 +9289,7 @@ char *rte_keymode_get_plugin_name(int key, int mode) {
 
   filter = weed_filters[key_to_fx[key][mode]];
   plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  name = weed_get_string_value(plugin_info, WEED_LEAF_NAME, &error);
+  name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
   return name;
 }
 
@@ -10570,17 +10590,19 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
     plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-    plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_NAME, &error);
-
-    lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
-    lives_free(plugin_name);
-    get_filename(plugin_fname, TRUE);
-  } else memset(plugin_fname, 0, 1);
+    if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
+      filename = weed_get_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, &error);
+    } else {
+      plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+      lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
+      lives_free(plugin_name);
+      get_filename(plugin_fname, TRUE);
+      // should we really use utf-8 here ? (needs checking)
+      filename = F2U8(plugin_fname);
+    }
+  } else return lives_strdup("");
 
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
-
-  // should we really use utf-8 here ? (needs checking)
-  filename = F2U8(plugin_fname);
 
   if (fullname) {
     if (!use_extra_authors || !weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS))
@@ -10604,10 +10626,31 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 }
 
 
-int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
-  char *chashname, *chashname2;
+static char *fix_hashnames(const char *old) {
+  const char *alterations[4] = {"frei0rFrei0r: ", "lapdspaLADSPA: ", "libvisuallibvisual: ", NULL};
+  const char *replacements[4] = {"Frei0r", "LADSPA", "libvisual", NULL};
+  char *hashname_new = NULL;
+  int i = 0;
+  while (alterations[i] != NULL) {
+    if (strstr(old, alterations[i]) != NULL) {
+      hashname_new = subst(old, alterations[i], replacements[i]);
+      break;
+    }
+    i++;
+  }
+  if (hashname_new != NULL) {
+    return hashname_new;
+  }
+  return NULL;
+}
 
+
+int weed_get_idx_for_hashname(const char *xhashname, boolean fullname) {
+  char *chashname, *chashname2;
   register int i;
+
+  char *hashname = fix_hashnames(xhashname);
+  if (hashname == NULL) hashname = (char *)xhashname;
 
   for (i = 0; i < num_weed_filters; i++) {
     chashname = make_weed_hashname(i, fullname, FALSE);
@@ -10616,6 +10659,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
 
     if (!lives_utf8_strcasecmp(hashname, chashname)) {
       lives_free(chashname);
+      if (hashname != xhashname) lives_free(hashname);
       return i;
     }
 
@@ -10625,6 +10669,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
       if (!lives_utf8_strcasecmp(hashname, chashname2)) {
         lives_free(chashname2);
         lives_free(chashname);
+        if (hashname != xhashname) lives_free(hashname);
         return i;
       }
     }
@@ -10636,11 +10681,13 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
       chashname = make_weed_hashname(i, fullname, TRUE);
       if (!lives_utf8_strcasecmp(hashname, chashname)) {
         lives_free(chashname);
+        if (hashname != xhashname) lives_free(hashname);
         return i;
       }
       lives_free(chashname);
     }
   }
+  if (hashname != xhashname) lives_free(hashname);
   return -1;
 }
 
@@ -10661,14 +10708,18 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
       plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-      plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_NAME, &error);
-
-      lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
-      lives_freep((void **)&plugin_name);
-      get_filename(plugin_fname, TRUE);
-    } else memset(plugin_fname, 0, 1);
-
-    filename = F2U8(plugin_fname);
+      if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
+        filename = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+      } else {
+        plugin_name = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, &error);
+        lives_snprintf(plugin_fname, PATH_MAX, "%s", plugin_name);
+        lives_freep((void **)&plugin_name);
+        get_filename(plugin_fname, TRUE);
+        filename = F2U8(plugin_fname);
+      }
+    } else {
+      return FALSE;
+    }
 
     if (lives_utf8_strcasecmp(pkg, filename)) {
       lives_freep((void **)&filename);

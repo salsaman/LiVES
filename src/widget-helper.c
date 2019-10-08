@@ -428,6 +428,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_surface_destroy(lives_painter_
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_surface_reference(lives_painter_surface_t *surf) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  return cairo_surface_reference(surf);
+#endif
+  return NULL;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_new_path(lives_painter_t *cr) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_new_path(cr);

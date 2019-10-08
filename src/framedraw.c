@@ -519,6 +519,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   }
 
   lives_painter_to_layer(cr, mainw->fd_layer);
+  lives_painter_destroy(cr);
 
   if (mainw->multitrack == NULL)
     redraw_framedraw_image(mainw->fd_layer);
@@ -531,6 +532,9 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
 #if GTK_CHECK_VERSION(3, 0, 0)
+    if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
+      if (mainw->multitrack->frame_pixbuf != NULL) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
+    }
     // set frame_pixbuf, this gets painted in in expose_event
     mainw->multitrack->frame_pixbuf = pixbuf;
 #else

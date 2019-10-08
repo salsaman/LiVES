@@ -3206,7 +3206,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
 
-    if (mt->framedraw != NULL) mt_framedraw(mt, mainw->frame_layer);
+    if (mt->framedraw != NULL) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
       if (pixbuf == NULL) pixbuf = layer_to_pixbuf(mainw->frame_layer);
 
@@ -3217,6 +3217,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
 #endif
       lives_widget_queue_draw(mt->play_box);
+      weed_plant_free(mainw->frame_layer);
     }
   } else {
     // no frame - show blank
@@ -12503,7 +12504,10 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
     break;
   case (POLY_PARAMS) :
-    mt->framedraw = NULL;
+    if (mt->framedraw != NULL) {
+      special_cleanup();
+      mt->framedraw = NULL;
+    }
     if (mt->current_rfx != NULL) {
       rfx_free(mt->current_rfx);
       lives_free(mt->current_rfx);
@@ -18727,6 +18731,13 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
+  }
+
+  if (mt->framedraw != NULL) {
+    if (!check_filewrite_overwrites()) {
+      mt->idlefunc = mt_idle_add(mt);
+      return;
+    }
   }
 
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);

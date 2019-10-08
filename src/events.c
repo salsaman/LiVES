@@ -3588,7 +3588,7 @@ lives_render_error_t render_events(boolean reset) {
                 weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER, (void *)mainw->track_decoders[i]);
                 pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks);
               } else {
-                weed_set_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL);
+                weed_layer_pixel_data_free(layers[i]);
               }
             }
             layers[i] = NULL;

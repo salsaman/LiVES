@@ -4849,6 +4849,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   framesize = CEIL(*rowstrides * height, 32);
 
   ptr = mem = (unsigned char *)lives_malloc(framesize + 64);
+  weed_layer_pixel_data_free(layer);
   weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, mem);
 
   // libpng needs pointers to each row
@@ -5173,7 +5174,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) is_thread = TRUE;
 
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_layer_pixel_data_free(layer);
 
   mainw->osc_block = TRUE; // block OSC until we are done
 
@@ -6151,7 +6152,7 @@ void load_frame_image(int frame) {
               weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER, (void *)mainw->track_decoders[i]);
               pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks);
             } else {
-              weed_set_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL);
+              weed_layer_pixel_data_free(layers[i]);
             }
           }
           layers[i] = NULL;

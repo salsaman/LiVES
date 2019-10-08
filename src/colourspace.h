@@ -11,6 +11,7 @@
 
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_pixel_data_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
+#define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
 
 #define DEF_SCREEN_GAMMA 2.2
 

@@ -518,10 +518,6 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   if (layout) lives_widget_object_unref(layout);
 
-  //surface = lives_painter_get_target(cr);
-  //src = lives_painter_image_surface_get_data(surface);
-  //lives_free(src);
-
   lives_painter_destroy(cr);
   return layer;
 }

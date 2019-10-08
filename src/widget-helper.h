@@ -94,6 +94,7 @@ typedef cairo_t lives_painter_t;
 typedef cairo_surface_t lives_painter_surface_t;
 
 boolean lives_painter_surface_destroy(lives_painter_surface_t *);
+lives_painter_surface_t *lives_painter_surface_reference(lives_painter_surface_t *);
 
 typedef cairo_format_t lives_painter_format_t;
 

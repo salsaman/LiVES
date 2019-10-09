@@ -10756,7 +10756,14 @@ int get_box_child_index(LiVESBox *box, LiVESWidget *tchild) {
 }
 
 
-boolean lives_container_child_set_shrinkable(LiVESContainer *c, LiVESWidget *child, boolean val) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_top(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+  lives_box_pack_start(box, child, expand, fill, padding);
+  lives_box_reorder_child(box, child, 0);
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_child_set_shrinkable(LiVESContainer *c, LiVESWidget *child, boolean val) {
 #ifdef GUI_GTK
   GValue bool = G_VALUE_INIT;
   g_value_init(&bool, G_TYPE_BOOLEAN);

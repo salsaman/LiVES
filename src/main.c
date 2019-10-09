@@ -4155,8 +4155,7 @@ void load_start_image(int frame) {
 #endif
 
   threaded_dialog_spin(0.);
-  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
-      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     LiVESPixbuf *sepbuf;
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
@@ -4201,8 +4200,7 @@ void load_start_image(int frame) {
     return;
   }
 
-  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
-      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->imframe, NULL);
     } else {
@@ -4349,8 +4347,7 @@ void load_end_image(int frame) {
 #endif
 
   threaded_dialog_spin(0.);
-  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
-      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     LiVESPixbuf *sepbuf;
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
@@ -4394,8 +4391,7 @@ void load_end_image(int frame) {
     return;
   }
 
-  if (!CURRENT_CLIP_IS_VALID || frame < 1 || frame > cfile->frames ||
-      (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->imframe, NULL);
     } else {
@@ -4566,8 +4562,7 @@ void load_preview_image(boolean update_always) {
     return;
   }
 
-  if (!CURRENT_CLIP_IS_VALID || !cfile->frames || (cfile->clip_type != CLIP_TYPE_DISK &&
-      cfile->clip_type != CLIP_TYPE_FILE)) {
+  if (!CURRENT_CLIP_IS_NORMAL || !CURRENT_CLIP_HAS_VIDEO) {
     mainw->preview_frame = 0;
     lives_signal_handler_block(mainw->preview_spinbutton, mainw->preview_spin_func);
     lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->preview_spinbutton), 0, 0);
@@ -5124,7 +5119,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
   size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
 
   col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
-  col_black_a = lives_rgba_col_new(0, 0, 0, 20480);
+  col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
 
   if (prefs->apply_gamma) {
     // make it look nicer by dimming relative to luma
@@ -5284,6 +5279,15 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         create_empty_pixel_data(layer, FALSE, TRUE);
 
         pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
+
+        if (pixel_data == NULL || pixel_data[0] == NULL) {
+          char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
+                                          weed_palette_get_name_full(dplug->cdata->current_palette, dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
+          LIVES_WARN(msg);
+          lives_free(msg);
+          return FALSE;
+        }
+
         rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
 
         // try to pull frame from decoder plugin
@@ -5848,7 +5852,7 @@ void load_frame_image(int frame) {
         }
       }
 
-      if (mainw->opening_loc || (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE)) {
+      if (mainw->opening_loc || !CURRENT_CLIP_IS_NORMAL) {
         framecount = lives_strdup_printf("%9d", mainw->actual_frame);
       } else {
         framecount = lives_strdup_printf("%9d/%d", mainw->actual_frame, cfile->frames);
@@ -5875,7 +5879,7 @@ void load_frame_image(int frame) {
           rec_after_pb = TRUE;
         }
 
-        if (rec_after_pb || (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) ||
+        if (rec_after_pb || !CURRENT_CLIP_IS_NORMAL ||
             (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && (mainw->files[bg_file]->clip_type != CLIP_TYPE_DISK &&
                 mainw->files[bg_file]->clip_type != CLIP_TYPE_FILE))) {
           // TODO - handle non-opening of scrap_file
@@ -5970,8 +5974,7 @@ void load_frame_image(int frame) {
         lives_free(frames);
       } else {
         if (mainw->toy_type != LIVES_TOY_NONE) {
-          if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !mainw->fs && (cfile->clip_type == CLIP_TYPE_DISK ||
-              cfile->clip_type == CLIP_TYPE_FILE)) {
+          if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !mainw->fs && CURRENT_CLIP_IS_NORMAL) {
             int current_file = mainw->current_file;
             if (mainw->toy_go_wild) {
               int i, other_file;
@@ -6055,7 +6058,7 @@ void load_frame_image(int frame) {
 
     // maybe the performance finished and we weren't looping
     if ((mainw->actual_frame < 1 || mainw->actual_frame > cfile->frames) &&
-        (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) && !mainw->is_rendering) {
+        CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
       mainw->noswitch = noswitch;
       lives_freep((void **)&framecount);
       return;
@@ -6066,10 +6069,7 @@ void load_frame_image(int frame) {
     // frame_layer will in any case be equal to or smaller than this depending on maximum source frame size
 
     if (!(mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_EFFECTS) &&
-          ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) ||
-           (mainw->blend_file != -1 && mainw->files[mainw->blend_file] != NULL &&
-            mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_DISK &&
-            mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_FILE)))) {
+          (!CURRENT_CLIP_IS_NORMAL || (IS_VALID_CLIP(mainw->blend_file) && !IS_NORMAL_CLIP(mainw->blend_file))))) {
       get_max_opsize(&opwidth, &opheight);
     }
 
@@ -6314,8 +6314,7 @@ void load_frame_image(int frame) {
     if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL) &&
         !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) && !(mainw->multitrack != NULL && cfile->opening)) {
       boolean size_ok = FALSE;
-      if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || (cfile->clip_type != CLIP_TYPE_DISK &&
-          cfile->clip_type != CLIP_TYPE_FILE)) {
+      if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) {
         size_ok = TRUE;
       } else {
         check_layer_ready(mainw->frame_layer);
@@ -6424,6 +6423,10 @@ void load_frame_image(int frame) {
         // so copy layer and convert, retaining original
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       } else frame_layer = mainw->frame_layer;
+
+      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+        frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+      }
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
 
@@ -6720,6 +6723,10 @@ void load_frame_image(int frame) {
         mainw->vpp->fheight = GUI_SCREEN_HEIGHT;
       }
 
+      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+        frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+      }
+
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
 
       if (mainw->vpp->fwidth != pwidth || mainw->vpp->fheight != pheight || lb_width != 0) {
@@ -6910,6 +6917,11 @@ void load_frame_image(int frame) {
       }
     }
 
+    if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+      mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
+      convert_layer_palette(mainw->frame_layer, cpal, 0);
+    }
+
     pixbuf = layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
@@ -6924,6 +6936,7 @@ void load_frame_image(int frame) {
 
       lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
       lives_painter_paint(cr);
+
       lives_painter_destroy(cr);
 
       unblock_expose();
@@ -7110,7 +7123,7 @@ void load_frame_image(int frame) {
         if (mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) remove_from_clipmenu();
       }
 
-      if ((cfile->clip_type == CLIP_TYPE_FILE || cfile->clip_type == CLIP_TYPE_DISK) && cfile->ext_src != NULL) {
+      if (CURRENT_CLIP_IS_NORMAL && cfile->ext_src != NULL) {
         char *cwd = lives_get_current_dir();
         char *ppath = lives_build_filename(prefs->workdir, cfile->handle, NULL);
         lives_chdir(ppath, FALSE);
@@ -7356,7 +7369,7 @@ void load_frame_image(int frame) {
         changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
       }
 
-      if ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) || (mainw->event_list != NULL && !mainw->record))
+      if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
         mainw->play_end = INT_MAX;
     }
 
@@ -7418,7 +7431,7 @@ void load_frame_image(int frame) {
       load_preview_image(FALSE);
     }
 
-    if (!mainw->go_away && !LIVES_IS_PLAYING && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (!mainw->go_away && !LIVES_IS_PLAYING && CURRENT_CLIP_IS_NORMAL) {
       mainw->no_context_update = TRUE;
       reget_afilesize(mainw->current_file);
       mainw->no_context_update = FALSE;
@@ -7428,7 +7441,7 @@ void load_frame_image(int frame) {
       lives_ce_update_timeline(0, cfile->pointer_time);
     }
 
-    if (cfile->opening || !(cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (cfile->opening || !CURRENT_CLIP_IS_NORMAL) {
       lives_widget_set_sensitive(mainw->rename, FALSE);
     }
 
@@ -7839,7 +7852,7 @@ void load_frame_image(int frame) {
 
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && new_file != mainw->current_file &&
         new_file != mainw->blend_file && !mainw->is_rendering) {
-      if (mainw->files[new_file]->clip_type == CLIP_TYPE_DISK || mainw->files[new_file]->clip_type == CLIP_TYPE_FILE)
+      if (IS_NORMAL_CLIP(new_file))
         mainw->pre_src_file = new_file;
 
       if (rte_window != NULL) rtew_set_keych(rte_fg_gen_key(), FALSE);
@@ -7883,7 +7896,7 @@ void load_frame_image(int frame) {
       }
     } else if (mainw->multitrack == NULL) mainw->must_resize = FALSE;
 
-    if ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) || (mainw->event_list != NULL && !mainw->record))
+    if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
       mainw->play_end = INT_MAX;
 
     // act like we are not playing a selection (but we will try to keep to
@@ -7902,7 +7915,7 @@ void load_frame_image(int frame) {
     mainw->deltaticks = 0;
     mainw->startticks = mainw->currticks;
     // force loading of a frame from the new clip
-    if (!mainw->noswitch && !mainw->is_rendering && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (!mainw->noswitch && !mainw->is_rendering && CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);

@@ -483,7 +483,7 @@ boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTi
 boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file < 0 || ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) || !LIVES_IS_PLAYING))
+  if (!CURRENT_CLIP_IS_NORMAL || !LIVES_IS_PLAYING)
     return lives_osc_notify_failure();
   dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   return lives_osc_notify_success(NULL);
@@ -493,12 +493,7 @@ boolean lives_osc_cb_play_reverse(void *context, int arglen, const void *vargs, 
 boolean lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
 
-  if (mainw->blend_file < 1 || mainw->files[mainw->blend_file] == NULL || mainw->blend_file == mainw->current_file ||
-      !LIVES_IS_PLAYING)
-    return lives_osc_notify_failure();
-
-  if (mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_FILE)
+  if (!IS_NORMAL_CLIP(mainw->blend_file) || mainw->blend_file == mainw->current_file ||  !LIVES_IS_PLAYING)
     return lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->pb_fps;
@@ -510,7 +505,7 @@ boolean lives_osc_cb_bgplay_reverse(void *context, int arglen, const void *vargs
 boolean lives_osc_cb_play_forward(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure(); // not ready to play yet
 
-  if (mainw->current_file < 0 || (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE))
+  if (!CURRENT_CLIP_IS_NORMAL)
     if (mainw->playing_file == 1) return lives_osc_notify_failure();
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
@@ -531,8 +526,7 @@ boolean lives_osc_cb_play_backward(void *context, int arglen, const void *vargs,
   if (mainw->go_away) return lives_osc_notify_failure();
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
 
-  if (mainw->current_file < 0 || (cfile->clip_type != CLIP_TYPE_DISK &&
-                                  cfile->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!CURRENT_CLIP_IS_NORMAL) return lives_osc_notify_failure();
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->reverse_pb = TRUE;
@@ -919,7 +913,7 @@ boolean lives_osc_cb_fgclip_set(void *context, int arglen, const void *vargs, OS
   lives_osc_parse_int_argument(vargs, &clip);
 
   if (clip > 0 && clip < MAX_FILES - 1) {
-    if (mainw->files[clip] != NULL && (mainw->files[clip]->clip_type == CLIP_TYPE_DISK || mainw->files[clip]->clip_type == CLIP_TYPE_FILE)) {
+    if (IS_NORMAL_CLIP(clip)) {
       if (mainw->playing_file != 0) {
         char *msg = lives_strdup_printf("%d", clip);
         switch_clip(1, clip, FALSE);
@@ -945,7 +939,7 @@ boolean lives_osc_cb_bgclip_set(void *context, int arglen, const void *vargs, OS
   lives_osc_parse_int_argument(vargs, &clip);
 
   if (clip > 0 && clip < MAX_FILES - 1) {
-    if (mainw->files[clip] != NULL && (mainw->files[clip]->clip_type == CLIP_TYPE_DISK || mainw->files[clip]->clip_type == CLIP_TYPE_FILE)) {
+    if (IS_NORMAL_CLIP(clip)) {
       char *msg = lives_strdup_printf("%d", clip);
       switch_clip(2, clip, FALSE);
       lives_osc_notify_success(msg);
@@ -1194,8 +1188,7 @@ boolean lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, O
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   mainw->current_file = clipno;
   start = cfile->start;
@@ -1237,8 +1230,7 @@ boolean lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *v
     return lives_osc_notify_failure();
   }
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   mainw->current_file = clipno;
 
@@ -1285,8 +1277,7 @@ boolean lives_osc_cb_fgclipsel_copy(void *context, int arglen, const void *vargs
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   mainw->current_file = clipno;
 
@@ -1340,8 +1331,7 @@ boolean lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs,
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   mainw->current_file = clipno;
 
@@ -1397,8 +1387,7 @@ boolean lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *var
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   mainw->current_file = clipno;
 
@@ -1502,8 +1491,7 @@ boolean lives_osc_cb_clipbd_insertb(void *context, int arglen, const void *vargs
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   if (times == 0 || times < -1) return lives_osc_notify_failure();
 
@@ -1565,8 +1553,7 @@ boolean lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs
   }
   lives_free(boolstr);
 
-  if (clipno < 1 || clipno > MAX_FILES || mainw->files[clipno] == NULL || (mainw->files[clipno]->clip_type != CLIP_TYPE_DISK &&
-      mainw->files[clipno]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (!IS_NORMAL_CLIP(clipno) || clipno == 0) return lives_osc_notify_failure();
 
   if (times == 0 || times < -1) return lives_osc_notify_failure();
 
@@ -1877,8 +1864,7 @@ boolean lives_osc_cb_clip_goto(void *context, int arglen, const void *vargs, OSC
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &frame);
 
-  if (frame < 1 || frame > cfile->frames || (cfile->clip_type != CLIP_TYPE_DISK &&
-      cfile->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+  if (frame < 1 || frame > cfile->frames || !CURRENT_CLIP_IS_NORMAL) return lives_osc_notify_failure();
 
   cfile->last_frameno = cfile->frameno = frame;
 
@@ -2362,8 +2348,7 @@ boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, O
   lives_osc_parse_int_argument(vargs, &frame);
 
   if (frame < 1 || frame > mainw->files[mainw->blend_file]->frames ||
-      (mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_DISK &&
-       mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
+      !IS_NORMAL_CLIP(mainw->blend_file)) return lives_osc_notify_failure();
 
   mainw->files[mainw->blend_file]->last_frameno = mainw->files[mainw->blend_file]->frameno = frame;
   return lives_osc_notify_success(NULL);
@@ -2411,11 +2396,9 @@ boolean lives_osc_cb_clip_set_start(void *context, int arglen, const void *vargs
     lives_osc_parse_int_argument(vargs, &frame);
   } else return lives_osc_notify_failure();
 
-  if (clip < 1 || clip > MAX_FILES || mainw->files[clip] == NULL) return lives_osc_notify_failure();
+  if (frame < 1 || !IS_NORMAL_CLIP(clip)) return lives_osc_notify_failure();
 
   sfile = mainw->files[clip];
-
-  if (frame < 1 || (sfile->clip_type != CLIP_TYPE_DISK && sfile->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (frame > sfile->frames) frame = sfile->frames;
 
@@ -2483,11 +2466,9 @@ boolean lives_osc_cb_clip_set_end(void *context, int arglen, const void *vargs, 
     lives_osc_parse_int_argument(vargs, &frame);
   } else return lives_osc_notify_failure();
 
-  if (clip < 1 || clip > MAX_FILES || mainw->files[clip] == NULL) return lives_osc_notify_failure();
+  if (frame < 1 || !IS_NORMAL_CLIP(clip)) return lives_osc_notify_failure();
 
   sfile = mainw->files[clip];
-
-  if (frame < 1 || (sfile->clip_type != CLIP_TYPE_DISK && sfile->clip_type != CLIP_TYPE_FILE)) return lives_osc_notify_failure();
 
   if (frame > sfile->frames) frame = sfile->frames;
 
@@ -2675,11 +2656,11 @@ boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *varg
     lives_osc_parse_string_argument(vargs, fname);
   }
 
-  if (clip < 1 || clip > MAX_FILES || mainw->files[clip] == NULL) return lives_osc_notify_failure();
+  if (frame < 1 || !IS_NORMAL_CLIP(clip)) return lives_osc_notify_failure();
+
   sfile = mainw->files[clip];
 
-  if (frame < 1 || frame > sfile->frames || (sfile->clip_type != CLIP_TYPE_DISK && sfile->clip_type != CLIP_TYPE_FILE))
-    return lives_osc_notify_failure();
+  if (frame > sfile->frames) return lives_osc_notify_failure();
 
   retval = save_frame_inner(clip, frame, fname, width, height, TRUE);
 
@@ -2694,7 +2675,7 @@ boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *varg
   if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL && (!mainw->record ||
                                   !LIVES_IS_PLAYING))) ||
       mainw->is_processing) return lives_osc_notify_failure();
-  if ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) || !cfile->frames) return lives_osc_notify_failure();
+  if (!CURRENT_CLIP_IS_NORMAL || !CURRENT_CLIP_HAS_VIDEO) return lives_osc_notify_failure();
 
   mainw->selwidth_locked = FALSE;
   on_select_all_activate(NULL, NULL);

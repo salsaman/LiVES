@@ -2106,6 +2106,8 @@ void play_file(void) {
   }
   mainw->reverse_pb = FALSE;
 
+  mainw->swapped_clip = -1;
+
   cfile->play_paused = FALSE;
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
@@ -5463,7 +5465,7 @@ boolean rewrite_recovery_file(void) {
 
     while (clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);
-      if (mainw->files[i]->clip_type == CLIP_TYPE_FILE || mainw->files[i]->clip_type == CLIP_TYPE_DISK) {
+      if (IS_NORMAL_CLIP(i)) {
         if (i != mainw->scrap_file) {
           if (mainw->files[i]->was_in_set && strlen(mainw->set_name) > 0) {
             if (!wrote_set_entry) {

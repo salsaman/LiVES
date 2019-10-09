@@ -7880,8 +7880,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     // already playing
 
     if (old_file != -1 && mainw->files[old_file] != NULL) {
-      if (mainw->files[old_file]->clip_type == CLIP_TYPE_DISK || mainw->files[old_file]->clip_type == CLIP_TYPE_FILE)
-        mainw->pre_src_file = old_file;
+      if (IS_NORMAL_CLIP(old_file)) mainw->pre_src_file = old_file;
       mainw->current_file = old_file;
     }
 
@@ -9252,6 +9251,19 @@ char *weed_filter_idx_get_name(int idx) {
   if ((filter = weed_filters[idx]) == NULL) return lives_strdup("");
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
   return filter_name;
+}
+
+
+char *weed_filter_idx_get_package_name(int idx) {
+  // return value should be free'd after use
+  weed_plant_t *filter, *pinfo;
+  int error;
+
+  if (idx == -1) return NULL;
+  if ((filter = weed_filters[idx]) == NULL) return NULL;
+  pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+  if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME)) return weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
+  return NULL;
 }
 
 

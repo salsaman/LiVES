@@ -72,7 +72,7 @@ typedef PangoContext LingoContext;
 #ifdef GUI_GTK
 #define lives_widget_create_lingo_context(a) gtk_widget_create_pango_context(a)
 #endif
-#define lingo_layout_get_size(a, b, c, d, e) pango_layout_get_size(a, b, c)
+#define lingo_layout_get_size(a, b, c) pango_layout_get_size(a, b, c)
 #define lingo_layout_new(a) pango_layout_new(a)
 #define lingo_layout_set_markup(a, b, c) pango_layout_set_markup(a, b, c)
 #define lingo_layout_set_height(a, b) pango_layout_set_height(a, b)
@@ -1031,6 +1031,9 @@ boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lowe
 size_t calc_spin_button_width(double min, double max, int dp);
 
 int get_box_child_index(LiVESBox *, LiVESWidget *child);
+
+boolean lives_box_pack_top(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
+//lives_box_reorder_child(LIVES_BOX(mt->fx_list_vbox), xeventbox, 0);
 
 boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *child, boolean val);
 

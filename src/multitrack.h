@@ -163,6 +163,7 @@ struct _mt_opts {
   boolean render_vidp; ///< render video
   boolean render_audp; ///< render audio
   boolean normalise_audp; ///< normalise audio
+  boolean overlay_timecode;
   int hpaned_pos;
   int vpaned_pos;
   LiVESList *aparam_view_list;
@@ -213,6 +214,8 @@ struct _mt {
   LiVESWidget *playsel;
   LiVESWidget *jumpnext;
   LiVESWidget *jumpback;
+  LiVESWidget *mark_jumpnext;
+  LiVESWidget *mark_jumpback;
   LiVESWidget *render;
   LiVESWidget *prerender_aud;
   LiVESWidget *message_box;
@@ -604,6 +607,8 @@ struct _mt {
 
   int preview_layer;
 
+  char timestring[256];
+
   weed_plant_t *solo_inst; ///< instance to view solo in the frame preview
 
   LiVESList *tl_marks;
@@ -884,6 +889,8 @@ void unpaint_lines(lives_mt *);
 
 void mt_prepare_for_playback(lives_mt *);
 void mt_post_playback(lives_mt *);
+
+boolean mt_tcoverlay_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
 
 // effect node controls
 void on_next_node_clicked(LiVESWidget *, livespointer mt);

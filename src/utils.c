@@ -1350,7 +1350,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     }
 
     // check if video stopped playback
-    if ((sfile->clip_type == CLIP_TYPE_DISK || sfile->clip_type == CLIP_TYPE_FILE) && (nframe < first_frame || nframe > last_frame)) {
+    if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
       if (mainw->whentostop == STOP_ON_VID_END) {
         mainw->cancelled = CANCEL_VID_END;
         return 0;
@@ -2728,14 +2728,14 @@ void find_when_to_stop(void) {
   if (mainw->alives_pgid > 0) mainw->whentostop = NEVER_STOP;
   else if (cfile->clip_type == CLIP_TYPE_GENERATOR || (mainw->aud_rec_fd != -1 &&
            mainw->ascrap_file == -1)) mainw->whentostop = STOP_ON_VID_END;
-  else if (mainw->multitrack != NULL && cfile->frames > 0) mainw->whentostop = STOP_ON_VID_END;
-  else if (cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE) mainw->whentostop = NEVER_STOP;
+  else if (mainw->multitrack != NULL && CURRENT_CLIP_HAS_VIDEO) mainw->whentostop = STOP_ON_VID_END;
+  else if (!CURRENT_CLIP_IS_NORMAL) mainw->whentostop = NEVER_STOP;
   else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop = STOP_ON_VID_END;
   else if (!mainw->preview && (mainw->loop_cont)) mainw->whentostop = NEVER_STOP;
-  else if (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
-                                  < MAX(cfile->laudio_time, cfile->raudio_time) &&
-                                  calc_time_from_frame(mainw->current_file, mainw->play_start) < cfile->laudio_time))
+  else if (!CURRENT_CLIP_HAS_VIDEO || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
+                                       < MAX(cfile->laudio_time, cfile->raudio_time) &&
+                                       calc_time_from_frame(mainw->current_file, mainw->play_start) < cfile->laudio_time))
     mainw->whentostop = STOP_ON_AUD_END;
   else mainw->whentostop = STOP_ON_VID_END; // tada...
 }

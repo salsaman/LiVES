@@ -511,7 +511,7 @@ typedef enum {
 
 #define CLIP_NAME_MAXLEN 256
 
-#define IS_VALID_CLIP(clip) (clip >= 0 && mainw->files[clip] != NULL)
+#define IS_VALID_CLIP(clip) (clip >= 0 && clip <= MAX_FILES && mainw->files[clip] != NULL)
 #define CURRENT_CLIP_IS_VALID IS_VALID_CLIP(mainw->current_file)
 
 #define CLIP_HAS_VIDEO(clip) (IS_VALID_CLIP(clip) ? mainw->files[clip]->frames > 0 : FALSE)
@@ -529,6 +529,10 @@ typedef enum {
 #define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
 
 #define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
+
+#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK || mainw->files[clip]->clip_type == CLIP_TYPE_FILE) : FALSE)
+
+#define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
 
 #define LIVES_IS_PLAYING (mainw->playing_file > -1)
 

@@ -615,6 +615,8 @@ typedef struct {
   int pre_src_file; ///< video file we were playing before any ext input started
   int pre_src_audio_file; ///< audio file we were playing before any ext input started
 
+  int swapped_clip; ///< maintains the current cliplist postion even if we swap fg and bg clips
+
   lives_toy_t toy_type;
   lives_pgid_t alives_pgid; // 0, or procid for autolives
 

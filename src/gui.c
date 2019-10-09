@@ -3909,6 +3909,7 @@ void make_play_window(void) {
   }
 
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
+  if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
 
   if (prefs->show_gui) {
     LiVESWindow *transient;
@@ -4322,7 +4323,7 @@ void resize_play_window(void) {
   nheight += mainw->pheight;
 
   if (!LIVES_IS_PLAYING && CURRENT_CLIP_HAS_VIDEO &&
-      (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE))
+      CURRENT_CLIP_IS_NORMAL)
     nwidth = MAX(mainw->pwidth, mainw->sepwin_minwidth);
   else nwidth = mainw->pwidth;
 
@@ -4463,7 +4464,7 @@ void add_to_clipmenu(void) {
                           LIVES_GUI_CALLBACK(switch_clip_activate),
                           NULL);
 
-  if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) mainw->clips_available++;
+  if (CURRENT_CLIP_IS_NORMAL) mainw->clips_available++;
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
@@ -4504,7 +4505,7 @@ void remove_from_clipmenu(void) {
   pthread_mutex_lock(&mainw->clip_list_mutex);
   mainw->cliplist = lives_list_remove(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
   pthread_mutex_unlock(&mainw->clip_list_mutex);
-  if (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE) {
+  if (CURRENT_CLIP_IS_NORMAL) {
     mainw->clips_available--;
     if (prefs->crash_recovery) rewrite_recovery_file();
   }

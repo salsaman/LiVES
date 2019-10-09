@@ -368,9 +368,9 @@ void start_ce_thumb_mode(void) {
 
     i = LIVES_POINTER_TO_INT(cliplist->data);
     if (i == mainw->scrap_file || i == mainw->ascrap_file ||
-        (mainw->files[i]->clip_type != CLIP_TYPE_DISK && mainw->files[i]->clip_type != CLIP_TYPE_FILE &&
+        (!IS_NORMAL_CLIP(i) &&
          mainw->files[i]->clip_type != CLIP_TYPE_YUV4MPEG && mainw->files[i]->clip_type != CLIP_TYPE_VIDEODEV) ||
-        mainw->files[i]->frames == 0) {
+        !CLIP_HAS_VIDEO(i)) {
       cliplist = cliplist->next;
       continue;
     }

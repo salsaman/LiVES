@@ -49,8 +49,7 @@ static LiVESWidget *add_deinterlace_checkbox(LiVESBox *for_deint) {
 
   if (LIVES_IS_HBOX(for_deint)) {
     LiVESWidget *filler;
-    lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_width);
-    lives_box_reorder_child(for_deint, hbox, 0);
+    lives_box_pack_top(for_deint, hbox, FALSE, FALSE, widget_opts.packing_width);
     filler = add_fill_to_box(LIVES_BOX(for_deint));
     if (filler != NULL) lives_box_reorder_child(for_deint, filler, 1);
   } else lives_box_pack_start(for_deint, hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3483,10 +3482,16 @@ void do_keys_window(void) {
   pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-right"))), (tmp2 = lives_strdup(_("skip forwards\n"))));
   lives_free(tmp);
   lives_free(tmp2);
-  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-up"))), (tmp2 = lives_strdup(_("faster/increase effect\n"))));
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-up"))), (tmp2 = lives_strdup(_("play faster/increase effect\n"))));
   lives_free(tmp);
   lives_free(tmp2);
-  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-down"))), (tmp2 = lives_strdup(_("slower/decrease effect\n"))));
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-down"))), (tmp2 = lives_strdup(_("play slower/decrease effect\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-alt-up"))), (tmp2 = lives_strdup(_("background clip play faster\n"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-alt-down"))), (tmp2 = lives_strdup(_("background clip play slower\n"))));
   lives_free(tmp);
   lives_free(tmp2);
   pair_add(textwindow->table, (tmp = lives_strdup(_("ctrl-enter"))), (tmp2 = lives_strdup(_("reset frame rate\n"))));
@@ -4463,7 +4468,7 @@ static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recomp
   //g_print("GET  LINGO\n");
   if (!LINGO_IS_LAYOUT(layout) || layout == NULL) return FALSE;
 
-  lingo_layout_get_size(layout, NULL, &lh, 0, 0);
+  lingo_layout_get_size(layout, NULL, &lh);
   lh /= LINGO_SCALE;
   if (height != last_height) recompute = TRUE;
   last_height = height;

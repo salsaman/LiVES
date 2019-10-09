@@ -50,7 +50,7 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
   double d;
 
   // get size of layout
-  lingo_layout_get_size(layout, &w_, &h_, width, height);
+  lingo_layout_get_size(layout, &w_, &h_);
 
   // scale width, height to pixels
   d = ((double)h_) / (double)LINGO_SCALE;
@@ -239,7 +239,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
     lingo_layout_set_text(layout, testtext, -1);
-    lingo_layout_get_size(layout, &w, &h, 0, 0);
+    lingo_layout_get_size(layout, &w, &h);
 
     h /= LINGO_SCALE;
     w /= LINGO_SCALE;
@@ -271,7 +271,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #endif
         lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
-        lingo_layout_get_size(layout, NULL, &h, 0, 0);
+        lingo_layout_get_size(layout, NULL, &h);
 
         h /= LINGO_SCALE;
       }
@@ -310,7 +310,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         if (tmp == NULL) break;
         // check width again, just looking at new part
         lingo_layout_set_text(layout, tmp, -1);
-        lingo_layout_get_size(layout, &pw, NULL, 0, 0);
+        lingo_layout_get_size(layout, &pw, NULL);
         w = pw / LINGO_SCALE;
         if (w >= width) {
           //dirn = -1;
@@ -437,7 +437,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
   LingoLayout *layout;
 
-  double x_pos = 0., y_pos = 0.;
+  double x_pos = 0., y_pos = 0., lwidth, lheight;
 
   if (cr == NULL) return NULL;
 
@@ -465,7 +465,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 #ifndef GUI_QT
   if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
 #endif
-    getxypos(layout, &x_pos, &y_pos, dwidth, dheight, center, &dwidth, &dheight);
+
+    getxypos(layout, &x_pos, &y_pos, dwidth, dheight, center, &lwidth, &lheight);
 
   if (!rising) y_pos = dheight * top;
 
@@ -478,7 +479,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
 
-  layout_to_lives_painter(layout, cr, mode, fg, bg, dwidth, dheight, x_pos, y_pos, x_pos, y_pos);
+  layout_to_lives_painter(layout, cr, mode, fg, bg, lwidth, lheight, x_pos, y_pos, x_pos, y_pos);
 
 #ifdef GUI_GTK
   if (font != NULL) {
@@ -487,6 +488,27 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 #endif
 
   return layout;
+}
+
+
+LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const char *text) {
+  lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+  lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
+  int error, size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
+  const char *font = "Sans";
+  boolean fake_gamma = FALSE;
+  if (prefs->apply_gamma) {
+    // leave as linear gamma maybe
+    if (get_layer_gamma(layer) == WEED_GAMMA_LINEAR)
+      weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+    fake_gamma = TRUE;
+  }
+
+  layer =  render_text_to_layer(layer, text, font, size,
+                                LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, FALSE, 0.1);
+  if (fake_gamma)
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+  return layer;
 }
 
 

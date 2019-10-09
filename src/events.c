@@ -2144,7 +2144,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
 
-  if (!mainw->clip_switched && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+  if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 

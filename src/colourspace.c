@@ -5848,15 +5848,14 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
   }
 
   if (src == dest) {
-    uint8_t tmp[3];
+    uint8_t tmp;
     int width3 = width * 3;
     orowstride -= width3;
     for (; src < end; src += irowstride) {
       for (i = 0; i < width3; i += 3) {
-        tmp[0] = src[i + 2]; // red
-        tmp[1] = src[i + 1]; // green
-        tmp[2] = src[i]; // blue
-        lives_memcpy(dest, tmp, 3);
+        tmp = src[i];
+        dest[0] = src[i + 2]; // red
+        dest[2] = tmp; // blue
         dest += 3;
       }
       dest += orowstride;
@@ -6183,16 +6182,14 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
   }
 
   if (src == dest) {
-    uint8_t tmp[4];
+    uint8_t tmp;
     int width4 = width * 4;
     orowstride -= width4;
     for (; src < end; src += irowstride) {
       for (i = 0; i < width4; i += 4) {
-        tmp[0] = src[i + 2]; // red
-        tmp[1] = src[i + 1]; // green
-        tmp[2] = src[i]; // blue
-        tmp[3] = src[i + 3]; // alpha
-        lives_memcpy(dest, tmp, 4);
+        tmp = src[i]; // red
+        dest[0] = src[i + 2];
+        dest[2] = tmp;
         dest += 4;
       }
       dest += orowstride;

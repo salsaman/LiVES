@@ -196,7 +196,7 @@ void lives_exit(int signum) {
 
     // stop any background processing for the current clip
     if (CURRENT_CLIP_IS_VALID) {
-      if (cfile->handle != NULL && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+      if (cfile->handle != NULL && CURRENT_CLIP_IS_NORMAL) {
         lives_kill_subprocesses(cfile->handle, TRUE);
       }
     }
@@ -291,7 +291,7 @@ void lives_exit(int signum) {
           cfile->raudio_drawable = NULL;
         }
 
-        if ((mainw->files[i]->clip_type == CLIP_TYPE_FILE || mainw->files[i]->clip_type == CLIP_TYPE_DISK) && mainw->files[i]->ext_src != NULL) {
+        if (IS_NORMAL_CLIP(i) && mainw->files[i]->ext_src != NULL) {
           // must do this before we move it
           char *ppath = lives_build_filename(prefs->workdir, mainw->files[i]->handle, NULL);
           lives_chdir(ppath, FALSE);
@@ -313,8 +313,7 @@ void lives_exit(int signum) {
       for (i = 0; i <= MAX_FILES; i++) {
         if (mainw->files[i] != NULL) {
           if ((!mainw->leave_files && !prefs->crash_recovery && strlen(mainw->set_name) == 0) ||
-              (!mainw->only_close && (i == 0 || (mainw->files[i]->clip_type != CLIP_TYPE_DISK &&
-                                                 mainw->files[i]->clip_type != CLIP_TYPE_FILE))) ||
+              (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
               (i == mainw->scrap_file && !mainw->leave_recovery) ||
               (i == mainw->ascrap_file && !mainw->leave_recovery) ||
               (mainw->multitrack != NULL && i == mainw->multitrack->render_file)) {
@@ -396,9 +395,7 @@ void lives_exit(int signum) {
       mainw->suppress_dprint = TRUE;
       mainw->close_keep_frames = TRUE;
       for (i = 1; i <= MAX_FILES; i++) {
-        if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_DISK ||
-                                        mainw->files[i]->clip_type == CLIP_TYPE_FILE) && (mainw->multitrack == NULL ||
-                                            i != mainw->multitrack->render_file)) {
+        if (IS_NORMAL_CLIP(i) && (mainw->multitrack == NULL || i != mainw->multitrack->render_file)) {
           mainw->current_file = i;
           close_current_file(0);
           threaded_dialog_spin(0.);
@@ -4551,7 +4548,7 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   area = LIVES_POINTER_TO_INT(area_enum);
 
   if (area == SCREEN_AREA_FOREGROUND || (area == SCREEN_AREA_BACKGROUND && mainw->blend_file == mainw->current_file)) {
-    if (mainw->current_file < 0 || ((cfile->clip_type != CLIP_TYPE_DISK && cfile->clip_type != CLIP_TYPE_FILE))) return TRUE;
+    if (!CURRENT_CLIP_IS_NORMAL) return TRUE;
 
     // change play direction
     if (cfile->play_paused) {
@@ -4628,7 +4625,7 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
   do {
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
@@ -4665,7 +4662,7 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
+    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
 
   num_clips = lives_list_length(mainw->cliplist);
@@ -4883,8 +4880,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
         i = LIVES_POINTER_TO_INT(cliplist->data);
-        if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_FILE ||
-                                        mainw->files[i]->clip_type == CLIP_TYPE_DISK)) {
+        if (IS_NORMAL_CLIP(i)) {
           lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
           get_basename(buff);
           if (strlen(buff)) {
@@ -5454,8 +5450,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
     // mark all free-floating files (directories) which we do not want to remove
     // we do error checking here
 
-    if ((i == mainw->current_file) || (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_DISK ||
-                                       mainw->files[i]->clip_type == CLIP_TYPE_FILE))) {
+    if ((i == mainw->current_file) || IS_NORMAL_CLIP(i)) {
       markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "set.", NULL);
 
       do {
@@ -5512,7 +5507,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
-    if (mainw->files[i] != NULL && (mainw->files[i]->clip_type == CLIP_TYPE_DISK || mainw->files[i]->clip_type == CLIP_TYPE_FILE)) {
+    if (IS_NORMAL_CLIP(i)) {
       markerfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, "set.", NULL);
       lives_rm(markerfile);
       lives_free(markerfile);
@@ -6703,8 +6698,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         mainw->pwidth = mainw->vpp->fwidth;
         mainw->pheight = mainw->vpp->fheight;
       }
-      if ((cfile->frames == 1 || cfile->play_paused) && !mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK ||
-          cfile->clip_type == CLIP_TYPE_FILE)) {
+      if (CURRENT_CLIP_IS_NORMAL && (CURRENT_CLIP_HAS_VIDEO || cfile->play_paused) && !mainw->noswitch) {
         weed_plant_t *frame_layer = mainw->frame_layer;
         mainw->frame_layer = NULL;
         load_frame_image(cfile->frameno);
@@ -6742,8 +6736,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
         if (mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused)) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          if (mainw->play_window != NULL && !mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK ||
-              cfile->clip_type == CLIP_TYPE_FILE)) {
+          if (mainw->play_window != NULL && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
             weed_plant_t *frame_layer = mainw->frame_layer;
             mainw->frame_layer = NULL;
             load_frame_image(cfile->frameno);
@@ -6786,7 +6779,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     if ((cfile->frames == 1 || cfile->play_paused) && !mainw->noswitch && mainw->multitrack == NULL &&
-        (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+        CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);
@@ -6869,8 +6862,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
-        if (!(mainw->play_window == NULL) && !mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK ||
-            cfile->clip_type == CLIP_TYPE_FILE)) {
+        if (!(mainw->play_window == NULL) && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
@@ -6968,14 +6960,15 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // switch to separate window during pb
         if (mainw->multitrack == NULL) {
-          if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) || cfile->opening)) {
+          if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) || (CURRENT_CLIP_IS_VALID &&
+              cfile->opening))) {
             lives_widget_show(mainw->framebar);
           }
           if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0 && capable->nmonitors > 1))) ||
               (mainw->fs && mainw->vpp != NULL &&
                !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
             unfade_background();
-            if (cfile->is_loaded) {
+            if (CURRENT_CLIP_IS_VALID && cfile->is_loaded) {
               load_start_image(cfile->start);
               load_end_image(cfile->end);
             } else {
@@ -7017,7 +7010,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         if (mainw->ext_playback && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
-          if (mainw->vpp->fwidth == 0 || mainw->vpp->fheight == 0) {
+          if ((mainw->vpp->fwidth == 0 || mainw->vpp->fheight == 0) && CURRENT_CLIP_IS_VALID) {
             mainw->vpp->fwidth = cfile->hsize;
             mainw->vpp->fheight = cfile->vsize;
           }
@@ -7036,12 +7029,11 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           hide_cursor(lives_widget_get_xwindow(mainw->play_window));
           lives_widget_set_app_paintable(mainw->play_window, TRUE);
         }
-        if (cfile->frames == 1 || cfile->play_paused) {
+        if (CURRENT_CLIP_IS_VALID && (cfile->frames == 1 || cfile->play_paused)) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
           if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window)) &&
-              !mainw->noswitch && mainw->multitrack == NULL && (cfile->clip_type == CLIP_TYPE_DISK ||
-                  cfile->clip_type == CLIP_TYPE_FILE)) {
+              !mainw->noswitch && mainw->multitrack == NULL && CURRENT_CLIP_IS_NORMAL) {
             weed_plant_t *frame_layer = mainw->frame_layer;
             mainw->frame_layer = NULL;
             load_frame_image(cfile->frameno);
@@ -7075,7 +7067,7 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           if (mainw->ext_playback) {
             vid_playback_plugin_exit();
           }
-          if (mainw->multitrack == NULL && cfile->frames > 0) {
+          if (mainw->multitrack == NULL && CURRENT_CLIP_HAS_VIDEO) {
             fade_background();
             fullscreen_internal();
           }
@@ -7087,9 +7079,8 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
 
         hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-        if (mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused) &&
-            !mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK ||
-                                 cfile->clip_type == CLIP_TYPE_FILE)) {
+        if (CURRENT_CLIP_IS_NORMAL && mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused) &&
+            !mainw->noswitch) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
@@ -7439,6 +7430,7 @@ void on_rev_clipboard_activate(LiVESMenuItem *menuitem, livespointer user_data) 
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
     if (!(cdata->seek_flag & LIVES_SEEK_FAST)) {
       if (!realize_all_frames(0, msg, FALSE)) {
+        mainw->current_file = current_file;
         lives_free(msg);
         sensitize();
         return;
@@ -9905,7 +9897,7 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
     cfile->play_paused = TRUE;
     cfile->pb_fps = 0.;
     mainw->deltaticks = 0;
-    if (!mainw->noswitch && (cfile->clip_type == CLIP_TYPE_DISK || cfile->clip_type == CLIP_TYPE_FILE)) {
+    if (!mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);

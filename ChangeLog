@@ -7,20 +7,31 @@ Fix screen / window sizing issues.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Improvements to RFX script builder tool.
-Improvements to Fileselector preview / selection opener.
-Smoother playback.
+Improvements to Fileselector preview / Selection opener.
+Improvements to effects previews.
+Improvements to "targetted_zoom" effect in multitrack; add "scaledpoint" layout element in RFX windows.
+New "auto-layout" mode to improve the appearance of all parameter windows.
+Tweaks for Preferences window.
+Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
+Stop multitrack parameters from getting reset after an autobackup, or when switching channels in the compositor.
+Smoother playback by interpolating between soundcard timing updates.
+Implement automatic internal GAMMA correction (sRGB, Linear, BT.701)
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Workaround since swscale cannot handle YUV888 or YUVA8888 palettes.
+Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
 Permit switching audio source with no clips loaded (bugfix).
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
 Fix recursive mutex issue with the audio_resync mutex.
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Fix label layouts for RFX windows.
-Add colour selection for blurzoom effect, improve the effect.
+Enable colour selection for 'blurzoom' effect, improve the effect appearance.
+Change the 'RGBDelay' and 'YUVDelay' effects to use less memory.
 Improve a/v sync when changing playback direction.
-Add preference to disable tooltips.
+Add preference to disable / enable tooltips in the interface windows.
+Add option to overlay the timecode when previewing in multitrack.
+Add ability to overlay critical messages on the playback window.
 Various minor fixes and interface tweaks.
 Updated translations for Portuguese, Brazilian Portuguese (Nany Cavalcante)
 

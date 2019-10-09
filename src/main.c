@@ -757,6 +757,8 @@ static boolean pre_init(void) {
 
   prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
+  prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
+
   mainw->mgeom = NULL;
 
   prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
@@ -1286,6 +1288,11 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->reconfig = FALSE;
 
   mainw->fsp_func = 0;
+
+  mainw->swapped_clip = -1;
+
+  mainw->urgency_msg = NULL;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -5715,6 +5722,19 @@ void free_track_decoders(void) {
 }
 
 
+static boolean check_for_urgency_msg(weed_plant_t *layer) {
+  if (mainw->urgency_msg != NULL) {
+    boolean timeout = lives_alarm_get(LIVES_URGENCY_ALARM + 1);
+    if (timeout) lives_freep((void **)&mainw->urgency_msg);
+    else {
+      render_text_overlay(layer, mainw->urgency_msg);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+
 static void load_frame_cleanup(boolean noswitch) {
   // here is where we free the mainw->frame_layer (the output video "frame" we just worked with)
 
@@ -6424,8 +6444,12 @@ void load_frame_image(int frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       } else frame_layer = mainw->frame_layer;
 
-      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
-        frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+      if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+        if (!prefs->show_urgency_msgs || !check_for_urgency_msg(frame_layer)) {
+          if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+          }
+        }
       }
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
@@ -6723,8 +6747,12 @@ void load_frame_image(int frame) {
         mainw->vpp->fheight = GUI_SCREEN_HEIGHT;
       }
 
-      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
-        frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+      if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
+        if (!prefs->show_urgency_msgs || !check_for_urgency_msg(frame_layer)) {
+          if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+            frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
+          }
+        }
       }
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
@@ -6917,10 +6945,12 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
-      mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
-      convert_layer_palette(mainw->frame_layer, cpal, 0);
-    }
+    if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
+      if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
+        mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
+        convert_layer_palette(mainw->frame_layer, cpal, 0);
+      }
+    } else if (prefs->show_urgency_msgs) convert_layer_palette(mainw->frame_layer, cpal, 0);
 
     pixbuf = layer_to_pixbuf(mainw->frame_layer);
     weed_plant_free(mainw->frame_layer);

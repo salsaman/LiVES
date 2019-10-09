@@ -1461,6 +1461,18 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       }
     }
 
+
+    for (j = 0; ff_webm_codec_tags[j].id != AV_CODEC_ID_NONE; j++) {
+#ifdef DEBUG_CODEC_MATCH
+      fprintf(stderr, "cf %s and %s\n", ff_webm_codec_tags[j].str, track->codec_id);
+#endif
+      if (!strncmp(ff_webm_codec_tags[j].str, track->codec_id,
+                   strlen(ff_webm_codec_tags[j].str))) {
+        codec_id = ff_webm_codec_tags[j].id;
+        break;
+      }
+    }
+
     st = track->stream = av_new_stream(s, 0);
     if (st == NULL) {
       fprintf(stderr,
@@ -1493,7 +1505,7 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
 
     if (codec_id == AV_CODEC_ID_NONE) {
       fprintf(stderr,
-              "mkv_decoder: Unknown video codec\n");
+              "mkv_decoder: Unknown stream codec: %s\n", track->codec_id);
       return -42;
     }
 
@@ -2860,7 +2872,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     // do this until we reach target frame //////////////
 
     do {
-
       got_picture = FALSE;
 
       while (!got_picture) {
@@ -2888,10 +2899,52 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     } while (nextframe <= tframe);
 
     /////////////////////////////////////////////////////
-
   }
 
+  priv->last_frame = tframe;
+
+#ifdef TEST_CACHING
+framedone2:
+#endif
+
   if (priv->picture == NULL || pixel_data == NULL) return TRUE;
+
+  // we are allowed to cast away const-ness for
+  // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
+
+  if (priv->picture->interlaced_frame) {
+    if (priv->picture->top_field_first)((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_TOP_FIRST;
+    else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
+  } else ((lives_clip_data_t *)cdata)->interlace = LIVES_INTERLACE_NONE;
+
+  ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_DEFAULT;
+
+  if (priv->picture->chroma_location == AVCHROMA_LOC_LEFT)
+    ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_JPEG;
+
+  if (priv->picture->chroma_location == AVCHROMA_LOC_CENTER)
+    ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_MPEG;
+
+  if (priv->picture->chroma_location == AVCHROMA_LOC_TOPLEFT)
+    ((lives_clip_data_t *)cdata)->YUV_sampling = WEED_YUV_SAMPLING_DVNTSC;
+
+  if (priv->picture->colorspace == AVCOL_SPC_BT709)
+    ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
+  else
+    ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
+
+
+  if (priv->picture->color_range == AVCOL_RANGE_JPEG)
+    ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
+  else
+    ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
+  y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
+
+  ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
+  if (priv->picture->color_trc == AVCOL_TRC_LINEAR)
+    ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_LINEAR;
+  /* if (priv->picture->color_trc == AVCOL_TRC_BT709) */
+  /*   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709; */
 
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];
@@ -2900,8 +2953,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     for (i = 0; i < xheight; i++) {
       if (i < btop || i > bbot) {
         // top or bottom border, copy black row
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P ||
-            pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
           memset(dst, black[p], dstwidth + (bleft + bright)*psize);
           dst += dstwidth + (bleft + bright) * psize;
         } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
@@ -2940,7 +2993,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       bbot >>= 1;
     }
   }
-
   return TRUE;
 }
 

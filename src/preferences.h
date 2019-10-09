@@ -260,6 +260,8 @@ typedef struct {
 
   boolean force_single_monitor;
 
+  boolean show_urgency_msgs;
+
   int midi_check_rate;
   int midi_rpt;
 
@@ -910,6 +912,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_PUSH_AUDIO_TO_GENS "push_audio_to_gens"
 #define PREF_APPLY_GAMMA "apply_gamma"
 #define PREF_SHOW_TOOLTIPS "show_tooltips"
+#define PREF_SHOW_URGENCY "show_urgency_messages"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

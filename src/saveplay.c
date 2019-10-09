@@ -2713,6 +2713,7 @@ void play_file(void) {
 #endif
 
   lives_freep((void **)&com);
+  lives_freep((void **)&mainw->urgency_msg);
   mainw->actual_frame = 0;
 
   if (audio_player == AUD_PLAYER_JACK) audio_cache_end();
@@ -4647,6 +4648,7 @@ boolean check_for_disk_space(void) {
           d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
                   prefs->workdir, prefs->rec_stop_gb);
           on_record_perf_activate(NULL, NULL);
+          d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO LOW DISKSPACE"));
         }
         return FALSE;
       }

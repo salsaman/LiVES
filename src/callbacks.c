@@ -9988,8 +9988,8 @@ boolean show_sync_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;
-  d_print(_("Audio is ahead of video by %.4f secs. at frame %d, with fps %.4f\n"),
-          avsync, mainw->actual_frame, cfile->pb_fps);
+  d_print_urgency(2.0, _("Audio is ahead of video by %.4f secs.\nat frame %d, with fps %.3f\n"),
+                  avsync, mainw->actual_frame, cfile->pb_fps);
   mainw->no_switch_dprint = FALSE;
   mainw->last_dprint_file = last_dprint_file;
   return TRUE;

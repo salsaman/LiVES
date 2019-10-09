@@ -1344,11 +1344,16 @@ typedef struct {
 
   boolean jack_trans_poll;
 
-#define LIVES_MAX_ALARMS 1024
+#define LIVES_MAX_ALARMS 1023
 #define LIVES_NO_ALARM_TICKS -1
+#define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS
 
-  int64_t alarms[LIVES_MAX_ALARMS];
+#define URGENCY_MSG_TIMEOUT 10.
+
+  int64_t alarms[LIVES_MAX_ALARMS + 1]; ///< reserve 1 for emergency msgs
   int next_free_alarm;
+
+  char *urgency_msg;
 
   // stuff specific to audio gens (will be extended to all rt audio fx)
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)

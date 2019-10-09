@@ -437,7 +437,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
   LingoLayout *layout;
 
-  double x_pos = 0., y_pos = 0., lwidth, lheight;
+  double x_pos = 0., y_pos = 0., lwidth = dwidth, lheight = dheight;
 
   if (cr == NULL) return NULL;
 

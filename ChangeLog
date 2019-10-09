@@ -23,6 +23,7 @@ Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
 Permit switching audio source with no clips loaded (bugfix).
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
 Fix recursive mutex issue with the audio_resync mutex.
+Fix mkv_decoder so it can decode webm clips.
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Fix label layouts for RFX windows.

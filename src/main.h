@@ -1056,6 +1056,8 @@ void d_print_done(void);
 void d_print_enough(int frames);
 void d_print_file_error_failed(void);
 
+boolean d_print_urgency(double timeout_seconds, const char *fmt, ...);
+
 // general
 void do_text_window(const char *title, const char *text);
 

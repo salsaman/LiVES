@@ -1331,6 +1331,7 @@ int process_one(boolean visible) {
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = real_ticks;
         }
+        if (force_show) resync_audio(cfile->frameno);
         force_show = FALSE;
       }
 

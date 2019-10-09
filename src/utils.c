@@ -1037,7 +1037,10 @@ int lives_alarm_set(int64_t ticks) {
   cticks = lives_get_current_ticks();
 
   // set to now + offset
-  mainw->alarms[mainw->next_free_alarm] = cticks + ticks;
+  mainw->alarms[ret] = cticks + ticks;
+
+  // special "emergency" alarms
+  if (ret >= LIVES_MAX_ALARMS) return 0;
 
   i = ++mainw->next_free_alarm;
 
@@ -1063,7 +1066,7 @@ boolean lives_alarm_get(int alarm_handle) {
   int64_t cticks;
 
   // invalid alarm number
-  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
+  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS + 1) {
     LIVES_WARN("Invalid get alarm handle");
     return FALSE;
   }
@@ -1293,7 +1296,9 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
   lives_clip_t *sfile = mainw->files[fileno];
 
   int dir = 0;
-  int cframe, nframe;
+  int cframe;
+
+  static int nframe = -1;
 
   int first_frame, last_frame;
 
@@ -1301,7 +1306,12 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   double fps;
 
-  if (sfile == NULL) return 0;
+  if (sfile == NULL) {
+    nframe = -1;
+    return 0;
+  }
+
+  if (nframe != -1) return nframe; // prevent infinite loops
 
   fps = sfile->pb_fps;
 
@@ -1323,8 +1333,11 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
 
   // nframe is our new frame
   nframe = cframe + myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
-
-  if (nframe == cframe || mainw->foreign) return nframe;
+  if (nframe == cframe || mainw->foreign) {
+    cframe = nframe;
+    nframe = -1;
+    return cframe;
+  }
 
   // calculate audio "frame" from the number of samples played
   if (prefs->audio_src == AUDIO_SRC_INT && mainw->playing_file == fileno) {
@@ -1353,6 +1366,7 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
       if (mainw->whentostop == STOP_ON_VID_END) {
         mainw->cancelled = CANCEL_VID_END;
+        nframe = -1;
         return 0;
       }
     }
@@ -1362,13 +1376,17 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
     if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0 && sfile->frames > 0) {
       if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
         mainw->cancelled = CANCEL_AUD_END;
+        nframe = -1;
         return 0;
       }
     }
 #endif
   }
 
-  if (sfile->frames == 0) return 0;
+  if (sfile->frames == 0) {
+    nframe = -1;
+    return 0;
+  }
 
   // get our frame back to within bounds
 
@@ -1467,13 +1485,15 @@ int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
         // we check for audio stop here, but the seek may not have happened yet
         if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
           mainw->cancelled = CANCEL_AUD_END;
+          nframe = -1;
           return 0;
         }
       }
     }
   }
-
-  return nframe;
+  cframe = nframe;
+  nframe = -1;
+  return cframe;
 }
 
 
@@ -1738,6 +1758,32 @@ int add_messages_to_list(const char *text) {
   }
   lives_strfreev(lines);
   return WEED_NO_ERROR;
+}
+
+
+boolean d_print_urgency(double timeout, const char *fmt, ...) {
+  // overlay emergency message on playback frame
+  va_list xargs;
+  char *text;
+
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  d_print(text);
+
+  if (LIVES_IS_PLAYING && prefs->show_urgency_msgs) {
+    int nfa = mainw->next_free_alarm;
+    mainw->next_free_alarm = LIVES_URGENCY_ALARM;
+    lives_freep((void **)&mainw->urgency_msg);
+    lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
+    mainw->next_free_alarm = nfa;
+    mainw->urgency_msg = lives_strdup(text);
+    lives_free(text);
+    return TRUE;
+  }
+  lives_free(text);
+  return FALSE;
 }
 
 

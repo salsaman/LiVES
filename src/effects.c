@@ -806,34 +806,15 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
 
   if (menuitem != NULL) {
     type = 0;
-
-    if (!(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) && (mainw->xlays =
-          layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-      if (!do_layout_alter_frames_warning()) {
-        lives_list_free_all(&mainw->xlays);
-        return;
-      }
-      add_lmap_error(LMAP_ERROR_ALTER_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                     cfile->stored_layout_frame > 0);
-      lives_list_free_all(&mainw->xlays);
-      has_lmap_error = TRUE;
-    }
-
-    if (!(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO) &&
-        (mainw->xlays = layout_audio_is_affected(mainw->current_file, 0.)) != NULL) {
-      if (!do_layout_alter_audio_warning()) {
-        lives_list_free_all(&mainw->xlays);
-        return;
-      }
-      add_lmap_error(LMAP_ERROR_ALTER_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                     cfile->stored_layout_audio > 0.);
-      has_lmap_error = TRUE;
-      lives_list_free_all(&mainw->xlays);
+    uint32_t chk_mask = WARN_MASK_ALTER_FRAMES | WARN_MASK_ALTER_AUDIO;
+    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+      return;
     }
   }
 
   if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) return;
 
+  if (((chk_mask ^ prefs->warning_mask) & chk_mask)) has_lmap_error = TRUE;
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
 }
 

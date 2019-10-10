@@ -296,6 +296,11 @@ typedef int lives_pgid_t;
 // floating point division, maintains the sign of the dividend
 #define SIGNED_DIVIDE(a, b) (a < 0. ? (a / b > 0. ? -a / b : a / b) : (a / b < 0. ? -a / b : a / b))
 
+#define myround(n) (n >= 0. ? (int)(n + 0.5) : (int)(n - 0.5))
+}
+
+
+
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
 static int32_t testint = 0x12345678;
@@ -1261,8 +1266,8 @@ int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
 int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source);
 int64_t lives_get_current_ticks(void);
 
-boolean lives_alarm_get(int alarm_handle);
 int lives_alarm_set(int64_t ticks);
+boolean lives_alarm_check(int alarm_handle);
 void lives_alarm_clear(int alarm_handle);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
 char *lives_format_storage_space_string(uint64_t space);

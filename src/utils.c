@@ -894,11 +894,6 @@ LIVES_GLOBAL_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
 }
 
 
-LIVES_GLOBAL_INLINE int myround(double n) {
-  return (n >= 0.) ? (int)(n + 0.5) : (int)(n - 0.5);
-}
-
-
 LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {
   memset(mainw->msg, 0, MAINW_MSG_SIZE);
 }
@@ -929,7 +924,7 @@ LIVES_GLOBAL_INLINE int get_approx_ln(uint32_t x) {
 }
 
 
-LIVES_GLOBAL_INLINE int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
+LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
 #ifdef USE_MONOTONIC_TIME
   return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
@@ -939,7 +934,7 @@ LIVES_GLOBAL_INLINE int64_t lives_get_relative_ticks(int64_t origsecs, int64_t o
 }
 
 
-int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
+ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
@@ -1008,7 +1003,7 @@ int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 }
 
 
-LIVES_GLOBAL_INLINE int64_t lives_get_current_ticks(void) {
+LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
   //  return current (wallclock) time in ticks (units of 10 nanoseconds)
   return lives_get_relative_ticks(0, 0);
 }
@@ -1020,17 +1015,20 @@ LIVES_GLOBAL_INLINE int64_t lives_get_current_ticks(void) {
  * call lives_get_alarm(handle) to test if time arrived
  */
 
-int lives_alarm_set(int64_t ticks) {
+lives_alarm_t lives_alarm_set(int64_t ticks) {
   int i;
   int64_t cticks;
 
   // we will assign [this] next
-  int ret = mainw->next_free_alarm;
+  lives_alarm_t ret = mainw->next_free_alarm;
 
-  // no alarm slots left
-  if (mainw->next_free_alarm == -1) {
-    LIVES_WARN("No alarms left");
-    return -1;
+  if (ret > LIVES_MAX_USER_ALARMS) ret--;
+  else {
+    // no alarm slots left
+    if (mainw->next_free_alarm == ALL_USED) {
+      LIVES_WARN("No alarms left");
+      return ALL_USED;
+    }
   }
 
   // get current ticks
@@ -1039,36 +1037,31 @@ int lives_alarm_set(int64_t ticks) {
   // set to now + offset
   mainw->alarms[ret] = cticks + ticks;
 
-  // special "emergency" alarms
-  if (ret >= LIVES_MAX_ALARMS) return 0;
+  // system alarms
+  if (ret >= LIVES_MAX_USER_ALARMS) return ++ret;
 
   i = ++mainw->next_free_alarm;
 
   // find free slot for next time
-  while (mainw->alarms[i] != LIVES_NO_ALARM_TICKS && i < LIVES_MAX_ALARMS) {
-    i++;
-  }
-  if (i == LIVES_MAX_ALARMS) {
-    // no slots left
-    mainw->next_free_alarm = -1;
-  }
-  // OK
-  else mainw->next_free_alarm = i;
+  while (mainw->alarms[i] != LIVES_NO_ALARM_TICKS && i < LIVES_MAX_USER_ALARMS) i++;
 
-  return ret + 1;
+  if (i == LIVES_MAX_USER_ALARMS) mainw->next_free_alarm = ALL_USED; // no more alarm slots
+  else mainw->next_free_alarm = i; // OK
+
+  return ++ret;
 }
 
 
 /*** check if alarm time passed yet, if so clear that alarm and return TRUE
  * else return FALSE
  */
-boolean lives_alarm_get(int alarm_handle) {
-  int64_t cticks;
+ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
+  ticks_t cticks;
 
   // invalid alarm number
-  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS + 1) {
-    LIVES_WARN("Invalid get alarm handle");
-    return FALSE;
+  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
+    LIVES_WARN("Invalid alarm handle");
+    return -1;
   }
 
   // offset of 1 was added for caller
@@ -1077,40 +1070,36 @@ boolean lives_alarm_get(int alarm_handle) {
   // alarm time was never set !
   if (mainw->alarms[alarm_handle] == LIVES_NO_ALARM_TICKS) {
     LIVES_WARN("Alarm time not set");
-    return TRUE;
+    return 0;
   }
 
   // get current ticks
-  cticks = lives_get_current_ticks();
+  cticks = mainw->alarms[alarm_handle] - lives_get_current_ticks(); 
 
-  if (cticks > mainw->alarms[alarm_handle]) {
+  if (cticks <= 0) {
     // reached alarm time, free up this timer and return TRUE
     mainw->alarms[alarm_handle] = LIVES_NO_ALARM_TICKS;
-
-    if (mainw->next_free_alarm == -1 || (alarm_handle < mainw->next_free_alarm)) {
-      mainw->next_free_alarm = alarm_handle;
-      mainw->alarms[alarm_handle] = LIVES_NO_ALARM_TICKS;
-      LIVES_DEBUG("Alarm reached");
-      return TRUE;
-    }
+    LIVES_DEBUG("Alarm reached");
+    return 0;
   }
 
   // alarm time not reached yet
-  return FALSE;
+  return cticks;
 }
 
 
-void lives_alarm_clear(int alarm_handle) {
+boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
     LIVES_WARN("Invalid clear alarm handle");
-    return;
+    return FALSE;
   }
 
-  alarm_handle--;
+  mainw->alarms[--alarm_handle] = LIVES_NO_ALARM_TICKS;
 
-  mainw->alarms[alarm_handle] = LIVES_NO_ALARM_TICKS;
-  if (mainw->next_free_alarm == -1 || alarm_handle < mainw->next_free_alarm)
+  if (alarm_handle < LIVES_MAX_USER_ALARMS && (mainw->next_free_alarm == ALL_USED || alarm_handle < mainw->next_free_alarm)) {
     mainw->next_free_alarm = alarm_handle;
+  }
+  return TRUE;
 }
 
 
@@ -1139,7 +1128,13 @@ LIVES_GLOBAL_INLINE char *lives_strappend(char *string, int len, const char *xne
 
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add) {
-  if (lives_list_find_custom(xlist, add, (LiVESCompareFunc)lives_utf8_strcasecmp) == NULL) return lives_list_append(xlist, lives_strdup(add));
+  LiVESList *list = xlist, *listlast = NULL;
+  while (list != NULL) {
+    listlast = list;
+    if (!lives_utf8_strcasecomp((const char *)list->data, add)) return xlist;
+  }
+  list = lives_list_append(listlast, lives_strdup(add));
+  if (xlist == NULL) return list;
   return xlist;
 }
 

@@ -355,6 +355,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   if (transient == NULL) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
+  gdk_window_set_urgency_hint(lives_widget_get_xwindow(dialog), FALSE);
+  gdk_window_set_modal_hint(lives_widget_get_xwindow(dialog), FALSE);
+  
   return dialog;
 }
 

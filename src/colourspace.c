@@ -354,6 +354,8 @@ static void init_RGB_to_YUV_tables(void) {
   double fac;
 
   for (i = 0; i < 256; i++) {
+    g_print("VAL is %c\n", CLAMP0255(a));
+
     Y_Rc[i] = myround(KR_YCBCR * (double)i
                       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kr
     Y_Gc[i] = myround((1. - KR_YCBCR - KB_YCBCR) * (double)i

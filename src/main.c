@@ -574,7 +574,7 @@ static boolean pre_init(void) {
 
   widget_helper_init();
 
-  widget_opts.title_prefix = lives_strdup_printf("%s: - ", lives_get_application_name());
+  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LIVES_VERSION);
 
   capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
 
@@ -3633,35 +3633,31 @@ boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) 
 
 
 void set_main_title(const char *file, int untitled) {
-  char *title, *tmp;
+  char *title;
   char short_file[256];
 
   if (file != NULL && CURRENT_CLIP_IS_VALID) {
     if (untitled) {
-      title = lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"), LiVES_VERSION, (tmp = get_untitled_name(untitled)),
+      title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"), (tmp = get_untitled_name(untitled)),
                                   cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       lives_free(tmp);
     } else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {
-        title = lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : ??? frames ??? bpp %.3f fps"), LiVES_VERSION,
+        title = lives_strdup_printf(_("<%s> %dx%d : ??? frames ??? bpp %.3f fps"), 
                                     (tmp = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
       } else {
-        title = lives_strdup_printf(_("LiVES-%s: <%s> %dx%d : %d frames %d bpp %.3f fps"), LiVES_VERSION,
+        title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"), 
                                     cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp = lives_path_get_basename(file))
                                     : (tmp = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
       lives_free(tmp);
     }
   } else {
-    title = lives_strdup_printf(_("LiVES-%s: <No File>"), LiVES_VERSION);
+    title = lives_strdup_printf(_("<No File>"));
   }
 
-  tmp = widget_opts.title_prefix;
-  widget_opts.title_prefix = "";
   lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);
-  widget_opts.title_prefix = tmp;
-
   lives_free(title);
 
   if (!LIVES_IS_PLAYING && mainw->play_window != NULL) play_window_set_title();
@@ -6623,7 +6619,7 @@ void load_frame_image(int frame) {
       mainw->pheight = cfile->vsize;
 
       mainw->sepwin_scale = 100.;
-
+      xyzzy not for fs;
       if (!mainw->is_rendering) {
         if (pmonitor == 0) {
           while (mainw->pwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY ||

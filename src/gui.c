@@ -4120,7 +4120,12 @@ void resize_play_window(void) {
 
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
+#if xGTK_CHECK_VERSION(3, 0, 0) // TODO
+	lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
+	gdk_window_set_fullscreen_mode (GdkWindow *window,GDK_FULLSCREEN_ON_ALL_MONITORS)
+#else
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
+#endif
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
         lives_widget_queue_resize(mainw->play_window);
       }

@@ -228,10 +228,8 @@ struct _mt {
   LiVESWidget *fx_delete;
   LiVESWidget *fx_edit;
   LiVESWidget *fx_region;
-  LiVESWidget *fx_region_1;
-  LiVESWidget *fx_region_1v;
-  LiVESWidget *fx_region_1a;
-  LiVESWidget *fx_region_2;
+  LiVESWidget *fx_region_v;
+  LiVESWidget *fx_region_a;
   LiVESWidget *fx_region_2av;
   LiVESWidget *fx_region_2v;
   LiVESWidget *fx_region_2a;
@@ -951,8 +949,8 @@ void wipe_layout(lives_mt *);
 
 void migrate_layouts(const char *old_set_name, const char *new_set_name);
 
-LiVESList *layout_frame_is_affected(int clipno, int frame);
-LiVESList *layout_audio_is_affected(int clipno, double time);
+LiVESList *layout_frame_is_affected(int clipno, int start, int end);
+LiVESList *layout_audio_is_affected(int clipno, double stime, double etime);
 
 boolean check_for_layout_del(lives_mt *, boolean exiting);
 

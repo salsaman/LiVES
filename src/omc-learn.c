@@ -786,8 +786,6 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev2), column);
   }
 
-  lives_widget_show(mnode->treev2);
-
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_connect(LIVES_GUI_OBJECT(mnode->treev2), LIVES_WIDGET_ROW_EXPANDED_SIGNAL,
                        LIVES_GUI_CALLBACK(rowexpand),
@@ -975,11 +973,10 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
   LiVESWidget *combo;
 
-  combo = lives_combo_new();
+  combo = lives_standard_combo_new();
 
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (omc_macros[i].msg == NULL) break;
-
     lives_combo_append_text(LIVES_COMBO(combo), omc_macros[i].macro_text);
   }
 
@@ -1113,7 +1110,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
   if (chstr != NULL) lives_free(chstr);
 
   label = lives_standard_label_new(labelt);
-  lives_widget_show(label);
 
   if (labelt != NULL) lives_free(labelt);
 
@@ -1228,8 +1224,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
     lives_tree_view_append_column(LIVES_TREE_VIEW(mnode->treev1), column);
   }
 
-  lives_widget_show(mnode->treev1);
-
 #if LIVES_TABLE_IS_GRID
   lives_widget_set_size_request(mnode->treev1, -1, TREE_ROW_HEIGHT);
 #endif
@@ -1245,8 +1239,6 @@ static void omc_learner_add_row(int type, int detail, lives_omc_match_node_t *mn
 #endif
 
   combo = create_omc_macro_combo(mnode, omclw->tbl_currow, omclw);
-
-  lives_widget_show(combo);
 
   lives_table_attach(LIVES_TABLE(omclw->table), combo, 2, 3, omclw->tbl_currow, omclw->tbl_currow + 1,
                      (LiVESAttachOptions) 0,
@@ -2100,8 +2092,6 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #ifdef OMC_JS_IMPL
   if (!mainw->ext_cntl[EXT_CNTL_JS]) js_open();
 #endif
-
-  lives_widget_show(omclw->dialog);
 
   mainw->cancelled = CANCEL_NONE;
 

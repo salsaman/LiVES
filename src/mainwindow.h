@@ -1188,7 +1188,7 @@ typedef struct {
   LiVESList *affected_layout_marks;
 
   /// immediately (to be) affected layout maps
-  LiVESList *xlays;
+  //LiVESList *xlays;
 
   char *recovery_file;  ///< the filename of our recover file
   boolean leave_recovery;
@@ -1344,13 +1344,15 @@ typedef struct {
 
   boolean jack_trans_poll;
 
-#define LIVES_MAX_ALARMS 1023
+#define LIVES_MAX_ALARMS 1024
+#define LIVES_MAX_USER_ALARMS 512
+
 #define LIVES_NO_ALARM_TICKS -1
-#define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS
+  
+#define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
+#define URGENCY_MSG_TIMEOUT 10. // seconds
 
-#define URGENCY_MSG_TIMEOUT 10.
-
-  int64_t alarms[LIVES_MAX_ALARMS + 1]; ///< reserve 1 for emergency msgs
+  int64_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
   int next_free_alarm;
 
   char *urgency_msg;

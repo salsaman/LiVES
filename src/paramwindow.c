@@ -259,16 +259,11 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   boolean has_lmap_error = FALSE;
 
-  if (menuitem != NULL && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) && rfx->num_in_channels > 0 &&
-      (mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-    if (!do_layout_alter_frames_warning()) {
-      lives_list_free_all(&mainw->xlays);
+  if (menuitem != NULL && rfx->num_in_channels > 0) {
+    uint32_t chk_mask = WARN_MASK_ALTER_FRAMES;
+    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
       return;
     }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file,
-                   0, 0., cfile->stored_layout_frame > 0);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
   }
 
   // do onchange|init
@@ -279,6 +274,8 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   if (rfx->min_frames > -1) {
     do_effect(rfx, FALSE);
   }
+  
+  if (((chk_mask ^ prefs->warning_mask) & chk_mask)) has_lmap_error = TRUE;
   if (has_lmap_error) popup_lmap_errors(NULL, NULL);
 }
 

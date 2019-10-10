@@ -4524,7 +4524,9 @@ void add_rfx_effects(lives_rfx_status_t status) {
       // add resizing effects to tools menu later
       lives_snprintf(txt, 61, "_%s", _(rfx->menu_text));
       if (rfx->num_params) lives_strappend(txt, 64, "...");
+      widget_opts.mnemonic_label = FALSE;
       menuitem = lives_standard_image_menu_item_new_with_label(txt);
+      widget_opts.mnemonic_label = TRUE;
 
       switch (rfx->status) {
       case RFX_STATUS_BUILTIN:

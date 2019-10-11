@@ -257,10 +257,10 @@ static lives_widget_group_t *get_group(lives_rfx_t *rfx, lives_param_t *param) {
 
 
 void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
-  boolean has_lmap_error = FALSE;
+  uint32_t chk_mask = 0;
 
   if (menuitem != NULL && rfx->num_in_channels > 0) {
-    uint32_t chk_mask = WARN_MASK_ALTER_FRAMES;
+    chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
     if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
       return;
     }
@@ -274,9 +274,8 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   if (rfx->min_frames > -1) {
     do_effect(rfx, FALSE);
   }
-  
-  if (((chk_mask ^ prefs->warning_mask) & chk_mask)) has_lmap_error = TRUE;
-  if (has_lmap_error) popup_lmap_errors(NULL, NULL);
+
+  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 }
 
 
@@ -671,18 +670,15 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
 LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   _fx_dialog *fxdialog;
+  uint32_t chk_mask;
   int resp;
 
   if (!check_storage_space(CURRENT_CLIP_IS_VALID ? cfile : NULL, FALSE)) return;
 
   if (rfx->num_in_channels > 0) {
-    if (CURRENT_CLIP_IS_VALID && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES)) {
-      if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-        if (!do_layout_alter_frames_warning()) {
-          lives_list_free_all(&mainw->xlays);
-          return;
-        }
-      }
+    chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
+    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+      return;
     }
   }
   fxdialog = on_fx_pre_activate(rfx, FALSE, NULL);

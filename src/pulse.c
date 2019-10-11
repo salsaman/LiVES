@@ -78,8 +78,8 @@ boolean lives_pulse_init(short startup_phase) {
   // startup pulseaudio server
   char *msg;
   pa_context_state_t pa_state;
-  boolean timeout;
-  int alarm_handle;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle;
 
   if (pa_mloop != NULL) return TRUE;
 
@@ -91,17 +91,16 @@ boolean lives_pulse_init(short startup_phase) {
   pa_state = pa_context_get_state(pcon);
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-  while (pa_state != PA_CONTEXT_READY && !(timeout = lives_alarm_get(alarm_handle))) {
+  while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
     pa_state = pa_context_get_state(pcon);
   }
-
   lives_alarm_clear(alarm_handle);
 
-  if (pa_context_get_state(pcon) == PA_CONTEXT_READY) timeout = FALSE;
+  if (pa_context_get_state(pcon) == PA_CONTEXT_READY) timeout = 1;
 
-  if (timeout) {
+  if (timeout == 0) {
     pa_context_unref(pcon);
     pcon = NULL;
     pulse_shutdown();
@@ -1436,34 +1435,11 @@ static void corked_cb(pa_stream *s, int success, void *userdata) {
 
 
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
-#if 0
-  // do we need to flush the read buffer ? before or after uncorking it ?
-  int alarm_handle;
-#endif
   pa_operation *paop;
 
   pdriver->abs_maxvol_heard = 0.;
 
   if (!pdriver->is_corked) return;
-
-#if 0
-  if (!pdriver->is_output) {
-    // flush the stream if we are reading from it
-    alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-
-    pa_threaded_mainloop_lock(pa_mloop);
-    paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
-    pa_threaded_mainloop_unlock(pa_mloop);
-
-    while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
-
-    lives_alarm_clear(alarm_handle);
-    pa_operation_unref(paop);
-  }
-#endif
 
   pa_threaded_mainloop_lock(pa_mloop);
   paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
@@ -1473,32 +1449,6 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
     pa_operation_unref(paop);
     return; // let it uncork in its own time...
   }
-
-#if 0
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-
-  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
-  }
-
-  lives_alarm_clear(alarm_handle);
-
-  alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-
-  // flush the stream again if we are reading from it
-  pa_threaded_mainloop_lock(pa_mloop);
-  paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
-  pa_threaded_mainloop_unlock(pa_mloop);
-
-  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && !lives_alarm_get(alarm_handle)) {
-    sched_yield();
-    lives_usleep(prefs->sleep_time);
-  }
-
-  lives_alarm_clear(alarm_handle);
-
-#endif
 
   pa_operation_unref(paop);
 }
@@ -1549,22 +1499,22 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
 }
 
 
-uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
+ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
   pa_usec_t usec, retusec;
   static pa_usec_t last_usec = 0;
-  boolean timeout;
-  int alarm_handle;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle;
   int err;
   if (msg != NULL && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
     alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-    while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(pulsed) != NULL) {
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(pulsed) != NULL) {
       sched_yield(); // wait for seek
       lives_usleep(prefs->sleep_time);
     }
     lives_alarm_clear(alarm_handle);
-    if (timeout) return -1;
+    if (timeout == 0) return -1;
   }
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
@@ -1574,13 +1524,13 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
     pa_threaded_mainloop_unlock(pa_mloop);
     sched_yield();
     lives_usleep(prefs->sleep_time);
-  } while (!(timeout = lives_alarm_get(alarm_handle)) && usec == 0 && err == 0);
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && usec == 0 && err == 0);
 #ifdef DEBUG_PA_TIME
   g_print("gettime3 %d %ld %ld %ld %f\n", err, usec, pulsed->usec_start, (usec - pulsed->usec_start) * USEC_TO_TICKS,
           (usec - pulsed->usec_start) * USEC_TO_TICKS / 100000000.);
 #endif
   lives_alarm_clear(alarm_handle);
-  if (timeout) return -1;
+  if (timeout == 0) return -1;
 
   retusec = usec;
   if (last_usec > 0 && usec <= last_usec) {
@@ -1588,7 +1538,7 @@ uint64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   } else pulsed->extrausec = 0;
   last_usec = usec;
 
-  return (uint64_t)((retusec - pulsed->usec_start) * USEC_TO_TICKS);
+  return (ticks_t)((retusec - pulsed->usec_start) * USEC_TO_TICKS);
 }
 
 
@@ -1603,20 +1553,19 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   // position will be adjusted to (floor) nearest sample
   int64_t seekstart;
   volatile aserver_message_t *pmsg;
-  int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-  boolean timeout;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
   if (frame < 1) frame = 1;
 
   do {
     pmsg = pulse_get_msgq(pulsed);
-  } while (!(timeout = lives_alarm_get(alarm_handle)) && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
-  if (timeout || pulsed->playing_file == -1) {
-    if (timeout) LIVES_WARN("PA connect timed out");
-    lives_alarm_clear(alarm_handle);
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
+  lives_alarm_clear(alarm_handle);
+  if (timeout == 0 || pulsed->playing_file == -1) {
+    if (timeout == 0) LIVES_WARN("PA connect timed out");
     return FALSE;
   }
-  lives_alarm_clear(alarm_handle);
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
   pulse_audio_seek_bytes(pulsed, seekstart, afile);
@@ -1633,19 +1582,18 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
   int64_t seekstart;
 
   if (!pulsed->is_corked) {
-    boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+    ticks_t timeout;
+    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
     do {
       pmsg = pulse_get_msgq(pulsed);
-    } while (!(timeout = lives_alarm_get(alarm_handle)) && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
+    } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
+    lives_alarm_clear(alarm_handle);
 
-    if (timeout || pulsed->playing_file == -1) {
-      lives_alarm_clear(alarm_handle);
-      if (timeout) LIVES_WARN("PA connect timed out");
+    if (timeout == 0 || pulsed->playing_file == -1) {
+      if (timeout == 0) LIVES_WARN("PA connect timed out");
       return 0;
     }
-    lives_alarm_clear(alarm_handle);
   }
 
   seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
@@ -1663,8 +1611,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
 
 
 boolean pulse_try_reconnect(void) {
-  boolean timeout;
-  int alarm_handle;
+  lives_alarm_t alarm_handle;
   do_threaded_dialog(_("Resetting pulseaudio connection..."), FALSE);
 
   pulse_shutdown();
@@ -1672,7 +1619,7 @@ boolean pulse_try_reconnect(void) {
 
   lives_system("pulseaudio -k", TRUE);
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-  while (!(timeout = lives_alarm_get(alarm_handle))) {
+  while (lives_alarm_check(alarm_handle) > 0) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
     threaded_dialog_spin(0.);
@@ -1734,8 +1681,8 @@ void pulse_aud_pb_ready(int fileno) {
         (sfile->laudio_time > 0. || sfile->opening ||
          (mainw->multitrack != NULL && mainw->multitrack->is_rendering &&
           lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
-      boolean timeout;
-      int alarm_handle;
+      ticks_t timeout;
+      lives_alarm_t alarm_handle;
 
       lives_freep((void **)&tmpfilename);
       mainw->pulsed->in_achans = sfile->achans;
@@ -1749,14 +1696,13 @@ void pulse_aud_pb_ready(int fileno) {
       else mainw->pulsed->reverse_endian = FALSE;
 
       alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
-      while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
         sched_yield(); // wait for seek
         lives_usleep(prefs->sleep_time);
       }
-
-      if (timeout) pulse_try_reconnect();
-
       lives_alarm_clear(alarm_handle);
+
+      if (timeout == 0) pulse_try_reconnect();
 
       if ((mainw->multitrack == NULL || mainw->multitrack->is_rendering ||
            sfile->opening) && (mainw->event_list == NULL || mainw->record || (mainw->preview && mainw->is_processing))) {

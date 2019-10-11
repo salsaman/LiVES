@@ -559,14 +559,16 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   weed_plant_t *layer;
   FILE *infofile = NULL;
 
+  ticks_t timeout;
+
+  lives_alarm_t alarm_handle;
+
   int tot_frames = 0;
   int vend = cfile->fx_frame_pump;
   int retval;
-  int alarm_handle;
   int current_file = mainw->current_file;
 
   boolean retb;
-  boolean timeout;
 
   const char *img_ext;
 
@@ -594,8 +596,8 @@ void load_rfx_preview(lives_rfx_t *rfx) {
         if (!retb) return;
       }
       vend++;
-      timeout = lives_alarm_get(alarm_handle);
-    } while (vend <= cfile->end && !timeout && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL);
+      timeout = lives_alarm_check(alarm_handle);
+    } while (vend <= cfile->end && timeout > 0 && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL);
     cfile->fx_frame_pump = vend - 1;
     lives_alarm_clear(alarm_handle);
   }

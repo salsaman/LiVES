@@ -140,7 +140,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
 
 void pa_time_reset(pulse_driver_t *pulsed, int64_t offset);
 
-uint64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
+ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
 double lives_pulse_get_pos(pulse_driver_t *);
 

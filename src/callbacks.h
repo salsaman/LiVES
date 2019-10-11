@@ -23,6 +23,8 @@ void on_cleardisk_activate(LiVESWidget *, livespointer);
 
 void on_cleardisk_advanced_clicked(LiVESWidget *, livespointer);
 
+boolean check_for_layout_errors(const char *operation, int fileno, int start, int end, uint32_t *in_mask);
+
 void popup_lmap_errors(LiVESMenuItem *, livespointer);
 
 void switch_clip(int type, int newclip, boolean force);

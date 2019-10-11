@@ -355,9 +355,6 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   if (transient == NULL) lives_window_set_keep_above(LIVES_WINDOW(dialog), TRUE);
 
-  gdk_window_set_urgency_hint(lives_widget_get_xwindow(dialog), FALSE);
-  gdk_window_set_modal_hint(lives_widget_get_xwindow(dialog), FALSE);
-  
   return dialog;
 }
 
@@ -1092,8 +1089,8 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
 
 int process_one(boolean visible) {
-  uint64_t new_ticks;
-  int64_t real_ticks;
+  ticks_t new_ticks;
+  ticks_t real_ticks;
 
   lives_time_source_t time_source;
   boolean show_frame;
@@ -1691,7 +1688,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         !(mainw->record && !(prefs->rec_opts & REC_FRAMES) && cfile->next_event == NULL)) {
       // calculate the start position from jack transport
 
-      uint64_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
+      ticks_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
       boolean noframedrop = mainw->noframedrop;
       mainw->noframedrop = FALSE;
       cfile->last_frameno = 1;
@@ -2037,7 +2034,7 @@ boolean do_auto_dialog(const char *text, int type) {
   char *mytext = lives_strdup(text);
 
   int time_rem, last_time_rem = 10000000;
-  int alarm_handle = 0;
+  lives_alarm_t alarm_handle = 0;
 
   if (type == 1 && mainw->rec_end_time != -1.) {
     stime = lives_get_current_ticks();
@@ -2116,12 +2113,14 @@ boolean do_auto_dialog(const char *text, int type) {
       fclose(infofile);
       infofile = NULL;
       if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-      while (!lives_alarm_get(alarm_handle)) {
-        lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-        lives_widget_context_update();
-        lives_usleep(prefs->sleep_time);
+      if (alarm_handle > 0) {
+        while (lives_alarm_check(alarm_handle) > 0) {
+          lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
+          lives_widget_context_update();
+          lives_usleep(prefs->sleep_time);
+        }
+        lives_alarm_clear(alarm_handle);
       }
-      lives_alarm_clear(alarm_handle);
     } else fclose(infofile);
   }
 

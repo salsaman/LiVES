@@ -36,4 +36,5 @@ boolean is_virtual_frame(int sfileno, int frame);
 
 int count_virtual_frames(int *findex, int start, int end);
 
+void insert_blank_frames(int sfileno, int nframes, int after, int palette);
 #endif

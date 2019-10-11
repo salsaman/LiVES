@@ -3310,9 +3310,9 @@ void unfade_background(void) {
 
   lives_widget_show_all(mainw->menu_hbox);
   lives_widget_show_all(mainw->hbox3);
+  lives_widget_show(mainw->btoolbar);
 
   lives_widget_hide(mainw->tb_hbox);
-
   if (!mainw->double_size) {
     if (palette->style & STYLE_1) {
       lives_widget_show_all(mainw->sep_image);
@@ -4120,9 +4120,9 @@ void resize_play_window(void) {
 
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-#if xGTK_CHECK_VERSION(3, 0, 0) // TODO
-	lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
-	gdk_window_set_fullscreen_mode (GdkWindow *window,GDK_FULLSCREEN_ON_ALL_MONITORS)
+#if GTK_CHECK_VERSION(99999, 0, 0) // TODO
+        lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
+        gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS)
 #else
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
@@ -4559,15 +4559,13 @@ void splash_init(void) {
     gtk_window_set_type_hint(LIVES_WINDOW(mainw->splash_window), GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
 #endif
 
+    vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
+    lives_container_add(LIVES_CONTAINER(mainw->splash_window), vbox);
+    lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width * 4);
+
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(mainw->splash_window, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
     }
-
-    vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
-    lives_container_add(LIVES_CONTAINER(mainw->splash_window), vbox);
-    lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
-
-    add_fill_to_box(LIVES_BOX(vbox));
 
     splash_pix = lives_pixbuf_new_from_file(tmp, &error);
     lives_free(tmp);

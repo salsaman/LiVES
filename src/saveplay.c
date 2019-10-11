@@ -111,7 +111,7 @@ boolean save_clip_values(int which) {
         if (mainw->com_failed || mainw->write_failed) break;
         if (cfile->ext_src) {
           lives_decoder_t *dplug = (lives_decoder_t *)cfile->ext_src;
-          save_clip_value(which, CLIP_DETAILS_DECODER_NAME, dplug->decoder->name);
+          save_clip_value(which, CLIP_DETAILS_DECODER_NAME, (void *)dplug->decoder->name);
           if (mainw->com_failed || mainw->write_failed) break;
         }
       } while (FALSE);
@@ -464,14 +464,14 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               if ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_START) && cdata->video_start_time <= 1.) {
                 // pad with blank frames at start
                 int extra_frames = cdata->video_start_time * cfile->fps + .5;
-                insert_blank_frames(mainw->current_file, extra_frames, 0);
+                insert_blank_frames(mainw->current_file, extra_frames, 0, WEED_PALETTE_RGB24);
                 load_start_image(cfile->start);
                 load_end_image(cfile->end);
               }
               if ((cdata->sync_hint & SYNC_HINT_VIDEO_PAD_END) && (double)cfile->frames / cfile->fps < cfile->laudio_time) {
                 // pad with blank frames at end
                 int extra_frames = (cfile->laudio_time - (double)cfile->frames / cfile->fps) * cfile->fps + .5;
-                insert_blank_frames(mainw->current_file, extra_frames, cfile->frames);
+                insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
                 cfile->end = cfile->frames;
                 load_end_image(cfile->end);
               }
@@ -1339,7 +1339,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (!save_all && !safe_symlinks) {
     // we are saving a selection - make symlinks from a temporary clip
 
-    if ((new_file = mainw->first_free_file) == -1) {
+    if ((new_file = mainw->first_free_file) == ALL_USED) {
       too_many_files();
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -1401,7 +1401,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 #endif
       lives_system(lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle), TRUE);
       lives_freep((void **)&cfile);
-      if (mainw->first_free_file == -1 || mainw->first_free_file > new_file)
+      if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
 
       switch_to_file(mainw->current_file, current_file);
@@ -1419,7 +1419,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_system((tmp = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
       lives_free(tmp);
       lives_freep((void **)&cfile);
-      if (mainw->first_free_file == -1 || mainw->first_free_file > new_file)
+      if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
 
       switch_to_file(mainw->current_file, current_file);
@@ -1456,7 +1456,7 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_free(com);
       lives_free(nfile);
       mainw->files[new_file] = NULL;
-      if (mainw->first_free_file == -1 || new_file) mainw->first_free_file = new_file;
+      if (mainw->first_free_file == ALL_USED || new_file) mainw->first_free_file = new_file;
     }
     switch_to_file(mainw->current_file, current_file);
     d_print_cancelled();
@@ -1756,7 +1756,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
         lives_free(com);
         lives_freep((void **)&cfile);
-        if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file)
+        if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
           mainw->first_free_file = mainw->current_file;
       } else if (!save_all && safe_symlinks) {
         com = lives_strdup_printf("%s clear_symlinks \"%s\"", prefs->backend_sync, cfile->handle);
@@ -1793,7 +1793,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_system((com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle)), TRUE);
         lives_free(com);
         lives_freep((void **)&cfile);
-        if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file)
+        if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
           mainw->first_free_file = mainw->current_file;
       } else if (!save_all && safe_symlinks) {
         com = lives_strdup_printf("%s clear_symlinks \"%s\"", prefs->backend_sync, cfile->handle);
@@ -1883,7 +1883,7 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(com);
         lives_free(nfile);
         mainw->files[new_file] = NULL;
-        if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file)
+        if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
           mainw->first_free_file = new_file;
       } else {
         com = lives_strdup_printf("%s clear_symlinks \"%s\"", prefs->backend_sync, cfile->handle);
@@ -2632,9 +2632,9 @@ void play_file(void) {
 
     // tell jack client to close audio file
     if (mainw->jackd != NULL && mainw->jackd->playing_file > 0) {
-      boolean timeout;
-      int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+      ticks_t timeout;
+      lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
         sched_yield(); // wait for seek
         lives_usleep(prefs->sleep_time);
       }
@@ -2643,7 +2643,7 @@ void play_file(void) {
       jack_message.data = NULL;
       jack_message.next = NULL;
       mainw->jackd->msgq = &jack_message;
-      if (timeout) handle_audio_timeout();
+      if (timeout == 0) handle_audio_timeout();
     }
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
       weed_plant_t *event = get_last_frame_event(mainw->event_list);
@@ -2666,9 +2666,9 @@ void play_file(void) {
 
       // tell pulse client to close audio file
       if (mainw->pulsed != NULL && (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0)) {
-        boolean timeout;
-        int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+        ticks_t timeout;
+        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
           sched_yield(); // wait for seek
           lives_usleep(prefs->sleep_time);
         }
@@ -2677,7 +2677,7 @@ void play_file(void) {
         pulse_message.data = NULL;
         pulse_message.next = NULL;
         mainw->pulsed->msgq = &pulse_message;
-        if (timeout)  {
+        if (timeout == 0)  {
           handle_audio_timeout();
           mainw->pulsed->playing_file = -1;
           mainw->pulsed->fd = -1;
@@ -2969,14 +2969,14 @@ void play_file(void) {
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-    boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+    ticks_t timeout;
+    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
       sched_yield(); // wait for seek
       lives_usleep(prefs->sleep_time);
     }
     lives_alarm_clear(alarm_handle);
-    if (timeout)  {
+    if (timeout == 0)  {
       handle_audio_timeout();
     }
     if (has_audio_buffers) {
@@ -2987,18 +2987,16 @@ void play_file(void) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-    boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+    ticks_t timeout;
+    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
       sched_yield(); // wait for seek
       lives_usleep(prefs->sleep_time);
     }
     lives_alarm_clear(alarm_handle);
-    if (timeout)  {
+    if (timeout == 0)  {
       handle_audio_timeout();
     }
-
-    lives_alarm_clear(alarm_handle);
 
     if (has_audio_buffers) {
       free_pulse_audio_buffers();
@@ -3105,7 +3103,7 @@ int close_temp_handle(int clipno, int new_clip) {
   lives_system(com, TRUE);
   lives_free(com);
   lives_freep((void **)&mainw->files[clipno]);
-  if (mainw->first_free_file == -1 || mainw->first_free_file > clipno)
+  if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
     mainw->first_free_file = clipno;
   return new_clip;
 }
@@ -5021,7 +5019,7 @@ manual_locate:
     } else {
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
       lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-      save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, dpsys->name);
+      save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
       if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     }
 

@@ -214,6 +214,7 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
 char *weed_filter_idx_get_package_name(int filter_idx) WARN_UNUSED;
+char *weed_get_package_name(weed_plant_t *filter_or_instance) WARN_UNUSED;
 char *weed_filter_extended_name(weed_plant_t *filter, boolean add_subcats) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,

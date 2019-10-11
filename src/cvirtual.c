@@ -645,3 +645,61 @@ boolean is_virtual_frame(int sfileno, int frame) {
   return FALSE;
 }
 
+
+void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
+  // insert blank frames in clip (only valid just after clip is opened)
+
+  // this is ugly, it should be moved to another file
+
+  lives_clip_t *sfile = mainw->files[sfileno];
+  LiVESPixbuf *blankp = NULL;
+  LiVESError *error = NULL;
+  char oname[PATH_MAX];
+  char nname[PATH_MAX];
+  char *tmp;
+
+  register int i;
+
+  if (!check_if_all_virtual(sfileno, 1, sfile->frames)) {
+    for (i = after + 1; i <= sfile->frames; i++) {
+      if (sfile->frame_index == NULL || sfile->frame_index[i - 1] == -1) {
+        tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
+        lives_snprintf(oname, PATH_MAX, "%s", tmp);
+        lives_free(tmp);
+        if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
+          tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
+          lives_snprintf(nname, PATH_MAX, "%s", tmp);
+          lives_free(tmp);
+          mainw->com_failed = FALSE;
+          lives_mv(oname, nname);
+          if (mainw->com_failed) {
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  for (i = after; i < after + nframes; i++) {
+    tmp = make_image_file_name(sfile, i + 1, get_image_ext_for_type(sfile->img_type));
+    lives_snprintf(oname, PATH_MAX, "%s", tmp);
+    lives_free(tmp);
+    if (blankp == NULL) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
+    lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
+    if (error != NULL) {
+      char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"), sfile->hsize, sfile->vsize, oname);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+      lives_error_free(error);
+      break;
+    }
+  }
+
+  nframes = i - after; // in case we bailed
+
+  insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
+
+  sfile->frames += nframes;
+
+  if (blankp != NULL) lives_widget_object_unref(blankp);
+}

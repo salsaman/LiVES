@@ -127,7 +127,8 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
   char *filename = yuv4mpeg->filename, *tmp;
 
-  int alarm_handle = 0;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle = 0;
 
   int ohsize = sfile->hsize;
   int ovsize = sfile->vsize;
@@ -152,17 +153,17 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
 
     gotbroken = FALSE;
 
-    while (!lives_alarm_get(alarm_handle) && !pthread_kill(y4thread, 0)) {
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && !pthread_kill(y4thread, 0)) {
       // wait for thread to complete or timeout
       lives_usleep(prefs->sleep_time);
       lives_widget_context_update();
     }
+    lives_alarm_clear(alarm_handle);
 
-    if (lives_alarm_get(alarm_handle)) {
+    if (timeout == 0) {
       // timeout - kill thread and wait for it to terminateo
       pthread_cancel(y4thread);
       pthread_join(y4thread, NULL);
-      lives_alarm_clear(alarm_handle);
 
       d_print_failed();
       d_print(_("Unable to open the incoming video stream\n"));
@@ -177,7 +178,6 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
     }
 
     pthread_join(y4thread, NULL);
-    lives_alarm_clear(alarm_handle);
 
     yuv4mpeg->fd = thread_data.fd;
 
@@ -191,23 +191,22 @@ static boolean lives_yuv_stream_start_read(lives_clip_t *sfile) {
   pthread_create(&y4thread, NULL, y4header_thread, &thread_data);
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
 
-  while (!lives_alarm_get(alarm_handle) && !pthread_kill(y4thread, 0)) {
+  while ((timeout = lives_alarm_check(alarm_handle)) > 0 && !pthread_kill(y4thread, 0)) {
     // wait for thread to complete or timeout
     lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
   }
+  lives_alarm_clear(alarm_handle);
 
-  if (lives_alarm_get(alarm_handle)) {
+  if (timeout == 0) {
     // timeout - kill thread and wait for it to terminate
     pthread_cancel(y4thread);
     pthread_join(y4thread, NULL);
-    lives_alarm_clear(alarm_handle);
     d_print(_("Unable to read the stream header\n"));
     return FALSE;
   }
 
   pthread_join(y4thread, NULL);
-  lives_alarm_clear(alarm_handle);
 
   i = thread_data.i;
 
@@ -270,11 +269,13 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
 
   y4data thread_data;
 
-  int error;
-
   pthread_t y4thread;
 
-  int alarm_handle;
+  ticks_t timeout;
+
+  lives_alarm_t alarm_handle;
+
+  int error;
 
   if (!yuv4mpeg->ready) lives_yuv_stream_start_read(sfile);
 
@@ -298,13 +299,13 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
 
   alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
-  while (!lives_alarm_get(alarm_handle) && !pthread_kill(y4thread, 0)) {
+  while ((timeout = lives_alarm_check(alarm_handle)) > 0 && !pthread_kill(y4thread, 0)) {
     // wait for thread to complete or timeout
     lives_usleep(prefs->sleep_time);
   }
+  lives_alarm_clear(alarm_handle);
 
-  if (lives_alarm_get(alarm_handle)) {
-    // timeout - kill thread and wait for it to terminate
+  if (timeout == 0) {
     // timeout - kill thread and wait for it to terminate
     pthread_cancel(y4thread);
     d_print(_("Unable to read the incoming video frame\n"));
@@ -312,7 +313,6 @@ void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
   } else gotbroken = FALSE;
 
   pthread_join(y4thread, NULL);
-  lives_alarm_clear(alarm_handle);
 
   lives_free(yuv4mpeg->pixel_data);
   yuv4mpeg->pixel_data = NULL;

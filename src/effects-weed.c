@@ -9267,6 +9267,20 @@ char *weed_filter_idx_get_package_name(int idx) {
 }
 
 
+char *weed_get_package_name(weed_plant_t *plant) {
+  // return value should be free'd after use
+  weed_plant_t *filter, *pinfo;
+  int error;
+
+  if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter = weed_instance_get_filter(plant, TRUE);
+  else filter = plant;
+
+  pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+  if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME)) return weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
+  return NULL;
+}
+
+
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) {
   // return value should be lives_free'd after use
   weed_plant_t *filter;

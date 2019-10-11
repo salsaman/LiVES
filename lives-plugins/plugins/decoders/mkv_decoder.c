@@ -37,7 +37,7 @@
 #include <sys/stat.h>
 #include <pthread.h>
 
-const char *plugin_version = "LiVES mkv decoder version 1.3";
+const char *plugin_version = "LiVES mkv decoder version 1.4";
 
 #ifdef HAVE_AV_CONFIG_H
 #undef HAVE_AV_CONFIG_H
@@ -208,7 +208,7 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
   if (data == NULL) {
     if (read(priv->fd, buffer, 1) < 1) {
       if (!priv->expect_eof)
-        fprintf(stderr, "mkv_decoder: error in stream header for %s\n", cdata->URI);
+        fprintf(stderr, "mkv_decoder: error in stream header reading num for %s\n", cdata->URI);
       got_eof = TRUE;
       return 0;
     }
@@ -237,7 +237,7 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
     if (data == NULL) {
       if (read(priv->fd, buffer, 1) < 1) {
         if (!priv->expect_eof)
-          fprintf(stderr, "mkv_decoder: error in stream header for %s\n", cdata->URI);
+          fprintf(stderr, "mkv_decoder: error in stream header reading num (%d of %d) for %s\n", n, bread, cdata->URI);
         got_eof = TRUE;
         return 0;
       }
@@ -291,7 +291,7 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
   while (n++ < size) {
     if (read(priv->fd, buffer, 1) < 1) {
       if (!priv->expect_eof)
-        fprintf(stderr, "mkv_decoder: error in stream header for %s\n", cdata->URI);
+        fprintf(stderr, "mkv_decoder: error in stream header reading uint (%d of %d) for %s\n", n, size, cdata->URI);
       got_eof = TRUE;
       return -ERR_EOF;
     }
@@ -359,6 +359,7 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
  * 0 is success, < 0 is failure.
  */
 static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str) {
+  int bread;
   lives_mkv_priv_t *priv = cdata->priv;
 
   free(*str);
@@ -369,9 +370,12 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
     return -errval;
   }
 
-  if (read(priv->fd, (uint8_t *) *str, size) < size) {
-    if (!priv->expect_eof)
-      fprintf(stderr, "mkv_decoder: error in stream header for %s\n", cdata->URI);
+  if ((bread = read(priv->fd, (uint8_t *) *str, size)) < size) {
+    if (!priv->expect_eof) {
+      if (bread > 0)(*str)[bread] = '\0';
+      else (*str)[0] = '\0';
+      fprintf(stderr, "mkv_decoder: error in stream header reading string (%s) %d of %d for %s\n", *str, bread, size, cdata->URI);
+    }
     av_freep(str);
     got_eof = TRUE;
     return -ERR_EOF;
@@ -390,6 +394,7 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
  * 0 is success, < 0 is failure.
  */
 static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin *bin) {
+  int bread;
   lives_mkv_priv_t *priv = cdata->priv;
   free(bin->data);
 
@@ -401,9 +406,9 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
   bin->size = length;
   bin->pos  = priv->input_position;
 
-  if (read(priv->fd, bin->data, length) < length) {
+  if ((bread = read(priv->fd, bin->data, length)) < length) {
     if (!priv->expect_eof)
-      fprintf(stderr, "mkv_decoder: error in stream header for %s\n", cdata->URI);
+      fprintf(stderr, "mkv_decoder: error in stream header reding bin %d of %d for %s\n", bread, length, cdata->URI);
     av_freep(&bin->data);
     got_eof = TRUE;
     return 0;
@@ -1846,10 +1851,6 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     return FALSE;
   }
 
-#ifdef IS_MINGW
-  setmode(priv->fd, O_BINARY);
-#endif
-
   if (isclone) goto skip_probe;
 
   if ((err = read(priv->fd, header, MKV_PROBE_SIZE)) < MKV_PROBE_SIZE) {
@@ -2411,7 +2412,6 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
   MatroskaDemuxContext *matroska = &priv->matroska;
 
   if (matroska->num_packets > 0) {
-
     memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
     free(matroska->packets[0]);
     if (matroska->num_packets > 1) {
@@ -2875,7 +2875,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       got_picture = FALSE;
 
       while (!got_picture) {
-
         if (priv->avpkt.data != NULL) {
           free(priv->avpkt.data);
           priv->avpkt.data = NULL;
@@ -2906,7 +2905,6 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #ifdef TEST_CACHING
 framedone2:
 #endif
-
   if (priv->picture == NULL || pixel_data == NULL) return TRUE;
 
   // we are allowed to cast away const-ness for
@@ -2932,7 +2930,6 @@ framedone2:
     ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_BT709;
   else
     ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
-
 
   if (priv->picture->color_range == AVCOL_RANGE_JPEG)
     ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;

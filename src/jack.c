@@ -180,9 +180,9 @@ return TRUE;
 // transport handling
 
 
-uint64_t jack_transport_get_time(void) {
+ticks_t jack_transport_get_time(void) {
 #ifdef ENABLE_JACK_TRANSPORT
-  uint64_t val;
+  ticks_t val;
 
   jack_nframes_t srate;
   jack_position_t pos;
@@ -689,7 +689,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 }
               }
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
-                uint64_t tc = mainw->currticks;
+                ticks_t tc = mainw->currticks;
                 // apply inplace any effects with audio in_channels
                 weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
               }
@@ -738,7 +738,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
-                  uint64_t tc = mainw->currticks;
+                  ticks_t tc = mainw->currticks;
                   // apply inplace any effects with audio in_channels
                   weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
                 }
@@ -1087,7 +1087,7 @@ static int audio_read(nframes_t nframes, void *arg) {
     // we may wish to analyse the audio for example, or push it to a video generator
 
     if (has_audio_filters(AF_TYPE_A)) {
-      uint64_t tc = mainw->currticks;
+      ticks_t tc = mainw->currticks;
 
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
         // if we have audio triggered gens., push audio to it
@@ -1212,9 +1212,9 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   const char *server_name = JACK_DEFAULT_SERVER_NAME;
   jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
-  int i;
 
-  int64_t ntime = 0, stime;
+  lives_alarm_t alarm_handle;
+  int i;
 
   if (mainw->aplayer_broken) return FALSE;
 
@@ -1224,15 +1224,12 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   jack_set_error_function(jack_error_func);
   jackd->client = NULL;
 
-  // TODO - use alarm
-
-  stime = lives_get_current_ticks();
-
-  while (jackd->client == NULL && ntime < LIVES_SHORT_TIMEOUT) {
+  alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+  while (jackd->client == NULL && lives_alarm_check(alarm_handle) > 0) {
     jackd->client = jack_client_open(client_name, options, &status, server_name);
     lives_usleep(prefs->sleep_time);
-    ntime = lives_get_current_ticks() - stime;
   }
+  lives_alarm_clear(alarm_handle);
 
   if (jackd->client == NULL) {
     lives_printerr("jack_client_open() failed, status = 0x%2.0x\n", status);
@@ -1608,20 +1605,20 @@ void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
 }
 
 
-uint64_t lives_jack_get_time(jack_driver_t *jackd) {
+ticks_t lives_jack_get_time(jack_driver_t *jackd) {
   // get the time in ticks since playback started
   volatile aserver_message_t *msg = jackd->msgq;
   jack_nframes_t frames, retframes;
   static jack_nframes_t last_frames = 0;
 
   if (msg != NULL && msg->command == ASERVER_CMD_FILE_SEEK) {
-    boolean timeout;
-    int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-    while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(jackd) != NULL) {
+    ticks_t timeout;
+    lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+    while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(jackd) != NULL) {
       sched_yield(); // wait for seek
     }
-    if (timeout) return -1;
     lives_alarm_clear(alarm_handle);
+    if (timeout == 0) return -1;
   }
 
   frames = jack_frame_time(jackd->client);
@@ -1632,8 +1629,8 @@ uint64_t lives_jack_get_time(jack_driver_t *jackd) {
   } else jackd->frames_written = 0;
   last_frames = frames;
 
-  return (uint64_t)((frames - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
-                      jackd->client)) * USEC_TO_TICKS);
+  return (ticks_t)((frames - jackd->nframes_start) * (1000000. / jack_get_sample_rate(
+                     jackd->client)) * USEC_TO_TICKS);
 }
 
 
@@ -1649,21 +1646,20 @@ boolean jack_audio_seek_frame(jack_driver_t *jackd, int frame) {
 
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
-  int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-  boolean timeout;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
-  if (alarm_handle == -1) return FALSE;
+  if (alarm_handle == ALL_USED) return FALSE;
 
   if (frame < 1) frame = 1;
 
   do {
     jmsg = jack_get_msgq(jackd);
-  } while (!(timeout = lives_alarm_get(alarm_handle)) && jmsg != NULL && jmsg->command != ASERVER_CMD_FILE_SEEK);
-  if (timeout || jackd->playing_file == -1) {
-    lives_alarm_clear(alarm_handle);
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg != NULL && jmsg->command != ASERVER_CMD_FILE_SEEK);
+  lives_alarm_clear(alarm_handle);
+  if (timeout == 0 || jackd->playing_file == -1) {
     return FALSE;
   }
-  lives_alarm_clear(alarm_handle);
   if (frame > afile->frames) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
   jack_audio_seek_bytes(jackd, seekstart);
@@ -1680,8 +1676,8 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
 
-  boolean timeout;
-  int alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+  ticks_t timeout;
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
   seek_err = FALSE;
 
@@ -1692,14 +1688,13 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
 
   do {
     jmsg = jack_get_msgq(jackd);
-  } while (!(timeout = lives_alarm_get(alarm_handle)) && jmsg != NULL && jmsg->command != ASERVER_CMD_FILE_SEEK);
-  if (timeout || jackd->playing_file == -1) {
-    lives_alarm_clear(alarm_handle);
-    if (timeout) LIVES_WARN("Jack connect timed out");
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jmsg != NULL && jmsg->command != ASERVER_CMD_FILE_SEEK);
+  lives_alarm_clear(alarm_handle);
+  if (timeout == 0 || jackd->playing_file == -1) {
+    if (timeout == 0) LIVES_WARN("Jack connect timed out");
     seek_err = TRUE;
     return 0;
   }
-  lives_alarm_clear(alarm_handle);
 
   seekstart = ((int64_t)(bytes / afile->achans / (afile->asampsize / 8))) * afile->achans * (afile->asampsize / 8);
 
@@ -1759,8 +1754,8 @@ void jack_aud_pb_ready(int fileno) {
         (sfile->laudio_time > 0. || sfile->opening ||
          (mainw->multitrack != NULL && mainw->multitrack->is_rendering &&
           lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
-      boolean timeout;
-      int alarm_handle;
+      ticks_t timeout;
+      lives_alarm_t alarm_handle;
 
       lives_freep((void **)&tmpfilename);
       mainw->jackd->num_input_channels = sfile->achans;
@@ -1774,11 +1769,11 @@ void jack_aud_pb_ready(int fileno) {
       else mainw->jackd->reverse_endian = FALSE;
 
       alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
         sched_yield(); // wait for seek
       }
-      if (timeout) jack_try_reconnect();
       lives_alarm_clear(alarm_handle);
+      if (timeout == 0) jack_try_reconnect();
 
       if ((mainw->multitrack == NULL || mainw->multitrack->is_rendering) &&
           (mainw->event_list == NULL || mainw->record || (mainw->preview && mainw->is_processing))) {

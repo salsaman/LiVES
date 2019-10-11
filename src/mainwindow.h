@@ -129,6 +129,7 @@
 #define LIVES_MAIN_WINDOW_WIDGET (mainw->LiVES)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define ALL_USED -1
 
 /// number of function keys
 #define FN_KEYS 12
@@ -449,6 +450,8 @@ typedef struct {
   int z_index; // for future use
 } lives_screen_area_t;
 
+typedef int lives_alarm_t;
+
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
 
@@ -456,7 +459,7 @@ typedef struct {
 #define MAINW_MSG_SIZE 8192
 
 typedef struct {
-  char msg[8192];
+  char msg[MAINW_MSG_SIZE];
 
   // files
   int current_file;
@@ -672,16 +675,16 @@ typedef struct {
 
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  volatile uint64_t startticks; ///< effective ticks when last frame was (should have been) displayed
-  uint64_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
-  uint64_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
-  uint64_t origusecs; ///< usecs at start of playback - ditto
-  uint64_t offsetticks; ///< offset for multitrack playback start
-  volatile uint64_t currticks; ///< current playback ticks (relative)
-  uint64_t deltaticks; ///< deltaticks for scratching
-  uint64_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
-  uint64_t stream_ticks;  ///< ticks since first frame sent to playback plugin
-  uint64_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
+  volatile ticks_t startticks; ///< effective ticks when last frame was (should have been) displayed
+  ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
+  ticks_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
+  ticks_t origusecs; ///< usecs at start of playback - ditto
+  ticks_t offsetticks; ///< offset for multitrack playback start
+  volatile ticks_t currticks; ///< current playback ticks (relative)
+  ticks_t deltaticks; ///< deltaticks for scratching
+  ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
+  ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
+  ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
   int size_warn; ///< warn the user that incorrectly sized frames were found
 
@@ -1188,7 +1191,7 @@ typedef struct {
   LiVESList *affected_layout_marks;
 
   /// immediately (to be) affected layout maps
-  //LiVESList *xlays;
+  LiVESList *xlays;
 
   char *recovery_file;  ///< the filename of our recover file
   boolean leave_recovery;
@@ -1348,7 +1351,7 @@ typedef struct {
 #define LIVES_MAX_USER_ALARMS 512
 
 #define LIVES_NO_ALARM_TICKS -1
-  
+
 #define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
 #define URGENCY_MSG_TIMEOUT 10. // seconds
 

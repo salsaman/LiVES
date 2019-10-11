@@ -973,7 +973,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
   LiVESWidget *combo;
 
-  combo = lives_standard_combo_new();
+  combo = lives_standard_combo_new(NULL, NULL, NULL, NULL);
 
   for (i = 0; i < N_OMC_MACROS; i++) {
     if (omc_macros[i].msg == NULL) break;

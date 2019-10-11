@@ -2204,7 +2204,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
       while (decoder_plugin != NULL) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
 
-        g_print("CHK %s %s\n", decplugname, dpsys->name);
+        //g_print("CHK %s %s\n", decplugname, dpsys->name);
 
         if (!strcmp(dpsys->name, decplugname)) {
           if (strncmp(decplugname, "zz", 2))
@@ -2392,7 +2392,7 @@ static void dpa_cancel_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void on_dpa_cb_toggled(LiVESToggleButton *button, char *decname) {
+static void on_dpa_cb_toggled(LiVESToggleButton *button, const char *decname) {
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
     future_prefs->disabled_decoders_new = lives_list_append(future_prefs->disabled_decoders_new, lives_strdup(decname));
@@ -2452,7 +2452,7 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                LIVES_GUI_CALLBACK(on_dpa_cb_toggled),
-                               dpsys->name);
+                               (livespointer)dpsys->name);
 
     decoder_plugin = decoder_plugin->next;
   }

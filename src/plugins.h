@@ -276,7 +276,7 @@ typedef struct {
 
 typedef struct {
   // playback
-  char *name; ///< plugin name
+  const char *name; ///< plugin name
   void *handle; ///< may be shared between several instances
 
   // mandatory

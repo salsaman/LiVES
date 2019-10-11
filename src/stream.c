@@ -777,7 +777,6 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
         }
         last_delta_ticks = ((int64_t)(last_delta_ticks >> 1) + (int64_t)((abs64(currticks - lstream->timecode)) >> 1));
 #endif
-
       }
     }
 

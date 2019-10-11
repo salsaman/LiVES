@@ -574,7 +574,7 @@ static boolean pre_init(void) {
 
   widget_helper_init();
 
-  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LIVES_VERSION);
+  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
 
   capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
 
@@ -1152,8 +1152,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->affected_layout_marks = NULL;
 
-  mainw->xlays = NULL;
-
   mainw->stored_layout_undos = NULL;
   mainw->sl_undo_mem = NULL;
   mainw->sl_undo_buffer_used = 0;
@@ -1292,6 +1290,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->swapped_clip = -1;
 
   mainw->urgency_msg = NULL;
+
+  mainw->xlays = NULL;
 
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
@@ -3633,7 +3633,7 @@ boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) 
 
 
 void set_main_title(const char *file, int untitled) {
-  char *title;
+  char *title, *tmp;
   char short_file[256];
 
   if (file != NULL && CURRENT_CLIP_IS_VALID) {
@@ -3644,17 +3644,17 @@ void set_main_title(const char *file, int untitled) {
     } else {
       lives_snprintf(short_file, 256, "%s", file);
       if (cfile->restoring || (cfile->opening && cfile->frames == 123456789)) {
-        title = lives_strdup_printf(_("<%s> %dx%d : ??? frames ??? bpp %.3f fps"), 
+        title = lives_strdup_printf(_("<%s> %dx%d : ??? frames ??? bpp %.3f fps"),
                                     (tmp = lives_path_get_basename(file)), cfile->hsize, cfile->vsize, cfile->fps);
       } else {
-        title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"), 
+        title = lives_strdup_printf(_("<%s> %dx%d : %d frames %d bpp %.3f fps"),
                                     cfile->clip_type != CLIP_TYPE_VIDEODEV ? (tmp = lives_path_get_basename(file))
                                     : (tmp = lives_strdup(file)), cfile->hsize, cfile->vsize, cfile->frames, cfile->bpp, cfile->fps);
       }
       lives_free(tmp);
     }
   } else {
-    title = lives_strdup_printf(_("<No File>"));
+    title = lives_strdup(_("<No File>"));
   }
 
   lives_window_set_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), title);
@@ -5720,8 +5720,8 @@ void free_track_decoders(void) {
 
 static boolean check_for_urgency_msg(weed_plant_t *layer) {
   if (mainw->urgency_msg != NULL) {
-    boolean timeout = lives_alarm_get(LIVES_URGENCY_ALARM + 1);
-    if (timeout) lives_freep((void **)&mainw->urgency_msg);
+    ticks_t timeout = lives_alarm_check(LIVES_URGENCY_ALARM);
+    if (timeout == 0) lives_freep((void **)&mainw->urgency_msg);
     else {
       render_text_overlay(layer, mainw->urgency_msg);
       return TRUE;
@@ -5778,10 +5778,11 @@ void load_frame_image(int frame) {
 
   double scrap_file_size = -1;
 
+  ticks_t audio_timed_out = 1;
+
   boolean was_preview;
   boolean rec_after_pb = FALSE;
   boolean noswitch = mainw->noswitch;
-  boolean audio_timed_out = FALSE;
 
   int weed_error;
   int retval;
@@ -5795,7 +5796,7 @@ void load_frame_image(int frame) {
   int fg_file = mainw->current_file;
 
 #if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
-  int alarm_handle;
+  lives_alarm_t alarm_handle;
 #endif
 
 #define BFC_LIMIT 1000
@@ -6357,7 +6358,7 @@ void load_frame_image(int frame) {
 #ifdef ENABLE_JACK
     if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
       alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-      while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+      while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
         // wait for seek
         sched_yield();
         lives_usleep(prefs->sleep_time);
@@ -6368,7 +6369,7 @@ void load_frame_image(int frame) {
 #ifdef HAVE_PULSE_AUDIO
     if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
       alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-      while (!(audio_timed_out = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+      while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
         // wait for seek
         sched_yield();
         lives_usleep(prefs->sleep_time);
@@ -6377,7 +6378,7 @@ void load_frame_image(int frame) {
     }
 #endif
 
-    if (audio_timed_out) {
+    if (audio_timed_out == 0) {
       mainw->cancelled = handle_audio_timeout();
       return;
     }
@@ -6619,8 +6620,8 @@ void load_frame_image(int frame) {
       mainw->pheight = cfile->vsize;
 
       mainw->sepwin_scale = 100.;
-      xyzzy not for fs;
-      if (!mainw->is_rendering) {
+
+      if (!mainw->is_rendering && !mainw->fs) {
         if (pmonitor == 0) {
           while (mainw->pwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY ||
                  mainw->pheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) {
@@ -7213,7 +7214,7 @@ void load_frame_image(int frame) {
         mt_delete_clips(mainw->multitrack, mainw->current_file);
       }
 
-      if (mainw->first_free_file == -1 || mainw->first_free_file > mainw->current_file)
+      if (mainw->first_free_file == ALL_USED || mainw->first_free_file > mainw->current_file)
         mainw->first_free_file = mainw->current_file;
 
       if (!mainw->only_close) {
@@ -7587,8 +7588,8 @@ void load_frame_image(int frame) {
 
 
   void switch_audio_clip(int new_file, boolean activate) {
-    boolean timeout;
-    int alarm_handle;
+    ticks_t timeout;
+    lives_alarm_t alarm_handle;
 
     if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -7598,13 +7599,13 @@ void load_frame_image(int frame) {
         if (mainw->jackd->playing_file == new_file) return;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
           // wait for seek
           sched_yield();
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
-        if (timeout) {
+        if (timeout == 0) {
           mainw->cancelled = handle_audio_timeout();
           return;
         }
@@ -7616,13 +7617,13 @@ void load_frame_image(int frame) {
           mainw->jackd->msgq = &jack_message;
 
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-          while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
             // wait for seek
             sched_yield();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
-          if (timeout)  {
+          if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
             return;
           }
@@ -7673,13 +7674,13 @@ void load_frame_image(int frame) {
         mainw->jackd->in_use = TRUE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!(timeout = lives_alarm_get(alarm_handle)) && jack_get_msgq(mainw->jackd) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
           // wait for seek
           sched_yield();
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
-        if (timeout)  {
+        if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
           return;
         }
@@ -7700,13 +7701,13 @@ void load_frame_image(int frame) {
         if (mainw->pulsed->playing_file == new_file) return;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
           // wait for seek
           sched_yield();
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
-        if (timeout)  {
+        if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
           return;
         }
@@ -7718,13 +7719,13 @@ void load_frame_image(int frame) {
           mainw->pulsed->msgq = &pulse_message;
 
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-          while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
             // wait for seek
             sched_yield();
             lives_usleep(prefs->sleep_time);
           }
           lives_alarm_clear(alarm_handle);
-          if (timeout)  {
+          if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
             return;
           }
@@ -7774,13 +7775,13 @@ void load_frame_image(int frame) {
         mainw->pulsed->in_use = TRUE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while (!(timeout = lives_alarm_get(alarm_handle)) && pulse_get_msgq(mainw->pulsed) != NULL) {
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
           // wait for seek
           sched_yield();
           lives_usleep(prefs->sleep_time);
         }
         lives_alarm_clear(alarm_handle);
-        if (timeout)  {
+        if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
           return;
         }

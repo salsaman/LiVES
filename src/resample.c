@@ -668,17 +668,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
 static void on_reorder_activate(int rwidth, int rheight) {
   char *msg;
-  boolean has_lmap_error = FALSE;
 
-  if (!(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) && (mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-    if (!do_layout_alter_frames_warning()) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_frame > 0);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
+  uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES | WARN_MASK_LAYOUT_ALTER_AUDIO;
+  if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+    return;
   }
 
   cfile->old_frames = cfile->frames;
@@ -722,7 +715,7 @@ static void on_reorder_activate(int rwidth, int rheight) {
   d_print(msg);
   lives_free(msg);
 
-  if (has_lmap_error) popup_lmap_errors(NULL, NULL);
+  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
@@ -746,7 +739,6 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
   char *com;
 
   boolean noswitch = mainw->noswitch;
-  boolean has_lmap_error = FALSE;
 
   int arate, achans, asampsize, arps;
   int asigned = 1, aendian = 1;
@@ -783,16 +775,9 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     aendian = !(cfile->undo1_uint & AFORM_BIG_ENDIAN);
   }
 
-  if (!(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO) && (mainw->xlays = layout_audio_is_affected
-      (mainw->current_file, 0.))) {
-    if (!do_layout_alter_audio_warning()) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_audio > 0.);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
+  uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES | WARN_MASK_LAYOUT_ALTER_AUDIO;
+  if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+    return;
   }
 
   // store old values for undo/redo
@@ -888,7 +873,8 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     }
   }
   d_print("\n");
-  if (has_lmap_error) popup_lmap_errors(NULL, NULL);
+
+  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_audio > 0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
@@ -1764,8 +1750,8 @@ void on_change_speed_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
   double arate = cfile->arate / cfile->fps;
   char *msg;
-  boolean has_lmap_error = FALSE;
   boolean bad_header = FALSE;
+  int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
 
   // change playback rate
   if (button != NULL) {
@@ -1778,86 +1764,14 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
     if (mainw->fx1_val > FPS_MAX) mainw->fx1_val = FPS_MAX;
   }
 
-  if (!(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_FRAMES) && mainw->fx1_val > cfile->fps) {
-    int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
-    if ((mainw->xlays = layout_frame_is_affected(mainw->current_file, new_frames)) != NULL) {
-      if (!do_warning_dialog(
-            _("\nSpeeding up the clip will cause missing frames in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-        lives_list_free_all(&mainw->xlays);
-        return;
-      }
-      add_lmap_error(LMAP_ERROR_DELETE_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, new_frames, 0.,
-                     new_frames <= count_resampled_frames(cfile->stored_layout_frame, cfile->stored_layout_fps, cfile->fps));
-      has_lmap_error = TRUE;
-      lives_list_free_all(&mainw->xlays);
-    }
+  char *tmp = lives_strdup(_("Changing the clip fps"));
+  uint32_t chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
+  if (mainw->fx1_bool) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
+  if (!check_for_layout_errors(tmp, mainw->current_file, 1, new_frames, &chk_mask)) {
+    lives_free(tmp);
+    return;
   }
-
-  if (mainw->fx1_bool && !(prefs->warning_mask & WARN_MASK_LAYOUT_DELETE_AUDIO) && mainw->fx1_val > cfile->fps) {
-    int new_frames = count_resampled_frames(cfile->frames, mainw->fx1_val, cfile->fps);
-    if ((mainw->xlays = layout_audio_is_affected(mainw->current_file, (new_frames - 1.) / cfile->fps)) != NULL) {
-      if (!do_warning_dialog(
-            _("\nSpeeding up the clip will cause missing audio in some multitrack layouts.\nAre you sure you wish to change the speed ?\n"))) {
-        lives_list_free_all(&mainw->xlays);
-        return;
-      }
-      add_lmap_error(LMAP_ERROR_DELETE_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0,
-                     (new_frames - 1.) / cfile->fps,
-                     (new_frames - 1.) / cfile->fps < cfile->stored_layout_audio);
-      has_lmap_error = TRUE;
-      lives_list_free_all(&mainw->xlays);
-    }
-  }
-
-  if (!has_lmap_error && !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_FRAMES) &&
-      (mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-    if (!do_warning_dialog(
-          _("\nChanging the speed will cause frames to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_SHIFT_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_frame > 0);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
-  }
-
-  if (mainw->fx1_bool && !has_lmap_error && !(prefs->warning_mask & WARN_MASK_LAYOUT_SHIFT_AUDIO) &&
-      (mainw->xlays = layout_audio_is_affected(mainw->current_file, 0.)) != NULL) {
-    if (!do_warning_dialog(
-          _("\nChanging the speed will cause audio to shift in some multitrack layouts.\nAre you sure you wish to continue ?\n"))) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_SHIFT_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_audio > 0.);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
-  }
-
-  if (!has_lmap_error && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_FRAMES) &&
-      (mainw->xlays = layout_frame_is_affected(mainw->current_file, 1)) != NULL) {
-    if (!do_layout_alter_frames_warning()) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_ALTER_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_frame > 0);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
-  }
-
-  if (mainw->fx1_bool && !has_lmap_error && !(prefs->warning_mask & WARN_MASK_LAYOUT_ALTER_AUDIO) &&
-      (mainw->xlays = layout_audio_is_affected(mainw->current_file, 0.)) != NULL) {
-    if (!do_layout_alter_audio_warning()) {
-      lives_list_free_all(&mainw->xlays);
-      return;
-    }
-    add_lmap_error(LMAP_ERROR_ALTER_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file, 0, 0.,
-                   cfile->stored_layout_audio > 0.);
-    has_lmap_error = TRUE;
-    lives_list_free_all(&mainw->xlays);
-  }
+  lives_free(tmp);
 
   if (button == NULL) {
     mainw->fx1_bool = !(cfile->undo1_int == cfile->arate);
@@ -1897,7 +1811,7 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   switch_to_file(mainw->current_file, mainw->current_file);
 
-  if (has_lmap_error) popup_lmap_errors(NULL, NULL);
+  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo

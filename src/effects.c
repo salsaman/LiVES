@@ -797,25 +797,35 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
 
 void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
+  uint32_t chk_mask = 0;
   int type = 1;
-
-  boolean has_lmap_error = FALSE;
 
   // type can be 0 - apply current realtime effects
   // 1 - resize (using weed filter) [menuitem == NULL]
 
   if (menuitem != NULL) {
-    type = 0;
-    uint32_t chk_mask = WARN_MASK_ALTER_FRAMES | WARN_MASK_ALTER_AUDIO;
-    if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
-      return;
+    int i;
+    for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+      if (rte_key_valid(i + 1, TRUE)) {
+        if (rte_key_is_enabled(1 + i)) {
+          weed_plant_t *filter = rte_keymode_get_filter(i + 1, rte_key_getmode(i + 1));
+          if (is_pure_audio(filter, TRUE)) {
+            chk_mask |= WARN_MASK_LAYOUT_ALTER_AUDIO;
+          } else chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
+        }
+      }
     }
+    if (chk_mask > 0) {
+      if (!check_for_layout_errors(NULL, mainw->current_file, 1, 0, &chk_mask)) {
+        return;
+      }
+    }
+    type = 0;
   }
 
   if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) return;
 
-  if (((chk_mask ^ prefs->warning_mask) & chk_mask)) has_lmap_error = TRUE;
-  if (has_lmap_error) popup_lmap_errors(NULL, NULL);
+  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 }
 
 
@@ -941,7 +951,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   blend_file->last_frameno = blend_file->frameno;
 
   if (!cfile->play_paused)
-    blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (uint64_t *)&ntc);
+    blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
 
   blend_tc = ntc;
 

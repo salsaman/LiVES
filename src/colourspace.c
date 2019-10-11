@@ -128,12 +128,7 @@ static void lives_free_buffer(uint8_t *pixels, livespointer data) {
   lives_free(pixels);
 }
 
-
-LIVES_INLINE uint8_t CLAMP0255(int32_t a) {
-  return (unsigned char)
-         ((((-a) >> 31) & a)   // 0 if the number was negative
-          | (255 - a) >> 31); // -1 if the number was greater than 255
-}
+#define CLAMP0255(a)  ((unsigned char)((((-a) >> 31) & a) | (255 - a) >> 31) )
 
 /* precomputed tables */
 
@@ -318,7 +313,7 @@ static inline void update_gamma_lut(boolean fwd, int gamma_type) {
       x = a;
       break;
     }
-    gamma_lut[i] = CLAMP0255(255. * x + .5);
+    gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
 
   current_gamma_type = gamma_type;
@@ -354,8 +349,6 @@ static void init_RGB_to_YUV_tables(void) {
   double fac;
 
   for (i = 0; i < 256; i++) {
-    g_print("VAL is %c\n", CLAMP0255(a));
-
     Y_Rc[i] = myround(KR_YCBCR * (double)i
                       * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kr
     Y_Gc[i] = myround((1. - KR_YCBCR - KB_YCBCR) * (double)i
@@ -918,9 +911,9 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 
 
 LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
-  *r = CLAMP0255((RGB_Y[y] + R_Cr[v]) >> FP_BITS);
-  *g = CLAMP0255((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS);
-  *b = CLAMP0255((RGB_Y[y] + B_Cb[u]) >> FP_BITS);
+  *r = CLAMP0255((int32_t)((RGB_Y[y] + R_Cr[v]) >> FP_BITS));
+  *g = CLAMP0255((int32_t)((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS));
+  *b = CLAMP0255((int32_t)((RGB_Y[y] + B_Cb[u]) >> FP_BITS));
 }
 
 
@@ -11647,61 +11640,3 @@ int weed_layer_get_palette(weed_plant_t *layer) {
   return WEED_PALETTE_END;
 }
 
-
-void insert_blank_frames(int sfileno, int nframes, int after) {
-  // insert blank frames in clip (only valid just after clip is opened)
-
-  // this is ugly, it should be moved to another file
-
-  lives_clip_t *sfile = mainw->files[sfileno];
-  LiVESPixbuf *blankp = NULL;
-  LiVESError *error = NULL;
-  char oname[PATH_MAX];
-  char nname[PATH_MAX];
-  char *tmp;
-
-  register int i;
-
-  if (!check_if_all_virtual(sfileno, 1, sfile->frames)) {
-    for (i = after + 1; i <= sfile->frames; i++) {
-      if (sfile->frame_index == NULL || sfile->frame_index[i - 1] == -1) {
-        tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
-        lives_snprintf(oname, PATH_MAX, "%s", tmp);
-        lives_free(tmp);
-        if (lives_file_test(oname, LIVES_FILE_TEST_EXISTS)) {
-          tmp = make_image_file_name(sfile, i + nframes, get_image_ext_for_type(sfile->img_type));
-          lives_snprintf(nname, PATH_MAX, "%s", tmp);
-          lives_free(tmp);
-          mainw->com_failed = FALSE;
-          lives_mv(oname, nname);
-          if (mainw->com_failed) {
-            return;
-          }
-        }
-      }
-    }
-  }
-
-  for (i = after; i < after + nframes; i++) {
-    tmp = make_image_file_name(sfile, i + 1, get_image_ext_for_type(sfile->img_type));
-    lives_snprintf(oname, PATH_MAX, "%s", tmp);
-    lives_free(tmp);
-    if (blankp == NULL) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, WEED_PALETTE_RGB24);
-    lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
-    if (error != NULL) {
-      char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"), sfile->hsize, sfile->vsize, oname);
-      LIVES_ERROR(msg);
-      lives_free(msg);
-      lives_error_free(error);
-      break;
-    }
-  }
-
-  nframes = i - after; // in case we bailed
-
-  insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
-
-  sfile->frames += nframes;
-
-  if (blankp != NULL) lives_widget_object_unref(blankp);
-}

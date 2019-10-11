@@ -896,19 +896,20 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_grab_remove(LiVESWidget *widget) {
 }
 
 
+static void _lives_widget_set_sensitive_cb(LiVESWidget *w, void *pstate) {
+  boolean state = (boolean)LIVES_POINTER_TO_INT(pstate);
+  lives_widget_set_sensitive(w, state);
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widget, boolean state) {
 #ifdef GUI_GTK
   gtk_widget_set_sensitive(widget, state);
 #ifdef GTK_SUBMENU_SENS_BUG
   if (GTK_IS_MENU_ITEM(widget)) {
-    LiVESWidget *sub;
-    if ((sub = gtk_menu_item_get_submenu(GTK_MENU_ITEM(widget))) != NULL) {
-      g_object_ref(sub);
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget), NULL);
-      gtk_widget_set_sensitive(sub, state);
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(widget), sub);
-      g_object_unref(sub);
-    }
+    LiVESWidget *sub = lives_menu_item_get_submenu(LIVES_MENU_ITEM(widget));
+    if (sub != NULL)
+      lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb, LIVES_INT_TO_POINTER(state));
   }
 #endif
   return TRUE;

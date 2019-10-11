@@ -1015,9 +1015,9 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
  * call lives_get_alarm(handle) to test if time arrived
  */
 
-lives_alarm_t lives_alarm_set(int64_t ticks) {
+lives_alarm_t lives_alarm_set(ticks_t ticks) {
   int i;
-  int64_t cticks;
+  ticks_t cticks;
 
   // we will assign [this] next
   lives_alarm_t ret = mainw->next_free_alarm;
@@ -1074,7 +1074,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   }
 
   // get current ticks
-  cticks = mainw->alarms[alarm_handle] - lives_get_current_ticks(); 
+  cticks = mainw->alarms[alarm_handle] - lives_get_current_ticks();
 
   if (cticks <= 0) {
     // reached alarm time, free up this timer and return TRUE
@@ -1119,10 +1119,23 @@ char *lives_datetime(struct timeval *tv) {
 }
 
 
-LIVES_GLOBAL_INLINE char *lives_strappend(char *string, int len, const char *xnew) {
-  char *tmp = lives_strconcat(string, xnew, NULL);
-  lives_snprintf(string, len, "%s", tmp);
-  lives_free(tmp);
+LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
+  size_t sz = strlen(string);
+  lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
+  return string;
+}
+
+
+LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, const char *fmt, ...) {
+  va_list xargs;
+  char *text;
+
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  lives_strappend(string, len, text);
+  lives_free(text);
   return string;
 }
 
@@ -1131,7 +1144,8 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const 
   LiVESList *list = xlist, *listlast = NULL;
   while (list != NULL) {
     listlast = list;
-    if (!lives_utf8_strcasecomp((const char *)list->data, add)) return xlist;
+    if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
+    list = list->next;
   }
   list = lives_list_append(listlast, lives_strdup(add));
   if (xlist == NULL) return list;
@@ -1262,7 +1276,7 @@ void calc_aframeno(int fileno) {
 }
 
 
-int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc) {
+int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -2325,9 +2339,9 @@ void get_frames_sizes(int fileno, int frame) {
 void get_next_free_file(void) {
   // get next free file slot, or -1 if we are full
   // can support MAX_FILES files (default 65536)
-  while ((mainw->first_free_file != -1) && mainw->files[mainw->first_free_file] != NULL) {
+  while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
     mainw->first_free_file++;
-    if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = -1;
+    if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
   }
 }
 
@@ -3701,17 +3715,17 @@ uint64_t sget_file_size(const char *name) {
 
 void wait_for_bg_audio_sync(int fileno) {
   char *afile = lives_get_audio_file_name(fileno);
-  boolean timeout;
-  int alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+  lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
   int fd;
 
-  while ((fd = open(afile, O_RDONLY)) < 0 && !(timeout = lives_alarm_get(alarm_handle))) {
+  while ((fd = open(afile, O_RDONLY)) < 0 && lives_alarm_check(alarm_handle) > 0) {
     lives_sync(1);
     lives_usleep(prefs->sleep_time);
   }
+  lives_alarm_clear(alarm_handle);
+
   if (fd >= 0) close(fd);
   lives_free(afile);
-  lives_alarm_clear(alarm_handle);
 }
 
 
@@ -4855,7 +4869,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESLi
 }
 
 
-LiVESList *lives_list_delete_string(LiVESList *list, char *string) {
+LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
   // remove string from list, using strcmp
 
   LiVESList *xlist = list;

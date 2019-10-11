@@ -297,9 +297,6 @@ typedef int lives_pgid_t;
 #define SIGNED_DIVIDE(a, b) (a < 0. ? (a / b > 0. ? -a / b : a / b) : (a / b < 0. ? -a / b : a / b))
 
 #define myround(n) (n >= 0. ? (int)(n + 0.5) : (int)(n - 0.5))
-}
-
-
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
@@ -314,6 +311,8 @@ float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
 int get_approx_ln(uint32_t val) GNU_CONST;
+
+typedef int64_t ticks_t;
 
 typedef struct {
   uint16_t red;
@@ -1262,18 +1261,17 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 
 char *filename_from_fd(char *val, int fd);
 
-int64_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
-int64_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source);
-int64_t lives_get_current_ticks(void);
+ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t origusecs);
+ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
+ticks_t lives_get_current_ticks(void);
 
-int lives_alarm_set(int64_t ticks);
-boolean lives_alarm_check(int alarm_handle);
-void lives_alarm_clear(int alarm_handle);
+lives_alarm_t lives_alarm_set(ticks_t ticks);
+ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
+boolean lives_alarm_clear(lives_alarm_t alarm_handle);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
 char *lives_format_storage_space_string(uint64_t space);
 char *lives_datetime(struct timeval *tv);
 
-int myround(double n) GNU_CONST; // round up +ve or down -ve
 void get_dirname(char *filename);
 char *get_dir(const char *filename);
 void get_basename(char *filename);
@@ -1367,16 +1365,17 @@ void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
 int get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
-char *lives_strappend(char *string, int len, const char *newbit);
+const char *lives_strappend(const char *string, int len, const char *newbit);
+const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 void find_when_to_stop(void);
-int calc_new_playback_position(int fileno, uint64_t otc, uint64_t *ntc);
+int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality);
 
 LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSED;
-LiVESList *lives_list_delete_string(LiVESList *, char *string) WARN_UNUSED;
+LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
 

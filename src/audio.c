@@ -3202,9 +3202,9 @@ boolean start_audio_stream(void) {
 
   int arate = 0;
   int afd;
-  int alarm_handle;
+  lives_alarm_t alarm_handle;
 
-  boolean timeout = FALSE;
+  ticks_t timeout = 0;
 
   astream_name = lives_build_filename(prefs->workdir, astname, NULL);
 
@@ -3245,8 +3245,7 @@ boolean start_audio_stream(void) {
     afd = lives_open2(astream_name, O_WRONLY | O_SYNC);
     if (afd != -1) break;
     lives_usleep(prefs->sleep_time);
-  } while (!(timeout = lives_alarm_get(alarm_handle)));
-
+  } while ((timeout = lives_alarm_check(alarm_handle)) > 0);
   lives_alarm_clear(alarm_handle);
 
   if (prefs->audio_player == AUD_PLAYER_PULSE) {

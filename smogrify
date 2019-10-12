@@ -966,6 +966,7 @@ if (defined($ARGV[0])) {
 
             while (my $file = readdir(DIR)) {
                 if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ ||
+		    $file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
 		    $file =~ /^layout_numbering\.$uid\.$gid\.(.*)/) {
 		    if ($pid eq "" || $pid ne $p1) {
 			my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");

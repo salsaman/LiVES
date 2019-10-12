@@ -80,7 +80,7 @@ boolean transcode(int start, int end) {
 
   float **fltbuf = NULL;
 
-  int64_t currticks;
+  ticks_t currticks;
 
   ssize_t in_bytes;
 

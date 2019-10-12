@@ -1472,6 +1472,8 @@ typedef struct {
   boolean reconfig;
 
   boolean ignore_screen_size;
+
+  boolean recording_recovered;
   ////////////////////
 } mainwindow;
 

@@ -203,7 +203,7 @@ render_details *rdet;
 ////////////////////////////////////////////////////////
 //// UI stuff ///////
 
-LiVESWidget *events_rec_dialog(boolean allow_mt);
+LiVESWidget *events_rec_dialog(void);
 boolean deal_with_render_choice(boolean add_deinit);
 
 #define RENDER_CHOICE_DISCARD 0

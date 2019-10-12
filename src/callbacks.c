@@ -9015,7 +9015,7 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
 
 void on_effects_paused(LiVESButton *button, livespointer user_data) {
   char *com = NULL;
-  int64_t xticks;
+  ticks_t xticks;
 
   if (mainw->iochan != NULL || cfile->opening) {
     // pause during encoding (if we start using mainw->iochan for other things, this will
@@ -9141,7 +9141,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   weed_plant_t *audio_event = mainw->audio_event;
 
   uint64_t old_rte; //TODO - block better
-  int64_t xticks;
+  ticks_t xticks;
 
   static volatile boolean in_preview_func = FALSE;
 
@@ -9866,7 +9866,7 @@ void on_back_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  mainw->deltaticks -= (int64_t)(change_speed * 3.*mainw->period);
+  mainw->deltaticks -= (ticks_t)(change_speed * 3. * mainw->period);
   mainw->scratch = SCRATCH_BACK;
 }
 
@@ -9880,7 +9880,7 @@ void on_forward_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  mainw->deltaticks += (int64_t)(change_speed * mainw->period);
+  mainw->deltaticks += (ticks_t)(change_speed * mainw->period);
   mainw->scratch = SCRATCH_FWD;
 }
 

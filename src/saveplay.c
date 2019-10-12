@@ -4491,6 +4491,8 @@ boolean open_scrap_file(void) {
   }
 
   mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+
+  // TODO: introduce CLIP_TYPE_SCRAP, CLIP_TYPE_ASCRAP
   mainw->files[new_file]->clip_type = CLIP_TYPE_DISK; // the default
   lives_snprintf(mainw->files[new_file]->handle, 256, "scrap%d", capable->mainpid);
 
@@ -5078,7 +5080,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
     if (!do_yesno_dialog
         (_("\nFiles from a previous run of LiVES were found.\nDo you want to attempt to recover them ?\n"))) {
-      lives_rm(recovery_file);
       retb = FALSE;
       goto recovery_done;
     }
@@ -5156,7 +5157,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         is_scrap = TRUE;
         buffptr = buff + 6;
       } else if (!strncmp(buff, "ascrap|", 7)) {
-        continue;
         is_ascrap = TRUE;
         buffptr = buff + 7;
       } else {
@@ -5446,11 +5446,7 @@ boolean rewrite_recovery_file(void) {
 
   register int i;
 
-  if (!prefs->crash_recovery) {
-    lives_rm(mainw->recovery_file);
-    return FALSE;
-  }
-  if (clist == NULL) {
+  if (clist == NULL || !prefs->crash_recovery) {
     lives_rm(mainw->recovery_file);
     return FALSE;
   }
@@ -5466,7 +5462,11 @@ boolean rewrite_recovery_file(void) {
     while (clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);
       if (IS_NORMAL_CLIP(i)) {
-        if (i != mainw->scrap_file) {
+        if (i == mainw->scrap_file) {
+          recovery_entry = lives_strdup_printf("scrap|%s\n", mainw->files[i]->handle);
+        } else if (i == mainw->ascrap_file) {
+          recovery_entry = lives_strdup_printf("ascrap|%s\n", mainw->files[i]->handle);
+        } else {
           if (mainw->files[i]->was_in_set && strlen(mainw->set_name) > 0) {
             if (!wrote_set_entry) {
               recovery_entry = lives_build_filename(mainw->set_name, "*\n", NULL);
@@ -5476,7 +5476,7 @@ boolean rewrite_recovery_file(void) {
               continue;
             }
           } else recovery_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
-        } else recovery_entry = lives_strdup_printf("scrap|%s\n", mainw->files[i]->handle);
+        }
 
         if (!opened) recovery_fd = creat(temp_recovery_file, S_IRUSR | S_IWUSR);
         if (recovery_fd < 0) retval = do_write_failed_error_s_with_retry(temp_recovery_file, lives_strerror(errno), NULL);
@@ -5517,11 +5517,11 @@ boolean rewrite_recovery_file(void) {
 boolean check_for_recovery_files(boolean auto_recover) {
   uint32_t recpid = 0;
 
-  char *recovery_file, *recovery_numbering_file;
+  char *recovery_file, *recovery_numbering_file, *recording_file, *recording_numbering_file, *xfile;
   char *com;
 
   boolean retval = FALSE;
-  boolean found;
+  boolean found = FALSE, found_recording = FALSE;
 
   int lgid = lives_getgid();
   int luid = lives_getuid();
@@ -5546,8 +5546,16 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   retval = recover_files((recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, luid,
                                           lgid, recpid)), auto_recover);
-  lives_rm(recovery_file);
   lives_free(recovery_file);
+
+  if (!retval) {
+    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname, capable->mainpid);
+    lives_system(com, FALSE);
+    lives_free(com);
+    return FALSE;
+  }
+
+  lives_rm(recovery_file);
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
   if (mainw->current_file > -1 && cfile != NULL) {
@@ -5565,7 +5573,10 @@ boolean check_for_recovery_files(boolean auto_recover) {
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid, LIVES_FILE_EXT_LAYOUT);
   recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
 
-  found = FALSE;
+  recording_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
+                                       LIVES_FILE_EXT_LAYOUT);
+
+  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
 
   if (!lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     lives_free(recovery_file);
@@ -5582,22 +5593,39 @@ boolean check_for_recovery_files(boolean auto_recover) {
     }
   }
 
+  if (lives_file_test(recording_file, LIVES_FILE_TEST_EXISTS)) {
+    if (lives_file_test(recording_numbering_file, LIVES_FILE_TEST_EXISTS)) {
+      found_recording = TRUE;
+      xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+      lives_mv(recording_file, xfile);
+      lives_free(xfile);
+      xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+      lives_mv(recording_numbering_file, xfile);
+      lives_free(xfile);
+    }
+    mainw->recording_recovered = TRUE;
+  }
+
   if (found) {
     // move files temporarily to stop them being cleansed
-    char *xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
     lives_mv(recovery_file, xfile);
     lives_free(xfile);
     xfile = lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
     lives_mv(recovery_numbering_file, xfile);
     lives_free(xfile);
     mainw->recoverable_layout = TRUE;
-  } else {
+  }
+
+  if (!found && !found_recording) {
     if (mainw->scrap_file != -1) close_scrap_file(TRUE);
     if (mainw->ascrap_file != -1) close_ascrap_file(TRUE);
   }
 
   lives_free(recovery_file);
   lives_free(recovery_numbering_file);
+  lives_free(recording_file);
+  lives_free(recording_numbering_file);
 
   if (mainw->com_failed) {
     rewrite_recovery_file();
@@ -5613,7 +5641,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   if (mainw->recoverable_layout) {
     // move files back
-    char *xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    xfile = lives_strdup_printf("%s/keep_layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
     lives_mv(xfile, recovery_file);
     lives_free(xfile);
     xfile = lives_strdup_printf("%s/keep_layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
@@ -5621,12 +5649,27 @@ boolean check_for_recovery_files(boolean auto_recover) {
     lives_free(xfile);
   }
 
+  recording_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid,
+                                       LIVES_FILE_EXT_LAYOUT);
+  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
+
+  if (mainw->recording_recovered) {
+    xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    lives_mv(xfile, recording_file);
+    lives_free(xfile);
+    xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    lives_mv(xfile, recording_numbering_file);
+    lives_free(xfile);
+  }
+
   lives_free(recovery_file);
   lives_free(recovery_numbering_file);
+  lives_free(recording_file);
+  lives_free(recording_numbering_file);
 
   rewrite_recovery_file();
 
-  if (!mainw->recoverable_layout) do_after_crash_warning();
+  if (!mainw->recoverable_layout && !mainw->recording_recovered) do_after_crash_warning();
 
   return retval;
 }

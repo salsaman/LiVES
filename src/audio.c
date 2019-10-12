@@ -3389,7 +3389,7 @@ void nullaudio_clip_set(int clipno) {
 int64_t nullaudio_update_seek_posn() {
   if (!CURRENT_CLIP_HAS_AUDIO) return mainw->nullaudio_seek_posn;
   else {
-    int64_t current_ticks = lives_get_current_ticks();
+    ticks_t current_ticks = lives_get_current_ticks();
     mainw->nullaudio_seek_posn += ((int64_t)((double)(current_ticks - mainw->nullaudio_start_ticks) / USEC_TO_TICKS / 1000000. *
                                    mainw->nullaudio_arate)) * afile->achans * (afile->asampsize >> 3);
     mainw->nullaudo_startticks = current_ticks;

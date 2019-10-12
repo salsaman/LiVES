@@ -2759,6 +2759,17 @@ boolean resize_message_area(livespointer data) {
 }
 
 
+static boolean render_choice_idle(livespointer data) {
+  if (mt_load_recovery_layout(NULL)) {
+    if (mainw->event_list != NULL) {
+      deal_with_render_choice(FALSE);
+    }
+  }
+  mainw->recording_recovered = FALSE;
+  return FALSE;
+}
+
+
 static boolean lives_startup(livespointer data) {
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
@@ -3076,15 +3087,19 @@ static boolean lives_startup(livespointer data) {
 
   if (mainw->recoverable_layout) layout_recovered = do_layout_recover_dialog();
 
-  if (mainw->ascrap_file != -1) {
-    if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->ascrap_file)) {
-      close_ascrap_file(FALSE); // ignore but leave file on disk for recovery purposes
+  if (!mainw->recording_recovered) {
+    if (mainw->ascrap_file != -1) {
+      if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->ascrap_file)) {
+        close_ascrap_file(FALSE); // ignore but leave file on disk for recovery purposes
+      }
     }
-  }
-  if (mainw->scrap_file != -1) {
-    if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
-      close_scrap_file(FALSE); // ignore but leave file on disk for recovery purposes
+    if (mainw->scrap_file != -1) {
+      if (!layout_recovered || mainw->multitrack == NULL || !used_in_current_layout(mainw->multitrack, mainw->scrap_file)) {
+        close_scrap_file(FALSE); // ignore but leave file on disk for recovery purposes
+      }
     }
+  } else {
+    if (mainw->multitrack) multitrack_delete(mainw->multitrack, FALSE);
   }
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
@@ -3121,9 +3136,11 @@ static boolean lives_startup(livespointer data) {
           lives_idle_add(resize_message_area, NULL);
         mainw->idlemax = DEF_IDLE_MAX;
       }
+      draw_little_bars(0., 0);
     }
-
-    draw_little_bars(0., 0);
+    if (mainw->recording_recovered) {
+      lives_idle_add(render_choice_idle, NULL);
+    }
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
     lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
@@ -5881,7 +5898,7 @@ void load_frame_image(int frame) {
 
       // record performance
       if ((mainw->record && !mainw->record_paused) || mainw->record_starting) {
-        uint64_t actual_ticks;
+        ticks_t actual_ticks;
         int fg_frame = mainw->actual_frame;
         int bg_file = mainw->blend_file > 0 && mainw->blend_file != mainw->current_file &&
                       mainw->files[mainw->blend_file] != NULL ? mainw->blend_file : -1;

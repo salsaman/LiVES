@@ -31,9 +31,9 @@ static boolean accelerators_swapped;
 static int frames_done;
 static double disp_fraction_done;
 
-static uint64_t last_open_check_ticks;
+static ticks_t last_open_check_ticks;
 
-static uint64_t prev_ticks;
+static ticks_t prev_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
@@ -1099,7 +1099,7 @@ int process_one(boolean visible) {
 
 #ifdef RT_AUDIO
   double audio_stretch;
-  uint64_t audio_ticks = 0;
+  ticks_t audio_ticks = 0;
 #endif
 
   if (!visible) {
@@ -1131,7 +1131,7 @@ int process_one(boolean visible) {
     }
     if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {
       // time source changed, make sure there is no discontinuity by adjusting deltaticks
-      int64_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
+      ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
       mainw->deltaticks += delta - mainw->currticks;
     }
     last_time_source = time_source;

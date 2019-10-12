@@ -2108,7 +2108,7 @@ void set_render_choice_button(LiVESButton *button, livespointer choice) {
 }
 
 
-LiVESWidget *events_rec_dialog(boolean allow_mt) {
+LiVESWidget *events_rec_dialog(void) {
   LiVESWidget *e_rec_dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
@@ -2144,7 +2144,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
 
-  if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL) {
+  if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL && !mainw->recording_recovered) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -2174,7 +2174,7 @@ LiVESWidget *events_rec_dialog(boolean allow_mt) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_MULTITRACK));
 
-  if (!allow_mt) lives_widget_set_sensitive(radiobutton, FALSE);
+  if (mainw->stored_event_list != NULL) lives_widget_set_no_show_all(hbox, TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -4446,6 +4446,57 @@ LIVES_INLINE void dprint_recneg(void) {
 }
 
 
+static boolean backup_recording(char **esave_file, char **asave_file) {
+  LiVESList *clist = mainw->cliplist;
+  double vald = 0.;
+  int fd, i, hdlsize;
+
+  *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                    capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+  mainw->write_failed = FALSE;
+  fd = lives_creat_buffered(*esave_file, DEF_FILE_PERMS);
+  if (fd >= 0) {
+    save_event_list_inner(NULL, fd, mainw->event_list, NULL);
+    lives_close_buffered(fd);
+  }
+  if (fd < 0 || mainw->write_failed) {
+    mainw->write_failed = FALSE;
+    lives_freep((void **)esave_file);
+    *asave_file = NULL;
+    return FALSE;
+  }
+
+  *asave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                    capable->mainpid);
+
+  fd = lives_creat_buffered(*asave_file, DEF_FILE_PERMS);
+  if (fd >= 0) {
+    while (!mainw->write_failed && clist != NULL) {
+      i = LIVES_POINTER_TO_INT(clist->data);
+      if (IS_NORMAL_CLIP(i)) {
+        lives_write_le_buffered(fd, &i, 4, TRUE);
+        lives_write_le_buffered(fd, &vald, 8, TRUE);
+        hdlsize = strlen(mainw->files[i]->handle);
+        lives_write_le_buffered(fd, &hdlsize, 4, TRUE);
+        lives_write_buffered(fd, (const char *)&mainw->files[i]->handle, hdlsize, TRUE);
+      }
+      clist = clist->next;
+    }
+    lives_close_buffered(fd);
+  }
+
+  if (fd < 0 || mainw->write_failed) {
+    mainw->write_failed = FALSE;
+    lives_rm(*esave_file);
+    if (fd >= 0) lives_rm(*asave_file);
+    lives_freep((void **)esave_file);
+    lives_freep((void **)asave_file);
+    return FALSE;
+  }
+  return TRUE;
+}
+
+
 boolean deal_with_render_choice(boolean add_deinit) {
   // this is called from saveplay.c after record/playback ends
   // here we deal with the user's wishes as to how to deal with the recorded events
@@ -4459,6 +4510,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
   LiVESWidget *elist_dialog;
 
   double df;
+
+  char *esave_file = NULL, *asave_file = NULL;
 
   boolean new_clip = FALSE;
   boolean was_paused = mainw->record_paused;
@@ -4500,8 +4553,13 @@ boolean deal_with_render_choice(boolean add_deinit) {
     pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
   }
 
+  // crash recovery -> backup the event list
+  if (prefs->crash_recovery) {
+    backup_recording(&esave_file, &asave_file);
+  }
+
   do {
-    e_rec_dialog = events_rec_dialog(TRUE);
+    e_rec_dialog = events_rec_dialog();
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
@@ -4509,7 +4567,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_widget_context_update();
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
-      if (mainw->current_file > -1) cfile->redoable = FALSE;
+      if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;
       close_scrap_file(TRUE);
       close_ascrap_file(TRUE);
       sensitize();
@@ -4617,6 +4675,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
     }
 
   } while (render_choice == RENDER_CHOICE_PREVIEW);
+
+  if (esave_file != NULL) lives_rm(esave_file);
+  if (asave_file != NULL) lives_rm(asave_file);
 
   if (mainw->event_list != NULL) {
     event_list_free(mainw->event_list);

@@ -6,6 +6,7 @@ Optimise communication with commandline plugins using popen().
 Fix screen / window sizing issues.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
+Crash recovery now recovers performance recording if lives crashes during rendering one.
 Improvements to RFX script builder tool.
 Improvements to Fileselector preview / Selection opener.
 Improvements to effects previews.

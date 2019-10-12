@@ -45,6 +45,40 @@ typedef struct {
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
+#if 0
+#include <openssl/md5.h>
+int calculate_md5sum(char *filename) {
+  //open file for calculating md5sum
+  FILE *file_ptr;
+  int n;
+  MD5_CTX c;
+  char buf[512];
+  ssize_t bytes;
+  unsigned char out[MD5_DIGEST_LENGTH];
+
+  file_ptr = fopen(filename, "r");
+  if (file_ptr == NULL) {
+    perror("Error opening file");
+    fflush(stdout);
+    return 1;
+  }
+
+  MD5_Init(&c);
+  do {
+    bytes = fread(buf, 1, 512, file_ptr);
+    MD5_Update(&c, buf, bytes);
+  } while (bytes > 0);
+
+  MD5_Final(out, &c);
+
+  for (n = 0; n < MD5_DIGEST_LENGTH; n++)
+    printf("%02x", out[n]);
+  printf("\n");
+  return 0;
+}
+#endif
+
+
 char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
 

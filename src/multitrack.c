@@ -126,6 +126,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list);
 
 /// used to match clips from the event recorder with renumbered clips (without gaps)
 static int renumbered_clips[MAX_FILES + 1];
+
 static double lfps[MAX_FILES + 1]; ///< table of layout fps
 static void **pchain; ///< param chain for currently being edited filter
 
@@ -252,7 +253,7 @@ void set_mixer_track_vol(lives_mt *mt, int trackno, double vol) {
 }
 
 
-static boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
+boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, unsigned char **mem) {
   weed_plant_t *event;
 
   void **ievs = NULL;
@@ -717,38 +718,52 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 
   //but the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
 
-  int fd, vari, clipn, offs;
+  int fd, vari, clipn, offs, restart = 0;
   double vard;
-  char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
-                                         capable->mainpid);
-  boolean isfirst = TRUE;
-  char buf[256];
+  char *aload_file;
+  char buf[512];
+  boolean gotvalid = FALSE;
 
-  // ensure file layouts are updated
-  upd_layout_maps(NULL);
+  if (mt != NULL) {
+    aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid);
+    // ensure file layouts are updated
+    upd_layout_maps(NULL);
+  } else {
+    aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid);
+  }
 
   fd = lives_open_buffered_rdonly(aload_file);
 
   if (fd != -1) {
     while (1) {
+      offs = restart;
       if (lives_read_le_buffered(fd, &clipn, 4, TRUE) == 4) {
-        if (isfirst) offs = -clipn + 1;
-        else isfirst = FALSE;
         if (lives_read_le_buffered(fd, &vard, 8, TRUE) == 8) {
-
           if (lives_read_le_buffered(fd, &vari, 4, TRUE) == 4) {
             // compare the handle - assume clip ordering has not changed
-            if (vari > 255) vari = 255;
+            if (vari > 511) vari = 511;
             if (lives_read_buffered(fd, buf, vari, TRUE) == vari) {
               memset(buf + vari, 0, 1);
-              while (mainw->files[clipn + offs] != NULL && strcmp(mainw->files[clipn + offs]->handle, buf)) {
-                offs++;
+              gotvalid = FALSE;
+              while (++offs < MAX_FILES) {
+                if (!IS_VALID_CLIP(offs)) {
+                  if (!gotvalid) restart = offs;
+                  continue;
+                }
+                gotvalid = TRUE;
+                if (strcmp(mainw->files[offs]->handle, buf)) {
+                  // dont increase restart
+                  continue;
+                }
+                // got a match - index the current clip order -> clip order in layout
+                renumbered_clips[clipn] = offs;
+                // lfps contains the fps at the time of the crash
+                lfps[offs] = vard;
+                restart = offs;
+                break;
               }
-              if (mainw->files[clipn + offs] == NULL) break;
-              // got a match - index the current clip order -> clip order in layout
-              renumbered_clips[clipn] = clipn + offs;
-              // lfps contains the fps at the time of the crash
-              lfps[clipn + offs] = vard;
             } else break;
           } else break;
         } else break;
@@ -894,23 +909,45 @@ void recover_layout_cancelled(boolean is_startup) {
 }
 
 
-static boolean mt_load_recovery_layout(lives_mt *mt) {
+boolean mt_load_recovery_layout(lives_mt *mt) {
   boolean recovered = TRUE;
-  char *aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
-                                         capable->mainpid);
-  char *eload_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
-                                         capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+  char *aload_file = NULL, *eload_file;
 
-  mt->auto_reloading = TRUE;
-  mainw->event_list = mt->event_list = load_event_list(mt, eload_file);
-  mt->auto_reloading = FALSE;
-  if (mt->event_list != NULL) {
-    lives_rm(eload_file);
-    lives_rm(aload_file);
-    mt_init_tracks(mt, TRUE);
-    remove_markers(mt->event_list);
-    save_mt_autoback(mt, 0);
+  if (mt != NULL) {
+    aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid);
+    eload_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+    mt->auto_reloading = TRUE;
+    mt->event_list = mainw->event_list = load_event_list(mt, eload_file);
+    mt->auto_reloading = FALSE;
+    if (mt->event_list != NULL) {
+      lives_rm(eload_file);
+      lives_rm(aload_file);
+      mt_init_tracks(mt, TRUE);
+      remove_markers(mt->event_list);
+      save_mt_autoback(mt, 0);
+    }
   } else {
+    // recover recording
+    int fd;
+    aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid);
+    eload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
+                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
+
+    if ((fd = lives_open_buffered_rdonly(eload_file)) < 0) {
+      lives_close_buffered(fd);
+    } else {
+      mainw->event_list = load_event_list(NULL, eload_file);
+      if (mainw->event_list != NULL) {
+        lives_rm(eload_file);
+        lives_rm(aload_file);
+      }
+    }
+  }
+
+  if (mainw->event_list == NULL) {
     // failed to load
     // keep the faulty layout for forensic purposes
     char *uldir = lives_build_filename(prefs->workdir, "unrecoverable_layouts", LIVES_DIR_SEP, NULL);
@@ -921,13 +958,15 @@ static boolean mt_load_recovery_layout(lives_mt *mt) {
     if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
       lives_mv(aload_file, uldir);
     }
-    mt->fps = prefs->mt_def_fps;
+    if (mt != NULL) {
+      mt->fps = prefs->mt_def_fps;
+    }
     lives_free(uldir);
     recovered = FALSE;
   }
 
   lives_free(eload_file);
-  lives_free(aload_file);
+  lives_freep((void **)&aload_file);
   return recovered;
 }
 
@@ -5300,117 +5339,118 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       if (tmp != NULL) lives_free(tmp);
       lives_free(set_needed);
     }
-  } else if (!show_errors && mem == NULL) return NULL; // no change needed
+  } else if (mt != NULL && !show_errors && mem == NULL) return NULL; // no change needed
 
-  if (event_list == mainw->stored_event_list || (mt != NULL && !mt->ignore_load_vals)) {
-    if (fps > -1) {
-      cfile->fps = cfile->pb_fps = fps;
-      if (mt != NULL) mt->fps = cfile->fps;
-      cfile->ratio_fps = check_for_ratio_fps(cfile->fps);
-    }
-
-    // check for optional leaves
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_WIDTH)) {
-      int width = weed_get_int_value(event_list, WEED_LEAF_WIDTH, &error);
-      if (width > 0) {
-        cfile->hsize = width;
-        if (mt != NULL) mt->layout_set_properties = TRUE;
+  if (mt != NULL) {
+    if (event_list == mainw->stored_event_list || (mt != NULL && !mt->ignore_load_vals)) {
+      if (fps > -1) {
+        cfile->fps = cfile->pb_fps = fps;
+        if (mt != NULL) mt->fps = cfile->fps;
+        cfile->ratio_fps = check_for_ratio_fps(cfile->fps);
       }
-    }
 
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_HEIGHT)) {
-      int height = weed_get_int_value(event_list, WEED_LEAF_HEIGHT, &error);
-      if (height > 0) {
-        cfile->vsize = height;
-        if (mt != NULL) mt->layout_set_properties = TRUE;
-      }
-    }
-
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_CHANNELS)) {
-      int achans = weed_get_int_value(event_list, WEED_LEAF_AUDIO_CHANNELS, &error);
-      if (achans >= 0 && mt != NULL) {
-        if (achans > 2) {
-          char *err = lives_strdup_printf(_("\nThis layout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
-          d_print(err);
-          do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-          lives_free(err);
-          return NULL;
+      // check for optional leaves
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_WIDTH)) {
+        int width = weed_get_int_value(event_list, WEED_LEAF_WIDTH, &error);
+        if (width > 0) {
+          cfile->hsize = width;
+          if (mt != NULL) mt->layout_set_properties = TRUE;
         }
-        cfile->achans = achans;
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_HEIGHT)) {
+        int height = weed_get_int_value(event_list, WEED_LEAF_HEIGHT, &error);
+        if (height > 0) {
+          cfile->vsize = height;
+          if (mt != NULL) mt->layout_set_properties = TRUE;
+        }
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_CHANNELS)) {
+        int achans = weed_get_int_value(event_list, WEED_LEAF_AUDIO_CHANNELS, &error);
+        if (achans >= 0 && mt != NULL) {
+          if (achans > 2) {
+            char *err = lives_strdup_printf(_("\nThis layout has an invalid number of audio channels (%d) for LiVES.\nIt cannot be loaded.\n"), achans);
+            d_print(err);
+            do_error_dialog_with_check_transient(err, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+            lives_free(err);
+            return NULL;
+          }
+          cfile->achans = achans;
+          if (mt != NULL) mt->layout_set_properties = TRUE;
+        }
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_RATE)) {
+        int arate = weed_get_int_value(event_list, WEED_LEAF_AUDIO_RATE, &error);
+        if (arate > 0) {
+          cfile->arate = cfile->arps = arate;
+          if (mt != NULL) mt->layout_set_properties = TRUE;
+        }
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE)) {
+        int asamps = weed_get_int_value(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE, &error);
+        if (asamps == 8 || asamps == 16) {
+          cfile->asampsize = asamps;
+          if (mt != NULL) mt->layout_set_properties = TRUE;
+        } else if (cfile->achans > 0) {
+          msg = lives_strdup_printf("Layout has invalid sample size %d\n", asamps);
+          LIVES_ERROR(msg);
+          lives_free(msg);
+        }
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_SIGNED)) {
+        int asigned = weed_get_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, &error);
+        if (asigned == WEED_TRUE) {
+          if (cfile->signed_endian & AFORM_UNSIGNED) cfile->signed_endian ^= AFORM_UNSIGNED;
+        } else {
+          if (!(cfile->signed_endian & AFORM_UNSIGNED)) cfile->signed_endian |= AFORM_UNSIGNED;
+        }
         if (mt != NULL) mt->layout_set_properties = TRUE;
+      }
+
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_ENDIAN)) {
+        int aendian = weed_get_int_value(event_list, WEED_LEAF_AUDIO_ENDIAN, &error);
+        if (aendian == WEED_AUDIO_LITTLE_ENDIAN) {
+          if (cfile->signed_endian & AFORM_BIG_ENDIAN) cfile->signed_endian ^= AFORM_BIG_ENDIAN;
+        } else {
+          if (!(cfile->signed_endian & AFORM_BIG_ENDIAN)) cfile->signed_endian |= AFORM_BIG_ENDIAN;
+        }
+        if (mt != NULL) mt->layout_set_properties = TRUE;
+      }
+    } else {
+      if (mt != NULL) {
+        msg = set_values_from_defs(mt, FALSE);
+        if (msg != NULL) {
+          if (mt != NULL) mt->layout_set_properties = TRUE;
+          lives_free(msg);
+        }
+        cfile->fps = cfile->pb_fps;
+        if (mt != NULL) mt->fps = cfile->fps;
+        cfile->ratio_fps = check_for_ratio_fps(cfile->fps);
       }
     }
 
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_RATE)) {
-      int arate = weed_get_int_value(event_list, WEED_LEAF_AUDIO_RATE, &error);
-      if (arate > 0) {
-        cfile->arate = cfile->arps = arate;
-        if (mt != NULL) mt->layout_set_properties = TRUE;
-      }
-    }
+    if (event_list == mainw->stored_event_list) return event_list;
+    // force 64 bit ptrs when reading layouts (for compatibility)
+    prefs->force64bit = FALSE;
 
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE)) {
-      int asamps = weed_get_int_value(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE, &error);
-      if (asamps == 8 || asamps == 16) {
-        cfile->asampsize = asamps;
-        if (mt != NULL) mt->layout_set_properties = TRUE;
-      } else if (cfile->achans > 0) {
-        msg = lives_strdup_printf("Layout has invalid sample size %d\n", asamps);
-        LIVES_ERROR(msg);
-        lives_free(msg);
+    if (weed_plant_has_leaf(event_list, WEED_LEAF_WEED_EVENT_API_VERSION)) {
+      if (weed_get_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, &error) >= 110) prefs->force64bit = TRUE;
+    } else {
+      if (weed_plant_has_leaf(event_list, WEED_LEAF_PTRSIZE)) {
+        if (weed_get_int_value(event_list, WEED_LEAF_PTRSIZE, &error) == 8) prefs->force64bit = TRUE;
       }
-    }
-
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_SIGNED)) {
-      int asigned = weed_get_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, &error);
-      if (asigned == WEED_TRUE) {
-        if (cfile->signed_endian & AFORM_UNSIGNED) cfile->signed_endian ^= AFORM_UNSIGNED;
-      } else {
-        if (!(cfile->signed_endian & AFORM_UNSIGNED)) cfile->signed_endian |= AFORM_UNSIGNED;
-      }
-      if (mt != NULL) mt->layout_set_properties = TRUE;
-    }
-
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_AUDIO_ENDIAN)) {
-      int aendian = weed_get_int_value(event_list, WEED_LEAF_AUDIO_ENDIAN, &error);
-      if (aendian == WEED_AUDIO_LITTLE_ENDIAN) {
-        if (cfile->signed_endian & AFORM_BIG_ENDIAN) cfile->signed_endian ^= AFORM_BIG_ENDIAN;
-      } else {
-        if (!(cfile->signed_endian & AFORM_BIG_ENDIAN)) cfile->signed_endian |= AFORM_BIG_ENDIAN;
-      }
-      if (mt != NULL) mt->layout_set_properties = TRUE;
-    }
-  } else {
-    if (mt != NULL) {
-      msg = set_values_from_defs(mt, FALSE);
-      if (msg != NULL) {
-        if (mt != NULL) mt->layout_set_properties = TRUE;
-        lives_free(msg);
-      }
-      cfile->fps = cfile->pb_fps;
-      if (mt != NULL) mt->fps = cfile->fps;
-      cfile->ratio_fps = check_for_ratio_fps(cfile->fps);
     }
   }
-
-  if (event_list == mainw->stored_event_list) return event_list;
 
   if (weed_plant_has_leaf(event_list, WEED_LEAF_FIRST)) weed_leaf_delete(event_list, WEED_LEAF_FIRST);
   if (weed_plant_has_leaf(event_list, WEED_LEAF_LAST)) weed_leaf_delete(event_list, WEED_LEAF_LAST);
 
   weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-
-  // force 64 bit ptrs when reading layouts (for compatibility)
-  prefs->force64bit = FALSE;
-
-  if (weed_plant_has_leaf(event_list, WEED_LEAF_WEED_EVENT_API_VERSION)) {
-    if (weed_get_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, &error) >= 110) prefs->force64bit = TRUE;
-  } else {
-    if (weed_plant_has_leaf(event_list, WEED_LEAF_PTRSIZE)) {
-      if (weed_get_int_value(event_list, WEED_LEAF_PTRSIZE, &error) == 8) prefs->force64bit = TRUE;
-    }
-  }
 
   do {
     if (mem != NULL && (*mem) >= mem_end) break;
@@ -5440,6 +5480,8 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
       if (num_events != NULL)(*num_events)++;
     }
   } while (event != NULL);
+
+  if (mt == NULL) return event_list;
 
   weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
 
@@ -9046,7 +9088,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     mt->frame_pixbuf = NULL;
   }
 
-  if (save_layout || mainw->scrap_file != -1 || mainw->ascrap_file != -1) {
+  if (save_layout || ((mainw->scrap_file != -1 || mainw->ascrap_file != -1) && !mainw->recording_recovered)) {
     int file_selected = mt->file_selected;
     if (!check_for_layout_del(mt, TRUE)) {
       if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
@@ -20087,7 +20129,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
   void **in_pchanges;
   void **pchains[FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL]; // parameter chains
 
-  double fps = weed_get_double_value(event_list, WEED_LEAF_FPS, &error);
+  double fps = 0.;
   double *aseek_index, *new_aseek_index;
 
   LiVESWidget *transient;
@@ -20097,6 +20139,8 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
   uint64_t *init_events;
 
   ttable trans_table[FX_KEYS_MAX - FX_KEYS_MAX_VIRTUAL]; // translation table for init_events
+
+  if (weed_plant_has_leaf(event_list, WEED_LEAF_FPS)) fps = weed_get_double_value(event_list, WEED_LEAF_FPS, &error);
 
   if (mt != NULL) mt->layout_prompt = FALSE;
 
@@ -20119,9 +20163,10 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
       continue;
     }
     tc = get_event_timecode(event);
-    tc = q_gint64(tc + TICKS_PER_SECOND_DBL / (2.*fps) - 1, fps);
-    weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
-
+    if (fps != 0.) {
+      tc = q_gint64(tc + TICKS_PER_SECOND_DBL / (2. * fps) - 1, fps);
+      weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
+    }
     ev_count++;
     lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d|", ev_count);
     if ((ev_count % 100) == 0) threaded_dialog_spin(0.);
@@ -20624,15 +20669,23 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
           } else {
             // take into account the fact that clip could have been resampled since layout was saved
             if (clip_index[i] > 0 && frame_index[i] > 0) {
-              new_frame_index[i] = count_resampled_frames(frame_index[i], lfps[renumbered_clips[clip_index[i]]],
-                                   mainw->files[renumbered_clips[clip_index[i]]]->fps);
-              if (new_frame_index[i] > mainw->files[renumbered_clips[clip_index[i]]]->frames) {
+              int rclip = renumbered_clips[clip_index[i]];
+              if (lfps[rclip] != 0.) {
+                new_frame_index[i] = count_resampled_frames(frame_index[i], lfps[rclip],
+                                     mainw->files[rclip]->fps);
+              } else new_frame_index[i] = frame_index[i];
+              // the scrap_file has no real frames so we allow it to pass
+              if (rclip != mainw->scrap_file && new_frame_index[i] > mainw->files[rclip]->frames) {
                 ebuf = rec_error_add(ebuf, "Invalid frame number", new_frame_index[i], tc);
                 new_clip_index[i] = -1;
                 new_frame_index[i] = 0;
                 missing_frames = TRUE;
               } else {
-                new_clip_index[i] = clip_index[i];
+                // if recovering a recording we will be rendering from the clip editor and not using renumbered clips
+                // so we must adjust the clip number in the layout
+                // for multitrack, we leave the original clip number and use our renumbered clips mapping
+                if (mainw->recording_recovered) new_clip_index[i] = rclip;
+                else new_clip_index[i] = clip_index[i];
                 new_frame_index[i] = frame_index[i];
                 last_valid_frame = i + 1;
               }
@@ -20780,7 +20833,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     }
     event = event_next;
 
-    if (!was_deleted) {
+    if (!was_deleted && fps != 0.) {
       while (cur_tc < last_frame_tc) {
         // add blank frames
         if (!has_frame_event_at(event_list, cur_tc, &shortcut)) {
@@ -20795,8 +20848,13 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
         cur_tc += TICKS_PER_SECOND_DBL / fps;
         cur_tc = q_gint64(cur_tc, fps);
       }
-      last_tc = tc;
     }
+    last_tc = tc;
+  }
+
+  if (fps == 0.) {
+    lives_free(ebuf);
+    return TRUE;
   }
 
   // add any missing filter_deinit events
@@ -20813,7 +20871,6 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
     last_tc = get_event_timecode(last_event);
     ebuf = rec_error_add(ebuf, "Removed final blank frames", -1, last_tc);
   }
-
 
   // pass 2 - move left any FILTER_DEINITS before the FRAME, move right any FILTER_INITS or PARAM_CHANGES after the FRAME
   // ensure we have at most 1 FILTER_MAP before each FRAME, and 1 FILTER_MAP after a FRAME
@@ -21016,12 +21073,15 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   int num_events = 0;
   int retval2;
-  int old_avol_fx = mt->avol_fx;
+  int old_avol_fx;
   int fd;
 
-  if (mt->idlefunc > 0) {
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc = 0;
+  if (mt != NULL) {
+    old_avol_fx  = mt->avol_fx;
+    if (mt->idlefunc > 0) {
+      lives_source_remove(mt->idlefunc);
+      mt->idlefunc = 0;
+    }
   }
 
   if (eload_file == NULL) {
@@ -21039,47 +21099,66 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   else eload_name = lives_strdup(_("auto backup"));
 
   if ((fd = lives_open_buffered_rdonly(eload_file)) < 0) {
-    msg = lives_strdup_printf(_("\nUnable to load layout file %s\n"), eload_name);
-    do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_free(msg);
+    if (mt != NULL) {
+      msg = lives_strdup_printf(_("\nUnable to load layout file %s\n"), eload_name);
+      do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_free(msg);
+      mt->idlefunc = mt_idle_add(mt);
+    }
     lives_free(eload_name);
-    mt->idlefunc = mt_idle_add(mt);
     return NULL;
   }
 
-  event_list_free_undos(mt);
+  if (mt != NULL) {
+    event_list_free_undos(mt);
 
-  if (mainw->event_list != NULL) {
-    event_list_free(mt->event_list);
-    mt->event_list = NULL;
-    mt_clear_timeline(mt);
+    if (mainw->event_list != NULL) {
+      event_list_free(mt->event_list);
+      mt->event_list = NULL;
+      mt_clear_timeline(mt);
+    }
+
+    mainw->no_switch_dprint = TRUE;
+    d_print(_("Loading layout from %s..."), eload_name);
+    mainw->no_switch_dprint = FALSE;
+
+    mt_desensitise(mt);
   }
-
-  mainw->no_switch_dprint = TRUE;
-  d_print(_("Loading layout from %s..."), eload_name);
-  mainw->no_switch_dprint = FALSE;
-
-  mt_desensitise(mt);
 
   mainw->read_failed = FALSE;
 
   do {
     retval = 0;
-    if ((event_list = load_event_list_inner(mt, fd, TRUE, &num_events, NULL, NULL)) == NULL) {
+    if ((event_list = load_event_list_inner(mt, fd, mt != NULL, &num_events, NULL, NULL)) == NULL) {
       lives_close_buffered(fd);
 
       if (mainw->read_failed) {
-        retval = do_read_failed_error_s_with_retry(eload_name, NULL, NULL);
+        if (mt != NULL) retval = do_read_failed_error_s_with_retry(eload_name, NULL, NULL);
         mainw->read_failed = FALSE;
       }
 
-      if (retval != LIVES_RESPONSE_RETRY) {
+      if (mt != NULL && retval != LIVES_RESPONSE_RETRY) {
         if (mt->is_ready) mt_sensitise(mt);
         lives_free(eload_name);
         mt->idlefunc = mt_idle_add(mt);
         return NULL;
       }
     } else lives_close_buffered(fd);
+
+    if (mt == NULL) {
+      lives_free(eload_name);
+      renumber_from_backup_layout_numbering(NULL);
+      if (!event_list_rectify(NULL, event_list)) {
+        event_list_free(event_list);
+        event_list = NULL;
+      }
+
+      if (get_first_event(event_list) == NULL) {
+        event_list_free(event_list);
+        event_list = NULL;
+      }
+      return event_list;
+    }
   } while (retval == LIVES_RESPONSE_RETRY);
 
   lives_free(eload_name);
@@ -21089,7 +21168,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   d_print(_("Got %d events...processing..."), num_events);
 
   mt->auto_changed = mt->changed = mainw->recoverable_layout;
-
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   cfile->progress_start = 1;

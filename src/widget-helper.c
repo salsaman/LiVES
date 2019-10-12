@@ -1212,7 +1212,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-  return gtk_dialog_run(dialog);
+  LiVESResponseType ret = gtk_dialog_run(dialog);
+  if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
+  return ret;
 #endif
 #ifdef GUI_QT
   int dc;

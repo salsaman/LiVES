@@ -2974,7 +2974,7 @@ void create_LiVES(void) {
   }
   mainw->plug = NULL;
   lives_widget_set_can_focus(mainw->message_box, TRUE);
-  if (new_lives) lives_widget_grab_focus(mainw->message_box);
+  if (new_lives) if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
 }
 
 

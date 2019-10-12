@@ -679,8 +679,8 @@ void lives2lives_read_stream(const char *host, int port) {
 
 
 void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstream_t *lstream) {
-  static int64_t last_delta_ticks = 0;
-  int64_t currticks;
+  static ticks_t last_delta_ticks = 0;
+  ticks_t currticks;
 
   void **pixel_data;
 
@@ -775,7 +775,7 @@ void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstrea
             }
           }
         }
-        last_delta_ticks = ((int64_t)(last_delta_ticks >> 1) + (int64_t)((abs64(currticks - lstream->timecode)) >> 1));
+        last_delta_ticks = ((ticks_t)(last_delta_ticks >> 1) + (ticks_t)((abs64(currticks - lstream->timecode)) >> 1));
 #endif
       }
     }

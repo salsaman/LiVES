@@ -938,6 +938,8 @@ void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_even
 char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload);
 weed_plant_t *load_event_list(lives_mt *, char *eload_file);
 boolean on_save_event_list_activate(LiVESMenuItem *, livespointer mt);
+boolean save_event_list_inner(lives_mt *, int fd, weed_plant_t *event_list, unsigned char **mem);
+boolean mt_load_recovery_layout(lives_mt *);
 
 // layouts and layout maps
 LiVESList *load_layout_map(void);

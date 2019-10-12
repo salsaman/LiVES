@@ -7011,7 +7011,7 @@ deinit2:
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
       outc_count == 0)) {
-    uint64_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    ticks_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks,
@@ -7056,7 +7056,7 @@ deinit2:
         if (mainw->pulsed_read != NULL && mainw->pulsed_read->in_use &&
             (mainw->pulsed_read->playing_file == -1 || mainw->pulsed_read->playing_file == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
-          int64_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
+          ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
           if (audio_ticks == -1) {
             mainw->cancelled = handle_audio_timeout();
             return mainw->cancelled;
@@ -7237,7 +7237,7 @@ void weed_deinit_effect(int hotkey) {
           if (mainw->pulsed != NULL) mainw->pulsed->in_use = FALSE; // deactivate writer
           pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
           if (mainw->pulsed != NULL) {
-            int64_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
+            ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
             if (audio_ticks == -1) {
               mainw->cancelled = handle_audio_timeout();
               return;
@@ -7338,7 +7338,7 @@ deinit3:
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    uint64_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    ticks_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
@@ -8765,7 +8765,7 @@ int set_copy_to(weed_plant_t *inst, int pnum, boolean update) {
 
 void rec_param_change(weed_plant_t *inst, int pnum) {
   // should be called with event_list_mutex unlocked !
-  uint64_t actual_ticks;
+  ticks_t actual_ticks;
   weed_plant_t *in_param;
   int key;
   int error;

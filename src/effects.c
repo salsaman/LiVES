@@ -589,7 +589,7 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   LiVESPixbuf *pixbuf;
 
-  int64_t frameticks;
+  ticks_t frameticks;
 
   weed_plant_t *layer;
 

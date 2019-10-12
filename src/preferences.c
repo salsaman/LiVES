@@ -848,6 +848,27 @@ success2:
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  if (!strcmp(prefidx, PREF_MT_AUTO_BACK)) {
+    if (newval == prefs->mt_auto_back) goto fail3;
+    if (mainw->multitrack != NULL) {
+      if (newval <= 0 && prefs->mt_auto_back > 0) {
+        if (mainw->multitrack->idlefunc > 0) {
+          lives_source_remove(mainw->multitrack->idlefunc);
+          mainw->multitrack->idlefunc = 0;
+        }
+        if (newval == 0) {
+          prefs->mt_auto_back = newval;
+          mt_auto_backup(mainw->multitrack);
+        }
+      }
+      if (newval > 0 && prefs->mt_auto_back <= 0 && mainw->multitrack->idlefunc > 0) {
+        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+      }
+    }
+    prefs->mt_auto_back = newval;
+    goto success3;
+  }
+
   if (!strcmp(prefidx, PREF_MAX_MSGS)) {
     if (newval == prefs->max_messages) goto fail3;
     if (newval < mainw->n_messages && newval >= 0) {
@@ -2083,21 +2104,7 @@ boolean apply_prefs(boolean skip_warn) {
   if (mt_autoback_always) mt_autoback_time = 0;
   else if (mt_autoback_never) mt_autoback_time = -1;
 
-  if (mt_autoback_time != prefs->mt_auto_back) {
-    if (mainw->multitrack != NULL) {
-      if (mt_autoback_time <= 0 && prefs->mt_auto_back > 0 && mainw->multitrack->idlefunc > 0) {
-        lives_source_remove(mainw->multitrack->idlefunc);
-        mainw->multitrack->idlefunc = 0;
-        mt_auto_backup(mainw->multitrack);
-      }
-      if (mt_autoback_time > 0 && prefs->mt_auto_back <= 0 && mainw->multitrack->idlefunc > 0) {
-        prefs->mt_auto_back = mt_autoback_time;
-        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-      }
-    }
-    prefs->mt_auto_back = mt_autoback_time;
-    set_int_pref(PREF_MT_AUTO_BACK, mt_autoback_time);
-  }
+  pref_factory_int(PREF_MT_AUTO_BACK, mt_autoback_time, TRUE);
 
   if (max_disp_vtracks != prefs->max_disp_vtracks) {
     prefs->max_disp_vtracks = max_disp_vtracks;

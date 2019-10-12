@@ -582,7 +582,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
 
             if (memok) {
-              int64_t tc = mainw->currticks;
+              ticks_t tc = mainw->currticks;
               // apply any audio effects with in_channels
 
               if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
@@ -669,7 +669,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
 
               if (memok) {
-                int64_t tc = mainw->currticks;
+                ticks_t tc = mainw->currticks;
                 // apply any audio effects with in_channels
 
                 if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
@@ -1057,7 +1057,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       }
 
       if (memok) {
-        int64_t tc = mainw->currticks;
+        ticks_t tc = mainw->currticks;
         // apply any audio effects with in channels but no out channels
 
         if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnsamples, pulsed->in_arate, tc, TRUE);

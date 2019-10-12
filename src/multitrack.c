@@ -5119,11 +5119,13 @@ static void apply_avol_filter(lives_mt *mt) {
 
   new_end_event = get_last_frame_event(mt->event_list);
 
-  if (new_end_event == NULL && init_event != NULL) {
-    remove_filter_from_event_list(mt->event_list, init_event);
-    if (mt->opts.aparam_view_list != NULL) {
-      for (i = 0; i < lives_list_length(mt->audio_draws); i++) {
-        lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws, i));
+  if (new_end_event == NULL) {
+    if (init_event != NULL) {
+      remove_filter_from_event_list(mt->event_list, init_event);
+      if (mt->opts.aparam_view_list != NULL) {
+        for (i = 0; i < lives_list_length(mt->audio_draws); i++) {
+          lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws, i));
+        }
       }
     }
     return;
@@ -9271,7 +9273,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     if (mt->audio_vols != NULL) lives_list_free(mt->audio_vols);
   }
 
-  if (CLIP_TOTAL_TIME(mainw->current_file) == 0.) close_current_file(mt->file_selected);
+  if (CURRENT_CLIP_IS_VALID && CLIP_TOTAL_TIME(mainw->current_file) == 0.) close_current_file(mt->file_selected);
 
   if (mt->video_draws != NULL) {
     for (i = 0; i < mt->num_video_tracks; i++) {
@@ -21152,7 +21154,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
         event_list_free(event_list);
         event_list = NULL;
       }
-
       if (get_first_event(event_list) == NULL) {
         event_list_free(event_list);
         event_list = NULL;

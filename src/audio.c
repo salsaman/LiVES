@@ -866,6 +866,7 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
 
       abuf = mainw->pulsed->abufs[mainw->pulsed->read_abuf];
 
+      // TODO **********
       pthread_mutex_unlock(&mainw->abuf_mutex);
     }
   }

@@ -1293,6 +1293,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->xlays = NULL;
 
+  mainw->preview_rendering = FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -2760,6 +2761,7 @@ boolean resize_message_area(livespointer data) {
 
 
 static boolean render_choice_idle(livespointer data) {
+  // TODO: *** figure out why we cant preview with only scrap_file loaded
   if (mt_load_recovery_layout(NULL)) {
     if (mainw->event_list != NULL) {
       deal_with_render_choice(FALSE);
@@ -5797,7 +5799,7 @@ void load_frame_image(int frame) {
 
   ticks_t audio_timed_out = 1;
 
-  boolean was_preview;
+  boolean was_preview = FALSE;
   boolean rec_after_pb = FALSE;
   boolean noswitch = mainw->noswitch;
 
@@ -5847,7 +5849,7 @@ void load_frame_image(int frame) {
   if (!mainw->foreign) {
     mainw->actual_frame = cfile->last_frameno = frame;
 
-    if (!(was_preview = mainw->preview) || mainw->is_rendering) {
+    if (!mainw->preview_rendering && (!(was_preview = mainw->preview) || mainw->is_rendering)) {
       /////////////////////////////////////////////////////////
 
       // normal play

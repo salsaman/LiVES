@@ -553,6 +553,7 @@ typedef struct {
   int play_end;
   boolean playing_sel;
   boolean preview;
+  boolean preview_rendering;
 
   boolean is_processing;
   boolean is_rendering;

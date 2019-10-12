@@ -3100,7 +3100,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       if (new_file != mainw->current_file) {
         mainw->files[new_file]->frameno = mainw->frame_index[i - 1];
-
         if (new_file != mainw->scrap_file) {
           // switch to a new file
           mainw->noswitch = FALSE;
@@ -4576,6 +4575,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       // preview
       cfile->next_event = get_first_event(mainw->event_list);
       mainw->is_rendering = TRUE;
+      mainw->preview_rendering = TRUE;
       if (prefs->audio_src == AUDIO_SRC_EXT) {
         pref_factory_bool(PREF_REC_EXT_AUDIO, FALSE, FALSE);
       }
@@ -4585,6 +4585,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       free_track_decoders();
       deinit_render_effects();
+      mainw->preview_rendering = FALSE;
       mainw->is_processing = mainw->is_rendering = FALSE;
       cfile->next_event = NULL;
       break;

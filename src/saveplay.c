@@ -5263,6 +5263,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         }
       } else {
         mainw->scrap_file = mainw->current_file;
+        cfile->opening = FALSE;
+        cfile->frames = 1;
+        cfile->hsize = 640;
+        cfile->vsize = 480;
       }
 
       if (mainw->current_file < 1) continue;

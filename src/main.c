@@ -4257,7 +4257,7 @@ void load_start_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      start_pixbuf = layer_to_pixbuf(layer);
+      start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_layer_free(layer);
 
@@ -4310,7 +4310,7 @@ void load_start_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      start_pixbuf = layer_to_pixbuf(layer);
+      start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
 
@@ -4447,7 +4447,7 @@ void load_end_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      end_pixbuf = layer_to_pixbuf(layer);
+      end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
 
@@ -4500,7 +4500,7 @@ void load_end_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      end_pixbuf = layer_to_pixbuf(layer);
+      end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
 
     weed_plant_free(layer);
@@ -4649,7 +4649,7 @@ void load_preview_image(boolean update_always) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
       resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      pixbuf = layer_to_pixbuf(layer);
+      pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
   }
@@ -5456,8 +5456,14 @@ void check_layer_ready(weed_plant_t *layer) {
   if (layer == NULL) return;
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) {
     pthread_t *frame_thread = (pthread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, &error);
-    pthread_join(*frame_thread, NULL);
+    int ret = pthread_join(*frame_thread, NULL);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
+    if (ret != 0) {
+      char *tmp = lives_strdup_printf("Check layer ready returned %d\n", ret);
+      LIVES_WARN(tmp);
+      lives_free(tmp);
+      return;
+    }
     free(frame_thread);
 
     if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_DEINTERLACE) &&
@@ -5549,7 +5555,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
 
   if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
     if (palette != WEED_PALETTE_END) convert_layer_palette(layer, palette, 0);
-    pixbuf = layer_to_pixbuf(layer);
+    pixbuf = layer_to_pixbuf(layer, TRUE);
   }
   weed_plant_free(layer);
   if (pixbuf != NULL && ((width != 0 && lives_pixbuf_get_width(pixbuf) != width)
@@ -6968,7 +6974,7 @@ void load_frame_image(int frame) {
       }
     } else if (prefs->show_urgency_msgs) convert_layer_palette(mainw->frame_layer, cpal, 0);
 
-    pixbuf = layer_to_pixbuf(mainw->frame_layer);
+    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 

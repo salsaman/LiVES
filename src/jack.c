@@ -1789,7 +1789,7 @@ void jack_aud_pb_ready(int fileno) {
           if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos);
         }
 
-        mainw->jackd->in_use = TRUE;
+        //mainw->jackd->in_use = TRUE;
         mainw->rec_aclip = fileno;
         mainw->rec_avel = sfile->arate / sfile->arps;
         mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));

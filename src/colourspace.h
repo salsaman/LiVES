@@ -147,7 +147,7 @@ void compact_rowstrides(weed_plant_t *layer);
 void weed_layer_pixel_data_free(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
-LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer);
+LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette);
 boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *) WARN_UNUSED;
 
 weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer);
@@ -174,6 +174,9 @@ double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 boolean weed_palette_is_lower_quality(int p1, int p2);  ///< return TRUE if p1 is lower quality than p2
 double weed_palette_get_compression_ratio(int pal);
+
+boolean weed_palette_is_pixbuf_palette(int pal);
+boolean weed_palette_is_painter_palette(int pal);
 
 #define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);

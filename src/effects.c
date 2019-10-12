@@ -659,7 +659,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         layer_palette = WEED_PALETTE_RGBA32;
       }
 
-      pixbuf = layer_to_pixbuf(layer);
+      pixbuf = layer_to_pixbuf(layer, TRUE);
       weed_plant_free(layer);
 
       tmp = make_image_file_name(cfile, i, LIVES_FILE_EXT_MGK);

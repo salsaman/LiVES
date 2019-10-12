@@ -1018,6 +1018,27 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_valid_palette(int pal) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean weed_palette_is_pixbuf_palette(int pal) {
+#ifdef GUI_GTK
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) return TRUE;
+#endif
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean weed_palette_is_painter_palette(int pal) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_A1) return TRUE;
+  if (capable->byte_order == LIVES_BIG_ENDIAN) {
+    if (pal == WEED_PALETTE_ARGB32) return TRUE;
+  } else {
+    if (pal == WEED_PALETTE_BGRA32) return TRUE;
+  }
+#endif
+  return FALSE;
+}
+
+
 LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
       pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
@@ -8270,7 +8291,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
 
   // TODO - inplace for RGB <-> BGR, RGBA - BGRA - ARGB
 
-  uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest, **gudest_array, *tmp;
+  uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest = NULL, **gudest_array, *tmp;
   int width, height, orowstride, irowstride;
   int error, inpl, flags = 0;
   int isamtype, isubspace;
@@ -9951,7 +9972,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
                    weed_palette_get_name(outpl));
     return FALSE;
   }
-  if (gusrc != NULL) {
+  if (gusrc != NULL && gudest != NULL) {
     if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
       LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
@@ -10190,7 +10211,7 @@ boolean gamma_correct_layer(int gamma_type, weed_plant_t *layer) {
 }
 
 
-LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
+LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
   // create a weed layer from a pixbuf
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
 
@@ -10210,9 +10231,10 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
 
   if (layer == NULL) return NULL;
 
+  palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
   gamma_correct_layer(WEED_GAMMA_SRGB, layer);
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
+  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just free the layer and return the pixbuf
     pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
@@ -10223,7 +10245,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer) {
   // otherwise we need to steal or copy the pixel_data
 
   do {
-    palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
     width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
     height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
     irowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
@@ -10828,7 +10849,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   case WEED_PALETTE_BGRA32:
 
     // create a new pixbuf
-    pixbuf = layer_to_pixbuf(layer);
+    pixbuf = layer_to_pixbuf(layer, FALSE);
 
     threaded_dialog_spin(0.);
     new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, interp);

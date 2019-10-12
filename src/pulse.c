@@ -284,6 +284,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pulsed->aPlayPtr->size = 0;
       pulsed->fd = -1;
       pulsed->playing_file = -1;
+      pulsed->in_use = FALSE;
       break;
     case ASERVER_CMD_FILE_SEEK:
       if (pulsed->fd < 0) break;
@@ -294,6 +295,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
       pulsed->real_seek_pos = pulsed->seek_pos = seek;
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
+      pulsed->in_use = TRUE;
       break;
     default:
       pulsed->msgq = NULL;
@@ -1715,7 +1717,7 @@ void pulse_aud_pb_ready(int fileno) {
         if (seek_err) {
           if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos, sfile);
         }
-        mainw->pulsed->in_use = TRUE;
+        //mainw->pulsed->in_use = TRUE;
         mainw->rec_aclip = fileno;
         mainw->rec_avel = sfile->pb_fps / sfile->fps;
         mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));

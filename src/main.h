@@ -627,6 +627,7 @@ typedef struct {
   double laudio_time;
   double raudio_time;
   double pointer_time;  ///< pointer time in timeline, also the playback start position for clipeditor (unless playing the selection)
+  double real_pointer_time;  ///< pointer time in timeline, can extend beyond video, for audio
 
   // used only for insert_silence, holds pre-padding length for undo
   double old_laudio_time;

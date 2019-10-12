@@ -94,7 +94,7 @@ typedef struct {
 
   boolean is_output; ///< is output FROM host to jack
 
-  int playing_file;
+  volatile int playing_file;
 
   lives_audio_buf_t **abufs;
   volatile int read_abuf;

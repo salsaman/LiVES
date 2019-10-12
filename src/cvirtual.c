@@ -91,7 +91,7 @@ int load_frame_index(int fileno) {
 
   int fd;
   int retval;
-  int maxframe = 0;
+  int maxframe = -1;
 
   register int i;
 
@@ -138,6 +138,7 @@ int load_frame_index(int fileno) {
 
   lives_free(fname);
 
+  if (maxframe >= 0) sfile->clip_type = CLIP_TYPE_FILE;
   return ++maxframe;
 }
 
@@ -271,6 +272,8 @@ mismatch:
   sfile->img_type = empirical_img_type;
 
   sfile->needs_update = TRUE;
+
+  sfile->afilesize = reget_afilesize_inner(fileno);
 
   return FALSE;
 }

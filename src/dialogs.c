@@ -1331,8 +1331,7 @@ int process_one(boolean visible) {
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = real_ticks;
         }
-        if (force_show) resync_audio(cfile->frameno);
-        force_show = FALSE;
+        if (force_show) force_show = FALSE;
       }
 
 #ifdef ENABLE_JACK
@@ -1501,7 +1500,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   FILE *infofile = NULL;
   char *mytext = NULL;
 
-  int frames_done;
+  int frames_done, frames;
 
   boolean got_err = FALSE;
 
@@ -1716,16 +1715,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   // set initial audio seek position for current file
-  if (cfile->achans) cfile->aseek_pos = (int64_t)((double)(mainw->play_start - 1.) /
-                                          cfile->fps * cfile->arate * cfile->achans * (cfile->asampsize / 8));
-
+  if (cfile->achans) {
+    mainw->aframeno = calc_frame_from_time4(mainw->current_file, cfile->aseek_pos / cfile->arate / cfile->achans / (cfile->asampsize >> 3));
+  }
+  frames = cfile->frames;
+  cfile->frames = 0; // allow seek beyond video length
   // MUST do re-seek after setting origsecs in order to set our clock properly
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL && mainw->jackd->playing_file > -1) {
-    if (!jack_audio_seek_frame(mainw->jackd, mainw->play_start)) {
-      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->play_start);
+    if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
+      if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
     }
 
     if (!(mainw->record && (prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit)))
@@ -1735,12 +1736,15 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
+    if (prefs->audio_src == AUDIO_SRC_INT)
+      mainw->jackd->in_use = TRUE;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
+  g_print("PFF is %d\n", mainw->pulsed->playing_file);
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
-    if (!pulse_audio_seek_frame(mainw->pulsed, mainw->play_start)) {
+    if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
       handle_audio_timeout();
       return FALSE;
     }
@@ -1752,9 +1756,11 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       mainw->rec_avel = 1.;
       mainw->rec_aseek = 0;
     }
+    /* if (prefs->audio_src == AUDIO_SRC_INT) */
+    /*   mainw->pulsed->in_use = TRUE; */
   }
 #endif
-
+  cfile->frames = frames;
   // tell jack transport we are ready to play
   mainw->video_seek_ready = TRUE;
 

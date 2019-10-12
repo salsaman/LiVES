@@ -530,11 +530,18 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   if (mainw->multitrack == NULL)
     redraw_framedraw_image(mainw->fd_layer);
   else {
+    int error;
     LiVESPixbuf *pixbuf;
+    int palette = weed_get_int_value(mainw->fd_layer, WEED_LEAF_CURRENT_PALETTE, &error);
+    if (weed_palette_has_alpha_channel(palette)) {
+      palette = WEED_PALETTE_RGBA32;
+    } else {
+      palette = WEED_PALETTE_RGB24;
+    }
     resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST,
-                 WEED_PALETTE_RGB24, 0);
-    convert_layer_palette(mainw->fd_layer, WEED_PALETTE_RGB24, 0);
-    pixbuf = layer_to_pixbuf(mainw->fd_layer);
+                 palette, 0);
+    convert_layer_palette(mainw->fd_layer, palette, 0);
+    pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE);
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
 #if GTK_CHECK_VERSION(3, 0, 0)

@@ -197,6 +197,7 @@ double lives_ce_update_timeline(int frame, double x) {
   if (x < 0.) x = 0.;
 
   if (frame == 0) frame = calc_frame_from_time4(mainw->current_file, x);
+  cfile->real_pointer_time = x;
 
   x = calc_time_from_frame(mainw->current_file, frame);
   if (x > CLIP_TOTAL_TIME(mainw->current_file)) x = CLIP_TOTAL_TIME(mainw->current_file);
@@ -699,9 +700,29 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       show_playbar_labels(mainw->current_file);
     } else {
       // playback, and we didnt switch clips during playback
+      ptrtime = -1.;
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = (double)mainw->jackd->seek_pos /
+              cfile->arate / cfile->achans / cfile->asampsize * 8;
+#endif
+      }
+
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = (double)mainw->pulsed->seek_pos /
+              cfile->arate / cfile->achans / cfile->asampsize * 8;
+#endif
+      }
+      if (ptrtime >= 0.) {
+        draw_little_bars(ptrtime, 2);
+        draw_little_bars(ptrtime, 3);
+        which = 1;
+      }
       ptrtime = (mainw->actual_frame - .5) / cfile->fps;
       if (ptrtime < 0.) ptrtime = 0.;
-      draw_little_bars(ptrtime, 0);
+      draw_little_bars(ptrtime, which);
+      which = 0;
     }
     lives_widget_queue_draw_if_visible(mainw->vidbar);
     lives_widget_queue_draw_if_visible(mainw->hruler);

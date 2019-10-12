@@ -3605,6 +3605,7 @@ lives_render_error_t render_events(boolean reset) {
           }
 
           if (layer != NULL) {
+            check_layer_ready(layer);
 #ifndef ALLOW_PNG24
             layer_palette = weed_layer_get_palette(layer);
             if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24 && layer_palette != WEED_PALETTE_RGBA32)
@@ -3617,7 +3618,7 @@ lives_render_error_t render_events(boolean reset) {
 #endif
             resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
             convert_layer_palette(layer, layer_palette, 0);
-            pixbuf = layer_to_pixbuf(layer);
+            pixbuf = layer_to_pixbuf(layer, TRUE);
             weed_layer_free(layer);
           }
           mainw->blend_file = blend_file;

@@ -2331,8 +2331,16 @@ void play_file(void) {
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
 
+
+    if (mainw->playing_sel) {
+      cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    } else {
+      if (cfile->real_pointer_time > cfile->pointer_time)
+        cfile->aseek_pos = (long)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+      else
+        cfile->aseek_pos = (long)(cfile->pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    }
     // start up our audio player (jack or pulse)
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -2419,7 +2427,7 @@ void play_file(void) {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
-        mainw->jackd->in_use = TRUE;
+        //mainw->jackd->in_use = TRUE;
       }
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL) {
         mainw->jackd_read->num_input_channels = mainw->jackd_read->num_output_channels = 2;
@@ -2440,7 +2448,7 @@ void play_file(void) {
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
         }
-        mainw->pulsed->in_use = TRUE;
+        //mainw->pulsed->in_use = TRUE;
       }
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL) {
         mainw->pulsed_read->in_achans = mainw->pulsed_read->out_achans = PA_ACHANS;
@@ -3190,6 +3198,7 @@ void create_cfile(void) {
   cfile->undo_action = UNDO_NONE;
   cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
   cfile->pointer_time = 0.;
+  cfile->real_pointer_time = 0.;
   cfile->restoring = cfile->opening_loc = cfile->nopreview = cfile->is_loaded = FALSE;
   cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
@@ -3563,7 +3572,7 @@ void wait_for_stop(const char *stop_command) {
 
 
 boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc) {
-  // save 1 frame as an image (uses imagemagick to convert)
+  // save 1 frame as an image
   // width==-1, height==-1 to use "natural" values
 
   lives_clip_t *sfile = mainw->files[clip];
@@ -3621,7 +3630,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
     mt_show_current_frame(mainw->multitrack, TRUE);
     resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
-    pixbuf = layer_to_pixbuf(mainw->frame_layer);
+    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 
@@ -4872,7 +4881,7 @@ boolean reload_clip(int fileno, int maxframe) {
 
   lives_clip_data_t *fake_cdata = (lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t), 1);
 
-  boolean was_renamed = FALSE;
+  boolean was_renamed = FALSE, retb = FALSE;
 
   int response;
 
@@ -4955,14 +4964,21 @@ manual_locate:
 
       // TODO ** - show layout errors
 
-      current_file = mainw->current_file;
-      mainw->current_file = fileno;
-      close_current_file(current_file);
-
+      check_clip_integrity(fileno, cdata, maxframe);
+      if (sfile->frames > 0 || sfile->afilesize > 0) {
+        // recover whatever we can
+        sfile->clip_type = CLIP_TYPE_FILE;
+        retb = check_if_non_virtual(fileno, 1, sfile->frames);
+      }
+      if (!retb) {
+        current_file = mainw->current_file;
+        mainw->current_file = fileno;
+        close_current_file(current_file);
+      }
       lives_freep((void **)&fake_cdata->URI);
       lives_free(fake_cdata);
       lives_free(orig_filename);
-      return FALSE;
+      return retb;
     }
 
     // got cdata
@@ -5271,11 +5287,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       if (mainw->current_file < 1) continue;
 
-      if ((maxframe = load_frame_index(mainw->current_file))) {
+      if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
         // CLIP_TYPE_FILE
         if (!strlen(cfile->file_name)) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
-      } else {
+      }
+      if (cfile->clip_type == CLIP_TYPE_DISK) {
         // CLIP_TYPE_DISK
         if (is_scrap || !check_frame_count(mainw->current_file)) {
           get_frame_count(mainw->current_file);

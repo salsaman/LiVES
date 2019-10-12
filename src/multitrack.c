@@ -3275,7 +3275,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
     if (mt->framedraw != NULL) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
-      if (pixbuf == NULL) pixbuf = layer_to_pixbuf(mainw->frame_layer);
+      if (pixbuf == NULL) pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
       // set frame_pixbuf, this gets painted in in expose_event

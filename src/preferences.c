@@ -2816,7 +2816,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   boolean pfsm;
   boolean has_ap_rec = FALSE;
 
-  int dph;
+  int woph;
 
   register int i;
 
@@ -2826,6 +2826,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   mainw->prefs_need_restart = FALSE;
 
   prefsw->accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+
+  woph = widget_opts.packing_height;
 
   if (saved_dialog == NULL) {
     // Create new modal dialog window and set some attributes
@@ -3876,7 +3878,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   add_fill_to_box(LIVES_BOX(hbox));
 
-  dph = widget_opts.packing_height;
   widget_opts.packing_height *= 2;
 
   layout = lives_layout_new(LIVES_BOX(prefsw->vbox_right_effects));
@@ -3890,18 +3891,18 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
+  widget_opts.packing_height = woph;
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_layout_add_label(LIVES_LAYOUT(layout), _("(Frei0r directories should be separated by ':', ordered from lowest to highest priority)"),
                          FALSE);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_layout_add_fill(LIVES_LAYOUT(layout), FALSE);
 
-
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
   prefsw->ladspa_entry = lives_standard_direntry_new(_("LADSPA plugin path"), prefs->ladspa_path, LONG_ENTRY_WIDTH, PATH_MAX,
                          LIVES_BOX(hbox), NULL);
 
-  widget_opts.packing_height = dph;
+  widget_opts.packing_height = woph;
 
   pixbuf_effects = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_EFFECTS, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 

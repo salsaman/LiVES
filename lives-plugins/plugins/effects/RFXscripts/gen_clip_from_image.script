@@ -34,9 +34,9 @@ nsize|Use _Natural image size|bool|0|
 </params>
 
 <param_window>
+layout|p2|p4|
 layout|p0|p1|
 layout|p5|
-layout|p2|p4|
 special|fileread|3|
 </param_window>
 

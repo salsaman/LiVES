@@ -1015,8 +1015,17 @@ static void audio_process_events_to(weed_timecode_t tc) {
 
     switch (hint) {
     case WEED_EVENT_HINT_FILTER_INIT: {
-      weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
-      if (get_event_timecode(deinit_event) < tc) break;
+      weed_plant_t *deinit_event;
+      if (!weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT)) {
+        LIVES_ERROR("Init event with no deinit !\n");
+      } else {
+        deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+        if (deinit_event == NULL) {
+          LIVES_ERROR("NULL deinit !\n");
+        } else {
+          if (get_event_timecode(deinit_event) < tc) break;
+        }
+      }
       process_events(event, TRUE, ctc);
     }
     break;

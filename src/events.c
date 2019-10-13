@@ -3874,6 +3874,7 @@ lives_render_error_t render_events(boolean reset) {
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(citmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(bitmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
           else weed_leaf_delete(citmpl[i], WEED_LEAF_HOST_REPEATS);
+          weed_plant_free(bitmpl[i]);
         }
         lives_free(bitmpl);
         lives_free(citmpl);
@@ -3887,6 +3888,7 @@ lives_render_error_t render_events(boolean reset) {
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS);
+	  weed_plant_free(botmpl[i]);
         }
         lives_free(botmpl);
         lives_free(cotmpl);
@@ -4541,6 +4543,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   }
 
   // add deinit events for any effects that are left on
+  // TODO *** - needs trans_table, only created in event_list_+rectify
   if (add_deinit && !was_paused) mainw->event_list = add_filter_deinit_events(mainw->event_list);
 
   if (add_deinit) event_list_close_gaps(mainw->event_list);

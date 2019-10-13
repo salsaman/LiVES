@@ -13024,8 +13024,10 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     }
 
     bbox = lives_hbutton_box_new();
+    lives_widget_apply_theme(bbox, LIVES_WIDGET_STATE_NORMAL);
+
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_SPREAD);
-    lives_box_pack_end(LIVES_BOX(mt->fx_list_box), bbox, FALSE, FALSE, 0);
+    lives_box_pack_end(LIVES_BOX(mt->fx_list_box), bbox, FALSE, FALSE, widget_opts.packing_height);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     mt->prev_fm_button = lives_standard_button_new_with_label(_("_Prev filter map"));  // Note to translators: previous filter map

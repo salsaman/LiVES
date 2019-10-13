@@ -32,8 +32,8 @@ fps|_Frames per second|num3|25.000|1.000|200.000|
 </params>
 
 <param_window>
-layout|p0||p1|
 layout|p2|p3|
+layout|p0||p1|
 </param_window>
 
 <properties>

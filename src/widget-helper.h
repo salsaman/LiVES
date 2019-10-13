@@ -460,6 +460,8 @@ LiVESWidget *lives_combo_new(void);
 LiVESWidget *lives_combo_new_with_model(LiVESTreeModel *model);
 LiVESTreeModel *lives_combo_get_model(LiVESCombo *);
 boolean lives_combo_set_model(LiVESCombo *, LiVESTreeModel *);
+boolean lives_combo_set_focus_on_click(LiVESCombo *combo, boolean state);
+void lives_combo_popup(LiVESCombo *combo);
 
 boolean lives_combo_append_text(LiVESCombo *, const char *text);
 boolean lives_combo_set_entry_text_column(LiVESCombo *, int column);

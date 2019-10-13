@@ -2891,6 +2891,7 @@ boolean perform_rfxbuilder_checks(rfx_build_window_t *rfxbuilder) {
 
   if (!strlen(name)) {
     do_blocking_error_dialog(_("\n\nName must not be blank.\n"));
+    lives_widget_grab_focus(rfxbuilder->name_entry);
     lives_free(name);
     return FALSE;
   }
@@ -2901,17 +2902,20 @@ boolean perform_rfxbuilder_checks(rfx_build_window_t *rfxbuilder) {
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->menu_text_entry)))) {
     do_blocking_error_dialog(_("\n\nMenu text must not be blank.\n"));
+    lives_widget_grab_focus(rfxbuilder->menu_text_entry);
     lives_free(name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->action_desc_entry))) &&
       rfxbuilder->type != RFX_BUILD_TYPE_UTILITY) {
     do_blocking_error_dialog(_("\n\nAction description must not be blank.\n"));
+    lives_widget_grab_focus(rfxbuilder->action_desc_entry);
     lives_free(name);
     return FALSE;
   }
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->author_entry)))) {
     do_blocking_error_dialog(_("\n\nAuthor must not be blank.\n"));
+    lives_widget_grab_focus(rfxbuilder->author_entry);
     lives_free(name);
     return FALSE;
   }
@@ -2948,6 +2952,7 @@ boolean perform_param_checks(rfx_build_window_t *rfxbuilder, int index, int rows
 
   if (!strlen(lives_entry_get_text(LIVES_ENTRY(rfxbuilder->param_name_entry)))) {
     do_blocking_error_dialog(_("\n\nParameter name must not be blank.\n"));
+    lives_widget_grab_focus(rfxbuilder->param_name_entry);
     return FALSE;
   }
   for (i = 0; i < rows; i++) {

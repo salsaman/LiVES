@@ -5607,8 +5607,6 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  lives_rm(recovery_file);
-
 #if !GTK_CHECK_VERSION(3, 0, 0)
   if (mainw->current_file > -1 && cfile != NULL) {
     load_start_image(cfile->start);

@@ -42,7 +42,12 @@ fps|_Frames per second|num3|25.000|1.000|200.000|
 <param_window>
 layout|p7|p11|
 layout|p8|p9|
-layout|p1|p2|fill|p5|
+layout|p1|p2|
+layout|p0|
+layout|p3|
+layout|p4|
+layout|p6|
+layout|p10|p5|
 </param_window>
 
 <properties>

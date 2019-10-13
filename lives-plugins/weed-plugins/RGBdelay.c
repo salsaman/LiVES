@@ -421,9 +421,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           NULL);
 
     gui = weed_filter_class_get_gui(filter_class);
-    rfx_strings[0] = "layout|p0";
+    rfx_strings[0] = "layout|p0|";
     rfx_strings[1] = "layout|hseparator|";
-    rfx_strings[2] = "layout|\"R\"|\"         G \"|\"         B \"|fill|fill|\"Blend Strength\"|fill|";
+    rfx_strings[2] = "layout|\"R\"|\"G\"|\"B\"|fill|fill|\"Blend Strength\"|fill|";
 
     for (i = 3; i < 54; i++) {
       rfx_strings[i] = weed_malloc(1024);
@@ -436,7 +436,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    rfx_strings[2] = "layout|\"  Y\"|fill|\"         U \"|fill|\"         V \"|fill|\"Blend Strength\"|fill|";
+    rfx_strings[2] = "layout|\"Y\"|\"U\"|\"V\"|fill|fill|\"Blend Strength\"|fill|";
 
     filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, &RGBd_init, &RGBd_process, &RGBd_deinit, in_chantmpls2, out_chantmpls2,
                                           (clone = weed_clone_plants(in_params)), NULL);

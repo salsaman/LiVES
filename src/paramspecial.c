@@ -356,12 +356,12 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
         }
       }
 
-      epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
+      //epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
 
       param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, def_dir);
       lives_free(def_dir);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
-      lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
+      //lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);

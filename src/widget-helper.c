@@ -1213,7 +1213,12 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType ret = gtk_dialog_run(dialog);
-  if (prefs->show_msg_area) lives_widget_grab_focus(mainw->message_box); // TODO !prefs->show_msg_area
+  if (prefs->show_msg_area) {
+    // TODO
+    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_grab_focus(mainw->msg_area);
+    gtk_window_set_focus(LIVES_MAIN_WINDOW_WIDGET, mainw->msg_area);
+  }
   return ret;
 #endif
 #ifdef GUI_QT
@@ -3469,6 +3474,27 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_model(LiVESCombo *combo, LiV
 }
 
 
+void lives_combo_popup(LiVESCombo *combo) {
+  // used in callback, so no inline
+#ifdef GUI_GTK
+  gtk_combo_box_popup(combo);
+#endif
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_focus_on_click(LiVESCombo *combo, boolean state) {
+#ifdef GUI_GTK
+#if GTK_CHECK_VERSION(3, 20, 0)
+  gtk_widget_set_focus_on_click(GTK_WIDGET(combo), state);
+#else
+  gtk_combo_box_set_focus_on_click(combo, state);
+#endif
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_append_text(LiVESCombo *combo, const char *text) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 24, 0)
@@ -3501,8 +3527,19 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
 
 
 WIDGET_HELPER_LOCAL_INLINE boolean lives_combo_remove_all_text(LiVESCombo *combo) {
+  // for tstore, need lives_tree_store_find_iter(), gtk_tree_model_iter_has_child ()
+  // or maybe just free the treestore and add a new list store
+  //LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
+  LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING);
+  //lives_combo_set_model(combo, NULL);
+  GtkCellArea *celly;
+  lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
+  gtk_cell_layout_clear(celly);
+  lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore));
+  return TRUE;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
+  // TODO *** - only works with list model
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(combo));
 #else
   register int count = lives_tree_model_iter_n_children(lives_combo_get_model(combo), NULL);
@@ -8261,7 +8298,7 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkCellArea *celly;
     lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    gtk_cell_area_foreach(celly, setcellbg, NULL);
+    //gtk_cell_area_foreach(celly, setcellbg, NULL);
 
     // need to get the GtkCellView !
     //lives_widget_object_set(celly, "background", &palette->info_base);
@@ -8447,7 +8484,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVES
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
-  LiVESWidget *layout = lives_table_new(0, 0, TRUE);
+  LiVESWidget *layout = lives_table_new(0, 0, FALSE);
   if (LIVES_IS_VBOX(box)) {
     lives_box_pack_start(box, layout, LIVES_SHOULD_EXPAND_EXTRA_HEIGHT, TRUE,
                          LIVES_SHOULD_EXPAND_HEIGHT ? widget_opts.packing_height : 0);
@@ -8462,7 +8499,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)
     lives_table_set_col_spacings(LIVES_TABLE(layout), widget_opts.packing_width);
-  lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
+  //lives_table_set_column_homogeneous(LIVES_TABLE(layout), FALSE);
   return layout;
 }
 
@@ -9196,6 +9233,15 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
   lives_widget_set_sensitive_with(LIVES_WIDGET(entry), combo);
   lives_widget_set_sensitive_with(combo, LIVES_WIDGET(entry));
 
+  lives_widget_set_can_focus(LIVES_WIDGET(entry), FALSE);
+
+  lives_combo_set_focus_on_click(LIVES_COMBO(combo), FALSE);
+
+  lives_widget_add_events(LIVES_WIDGET(entry), LIVES_BUTTON_RELEASE_MASK);
+  lives_signal_connect_swapped(LIVES_GUI_OBJECT(entry), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                               LIVES_GUI_CALLBACK(lives_combo_popup),
+                               combo);
+
   if (box != NULL) {
     LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
     int packing_width = 0;
@@ -9563,7 +9609,7 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
   // add dir, with filechooser button
   buttond = lives_standard_file_button_new(isdir, defdir);
   lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
-  lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width / 2);
+  lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
                        (livespointer)direntry);
@@ -10038,6 +10084,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   LiVESWidgetColor colr;
   LiVESWidget *cbutton, *labelcname = NULL;
   LiVESWidget *hbox = NULL;
+  LiVESWidget *layout;
   LiVESWidget *spinbutton_red = NULL, *spinbutton_green = NULL, *spinbutton_blue = NULL, *spinbutton_alpha = NULL;
   LiVESWidget *parent = NULL;
   char *tmp, *tmp2;
@@ -10097,19 +10144,25 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   lives_color_button_set_title(LIVES_COLOR_BUTTON(cbutton), _("Select Colour"));
 
   if (box != NULL) {
-    if (labelcname != NULL) {
-      lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, packing_width);
-      if (parent_is_layout) {
-        hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
-        widget_opts.justify = LIVES_JUSTIFY_RIGHT;
+    if (!widget_opts.swap_label) {
+      if (labelcname != NULL) {
+        if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_margin_left(labelcname, widget_opts.packing_width >> 2);
+        lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
+        if (parent_is_layout) {
+          hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
+          widget_opts.justify = LIVES_JUSTIFY_RIGHT;
+        }
       }
     }
 
     if (sb_red != NULL) {
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
       spinbutton_red = lives_standard_spin_button_new((tmp = lives_strdup(_("_Red"))), rgba->red / 255., 0., 255., 1., 1., 0,
                        (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The red value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), "cbutton", cbutton);
       *sb_red = spinbutton_red;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -10123,10 +10176,13 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (sb_green != NULL) {
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
       spinbutton_green = lives_standard_spin_button_new((tmp = lives_strdup(_("_Green"))), rgba->green / 255., 0., 255., 1., 1., 0,
                          (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The green value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), "cbutton", cbutton);
       *sb_green = spinbutton_green;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -10140,10 +10196,13 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (sb_blue != NULL) {
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
       spinbutton_blue = lives_standard_spin_button_new((tmp = lives_strdup(_("_Blue"))), rgba->blue / 255., 0., 255., 1., 1., 0,
                         (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The blue value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), "cbutton", cbutton);
       *sb_blue = spinbutton_blue;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_blue), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -10157,10 +10216,13 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (use_alpha && sb_alpha != NULL) {
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
       spinbutton_alpha = lives_standard_spin_button_new((tmp = lives_strdup(_("_Alpha"))), rgba->alpha / 255., 0., 255., 1., 1., 0,
                          (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The alpha value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_alpha), "cbutton", cbutton);
       *sb_alpha = spinbutton_alpha;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_alpha), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -10185,6 +10247,17 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha", spinbutton_alpha);
 
     lives_widget_set_show_hide_parent(cbutton);
+
+    if (widget_opts.swap_label) {
+      if (labelcname != NULL) {
+        if (parent_is_layout) {
+          hbox = lives_layout_hbox_new(LIVES_TABLE(parent));
+          widget_opts.justify = LIVES_JUSTIFY_LEFT;
+        }
+        if (LIVES_SHOULD_EXPAND_WIDTH) lives_widget_set_margin_right(labelcname, widget_opts.packing_width >> 2);
+        lives_box_pack_start(LIVES_BOX(hbox), labelcname, FALSE, FALSE, widget_opts.packing_width);
+      }
+    }
   }
 
   if (parent_is_layout) {

@@ -2883,6 +2883,13 @@ void end_threaded_dialog(void) {
 
   mainw->threaded_dialog = FALSE;
 
+  if (prefs->show_msg_area) {
+    // TODO
+    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_grab_focus(mainw->msg_area);
+    gtk_window_set_focus(LIVES_MAIN_WINDOW_WIDGET, mainw->msg_area);
+  }
+
   if (mainw->is_ready && prefs->show_gui)
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }

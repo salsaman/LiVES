@@ -34,7 +34,7 @@ psize|_Point size|num0|32|10|120|
 </params>
 
 <param_window>
-layout|p1|fill|p2|fill|p5|
+layout|p1|p2|p5|
 </param_window>
 
 <properties>

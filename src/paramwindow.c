@@ -275,7 +275,7 @@ void on_render_fx_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
     do_effect(rfx, FALSE);
   }
 
-  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 }
 
 

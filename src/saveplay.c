@@ -804,13 +804,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   // now file should be loaded...get full details
   cfile->is_loaded = TRUE;
 
-  if (cfile->ext_src == NULL) {
-    add_file_info(cfile->handle, FALSE);
-  } else {
-    add_file_info(NULL, FALSE);
-    cfile->f_size = sget_file_size((char *)file_name);
-  }
-
   if (cfile->frames <= 0) {
     if (cfile->afilesize == 0l) {
       // we got neither video nor audio...
@@ -847,6 +840,13 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->frames = 0;
   }
 
+  if (cfile->ext_src == NULL) {
+    add_file_info(cfile->handle, FALSE);
+  } else {
+    add_file_info(NULL, FALSE);
+    cfile->f_size = sget_file_size((char *)file_name);
+  }
+
   reget_afilesize(mainw->current_file);
 
   if (cfile->ext_src == NULL && start != 0. && CLIP_TOTAL_TIME(mainw->current_file) > cfile->video_time) {
@@ -864,6 +864,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     d_print(_("Loaded subtitle file: %s\n"), isubfname);
     lives_free(isubfname);
   }
+
+#ifdef GET_MD5
+  g_print("md5sum is %s\n", get_md5sum(file_name));
+#endif
+
+  // TODO - prompt for copy to origs (unless it is already there)
 
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
 
@@ -2963,6 +2969,8 @@ void play_file(void) {
   }
   mainw->is_processing = mainw->preview;
 
+  if (prefs->volume != (double)future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
+
   // TODO - ????
   if (mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && cfile->frames == 0 && mainw->record_perf) {
     lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
@@ -3228,6 +3236,7 @@ void create_cfile(void) {
   cfile->cb_src = -1;
   cfile->needs_update = FALSE;
   cfile->audio_waveform = NULL;
+  cfile->md5sum[0] = 0;
 
   if (!strcmp(prefs->image_ext, LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
   else cfile->img_type = IMG_TYPE_PNG;
@@ -4962,8 +4971,6 @@ manual_locate:
 
       // NOT openable, or not found and user cancelled, switch back to original clip
 
-      // TODO ** - show layout errors
-
       check_clip_integrity(fileno, cdata, maxframe);
       if (sfile->frames > 0 || sfile->afilesize > 0) {
         // recover whatever we can
@@ -5054,6 +5061,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   char buff[256], *buffptr;
   char *clipdir;
   char *cwd = lives_get_current_dir();
+
+  uint32_t mask;
 
   int retval;
   int new_file, clipnum = 0;
@@ -5164,7 +5173,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         prefs->crash_recovery = crash_recovery; // reset to original value
         mainw->suppress_dprint = FALSE;
         d_print_failed();
-        break;
+        mainw->suppress_dprint = FALSE;
+        continue;
       }
       prefs->crash_recovery = crash_recovery; // reset to original value
     } else {
@@ -5294,7 +5304,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
       if (cfile->clip_type == CLIP_TYPE_DISK) {
         // CLIP_TYPE_DISK
-        if (is_scrap || !check_frame_count(mainw->current_file)) {
+        if (!check_frame_count(mainw->current_file)) {
           get_frame_count(mainw->current_file);
           cfile->needs_update = TRUE;
         }
@@ -5381,6 +5391,30 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
         threaded_dialog_spin(0.);
 
+        if (mainw->current_file != -1)
+          if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);
+
+        // TODO: -- needs checking ----
+        mask = 0;
+        mainw->xlays = layout_frame_is_affected(mainw->current_file, cfile->frames, 0, mainw->xlays);
+        if (mainw->xlays != NULL) {
+          add_lmap_error(LMAP_ERROR_DELETE_FRAMES, cfile->name, (livespointer)cfile->layout_map, mainw->current_file,
+                         cfile->frames, 0., FALSE);
+          lives_list_free_all(&mainw->xlays);
+          mask |= WARN_MASK_LAYOUT_DELETE_FRAMES;
+          g_print("FRMS %d\n", cfile->frames);
+        }
+
+        mainw->xlays = layout_audio_is_affected(mainw->current_file, cfile->laudio_time, 0., mainw->xlays);
+        if (mainw->xlays != NULL) {
+          add_lmap_error(LMAP_ERROR_DELETE_AUDIO, cfile->name, (livespointer)cfile->layout_map, mainw->current_file,
+                         cfile->frames, cfile->laudio_time, FALSE);
+          lives_list_free_all(&mainw->xlays);
+          mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
+          g_print("AUD %f\n", cfile->laudio_time);
+        }
+        if (mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
+
         lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
       } else {
         pthread_mutex_lock(&mainw->clip_list_mutex);
@@ -5390,9 +5424,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
     }
   }
-
-  if (mainw->current_file != -1)
-    if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);
 
   if (mainw->multitrack == NULL) {
     int start_file = mainw->current_file;

@@ -823,9 +823,11 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
     type = 0;
   }
 
-  if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) return;
-
-  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  if (!on_realfx_activate_inner(type, (lives_rfx_t *)rfx)) {
+    unbuffer_lmap_errors(FALSE);
+    return;
+  }
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 }
 
 

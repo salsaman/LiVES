@@ -176,6 +176,14 @@ LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
 }
 
 
+LIVES_GLOBAL_INLINE double get_double_prefd(const char *key, double defval) {
+  char buffer[64];
+  get_string_pref(key, buffer, 64);
+  if (strlen(buffer) == 0) return defval;
+  return strtod(buffer, NULL);
+}
+
+
 LIVES_GLOBAL_INLINE boolean has_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
@@ -967,6 +975,24 @@ success4:
 
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
+
+  if (!strcmp(prefidx, PREF_MASTER_VOLUME)) {
+    char *ttip;
+    if ((LIVES_IS_PLAYING && future_prefs->volume == newval) || (!LIVES_IS_PLAYING && prefs->volume == (double)newval)) goto fail5;
+    future_prefs->volume = newval;
+    ttip = lives_strdup_printf(_("Audio volume (%.2f)"), newval);
+    lives_widget_set_tooltip_text(mainw->vol_toolitem, _(ttip));
+    lives_free(ttip);
+    if (!LIVES_IS_PLAYING) {
+      prefs->volume = newval;
+    } else permanent = FALSE;
+    if (LIVES_IS_RANGE(mainw->volume_scale)) {
+      lives_range_set_value(LIVES_RANGE(mainw->volume_scale), newval);
+    } else {
+      lives_scale_button_set_value(LIVES_SCALE_BUTTON(mainw->volume_scale), newval);
+    }
+    goto success5;
+  }
 
   if (!strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
     if (prefs->ahold_threshold == newval) goto fail5;

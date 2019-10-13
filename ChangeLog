@@ -27,6 +27,7 @@ Fix recursive mutex issue with the audio_resync mutex.
 Fix mkv_decoder so it can decode webm clips.
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
+Master audio volume is now maintained between sessions.
 Fix label layouts for RFX windows.
 Enable colour selection for 'blurzoom' effect, improve the effect appearance.
 Change the 'RGBDelay' and 'YUVDelay' effects to use less memory.

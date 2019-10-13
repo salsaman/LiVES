@@ -396,6 +396,8 @@ typedef struct {
   boolean apply_gamma;
 
   boolean show_tooltips;
+
+  double volume; ///< audio volume level (for jack and pulse)
 } _prefs;
 
 enum {
@@ -693,6 +695,7 @@ typedef struct {
   LiVESList *disabled_decoders_new;
 
   short sepwin_type;
+  volatile float volume; ///< audio volume level (for jack and pulse)
 } _future_prefs;
 
 _prefs *prefs;
@@ -921,6 +924,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 ///////// float values
 #define PREF_AHOLD_THRESHOLD "ahold_threshold"
+#define PREF_MASTER_VOLUME "master_volume"
 
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
@@ -945,6 +949,7 @@ int get_utf8_pref(const char *key, char *val, int maxlen);
 int get_string_pref(const char *key, char *val, int maxlen);
 boolean get_boolean_pref(const char *key);
 double get_double_pref(const char *key);
+double get_double_prefd(const char *key, double defval);
 int get_int_pref(const char *key);
 LiVESList *get_list_pref(const char *key);
 boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol);

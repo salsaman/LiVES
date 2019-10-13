@@ -683,6 +683,7 @@ static void on_reorder_activate(int rwidth, int rheight) {
     if (!(cfile->undo_action == UNDO_RESAMPLE)) {
       cfile->frames = -cfile->frames;
     }
+    unbuffer_lmap_errors(FALSE);
     return;
   }
 
@@ -715,7 +716,7 @@ static void on_reorder_activate(int rwidth, int rheight) {
   d_print(msg);
   lives_free(msg);
 
-  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
@@ -802,7 +803,10 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
                                 cur_signed, cur_endian, audio_stretch);
       mainw->com_failed = FALSE;
       lives_system(com, FALSE);
-      if (mainw->com_failed) return;
+      if (mainw->com_failed) {
+        unbuffer_lmap_errors(FALSE);
+        return;
+      }
       do_progress_dialog(TRUE, FALSE, _("Resampling audio")); // TODO - allow cancel ??
       lives_free(com);
       cfile->arate = cfile->arps = arps;
@@ -817,7 +821,10 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
       check_backend_return(cfile);
-      if (mainw->com_failed) return;
+      if (mainw->com_failed) {
+        unbuffer_lmap_errors(FALSE);
+        return;
+      }
       do_progress_dialog(TRUE, FALSE, _("Resampling audio"));
       lives_free(com);
 
@@ -846,6 +853,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
     on_undo_activate(NULL, NULL);
     set_undoable(_("Resample Audio"), FALSE);
     mainw->error = TRUE;
+    unbuffer_lmap_errors(FALSE);
     return;
   }
   set_undoable(_("Resample Audio"), !prefs->conserve_space);
@@ -874,7 +882,7 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
   }
   d_print("\n");
 
-  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_audio > 0.) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
@@ -1811,7 +1819,7 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   switch_to_file(mainw->current_file, mainw->current_file);
 
-  popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
   if (mainw->sl_undo_mem != NULL && cfile->stored_layout_frame != 0) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo

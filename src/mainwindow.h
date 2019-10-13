@@ -354,6 +354,7 @@ enum {
 #define EXEC_MIDISTART "midistart"
 #define EXEC_MIDISTOP "midistop"
 #define EXEC_AUTOLIVES_PL "autolives.pl"
+#define EXEC_MD5SUM "md5sum"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
@@ -539,6 +540,8 @@ typedef struct {
   size_t sl_undo_buffer_used;
   unsigned char *sl_undo_mem;
   int sl_undo_offset;
+
+  LiVESList *new_lmap_errors;
 
   short endian;
 
@@ -1234,8 +1237,6 @@ typedef struct {
   FILE *clip_header;
 
   LiVESList *file_buffers;
-
-  volatile float volume; ///< audio volume level (for jack and pulse)
 
   int aud_rec_fd; ///< fd of file we are recording audio to
   double rec_end_time;

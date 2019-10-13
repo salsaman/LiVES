@@ -1005,6 +1005,15 @@ typedef enum {
   LMAP_INFO_SETNAME_CHANGED = 1024
 } lives_lmap_error_t;
 
+typedef struct {
+  lives_lmap_error_t type;
+  char *name;
+  livespointer data;
+  int clipno, frameno;
+  double atime;
+  boolean current;
+} lmap_error;
+
 // array max: TODO - use dynamic arrays to bypass track limits
 
 #define MAX_TRACKS 65536

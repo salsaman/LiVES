@@ -773,6 +773,9 @@ static boolean pre_init(void) {
     mainw->fx_candidates[i].rfx = NULL;
   }
 
+  prefs->volume = get_double_prefd(PREF_MASTER_VOLUME, 1.0);
+  future_prefs->volume = (float)prefs->volume;
+
   prefs->open_maximised = get_boolean_pref(PREF_OPEN_MAXIMISED);
 
   for (i = 0; i < MAX_EXT_CNTL; i++) mainw->ext_cntl[i] = FALSE;
@@ -815,7 +818,6 @@ static boolean pre_init(void) {
 
   prefs->midi_rcv_channel = get_int_pref(PREF_MIDI_RCV_CHANNEL);
 
-  mainw->volume = 1.f;
   mainw->ccpd_with_sound = TRUE;
 
   mainw->loop = TRUE;
@@ -1294,6 +1296,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->xlays = NULL;
 
   mainw->preview_rendering = FALSE;
+
+  mainw->new_lmap_errors = NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   memset(mainw->set_name, 0, 1);
@@ -3245,7 +3249,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");

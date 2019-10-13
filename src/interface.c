@@ -1019,10 +1019,13 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
     preview_button = lives_standard_button_new_with_label(_("Click here to _Preview the file"));
   }
 
-  lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playframe), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                       LIVES_GUI_CALLBACK(on_fsp_click),
-                       preview_button);
+  if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
+      preview_type == LIVES_PREVIEW_TYPE_IMAGE_ONLY) {
+    lives_box_pack_start(for_button, preview_button, FALSE, FALSE, widget_opts.packing_width);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->fs_playframe), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                         LIVES_GUI_CALLBACK(on_fsp_click),
+                         preview_button);
+  }
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE) {
     add_deinterlace_checkbox(for_deint);
@@ -1904,7 +1907,7 @@ _insertw *create_insert_dialog(void) {
 }
 
 
-LiVESWidget *create_opensel_dialog(double frames, double fps) {
+LiVESWidget *create_opensel_dialog(int frames, double fps) {
   LiVESWidget *opensel_dialog;
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
@@ -1920,7 +1923,7 @@ LiVESWidget *create_opensel_dialog(double frames, double fps) {
 
   char *text;
 
-  if (fps > 0.) tottime = frames / fps;
+  if (fps > 0.) tottime = (double)frames / fps;
 
   opensel_dialog = lives_standard_dialog_new(_("Open Selection"), FALSE, -1, -1);
   if (prefs->show_gui) {
@@ -1947,7 +1950,7 @@ LiVESWidget *create_opensel_dialog(double frames, double fps) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(label, LIVES_ALIGN_END);
 
-  if (frames > 0. && fps > 0.)
+  if (frames > 0 && fps > 0.)
     text = lives_strdup_printf(_("[ maximum =  %.2f ]"), tottime);
   else text = lives_strdup("");
   label = lives_standard_label_new(text);
@@ -1964,8 +1967,8 @@ LiVESWidget *create_opensel_dialog(double frames, double fps) {
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(label, LIVES_ALIGN_END);
 
-  if (frames > 0.)
-    text = lives_strdup_printf(_("[ maximum =  %d ]"), (int)frames);
+  if (frames > 0)
+    text = lives_strdup_printf(_("[ maximum =  %d ]"), frames);
   else text = lives_strdup("");
   label = lives_standard_label_new(text);
   lives_free(text);

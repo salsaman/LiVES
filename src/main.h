@@ -734,6 +734,7 @@ typedef struct {
 
   float **audio_waveform; ///< values for drawing the audio wave
   int *aw_sizes; ///< size of each audio_waveform in floats
+  char md5sum[64];
 } lives_clip_t;
 
 typedef struct {
@@ -894,7 +895,8 @@ typedef enum {
   CLIP_DETAILS_HEADER_VERSION,
   CLIP_DETAILS_KEYWORDS,
   CLIP_DETAILS_INTERLACE,
-  CLIP_DETAILS_DECODER_NAME
+  CLIP_DETAILS_DECODER_NAME,
+  CLIP_DETAILS_MD5SUM // for future use
 } lives_clip_details_t;
 
 // some useful functions
@@ -1337,6 +1339,10 @@ char *remove_trailing_zeroes(double val);
 void remove_layout_files(LiVESList *lmap);
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data,
                        int clipno, int frameno, double atime, boolean affects_current);
+void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
+                       int frameno, double atime, boolean affects_current);
+void unbuffer_lmap_errors(boolean add);
+
 void clear_lmap_errors(void);
 boolean prompt_remove_layout_files(void);
 boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, const char *nreject);

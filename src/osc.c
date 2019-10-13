@@ -2030,11 +2030,7 @@ boolean lives_osc_cb_set_avol(void *context, int arglen, const void *vargs, OSCT
 
   if (vol < 0. || vol > 1.) return lives_osc_notify_failure();
 
-  if (LIVES_IS_RANGE(mainw->volume_scale)) {
-    lives_range_set_value(LIVES_RANGE(mainw->volume_scale), vol);
-  } else {
-    lives_scale_button_set_value(LIVES_SCALE_BUTTON(mainw->volume_scale), vol);
-  }
+  pref_factory_float(PREF_MASTER_VOLUME, vol, TRUE);
 
   return lives_osc_notify_success(NULL);
 }
@@ -2050,7 +2046,7 @@ boolean lives_osc_cb_get_avol(void *context, int arglen, const void *vargs, OSCT
     return TRUE;
   }
 
-  tmp = lives_strdup_printf("%.2f", mainw->volume);
+  tmp = lives_strdup_printf("%.2f", future_prefs->volume);
   lives_status_send(tmp);
   lives_free(tmp);
 

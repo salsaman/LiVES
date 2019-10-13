@@ -1741,7 +1741,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-  g_print("PFF is %d\n", mainw->pulsed->playing_file);
   if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
       !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL && mainw->pulsed->playing_file > -1) {
     if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {

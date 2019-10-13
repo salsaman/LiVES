@@ -725,13 +725,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
       // playback from memory or file
 
-      if (mainw->volume != pulsed->volume_linear) {
+      if (future_prefs->volume != pulsed->volume_linear) {
         pa_operation *paop;
-        pavol = pa_sw_volume_from_linear(mainw->volume);
+        pavol = pa_sw_volume_from_linear(future_prefs->volume);
         pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
         paop = pa_context_set_sink_input_volume(pulsed->con, pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
         pa_operation_unref(paop);
-        pulsed->volume_linear = mainw->volume;
+        pulsed->volume_linear = future_prefs->volume;
       }
 
       while (nbytes > 0) {
@@ -1160,8 +1160,8 @@ int pulse_audio_init(void) {
   pulsed.mloop = pa_mloop;
   pulsed.con = pcon;
 
-  //for (j = 0; j < PULSE_MAX_OUTPUT_CHANS; j++) pulsed.volume.values[j] = pa_sw_volume_from_linear(mainw->volume);
-  pulsed.volume_linear = mainw->volume;
+  //for (j = 0; j < PULSE_MAX_OUTPUT_CHANS; j++) pulsed.volume.values[j] = pa_sw_volume_from_linear(future_prefs->volume);
+  pulsed.volume_linear = future_prefs->volume;
   pulsed.state = (pa_stream_state_t)PA_STREAM_UNCONNECTED;
   pulsed.in_arate = 44100;
   pulsed.fd = -1;
@@ -1202,7 +1202,7 @@ int pulse_audio_read_init(void) {
   pulsed_reader.mloop = pa_mloop;
   pulsed_reader.con = pcon;
 
-  //for (j = 0; j < PULSE_MAX_OUTPUT_CHANS; j++) pulsed_reader.volume.values[j] = pa_sw_volume_from_linear(mainw->volume);
+  //for (j = 0; j < PULSE_MAX_OUTPUT_CHANS; j++) pulsed_reader.volume.values[j] = pa_sw_volume_from_linear(future_prefs->volume);
   pulsed_reader.state = (pa_stream_state_t)PA_STREAM_UNCONNECTED;
   pulsed_reader.fd = -1;
   pulsed_reader.seek_pos = pulsed_reader.seek_end = 0;
@@ -1235,7 +1235,7 @@ static void info_cb(pa_context *c, const pa_sink_input_info *i, int eol, void *u
 
   pdrive->volume = i->volume;
   pdriver->volume_linear = pa_sw_volume_to_linear(i->volume.values[0]);
-  lives_scale_button_set_value(LIVES_SCALE_BUTTON(mainw->volume_scale), pdriver->volume_linear);
+  pref_factory_float(PREF_MASTER_VOLUME, pdriver->volume_linear, TRUE);
   if (i->mute != mainw->mute) on_mute_activate(NULL, NULL);
 }
 #endif
@@ -1343,7 +1343,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                PA_STREAM_AUTO_TIMING_UPDATE),
                                NULL, NULL);
 #else
-    pdriver->volume_linear = mainw->volume;
+    pdriver->volume_linear = future_prefs->volume;
     pavol = pa_sw_volume_from_linear(pdriver->volume_linear);
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 

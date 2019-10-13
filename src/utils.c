@@ -45,38 +45,23 @@ typedef struct {
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
-#if 0
-#include <openssl/md5.h>
-int calculate_md5sum(char *filename) {
-  //open file for calculating md5sum
-  FILE *file_ptr;
-  int n;
-  MD5_CTX c;
-  char buf[512];
-  ssize_t bytes;
-  unsigned char out[MD5_DIGEST_LENGTH];
 
-  file_ptr = fopen(filename, "r");
-  if (file_ptr == NULL) {
-    perror("Error opening file");
-    fflush(stdout);
-    return 1;
+char *get_md5sum(const char *filename) {
+  char **array;
+  char *md5;
+  char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
+  mainw->com_failed = FALSE;
+  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
+  lives_free(com);
+  if (mainw->com_failed) {
+    mainw->com_failed = FALSE;
+    return NULL;
   }
-
-  MD5_Init(&c);
-  do {
-    bytes = fread(buf, 1, 512, file_ptr);
-    MD5_Update(&c, buf, bytes);
-  } while (bytes > 0);
-
-  MD5_Final(out, &c);
-
-  for (n = 0; n < MD5_DIGEST_LENGTH; n++)
-    printf("%02x", out[n]);
-  printf("\n");
-  return 0;
+  array = lives_strsplit(mainw->msg, " ", 2);
+  md5 = lives_strdup(array[0]);
+  lives_strfreev(array);
+  return md5;
 }
-#endif
 
 
 char *filename_from_fd(char *val, int fd) {
@@ -1918,6 +1903,38 @@ LIVES_GLOBAL_INLINE void d_print_enough(int frames) {
 }
 
 
+void buffer_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
+                       int frameno, double atime, boolean affects_current) {
+  lmap_error *err = (lmap_error *)lives_malloc(sizeof(lmap_error));
+  if (err == NULL) return;
+  err->type = lerror;
+  if (name != NULL) err->name = lives_strdup(name);
+  else err->name = NULL;
+  err->data = user_data;
+  err->clipno = clipno;
+  err->frameno = frameno;
+  err->atime = atime;
+  err->current = affects_current;
+  mainw->new_lmap_errors = lives_list_prepend(mainw->new_lmap_errors, err);
+}
+
+
+void unbuffer_lmap_errors(boolean add) {
+  LiVESList *list = mainw->new_lmap_errors;
+  while (list != NULL) {
+    lmap_error *err = (lmap_error *)list->data;
+    if (add) add_lmap_error(err->type, err->name, err->data, err->clipno, err->frameno, err->atime, err->current);
+    if (err->name != NULL) lives_free(err->name);
+    lives_free(err);
+    list = list->next;
+  }
+  if (mainw->new_lmap_errors != NULL) {
+    lives_list_free(mainw->new_lmap_errors);
+    mainw->new_lmap_errors = NULL;
+  }
+}
+
+
 boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer user_data, int clipno,
                        int frameno, double atime, boolean affects_current) {
   // potentially add a layout map error to the layout textbuffer
@@ -2094,6 +2111,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     break;
   }
 
+  g_print("set sensi\n");
   lives_widget_set_sensitive(mainw->show_layout_errors, TRUE);
   if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, TRUE);
   return TRUE;
@@ -4346,6 +4364,8 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_DECODER_NAME:
     lives_snprintf((char *)retval, maxlen, "%s", (tmp = F2U8(val)));
     lives_free(tmp);
+    break;
+  default:
     break;
   }
   lives_free(val);

@@ -652,7 +652,8 @@ static int audio_process(nframes_t nframes, void *arg) {
       }
 
       // playback from memory or file
-      vol = mainw->volume * mainw->volume; // TODO - we should really use a logarithmic scale
+      vol = future_prefs->volume * future_prefs->volume;
+      vol *= vol;
 
       if (numFramesToWrite) {
         if (!from_memory) {

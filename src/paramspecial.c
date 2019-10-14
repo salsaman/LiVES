@@ -329,7 +329,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   slist = fileread;
   while (slist != NULL) {
     if (param == (lives_param_t *)(slist->data)) {
-      int epos;
       char *def_dir;
 
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEREAD;
@@ -384,8 +383,6 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
   slist = filewrite;
   while (slist != NULL) {
     if (param == (lives_param_t *)(slist->data)) {
-      int epos;
-
       param->special_type = LIVES_PARAM_SPECIAL_TYPE_FILEWRITE;
 
       if (param->widgets[0] == NULL) continue;
@@ -398,13 +395,10 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       if (box == NULL) return;
 
-      epos = get_box_child_index(LIVES_BOX(box), param->widgets[0]);
-
       param->widgets[1] = buttond = lives_standard_file_button_new(FALSE, NULL);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(buttond), "filesel_type", (livespointer)LIVES_FILE_SELECTION_SAVE);
       lives_box_pack_start(LIVES_BOX(box), buttond, FALSE, FALSE, widget_opts.packing_width);
-      lives_box_reorder_child(LIVES_BOX(box), buttond, epos); // insert after label, before textbox
       lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)param->widgets[0]);
 
       if (!lives_widget_is_sensitive(param->widgets[0])) lives_widget_set_sensitive(buttond, FALSE);

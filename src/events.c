@@ -2627,7 +2627,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_HINT, WEED_EVENT_HINT_FILTER_INIT);
-  weed_set_string_value(event, WEED_LEAF_FILTER, (tmp = make_weed_hashname(filter_idx, TRUE, FALSE)));
+  weed_set_string_value(event, WEED_LEAF_FILTER, (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0)));
   lives_free(tmp);
 
   filter = get_weed_filter(filter_idx);
@@ -3888,7 +3888,7 @@ lives_render_error_t render_events(boolean reset) {
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS);
-	  weed_plant_free(botmpl[i]);
+          weed_plant_free(botmpl[i]);
         }
         lives_free(botmpl);
         lives_free(cotmpl);
@@ -5061,7 +5061,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                     iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
                     if (iname != NULL) {
                       ie_idx = weed_get_idx_for_hashname(iname, TRUE);
-                      fname = weed_filter_idx_get_name(ie_idx);
+                      fname = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
                       strval = lives_strdup_printf("%p (%s)", voidval[j], fname);
                       lives_freep((void **)&iname);
                     }

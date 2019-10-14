@@ -1217,7 +1217,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
     // TODO
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_grab_focus(mainw->msg_area);
-    gtk_window_set_focus(LIVES_MAIN_WINDOW_WIDGET, mainw->msg_area);
+    gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
   }
   return ret;
 #endif
@@ -3527,16 +3527,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
 
 
 WIDGET_HELPER_LOCAL_INLINE boolean lives_combo_remove_all_text(LiVESCombo *combo) {
-  // for tstore, need lives_tree_store_find_iter(), gtk_tree_model_iter_has_child ()
-  // or maybe just free the treestore and add a new list store
-  //LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING);
-  LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING);
-  //lives_combo_set_model(combo, NULL);
-  GtkCellArea *celly;
-  lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-  gtk_cell_layout_clear(celly);
-  lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore));
-  return TRUE;
+  /* // for tstore, need lives_tree_store_find_iter(), gtk_tree_model_iter_has_child () */
+  /* // or maybe just free the treestore and add a new list store */
+  /* //LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING); */
+  /* LiVESListStore *lstore = lives_list_store_new(1, LIVES_COL_TYPE_STRING); */
+  /* //lives_combo_set_model(combo, NULL); */
+  /* GtkCellArea *celly; */
+  /* lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly); */
+  /* gtk_cell_layout_clear(celly); */
+  /* lives_combo_set_model(LIVES_COMBO(combo), LIVES_TREE_MODEL(lstore)); */
+  /* return TRUE; */
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   // TODO *** - only works with list model
@@ -8264,8 +8264,6 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 }
 
 
-#define COMBO_LIST_LIMIT 64
-
 boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
   LiVESList *revlist;
 
@@ -8298,11 +8296,10 @@ boolean lives_combo_populate(LiVESCombo *combo, LiVESList *list) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     GtkCellArea *celly;
     lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-    //gtk_cell_area_foreach(celly, setcellbg, NULL);
+    gtk_cell_area_foreach(celly, setcellbg, NULL);
 
     // need to get the GtkCellView !
-    //lives_widget_object_set(celly, "background", &palette->info_base);
-
+    lives_widget_object_set(celly, "background", &palette->info_base);
 #endif
   }
   return TRUE;
@@ -9608,7 +9605,7 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
 
   // add dir, with filechooser button
   buttond = lives_standard_file_button_new(isdir, defdir);
-  lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
+  if (widget_opts.last_label != NULL) lives_label_set_mnemonic_widget(LIVES_LABEL(widget_opts.last_label), buttond);
   lives_box_pack_start(LIVES_BOX(lives_widget_get_parent(direntry)), buttond, FALSE, FALSE, widget_opts.packing_width);
 
   lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),

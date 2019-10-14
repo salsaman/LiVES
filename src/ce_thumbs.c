@@ -234,7 +234,7 @@ void start_ce_thumb_mode(void) {
     fxlist = NULL;
 
     for (j = 0; j <= rte_key_getmaxmode(i + 1); j++) {
-      fxlist = lives_list_append(fxlist, rte_keymode_get_filter_name(i + 1, j));
+      fxlist = lives_list_append(fxlist, rte_keymode_get_filter_name(i + 1, j, TRUE, FALSE));
     }
 
     hbox = lives_hbox_new(FALSE, 0);
@@ -635,7 +635,7 @@ void ce_thumbs_reset_combo(int key) {
 
   if (key >= rte_keys_virtual) return;
   for (j = 0; j <= rte_key_getmaxmode(key + 1); j++) {
-    fxlist = lives_list_append(fxlist, rte_keymode_get_filter_name(key + 1, j));
+    fxlist = lives_list_append(fxlist, rte_keymode_get_filter_name(key + 1, j, TRUE, FALSE));
   }
   lives_combo_populate(LIVES_COMBO(fxcombos[key]), fxlist);
   if (fxlist != NULL) {

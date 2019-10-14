@@ -1151,8 +1151,15 @@ int process_one(boolean visible) {
 #ifdef ENABLE_JACK
       if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_jack_get_time(mainw->jackd)) >
-          mainw->offsetticks) {
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
+              mainw->offsetticks || audio_ticks == -1)) {
+        if (audio_ticks == -1) {
+          if (mainw->cancelled == CANCEL_NONE) {
+            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+            else mainw->cancelled = CANCEL_AUDIO_ERROR;
+            return mainw->cancelled;
+          }
+        }
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
             audio_stretch > 0.5) {
           // if audio_stretch is > 1. it means that audio is playing too fast
@@ -1176,11 +1183,15 @@ int process_one(boolean visible) {
 #ifdef HAVE_PULSE_AUDIO
       if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && (audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
-          mainw->offsetticks) {
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
+          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
+           mainw->offsetticks || audio_ticks == -1)) {
         if (audio_ticks == -1) {
-          mainw->cancelled = CANCEL_ERROR;
-          return mainw->cancelled;
+          if (mainw->cancelled == CANCEL_NONE) {
+            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+            else mainw->cancelled = CANCEL_AUDIO_ERROR;
+            return mainw->cancelled;
+          }
         }
         // fps is synched to external source, so we adjust the audio rate to fit
         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
@@ -2887,7 +2898,7 @@ void end_threaded_dialog(void) {
     // TODO
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_grab_focus(mainw->msg_area);
-    gtk_window_set_focus(LIVES_MAIN_WINDOW_WIDGET, mainw->msg_area);
+    gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
   }
 
   if (mainw->is_ready && prefs->show_gui)

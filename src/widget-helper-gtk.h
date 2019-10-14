@@ -41,6 +41,8 @@
 #define GTK_CSS_SELECTORS_BUG
 #endif
 
+#define COMBO_LIST_LIMIT 256 // if we get a combo longer than this, we use a tree store
+
 #ifndef IS_MINGW
 typedef gboolean                          boolean;
 #else
@@ -221,6 +223,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_filename_from_utf8(a, b, c, d, e) g_filename_from_utf8(a, b, c, d, e)
 
 #define lives_utf8_strdown(a, b) g_utf8_strdown(a, b)
+#define lives_utf8_strup(a, b) g_utf8_strup(a, b)
 
 #define lives_find_program_in_path(a) g_find_program_in_path(a)
 

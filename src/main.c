@@ -524,7 +524,7 @@ static boolean pre_init(void) {
 
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
 
-  pthread_mutex_init(&mainw->abuf_mutex, NULL);
+  pthread_mutex_init(&mainw->abuf_mutex, &mattr);
 
   pthread_mutex_init(&mainw->abuf_frame_mutex, NULL);
 
@@ -906,11 +906,13 @@ static void lives_init(_ign_opts *ign_opts) {
   LiVESList *encoders = NULL;
   LiVESList *encoder_capabilities = NULL;
 
+  char **array;
   char mppath[PATH_MAX];
 
   char *weed_plugin_path;
   char *frei0r_path;
   char *ladspa_path;
+  char *msg;
 
   boolean needs_free;
 
@@ -1358,15 +1360,13 @@ static void lives_init(_ign_opts *ign_opts) {
 
     if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = 8;
 
-    get_string_pref(PREF_DEF_AUTOTRANS, prefs->def_autotrans, 256);
-
     prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
     if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
     future_prefs->nfx_threads = prefs->nfx_threads;
 
     prefs->stream_audio_out = get_boolean_pref(PREF_STREAM_AUDIO_OUT);
 
-    prefs->unstable_fx = FALSE;
+    prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
 
     prefs->disabled_decoders = get_list_pref(PREF_DISABLED_DECODERS);
 
@@ -1768,9 +1768,31 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_snprintf(prefs->jack_tserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
 #endif
 
-      get_string_pref(PREF_CURRENT_AUTOTRANS, buff, 256);
-      if (strlen(buff) == 0) prefs->atrans_fx = -1;
-      else prefs->atrans_fx = weed_get_idx_for_hashname(buff, FALSE);
+      array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
+      mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
+      if (mainw->def_trans_idx == - 1) {
+        msg = lives_strdup_printf(_("System default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+        LIVES_WARN(msg);
+        lives_free(msg);
+      }
+      lives_strfreev(array);
+
+      get_string_prefd(PREF_CURRENT_AUTOTRANS, buff, 256, DEF_AUTOTRANS);
+      if (!strcmp(buff, "none")) prefs->atrans_fx = -1;
+      else {
+        if (!lives_utf8_strcasecmp(buff, DEF_AUTOTRANS) || get_token_count(buff, '|') < 3)
+          prefs->atrans_fx = mainw->def_trans_idx;
+        else {
+          array = lives_strsplit(buff, "|", 3);
+          prefs->atrans_fx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
+          if (prefs->atrans_fx == - 1) {
+            msg = lives_strdup_printf(_("User default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+            LIVES_WARN(msg);
+            lives_free(msg);
+          }
+          lives_strfreev(array);
+        }
+      }
 
       mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
 
@@ -2213,7 +2235,7 @@ boolean set_palette_colours(boolean force_reload) {
 
     // mandatory for themes
 
-    if (!is_OK || get_pref_from_file(themefile, THEME_DETAIL_STYLE, pstyle, 8) != LIVES_RESPONSE_NONE) {
+    if (!is_OK || get_pref_from_file(themefile, THEME_DETAIL_STYLE, pstyle, 8) == LIVES_RESPONSE_NONE) {
       is_OK = FALSE;
     } else {
       palette->style = atoi(pstyle);
@@ -3249,7 +3271,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");

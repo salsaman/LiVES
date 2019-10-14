@@ -2450,6 +2450,12 @@ static void apbutton_clicked(LiVESButton *button, livespointer user_data) {
   iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
   niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
+#ifdef COMBO_LIST_LIMIT
+  if (niparams + EXTRA_PARAMS_IN > COMBO_LIST_LIMIT) {
+    niparams = COMBO_LIST_LIMIT - EXTRA_PARAMS_IN;
+  }
+#endif
+
   oparams = weed_get_plantptr_array(rte_keymode_get_filter(conxwp->okey + 1, conxwp->omode), WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
 
   totchans = cconx_get_numcons(conxwp, FX_DATA_WILDCARD);
@@ -3254,7 +3260,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
   lives_combo_populate(LIVES_COMBO(conxwp->ccombo[ours]), clist);
   lives_combo_set_active_string(LIVES_COMBO(conxwp->ccombo[ours]), "");
 
-  if (cidx == 0) lives_widget_set_sensitive(conxwp->acbutton, TRUE);
+  if (cidx == 0) if (conxwp->acbutton != NULL) lives_widget_set_sensitive(conxwp->acbutton, TRUE);
   lives_widget_set_sensitive(conxwp->ccombo[ours], TRUE);
 
   lives_list_free_all(&clist);
@@ -3370,6 +3376,11 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
     if (weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) {
       iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
       niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+#ifdef COMBO_LIST_LIMIT
+      if (niparams + EXTRA_PARAMS_IN > COMBO_LIST_LIMIT) {
+        niparams = COMBO_LIST_LIMIT - EXTRA_PARAMS_IN;
+      }
+#endif
     }
 
     // populate pcombo with all in params
@@ -3420,7 +3431,7 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
   lives_combo_populate(LIVES_COMBO(conxwp->pcombo[ours]), plist);
   lives_combo_set_active_string(LIVES_COMBO(conxwp->pcombo[ours]), "");
 
-  if (pidx == 0) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
+  if (pidx == 0) if (conxwp->apbutton != NULL) lives_widget_set_sensitive(conxwp->apbutton, TRUE);
 
   lives_widget_set_sensitive(conxwp->pcombo[ours], TRUE);
 
@@ -3909,6 +3920,12 @@ static void on_acheck_toggled(LiVESToggleButton *acheck, livespointer user_data)
 
       iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
       niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+
+#ifdef COMBO_LIST_LIMIT
+      if (niparams + EXTRA_PARAMS_IN > COMBO_LIST_LIMIT) {
+        niparams = COMBO_LIST_LIMIT - EXTRA_PARAMS_IN;
+      }
+#endif
 
       for (i = 0; i < niparams; i++) {
         param = iparams[j];
@@ -4744,6 +4761,11 @@ show_ex_params:
         iparams = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
         niparams = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
 
+#ifdef COMBO_LIST_LIMIT
+        if (niparams + EXTRA_PARAMS_IN > COMBO_LIST_LIMIT) {
+          niparams = COMBO_LIST_LIMIT - EXTRA_PARAMS_IN;
+        }
+#endif
         pidx = 0;
 
         // find combo list index for iparam

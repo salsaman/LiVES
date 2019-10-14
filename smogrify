@@ -404,7 +404,6 @@ if (defined($ARGV[0])) {
 
             &rc_set_if_not_set("rec_stop_gb", 10);
 
-            &rc_set_if_not_set("def_autotrans", "chroma blend");
             &rc_set_if_not_set("audio_src", 0);
 	    #internal
 
@@ -7688,6 +7687,9 @@ sub version_check_and_upgrade {
         if ($version_hash==2002005 && &rc_get("video_open_command") eq "") {
             $video_open_command="\"".&get_mplayer_location."\"";
             &rc_set("video_open_command","$video_open_command");
+        }
+        if ($version_hash<3000004) {
+            &rc_delete("def_autotrans");
         }
         unless ($old_version eq $version) {
             $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir/$default_keymap\" 2>$nulfile");

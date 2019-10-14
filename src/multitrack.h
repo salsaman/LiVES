@@ -48,6 +48,8 @@
 
 #define DEF_TIME 120 ///< default seconds when there is no event_list
 
+#define DEF_AUTOTRANS "simple_blend|chroma blend|salsaman"
+
 typedef struct _mt lives_mt;
 
 typedef struct _track_rect track_rect;
@@ -297,6 +299,7 @@ struct _mt {
   LiVESWidget *last_filter_map;
   LiVESWidget *next_filter_map;
   LiVESWidget *fx_list_box;
+  LiVESWidget *fx_list_label;
   LiVESWidget *fx_list_scroll;
   LiVESWidget *fx_list_vbox;
   LiVESWidget *next_fm_button;

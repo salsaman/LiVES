@@ -36,9 +36,9 @@ typedef enum {
 } lives_filter_error_t;
 
 typedef enum {
-  FX_LIST_NAME,
-  FX_LIST_EXTENDED_NAME,
-  FX_LIST_HASHNAME,
+  FX_LIST_NAME, // just name
+  FX_LIST_EXTENDED_NAME, // name + author (if dupe) + subcat + observations
+  FX_LIST_HASHNAME, // hashnames - (packagefilterauthor) author and not extra_authors
 } lives_fx_list_t;
 
 #ifndef WEED_PLANT_LAYER
@@ -212,15 +212,15 @@ typedef enum {
 weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
-char *weed_filter_idx_get_name(int filter_idx) WARN_UNUSED;
 char *weed_filter_idx_get_package_name(int filter_idx) WARN_UNUSED;
 char *weed_get_package_name(weed_plant_t *filter_or_instance) WARN_UNUSED;
-char *weed_filter_extended_name(weed_plant_t *filter, boolean add_subcats) WARN_UNUSED;
+char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes, boolean add_notes) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
-                         boolean use_extra_authors) WARN_UNUSED;  ///< fullname includes author and version
+                         boolean use_extra_authors, char sep) WARN_UNUSED;  ///< fullname includes author and version
 int weed_get_idx_for_hashname(const char *hashname, boolean fullname) GNU_CONST;  ///< fullname includes author and version
 int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
+int weed_filter_highest_version(const char *pkg, const char *fxname, const char *auth, int *return_version);
 int enabled_in_channels(weed_plant_t *plant, boolean count_repeats);
 int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
 weed_plant_t *get_enabled_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
@@ -366,7 +366,8 @@ boolean rte_keymode_valid(int key, int mode,
                           boolean is_userkey);  ///< returns TRUE if a filter_class is bound to key/mode, is_userkey should be
 ///< set to TRUE
 int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
-char *rte_keymode_get_filter_name(int key, int mode) WARN_UNUSED;  ///< returns name of filter_class bound to key/mode (or "")
+char *rte_keymode_get_filter_name(int key, int mode, boolean mark_dupes,
+                                  boolean add_notes) WARN_UNUSED;  ///< returns name of filter_class bound to key/mode (or "")
 char *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
 char *rte_keymode_get_type(int key, int mode) WARN_UNUSED;  ///< returns a string filter/instance type (or "")
 
@@ -395,7 +396,7 @@ int rte_switch_keymode(int key, int mode, const char *hashname);
 /////////////////////////////////////////////////////////////
 
 LiVESList *weed_get_all_names(lives_fx_list_t list_type);
-int rte_get_numfilters(boolean inc_dupes);
+int rte_get_numfilters(void);
 int weed_get_sorted_filter(int i);
 
 /////////////////////////////////////////////////////////

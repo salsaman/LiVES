@@ -108,6 +108,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 
 
 static void framedraw_redraw_cb(LiVESWidget *widget, lives_special_framedraw_rect_t *framedraw) {
+  if (mainw->multitrack != NULL) return;
   framedraw_redraw(framedraw, mainw->fd_layer_orig);
 }
 

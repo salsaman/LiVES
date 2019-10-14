@@ -461,6 +461,9 @@ typedef enum {
   /// cancelled because of error
   CANCEL_ERROR,
 
+  /// cancelled because of soundcard error
+  CANCEL_AUDIO_ERROR,
+
   /// cancelled and paused
   CANCEL_USER_PAUSED,
 

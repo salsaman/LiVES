@@ -1357,7 +1357,7 @@ typedef struct {
 #define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
 #define URGENCY_MSG_TIMEOUT 10. // seconds
 
-  int64_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
+  ticks_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
   int next_free_alarm;
 
   char *urgency_msg;
@@ -1476,6 +1476,8 @@ typedef struct {
   boolean ignore_screen_size;
 
   boolean recording_recovered;
+
+  int def_trans_idx;
   ////////////////////
 } mainwindow;
 

@@ -205,7 +205,8 @@ static boolean save_keymap2_file(char *kfname) {
           if (rte_keymode_valid(i, j, TRUE)) {
             lives_write_le_buffered(kfd, &i, 4, TRUE);
             if (mainw->write_failed) break;
-            hashname = lives_strdup_printf("Weed%s", (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE)));
+            // TODO: use newer version with separator
+            hashname = lives_strdup_printf("Weed%s", (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0)));
             lives_free(tmp);
             slen = strlen(hashname);
             lives_write_le_buffered(kfd, &slen, 4, TRUE);
@@ -276,7 +277,8 @@ static boolean save_keymap3_file(char *kfname) {
           lives_write_le_buffered(kfd, &cconx->omode, 4, TRUE);
           if (mainw->write_failed) goto write_failed1;
 
-          hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey + 1, cconx->omode), TRUE, FALSE);
+          // TODO: use newer version with separator
+          hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey + 1, cconx->omode), TRUE, FALSE, 0);
           slen = strlen(hashname);
           lives_write_le_buffered(kfd, &slen, 4, TRUE);
           lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -303,7 +305,8 @@ static boolean save_keymap3_file(char *kfname) {
               lives_write_le_buffered(kfd, &cconx->imode[j], 4, TRUE);
               if (mainw->write_failed) goto write_failed1;
 
-              hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j] + 1, cconx->imode[j]), TRUE, FALSE);
+              // TODO: use newer version with separator
+              hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j] + 1, cconx->imode[j]), TRUE, FALSE, 0);
               slen = strlen(hashname);
               lives_write_le_buffered(kfd, &slen, 4, TRUE);
               lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -349,7 +352,8 @@ static boolean save_keymap3_file(char *kfname) {
           lives_write_le_buffered(kfd, &pconx->omode, 4, TRUE);
           if (mainw->write_failed) goto write_failed1;
 
-          hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey + 1, pconx->omode), TRUE, FALSE);
+          // TODO: use newer version with separator
+          hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey + 1, pconx->omode), TRUE, FALSE, 0);
           slen = strlen(hashname);
           lives_write_le_buffered(kfd, &slen, 4, TRUE);
           lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -376,7 +380,8 @@ static boolean save_keymap3_file(char *kfname) {
               lives_write_le_buffered(kfd, &pconx->imode[j], 4, TRUE);
               if (mainw->write_failed) goto write_failed1;
 
-              hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j] + 1, pconx->imode[j]), TRUE, FALSE);
+              // TODO: use newer version with separator
+              hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j] + 1, pconx->imode[j]), TRUE, FALSE, 0);
               slen = strlen(hashname);
               lives_write_le_buffered(kfd, &slen, 4, TRUE);
               lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -472,7 +477,8 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
         for (i = 1; i <= prefs->rte_keys_virtual; i++) {
           for (j = 0; j < modes; j++) {
             if (rte_keymode_valid(i, j, TRUE)) {
-              lives_fputs(lives_strdup_printf("%d|Weed%s\n", i, (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE))), kfile);
+              // TODO: use newer version with separator
+              lives_fputs(lives_strdup_printf("%d|Weed%s\n", i, (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0))), kfile);
               lives_free(tmp);
             }
           }
@@ -537,7 +543,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   d_print(_("Saving real time effect defaults to %s..."), prefs->fxdefsfile);
 
-  numfx = rte_get_numfilters(FALSE);
+  numfx = rte_get_numfilters();
 
   do {
     do_threaded_dialog(_("Saving real time effect defaults..."), FALSE);
@@ -843,11 +849,12 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           int fidx = rte_keymode_get_filter_idx(okey + 1, omode);
           if (fidx == -1) is_valid = FALSE;
           else {
-            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE);
+            // TODO: use newer version with separator
+            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
             if (strcmp(hashname, hashname2)) is_valid = FALSE;
             lives_free(hashname2);
             if (!is_valid) {
-              hashname2 = make_weed_hashname(fidx, TRUE, TRUE);
+              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
               if (!strcmp(hashname, hashname2)) is_valid = TRUE;
               lives_free(hashname2);
             }
@@ -935,11 +942,12 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               int fidx = rte_keymode_get_filter_idx(ikey + 1, imode);
               if (fidx == -1) is_valid2 = FALSE;
               else {
-                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE);
+                // TODO: use newer version with separator
+                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
                 if (strcmp(hashname, hashname2)) is_valid2 = FALSE;
                 lives_free(hashname2);
                 if (!is_valid2) {
-                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE);
+                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
                   if (!strcmp(hashname, hashname2)) is_valid2 = TRUE;
                   lives_free(hashname2);
                 }
@@ -1036,11 +1044,12 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           int fidx = rte_keymode_get_filter_idx(okey + 1, omode);
           if (fidx == -1) is_valid = FALSE;
           else {
-            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE);
+            // TODO: use newer version with separator
+            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
             if (strcmp(hashname, hashname2)) is_valid = FALSE;
             lives_free(hashname2);
             if (!is_valid) {
-              hashname2 = make_weed_hashname(fidx, TRUE, TRUE);
+              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
               if (!strcmp(hashname, hashname2)) is_valid = TRUE;
               lives_free(hashname2);
             }
@@ -1123,11 +1132,12 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               int fidx = rte_keymode_get_filter_idx(ikey + 1, imode);
               if (fidx == -1) is_valid2 = FALSE;
               else {
-                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE);
+                // TODO: use newer version with separator
+                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
                 if (strcmp(hashname, hashname2)) is_valid2 = FALSE;
                 lives_free(hashname2);
                 if (!is_valid2) {
-                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE);
+                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
                   if (!strcmp(hashname, hashname2)) is_valid2 = TRUE;
                   lives_free(hashname2);
                 }
@@ -1500,7 +1510,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       int idx = (key - 1) * modes + mode;
       int fx_idx = rte_keymode_get_filter_idx(key, mode);
 
-      rtew_combo_set_text(key - 1, mode, (tmp = rte_keymode_get_filter_name(key, mode)));
+      rtew_combo_set_text(key - 1, mode, (tmp = rte_keymode_get_filter_name(key, mode, FALSE, FALSE)));
       lives_free(tmp);
 
       if (fx_idx != -1) {
@@ -1588,6 +1598,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   char *tmp;
   char *type;
   char *plugin_name;
+  char *package_name;
 
   boolean has_desc = FALSE;
   boolean has_url = FALSE;
@@ -1611,6 +1622,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   plugin_name = rte_keymode_get_plugin_name(key + 1, mode);
   filter = rte_keymode_get_filter(key + 1, mode);
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
+  package_name = weed_get_package_name(filter);
   filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &weed_error);
   if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS,
         &weed_error);
@@ -1655,6 +1667,12 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
+  if (package_name != NULL) {
+    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Package name: %s"), package_name)));
+    lives_free(tmp);
+    lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
+  }
+
   label = lives_standard_label_new((tmp = lives_strdup_printf(_("Author: %s"), filter_author)));
   lives_free(tmp);
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
@@ -1682,7 +1700,9 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     label = lives_standard_label_new(_("Description: "));
     lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_height);
 
+    widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
     textview = lives_standard_text_view_new(filter_description, NULL);
+    widget_opts.justify = LIVES_JUSTIFY_CENTER;
 
     if (palette->style & STYLE_1) {
       lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
@@ -1706,6 +1726,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
 
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
+  add_fill_to_box(LIVES_BOX(vbox));
+
   ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
               LIVES_RESPONSE_OK);
 
@@ -1718,6 +1740,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(filter_name);
   lives_free(filter_author);
   lives_freep((void **)&filter_extra_authors);
+  lives_freep((void **)&package_name);
   if (has_desc) lives_free(filter_description);
   if (has_url) lives_free(url);
   if (has_license) lives_free(license);
@@ -1949,7 +1972,7 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
 
   lives_tree_model_get(model, &iter1, HASH_COLUMN, &hashname1, -1);
   if (hashname1 == NULL) {
-    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode)));
+    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE, FALSE)));
     lives_free(tmp);
     return;
   }
@@ -1972,12 +1995,12 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
   lives_widget_grab_focus(combo_entries[key_mode]);
 
   if ((error = rte_switch_keymode(key + 1, mode, hashname1)) < 0) {
-    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode)));
+    lives_entry_set_text(LIVES_ENTRY(combo_entries[key_mode]), (tmp = rte_keymode_get_filter_name(key + 1, mode, FALSE, FALSE)));
     lives_free(tmp);
 
     if (error == -2) do_mix_error();
     if (error == -1) {
-      d_print(_("LiVES could not locate the effect %s.\n"), rte_keymode_get_filter_name(key + 1, mode));
+      d_print(_("LiVES could not locate the effect %s.\n"), rte_keymode_get_filter_name(key + 1, mode, TRUE, FALSE));
     }
     return;
   }
@@ -2289,7 +2312,7 @@ LiVESWidget *create_rte_window(void) {
 
       combo_entries[idx] = lives_combo_get_entry(LIVES_COMBO(combo));
 
-      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]), (tmp = rte_keymode_get_filter_name(i + 1, j)));
+      lives_entry_set_text(LIVES_ENTRY(combo_entries[idx]), (tmp = rte_keymode_get_filter_name(i + 1, j, FALSE, FALSE)));
       lives_free(tmp);
 
       lives_entry_set_editable(LIVES_ENTRY(combo_entries[idx]), FALSE);

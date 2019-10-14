@@ -2646,13 +2646,16 @@ void play_file(void) {
 
     // tell jack client to close audio file
     if (mainw->jackd != NULL && mainw->jackd->playing_file > 0) {
-      ticks_t timeout;
-      lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-      while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
-        sched_yield(); // wait for seek
-        lives_usleep(prefs->sleep_time);
+      ticks_t timeout = 0;
+      if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
+        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
+          sched_yield(); // wait for seek
+          lives_usleep(prefs->sleep_time);
+        }
+        lives_alarm_clear(alarm_handle);
       }
-      lives_alarm_clear(alarm_handle);
+      if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
       jack_message.command = ASERVER_CMD_FILE_CLOSE;
       jack_message.data = NULL;
       jack_message.next = NULL;
@@ -2680,13 +2683,16 @@ void play_file(void) {
 
       // tell pulse client to close audio file
       if (mainw->pulsed != NULL && (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0)) {
-        ticks_t timeout;
-        lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-        while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
-          sched_yield(); // wait for seek
-          lives_usleep(prefs->sleep_time);
+        ticks_t timeout = 0;
+        if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
+          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
+            sched_yield(); // wait for seek
+            lives_usleep(prefs->sleep_time);
+          }
+          lives_alarm_clear(alarm_handle);
         }
-        lives_alarm_clear(alarm_handle);
+        if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
         pulse_message.command = ASERVER_CMD_FILE_CLOSE;
         pulse_message.data = NULL;
         pulse_message.next = NULL;
@@ -2747,7 +2753,6 @@ void play_file(void) {
     mainw->pulsed->in_use = FALSE;
   }
 #endif
-
 
   // terminate autolives if running
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);

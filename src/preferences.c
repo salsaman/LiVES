@@ -54,7 +54,7 @@ static void on_osc_enable_toggled(LiVESToggleButton *t1, livespointer t2) {
 #endif
 
 
-static int get_pref_inner(const char *filename, const char *key, char *val, int maxlen) {
+static LiVESResponseType get_pref_inner(const char *filename, const char *key, char *val, int maxlen) {
   char *com;
 
   memset(val, 0, maxlen);
@@ -65,8 +65,9 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
       if (prefval != NULL) {
         lives_snprintf(val, maxlen, "%s", prefval);
         lives_free(prefval);
+        return LIVES_RESPONSE_YES;
       }
-      return LIVES_RESPONSE_NONE;
+      return LIVES_RESPONSE_NO;
     }
     com = lives_strdup_printf("%s get_pref \"%s\" -", prefs->backend_sync, key);
   } else {
@@ -82,17 +83,24 @@ static int get_pref_inner(const char *filename, const char *key, char *val, int 
 }
 
 
-LIVES_GLOBAL_INLINE int get_string_pref(const char *key, char *val, int maxlen) {
+LIVES_GLOBAL_INLINE LiVESResponseType get_string_pref(const char *key, char *val, int maxlen) {
   return get_pref_inner(NULL, key, val, maxlen);
 }
 
 
-LIVES_GLOBAL_INLINE int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
+LIVES_GLOBAL_INLINE LiVESResponseType get_string_prefd(const char *key, char *val, int maxlen, const char *def) {
+  int ret = get_pref_inner(NULL, key, val, maxlen);
+  if (ret == LIVES_RESPONSE_NO) lives_snprintf(val, maxlen, "%s", def);
+  return ret;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen) {
   return get_pref_inner(filename, key, val, maxlen);
 }
 
 
-int get_utf8_pref(const char *key, char *val, int maxlen) {
+LiVESResponseType get_utf8_pref(const char *key, char *val, int maxlen) {
   // get a pref in locale encoding, then convert it to utf8
   char *tmp;
   int retval = get_string_pref(key, val, maxlen);
@@ -111,7 +119,7 @@ LiVESList *get_list_pref(const char *key) {
 
   LiVESList *retlist = NULL;
 
-  if (get_string_pref(key, buf, 65535) != LIVES_RESPONSE_NONE) return NULL;
+  if (get_string_pref(key, buf, 65535) == LIVES_RESPONSE_NO) return NULL;
   if (!strlen(buf)) return NULL;
 
   nvals = get_token_count(buf, '\n');
@@ -197,7 +205,7 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   char **array;
   int ntoks;
 
-  if (get_string_pref(key, buffer, 64) != LIVES_RESPONSE_NONE) return FALSE;
+  if (get_string_pref(key, buffer, 64) == LIVES_RESPONSE_NO) return FALSE;
   if (strlen(buffer) == 0) return FALSE;
   if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
@@ -218,7 +226,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
   char **array;
   int ntoks;
 
-  if (get_pref_from_file(themefile, key, buffer, 64) != LIVES_RESPONSE_NONE) return FALSE;
+  if (get_pref_from_file(themefile, key, buffer, 64) == LIVES_RESPONSE_NO) return FALSE;
   if (strlen(buffer) == 0) return FALSE;
   if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
@@ -2513,7 +2521,7 @@ static void pref_init_list(LiVESWidget *list) {
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column1);
   lives_tree_view_append_column(LIVES_TREE_VIEW(list), column2);
   lives_tree_view_column_set_sizing(column2, LIVES_TREE_VIEW_COLUMN_FIXED);
-  lives_tree_view_column_set_fixed_width(column2, 150.*widget_opts.scale);
+  lives_tree_view_column_set_fixed_width(column2, 150. * widget_opts.scale);
 
   store = lives_list_store_new(N_COLUMNS, LIVES_COL_TYPE_PIXBUF, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_UINT);
 
@@ -2528,10 +2536,13 @@ static void prefs_add_to_list(LiVESWidget *list, LiVESPixbuf *pix, const char *s
   LiVESListStore *store;
   LiVESTreeIter iter;
 
+  char *tmp = lives_strdup_printf("\n  %s\n", str);
+
   store = LIVES_LIST_STORE(lives_tree_view_get_model(LIVES_TREE_VIEW(list)));
 
   lives_list_store_insert(store, &iter, idx);
-  lives_list_store_set(store, &iter, LIST_ICON, pix, LIST_ITEM, str, LIST_NUM, idx, -1);
+  lives_list_store_set(store, &iter, LIST_ICON, pix, LIST_ITEM, tmp, LIST_NUM, idx, -1);
+  lives_free(tmp);
 }
 
 
@@ -4422,11 +4433,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                          (palette->style & STYLE_4), LIVES_BOX(hbox), NULL);
   layout = lives_layout_new(LIVES_BOX(vbox));
 
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Frame blank image"), TRUE);
+
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-  prefsw->frameblank_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Frame blank image"))), mainw->frameblank_path,
+  prefsw->frameblank_entry = lives_standard_fileentry_new(" ", mainw->frameblank_path,
                              prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                              (tmp2 = lives_strdup(_("The frame image which is shown when there is no clip loaded."))));
-  lives_free(tmp);
   lives_free(tmp2);
 
   prefsw->fb_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
@@ -4435,11 +4447,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(prefsw->fb_filebutton), "filesel_type",
                                LIVES_INT_TO_POINTER(LIVES_FILE_SELECTION_IMAGE_ONLY));
 
-  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
-  prefsw->sepimg_entry = lives_standard_fileentry_new((tmp = lives_strdup(_("Separator image"))), mainw->sepimg_path,
+  lives_layout_add_row(LIVES_LAYOUT(layout));
+  lives_layout_add_label(LIVES_LAYOUT(layout), _("Separator image"), TRUE);
+
+  hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  prefsw->sepimg_entry = lives_standard_fileentry_new(" ", mainw->sepimg_path,
                          prefs->def_image_dir, MEDIUM_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                          (tmp2 = lives_strdup(_("The image shown in the center of the interface."))));
-  lives_free(tmp);
   lives_free(tmp2);
 
   prefsw->se_filebutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));

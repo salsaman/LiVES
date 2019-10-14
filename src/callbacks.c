@@ -1662,7 +1662,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   themeheader = lives_build_filename(prefs->workdir, IMPORTS_DIRNAME, THEME_HEADER, NULL);
 
-  if (get_pref_from_file(themeheader, THEME_DETAIL_NAME, tname, 128) != LIVES_RESPONSE_NONE) {
+  if (get_pref_from_file(themeheader, THEME_DETAIL_NAME, tname, 128) == LIVES_RESPONSE_NO) {
     // failed to get name
     lives_rmdir(importcheckdir, TRUE);
     lives_free(importcheckdir);
@@ -4144,6 +4144,10 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // in case we are rendering and previewing, in case we now have audio
   if (mainw->preview && mainw->is_rendering && mainw->is_processing) reget_afilesize(mainw->current_file);
   mainw->noswitch = FALSE;
+  if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
+    handle_audio_timeout();
+    mainw->cancelled = CANCEL_ERROR;
+  }
 }
 
 
@@ -4176,6 +4180,10 @@ void on_playclip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     close_current_file(0);
   }
   mainw->noswitch = FALSE;
+  if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
+    handle_audio_timeout();
+    mainw->cancelled = CANCEL_ERROR;
+  }
 }
 
 

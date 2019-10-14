@@ -916,6 +916,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_APPLY_GAMMA "apply_gamma"
 #define PREF_SHOW_TOOLTIPS "show_tooltips"
 #define PREF_SHOW_URGENCY "show_urgency_messages"
+#define PREF_UNSTABLE_FX "allow_unstable_effects"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
@@ -942,11 +943,12 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
 
 boolean has_pref(const char *key);
 
-int get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
+LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
 void get_pref_default(const char *key, char *val, int maxlen); // valid only for select prefs (PREF_SOX_COMMAND)
 
 int get_utf8_pref(const char *key, char *val, int maxlen);
-int get_string_pref(const char *key, char *val, int maxlen);
+LiVESResponseType get_string_pref(const char *key, char *val, int maxlen);
+LiVESResponseType get_string_prefd(const char *key, char *val, int maxlen, const char *def);
 boolean get_boolean_pref(const char *key);
 double get_double_pref(const char *key);
 double get_double_prefd(const char *key, double defval);

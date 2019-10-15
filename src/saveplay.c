@@ -1964,6 +1964,7 @@ void play_file(void) {
 #endif
 
   boolean mute;
+  boolean needsadone = FALSE;
 
 #ifdef RT_AUDIO
   boolean exact_preview = FALSE;
@@ -2020,6 +2021,7 @@ void play_file(void) {
       d_print(_("recording aborted by clipboard playback.\n"));
     } else {
       d_print(_("Recording performance..."));
+      needsadone = TRUE;
       mainw->clip_switched = FALSE;
       // TODO
       if (mainw->current_file > 0 && (cfile->undo_action == UNDO_RESAMPLE || cfile->undo_action == UNDO_RENDER)) {
@@ -2956,6 +2958,7 @@ void play_file(void) {
 
   // disable the freeze key
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
+  if (needsadone) d_print_done();
 
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0.) {

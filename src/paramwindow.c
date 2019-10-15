@@ -785,7 +785,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   if (pbox == NULL) {
     char *title, *defstr;
-    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 && rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 2;
+    if (rfx->status == RFX_STATUS_WEED || no_process || (rfx->num_in_channels == 0 &&
+        rfx->props & RFX_PROPS_BATCHG)) scrw = RFX_WINSIZE_H * 1.5 * widget_opts.scale;
     else scrw = GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY;
 
     fx_dialog[didx] = (_fx_dialog *)lives_malloc(sizeof(_fx_dialog));

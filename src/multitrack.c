@@ -8549,7 +8549,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, widget_opts.packing_width);
 
   mt->in_image = lives_image_new();
-  mt->in_frame = lives_alignment_new(0.5, 0.5, 1., 1.);
   mt->in_frame = lives_frame_new(NULL);
   lives_container_set_border_width(LIVES_CONTAINER(mt->in_frame), 0);
 

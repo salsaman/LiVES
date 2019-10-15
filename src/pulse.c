@@ -268,12 +268,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             posix_fadvise(pulsed->fd, 0, 0, POSIX_FADV_SEQUENTIAL);
           }
 #endif
-          pulsed->real_seek_pos = pulsed->seek_pos = 0;
-          pulsed->playing_file = new_file;
-          pa_stream_trigger(pulsed->pstream, NULL, NULL);
         }
         lives_free(filename);
       }
+      pulsed->real_seek_pos = pulsed->seek_pos = 0;
+      pulsed->playing_file = new_file;
+      pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     case ASERVER_CMD_FILE_CLOSE:
       //if (!LIVES_IS_PLAYING) pulse_driver_cork(pulsed);

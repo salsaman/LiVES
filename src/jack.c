@@ -121,15 +121,14 @@ boolean lives_jack_init(void) {
     LIVES_ERROR("Could not start the jack server");
     return FALSE;
   }
-}
 
-mainw->jack_inited = TRUE;
+  mainw->jack_inited = TRUE;
 
-options = (jack_options_t)((int)options | (int)JackNoStartServer);
+  options = (jack_options_t)((int)options | (int)JackNoStartServer);
 
 #else
 
-  if ((prefs->jack_opts &JACK_OPTS_START_TSERVER) || (prefs->jack_opts &JACK_OPTS_START_ASERVER)) {
+  if ((prefs->jack_opts & JACK_OPTS_START_TSERVER) || (prefs->jack_opts & JACK_OPTS_START_ASERVER)) {
     unsetenv("JACK_NO_START_SERVER");
     setenv("JACK_START_SERVER", "1", 0);
 
@@ -153,27 +152,27 @@ options = (jack_options_t)((int)options | (int)JackNoStartServer);
 
 #endif
 
-// startup the transport client now; we will open another later for audio
-jack_transport_client = jack_client_open(jt_client, options, &status, server_name);
-lives_free(jt_client);
+  // startup the transport client now; we will open another later for audio
+  jack_transport_client = jack_client_open(jt_client, options, &status, server_name);
+  lives_free(jt_client);
 
-if (jack_transport_client == NULL) return FALSE;
+  if (jack_transport_client == NULL) return FALSE;
 
 #ifdef ENABLE_JACK_TRANSPORT
-jack_activate(jack_transport_client);
-jack_set_sync_timeout(jack_transport_client, 5000000); // seems to not work
-jack_set_sync_callback(jack_transport_client, lives_start_ready_callback, NULL);
-mainw->jack_trans_poll = TRUE;
+  jack_activate(jack_transport_client);
+  jack_set_sync_timeout(jack_transport_client, 5000000); // seems to not work
+  jack_set_sync_callback(jack_transport_client, lives_start_ready_callback, NULL);
+  mainw->jack_trans_poll = TRUE;
 #else
-jack_client_close(jack_transport_client);
-jack_transport_client = NULL;
+  jack_client_close(jack_transport_client);
+  jack_transport_client = NULL;
 #endif
 
-if (status &JackServerStarted) {
-  d_print(_("JACK server started\n"));
-}
+  if (status & JackServerStarted) {
+    d_print(_("JACK server started\n"));
+  }
 
-return TRUE;
+  return TRUE;
 }
 
 /////////////////////////////////////////////////////////////////
@@ -380,6 +379,7 @@ static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jack
     check_zero_buff(rbytes);
     audio_stream(zero_buff, rbytes, jackd->astream_fd);
   }
+  if (!jackd->is_paused) jackd->frames_written += nframes;
 }
 
 
@@ -423,12 +423,13 @@ static int audio_process(nframes_t nframes, void *arg) {
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
+      jackd->in_use = FALSE;
       break;
     case ASERVER_CMD_FILE_SEEK:
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
-      if (xseek < 0.) xseek = 0.;
       jackd->seek_pos = jackd->real_seek_pos = xseek;
+      jackd->in_use = TRUE;
       break;
     default:
       jackd->msgq = NULL;
@@ -449,14 +450,17 @@ static int audio_process(nframes_t nframes, void *arg) {
   for (i = 0; i < jackd->num_output_channels; i++)
     out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i],
                     nframes);
-  if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use) {
+  if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use && jackd->playing_file > -1) {
+    //if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use) {
     // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf == -1) {
       // assign local copy from cache_buffers
       if (!LIVES_IS_PLAYING || (cache_buffer = pop_cache_buffer()) == NULL) {
         // audio buffer is not ready yet
-        output_silence(0, nframes, jackd, out_buffer);
-        jackd->is_silent = TRUE;
+        if (!jackd->is_silent) {
+          output_silence(0, nframes, jackd, out_buffer);
+          jackd->is_silent = TRUE;
+        }
         return 0;
       }
       if (cache_buffer->fileno == -1) jackd->playing_file = -1;
@@ -497,11 +501,11 @@ static int audio_process(nframes_t nframes, void *arg) {
         jackd->is_silent = TRUE;
       }
 
-      if (!jackd->is_paused) jackd->frames_written += nframes;
+      /* if (!jackd->is_paused) jackd->frames_written += nframes; */
 
-      if (jackd->seek_pos < 0. && jackd->playing_file > -1 && afile != NULL) {
-        jackd->seek_pos += nframes * afile->achans * afile->asampsize / 8;
-      }
+      /* if (jackd->seek_pos < 0. && jackd->playing_file > -1 && afile != NULL) { */
+      /*   jackd->seek_pos += nframes * afile->achans * afile->asampsize / 8; */
+      /* } */
       return 0;
     }
 
@@ -571,8 +575,6 @@ static int audio_process(nframes_t nframes, void *arg) {
             }
 
             output_silence(0, nframes, jackd, out_buffer);
-
-            jackd->frames_written += nframes;
             return 0;
           } else {
             // not muted
@@ -620,7 +622,6 @@ static int audio_process(nframes_t nframes, void *arg) {
 
           jackd->is_silent = TRUE;
 
-          if (!jackd->is_paused) jackd->frames_written += nframes;
           if (jackd->seek_pos < 0. && jackd->playing_file > -1 && xfile != NULL) {
             jackd->seek_pos += nframes * xfile->achans * xfile->asampsize / 8;
           }
@@ -655,7 +656,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       vol = future_prefs->volume * future_prefs->volume;
       vol *= vol;
 
-      if (numFramesToWrite) {
+      if (numFramesToWrite > 0) {
         if (!from_memory) {
           //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
           if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) &&
@@ -689,12 +690,13 @@ static int audio_process(nframes_t nframes, void *arg) {
                   pthread_mutex_unlock(&mainw->abuf_frame_mutex);
                 }
               }
+              //}
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
                 ticks_t tc = mainw->currticks;
-                // apply inplace any effects with audio in_channels
+                // apply inplace any effects with audio in_channels, result goes to jack
                 weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
               }
-              // new streaming API
+
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
               if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
                 (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite);
@@ -743,7 +745,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                   // apply inplace any effects with audio in_channels
                   weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
                 }
-                // new streaming API
+
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
                 if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
                   (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite);
@@ -896,11 +898,10 @@ static int audio_process(nframes_t nframes, void *arg) {
     else jackd->jack_pulse[1]=jackd->jack_pulse[0];
     */
 
-    if (jackFramesAvailable) {
+    if (jackFramesAvailable > 0) {
 #ifdef DEBUG_AJACK
       lives_printerr("buffer underrun of %ld frames\n", jackFramesAvailable);
 #endif
-
       output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer);
     }
   } else if (jackd->state == JackTransportStarting || jackd->state == JackTransportStopped ||
@@ -1087,7 +1088,7 @@ static int audio_read(nframes_t nframes, void *arg) {
     // in this case we read external audio, but maybe not record it
     // we may wish to analyse the audio for example, or push it to a video generator
 
-    if (has_audio_filters(AF_TYPE_A)) {
+    if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no video channels out)
       ticks_t tc = mainw->currticks;
 
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
@@ -1213,7 +1214,7 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   const char *server_name = JACK_DEFAULT_SERVER_NAME;
   jack_options_t options = (jack_options_t)((int)JackServerName | (int)JackNoStartServer);
   jack_status_t status;
-
+  boolean needs_sigs = FALSE;
   lives_alarm_t alarm_handle;
   int i;
 
@@ -1225,12 +1226,24 @@ boolean jack_create_client_writer(jack_driver_t *jackd) {
   jack_set_error_function(jack_error_func);
   jackd->client = NULL;
 
-  alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+  if (!mainw->signals_deferred) {
+    // try to handle crashes in jack_client_open()
+    set_signal_handlers((SignalHandlerPointer)defer_sigint);
+    needs_sigs = TRUE;
+    mainw->crash_possible = 1;
+  }
+
+  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while (jackd->client == NULL && lives_alarm_check(alarm_handle) > 0) {
     jackd->client = jack_client_open(client_name, options, &status, server_name);
     lives_usleep(prefs->sleep_time);
   }
   lives_alarm_clear(alarm_handle);
+
+  if (needs_sigs) {
+    set_signal_handlers((SignalHandlerPointer)catch_sigint);
+    mainw->crash_possible = 0;
+  }
 
   if (jackd->client == NULL) {
     lives_printerr("jack_client_open() failed, status = 0x%2.0x\n", status);

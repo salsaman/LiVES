@@ -410,6 +410,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
 
   boolean tried_all = FALSE;
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   int nframe, oframe = frame;
 
@@ -442,7 +443,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
       pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width, height);
       if (error != NULL || pixbuf == NULL) {
         lives_error_free(error);
-        if (needs_idlefunc) {
+        if (mt != NULL && (needs_idlefunc || (!did_backup && mt->auto_changed))) {
           mt->idlefunc = mt_idle_add(mt);
         }
         return NULL;
@@ -471,8 +472,10 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
     }
   } while (noblanks);
 
-  if (needs_idlefunc) {
-    mt->idlefunc = mt_idle_add(mt);
+  if (mt != NULL) {
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
   }
 
   return thumbnail;
@@ -775,7 +778,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
 }
 
 
-static void save_mt_autoback(lives_mt *mt, int64_t stime) {
+static void save_mt_autoback(lives_mt *mt) {
   // auto backup of the current layout
 
   // this is called from an idle funtion - if the specified amount of time has passed and
@@ -791,6 +794,7 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
   int retval2;
   int fd;
 
+  mt->auto_changed = FALSE;
   mt_desensitise(mt);
 
   // flush any pending events
@@ -823,18 +827,15 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
     mt_sensitise(mt);
 
-    if (!mainw->write_failed) mt->auto_changed = FALSE;
-    else mainw->write_failed = FALSE;
-
     if (!retval || mainw->write_failed) {
+      mainw->write_failed = FALSE;
       retval2 = do_write_failed_error_s_with_retry(asave_file, NULL, NULL);
     }
   } while (retval2 == LIVES_RESPONSE_RETRY);
 
   lives_free(asave_file);
 
-  stime = lives_get_current_ticks();
-  mt->auto_back_time = stime;
+  mt->auto_back_time = lives_get_current_ticks();
 
   gettimeofday(&otv, NULL);
   tmp = lives_datetime(&otv);
@@ -844,12 +845,22 @@ static void save_mt_autoback(lives_mt *mt, int64_t stime) {
 
 
 boolean mt_auto_backup(livespointer user_data) {
-  int64_t stime, diff;
+  ticks_t stime, diff;
 
   lives_mt *mt = (lives_mt *)user_data;
 
+  if (mainw->multitrack == NULL) return FALSE;
+
+  if (prefs->mt_auto_back == 0) mt->auto_changed = TRUE;
+
+  if (!mt->auto_changed && mt->did_backup) {
+    LIVES_WARN("Error in mt backup");
+    return TRUE;
+  }
+
+  mt->idlefunc = 0;
+
   if (!mt->auto_changed || mt->event_list == NULL || prefs->mt_auto_back < 0) {
-    mt->idlefunc = 0;
     return FALSE;
   }
 
@@ -859,16 +870,14 @@ boolean mt_auto_backup(livespointer user_data) {
   diff = stime - mt->auto_back_time;
   if (diff >= prefs->mt_auto_back * TICKS_PER_SECOND) {
     // time to back up the event_list
-    if (mt->idlefunc != 0) {
-      lives_source_remove(mt->idlefunc);
-      mt->idlefunc = 0;
-    }
-    save_mt_autoback(mt, stime);
-    mt->auto_changed = FALSE;
-    mt->idlefunc = mt_idle_add(mt);
+    // resets mt->auto_changed
+    save_mt_autoback(mt);
+    return FALSE;
   }
 
-  return TRUE;
+  // re-add the idlefunc (in case we came here via a timer)
+  mt->idlefunc = mt_idle_add(mt);
+  return FALSE;
 }
 
 
@@ -926,7 +935,7 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
       lives_rm(aload_file);
       mt_init_tracks(mt, TRUE);
       remove_markers(mt->event_list);
-      save_mt_autoback(mt, 0);
+      save_mt_autoback(mt);
     }
   } else {
     // recover recording
@@ -986,8 +995,6 @@ boolean recover_layout(void) {
     loaded = mt_load_recovery_layout(mainw->multitrack);
     mainw->multitrack->auto_reloading = FALSE;
     mt_sensitise(mainw->multitrack);
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-    if (prefs->mt_auto_back == 0) mt_auto_backup(mainw->multitrack);
     set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
   }
   mainw->recoverable_layout = FALSE;
@@ -3113,6 +3120,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   boolean is_rendering = mainw->is_rendering;
   boolean internal_messaging = mainw->internal_messaging;
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   if (mt->play_width == 0 || mt->play_height == 0) return;
 
@@ -3172,6 +3180,9 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 #endif
     }
     lives_widget_queue_draw(mt->play_box);
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
     return;
   }
 
@@ -3270,7 +3281,12 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     }
   }
 
-  if (return_layer) return;
+  if (return_layer) {
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
+    return;
+  }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (mt->frame_pixbuf != NULL && mt->frame_pixbuf != mainw->imframe) {
@@ -3339,7 +3355,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   lives_ruler_set_value(LIVES_RULER(mt->timeline), ptr_time);
   lives_widget_queue_draw(mt->timeline);
 
-  if (needs_idlefunc) {
+  if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
     mt->idlefunc = mt_idle_add(mt);
   }
 }
@@ -3948,9 +3964,10 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
   mt->current_fx = mt->selected_filter;
   mt->selected_filter = -1;
 
-  // create dummy menuitem
+  // create dummy menuitem, needed in order to pass idx value
   dummy_menuitem = lives_standard_menu_item_new();
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dummy_menuitem), "idx", LIVES_INT_TO_POINTER(mt->current_fx));
+  lives_widget_object_ref_sink(dummy_menuitem);
 
   nins = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE);
   if (nins == 1) {
@@ -3965,13 +3982,13 @@ static boolean on_drag_filter_end(LiVESWidget *widget, LiVESXEventButton *event,
 
     if (tchan == -1 && !is_pure_audio(get_weed_filter(mt->current_fx), FALSE)) {
       // can only apply audio filters to backing audio
-      lives_widget_destroy(dummy_menuitem);
+      lives_widget_object_unref(dummy_menuitem);
       return FALSE;
     }
 
     block = get_block_from_time(eventbox, timesecs, mt);
     if (block == NULL) {
-      lives_widget_destroy(dummy_menuitem);
+      lives_widget_object_unref(dummy_menuitem);
       return FALSE;
     }
     nb_ignore = TRUE;
@@ -4989,9 +5006,13 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
 
   unsigned char *memblock;
 
-  mt->did_backup = FALSE;
+  if (mt->did_backup) return;
 
-  mt->changed = mt->auto_changed = TRUE;
+  // top level caller MUST reset this to FALSE !
+  mt->did_backup = mt->changed = TRUE;
+
+  // ask caller to add the idle func
+  if (prefs->mt_auto_back > 0) mt->auto_changed = TRUE;
 
   if (mt->undo_mem == NULL) return;
 
@@ -5186,15 +5207,7 @@ static void apply_avol_filter(lives_mt *mt) {
     double region_end = mt->region_end;
 
     boolean did_backup = mt->did_backup;
-    boolean needs_idlefunc = FALSE;
-
     int current_fx = mt->current_fx;
-
-    if (!did_backup && mt->idlefunc > 0) {
-      needs_idlefunc = TRUE;
-      lives_source_remove(mt->idlefunc);
-      mt->idlefunc = 0;
-    }
 
     mt->region_start = 0.;
     mt->region_end = (get_event_timecode(new_end_event) + TICKS_PER_SECOND_DBL / mt->fps) / TICKS_PER_SECOND_DBL;
@@ -5210,8 +5223,9 @@ static void apply_avol_filter(lives_mt *mt) {
     }
     mt->current_fx = mt->avol_fx;
 
-    mt->did_backup = TRUE;
+    mt->did_backup = TRUE; // this is a special internal event that we don't want to backup
     mt_add_region_effect(NULL, mt);
+    mt->did_backup = did_backup;
     mt->avol_init_event = mt->init_event;
 
     mt->region_start = region_start;
@@ -5222,17 +5236,11 @@ static void apply_avol_filter(lives_mt *mt) {
     mt->current_fx = current_fx;
     mt->init_event = old_mt_init;
 
-    mt->did_backup = did_backup;
-
     if (mt->opts.aparam_view_list != NULL) {
       for (i = 0; i < lives_list_length(mt->audio_draws); i++) {
         lives_widget_queue_draw((LiVESWidget *)lives_list_nth_data(mt->audio_draws, i));
       }
     }
-
-    if (!did_backup && needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
-    if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
-
     return;
   }
 
@@ -5283,7 +5291,7 @@ static void set_audio_filter_channel_values(lives_mt *mt) {
     }
   }
 
-  mt->changed = mt->auto_changed = TRUE;
+  mt->changed = TRUE;
 
   weed_reinit_effect(inst, TRUE);
   polymorph(mt, POLY_PARAMS);
@@ -5308,6 +5316,7 @@ static char *mt_set_vals_string(void) {
 void set_mt_play_sizes(lives_mt *mt, int width, int height) {
   int rwidth, rheight;
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
   lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
@@ -5320,7 +5329,7 @@ void set_mt_play_sizes(lives_mt *mt, int width, int height) {
 
   lives_widget_context_update();
 
-  if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
+  if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
 
   rwidth = lives_widget_get_allocation_width(mt->play_box);
   rheight = lives_widget_get_allocation_height(mt->play_box);
@@ -5603,9 +5612,7 @@ char *set_values_from_defs(lives_mt *mt, boolean from_prefs) {
   if (cfile->achans == 0) {
     mt->avol_fx = -1;
     mt->avol_init_event = NULL;
-  }
-
-  set_audio_filter_channel_values(mt);
+  } else set_audio_filter_channel_values(mt);
 
   return retval;
 }
@@ -9119,6 +9126,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   double *layout_map_audio = NULL;
 
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   register int i;
 
@@ -9138,7 +9146,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
   if (save_layout || ((mainw->scrap_file != -1 || mainw->ascrap_file != -1) && !mainw->recording_recovered)) {
     int file_selected = mt->file_selected;
     if (!check_for_layout_del(mt, TRUE)) {
-      if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
+      if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
       return FALSE;
     }
     mt->file_selected = file_selected; // because init_clips will reset this
@@ -10524,7 +10532,6 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
           /// move the init event in the filter map
           move_init_in_filter_map(mt, mt->event_list, mt->fm_edit_event, osel, mt->selected_init_event,
                                   mt->current_track, FALSE);
-          mt->did_backup = FALSE;
           break;
         case FX_ORD_AFTER:
           if (init_event_is_process_last(mt->selected_init_event)) {
@@ -10542,7 +10549,6 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
           /// move the init event in the filter map
           move_init_in_filter_map(mt, mt->event_list, mt->fm_edit_event, osel, mt->selected_init_event,
                                   mt->current_track, TRUE);
-          mt->did_backup = FALSE;
           break;
 
         default:
@@ -10550,6 +10556,7 @@ static boolean fx_ebox_pressed(LiVESWidget *eventbox, LiVESXEventButton *event, 
         }
       }
 
+      mt->did_backup = FALSE;
       mt->selected_init_event = osel;
       mt->fx_order = FX_ORD_NONE;
       mt->selected_init_event = NULL;
@@ -11312,8 +11319,10 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   int clip, current_track = -1;
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -11341,20 +11350,28 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
       if (event == NULL) break; // must be end of timeline
       if (new_track >= 0) {
         // is video track, if we have a non-blank frame, abort
-        if (get_frame_event_clip(event, new_track) >= 0) return NULL;
-      } else {
-        // is audio track, see if we are in an audio block
-        if (tc == start_tc && get_audio_block_start(mt->event_list, new_track, tcnow, TRUE) != NULL) return NULL;
-        // or if one starts here
-        if (get_audio_block_start(mt->event_list, new_track, tcnow, FALSE) != NULL) return NULL;
+        if (get_frame_event_clip(event, new_track) >= 0) {
+          if (!did_backup) {
+            if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+          }
+          return NULL;
+        } else {
+          // is audio track, see if we are in an audio block
+          // or if one starts here
+          if ((tc == start_tc && get_audio_block_start(mt->event_list, new_track, tcnow, TRUE) != NULL) ||
+              (get_audio_block_start(mt->event_list, new_track, tcnow, FALSE) != NULL)) {
+            if (!did_backup) {
+              if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+            }
+            return NULL;
+          }
+        }
       }
     }
   }
 
-  if (!did_backup) {
-    if (old_track < 0) mt_backup(mt, MT_UNDO_MOVE_AUDIO_BLOCK, 0);
-    else mt_backup(mt, MT_UNDO_MOVE_BLOCK, 0);
-  }
+  if (old_track < 0) mt_backup(mt, MT_UNDO_MOVE_AUDIO_BLOCK, 0);
+  else mt_backup(mt, MT_UNDO_MOVE_BLOCK, 0);
 
   mt->specific_event = get_prev_event(block->start_event);
   while (mt->specific_event != NULL && get_event_timecode(mt->specific_event) == start_tc) {
@@ -11456,7 +11473,12 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
   // apply autotransition
-  if (prefs->atrans_fx != -1) mt_do_autotransition(mt, block);
+  if (prefs->atrans_fx != -1) {
+    // add the insert and autotrans as 2 separate undo events
+    mt->did_backup = did_backup;
+    mt_do_autotransition(mt, block);
+    mt->did_backup = TRUE;
+  }
 
   if (!did_backup) {
     if (mt->avol_fx != -1 && (block == NULL || block->next == NULL) && mt->audio_draws != NULL &&
@@ -11464,8 +11486,6 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
       apply_avol_filter(mt);
     }
   }
-
-  mt->did_backup = did_backup;
 
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
@@ -11477,8 +11497,11 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   // give the new block the same uid as the old one
   if (block != NULL) block->uid = uid;
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 
   return block;
 }
@@ -11743,6 +11766,8 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
   boolean was_moved;
   boolean start_anchored;
+  boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   int track;
   int filenum;
@@ -11750,9 +11775,14 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
   if (!mainw->interactive) return;
 
-  if (block == NULL) {
-    // if no block selected, set for current clip ?
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
 
+  if (block == NULL) {
+    // if no block selected, set for current clip
     lives_clip_t *sfile = mainw->files[mt->file_selected];
     sfile->start = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(widget));
     set_clip_labels_variable(mt, mt->file_selected);
@@ -11760,6 +11790,9 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
     if (sfile->end < sfile->start) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), (double)sfile->start);
+    }
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
     }
     return;
   }
@@ -11773,6 +11806,9 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
 
   if (new_start_tc == orig_start_tc || !block->ordered) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), new_start_tc / TICKS_PER_SECOND_DBL);
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
     return;
   }
 
@@ -11831,8 +11867,12 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
           break;
         }
 
-        if (event == block->end_event) return; // should never happen...
-
+        if (event == block->end_event) {
+          if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+            mt->idlefunc = mt_idle_add(mt);
+          }
+          return; // should never happen...
+        }
         if (track >= 0) remove_frame_from_event(mt->event_list, event, track);
         event = get_next_frame_event(event);
       }
@@ -11962,6 +12002,20 @@ void in_out_start_changed(LiVESWidget *widget, livespointer user_data) {
     redraw_eventbox(mt, block->eventbox);
     paint_lines(mt, mt->ptr_time, TRUE);
   }
+
+  if (prefs->mt_auto_back >= 0) {
+    mt->auto_changed = TRUE;
+    if (prefs->mt_auto_back < MT_INOUT_TIME) {
+      // the user wants us to backup, but it would be tiresome to backup on every spin button change
+      // so instead of adding the idle function we will add a timer
+      //
+      // if the spinbutton is changed again we we reset the timer
+      // after any backup we put the normal idlefunc back again
+      mt->idlefunc = lives_timer_add(MT_INOUT_TIME, mt_auto_backup, mt);
+    } else {
+      mt->idlefunc = mt_idle_add(mt);
+    }
+  }
 }
 
 
@@ -11983,6 +12037,8 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
 
   boolean was_moved;
   boolean end_anchored;
+  boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   int track;
   int filenum;
@@ -11991,6 +12047,12 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
 
   if (!mainw->interactive) return;
 
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
+
   if (block == NULL) {
     lives_clip_t *sfile = mainw->files[mt->file_selected];
     sfile->end = (int)new_end;
@@ -11998,6 +12060,9 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     update_out_image(mt, 0);
 
     if (sfile->end < sfile->start) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_in), (double)sfile->end);
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
     return;
   }
 
@@ -12049,6 +12114,9 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     lives_signal_handler_block(mt->spinbutton_out, mt->spin_out_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mt->spinbutton_out), new_end_tc / TICKS_PER_SECOND_DBL);
     lives_signal_handler_unblock(mt->spinbutton_out, mt->spin_out_func);
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+      mt->idlefunc = mt_idle_add(mt);
+    }
     return;
   }
 
@@ -12254,6 +12322,19 @@ void in_out_end_changed(LiVESWidget *widget, livespointer user_data) {
     if (ablock != NULL && ablock != block) redraw_eventbox(mt, block->eventbox);
     paint_lines(mt, mt->ptr_time, TRUE);
     // TODO - redraw chans ??
+  }
+  if (prefs->mt_auto_back >= 0) {
+    mt->auto_changed = TRUE;
+    if (prefs->mt_auto_back < MT_INOUT_TIME) {
+      // the user wants us to backup, but it would be tiresome to backup on every spin button change
+      // so instead of adding the idle function we will add a timer
+      //
+      // if the spinbutton is changed again we we reset the timer
+      // after any backup we put the normal idlefunc back again
+      mt->idlefunc = lives_timer_add(MT_INOUT_TIME, mt_auto_backup, mt);
+    } else {
+      mt->idlefunc = mt_idle_add(mt);
+    }
   }
 }
 
@@ -13453,6 +13534,7 @@ void do_track_context(lives_mt *mt, LiVESXEventButton *event, double timesecs, i
 
   boolean has_something = FALSE;
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   if (!mainw->interactive) return;
 
@@ -13517,7 +13599,7 @@ void do_track_context(lives_mt *mt, LiVESXEventButton *event, double timesecs, i
                          (livespointer)mt);
   } else lives_widget_destroy(menu);
 
-  if (needs_idlefunc) {
+  if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
     mt->idlefunc = mt_idle_add(mt);
   }
 }
@@ -13537,6 +13619,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
 
   boolean got_track = FALSE;
   boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   int x, y;
   int track = 0;
@@ -13662,7 +13745,7 @@ track_rel_done:
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_widget_set_sensitive(mt->mm_menuitem, TRUE);
 
-  if (needs_idlefunc) {
+  if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
     mt->idlefunc = mt_idle_add(mt);
   }
 
@@ -14284,16 +14367,18 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
 
   boolean did_backup = mt->did_backup;
   boolean audio_done = FALSE;
+  boolean needs_idlefunc = FALSE;
 
   int track;
   int filenum;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_REMOVE_GAPS, 0);
+  mt_backup(mt, MT_UNDO_REMOVE_GAPS, 0);
 
   //go through selected tracks, move each block as far left as possible
 
@@ -14342,7 +14427,6 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
       // and then move all other blocks by offset
 
       while (tc <= tc_last) {
-
         block = get_block_after(eventbox, tc / TICKS_PER_SECOND_DBL, FALSE);
         if (block == NULL) break;
 
@@ -14379,7 +14463,6 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
       tc_first = tc;
       tc = tc_last;
       while (tc >= tc_first) {
-
         block = get_block_before(eventbox, tc / TICKS_PER_SECOND_DBL, FALSE);
         if (block == NULL) break;
 
@@ -14428,8 +14511,11 @@ static void remove_gaps_inner(LiVESMenuItem *menuitem, livespointer user_data, b
     get_track_index(mt, tc);
   }
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -14781,15 +14867,17 @@ void on_insgap_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESList *slist = mt->selected_tracks;
   char *tstart, *tend;
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   int track;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_INSERT_GAP, 0);
+  mt_backup(mt, MT_UNDO_INSERT_GAP, 0);
 
   while (slist != NULL) {
     track = LIVES_POINTER_TO_INT(slist->data);
@@ -14812,8 +14900,11 @@ void on_insgap_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(tstart);
   lives_free(tend);
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -14821,11 +14912,13 @@ void on_insgap_cur_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   char *tstart, *tend;
   char *tname;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -14851,8 +14944,11 @@ void on_insgap_cur_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(tstart);
   lives_free(tend);
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -15344,17 +15440,9 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
 
   lives_rfx_t *rfx;
 
-  boolean did_backup = mt->did_backup;
   boolean has_params;
 
   register int i;
-
-  if (!did_backup && mt->idlefunc > 0) {
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc = 0;
-  }
-
-  if (!did_backup && mt->current_fx != mt->avol_fx) mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
 
   // set track_index (for special widgets)
   mt->track_index = -1;
@@ -15410,16 +15498,19 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
   unlink_event(mt->event_list, event);
   insert_filter_map_event_at(mt->event_list, end_event, event, FALSE);
 
-  mt->did_backup = did_backup;
   if (mt->event_list != NULL) lives_widget_set_sensitive(mt->clear_event_list, TRUE);
 
-  if (mt->current_fx == mt->avol_fx) return;
+  if (mt->current_fx == mt->avol_fx) {
+    return;
+  }
 
   if (mt->avol_fx != -1) {
     apply_avol_filter(mt);
   }
 
-  if (mt->is_atrans) return;
+  if (mt->is_atrans) {
+    return;
+  }
 
   rfx = weed_to_rfx(filter, FALSE);
   get_track_index(mt, tc);
@@ -15437,9 +15528,6 @@ static void add_effect_inner(lives_mt *mt, int num_in_tracks, int *in_tracks, in
     polymorph(mt, POLY_PARAMS);
     lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
   } else polymorph(mt, POLY_FX_STACK);
-
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
 }
 
 
@@ -15480,10 +15568,19 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   char *tmp, *tmp1;
   char *tstart, *tend;
 
+  boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
+
   int numtracks = lives_list_length(mt->selected_tracks);
   int tcount = 0, tlast = -1000000, tsmall = -1, ctrack;
 
   int *tracks = (int *)lives_malloc(numtracks * sizint);
+
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
 
   // sort selected tracks into ascending order
   while (tcount < numtracks) {
@@ -15512,6 +15609,9 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   add_effect_inner(mt, numtracks, tracks, 1, &tracks[0], start_event, end_event);
 
   if (menuitem == NULL && !mt->is_atrans) {
+    if (!did_backup) {
+      if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    }
     lives_free(tracks);
     return;
   }
@@ -15551,12 +15651,18 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
+
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
 static boolean mt_add_region_effect_idle(livespointer user_data) {
   mt_add_region_effect(LIVES_MENU_ITEM(dummy_menuitem), user_data);
-  lives_widget_destroy(dummy_menuitem);
+  lives_widget_object_unref(dummy_menuitem);
   return FALSE;
 }
 
@@ -15571,6 +15677,14 @@ void mt_add_block_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   char *tstart, *tend;
   char *tmp;
   int selected_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->block_selected->eventbox), "layer_number"));
+  boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
+
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
 
   if (menuitem != NULL) mt->current_fx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), "idx"));
 
@@ -15590,12 +15704,18 @@ void mt_add_block_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(tend);
   lives_free(tmp);
   lives_free(filter_name);
+
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
 static boolean mt_add_block_effect_idle(livespointer user_data) {
   mt_add_block_effect(LIVES_MENU_ITEM(dummy_menuitem), user_data);
-  lives_widget_destroy(dummy_menuitem);
+  lives_widget_object_unref(dummy_menuitem);
   return FALSE;
 }
 
@@ -15622,6 +15742,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *tstart, *tend;
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   int numtracks;
   int error;
@@ -15630,7 +15751,8 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mt->is_rendering) return;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -15669,7 +15791,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_free(tracks);
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_DELETE_FILTER, 0);
+  mt_backup(mt, MT_UNDO_DELETE_FILTER, 0);
 
   remove_filter_from_event_list(mt->event_list, mt->selected_init_event);
   remove_end_blank_frames(mt->event_list, TRUE);
@@ -15689,10 +15811,12 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mt->poly_state == POLY_PARAMS) polymorph(mt, POLY_CLIPS);
   else if (mt->poly_state == POLY_FX_STACK) polymorph(mt, POLY_FX_STACK);
   mt_show_current_frame(mt, FALSE);
-  mt->did_backup = did_backup;
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -16312,10 +16436,12 @@ void on_split_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   double timesecs = mt->ptr_time;
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   if (mt->putative_block == NULL) return;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -16326,15 +16452,17 @@ void on_split_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mt->use_context = FALSE;
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_SPLIT, 0);
+  mt_backup(mt, MT_UNDO_SPLIT, 0);
 
   tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
   split_block(mt, mt->putative_block, tc, mt->current_track, FALSE);
-  mt->did_backup = did_backup;
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -16343,16 +16471,16 @@ void on_split_curr_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
   double timesecs = mt->ptr_time;
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
   weed_timecode_t tc;
   LiVESWidget *eventbox;
   track_rect *block;
 
   if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
-
-  if (!did_backup) mt_backup(mt, MT_UNDO_SPLIT, 0);
 
   tc = q_gint64(timesecs * TICKS_PER_SECOND_DBL, mt->fps);
 
@@ -16361,13 +16489,21 @@ void on_split_curr_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   block = get_block_from_time(eventbox, timesecs, mt);
 
-  if (block == NULL) return;
+  if (block == NULL) {
+    if (!did_backup) {
+      if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    }
+    return;
+  }
 
+  mt_backup(mt, MT_UNDO_SPLIT, 0);
   split_block(mt, block, tc, mt->current_track, FALSE);
-  mt->did_backup = did_backup;
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -16380,15 +16516,17 @@ void on_split_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   track_rect *block;
   double timesecs = mt->ptr_time;
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   if (mt->selected_tracks == NULL) return;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_SPLIT_MULTI, 0);
+  mt_backup(mt, MT_UNDO_SPLIT_MULTI, 0);
 
   while (selt != NULL) {
     track = LIVES_POINTER_TO_INT(selt->data);
@@ -16397,10 +16535,12 @@ void on_split_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (block != NULL) split_block(mt, block, timesecs * TICKS_PER_SECOND_DBL, track, FALSE);
     selt = selt->next;
   }
-  mt->did_backup = did_backup;
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 }
 
 
@@ -16419,22 +16559,22 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
 
   boolean done = FALSE;
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   int track;
 
   if (mt->is_rendering) return;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
 
   mt->context_time = -1.;
 
-  if (!did_backup) {
-    if (mt->current_track != -1) mt_backup(mt, MT_UNDO_DELETE_BLOCK, 0);
-    else mt_backup(mt, MT_UNDO_DELETE_AUDIO_BLOCK, 0);
-  }
+  if (mt->current_track != -1) mt_backup(mt, MT_UNDO_DELETE_BLOCK, 0);
+  else mt_backup(mt, MT_UNDO_DELETE_AUDIO_BLOCK, 0);
 
   if (mt->block_selected == NULL) mt->block_selected = mt->putative_block;
   block = mt->block_selected;
@@ -16569,7 +16709,6 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
     apply_avol_filter(mt);
   }
 
-  mt->did_backup = did_backup;
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
       mt->poly_state == POLY_PARAMS && weed_plant_has_leaf(mt->init_event, WEED_LEAF_IN_TRACKS)) {
     weed_timecode_t tc = q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL +
@@ -16583,8 +16722,11 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
     mt_show_current_frame(mt, FALSE);
   }
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
 
   mt_desensitise(mt);
   mt_sensitise(mt);
@@ -17183,6 +17325,7 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   weed_timecode_t ins_end = (double)(sfile->end) / sfile->fps * TICKS_PER_SECOND_DBL;
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   track_rect *block;
 
@@ -17190,7 +17333,8 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (sfile->frames == 0) return FALSE;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -17227,11 +17371,16 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
       event = get_frame_event_at(mt->event_list, tcnow, event, TRUE);
       if (event == NULL) break; // must be end of timeline
       // is video track, if we have a non-blank frame, abort
-      if (get_frame_event_clip(event, mt->current_track) >= 0) return FALSE;
+      if (get_frame_event_clip(event, mt->current_track) >= 0) {
+        if (!did_backup) {
+          if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+        }
+        return FALSE;
+      }
     }
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_INSERT_BLOCK, 0);
+  mt_backup(mt, MT_UNDO_INSERT_BLOCK, 0);
 
   insert_frames(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND, DIRECTION_POSITIVE, eventbox, mt, NULL);
 
@@ -17271,9 +17420,12 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   // get this again because it could have moved
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
-  if (!mt->moving_block && prefs->atrans_fx != -1) mt_do_autotransition(mt, block);
-
-  mt->did_backup = did_backup;
+  if (!mt->moving_block && prefs->atrans_fx != -1) {
+    // add the insert and autotrans as 2 separate undo events
+    mt->did_backup = did_backup;
+    mt_do_autotransition(mt, block);
+    mt->did_backup = TRUE;
+  }
 
   if (block != NULL && !resize_timeline(mt) && !did_backup) {
     lives_painter_surface_t *bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
@@ -17301,9 +17453,11 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
 
   mt_tl_move_relative(mt, 0.);
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
-
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
   return TRUE;
 }
 
@@ -17321,6 +17475,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   weed_timecode_t ins_end = q_gint64((double)sfile->end / sfile->fps * TICKS_PER_SECOND_DBL, mt->fps);
 
   boolean did_backup = mt->did_backup;
+  boolean needs_idlefunc = FALSE;
 
   track_rect *block;
 
@@ -17331,7 +17486,8 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (mt->current_track != -1 || sfile->achans == 0) return FALSE;
 
-  if (!did_backup && mt->idlefunc > 0) {
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
   }
@@ -17348,6 +17504,9 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   }
 
   if (ins_start > q_gint64(sfile->laudio_time * TICKS_PER_SECOND_DBL, mt->fps)) {
+    if (!did_backup) {
+      if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    }
     return FALSE;
   }
 
@@ -17377,13 +17536,17 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
       event = get_frame_event_at(mt->event_list, tcnow, event, TRUE);
       if (event == NULL) break; // must be end of timeline
       // is audio track, see if we are in an audio block
-      if (tc == 0 && get_audio_block_start(mt->event_list, mt->current_track, tcnow, TRUE) != NULL) return FALSE;
-      // or if one starts here
-      if (get_audio_block_start(mt->event_list, mt->current_track, tcnow, FALSE) != NULL) return FALSE;
+      if ((tc == 0 && get_audio_block_start(mt->event_list, mt->current_track, tcnow, TRUE) != NULL) ||
+          (get_audio_block_start(mt->event_list, mt->current_track, tcnow, FALSE) != NULL)) {
+        if (!did_backup) {
+          if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+        }
+        return FALSE;
+      }
     }
   }
 
-  if (!did_backup) mt_backup(mt, MT_UNDO_INSERT_AUDIO_BLOCK, 0);
+  mt_backup(mt, MT_UNDO_INSERT_AUDIO_BLOCK, 0);
 
   insert_audio(mt->file_selected, ins_start, ins_end, secs * TICKS_PER_SECOND, mt->insert_avel, dir, eventbox, mt, NULL);
 
@@ -17467,9 +17630,11 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
     get_track_index(mt, tc);
   }
 
-  if (!did_backup) mt->idlefunc = mt_idle_add(mt);
-  if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
-
+  if (!did_backup) {
+    mt->did_backup = FALSE;
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+    if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  }
   return TRUE;
 }
 
@@ -18781,6 +18946,13 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
 
   register int i;
 
+  if (mt->idlefunc > 0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
+
+  // TODO - undo: but we need to reinsert the values in pchains...
+
   for (i = 0; i < num_params; i++) {
     event = (weed_plant_t *)pchain[i];
     ev_tc = -1;
@@ -18795,6 +18967,7 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
         if (next_pchange != NULL) weed_set_voidptr_value(next_pchange, WEED_LEAF_PREV_CHANGE, prev_pchange);
       } else {
         // is initial pchange, reset to defaults, c.f. paramspecial.c
+        break_me();
         weed_plant_t *param = in_params[i];
         weed_plant_t *paramtmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
         if (weed_plant_has_leaf(paramtmpl, WEED_LEAF_HOST_DEFAULT)) {
@@ -18830,7 +19003,10 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
   }
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
 
-  mt->changed = mt->auto_changed = TRUE;
+  if (!mt->auto_changed) mt->auto_changed = TRUE;
+  if (prefs->mt_auto_back > 0) mt->idlefunc = mt_idle_add(mt);
+  else if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  mt->changed = TRUE;
 }
 
 
@@ -18949,20 +19125,22 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
   boolean has_multi = FALSE;
   boolean was_changed = FALSE;
+  boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
 
   int numtracks;
   register int i;
 
-  if (mt->idlefunc > 0) {
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc = 0;
-  }
-
   if (mt->framedraw != NULL) {
     if (!check_filewrite_overwrites()) {
-      mt->idlefunc = mt_idle_add(mt);
       return;
     }
+  }
+
+  if (mt->idlefunc > 0) {
+    needs_idlefunc = TRUE;
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
   }
 
   lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
@@ -19001,8 +19179,10 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     at_event = get_frame_event_at(mt->event_list, tc, mt->init_event, TRUE);
     insert_param_change_event_at(mt->event_list, at_event, pchange);
   }
+
   if (!was_changed) {
-    mt->idlefunc = mt_idle_add(mt);
+    if (needs_idlefunc || (!did_backup && mt->auto_changed))
+      mt->idlefunc = mt_idle_add(mt);
     return;
   }
 
@@ -19037,7 +19217,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     tname = lives_strdup(_("audio"));
   }
 
-  d_print(_("Set parameter values for %s %s on %s at time %s\n"), tname, filter_name, mt->timestring);
+  d_print(_("Set parameter values for %s %s on %s at time %s\n"), tname, filter_name, track_desc, mt->timestring);
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
@@ -19056,8 +19236,10 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     mt_show_current_frame(mt, FALSE); // show full preview in play window
   }
 
-  mt->changed = mt->auto_changed = TRUE;
-  mt->idlefunc = mt_idle_add(mt);
+  if (!mt->auto_changed) mt->auto_changed = TRUE;
+  if (prefs->mt_auto_back > 0) mt->idlefunc = mt_idle_add(mt);
+  else if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  mt->changed = TRUE;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -19447,8 +19629,9 @@ boolean set_new_set_name(lives_mt *mt) {
     if (response == LIVES_RESPONSE_CANCEL) {
       mainw->cancelled = CANCEL_USER;
       if (mt != NULL) {
-        mt->idlefunc = 0;
-        mt->idlefunc = mt_idle_add(mt);
+        if (needs_idlefunc) {
+          mt->idlefunc = mt_idle_add(mt);
+        }
         mt_sensitise(mt);
       }
       return FALSE;
@@ -19462,11 +19645,8 @@ boolean set_new_set_name(lives_mt *mt) {
 
   lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
 
-  if (needs_idlefunc) {
-    mt->idlefunc = 0;
-    mt->idlefunc = mt_idle_add(mt);
-    mt_sensitise(mt);
-  }
+  if (!mt->auto_changed) mt->auto_changed = TRUE;
+  if (prefs->mt_auto_back >= 0) mt_auto_backup(mt);
 
   return TRUE;
 }
@@ -19503,7 +19683,9 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   boolean orig_ar_layout = prefs->ar_layout, ar_layout;
   boolean was_set = mainw->was_set;
   boolean retval = TRUE;
+
   boolean needs_idlefunc = FALSE;
+  boolean did_backup;
 
   int retval2;
   int fd;
@@ -19512,6 +19694,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     event_list = mainw->stored_event_list;
     layout_name = mainw->stored_layout_name;
   } else {
+    did_backup = mt->did_backup;
     mt_desensitise(mt);
     event_list = mt->event_list;
     layout_name = mt->layout_name;
@@ -19551,24 +19734,26 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     char *tmp;
     weed_set_string_value(event_list, WEED_LEAF_NEEDS_SET, (tmp = F2U8(mainw->set_name)));
     lives_free(tmp);
-  } else if (mainw->interactive) {
-    if (!set_new_set_name(mt)) {
-      if (needs_idlefunc) {
+  } else if (mt != NULL) {
+    if (mainw->interactive) {
+      if (!set_new_set_name(mt)) {
+        if (needs_idlefunc) {
+          mt->idlefunc = mt_idle_add(mt);
+        }
+        mt_sensitise(mt);
+        lives_freep((void **)&layout_map);
+        lives_freep((void **)&layout_map_audio);
+        return FALSE;
+      }
+    } else {
+      if ((needs_idlefunc || (!did_backup && mt->auto_changed))) {
         mt->idlefunc = mt_idle_add(mt);
       }
-      if (mt != NULL) mt_sensitise(mt);
+      mt_sensitise(mt);
       lives_freep((void **)&layout_map);
       lives_freep((void **)&layout_map_audio);
       return FALSE;
     }
-  } else {
-    if (needs_idlefunc) {
-      mt->idlefunc = mt_idle_add(mt);
-    }
-    if (mt != NULL) mt_sensitise(mt);
-    lives_freep((void **)&layout_map);
-    lives_freep((void **)&layout_map_audio);
-    return FALSE;
   }
 
   esave_dir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
@@ -19609,10 +19794,12 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     if (!was_set) memset(mainw->set_name, 0, 1);
     mainw->cancelled = CANCEL_USER;
 
-    if (needs_idlefunc) {
-      mt->idlefunc = mt_idle_add(mt);
+    if (mt != NULL) {
+      mt_sensitise(mt);
+      if (needs_idlefunc || (!did_backup && mt->auto_changed)) {
+        mt->idlefunc = mt_idle_add(mt);
+      }
     }
-    if (mt != NULL) mt_sensitise(mt);
     return FALSE;
   }
 
@@ -19641,10 +19828,12 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     if (!retval || fd < 0) {
       retval2 = do_write_failed_error_s_with_retry(esave_file, (fd < 0) ? lives_strerror(errno) : NULL, NULL);
       if (retval2 == LIVES_RESPONSE_CANCEL) {
-        if (needs_idlefunc) {
-          mt->idlefunc = mt_idle_add(mt);
+        if (mt != NULL) {
+          if (needs_idlefunc) {
+            mt->idlefunc = mt_idle_add(mt);
+          }
+          mt_sensitise(mt);
         }
-        if (mt != NULL) mt_sensitise(mt);
         lives_freep((void **)&esave_file);
         lives_freep((void **)&esave_dir);
         lives_freep((void **)&layout_map);
@@ -19683,9 +19872,6 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   if (mt != NULL) {
     mt->auto_changed = FALSE;
-    if (needs_idlefunc) {
-      mt->idlefunc = mt_idle_add(mt);
-    }
     mt_sensitise(mt);
   }
 
@@ -21095,13 +21281,14 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   LiVESWidget *hbox;
   LiVESWidget *ar_checkbutton;
 
+  boolean needs_idlefunc = FALSE;
+  boolean did_backup = mt->did_backup;
+
   char *filt[] = {"*."LIVES_FILE_EXT_LAYOUT, NULL};
 
   char *eload_dir;
   char *eload_file;
   char *startdir = NULL;
-
-  boolean needs_idlefunc = FALSE;
 
   if (!strlen(mainw->set_name)) {
     LIVES_ERROR("Loading event list for unknown set");
@@ -21150,12 +21337,12 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
 
     cdir = lives_build_filename(prefs->workdir, mainw->set_name, NULL);
     lives_rmdir(cdir, FALSE);
+
+    if (needs_idlefunc || (!did_backup && mt->auto_changed))
+      mt->idlefunc = mt_idle_add(mt);
   }
 
   lives_free(eload_dir);
-
-  if (needs_idlefunc)
-    mt->idlefunc = mt_idle_add(mt);
 
   return eload_file;
 }
@@ -21173,6 +21360,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
   boolean free_eload_file = TRUE;
   boolean orig_ar_layout = prefs->ar_layout, ar_layout;
   boolean retval = TRUE;
+  boolean needs_idlefunc = FALSE;
 
   int num_events = 0;
   int retval2;
@@ -21184,13 +21372,14 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     if (mt->idlefunc > 0) {
       lives_source_remove(mt->idlefunc);
       mt->idlefunc = 0;
+      needs_idlefunc = TRUE;
     }
   }
 
   if (eload_file == NULL) {
     eload_file = get_eload_filename(mt, TRUE);
     if (eload_file == NULL) {
-      mt->idlefunc = mt_idle_add(mt);
+      if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
       return NULL;
     }
   } else free_eload_file = FALSE;
@@ -21206,7 +21395,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
       msg = lives_strdup_printf(_("\nUnable to load layout file %s\n"), eload_name);
       do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
       lives_free(msg);
-      mt->idlefunc = mt_idle_add(mt);
+      if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
     }
     lives_free(eload_name);
     return NULL;
@@ -21243,7 +21432,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
       if (mt != NULL && retval != LIVES_RESPONSE_RETRY) {
         if (mt->is_ready) mt_sensitise(mt);
         lives_free(eload_name);
-        mt->idlefunc = mt_idle_add(mt);
+        if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
         return NULL;
       }
     } else lives_close_buffered(fd);
@@ -21269,7 +21458,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   d_print(_("Got %d events...processing..."), num_events);
 
-  mt->auto_changed = mt->changed = mainw->recoverable_layout;
+  mt->changed = mainw->recoverable_layout;
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   cfile->progress_start = 1;
@@ -21305,7 +21494,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     d_print(_("%d errors detected.\n"), elist_errors);
     if (!mt->auto_reloading) {
       if (!mt->layout_prompt || do_mt_rect_prompt()) {
-
         do {
           retval2 = 0;
           retval = TRUE;
@@ -21366,7 +21554,9 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     }
   }
 
-  set_audio_filter_channel_values(mt);
+  if (cfile->achans > 0) {
+    set_audio_filter_channel_values(mt);
+  }
 
   if (mt->opts.back_audio_tracks > 0) {
     lives_widget_show(mt->view_audio);
@@ -21376,7 +21566,6 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
 
   if (!mainw->recoverable_layout) {
     polymorph(mt, POLY_CLIPS);
-    mt->idlefunc = mt_idle_add(mt);
   }
 
   return (event_list);
@@ -22584,7 +22773,6 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
   double region_end = mt->region_end;
 
   boolean did_backup = FALSE;
-  boolean needs_idle = FALSE;
 
   int nvids = lives_list_length(mt->video_draws);
   int current_fx = mt->current_fx;
@@ -22637,13 +22825,6 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     }
   }
 
-  if (!mt->did_backup && mt->idlefunc > 0) {
-    // freeze auto backups
-    lives_source_remove(mt->idlefunc);
-    mt->idlefunc = 0;
-    needs_idle = TRUE;
-  }
-
   mt->is_atrans = TRUE; ///< force some visual changes
 
   if (oblock != NULL) {
@@ -22651,7 +22832,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(i));
 
     mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
-    did_backup = mt->did_backup = TRUE;
+
     mt->region_start = sttc / TICKS_PER_SECOND_DBL;
     mt->region_end = endtc / TICKS_PER_SECOND_DBL;
     mt_add_region_effect(NULL, mt);
@@ -22719,8 +22900,9 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(track));
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(i));
 
-    if (!did_backup) mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
-    did_backup = mt->did_backup = TRUE;
+    mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
+    mt->did_backup = FALSE;
+
     mt->region_start = sttc / TICKS_PER_SECOND_DBL;
     mt->region_end = endtc / TICKS_PER_SECOND_DBL;
     mt_add_region_effect(NULL, mt);
@@ -22777,6 +22959,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
 
   lives_free(ptmpls);
 
-  if (needs_idle) mt->idlefunc = mt_idle_add(mt);
+  mt->changed = mt->auto_changed = TRUE;
+  mt->did_backup = did_backup;
 }
 

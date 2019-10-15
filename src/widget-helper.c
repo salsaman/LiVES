@@ -8088,10 +8088,15 @@ WIDGET_HELPER_GLOBAL_INLINE uint64_t lives_widget_get_xwinid(LiVESWidget *widget
 
 
 WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWidgetSourceFunc function, livespointer data) {
+  // interval in milliseconds
   uint32_t timer = 0;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
-  timer = g_timeout_add(interval, function, data);
+  if (interval > 1000) {
+    timer = g_timeout_add_seconds(interval / 1000., function, data);
+  } else {
+    timer = g_timeout_add(interval, function, data);
+  }
 #else
   timer = gtk_timeout_add(interval, function, data);
 #endif
@@ -8106,10 +8111,8 @@ WIDGET_HELPER_GLOBAL_INLINE uint32_t lives_timer_add(uint32_t interval, LiVESWid
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_timer_remove(uint32_t timer) {
 #ifdef GUI_GTK
-#if !GTK_CHECK_VERSION(3, 0, 0)
-  gtk_timeout_remove(timer);
+  g_source_remove(timer);
   return TRUE;
-#endif
 #endif
 #ifdef GUI_QT
   remove_static_timer(timer);
@@ -8118,16 +8121,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_timer_remove(uint32_t timer) {
 }
 
 
-boolean lives_source_remove(uint32_t handle) {
-#ifdef GUI_GTK
-  g_source_remove(handle);
-  return TRUE;
-#endif
-#ifdef GUI_QT
-  lives_timer_remove(handle);
-  return TRUE;
-#endif
-  return FALSE;
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_source_remove(uint32_t handle) {
+  return lives_timer_remove(handle);
 }
 
 

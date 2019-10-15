@@ -483,7 +483,6 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   rfx->params[trans].widgets[16] = radiobutton_in;
   rfx->params[trans].widgets[17] = radiobutton_out;
   rfx->params[trans].widgets[18] = radiobutton_dummy;
-  break_me();
 }
 
 

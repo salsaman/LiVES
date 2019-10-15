@@ -1451,7 +1451,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
       prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
 
-      prefs->mt_auto_back = get_int_pref(PREF_MT_AUTO_BACK);
+      prefs->mt_auto_back = (ticks_t)get_int_pref(PREF_MT_AUTO_BACK);
 
       get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 

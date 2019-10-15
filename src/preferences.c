@@ -865,7 +865,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
   if (!strcmp(prefidx, PREF_MT_AUTO_BACK)) {
-    if (newval == prefs->mt_auto_back) goto fail3;
+    if ((ticks_t)newval == prefs->mt_auto_back) goto fail3;
     if (mainw->multitrack != NULL) {
       if (newval <= 0 && prefs->mt_auto_back > 0) {
         if (mainw->multitrack->idlefunc > 0) {
@@ -873,7 +873,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
           mainw->multitrack->idlefunc = 0;
         }
         if (newval == 0) {
-          prefs->mt_auto_back = newval;
+          prefs->mt_auto_back = (ticks_t)newval;
           mt_auto_backup(mainw->multitrack);
         }
       }

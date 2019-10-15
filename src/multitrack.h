@@ -40,6 +40,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#define MT_INOUT_TIME 10000 ///< min milliseconds to save autobackup when changing in / out spins
+
 #define BLOCK_DRAW_SIMPLE 1
 #define BLOCK_DRAW_THUMB 2
 #define BLOCK_DRAW_TYPE BLOCK_DRAW_THUMB
@@ -565,7 +567,7 @@ struct _mt {
   boolean changed; ///< changed since last saved
   boolean auto_changed; ///< changed since last auto-saved
 
-  int64_t auto_back_time; ///< time when last backup was done (not to be confused with prefs->auto_back)
+  ticks_t auto_back_time; ///< time when last backup was done (not to be confused with prefs->auto_back)
 
   // stuff to do with framedraw "special" widgets
   int inwidth;

@@ -474,7 +474,7 @@ weed_timecode_t get_prev_paramchange(void **pchange_prev, weed_timecode_t start_
 
 
 boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event) {
-  // a PARAM_CHANGE is an init_pchange iff both events have the same tc, and there is no frame event between the two events
+  // a PARAM_CHANGE is an init_pchange iff
   weed_plant_t *event = init_event;
   weed_timecode_t tc = get_event_timecode(event);
   if (tc != get_event_timecode(pchange_event)) return FALSE;

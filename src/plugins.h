@@ -342,8 +342,10 @@ lives_decoder_t *clone_decoder(int fileno);
 /// scraps are passed between programs to generate param windows
 #define PLUGIN_RFX_SCRAP ""
 
-/// max number of display widgets per parameter (currently 5 for RGBA spinbuttons + colorbutton + extra label)
-#define MAX_PARAM_WIDGETS 6
+/// max number of display widgets per parameter (currently 7 for transition param with mergealign -
+/// spin + label + knob + scale + in + out + dummy
+// TODO : use enum for widget type
+#define MAX_PARAM_WIDGETS 32
 
 /// length of max string (not including terminating NULL) for LiVES-perl
 #define RFX_MAXSTRINGLEN (PATH_MAX - 1)

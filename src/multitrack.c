@@ -1607,7 +1607,7 @@ static char *mt_params_label(lives_mt *mt) {
 
 
 LIVES_GLOBAL_INLINE double mt_get_effect_time(lives_mt *mt) {
-  return q_gint64(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)) * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
+  return QUANT_TIME(lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->node_spinbutton)));
 }
 
 
@@ -2740,9 +2740,10 @@ void multitrack_view_in_out(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-static void time_to_string(lives_mt *mt, double secs, int length) {
+static char *time_to_string(double secs) {
   int hours, mins, rest;
   char *rests;
+  char timestring[TIMECODE_LENGTH];
 
   hours = secs / 3600;
   secs -= hours * 3600.;
@@ -2752,9 +2753,17 @@ static void time_to_string(lives_mt *mt, double secs, int length) {
   secs = (int)secs * 1.;
   if (rest < 10) rests = lives_strdup_printf("%d0", rest);
   else rests = lives_strdup_printf("%d", rest);
-  lives_snprintf(mt->timestring, 256, "%02d:%02d:%02d.%s", hours, mins, (int)secs, rests);
+  lives_snprintf(timestring, TIMECODE_LENGTH, "%02d:%02d:%02d.%s", hours, mins, (int)secs, rests);
   lives_free(rests);
-  lives_entry_set_text(LIVES_ENTRY(mt->timecode), mt->timestring);
+  return lives_strdup(timestring);
+}
+
+
+static void update_timecodes(lives_mt *mt, double dtime) {
+  char *timestring = time_to_string(QUANT_TIME(dtime));
+  lives_snprintf(mt->timestring, TIMECODE_LENGTH, "%s", timestring);
+  lives_entry_set_text(LIVES_ENTRY(mt->timecode), timestring);
+  lives_free(timestring);
 }
 
 
@@ -3369,7 +3378,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
     mt->block_tl_move = FALSE;
   }
 
-  time_to_string(mt, pos, TIMECODE_LENGTH);
+  update_timecodes(mt, pos);
 
   if (pos > mt->region_end - 1. / mt->fps) lives_widget_set_sensitive(mt->tc_to_rs, FALSE);
   else lives_widget_set_sensitive(mt->tc_to_rs, TRUE);
@@ -5839,7 +5848,7 @@ static boolean timecode_string_validate(LiVESEntry *entry, lives_mt *mt) {
   pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
   if (pos < 0.) pos = 0.;
 
-  time_to_string(mt, pos, TIMECODE_LENGTH);
+  update_timecodes(mt, pos);
 
   return TRUE;
 }
@@ -5883,7 +5892,7 @@ static void after_timecode_changed(LiVESWidget *entry, LiVESXEventFocus *dir, li
     pos = mt->ptr_time;
     pos = q_dbl(pos, mt->fps) / TICKS_PER_SECOND_DBL;
     if (pos < 0.) pos = 0.;
-    time_to_string(mt, pos, TIMECODE_LENGTH);
+    update_timecodes(mt, pos);
   }
 }
 
@@ -8013,7 +8022,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
-  time_to_string(mt, 0., TIMECODE_LENGTH);
+  update_timecodes(mt, 0.);
 
   lives_widget_add_events(mt->timecode, LIVES_FOCUS_CHANGE_MASK);
   lives_widget_set_sensitive(mt->timecode, FALSE);
@@ -13950,7 +13959,7 @@ void animate_multitrack(lives_mt *mt) {
 
   int ebwidth = lives_widget_get_allocation_width(mt->timeline);
 
-  time_to_string(mt, currtime, TIMECODE_LENGTH);
+  update_timecodes(mt, currtime);
 
   offset = (currtime - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)ebwidth;
   offset_old = (lives_ruler_get_value(LIVES_RULER(mt->timeline)) - mt->tl_min) / (mt->tl_max - mt->tl_min) * (double)ebwidth;
@@ -14770,7 +14779,7 @@ void on_insgap_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_mt *mt = (lives_mt *)user_data;
   LiVESList *slist = mt->selected_tracks;
-
+  char *tstart, *tend;
   boolean did_backup = mt->did_backup;
 
   int track;
@@ -14795,7 +14804,13 @@ void on_insgap_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup = did_backup;
   mt_show_current_frame(mt, FALSE);
 
-  d_print(_("Inserted gap in selected tracks from time %.4f to %.4f\n"), mt->region_start, mt->region_end);
+  tstart = time_to_string(QUANT_TIME(mt->region_start));
+  tend = time_to_string(QUANT_TIME(mt->region_end));
+
+  d_print(_("Inserted gap in selected tracks from time %s to time %s\n"), tstart, tend);
+
+  lives_free(tstart);
+  lives_free(tend);
 
   if (!did_backup) mt->idlefunc = mt_idle_add(mt);
   if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
@@ -14807,6 +14822,7 @@ void on_insgap_cur_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   boolean did_backup = mt->did_backup;
 
+  char *tstart, *tend;
   char *tname;
 
   if (!did_backup && mt->idlefunc > 0) {
@@ -14825,9 +14841,15 @@ void on_insgap_cur_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->did_backup = did_backup;
   mt_show_current_frame(mt, FALSE);
 
+  tstart = time_to_string(QUANT_TIME(mt->region_start));
+  tend = time_to_string(QUANT_TIME(mt->region_end));
+
   tname = get_track_name(mt, mt->current_track, FALSE);
-  d_print(_("Inserted gap in track %s from time %.4f to %.4f\n"), tname, mt->region_start, mt->region_end);
+  d_print(_("Inserted gap in track %s from time %s to time %s\n"), tname, tstart, tend);
+
   lives_free(tname);
+  lives_free(tstart);
+  lives_free(tend);
 
   if (!did_backup) mt->idlefunc = mt_idle_add(mt);
   if (!did_backup && prefs->mt_auto_back == 0) mt_auto_backup(mt);
@@ -15456,6 +15478,7 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   char *filter_name;
   char *tname, *track_desc;
   char *tmp, *tmp1;
+  char *tstart, *tend;
 
   int numtracks = lives_list_length(mt->selected_tracks);
   int tcount = 0, tlast = -1000000, tsmall = -1, ctrack;
@@ -15518,10 +15541,13 @@ void mt_add_region_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   lives_free(tracks);
 
-  d_print(_("Added %s %s to %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL,
-          q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps,
-                   mt->fps) / TICKS_PER_SECOND_DBL);
+  tstart = time_to_string(QUANT_TICKS(start_tc));
+  tend = time_to_string(QUANT_TICKS(end_tc + TICKS_PER_SECOND_DBL / mt->fps));
 
+  d_print(_("Added %s %s to %s from time %s to time %s\n"), tname, filter_name, track_desc, tstart, tend);
+
+  lives_free(tstart);
+  lives_free(tend);
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);
@@ -15542,10 +15568,9 @@ void mt_add_block_effect(LiVESMenuItem *menuitem, livespointer user_data) {
   weed_timecode_t start_tc = get_event_timecode(start_event);
   weed_timecode_t end_tc = get_event_timecode(end_event);
   char *filter_name;
-  int selected_track;
+  char *tstart, *tend;
   char *tmp;
-
-  selected_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->block_selected->eventbox), "layer_number"));
+  int selected_track = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->block_selected->eventbox), "layer_number"));
 
   if (menuitem != NULL) mt->current_fx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), "idx"));
 
@@ -15554,10 +15579,15 @@ void mt_add_block_effect(LiVESMenuItem *menuitem, livespointer user_data) {
 
   filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, TRUE, FALSE);
 
-  d_print(_("Added effect %s to track %s from %.4f to %.4f\n"), filter_name,
-          (tmp = get_track_name(mt, selected_track, mt->aud_track_selected)),
-          start_tc / TICKS_PER_SECOND_DBL, q_gint64(end_tc + TICKS_PER_SECOND_DBL / mt->fps, mt->fps) / TICKS_PER_SECOND_DBL);
+  tstart = time_to_string(QUANT_TICKS(start_tc));
+  tend = time_to_string(QUANT_TICKS(end_tc + TICKS_PER_SECOND_DBL / mt->fps));
 
+  d_print(_("Added effect %s to track %s from time %s to time %s\n"), filter_name,
+          (tmp = get_track_name(mt, selected_track, mt->aud_track_selected)),
+          tstart, tend);
+
+  lives_free(tstart);
+  lives_free(tend);
   lives_free(tmp);
   lives_free(filter_name);
 }
@@ -15589,6 +15619,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *fhash, *filter_name;
   char *tname, *track_desc;
   char *tmp, *tmp1;
+  char *tstart, *tend;
 
   boolean did_backup = mt->did_backup;
 
@@ -15643,8 +15674,13 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   remove_filter_from_event_list(mt->event_list, mt->selected_init_event);
   remove_end_blank_frames(mt->event_list, TRUE);
 
-  d_print(_("Deleted %s %s from %s from %.4f to %.4f\n"), tname, filter_name, track_desc, start_tc / TICKS_PER_SECOND_DBL,
-          end_tc / TICKS_PER_SECOND_DBL);
+  tstart = time_to_string(QUANT_TICKS(start_tc));
+  tend = time_to_string(QUANT_TICKS(end_tc + TICKS_PER_SECOND_DBL / mt->fps));
+
+  d_print(_("Deleted %s %s from %s from time %s to time %s\n"), tname, filter_name, track_desc, tstart, tend);
+
+  lives_free(tstart);
+  lives_free(tend);
   lives_free(filter_name);
   lives_free(track_desc);
 
@@ -16379,6 +16415,7 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
   LiVESWidget *eventbox, *aeventbox;
 
   char *tmp;
+  char *tstart, *tend;
 
   boolean done = FALSE;
   boolean did_backup = mt->did_backup;
@@ -16469,14 +16506,17 @@ static void on_delblock_activate(LiVESMenuItem *menuitem, livespointer user_data
 
   tmp = get_track_name(mt, mt->current_track, FALSE);
 
+  tstart = time_to_string(QUANT_TICKS(start_tc));
+  tend = time_to_string(QUANT_TICKS(end_tc + TICKS_PER_SECOND_DBL / mt->fps));
+
   if (mt->current_track != -1 && !is_audio_eventbox(eventbox)) {
-    d_print(_("Deleted frames from time %.4f to %.4f on track %s\n"),
-            (start_tc) / TICKS_PER_SECOND_DBL, (end_tc) / TICKS_PER_SECOND_DBL + 1. / mt->fps, tmp);
+    d_print(_("Deleted frames from time %s to time %s on track %s\n"), tstart, tend, tmp);
   } else {
-    d_print(_("Deleted audio from time %.4f to %.4f on track %s\n"),
-            (start_tc) / TICKS_PER_SECOND_DBL, (end_tc) / TICKS_PER_SECOND_DBL + 1. / mt->fps, tmp);
+    d_print(_("Deleted audio from time %s to time %s on track %s\n"), tstart, tend, tmp);
   }
   lives_free(tmp);
+  lives_free(tstart);
+  lives_free(tend);
 
   if ((mt->opts.grav_mode == GRAV_MODE_LEFT || mt->opts.grav_mode == GRAV_MODE_RIGHT) && !mt->moving_block && !did_backup) {
     // gravity left - remove first gap from old block start to end time
@@ -17273,6 +17313,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   lives_clip_t *sfile = mainw->files[mt->file_selected];
 
   double secs = mt->ptr_time;
+  double tstart, tend;
 
   LiVESWidget *eventbox = (LiVESWidget *)mt->audio_draws->data;
 
@@ -17284,6 +17325,7 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
   track_rect *block;
 
   char *tmp;
+  char *istart, *iend;
 
   lives_direction_t dir;
 
@@ -17380,10 +17422,17 @@ boolean multitrack_audio_insert(LiVESMenuItem *menuitem, livespointer user_data)
 
   mt->did_backup = did_backup;
 
-  d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %.4f to %.4f\n"),
-          ins_start / TICKS_PER_SECOND_DBL, ins_end / TICKS_PER_SECOND_DBL, (tmp = get_menu_name(sfile, FALSE)), secs,
-          secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL);
+  tstart = QUANT_TICKS(ins_start);
+  tend = QUANT_TICKS(ins_end);
+  istart = time_to_string(QUANT_TIME(secs));
+  iend = time_to_string(QUANT_TIME(secs + (ins_end - ins_start) / TICKS_PER_SECOND_DBL));
+
+  d_print(_("Inserted audio %.4f to %.4f from clip %s into backing audio from time %s to time %s\n"),
+          tstart, tend, (tmp = get_menu_name(sfile, FALSE)), istart, iend);
   lives_free(tmp);
+
+  lives_free(istart);
+  lives_free(iend);
 
   if (!resize_timeline(mt) && !did_backup) {
     lives_painter_surface_t *bgimage = (lives_painter_surface_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "bgimg");
@@ -17641,14 +17690,18 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
   }
 
   if (in_block == NULL) {
-    char *tmp, *tmp1;
-    d_print(_("Inserted frames %d to %d from clip %s into track %s from time %.4f to %.4f\n"),
+    char *tmp, *tmp1, *istart, *iend;
+
+    istart = time_to_string(QUANT_TICKS((orig_st + start_tc)));
+    iend = time_to_string(QUANT_TICKS((orig_end + start_tc)));
+
+    d_print(_("Inserted frames %d to %d from clip %s into track %s from time %s to time %s\n"),
             sfile->start, sfile->end, (tmp1 = get_menu_name(sfile, FALSE)),
-            (tmp = get_track_name(mt, mt->current_track, FALSE)),
-            (orig_st + start_tc) / TICKS_PER_SECOND_DBL, (orig_end + start_tc) / TICKS_PER_SECOND_DBL);
+            (tmp = get_track_name(mt, mt->current_track, FALSE)), istart, iend);
     lives_free(tmp);
     lives_free(tmp1);
-
+    lives_free(istart);
+    lives_free(iend);
   }
 
   end_secs = event_list_get_end_secs(mt->event_list);
@@ -18629,6 +18682,7 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
   weed_timecode_t init_tc = get_event_timecode(mt->init_event);
   weed_timecode_t otc = lives_spin_button_get_value(spinbutton) * TICKS_PER_SECOND_DBL + init_tc;
   weed_timecode_t tc = q_gint64(otc, mt->fps);
+  weed_timecode_t pn_tc, nn_tc;
   double timesecs;
   boolean auto_prev = mt->opts.fx_auto_preview;
 
@@ -18659,10 +18713,14 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
 
   mt->opts.fx_auto_preview = auto_prev;
 
-  if (get_prev_node_tc(mt, tc) > -1) lives_widget_set_sensitive(mt->prev_node_button, TRUE);
+  // get timecodes of previous and next fx nodes
+  pn_tc = get_prev_node_tc(mt, tc);
+  nn_tc = get_next_node_tc(mt, tc);
+
+  if (pn_tc > -1) lives_widget_set_sensitive(mt->prev_node_button, TRUE);
   else lives_widget_set_sensitive(mt->prev_node_button, FALSE);
 
-  if (get_next_node_tc(mt, tc) > -1) lives_widget_set_sensitive(mt->next_node_button, TRUE);
+  if (nn_tc > -1) lives_widget_set_sensitive(mt->next_node_button, TRUE);
   else lives_widget_set_sensitive(mt->next_node_button, FALSE);
 
   if (is_node_tc(mt, tc)) {
@@ -18761,7 +18819,7 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
 
   filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
 
-  d_print(_("Removed parameter values for effect %s at time %.4f\n"), filter_name, tc);
+  d_print(_("Removed parameter values for effect %s at time %s\n"), filter_name, mt->timestring);
   lives_free(filter_name);
   mt->block_tl_move = TRUE;
   on_node_spin_value_changed(LIVES_SPIN_BUTTON(mt->node_spinbutton), (livespointer)mt);
@@ -18979,7 +19037,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     tname = lives_strdup(_("audio"));
   }
 
-  d_print(_("Set parameter values for %s %s on %s at time %.4f\n"), tname, filter_name, track_desc, tc / TICKS_PER_SECOND_DBL);
+  d_print(_("Set parameter values for %s %s on %s at time %s\n"), tname, filter_name, mt->timestring);
   lives_free(filter_name);
   lives_free(tname);
   lives_free(track_desc);

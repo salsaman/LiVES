@@ -480,9 +480,10 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   hseparator = lives_hseparator_new();
   lives_box_pack_start(vbox, hseparator, FALSE, FALSE, 0);
 
-  rfx->params[trans].widgets[1] = radiobutton_in;
-  rfx->params[trans].widgets[2] = radiobutton_out;
-  rfx->params[trans].widgets[3] = radiobutton_dummy;
+  rfx->params[trans].widgets[16] = radiobutton_in;
+  rfx->params[trans].widgets[17] = radiobutton_out;
+  rfx->params[trans].widgets[18] = radiobutton_dummy;
+  break_me();
 }
 
 
@@ -1108,6 +1109,14 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     lives_widget_set_halign(param_vbox, LIVES_ALIGN_FILL);
     lives_widget_set_valign(param_vbox, LIVES_ALIGN_CENTER);
     lives_box_pack_start(LIVES_BOX(top_hbox), param_vbox, TRUE, TRUE, widget_opts.packing_width);
+
+    for (i = 0; i < rfx->num_params; i++) {
+      used[i] = FALSE;
+      for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
+        if (rfx->params[i].transition && j > 0 && j < 4) continue;
+        rfx->params[i].widgets[j] = NULL;
+      }
+    }
   }
 
   switch (rfx->status) {
@@ -1215,16 +1224,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     // if the string has the same value as its successor we will create or extend the layout
     if (chk_params) pass = 1;
     //g_print("in pass %d\n", pass);
-
-    for (i = 0; i < rfx->num_params; i++) {
-      used[i] = FALSE;
-      if (pass == 0) {
-        for (j = 0; j < MAX_PARAM_WIDGETS; j++) {
-          if (rfx->params[i].transition && j > 0 && j < 4) continue;
-          rfx->params[i].widgets[j] = NULL;
-        }
-      }
-    }
 
     list = layout;
     // use layout hints to build as much as we can
@@ -2082,13 +2081,13 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
         if (enabled_in_channels(filter, FALSE) == 2 && param->transition) {
           if (param->dp == 0) {
-            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[1]), TRUE);
-            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[2]), TRUE);
-            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[3]), TRUE);
+            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[16]), TRUE);
+            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[17]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[18]), TRUE);
           } else {
-            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[1]), TRUE);
-            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[2]), TRUE);
-            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[3]), TRUE);
+            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[16]), TRUE);
+            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[17]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[18]), TRUE);
           }
         }
       }

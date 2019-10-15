@@ -608,7 +608,7 @@ struct _mt {
 
   int preview_layer;
 
-  char timestring[256];
+  char timestring[TIMECODE_LENGTH];
 
   weed_plant_t *solo_inst; ///< instance to view solo in the frame preview
 
@@ -1022,5 +1022,11 @@ typedef struct {
 #define MAX_TRACKS 65536
 #define MAX_VIDEO_TRACKS 65536
 #define MAX_AUDIO_TRACKS 65536
+
+// double -> quantised double
+#define QUANT_TIME(dbltime) ((q_gint64(dbltime * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL))
+
+// ticks -> quantised double
+#define QUANT_TICKS(ticks) ((q_gint64(ticks, mt->fps) / TICKS_PER_SECOND_DBL))
 
 #endif

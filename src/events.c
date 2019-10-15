@@ -474,7 +474,9 @@ weed_timecode_t get_prev_paramchange(void **pchange_prev, weed_timecode_t start_
 
 
 boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event) {
-  // a PARAM_CHANGE is an init_pchange iff
+  // a PARAM_CHANGE is an init_pchange iff both events have the same tc, and there is no frame event between the two events
+  // normally we could check the "in_params" of the init_event for a match, but here we may be rebuilding the event list
+  // so the values will not confer
   weed_plant_t *event = init_event;
   weed_timecode_t tc = get_event_timecode(event);
   if (tc != get_event_timecode(pchange_event)) return FALSE;
@@ -546,11 +548,6 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
           && (!WEED_EVENT_IS_FRAME(event_before) ||
               WEED_EVENT_IS_FILTER_DEINIT(in_event)))) break;
       event_before = get_prev_event(event_before);
-      //}
-      //      if (get_event_timecode(event_before) < in_tc || (get_event_timecode(event_before) == in_tc
-      //						       && (!WEED_EVENT_IS_FILTER_MAP(in_event) && ((!WEED_EVENT_IS_FRAME(event_before) && !WEED_EVENT_IS_FILTER_DEINIT(event_before)) ||
-      //												     WEED_EVENT_IS_FILTER_DEINIT(in_event))))) break;
-      //  event_before = get_prev_event(event_before);
     }
   }
 
@@ -2511,6 +2508,7 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
 
 
 void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, weed_plant_t *init_event, int ntracks, int leave) {
+  // add the initial values for all parameters when we insert a filter_init event
   weed_plant_t **in_params = NULL, **in_ptmpls;
 
   void **pchain = NULL;
@@ -2575,6 +2573,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_INIT_EVENT, init_event);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_PREV_CHANGE, NULL);
+    weed_set_boolean_value((weed_plant_t *)pchain[i], WEED_LEAF_IS_DEF_VALUE, WEED_TRUE);
     weed_add_plant_flags((weed_plant_t *)pchain[i], WEED_LEAF_READONLY_PLUGIN);
 
     insert_param_change_event_at(event_list, init_event, (weed_plant_t *)pchain[i]);

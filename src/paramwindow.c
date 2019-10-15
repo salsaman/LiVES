@@ -1227,9 +1227,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     list = layout;
     // use layout hints to build as much as we can
     for (i = 0; list != NULL; i++) {
-      //g_print("IDX2 %d %d\n", i, chk_params);
       line = (char *)list->data;
       list = list->next;
+      //g_print("IDX2 %d %d %d %s\n", pass, i, chk_params, line);
 
       layout_mode = FALSE;
       has_box = FALSE;
@@ -1282,11 +1282,11 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
               param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
 
           has_param = TRUE;
-          used[pnum] = TRUE;
 
           if (pass == 0) {
             if ((fmtlen = strlen((const char *)format)) < FMT_STRING_SIZE - 1) format[fmtlen] = (unsigned char)param->type;
           } else {
+            used[pnum] = TRUE;
             if (!has_box) {
               // add a new row if needed
               if (layoutx != NULL) lives_layout_add_row(LIVES_LAYOUT(layoutx));

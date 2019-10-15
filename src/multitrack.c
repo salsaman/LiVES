@@ -1609,6 +1609,12 @@ static char *mt_params_label(lives_mt *mt) {
   } else ltext = lives_strdup(fname);
   lives_free(fname);
 
+  if (mt->framedraw != NULL) {
+    char *tmp = lives_strdup_printf("%s\n%s",  ltext, _("<--- Some parameters can be altered by clicking / dragging in the Preview window"));
+    lives_free(ltext);
+    ltext = tmp;
+  }
+
   return ltext;
 }
 
@@ -1629,8 +1635,6 @@ boolean add_mt_param_box(lives_mt *mt) {
   weed_plant_t *deinit_event;
 
   weed_timecode_t tc;
-
-  LiVESWidget *label;
 
   double fx_start_time, fx_end_time;
   double cur_time = mt->ptr_time;
@@ -1655,10 +1659,14 @@ boolean add_mt_param_box(lives_mt *mt) {
   }
 
   mt->fx_box = lives_vbox_new(FALSE, 0);
-  label = lives_label_new("");
-  lives_widget_apply_theme2(label, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  lives_box_pack_start(LIVES_BOX(mt->fx_box), label, FALSE, TRUE, widget_opts.packing_height);
-  lives_widget_set_no_show_all(label, TRUE);
+
+  if (mt->fx_params_label != NULL) {
+    lives_widget_destroy(mt->fx_params_label);
+  }
+
+  mt->fx_params_label = lives_label_new("");
+  lives_widget_apply_theme2(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_box_pack_start(LIVES_BOX(mt->fx_base_box), mt->fx_params_label, FALSE, TRUE, widget_opts.packing_height);
 
   lives_box_pack_end(LIVES_BOX(mt->fx_base_box), mt->fx_box, TRUE, TRUE, 0);
 
@@ -1676,13 +1684,10 @@ boolean add_mt_param_box(lives_mt *mt) {
 
   ltext = mt_params_label(mt);
 
-  if (mt->framedraw != NULL) {
-    lives_label_set_text(LIVES_LABEL(label), _("<--- Some parameters can be altered by clicking / dragging in the Preview window"));
-    lives_widget_show(label);
-  }
-
   widget_opts.mnemonic_label = FALSE;
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
   lives_label_set_text(LIVES_LABEL(mt->fx_params_label), ltext);
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.mnemonic_label = TRUE;
 
   lives_free(ltext);
@@ -2049,7 +2054,9 @@ void track_select(lives_mt *mt) {
       if (mt->fx_params_label != NULL) {
         char *ltext = mt_params_label(mt);
         widget_opts.mnemonic_label = FALSE;
+        widget_opts.justify = LIVES_JUSTIFY_CENTER;
         lives_label_set_text(LIVES_LABEL(mt->fx_params_label), ltext);
+        widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
         widget_opts.mnemonic_label = TRUE;
         lives_free(ltext);
       }
@@ -2776,7 +2783,7 @@ static void update_timecodes(lives_mt *mt, double dtime) {
 
 static void set_fxlist_label(lives_mt *mt) {
   char *tname = get_track_name(mt, mt->current_track, mt->aud_track_selected);
-  char *text = lives_strdup_printf(_("Effects stack for %s at time %s"), tname, mt->timestring);
+  char *text = lives_strdup_printf(_("\nEffects stack for %s at time %s\n"), tname, mt->timestring);
   lives_label_set_text(LIVES_LABEL(mt->fx_list_label), text);
   lives_free(tname);
   lives_free(text);
@@ -6051,7 +6058,7 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_set_fg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
   lives_widget_set_bg_color(mt->tlx_eventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
 
-  lives_widget_apply_theme(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL);
+  if (mt->fx_params_label != NULL) lives_widget_apply_theme2(mt->fx_params_label, LIVES_WIDGET_STATE_NORMAL, TRUE);
   lives_widget_apply_theme(mt->time_label, LIVES_WIDGET_STATE_NORMAL);
 
   if (mt->tl_label != NULL)
@@ -8440,9 +8447,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_end(LIVES_BOX(mt->fx_contents_box), hbox, FALSE, FALSE, 0);
-
-  mt->fx_params_label = lives_standard_label_new("");
-  lives_box_pack_start(LIVES_BOX(hbox), mt->fx_params_label, TRUE, TRUE, widget_opts.packing_width);
 
   mt->solo_check = lives_standard_check_button_new(_("Solo"), TRUE, LIVES_BOX(hbox),
                    (tmp = lives_strdup(_("Preview only the selected effect"))));
@@ -12695,6 +12699,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     if (mt->fx_box != NULL) {
       lives_widget_destroy(mt->fx_box);
       mt->fx_box = NULL;
+      lives_widget_destroy(mt->fx_params_label);
+      mt->fx_params_label = NULL;
       lives_container_remove(LIVES_CONTAINER(mt->poly_box), mt->fx_base_box);
     }
 
@@ -12954,8 +12960,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->clip_scroll, TRUE, TRUE, 0);
     if (mt->is_ready) mouse_mode_context(mt);
     break;
-  case (POLY_PARAMS):
 
+  case (POLY_PARAMS):
     lives_box_pack_start(LIVES_BOX(mt->poly_box), mt->fx_base_box, TRUE, TRUE, 0);
 
     filter = get_weed_filter(mt->current_fx);
@@ -18835,7 +18841,7 @@ static boolean is_node_tc(lives_mt *mt, weed_timecode_t tc) {
     ev_tc = -1;
     while (event != NULL &&
            (ev_tc = get_event_timecode(event)) < tc) event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_NEXT_CHANGE, &error);
-    if (ev_tc == tc) return TRUE;
+    if (ev_tc == tc && !weed_plant_has_leaf(event, WEED_LEAF_IS_DEF_VALUE)) return TRUE;
   }
   return FALSE;
 }
@@ -18967,7 +18973,6 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
         if (next_pchange != NULL) weed_set_voidptr_value(next_pchange, WEED_LEAF_PREV_CHANGE, prev_pchange);
       } else {
         // is initial pchange, reset to defaults, c.f. paramspecial.c
-        break_me();
         weed_plant_t *param = in_params[i];
         weed_plant_t *paramtmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
         if (weed_plant_has_leaf(paramtmpl, WEED_LEAF_HOST_DEFAULT)) {
@@ -18977,6 +18982,7 @@ void on_del_node_clicked(LiVESWidget *button, livespointer user_data) {
           int num_in_tracks = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_TRACKS);
           fill_param_vals_to(event, paramtmpl, num_in_tracks - 1);
         }
+        weed_set_boolean_value(event, WEED_LEAF_IS_DEF_VALUE, WEED_TRUE);
       }
     }
   }
@@ -19172,6 +19178,10 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
 
     weed_leaf_copy(pchange, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
     weed_add_plant_flags(pchange, WEED_LEAF_READONLY_PLUGIN);
+
+    // mark the default value as changed, so the user can delete this node (which will reset to defaults)
+    if (weed_plant_has_leaf(pchange, WEED_LEAF_IS_DEF_VALUE))
+      weed_leaf_delete(pchange, WEED_LEAF_IS_DEF_VALUE);
 
     // set next_change, prev_change
     add_to_pchain(mt->event_list, mt->init_event, pchange, i, tc);
@@ -22901,7 +22911,6 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     mt->selected_tracks = lives_list_append(mt->selected_tracks, LIVES_INT_TO_POINTER(i));
 
     mt_backup(mt, MT_UNDO_APPLY_FILTER, 0);
-    mt->did_backup = FALSE;
 
     mt->region_start = sttc / TICKS_PER_SECOND_DBL;
     mt->region_end = endtc / TICKS_PER_SECOND_DBL;

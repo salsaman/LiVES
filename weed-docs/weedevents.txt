@@ -36,8 +36,10 @@ Removed "first" and "last" since these do not need to be saved to disk. Added "t
 29/02/2016
 Added WEED_AUDIO_LITTLE_ENDIAN and WEED_AUDIO_BIG_ENDIAN symbols.
 
+15/10/2019
+Added optional "author", "title", "comments", "created_version" and "edited_version" leaves.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2016
+(C) Gabriel "Salsaman" Finch 2005 - 2019
 
 == WEED_EVENT_API_VERSION ==
 This is defined as 120 for this version of the specification. This
@@ -78,6 +80,15 @@ event list for all tracks/channels.
 
 '''Optional leaves''': [[BR]]
 
+ * "author" : WEED_SEED_STRING : author name
+
+ * "title" : WEED_SEED_STRING :
+
+ * "comments" : WEED_SEED_STRING :
+
+ * "created_version" : WEED_SEED_STRING : the application which created the event list
+
+ * "edited_version" : WEED_SEED_STRING : the application which last edited the event list
 
  * "width" : WEED_SEED_INT : frame width in pixels (must be >0)
 

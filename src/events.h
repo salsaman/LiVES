@@ -18,6 +18,11 @@
 #define WEED_LEAF_AUDIO_VOLUME_VALUES "audio_volume_values"
 #define WEED_LEAF_TRACK_LABEL_TRACKS "track_label_tracks"
 #define WEED_LEAF_TRACK_LABEL_VALUES "track_label_values"
+
+#define WEED_LEAF_AUTHOR "author"
+#define WEED_LEAF_TITLE "title"
+#define WEED_LEAF_COMMENTS "comments"
+
 #define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
 #define WEED_LEAF_LIVES_EDITED_VERSION "edited_version"
 
@@ -50,12 +55,13 @@
 #define WEED_LEAF_PREVIOUS "previous"
 #define WEED_LEAF_FIRST "first"
 #define WEED_LEAF_LAST "last"
-#define WEED_LEAF_NEEDS_SET "needs_set"
-#define WEED_LEAF_GAMMA_ENABLED "gamma_enabled"
+#define WEED_LEAF_NEEDS_SET "needs_set" // oops, should have been host_needs_set
+#define WEED_LEAF_GAMMA_ENABLED "host_gamma_enabled"
 
 // param change
-#define WEED_LEAF_NEXT_CHANGE "next_change"
-#define WEED_LEAF_PREV_CHANGE "prev_change"
+#define WEED_LEAF_NEXT_CHANGE  "next_change"
+#define WEED_LEAF_PREV_CHANGE  "prev_change"
+#define WEED_LEAF_IS_DEF_VALUE "host_is_def_value"
 
 // init_event
 #define WEED_LEAF_DEINIT_EVENT "deinit_event"
@@ -65,7 +71,7 @@
 #define WEED_LEAF_TRACKS "tracks"
 
 // misc
-#define WEED_LEAF_PTRSIZE "ptrsize"
+#define WEED_LEAF_PTRSIZE "ptrsize" ///< deprecated
 
 #define WEED_LEAF_HOST_AUDIO_TRANSITION "host_audio_transition"
 

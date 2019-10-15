@@ -84,7 +84,6 @@ void add_to_special(const char *sp_string, lives_rfx_t *rfx) {
       framedraw.xend_param = &rfx->params[atoi(array[4])];
       framedraw.yend_param = &rfx->params[atoi(array[5])];
       framedraw.stdwidgets = 4;
-      break_me();
     } else if (!strcmp(array[1], "multirect") || !strcmp(array[1], "multrect")) { // allow for spelling errors in earlier draft
       framedraw.type = LIVES_PARAM_SPECIAL_TYPE_RECT_MULTIRECT;
       framedraw.xstart_param = &rfx->params[atoi(array[2])];

@@ -5151,6 +5151,7 @@ void weed_load_all(void) {
   }
   filter_map[FX_KEYS_MAX + 1] = NULL;
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+    pchains[i] = NULL;
     init_events[i] = NULL;
   }
 

@@ -135,20 +135,19 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   if (mainw->did_rfx_preview) {
     if (def_ok) {
       for (i = 0; i < rfx->num_params; i++) {
-	if (rfx->params[i].changed) {
-	  mainw->keep_pre = FALSE;
-	  break;
-	}
+        if (rfx->params[i].changed) {
+          mainw->keep_pre = FALSE;
+          break;
+        }
       }
-    }
-    else mainw->keep_pre = FALSE;
-      
-    if (!mainw->keep_pre) {
-      lives_kill_subprocesses(cfile->handle,TRUE);
+    } else mainw->keep_pre = FALSE;
 
-      if (cfile->start==0) {
-	cfile->start=1;
-	cfile->end=cfile->frames;
+    if (!mainw->keep_pre) {
+      lives_kill_subprocesses(cfile->handle, TRUE);
+
+      if (cfile->start == 0) {
+        cfile->start = 1;
+        cfile->end = cfile->frames;
       }
 
       do_rfx_cleanup(rfx);
@@ -159,7 +158,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (!def_ok) {
     if (rfx != NULL && rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
-	rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
+        rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
       // for a generator, we silently close the (now) temporary file we would have generated frames into
       mainw->suppress_dprint = TRUE;
       close_current_file(mainw->pre_src_file);
@@ -190,14 +189,14 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   mainw->block_param_updates = FALSE;
 
   if (def_ok && rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
-  
+
   if (button != NULL)
     if (dialog != NULL) {
       // prevent a gtk+ crash by removing the focus before detroying the dialog
       LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
       lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
     }
-  
+
   lives_general_button_clicked(button, NULL);
 
   if (def_ok) {
@@ -206,8 +205,8 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   }
 
   if (mainw->multitrack != NULL) {
-    polymorph(mainw->multitrack,POLY_NONE);
-    polymorph(mainw->multitrack,POLY_CLIPS);
+    polymorph(mainw->multitrack, POLY_NONE);
+    polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
   }
 }

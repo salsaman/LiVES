@@ -2200,7 +2200,7 @@ LiVESWidget *create_rte_window(void) {
 
   irte_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   lives_window_set_transient_for(LIVES_WINDOW(irte_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  
+
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -2437,7 +2437,7 @@ rte_window_ready:
 
   lives_widget_set_sensitive(mainw->mt_menu, FALSE);
   lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
-  
+
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
   mainw->no_context_update = FALSE;

@@ -8337,9 +8337,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   tname = get_tab_name(POLY_CLIPS);
   mt->nb_label1 = lives_standard_label_new(tname);
-  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  lives_widget_set_bg_color(mt->nb_label1, LIVES_WIDGET_STATE_ACTIVE, &palette->menu_and_bars);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label1, TRUE);
+  lives_widget_set_halign(mt->nb_label1, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label1, LIVES_WIDGET_STATE_NORMAL);
 
   // prepare polymorph box
   mt->poly_box = lives_vbox_new(FALSE, 0);
@@ -8376,7 +8377,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_IN_OUT);
   mt->nb_label2 = lives_label_new(tname);
   lives_free(tname);
-  lives_widget_set_base_color(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  lives_widget_set_hexpand(mt->nb_label2, TRUE);
+  lives_widget_set_halign(mt->nb_label2, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label2, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8388,6 +8391,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_FX_STACK);
   mt->nb_label3 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label3, TRUE);
+  lives_widget_set_halign(mt->nb_label3, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label3, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8509,6 +8515,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_EFFECTS);
   mt->nb_label4 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label4, TRUE);
+  lives_widget_set_halign(mt->nb_label4, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label4, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8520,6 +8529,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_TRANS);
   mt->nb_label5 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label5, TRUE);
+  lives_widget_set_halign(mt->nb_label5, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label5, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8531,6 +8543,9 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   tname = get_tab_name(POLY_COMP);
   mt->nb_label6 = lives_label_new(tname);
   lives_free(tname);
+  lives_widget_set_hexpand(mt->nb_label6, TRUE);
+  lives_widget_set_halign(mt->nb_label6, LIVES_ALIGN_CENTER);
+  lives_widget_apply_theme(mt->nb_label6, LIVES_WIDGET_STATE_NORMAL);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -8578,7 +8593,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->in_out_box = lives_hbox_new(TRUE, 0);
   lives_widget_object_ref(mt->in_out_box);
   lives_widget_apply_theme2(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL, TRUE);
-  
+
   vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, widget_opts.packing_width);
 
@@ -22478,10 +22493,12 @@ void amixer_show(LiVESButton *button, livespointer user_data) {
     lives_window_center(LIVES_WINDOW(amixerw));
   }
 
-  if (prefs->open_maximised) {
-    lives_window_unmaximize(LIVES_WINDOW(amixerw));
-    lives_window_maximize(LIVES_WINDOW(amixerw));
-  } else lives_window_set_default_size(LIVES_WINDOW(amixerw), winsize_h, winsize_v);
+  lives_window_set_transient_for(LIVES_WINDOW(amixerw), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+
+  /* if (prefs->open_maximised) { */
+  /*   lives_window_unmaximize(LIVES_WINDOW(amixerw)); */
+  /*   lives_window_maximize(LIVES_WINDOW(amixerw)); */
+  /* } else lives_window_set_default_size(LIVES_WINDOW(amixerw), winsize_h, winsize_v); */
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
   lives_container_add(LIVES_CONTAINER(amixerw), top_vbox);

@@ -4679,13 +4679,17 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
-  num_clips = lives_list_length(mainw->cliplist);
-
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
+
+  num_clips = lives_list_length(mainw->cliplist);
+
+  mainw->swapped_clip = -1;
+
+
   do {
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here
     if (list_index == NULL || ((list_index = list_index->prev) == NULL)) list_index = lives_list_last(mainw->cliplist);
@@ -4723,6 +4727,7 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   } else {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
+  mainw->swapped_clip = -1;
 
   num_clips = lives_list_length(mainw->cliplist);
 

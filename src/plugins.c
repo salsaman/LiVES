@@ -469,13 +469,21 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   _vid_playback_plugin *vpp = vppw->plugin;
 
-  if (!special_cleanup()) {
+  if (vppw->rfx != NULL && mainw->textwidget_focus != NULL) {
+    // make sure text widgets are updated if they activate the default
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    after_param_text_changed(textwidget, vppw->rfx);
+  }
+
+  if (!special_cleanup(TRUE)) {
     // check for file overwrites with special type "filewrite"
     // if user declines, will return with LIVES_RESPONSE_RETRY
     if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
       lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
     return;
   }
+
+  mainw->textwidget_focus = NULL;
 
   if (vpp == mainw->vpp) {
     if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));

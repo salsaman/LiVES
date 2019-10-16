@@ -95,80 +95,19 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 }
 
 
-void on_paramwindow_ok_clicked(LiVESButton *button, lives_rfx_t *rfx) {
-  register int i;
-
-  if (rfx != NULL && rfx->status != RFX_STATUS_SCRAP) mainw->keep_pre = mainw->did_rfx_preview;
-
-  if (mainw->textwidget_focus != NULL) {
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
-    after_param_text_changed(textwidget, rfx);
-  }
-
-  if (!special_cleanup()) {
-    if (LIVES_IS_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))))
-      lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
-    return;
-  }
-
-  if (mainw->did_rfx_preview) {
-    for (i = 0; i < rfx->num_params; i++) {
-      if (rfx->params[i].changed) {
-        mainw->keep_pre = FALSE;
-        break;
-      }
-    }
-
-    if (!mainw->keep_pre) {
-      lives_kill_subprocesses(cfile->handle, TRUE);
-
-      if (cfile->start == 0) {
-        cfile->start = 1;
-        cfile->end = cfile->frames;
-      }
-
-      do_rfx_cleanup(rfx);
-    }
-    mainw->did_rfx_preview = FALSE;
-    mainw->show_procd = TRUE;
-  }
-
-  if (usrgrp_to_livesgrp[0] != NULL) lives_slist_free(usrgrp_to_livesgrp[0]);
-  usrgrp_to_livesgrp[0] = NULL;
-
-  if (rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
-
-  if (button != NULL) {
-    lives_general_button_clicked(button, NULL);
-  }
-
-  if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
-  else on_render_fx_activate(NULL, rfx);
-
-  mainw->keep_pre = FALSE;
-  mainw->is_generating = FALSE;
-
-  if (mainw->multitrack != NULL) {
-    polymorph(mainw->multitrack, POLY_NONE);
-    polymorph(mainw->multitrack, POLY_CLIPS);
-    mt_sensitise(mainw->multitrack);
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-  }
-}
-
-
-void on_paramwindow_cancel_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
-  on_paramwindow_cancel_clicked(button, rfx);
+  on_paramwindow_button_clicked(button, rfx);
   lives_freep((void **)&fx_dialog[1]);
 }
 
 
-void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
+void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidget *dialog = NULL;
   boolean def_ok = FALSE;
+  int i;
 
-  if (button != NULL) lives_widget_get_toplevel(LIVES_WIDGET(button));
+  if (button != NULL) dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
 
   if (dialog != NULL && LIVES_IS_DIALOG(dialog)) {
     if (lives_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
@@ -176,47 +115,61 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
 
-  if (!special_cleanup()) {
-    if (def_ok) lives_dialog_response(LIVES_DIALOG(dialog), LIVES_RESPONSE_RETRY);
+  if (mainw->textwidget_focus != NULL) {
+    // make sure text widgets are updated if they activate the default
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    after_param_text_changed(textwidget, rfx);
+  }
+
+  if (!special_cleanup(def_ok)) {
+    lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
     return;
   }
 
+  mainw->textwidget_focus = NULL;
+
+  if (def_ok && rfx != NULL && rfx->status != RFX_STATUS_SCRAP) mainw->keep_pre = mainw->did_rfx_preview;
+
   mainw->block_param_updates = TRUE;
+
   if (mainw->did_rfx_preview) {
-    lives_kill_subprocesses(cfile->handle, TRUE);
-
-    mainw->did_rfx_preview = FALSE;
-    mainw->show_procd = TRUE;
-
-    if (cfile->start == 0) {
-      cfile->start = 1;
-      cfile->end = cfile->frames;
+    if (def_ok) {
+      for (i = 0; i < rfx->num_params; i++) {
+	if (rfx->params[i].changed) {
+	  mainw->keep_pre = FALSE;
+	  break;
+	}
+      }
     }
+    else mainw->keep_pre = FALSE;
+      
+    if (!mainw->keep_pre) {
+      lives_kill_subprocesses(cfile->handle,TRUE);
 
-    do_rfx_cleanup(rfx);
+      if (cfile->start==0) {
+	cfile->start=1;
+	cfile->end=cfile->frames;
+      }
+
+      do_rfx_cleanup(rfx);
+      mainw->did_rfx_preview = FALSE;
+    }
+    mainw->show_procd = TRUE;
   }
 
-  if (rfx != NULL && rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
-      rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
-    // for a generator, we silently close the (now) temporary file we would have generated frames into
-    if (!def_ok) {
+  if (!def_ok) {
+    if (rfx != NULL && rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
+	rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
+      // for a generator, we silently close the (now) temporary file we would have generated frames into
       mainw->suppress_dprint = TRUE;
       close_current_file(mainw->pre_src_file);
       mainw->suppress_dprint = FALSE;
-      mainw->is_generating = FALSE;
       if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
+      mainw->keep_pre = FALSE;
+      mainw->is_generating = FALSE;
     }
   }
 
-  if (button != NULL) {
-    // prevent a gtk+ crash by removing the focus before detroying the dialog
-    LiVESWidget *toplevel = lives_widget_get_toplevel(LIVES_WIDGET(button));
-    if (LIVES_IS_DIALOG(toplevel)) {
-      LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(toplevel));
-      lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
-    }
-    lives_general_button_clicked(button, NULL);
-  }
   if (rfx == NULL) {
     if (usrgrp_to_livesgrp[1] != NULL) lives_slist_free(usrgrp_to_livesgrp[1]);
     usrgrp_to_livesgrp[1] = NULL;
@@ -236,9 +189,26 @@ void on_paramwindow_cancel_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   mainw->block_param_updates = FALSE;
 
+  if (def_ok && rfx != NULL && rfx->status == RFX_STATUS_SCRAP) return;
+  
+  if (button != NULL)
+    if (dialog != NULL) {
+      // prevent a gtk+ crash by removing the focus before detroying the dialog
+      LiVESWidget *content_area = lives_dialog_get_content_area(LIVES_DIALOG(dialog));
+      lives_container_set_focus_child(LIVES_CONTAINER(content_area), NULL);
+    }
+  
+  lives_general_button_clicked(button, NULL);
+
+  if (def_ok) {
+    if (rfx->status == RFX_STATUS_WEED) on_realfx_activate(NULL, rfx);
+    else on_render_fx_activate(NULL, rfx);
+  }
+
   if (mainw->multitrack != NULL) {
+    polymorph(mainw->multitrack,POLY_NONE);
+    polymorph(mainw->multitrack,POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 }
 
@@ -890,21 +860,21 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
       if (!is_realtime) {
         if (fx_dialog[didx]->okbutton != NULL)
           lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
+                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                                rfx);
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                              rfx);
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                              rfx);
       } else {
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked2),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2),
                              rfx);
         if (rfx->status == RFX_STATUS_SCRAP)
           lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked2),
+                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2),
                                rfx);
         else {
           if (fx_dialog[didx]->okbutton != NULL)
@@ -918,20 +888,20 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
           }
         }
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked2),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked2),
                              rfx);
       }
     } else {
       if (!is_defaults) {
         if (fx_dialog[didx]->okbutton != NULL)
           lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_paramwindow_ok_clicked),
+                               LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                                (livespointer)rfx);
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                              (livespointer)rfx);
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->dialog), LIVES_WIDGET_DELETE_EVENT,
-                             LIVES_GUI_CALLBACK(on_paramwindow_cancel_clicked),
+                             LIVES_GUI_CALLBACK(on_paramwindow_button_clicked),
                              (livespointer)rfx);
       } else {
         if (fx_dialog[didx]->okbutton != NULL)

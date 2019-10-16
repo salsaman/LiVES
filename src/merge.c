@@ -250,7 +250,7 @@ void on_trans_method_changed(LiVESCombo *combo, livespointer user_data) {
   rfx = &mainw->rendered_fx[mainw->last_transition_idx];
 
   lives_container_foreach(LIVES_CONTAINER(merge_opts->param_vbox), bang, NULL);
-  on_paramwindow_cancel_clicked(NULL, rfx);
+  on_paramwindow_button_clicked(NULL, rfx);
 
   idx = lives_list_strcmp_index(merge_opts->trans_list, txt, TRUE);
 
@@ -288,7 +288,7 @@ void on_merge_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_merge_cancel_clicked(LiVESButton *button, livespointer user_data) {
   lives_rfx_t *rfx = (lives_rfx_t *)user_data;
-  on_paramwindow_cancel_clicked(NULL, rfx);
+  on_paramwindow_button_clicked(NULL, rfx);
   if (merge_opts->spinbutton_loops != NULL)
     mainw->last_transition_loops = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
   lives_widget_destroy(merge_opts->merge_dialog);
@@ -321,6 +321,21 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   int cb_end, excess_frames;
   int times_to_loop = 1;
 
+  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
+
+  if (rfx != NULL && mainw->textwidget_focus != NULL) {
+    // make sure text widgets are updated if they activate the default
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    after_param_text_changed(textwidget, rfx);
+  }
+
+  if (!special_cleanup(TRUE)) {
+    // check for file overwrites with special type "filewrite"
+    // if user declines, will return with LIVES_RESPONSE_RETRY
+    return;
+  }
+
+  mainw->textwidget_focus = NULL;
 
   if (merge_opts->spinbutton_loops != NULL)
     mainw->last_transition_loops = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(merge_opts->spinbutton_loops));
@@ -329,11 +344,9 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   mainw->last_transition_ins_frames = merge_opts->ins_frames;
   mainw->last_transition_align_start = merge_opts->align_start;
 
-  rfx = &mainw->rendered_fx[mainw->last_transition_idx];
-
   if (cfile->fps != clipboard->fps) {
     if (!do_clipboard_fps_warning()) {
-      on_paramwindow_cancel_clicked(NULL, rfx);
+      on_paramwindow_button_clicked(NULL, rfx);
       lives_widget_destroy(merge_opts->merge_dialog);
       lives_widget_context_update();
       lives_list_free(merge_opts->trans_list);
@@ -348,7 +361,7 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   else
     times_to_loop = 1;
 
-  on_paramwindow_cancel_clicked(NULL, rfx);
+  on_paramwindow_button_clicked(NULL, rfx);
   lives_widget_destroy(merge_opts->merge_dialog);
   lives_widget_context_update();
   lives_list_free(merge_opts->trans_list);

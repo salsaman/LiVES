@@ -8662,6 +8662,7 @@ LiVESWidget *lives_standard_notebook_new(const LiVESWidgetColor *bg_color, const
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background", "none");
     set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "background-color", colref);
     lives_free(colref);
+    set_css_value_direct(notebook, LIVES_WIDGET_STATE_ACTIVE, "*", "hexpand", "TRUE");
   }
 #endif
   return notebook;

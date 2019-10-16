@@ -507,11 +507,9 @@ boolean check_filewrite_overwrites(void) {
 }
 
 
-boolean special_cleanup(void) {
+boolean special_cleanup(boolean is_ok) {
   // free some memory now
-  boolean ret = TRUE;
-
-  if (!check_filewrite_overwrites()) return FALSE;
+  if (is_ok && !check_filewrite_overwrites()) return FALSE;
 
   mainw->framedraw = mainw->framedraw_reset = NULL;
   mainw->framedraw_spinbutton = NULL;
@@ -537,7 +535,7 @@ boolean special_cleanup(void) {
   passwd_widgets = NULL;
 
   framedraw.added = FALSE;
-  return ret;
+  return TRUE;
 }
 
 

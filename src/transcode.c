@@ -151,7 +151,7 @@ boolean transcode(int start, int end) {
   do {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
-
+  g_print("VAL is %s\n", (char *)vpp->extra_argv[5]);
   if (resp == LIVES_RESPONSE_CANCEL) {
     mainw->cancelled = CANCEL_USER;
     rfx_free(rfx);
@@ -227,6 +227,7 @@ boolean transcode(int start, int end) {
     }
   }
 
+  g_print("2VAL is %s\n", (char *)vpp->extra_argv[5]);
   if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
     error = TRUE;
     goto tr_err;

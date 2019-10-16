@@ -544,7 +544,7 @@ static void ce_thumbs_remove_param_box(int key) {
   if (key >= rte_keys_virtual) return;
   if (pscrolls[key] == NULL) return;
   rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx");
-  on_paramwindow_cancel_clicked(NULL, rfx); // free rfx and unref the inst (must be done before destroying the pscrolls[key]
+  on_paramwindow_button_clicked(NULL, rfx); // free rfx and unref the inst (must be done before destroying the pscrolls[key]
   lives_widget_destroy(pscrolls[key]);
   pscrolls[key] = NULL;
   lives_widget_queue_draw(param_hbox);

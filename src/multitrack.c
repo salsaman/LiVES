@@ -93,6 +93,7 @@
 #include "framedraw.h"
 #include "cvirtual.h"
 #include "pangotext.h"
+#include "rte_window.h"
 
 #ifdef ENABLE_GIW
 #include "giw/giwvslider.h"
@@ -4048,6 +4049,7 @@ static void add_to_listbox(lives_mt *mt, LiVESWidget *xeventbox, char *fname, bo
   if (palette->style & STYLE_1) {
     lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
     lives_widget_set_fg_color(xeventbox, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_can_focus(xeventbox, TRUE);
   }
 
   lives_container_add(LIVES_CONTAINER(xeventbox), label);
@@ -4649,6 +4651,7 @@ void mt_init_start_end_spins(lives_mt *mt) {
   int dpw = widget_opts.packing_width;
 
   hbox = lives_hbox_new(FALSE, 0);
+  lives_widget_apply_theme(hbox, LIVES_WIDGET_STATE_NORMAL);
 
   lives_box_pack_start(LIVES_BOX(mt->xtravbox), hbox, FALSE, FALSE, 6);
 
@@ -5969,6 +5972,8 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_apply_theme(mt->top_vbox, LIVES_WIDGET_STATE_NORMAL);
   lives_widget_apply_theme(mt->tl_hbox, LIVES_WIDGET_STATE_NORMAL);
 
+  lives_widget_apply_theme(mt->clip_inner_box, LIVES_WIDGET_STATE_NORMAL);
+
   lives_widget_apply_theme2(mt->menubar, LIVES_WIDGET_STATE_NORMAL, TRUE);
   lives_widget_apply_theme2(mt->menu_hbox, LIVES_WIDGET_STATE_NORMAL, TRUE);
 
@@ -6031,7 +6036,8 @@ void set_mt_colours(lives_mt *mt) {
   if (mainw->vol_label != NULL) lives_widget_apply_theme2(mainw->vol_label, LIVES_WIDGET_STATE_NORMAL, FALSE);
   lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
-  set_child_colour(mt->in_out_box, FALSE);
+  lives_widget_apply_theme2(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  set_child_alt_colour(mt->in_out_box, FALSE);
 
   if (palette->style & STYLE_4) {
     lives_widget_show(mt->hseparator);
@@ -6119,6 +6125,7 @@ void set_mt_colours(lives_mt *mt) {
 
   lives_widget_apply_theme(lives_bin_get_child(LIVES_BIN(mt->context_scroll)), LIVES_WIDGET_STATE_NORMAL);
 
+  lives_widget_apply_theme(mt->context_box, LIVES_WIDGET_STATE_NORMAL);
   set_child_colour(mt->context_box, TRUE);
 
   lives_widget_apply_theme(mt->vpaned, LIVES_WIDGET_STATE_NORMAL);
@@ -6282,6 +6289,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   register int i;
 
   lives_mt *mt = (lives_mt *)lives_malloc(sizeof(lives_mt));
+
+  if (rte_window != NULL) {
+    on_rtew_delete_event(NULL, NULL, NULL);
+    lives_widget_destroy(rte_window);
+    rte_window = NULL;
+  }
 
   mainw->multitrack = mt;
 
@@ -8564,7 +8577,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // poly in_out_box
   mt->in_out_box = lives_hbox_new(TRUE, 0);
   lives_widget_object_ref(mt->in_out_box);
-
+  lives_widget_apply_theme2(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  
   vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, widget_opts.packing_width);
 
@@ -12687,7 +12701,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
     break;
   case (POLY_PARAMS) :
     if (mt->framedraw != NULL) {
-      special_cleanup();
+      special_cleanup(FALSE);
       mt->framedraw = NULL;
     }
     if (mt->current_rfx != NULL) {
@@ -12977,8 +12991,8 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
 
     if (fx_dialog[1] != NULL) {
       lives_rfx_t *rfx = fx_dialog[1]->rfx;
+      on_paramwindow_button_clicked(NULL, rfx);
       lives_widget_destroy(fx_dialog[1]->dialog);
-      on_paramwindow_cancel_clicked(NULL, rfx);
       lives_freep((void **)&fx_dialog[1]);
     }
 
@@ -13158,10 +13172,13 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       }
     }
 
+    add_hsep_to_box(LIVES_BOX(mt->fx_list_box));
+
     bbox = lives_hbutton_box_new();
 
     lives_button_box_set_layout(LIVES_BUTTON_BOX(bbox), LIVES_BUTTONBOX_SPREAD);
     lives_box_pack_end(LIVES_BOX(mt->fx_list_box), bbox, FALSE, FALSE, widget_opts.packing_height);
+    lives_container_set_border_width(LIVES_CONTAINER(mt->fx_list_box), widget_opts.border_width);
 
     widget_opts.expand = LIVES_EXPAND_DEFAULT_WIDTH;
     mt->prev_fm_button = lives_standard_button_new_with_label(_("_Prev filter map"));  // Note to translators: previous filter map
@@ -19137,6 +19154,11 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
   int numtracks;
   register int i;
 
+  if (mt->current_rfx != NULL && mainw->textwidget_focus != NULL) {
+    // make sure text widgets are updated if they activate the default
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    after_param_text_changed(textwidget, mt->current_rfx);
+  }
   if (mt->framedraw != NULL) {
     if (!check_filewrite_overwrites()) {
       return;

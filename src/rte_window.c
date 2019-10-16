@@ -1863,9 +1863,9 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   filter_mutex_unlock(key);
 
   if (fx_dialog[1] != NULL) {
-    rfx = fx_dialog[1]->rfx;
     lives_widget_destroy(fx_dialog[1]->dialog);
-    on_paramwindow_cancel_clicked(NULL, rfx);
+    rfx = fx_dialog[1]->rfx;
+    on_paramwindow_button_clicked(NULL, rfx);
     lives_freep((void **)&fx_dialog[1]);
   }
 
@@ -1888,8 +1888,10 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
+boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data) {
   old_rte_keys_virtual = prefs->rte_keys_virtual;
+  lives_widget_set_sensitive(mainw->mt_menu, TRUE);
+  lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
   if (user_data == NULL) {
     // first time around we come here, and just hide the window
     lives_widget_hide(rte_window);
@@ -2198,7 +2200,7 @@ LiVESWidget *create_rte_window(void) {
 
   irte_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   lives_window_set_transient_for(LIVES_WINDOW(irte_window), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-
+  
   if (palette->style & STYLE_1) {
     lives_widget_set_bg_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
     lives_widget_set_text_color(irte_window, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars_fore);
@@ -2424,6 +2426,7 @@ rte_window_ready:
 
   rte_window_is_hidden = FALSE;
 
+  //lives_window_set_modal(LIVES_WINDOW(irte_window), TRUE);
   lives_widget_show_all(irte_window);
 
   if (prefs->open_maximised) {
@@ -2432,6 +2435,9 @@ rte_window_ready:
 
   lives_widget_show_now(irte_window);
 
+  lives_widget_set_sensitive(mainw->mt_menu, FALSE);
+  lives_widget_set_sensitive(mainw->rte_defs_menu, FALSE);
+  
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, irte_window);
   mainw->no_context_update = FALSE;
@@ -2525,7 +2531,7 @@ void redraw_pwindow(int key, int mode) {
         lives_widget_unparent(widget);
       }
       if (child_list != NULL) lives_list_free(child_list);
-      on_paramwindow_cancel_clicked(NULL, NULL);
+      on_paramwindow_button_clicked(NULL, NULL);
       restore_pwindow(rfx);
     }
   }
@@ -2570,8 +2576,8 @@ void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (fx_dialog[1] != NULL) {
     rfx = fx_dialog[1]->rfx;
+    on_paramwindow_button_clicked(NULL, rfx);
     lives_widget_destroy(fx_dialog[1]->dialog);
-    on_paramwindow_cancel_clicked(NULL, rfx);
     lives_freep((void **)&fx_dialog[1]);
   }
 
@@ -2640,7 +2646,7 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
 
 
 void rte_set_defs_cancel(LiVESButton *button, lives_rfx_t *rfx) {
-  on_paramwindow_cancel_clicked(button, rfx);
+  on_paramwindow_button_clicked(button, rfx);
   lives_freep((void **)&fx_dialog[1]);
 }
 

@@ -4237,10 +4237,12 @@ int enabled_in_channels(weed_plant_t *plant, boolean count_repeats) {
       if (weed_plant_has_leaf(ctmpl, WEED_LEAF_IS_AUDIO) && weed_get_boolean_value(ctmpl, WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
         if (weed_plant_has_leaf(ctmpl, WEED_LEAF_OPTIONAL) && weed_get_boolean_value(ctmpl, WEED_LEAF_OPTIONAL, &error) == WEED_TRUE) continue;
       }
-
       if (!weed_plant_has_leaf(channels[i], WEED_LEAF_DISABLED) ||
           weed_get_boolean_value(channels[i], WEED_LEAF_DISABLED, &error) != WEED_TRUE) enabled++;
     } else {
+      // skip alpha channels
+      if (mainw->multitrack != NULL && !has_non_alpha_palette(channels[i])) continue;
+
       if (!weed_plant_has_leaf(channels[i], WEED_LEAF_HOST_DISABLED) ||
           weed_get_boolean_value(channels[i], WEED_LEAF_HOST_DISABLED, &error) != WEED_TRUE) enabled++;
     }
@@ -10647,7 +10649,6 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
     }
 
     offset += num_params;
-
   } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
            (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
 

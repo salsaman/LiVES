@@ -24,6 +24,7 @@ void rtew_set_grab_button(boolean on);
 void redraw_pwindow(int key, int mode);
 void restore_pwindow(lives_rfx_t *);
 void update_pwindow(int key, int i, LiVESList *list);
+boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data);
 
 void rte_set_defs_activate(LiVESMenuItem *, livespointer user_data);
 void rte_set_defs_cancel(LiVESButton *, lives_rfx_t *);

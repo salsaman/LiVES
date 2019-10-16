@@ -26,9 +26,8 @@ typedef struct {
 
 #define DEF_SLIDER_WIDTH ((int)(200.*widget_opts.scale))
 
-void on_paramwindow_ok_clicked(LiVESButton *, lives_rfx_t *);
-void on_paramwindow_cancel_clicked(LiVESButton *, lives_rfx_t *);
-void on_paramwindow_cancel_clicked2(LiVESButton *, lives_rfx_t *);
+void on_paramwindow_button_clicked(LiVESButton *, lives_rfx_t *);
+void on_paramwindow_button_clicked2(LiVESButton *, lives_rfx_t *);
 
 void on_render_fx_pre_activate(LiVESMenuItem *, lives_rfx_t *);
 void on_render_fx_activate(LiVESMenuItem *, lives_rfx_t *);

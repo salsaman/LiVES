@@ -69,7 +69,7 @@ const lives_special_aspect_t *paramspecial_get_aspect(void);
 
 boolean check_filewrite_overwrites(void);
 
-boolean special_cleanup(void);
+boolean special_cleanup(boolean is_ok);
 
 void setmergealign(void);
 

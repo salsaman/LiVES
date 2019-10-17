@@ -112,6 +112,8 @@ mainwindow *mainw;
 //////////////////////////////////////////
 static char buff[256];
 
+static char devmap[PATH_MAX];
+
 static boolean no_recover = FALSE, auto_recover = FALSE;
 static boolean upgrade_error = FALSE;
 static boolean info_only;
@@ -267,7 +269,6 @@ void catch_sigint(int signum) {
         }
 #endif
 #endif
-
       }
 
       if (mainw->was_set) {
@@ -448,6 +449,15 @@ void get_monitors(boolean reset) {
 }
 
 
+static void print_notice(void) {
+  lives_printerr("\nLiVES %s\n", LiVES_VERSION);
+  lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
+  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
+                 "under certain conditions; "
+                 "see the file COPYING for details.\n\n");
+}
+
+
 static boolean pre_init(void) {
   // stuff which should be done *before* mainwindow is created
   // returns TRUE if we got an error loading the theme
@@ -456,16 +466,97 @@ static boolean pre_init(void) {
   LiVESError *gerr = NULL;
   char *icon;
 #endif
-
-  int randfd;
   ssize_t randres = -1;
   uint32_t rseed;
 
   pthread_mutexattr_t mattr;
 
+  char *msg, *tmp, *tmp2;
+
   boolean needs_update = FALSE;
 
+  int randfd;
+
   register int i;
+
+  // check the backend is there, get some system details and prefs
+  capable = get_capabilities();
+
+  //FATAL ERRORS
+
+  if (!mainw->foreign) {
+    if (!capable->can_write_to_workdir) {
+      if (!mainw->has_session_workdir) {
+        tmp2 = lives_strdup_printf(_("Please check the <workdir> setting in \n%s\nand try again.\n"),
+                                   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+        lives_free(tmp);
+      } else
+        tmp2 = lives_strdup("");
+
+      msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
+                                prefs->workdir, tmp2);
+      lives_free(tmp2);
+      startup_message_fatal(msg);
+    } else {
+      if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
+        startup_message_fatal(lives_strdup(
+                                _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n")));
+
+      } else {
+        if (!capable->has_perl) {
+          startup_message_fatal(lives_strdup(
+                                  _("\nPerl must be installed and in your path.\n\n"
+                                    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n")));
+        } else {
+          if (!capable->smog_version_correct) {
+            startup_message_fatal(lives_strdup(
+                                    _("\nAn incorrect version of smogrify was found in your path.\n\n"
+                                      "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n")));
+          } else {
+            if (!capable->can_write_to_home) {
+              startup_message_fatal(lives_strdup_printf(
+                                      _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
+                                      capable->home_dir));
+            } else {
+              if (!capable->has_smogrify) {
+                msg = lives_strdup(
+                        _("\n`smogrify` must be in your path, and be executable\n\n"
+                          "Please review the README file which came with this package\nbefore running LiVES.\n"));
+                startup_message_fatal(msg);
+              } else {
+                if (!capable->can_read_from_config) {
+                  msg = lives_strdup_printf(
+                          _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
+                          (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                  lives_free(tmp);
+                  startup_message_fatal(msg);
+                } else {
+                  if (!capable->can_write_to_config) {
+                    msg = lives_strdup_printf(
+                            _("\nLiVES was unable to write to its configuration file\n%s\n\n"
+                              "Please check the file permissions for this file and directory\nand try again.\n"),
+                            (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                    lives_free(tmp);
+                    startup_message_fatal(msg);
+                  } else {
+                    if (!capable->can_write_to_config_new) {
+                      msg = lives_strdup_printf(
+                              _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+                                "Please check the file permissions for this file and directory\nand try again.\n"),
+                              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
+                      lives_free(tmp);
+                      lives_free(tmp2);
+                      startup_message_fatal(msg);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   sizint = sizeof(int);
   sizdbl = sizeof(double);
@@ -473,10 +564,6 @@ static boolean pre_init(void) {
 
   /* TRANSLATORS: localised name may be used here */
   lives_set_application_name(_("LiVES"));
-
-  mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
-  mainw->is_ready = mainw->fatal = FALSE;
-  mainw->mgeom = NULL;
 
   // try to get randomness from /dev/urandom
   randfd = lives_open2("/dev/urandom", O_RDONLY);
@@ -526,12 +613,45 @@ static boolean pre_init(void) {
   // TRANSLATORS: adjective for "Test" type effects
   mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = lives_strdup(_("Test"));
 
-  prefs = (_prefs *)lives_malloc(sizeof(_prefs));
-  future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
+  // now we can use PREFS properly
+  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
+  cache_file_contents(capable->rcfile);
 
+  get_string_pref(PREF_DS_WARN_LEVEL, buff, 256);
+  if (!strlen(buff)) prefs->ds_warn_level = DEF_DS_WARN_LEVEL;
+  else prefs->ds_warn_level = strtol(buff, NULL, 10);
+
+  mainw->next_ds_warn_level = prefs->ds_warn_level;
+
+  get_string_pref(PREF_DS_CRIT_LEVEL, buff, 256);
+  if (!strlen(buff)) prefs->ds_crit_level = DEF_DS_CRIT_LEVEL;
+  else prefs->ds_crit_level = strtol(buff, NULL, 10);
+
+  if (mainw->next_ds_warn_level > 0) {
+    mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
+    if (mainw->ds_status == LIVES_STORAGE_STATUS_CRITICAL) {
+      tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
+      msg = lives_strdup_printf("\n%s\n", tmp);
+      lives_free(tmp);
+      startup_message_fatal(msg);
+    }
+  } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
+
+  if (mainw->has_session_workdir)
+    set_string_pref(PREF_SESSION_WORKDIR, prefs->workdir);
+
+  // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
 
-  lives_snprintf(prefs->cmd_log, PATH_MAX, LIVES_DEVNULL);
+  mainw->mgeom = NULL;
+
+  prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
+  mainw->ignore_screen_size = FALSE;
+
+  // sets prefs->screen_scale, capable->nmonitors, mainw->mgeom, prefs->play_monitor, prefs->gui_monitor
+  // prefs->show_msg_area, mainw->old_screen_height, mainw->old_screen_width
+  // widget_opts.monitor, widget_opts.screen and various widget_opts sizes
+  get_monitors(TRUE);
 
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
@@ -581,85 +701,9 @@ static boolean pre_init(void) {
   mainw->threaded_dialog = FALSE;
   clear_mainw_msg();
 
-  mainw->interactive = TRUE;
-
   info_only = FALSE;
 
-  // check the backend is there, get some system details and prefs
-  capable = get_capabilities();
-
   palette = (_palette *)(lives_malloc(sizeof(_palette)));
-
-  widget_helper_init();
-
-  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
-
-  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
-
-  if (!mainw->foreign) {
-    char *tmp, *tmp2, *err;
-    // fatal errors
-    if (!capable->has_perl) {
-      startup_message_fatal(
-        _("\nPerl must be installed and in your path.\n\n"
-          "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
-    } else {
-      if (!capable->smog_version_correct) {
-        startup_message_fatal(
-          _("\nAn incorrect version of smogrify was found in your path.\n\n"
-            "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n"));
-      } else {
-        if (!capable->can_write_to_home) {
-          startup_message_fatal((tmp = lives_strdup_printf(
-                                         _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
-                                         capable->home_dir)));
-          lives_free(tmp);
-        } else {
-          if (!capable->has_smogrify) {
-            err = lives_strdup(
-                    _("\n`smogrify` must be in your path, and be executable\n\n"
-                      "Please review the README file which came with this package\nbefore running LiVES.\n"));
-            startup_message_fatal(err);
-            lives_free(err);
-          } else {
-            if (!capable->can_read_from_config) {
-              err = lives_strdup_printf(
-                      _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
-                      (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-              lives_free(tmp);
-              startup_message_fatal(err);
-              lives_free(err);
-            } else {
-              if (!capable->can_write_to_config) {
-                err = lives_strdup_printf(
-                        _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-                          "Please check the file permissions for this file and directory\nand try again.\n"),
-                        (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-                lives_free(tmp);
-                startup_message_fatal(err);
-                lives_free(err);
-              } else {
-                if (!capable->can_write_to_config_new) {
-                  err = lives_strdup_printf(
-                          _("\nLiVES was unable to write to the configuration file\n%s\n\n"
-                            "Please check the file permissions for this file and directory\nand try again.\n"),
-                          (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
-                  lives_free(tmp);
-                  lives_free(tmp2);
-                  startup_message_fatal(err);
-                  lives_free(err);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  prefs->show_gui = TRUE;
-  prefs->show_splash = FALSE;
-  prefs->show_playwin = TRUE;
 
   prefs->sepwin_type = future_prefs->sepwin_type = get_int_prefd(PREF_SEPWIN_TYPE, SEPWIN_TYPE_STICKY);
 
@@ -679,15 +723,6 @@ static boolean pre_init(void) {
   prefs->letterbox = FALSE;
   prefs->bigendbug = 0;
 
-#ifdef HAVE_YUV4MPEG
-  memset(prefs->yuvin, 0, 1);
-#endif
-
-  if (!capable->smog_version_correct || !capable->can_write_to_workdir) {
-    lives_snprintf(prefs->theme, 64, "none");
-    return FALSE;
-  }
-
 #if GTK_CHECK_VERSION(3, 0, 0)
   prefs->funky_widgets = TRUE;
 #else
@@ -696,10 +731,6 @@ static boolean pre_init(void) {
 
   prefs->show_splash = TRUE;
   prefs->hide_framebar = FALSE;
-
-  // from here onwards we can use get_string_pref() and friends  //////
-
-  cache_file_contents(capable->rcfile);
 
   // get some prefs we need to set menu options
   future_prefs->show_recent = prefs->show_recent = get_boolean_pref(PREF_SHOW_RECENT_FILES);
@@ -744,10 +775,13 @@ static boolean pre_init(void) {
 
   mainw->imsep = mainw->imframe = NULL;
 
+  // The idea was to set pointers to memory and other functions to be passed to Weed plugins as function pointers.
+  // However this doesn't really work because if libdl finds functions with the same name in the host,
+  // it will use those instead. This rather annoying since the plugins thus have to be compiled with a fragment of C code
+  // in order to use their own versions, rather than the host versions.
   weed_memory_init();
 
   prefs->max_messages = get_int_prefd(PREF_MAX_MSGS, DEF_MAX_MSGS);
-
   prefs->msg_textsize = get_int_prefd(PREF_MSG_TEXTSIZE, DEF_MSG_TEXTSIZE);
 
   mainw->msg_list = NULL;
@@ -767,22 +801,21 @@ static boolean pre_init(void) {
     set_palette_colours(FALSE);
   } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
+  if (!mainw->foreign) {
+    if (prefs->show_splash) splash_init();
+    print_notice();
+  }
+
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
   prefs->warning_mask = (uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
 
-  future_prefs->jack_opts = get_int_pref(PREF_JACK_OPTS);
-  prefs->jack_opts = future_prefs->jack_opts;
+  if (!ign_opts.ign_jackopts) {
+    prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 0);
+  }
 
   prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
   prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
-
-  mainw->mgeom = NULL;
-
-  prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
-  mainw->ignore_screen_size = FALSE;
-
-  get_monitors(TRUE);
 
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
@@ -834,7 +867,7 @@ static boolean pre_init(void) {
   if (prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) prefs->alsa_midi_dummy = TRUE;
 #endif
 
-  prefs->midi_rcv_channel = get_int_pref(PREF_MIDI_RCV_CHANNEL);
+  prefs->midi_rcv_channel = get_int_prefd(PREF_MIDI_RCV_CHANNEL, -1);
 
   mainw->ccpd_with_sound = TRUE;
 
@@ -844,9 +877,6 @@ static boolean pre_init(void) {
 #ifdef GUI_GTK
   mainw->target_table = target_table;
 #endif
-
-  prefs->max_modes_per_key = 0;
-  mainw->debug = FALSE;
 
   prefs->show_asrc = get_boolean_pref(PREF_SHOW_ASRC);
   prefs->hfbwnp = get_boolean_pref(PREF_HFBWNP);
@@ -1327,635 +1357,621 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->pause_effect_during_preview = FALSE;
 
-  if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    int pb_quality = get_int_pref(PREF_PB_QUALITY);
+  prefs->pb_quality = get_int_prefd(PREF_PB_QUALITY, PB_QUALITY_MED);
+  if (prefs->pb_quality != PB_QUALITY_LOW && prefs->pb_quality != PB_QUALITY_HIGH &&
+      prefs->pb_quality != PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_MED;
 
-    prefs->pb_quality = PB_QUALITY_MED;
-    if (pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_LOW;
-    else if (pb_quality == PB_QUALITY_HIGH) prefs->pb_quality = PB_QUALITY_HIGH;
+  mainw->ext_playback = mainw->ext_keyboard = mainw->ext_audio = FALSE;
 
-    mainw->ext_playback = mainw->ext_keyboard = mainw->ext_audio = FALSE;
+  get_string_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
+  if (!strcmp(buff, LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
+  else lives_snprintf(prefs->image_ext, 16, "%s", buff);
 
-    get_string_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
-    if (!strcmp(buff, LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
-    else lives_snprintf(prefs->image_ext, 16, "%s", buff);
+  prefs->loop_recording = TRUE;
+  prefs->no_bandwidth = FALSE;
+  prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
-    prefs->loop_recording = TRUE;
-    prefs->no_bandwidth = FALSE;
-    prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
+  // we set the theme here in case it got reset to 'none'
+  set_string_pref(PREF_GUI_THEME, prefs->theme);
+  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
 
-    // we set the theme here in case it got reset to 'none'
-    set_string_pref(PREF_GUI_THEME, prefs->theme);
-    lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+  prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);
+  future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
 
-    prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);
-    future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
+  if (prefs->gui_monitor != 0) {
+    lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
 
-    if (prefs->gui_monitor != 0) {
-      lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
+  prefs->default_fps = get_double_pref(PREF_DEFAULT_FPS);
+  if (prefs->default_fps < 1.) prefs->default_fps = 1.;
+  if (prefs->default_fps > FPS_MAX) prefs->default_fps = FPS_MAX;
 
-    prefs->default_fps = get_double_pref(PREF_DEFAULT_FPS);
-    if (prefs->default_fps < 1.) prefs->default_fps = 1.;
-    if (prefs->default_fps > FPS_MAX) prefs->default_fps = FPS_MAX;
+  prefs->q_type = Q_SMOOTH;
 
-    prefs->q_type = Q_SMOOTH;
+  prefs->event_window_show_frame_events = FALSE;
+  if (!mainw->foreign) prefs->crash_recovery = TRUE;
+  else prefs->crash_recovery = FALSE;
 
-    prefs->event_window_show_frame_events = FALSE;
-    if (!mainw->foreign) prefs->crash_recovery = TRUE;
-    else prefs->crash_recovery = FALSE;
+  prefs->acodec_list = NULL;
 
-    prefs->acodec_list = NULL;
+  prefs->render_audio = TRUE;
+  prefs->normalise_audio = TRUE;
 
-    prefs->render_audio = TRUE;
-    prefs->normalise_audio = TRUE;
+  prefs->num_rtaudiobufs = 4;
 
-    prefs->num_rtaudiobufs = 4;
+  prefs->safe_symlinks = FALSE; // set to TRUE for dynebolic and other live CDs
 
-    prefs->safe_symlinks = FALSE; // set to TRUE for dynebolic and other live CDs
+  prefs->ce_maxspect = get_boolean_pref(PREF_CE_MAXSPECT);
 
-    prefs->ce_maxspect = get_boolean_pref(PREF_CE_MAXSPECT);
+  prefs->rec_stop_gb = get_int_pref(PREF_REC_STOP_GB);
 
-    prefs->rec_stop_gb = get_int_pref(PREF_REC_STOP_GB);
+  if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = DEF_FX_KEYMODES;
 
-    if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = 8;
+  prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
+  if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
+  future_prefs->nfx_threads = prefs->nfx_threads;
 
-    prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
-    if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
-    future_prefs->nfx_threads = prefs->nfx_threads;
+  prefs->stream_audio_out = get_boolean_pref(PREF_STREAM_AUDIO_OUT);
 
-    prefs->stream_audio_out = get_boolean_pref(PREF_STREAM_AUDIO_OUT);
+  prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
 
-    prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
+  prefs->disabled_decoders = get_list_pref(PREF_DISABLED_DECODERS);
 
-    prefs->disabled_decoders = get_list_pref(PREF_DISABLED_DECODERS);
+  prefs->enc_letterbox = FALSE;
 
-    prefs->enc_letterbox = FALSE;
+  prefs->clear_disk_opts = get_int_pref(PREF_CLEAR_DISK_OPTS);
 
-    get_string_pref(PREF_DS_WARN_LEVEL, buff, 256);
-    if (!strlen(buff)) prefs->ds_warn_level = DEF_DS_WARN_LEVEL;
-    else prefs->ds_warn_level = strtol(buff, NULL, 10);
+  prefs->force_system_clock = TRUE;
 
-    mainw->next_ds_warn_level = prefs->ds_warn_level;
+  prefs->alpha_post = FALSE; ///< allow pre-multiplied alpha internally
 
-    get_string_pref(PREF_DS_CRIT_LEVEL, buff, 256);
-    if (!strlen(buff)) prefs->ds_crit_level = DEF_DS_CRIT_LEVEL;
-    else prefs->ds_crit_level = strtol(buff, NULL, 10);
+  prefs->auto_trim_audio = get_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO);
 
-    prefs->clear_disk_opts = get_int_pref(PREF_CLEAR_DISK_OPTS);
-
-    prefs->force_system_clock = TRUE;
-
-    prefs->alpha_post = FALSE; ///< allow pre-multiplied alpha internally
-
-    prefs->auto_trim_audio = get_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO);
-
-    prefs->force64bit = FALSE;
+  prefs->force64bit = FALSE;
 
 #if LIVES_HAS_GRID_WIDGET
-    prefs->ce_thumb_mode = get_boolean_pref(PREF_CE_THUMB_MODE);
+  prefs->ce_thumb_mode = get_boolean_pref(PREF_CE_THUMB_MODE);
 #else
-    prefs->ce_thumb_mode = FALSE;
+  prefs->ce_thumb_mode = FALSE;
 #endif
 
-    widget_opts.show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
+  widget_opts.show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
 
-    prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
+  prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
 
-    prefs->perm_audio_reader = TRUE;
+  prefs->perm_audio_reader = TRUE;
 
-    prefs->max_disp_vtracks = get_int_pref(PREF_MAX_DISP_VTRACKS);
+  prefs->max_disp_vtracks = get_int_pref(PREF_MAX_DISP_VTRACKS);
 
-    prefs->mt_load_fuzzy = FALSE;
+  prefs->mt_load_fuzzy = FALSE;
 
-    prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
+  prefs->ahold_threshold = get_double_pref(PREF_AHOLD_THRESHOLD);
 
-    prefs->screen_gamma = DEF_SCREEN_GAMMA;
+  prefs->screen_gamma = DEF_SCREEN_GAMMA;
 
-    prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
+  prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
-    prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
+  prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
 
-    //////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////
 
-    if (!mainw->foreign) {
-      // set various prefs
+  if (!mainw->foreign) {
+    // set various prefs
 
-      prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
-      if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
+    prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
+    if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
 
-      if (prefs->midi_check_rate < 1) prefs->midi_check_rate = 1;
+    if (prefs->midi_check_rate < 1) prefs->midi_check_rate = 1;
 
-      prefs->midi_rpt = get_int_pref(PREF_MIDI_RPT);
-      if (prefs->midi_rpt == 0) prefs->midi_rpt = DEF_MIDI_RPT;
+    prefs->midi_rpt = get_int_pref(PREF_MIDI_RPT);
+    if (prefs->midi_rpt == 0) prefs->midi_rpt = DEF_MIDI_RPT;
 
-      prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
+    prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
 
-      prefs->mt_auto_back = (ticks_t)get_int_pref(PREF_MT_AUTO_BACK);
+    prefs->mt_auto_back = (ticks_t)get_int_pref(PREF_MT_AUTO_BACK);
 
-      get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
+    get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
-      if (!ign_opts->ign_aplayer) {
-        get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2);
+    if (!ign_opts->ign_aplayer) {
+      get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2);
+    }
+
+    memset(mppath, 0, 1);
+
+    if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
+      get_location(EXEC_MPLAYER, mppath, PATH_MAX);
+    }
+
+    if (!strlen(prefs->video_open_command) && capable->has_mplayer2) {
+      get_location(EXEC_MPLAYER2, mppath, PATH_MAX);
+    }
+
+    if (!strlen(prefs->video_open_command) && capable->has_mpv) {
+      get_location(EXEC_MPV, mppath, PATH_MAX);
+    }
+
+    if (strlen(mppath)) {
+      lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
+      set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
+    }
+
+    prefs->warn_file_size = get_int_pref(PREF_WARN_FILE_SIZE);
+    if (prefs->warn_file_size == 0) {
+      prefs->warn_file_size = WARN_FILE_SIZE;
+    }
+
+    prefs->rte_keys_virtual = get_int_pref(PREF_RTE_KEYS_VIRTUAL);
+    if (prefs->rte_keys_virtual < FX_KEYS_PHYSICAL) prefs->rte_keys_virtual = FX_KEYS_PHYSICAL;
+    if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
+
+    prefs->show_rdet = TRUE;
+
+    prefs->move_effects = TRUE;
+
+    prefs->mt_undo_buf = get_int_pref(PREF_MT_UNDO_BUF);
+
+    prefs->mt_enter_prompt = get_boolean_pref(PREF_MT_ENTER_PROMPT);
+
+    prefs->mt_def_width = get_int_pref(PREF_MT_DEF_WIDTH);
+    prefs->mt_def_height = get_int_pref(PREF_MT_DEF_HEIGHT);
+    prefs->mt_def_fps = get_double_pref(PREF_MT_DEF_FPS);
+    prefs->mt_def_arate = get_int_pref(PREF_MT_DEF_ARATE);
+    prefs->mt_def_achans = get_int_pref(PREF_MT_DEF_ACHANS);
+    prefs->mt_def_asamps = get_int_pref(PREF_MT_DEF_ASAMPS);
+    prefs->mt_def_signed_endian = get_int_pref(PREF_MT_DEF_SIGNED_ENDIAN);
+
+    if (prefs->mt_def_width == 0) prefs->mt_def_width = DEFAULT_FRAME_HSIZE_UNSCALED;
+    if (prefs->mt_def_height == 0) prefs->mt_def_height = DEFAULT_FRAME_VSIZE_UNSCALED;
+    if (prefs->mt_def_fps == 0.) prefs->mt_def_fps = prefs->default_fps;
+    if (prefs->mt_def_arate == 0) prefs->mt_def_arate = DEFAULT_AUDIO_RATE;
+    if (prefs->mt_def_asamps == 0) prefs->mt_def_asamps = DEFAULT_AUDIO_SAMPS;
+
+    prefs->mt_exit_render = get_boolean_pref(PREF_MT_EXIT_RENDER);
+    prefs->render_prompt = get_boolean_pref(PREF_RENDER_PROMPT);
+
+    prefs->mt_pertrack_audio = get_boolean_pref(PREF_MT_PERTRACK_AUDIO);
+    prefs->mt_backaudio = get_int_pref(PREF_MT_BACKAUDIO);
+
+    prefs->instant_open = get_boolean_pref(PREF_INSTANT_OPEN);
+    prefs->auto_deint = get_boolean_pref(PREF_AUTO_DEINTERLACE);
+    prefs->auto_nobord = get_boolean_pref(PREF_AUTO_CUT_BORDERS);
+
+    if (!ign_opts->ign_clipset) {
+      get_string_pref(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128);
+      if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset = TRUE;
+      else prefs->ar_clipset = FALSE;
+    } else set_string_pref(PREF_AR_CLIPSET, "");
+
+    get_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name, PATH_MAX);
+    if (strlen(prefs->ar_layout_name)) prefs->ar_layout = TRUE;
+    else prefs->ar_layout = FALSE;
+
+    prefs->rec_desktop_audio = get_boolean_pref(PREF_REC_DESKTOP_AUDIO);
+
+    future_prefs->startup_interface = get_int_prefd(PREF_STARTUP_INTERFACE, STARTUP_CE);
+    if (!ign_opts->ign_stmode) {
+      prefs->startup_interface = future_prefs->startup_interface;
+    }
+
+    // scan for encoder plugins
+    if ((encoders = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL)) != NULL) {
+      capable->has_encoder_plugins = TRUE;
+      lives_list_free_all(&encoders);
+    }
+
+    memset(prefs->encoder.of_name, 0, 1);
+
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
+      LiVESList *ofmt_all = NULL;
+      char **array;
+      if (capable->python_version >= 3000000)
+        lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER3_NAME);
+      else
+        lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER_NAME);
+
+      // need to change the output format
+
+      if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
+        set_string_pref(PREF_ENCODER, prefs->encoder.name);
+
+        for (i = 0; i < lives_list_length(ofmt_all); i++) {
+          if (get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|') > 2) {
+            array = lives_strsplit((char *)lives_list_nth_data(ofmt_all, i), "|", -1);
+
+            if (!strcmp(array[0], HI_THEORA_FORMAT)) {
+              lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+              lives_strfreev(array);
+              break;
+            }
+            if (!strcmp(array[0], HI_MPEG_FORMAT)) {
+              lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+            } else if (!strcmp(array[0], HI_H_MKV_FORMAT) && strcmp(prefs->encoder.of_name, HI_MPEG_FORMAT)) {
+              lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+            } else if (!strcmp(array[0], HI_H_AVI_FORMAT) && strcmp(prefs->encoder.of_name, HI_MPEG_FORMAT) &&
+                       strcmp(prefs->encoder.of_name, HI_H_MKV_FORMAT)) {
+              lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+            } else if (!strlen(prefs->encoder.of_name)) {
+              lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+            }
+
+            lives_strfreev(array);
+          }
+        }
+
+        set_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name);
+
+        lives_list_free_all(&ofmt_all);
       }
+    }
 
-      memset(mppath, 0, 1);
+    if (!strlen(prefs->encoder.of_name)) {
+      get_string_pref(PREF_ENCODER, prefs->encoder.name, 64);
+      get_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name, 64);
+    }
 
-      if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
-        get_location(EXEC_MPLAYER, mppath, PATH_MAX);
-      }
+    future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int_pref(PREF_ENCODER_ACODEC);
+    prefs->encoder.capabilities = 0;
+    prefs->encoder.of_allowed_acodecs = AUDIO_CODEC_UNKNOWN;
 
-      if (!strlen(prefs->video_open_command) && capable->has_mplayer2) {
-        get_location(EXEC_MPLAYER2, mppath, PATH_MAX);
-      }
+    lives_snprintf(future_prefs->encoder.name, 64, "%s", prefs->encoder.name);
 
-      if (!strlen(prefs->video_open_command) && capable->has_mpv) {
-        get_location(EXEC_MPV, mppath, PATH_MAX);
-      }
+    memset(future_prefs->encoder.of_restrict, 0, 1);
+    memset(prefs->encoder.of_restrict, 0, 1);
 
-      if (strlen(mppath)) {
-        lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
-        set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
-      }
+    if (capable->has_encoder_plugins) {
+      char **array;
+      int numtok;
+      LiVESList *ofmt_all, *dummy_list;
 
-      prefs->warn_file_size = get_int_pref(PREF_WARN_FILE_SIZE);
-      if (prefs->warn_file_size == 0) {
-        prefs->warn_file_size = WARN_FILE_SIZE;
-      }
+      dummy_list = plugin_request("encoders", prefs->encoder.name, "init");
+      lives_list_free_all(&dummy_list);
 
-      prefs->rte_keys_virtual = get_int_pref(PREF_RTE_KEYS_VIRTUAL);
-      if (prefs->rte_keys_virtual < FX_KEYS_PHYSICAL) prefs->rte_keys_virtual = FX_KEYS_PHYSICAL;
-      if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
-
-      prefs->show_rdet = TRUE;
-
-      prefs->move_effects = TRUE;
-
-      prefs->mt_undo_buf = get_int_pref(PREF_MT_UNDO_BUF);
-
-      prefs->mt_enter_prompt = get_boolean_pref(PREF_MT_ENTER_PROMPT);
-
-      prefs->mt_def_width = get_int_pref(PREF_MT_DEF_WIDTH);
-      prefs->mt_def_height = get_int_pref(PREF_MT_DEF_HEIGHT);
-      prefs->mt_def_fps = get_double_pref(PREF_MT_DEF_FPS);
-      prefs->mt_def_arate = get_int_pref(PREF_MT_DEF_ARATE);
-      prefs->mt_def_achans = get_int_pref(PREF_MT_DEF_ACHANS);
-      prefs->mt_def_asamps = get_int_pref(PREF_MT_DEF_ASAMPS);
-      prefs->mt_def_signed_endian = get_int_pref(PREF_MT_DEF_SIGNED_ENDIAN);
-
-      if (prefs->mt_def_width == 0) prefs->mt_def_width = DEFAULT_FRAME_HSIZE_UNSCALED;
-      if (prefs->mt_def_height == 0) prefs->mt_def_height = DEFAULT_FRAME_VSIZE_UNSCALED;
-      if (prefs->mt_def_fps == 0.) prefs->mt_def_fps = prefs->default_fps;
-      if (prefs->mt_def_arate == 0) prefs->mt_def_arate = DEFAULT_AUDIO_RATE;
-      if (prefs->mt_def_asamps == 0) prefs->mt_def_asamps = DEFAULT_AUDIO_SAMPS;
-
-      prefs->mt_exit_render = get_boolean_pref(PREF_MT_EXIT_RENDER);
-      prefs->render_prompt = get_boolean_pref(PREF_RENDER_PROMPT);
-
-      prefs->mt_pertrack_audio = get_boolean_pref(PREF_MT_PERTRACK_AUDIO);
-      prefs->mt_backaudio = get_int_pref(PREF_MT_BACKAUDIO);
-
-      prefs->instant_open = get_boolean_pref(PREF_INSTANT_OPEN);
-      prefs->auto_deint = get_boolean_pref(PREF_AUTO_DEINTERLACE);
-      prefs->auto_nobord = get_boolean_pref(PREF_AUTO_CUT_BORDERS);
-
-      if (!ign_opts->ign_clipset) {
-        get_string_pref(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128);
-        if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset = TRUE;
-        else prefs->ar_clipset = FALSE;
-      }
-
-      get_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name, PATH_MAX);
-      if (strlen(prefs->ar_layout_name)) prefs->ar_layout = TRUE;
-      else prefs->ar_layout = FALSE;
-
-      prefs->rec_desktop_audio = get_boolean_pref(PREF_REC_DESKTOP_AUDIO);
-
-      future_prefs->startup_interface = get_int_pref(PREF_STARTUP_INTERFACE);
-      if (!ign_opts->ign_stmode) {
-        prefs->startup_interface = future_prefs->startup_interface;
-      }
-
-      // scan for encoder plugins
-      if ((encoders = get_plugin_list(PLUGIN_ENCODERS, FALSE, NULL, NULL)) != NULL) {
-        capable->has_encoder_plugins = TRUE;
-        lives_list_free_all(&encoders);
-      }
-
-      memset(prefs->encoder.of_name, 0, 1);
-
-      if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
-        LiVESList *ofmt_all = NULL;
-        char **array;
-        if (capable->python_version >= 3000000)
-          lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER3_NAME);
-        else
-          lives_snprintf(prefs->encoder.name, 64, "%s", MULTI_ENCODER_NAME);
-
-        // need to change the output format
-
+      if (!((encoder_capabilities = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "get_capabilities")) == NULL)) {
+        prefs->encoder.capabilities = atoi((char *)lives_list_nth_data(encoder_capabilities, 0));
+        lives_list_free_all(&encoder_capabilities);
         if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
-          set_string_pref(PREF_ENCODER, prefs->encoder.name);
-
-          for (i = 0; i < lives_list_length(ofmt_all); i++) {
-            if (get_token_count((char *)lives_list_nth_data(ofmt_all, i), '|') > 2) {
-              array = lives_strsplit((char *)lives_list_nth_data(ofmt_all, i), "|", -1);
-
-              if (!strcmp(array[0], HI_THEORA_FORMAT)) {
-                lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
+          // get any restrictions for the current format
+          LiVESList *list = ofmt_all;
+          while (list != NULL) {
+            if ((numtok = get_token_count((char *)list->data, '|')) > 2) {
+              array = lives_strsplit((char *)list->data, "|", -1);
+              if (!strcmp(array[0], prefs->encoder.of_name)) {
+                if (numtok > 1) {
+                  lives_snprintf(prefs->encoder.of_desc, 128, "%s", array[1]);
+                }
                 lives_strfreev(array);
                 break;
               }
-              if (!strcmp(array[0], HI_MPEG_FORMAT)) {
-                lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
-              } else if (!strcmp(array[0], HI_H_MKV_FORMAT) && strcmp(prefs->encoder.of_name, HI_MPEG_FORMAT)) {
-                lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
-              } else if (!strcmp(array[0], HI_H_AVI_FORMAT) && strcmp(prefs->encoder.of_name, HI_MPEG_FORMAT) &&
-                         strcmp(prefs->encoder.of_name, HI_H_MKV_FORMAT)) {
-                lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
-              } else if (!strlen(prefs->encoder.of_name)) {
-                lives_snprintf(prefs->encoder.of_name, 64, "%s", array[0]);
-              }
-
               lives_strfreev(array);
             }
+            list = list->next;
           }
-
-          set_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name);
-
           lives_list_free_all(&ofmt_all);
         }
       }
+    }
 
-      if (!strlen(prefs->encoder.of_name)) {
-        get_string_pref(PREF_ENCODER, prefs->encoder.name, 64);
-        get_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name, 64);
-      }
-
-      future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int_pref(PREF_ENCODER_ACODEC);
-      prefs->encoder.capabilities = 0;
-      prefs->encoder.of_allowed_acodecs = AUDIO_CODEC_UNKNOWN;
-
-      lives_snprintf(future_prefs->encoder.name, 64, "%s", prefs->encoder.name);
-
-      memset(future_prefs->encoder.of_restrict, 0, 1);
-      memset(prefs->encoder.of_restrict, 0, 1);
-
-      if (capable->has_encoder_plugins) {
-        char **array;
-        int numtok;
-        LiVESList *ofmt_all, *dummy_list;
-
-        dummy_list = plugin_request("encoders", prefs->encoder.name, "init");
-        lives_list_free_all(&dummy_list);
-
-        if (!((encoder_capabilities = plugin_request(PLUGIN_ENCODERS, prefs->encoder.name, "get_capabilities")) == NULL)) {
-          prefs->encoder.capabilities = atoi((char *)lives_list_nth_data(encoder_capabilities, 0));
-          lives_list_free_all(&encoder_capabilities);
-          if ((ofmt_all = plugin_request_by_line(PLUGIN_ENCODERS, prefs->encoder.name, "get_formats")) != NULL) {
-            // get any restrictions for the current format
-            LiVESList *list = ofmt_all;
-            while (list != NULL) {
-              if ((numtok = get_token_count((char *)list->data, '|')) > 2) {
-                array = lives_strsplit((char *)list->data, "|", -1);
-                if (!strcmp(array[0], prefs->encoder.of_name)) {
-                  if (numtok > 1) {
-                    lives_snprintf(prefs->encoder.of_desc, 128, "%s", array[1]);
-                  }
-                  lives_strfreev(array);
-                  break;
-                }
-                lives_strfreev(array);
-              }
-              list = list->next;
-            }
-            lives_list_free_all(&ofmt_all);
-          }
-        }
-      }
-
-      get_utf8_pref(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir, PATH_MAX);
-      if (!strlen(prefs->def_vid_load_dir)) {
+    get_utf8_pref(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir, PATH_MAX);
+    if (!strlen(prefs->def_vid_load_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2, 14, 0)
-        lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+      lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-        lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", capable->home_dir);
+      lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s", capable->home_dir);
 #endif
 #endif
-        set_utf8_pref(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir);
-      }
-      lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", prefs->def_vid_load_dir);
-      ensure_isdir(mainw->vid_load_dir);
+      set_utf8_pref(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir);
+    }
+    lives_snprintf(mainw->vid_load_dir, PATH_MAX, "%s", prefs->def_vid_load_dir);
+    ensure_isdir(mainw->vid_load_dir);
 
-      get_utf8_pref(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir, PATH_MAX);
-      if (!strlen(prefs->def_vid_save_dir)) {
+    get_utf8_pref(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir, PATH_MAX);
+    if (!strlen(prefs->def_vid_save_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2, 14, 0)
-        lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
+      lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_VIDEOS));
 #else
-        lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", capable->home_dir);
+      lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s", capable->home_dir);
 #endif
 #endif
-        set_utf8_pref(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir);
-      }
-      lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", prefs->def_vid_save_dir);
-      ensure_isdir(mainw->vid_save_dir);
+      set_utf8_pref(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir);
+    }
+    lives_snprintf(mainw->vid_save_dir, PATH_MAX, "%s", prefs->def_vid_save_dir);
+    ensure_isdir(mainw->vid_save_dir);
 
-      lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", mainw->vid_save_dir);
+    lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", mainw->vid_save_dir);
 
-      get_utf8_pref(PREF_AUDIO_DIR, prefs->def_audio_dir, PATH_MAX);
-      if (!strlen(prefs->def_audio_dir)) {
+    get_utf8_pref(PREF_AUDIO_DIR, prefs->def_audio_dir, PATH_MAX);
+    if (!strlen(prefs->def_audio_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2, 14, 0)
-        lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
+      lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_MUSIC));
 #else
-        lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", capable->home_dir);
+      lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s", capable->home_dir);
 #endif
 #endif
-        set_utf8_pref(PREF_AUDIO_DIR, prefs->def_audio_dir);
-      }
-      lives_snprintf(mainw->audio_dir, PATH_MAX, "%s", prefs->def_audio_dir);
-      ensure_isdir(mainw->audio_dir);
+      set_utf8_pref(PREF_AUDIO_DIR, prefs->def_audio_dir);
+    }
+    lives_snprintf(mainw->audio_dir, PATH_MAX, "%s", prefs->def_audio_dir);
+    ensure_isdir(mainw->audio_dir);
 
-      get_utf8_pref(PREF_IMAGE_DIR, prefs->def_image_dir, PATH_MAX);
-      if (!strlen(prefs->def_image_dir)) {
+    get_utf8_pref(PREF_IMAGE_DIR, prefs->def_image_dir, PATH_MAX);
+    if (!strlen(prefs->def_image_dir)) {
 #ifdef USE_GLIB
 #if GLIB_CHECK_VERSION(2, 14, 0)
-        lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
+      lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", g_get_user_special_dir(G_USER_DIRECTORY_PICTURES));
 #else
-        lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", capable->home_dir);
+      lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s", capable->home_dir);
 #endif
 #endif
-        set_utf8_pref(PREF_IMAGE_DIR, prefs->def_image_dir);
-      }
-      lives_snprintf(mainw->image_dir, PATH_MAX, "%s", prefs->def_image_dir);
-      ensure_isdir(mainw->image_dir);
+      set_utf8_pref(PREF_IMAGE_DIR, prefs->def_image_dir);
+    }
+    lives_snprintf(mainw->image_dir, PATH_MAX, "%s", prefs->def_image_dir);
+    ensure_isdir(mainw->image_dir);
 
-      get_utf8_pref(PREF_PROJ_DIR, prefs->def_proj_dir, PATH_MAX);
-      if (!strlen(prefs->def_proj_dir)) {
-        lives_snprintf(prefs->def_proj_dir, PATH_MAX, "%s", capable->home_dir);
-        set_utf8_pref(PREF_PROJ_DIR, prefs->def_proj_dir);
-      }
-      lives_snprintf(mainw->proj_load_dir, PATH_MAX, "%s", prefs->def_proj_dir);
-      ensure_isdir(mainw->proj_load_dir);
-      lives_snprintf(mainw->proj_save_dir, PATH_MAX, "%s", mainw->proj_load_dir);
+    get_utf8_pref(PREF_PROJ_DIR, prefs->def_proj_dir, PATH_MAX);
+    if (!strlen(prefs->def_proj_dir)) {
+      lives_snprintf(prefs->def_proj_dir, PATH_MAX, "%s", capable->home_dir);
+      set_utf8_pref(PREF_PROJ_DIR, prefs->def_proj_dir);
+    }
+    lives_snprintf(mainw->proj_load_dir, PATH_MAX, "%s", prefs->def_proj_dir);
+    ensure_isdir(mainw->proj_load_dir);
+    lives_snprintf(mainw->proj_save_dir, PATH_MAX, "%s", mainw->proj_load_dir);
 
-      prefs->show_player_stats = get_boolean_pref(PREF_SHOW_PLAYER_STATS);
+    prefs->show_player_stats = get_boolean_pref(PREF_SHOW_PLAYER_STATS);
 
-      prefs->dl_bandwidth = get_int_pref(PREF_DL_BANDWIDTH_K);
-      prefs->fileselmax = get_boolean_pref(PREF_FILESEL_MAXIMISED);
+    prefs->dl_bandwidth = get_int_pref(PREF_DL_BANDWIDTH_K);
+    prefs->fileselmax = get_boolean_pref(PREF_FILESEL_MAXIMISED);
 
-      prefs->midisynch = get_boolean_pref(PREF_MIDISYNCH);
-      if (prefs->midisynch && !capable->has_midistartstop) {
-        set_boolean_pref(PREF_MIDISYNCH, FALSE);
-        prefs->midisynch = FALSE;
-      }
+    prefs->midisynch = get_boolean_pref(PREF_MIDISYNCH);
+    if (prefs->midisynch && !capable->has_midistartstop) {
+      set_boolean_pref(PREF_MIDISYNCH, FALSE);
+      prefs->midisynch = FALSE;
+    }
 
-      prefs->discard_tv = FALSE;
+    prefs->discard_tv = FALSE;
 
-      // conserve disk space ?
-      prefs->conserve_space = get_boolean_pref(PREF_CONSERVE_SPACE);
-      prefs->ins_resample = get_boolean_pref(PREF_INSERT_RESAMPLE);
+    // conserve disk space ?
+    prefs->conserve_space = get_boolean_pref(PREF_CONSERVE_SPACE);
+    prefs->ins_resample = get_boolean_pref(PREF_INSERT_RESAMPLE);
 
-      // need better control of audio channels first
-      prefs->pause_during_pb = FALSE;
+    // need better control of audio channels first
+    prefs->pause_during_pb = FALSE;
 
-      // should we always use the last directory ?
-      // TODO - add to GUI
-      prefs->save_directories = get_boolean_pref(PREF_SAVE_DIRECTORIES);
-      prefs->antialias = get_boolean_pref(PREF_ANTIALIAS);
+    // should we always use the last directory ?
+    // TODO - add to GUI
+    prefs->save_directories = get_boolean_pref(PREF_SAVE_DIRECTORIES);
+    prefs->antialias = get_boolean_pref(PREF_ANTIALIAS);
 
-      prefs->concat_images = get_boolean_pref(PREF_CONCAT_IMAGES);
+    prefs->concat_images = get_boolean_pref(PREF_CONCAT_IMAGES);
 
-      prefs->safer_preview = TRUE;
+    prefs->safer_preview = TRUE;
 
-      prefs->fxdefsfile = NULL;
-      prefs->fxsizesfile = NULL;
+    prefs->fxdefsfile = NULL;
+    prefs->fxsizesfile = NULL;
 
-      needs_free = FALSE;
-      weed_plugin_path = getenv("WEED_PLUGIN_PATH");
-      if (weed_plugin_path == NULL) {
-        get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
-        if (strlen(prefs->weed_plugin_path) == 0) weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_WEED_FX_BUILTIN,
-              NULL);
-        else weed_plugin_path = lives_strdup(prefs->weed_plugin_path);
-        lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
-        needs_free = TRUE;
-      }
-      lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
-      if (needs_free) lives_free(weed_plugin_path);
+    needs_free = FALSE;
+    weed_plugin_path = getenv("WEED_PLUGIN_PATH");
+    if (weed_plugin_path == NULL) {
+      get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
+      if (strlen(prefs->weed_plugin_path) == 0) weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_WEED_FX_BUILTIN,
+            NULL);
+      else weed_plugin_path = lives_strdup(prefs->weed_plugin_path);
+      lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", weed_plugin_path);
+    if (needs_free) lives_free(weed_plugin_path);
 
-      needs_free = FALSE;
-      frei0r_path = getenv("FREI0R_PATH");
-      if (frei0r_path == NULL) {
-        get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
-        if (strlen(prefs->frei0r_path) == 0) frei0r_path = lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
-              capable->home_dir);
-        else frei0r_path = lives_strdup(prefs->frei0r_path);
-        lives_setenv("FREI0R_PATH", frei0r_path);
-        needs_free = TRUE;
-      }
-      lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
-      if (needs_free) lives_free(frei0r_path);
+    needs_free = FALSE;
+    frei0r_path = getenv("FREI0R_PATH");
+    if (frei0r_path == NULL) {
+      get_string_pref(PREF_FREI0R_PATH, prefs->frei0r_path, PATH_MAX);
+      if (strlen(prefs->frei0r_path) == 0) frei0r_path = lives_strdup_printf("/usr/lib/frei0r-1:/usr/local/lib/frei0r-1:%s/frei0r-1",
+            capable->home_dir);
+      else frei0r_path = lives_strdup(prefs->frei0r_path);
+      lives_setenv("FREI0R_PATH", frei0r_path);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
+    if (needs_free) lives_free(frei0r_path);
 
-      needs_free = FALSE;
-      ladspa_path = getenv("LADSPA_PATH");
-      if (ladspa_path == NULL || strlen(ladspa_path) == 0) {
-        get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
-        if (strlen(prefs->ladspa_path) == 0) ladspa_path = lives_build_filename(prefs->lib_dir, "ladspa", NULL);
-        else ladspa_path = lives_strdup(prefs->ladspa_path);
-        lives_setenv("LADSPA_PATH", ladspa_path);
-        needs_free = TRUE;
-      }
-      lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
-      if (needs_free) lives_free(ladspa_path);
+    needs_free = FALSE;
+    ladspa_path = getenv("LADSPA_PATH");
+    if (ladspa_path == NULL || strlen(ladspa_path) == 0) {
+      get_string_pref(PREF_LADSPA_PATH, prefs->ladspa_path, PATH_MAX);
+      if (strlen(prefs->ladspa_path) == 0) ladspa_path = lives_build_filename(prefs->lib_dir, "ladspa", NULL);
+      else ladspa_path = lives_strdup(prefs->ladspa_path);
+      lives_setenv("LADSPA_PATH", ladspa_path);
+      needs_free = TRUE;
+    }
+    lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
+    if (needs_free) lives_free(ladspa_path);
 
-      splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
-      weed_load_all();
+    splash_msg(_("Loading realtime effect plugins..."), SPLASH_LEVEL_LOAD_RTE);
+    weed_load_all();
 
-      // replace any multi choice effects with their delegates
-      replace_with_delegates();
+    // replace any multi choice effects with their delegates
+    replace_with_delegates();
 
-      threaded_dialog_spin(0.);
-      load_default_keymap();
-      threaded_dialog_spin(0.);
+    threaded_dialog_spin(0.);
+    load_default_keymap();
+    threaded_dialog_spin(0.);
 
-      prefs->audio_opts = get_int_pref(PREF_AUDIO_OPTS);
+    prefs->audio_opts = get_int_pref(PREF_AUDIO_OPTS);
 
 #ifdef ENABLE_JACK
-      lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
-      lives_snprintf(prefs->jack_tserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
+    lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
+    lives_snprintf(prefs->jack_tserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
 #endif
 
-      array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
-      mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
-      if (mainw->def_trans_idx == - 1) {
-        msg = lives_strdup_printf(_("System default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
-        LIVES_WARN(msg);
-        lives_free(msg);
-      }
-      lives_strfreev(array);
+    array = lives_strsplit(DEF_AUTOTRANS, "|", 3);
+    mainw->def_trans_idx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
+    if (mainw->def_trans_idx == - 1) {
+      msg = lives_strdup_printf(_("System default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+      LIVES_WARN(msg);
+      lives_free(msg);
+    }
+    lives_strfreev(array);
 
-      get_string_prefd(PREF_CURRENT_AUTOTRANS, buff, 256, DEF_AUTOTRANS);
-      if (!strcmp(buff, "none")) prefs->atrans_fx = -1;
+    get_string_prefd(PREF_CURRENT_AUTOTRANS, buff, 256, DEF_AUTOTRANS);
+    if (!strcmp(buff, "none")) prefs->atrans_fx = -1;
+    else {
+      if (!lives_utf8_strcasecmp(buff, DEF_AUTOTRANS) || get_token_count(buff, '|') < 3)
+        prefs->atrans_fx = mainw->def_trans_idx;
       else {
-        if (!lives_utf8_strcasecmp(buff, DEF_AUTOTRANS) || get_token_count(buff, '|') < 3)
-          prefs->atrans_fx = mainw->def_trans_idx;
+        array = lives_strsplit(buff, "|", 3);
+        prefs->atrans_fx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
+        if (prefs->atrans_fx == - 1) {
+          msg = lives_strdup_printf(_("User default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
+          LIVES_WARN(msg);
+          lives_free(msg);
+        }
+        lives_strfreev(array);
+      }
+    }
+
+    mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+
+    if (capable->has_jackd) naudp++;
+    if (capable->has_pulse_audio) naudp++;
+    if (capable->has_sox_play) naudp++;
+
+    if (naudp > 1) {
+      if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
+        splash_end();
+        if (!do_audio_choice_dialog(prefs->startup_phase)) {
+          lives_exit(0);
+        }
+        if (prefs->audio_player == AUD_PLAYER_JACK) future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_START_ASERVER;
+        else future_prefs->jack_opts = prefs->jack_opts = 0;
+        set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
+
+        prefs->startup_phase = 4;
+        set_int_pref(PREF_STARTUP_PHASE, 4);
+      }
+
+      // audio startup
+#ifdef ENABLE_JACK
+      if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
+          prefs->jack_opts & JACK_OPTS_START_ASERVER ||
+          prefs->jack_opts & JACK_OPTS_START_TSERVER) {
+        // start jack transport polling
+        if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."), SPLASH_LEVEL_LOAD_APLAYER);
         else {
-          array = lives_strsplit(buff, "|", 3);
-          prefs->atrans_fx = weed_filter_highest_version(array[0], array[1], array[2], NULL);
-          if (prefs->atrans_fx == - 1) {
-            msg = lives_strdup_printf(_("User default transition (%s from package %s by %s) not found."), array[1], array[0], array[2]);
-            LIVES_WARN(msg);
-            lives_free(msg);
+          if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."), SPLASH_LEVEL_LOAD_APLAYER);
+          else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
+        }
+        if (!lives_jack_init()) {
+          if ((prefs->jack_opts & JACK_OPTS_START_ASERVER) || (prefs->jack_opts & JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
+          else do_jack_noopen_warn3();
+          if (prefs->startup_phase == 4) {
+            do_jack_noopen_warn2();
           }
-          lives_strfreev(array);
+          future_prefs->jack_opts = 0; // jack is causing hassle, get rid of it
+          set_int_pref(PREF_JACK_OPTS, 0);
+          lives_exit(0);
         }
       }
 
-      mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+      if (prefs->audio_player == AUD_PLAYER_JACK) {
+        jack_audio_init();
+        jack_audio_read_init();
+        mainw->jackd = jack_get_driver(0, TRUE);
+        if (mainw->jackd != NULL) {
+          if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
 
-      if (capable->has_jackd) naudp++;
-      if (capable->has_pulse_audio) naudp++;
-      if (capable->has_sox_play) naudp++;
+          if (mainw->jackd == NULL && prefs->startup_phase == 0) {
+#ifdef HAVE_PULSE_AUDIO
+            char *otherbit = lives_strdup("\"lives -aplayer pulse\".");
+#else
+            char *otherbit = lives_strdup("\"lives -aplayer sox\".");
+#endif
+            char *tmp;
 
-      if (naudp > 1) {
-        if (prefs->startup_phase > 0 && prefs->startup_phase <= 4) {
-          splash_end();
-          if (!do_audio_choice_dialog(prefs->startup_phase)) {
-            lives_exit(0);
+            char *msg = lives_strdup_printf(
+                          _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
+                            "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
+                            "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
+                          (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+            lives_printerr("%s%s\n\n", msg, otherbit);
+            lives_free(msg);
+            lives_free(tmp);
+            lives_free(otherbit);
           }
-          if (prefs->audio_player == AUD_PLAYER_JACK) future_prefs->jack_opts = prefs->jack_opts = JACK_OPTS_START_ASERVER;
-          else future_prefs->jack_opts = prefs->jack_opts = 0;
-          set_int_pref(PREF_JACK_OPTS, prefs->jack_opts);
 
-          prefs->startup_phase = 4;
-          set_int_pref(PREF_STARTUP_PHASE, 4);
-        }
-
-        // audio startup
-#ifdef ENABLE_JACK
-        if (prefs->jack_opts & JACK_OPTS_TRANSPORT_MASTER || prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT ||
-            prefs->jack_opts & JACK_OPTS_START_ASERVER ||
-            prefs->jack_opts & JACK_OPTS_START_TSERVER) {
-          // start jack transport polling
-          if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."), SPLASH_LEVEL_LOAD_APLAYER);
-          else {
-            if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."), SPLASH_LEVEL_LOAD_APLAYER);
-            else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
-          }
-          if (!lives_jack_init()) {
-            if ((prefs->jack_opts & JACK_OPTS_START_ASERVER) || (prefs->jack_opts & JACK_OPTS_START_TSERVER)) do_jack_noopen_warn();
-            else do_jack_noopen_warn3();
+          if (mainw->jackd == NULL) {
+            do_jack_noopen_warn3();
             if (prefs->startup_phase == 4) {
               do_jack_noopen_warn2();
-            }
-            future_prefs->jack_opts = 0; // jack is causing hassle, get rid of it
-            set_int_pref(PREF_JACK_OPTS, 0);
+            } else do_jack_noopen_warn4();
             lives_exit(0);
           }
-        }
 
-        if (prefs->audio_player == AUD_PLAYER_JACK) {
-          jack_audio_init();
-          jack_audio_read_init();
-          mainw->jackd = jack_get_driver(0, TRUE);
-          if (mainw->jackd != NULL) {
-            if (!jack_create_client_writer(mainw->jackd)) mainw->jackd = NULL;
+          mainw->jackd->whentostop = &mainw->whentostop;
+          mainw->jackd->cancelled = &mainw->cancelled;
+          mainw->jackd->in_use = FALSE;
+          mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
 
-            if (mainw->jackd == NULL && prefs->startup_phase == 0) {
-#ifdef HAVE_PULSE_AUDIO
-              char *otherbit = lives_strdup("\"lives -aplayer pulse\".");
-#else
-              char *otherbit = lives_strdup("\"lives -aplayer sox\".");
-#endif
-              char *tmp;
-
-              char *msg = lives_strdup_printf(
-                            _("\n\nManual start of jackd required. Please make sure jackd is running, \n"
-                              "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
-                              "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
-                            (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-              lives_printerr("%s%s\n\n", msg, otherbit);
-              lives_free(msg);
-              lives_free(tmp);
-              lives_free(otherbit);
-            }
-
-            if (mainw->jackd == NULL) {
-              do_jack_noopen_warn3();
-              if (prefs->startup_phase == 4) {
-                do_jack_noopen_warn2();
-              } else do_jack_noopen_warn4();
-              lives_exit(0);
-            }
-
-            mainw->jackd->whentostop = &mainw->whentostop;
-            mainw->jackd->cancelled = &mainw->cancelled;
-            mainw->jackd->in_use = FALSE;
-            mainw->jackd->play_when_stopped = (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED) ? FALSE : TRUE;
-
-            jack_write_driver_activate(mainw->jackd);
-
-            if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
-              // create reader connection now, if permanent
-              jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
-            }
-          }
-        }
-#endif
-      }
-
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-        splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
-
-        if (!lives_pulse_init(prefs->startup_phase)) {
-          if (prefs->startup_phase == 4) {
-            lives_exit(0);
-          }
-        } else {
-          pulse_audio_init();
-          pulse_audio_read_init();
-          mainw->pulsed = pulse_get_driver(TRUE);
-
-          mainw->pulsed->whentostop = &mainw->whentostop;
-          mainw->pulsed->cancelled = &mainw->cancelled;
-          mainw->pulsed->in_use = FALSE;
-
-          pulse_driver_activate(mainw->pulsed);
+          jack_write_driver_activate(mainw->jackd);
 
           if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
             // create reader connection now, if permanent
-            pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+            jack_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
           }
         }
       }
 #endif
     }
 
-    if (prefs->startup_phase != 0) {
-      char *txt;
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
-      splash_end();
-      set_int_pref(PREF_STARTUP_PHASE, 5);
-      prefs->startup_phase = 5;
-      do_startup_interface_query();
-      txt = get_new_install_msg();
-      startup_message_info(txt);
-      lives_free(txt);
+      if (!lives_pulse_init(prefs->startup_phase)) {
+        if (prefs->startup_phase == 4) {
+          lives_exit(0);
+        }
+      } else {
+        pulse_audio_init();
+        pulse_audio_read_init();
+        mainw->pulsed = pulse_get_driver(TRUE);
 
-      set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
-      prefs->startup_phase = 100;
+        mainw->pulsed->whentostop = &mainw->whentostop;
+        mainw->pulsed->cancelled = &mainw->cancelled;
+        mainw->pulsed->in_use = FALSE;
 
-      if (prefs->show_splash) {
-        splash_init();
+        pulse_driver_activate(mainw->pulsed);
+
+        if (prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT) {
+          // create reader connection now, if permanent
+          pulse_rec_audio_to_clip(-1, -1, RECA_EXTERNAL);
+        }
       }
     }
-
-    if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL) mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
+#endif
   }
+
+  if (prefs->startup_phase != 0) {
+    char *txt;
+
+    splash_end();
+    set_int_pref(PREF_STARTUP_PHASE, 5);
+    prefs->startup_phase = 5;
+    do_startup_interface_query();
+    txt = get_new_install_msg();
+    startup_message_info(txt);
+    lives_free(txt);
+
+    set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
+    prefs->startup_phase = 100;
+
+    if (prefs->show_splash) {
+      splash_init();
+    }
+  }
+
+  if (mainw->vpp != NULL && mainw->vpp->get_audio_fmts != NULL) mainw->vpp->audio_codec = get_best_audio(mainw->vpp);
 } // end of lives_init
 
 
@@ -1966,7 +1982,9 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 
 
 static void do_start_messages(void) {
+  int w, h;
   char *endian;
+
   d_print(_("\nChecking optional dependencies: "));
 
   show_detected_or_not(capable->has_mplayer, "mplayer");
@@ -2055,6 +2073,9 @@ static void do_start_messages(void) {
 #endif
 
   d_print(_("Gui screen size is %d X %d, scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, widget_opts.scale);
+  if (get_screen_usable_size(&w, &h)) {
+    d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
+  }
 }
 
 
@@ -2340,7 +2361,7 @@ capability *get_capabilities(void) {
   char **array;
 
   char *safer_bfile;
-  char *tmp;
+  char *msg, *tmp;
 
   char buffer[8192 + PATH_MAX];
   char string[256];
@@ -2445,27 +2466,38 @@ capability *get_capabilities(void) {
 
   // check that we can write to $HOME
   if (!check_file(safer_bfile, FALSE)) return capable;
+
   capable->can_write_to_home = TRUE;
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX, "%s", BACKEND_NAME);
-  lives_snprintf(prefs->backend, PATH_MAX, "%s", BACKEND_NAME);
-  if ((tmp = lives_find_program_in_path(BACKEND_NAME)) == NULL) return capable;
-  lives_free(tmp);
+  lives_snprintf(capable->backend_path, PATH_MAX, "%s",  lives_find_program_in_path(BACKEND_NAME));
 
-  prefs->def_workdir = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL);
+  if (strlen(capable->backend_path) == 0) return capable;
 
-  capable->smog_version_correct = TRUE;
-  capable->can_write_to_home = FALSE;
-  if (mkdtemp(prefs->def_workdir) == NULL) {
-    lives_free(prefs->def_workdir);
-    prefs->def_workdir = NULL;
-    return capable;
+  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+
+  if (!mainw->has_session_workdir) {
+    lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
+    lives_free(tmp);
+    capable->smog_version_correct = TRUE;
+    capable->can_write_to_home = FALSE;
+    if (mkdtemp(prefs->tmp_workdir) == NULL) {
+      return capable;
+    }
+  } else {
+    if (!lives_make_writeable_dir(prefs->workdir)) {
+      // abort if we cannot create the new subdir
+      return capable;
+    }
   }
+
   capable->smog_version_correct = FALSE;
   capable->can_write_to_home = TRUE;
 
   lives_snprintf(string, 256, "%s report \"%s\" \"%s\" 2>%s", prefs->backend_sync,
-                 (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)), prefs->def_workdir,
+                 (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
+                 mainw->has_session_workdir ? prefs->workdir : prefs->tmp_workdir,
                  LIVES_DEVNULL);
 
   lives_free(tmp);
@@ -2527,16 +2559,17 @@ capability *get_capabilities(void) {
 
   if (mainw->read_failed) return capable;
 
-  // get backend version, workdir, and any startup message
   numtok = get_token_count(buffer, '|');
+
   array = lives_strsplit(buffer, "|", numtok);
 
   lives_snprintf(string, 256, "%s", array[0]);
 
   capable->smog_version_correct = FALSE;
 
-  if (strcmp(string, LiVES_VERSION)) {
-    char *msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", string, LiVES_VERSION);
+  // the backend should return at least 3 fields: a version string, the working directory (see below) and the startup_phase
+  if (strcmp(string, LiVES_VERSION) || (numtok < 3)) {
+    msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", string, LiVES_VERSION);
     LIVES_ERROR(msg);
     lives_free(msg);
     lives_strfreev(array);
@@ -2545,16 +2578,36 @@ capability *get_capabilities(void) {
 
   capable->smog_version_correct = TRUE;
 
-  lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
-  lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
+  if (!mainw->has_session_workdir) {
+    // The backend process returned a value. If the user has a valid, undamaged  config file, it returned the stored value
+    // from there; otherwise it returned tmp_workdir, which we created earlier with mkdtemp() and set the startup_phase
+    // so we prompt the user for the real directory in workdir_query(), and then we can safely remove tmp_workdir
 
-  if (strcmp(prefs->workdir, prefs->def_workdir)) {
-    lives_rmdir(prefs->def_workdir, TRUE);
-    lives_free(prefs->def_workdir);
-    prefs->def_workdir = NULL;
+    // if the user set the value with -tmpdir then we use the supplied value, and of course we dont' remove it,
+    // although we may still prompt for the working dir if it's a fresh install.
+
+    lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
+    if (strcmp(prefs->workdir, prefs->tmp_workdir)) {
+      lives_rmdir(prefs->tmp_workdir, TRUE);
+      prefs->tmp_workdir[0] = '\0';
+    }
+    delete_pref(PREF_SESSION_WORKDIR);
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
   }
 
+  lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
+
+  // the startup phaase
+  // this is 0 for normal operation
+  // -1 for a fresh install
+  // after this the value goes to 1....n
+  // then finally gets set to 100, which instructs the backend to remove this preference, and return 0
   prefs->startup_phase = atoi(array[2]);
+
+  // the backend can optionally return 2 more fields of message ttext
+  // the first of these may contain a special value, which we check for
 
   if (numtok > 3 && strlen(array[3])) {
     startup_msgtype = 1;
@@ -2580,7 +2633,15 @@ capability *get_capabilities(void) {
   }
   lives_strfreev(array);
 
-  if (!capable->can_write_to_workdir) return capable;
+  if (prefs->startup_phase == 0) {
+    if (mainw->has_session_workdir) {
+      set_string_pref_priority(PREF_SESSION_WORKDIR, prefs->workdir);
+      set_string_pref(PREF_SESSION_WORKDIR_OLD, prefs->workdir);
+    } else {
+      set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+      set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+    }
+  }
 
   get_location(EXEC_MPLAYER, string, 256);
   if (strlen(string)) capable->has_mplayer = TRUE;
@@ -2673,15 +2734,6 @@ capability *get_capabilities(void) {
 }
 
 
-void print_notice(void) {
-  lives_printerr("\nLiVES %s\n", LiVES_VERSION);
-  lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
-  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
-                 "under certain conditions; "
-                 "see the file COPYING for details.\n\n");
-}
-
-
 void print_opthelp(void) {
   print_notice();
   lives_printerr(_("\nStartup syntax is: %s [opts] [filename [start_time] [frames]]\n"), capable->myname);
@@ -2690,28 +2742,28 @@ void print_opthelp(void) {
   lives_printerr("%s", _("frames : maximum number of frames to open\n"));
   lives_printerr("%s", "\n");
   lives_printerr("%s", _("opts can be:\n"));
-  lives_printerr("%s", _("-help            : show this help text and exit\n"));
-  lives_printerr("%s", _("-tmpdir <tempdir>: use alternate working directory (e.g /var/ramdisk)\n"));
-  lives_printerr("%s", _("-set <setname>   : autoload clip set setname\n"));
-  lives_printerr("%s", _("-noset           : do not load any set on startup\n"));
-  lives_printerr("%s", _("-norecover       : force no-loading of crash recovery\n"));
-  lives_printerr("%s", _("-recover         : force loading of crash recovery\n"));
-  lives_printerr("%s", _("-nothreaddialog  : does nothing - retained for backwards compatibility\n"));
-  lives_printerr("%s", _("-nogui           : do not show the gui\n"));
-  lives_printerr("%s", _("-nosplash        : do not show the splash window\n"));
-  lives_printerr("%s", _("-noplaywin       : do not show the play window\n"));
-  lives_printerr("%s", _("-noninteractive  : disable menu interactivity\n"));
-  lives_printerr("%s", _("-startup-ce      : start in clip editor mode\n"));
-  lives_printerr("%s", _("-startup-mt      : start in multitrack mode\n"));
-  lives_printerr("%s", _("-fxmodesmax <n>  : allow <n> modes per effect key (minimum is 1, default is 8)\n"));
+  lives_printerr("%s", _("-help                       : show this help text and exit\n"));
+  lives_printerr("%s", _("-workdir <tempdir>          : use alternate working directory (e.g /var/ramdisk)\n"));
+  lives_printerr("%s", _("-set <setname>              : autoload clip set setname\n"));
+  lives_printerr("%s", _("-noset                      : do not load any set on startup\n"));
+  lives_printerr("%s", _("-norecover                  : force no-loading of crash recovery\n"));
+  lives_printerr("%s", _("-recover                    : force loading of crash recovery\n"));
+  lives_printerr("%s", _("-nogui                      : do not show the gui\n"));
+  lives_printerr("%s", _("-nosplash                   : do not show the splash window\n"));
+  lives_printerr("%s", _("-noplaywin                  : do not show the play window\n"));
+  lives_printerr("%s", _("-noninteractive             : disable menu interactivity\n"));
+  lives_printerr("%s", _("-startup-ce                 : start in clip editor mode\n"));
+  lives_printerr("%s", _("-startup-mt                 : start in multitrack mode\n"));
+  lives_printerr("%s", _("-fxmodesmax <n>             : allow <n> modes per effect key (minimum is 1, default is 8)\n"));
 #ifdef ENABLE_OSC
-  lives_printerr("%s", _("-oscstart <port> : start OSC listener on UDP port <port>\n"));
-  lives_printerr("%s", _("-nooscstart      : do not start OSC listener\n"));
+  lives_printerr("%s", _("-oscstart <port>            : start OSC listener on UDP port <port>\n"));
+  lives_printerr("%s", _("-nooscstart                 : do not start OSC listener\n"));
   lives_printerr(
 #endif
-    _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' (only valid for %s and %s players)\n"),
+    _("-asource <source>                              : set the initial audio source; <source> can be 'internal' or 'external' \n"
+      "                                                   (only valid for %s and %s players)\n"),
     AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
-  lives_printerr("%s", _("-aplayer <ap>    : start with selected audio player. <ap> can be "));
+  lives_printerr("%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
   lives_printerr("%s", AUDIO_PLAYER_PULSE);
 #endif
@@ -2723,16 +2775,16 @@ void print_opthelp(void) {
   if (capable->has_sox_play) lives_printerr(", %s", AUDIO_PLAYER_SOX);
   lives_printerr(" or %s\n", AUDIO_PLAYER_NONE);
   lives_printerr("%s",
-                 _("-jackopts <opts>    : opts is a bitmap of jack startup options \n"
-                   "                      "
+                 _("-jackopts <opts>                   : opts is a bitmap of jack startup options \n"
+                   "                                     "
                    "[1 = jack transport client, \n"
-                   "                      "
+                   "                                     "
                    "2 = jack transport master, \n"
-                   "                      "
+                   "                                     "
                    "4 = start/stop jack transport server, \n"
-                   "                      "
+                   "                                     "
                    "8 = pause transport when video paused, \n"
-                   "                      "
+                   "                                     "
                    "16 = start/stop jack audio server] \n"));
 #else // no jack
   if (capable->has_sox_play) {
@@ -2749,10 +2801,12 @@ void print_opthelp(void) {
 
   //
 
-  lives_printerr("%s", _("-devicemap <mapname>          : autoload devicemap\n"));
+  lives_printerr("%s", _("-devicemap <mapname>                     : autoload devicemap\n"));
   lives_printerr("%s",
-                 _("-vppdefaults <file>          : load video playback plugin defaults from <file> (Note: only sets the settings, not the plugin type)\n"));
-  lives_printerr("%s", _("-debug            : try to debug crashes (requires 'gdb' installed)\n"));
+                 _("-vppdefaults <file>                            : load video playback plugin defaults from <file>"
+                   "                                                 "
+                   "(Note: only affects the settings, not the plugin type)\n"));
+  lives_printerr("%s", _("-debug                                    : try to debug crashes (requires 'gdb' to be installed)\n"));
 
   lives_printerr("%s", "\n");
 }
@@ -2767,6 +2821,18 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 
 /////////////////////////////////
+
+static boolean render_choice_idle(livespointer data) {
+  // TODO: *** figure out why we cant preview with only scrap_file loaded
+  if (mt_load_recovery_layout(NULL)) {
+    if (mainw->event_list != NULL) {
+      deal_with_render_choice(FALSE);
+    }
+  }
+  mainw->recording_recovered = FALSE;
+  return FALSE;
+}
+
 
 boolean resize_message_area(livespointer data) {
   // workaround because the window manager will resize the window asynchronously
@@ -2802,235 +2868,194 @@ boolean resize_message_area(livespointer data) {
 #endif
   if (isfirst && mainw->current_file == -1) d_print("");
   isfirst = FALSE;
-  return FALSE;
-}
-
-
-static boolean render_choice_idle(livespointer data) {
-  // TODO: *** figure out why we cant preview with only scrap_file loaded
-  if (mt_load_recovery_layout(NULL)) {
-    if (mainw->event_list != NULL) {
-      deal_with_render_choice(FALSE);
-    }
+  if (mainw->recording_recovered) {
+    lives_idle_add(render_choice_idle, NULL);
   }
-  mainw->recording_recovered = FALSE;
   return FALSE;
 }
 
 
 static boolean lives_startup(livespointer data) {
+  // this is run in an idlefunc
+
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
-  char *tmp;
-  int w, h;
+  char *tmp, *tmp2, *msg;
 
-  if (capable->smog_version_correct) {
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
-      // get initial workdir
-      if (!do_workdir_query()) {
-        lives_exit(0);
-      }
-      if (prefs->def_workdir != NULL) {
-        lives_rmdir(prefs->def_workdir, TRUE);
-        lives_free(prefs->def_workdir);
-        prefs->def_workdir = NULL;
-      }
-      prefs->startup_phase = 2;
-      set_int_pref(PREF_STARTUP_PHASE, 2);
+  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
+    // get initial workdir
+    if (!do_workdir_query()) {
+      lives_exit(0);
     }
-
-    if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
-      if (!do_startup_tests(FALSE)) {
-        lives_exit(0);
-      }
-      prefs->startup_phase = 3;
-      set_int_pref(PREF_STARTUP_PHASE, 3);
+    if (prefs->tmp_workdir != NULL) {
+      lives_rmdir(prefs->tmp_workdir, TRUE);
+      prefs->tmp_workdir[0] = '\0';
     }
-
-    get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
-
-    if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
-      mainw->vpp = open_vid_playback_plugin(buff, TRUE);
-    } else {
-      mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
-      if (mainw->vpp != NULL) {
-        lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
-        set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
-      }
-    }
-
-    if (!ign_opts.ign_aplayer) {
-      get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
-      if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
-        prefs->audio_player = AUD_PLAYER_NONE;  // experimental
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
-      } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-        prefs->audio_player = AUD_PLAYER_SOX;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-      } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
-        prefs->audio_player = AUD_PLAYER_JACK;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-      } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
-        prefs->audio_player = AUD_PLAYER_PULSE;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-      }
-    }
-
-#ifdef HAVE_PULSE_AUDIO
-    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
-      prefs->audio_player = AUD_PLAYER_PULSE;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
-    } else {
-#endif
-#ifdef ENABLE_JACK
-      if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
-        prefs->audio_player = AUD_PLAYER_JACK;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-        set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-    }
-#endif
-
-    if (!ign_opts.ign_asource) prefs->audio_src = get_int_pref(PREF_AUDIO_SRC);
-
-    if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
-          capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
-      prefs->audio_src = AUDIO_SRC_INT;
-      set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
-    }
-
-    future_prefs->audio_src = prefs->audio_src;
-
-    splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
-    LIVES_MAIN_WINDOW_WIDGET = NULL;
-
-    create_LiVES();
-
-    if (prefs->open_maximised && prefs->show_gui) {
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    }
-
-    set_interactive(mainw->interactive);
-
-    // needed to avoid priv->pulse2 > priv->pulse1 gtk error
-    lives_widget_context_update();
-
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
-
-    mainw->startup_error = FALSE;
-
-    if (theme_error && !mainw->foreign) {
-      // non-fatal errors
-      char *tmp2;
-      char *err = lives_strdup_printf(
-                    _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
-                      "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
-                    (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR, (tmp2 = lives_filename_to_utf8(capable->rcfile, -1,
-                        NULL, NULL,
-                        NULL)));
-      lives_free(tmp2);
-      lives_free(tmp);
-      startup_message_nonfatal(err);
-      lives_free(err);
-      lives_snprintf(prefs->theme, 64, "none");
-      upgrade_error = TRUE;
-    }
-    lives_init(&ign_opts);
+    prefs->startup_phase = 2;
+    set_int_pref(PREF_STARTUP_PHASE, 2);
   }
 
+  if (prefs->startup_phase > 0 && prefs->startup_phase < 3) {
+    if (!do_startup_tests(FALSE)) {
+      lives_exit(0);
+    }
+    prefs->startup_phase = 3;
+    set_int_pref(PREF_STARTUP_PHASE, 3);
+  }
+
+  get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
+
+  if (strlen(buff) && strcmp(buff, "(null)") && strcmp(buff, "none")) {
+    mainw->vpp = open_vid_playback_plugin(buff, TRUE);
+  } else {
+    mainw->vpp = open_vid_playback_plugin(DEFAULT_VPP, TRUE);
+    if (mainw->vpp != NULL) {
+      lives_snprintf(future_prefs->vpp_name, 64, "%s", mainw->vpp->name);
+      set_string_pref(PREF_VID_PLAYBACK_PLUGIN, mainw->vpp->name);
+    }
+  }
+
+  if (!ign_opts.ign_aplayer) {
+    get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
+    if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
+      prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+    } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
+      prefs->audio_player = AUD_PLAYER_SOX;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
+    } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
+      prefs->audio_player = AUD_PLAYER_JACK;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+    } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
+      prefs->audio_player = AUD_PLAYER_PULSE;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+    }
+  } else {
+    set_string_pref(PREF_AUDIO_PLAYER, prefs->aplayer);
+  }
+
+#ifdef HAVE_PULSE_AUDIO
+  if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_pulse_audio) {
+    prefs->audio_player = AUD_PLAYER_PULSE;
+    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+    set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
+  } else {
+#endif
+#ifdef ENABLE_JACK
+    if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_jackd) {
+      prefs->audio_player = AUD_PLAYER_JACK;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+      set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+  }
+#endif
+
+  if (!ign_opts.ign_asource) prefs->audio_src = get_int_prefd(PREF_AUDIO_SRC, AUDIO_SRC_INT);
+
+  if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
+        capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
+    prefs->audio_src = AUDIO_SRC_INT;
+    set_int_pref(PREF_AUDIO_SRC, prefs->audio_src);
+  }
+
+  future_prefs->audio_src = prefs->audio_src;
+
+  splash_msg(_("Starting GUI..."), SPLASH_LEVEL_BEGIN);
+  LIVES_MAIN_WINDOW_WIDGET = NULL;
+
+  create_LiVES();
+
+  if (prefs->open_maximised && prefs->show_gui) {
+    lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+  }
+
+  set_interactive(mainw->interactive);
+
+  // needed to avoid priv->pulse2 > priv->pulse1 gtk error
+  lives_widget_context_update();
+
+  lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+  lives_widget_context_update();
+
+  mainw->startup_error = FALSE;
+
+  if (theme_error && !mainw->foreign) {
+    // non-fatal errors
+    msg = lives_strdup_printf(
+            _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
+              "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
+            (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR, (tmp2 = lives_filename_to_utf8(capable->rcfile, -1,
+                NULL, NULL,
+                NULL)));
+    lives_free(tmp2);
+    lives_free(tmp);
+    startup_message_nonfatal(msg);
+    lives_free(msg);
+    lives_snprintf(prefs->theme, 64, "none");
+    upgrade_error = TRUE;
+  }
+
+  lives_init(&ign_opts);
+
+  // non-fatal errors
+
   if (!mainw->foreign) {
-    char *err;
-    if (!capable->can_write_to_workdir) {
-      char *extrabit;
-      if (!mainw->has_session_workdir) {
-        extrabit = lives_strdup_printf(_("Please check the <tempdir> setting in \n%s\nand try again.\n"),
-                                       (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-        lives_free(tmp);
-      } else
-        extrabit = lives_strdup("");
-
-      err = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
-                                prefs->workdir, extrabit);
-      lives_free(extrabit);
-      startup_message_fatal(err);
-      lives_free(err);
+    if (strlen(capable->startup_msg)) {
+      if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
+      else if (info_only) startup_message_info(capable->startup_msg);
+      else startup_message_nonfatal(capable->startup_msg);
     } else {
-      if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-        startup_message_fatal(
-          _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n"));
-      } else {
-        if (strlen(capable->startup_msg)) {
-          if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
-          else if (info_only) startup_message_info(capable->startup_msg);
-          else startup_message_nonfatal(capable->startup_msg);
-        } else {
-          // non-fatal errors
-          if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
-            startup_message_nonfatal_dismissable(
-              _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
-                "You may wish to install one of these to use LiVES more fully.\n"),
-              WARN_MASK_NO_MPLAYER);
-          }
-          if (!capable->has_convert) {
-            startup_message_nonfatal_dismissable(
-              _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
-              WARN_MASK_NO_MPLAYER);
-          }
-          if (!capable->has_composite) {
-            startup_message_nonfatal_dismissable(
-              _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
-              WARN_MASK_NO_MPLAYER);
-          }
-          if (!capable->has_sox_sox) {
-            startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
-                                                 WARN_MASK_NO_MPLAYER);
-          }
-          if (!capable->has_encoder_plugins) {
-            err = lives_strdup_printf(
-                    _("\nLiVES was unable to find any encoder plugins.\n"
-                      "Please check that you have them installed correctly in\n%s%s%s/\n"
-                      "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
-                    prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-            lives_free(tmp);
-            startup_message_nonfatal_dismissable(err, WARN_MASK_NO_ENCODERS);
-            lives_free(err);
-            upgrade_error = TRUE;
-          }
+      if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
+        startup_message_nonfatal_dismissable(
+          _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
+            "You may wish to install one of these to use LiVES more fully.\n"),
+          WARN_MASK_NO_MPLAYER);
+      }
+      if (!capable->has_convert) {
+        startup_message_nonfatal_dismissable(
+          _("\nLiVES was unable to locate 'convert'. You should install convert and image-magick if you want to use rendered effects.\n"),
+          WARN_MASK_NO_MPLAYER);
+      }
+      if (!capable->has_composite) {
+        startup_message_nonfatal_dismissable(
+          _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
+          WARN_MASK_NO_MPLAYER);
+      }
+      if (!capable->has_sox_sox) {
+        startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
+                                             WARN_MASK_NO_MPLAYER);
+      }
+      if (!capable->has_encoder_plugins) {
+        msg = lives_strdup_printf(
+                _("\nLiVES was unable to find any encoder plugins.\n"
+                  "Please check that you have them installed correctly in\n%s%s%s/\n"
+                  "You will not be able to 'Save' without them.\nYou may need to change the value of <lib_dir> in %s\n"),
+                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_ENCODERS, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+        lives_free(tmp);
+        startup_message_nonfatal_dismissable(msg, WARN_MASK_NO_ENCODERS);
+        lives_free(msg);
+        upgrade_error = TRUE;
+      }
 
-          if (mainw->next_ds_warn_level > 0) {
-            uint64_t dsval;
-            lives_storage_status_t ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
-            if (ds == LIVES_STORAGE_STATUS_WARNING) {
-              uint64_t curr_ds_warn = mainw->next_ds_warn_level;
-              mainw->next_ds_warn_level >>= 1;
-              if (mainw->next_ds_warn_level > (dsval >> 1)) mainw->next_ds_warn_level = dsval >> 1;
-              if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
-              tmp = ds_warning_msg(prefs->workdir, dsval, curr_ds_warn, mainw->next_ds_warn_level);
-              err = lives_strdup_printf("\n%s\n", tmp);
-              lives_free(tmp);
-              startup_message_nonfatal(err);
-              lives_free(err);
-            } else if (ds == LIVES_STORAGE_STATUS_CRITICAL) {
-              tmp = ds_critical_msg(prefs->workdir, dsval);
-              err = lives_strdup_printf("\n%s\n", tmp);
-              lives_free(tmp);
-              startup_message_fatal(err);
-              lives_free(err);
-            }
-          }
-        }
-
-        if (!mainw->foreign && capable->smog_version_correct) {
-          splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
-          // must call this at least to set up rendered_fx[0]
-          add_rfx_effects(RFX_STATUS_ANY);
+      if (mainw->next_ds_warn_level > 0) {
+        if (mainw->ds_status == LIVES_STORAGE_STATUS_WARNING) {
+          uint64_t curr_ds_warn = mainw->next_ds_warn_level;
+          mainw->next_ds_warn_level >>= 1;
+          if (mainw->next_ds_warn_level > (mainw->dsval >> 1)) mainw->next_ds_warn_level = mainw->dsval >> 1;
+          if (mainw->next_ds_warn_level < prefs->ds_crit_level) mainw->next_ds_warn_level = prefs->ds_crit_level;
+          tmp = ds_warning_msg(prefs->workdir, mainw->dsval, curr_ds_warn, mainw->next_ds_warn_level);
+          msg = lives_strdup_printf("\n%s\n", tmp);
+          lives_free(tmp);
+          startup_message_nonfatal(msg);
+          lives_free(msg);
         }
       }
     }
+    splash_msg(_("Loading rendered effect plugins..."), SPLASH_LEVEL_LOAD_RFX);
+    // must call this at least to set up rendered_fx[0]
+    add_rfx_effects(RFX_STATUS_ANY);
   } else {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);
@@ -3072,13 +3097,13 @@ static boolean lives_startup(livespointer data) {
       pulse_audio_read_init();
     }
 #endif
+
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_context_update();
     mainw->go_away = FALSE;
     on_capture2_activate();  // exits
   }
 
-  do_start_messages();
   //#define NOTTY
 #ifdef NOTTY
   if (!mainw->foreign) {
@@ -3166,28 +3191,34 @@ static boolean lives_startup(livespointer data) {
 
   mainw->go_away = FALSE;
 
+  mainw->no_switch_dprint = TRUE;
   if (mainw->current_file > -1 && mainw->multitrack == NULL) {
     switch_clip(1, mainw->current_file, TRUE);
   }
 
-  if (get_screen_usable_size(&w, &h)) {
-    d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
-  }
+  do_start_messages();
+
+  // anything that d_prints messages should go here:
+
+  if (devmap != NULL)
+    on_devicemap_load_activate(NULL, devmap);
 
   d_print(_("Welcome to LiVES version %s.\n\n"), LiVES_VERSION);
+
+  mainw->no_switch_dprint = FALSE;
+  d_print("");
 
   if (mainw->multitrack == NULL) {
     if (mainw->current_file == -1) {
       resize(1.);
       if (prefs->show_msg_area) {
+        // the message area must fit exactly to the screen size, so we update it in an idle function
+        // due to the fact that the window manager may resize the window asynchronously
         if (mainw->idlemax == 0)
           lives_idle_add(resize_message_area, NULL);
         mainw->idlemax = DEF_IDLE_MAX;
       }
       draw_little_bars(0., 0);
-    }
-    if (mainw->recording_recovered) {
-      lives_idle_add(render_choice_idle, NULL);
     }
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
@@ -3235,7 +3266,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ssize_t mynsize;
   char fbuff[PATH_MAX];
-  char *tmp;
+  char *tmp, *dir, *msg;
 
 #ifdef GUI_QT
   qapp = new QApplication(argc, argv);
@@ -3246,7 +3277,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw = NULL;
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
-  ign_opts.ign_clipset = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_asource = ign_opts.ign_stmode = ign_opts.ign_vppdefs = FALSE;
+  ign_opts.ign_clipset = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_asource = ign_opts.ign_stmode = ign_opts.ign_vppdefs =
+                           ign_opts.ign_jackopts = FALSE;
 
 #ifdef ENABLE_OIL
   oil_init();
@@ -3289,6 +3321,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
 #ifdef GUI_GTK
+  if (gtk_thread != NULL) {
+    pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL);
+  }
+#endif
+
+#ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
   g_log_set_always_fatal((GLogLevelFlags)0);
@@ -3300,36 +3338,42 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
 
-  theme_error = pre_init();
+  widget_helper_init();
+  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
+
+  // init prefs
+  prefs = (_prefs *)lives_malloc(sizeof(_prefs));
+  future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
+
+  prefs->tmp_workdir[0] = '\0';
+  prefs->show_gui = TRUE;
+  prefs->show_splash = FALSE;
+  prefs->show_playwin = TRUE;
+  lives_snprintf(prefs->cmd_log, PATH_MAX, LIVES_DEVNULL);
+
+#ifdef HAVE_YUV4MPEG
+  prefs->yuvin[0] = '\0';
+#endif
+
+  prefs->workdir[0] = '\0';
+
+  mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
+  mainw->is_ready = mainw->fatal = FALSE;
+  mainw->go_away = TRUE;
+  mainw->mgeom = NULL;
+
+  mainw->has_session_workdir = FALSE;
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign = FALSE;
-  memset(start_file, 0, 1);
-  mainw->has_session_workdir = FALSE;
 
-  mainw->libthread = gtk_thread;
-  mainw->id = id;
+  mainw->debug = FALSE;
 
-  lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
+  mainw->interactive = TRUE;
 
-  // what's my name ?
-  capable->myname_full = lives_find_program_in_path(argv[0]);
+  prefs->max_modes_per_key = DEF_FX_KEYMODES;
 
-  if ((mynsize = lives_readlink(capable->myname_full, fbuff, PATH_MAX)) != -1) {
-    // no. i mean, what's my real name ?
-    memset(fbuff + mynsize, 0, 1);
-    lives_free(capable->myname_full);
-    capable->myname_full = lives_strdup(fbuff);
-  }
-
-  // what's my short name (without the path) ?
-  lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
-  get_basename(fbuff);
-  capable->myname = lives_strdup(fbuff);
-
-  // format is:
-  // lives [opts] [filename [start_time] [frames]]
-
+  // get opts first
   if (argc > 1) {
     if (!strcmp(argv[1], "-capture")) {
       // special mode for grabbing external window
@@ -3344,8 +3388,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       struct option longopts[] = {
         {"aplayer", 1, 0, 0},
         {"asource", 1, 0, 0},
-        {"tmpdir", 1, 0, 0},
-        {"yuvin", 1, 0, 0},
+        {"workdir", 1, 0, 0},
         {"set", 1, 0, 0},
         {"noset", 0, 0, 0},
 #ifdef ENABLE_OSC
@@ -3354,16 +3397,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"vppdefaults", 1, 0, 0},
         {"recover", 0, 0, 0},
         {"norecover", 0, 0, 0},
-        {"nothreaddialog", 0, 0, 0},
         {"nogui", 0, 0, 0},
         {"nosplash", 0, 0, 0},
         {"noplaywin", 0, 0, 0},
         {"noninteractive", 0, 0, 0},
         {"startup-ce", 0, 0, 0},
         {"startup-mt", 0, 0, 0},
-        {"debug", 0, 0, 0},
-        {"bigendbug", 1, 0, 0},
         {"fxmodesmax", 1, 0, 0},
+        {"yuvin", 1, 0, 0},
+        {"debug", 0, 0, 0},
 #ifdef ENABLE_OSC
         {"oscstart", 1, 0, 0},
         {"nooscstart", 0, 0, 0},
@@ -3371,8 +3413,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_JACK
         {"jackopts", 1, 0, 0},
 #endif
+        // deprecated
+        {"nothreaddialog", 0, 0, 0},
+        {"bigendbug", 1, 0, 0},
+        {"tmpdir", 1, 0, 0},
         {0, 0, 0, 0}
       };
+
       int option_index = 0;
       const char *charopt;
       int c;
@@ -3381,61 +3428,57 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         c = getopt_long_only(argc, argv, "", longopts, &option_index);
         if (c == -1) break; // end of options
         charopt = longopts[option_index].name;
+
+        if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
+          // override workdir setting
+          mainw->has_session_workdir = TRUE;
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
+          continue;
+        }
+
         if (!strcmp(charopt, "norecover")) {
           // auto no-recovery
           no_recover = TRUE;
           continue;
         }
-        if (!strcmp(charopt, "debug")) {
-          // debug crashes
-          mainw->debug = TRUE;
-          continue;
-        }
+
         if (!strcmp(charopt, "recover")) {
           // auto recovery
           auto_recover = TRUE;
           continue;
         }
-        if (!strcmp(charopt, "tmpdir")) {
-          mainw->has_session_workdir = TRUE;
-          // override tempdir (workdir) setting
-          lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
-          lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
-          set_string_pref(PREF_SESSION_WORKDIR, prefs->workdir);
-          lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
 
-          if (!lives_make_writeable_dir(prefs->workdir)) {
-            // abort if we cannot create the new subdir
-            capable->can_write_to_workdir = FALSE;
-          }
+        if (!strcmp(charopt, "debug")) {
+          // debug crashes
+          mainw->debug = TRUE;
           continue;
         }
+
         if (!strcmp(charopt, "yuvin")) {
 #ifdef HAVE_YUV4MPEG
           char *dir;
           lives_snprintf(prefs->yuvin, PATH_MAX, "%s", optarg);
           prefs->startup_interface = STARTUP_CE;
           ign_opts.ign_stmode = TRUE;
-
           dir = get_dir(prefs->yuvin);
           get_basename(prefs->yuvin);
           lives_snprintf(prefs->yuvin, PATH_MAX, "%s", (tmp = lives_build_filename(dir, prefs->yuvin, NULL)));
           lives_free(tmp);
           lives_free(dir);
-
 #else
           LIVES_ERROR("Must have mjpegtools installed for yuvin to work");
 #endif
           continue;
         }
+
         if (!strcmp(charopt, "noset")) {
           // override clipset loading
           memset(prefs->ar_clipset_name, 0, 1);
           prefs->ar_clipset = FALSE;
           ign_opts.ign_clipset = TRUE;
-          set_string_pref(PREF_AR_CLIPSET, "");
           continue;
         }
+
         if (!strcmp(charopt, "set") && optarg != NULL) {
           // force clipset loading
           lives_snprintf(prefs->ar_clipset_name, 128, "%s", optarg);
@@ -3443,11 +3486,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           ign_opts.ign_clipset = TRUE;
           continue;
         }
+
 #ifdef ENABLE_OSC
         if (!strcmp(charopt, "devicemap") && optarg != NULL) {
           // force devicemap loading
-          char *dir, *devmap2;
-          char devmap[PATH_MAX];
+          char *devmap2;
           lives_snprintf(devmap, PATH_MAX, "%s", optarg);
           devmap2 = lives_strdup(devmap);
           dir = get_dir(devmap);
@@ -3460,24 +3503,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_free(tmp);
           lives_free(dir);
           lives_free(devmap2);
-          on_devicemap_load_activate(NULL, devmap);
           continue;
         }
 #endif
+
         if (!strcmp(charopt, "vppdefaults") && optarg != NULL) {
-          char *dir;
           // load alternate vpp file
           lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", optarg);
           ign_opts.ign_vppdefs = TRUE;
-
           dir = get_dir(mainw->vpp_defs_file);
           get_basename(mainw->vpp_defs_file);
           lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", (tmp = lives_build_filename(dir, mainw->vpp_defs_file, NULL)));
           lives_free(tmp);
           lives_free(dir);
-
           continue;
         }
+
         if (!strcmp(charopt, "aplayer")) {
           boolean apl_valid = FALSE;
 
@@ -3487,35 +3528,36 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             switch_aud_to_sox(TRUE);
             apl_valid = TRUE;
           }
+
           if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
             // still experimental
             switch_aud_to_none(TRUE);
             apl_valid = TRUE;
           }
+
           if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
 #ifdef ENABLE_JACK
             prefs->audio_player = AUD_PLAYER_JACK;
             lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-            set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_JACK);
             apl_valid = TRUE;
 #endif
           }
+
           if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
 #ifdef HAVE_PULSE_AUDIO
-            prefs->audio_player = AUD_PLAYER_PULSE;
-            set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_PULSE);
             lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
             apl_valid = TRUE;
 #endif
           }
           if (apl_valid) ign_opts.ign_aplayer = TRUE;
           else {
-            char *errmsg = lives_strdup_printf(_("Invalid audio player %s"), buff);
-            LIVES_ERROR(errmsg);
-            lives_free(errmsg);
+            msg = lives_strdup_printf(_("Invalid audio player %s"), buff);
+            LIVES_ERROR(msg);
+            lives_free(msg);
           }
           continue;
         }
+
         if (!strcmp(charopt, "asource")) {
           lives_snprintf(buff, 256, "%s", optarg);
           // override audio source
@@ -3530,38 +3572,44 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           continue;
         }
+
         if (!strcmp(charopt, "nogui")) {
           // force headless mode
           prefs->show_gui = FALSE;
           continue;
         }
+
         if (!strcmp(charopt, "nosplash")) {
           // do not show splash
           prefs->show_splash = FALSE;
           continue;
         }
+
         if (!strcmp(charopt, "noplaywin")) {
           // do not show the play window
           prefs->show_playwin = FALSE;
           continue;
         }
+
         if (!strcmp(charopt, "noninteractive")) {
           // disable menu/toolbar interactivity
           mainw->interactive = FALSE;
           continue;
         }
+
         if (!strcmp(charopt, "nothreaddialog")) {
-          // disable threaded dialog (does nothing now)
           continue;
         }
+
         if (!strcmp(charopt, "fxmodesmax") && optarg != NULL) {
           // set number of fx modes
           prefs->max_modes_per_key = atoi(optarg);
           if (prefs->max_modes_per_key < 1) prefs->max_modes_per_key = 1;
-          ign_opts.ign_osc = TRUE;
           continue;
         }
+
         if (!strcmp(charopt, "bigendbug")) {
+          // only for backwards comptaibility
           if (optarg != NULL) {
             // set bigendbug
             prefs->bigendbug = atoi(optarg);
@@ -3569,6 +3617,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
 #ifdef ENABLE_OSC
+
         if (!strcmp(charopt, "oscstart") && optarg != NULL) {
           // force OSC start
           prefs->osc_udp_port = atoi(optarg);
@@ -3576,6 +3625,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           ign_opts.ign_osc = TRUE;
           continue;
         }
+
         if (!strcmp(charopt, "nooscstart")) {
           // force no OSC start
           prefs->osc_start = FALSE;
@@ -3587,7 +3637,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_JACK
         if (!strcmp(charopt, "jackopts") && optarg != NULL) {
           // override jackopts in config file
-          prefs->jack_opts = atoi(optarg);
+          ign_opts.ign_jackopts = TRUE;
+          future_prefs->jack_opts = prefs->jack_opts = atoi(optarg);
           continue;
         }
 #endif
@@ -3599,6 +3650,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           }
           continue;
         }
+
         if (!strcmp(charopt, "startup-mt")) {
           // force start in multitrack mode
           if (!ign_opts.ign_stmode) {
@@ -3608,6 +3660,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           continue;
         }
       }
+
       if (optind < argc) {
         // remaining opts are filename [start_time] [end_frame]
         char *dir;
@@ -3627,12 +3680,33 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     }
   }
 
-  if (!mainw->foreign) {
-    if (prefs->show_splash) splash_init();
-    print_notice();
+  // get capabilities and if OK set some initial prefs
+  theme_error = pre_init();
+
+  memset(start_file, 0, 1);
+
+  mainw->libthread = gtk_thread;
+  mainw->id = id;
+
+  // what's my name ?
+  capable->myname_full = lives_find_program_in_path(argv[0]);
+
+  if ((mynsize = lives_readlink(capable->myname_full, fbuff, PATH_MAX)) != -1) {
+    // no. i mean, what's my real name ?
+    memset(fbuff + mynsize, 0, 1);
+    lives_free(capable->myname_full);
+    capable->myname_full = lives_strdup(fbuff);
   }
 
-  // need to do this here, before startup but afer setting ign_opts
+  // what's my short name (without the path) ?
+  lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
+  get_basename(fbuff);
+  capable->myname = lives_strdup(fbuff);
+
+  // format is:
+  // lives [opts] [filename [start_time] [frames]]
+
+  // need to do this here, before lives_startup but afer setting ign_opts
   mainw->vpp = NULL;
   memset(future_prefs->vpp_name, 0, 64);
   future_prefs->vpp_argv = NULL;
@@ -3645,8 +3719,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
   if (gtk_thread == NULL) {
     gtk_main();
-  } else {
-    pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL);
   }
 #endif
 
@@ -3658,11 +3730,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 }
 
 
-void startup_message_fatal(const char *msg) {
+void startup_message_fatal(char *msg) {
   if (mainw->splash_window != NULL) splash_end();
+
   do_blocking_error_dialog(msg);
-  mainw->startup_error = TRUE;
-  lives_exit(0);
+
+  if (prefs->tmp_workdir != NULL) {
+    // created with mkdtemp
+    lives_rmdir(prefs->tmp_workdir, TRUE);
+    prefs->tmp_workdir[0] = '\0';
+    lives_rm(capable->rcfile);
+  }
+
+  // needs notify_socket and prefs->omc_events, so most likely will do nothing
+  lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
+  lives_free(msg);
+
   _exit(0);
 }
 
@@ -5626,11 +5709,18 @@ LIVES_GLOBAL_INLINE LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const ch
 
 static void get_max_opsize(int *opwidth, int *opheight) {
   // calc max output size for display
-  // if we are rendering or saving to disk
+
+  // hq: - during effects processing we resize eveything to the largest input size
+  //     - after all processing we only resize if the player needs a fixed size
+
+  // !hq - during fx processing we resize all the smaller of largest input size, output size
+  //     - after all processing we only resize if the player needs a fixed size
+
   int pmonitor;
 
   if (mainw->ext_playback) {
-    // playback plugin
+    // playback plugin (therefore fullscreen / separate window)
+    //
     if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
       if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
         // plugin can resize. Set whichever is smaller of screen size, clip size.
@@ -5643,11 +5733,11 @@ static void get_max_opsize(int *opwidth, int *opheight) {
             *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
           }
         } else {
+          // single monitor
           *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
           *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
         }
-
-        // use smaller of clip size, screen size
+        // use smaller of clip size, screen size (blend file size if applicable)
         if (cfile->hsize < *opwidth) *opwidth = cfile->hsize;
         if (cfile->vsize < *opheight) *opheight = cfile->vsize;
       } else {
@@ -5658,6 +5748,7 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     } else {
       // remote display
       if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+        // cant resize, we use the width it gave us
         *opwidth = mainw->vpp->fwidth;
         *opheight = mainw->vpp->fheight;
       } else {
@@ -5665,59 +5756,27 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         *opheight = cfile->vsize;
       }
     }
-  }
-
-  if (mainw->multitrack != NULL) {
-    // multitrack mode
-    if (mainw->multitrack->is_rendering) {
-      // if we are rendering, use the clip size
-      *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
-      *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
-    } else if (!mainw->ext_playback) {
-      // not rendering or using playback plugin
-      if (!mainw->fs || mainw->play_window == NULL) {
-        // not full screen, or inset
+  } else {
+    if (mainw->multitrack != NULL) {
+      // multitrack mode
+      if (mainw->multitrack->is_rendering) {
+        // if we are rendering, use the render file size
         *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
         *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
-        calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
-      } else {
-        // fullscreen, sepwin
-        // use screen size. We dealt with pb plugins above
-        if (prefs->play_monitor == 0) {
-          *opwidth = GUI_SCREEN_WIDTH;
-          *opheight = GUI_SCREEN_HEIGHT;
-          if (capable->nmonitors > 1  && !prefs->force_single_monitor) {
-            // spread over all monitors
-            *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-            *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-          }
+      } else if (!mainw->ext_playback) {
+        // not rendering or using playback plugin
+        if (!mainw->fs || mainw->play_window == NULL) {
+          // not full screen, or inset, use the play window size (keeping aspect ratio)
+          *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
+          *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
+          calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
         } else {
-          if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
-          else pmonitor = prefs->gui_monitor;
-          *opwidth = mainw->mgeom[pmonitor - 1].width;
-          *opheight = mainw->mgeom[pmonitor - 1].height;
-        }
-      }
-    }
-  } else {
-    // clip edit mode
-    if (mainw->fs && !mainw->is_rendering) {
-      if (!mainw->sep_win) {
-        do {
-          *opwidth = lives_widget_get_allocation_width(mainw->playframe);
-          *opheight = lives_widget_get_allocation_height(mainw->playframe);
-          if (*opwidth * (*opheight) == 0) {
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          }
-        } while (*opwidth * (*opheight) == 0);
-      } else {
-        // sep win full screen
-        if (!mainw->ext_playback) {
+          // fullscreen, sepwin
+          // use screen size. We dealt with pb plugins above
           if (prefs->play_monitor == 0) {
-            if (capable->nmonitors == 1) {
-              *opwidth = GUI_SCREEN_WIDTH;
-              *opheight = GUI_SCREEN_HEIGHT;
-            } else {
+            *opwidth = GUI_SCREEN_WIDTH;
+            *opheight = GUI_SCREEN_HEIGHT;
+            if (capable->nmonitors > 1  && !prefs->force_single_monitor) {
               // spread over all monitors
               *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
               *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
@@ -5731,21 +5790,10 @@ static void get_max_opsize(int *opwidth, int *opheight) {
         }
       }
     } else {
-      if (mainw->is_rendering) {
-        if (cfile->hsize > *opwidth) *opwidth = cfile->hsize;
-        if (cfile->vsize > *opheight) *opheight = cfile->vsize;
-      } else {
-        // not full screen
-
+      // clip edit mode
+      if (mainw->fs && !mainw->is_rendering) {
+        // fullscreen, not rendering
         if (!mainw->sep_win) {
-          // in GUI
-#if GTK_CHECK_VERSION(3, 0, 0)
-          int rwidth = mainw->ce_frame_width;
-          int rheight = mainw->ce_frame_height;
-          *opwidth = cfile->hsize;
-          *opheight = cfile->vsize;
-          calc_maxspect(rwidth, rheight, opwidth, opheight);
-#else
           do {
             *opwidth = lives_widget_get_allocation_width(mainw->playframe);
             *opheight = lives_widget_get_allocation_height(mainw->playframe);
@@ -5753,12 +5801,55 @@ static void get_max_opsize(int *opwidth, int *opheight) {
               lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
             }
           } while (*opwidth * (*opheight) == 0);
-#endif
         } else {
-          // in sep. window
-          if (mainw->pwidth < *opwidth || mainw->pheight < *opheight || *opwidth == 0 || *opheight == 0) {
-            *opwidth = mainw->pwidth;
-            *opheight = mainw->pheight;
+          // sep win full screen, no plugin
+          if (!mainw->ext_playback) {
+            if (prefs->play_monitor == 0) {
+              if (capable->nmonitors == 1) {
+                *opwidth = GUI_SCREEN_WIDTH;
+                *opheight = GUI_SCREEN_HEIGHT;
+              } else {
+                // spread over all monitors
+                *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
+                *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
+              }
+            } else {
+              if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
+              else pmonitor = prefs->gui_monitor;
+              *opwidth = mainw->mgeom[pmonitor - 1].width;
+              *opheight = mainw->mgeom[pmonitor - 1].height;
+            }
+          }
+        }
+      } else {
+        if (mainw->is_rendering) {
+          if (cfile->hsize > *opwidth) *opwidth = cfile->hsize;
+          if (cfile->vsize > *opheight) *opheight = cfile->vsize;
+        } else {
+          // not full screen, not rendering
+          if (!mainw->sep_win) {
+            // in GUI
+#if GTK_CHECK_VERSION(3, 0, 0)
+            int rwidth = mainw->ce_frame_width;
+            int rheight = mainw->ce_frame_height;
+            *opwidth = cfile->hsize;
+            *opheight = cfile->vsize;
+            calc_maxspect(rwidth, rheight, opwidth, opheight);
+#else
+            do {
+              *opwidth = lives_widget_get_allocation_width(mainw->playframe);
+              *opheight = lives_widget_get_allocation_height(mainw->playframe);
+              if (*opwidth * (*opheight) == 0) {
+                lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+              }
+            } while (*opwidth * (*opheight) == 0);
+#endif
+          } else {
+            // in sep. window
+            if (mainw->pwidth < *opwidth || mainw->pheight < *opheight || *opwidth == 0 || *opheight == 0) {
+              *opwidth = mainw->pwidth;
+              *opheight = mainw->pheight;
+            }
           }
         }
       }

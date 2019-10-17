@@ -184,15 +184,15 @@ boolean widget_helper_init(void);
 boolean widget_opts_rescale(double scale);
 
 lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha);
-boolean widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
-boolean lives_rgba_to_widget_color(LiVESWidgetColor *, lives_colRGBA64_t *);
+lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *, LiVESWidgetColor *);
+LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWidgetColor *, lives_colRGBA64_t *);
 
-boolean lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *, lives_colRGBA64_t *);
-boolean lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *, lives_colRGB48_t *);
-boolean lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *, LiVESWidgetColor *);
+lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *, lives_colRGBA64_t *);
+lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *, lives_colRGB48_t *);
+LiVESWidgetColor *lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *, LiVESWidgetColor *);
 
 boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
-boolean lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
+lives_colRGBA64_t *lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2);
 
 // object funcs.
 
@@ -623,7 +623,7 @@ boolean lives_spin_button_set_digits(LiVESSpinButton *, uint32_t digits);
 boolean lives_spin_button_update(LiVESSpinButton *);
 
 LiVESWidget *lives_color_button_new_with_color(const LiVESWidgetColor *);
-boolean lives_color_button_get_color(LiVESColorButton *, LiVESWidgetColor *);
+LiVESWidgetColor *lives_color_button_get_color(LiVESColorButton *, LiVESWidgetColor *);
 boolean lives_color_button_set_color(LiVESColorButton *, const LiVESWidgetColor *);
 boolean lives_color_button_set_alpha(LiVESColorButton *, int16_t alpha);
 int16_t lives_color_button_get_alpha(LiVESColorButton *);

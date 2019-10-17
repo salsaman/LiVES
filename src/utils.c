@@ -1829,7 +1829,6 @@ void d_print(const char *fmt, ...) {
   char *tmp, *text;
 
   if (!prefs->show_gui) return;
-  if (!capable->smog_version_correct) return;
   if (mainw->suppress_dprint) return;
 
   va_start(xargs, fmt);

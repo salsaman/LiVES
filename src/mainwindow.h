@@ -1,6 +1,6 @@
 // mainwindow.h
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2018
+// (c) G. Finch <salsaman+lives@gmail.com> 2003 - 2019
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -658,7 +658,6 @@ typedef struct {
   int old_scr_width;
   int old_scr_height;
 
-  char first_info_file[PATH_MAX];
   boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
   boolean was_set;
 
@@ -1480,6 +1479,10 @@ typedef struct {
   boolean recording_recovered;
 
   int def_trans_idx;
+
+  // disk space in workdir
+  lives_storage_status_t ds_status;
+  uint64_t dsval;
   ////////////////////
 } mainwindow;
 

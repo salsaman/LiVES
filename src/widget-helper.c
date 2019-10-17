@@ -7811,7 +7811,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_color_button_new_with_color(const
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_color_button_get_color(LiVESColorButton *button, LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 4, 0)
   gtk_color_chooser_get_rgba((GtkColorChooser *)button, color);
@@ -7822,12 +7822,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_color_button_get_color(LiVESColorButto
   gtk_color_button_get_color(button, color);
 #endif
 #endif
-  return TRUE;
+  return color;
 #endif
 #ifdef GUI_QT
   button->get_colour(color);
+  return color;
 #endif
-  return FALSE;
+  return NULL;
 }
 
 
@@ -10418,30 +10419,32 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
-  return lives_painter_set_source_rgb(cr,
-                                      (double)col->red / 65535.,
-                                      (double)col->green / 65535.,
-                                      (double)col->blue / 65535.
-                                     );
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
+  lives_painter_set_source_rgb(cr,
+                               (double)col->red / 65535.,
+                               (double)col->green / 65535.,
+                               (double)col->blue / 65535.
+                              );
+  return col;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
-  return lives_painter_set_source_rgb(cr,
-                                      (double)col->red / 65535.,
-                                      (double)col->green / 65535.,
-                                      (double)col->blue / 65535.
-                                     );
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
+  lives_painter_set_source_rgb(cr,
+                               (double)col->red / 65535.,
+                               (double)col->green / 65535.,
+                               (double)col->blue / 65535.
+                              );
+  return col;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *cr, LiVESWidgetColor *wcol) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_painter_set_source_rgb_from_lives_widget_color(lives_painter_t *cr,
+    LiVESWidgetColor *wcol) {
   lives_colRGBA64_t col;
-  if (widget_color_to_lives_rgba(&col, wcol)) {
-    return lives_painter_set_source_rgb_from_lives_rgba(cr, &col);
-  }
-  return FALSE;
+  widget_color_to_lives_rgba(&col, wcol);
+  lives_painter_set_source_rgb_from_lives_rgba(cr, &col);
+  return wcol;
 }
 
 
@@ -11603,17 +11606,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_path_disconnect(LiVESAccelGroup 
 
 
 WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t lives_rgba_col_new(int red, int green, int blue, int alpha) {
-  lives_colRGBA64_t lcol;
-  lcol.red = red;
-  lcol.green = green;
-  lcol.blue = blue;
-  lcol.alpha = alpha;
+  lives_colRGBA64_t lcol = {red, green, blue, alpha};
+  /* lcol.red = red; */
+  /* lcol.green = green; */
+  /* lcol.blue = blue; */
+  /* lcol.alpha = alpha; */
   return lcol;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVESWidgetColor *color) {
-#ifdef GUI_GTK
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *widget_color_to_lives_rgba(lives_colRGBA64_t *lcolor, LiVESWidgetColor *color) {
   lcolor->red = LIVES_WIDGET_COLOR_STRETCH(color->red);
   lcolor->green = LIVES_WIDGET_COLOR_STRETCH(color->green);
   lcolor->blue = LIVES_WIDGET_COLOR_STRETCH(color->blue);
@@ -11622,38 +11624,32 @@ WIDGET_HELPER_GLOBAL_INLINE boolean widget_color_to_lives_rgba(lives_colRGBA64_t
 #else
   lcolor->alpha = 65535;
 #endif
-  return TRUE;
-#endif
-  return FALSE;
+  return lcolor;
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_to_widget_color(LiVESWidgetColor *color, lives_colRGBA64_t *lcolor) {
-#ifdef GUI_GTK
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_rgba_to_widget_color(LiVESWidgetColor *color, lives_colRGBA64_t *lcolor) {
   color->red = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->red);
   color->green = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->green);
   color->blue = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->blue);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
   color->alpha = LIVES_WIDGET_COLOR_SCALE_65535(lcolor->alpha);
 #endif
-  return TRUE;
-#endif
-  return FALSE;
+  return color;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_equal(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
-  if (col1->red == col2->red && col1->green == col2->green && col1->blue == col2->blue && col1->alpha == col2->alpha) return TRUE;
-  return FALSE;
+  return memcmp(col1, col2, sizeof(lives_colRGBA64_t));
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_rgba_copy(lives_colRGBA64_t *col1, lives_colRGBA64_t *col2) {
   col1->red = col2->red;
   col1->green = col2->green;
   col1->blue = col2->blue;
   col1->alpha = col2->alpha;
-  return TRUE;
+  return col1;
 }
 
 

@@ -1,5 +1,5 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2010 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
@@ -34,31 +34,25 @@
 
 static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t **buff, double timeout) {
   // wait for USER type buffer
-  int64_t stime, dtime, timer;
   unicap_status_t status;
   int ncount;
+  lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
 
-  timer = timeout * TICKS_PER_SECOND;
-  stime = lives_get_current_ticks();
-
-  while (1) {
+  do {
     status = unicap_poll_buffer(ldev->handle, &ncount);
 
 #ifdef DEBUG_UNICAP
     if (status != STATUS_SUCCESS) lives_printerr("Unicap poll failed with status %d\n", status);
 #endif
-
     if (ncount >= 0) {
+      lives_alarm_clear(alarm_handle);
       if (!SUCCESS(unicap_wait_buffer(ldev->handle, buff))) return FALSE;
       return TRUE;
     }
-
-    dtime = lives_get_current_ticks();
-    if (dtime - stime > timer) return FALSE;
-
     lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
-  }
+    sched_yield();
+  } while (lives_alarm_check(alarm_handle) > 0);
 
   return FALSE;
 }
@@ -66,19 +60,20 @@ static boolean lives_wait_user_buffer(lives_vdev_t *ldev, unicap_data_buffer_t *
 
 static boolean lives_wait_system_buffer(lives_vdev_t *ldev, double timeout) {
   // wait for SYSTEM type buffer
-  int64_t stime, dtime, timer;
+  lives_alarm_t alarm_handle = lives_alarm_set(timeout * TICKS_PER_SECOND_DBL);
 
-  timer = timeout * TICKS_PER_SECOND;
-  stime = lives_get_current_ticks();
-
-  while (ldev->buffer_ready == 0) {
-    dtime = lives_get_current_ticks();
-    if (dtime - stime > timer) return FALSE;
+  do {
+    if (ldev->buffer_ready != 0) {
+      lives_alarm_clear(alarm_handle);
+      return TRUE;
+    }
     lives_usleep(prefs->sleep_time);
     lives_widget_context_update();
-  }
+    sched_yield();
+  } while (lives_alarm_check(alarm_handle) > 0);
+  lives_alarm_clear(alarm_handle);
 
-  return TRUE;
+  return FALSE;
 }
 
 
@@ -105,6 +100,7 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   unicap_data_buffer_t *returned_buffer = NULL;
   void **pixel_data;
   void *odata = ldev->buffer1.data;
+
   int error;
 
   weed_set_int_value(layer, WEED_LEAF_WIDTH, sfile->hsize /
@@ -118,7 +114,6 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   create_empty_pixel_data(layer, TRUE, TRUE);
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
-
     if (weed_palette_get_numplanes(ldev->current_palette) == 1 || ldev->is_really_grey) {
       ldev->buffer1.data = (unsigned char *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
     }
@@ -149,7 +144,10 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
 
   if (weed_palette_get_numplanes(ldev->current_palette) > 1 && !ldev->is_really_grey) {
-    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->current_palette);
+    boolean contig = FALSE;
+    if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
+        weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) contig = TRUE;
+    pixel_data_planar_from_membuf(pixel_data, returned_buffer->data, sfile->hsize * sfile->vsize, ldev->current_palette, contig);
   } else {
     if (ldev->buffer_type == UNICAP_BUFFER_TYPE_SYSTEM) {
       int rowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
@@ -164,12 +162,14 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
     }
   }
 
-  if (ldev->is_really_grey) {
-    // y contains our greyscale data
-    // set u and v planes to 128
-    memset(pixel_data[1], 128, sfile->hsize * sfile->vsize);
-    memset(pixel_data[2], 128, sfile->hsize * sfile->vsize);
-  }
+  // shouldnt be necessary since we specified black_fill in create_empty_pixel_data()
+
+  /* if (ldev->is_really_grey) { */
+  /*   // y contains our greyscale data */
+  /*   // set u and v planes to 128 */
+  /*   memset(pixel_data[1], 128, sfile->hsize * sfile->vsize); */
+  /*   memset(pixel_data[2], 128, sfile->hsize * sfile->vsize); */
+  /* } */
 
   lives_free(pixel_data);
 

@@ -138,10 +138,17 @@ boolean do_workdir_query(void) {
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
 
-  set_string_pref(PREF_WORKING_DIR, prefs->workdir);
-  set_string_pref(PREF_SESSION_WORKDIR, prefs->workdir);
+  set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+  set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
 
-  lives_snprintf(mainw->first_info_file, PATH_MAX, "%s"LIVES_DIR_SEP LIVES_INFO_FILE_NAME".%d", prefs->workdir, capable->mainpid);
+  if (mainw->has_session_workdir) {
+    mainw->has_session_workdir = FALSE;
+    delete_pref(PREF_SESSION_WORKDIR);
+  }
+
+  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
 
   lives_free(dirname);
 

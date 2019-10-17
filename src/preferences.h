@@ -1,6 +1,6 @@
 // preferences.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2017
+// (c) G. Finch (salsaman_lives@gmail.com) 2004 - 2019
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -350,8 +350,8 @@ typedef struct {
 
   LiVESList *disabled_decoders;
 
-  char backend_sync[PATH_MAX];
-  char backend[PATH_MAX];
+  char backend_sync[PATH_MAX * 4];
+  char backend[PATH_MAX * 4];
 
   char weed_plugin_path[PATH_MAX];
   char frei0r_path[PATH_MAX];
@@ -389,7 +389,7 @@ typedef struct {
 
   double screen_scale;
 
-  char *def_workdir;
+  char tmp_workdir[PATH_MAX];
 
   boolean load_rfx_builtin;
 
@@ -656,6 +656,7 @@ typedef struct {
 typedef struct {
   boolean ign_clipset;
   boolean ign_osc;
+  boolean ign_jackopts;
   boolean ign_aplayer;
   boolean ign_asource;
   boolean ign_stmode;
@@ -766,11 +767,13 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 /////////////////// string values
 
-#define PREF_WORKING_DIR "tempdir"
+#define PREF_WORKING_DIR "workdir"
+#define PREF_WORKING_DIR_OLD "workdir"
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
 #define PREF_LIB_DIR "lib_dir" // readonly
 
-#define PREF_SESSION_WORKDIR "session_tempdir"
+#define PREF_SESSION_WORKDIR "session_workdir"
+#define PREF_SESSION_WORKDIR_OLD "session_workdir"
 
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
@@ -960,7 +963,10 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 boolean get_boolean_prefd(const char *key, boolean defval);
 int get_int_prefd(const char *key, int defval);
 
+int delete_pref(const char *key);
+
 int set_string_pref(const char *key, const char *value);
+int set_string_pref_priority(const char *key, const char *value);
 int set_utf8_pref(const char *key, const char *value);
 int set_boolean_pref(const char *key, boolean value);
 int set_double_pref(const char *key, double value);

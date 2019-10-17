@@ -2525,7 +2525,6 @@ static void do_devicemap_load_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nError parsing file\n%s\n"), fname);
   do_blocking_error_dialog(msg);
   lives_free(msg);
-  d_print_failed();
 }
 
 
@@ -2533,7 +2532,6 @@ static void do_devicemap_version_error(const char *fname) {
   char *msg = lives_strdup_printf(_("\n\nInvalid version in file\n%s\n"), fname);
   do_blocking_error_dialog(msg);
   lives_free(msg);
-  d_print_failed();
 }
 
 
@@ -2577,9 +2575,11 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   d_print(_("Loading device mapping from file %s..."), load_file);
 
   if ((fd = open(load_file, O_RDONLY)) < 0) {
-    char *msg = lives_strdup_printf(_("\n\nUnable to open file\n%s\nError code %d\n"), load_file, errno);
-    do_blocking_error_dialog(msg);
-    lives_free(msg);
+    if (!mainw->go_away) {
+      char *msg = lives_strdup_printf(_("\n\nUnable to open file\n%s\nError code %d\n"), load_file, errno);
+      do_blocking_error_dialog(msg);
+      lives_free(msg);
+    }
     lives_free(load_file);
     d_print_failed();
     return;
@@ -2593,15 +2593,13 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
   bytes = read(fd, tstring, strlen(OMC_FILE_VSTRING));
   if (bytes < strlen(OMC_FILE_VSTRING)) {
-    do_devicemap_load_error(load_file);
-    lives_free(load_file);
-    close(fd);
-    return;
+    goto load_failed;
   }
 
   if (strncmp(tstring, OMC_FILE_VSTRING, strlen(OMC_FILE_VSTRING))) {
     if (strncmp(tstring, OMC_FILE_VSTRING_1_0, strlen(OMC_FILE_VSTRING_1_0))) {
-      do_devicemap_version_error(load_file);
+      d_print_failed();
+      if (!mainw->go_away) do_devicemap_version_error(load_file);
       lives_free(load_file);
       close(fd);
       return;
@@ -2609,19 +2607,13 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   } else {
     bytes = lives_read(fd, &omnimidi, 1, TRUE);
     if (bytes < 1) {
-      do_devicemap_load_error(load_file);
-      lives_free(load_file);
-      close(fd);
-      return;
+      goto load_failed;
     }
   }
 
   bytes = lives_read_le(fd, &nnodes, 4, TRUE);
   if (bytes < 4) {
-    do_devicemap_load_error(load_file);
-    lives_free(load_file);
-    close(fd);
-    return;
+    goto load_failed;
   }
 
   if (omc_node_list != NULL) {
@@ -2632,40 +2624,26 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
   for (i = 0; i < nnodes; i++) {
     bytes = lives_read_le(fd, &srchlen, 4, TRUE);
     if (bytes < 4) {
-      do_devicemap_load_error(load_file);
-      lives_free(load_file);
-      close(fd);
-      return;
+      goto load_failed;
     }
 
     srch = (char *)lives_malloc(srchlen + 1);
 
     bytes = read(fd, srch, srchlen);
     if (bytes < srchlen) {
-      do_devicemap_load_error(load_file);
-      lives_free(load_file);
-      close(fd);
-      return;
+      goto load_failed2;
     }
 
     memset(srch + srchlen, 0, 1);
 
     bytes = lives_read_le(fd, &macro, 4, TRUE);
     if (bytes < sizint) {
-      do_devicemap_load_error(load_file);
-      lives_free(load_file);
-      lives_free(srch);
-      close(fd);
-      return;
+      goto load_failed2;
     }
 
     bytes = lives_read_le(fd, &nvars, 4, TRUE);
     if (bytes < 4) {
-      do_devicemap_load_error(load_file);
-      lives_free(load_file);
-      lives_free(srch);
-      close(fd);
-      return;
+      goto load_failed2;
     }
 
     supertype = atoi(srch);
@@ -2709,52 +2687,31 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
     for (j = 0; j < nvars; j++) {
       bytes = lives_read_le(fd, &mnode->offs0[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->scale[j], 8, TRUE);
       if (bytes < 8) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->offs1[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->min[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->max[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->matchp[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->matchi[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
     }
 
@@ -2767,24 +2724,15 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
     for (j = 0; j < omacro.nparams; j++) {
       bytes = lives_read_le(fd, &mnode->map[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = lives_read_le(fd, &mnode->fvali[j], 4, TRUE);
       if (bytes < 4) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
       bytes = read(fd, &mnode->fvald[j], 8);
       if (bytes < 8) {
-        do_devicemap_load_error(load_file);
-        lives_free(load_file);
-        close(fd);
-        return;
+        goto load_failed;
       }
     }
     omc_node_list = lives_slist_append(omc_node_list, (livespointer)mnode);
@@ -2813,6 +2761,15 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
     do_warning_dialog(
       _("The MIDI receive channel setting was updated by the device map.\nPlease review the setting in Preferences and adjust it if necessary.\n"));
   }
+  return;
+
+load_failed2:
+  lives_free(srch);
+load_failed:
+  d_print_failed();
+  if (!mainw->go_away) do_devicemap_load_error(load_file);
+  lives_free(load_file);
+  close(fd);
 }
 
 #endif

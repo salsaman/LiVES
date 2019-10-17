@@ -469,28 +469,26 @@ void lives_exit(int signum) {
 
   lives_list_free_all(&mainw->current_layouts_map);
 
-  if (capable->smog_version_correct && !mainw->startup_error) {
-    if (capable->has_encoder_plugins) {
-      LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
-      lives_list_free_all(&dummy_list);
-    }
+  if (capable->has_encoder_plugins) {
+    LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
+    lives_list_free_all(&dummy_list);
+  }
 
-    weed_unload_all();
+  weed_unload_all();
 
-    threaded_dialog_spin(0.);
+  threaded_dialog_spin(0.);
 
-    rfx_free_all();
-    threaded_dialog_spin(0.);
+  rfx_free_all();
+  threaded_dialog_spin(0.);
 
 #ifdef ENABLE_OSC
-    if (prefs->osc_udp_started) lives_osc_end();
+  if (prefs->osc_udp_started) lives_osc_end();
 
 #ifdef IS_MINGW
-    WSACleanup();
+  WSACleanup();
 #endif
 
 #endif
-  }
 
   pconx_delete_all();
   cconx_delete_all();
@@ -554,14 +552,13 @@ void lives_exit(int signum) {
   lives_freep((void **)&trString);
 #endif
 
-  if (prefs->def_workdir != NULL) {
-    lives_rmdir(prefs->def_workdir, TRUE);
-    lives_free(prefs->def_workdir);
-    prefs->def_workdir = NULL;
+  if (prefs->tmp_workdir != NULL) {
+    lives_rmdir(prefs->tmp_workdir, TRUE);
+    prefs->tmp_workdir[0] = '\0';
     lives_rm(capable->rcfile);
   }
 
-  tmp = lives_strdup_printf("%d", signum);
+  tmp = lives_strdup_printf("signal: %d", signum);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);
 
@@ -4685,10 +4682,9 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
 
-  num_clips = lives_list_length(mainw->cliplist);
-
   mainw->swapped_clip = -1;
 
+  num_clips = lives_list_length(mainw->cliplist);
 
   do {
     if (num_tried++ == num_clips) return TRUE; // we might have only audio clips, and then we will block here

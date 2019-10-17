@@ -777,6 +777,8 @@ typedef struct {
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
 
+  char backend_path[PATH_MAX];
+
   char touch_cmd[PATH_MAX];
   char rm_cmd[PATH_MAX];
   char mv_cmd[PATH_MAX];
@@ -1130,7 +1132,7 @@ typedef void (*SignalHandlerPointer)(int);
 void set_signal_handlers(SignalHandlerPointer sigfunc);
 void catch_sigint(int signum);
 void defer_sigint(int signum);
-void startup_message_fatal(const char *msg) GNU_NORETURN;
+void startup_message_fatal(char *msg) GNU_NORETURN;
 boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);

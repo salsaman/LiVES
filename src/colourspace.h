@@ -146,7 +146,7 @@ void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int
 void compact_rowstrides(weed_plant_t *layer);
 void weed_layer_pixel_data_free(weed_plant_t *layer);
 void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean may_contig);
-void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette);
+void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
 LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette);
 boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *) WARN_UNUSED;
 
@@ -178,7 +178,6 @@ double weed_palette_get_compression_ratio(int pal);
 boolean weed_palette_is_pixbuf_palette(int pal);
 boolean weed_palette_is_painter_palette(int pal);
 
-#define BLACK_THRESH 20 ///< if R,G and B values are all <= this, we consider it a "black" pixel
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
 
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);

@@ -69,22 +69,52 @@ $smog_convert_command = "convert -quiet";
 ###################################################################
 
 if (defined($ARGV[0])) {
+
     $command = $ARGV[0];
 
-    unless ($command eq "version") {
-        my $rcfile = "$home/$rc_filename";
-        if (-f $rcfile) {
-            $workdir = &rc_get("session_tempdir");
+    if ($command eq "version") {
+	print "smogrify $version\n";
+	exit 0;
+    }
 
-            if ($workdir eq "" || $command eq "report") {
-                $workdir = &rc_get("tempdir");
-		unless ($workdir eq "") {
-		    $priority = 1; ## set it as first key if not found in rc file
-		    &rc_set("session_tempdir", "$workdir");
-		    $priority = 0;
+    $session_workdir = $workdir = "";
+
+    $work = "$WORKDIR";
+
+    if ($work) {
+	$workdir = $work;
+    }
+
+    if ($command eq "report" || $workdir eq "") {
+	$rcfile = "$home/$rc_filename";
+	if ($command eq "report") {
+	    $session_workdir = $workdir;
+	}
+	if (-f $rcfile) {
+	    if ($command ne "report") {
+		$session_workdir = &rc_get("session_workdir");
+		if ($session_workdir eq "") {
+		    $session_workdir = &rc_get("session_tempdir");
 		}
 	    }
-        }
+	    if ($session_workdir eq "" || $command eq "report") {
+		$workdir = &rc_get("workdir");
+		if ($workdir eq "") {
+		    $workdir = &rc_get("tempdir");
+		}
+		if ($workdir eq "") {
+		    unlink "$rcfile";
+		}
+	    }
+	}
+    }
+
+    if ($session_workdir eq "") {
+	$session_workdir = $workdir;
+    }
+
+    if ($command ne "report" && $session_workdir ne "") {
+	$workdir = $session_workdir;
     }
 
     if (!caller || $command eq "save" || $command eq "plugin_clear") {
@@ -92,11 +122,196 @@ if (defined($ARGV[0])) {
             print STDERR "command is $command\n";
         }
 
-        if ($command eq "save" && $ARGV[1] eq "get_rfx") {
-            $background = 0;
+	## blocking calls
+
+        if ($command eq "report") {
+	    ################################### startup checks ########################
+
+            $gui_bootstrap_file = "";
+            if (defined($ARGV[1])) {
+                $gui_bootstrap_file = $ARGV[1];
+            }
+
+	    if (defined($ARGV[2])) {
+                $default_workdir = $ARGV[2];
+            }
+
+            if (! -d "$lives_home_dir") {
+		# this can fail here, but succeed later
+		smog_system("/bin/mkdir -p \"$lives_home_dir\"");
+            }
+
+            $startup_phase = -1;
+
+	    if ($session_workdir eq "") {
+		$session_workdir = $default_workdir;
+	    }
+
+	    # get $workdir from .rc file, if no .rc file, create it
+            if (! -s "$rcfile") {
+		# set comment at start of file
+                &rc_set("", "");
+		&rc_set("version", "$version");
+                &rc_set("startup_phase", -1);
+            } else {
+		$startup_phase = &rc_get("startup_phase");
+		if ($startup_phase eq "" || $startup_phase eq "100") {
+		    $startup_phase = 0;
+		    &rc_delete("startup_phase");
+		}
+		else {
+		    $priority = 1; ## set it as first key if not found in rc file
+		    &rc_set("version", "$version");
+		}
+	    }
+
+	    # create the working directory if non existing
+	    if ($session_workdir ne "" && ! -d "$session_workdir") {
+		$smerr = smog_system("/bin/mkdir -p \"$session_workdir\"");
+		if ($smerr) {
+		    if ($session_workdir eq $default_workdir) {
+			exit 5;
+		    }
+		    else {
+			exit 6;
+		    }
+		}
+	    }
+
+	    ## check we can write to $session_workdir
+	    unlink "$session_workdir/liveswritetest";
+
+	    $smres = smog_system("touch \"$session_workdir/liveswritetest\"");
+	    if ($smres) {
+		exit 6;
+	    }
+
+	    unlink "$session_workdir/liveswritetest";
+
+	    $priority = 0;
+
+	    ###################### all startup tests passed ########################
+
+            $video_open_command = "\"". &get_mplayer_location."\"";
+
+            $audio_player = "sox";
+            $audio_play_command = &rc_get_default("sox_command");
+
+            $convert_version_hash = &get_convert_version_hash;
+
+            $default_keymap = "default.keymap";
+
+            if ($audio_play_command eq "") {
+                $audio_player = "mplayer";
+                $audio_play_command = &rc_get_default("mplayer_audio_command");
+            }
+
+            if (defined($dyneversion)) {
+                &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
+                &rc_set_if_not_set("prefix_dir", "/opt/$dyneversion/");
+            }
+
+	    # NOTE: the following definitions must match with equivalent keys in preferences.h
+            &rc_set_if_not_set("video_open_command", "$video_open_command");
+            &rc_set_if_not_set("audio_play_command", "$audio_play_command");
+            &rc_set_if_not_set("audio_player", $audio_player);
+            &rc_set_if_not_set("midisynch", "false");
+            &rc_set_if_not_set("pb_quality", 2);
+            &rc_set_if_not_set("insert_resample", "true");
+            &rc_set_if_not_set("open_compression_percent", 15);
+            &rc_set_if_not_set("conserve_space", "false");
+            &rc_set_if_not_set("antialias", "true");
+	    # resize action when opening images - can be either: "bound" or "none"
+            &rc_set_if_not_set("image_resize_action", "none");
+            &rc_set_if_not_set("encoder", $encoder);
+            &rc_set_if_not_set("output_type", "mjpeg");
+            &rc_set_if_not_set("audio_effect", "none");
+            &rc_set_if_not_set("default_image_format", "png");
+            &rc_set_if_not_set("default_fps", 25);
+            &rc_set_if_not_set("save_directories", "false");
+            &rc_set_if_not_set("stop_screensaver", "true");
+            &rc_set_if_not_set("open_maximised", "true");
+            &rc_set_if_not_set("filesel_maximised", "true");
+            &rc_set_if_not_set("show_recent_files", "true");
+            &rc_set_if_not_set("ce_maxspect", "true");
+            &rc_set_if_not_set("lives_warning_mask", 797696);
+	    # bits 19,18,13,11 and 10
+            &rc_set_if_not_set("dl_bandwidth_K", 5000);
+            &rc_set_if_not_set("show_player_stats", "false");
+            &rc_set_if_not_set("show_toolbar", "true");
+            &rc_set_if_not_set("encoder_acodec", 1);
+	    # default of PCM
+            &rc_set_if_not_set("record_opts", -1);
+
+            &rc_set_if_not_set("gui_theme", "crayons");
+            &rc_set_if_not_set("jack_opts", 0);
+	    # start aserver on startup
+            &rc_set_if_not_set("audio_opts", 3);
+            &rc_set_if_not_set("rte_keys_virtual", 9);
+
+            &rc_set_if_not_set("instant_open", "true");
+            &rc_set_if_not_set("auto_deinterlace", "true");
+            &rc_set_if_not_set("auto_trim_pad_audio", "true");
+            &rc_set_if_not_set("auto_cut_borders", "false");
+
+            &rc_set_if_not_set("mt_undo_buf", 32);
+            &rc_set_if_not_set("mt_enter_prompt", "true");
+            &rc_set_if_not_set("render_prompt", "true");
+            &rc_set_if_not_set("mt_exit_render", "true");
+            &rc_set_if_not_set("mt_def_width", 1024);
+            &rc_set_if_not_set("mt_def_height", 768);
+            &rc_set_if_not_set("mt_def_achans", 2);
+            &rc_set_if_not_set("mt_def_signed_endian", 2 * !&get_endian);
+            &rc_set_if_not_set("mt_backaudio", "1");
+            &rc_set_if_not_set("mt_pertrack_audio", "true");
+            &rc_set_if_not_set("mt_auto_back", 120);
+
+            &rc_set_if_not_set("ar_clipset", "");
+            &rc_set_if_not_set("ar_layout", "");
+
+            &rc_set_if_not_set("rec_desktop_audio", "false");
+            &rc_set_if_not_set("osc_start", "false");
+            &rc_set_if_not_set("osc_port", 49999);
+
+            &rc_set_if_not_set("concat_images", "true");
+            &rc_set_if_not_set("mouse_scroll_clips", "true");
+
+            &rc_set_if_not_set("omc_dev_opts", 3);
+
+            &rc_set_if_not_set("rec_stop_gb", 10);
+
+            &rc_set_if_not_set("audio_src", 0);
+	    #internal
+
+            &rc_set_if_not_set("ce_thumb_mode", "false");
+
+            &rc_set_if_not_set("show_button_icons", "false");
+
+            &rc_set_if_not_set("max_disp_vtracks", 5);
+
+	    &rc_set_if_not_set("show_audio_src", "true");
+
+	    &rc_set_if_not_set("midi_rcv_chan", 0);
+
+	    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
+
+            $workdir = &rc_get("workdir");
+            &write_bootstrap_file;
+
+            $convert_old_version = &rc_get("convert_version");
+            unless($convert_old_version eq $convert_version) {
+                &rc_set("convert_version", $convert_version);
+            }
+            &version_check_and_upgrade;
+
+            unless($gui_bootstrap_file eq "") {
+                open OUT, "> $gui_bootstrap_file" or exit 5;
+                print OUT "$version|$session_workdir|$startup_phase|$msg|$msg2";
+                close OUT;
+            }
+            exit 0;
         }
 
-	## blocking calls
         if ($command eq "get_pid_for_handle") {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
@@ -250,192 +465,6 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-        if ($command eq "report") {
-            $gui_bootstrap_file = "";
-            if (defined($ARGV[1])) {
-                $gui_bootstrap_file = $ARGV[1];
-            }
-
-	    if (defined($ARGV[2])) {
-                $default_workdir = $ARGV[2];
-            }
-
-            if (! -d "$lives_home_dir") {
-		# this can fail here, but succeed later
-		smog_system("/bin/mkdir -p \"$lives_home_dir\"");
-            }
-
-            $startup_phase = 0;
-
-            $video_open_command = "\"". & get_mplayer_location."\"";
-
-            $audio_player = "sox";
-            $audio_play_command = &rc_get_default("sox_command");
-
-            $convert_version_hash = &get_convert_version_hash;
-
-            if ($audio_play_command eq "") {
-                $audio_player = "mplayer";
-                $audio_play_command = &rc_get_default("mplayer_audio_command");
-            }
-
-	    # get $workdir from .rc file, if no .rc file, create it
-            if (! -s "$home/$rc_filename") {
-		# set comment at start of file
-                &rc_set("", "");
-                $startup_phase = -1;
-                &rc_set("startup_phase", -1);
-            } else {
-                $startup_phase = &rc_get("startup_phase");
-                if ($startup_phase eq "" || $startup_phase eq "100") {
-                    $startup_phase = 0;
-                    &rc_delete("startup_phase");
-                }
-            }
-
-            $default_keymap = "default.keymap";
-
-	    $priority = 1; ## set it as first key if not found in rc file
-            &rc_set_if_not_set("version", "$version");
-	    $priority = 1; ## set it as first key if not found in rc file
-            if (!&rc_set_if_not_set("tempdir", "$default_workdir")) {
-		# if working dir not set, then use default passed from frontend
-		# and force the user to change it in the GUI
-
-		$workdir = $default_workdir;
-                $startup_phase = -1;
-                &rc_set("startup_phase", -1);
-	    }
-	    # create the working directory if non existing
-	    if (! -d "$workdir") {
-		$smerr = smog_system("/bin/mkdir -p \"$workdir\"");
-		if ($smerr) {
-		    if ($workdir eq $default_workdir) {
-			exit 5;
-		    }
-		    else {
-			exit 6;
-		    }
-		}
-	    }
-	    $priority = 0;
-
-	    ## check we can write to workdir
-	    unlink "$workdir/liveswritetest";
-
-	    $smres = smog_system("touch \"$workdir/liveswritetest\"");
-	    if ($smres) {
-		exit 6;
-	    }
-	    
-	    unlink "$workdir/liveswritetest";
-
-            if (defined($dyneversion)) {
-                &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
-                &rc_set_if_not_set("prefix_dir", "/opt/$dyneversion/");
-            }
-
-	    # NOTE: the following definitions must match with equivalent keys in preferences.h
-            &rc_set_if_not_set("video_open_command", "$video_open_command");
-            &rc_set_if_not_set("audio_play_command", "$audio_play_command");
-            &rc_set_if_not_set("audio_player", $audio_player);
-            &rc_set_if_not_set("midisynch", "false");
-            &rc_set_if_not_set("pb_quality", 2);
-            &rc_set_if_not_set("insert_resample", "true");
-            &rc_set_if_not_set("open_compression_percent", 15);
-            &rc_set_if_not_set("conserve_space", "false");
-            &rc_set_if_not_set("antialias", "true");
-	    # resize action when opening images - can be either: "bound" or "none"
-            &rc_set_if_not_set("image_resize_action", "none");
-            &rc_set_if_not_set("encoder", $encoder);
-            &rc_set_if_not_set("output_type", "mjpeg");
-            &rc_set_if_not_set("audio_effect", "none");
-            &rc_set_if_not_set("default_image_format", "png");
-            &rc_set_if_not_set("default_fps", 25);
-            &rc_set_if_not_set("save_directories", "false");
-            &rc_set_if_not_set("stop_screensaver", "true");
-            &rc_set_if_not_set("open_maximised", "true");
-            &rc_set_if_not_set("filesel_maximised", "true");
-            &rc_set_if_not_set("show_recent_files", "true");
-            &rc_set_if_not_set("ce_maxspect", "true");
-            &rc_set_if_not_set("lives_warning_mask", 797696);
-	    # bits 19,18,13,11 and 10
-            &rc_set_if_not_set("dl_bandwidth_K", 5000);
-            &rc_set_if_not_set("show_player_stats", "false");
-            &rc_set_if_not_set("show_toolbar", "true");
-            &rc_set_if_not_set("encoder_acodec", 1);
-	    # default of PCM
-            &rc_set_if_not_set("record_opts", -1);
-
-            &rc_set_if_not_set("gui_theme", "crayons");
-            &rc_set_if_not_set("jack_opts", 0);
-	    # start aserver on startup
-            &rc_set_if_not_set("audio_opts", 3);
-            &rc_set_if_not_set("rte_keys_virtual", 9);
-
-            &rc_set_if_not_set("instant_open", "true");
-            &rc_set_if_not_set("auto_deinterlace", "true");
-            &rc_set_if_not_set("auto_trim_pad_audio", "true");
-            &rc_set_if_not_set("auto_cut_borders", "false");
-
-            &rc_set_if_not_set("mt_undo_buf", 32);
-            &rc_set_if_not_set("mt_enter_prompt", "true");
-            &rc_set_if_not_set("render_prompt", "true");
-            &rc_set_if_not_set("mt_exit_render", "true");
-            &rc_set_if_not_set("mt_def_width", 1024);
-            &rc_set_if_not_set("mt_def_height", 768);
-            &rc_set_if_not_set("mt_def_achans", 2);
-            &rc_set_if_not_set("mt_def_signed_endian", 2 * !&get_endian);
-            &rc_set_if_not_set("mt_backaudio", "1");
-            &rc_set_if_not_set("mt_pertrack_audio", "true");
-            &rc_set_if_not_set("mt_auto_back", 120);
-
-            &rc_set_if_not_set("ar_clipset", "");
-            &rc_set_if_not_set("ar_layout", "");
-
-            &rc_set_if_not_set("rec_desktop_audio", "false");
-            &rc_set_if_not_set("osc_start", "false");
-            &rc_set_if_not_set("osc_port", 49999);
-
-            &rc_set_if_not_set("concat_images", "true");
-            &rc_set_if_not_set("mouse_scroll_clips", "true");
-
-            &rc_set_if_not_set("omc_dev_opts", 3);
-
-            &rc_set_if_not_set("rec_stop_gb", 10);
-
-            &rc_set_if_not_set("audio_src", 0);
-	    #internal
-
-            &rc_set_if_not_set("ce_thumb_mode", "false");
-
-            &rc_set_if_not_set("show_button_icons", "false");
-
-            &rc_set_if_not_set("max_disp_vtracks", 5);
-
-	    &rc_set_if_not_set("show_audio_src", "true");
-
-	    &rc_set_if_not_set("midi_rcv_chan", 0);
-
-	    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
-
-            $workdir = &rc_get("tempdir");
-            &write_bootstrap_file;
-
-            $convert_old_version = &rc_get("convert_version");
-            unless($convert_old_version eq $convert_version) {
-                &rc_set("convert_version", $convert_version);
-            }
-            &version_check_and_upgrade;
-
-            unless($gui_bootstrap_file eq "") {
-                open OUT, "> $gui_bootstrap_file" or exit 5;
-                print OUT "$version|$workdir|$startup_phase|$msg|$msg2";
-                close OUT;
-            }
-            exit 0;
-        }
-    
         if ($command eq "set_clip_value") {
             $prefs_file = $ARGV[1];
             shift(@ARGV);
@@ -447,6 +476,16 @@ if (defined($ARGV[0])) {
 	    shift(@ARGV);
 	    shift(@ARGV);
             $value = join(" ", @ARGV);
+            &rc_set("$key", "$value");
+            exit 0;
+        }
+
+	if ($command eq "set_pref_priority") {
+            $key = $ARGV[1];
+	    shift(@ARGV);
+	    shift(@ARGV);
+            $value = join(" ", @ARGV);
+	    $priority = 1;
             &rc_set("$key", "$value");
             exit 0;
         }
@@ -820,11 +859,6 @@ if (defined($ARGV[0])) {
             exit 0;
         }
 
-        if ($command eq "version"&&!caller) {
-            print "smogrify $version\n";
-            exit 0;
-        }
-
         if ($command eq "plugin_clear") {
 	    # this is a special function which does general cleanup
 	    # and then does the "clear" command in the plugin
@@ -1085,6 +1119,10 @@ if (defined($ARGV[0])) {
             print $out;
 
             exit 0;
+        }
+
+        if ($command eq "save" && $ARGV[1] eq "get_rfx") {
+            $background = 0;
         }
 
         if ($command eq "mv_pre") {
@@ -3333,6 +3371,7 @@ if (defined($ARGV[0])) {
 	    &sig_complete;
 	    exit 0;
 	}
+
 
 	if ($command eq "commit_audio") {
 	    # commit the audio file in either audiodump or audiodump.wav as new audio file
@@ -7168,16 +7207,16 @@ sub get_mplayer_location {
 
 
 sub rc_set_if_not_set {
-    my ($key,$value)=@_;
-    $skip_if_exist=1;
-    return &rc_set("$key","$value");
+    my ($key, $value) = @_;
+    $noreplace = 1;
+    return &rc_set("$key", "$value");
 }
 
 
 sub rc_delete {
-    my ($key)=$_[0];
-    $delpref=1;
-    &rc_set($key,"");
+    my ($key) = $_[0];
+    $delpref = 1;
+    &rc_set($key, "");
 }
 
 
@@ -7191,12 +7230,12 @@ sub printlen {
 
 sub rc_set {
     # set/modify/delete a value in the .rc file
-    my ($key,$value)=@_;
+    my ($key, $value)=@_;
 
-    my ($rcfile)="$home/$rc_filename";
+    my $rcfile = "$home/$rc_filename";
 
     if (defined($prefs_file)) {
-        $rcfile=$prefs_file;
+        $rcfile = $prefs_file;
     }
 
     my $newrcfile = "$rcfile.new";
@@ -7207,11 +7246,11 @@ sub rc_set {
 
     if (substr($value,-1,1) eq "\"" && substr($value,0,1) ne "\"") {
 	# strip trailing unmatched "
-        $value=substr($value,0,length($value)-1);
+        $value=substr($value, 0,length($value)- 1);
     }
 
     my $rcfilesize = 0;
-    my $addsize;
+    my $addsize = 0;
 
     my $orcfilesize = -s "$rcfile";
 
@@ -7219,12 +7258,41 @@ sub rc_set {
     select((select(OUT), $| = 1)[0]);
 
     if (!defined($delpref)) {
-        $delpref=0;
+        $delpref = 0;
+    }
+    if (!defined($find)) {
+        $find = 0;
+    }
+    if (!defined($noreplace)) {
+        $noreplace = 0;
     }
 
+    ## the process here is that we read in the rc_file a line at a time, constructing a copy of it
+    ## if we find <key> in the old file, we insert the new value between then skip everything until we reach </key>
+    ## then continue to the end
+
+    # if we are just look for the existence of the pref we do not write anything, just return if we find <key> or reach the end
+
+    ## when $delpref is 1 we just skip writing the key
+
+    ## some keys are "priority" keys and get inserted at the start
+
+    ## as we write we record the exact number of bytes written. If the filesize of the new file is not what we expect then we abort
+    ## the operation
+
+    ## otherwise we rename the new file to the old file
+
+    ## after copying we check again. IF the overwritten file has the wrong size we delete it, which will cause the user to
+    ## go through the setup process again the next time they use the app.
+
+    my $part = -1;
+    my $found = 0;
+
     if ($key eq "") {
+	## if $key is "" then we write a comment at the start
+
         $date=&get_current_date;
-        $addsize = &printlen(OUT, "# This file is autogenerated by $GUI_NAME on $date\n");
+        $addsize = &printlen(OUT, "# This file was autogenerated by $GUI_NAME version $version on $date\n");
 	if ($addsize == -1) {
 	    exit 4;
 	}
@@ -7234,136 +7302,118 @@ sub rc_set {
 	    exit 4;
 	}
 	$rcfilesize += $addsize;
-    }
-
-    #replace <$key> to </$key> with our new value
-    else {
+        $addsize = &printlen(OUT, "#  Note: The values <tempdir> and <session_tempdir> have been replaced by\n#  <workdir> and <session_workdir>\n# The old values are retained only for compatibility with versions of $GUI_NAME < 3.0.3\n");
+	if ($addsize == -1) {
+	    exit 4;
+	}
+	$rcfilesize += $addsize;
+    } else {
         if (!defined(open IN,"< $rcfile") && -e $rcfile) {
             exit 2;
         }
-        my $string="";
-        my $current="";
-        my $part=0;
-        my $found=0;
+
         while (<IN>) {
-            my $laststring=$current;
-            $current=$_;
-            if ($delpref!=1) {
-                $string=$current;
-
-                if ($string=~/^#.*/) {
-		    #ignore comments
-                    $addsize = &printlen(OUT, $string);
+            $current = $_;
+	    if (!$find && $part == -1) {
+		if ($current =~ /^#.*/) {
+		    $addsize = &printlen(OUT, $current);
 		    if ($addsize == -1) {
 			exit 4;
 		    }
 		    $rcfilesize += $addsize;
-                    next;
-                }
-            }
-            else {
-                $string=$laststring;
-                next if ($laststring eq "");
-            }
-
-            if ($priority==2) {
-                $addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n");
-		if ($addsize == -1) {
-		    exit 4;
+		    next;
 		}
-		$rcfilesize += $addsize;
-                $found=1;
-                $priority=1;
-            }
-            if ($found==0||$part==1) {
-                if ($part==1||$current=~ /^(<$key>)/) {
-                    if ($skip_if_exist==1) {
-                        close IN;
-                        close OUT;
-                        unlink "$newrcfile";
-                        $skip_if_exist=0;
-                        return 1;
-                    }
-                    if ($part==0) {
-                        $part=1;
-                        if ($delpref==0) {
-			    #update existing value
-                            $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n");
-			    if ($addsize == -1) {
-				exit 4;
-			    }
-			    $rcfilesize += $addsize;
-                        }
-                        else {
-			    #delete
-			    #$date=&get_current_date;
-			    #print OUT "# $key deleted by $GUI_NAME $date\n";
-                            if ($string ne "\n") {
-                                $addsize = &printlen(OUT, $string);
-				if ($addsize == -1) {
-				    exit 4;
-				}
-				$rcfilesize += $addsize;
-                            }
-                            $delpref=2;
-                        }
-                        $found=1;
-                    }
-                    if ($current=~ /(<\/$key>)$/) {
-                        $part=0;
-                    }
-                }
-                elsif ($part==0) {
-                    $addsize = &printlen(OUT, $string);
-		    if ($addsize == -1) {
-			exit 4;
+		else {
+		    $part = 0;
+		    if ($priority == 1) {
+			$addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n\n");
+			if ($addsize == -1) {
+			    exit 4;
+			}
+			$rcfilesize += $addsize;
+			$part = 3;
 		    }
-		    $rcfilesize += $addsize;
-                }
-            }
-            else {
-                $addsize = &printlen(OUT, $string);
+		}
+	    }
+
+	    if ($current =~ /^(<$key>)/) {
+		if ($find || $noreplace) {
+		    close IN;
+		    close OUT;
+		    if ($noreplace) {
+			unlink "$newrcfile";
+		    }
+		    $find = $noreplace = 0;
+		    return $found = 1;
+		}
+		$part = 1;
+		next;
+	    }
+
+	    next if ($find);
+
+	    if ($current =~ /(<\/$key>)$/) {
+		if ($part == 1) {
+		    $part = 2;
+		    $found = 1;
+		}
+		next;
+	    }
+
+	    next if ($part == 1);
+
+	    if ($part == 2) {
+		# skip whitespace after the </key>
+		next if ($current =~ s/^\s+//);
+		if ($delpref) {
+		    $addsize = &printlen(OUT, "\n");
+		}
+		else {
+		    #inject the key / value
+		    $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
+		}
 		if ($addsize == -1) {
 		    exit 4;
 		}
 		$rcfilesize += $addsize;
-            }
-        }
-        if ($found==0&&$delpref==0) {
-	    # we didnt find the key so we must add it
-            if ($priority==1) {
-		#if $priority was 1 we set it as first
-                $priority=2;
-		close IN;
-		close OUT;
-                return &rc_set("$key", "$value");
-            }
-            else {
-		# otherwise set it as last
-                $addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n");
-		if ($addsize == -1) {
-		    exit 4;
-		}
-		$rcfilesize += $addsize;
-            }
-        }
-        if ($delpref==1) {
-            $addsize = &printlen(OUT, $current);
+		$part = 3;
+	    }
+	    $addsize = &printlen(OUT, $current);
 	    if ($addsize == -1) {
 		exit 4;
 	    }
 	    $rcfilesize += $addsize;
-        }
+	}
     }
 
     close IN;
+
+    if ($find) {
+	return $find = $found = 0;
+    }
+
+    if ($part < 2) {
+	$found = 0;
+    }
+
+    if (!$delpref && $part < 3 && $key ne "") {
+	$addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n");
+	if ($addsize == -1) {
+	    exit 4;
+	}
+	$rcfilesize += $addsize;
+    }
+
     close OUT;
+
+    $delpref = $noreplace = 0;
 
     if (-s "$newrcfile" != $rcfilesize) {
 	exit 4;
     }
 
     smog_copy("$newrcfile", "$rcfile");
+
     if ($panic) {
 	if (-s $rcfile != $orcfilesize && -s $rcfile != $rcfilesize) {
 	    unlink "$rcfile";
@@ -7377,7 +7427,7 @@ sub rc_set {
     }
 
     unlink "$newrcfile";
-    $delpref=0;
+
     return 0;
 }
 

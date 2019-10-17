@@ -10,6 +10,8 @@
 #define RTE_INFO_WIDTH ((int)(550.*widget_opts.scale))
 #define RTE_INFO_HEIGHT ((int)(400.*widget_opts.scale))
 
+#define DEF_FX_KEYMODES 8
+
 void rte_window_set_interactive(boolean interactive);
 
 void on_assign_rte_keys_activate(LiVESMenuItem *, livespointer);

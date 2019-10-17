@@ -486,7 +486,7 @@ void create_LiVES(void) {
 
 #endif
 
-    if (capable->smog_version_correct) lives_window_set_decorated(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), prefs->open_decorated);
+    lives_window_set_decorated(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), prefs->open_decorated);
   }
   mainw->top_vbox = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(LIVES_MAIN_WINDOW_WIDGET), mainw->top_vbox);
@@ -667,25 +667,18 @@ void create_LiVES(void) {
 
   memset(buff, 0, 1);
 
-  // since we are still initialising, we need to check if we can read prefs
-  if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_utf8_pref(PREF_RECENT1, buff, 32768);
-  }
+  get_utf8_pref(PREF_RECENT1, buff, 32768);
+
   widget_opts.mnemonic_label = FALSE;
   mainw->recent[0] = lives_standard_menu_item_new_with_label(buff);
-  if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_utf8_pref(PREF_RECENT2, buff, 32768);
-  }
+
+  get_utf8_pref(PREF_RECENT2, buff, 32768);
   mainw->recent[1] = lives_standard_menu_item_new_with_label(buff);
 
-  if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_utf8_pref(PREF_RECENT3, buff, 32768);
-  }
+  get_utf8_pref(PREF_RECENT3, buff, 32768);
   mainw->recent[2] = lives_standard_menu_item_new_with_label(buff);
 
-  if (capable->smog_version_correct && capable->can_write_to_workdir) {
-    get_utf8_pref(PREF_RECENT4, buff, 32768);
-  }
+  get_utf8_pref(PREF_RECENT4, buff, 32768);
   mainw->recent[3] = lives_standard_menu_item_new_with_label(buff);
   widget_opts.mnemonic_label = TRUE;
 
@@ -1074,7 +1067,7 @@ void create_LiVES(void) {
   lives_menu_add_separator(LIVES_MENU(mainw->play_menu));
 
   mainw->sticky = lives_standard_check_menu_item_new_with_label(_("Separate Window 'S_ticky' Mode"),
-                  capable->smog_version_correct && prefs->sepwin_type == SEPWIN_TYPE_STICKY);
+                  prefs->sepwin_type == SEPWIN_TYPE_STICKY);
 
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->sticky);
 
@@ -1153,7 +1146,7 @@ void create_LiVES(void) {
   mainw->rendered_fx = NULL;
   mainw->custom_tools_menu = NULL;
 
-  if (!mainw->foreign && capable->smog_version_correct) {
+  if (!mainw->foreign) {
     splash_msg(_("Starting GUI..."), SPLASH_LEVEL_START_GUI);
   }
 
@@ -1206,11 +1199,9 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->load_cdtrack);
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->eject_cd);
 
-  if (capable->smog_version_correct) {
-    if (!capable->has_cdda2wav) {
-      lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
-      lives_widget_set_sensitive(mainw->eject_cd, FALSE);
-    }
+  if (!capable->has_cdda2wav) {
+    lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
+    lives_widget_set_sensitive(mainw->eject_cd, FALSE);
   }
 
   mainw->recaudio_submenu = lives_standard_menu_item_new_with_label(_("Record E_xternal Audio..."));
@@ -1413,21 +1404,19 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->send_lives2lives);
   lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_lives2lives);
 
-  if (capable->smog_version_correct) {
-    mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = lives_strdup(_("Open _yuv4mpeg stream..."))));
-    lives_free(tmp);
+  mainw->open_yuv4m = lives_standard_menu_item_new_with_label((tmp = lives_strdup(_("Open _yuv4mpeg stream..."))));
+  lives_free(tmp);
 #ifdef HAVE_YUV4MPEG
-    lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
+  lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
-    lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_yuv4m);
+  lives_container_add(LIVES_CONTAINER(mainw->advanced_menu), mainw->open_yuv4m);
 
-    // TODO - apply a deinterlace filter to yuv4mpeg frames
-    /*mainw->yuv4m_deint = lives_standard_check_menu_item_new_with_label (_("_Deinterlace yuv4mpeg frames"));
+  // TODO - apply a deinterlace filter to yuv4mpeg frames
+  /*mainw->yuv4m_deint = lives_standard_check_menu_item_new_with_label (_("_Deinterlace yuv4mpeg frames"));
     lives_widget_show (mainw->yuv4m_deint);
     lives_container_add (LIVES_CONTAINER (advance_menu), mainw->yuv4m_deint);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->yu4m_deint),TRUE);*/
 #endif
-  }
 
   lives_menu_add_separator(LIVES_MENU(mainw->advanced_menu));
 
@@ -1585,75 +1574,64 @@ void create_LiVES(void) {
   lives_toolbar_set_style(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOLBAR_ICONS);
   lives_toolbar_set_icon_size(LIVES_TOOLBAR(mainw->btoolbar), LIVES_ICON_SIZE_LARGE_TOOLBAR);
 
-  if (capable->smog_version_correct) {
-    lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->btoolbar, FALSE, TRUE, 0);
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->btoolbar, FALSE, TRUE, 0);
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
-    if (tmp_toolbar_icon != NULL) {
-      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
-
-    mainw->m_sepwinbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                            _("Show the play window (s)"));
-    lives_widget_set_focus_on_click(mainw->m_sepwinbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-
-    mainw->m_rewindbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                            _("Rewind to start (w)"));
-
-    lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
-    lives_widget_set_focus_on_click(mainw->m_rewindbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-
-    mainw->m_playbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "", _("Play all (p)"));
-    lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-
-    mainw->m_stopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                          _("Stop playback (q)"));
-    lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
-    lives_widget_set_focus_on_click(mainw->m_stopbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_PLAY_SEL, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-    mainw->m_playselbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                             _("Play selection (y)"));
-
-    lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
-    lives_widget_set_focus_on_click(mainw->m_playselbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-    if (tmp_toolbar_icon != NULL) {
-      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
-
-    mainw->m_loopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                          _("Switch continuous looping on (o)"));
-    lives_widget_set_focus_on_click(mainw->m_loopbutton, FALSE);
-
-    tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-    if (tmp_toolbar_icon != NULL) {
-      pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
-      lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
-    }
-
-    mainw->m_mutebutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
-                          _("Mute the audio (z)"));
-    lives_widget_set_focus_on_click(mainw->m_mutebutton, FALSE);
-
-  } else {
-    mainw->m_sepwinbutton = lives_standard_menu_item_new();
-    mainw->m_rewindbutton = lives_standard_menu_item_new();
-    mainw->m_playbutton = lives_standard_menu_item_new();
-    mainw->m_stopbutton = lives_standard_menu_item_new();
-    mainw->m_playselbutton = lives_standard_menu_item_new();
-    mainw->m_loopbutton = lives_standard_menu_item_new();
-    mainw->m_mutebutton = lives_standard_menu_item_new();
+  if (tmp_toolbar_icon != NULL) {
+    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
+    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
   }
+
+  mainw->m_sepwinbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                          _("Show the play window (s)"));
+  lives_widget_set_focus_on_click(mainw->m_sepwinbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_REWIND, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+
+  mainw->m_rewindbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                          _("Rewind to start (w)"));
+
+  lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
+  lives_widget_set_focus_on_click(mainw->m_rewindbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_PLAY, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+
+  mainw->m_playbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "", _("Play all (p)"));
+  lives_widget_set_sensitive(mainw->m_playbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_STOCK_MEDIA_STOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+
+  mainw->m_stopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                        _("Stop playback (q)"));
+  lives_widget_set_sensitive(mainw->m_stopbutton, FALSE);
+  lives_widget_set_focus_on_click(mainw->m_stopbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_PLAY_SEL, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  mainw->m_playselbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                           _("Play selection (y)"));
+
+  lives_widget_set_sensitive(mainw->m_playselbutton, FALSE);
+  lives_widget_set_focus_on_click(mainw->m_playselbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_LOOP, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  if (tmp_toolbar_icon != NULL) {
+    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
+    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
+  }
+
+  mainw->m_loopbutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                        _("Switch continuous looping on (o)"));
+  lives_widget_set_focus_on_click(mainw->m_loopbutton, FALSE);
+
+  tmp_toolbar_icon = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  if (tmp_toolbar_icon != NULL) {
+    pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(tmp_toolbar_icon));
+    lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
+  }
+
+  mainw->m_mutebutton = lives_standard_tool_button_new(LIVES_TOOLBAR(mainw->btoolbar), LIVES_WIDGET(tmp_toolbar_icon), "",
+                        _("Mute the audio (z)"));
+  lives_widget_set_focus_on_click(mainw->m_mutebutton, FALSE);
 
   for (i = 0; i < 3; i++) {
     lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
@@ -1766,12 +1744,10 @@ void create_LiVES(void) {
   mainw->vol_label = NULL;
 
   if (LIVES_IS_RANGE(mainw->volume_scale)) {
-    if (capable->smog_version_correct) {
-      mainw->vol_label = LIVES_WIDGET(lives_tool_item_new());
-      label = lives_label_new(_("Volume"));
-      lives_container_add(LIVES_CONTAINER(mainw->vol_label), label);
-      lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_label), -1);
-    }
+    mainw->vol_label = LIVES_WIDGET(lives_tool_item_new());
+    label = lives_label_new(_("Volume"));
+    lives_container_add(LIVES_CONTAINER(mainw->vol_label), label);
+    lives_toolbar_insert(LIVES_TOOLBAR(mainw->btoolbar), LIVES_TOOL_ITEM(mainw->vol_label), -1);
   } else lives_widget_object_unref(adj);
 
   mainw->vol_toolitem = LIVES_WIDGET(lives_tool_item_new());
@@ -2472,11 +2448,9 @@ void create_LiVES(void) {
 #endif
 
 #ifdef HAVE_YUV4MPEG
-  if (capable->smog_version_correct) {
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_yuv4m), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_open_yuv4m_activate),
-                         NULL);
-  }
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_yuv4m), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_open_yuv4m_activate),
+                       NULL);
 #endif
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open_lives2lives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_open_lives2lives_activate),
@@ -2866,95 +2840,93 @@ void create_LiVES(void) {
                          NULL);
 
   // these are for the menu transport buttons
-  if (capable->smog_version_correct) {
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_sepwinbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_sepwin_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_playall_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_stop_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playselbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_playsel_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_rewindbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_rewind_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_mutebutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_mute_button_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_loopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_loop_button_activate),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_sepwinbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_sepwin_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_playall_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_stop_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_playselbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_playsel_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_rewindbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_rewind_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_mutebutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_mute_button_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->m_loopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_loop_button_activate),
+                       NULL);
 
-    // these are 'invisible' buttons for the key accelerators
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_stop_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_bckground), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_fade_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_sepwin_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_double), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_double_size_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_full_screen_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_show_file_info_activate),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_toolbar_hide),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_slower), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_slower_pressed),
-                         LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_faster), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_faster_pressed),
-                         LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_back), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_back_pressed),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_forward), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(on_forward_pressed),
-                         NULL);
+  // these are 'invisible' buttons for the key accelerators
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_stopbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_stop_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_bckground), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_fade_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_sepwin), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_sepwin_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_double), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_double_size_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_fullscreen), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_full_screen_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_infobutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_show_file_info_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_hide), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_toolbar_hide),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_slower), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_slower_pressed),
+                       LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_faster), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_faster_pressed),
+                       LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_back), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_back_pressed),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->t_forward), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_forward_pressed),
+                       NULL);
 
-    mainw->mouse_fn1 = lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                                            LIVES_GUI_CALLBACK(on_mouse_sel_update),
-                                            NULL);
-    lives_signal_handler_block(mainw->eventbox2, mainw->mouse_fn1);
-    mainw->mouse_blocked = TRUE;
+  mainw->mouse_fn1 = lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
+                                          LIVES_GUI_CALLBACK(on_mouse_sel_update),
+                                          NULL);
+  lives_signal_handler_block(mainw->eventbox2, mainw->mouse_fn1);
+  mainw->mouse_blocked = TRUE;
 
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_mouse_sel_reset),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(on_mouse_sel_reset),
+                       NULL);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_mouse_sel_start),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox2), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(on_mouse_sel_start),
+                       NULL);
 
 #ifdef ENABLE_GIW_3
-    adj = giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler));
-    lives_signal_connect_swapped(LIVES_GUI_OBJECT(adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                                 LIVES_GUI_CALLBACK(on_hrule_value_changed),
-                                 mainw->hruler);
+  adj = giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler));
+  lives_signal_connect_swapped(LIVES_GUI_OBJECT(adj), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(on_hrule_value_changed),
+                               mainw->hruler);
 #else
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
-                         LIVES_GUI_CALLBACK(on_hrule_update),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
-                         LIVES_GUI_CALLBACK(on_hrule_reset),
-                         NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
-                         LIVES_GUI_CALLBACK(on_hrule_set),
-                         NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_MOTION_NOTIFY_EVENT,
+                       LIVES_GUI_CALLBACK(on_hrule_update),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_RELEASE_EVENT,
+                       LIVES_GUI_CALLBACK(on_hrule_reset),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox5), LIVES_WIDGET_BUTTON_PRESS_EVENT,
+                       LIVES_GUI_CALLBACK(on_hrule_set),
+                       NULL);
 #endif
-  }
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->sa_button), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_all_activate),
@@ -3008,7 +2980,7 @@ void show_lives(void) {
 
   lives_widget_hide(mainw->playframe);
 
-  if (capable->smog_version_correct && prefs->show_recent) {
+  if (prefs->show_recent) {
     lives_widget_show(mainw->recent_menu);
   } else {
     lives_widget_hide(mainw->recent_menu);

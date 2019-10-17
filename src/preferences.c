@@ -281,6 +281,14 @@ int set_string_pref(const char *key, const char *value) {
 }
 
 
+int set_string_pref_priority(const char *key, const char *value) {
+  char *com = lives_strdup_printf("%s set_pref_priority \"%s\" \"%s\"", prefs->backend_sync, key, value);
+  int ret = run_prefs_command(com);
+  lives_free(com);
+  return ret;
+}
+
+
 int set_utf8_pref(const char *key, const char *value) {
   // convert to locale encoding
   char *tmp = U82F(value);
@@ -861,6 +869,26 @@ success2:
 }
 
 
+boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbutton) {
+  LiVESWidgetColor col;
+  lives_colRGBA64_t lcol;
+
+  if (prefsw != NULL) prefsw->ignore_apply = TRUE;
+
+  if (!lives_rgba_equal(widget_color_to_lives_rgba(&lcol, lives_color_button_get_color(cbutton, &col)), pcol)) {
+    lives_rgba_copy(pcol, &lcol);
+    if (prefsw != NULL) {
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      prefsw->ignore_apply = FALSE;
+    }
+    return TRUE;
+  }
+
+  if (prefsw != NULL) prefsw->ignore_apply = FALSE;
+  return FALSE;
+}
+
+
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
@@ -1360,12 +1388,8 @@ boolean apply_prefs(boolean skip_warn) {
     }
   }
 
-  lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_cesel), &col);
-  widget_color_to_lives_rgba(&lcol, &col);
-  if (!lives_rgba_equal(&lcol, &palette->ce_sel)) {
-    lives_rgba_copy(&palette->ce_sel, &lcol);
+  if (pref_factory_color_button(&palette->ce_unsel, LIVES_COLOR_BUTTON(prefsw->cbutton_cesel)))
     mainw->prefs_changed |= PREFS_XCOLOURS_CHANGED;
-  }
 
   lives_color_button_get_color(LIVES_COLOR_BUTTON(prefsw->cbutton_ceunsel), &col);
   widget_color_to_lives_rgba(&lcol, &col);

@@ -521,7 +521,6 @@ static int audio_process(nframes_t nframes, void *arg) {
         numFramesToWrite = jackFramesAvailable;
         jackd->frames_written += numFramesToWrite;
         jackFramesAvailable = 0;
-
       } else {
         if (LIVES_LIKELY(jackd->playing_file >= 0)) {
           if (jackd->playing_file == mainw->ascrap_file && mainw->playing_file >= -1 && mainw->files[mainw->playing_file]->achans > 0) {

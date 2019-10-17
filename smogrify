@@ -347,7 +347,7 @@ if (defined($ARGV[0])) {
             $statusfile = "$curworkdir/.status";
 
             unless(-d "$curworkdir") {
-                exit 2;
+                exit 102;
             }
 
             if (defined(open IN, "< $pidfile")) {
@@ -1181,6 +1181,7 @@ if (defined($ARGV[0])) {
 	####################################################################
 	# run the rest in background
 	if ($background == 1) {
+	    print STDERR "com2 is $command\n";
 	    if (fork()) {
 		exit 0;
 	    }
@@ -2963,6 +2964,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "export_audio") {
+	    print STDERR "EA start\n";
 	    $audio_start = $ARGV[2];
 	    $audio_end = $ARGV[3];
 	    $arate = $ARGV[4];
@@ -2976,6 +2978,7 @@ if (defined($ARGV[0])) {
 	    unless(&is_writeable($nfile)) {
 		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
+	    print "CA!\n";
 
 	    $sox_version = &get_sox_version;
 
@@ -3005,8 +3008,9 @@ if (defined($ARGV[0])) {
 
 	    # convert raw audio to wav
 	    $audio_out = $curworkdir . "/audiodump.wav";
-
+	    print "CA!\n";
 	    &convert_audio_to_wav;
+	    print  STDERR "CA2!\n";
 	    if ($panic) {
 		unlink "$pidfile";
 		exit 1;
@@ -3016,8 +3020,8 @@ if (defined($ARGV[0])) {
 	    }
 
 	    smog_rename("$audio_out", "$nfile");
-	    smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
-
+smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
+print "EA done\n";
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3690,7 +3694,7 @@ if (defined($ARGV[0])) {
 
 	    if (-f $xdfile) {
 		&sig_error;
-		exit 2;
+		exit 102;
 	    }
 
 	    if ($bestaudio ne "") {
@@ -5818,7 +5822,7 @@ sub convert_audio_to_wav {
 	    . "\"$curworkdir/audiodump.wav\" >$nulfile 2>&1";
 
     }
-
+    print STDERR "com is $smcom\n";
     my $smerr=smog_system("$smcom");
     if ($smerr) {
         sig_system_error("$smcom",$smerr);
@@ -7287,7 +7291,6 @@ sub rc_set {
 
     my $part = -1;
     my $found = 0;
-
     if ($key eq "") {
 	## if $key is "" then we write a comment at the start
 
@@ -7309,7 +7312,8 @@ sub rc_set {
 	$rcfilesize += $addsize;
     } else {
         if (!defined(open IN,"< $rcfile") && -e $rcfile) {
-            exit 2;
+	    print "COULD not open $rcfile\n";
+            exit 102;
         }
 
         while (<IN>) {
@@ -7406,7 +7410,7 @@ sub rc_set {
 
     close OUT;
 
-    $delpref = $noreplace = 0;
+   $delpref = $noreplace = 0;
 
     if (-s "$newrcfile" != $rcfilesize) {
 	exit 4;
@@ -7425,7 +7429,6 @@ sub rc_set {
 	unlink "$rcfile";
 	exit 3;
     }
-
     unlink "$newrcfile";
 
     return 0;
@@ -7444,7 +7447,7 @@ sub rc_get {
 
     unless (defined(open IN,"$rcfile")) {
         print STDERR "Smogrify: Unable to read value $key from rc file, $rcfile\n";
-        exit 2;
+        exit 102;
     }
     $part=0;
     while (<IN>) {

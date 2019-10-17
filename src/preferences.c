@@ -58,7 +58,6 @@ static LiVESResponseType get_pref_inner(const char *filename, const char *key, c
   char *com;
 
   memset(val, 0, maxlen);
-
   if (filename == NULL) {
     if (mainw->cached_list != NULL) {
       char *prefval = get_val_from_cached_list(key, maxlen);

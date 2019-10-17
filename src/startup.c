@@ -66,15 +66,20 @@ boolean do_workdir_query(void) {
 
   char *dirname;
 
-  renamew = create_rename_dialog(6);
+  _entryw *wizard = create_rename_dialog(6);
+
+  lives_widget_show_now(wizard->dialog);
+  lives_widget_context_update();
+  lives_window_present(LIVES_WINDOW(wizard->dialog));
+  lives_xwindow_raise(lives_widget_get_xwindow(wizard->dialog));
 
   while (1) {
-    response = lives_dialog_run(LIVES_DIALOG(renamew->dialog));
+    response = lives_dialog_run(LIVES_DIALOG(wizard->dialog));
 
     if (response == LIVES_RESPONSE_CANCEL) return FALSE;
 
     // TODO: should we convert to locale encoding ??
-    dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(renamew->entry)));
+    dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
 
     if (strcmp(dirname + strlen(dirname) - 1, LIVES_DIR_SEP)) {
       char *tmp = lives_strdup_printf("%s%s", dirname, LIVES_DIR_SEP);
@@ -132,8 +137,8 @@ boolean do_workdir_query(void) {
     break;
   }
 
-  lives_widget_destroy(renamew->dialog);
-  lives_freep((void **)&renamew);
+  lives_widget_destroy(wizard->dialog);
+  lives_freep((void **)&wizard);
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);

@@ -485,23 +485,25 @@ static boolean pre_init(void) {
   //FATAL ERRORS
 
   if (!mainw->foreign) {
-    if (!capable->can_write_to_workdir) {
-      if (!mainw->has_session_workdir) {
-        tmp2 = lives_strdup_printf(_("Please check the <workdir> setting in \n%s\nand try again.\n"),
-                                   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-        lives_free(tmp);
-      } else
-        tmp2 = lives_strdup("");
-
-      msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
-                                prefs->workdir, tmp2);
-      lives_free(tmp2);
+    if (!capable->has_smogrify) {
+      msg = lives_strdup(
+              _("\n`smogrify` must be in your path, and be executable\n\n"
+                "Please review the README file which came with this package\nbefore running LiVES.\n"));
       startup_message_fatal(msg);
+      lives_free(msg);
     } else {
-      if ((!capable->has_sox_sox || !capable->has_sox_play) && !capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-        startup_message_fatal(lives_strdup(
-                                _("\nLiVES currently requires 'mplayer', 'mplayer2', 'mpv' or 'sox' to function. Please install one or other of these, and try again.\n")));
+      if (!capable->can_write_to_workdir) {
+        if (!mainw->has_session_workdir) {
+          tmp2 = lives_strdup_printf(_("Please check the <workdir> setting in \n%s\nand try again.\n"),
+                                     (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+          lives_free(tmp);
+        } else
+          tmp2 = lives_strdup("");
 
+        msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
+                                  prefs->workdir, tmp2);
+        lives_free(tmp2);
+        startup_message_fatal(msg);
       } else {
         if (!capable->has_perl) {
           startup_message_fatal(lives_strdup(
@@ -692,7 +694,6 @@ static boolean pre_init(void) {
 
   prefs->wm = NULL;
   prefs->sleep_time = 1000;
-  mainw->cached_list = NULL;
 
   mainw->splash_window = NULL;
 
@@ -801,7 +802,7 @@ static boolean pre_init(void) {
     set_palette_colours(FALSE);
   } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
 
-  if (!mainw->foreign) {
+  if (!mainw->foreign && prefs->startup_phase == 0) {
     if (prefs->show_splash) splash_init();
     print_notice();
   }
@@ -2473,11 +2474,10 @@ capability *get_capabilities(void) {
 
   if (strlen(capable->backend_path) == 0) return capable;
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-
   if (!mainw->has_session_workdir) {
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s \"%s\" ", EXEC_PERL, capable->backend_path);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\" ", EXEC_PERL, capable->backend_path);
+
     lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
     lives_free(tmp);
     capable->smog_version_correct = TRUE;
@@ -2490,6 +2490,8 @@ capability *get_capabilities(void) {
       // abort if we cannot create the new subdir
       return capable;
     }
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
   }
 
   capable->smog_version_correct = FALSE;
@@ -2508,10 +2510,20 @@ capability *get_capabilities(void) {
     return capable;
   }
 
-  capable->has_smogrify = TRUE;
-  capable->smog_version_correct = TRUE;
+  capable->has_smogrify = FALSE;
+
+  if (err == 255) {
+    // not found...
+    return capable;
+  }
 
   if (err == 2) {
+    return capable;
+  }
+
+  capable->has_smogrify = TRUE;
+
+  if (err == 102) {
     // couldnt read from rcfile
     return capable;
   }
@@ -2583,7 +2595,7 @@ capability *get_capabilities(void) {
     // from there; otherwise it returned tmp_workdir, which we created earlier with mkdtemp() and set the startup_phase
     // so we prompt the user for the real directory in workdir_query(), and then we can safely remove tmp_workdir
 
-    // if the user set the value with -tmpdir then we use the supplied value, and of course we dont' remove it,
+    // if the user set the value with -workdir then we use the supplied value, and of course we dont' remove it,
     // although we may still prompt for the working dir if it's a fresh install.
 
     lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
@@ -2591,10 +2603,9 @@ capability *get_capabilities(void) {
       lives_rmdir(prefs->tmp_workdir, TRUE);
       prefs->tmp_workdir[0] = '\0';
     }
-    delete_pref(PREF_SESSION_WORKDIR);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-
     lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    delete_pref(PREF_SESSION_WORKDIR);
   }
 
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
@@ -3284,8 +3295,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   oil_init();
 #endif
 
-#ifdef ENABLE_ORC
-  orc_init();
+
+#ifdef GUI_GTK
+  if (gtk_thread != NULL) {
+    pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL);
+  }
 #endif
 
   zargc = argc;
@@ -3361,6 +3375,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->go_away = TRUE;
   mainw->mgeom = NULL;
+  mainw->cached_list = NULL;
 
   mainw->has_session_workdir = FALSE;
 

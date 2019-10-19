@@ -885,6 +885,8 @@ boolean mt_auto_backup(livespointer user_data) {
 uint32_t mt_idle_add(lives_mt *mt) {
   uint32_t retval;
 
+  if (LIVES_IS_PLAYING || mt->is_rendering) return 0;
+
   if (prefs->mt_auto_back <= 0) return 0;
 
   if (mt->idlefunc > 0) return mt->idlefunc;
@@ -5881,10 +5883,10 @@ static void cmi_set_inactive(LiVESWidget *widget, livespointer data) {
 
 void mt_set_autotrans(int idx) {
   prefs->atrans_fx = idx;
-  if (idx == -1) set_string_pref(PREF_CURRENT_AUTOTRANS, "none");
+  if (idx == -1) set_string_pref(PREF_ACTIVE_AUTOTRANS, "none");
   else {
     char *atrans_hash = make_weed_hashname(prefs->atrans_fx, TRUE, FALSE, '|');
-    set_string_pref(PREF_CURRENT_AUTOTRANS, atrans_hash);
+    set_string_pref(PREF_ACTIVE_AUTOTRANS, atrans_hash);
     lives_free(atrans_hash);
   }
   mouse_mode_context(mainw->multitrack);
@@ -11271,9 +11273,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   // this must be done right at the end
   // it slows down every single call to g_main_context_iteration - therefore it should be disabled before calling that
-  if (multi->idlefunc == 0) {
-    multi->idlefunc = mt_idle_add(multi);
-  }
+  /* if (multi->idlefunc == 0) { */
+  /*   multi->idlefunc = mt_idle_add(multi); */
+  /* } */
 
   set_interactive(mainw->interactive);
   if (mainw->reconfig) return FALSE;
@@ -17237,12 +17239,14 @@ void mt_post_playback(lives_mt *mt) {
 
 void multitrack_playall(lives_mt *mt) {
   LiVESWidget *old_context_scroll = mt->context_scroll;
+  boolean needs_idlefunc = FALSE;
 
-  if (mainw->current_file < 1) return;
+  if (!CURRENT_CLIP_IS_VALID) return;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
     mt->idlefunc = 0;
+    needs_idlefunc = TRUE;
   }
 
   lives_widget_set_sensitive(mt->quit, TRUE);
@@ -17313,7 +17317,7 @@ void multitrack_playall(lives_mt *mt) {
 
   if (!mt->is_rendering) {
     mt_sensitise(mt);
-    mt->idlefunc = mt_idle_add(mt);
+    if (needs_idlefunc) mt->idlefunc = mt_idle_add(mt);
   }
 
   if (!pb_audio_needs_prerender) lives_widget_set_sensitive(mt->prerender_aud, FALSE);

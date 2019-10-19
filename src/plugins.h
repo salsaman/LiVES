@@ -569,6 +569,7 @@ typedef struct {
   LiVESWidget *pal_entry;
   lives_rfx_t *rfx;
   boolean keep_rfx;
+  int intention;
 } _vppaw;
 
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);

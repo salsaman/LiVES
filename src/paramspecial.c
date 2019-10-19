@@ -31,12 +31,21 @@ static LiVESList *fileread;
 static LiVESList *filewrite;
 static LiVESList *passwd_widgets;
 
+static boolean special_do_setup = TRUE;
 
 void init_special(void) {
   framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
-  aspect.width_param = aspect.height_param = NULL;
-  aspect.lockbutton = NULL;
-  aspect.nwidgets = 0;
+  if (special_do_setup) {
+    // first time init
+    aspect.no_reset = FALSE;
+    special_do_setup = FALSE;
+  }
+
+  if (!aspect.no_reset) {
+    aspect.width_param = aspect.height_param = NULL;
+    aspect.lockbutton = NULL;
+    aspect.nwidgets = 0;
+  }
   framedraw.xstart_param = framedraw.ystart_param = framedraw.xend_param = framedraw.yend_param = NULL;
   framedraw.stdwidgets = 0;
   framedraw.extra_params = NULL;
@@ -255,6 +264,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     }
 
     if (param == aspect.width_param) {
+      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), cfile->hsize);
       aspect.width_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                           LIVES_GUI_CALLBACK(after_aspect_width_changed),
                           NULL);
@@ -262,6 +272,7 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
     }
 
     if (param == aspect.height_param) {
+      if (CURRENT_CLIP_HAS_VIDEO) lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), cfile->vsize);
       aspect.height_func = lives_signal_connect_after(LIVES_GUI_OBJECT(param->widgets[0]), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_aspect_height_changed),
                            NULL);
@@ -272,6 +283,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       boolean expand = widget_opts.expand == LIVES_EXPAND_EXTRA;
       char *labeltext = lives_strdup(_("    Maintain _Aspect Ratio    "));
       LiVESWidget *eventbox = lives_event_box_new();
+
+      aspect.no_reset = TRUE;
 
       // TODO: fix the width and height
       aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH, ASPECT_BUTTON_HEIGHT, _("Maintain aspect ratio"));
@@ -510,6 +523,8 @@ boolean check_filewrite_overwrites(void) {
 boolean special_cleanup(boolean is_ok) {
   // free some memory now
   if (is_ok && !check_filewrite_overwrites()) return FALSE;
+
+  aspect.no_reset = FALSE;
 
   mainw->framedraw = mainw->framedraw_reset = NULL;
   mainw->framedraw_spinbutton = NULL;

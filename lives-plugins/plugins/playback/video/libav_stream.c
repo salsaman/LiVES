@@ -168,7 +168,7 @@ const char *get_init_rfx(int intention) {
 <params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
-mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
+mbitv|Max bitrate (_video)|num0|500000|100000|1000000000|\\n\
 \
 achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
@@ -206,23 +206,28 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
 0xF0\\n\
 </language_code>\\n\
 <params>\\n\
-form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
+form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis|webm/vp9/opus||\\n\
 \
-mbitv|Max bitrate (_video)|num0|3000000|100000|1000000000|\\n\
+mbitv|Max bitrate (_video)|num0|500000|100000|1000000000|\\n\
 \
 achans|Audio _layout|string_list|1|mono|stereo||\\n\
 arate|Audio _rate (Hz)|string_list|1|22050|44100|48000||\\n\
 mbita|Max bitrate (_audio)|num0|320000|16000|10000000|\\n\
 \
 fname|_Output file|string||\\n\
+highq|_High quality (larger file size)|bool|0|0|\\n\
 </params>\\n\
 <param_window>\\n\
 special|filewrite|5|\\n\
-layout|p5||\\n\
+layout|hseparator|\\n\
+layout|p5|\\n\
+layout|p6|\\n\
+layout|p0|\\n\
+layout|hseparator|\\n\
 </param_window>\\n\
 <onchange>\\n\
-init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";}\\n\
-0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} else {$p5 .= \".ogm\";}\\n\
+init|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 == 2) {$p5 .= \".webm\";} else {$p5 .= \".ogm\";}\\n\
+0|$p5 = (split(/\\./,$p5))[0]; if ($p0 == 0) {$p5 .= \".mp4\";} elsif ($p0 == 2) {$p5 .= \".webm\";} else {$p5 .= \".ogm\";}\\n\
 </onchange>\\n\
 ";
   default:
@@ -350,9 +355,9 @@ static boolean open_audio() {
       }
     }
   }
-  c->channels        = out_nchans = av_get_channel_layout_nb_channels(c->channel_layout);
+  c->channels = out_nchans = av_get_channel_layout_nb_channels(c->channel_layout);
 
-  c->bit_rate    = maxabitrate;
+  c->bit_rate = maxabitrate;
   c->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
   ret = avcodec_open2(c, codec, &opt);
   if (ret < 0) {
@@ -507,7 +512,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   vcodec_id = AV_CODEC_ID_H264;
 
   acodec_id = AV_CODEC_ID_MP3;
-  maxvbitrate = 3000000;
+  maxvbitrate = 500000;
 
   if (argc > 0) {
     switch (atoi(argv[0])) {
@@ -522,6 +527,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       vcodec_id = AV_CODEC_ID_THEORA;
       acodec_id = AV_CODEC_ID_VORBIS;
       break;
+    case 2:
+      fmtstring = "webm";
+      vcodec_id = AV_CODEC_ID_VP9;
+      acodec_id = AV_CODEC_ID_OPUS;
+      break;
     default:
       return FALSE;
     }
@@ -534,6 +544,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
       break;
     case 1:
+    case 2:
       stream_encode = FALSE;
       snprintf(uri, PATH_MAX, "%s", argv[5]);
       break;
@@ -594,14 +605,35 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   //vStream->codec->color_trc = AVCOL_TRC_IEC61966_2_1;
 
   vStream->codec->bit_rate = maxvbitrate;
+  // vStream->codec->bit_rate_tolerance = 0;
+
   if (vcodec_id == AV_CODEC_ID_H264) {
     av_opt_set(encctx->priv_data, "preset", "ultrafast", 0);
     //av_opt_set(encctx->priv_data, "crf", "0", 0);
     av_opt_set(encctx->priv_data, "qscale", "1", 0);
     av_opt_set(encctx->priv_data, "profile", "main", 0);
     av_opt_set(encctx->priv_data, "crf", "1", 0);
+
+    if (!atoi(argv[6])) {
+      // lower q, about half the size
+      vStream->codec->qmin = 10;
+      vStream->codec->qmax = 51;
+    }
+
+    /* // highest quality - may break compliance */
+    /* vStream->codec->me_subpel_quality = 11; */
+    /* vStream->codec->trellis = 2; */
+
+    /* // 3 for black enhance */
+    /* av_opt_set(encctx->priv_data, "aq-mode", "2", 0); */
+
+    /* if (mypalette == WEED_PALETTE_YUV444P) */
+    /*   av_opt_set(encctx->priv_data, "profile", "high444", 0); */
+    /* else */
+    /*   av_opt_set(encctx->priv_data, "profile", "main", 0); */
   }
-  vStream->codec->gop_size = 10;
+
+  //vStream->codec->gop_size = 10; // maybe only streaming, breaks whatsapp
 
   if (vcodec_id == AV_CODEC_ID_MPEG2VIDEO) {
     /* just for testing, we also add B frames */

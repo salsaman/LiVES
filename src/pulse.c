@@ -167,6 +167,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
   if (xbytes <= 0) return;
   if (mainw->aplayer_broken) return;
   while (nbytes > 0) {
+    int ret = 0;
 #if HAVE_PA_STREAM_BEGIN_WRITE
     xbytes = -1;
     // returns a buffer and size for us to write to
@@ -176,10 +177,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
 #if !HAVE_PA_STREAM_BEGIN_WRITE
     buff = (uint8_t *)lives_try_malloc0(xbytes);
 #endif
-    if (!buff) {
-#if HAVE_PA_STREAM_BEGIN_WRITE
-      pa_stream_cancel_write(pdriver->pstream);
-#endif
+    if (!buff || ret != 0) {
       return;
     }
 #if HAVE_PA_STREAM_BEGIN_WRITE
@@ -741,18 +739,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (xbytes / pulsed->out_achans / (pulsed->out_asamps >> 3) <= numFramesToWrite && offs == 0) {
             buffer = pulsed->sound_buffer;
           } else {
+            int ret = 0;
+            if (pulsed->sound_buffer) {
 #if HAVE_PA_STREAM_BEGIN_WRITE
-            xbytes = -1;
-            // returns a buffer and a max size fo us to write to
-            pa_stream_begin_write(pulsed->pstream, (void **)&buffer, &xbytes);
-            if (nbytes < xbytes) xbytes = nbytes;
+              xbytes = -1;
+              // returns a buffer and a max size fo us to write to
+              ret = pa_stream_begin_write(pulsed->pstream, (void **)&buffer, &xbytes);
+              if (nbytes < xbytes) xbytes = nbytes;
 #else
-            buffer = (uint8_t *)lives_try_malloc(nbytes);
+              buffer = (uint8_t *)lives_try_malloc(nbytes);
 #endif
-            if (!buffer || !pulsed->sound_buffer) {
-#if HAVE_PA_STREAM_BEGIN_WRITE
-              pa_stream_cancel_write(pulsed->pstream);
-#endif
+            }
+            if (!pulsed->sound_buffer || ret != 0 || !buffer) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;
@@ -780,18 +778,16 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
         } else {
           if (pulsed->read_abuf > -1 && !pulsed->mute) {
+            int ret = 0;
 #if HAVE_PA_STREAM_BEGIN_WRITE
             xbytes = -1;
-            pa_stream_begin_write(pulsed->pstream, (void **)&shortbuffer, &xbytes);
+            ret = pa_stream_begin_write(pulsed->pstream, (void **)&shortbuffer, &xbytes);
 #endif
             if (nbytes < xbytes) xbytes = nbytes;
 #if !HAVE_PA_STREAM_BEGIN_WRITE
             shortbuffer = (short *)lives_try_malloc0(xbytes);
 #endif
-            if (!shortbuffer) {
-#if HAVE_PA_STREAM_BEGIN_WRITE
-              pa_stream_cancel_write(pulsed->pstream);
-#endif
+            if (!shortbuffer || ret != 0) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), nbytes);
               if (!pulsed->is_paused) pulsed->frames_written += nsamples;

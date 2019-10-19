@@ -104,7 +104,6 @@
 #endif
 
 ////////////////////////////////
-capability *capable;
 _palette *palette;
 ssize_t sizint, sizdbl, sizshrt;
 mainwindow *mainw;
@@ -177,7 +176,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
   //#define TRAP_ERRMSG ""
 #ifdef TRAP_ERRMSG
   if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
-    lives_printerr("Trapped message %s\n", message);
+    fprintf(stderr, "Trapped message %s\n", message);
     raise(LIVES_SIGSEGV);
   }
 #endif
@@ -198,7 +197,7 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     d_print(msg);
   }
 
-  lives_printerr("%s", msg);
+  fprintf(stderr, "%s", msg);
   lives_free(msg);
 
   if (level & LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
@@ -245,16 +244,16 @@ void catch_sigint(int signum) {
       if (signum == LIVES_SIGABRT || signum == LIVES_SIGSEGV) {
         signal(LIVES_SIGSEGV, SIG_DFL);
         signal(LIVES_SIGABRT, SIG_DFL);
-        lives_printerr(_("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
-                         "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
-        lives_printerr(_("\n\nWhen reporting crashes, please include details of your operating system, "
-                         "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
+        fprintf(stderr, _("\nUnfortunately LiVES crashed.\nPlease report this bug at %s\n"
+                          "Thanks. Recovery should be possible if you restart LiVES.\n"), LIVES_BUG_URL);
+        fprintf(stderr, _("\n\nWhen reporting crashes, please include details of your operating system, "
+                          "distribution, and the LiVES version (%s)\n"), LiVES_VERSION);
 
         if (capable->has_gdb) {
-          if (mainw->debug) lives_printerr("%s", _("and any information shown below:\n\n"));
-          else lives_printerr("%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
+          if (mainw->debug) fprintf(stderr, "%s", _("and any information shown below:\n\n"));
+          else fprintf(stderr, "%s", _("Please try running LiVES with the -debug option to collect more information.\n\n"));
         } else {
-          lives_printerr("%s", _("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
+          fprintf(stderr, "%s", _("Please install gdb and then run LiVES with the -debug option to collect more information.\n\n"));
         }
 
 #ifdef USE_GLIB
@@ -272,7 +271,7 @@ void catch_sigint(int signum) {
       }
 
       if (mainw->was_set) {
-        lives_printerr("%s", _("Preserving set.\n"));
+        fprintf(stderr, "%s", _("Preserving set.\n"));
       }
 
       mainw->leave_recovery = mainw->leave_files = TRUE;
@@ -450,11 +449,11 @@ void get_monitors(boolean reset) {
 
 
 static void print_notice(void) {
-  lives_printerr("\nLiVES %s\n", LiVES_VERSION);
-  lives_printerr("Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
-  lives_printerr("LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
-                 "under certain conditions; "
-                 "see the file COPYING for details.\n\n");
+  fprintf(stderr, "\nLiVES %s\n", LiVES_VERSION);
+  fprintf(stderr, "Copyright "LIVES_COPYRIGHT_YEARS" Gabriel Finch ("LIVES_AUTHOR_EMAIL") and others.\n");
+  fprintf(stderr, "LiVES comes with ABSOLUTELY NO WARRANTY\nThis is free software, and you are welcome to redistribute it\n"
+          "under certain conditions; "
+          "see the file COPYING for details.\n\n");
 }
 
 
@@ -534,6 +533,7 @@ static boolean pre_init(void) {
                   startup_message_fatal(msg);
                 } else {
                   if (!capable->can_write_to_config) {
+                    char *tmp;
                     msg = lives_strdup_printf(
                             _("\nLiVES was unable to write to its configuration file\n%s\n\n"
                               "Please check the file permissions for this file and directory\nand try again.\n"),
@@ -616,7 +616,6 @@ static boolean pre_init(void) {
   mainw->string_constants[LIVES_STRING_CONSTANT_TEST] = lives_strdup(_("Test"));
 
   // now we can use PREFS properly
-  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
   cache_file_contents(capable->rcfile);
 
   get_string_pref(PREF_DS_WARN_LEVEL, buff, 256);
@@ -638,9 +637,6 @@ static boolean pre_init(void) {
       startup_message_fatal(msg);
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
-
-  if (mainw->has_session_workdir)
-    set_string_pref(PREF_SESSION_WORKDIR, prefs->workdir);
 
   // get some prefs we need to set menu options
   prefs->gui_monitor = -1;
@@ -1406,7 +1402,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->rec_stop_gb = get_int_pref(PREF_REC_STOP_GB);
 
-  if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = DEF_FX_KEYMODES;
+  if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
   prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
   if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
@@ -1815,7 +1811,7 @@ static void lives_init(_ign_opts *ign_opts) {
     }
     lives_strfreev(array);
 
-    get_string_prefd(PREF_CURRENT_AUTOTRANS, buff, 256, DEF_AUTOTRANS);
+    get_string_prefd(PREF_ACTIVE_AUTOTRANS, buff, 256, DEF_AUTOTRANS);
     if (!strcmp(buff, "none")) prefs->atrans_fx = -1;
     else {
       if (!lives_utf8_strcasecmp(buff, DEF_AUTOTRANS) || get_token_count(buff, '|') < 3)
@@ -1895,7 +1891,7 @@ static void lives_init(_ign_opts *ign_opts) {
                             "or else change the value of <jack_opts> in %s to 16\nand restart LiVES.\n\n"
                             "Alternatively, try to start lives with either \"lives -jackopts 16\", or "),
                           (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-            lives_printerr("%s%s\n\n", msg, otherbit);
+            fprintf(stderr, "%s%s\n\n", msg, otherbit);
             lives_free(msg);
             lives_free(tmp);
             lives_free(otherbit);
@@ -2377,7 +2373,6 @@ capability *get_capabilities(void) {
   kern_return_t kerr;
 #endif
 
-  capable = (capability *)lives_malloc(sizeof(capability));
   capable->has_perl = FALSE;
 
   get_location(EXEC_PERL, string, 256);
@@ -2395,9 +2390,6 @@ capability *get_capabilities(void) {
     capable->byte_order = LIVES_BIG_ENDIAN;
   else
     capable->byte_order = LIVES_LITTLE_ENDIAN;
-
-  capable->has_smogrify = FALSE;
-  capable->smog_version_correct = FALSE;
 
   capable->mainpid = lives_getpid();
 
@@ -2418,11 +2410,13 @@ capability *get_capabilities(void) {
   get_location("eject", capable->eject_cmd, PATH_MAX);
 
   // required
-  capable->can_write_to_workdir = FALSE;
-  capable->can_write_to_home = FALSE;
-  capable->can_write_to_config = FALSE;
-  capable->can_write_to_config_new = FALSE;
-  capable->can_read_from_config = FALSE;
+  capable->can_write_to_workdir = TRUE;
+  capable->can_write_to_home = TRUE;
+  capable->can_write_to_config = TRUE;
+  capable->can_write_to_config_new = TRUE;
+  capable->can_read_from_config = TRUE;
+  capable->has_smogrify = TRUE;
+  capable->smog_version_correct = TRUE;
 
 #ifdef GUI_GTK
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
@@ -2436,7 +2430,10 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->system_workdir, PATH_MAX, "%s", qsl.at(0).toLocal8Bit().constData());
 #endif
 
-  memset(capable->startup_msg, 0, 1);
+  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
+
+  capable->startup_msg[0] = '\0';
+
   // optional
   capable->has_mplayer = FALSE;
   capable->has_mplayer2 = FALSE;
@@ -2462,40 +2459,40 @@ capability *get_capabilities(void) {
   capable->has_gconftool_2 = FALSE;
   capable->has_xdg_screensaver = FALSE;
 
+  capable->can_write_to_home = FALSE;
   safer_bfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d", capable->home_dir, lives_getuid(), lives_getgid());
   lives_rm(safer_bfile);
 
   // check that we can write to $HOME
   if (!check_file(safer_bfile, FALSE)) return capable;
-
   capable->can_write_to_home = TRUE;
 
-  lives_snprintf(capable->backend_path, PATH_MAX, "%s",  lives_find_program_in_path(BACKEND_NAME));
-
+  capable->has_smogrify = FALSE;
+  lives_snprintf(capable->backend_path, PATH_MAX, "%s", lives_find_program_in_path(BACKEND_NAME));
   if (strlen(capable->backend_path) == 0) return capable;
+  capable->has_smogrify = TRUE;
 
   if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s \"%s\" ", EXEC_PERL, capable->backend_path);
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\" ", EXEC_PERL, capable->backend_path);
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
 
     lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
     lives_free(tmp);
-    capable->smog_version_correct = TRUE;
     capable->can_write_to_home = FALSE;
     if (mkdtemp(prefs->tmp_workdir) == NULL) {
       return capable;
     }
+    capable->can_write_to_home = TRUE;
   } else {
+    capable->can_write_to_workdir = FALSE;
     if (!lives_make_writeable_dir(prefs->workdir)) {
       // abort if we cannot create the new subdir
       return capable;
     }
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    capable->can_write_to_workdir = TRUE;
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->workdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->workdir);
   }
-
-  capable->smog_version_correct = FALSE;
-  capable->can_write_to_home = TRUE;
 
   lives_snprintf(string, 256, "%s report \"%s\" \"%s\" 2>%s", prefs->backend_sync,
                  (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
@@ -2505,7 +2502,6 @@ capability *get_capabilities(void) {
   lives_free(tmp);
 
   err = lives_system(string, TRUE) >> 8;
-
   if (err == 127 || err == 126) {
     return capable;
   }
@@ -2513,15 +2509,17 @@ capability *get_capabilities(void) {
   capable->has_smogrify = FALSE;
 
   if (err == 255) {
-    // not found...
+    // error in executable
     return capable;
   }
 
   if (err == 2) {
+    // not found
     return capable;
   }
 
   capable->has_smogrify = TRUE;
+  capable->can_read_from_config = FALSE;
 
   if (err == 102) {
     // couldnt read from rcfile
@@ -2529,6 +2527,7 @@ capability *get_capabilities(void) {
   }
 
   capable->can_read_from_config = TRUE;
+  capable->can_write_to_config = FALSE;
 
   if (err == 3) {
     // couldnt write to rcfile
@@ -2536,6 +2535,7 @@ capability *get_capabilities(void) {
   }
 
   capable->can_write_to_config = TRUE;
+  capable->can_write_to_config_new = FALSE;
 
   if (err == 4) {
     // couldnt write to rcfile.new
@@ -2551,17 +2551,21 @@ capability *get_capabilities(void) {
   }
 
   if (err == 6) {
+    capable->can_write_to_workdir = FALSE;
     // couldnt write to workdir
     return capable;
   }
 
   capable->can_write_to_workdir = TRUE;
+  capable->can_write_to_home = FALSE;
 
   if (!(bootfile = fopen(safer_bfile, "r"))) {
+    capable->can_write_to_home = FALSE;
     lives_free(safer_bfile);
     return capable;
   }
 
+  capable->can_write_to_home = TRUE;
   mainw->read_failed = FALSE;
   lives_fgets(buffer, 8192, bootfile);
   fclose(bootfile);
@@ -2591,6 +2595,7 @@ capability *get_capabilities(void) {
   capable->smog_version_correct = TRUE;
 
   if (!mainw->has_session_workdir) {
+    size_t tmplen = strlen(prefs->tmp_workdir);
     // The backend process returned a value. If the user has a valid, undamaged  config file, it returned the stored value
     // from there; otherwise it returned tmp_workdir, which we created earlier with mkdtemp() and set the startup_phase
     // so we prompt the user for the real directory in workdir_query(), and then we can safely remove tmp_workdir
@@ -2600,12 +2605,13 @@ capability *get_capabilities(void) {
 
     lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
     if (strcmp(prefs->workdir, prefs->tmp_workdir)) {
-      lives_rmdir(prefs->tmp_workdir, TRUE);
-      prefs->tmp_workdir[0] = '\0';
+      if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
+        lives_rmdir(prefs->tmp_workdir, TRUE);
+        prefs->tmp_workdir[0] = '\0';
+      }
     }
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
     lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-    delete_pref(PREF_SESSION_WORKDIR);
   }
 
   lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
@@ -2645,10 +2651,7 @@ capability *get_capabilities(void) {
   lives_strfreev(array);
 
   if (prefs->startup_phase == 0) {
-    if (mainw->has_session_workdir) {
-      set_string_pref_priority(PREF_SESSION_WORKDIR, prefs->workdir);
-      set_string_pref(PREF_SESSION_WORKDIR_OLD, prefs->workdir);
-    } else {
+    if (!mainw->has_session_workdir) {
       set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
       set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
     }
@@ -2747,79 +2750,82 @@ capability *get_capabilities(void) {
 
 void print_opthelp(void) {
   print_notice();
+
   lives_printerr(_("\nStartup syntax is: %s [opts] [filename [start_time] [frames]]\n"), capable->myname);
-  lives_printerr("%s", _("Where: filename is the name of a media file or backup file.\n"));
-  lives_printerr("%s", _("start_time : filename start time in seconds\n"));
-  lives_printerr("%s", _("frames : maximum number of frames to open\n"));
-  lives_printerr("%s", "\n");
-  lives_printerr("%s", _("opts can be:\n"));
-  lives_printerr("%s", _("-help                       : show this help text and exit\n"));
-  lives_printerr("%s", _("-workdir <tempdir>          : use alternate working directory (e.g /var/ramdisk)\n"));
-  lives_printerr("%s", _("-set <setname>              : autoload clip set setname\n"));
-  lives_printerr("%s", _("-noset                      : do not load any set on startup\n"));
-  lives_printerr("%s", _("-norecover                  : force no-loading of crash recovery\n"));
-  lives_printerr("%s", _("-recover                    : force loading of crash recovery\n"));
-  lives_printerr("%s", _("-nogui                      : do not show the gui\n"));
-  lives_printerr("%s", _("-nosplash                   : do not show the splash window\n"));
-  lives_printerr("%s", _("-noplaywin                  : do not show the play window\n"));
-  lives_printerr("%s", _("-noninteractive             : disable menu interactivity\n"));
-  lives_printerr("%s", _("-startup-ce                 : start in clip editor mode\n"));
-  lives_printerr("%s", _("-startup-mt                 : start in multitrack mode\n"));
-  lives_printerr("%s", _("-fxmodesmax <n>             : allow <n> modes per effect key (minimum is 1, default is 8)\n"));
+  fprintf(stderr, "%s", _("Where: filename is the name of a media file or backup file.\n"));
+  fprintf(stderr, "%s", _("start_time : filename start time in seconds\n"));
+  fprintf(stderr, "%s", _("frames : maximum number of frames to open\n"));
+  fprintf(stderr, "%s", "\n");
+  fprintf(stderr, "%s", _("opts can be:\n"));
+  fprintf(stderr, "%s", _("-help, --help               : show this help text and exit\n"));
+  fprintf(stderr, "%s", _("-version, --version         : show the LiVES version and exit\n"));
+  fprintf(stderr, "%s", _("-workdir <tempdir>          : use alternate working directory (e.g /var/ramdisk)\n"));
+  fprintf(stderr, "%s", _("-set <setname>              : autoload clip set setname\n"));
+  fprintf(stderr, "%s", _("-noset                      : do not load any set on startup\n"));
+  fprintf(stderr, "%s", _("-norecover                  : force no-loading of crash recovery\n"));
+  fprintf(stderr, "%s", _("-recover                    : force loading of crash recovery\n"));
+  fprintf(stderr, "%s", _("-nogui                      : do not show the gui\n"));
+  fprintf(stderr, "%s", _("-nosplash                   : do not show the splash window\n"));
+  fprintf(stderr, "%s", _("-noplaywin                  : do not show the play window\n"));
+  fprintf(stderr, "%s", _("-noninteractive             : disable menu interactivity\n"));
+  fprintf(stderr, "%s", _("-startup-ce                 : start in clip editor mode\n"));
+  fprintf(stderr, "%s", _("-startup-mt                 : start in multitrack mode\n"));
+  fprintf(stderr, "%s", _("-fxmodesmax <n>             : allow <n> modes per effect key (minimum is 1, default is " DEF_FX_KEYMODES ")\n"));
 #ifdef ENABLE_OSC
-  lives_printerr("%s", _("-oscstart <port>            : start OSC listener on UDP port <port>\n"));
-  lives_printerr("%s", _("-nooscstart                 : do not start OSC listener\n"));
-  lives_printerr(
+  fprintf(stderr, "%s", _("-oscstart <port>            : start OSC listener on UDP port <port>\n"));
+  fprintf(stderr, "%s", _("-nooscstart                 : do not start OSC listener\n"));
+  fprintf(stderr,
 #endif
-    _("-asource <source>                              : set the initial audio source; <source> can be 'internal' or 'external' \n"
-      "                                                   (only valid for %s and %s players)\n"),
-    AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
-  lives_printerr("%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
+          _("-asource <source>           : set the initial audio source; <source> can be 'internal' or 'external' \n"
+            "                                    [only valid for %s and %s players]\n"),
+          AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
+  fprintf(stderr, "%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
-  lives_printerr("%s", AUDIO_PLAYER_PULSE);
+  fprintf(stderr, "%s", AUDIO_PLAYER_PULSE);
 #endif
 #ifdef ENABLE_JACK
 #ifdef HAVE_PULSE_AUDIO
-  lives_printerr(", ");
+  fprintf(stderr, ", ");
 #endif
-  lives_printerr("%s", AUDIO_PLAYER_JACK);
+  fprintf(stderr, "%s", AUDIO_PLAYER_JACK);
   if (capable->has_sox_play) lives_printerr(", %s", AUDIO_PLAYER_SOX);
-  lives_printerr(" or %s\n", AUDIO_PLAYER_NONE);
-  lives_printerr("%s",
-                 _("-jackopts <opts>                   : opts is a bitmap of jack startup options \n"
-                   "                                     "
-                   "[1 = jack transport client, \n"
-                   "                                     "
-                   "2 = jack transport master, \n"
-                   "                                     "
-                   "4 = start/stop jack transport server, \n"
-                   "                                     "
-                   "8 = pause transport when video paused, \n"
-                   "                                     "
-                   "16 = start/stop jack audio server] \n"));
+  fprintf(stderr, " or %s\n", AUDIO_PLAYER_NONE);
+  fprintf(stderr, "%s",
+          _("-jackopts <opts>            : opts is a bitmap of jack startup options \n"
+            "                                    "
+            "[1 = jack transport client, \n"
+            "                                     "
+            "2 = jack transport master, \n"
+            "                                     "
+            "4 = start/stop jack transport server, \n"
+            "                                     "
+            "8 = pause transport when video paused, \n"
+            "                                     "
+            "16 = start/stop jack audio server] \n"));
 #else // no jack
   if (capable->has_sox_play) {
 #ifdef HAVE_PULSE_AUDIO
-    lives_printerr(", ");
+    fprintf(stderr, ", ");
 #endif
-    lives_printerr("%s or ", AUDIO_PLAYER_SOX);
+    fprintf(stderr, "%s or ", AUDIO_PLAYER_SOX);
   }
 #ifdef HAVE_PULSE_AUDIO
-  else lives_printerr(_(" or "));
+  else fprintf(stderr, _(" or "));
 #endif
 #endif
-  lives_printerr("%s\n", AUDIO_PLAYER_NONE);
-
+#ifndef ENABLE_JACK
+  fprintf(stderr, "%s\n", AUDIO_PLAYER_NONE);
+#endif
   //
 
-  lives_printerr("%s", _("-devicemap <mapname>                     : autoload devicemap\n"));
-  lives_printerr("%s",
-                 _("-vppdefaults <file>                            : load video playback plugin defaults from <file>"
-                   "                                                 "
-                   "(Note: only affects the settings, not the plugin type)\n"));
-  lives_printerr("%s", _("-debug                                    : try to debug crashes (requires 'gdb' to be installed)\n"));
+  fprintf(stderr, "%s", _("-devicemap <mapname>        : autoload devicemap\n"));
+  fprintf(stderr, "%s",
+          _("-vppdefaults <file>         : load video playback plugin defaults from <file>\n"
+            "                                    "
+            "[Note: only affects the settings, not the plugin type]\n"));
+  fprintf(stderr, "%s", _("-debug                      : try to debug crashes (requires 'gdb' to be installed)\n"));
 
-  lives_printerr("%s", "\n");
+  fprintf(stderr, "%s", "\n");
 }
 
 //// things to do - on startup
@@ -2891,6 +2897,7 @@ static boolean lives_startup(livespointer data) {
 
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
+  size_t tmplen;
   char *tmp, *tmp2, *msg;
 
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
@@ -2898,7 +2905,8 @@ static boolean lives_startup(livespointer data) {
     if (!do_workdir_query()) {
       lives_exit(0);
     }
-    if (prefs->tmp_workdir != NULL) {
+    tmplen = strlen(prefs->tmp_workdir);
+    if (tmplen > 0 && (tmplen > strlen(prefs->workdir) || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen))) {
       lives_rmdir(prefs->tmp_workdir, TRUE);
       prefs->tmp_workdir[0] = '\0';
     }
@@ -3286,6 +3294,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   mainw = NULL;
+  prefs = NULL;
+  capable = NULL;
+
   set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
   ign_opts.ign_clipset = ign_opts.ign_osc = ign_opts.ign_aplayer = ign_opts.ign_asource = ign_opts.ign_stmode = ign_opts.ign_vppdefs =
@@ -3386,7 +3397,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   mainw->interactive = TRUE;
 
-  prefs->max_modes_per_key = DEF_FX_KEYMODES;
+  prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
+
+  capable = (capability *)lives_malloc(sizeof(capability));
 
   // get opts first
   if (argc > 1) {
@@ -3394,6 +3407,22 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       // special mode for grabbing external window
       mainw->foreign = TRUE;
     } else if (!strcmp(argv[1], "-help") || !strcmp(argv[1], "--help")) {
+      char string[256];
+      get_location(EXEC_PLAY, string, 256);
+      if (strlen(string)) capable->has_sox_play = TRUE;
+
+      capable->myname_full = lives_find_program_in_path(argv[0]);
+
+      if ((mynsize = lives_readlink(capable->myname_full, fbuff, PATH_MAX)) != -1) {
+        memset(fbuff + mynsize, 0, 1);
+        lives_free(capable->myname_full);
+        capable->myname_full = lives_strdup(fbuff);
+      }
+
+      lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
+      get_basename(fbuff);
+      capable->myname = lives_strdup(fbuff);
+
       print_opthelp();
       exit(0);
     } else if (!strcmp(argv[1], "-version") || !strcmp(argv[1], "--version")) {
@@ -3580,7 +3609,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_EXT;
             ign_opts.ign_asource = TRUE;
           } else if (strcmp(buff, _("internal")) && strcmp(buff, "internal")) { // handle translated and original strings
-            lives_printerr(_("Invalid audio source %s\n"), buff);
+            fprintf(stderr, _("Invalid audio source %s\n"), buff);
           } else {
             future_prefs->audio_src = prefs->audio_src = AUDIO_SRC_INT;
             ign_opts.ign_asource = TRUE;
@@ -3746,15 +3775,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 
 void startup_message_fatal(char *msg) {
+  size_t tmplen = strlen(prefs->tmp_workdir);
   if (mainw->splash_window != NULL) splash_end();
 
   do_blocking_error_dialog(msg);
 
-  if (prefs->tmp_workdir != NULL) {
+  if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
     // created with mkdtemp
     lives_rmdir(prefs->tmp_workdir, TRUE);
     prefs->tmp_workdir[0] = '\0';
-    lives_rm(capable->rcfile);
   }
 
   // needs notify_socket and prefs->omc_events, so most likely will do nothing
@@ -7551,7 +7580,7 @@ void load_frame_image(int frame) {
 
     // should use close_current_file
     if (new_file == -1 || new_file > MAX_FILES) {
-      lives_printerr("warning - attempt to switch to invalid clip %d\n", new_file);
+      fprintf(stderr, "warning - attempt to switch to invalid clip %d\n", new_file);
       return;
     }
 

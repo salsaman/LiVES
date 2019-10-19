@@ -2242,8 +2242,9 @@ _entryw *create_rename_dialog(int type) {
     }
     if (type == 6) {
       char *workdir;
-      if (prefs->workdir != NULL && strlen(prefs->workdir) > 0) workdir = lives_strdup(prefs->workdir);
-      else workdir = lives_build_filename(capable->home_dir, LIVES_WORK_NAME, NULL);
+      if (strlen(prefs->workdir) > 0 && (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->workdir, prefs->tmp_workdir)))
+        workdir = lives_strdup(prefs->workdir);
+      else workdir = lives_build_filename(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
       lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(workdir)));
       lives_free(tmp);
       lives_free(workdir);
@@ -4059,7 +4060,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, 0);
 
   // add "aspectratio" widget
-  if (mainw->current_file > -1) {
+  if (CURRENT_CLIP_HAS_VIDEO) {
     aspect = add_aspect_ratio_button(LIVES_SPIN_BUTTON(spinbutton_width), LIVES_SPIN_BUTTON(spinbutton_height), LIVES_BOX(hbox));
     lives_widget_set_no_show_all(lives_widget_get_parent(aspect->label), TRUE);
   } else aspect = NULL;

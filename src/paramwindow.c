@@ -2879,6 +2879,8 @@ char *param_marshall(lives_rfx_t *rfx, boolean with_min_max) {
 
   for (i = 0; i < rfx->num_params; i++) {
     switch (rfx->params[i].type) {
+    case LIVES_PARAM_UNKNOWN:
+      continue;
     case LIVES_PARAM_COLRGB24:
       get_colRGB24_param(rfx->params[i].value, &rgb);
       if (!with_min_max) {

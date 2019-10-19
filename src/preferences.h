@@ -768,12 +768,12 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 /////////////////// string values
 
 #define PREF_WORKING_DIR "workdir"
-#define PREF_WORKING_DIR_OLD "workdir"
+#define PREF_WORKING_DIR_OLD "tempdir"
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
 #define PREF_LIB_DIR "lib_dir" // readonly
 
 #define PREF_SESSION_WORKDIR "session_workdir"
-#define PREF_SESSION_WORKDIR_OLD "session_workdir"
+#define PREF_SESSION_WORKDIR_OLD "session_tempdir"
 
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
@@ -802,8 +802,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_AR_LAYOUT "ar_layout"
 #define PREF_AR_CLIPSET "ar_clipset"
 
-#define PREF_CURRENT_AUTOTRANS "current_autotrans"
-#define PREF_DEF_AUTOTRANS "def_autotrans"  // readonly
+#define PREF_ACTIVE_AUTOTRANS "active_autotrans"
 
 #define PREF_SCREEN_SCALE "screen_scale"
 

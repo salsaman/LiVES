@@ -22,6 +22,7 @@
 #include "plugins.h"
 #include "rte_window.h"
 #include "interface.h"
+#include "startup.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -1611,47 +1612,27 @@ boolean apply_prefs(boolean skip_warn) {
   ensure_isdir(future_prefs->workdir);
 
   if (strcmp(prefs->workdir, workdir) || strcmp(future_prefs->workdir, workdir)) {
-    size_t chklen = strlen(LIVES_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
-    if (lives_file_test(workdir, LIVES_FILE_TEST_EXISTS) && (strlen(workdir) < chklen ||
-        strncmp(workdir + strlen(workdir) - chklen, LIVES_DIR_SEP LIVES_WORK_NAME LIVES_DIR_SEP, chklen)))
-      lives_strappend(workdir, PATH_MAX, LIVES_WORK_NAME LIVES_DIR_SEP);
+    char *xworkdir = lives_strdup(workdir);
+    if (check_workdir_valid(&xworkdir)) {
+      char *msg = lives_strdup(
+                    _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
+                      "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
+                      "Alternatively, press Cancel to restore the working directory to its original setting."));
 
-    if (strcmp(prefs->workdir, workdir) || strcmp(future_prefs->workdir, workdir)) {
-      char *msg;
+      lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
+      lives_free(xworkdir);
 
-      if (!check_dir_access(workdir)) {
-        tmp = lives_filename_to_utf8(workdir, -1, NULL, NULL, NULL);
-#ifndef IS_MINGW
-        msg = lives_strdup_printf(
-                _("Unable to create or write to the new working directory.\nYou may need to create it as the root user first, e.g:\n\nsudo mkdir -p '%s'"
-                  "\n\nThe directory will not be changed now.\n"),
-                tmp, tmp);
-#else
-        msg = lives_strdup_printf(
-                _("Unable to create or write to the new working directory.\n%s\nPlease try another directory or contact your system administrator."
-                  "\n\nThe directory will not be changed now.\n"),
-                tmp);
-#endif
+      lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
+      set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label));
+      lives_widget_queue_draw(prefsw->workdir_label);
+      lives_widget_context_update(); // update prefs window before showing confirmation box
 
-        lives_free(tmp);
-        do_blocking_error_dialog(msg);
+      if (do_warning_dialog(msg)) {
+        mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
+        needs_restart = TRUE;
       } else {
-        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
-        set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label));
-        lives_widget_queue_draw(prefsw->workdir_label);
-        lives_widget_context_update(); // update prefs window before showing confirmation box
-
-        msg = lives_strdup(
-                _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
-                  "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"
-                  "Alternatively, press Cancel to restore the working directory to its original setting."));
-        if (do_warning_dialog(msg)) {
-          mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
-          needs_restart = TRUE;
-        } else {
-          lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
-          lives_entry_set_text(LIVES_ENTRY(prefsw->workdir_entry), prefs->workdir);
-        }
+        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
+        lives_entry_set_text(LIVES_ENTRY(prefsw->workdir_entry), prefs->workdir);
       }
       lives_free(msg);
     }
@@ -2199,7 +2180,8 @@ void save_future_prefs(void) {
   }
 
   if (strncmp(future_prefs->workdir, "NULL", 4)) {
-    set_string_pref(PREF_WORKING_DIR, future_prefs->workdir);
+    set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
+    set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);
   }
   if (prefs->show_tool != future_prefs->show_tool) {
     set_boolean_pref(PREF_SHOW_TOOLBAR, future_prefs->show_tool);

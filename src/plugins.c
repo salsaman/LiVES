@@ -800,6 +800,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   vppa->keep_rfx = FALSE;
 
+  vppa->intention = intention;
+
   pversion = (tmpvpp->version)();
 
   if (intention == 0)
@@ -875,8 +877,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth : MAX_VPP_HSIZE;
 
-    if (intention == 1) hsize = cfile->hsize;
-
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
                         4., MAX_FRAME_WIDTH, 4., 16., 0, LIVES_BOX(hbox), NULL);
@@ -885,12 +885,17 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight : MAX_VPP_VSIZE;
 
-    if (intention == 1) vsize = cfile->vsize;
-
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
                         4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
+    if (intention == 1) {
+      // add aspect ratio butto
+      lives_special_aspect_t *aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
+                                       LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(dialog_vbox));
+      // don't reset the aspect params when we make_param_box
+      aspect->no_reset = TRUE;
+    }
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
@@ -2577,7 +2582,6 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
   rfx->params = (lives_param_t *)lives_malloc(rfx->num_params * sizeof(lives_param_t));
 
   for (param_idx = 0; param_idx < rfx->num_params; param_idx++) {
-
     line = (char *)lives_list_nth_data(parameter_list, param_idx);
 
     len = get_token_count(line, (unsigned int)rfx->delim[0]);

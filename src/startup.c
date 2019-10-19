@@ -59,83 +59,90 @@ void close_file(int current_file, boolean tshoot) {
 }
 
 
-boolean do_workdir_query(void) {
+boolean check_workdir_valid(char **pdirname) {
   uint64_t freesp;
+  size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
+  char *tmp;
 
+  if (pdirname == NULL || *pdirname == NULL) return FALSE;
+
+  // append a dirsep to the end if there isnt one
+  if (strcmp(*pdirname + strlen(*pdirname) - 1, LIVES_DIR_SEP)) {
+    tmp = lives_strdup_printf("%s%s", *pdirname, LIVES_DIR_SEP);
+    lives_free(*pdirname);
+    *pdirname = tmp;
+  }
+
+  // if it's an existing dir, append "livesprojects" to the end unless it is already
+  if (lives_file_test(*pdirname, LIVES_FILE_TEST_EXISTS) &&
+      (strlen(*pdirname) < chklen || strncmp(*pdirname + strlen(*pdirname) - chklen,
+          LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))) {
+    tmp = lives_strdup_printf("%s%s%s", *pdirname, LIVES_DEF_WORK_NAME, LIVES_DIR_SEP);
+    lives_free(*pdirname);
+    *pdirname = tmp;
+  }
+
+  if (strlen(*pdirname) > (PATH_MAX - 1)) {
+    do_blocking_error_dialog(_("Directory name is too long !"));
+    return FALSE;
+  }
+
+  if (!check_dir_access(*pdirname)) {
+    do_dir_perm_error(*pdirname);
+    return FALSE;
+  }
+
+  if (lives_file_test(*pdirname, LIVES_FILE_TEST_IS_DIR)) {
+    if (is_writeable_dir(*pdirname)) {
+      freesp = get_fs_free(*pdirname);
+      if (!prompt_existing_dir(*pdirname, freesp, TRUE)) {
+        return FALSE;
+      }
+    } else {
+      if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
+        return FALSE;
+      }
+    }
+  } else {
+    if (is_writeable_dir(*pdirname)) {
+      freesp = get_fs_free(*pdirname);
+      if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
+        lives_rmdir(*pdirname, FALSE);
+        return FALSE;
+      }
+    } else {
+      if (!prompt_new_dir(*pdirname, 0, FALSE)) {
+        lives_rmdir(*pdirname, FALSE);
+        return FALSE;
+      }
+    }
+  }
+
+  if (!lives_make_writeable_dir(*pdirname)) {
+    do_blocking_error_dialogf(
+      _("LiVES could not write to the directory\n%s\nPlease check permissions for the parent directory,\nand try again.\n"), *pdirname);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+
+boolean do_workdir_query(void) {
   int response;
 
-  char *dirname;
+  char *dirname = NULL;
 
   _entryw *wizard = create_rename_dialog(6);
 
-  lives_widget_show_now(wizard->dialog);
-  lives_widget_context_update();
-  lives_window_present(LIVES_WINDOW(wizard->dialog));
-  lives_xwindow_raise(lives_widget_get_xwindow(wizard->dialog));
-
-  while (1) {
+  do {
+    lives_freep((void **)&dirname);
     response = lives_dialog_run(LIVES_DIALOG(wizard->dialog));
-
     if (response == LIVES_RESPONSE_CANCEL) return FALSE;
 
     // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
-
-    if (strcmp(dirname + strlen(dirname) - 1, LIVES_DIR_SEP)) {
-      char *tmp = lives_strdup_printf("%s%s", dirname, LIVES_DIR_SEP);
-      lives_free(dirname);
-      dirname = tmp;
-    }
-
-    if (strlen(dirname) > (PATH_MAX - 1)) {
-      do_blocking_error_dialog(_("Directory name is too long !"));
-      lives_free(dirname);
-      continue;
-    }
-
-    if (!check_dir_access(dirname)) {
-      do_dir_perm_error(dirname);
-      lives_free(dirname);
-      continue;
-    }
-
-    if (lives_file_test(dirname, LIVES_FILE_TEST_IS_DIR)) {
-      if (is_writeable_dir(dirname)) {
-        freesp = get_fs_free(dirname);
-        if (!prompt_existing_dir(dirname, freesp, TRUE)) {
-          lives_free(dirname);
-          continue;
-        }
-      } else {
-        if (!prompt_existing_dir(dirname, 0, FALSE)) {
-          lives_free(dirname);
-          continue;
-        }
-      }
-    } else {
-      if (is_writeable_dir(dirname)) {
-        freesp = get_fs_free(dirname);
-        if (!prompt_new_dir(dirname, freesp, TRUE)) {
-          lives_rmdir(dirname, FALSE);
-          lives_free(dirname);
-          continue;
-        }
-      } else {
-        if (!prompt_new_dir(dirname, 0, FALSE)) {
-          lives_rmdir(dirname, FALSE);
-          lives_free(dirname);
-          continue;
-        }
-      }
-    }
-    if (!lives_make_writeable_dir(dirname)) {
-      do_blocking_error_dialogf(
-        _("LiVES could not write to the directory\n%s\nPlease check permissions for the parent directory,\nand try again.\n"), dirname);
-      lives_free(dirname);
-      continue;
-    }
-    break;
-  }
+  } while (!check_workdir_valid(&dirname));
 
   lives_widget_destroy(wizard->dialog);
   lives_freep((void **)&wizard);
@@ -146,13 +153,9 @@ boolean do_workdir_query(void) {
   set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
   set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
 
-  if (mainw->has_session_workdir) {
-    mainw->has_session_workdir = FALSE;
-    delete_pref(PREF_SESSION_WORKDIR);
-  }
+  mainw->has_session_workdir = FALSE;
 
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-
   lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
 
   lives_free(dirname);

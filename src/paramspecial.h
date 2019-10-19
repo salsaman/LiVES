@@ -37,6 +37,7 @@ typedef struct {
   ulong height_func;
   double ratio;
   int nwidgets;
+  boolean no_reset;
 } lives_special_aspect_t;
 
 typedef struct {

@@ -16,4 +16,6 @@ void do_startup_interface_query(void);
 
 void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
 
+boolean check_workdir_valid(char **pdirname);
+
 #endif

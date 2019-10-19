@@ -10,7 +10,7 @@
 #define RTE_INFO_WIDTH ((int)(550.*widget_opts.scale))
 #define RTE_INFO_HEIGHT ((int)(400.*widget_opts.scale))
 
-#define DEF_FX_KEYMODES 8
+#define DEF_FX_KEYMODES "8" // keep as string
 
 void rte_window_set_interactive(boolean interactive);
 

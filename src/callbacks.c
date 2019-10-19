@@ -137,7 +137,19 @@ void lives_exit(int signum) {
 
   register int i;
 
-  if (!mainw->only_close) mainw->is_exiting = TRUE;
+  if (mainw == NULL) exit(0);
+
+  if (!mainw->only_close) {
+    if (prefs != NULL) {
+      size_t tmplen = strlen(prefs->tmp_workdir);
+      if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
+        // created with mkdtemp
+        lives_rmdir(prefs->tmp_workdir, TRUE);
+        prefs->tmp_workdir[0] = '\0';
+      }
+    }
+    mainw->is_exiting = TRUE;
+  }
 
   if (mainw->is_ready) {
     char *com;
@@ -552,12 +564,6 @@ void lives_exit(int signum) {
   lives_freep((void **)&trString);
 #endif
 
-  if (prefs->tmp_workdir != NULL) {
-    lives_rmdir(prefs->tmp_workdir, TRUE);
-    prefs->tmp_workdir[0] = '\0';
-    lives_rm(capable->rcfile);
-  }
-
   tmp = lives_strdup_printf("signal: %d", signum);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
   lives_free(tmp);
@@ -670,15 +676,15 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
 void on_filesel_complex_clicked(LiVESButton *button, LiVESEntry *entry) {
   // append LIVES_WORK_NAME
-  size_t chklen = strlen(LIVES_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
+  size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
 
   on_filesel_button_clicked(NULL, entry);
 
   if (strcmp(file_name + strlen(file_name) - 1, LIVES_DIR_SEP)) {
     lives_strappend(file_name, PATH_MAX, LIVES_DIR_SEP);
   }
-  if (strlen(file_name) < chklen || strncmp(file_name + strlen(file_name) - chklen, LIVES_DIR_SEP LIVES_WORK_NAME LIVES_DIR_SEP, chklen))
-    lives_strappend(file_name, PATH_MAX, LIVES_WORK_NAME LIVES_DIR_SEP);
+  if (strlen(file_name) < chklen || strncmp(file_name + strlen(file_name) - chklen, LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))
+    lives_strappend(file_name, PATH_MAX, LIVES_DEF_WORK_NAME LIVES_DIR_SEP);
 
   lives_entry_set_text(entry, file_name);
 }
@@ -702,11 +708,13 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *fname, *com, *tmp, *dfile;
   double fps;
   int resp, npieces, frames;
+  boolean needs_idlefunc = FALSE;
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
+      needs_idlefunc = TRUE;
     }
     mt_desensitise(mainw->multitrack);
     lives_widget_set_sensitive(mainw->multitrack->playall, TRUE);
@@ -729,7 +737,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (fname == NULL) {
       if (mainw->multitrack != NULL) {
         mt_sensitise(mainw->multitrack);
-        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+        if (needs_idlefunc) mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
       }
       return;
     }
@@ -759,7 +767,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     // check details
-    com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d", prefs->backend, capable->mainpid,
+    com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d", prefs->backend_sync, capable->mainpid,
                               fname,
                               prefs->image_ext, FALSE, FALSE);
 
@@ -872,6 +880,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char file[PATH_MAX];
   double start = 0.;
+  boolean needs_idlefunc = FALSE;
   int end = 0, pno;
   char *pref;
 
@@ -881,6 +890,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
+      needs_idlefunc = TRUE;
     }
     mt_desensitise(mainw->multitrack);
   }
@@ -914,7 +924,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     polymorph(mainw->multitrack, POLY_NONE);
     polymorph(mainw->multitrack, POLY_CLIPS);
     mt_sensitise(mainw->multitrack);
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    if (needs_idlefunc) mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 }
 
@@ -4484,7 +4494,6 @@ void on_encoder_entry_changed(LiVESCombo *combo, livespointer ptr) {
   lives_free(new_encoder_name);
 
   if ((encoder_capabilities = plugin_request(PLUGIN_ENCODERS, future_prefs->encoder.name, "get_capabilities")) == NULL) {
-
     do_plugin_encoder_error(future_prefs->encoder.name);
 
     if (prefsw != NULL) {
@@ -6150,7 +6159,7 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
 
   if (preview_type != LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
     // get width and height of clip
-    com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d", prefs->backend, capable->mainpid,
+    com = lives_strdup_printf("%s get_details fsp%d \"%s\" \"%s\" %d %d", prefs->backend_sync, capable->mainpid,
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                               prefs->image_ext, FALSE, FALSE);
     mainw->com_failed = FALSE;

@@ -151,14 +151,12 @@ boolean transcode(int start, int end) {
   do {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
-  g_print("VAL is %s\n", (char *)vpp->extra_argv[5]);
   if (resp == LIVES_RESPONSE_CANCEL) {
     mainw->cancelled = CANCEL_USER;
     rfx_free(rfx);
     lives_free(rfx);
     goto tr_err2;
   }
-
   mainw->cancelled = CANCEL_NONE;
   // get the param value ourselves
   get_rfx_param_by_name_string(rfx, TRANSCODE_PARAM_FILENAME, (char **)&pname);
@@ -171,9 +169,11 @@ boolean transcode(int start, int end) {
   // (re)set these for the current clip
   if (vpp->set_fps != NULL)(*vpp->set_fps)(cfile->fps);
 
-  if (vpp->set_palette != NULL)(*vpp->set_palette)(vpp->palette);
-  if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
-
+  (*vpp->set_palette)(vpp->palette);
+  if (weed_palette_is_yuv_palette(vpp->palette)) {
+    if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+  }
+  //
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
     int in_arate = (int)((float)cfile->arps / (float)cfile->arate * (float)cfile->arps);
     if ((*vpp->init_audio)(in_arate, cfile->achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) {
@@ -227,7 +227,6 @@ boolean transcode(int start, int end) {
     }
   }
 
-  g_print("2VAL is %s\n", (char *)vpp->extra_argv[5]);
   if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
     error = TRUE;
     goto tr_err;
@@ -266,6 +265,22 @@ boolean transcode(int start, int end) {
     if (mainw->fx1_bool) {
       frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
     }
+
+#ifdef MATCH_PALETTES
+    if (i == start) {
+      // try to match palettes
+      int *pal_list = (*vpp->get_palette_list)();
+      get_best_palette_match(weed_layer_get_palette(frame_layer), pal_list, &vpp->palette, &vpp->YUV_clamping);
+      (*vpp->set_palette)(vpp->palette);
+      if (weed_palette_is_yuv_palette(vpp->palette)) {
+        if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
+      }
+      if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
+        error = TRUE;
+        goto tr_err;
+      }
+    }
+#endif
 
     if (audio) {
       // - read 1 frame worth of audio, to float, send

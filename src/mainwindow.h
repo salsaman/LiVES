@@ -1483,6 +1483,8 @@ typedef struct {
   // disk space in workdir
   lives_storage_status_t ds_status;
   uint64_t dsval;
+
+  char *old_vhash;
   ////////////////////
 } mainwindow;
 

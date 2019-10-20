@@ -793,7 +793,7 @@ typedef struct {
   char *rcfile;
 
   /// used for returning startup messages from the backend
-  char startup_msg[256];
+  char startup_msg[1024];
 
   // plugins
   boolean has_encoder_plugins;
@@ -952,8 +952,7 @@ char *ds_critical_msg(const char *dir, uint64_t dsval);
 char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
 boolean check_storage_space(lives_clip_t *sfile, boolean is_processing);
 
-char *get_upd_msg(int type);
-char *get_new_install_msg(void);
+char *get_upd_msg(void);
 
 boolean ask_permission_dialog(int what);
 boolean do_abort_check(void);
@@ -1292,6 +1291,7 @@ boolean cache_file_contents(const char *filename);
 char *get_val_from_cached_list(const char *key, size_t maxlen);
 
 void get_location(const char *exe, char *val, int maxlen);
+boolean has_executable(const char *exe);
 
 char *make_image_file_name(lives_clip_t *clip, int frame, const char *img_ext);
 const char *get_image_ext_for_type(lives_image_type_t imgtype);

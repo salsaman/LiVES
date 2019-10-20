@@ -3334,26 +3334,11 @@ void do_set_noclips_error(const char *setname) {
 }
 
 
-char *get_upd_msg(int type) {
+char *get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
-  char *msg;
-  if (type == 2) {
-    msg = lives_strdup_printf(
-            _("Some security issues have been fixed in this version of LiVES.\nIn order to complete the fixes I can update the permissions on your\n%s\ndirectory. Would you like me to do this (recommended) ?"),
-            prefs->workdir);
-  } else {
-    msg = lives_strdup_printf(
-            _("\nWelcome to LiVES version %s\n\nAfter upgrading, you are *strongly* advised to run:\n\nFile -> Clean up Diskspace\n"), LiVES_VERSION);
-  }
-  return msg;
-}
-
-
-char *get_new_install_msg(void) {
-  LIVES_DEBUG("upd msg !");
-  // TRANSLATORS: make sure the menu text matches what is in gui.c
-  char *msg = lives_strdup_printf(_("\n\nWelcome to LiVES version %s !\n\n"), LiVES_VERSION);
+  char *msg = lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are advised to run:"
+                                    "\n\nFile -> Clean up Diskspace\n"), LiVES_VERSION);
   return msg;
 }
 

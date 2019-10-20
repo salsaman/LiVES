@@ -1260,9 +1260,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
   register int i;
 
-  def_modes = (int *)lives_malloc(prefs->rte_keys_virtual * sizint);
-  for (i = 0; i < prefs->rte_keys_virtual; i++) def_modes[i] = -1;
-
   if (lives_file_test(keymap_file2, LIVES_FILE_TEST_EXISTS)) {
     lives_free(keymap_file);
     keymap_file = keymap_file2;
@@ -1291,7 +1288,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(keymap_file);
         d_print_file_error_failed();
-        lives_free(def_modes);
         return FALSE;
       }
     }
@@ -1303,9 +1299,11 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     // user cancelled
     mainw->error = FALSE;
     d_print_cancelled();
-    lives_free(def_modes);
     return FALSE;
   }
+
+  def_modes = (int *)lives_malloc(prefs->rte_keys_virtual * sizint);
+  for (i = 0; i < prefs->rte_keys_virtual; i++) def_modes[i] = -1;
 
   badkeymap = (uint8_t **)lives_malloc(prefs->rte_keys_virtual * sizeof(uint8_t *));
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
@@ -1333,7 +1331,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
     if (!strcmp((char *)lives_list_nth_data(list, 0), "LiVES keymap file version 2") ||
         !strcmp((char *)lives_list_nth_data(list, 0), "LiVES keymap file version 1")) update = 1;
-    if (!strcmp((char *)lives_list_nth_data(list, 0), "LiVES keymap file version 3")) update = 2;
+    else {
+      if (!strcmp((char *)lives_list_nth_data(list, 0), "LiVES keymap file version 3")) update = 2;
+      else {
+        goto cleanup1;
+      }
+    }
   } else {
     // newer style
 
@@ -1556,22 +1559,18 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
   }
 
+cleanup1:
+
   for (i = 0; i < prefs->rte_keys_virtual; i++) {
     lives_free(badkeymap[i]);
   }
 
   lives_free(badkeymap);
-
   lives_free(keymap_file); // frees keymap_file2 if applicable
-
   lives_free(keymap_file3);
-
   lives_free(def_modes);
-
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
-
   if (rte_window != NULL) check_clear_all_button();
-
   return FALSE;
 }
 

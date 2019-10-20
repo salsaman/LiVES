@@ -38,8 +38,8 @@
 #endif
 #include "lbindings.h"
 
-void *status_socket;
-void *notify_socket;
+void *status_socket = NULL;
+void *notify_socket = NULL;
 
 static lives_osc *livesOSC = NULL;
 

@@ -29,6 +29,7 @@ $umask = 0177;
 # ->        -rw-------
 
 $GUI_NAME = "LiVES";
+$MYNAME = $0;
 
 ###################################################################
 
@@ -54,10 +55,7 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
 
 $home = $ENV {"HOME"};
 $rc_filename = ".lives";
-$lives_home_dir = "$home/.lives-dir";
 
-# default temporary directory (can be overridden from the GUI)
-$default_workdir = "$home/livestmp";
 $nulfile = "/dev/null";
 
 $encoder = "ffmpeg_encoder";
@@ -76,23 +74,56 @@ if (defined($ARGV[0])) {
 	exit 0;
     }
 
-    $session_workdir = $workdir = "";
-
+    $workdir = "";
+    $rcfile = "$home/$rc_filename";
     $work = "$WORKDIR";
 
     if ($work) {
 	$workdir = $work;
     }
 
+    $has_rcfile = -1;
+
     if ($workdir eq "") {
-	$rcfile = "$home/$rc_filename";
-	if (-f $rcfile) {
+	if (-e $rcfile) {
+	    $has_rcfile = 1;
+	}
+	else {
+	    $has_rcfile = 0;
+	    my $size = -s "$rcfile.recovery";
+	    if ($size > 0) {
+		unlink "$rcfile.recovery.tried";
+		if (! -e "$rcfile.recovery.tried") {
+		    smog_rename("$rcfile.recovery", "$rcfile.recovery.tried");
+		    if (! -e "$rcfile.recovery" && -s "$rcfile.recovery.tried" == $size) {
+			smog_copy("$rcfile.recovery.tried", $rcfile);
+			if ($panic || -s $rcfile != $size) {
+			    unlink $rcfile;
+			}
+			else {
+			    $has_rcfile = 1;
+			}
+		    } else {
+			unlink "$rcfile.recovery.tried";
+			if (-s "$rcfile.recovery" != $size) {
+			    unlink "$rcfile.recovery";
+			}
+		    }
+		}
+	    }
+	}
+
+	if ($has_rcfile) {
+	    # can exit 3 here
 	    $workdir = &rc_get("workdir");
 	    if ($workdir eq "") {
 		$workdir = &rc_get("tempdir");
 	    }
-	    if ($workdir eq "" && $command eq "report") {
-		&rc_set_priority("startup_phase", -1);
+	    if ($workdir eq "") {
+		if ($command ne "report") {  ## TODO: allow some other commands
+		    print STDERR "smogrify: workdir not defined for command $command\n";
+		    exit 99;
+		}
 	    }
 	}
     }
@@ -106,165 +137,226 @@ if (defined($ARGV[0])) {
 
         if ($command eq "report") {
 	    ################################### startup checks ########################
+	    ## can exit with code 3 (could not read from $rcfile), 4 (could not write to $rcfile.new),
+	    ## 5 (could not create bootstrap file), 6 (could not write to $rcfile)
+	    ## or 0 (success)
+	    ##
+	    ## if no args are passed, will report on STDOUT and will only return 3 or 0
 
-            $gui_bootstrap_file = "";
+	    my $upd;
+
             if (defined($ARGV[1])) {
+		# only for backwards compatibility; otherwise pass in "-" to do an update or "" for a dry-run
                 $gui_bootstrap_file = $ARGV[1];
+		$upd = 0;
             }
-
-	    if (defined($ARGV[2])) {
-                $default_workdir = $ARGV[2];
-            }
-
-            if (! -d "$lives_home_dir") {
-		# this can fail here, but succeed later
-		smog_system("/bin/mkdir -p \"$lives_home_dir\"");
-            }
-
-            $startup_phase = -1;
-
-	    if ($workdir eq "") {
-		$workdir = $default_workdir;
+	    if ($gui_bootstrap_file eq "-") {
+		$upd = 1;
+	    }
+	    elsif ($gui_bootstrap_file eq "") {
+		$gui_bootstrap_file = "-";
+		$upd = 0;
+	    }
+	    else {
+		$upd = 0;
 	    }
 
-	    # get $workdir from .rc file, if no .rc file, create it
-            if (! -s "$rcfile") {
-		# set comment at start of file
-                &rc_set("", "");
-                &rc_set("startup_phase", -1);
+	    my $old_version_hash = "";
+	    my $old_version = "";
+
+	    if ($has_rcfile == -1) {
+		$has_rcfile = -e $rcfile;
+	    }
+
+	    if ($has_rcfile) {
+		# can exit 3 here
+		# can exit here
+		$old_version = &rc_get("version");
+		if ($old_version eq "") {
+		    smog_rename($rcfile, "$rcfile.damaged");
+		    unlink($rcfile);
+		    if (-e $rcfile) {
+			&startup_error(5, "general", "remove_damaged1", "$home:$rc_filename:");
+		    }
+		    $panic = 0;
+		    $has_rcfile = 0;
+		    $old_version_hash = "0";
+		}
+		else {
+		    $old_version_hash = &version_hash($old_version);
+		    if ($old_version_hash < 30000003) {
+			if ($work eq "") {
+			    #older versions used tempdir instead of workdir
+			    $workdir = &rc_get("tempdir");
+			}
+		    }
+		}
+	    }
+
+            my $startup_phase = -1;
+
+            if (!$has_rcfile) {
+		if ($upd) {
+		    # set comment at start of file
+		    &rc_set("", "");
+		    &rc_set("startup_phase", -1);
+		}
             } else {
 		$startup_phase = &rc_get("startup_phase");
 		if ($startup_phase eq "" || $startup_phase eq "100") {
 		    $startup_phase = 0;
-		    &rc_delete("startup_phase");
+		    if ($upd) {
+			&rc_delete("startup_phase");
+		    }
 		}
 	    }
 
-	    $priority = 0;
+	    $version_hash = &version_hash($version);
 
 	    ###################### all startup tests passed ########################
 
-            $video_open_command = "\"". &get_mplayer_location . "\"";
+	    $msg = "";
 
-            $audio_player = "sox";
-            $audio_play_command = &rc_get_default("sox_command");
+	    my $convert_old_version = &rc_get("convert_version");
+            my $convert_version = &get_convert_version;
+            unless ($convert_old_version eq $convert_version) {
+		if ($upd) {
+		    &rc_set("convert_version", $convert_version);
+		}
+		# throw a warning if using png and convert_version < 6.0.0
+		my $convert_version_hash = &version_hash($convert_version);
+		if ($convert_version_hash < 6000 && $convert_version_hash > 0 && &rc_get("default_image_format") eq "png") {
+		    $msg .= "You are advised to upgrade to at least version 6.0 of Image Magick if using png files\n";
+		}
+	    }
 
-            $convert_version_hash = &get_convert_version_hash;
+	    if ($old_version_hash ne $version_hash) {
+		if ($upd) {
+		    ## TODO: move all into front end
 
-            $default_keymap = "default.keymap";
+		    my $video_open_command = "\"". &get_mplayer_location . "\"";
 
-            if ($audio_play_command eq "") {
-                $audio_player = "mplayer";
-                $audio_play_command = &rc_get_default("mplayer_audio_command");
-            }
+		    my $audio_player = "sox";
+		    my $audio_play_command = &rc_get_default("sox_command");
 
-            if (defined($dyneversion)) {
-                &rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
-                &rc_set_if_not_set("prefix_dir", "/opt/$dyneversion/");
-            }
+		    if ($audio_play_command eq "") {
+			$audio_player = "mplayer";
+			$audio_play_command = &rc_get_default("mplayer_audio_command");
+		    }
 
-	    # NOTE: the following definitions must match with equivalent keys in preferences.h
-            &rc_set_if_not_set("video_open_command", "$video_open_command");
-            &rc_set_if_not_set("audio_play_command", "$audio_play_command");
-            &rc_set_if_not_set("audio_player", $audio_player);
-            &rc_set_if_not_set("midisynch", "false");
-            &rc_set_if_not_set("pb_quality", 2);
-            &rc_set_if_not_set("insert_resample", "true");
-            &rc_set_if_not_set("open_compression_percent", 15);
-            &rc_set_if_not_set("conserve_space", "false");
-            &rc_set_if_not_set("antialias", "true");
+		    if (defined($dyneversion)) {
+			&rc_set_if_not_set("lib_dir", "/opt/$dyneversion/lib/");
+			&rc_set_if_not_set("prefix_dir", "/opt/$dyneversion/");
+		    }
 
-	    # resize action when opening images - can be either: "bound" or "none"
-            &rc_set_if_not_set("image_resize_action", "none");
-            &rc_set_if_not_set("encoder", $encoder);
-            &rc_set_if_not_set("output_type", "mjpeg");
-            &rc_set_if_not_set("audio_effect", "none");
-            &rc_set_if_not_set("default_image_format", "png");
-            &rc_set_if_not_set("default_fps", 25);
-            &rc_set_if_not_set("save_directories", "false");
-            &rc_set_if_not_set("stop_screensaver", "true");
-            &rc_set_if_not_set("open_maximised", "true");
-            &rc_set_if_not_set("filesel_maximised", "true");
-            &rc_set_if_not_set("show_recent_files", "true");
-            &rc_set_if_not_set("ce_maxspect", "true");
+		    # NOTE: the following definitions must match with equivalent keys in preferences.h
+		    &rc_set_if_not_set("video_open_command", "$video_open_command");
+		    &rc_set_if_not_set("audio_play_command", "$audio_play_command");
+		    &rc_set_if_not_set("audio_player", $audio_player);
+		    &rc_set_if_not_set("midisynch", "false");
+		    &rc_set_if_not_set("pb_quality", 2);
+		    &rc_set_if_not_set("insert_resample", "true");
+		    &rc_set_if_not_set("open_compression_percent", 15);
+		    &rc_set_if_not_set("conserve_space", "false");
+		    &rc_set_if_not_set("antialias", "true");
 
-	    # bits 19,18,13,11 and 10
-            &rc_set_if_not_set("lives_warning_mask", 797696);
+		    # resize action when opening images - can be either: "bound" or "none"
+		    &rc_set_if_not_set("image_resize_action", "none");
+		    &rc_set_if_not_set("encoder", $encoder);
+		    &rc_set_if_not_set("output_type", "mjpeg");
+		    &rc_set_if_not_set("audio_effect", "none");
+		    &rc_set_if_not_set("default_image_format", "png");
+		    &rc_set_if_not_set("default_fps", 25);
+		    &rc_set_if_not_set("save_directories", "false");
+		    &rc_set_if_not_set("stop_screensaver", "true");
+		    &rc_set_if_not_set("open_maximised", "true");
+		    &rc_set_if_not_set("filesel_maximised", "true");
+		    &rc_set_if_not_set("show_recent_files", "true");
+		    &rc_set_if_not_set("ce_maxspect", "true");
 
-            &rc_set_if_not_set("dl_bandwidth_K", 5000);
-            &rc_set_if_not_set("show_player_stats", "false");
-            &rc_set_if_not_set("show_toolbar", "true");
+		    # bits 19,18,13,11 and 10
+		    &rc_set_if_not_set("lives_warning_mask", 797696);
 
-	    # default of PCM
-            &rc_set_if_not_set("encoder_acodec", 1);
-            &rc_set_if_not_set("record_opts", -1);
+		    &rc_set_if_not_set("dl_bandwidth_K", 5000);
+		    &rc_set_if_not_set("show_player_stats", "false");
+		    &rc_set_if_not_set("show_toolbar", "true");
 
-            &rc_set_if_not_set("gui_theme", "crayons");
+		    # default of PCM
+		    &rc_set_if_not_set("encoder_acodec", 1);
+		    &rc_set_if_not_set("record_opts", -1);
 
-	    # start aserver on startup
-            &rc_set_if_not_set("jack_opts", 0);
-            &rc_set_if_not_set("audio_opts", 3);
-            &rc_set_if_not_set("rte_keys_virtual", 9);
+		    &rc_set_if_not_set("gui_theme", "crayons");
 
-            &rc_set_if_not_set("instant_open", "true");
-            &rc_set_if_not_set("auto_deinterlace", "true");
-            &rc_set_if_not_set("auto_trim_pad_audio", "true");
-            &rc_set_if_not_set("auto_cut_borders", "false");
+		    # start aserver on startup
+		    &rc_set_if_not_set("jack_opts", 0);
+		    &rc_set_if_not_set("audio_opts", 3);
+		    &rc_set_if_not_set("rte_keys_virtual", 9);
 
-            &rc_set_if_not_set("mt_undo_buf", 32);
-            &rc_set_if_not_set("mt_enter_prompt", "true");
-            &rc_set_if_not_set("render_prompt", "true");
-            &rc_set_if_not_set("mt_exit_render", "true");
-            &rc_set_if_not_set("mt_def_width", 1024);
-            &rc_set_if_not_set("mt_def_height", 768);
-            &rc_set_if_not_set("mt_def_achans", 2);
-            &rc_set_if_not_set("mt_def_signed_endian", 2 * !&get_endian);
-            &rc_set_if_not_set("mt_backaudio", "1");
-            &rc_set_if_not_set("mt_pertrack_audio", "true");
-            &rc_set_if_not_set("mt_auto_back", 120);
+		    &rc_set_if_not_set("instant_open", "true");
+		    &rc_set_if_not_set("auto_deinterlace", "true");
+		    &rc_set_if_not_set("auto_trim_pad_audio", "true");
+		    &rc_set_if_not_set("auto_cut_borders", "false");
 
-            &rc_set_if_not_set("ar_clipset", "");
-            &rc_set_if_not_set("ar_layout", "");
+		    &rc_set_if_not_set("mt_undo_buf", 32);
+		    &rc_set_if_not_set("mt_enter_prompt", "true");
+		    &rc_set_if_not_set("render_prompt", "true");
+		    &rc_set_if_not_set("mt_exit_render", "true");
+		    &rc_set_if_not_set("mt_def_width", 1024);
+		    &rc_set_if_not_set("mt_def_height", 768);
+		    &rc_set_if_not_set("mt_def_achans", 2);
+		    &rc_set_if_not_set("mt_def_signed_endian", 2 * !&get_endian);
+		    &rc_set_if_not_set("mt_backaudio", "1");
+		    &rc_set_if_not_set("mt_pertrack_audio", "true");
+		    &rc_set_if_not_set("mt_auto_back", 120);
 
-            &rc_set_if_not_set("rec_desktop_audio", "false");
-            &rc_set_if_not_set("osc_start", "false");
-            &rc_set_if_not_set("osc_port", 49999);
+		    &rc_set_if_not_set("ar_clipset", "");
+		    &rc_set_if_not_set("ar_layout", "");
 
-            &rc_set_if_not_set("concat_images", "true");
-            &rc_set_if_not_set("mouse_scroll_clips", "true");
+		    &rc_set_if_not_set("rec_desktop_audio", "false");
+		    &rc_set_if_not_set("osc_start", "false");
+		    &rc_set_if_not_set("osc_port", 49999);
 
-            &rc_set_if_not_set("omc_dev_opts", 3);
+		    &rc_set_if_not_set("concat_images", "true");
+		    &rc_set_if_not_set("mouse_scroll_clips", "true");
+		    &rc_set_if_not_set("omc_dev_opts", 3);
+		    &rc_set_if_not_set("rec_stop_gb", 10);
 
-            &rc_set_if_not_set("rec_stop_gb", 10);
+		    #internal
+		    &rc_set_if_not_set("audio_src", 0);
+		    &rc_set_if_not_set("ce_thumb_mode", "false");
+		    &rc_set_if_not_set("show_button_icons", "false");
+		    &rc_set_if_not_set("max_disp_vtracks", 5);
+		    &rc_set_if_not_set("show_audio_src", "true");
+		    &rc_set_if_not_set("midi_rcv_chan", 0);
+		    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
+		}
+		if ($old_version ne "") {
+		    if ($old_version_hash < $version_hash) {
+			&version_check_and_upgrade($upd, $old_version_hash, $version_hash);
+		    }
+		}
+	    }
 
-	    #internal
-            &rc_set_if_not_set("audio_src", 0);
+	    if ($upd) {
+		# bless this version
+		&rc_set_priority("version", "$version");
+		# can exit with code 3, 4, or 5
+	    }
 
-            &rc_set_if_not_set("ce_thumb_mode", "false");
-
-            &rc_set_if_not_set("show_button_icons", "false");
-
-            &rc_set_if_not_set("max_disp_vtracks", 5);
-
-	    &rc_set_if_not_set("show_audio_src", "true");
-
-	    &rc_set_if_not_set("midi_rcv_chan", 0);
-
-	    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
-
-	    $convert_old_version = &rc_get("convert_version");
-            unless($convert_old_version eq $convert_version) {
-                &rc_set("convert_version", $convert_version);
-            }
-            &version_check_and_upgrade;
-
-            unless($gui_bootstrap_file eq "") {
-                open OUT, "> $gui_bootstrap_file" or exit 5;
-                print OUT "$version|$workdir|$startup_phase|$msg|$msg2";
-                close OUT;
-            }
+            if ($gui_bootstrap_file eq "-") {
+		print "$version|$workdir|$startup_phase|$old_version_hash|$msg|";
+	    }
+	    else {
+		# only for backwards compatibility
+		if (! -e $gui_bootstrap_file) {
+		    open OUT, "> $gui_bootstrap_file" or exit 5;
+		    print OUT "$version|";
+		    close OUT;
+		}
+	    }
             exit 0;
         }
+
 
         if ($command eq "get_pid_for_handle") {
             $handle = $ARGV[1];
@@ -301,7 +393,7 @@ if (defined($ARGV[0])) {
             $statusfile = "$curworkdir/.status";
 
             unless(-d "$curworkdir") {
-                exit 102;
+                exit 3;
             }
 
             if (defined(open IN, "< $pidfile")) {
@@ -317,11 +409,11 @@ if (defined($ARGV[0])) {
                 if (!($uid == $stat[4] && $gid == $stat[5])) {
                     die "Smogrify: Unable to stop process $target_pid.\n";
                 }
-                elsif($command eq "stopsubsub" || $command eq "stop_audio") {
+                elsif ($command eq "stopsubsub" || $command eq "stop_audio") {
 		    # kill all subprocesses of target_pid, and target_pid
                     &kill_child_pids($target_pid, $sig);
                 }
-                elsif($command eq "stopsubsubs") {
+                elsif ($command eq "stopsubsubs") {
 		    # kill all subprocesses of target_pid, but not target_pid
                     smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
                     if (-s "$workdir/.pids.$target_pid" && defined(open IN, "$workdir/.pids.$target_pid")) {
@@ -3684,7 +3776,7 @@ if (defined($ARGV[0])) {
 
 	    if (-f $xdfile) {
 		&sig_error;
-		exit 102;
+		exit 3;
 	    }
 
 	    if ($bestaudio ne "") {
@@ -3967,6 +4059,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if (substr($command, 0, 9) eq "fxrender_") {
+	    my $lives_home_dir = "$home/.lives-dir";
 	    smog_chdir("$curworkdir");
 	    unlink "$curworkdir/pause";
 	    $command = substr($command, 9);
@@ -3993,7 +4086,7 @@ if (defined($ARGV[0])) {
 	    if ($status == 0) {
 		$plugin_name = "$command";
 	    }
-	    elsif($status == 1) {
+	    elsif ($status == 1) {
 		$plugin_dir = "$lives_home_dir/plugins/effects/rendered/custom";
 		$plugin_name = "$plugin_dir/$command";
 	    }
@@ -4003,8 +4096,8 @@ if (defined($ARGV[0])) {
 	    }
 	    $smcom = "\"$plugin_name\" get_description";
 	    $fx_desc = smog_system_direct($smcom);
-	    if ($ ?) {
-		sig_system_error($smcom, $ ?);
+	    if ($?) {
+		sig_system_error($smcom, $?);
 		unlink $pidfile;
 		exit 1;
 	    }
@@ -4027,8 +4120,8 @@ if (defined($ARGV[0])) {
 
 	    $fps = 0;
 	    $fx_caps = smog_system_direct("\"$plugin_name\" get_capabilities");
-	    if ($ ?) {
-		sig_system_error($smcom, $ ?);
+	    if ($?) {
+		sig_system_error($smcom, $?);
 		unlink $pidfile;
 		exit 1;
 	    }
@@ -5102,8 +5195,7 @@ sub trim_center {
     $x = int(($hsize - $width) / 2);
     $y = int(($vsize - $height) / 2);
 
-    $com = "$smog_convert_command $input_prefix\"$name$input_ext\" -crop $width" . "x" . $height . "\\!+" . $x . "\\! + " . $y . "\\! "
-	."$resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+    $com = "$smog_convert_command $input_prefix\"$name$input_ext\" -crop $width" . "x" . $height . "\\!+" . $x . "\\! + " . $y . "\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
 
     $smerror = smog_system($com);
 
@@ -7203,13 +7295,18 @@ sub rc_set {
 
     my $newrcfile = "$rcfile.new";
 
-    if (!defined(open OUT,"> $newrcfile")) {
-        exit 4;
+    unlink($newrcfile);
+    if (-e $newrcfile) {
+	&startup_error(4, "rc_set_new", "rm_new1", "$home:$rc_filename.new");
     }
 
-    if (substr($value,-1,1) eq "\"" && substr($value,0,1) ne "\"") {
+    if (!defined(open OUT,"> $newrcfile")) {
+	&startup_error(4, "rc_set_new", "open_new", "$home:$rc_filename.new");
+    }
+
+    if (substr($value, -1, 1) eq "\"" && substr($value, 0, 1) ne "\"") {
 	# strip trailing unmatched "
-        $value=substr($value, 0,length($value)- 1);
+        $value=substr($value, 0, length($value) - 1);
     }
 
     my $rcfilesize = 0;
@@ -7221,13 +7318,20 @@ sub rc_set {
     select((select(OUT), $| = 1)[0]);
 
     if (!defined($delpref)) {
+	# delete a value
         $delpref = 0;
     }
     if (!defined($find)) {
+	# find a value, no update
         $find = 0;
     }
     if (!defined($noreplace)) {
+	# add value only if not there
         $noreplace = 0;
+    }
+    if (!defined($deprecate)) {
+	# add a comment
+        $deprecate = 0;
     }
 
     ## the process here is that we read in the rc_file a line at a time, constructing a copy of it
@@ -7248,116 +7352,149 @@ sub rc_set {
     ## after copying we check again. IF the overwritten file has the wrong size we delete it, which will cause the user to
     ## go through the setup process again the next time they use the app.
 
-    my $part = -1;
-    my $found = 0;
+
+    # $stage defines the action applied to the line:
+    # -1 == initial comments: we leave the comments as they are but skip whitespace lines, unless we hit another comment
+    #       then the whitespace is re added
+    ##
+    # when we hit a non-comment, non-whitespace line, we isert a single newline, then got to stage 0
+    # or for a priority pref we go to stage 2
+    ##
+    # stage 0 we just output the lines, until we find <key>, then we go to stage 1
+    #
+    # stage 1 we output nothing until we reach </key> and the we go to stage 2
+    ##
+    # stage 2, we still output nothing until we reach a non-blank line
+    ##
+    # when we hit a non blank line, we output a newline, <key>, value </Key>, newline
+    ## - if we are in delpref mode, we just insert a single newline
+    ## - if we are in find or noreplace mode, we exit the function
+    #
+    ## stage 3: we just output the lines, but we act like delpref; if we hit another copy of the key we go back to stage 1
+    ##
+
+    my $stage = -1;
     my $extrablanks = 0;
+    my $current = "";
+    my $lastline = "";
+    my $truncate = 0;
 
     if ($key eq "") {
-	## if $key is "" then we write a comment at the start
+	## if $key is "" then we write comments at the start
 
         $date=&get_current_date;
         $addsize = &printlen(OUT, "# This file was autogenerated by $GUI_NAME version $version on $date\n");
 	if ($addsize == -1) {
-	    exit 4;
+	    &startup_error(4, "rc_set_new", "write_new_header1", "$home:$rc_filename.new");
 	}
 	$rcfilesize += $addsize;
         $addsize = &printlen(OUT, "# You are strongly advised to change the values only through the GUI.\n");
 	if ($addsize == -1) {
-	    exit 4;
+	    &startup_error(4, "rc_set_new2", "write_new_header2", "$home:$rc_filename.new");
 	}
 	$rcfilesize += $addsize;
-    } else {
-        if (!defined(open IN,"< $rcfile") && -e $rcfile) {
-	    print "COULD not open $rcfile\n";
-            exit 102;
-        }
+	$truncate = 1;
+    }
 
-	$current = "";
+    if (!$truncate) {
+	if (!defined(open IN,"< $rcfile") && -e $rcfile) {
+	    &startup_error(3, "rc_get", "open_file1", "$home:$rc_filename");
+	}
 
-        while (<IN>) {
+	while (<IN>) {
 	    $lastline = $current;
-            $current = $_;
+	    $current = $_;
 
 	    if ($current =~ /(<\/$key>)$/) {
-		if ($part == 1 || $deprecate) {
+		if ($stage == 1) {
 		    if ($find || $noreplace) {
 			close IN;
 			close OUT;
 			if ($noreplace) {
 			    unlink "$newrcfile";
+			    if (-e $newrcfile) {
+				&startup_error(4, "rc_set_new", "rm_new2", "$home:$rc_filename.new");
+			    }
 			}
 			$find = $noreplace = 0;
 			return 1;
 		    }
-		    $part = 2;
-		    $found = 1;
+		    $stage = 2;
 		}
 		next;
 	    }
 
-	    if ($part == -1) {
-		# skip whitespace after the </key>
+	    if ($stage == -1) {
+		# skip whitespace during initial comments
 		if ($current =~ s/^\s+//) {
 		    if (!$find) {
-			$extrblanks++;
+			$extrablanks++;
 		    }
+		    next;
 		}
-		if ($current =~ /^#.*/) {
-		    for ($i = 0; $i < $extrablanks; $i++) {
-			$addsize = &printlen(OUT, "\n");
+		if ($current =~ /^#.*/ && !($current =~ /^#deprecated/)) {
+		    #initial comments
+		    if (!$find) {
+			for ($i = 0; $i < $extrablanks; $i++) {
+			    # add back skipped whitespace
+			    $addsize = &printlen(OUT, "\n");
+			    if ($addsize == -1) {
+				&startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
+			    }
+			    $rcfilesize += $addsize;
+			}
+			$extrablanks = 0;
+			# write the line and continue
+			$addsize = &printlen(OUT, $current);
 			if ($addsize == -1) {
-			    exit 4;
+			    &startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 			}
 			$rcfilesize += $addsize;
 		    }
-		    $exrablanks = 0;
-		    $addsize = &printlen(OUT, $current);
-		    if ($addsize == -1) {
-			exit 4;
-		    }
-		    $rcfilesize += $addsize;
 		    next;
 		}
 		else {
-		    $part = 0;
+		    # the first non-comment, non whitespace line
+		    $stage = 0;
 		    if (!$find) {
+			# write a single newline
 			$addsize = &printlen(OUT, "\n");
 			if ($addsize == -1) {
-			    exit 4;
+			    &startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 			}
 			$rcfilesize += $addsize;
 		    }
 		    if ($priority == 1) {
-			$part = 2;
+			# insert the key after any whitespace
+			$stage = 2;
 		    }
 		}
 	    }
 
-	    if ($current =~ /^(<$key>)/ && $part != 2) {
-		next if $part == 1;
-		$part = 1;
+	    if ($current =~ /^(<$key>)/) {
+		# we found <key>
+		next if $stage > 0;
+		$stage = 1;
 		if ($deprecate) {
-		    unless ($lastline =~ /^# deprecated/) {
+		    unless ($lastline =~ /^#deprecated/) {
 			if ($value eq "") {
-			    $addsize = &printlen(OUT, "# deprecated as of $GUI_NAME version $dversion\n");
+			    $addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion\n");
 			}
 			else {
-			    $addsize = &printlen(OUT, "# deprecated as of $GUI_NAME version $dversion, use <$value> instead\n");
+			    $addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion, use <$value> instead\n");
 			}
 			if ($addsize == -1) {
-			    exit 4;
+			    &startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 			}
 			$rcfilesize += $addsize;
 		    }
-		    $part = 3;
 		}
-		next unless $deprecate;
 	    }
 
 	    next if ($find);
-	    next if ($part == 1);
+	    next if ($stage == 1 && !$deprecate);
 
-	    if ($part == 2) {
+	    if ($stage == 2) {
 		# skip whitespace after the </key>
 		next if ($current =~ s/^\s+//);
 		if (!$delpref) {
@@ -7366,48 +7503,55 @@ sub rc_set {
 			$deprecate = 0;
 		    }
 		    else {
-			#inject the key / value
-			$addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n\n");
+			# inject the key / value, and add a newline
+			$addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
 		    }
 		    if ($addsize == -1) {
-			exit 4;
+			&startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 		    }
-		    $delpref = 1;
 		    $rcfilesize += $addsize;
+		    $delpref = 1;
 		}
 		if ($current =~ /^(<$key>)/) {
-		    $part = 1;
+		    $stage = 1;
 		    next;
 		}
 		else {
-		    $part = 3;
+		    $stage = 0;
 		}
 	    }
 
+	    next if ($delpref && $current =~ /^(#deprecated <$key>)/);
+
 	    $addsize = &printlen(OUT, $current);
 	    if ($addsize == -1) {
-		exit 4;
+		&startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 	    }
 	    $rcfilesize += $addsize;
 	}
     }
-
     close IN;
 
     if ($find) {
-	return $find = $found = 0;
+	$find = 0;
+	return 0;
     }
 
-    if ($part < 2) {
-	$found = 0;
-    }
-
-    if (!$delpref && $part < 3 && $key ne "") {
-	$addsize = &printlen(OUT, "\n<$key>\n$value\n</$key>\n");
-	if ($addsize == -1) {
-	    exit 4;
+    if ($key ne "") {
+	if ($stage == 0 && !($current =~ s/^\s+//)) {
+	    $addsize = &printlen(OUT, "\n");
+	    if ($addsize == -1) {
+		&startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
+	    }
+	    $rcfilesize += $addsize;
 	}
-	$rcfilesize += $addsize;
+	if (!$delpref && $key ne "") {
+	    $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
+	    if ($addsize == -1) {
+		&startup_error(4, "rc_set_new", "write_new", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
+	    }
+	    $rcfilesize += $addsize;
+	}
     }
 
     close OUT;
@@ -7415,25 +7559,57 @@ sub rc_set {
     $delpref = $noreplace = $deprecate = 0;
 
     if (-s "$newrcfile" != $rcfilesize) {
-	exit 4;
+	&startup_error(4, "rc_set_new", "check_new_size", "$home:$rc_filename.new:$key:$value:$priority:$delpref:$deprecate:$dversion:");
     }
 
     smog_copy("$newrcfile", "$rcfile");
+    my $xrcsize = -s $rcfile;
 
-    if ($panic) {
-	if (-s $rcfile != $orcfilesize && -s $rcfile != $rcfilesize) {
-	    unlink "$rcfile";
+    if ($panic || $xrcsize != $rcfilesize) {
+	if ($xrcsize == $orcsize) {
+	    unlink "$newrcfile";
+	    &startup_error(5, "rc_set", "check_size1", "$home:$rc_filename:$key:$value:$priority:$delpref:$deprecate:$dversion:");
 	}
-	exit 3;
-    }
-
-    if (-s $rcfile != $rcfilesize) {
 	unlink "$rcfile";
-	exit 3;
+	$panic = 0;
+	if (! -e $rcfile && -s "$newrcfile" == $rcfilesize) {
+	    if (!&smog_rename("$newrcfile", "$rcfile")) {
+		$panic = 1;
+	    }
+	}
+	if ($panic || -s $rcfile != $rcfilesize) {
+	    unlink "$rcfile";
+	    if (-s "$newrcfile" == $rcfilesize) {
+		$panic = !&smog_rename("$newrcfile", "$rcfile.recovery");
+		if ($panic || -s "$rcfile.recovery" != $rcfilesize) {
+		    unlink "$rcfile.recovery";
+		    unlink "$newrcfile";
+		}
+	    }
+	    &startup_error(5, "rc_set", "check_size2", "$home:$rc_filename:$key:$value:$priority:$delpref:$deprecate:$dversion:");
+	}
     }
-    unlink "$newrcfile";
 
+    unlink "$newrcfile";
+    if (-e "$newrcfile") {
+	&startup_error(4, "rc_set_new", "rm_new", "$home:$rc_filename.new:");
+    }
     return 0;
+}
+
+
+sub startup_error {
+    my ($err, $func, $detail, $text) = @_;
+    if ($gui_bootstrap_file ne "" && $gui_bootstrap_file ne "-") {
+	# backwards compatibility only
+	if (open OUT, "> $gui_bootstrap_file") {
+	    print OUT "$version|/tmp|||||";
+	    close OUT;
+	}
+	exit $err;
+    }
+    print "smogrify::error|$func|$detail|$text|\n";
+    exit $err;
 }
 
 
@@ -7444,32 +7620,37 @@ sub rc_get {
     my $string = "";
 
     if (defined($prefs_file)) {
-        $rcfile=$prefs_file;
+        $rcfile = $prefs_file;
     }
 
-    unless (defined(open IN,"$rcfile")) {
-        print STDERR "Smogrify: Unable to read value $key from rc file, $rcfile\n";
-        exit 102;
+    unless (defined(open IN, "< $rcfile")) {
+	if ($gui_bootstrap_file ne "") {
+	    &startup_error(3, "rc_get", "open_file", "$home:$rc_filename");
+	}
+	print STDERR "smogrify: Unable to read value $key from $rcfile\n";
+	exit 3;
     }
-    $part=0;
+
+    $stage = 0;
     while (<IN>) {
-        if ($part==1&&$_=~ /(<\/$key>)$/) {
+	$line = $_;
+        if ($stage == 1 && $line =~ /(<\/$key>)$/) {
             close IN;
             return $string;
         }
-        if ($part==1||$_=~ /^(<$key>)/) {
-            if ($part==1) {
-                $_=~ s/\n//g;
+        if ($stage == 1 || $_ =~ /^(<$key>)/) {
+            if ($stage == 1) {
+                $line =~ s/\n//g;
                 if ($string eq "") {
-                    $string=$_;
+                    $string = $line;
                 }
                 else {
-                    $string.="\n".$_;
+                    $string .= "\n" . $line;
                 }
             }
             else {
-                $part=1;
-                $string=$2;
+                $stage = 1;
+                $string = $2;
             }
         }
     }
@@ -7665,107 +7846,76 @@ sub version_check_and_upgrade {
 
     # mainly for very very old versions
 
-    my $old_version = &rc_get("version");
-    my $version_hash = &version_hash($old_version);
-    my $new_version_hash = &version_hash($version);
+    my ($upd, $old_version_hash) = @_;
 
-    $msg="";
-
-    # throw a warning if using png and convert_version < 6.0.0
-    if (&rc_get("default_image_format") eq "png" && $convert_version_hash<6000 && $convert_version_hash>0) {
-        $msg="You are advised to upgrade to at least version 6.0 of Image Magick if using png files";
-    }
-
-    if ($version_hash>0) {
-        if ($new_version_hash>$version_hash) {
-            $msg="!updmsg";
-        }
-
-	if ($new_version_hash>2008000&&$version_hash<=2008000) {
-	    $msg="!updmsg2";
-        }
-
-        if ($version_hash<8005) {
+    if ($upd) {
+	if ($old_version_hash < 8005) {
 	    # not used now
-            &rc_delete("frontend");
-            &rc_delete("mog_auto_bak");
-            &rc_delete("plugin_dir");
-        }
-        if ($version_hash<9001) {
+	    &rc_delete("frontend");
+	    &rc_delete("mog_auto_bak");
+	    &rc_delete("plugin_dir");
+	}
+    }
+    if ($old_version_hash < 9001) {
+	if ($upd) {
 	    # convert_version is used instead now
-            &rc_delete("mogrify_version");
+	    &rc_deprecate("mogrify_version", "convert_version", "0.9.1");
+	    &rc_delete("effects_command");
 
-            &rc_delete("effects_command");
-
-	    # hey, now we use our own keyboard poller
-	    # things are getting groovy !
-            &rc_delete("no_fast_keys");
+	    &rc_delete("no_fast_keys");
 
 	    # changed to "open_compression_percent"
-            &rc_delete("open_quality");
+	    &rc_delete("open_quality");
 
-            &rc_delete("kbd_rpt_state");
-            &rc_delete("kbd_rpt_delay");
-            &rc_delete("kbd_rpt_rate");
+	    &rc_delete("kbd_rpt_state");
+	    &rc_delete("kbd_rpt_delay");
+	    &rc_delete("kbd_rpt_rate");
 
 	    #encoder_command not used any more
-            &rc_delete("encoder_command");
+	    &rc_delete("encoder_command");
 
 	    #encoder_acodec used instead
-            &rc_delete("audio_encode_quality");
-
-	    #encoder plugin names changed
-            $msg="Make sure you delete all the old encoder plugins and install the new ones.";
-            $msg2="Then change your encoder from Preferences / Encoders";
-        }
-        if ($version_hash<9006) {
-            &rc_delete("video_player");
-            &rc_delete("video_play_command");
-            &rc_delete("PAL/NTSC");
-        }
-        if ($version_hash<9006) {
-            &rc_delete("osc_opts");
-        }
-        if ($version_hash<1001005) {
-            &rc_delete("debug_encoders");
-        }
-        if ($version_hash<1002000) {
-            my $wmask = &rc_get("lives_warning_mask");
-            $wmask|=8192;
-            &rc_set("lives_warning_mask",$wmask);
-        }
-        if ($version_hash<1003011) {
-            &rc_set("osc_port",49999);
-            $msg="Default OSC port has been changed to 49999.";
-        }
-        if ($version_hash==2002005 && &rc_get("video_open_command") eq "") {
-            $video_open_command="\"".&get_mplayer_location."\"";
-            &rc_set("video_open_command","$video_open_command");
-        }
-        if ($version_hash<3000003) {
-            &rc_deprecate("current_autotrans", "active_autotrans", "3.0.3");
-            &rc_deprecate("def_autotrans", "", "3.0.3");
-            &rc_deprecate("session_tempdir", "", "3.0.3");
-	    $old_workdir = &rc_get("tempdir");
-	    if ($old_workdir ne "") {
-		$workdir = $old_workdir;
-		&rc_deprecate("tempdir", "workdir", "3.0.3");
-	    }
-        }
-        unless ($old_version eq $version) {
-            $current_keymap=smog_system_direct("grep \"keymap file version 4\" \"$lives_home_dir/$default_keymap\" 2>$nulfile");
-            if ($current_keymap eq "") {
-                unlink "$lives_home_dir/$default_keymap";
-            }
-            unless (&location("build-lives-plugin-multi") eq "") {
-                smog_system("build-lives-plugin-multi custom");
-                smog_system("build-lives-plugin-multi test");
-            }
-        }
+	    &rc_deprecate("audio_encode_quality", "encoder_acodec", "0.9.1");
+	}
+	#encoder plugin names changed
+	$msg .= "Encoder names have changed.\nMake sure you delete all the old encoder plugins and install the new ones.";
     }
 
-    # bless this version
-    &rc_set_priority("version", "$version");
+    if ($upd) {
+	if ($old_version_hash < 9006) {
+	    &rc_delete("video_player");
+	    &rc_delete("video_play_command");
+	    &rc_delete("PAL/NTSC");
+	    &rc_delete("osc_opts");
+	}
+
+	if ($old_version_hash<1001005) {
+	    &rc_delete("debug_encoders");
+	}
+
+	if ($old_version_hash < 1002000) {
+	    my $wmask = &rc_get("lives_warning_mask");
+	    $wmask |= 8192;
+	    &rc_set("lives_warning_mask", $wmask);
+	}
+
+	if ($old_version_hash < 1003011) {
+	    &rc_set("osc_port", 49999);
+	    $msg = "Default OSC port has been changed to 49999.\n" . $msg;
+	}
+
+	if ($old_version_hash < 30000003) {
+	    &rc_deprecate("current_autotrans", "active_autotrans", "3.0.3");
+	    &rc_deprecate("def_autotrans", "", "3.0.3");
+	    &rc_deprecate("session_tempdir", "", "3.0.3");
+	    &rc_deprecate("tempdir", "workdir", "3.0.3");
+	}
+
+	unless (&location("build-lives-plugin-multi") eq "") {
+	    smog_system("build-lives-plugin-multi custom");
+	    smog_system("build-lives-plugin-multi test");
+	}
+    }
 }
 
 
@@ -7806,16 +7956,11 @@ sub get_form_request {
 }
 
 
-sub get_convert_version_hash {
-    # turn a version like
-    # a.b.c into an integer
-    # a * 1,000,000 plus b * 1,000 plus c
-    # eg. 1.4.6 becomes 10004006
-
+sub get_convert_version {
     my $real_convert_command = (split(" ", $smog_convert_command))[0];
     my $convert_version = smog_system_direct("$real_convert_command 2>$nulfile | grep -i version");
-    $convert_version = (split(" ",$convert_version))[2];
-    return &version_hash($convert_version);
+    $convert_version = (split(" ", $convert_version))[2];
+    return $convert_version;
 }
 
 

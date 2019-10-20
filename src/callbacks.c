@@ -137,7 +137,7 @@ void lives_exit(int signum) {
 
   register int i;
 
-  if (mainw == NULL) exit(0);
+  if (mainw == NULL) _exit(0);
 
   if (!mainw->only_close) {
     if (prefs != NULL) {
@@ -146,8 +146,16 @@ void lives_exit(int signum) {
         // created with mkdtemp
         lives_rmdir(prefs->tmp_workdir, TRUE);
         prefs->tmp_workdir[0] = '\0';
+        if (capable != NULL) {
+          if (mainw->old_vhash != NULL) {
+            if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+              lives_rm(capable->rcfile);
+            }
+            lives_free(mainw->old_vhash);
+          }
+        } else _exit(0);
       }
-    }
+    } else _exit(0);
     mainw->is_exiting = TRUE;
   }
 
@@ -257,7 +265,7 @@ void lives_exit(int signum) {
       threaded_dialog_spin(0.);
     }
 
-    if (strcmp(future_prefs->workdir, prefs->workdir)) {
+    if (strlen(future_prefs->workdir) > 0 && strcmp(future_prefs->workdir, prefs->workdir)) {
       // if we changed the workdir, remove everything but sets from the old dir
       // create the new directory, and then move any sets over
       end_threaded_dialog();
@@ -273,7 +281,7 @@ void lives_exit(int signum) {
         lives_free(com);
       }
       lives_snprintf(prefs->workdir, PATH_MAX, "%s", future_prefs->workdir);
-    } else if (!mainw->only_close) lives_snprintf(future_prefs->workdir, 256, "NULL");
+    }
 
     if (mainw->leave_files && !mainw->fatal) {
       d_print(_("Saving as set %s..."), mainw->set_name);

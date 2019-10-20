@@ -772,9 +772,6 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_PREFIX_DIR "prefix_dir" // readonly
 #define PREF_LIB_DIR "lib_dir" // readonly
 
-#define PREF_SESSION_WORKDIR "session_workdir"
-#define PREF_SESSION_WORKDIR_OLD "session_tempdir"
-
 #define PREF_AUDIO_PLAYER "audio_player"
 #define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
 

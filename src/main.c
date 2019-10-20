@@ -128,8 +128,6 @@ static _ign_opts ign_opts;
 static int zargc;
 static char **zargv;
 
-static int startup_msgtype = 0;
-
 #ifndef NO_PROG_LOAD
 static int xxwidth = 0, xxheight = 0;
 #endif
@@ -484,79 +482,75 @@ static boolean pre_init(void) {
   //FATAL ERRORS
 
   if (!mainw->foreign) {
+    if (!capable->has_perl) {
+      startup_message_fatal(lives_strdup(
+                              _("\nPerl must be installed and in your path.\n\n"
+                                "Please review the README file which came with this package\nbefore running LiVES.\n\n"
+                                "Thankyou.\n")));
+    }
     if (!capable->has_smogrify) {
       msg = lives_strdup(
               _("\n`smogrify` must be in your path, and be executable\n\n"
                 "Please review the README file which came with this package\nbefore running LiVES.\n"));
       startup_message_fatal(msg);
-      lives_free(msg);
-    } else {
-      if (!capable->can_write_to_workdir) {
-        if (!mainw->has_session_workdir) {
-          tmp2 = lives_strdup_printf(_("Please check the <workdir> setting in \n%s\nand try again.\n"),
+    }
+    if (!capable->can_write_to_home) {
+      startup_message_fatal(lives_strdup_printf(
+                              _("\nLiVES was unable to write a small file to %s\n"
+                                "Please make sure you have write access to the directory and try again.\n"),
+                              capable->home_dir));
+    }
+    if (!capable->smog_version_correct) {
+      startup_message_fatal(lives_strdup(
+                              _("\nAn incorrect version of smogrify was found in your path.\n\n"
+                                "Please review the README file which came with this package\nbefore running LiVES."
+                                "\n\nThankyou.\n")));
+    }
+    if (!capable->can_read_from_config) {
+      msg = lives_strdup_printf(
+              _("\nLiVES was unable to read from its configuration file\n%s\n\n"
+                "Please check the file permissions for this file and try again.\n"),
+              (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+      lives_free(tmp);
+      startup_message_fatal(msg);
+    }
+    if (!capable->can_write_to_config_new) {
+      msg = lives_strdup_printf(
+              _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+                "Please check the file permissions for this file and directory\nand try again.\n"),
+              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
+      lives_free(tmp);
+      lives_free(tmp2);
+      startup_message_fatal(msg);
+    }
+    if (!capable->can_write_to_config) {
+      msg = lives_strdup_printf(
+              _("\nLiVES was unable to write to its configuration file\n%s\n\n"
+                "Please check the file permissions for this file and directory\nand try again.\n"),
+              (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+      lives_free(tmp);
+      startup_message_fatal(msg);
+    }
+    if (!capable->can_write_to_workdir) {
+      tmp2 = lives_strdup("");
+      if (!mainw->has_session_workdir) {
+        if (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->tmp_workdir, prefs->workdir)) {
+          lives_free(tmp2);
+          tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
+                                     (mainw->old_vhash != NULL && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
+                                     ? "<tempdir>" : "<workdir>",
                                      (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
           lives_free(tmp);
-        } else
-          tmp2 = lives_strdup("");
-
-        msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
-                                  prefs->workdir, tmp2);
-        lives_free(tmp2);
-        startup_message_fatal(msg);
-      } else {
-        if (!capable->has_perl) {
-          startup_message_fatal(lives_strdup(
-                                  _("\nPerl must be installed and in your path.\n\n"
-                                    "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n")));
-        } else {
-          if (!capable->smog_version_correct) {
-            startup_message_fatal(lives_strdup(
-                                    _("\nAn incorrect version of smogrify was found in your path.\n\n"
-                                      "Please review the README file which came with this package\nbefore running LiVES.\n\nThankyou.\n")));
-          } else {
-            if (!capable->can_write_to_home) {
-              startup_message_fatal(lives_strdup_printf(
-                                      _("\nLiVES was unable to write a small file to %s\nPlease make sure you have write access to the directory and try again.\n"),
-                                      capable->home_dir));
-            } else {
-              if (!capable->has_smogrify) {
-                msg = lives_strdup(
-                        _("\n`smogrify` must be in your path, and be executable\n\n"
-                          "Please review the README file which came with this package\nbefore running LiVES.\n"));
-                startup_message_fatal(msg);
-              } else {
-                if (!capable->can_read_from_config) {
-                  msg = lives_strdup_printf(
-                          _("\nLiVES was unable to read from its configuration file\n%s\n\nPlease check the file permissions for this file and try again.\n"),
-                          (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-                  lives_free(tmp);
-                  startup_message_fatal(msg);
-                } else {
-                  if (!capable->can_write_to_config) {
-                    char *tmp;
-                    msg = lives_strdup_printf(
-                            _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-                              "Please check the file permissions for this file and directory\nand try again.\n"),
-                            (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-                    lives_free(tmp);
-                    startup_message_fatal(msg);
-                  } else {
-                    if (!capable->can_write_to_config_new) {
-                      msg = lives_strdup_printf(
-                              _("\nLiVES was unable to write to the configuration file\n%s\n\n"
-                                "Please check the file permissions for this file and directory\nand try again.\n"),
-                              (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
-                      lives_free(tmp);
-                      lives_free(tmp2);
-                      startup_message_fatal(msg);
-                    }
-                  }
-                }
-              }
-            }
-          }
         }
       }
+      msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
+                                prefs->workdir, tmp2);
+      lives_free(tmp2);
+      startup_message_fatal(msg);
+    }
+    if (mainw->error) {
+      msg = lives_strdup_printf(_("\nSomething went wrong during startup\n%s"), mainw->msg);
+      startup_message_fatal(msg);
     }
   }
 
@@ -1950,15 +1944,10 @@ static void lives_init(_ign_opts *ign_opts) {
   }
 
   if (prefs->startup_phase != 0) {
-    char *txt;
-
     splash_end();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
     do_startup_interface_query();
-    txt = get_new_install_msg();
-    startup_message_info(txt);
-    lives_free(txt);
 
     set_int_pref(PREF_STARTUP_PHASE, 100); // tell backend to delete this
     prefs->startup_phase = 100;
@@ -2353,18 +2342,16 @@ boolean set_palette_colours(boolean force_reload) {
 
 capability *get_capabilities(void) {
   // get capabilities of backend system
-  FILE *bootfile;
-
   char **array;
 
-  char *safer_bfile;
   char *msg, *tmp;
 
-  char buffer[8192 + PATH_MAX];
-  char string[256];
+  char buffer[PATH_MAX * 4];
+  char command[PATH_MAX * 4];
 
-  int err;
   int numtok;
+
+  size_t xs;
 
 #ifdef IS_DARWIN
   processor_info_array_t processorInfo;
@@ -2373,12 +2360,12 @@ capability *get_capabilities(void) {
   kern_return_t kerr;
 #endif
 
-  capable->has_perl = FALSE;
+  buffer[0] = '\0';
+  command[0] = '\0';
 
-  get_location(EXEC_PERL, string, 256);
-  if (!strlen(string)) {
+  capable->has_perl = FALSE;
+  if (!has_executable(EXEC_PERL))
     return capable;
-  }
   capable->has_perl = TRUE;
 
   // this is _compile time_ bits, not runtime bits
@@ -2422,14 +2409,6 @@ capability *get_capabilities(void) {
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #endif
 
-#ifdef GUI_QT
-  QStringList qsl = QStandardPaths::standardLocations(QStandardPaths::HomeLocation);
-  lives_snprintf(capable->home_dir, PATH_MAX, "%s", qsl.at(0).toLocal8Bit().constData());
-
-  qsl = QStandardPaths::standardLocations(QStandardPaths::TempLocation);
-  lives_snprintf(capable->system_workdir, PATH_MAX, "%s", qsl.at(0).toLocal8Bit().constData());
-#endif
-
   capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
 
   capable->startup_msg[0] = '\0';
@@ -2459,23 +2438,16 @@ capability *get_capabilities(void) {
   capable->has_gconftool_2 = FALSE;
   capable->has_xdg_screensaver = FALSE;
 
-  capable->can_write_to_home = FALSE;
-  safer_bfile = lives_strdup_printf("%s"LIVES_DIR_SEP LIVES_BFILE_NAME".%d.%d", capable->home_dir, lives_getuid(), lives_getgid());
-  lives_rm(safer_bfile);
-
-  // check that we can write to $HOME
-  if (!check_file(safer_bfile, FALSE)) return capable;
-  capable->can_write_to_home = TRUE;
-
   capable->has_smogrify = FALSE;
   lives_snprintf(capable->backend_path, PATH_MAX, "%s", lives_find_program_in_path(BACKEND_NAME));
   if (strlen(capable->backend_path) == 0) return capable;
   capable->has_smogrify = TRUE;
 
-  if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
+  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
+  capable->can_write_to_workdir = FALSE;
+  if (!mainw->has_session_workdir) {
     lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
     lives_free(tmp);
     capable->can_write_to_home = FALSE;
@@ -2483,120 +2455,98 @@ capability *get_capabilities(void) {
       return capable;
     }
     capable->can_write_to_home = TRUE;
+    capable->can_write_to_workdir = TRUE;
   } else {
-    capable->can_write_to_workdir = FALSE;
     if (!lives_make_writeable_dir(prefs->workdir)) {
       // abort if we cannot create the new subdir
       return capable;
     }
-    capable->can_write_to_workdir = TRUE;
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->workdir);
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->workdir);
   }
-
-  lives_snprintf(string, 256, "%s report \"%s\" \"%s\" 2>%s", prefs->backend_sync,
-                 (tmp = lives_filename_from_utf8(safer_bfile, -1, NULL, NULL, NULL)),
-                 mainw->has_session_workdir ? prefs->workdir : prefs->tmp_workdir,
-                 LIVES_DEVNULL);
-
-  lives_free(tmp);
-
-  err = lives_system(string, TRUE) >> 8;
-  if (err == 127 || err == 126) {
-    return capable;
-  }
+  capable->can_write_to_workdir = TRUE;
 
   capable->has_smogrify = FALSE;
 
-  if (err == 255) {
-    // error in executable
+  lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
+  lives_popen(command, TRUE, buffer, PATH_MAX * 4);
+
+  if (mainw->com_failed) {
     return capable;
   }
 
-  if (err == 2) {
-    // not found
+  xs = strlen(buffer);
+  if (xs < 5) return capable;
+
+  if (buffer[xs - 1] == '\n') buffer[xs - 1] = '\0';
+  numtok = get_token_count(buffer, ' ');
+  if (numtok < 2) return capable;
+
+  array = lives_strsplit(buffer, " ", numtok);
+  if (strcmp(array[0], "smogrify")) {
+    lives_strfreev(array);
     return capable;
   }
 
   capable->has_smogrify = TRUE;
-  capable->can_read_from_config = FALSE;
-
-  if (err == 102) {
-    // couldnt read from rcfile
-    return capable;
-  }
-
-  capable->can_read_from_config = TRUE;
-  capable->can_write_to_config = FALSE;
-
-  if (err == 3) {
-    // couldnt write to rcfile
-    return capable;
-  }
-
-  capable->can_write_to_config = TRUE;
-  capable->can_write_to_config_new = FALSE;
-
-  if (err == 4) {
-    // couldnt write to rcfile.new
-    return capable;
-  }
-
-  capable->can_write_to_config_new = TRUE;
-
-  if (err == 5) {
-    // couldnt write to home
-    capable->can_write_to_home = FALSE;
-    return capable;
-  }
-
-  if (err == 6) {
-    capable->can_write_to_workdir = FALSE;
-    // couldnt write to workdir
-    return capable;
-  }
-
-  capable->can_write_to_workdir = TRUE;
-  capable->can_write_to_home = FALSE;
-
-  if (!(bootfile = fopen(safer_bfile, "r"))) {
-    capable->can_write_to_home = FALSE;
-    lives_free(safer_bfile);
-    return capable;
-  }
-
-  capable->can_write_to_home = TRUE;
-  mainw->read_failed = FALSE;
-  lives_fgets(buffer, 8192, bootfile);
-  fclose(bootfile);
-
-  lives_rm(safer_bfile);
-  lives_free(safer_bfile);
-
-  if (mainw->read_failed) return capable;
-
-  numtok = get_token_count(buffer, '|');
-
-  array = lives_strsplit(buffer, "|", numtok);
-
-  lives_snprintf(string, 256, "%s", array[0]);
-
   capable->smog_version_correct = FALSE;
 
-  // the backend should return at least 3 fields: a version string, the working directory (see below) and the startup_phase
-  if (strcmp(string, LiVES_VERSION) || (numtok < 3)) {
-    msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", string, LiVES_VERSION);
+  if (strcmp(array[1], LiVES_VERSION)) {
+    msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", array[1], LiVES_VERSION);
     LIVES_ERROR(msg);
     lives_free(msg);
     lives_strfreev(array);
     return capable;
   }
 
+  lives_strfreev(array);
   capable->smog_version_correct = TRUE;
+
+  lives_snprintf(command, PATH_MAX * 4, "%s report -", prefs->backend_sync);
+
+  capable->has_smogrify = FALSE;
+  lives_popen(command, TRUE, buffer, PATH_MAX * 4);
+  if (mainw->com_failed || strlen(buffer) < 6) return capable;
+  capable->has_smogrify = TRUE;
+
+  numtok = get_token_count(buffer, '|');
+  if (numtok < 2) {
+    lives_strfreev(array);
+    capable->smog_version_correct = FALSE;
+    return capable;
+  }
+
+  array = lives_strsplit(buffer, "|", numtok);
+
+  if (!strcmp(array[0], "smogrify::error")) {
+    if (!strcmp(array[1], "rc_get")) {
+      lives_strfreev(array);
+      capable->can_read_from_config = FALSE;
+      return capable;
+    }
+    if (!strcmp(array[1], "rc_set_new")) {
+      lives_strfreev(array);
+      capable->can_write_to_config_new = FALSE;
+      return capable;
+    }
+    if (!strcmp(array[1], "rc_set")) {
+      lives_strfreev(array);
+      capable->can_write_to_config = FALSE;
+      return capable;
+    }
+    // other unspecified error
+    mainw->error = TRUE;
+    lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%s", buff);
+    return capable;
+  }
+
+  capable->can_write_to_home = TRUE;
+  capable->can_write_to_config_new = TRUE;
+  capable->can_write_to_config = TRUE;
+  capable->can_read_from_config = TRUE;
+
 
   if (!mainw->has_session_workdir) {
     size_t tmplen = strlen(prefs->tmp_workdir);
-    // The backend process returned a value. If the user has a valid, undamaged  config file, it returned the stored value
+    // The backend process returned a value. If the user has a valid, undamaged config file, it returned the stored value
     // from there; otherwise it returned tmp_workdir, which we created earlier with mkdtemp() and set the startup_phase
     // so we prompt the user for the real directory in workdir_query(), and then we can safely remove tmp_workdir
 
@@ -2604,131 +2554,95 @@ capability *get_capabilities(void) {
     // although we may still prompt for the working dir if it's a fresh install.
 
     lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
+    g_print("len is %d\n", strlen(prefs->workdir));
+    if (strlen(prefs->workdir) == 0) {
+      lives_snprintf(prefs->workdir, PATH_MAX, "%s", prefs->tmp_workdir);
+    }
+    g_print("VOOLS %s ans %s\n", prefs->workdir, prefs->tmp_workdir);
     if (strcmp(prefs->workdir, prefs->tmp_workdir)) {
       if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
         lives_rmdir(prefs->tmp_workdir, TRUE);
         prefs->tmp_workdir[0] = '\0';
       }
+      ensure_isdir(prefs->workdir);
+      if (!is_writeable_dir(prefs->workdir)) {
+        capable->can_write_to_workdir = FALSE;
+        return capable;
+      }
+      capable->can_write_to_workdir = TRUE;
+
+      lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+      lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
+
+      set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+
+      // for backwards compatibility only
+      set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+    } else {
+      lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+      lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
     }
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+  } else {
     lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
 
-  lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
-
-  // the startup phaase
+  // the startup phase
   // this is 0 for normal operation
   // -1 for a fresh install
   // after this the value goes to 1....n
   // then finally gets set to 100, which instructs the backend to remove this preference, and return 0
   prefs->startup_phase = atoi(array[2]);
 
-  // the backend can optionally return 2 more fields of message ttext
-  // the first of these may contain a special value, which we check for
+  // hash of last version used,
+  // or 0 if rcfile existed, but we couldn't extract a version
+  if (numtok > 3) {
+    mainw->old_vhash = lives_strdup(array[3]);
+  }
 
-  if (numtok > 3 && strlen(array[3])) {
-    startup_msgtype = 1;
-    if (!strcmp(array[3], "!updmsg2")) {
-      startup_msgtype = 2;
-    }
-    if (!strncmp(array[3], "!updmsg", 7)) {
-      char *text = get_upd_msg(startup_msgtype);
-      lives_snprintf(capable->startup_msg, 256, "%s\n\n", text);
-      info_only = TRUE;
-      lives_free(text);
-
-      if (numtok > 4 && strlen(array[4])) {
-        info_only = FALSE;
-        lives_strappend(capable->startup_msg, 256, array[4]);
-      }
-    } else {
-      lives_snprintf(capable->startup_msg, 256, "%s\n\n", array[3]);
-      if (numtok > 4 && strlen(array[4])) {
-        lives_strappend(capable->startup_msg, 256, array[4]);
+  if (strlen(mainw->old_vhash) > 0 && strcmp(mainw->old_vhash, "0")) {
+    int version_hash = verhash(LiVES_VERSION);
+    if (atoi(mainw->old_vhash) < version_hash) {
+      if (prefs->startup_phase == 0) {
+        msg = get_upd_msg();
+        lives_snprintf(capable->startup_msg, 1024, "%s", msg);
+        lives_free(msg);
+        if (numtok > 4 && strlen(array[4])) {
+          lives_strappend(capable->startup_msg, 1024, array[4]);
+        }
       }
     }
   }
+
   lives_strfreev(array);
 
-  if (prefs->startup_phase == 0) {
-    if (!mainw->has_session_workdir) {
-      set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
-      set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
-    }
-  }
-
-  get_location(EXEC_MPLAYER, string, 256);
-  if (strlen(string)) capable->has_mplayer = TRUE;
-
-  get_location(EXEC_MPLAYER2, string, 256);
-  if (strlen(string)) capable->has_mplayer2 = TRUE;
-
-  get_location(EXEC_MPV, string, 256);
-  if (strlen(string)) capable->has_mpv = TRUE;
-
-  get_location(EXEC_CONVERT, string, 256);
-  if (strlen(string)) capable->has_convert = TRUE;
-
-  get_location(EXEC_COMPOSITE, string, 256);
-  if (strlen(string)) capable->has_composite = TRUE;
-
-  get_location(EXEC_IDENTIFY, string, 256);
-  if (strlen(string)) capable->has_identify = TRUE;
+  capable->has_mplayer = has_executable(EXEC_MPLAYER);
+  capable->has_mplayer2 = has_executable(EXEC_MPLAYER2);
+  capable->has_mpv = has_executable(EXEC_MPV);
+  capable->has_convert = has_executable(EXEC_CONVERT);
+  capable->has_composite = has_executable(EXEC_COMPOSITE);
+  capable->has_identify = has_executable(EXEC_IDENTIFY);
 
   ///////////////////////////////////////////////////////
 
-  get_location(EXEC_PLAY, string, 256);
-  if (strlen(string)) capable->has_sox_play = TRUE;
-
-  get_location(EXEC_SOX, string, 256);
-  if (strlen(string)) capable->has_sox_sox = TRUE;
-
-  get_location(EXEC_DVGRAB, string, 256);
-  if (strlen(string)) capable->has_dvgrab = TRUE;
-
-  get_location(EXEC_CDDA2WAV, string, 256);
-  if (strlen(string)) capable->has_cdda2wav = TRUE;
-  else {
-    get_location(EXEC_ICEDAX, string, 256);
-    if (strlen(string)) capable->has_cdda2wav = TRUE;
+  capable->has_sox_play = has_executable(EXEC_PLAY);
+  capable->has_sox_sox = has_executable(EXEC_SOX);
+  capable->has_dvgrab = has_executable(EXEC_DVGRAB);
+  if (!(capable->has_cdda2wav = has_executable(EXEC_CDDA2WAV))) {
+    capable->has_cdda2wav = has_executable(EXEC_ICEDAX);
   }
-
-  get_location(EXEC_JACKD, string, 256);
-  if (strlen(string)) capable->has_jackd = TRUE;
-
-  get_location(EXEC_GDB, string, 256);
-  if (strlen(string)) capable->has_gdb = TRUE;
-
-  get_location(EXEC_SSH_ASKPASS, string, 256);
-  if (strlen(string)) capable->has_ssh_askpass = TRUE;
-
-  get_location(EXEC_YOUTUBE_DL, string, 256);
-  if (strlen(string)) capable->has_youtube_dl = TRUE;
-
-  get_location(EXEC_PULSEAUDIO, string, 256);
-  if (strlen(string)) capable->has_pulse_audio = TRUE;
-
-  get_location(EXEC_PYTHON, string, 256);
-  if (strlen(string)) {
-    capable->has_python = TRUE;
+  capable->has_jackd = has_executable(EXEC_JACKD);
+  capable->has_gdb = has_executable(EXEC_GDB);
+  capable->has_ssh_askpass = has_executable(EXEC_SSH_ASKPASS);
+  capable->has_pulse_audio = has_executable(EXEC_PULSEAUDIO);
+  if ((capable->has_python = has_executable(EXEC_PYTHON))) {
     capable->python_version = get_version_hash(EXEC_PYTHON " -V 2>&1", " ", 1);
   }
-
-  get_location(EXEC_XWININFO, string, 256);
-  if (strlen(string)) capable->has_xwininfo = TRUE;
-
-  get_location(EXEC_GCONFTOOL_2, string, 256);
-  if (strlen(string)) capable->has_gconftool_2 = TRUE;
-
-  get_location(EXEC_XDG_SCREENSAVER, string, 256);
-  if (strlen(string)) capable->has_xdg_screensaver = TRUE;
-
-  get_location(EXEC_MIDISTART, string, 256);
-  if (strlen(string)) {
-    get_location(EXEC_MIDISTOP, string, 256);
-    if (strlen(string)) {
-      capable->has_midistartstop = TRUE;
-    }
+  capable->has_xwininfo = has_executable(EXEC_XWININFO);
+  capable->has_gconftool_2 = has_executable(EXEC_GCONFTOOL_2);
+  capable->has_xdg_screensaver = has_executable(EXEC_XDG_SCREENSAVER);
+  if (has_executable(EXEC_MIDISTART)) {
+    capable->has_midistartstop = has_executable(EXEC_MIDISTOP);
   }
 
 #ifdef IS_DARWIN
@@ -3005,9 +2919,10 @@ static boolean lives_startup(livespointer data) {
     msg = lives_strdup_printf(
             _("\n\nThe theme you requested could not be located. Please make sure you have the themes installed in\n%s/%s.\n"
               "(Maybe you need to change the value of <prefix_dir> in your %s file)\n"),
-            (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR, (tmp2 = lives_filename_to_utf8(capable->rcfile, -1,
-                NULL, NULL,
-                NULL)));
+            (tmp = lives_filename_to_utf8(prefs->prefix_dir, -1, NULL, NULL, NULL)), THEME_DIR,
+            (tmp2 = lives_filename_to_utf8(capable->rcfile, -1,
+                                           NULL, NULL,
+                                           NULL)));
     lives_free(tmp2);
     lives_free(tmp);
     startup_message_nonfatal(msg);
@@ -3022,8 +2937,7 @@ static boolean lives_startup(livespointer data) {
 
   if (!mainw->foreign) {
     if (strlen(capable->startup_msg)) {
-      if (startup_msgtype == 2) startup_message_choice(capable->startup_msg, startup_msgtype);
-      else if (info_only) startup_message_info(capable->startup_msg);
+      if (info_only) startup_message_info(capable->startup_msg);
       else startup_message_nonfatal(capable->startup_msg);
     } else {
       if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
@@ -3316,8 +3230,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   zargc = argc;
   zargv = argv;
 
-  mainw = NULL;
-
   //setlocale(LC_ALL, "");
 
   // force decimal point to be a "."
@@ -3369,6 +3281,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // init prefs
   prefs = (_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
+  future_prefs->workdir[0] = '\0';
 
   prefs->tmp_workdir[0] = '\0';
   prefs->show_gui = TRUE;
@@ -3387,8 +3300,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->go_away = TRUE;
   mainw->mgeom = NULL;
   mainw->cached_list = NULL;
+  mainw->msg[0] = '\0';
+  mainw->com_failed = FALSE;
+  mainw->error = FALSE;
 
   mainw->has_session_workdir = FALSE;
+  mainw->old_vhash = NULL;
 
   // mainw->foreign is set if we are grabbing an external window
   mainw->foreign = FALSE;
@@ -3474,9 +3391,26 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         charopt = longopts[option_index].name;
 
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
+          char cdir[PATH_MAX];
+          boolean toolong = FALSE;
+
+          if (strlen(optarg) > PATH_MAX) {
+            toolong = TRUE;
+          } else {
+            lives_snprintf(cdir, PATH_MAX, "%s", optarg);
+            ensure_isdir(cdir);
+            if (strlen(optarg) > PATH_MAX) {
+              toolong = TRUE;
+            }
+          }
+          if (toolong) {
+            msg = lives_strdup(_("The working directory name specified is too long.\n"));
+            startup_message_fatal(msg);
+          }
+
           // override workdir setting
           mainw->has_session_workdir = TRUE;
-          lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", cdir);
           continue;
         }
 
@@ -3493,7 +3427,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "debug")) {
-          // debug crashes
+          // debuyg crashes
           mainw->debug = TRUE;
           continue;
         }
@@ -3784,6 +3718,12 @@ void startup_message_fatal(char *msg) {
     // created with mkdtemp
     lives_rmdir(prefs->tmp_workdir, TRUE);
     prefs->tmp_workdir[0] = '\0';
+    if (mainw->old_vhash != NULL) {
+      if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+        lives_rm(capable->rcfile);
+      }
+      lives_free(mainw->old_vhash);
+    }
   }
 
   // needs notify_socket and prefs->omc_events, so most likely will do nothing
@@ -3796,18 +3736,6 @@ void startup_message_fatal(char *msg) {
 
 LIVES_GLOBAL_INLINE boolean startup_message_nonfatal(const char *msg) {
   do_error_dialog(msg);
-  return TRUE;
-}
-
-
-boolean startup_message_choice(const char *msg, int msg_type) {
-  boolean res = do_yesno_dialog(msg);
-  if (res && msg_type == 2) {
-    // do chmod
-    char *mode = lives_strdup_printf("-R %o", capable->umask);
-    lives_chmod(prefs->workdir, mode);
-    lives_free(mode);
-  }
   return TRUE;
 }
 

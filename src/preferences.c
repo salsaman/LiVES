@@ -506,10 +506,9 @@ void set_vpp(boolean set_in_prefs) {
 }
 
 
-static void set_workdir_label_text(LiVESLabel *label) {
+static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
   char *free_ds;
   char *tmpx1, *tmpx2;
-  char *dir = future_prefs->workdir;
   char *markup;
 
   // use lives_strdup* since the translation string is auto-freed()
@@ -523,7 +522,8 @@ static void set_workdir_label_text(LiVESLabel *label) {
   }
 
   tmpx1 = lives_strdup(
-            _("The work directory is LiVES working directory where opened clips and sets are stored.\nIt should be in a partition with plenty of free disk space.\n"));
+            _("The work directory is LiVES working directory where opened clips and sets are stored.\n"
+              "It should be in a partition with plenty of free disk space.\n"));
 
 #ifdef GUI_GTK
   markup = g_markup_printf_escaped("<span background=\"white\" foreground=\"red\"><big><b>%s</b></big></span>%s", tmpx1, tmpx2);
@@ -1111,6 +1111,8 @@ success6:
 
 boolean apply_prefs(boolean skip_warn) {
   // set current prefs from prefs dialog
+  char prefworkdir[PATH_MAX];
+
   const char *video_open_command = lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
   const char *audio_play_command = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
   const char *def_vid_load_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
@@ -1351,6 +1353,9 @@ boolean apply_prefs(boolean skip_warn) {
 
   char *cdplay_device = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->cdplay_entry)), -1, NULL, NULL, NULL);
 
+  lives_snprintf(prefworkdir, PATH_MAX, "%s", prefs->workdir);
+  ensure_isdir(prefworkdir);
+
   // TODO: move all into pref_factory_* functions
   mainw->no_context_update = TRUE;
 
@@ -1469,8 +1474,9 @@ boolean apply_prefs(boolean skip_warn) {
     else future_prefs->encoder.audio_codec = prefs->acodec_list_to_format[idx];
   } else future_prefs->encoder.audio_codec = 0;
 
-  lives_snprintf(workdir, PATH_MAX, "%s", (tmp = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->workdir_entry)),
-                 -1, NULL, NULL, NULL)));
+  lives_snprintf(workdir, PATH_MAX, "%s",
+                 (tmp = lives_filename_from_utf8((char *)lives_entry_get_text(LIVES_ENTRY(prefsw->workdir_entry)),
+                        -1, NULL, NULL, NULL)));
   lives_free(tmp);
 
   if (audp == NULL ||
@@ -1608,10 +1614,8 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   ensure_isdir(workdir);
-  ensure_isdir(prefs->workdir);
-  ensure_isdir(future_prefs->workdir);
 
-  if (strcmp(prefs->workdir, workdir) || strcmp(future_prefs->workdir, workdir)) {
+  if (strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir)) {
       char *msg = lives_strdup(
@@ -1620,19 +1624,19 @@ boolean apply_prefs(boolean skip_warn) {
                       "Alternatively, press Cancel to restore the working directory to its original setting."));
 
       lives_snprintf(workdir, PATH_MAX, "%s", xworkdir);
+      set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), xworkdir);
       lives_free(xworkdir);
 
-      lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
-      set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label));
       lives_widget_queue_draw(prefsw->workdir_label);
       lives_widget_context_update(); // update prefs window before showing confirmation box
 
       if (do_warning_dialog(msg)) {
+        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", workdir);
         mainw->prefs_changed = PREFS_WORKDIR_CHANGED;
         needs_restart = TRUE;
       } else {
-        lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
-        lives_entry_set_text(LIVES_ENTRY(prefsw->workdir_entry), prefs->workdir);
+        future_prefs->workdir[0] = '\0';
+        set_workdir_label_text(LIVES_LABEL(prefsw->workdir_label), prefs->workdir);
       }
       lives_free(msg);
     }
@@ -2179,7 +2183,7 @@ void save_future_prefs(void) {
     set_string_pref(PREF_RECENT4, "");
   }
 
-  if (strncmp(future_prefs->workdir, "NULL", 4)) {
+  if (strlen(future_prefs->workdir) > 0) {
     set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
     set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);
   }
@@ -3979,7 +3983,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
   label = lives_standard_label_new("");
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-  set_workdir_label_text(LIVES_LABEL(label));
+  set_workdir_label_text(LIVES_LABEL(label), prefs->workdir);
   lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), label, 0, 3, 0, 2,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
@@ -4018,7 +4022,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry), FALSE);
 
-  prefsw->workdir_entry = lives_standard_entry_new(NULL, (tmp = lives_filename_to_utf8(future_prefs->workdir, -1, NULL, NULL, NULL)),
+  prefsw->workdir_entry = lives_standard_entry_new(NULL,
+                          (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0 ? future_prefs->workdir : prefs->workdir, -1, NULL, NULL, NULL)),
                           -1,
                           PATH_MAX,
                           NULL, (tmp2 = lives_strdup(_("LiVES working directory."))));

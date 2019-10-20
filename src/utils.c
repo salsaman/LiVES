@@ -2588,6 +2588,17 @@ void get_location(const char *exe, char *val, int maxlen) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean has_executable(const char *exe) {
+  char *loc;
+  if ((loc = lives_find_program_in_path(exe)) != NULL) {
+    lives_free(loc);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+
 uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   /// get version hash output for an executable from the backend
   char val[16];
@@ -3955,13 +3966,21 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
 }
 
 
-int verhash(char *version) {
+int verhash(char *xv) {
+  char *version;
   char *s;
   int major = 0;
   int minor = 0;
   int micro = 0;
 
-  if (!(strlen(version))) return 0;
+  if (xv == NULL) return 0;
+
+  version = lives_strdup(xv);
+
+  if (!(strlen(version))) {
+    lives_free(version);
+    return 0;
+  }
 
   s = strtok(version, ".");
   if (!(s == NULL)) {
@@ -3975,6 +3994,7 @@ int verhash(char *version) {
       }
     }
   }
+  lives_free(version);
   return major * 1000000 + minor * 1000 + micro;
 }
 
@@ -4127,6 +4147,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
   char *keystr_end = lives_strdup_printf("</%s>", key);
   size_t kslen = strlen(keystr_start);
   size_t kelen = strlen(keystr_end);
+  size_t xs;
 
   boolean gotit = FALSE;
   char buff[maxlen];
@@ -4152,7 +4173,8 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   if (!gotit) return NULL;
 
-  if (strlen(buff) > 0) memset(buff + strlen(buff) - 1, 0, 1); // remove trailing newline
+  xs = strlen(buff);
+  if (xs > 0 && buff[xs - 1] == '\n') buff[xs - 1] = '\0'; // remove trailing newline
 
   return lives_strdup(buff);
 }

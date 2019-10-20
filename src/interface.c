@@ -2244,7 +2244,8 @@ _entryw *create_rename_dialog(int type) {
       char *workdir;
       if (strlen(prefs->workdir) > 0 && (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->workdir, prefs->tmp_workdir)))
         workdir = lives_strdup(prefs->workdir);
-      else workdir = lives_build_filename(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
+      else workdir = lives_strdup_printf("%s/%s/", capable->home_dir, LIVES_DEF_WORK_NAME)
+                       ;
       lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(workdir)));
       lives_free(tmp);
       lives_free(workdir);

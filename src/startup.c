@@ -60,17 +60,27 @@ void close_file(int current_file, boolean tshoot) {
 
 
 boolean check_workdir_valid(char **pdirname) {
+  char cdir[PATH_MAX];
   uint64_t freesp;
   size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
   char *tmp;
 
   if (pdirname == NULL || *pdirname == NULL) return FALSE;
 
+  if (strlen(*pdirname) > (PATH_MAX - 1)) {
+    do_blocking_error_dialog(_("Directory name is too long !"));
+    return FALSE;
+  }
+
   // append a dirsep to the end if there isnt one
-  if (strcmp(*pdirname + strlen(*pdirname) - 1, LIVES_DIR_SEP)) {
-    tmp = lives_strdup_printf("%s%s", *pdirname, LIVES_DIR_SEP);
-    lives_free(*pdirname);
-    *pdirname = tmp;
+  lives_snprintf(cdir, PATH_MAX, "%s", *pdirname);
+  ensure_isdir(cdir);
+
+  *pdirname = lives_strdup(cdir);
+
+  if (strlen(*pdirname) > (PATH_MAX - 1)) {
+    do_blocking_error_dialog(_("Directory name is too long !"));
+    return FALSE;
   }
 
   // if it's an existing dir, append "livesprojects" to the end unless it is already
@@ -148,15 +158,14 @@ boolean do_workdir_query(void) {
   lives_freep((void **)&wizard);
 
   lives_snprintf(prefs->workdir, PATH_MAX, "%s", dirname);
-  lives_snprintf(future_prefs->workdir, PATH_MAX, "%s", prefs->workdir);
 
   set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
   set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
 
   mainw->has_session_workdir = FALSE;
 
-  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
   lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
   lives_free(dirname);
 

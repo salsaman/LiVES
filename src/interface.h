@@ -145,6 +145,8 @@ typedef struct {
 #define LIVES_FILE_SELECTION_IMAGE_ONLY 5
 #define LIVES_FILE_SELECTION_SAVE 6
 
+#define LIVES_DIR_SELECTION_WORKDIR 1024
+
 aud_dialog_t *create_audfade_dialog(int type);
 LiVESWidget *create_combo_dialog(int type, LiVESList *list);
 

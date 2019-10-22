@@ -4022,13 +4022,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->proj_dir_entry), FALSE);
 
-  prefsw->workdir_entry = lives_standard_entry_new(NULL,
+  hbox = lives_hbox_new(FALSE, 0);
+  prefsw->workdir_entry = lives_standard_direntry_new("",
                           (tmp = lives_filename_to_utf8(strlen(future_prefs->workdir) > 0 ? future_prefs->workdir : prefs->workdir, -1, NULL, NULL, NULL)),
-                          -1,
-                          PATH_MAX,
-                          NULL, (tmp2 = lives_strdup(_("LiVES working directory."))));
+                          LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), (tmp2 = lives_strdup(_("LiVES working directory."))));
 
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), prefsw->workdir_entry, 1, 2, 3, 4,
+  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), hbox, 1, 2, 3, 4,
                      (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
@@ -4036,6 +4035,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_free(tmp2);
 
   lives_entry_set_editable(LIVES_ENTRY(prefsw->workdir_entry), FALSE);
+
+  dirbutton = lives_label_get_mnemonic_widget(LIVES_LABEL(widget_opts.last_label));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dirbutton), "filesel_type",
+                               LIVES_INT_TO_POINTER(LIVES_DIR_SELECTION_WORKDIR));
 
   dirbutton = lives_standard_file_button_new(TRUE, NULL);
 
@@ -4076,14 +4079,6 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                      (LiVESAttachOptions)(0), 0, 0);
 
   lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), prefsw->proj_dir_entry);
-
-  dirbutton = lives_standard_file_button_new(TRUE, NULL);
-
-  lives_table_attach(LIVES_TABLE(prefsw->table_right_directories), dirbutton, 2, 3, 3, 4,
-                     (LiVESAttachOptions)(0),
-                     (LiVESAttachOptions)(0), 0, 0);
-
-  lives_signal_connect(dirbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked), prefsw->workdir_entry);
 
   pixbuf_directories = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_DIRECTORY, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 

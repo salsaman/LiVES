@@ -29,6 +29,7 @@
 #include "cvirtual.h"
 #include "paramwindow.h"
 #include "ce_thumbs.h"
+#include "startup.h"
 
 #ifdef LIBAV_TRANSCODE
 #include "transcode.h"
@@ -616,13 +617,25 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
-  if (filesel_type == LIVES_FILE_SELECTION_UNDEFINED) {
+  switch (filesel_type) {
+  case LIVES_FILE_SELECTION_UNDEFINED:
+  case LIVES_DIR_SELECTION_WORKDIR:
     dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
                           is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
-                          (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR)) ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
+                          (fname == def_dir && def_dir != NULL && !strcmp(def_dir, LIVES_DEVICE_DIR))
+                          ? LIVES_FILE_CHOOSER_ACTION_SELECT_DEVICE :
                           LIVES_FILE_CHOOSER_ACTION_OPEN,
                           NULL, NULL);
-  } else if (filesel_type == LIVES_FILE_SELECTION_SAVE) {
+
+    if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
+      if (strcmp(dirname, fname)) {
+        if (!check_workdir_valid(&dirname)) {
+          dirname = lives_strdup(fname);
+        }
+      }
+    }
+    break;
+  case LIVES_FILE_SELECTION_SAVE: {
     char fnamex[PATH_MAX], dirnamex[PATH_MAX];
     boolean free_filt = FALSE;
 
@@ -647,7 +660,9 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
       lives_free(filt[0]);
       lives_free(filt);
     }
-  } else {
+  }
+  break;
+  default: {
     LiVESWidget *chooser = choose_file_with_preview(def_dir, fname, filt, filesel_type);
     int resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
@@ -656,8 +671,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
     if (resp == LIVES_RESPONSE_ACCEPT) {
       dirname = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(chooser));
     }
-
     lives_widget_destroy(LIVES_WIDGET(chooser));
+  }
   }
 
   if (fname != NULL && fname != def_dir) lives_free(fname);
@@ -679,22 +694,6 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
     after_param_text_changed(tentry, rfx);
     rfx->params[param_number].edited = FALSE;
   }
-}
-
-
-void on_filesel_complex_clicked(LiVESButton *button, LiVESEntry *entry) {
-  // append LIVES_WORK_NAME
-  size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
-
-  on_filesel_button_clicked(NULL, entry);
-
-  if (strcmp(file_name + strlen(file_name) - 1, LIVES_DIR_SEP)) {
-    lives_strappend(file_name, PATH_MAX, LIVES_DIR_SEP);
-  }
-  if (strlen(file_name) < chklen || strncmp(file_name + strlen(file_name) - chklen, LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))
-    lives_strappend(file_name, PATH_MAX, LIVES_DEF_WORK_NAME LIVES_DIR_SEP);
-
-  lives_entry_set_text(entry, file_name);
 }
 
 

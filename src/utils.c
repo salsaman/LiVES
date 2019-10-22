@@ -2110,7 +2110,6 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
     break;
   }
 
-  g_print("set sensi\n");
   lives_widget_set_sensitive(mainw->show_layout_errors, TRUE);
   if (mainw->multitrack != NULL) lives_widget_set_sensitive(mainw->multitrack->show_layout_errors, TRUE);
   return TRUE;

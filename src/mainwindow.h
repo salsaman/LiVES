@@ -1484,6 +1484,7 @@ typedef struct {
   lives_storage_status_t ds_status;
   uint64_t dsval;
 
+  char *version_hash;
   char *old_vhash;
   ////////////////////
 } mainwindow;

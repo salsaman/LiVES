@@ -747,6 +747,7 @@ typedef struct {
   boolean can_read_from_config;
   boolean can_write_to_config;
   boolean can_write_to_config_new;
+  boolean can_write_to_config_backup;
   boolean can_write_to_home;
   boolean can_write_to_workdir;
 

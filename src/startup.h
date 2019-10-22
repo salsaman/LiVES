@@ -10,6 +10,7 @@
 #define LIVES_TEST_VIDEO_NAME "vidtest.avi"
 
 boolean do_workdir_query(void);
+boolean check_workdir_valid(char **pdirname);
 boolean do_audio_choice_dialog(short startup_phase);
 boolean do_startup_tests(boolean tshoot);
 void do_startup_interface_query(void);

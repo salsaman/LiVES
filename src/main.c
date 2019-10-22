@@ -132,6 +132,10 @@ static char **zargv;
 static int xxwidth = 0, xxheight = 0;
 #endif
 
+static char *old_vhash = NULL;
+static int initial_startup_phase = 0;
+static boolean was_temp_workdir = FALSE;
+
 ////////////////////
 
 #ifdef GUI_GTK
@@ -514,21 +518,13 @@ static boolean pre_init(void) {
       lives_free(tmp);
       startup_message_fatal(msg);
     }
-    if (!capable->can_write_to_config_new) {
+    if (!capable->can_write_to_config_new || !capable->can_write_to_config_backup || !capable->can_write_to_config) {
       msg = lives_strdup_printf(
-              _("\nLiVES was unable to write to the configuration file\n%s\n\n"
+              _("\nAn error occured when writing to the configuration files\n%s*\n\n"
                 "Please check the file permissions for this file and directory\nand try again.\n"),
               (tmp2 = ensure_extension((tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)), LIVES_FILE_EXT_NEW)));
       lives_free(tmp);
       lives_free(tmp2);
-      startup_message_fatal(msg);
-    }
-    if (!capable->can_write_to_config) {
-      msg = lives_strdup_printf(
-              _("\nLiVES was unable to write to its configuration file\n%s\n\n"
-                "Please check the file permissions for this file and directory\nand try again.\n"),
-              (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-      lives_free(tmp);
       startup_message_fatal(msg);
     }
     if (!capable->can_write_to_workdir) {
@@ -1969,7 +1965,54 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 
 static void do_start_messages(void) {
   int w, h;
-  char *endian;
+  char *endian, *phase = NULL;
+
+  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
+  if (mainw->has_session_workdir) {
+    d_print(_("(Set by -workdir commandline option)\n"));
+  } else {
+    if (!was_temp_workdir) {
+      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
+        lives_free(old_vhash);
+        old_vhash = lives_strdup(LiVES_VERSION);
+      }
+      d_print(_("(Retrieved from %s, version %s)\n"), capable->rcfile, old_vhash);
+    } else {
+      d_print(_("(Set by user during setup phase)\n"));
+    }
+  }
+
+  if (initial_startup_phase == 0) {
+    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+      phase = lives_strdup(_("(forced reinstall, error in recovery phase)"));
+    } else {
+      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("upgrade from version %s"), mainw->old_vhash);
+      } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
+      } else phase = lives_strdup(_("(normal startup)"));
+    }
+  } else if (initial_startup_phase == -1) {
+    if (!strcmp(mainw->old_vhash, "0")) {
+      phase = lives_strdup_printf(_("reinstall after failed recovery; check %s.damaged for errors"), capable->rcfile);
+    } else {
+      phase = lives_strdup(_("(fresh install)"));
+    }
+  }
+  if (phase == NULL) phase = lives_strdup_printf(_("installation phase %d"), initial_startup_phase);
+
+  d_print(_("Initial startup phase was %d %s\n"), initial_startup_phase, phase);
+  lives_free(phase);
+  lives_free(old_vhash);
+
+  if (initial_startup_phase == 0) {
+    char *fname = lives_strdup_printf("%s.recovery.succeeded", capable->rcfile);
+    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      phase = lives_strdup_printf(_("%s was possibly recovered from %s\n"), capable->rcfile, fname);
+      d_print("%s", phase);
+      lives_free(phase);
+    }
+  }
 
   d_print(_("\nChecking optional dependencies: "));
 
@@ -2043,8 +2086,6 @@ static void do_start_messages(void) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   d_print(_(", with cairo support"));
 #endif
-
-  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
 
 #ifndef RT_AUDIO
   d_print(_("WARNING - this version of LiVES was compiled without either\njack or pulseaudio support.\n"
@@ -2400,6 +2441,7 @@ capability *get_capabilities(void) {
   capable->can_write_to_workdir = TRUE;
   capable->can_write_to_home = TRUE;
   capable->can_write_to_config = TRUE;
+  capable->can_write_to_config_backup = TRUE;
   capable->can_write_to_config_new = TRUE;
   capable->can_read_from_config = TRUE;
   capable->has_smogrify = TRUE;
@@ -2443,9 +2485,6 @@ capability *get_capabilities(void) {
   if (strlen(capable->backend_path) == 0) return capable;
   capable->has_smogrify = TRUE;
 
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
-  lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
-
   capable->can_write_to_workdir = FALSE;
   if (!mainw->has_session_workdir) {
     lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
@@ -2456,12 +2495,21 @@ capability *get_capabilities(void) {
     }
     capable->can_write_to_home = TRUE;
     capable->can_write_to_workdir = TRUE;
+
+    // we created a temp workdir, but we will let the backend search for an exsting value
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
     if (!lives_make_writeable_dir(prefs->workdir)) {
       // abort if we cannot create the new subdir
       return capable;
     }
+
+    // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
+
   capable->can_write_to_workdir = TRUE;
 
   capable->has_smogrify = FALSE;
@@ -2527,6 +2575,11 @@ capability *get_capabilities(void) {
       capable->can_write_to_config_new = FALSE;
       return capable;
     }
+    if (!strcmp(array[1], "rc_set_rec")) {
+      lives_strfreev(array);
+      capable->can_write_to_config_backup = FALSE;
+      return capable;
+    }
     if (!strcmp(array[1], "rc_set")) {
       lives_strfreev(array);
       capable->can_write_to_config = FALSE;
@@ -2540,9 +2593,34 @@ capability *get_capabilities(void) {
 
   capable->can_write_to_home = TRUE;
   capable->can_write_to_config_new = TRUE;
+  capable->can_write_to_config_backup = TRUE;
   capable->can_write_to_config = TRUE;
   capable->can_read_from_config = TRUE;
 
+  // the startup phase
+  // this is 0 for normal operation
+  // -1 for a fresh install
+  // after this the value goes to 1....n
+  // then finally gets set to 100, which instructs the backend to remove this preference, and return 0
+  initial_startup_phase = prefs->startup_phase = atoi(array[2]);
+
+  // hash of last version used,
+  // or 0 if rcfile existed, but we couldn't extract a version
+  if (numtok > 3) {
+    mainw->old_vhash = lives_strdup(array[3]);
+  }
+
+  if (mainw->old_vhash == NULL) {
+    old_vhash = lives_strdup("NULL");
+  } else if (strlen(mainw->old_vhash) == 0) {
+    old_vhash = lives_strdup("not present");
+  } else if (!strcmp(mainw->old_vhash, "0")) {
+    old_vhash = lives_strdup("unrecoverable");
+  } else {
+    old_vhash = lives_strdup(mainw->old_vhash);
+  }
+
+  was_temp_workdir = FALSE;
 
   if (!mainw->has_session_workdir) {
     size_t tmplen = strlen(prefs->tmp_workdir);
@@ -2554,12 +2632,21 @@ capability *get_capabilities(void) {
     // although we may still prompt for the working dir if it's a fresh install.
 
     lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
-    g_print("len is %d\n", strlen(prefs->workdir));
     if (strlen(prefs->workdir) == 0) {
       lives_snprintf(prefs->workdir, PATH_MAX, "%s", prefs->tmp_workdir);
+      was_temp_workdir = TRUE;
     }
-    g_print("VOOLS %s ans %s\n", prefs->workdir, prefs->tmp_workdir);
     if (strcmp(prefs->workdir, prefs->tmp_workdir)) {
+      if (prefs->startup_phase == -1) {
+        msg = lives_strdup_printf("The backend found a workdir (%s), but set startup_phase to -1 !", prefs->workdir);
+        LIVES_WARN(msg);
+        lives_free(msg);
+      }
+      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+        msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", prefs->workdir, old_vhash);
+        LIVES_WARN(msg);
+        lives_free(msg);
+      }
       if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
         lives_rmdir(prefs->tmp_workdir, TRUE);
         prefs->tmp_workdir[0] = '\0';
@@ -2579,30 +2666,19 @@ capability *get_capabilities(void) {
       // for backwards compatibility only
       set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
     } else {
+      if (prefs->startup_phase != -1) {
+        msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s", prefs->startup_phase, prefs->workdir);
+        LIVES_ERROR(msg);
+        lives_free(msg);
+      }
+      prefs->startup_phase = -1;
       lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
       lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
     }
-  } else {
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-    lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
-  }
-
-  // the startup phase
-  // this is 0 for normal operation
-  // -1 for a fresh install
-  // after this the value goes to 1....n
-  // then finally gets set to 100, which instructs the backend to remove this preference, and return 0
-  prefs->startup_phase = atoi(array[2]);
-
-  // hash of last version used,
-  // or 0 if rcfile existed, but we couldn't extract a version
-  if (numtok > 3) {
-    mainw->old_vhash = lives_strdup(array[3]);
   }
 
   if (strlen(mainw->old_vhash) > 0 && strcmp(mainw->old_vhash, "0")) {
-    int version_hash = verhash(LiVES_VERSION);
-    if (atoi(mainw->old_vhash) < version_hash) {
+    if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
       if (prefs->startup_phase == 0) {
         msg = get_upd_msg();
         lives_snprintf(capable->startup_msg, 1024, "%s", msg);
@@ -3296,6 +3372,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->workdir[0] = '\0';
 
   mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
+  mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->go_away = TRUE;
   mainw->mgeom = NULL;

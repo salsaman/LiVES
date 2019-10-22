@@ -272,10 +272,6 @@ void on_select_end_only_activate(LiVESMenuItem *, livespointer);
 
 void on_filesel_button_clicked(LiVESButton *, livespointer);
 
-void on_filesel_complex_clicked(LiVESButton *, LiVESEntry *);
-
-void on_filesel_complex_ok_clicked(LiVESButton *, LiVESEntry *entry);
-
 void on_encoder_ofmt_changed(LiVESCombo *, livespointer);
 
 void on_ok_export_audio_clicked(LiVESButton *, livespointer);

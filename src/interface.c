@@ -16,6 +16,7 @@
 #include "interface.h"
 #include "paramwindow.h"
 #include "merge.h"
+#include "startup.h"
 #include "support.h"
 #include "omc-learn.h" // for OSC_NOTIFY mapping
 
@@ -2135,12 +2136,10 @@ _entryw *create_rename_dialog(int type) {
   LiVESWidget *okbutton;
   LiVESWidget *checkbutton;
   LiVESWidget *set_combo;
-  LiVESWidget *dirbutton1;
-  LiVESWidget *dirimage1;
 
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  char *title = NULL;
+  char *title = NULL, *workdir, *tmp, *tmp2;
 
   _entryw *renamew = (_entryw *)(lives_malloc(sizeof(_entryw)));
 
@@ -2233,32 +2232,23 @@ _entryw *create_rename_dialog(int type) {
     }
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), renamew->setlist);
   } else {
-    char *tmp;
-    renamew->entry = lives_standard_entry_new(NULL, NULL, -1, -1, LIVES_BOX(hbox), NULL);
-    lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX : type == 7 ? 16 : 128);
-    if (type == 2 && strlen(mainw->set_name)) {
-      lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(mainw->set_name)));
-      lives_free(tmp);
-    }
     if (type == 6) {
-      char *workdir;
       if (strlen(prefs->workdir) > 0 && (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->workdir, prefs->tmp_workdir)))
         workdir = lives_strdup(prefs->workdir);
-      else workdir = lives_strdup_printf("%s/%s/", capable->home_dir, LIVES_DEF_WORK_NAME)
-                       ;
-      lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(workdir)));
+      else workdir = lives_strdup_printf("%s/%s/", capable->home_dir, LIVES_DEF_WORK_NAME);
+      renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
+                       LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
+                       (tmp2 = lives_strdup(_("LiVES working directory."))));
       lives_free(tmp);
       lives_free(workdir);
+    } else {
+      renamew->entry = lives_standard_entry_new(NULL, NULL, -1, -1, LIVES_BOX(hbox), NULL);
+      lives_entry_set_max_length(LIVES_ENTRY(renamew->entry), type == 6 ? PATH_MAX : type == 7 ? 16 : 128);
+      if (type == 2 && strlen(mainw->set_name)) {
+        lives_entry_set_text(LIVES_ENTRY(renamew->entry), (tmp = F2U8(mainw->set_name)));
+        lives_free(tmp);
+      }
     }
-  }
-
-  if (type == 6) {
-    // TODO: std dirbutton ?
-    dirbutton1 = lives_standard_button_new();
-    dirimage1 = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
-    lives_container_add(LIVES_CONTAINER(dirbutton1), dirimage1);
-    lives_box_pack_start(LIVES_BOX(hbox), dirbutton1, FALSE, TRUE, widget_opts.packing_width);
-    lives_signal_connect(dirbutton1, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_complex_clicked), renamew->entry);
   }
 
   if (type == 8) {

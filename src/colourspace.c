@@ -1,6 +1,6 @@
 // colourspace.c
 // LiVES
-// (c) G. Finch 2004 - 2017 <salsaman@gmail.com>
+// (c) G. Finch 2004 - 2019 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -26,9 +26,11 @@
 
 // *
 // TODO -
-//      - resizing of single plane (including bicubic)
+//      - resizing of single plane (including bicubic) (maybe just triplicate the values and pretend it's RGB)
 //      - external plugins for palette conversion, resizing
 //      - convert yuv subspace and sampling type
+//      - gamma types other than linear and sRGB (bt709 is partway implemented)
+//      - RGB(A) float, YUV10, etc.
 
 #include <math.h>
 
@@ -10897,7 +10899,9 @@ void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int
   interp = get_interp_value(prefs->pb_quality);
 
   pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
-  nwidth *= weed_palette_get_pixels_per_macropixel(pal); // convert from macropixels to pixels
+
+  // I think this was wrong, resize_layer works in macropixels
+  //nwidth *= weed_palette_get_pixels_per_macropixel(pal); // convert from macropixels to pixels
 
   resize_layer(layer, width, height, interp, WEED_PALETTE_END, 0); // resize can change current_palette
 

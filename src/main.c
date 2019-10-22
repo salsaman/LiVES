@@ -4433,7 +4433,8 @@ void load_start_image(int frame) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
+                   cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
@@ -4486,7 +4487,8 @@ void load_start_image(int frame) {
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
+                   height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
@@ -4623,7 +4625,8 @@ void load_end_image(int frame) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
+                   cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
@@ -4676,7 +4679,8 @@ void load_end_image(int frame) {
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
+                   height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
@@ -4825,7 +4829,8 @@ void load_preview_image(boolean update_always) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
                            WEED_PALETTE_RGB24)) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
+                   mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       pixbuf = layer_to_pixbuf(layer, TRUE);
     }
@@ -6732,7 +6737,8 @@ void load_frame_image(int frame) {
                         weed_get_int_value(return_layer, WEED_LEAF_WIDTH, &weed_error));
         int height = MIN(weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
                          weed_get_int_value(return_layer, WEED_LEAF_HEIGHT, &weed_error));
-        resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
+        resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
+                     height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
 
         save_to_scrap_file(return_layer);
         weed_layer_free(return_layer);
@@ -7051,7 +7057,8 @@ void load_frame_image(int frame) {
                         weed_get_int_value(return_layer, WEED_LEAF_WIDTH, &weed_error));
         int height = MIN(weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
                          weed_get_int_value(return_layer, WEED_LEAF_HEIGHT, &weed_error));
-        resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
+        resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
+                     height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
 
         save_to_scrap_file(return_layer);
         weed_layer_free(return_layer);

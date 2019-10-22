@@ -649,7 +649,10 @@ lives_render_error_t realfx_progress(boolean reset) {
     if (!has_video_filters(TRUE) || resize_instance != NULL) {
       layer_palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &weed_error);
 
-      if (resize_instance == NULL) resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
+      // need to convert the width because the clip width is in pixels, but resize_layer works in macropixels
+      if (resize_instance == NULL) resize_layer(layer, cfile->hsize /
+            weed_palette_get_pixels_per_macropixel(layer_palette),
+            cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
 
       if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24 && layer_palette != WEED_PALETTE_RGBA32) {
         convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);

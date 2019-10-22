@@ -3645,7 +3645,9 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
     int retval;
 
     mt_show_current_frame(mainw->multitrack, TRUE);
-    resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
+    resize_layer(mainw->frame_layer,
+                 sfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                 sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);

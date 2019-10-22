@@ -3332,7 +3332,9 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
 
     if ((mt->outwidth != (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)) ||
          mt->outheight != weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error)))
-      resize_layer(mainw->frame_layer, mt->outwidth, mt->outheight, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
+      resize_layer(mainw->frame_layer,
+                   mt->outwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                   mt->outheight, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
 
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
 

@@ -2319,7 +2319,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // layer needs resizing
 
       if (prefs->pb_quality == PB_QUALITY_HIGH || opwidth == 0 || opheight == 0) {
-        if (!resize_layer(layer, width, height, LIVES_INTERP_BEST, cpalette, iclamping)) {
+        if (!resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(inpalette),
+                          height, LIVES_INTERP_BEST, cpalette, iclamping)) {
           lives_freep((void **)&in_tracks);
           lives_freep((void **)&out_tracks);
           lives_freep((void **)&in_channels);
@@ -2327,7 +2328,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           return FILTER_ERROR_UNABLE_TO_RESIZE;
         }
       } else {
-        if (!resize_layer(layer, width, height, get_interp_value(prefs->pb_quality), cpalette, iclamping)) {
+        if (!resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(inpalette),
+                          height, get_interp_value(prefs->pb_quality), cpalette, iclamping)) {
           lives_freep((void **)&in_tracks);
           lives_freep((void **)&out_tracks);
           lives_freep((void **)&in_channels);
@@ -2433,7 +2435,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
           height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
           if (width != opwidth || height != opheight) {
-            if (!resize_layer(channel, opwidth, opheight, LIVES_INTERP_BEST, WEED_PALETTE_END, 0)) {
+            if (!resize_layer(channel, opwidth / weed_palette_get_pixels_per_macropixel(inpalette),
+                              opheight,
+                              LIVES_INTERP_BEST, WEED_PALETTE_END, 0)) {
               lives_freep((void **)&in_tracks);
               lives_freep((void **)&out_tracks);
               lives_freep((void **)&in_channels);

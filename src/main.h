@@ -748,7 +748,6 @@ typedef struct {
   boolean can_write_to_config;
   boolean can_write_to_config_new;
   boolean can_write_to_config_backup;
-  boolean can_write_to_home;
   boolean can_write_to_workdir;
 
   // the following may need checking before use
@@ -919,7 +918,8 @@ boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
-int do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
+void do_abort_retry_dialog(const char *text, LiVESWindow *transient);
+LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
 int do_error_dialog(const char *text);
 int do_error_dialogf(const char *fmt, ...);
 int do_info_dialog(const char *text);

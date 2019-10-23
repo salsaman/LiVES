@@ -1617,7 +1617,7 @@ boolean apply_prefs(boolean skip_warn) {
 
   if (strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
-    if (check_workdir_valid(&xworkdir)) {
+    if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
       char *msg = lives_strdup(
                     _("You have chosen to change the working directory.\nPlease make sure you have no other copies of LiVES open.\n\n"
                       "If you do have other copies of LiVES open, please close them now, *before* pressing OK.\n\n"

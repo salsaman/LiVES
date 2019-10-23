@@ -62,6 +62,19 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
     exit 1;
 }
 
+
+
+
+broken, do not use yet !!!!!!
+
+
+
+
+
+
+
+    
+
 #$DEBUG_SMOGRIFY=1;
 
 ###################################################################
@@ -74,18 +87,47 @@ if (defined($ARGV[0])) {
 	exit 0;
     }
 
-    $home = $ENV {"HOME"};
-    if ($home eq "") {
-	if ($command ne "....") {  ## TODO: allow some commands
-	    if (!caller) {
-		print STDERR "smogrify for $GUI_NAME v$version: \$home not defined for command $command, cannot continue. Exiting with code 98\.n";
-		print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
-	    }
-	    exit 98;
-	}
+    if ($command eq "list_commands") {
+	&listemall;
+	exit 0;
     }
+    
+    $configdir = "";
+    
+    if ($command eq "report" || $command eq "get_pref" || $command eq "set_pref") {
+	$configdir = "";
+	$config = "$CONFIGDIR";
 
-    $rc_filename = ".lives";
+	if ($config) {
+	    $configdir = $config;
+	}
+
+	if (!caller) {
+	    if ($configdir eq "") {
+		# configdir not set, try with $HONE
+		$home = $ENV {"HOME"};
+		if ($home eq "") {
+		    if ($command ne "....") {  ## TODO: allow some commands
+			if (!caller) {
+			    print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command $command, ";
+			    print STDERR "cannot continue with $command. Exiting with code 98\n";
+			    print STDERR "You can override the default configdir setting ";
+			    print STDERR "by starting %GUI_NAME with the -configdir commandline option.\n";
+			    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+			}
+			exit 98;
+		    }
+		}
+	    }
+	}
+	$rcfile = "$configdir/$rc_filename";
+	$rcfile_damaged = "$rcfile.damaged";
+	$recrcfile = "$rcfile.recovery";
+	$recrcfile_tried = "$recrcfile.tried";
+	$recrcfile_succeeded = "$recrcfile_tried.succeeded";
+	$newrcfile = "$rcfile.new";
+	$rc_filename = ".lives";
+    }
 
     $nulfile = "/dev/null";
 
@@ -93,38 +135,35 @@ if (defined($ARGV[0])) {
     $smog_composite_command = "composite -quiet";
     $smog_convert_command = "convert -quiet";
 
-    $rcfile = "$home/$rc_filename";
-    $rcfile_damaged = "$rcfile.damaged";
-    $recrcfile = "$rcfile.recovery";
-    $recrcfile_tried = "$recrcfile.tried";
-    $recrcfile_succeeded = "$recrcfile_tried.succeeded";
-    $newrcfile = "$rcfile.new";
-
     $workdir = "";
-    $work = "$WORKDIR";
-
-    if ($work) {
-	$workdir = $work;
-    }
 
     $has_rcfile = -1;
     $bad_rcfile = 0;
 
-    if ($workdir eq "") {
-	$has_rcfile = 0 + -e $rcfile;
-	if ($has_rcfile) {
-	    # can exit 3 here
-	    $workdir = &rc_get("workdir");
+    if ($command ne "get_pref" && $command ne "set_pref" ) {
+	$work = "$WORKDIR";
+
+	if ($work) {
+	    $workdir = $work;
+	}
+
+	if ($command ne "report") {
 	    if ($workdir eq "") {
-		$workdir = &rc_get("tempdir");
-	    }
-	    if ($workdir eq "") {
-		if ($command ne "report") {  ## TODO: allow some other commands
-		    if (!caller) {
-			print STDERR "smogrify for $GUI_NAME v$version: workdir not defined for command $command, cannot continue. Exiting with code 97\.n";
-			print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+		$has_rcfile = 0 + -e $rcfile;
+		if ($has_rcfile) {
+		    # can exit 3 here
+		    $workdir = &rc_get("workdir");
+		    if ($workdir eq "") {
+			$workdir = &rc_get("tempdir");
 		    }
-		    exit 97;
+		    if ($workdir eq "") {
+			if (!caller) {
+			    print STDERR "smogrify for $GUI_NAME v$version: workdir not defined for command $command, ";
+			    print STDERR "cannot continue. Exiting with code 97\.n";
+			    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+			}
+			exit 97;
+		    }
 		}
 	    }
 	}
@@ -140,12 +179,8 @@ if (defined($ARGV[0])) {
 
         if ($command eq "report") {
 	    ################################### startup checks ########################
-
 	    my $upd;
-
-	    unlink $rcfile_damaged;
-	    unlink $recfile_tried;
-	    unlink $recfile_succeeded;
+	    my $recovery_file = "";
 
             if (defined($ARGV[1])) {
 		# only for backwards compatibility; otherwise pass in "-" to do an update or "" for a dry-run
@@ -155,14 +190,19 @@ if (defined($ARGV[0])) {
 	    if ($gui_bootstrap_file eq "-") {
 		$upd = 1;
 	    }
-	    elsif ($gui_bootstrap_file eq "") {
-		$gui_bootstrap_file = "-";
-		$upd = 0;
-	    }
 	    else {
 		$upd = 0;
+		if ($gui_bootstrap_file eq "") {
+		    $gui_bootstrap_file = "-";
+		}
 	    }
 
+	    if ($upd) {
+		unlink $rcfile_damaged;
+		unlink $recrcfile_tried;
+		unlink $recrcfile_succeeded;
+	    }
+	    
 	    my $old_version_hash = "";
 	    my $old_version = "";
 
@@ -173,14 +213,14 @@ if (defined($ARGV[0])) {
 
 	    if (!$has_rcfile) {
 		if ($upd) {
-		    $has_rcfile = &recover_rcfile($rcfile);
-		    if ($has_rcfile) {
+		    $recovery_file = &recover_rcfile($rcfile);
+		    if ($recovery_file ne "") {
+			$has_rcfile = 1;
 			$old_version_hash = "0";
 		    }
 		}
 	    }
 
-	    print STDERR "2nrc is $has_rcfile\n";
 	    if ($has_rcfile) {
 		# found an existing rcfile
 		# try to get the version
@@ -190,6 +230,7 @@ if (defined($ARGV[0])) {
 		    $has_rcfile = 0;
 		    if ($upd) {
 			# we only accept settings files with a valid version entry
+			$xsize = -s $rcfile;
 			smog_rename($rcfile, $rcfile_damaged);
 			unlink($rcfile);
 			if (-e $rcfile) {
@@ -198,13 +239,14 @@ if (defined($ARGV[0])) {
 			}
 
 			if ($old_version_hash eq "0") {
-			    &startup_error(5, "report", "rc_recover_version0", "$rcfile:@:");
+			    &startup_error(5, "report", "rc_recover_version0", "$rcfile:$recovery_file:$xsize:@:");
 			}
 			else {
 			    # failed to get version from $rcfile. Try to recover from backup
-			    $has_rcfile = &recover_rcfile($rcfile);
-			    if ($has_rcfile) {
-				# ok, got a backup, now we check againm
+			    $recovery_file = &recover_rcfile($rcfile);
+			    if ($recovery_file ne "") {
+				# ok, got a backup, now we check again
+				$has_rcfile = 1;
 				$old_version_hash = "0";
 				$old_version = &rc_get("version");
 				if ($old_version eq "") {
@@ -240,7 +282,6 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		    else {
-			print "OK aaa\n";
 			# rcfile has version
 			if ($old_version ne "") {
 			    $old_version_hash = &version_hash($old_version);
@@ -256,15 +297,20 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		}
-		if ($has_rcfile) {
-		    print STDERR "here iam\n";
-		    unlink $recrcfile_tried;
-		    $panic = 0;
-		    smog_copy($rcfile, $recrcfile_succeeded);
-		    if ($panic || -s $recrcfile_succeeded != -s $rcfile) {
-			unlink $rcfile_succeeded;
+	    }
+
+	    if ($has_rcfile && $recovery_file ne "") {
+		$panic = 0;
+		smog_copy($rcfile, $recrcfile_succeeded);
+		if ($panic || -s $recrcfile_succeeded != -s $rcfile) {
+		    unlink $rcfile_succeeded;
+		    &startup_error(5, "report", "copyto_succeeded0", "$recrcfile_succeeded:@:");
+		}
+		else {
+		    unlink $recovery_file;
+		    if (-e $recovery_file) {
+			&startup_error(5, "report", "remove_recovery0", "$recovery_file:@:");
 		    }
-		    $panic = 0;
 		}
 	    }
 
@@ -292,29 +338,27 @@ if (defined($ARGV[0])) {
 
             if (!$has_rcfile) {
 		print STDERR "a1sp is $startup_phase\n";
-		unlink $rcfile;
-		if (-e $rcfile) {
-		    &startup_error(5, "report", "remove_badrcfile0", "$rcfile:@:");
-		}
 		if ($upd) {
+		    unlink $rcfile;
+		    if (-e $rcfile) {
+			&startup_error(5, "report", "remove_badrcfile0", "$rcfile:@:");
+		    }
 		    # set comment at start of file
 		    &rc_set("", "");
-		    print STDERR "xxa1sp is $startup_phase\n";
-
 		    &rc_set("startup_phase", -1);
 		}
             } else {
-		print STDERR "b1sp is $startup_phase\n";
-		$startup_phase = &rc_get("startup_phase");
-		if ($startup_phase eq "" || $startup_phase eq "100") {
-		    $startup_phase = 0;
-		    if ($upd) {
-			&rc_delete("startup_phase");
+		if ($workdir ne "") {
+		    $startup_phase = &rc_get("startup_phase");
+		    if ($startup_phase eq "" || $startup_phase eq "100") {
+			$startup_phase = 0;
+			if ($upd) {
+			    &rc_delete("startup_phase");
+			}
 		    }
 		}
 	    }
 
-	    print STDERR "1sp is $startup_phase\n";
 	    $version_hash = &version_hash($version);
 
 	    ###################### all startup tests passed ########################
@@ -453,7 +497,7 @@ if (defined($ARGV[0])) {
 		print "$version|$workdir|$startup_phase|$old_version_hash|$msg|";
 	    }
 	    else {
-		# only for backwards compatibility
+		# only for backwards compatibility with older LiVES.
 		if (! -e $gui_bootstrap_file) {
 		    open OUT, "> $gui_bootstrap_file" or exit 5;
 		    print OUT "$version|";
@@ -483,6 +527,7 @@ if (defined($ARGV[0])) {
             print $target_pid;
             exit 0;
         }
+
 
         if ($command eq "stopsubsub" || $command eq "stopsubsubs" || $command eq "stop_audio") {
             $handle = $ARGV[1];
@@ -672,7 +717,7 @@ if (defined($ARGV[0])) {
             } else {
                 $second = $gid;
             }
-            $value = &rc_get($key, $home);
+            $value = &rc_get($key, $configdir);
 
             if ($first eq "-") {
                 print $value;
@@ -1605,7 +1650,8 @@ if (defined($ARGV[0])) {
 
             unless ($file =~ /^http/) {
                 if (! -f "$file" && ! -d "$file") {
-                    &sig_error("$file", "could not be found", "$GUI_NAME was unable to open it.", "Please check the file name and try again.");
+                    &sig_error("$file", "could not be found", "$GUI_NAME was unable to open it.", 
+			       "Please check the file name and try again.");
                 }
             }
 
@@ -1979,7 +2025,8 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # mplayer seems to sometimes output one extra frame for jpg
-	    if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG) && ($count == $xframes + 1) && (($frames eq "") || (!($frames eq "") && ($count < $ARGV[4]) || ($ARGV[3] == 0)))) {
+	    if (defined($MPLAYER_EXTRA_OPEN_FRAME_BUG) && ($count == $xframes + 1) 
+		&& (($frames eq "") || (!($frames eq "") && ($count < $ARGV[4]) || ($ARGV[3] == 0)))) {
 		$name = &mkname($count);
 		unlink "$name$img_ext";
 		$count--;
@@ -2141,7 +2188,7 @@ if (defined($ARGV[0])) {
 
 	    # check the file is writable
 	    unless ($nfile eq "" || &is_writeable($nfile)) {
-		&sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
+		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
 	    $start=$ARGV[5];
@@ -2626,7 +2673,7 @@ if (defined($ARGV[0])) {
 
 	    # check the file is writable
 	    unless (&is_writeable($nfile)) {
-		&sig_error("Unable to open output file !","$GUI_NAME could not write to $nfile.");
+		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
 	    unlink glob "*.tar";
@@ -2700,7 +2747,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    unless (-f "header.tar"||-f "header"||-f "header.lives") {
+	    unless (-f "header.tar" || -f "header" || -f "header.lives") {
 		&sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	    }
 
@@ -4165,7 +4212,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if (substr($command, 0, 9) eq "fxrender_") {
-	    my $lives_home_dir = "$home/.lives-dir";
+	    my $lives_config_dir = "$configdir/.lives-dir";
 	    smog_chdir("$curworkdir");
 	    unlink "$curworkdir/pause";
 	    $command = substr($command, 9);
@@ -4193,11 +4240,11 @@ if (defined($ARGV[0])) {
 		$plugin_name = "$command";
 	    }
 	    elsif ($status == 1) {
-		$plugin_dir = "$lives_home_dir/plugins/effects/rendered/custom";
+		$plugin_dir = "$lives_config_dir/plugins/effects/rendered/custom";
 		$plugin_name = "$plugin_dir/$command";
 	    }
 	    else {
-		$plugin_dir = "$lives_home_dir/plugins/effects/rendered/test";
+		$plugin_dir = "$lives_config_dir/plugins/effects/rendered/test";
 		$plugin_name = "$plugin_dir/$command";
 	    }
 	    $smcom = "\"$plugin_name\" get_description";
@@ -4430,13 +4477,13 @@ sub kill_child_pids {
 	# must not ! >/dev/null 2>&1");
     }
 
-    if (-s "$workdir/.pids.$target_pid"&&defined(open IN,"$workdir/.pids.$target_pid")) {
+    if (-s "$workdir/.pids.$target_pid" && defined(open IN,"$workdir/.pids.$target_pid")) {
         while (<IN>) {
-            $pid=$_;
+            $pid = $_;
             chomp($pid);
             &kill_child_pids($pid,$sig);
         }
-        close IN;
+        close IN;s
     }
 
     unlink "$workdir/.pids.$target_pid";
@@ -4449,8 +4496,9 @@ sub is_writeable {
     my $file = shift;
     if (! -s $nfile) {
         unlink "$nfile";
-    }
-    $exists=(-f "$nfile");
+    };
+
+    $dexists = (-f "$nfile");
     if (!$exists) {
         umask 0;
 	$ret = smog_system("touch \"$nfile\"");
@@ -6584,7 +6632,7 @@ sub byfile {
 
 sub open_single_image {
     # set $hsize and $vsize to force the image size, set to 0 to autoresize
-    #identify hangs if the file extension is ".avi" or ".mp4" or ".mpg"
+    #identify hangs if the file extension is ".avit" or ".mp4" or ".mpg"
 
     my $i = shift;
     my $j;
@@ -6596,16 +6644,27 @@ sub open_single_image {
 	return 0;
     }
 
-    if (!defined($file_ext)) {
-	$file_ext = &get_ext("$file");
+    if (!defined($file_exec)) {
+	$file_exec = &location("file");
     }
+    if ($file_exec) {
+	if (&file_examine($file) eq "video") {
+	    $height = $width = $bpp = 0;
+	    return;
+	}
+    }
+    else {
+	if (!defined($file_ext)) {
+	    $file_ext = &get_ext("$file");
+	}
 
-    if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".ogg" || $file_ext eq ".mov" ||
-        $file_ext eq ".ogv" ||
-        $file_ext eq ".webm" || $file_ext eq ".mkv" || $file_ext eq ".asf" || $file_ext eq ".wmv" || $file_ext eq ".flv" || $file_ext eq ".mng" ||
-        $file_ext eq ".dv" || $file_ext eq ".mp3" || $file_ext eq ".mpeg") {
-	# need to set $name before we return
-	return 0;
+	if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".ogg" || $file_ext eq ".mov" ||
+	    $file_ext eq ".ogv" ||
+	    $file_ext eq ".webm" || $file_ext eq ".mkv" || $file_ext eq ".asf" || $file_ext eq ".wmv" || $file_ext eq ".flv" || $file_ext eq ".mng" ||
+	    $file_ext eq ".dv" || $file_ext eq ".mp3" || $file_ext eq ".mpeg") {
+	    # need to set $name before we return
+	    return 0;
+	}
     }
 
     if ($hsize*$vsize == 0) {
@@ -6668,12 +6727,12 @@ sub open_single_image {
 
 sub file_examine {
     my $target = shift;
-    if (!defined($file_path)) {
-	$file_path = &location("file");
+    if (!defined($file_exec)) {
+	$file_exec = &location("file");
     }
     return "" if $file_path eq "";
     return "" if  ! -f $target;
-    my $cmd = "$file_path -bi $target";
+    my $cmd = "$file_exec -bi $target";
     $res = &smog_system_direct($cmd);
     $res = (split /\//, (split /\;/, $res)[0])[0];
     $res;
@@ -6685,18 +6744,23 @@ sub get_image_size {
     my $file = shift;
     my $i;
 
-    my $type = &file_examine($file);
-    if ($type eq "video") {
-        $height = $width = $bpp = 0;
-	return;
+    if (!defined($file_exec)) {
+	$file_exec = &location("file");
     }
+    if ($file_exec) {
+	if (&file_examine($file) eq "video") {
+	    $height = $width = $bpp = 0;
+	    return;
+	}
+    }
+    else {
+	#identify hangs if the file extension is ".avi" or ".mp4"...maybe more...
+	$file_ext = &get_ext("$file");
 
-    #identify hangs if the file extension is ".avi" or ".mp4"...maybe more...
-    my $file_ext = &get_ext("$file");
-
-    if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".mpeg") {
-        $height = $width = $bpp = 0;
-        return;
+	if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".mpeg") {
+	    $height = $width = $bpp = 0;
+	    return;
+	}
     }
 
     $bpp = 8; # default for images
@@ -7358,6 +7422,14 @@ sub get_mplayer_location {
 }
 
 
+sub listemall {
+    open (PS, "cat $MYNAME | grep '\$command eq '|");
+    while (<PS>) {
+	print $_;
+    }
+}
+
+
 sub rc_set_if_not_set {
     my ($key, $value) = @_;
     $noreplace = 1;
@@ -7429,7 +7501,7 @@ sub rc_set {
     if (!$find) {
 	unlink($newrcfile);
 	if (-e $newrcfile) {
-	    &startup_error(4, "rc_set_new", "rm_new0", "$newrcfile:@:");
+	    &startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:@:");
 	}
 	if (!defined(open OUT,"> $newrcfile")) {
 	    &startup_error(4, "rc_set_new", "open_new0", "$newrcfile:@:");
@@ -7547,7 +7619,7 @@ sub rc_set {
 				unlink "$newrcfile";
 				if (-e $newrcfile) {
 				    close OUT;
-				    &startup_error(4, "rc_set_new", "rm_new1", "$newrcfile:@:");
+				    &startup_error(4, "rc_set_new", "remove_new1", "$newrcfile:@:");
 				}
 			    }
 			    $find = $noreplace = 0;
@@ -7640,7 +7712,7 @@ sub rc_set {
 				unlink "$newrcfile";
 				if (-e $newrcfile) {
 				    close OUT;
-				    &startup_error(4, "rc_set_new", "rm_new2", "$newrcfile:@:");
+				    &startup_error(4, "rc_set_new", "remove_new2", "$newrcfile:@:");
 				}
 			    }
 			    $find = $noreplace = 0;
@@ -7741,9 +7813,7 @@ sub rc_set {
 
     close OUT;
 
-    $delpref = $noreplace = 0;
-
-    if (-s $newrcfile != $rcfilesize) {
+     if (-s $newrcfile != $rcfilesize) {
 	unlink $newrcfile;
 	&startup_error(4, "rc_set_new", "check_new_size0", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $newrcfile . ":$rcfilesize:@:");
     }
@@ -7752,17 +7822,27 @@ sub rc_set {
 	# attempt to backup $rcfile before replacement
 	unlink $recrcfile;
 	if (-e $recrcfile) {
-	    &startup_error(4, "rc_set_rec", "rm_rec0", "$recrcfile:");
+	    &startup_error(4, "rc_set_rec", "renove_recovery1", "$recrcfile:@:");
 	}
-	$panic = 0;
 	if (-s $rcfile) {
+	    $panic = 0;
 	    smog_copy($rcfile, $recrcfile);
 	    if ($panic || -s $recrcfile != $orcsize) {
 		unlink $recrcfile;
 		if (-s $rcfile != $orcsize) {
 		    unlink $rcfile;
+		    if (-s $newrcfile == $rcfilesize) {
+			$panic = 0;
+			smog_copy($newrcfile, $rcfile);
+			if ($panic || -s $rcfile != $rcfilesize) {
+			    unlink $rcfile;
+			    if (-s $newrcfile != $rcfilesize) {
+				unlink $newrcfile;
+			    }
+			}
+		    }
 		}
-		&startup_error(4, "rc_set_rec", "check_size_rec0", "$recrcfile:" . -s $recrcfile . ":$orcsize:@:");
+		&startup_error(4, "rc_set_rec", "check_size_rec0", "$rcfile:$recrcfile:" . -s $recrcfile . ":$orcsize:@:");
 	    }
 	}
     }
@@ -7775,61 +7855,25 @@ sub rc_set {
 
     if ($panic || $rcsize != $rcfilesize) {
 	# copy failed
-	if ($rcsize == $orcsize) {
-	    # if old file is ok, exit
-	    unlink $newrcfile;
-	    &startup_error(5, "rc_set", "check_size0", "$xrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:$rcsize:$rcfilesize:@:");
+	if ($rcsize != $orcsize && $xrcfile eq $rcfile) {
+	    unlink $rcfile;
 	}
-	# uh-oh
-	unlink $xrcfile;
-	$panic = 0;
-	if (! -e $xrcfile && -s $newrcfile == $rcfilesize) {
-	    # try renaming instead
-	    if (!&smog_rename($newrcfile, $xrcfile)) {
-		$panic = 1;
-	    }
-	}
-	if ($panic || -s $xrcfile != $rcfilesize) {
-	    # still no luck
-	    unlink $xrcfile;
-	    if ($xrcfile eq $rcfile && ! -e $rcfile) {
-		if ($orcsize != 0 && -s $recrcfile == $orcsize) {
-		    # try to recover from copy
-		    $panic = 0;
-		    smog_copy($recrfile, $rcfile);
-		    if ($panic || -s $rcfile ne $orcsize) {
-			unlink $rcfile;
-		    }
-		}
-		if (-s $recrcfile != $orcsize && -s $newrcfile == $rcfilesize) {
-		    unlink $recrcfile;
-		    if (!-e $recrcfile) {
-			$panic = 0;
-			smog_copy($newrcfile, $recrcfile);
-			if ($panic || -s $recrcfile != $rcfilesize) {
-			    unlink $recrcfile;
-			    if (-s $newrcfile != $rcfilesize) {
-				unlink $newrcfile;
-			    }
-			}
-		    }
-		}
-	    }
-	    &startup_error(5, "rc_set", "check_size1", "$xrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $xrcfile . ":$rcfilesize:@:");
-	}
+	&startup_error(5, "rc_set", "check_size0", 
+			   "$xrcfile:$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:$rcsize:$orcsize:$rcfilesize:@:");
     }
 
-    # seems like it worked
-    unlink $newrcfile;
-    if (-e $newrcfile) {
-	&startup_error(4, "rc_set_new", "rm_new3", "$newrcfile:@:");
-    }
+    $delpref = $noreplace = 0;
 
     if (!$deprecate && $key eq "tempdir") {
 	&rc_deprecate("tempdir", "workdir", "3.0.3");
     }
     else {
 	$deprecate = 0;
+    }
+
+    if ($xrcfile ne $rcfile) {
+	unlink $newrcfile;
+	return 0;
     }
     return 0;
 }
@@ -7855,23 +7899,30 @@ sub startup_error {
 	}
 	if ($bad_rcfile) {
 	    print STDERR "smogrify: $rcfile is damaged and could not be removed.\n";
-	    print STDERR "smogrify: File MUST contain at least a <version> key and either a <tempdir> or a <workdir> key.\n";
-	    print STDERR "smogrify: (unless LiVES is run with the -workdir commandline option).\n";
+	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
 	if (! -e $rcfile) {
 	    print STDERR "smogrify: $rcfile not present.\n";
-	    print STDERR "smogrify: Recovery may be possible from $recrcfile\n";
+	    if (-s $recrcfile) {
+		print STDERR "smogrify: Recovery may be possible from $recrcfile\n";
+	    }
+	    elsif (-s $newrcfile > 0) {
+		print STDERR "smogrify: Recovery may be possible from $newrcfile\n";
+	    }
 	}
-	elsif (-s $newrcfile > 0) {
-	    print STDERR "smogrify: Recovery may be possible from $mewrcfile\n";
+	if (-s $recrcfile_damaged > 0) {
+	    print STDERR "smogrify: Damaged file may have been saved as $recrcfile_damaged.\n";
+	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
 	if (-s $recrcfile_tried > 0) {
-	    print STDERR "smogrify: Recovery appears to have been attempted from $recrcfile_tried\n";
+	    print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recrcfile_tried\n";
+	    print STDERR "smogrify: File MUST contain at least a <version> key.\n";
 	}
-	if (-s $rrcfile_damaged > 0) {
-	    print STDERR "smogrify: Damaged file may have been saved as $recrcfile_damaged.\n";
-	    print STDERR "smogrify: File MUST contain at least a <version> key and either a <tempdir> or a <workdir> key.\n";
-	    print STDERR "smogrify: (unless LiVES is run with the -workdir commandline option).\n";
+	if (-s $recrcfile_tried > 0) {
+	    print STDERR "smogrify: Unsuccesfull recovery appears to have been attempted from $recrcfile_tried\n";
+	}
+	if (-s $recrcfile_succeeded > 0) {
+	    print STDERR "smogrify: Succesfull recovery appears to have been nade from $recrcfile_succeeded\n";
 	}
 	print STDERR "smogrify: \@ARGV = " . join(" ", @ARGV) . "\n";
     }
@@ -7885,7 +7936,8 @@ sub recover_rcfile {
     ## attempt a one-time recovery of $rcfile from $rcfile.recovery
     #inputs: $rcfile, $recrcfile, $recrcfile_tried
 
-    return -1 if (-e $rcfile);
+    return "" if (-e $rcfile);
+
     my $xrecrcfile = $recrcfile;
     if (! -s $recrcfile) {
 	unlink $recrcfile;
@@ -7898,7 +7950,7 @@ sub recover_rcfile {
 
     if ($size == 0) {
 	unlink $xrecrcfile;
-	return 0;
+	return "";
     }
 
     # try to back up the recovery file if we can
@@ -7918,16 +7970,17 @@ sub recover_rcfile {
 	}
 	else {
 	    # copy failed...
+	    $panic = 0;
 	    unlink $recrcfile_tried;
 	    if (-s $xrecrcfile != $size) {
 		# ...recovery file damaged in the process, try to remove it; no recovery
 		unlink $xrecrcfile;
-		return 0;
+		return "";
 	    }
 	    # ...try with the original
 	}
     }
-    print STDERR "Copy $xrecrcfile to $rcfile\n";
+    #print STDERR "Copy $xrecrcfile to $rcfile\n";
     smog_copy($xrecrcfile, $rcfile);
 
     if ($panic || -s $rcfile != $size) {
@@ -7939,14 +7992,14 @@ sub recover_rcfile {
 	# try to remove rcfile; no recovery
 	$panic = 0;
 	unlink $rcfile;
-	return 0;
+	return "";
     }
 
     # success !
     if ($xrecrcfile != $recrcfile_tried) {
 	unlink $xrecrcfile;
     }
-    return 1;
+    return $xrecrcfile;
 }
 
 
@@ -8023,7 +8076,7 @@ sub fast_dd {
         }
     }
 
-    if (! open FFIN,"<","$fdd_in") {
+    if (! open FFIN, "<", "$fdd_in") {
         if (-f "$fdd_in") {
             $panic=sig_read_error("$fdd_in");
         }
@@ -8039,9 +8092,9 @@ sub fast_dd {
         return;
     }
 
-    open FFOUT,"+<","$fdd_out" or $panic=sig_write_error("$fdd_out");
+    open FFOUT,"+<", "$fdd_out" or $panic = sig_write_error("$fdd_out");
     return if $panic;
-    seek FFOUT,$seek,SEEK_START or $panic=sig_write_error("$fdd_out");
+    seek FFOUT, $seek, SEEK_START or $panic = sig_write_error("$fdd_out");
     return if $panic;
 
     for ($i=0;$i<$fblocks;$i++) {
@@ -8106,16 +8159,6 @@ sub my_basename {
 }
 
 
-sub write_bootstrap_file {
-    #write our bootstrap file and make our workdir
-    unlink "$gui_bootstrap_file";
-    unless (defined(open OUT,"> $gui_bootstrap_file")) {
-        exit 5;
-    }
-    close OUT;
-}
-
-
 sub fndset {
     # check if a directory is in a set (old style)
     # but useful for frontend marking the currently opened clips, so we do not prune them by accident
@@ -8124,10 +8167,6 @@ sub fndset {
     $in_set = 1;
 }
 
-
-sub get_home_dir {
-    return $ENV{"HOME"};
-}
 
 # get default values
 
@@ -8469,3 +8508,4 @@ sub is_non_empty_dir {
 }
 
 1; # for require
+}

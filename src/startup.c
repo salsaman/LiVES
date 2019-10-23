@@ -12,25 +12,32 @@
 
 static boolean allpassed;
 
-static boolean prompt_existing_dir(const char *dirname, uint64_t freespace, boolean wrtable) {
-  boolean res;
+static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t freespace, boolean wrtable, LiVESWindow *transient) {
+  // can return LIVES_RESPONSE_OK, LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
+  char *msg;
   if (wrtable) {
-    char *fspstr = lives_format_storage_space_string(freespace);
     if (dirs_equal(dirname, capable->home_dir)) {
       if (!do_yesno_dialog(
-            _("You have chosen to use your home directory as the LiVES working directory.\nThis is NOT recommended as it will likely result in the loss of unrelated files.\nClick Yes if you REALLY want to continue, or No to create or select another directory.\n")))
-        return FALSE;
+            _("You have chosen to use your home directory as the LiVES working directory.\nThis is NOT recommended as it will possibly result in the loss of unrelated files.\nClick Yes if you REALLY want to continue, or No to create or select another directory.\n")))
+        return LIVES_RESPONSE_CANCEL;
+    } else {
+      msg = lives_format_storage_space_string(freespace);
+      boolean res = do_yesno_dialogf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),
+                                     dirname, msg);
+      lives_free(msg);
+      if (!res) return LIVES_RESPONSE_CANCEL;
+      return LIVES_RESPONSE_OK;
     }
-
-    res = do_yesno_dialogf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"), dirname,
-                           fspstr);
-    lives_free(fspstr);
   } else {
-    res = do_error_dialogf(
-            _("A directory named\n%s\nalready exists.\nLiVES could not write to this directory or read its free space.\nPlease select another location.\n"),
-            dirname);
+    msg = lives_strdup_printf(_("A directory named\n%s\nalready exists.\nHowever, LiVES could not write to this directory"
+                                "or read its free space.\nClick Abort to exit from LiVES, or Retry to select another "
+                                "location.\n"), dirname);
+
+    do_abort_retry_dialog(msg, transient);
+    lives_free(msg);
+    return LIVES_RESPONSE_RETRY;
   }
-  return res;
+  return LIVES_RESPONSE_OK;
 }
 
 
@@ -47,6 +54,25 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 }
 
 
+void dir_toolong_error(char *dirname, const char *dirtype, size_t max) {
+  char *msg = lives_strdup_printf(_("The name of the %s directory provided\n(%s)\nis too long (maximum is %d characters)"
+                                    "Please click Retry to select an alternative directory, or Abort to exit immediately"
+                                    "from LiVES"), dirtype, dirname, max);
+  do_abort_retry_dialog(msg, NULL);
+  lives_free(msg);
+}
+
+
+void do_bad_dir_perms_error(const char *dirname) {
+  char *msg = lives_strdup_printf(_("LiVES could not write to the directory\n%s\nPlease check permissions for the directory.\n"
+                                    "Click Abort to exit immediately from LiVES, or Retry to select a different directory.\n"),
+                                  *dirname);
+
+  do_abort_retry_dialog(msg, NULL);
+  lives_free(msg);
+}
+
+
 void close_file(int current_file, boolean tshoot) {
   if (tshoot) close_current_file(current_file);
   else {
@@ -59,17 +85,18 @@ void close_file(int current_file, boolean tshoot) {
 }
 
 
-boolean check_workdir_valid(char **pdirname) {
+LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, boolean fullcheck) {
+  // returns LIVES_RESPONSE_RETRY or LIVES_RESPONSE_OK
   char cdir[PATH_MAX];
   uint64_t freesp;
   size_t chklen = strlen(LIVES_DEF_WORK_NAME) + strlen(LIVES_DIR_SEP) * 2;
   char *tmp;
 
-  if (pdirname == NULL || *pdirname == NULL) return FALSE;
+  if (pdirname == NULL || *pdirname == NULL) return LIVES_RESPONSE_RETRY;
 
-  if (strlen(*pdirname) > (PATH_MAX - 1)) {
+  if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
     do_blocking_error_dialog(_("Directory name is too long !"));
-    return FALSE;
+    return LIVES_RESPONSE_RETRY;
   }
 
   // append a dirsep to the end if there isnt one
@@ -78,63 +105,66 @@ boolean check_workdir_valid(char **pdirname) {
 
   *pdirname = lives_strdup(cdir);
 
-  if (strlen(*pdirname) > (PATH_MAX - 1)) {
+  if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
     do_blocking_error_dialog(_("Directory name is too long !"));
-    return FALSE;
+    return LIVES_RESPONSE_RETRY;
   }
 
-  // if it's an existing dir, append "livesprojects" to the end unless it is already
-  if (lives_file_test(*pdirname, LIVES_FILE_TEST_EXISTS) &&
-      (strlen(*pdirname) < chklen || strncmp(*pdirname + strlen(*pdirname) - chklen,
-          LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))) {
-    tmp = lives_strdup_printf("%s%s%s", *pdirname, LIVES_DEF_WORK_NAME, LIVES_DIR_SEP);
-    lives_free(*pdirname);
-    *pdirname = tmp;
-  }
+  if (fullcheck) {
+    // if it's an existing dir, append "livesprojects" to the end unless it is already
+    if (lives_file_test(*pdirname, LIVES_FILE_TEST_EXISTS) &&
+        (strlen(*pdirname) < chklen || strncmp(*pdirname + strlen(*pdirname) - chklen,
+            LIVES_DIR_SEP LIVES_DEF_WORK_NAME LIVES_DIR_SEP, chklen))) {
+      tmp = lives_strdup_printf("%s%s%s", *pdirname, LIVES_DEF_WORK_NAME, LIVES_DIR_SEP);
+      lives_free(*pdirname);
+      *pdirname = tmp;
+    }
 
-  if (strlen(*pdirname) > (PATH_MAX - 1)) {
-    do_blocking_error_dialog(_("Directory name is too long !"));
-    return FALSE;
+    if (strlen(*pdirname) > (PATH_MAX - MAX_SET_NAME_LEN * 2)) {
+      do_blocking_error_dialog(_("Directory name is too long !"));
+      return LIVES_RESPONSE_RETRY;
+    }
   }
 
   if (!check_dir_access(*pdirname)) {
     do_dir_perm_error(*pdirname);
-    return FALSE;
+    return LIVES_RESPONSE_RETRY;
   }
 
-  if (lives_file_test(*pdirname, LIVES_FILE_TEST_IS_DIR)) {
-    if (is_writeable_dir(*pdirname)) {
-      freesp = get_fs_free(*pdirname);
-      if (!prompt_existing_dir(*pdirname, freesp, TRUE)) {
-        return FALSE;
+  if (fullcheck) {
+    if (lives_file_test(*pdirname, LIVES_FILE_TEST_IS_DIR)) {
+      if (is_writeable_dir(*pdirname)) {
+        freesp = get_fs_free(*pdirname);
+        if (!prompt_existing_dir(*pdirname, freesp, TRUE, LIVES_WINDOW(dialog))) {
+          return LIVES_RESPONSE_RETRY;
+        }
+      } else {
+        if (!prompt_existing_dir(*pdirname, 0, FALSE, LIVES_WINDOW(dialog))) {
+          return LIVES_RESPONSE_RETRY;
+        }
       }
     } else {
-      if (!prompt_existing_dir(*pdirname, 0, FALSE)) {
-        return FALSE;
-      }
-    }
-  } else {
-    if (is_writeable_dir(*pdirname)) {
-      freesp = get_fs_free(*pdirname);
-      if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
-        lives_rmdir(*pdirname, FALSE);
-        return FALSE;
-      }
-    } else {
-      if (!prompt_new_dir(*pdirname, 0, FALSE)) {
-        lives_rmdir(*pdirname, FALSE);
-        return FALSE;
+      if (is_writeable_dir(*pdirname)) {
+        freesp = get_fs_free(*pdirname);
+        if (!prompt_new_dir(*pdirname, freesp, TRUE)) {
+          lives_rmdir(*pdirname, FALSE);
+          return LIVES_RESPONSE_RETRY;
+        }
+      } else {
+        if (!prompt_new_dir(*pdirname, 0, FALSE)) {
+          lives_rmdir(*pdirname, FALSE);
+          return LIVES_RESPONSE_RETRY;
+        }
       }
     }
   }
 
   if (!lives_make_writeable_dir(*pdirname)) {
-    do_blocking_error_dialogf(
-      _("LiVES could not write to the directory\n%s\nPlease check permissions for the parent directory,\nand try again.\n"), *pdirname);
-    return FALSE;
+    do_bad_dir_perms_error(*pdirname);
+    return LIVES_RESPONSE_RETRY;
   }
 
-  return TRUE;
+  return LIVES_RESPONSE_OK;
 }
 
 
@@ -152,7 +182,7 @@ boolean do_workdir_query(void) {
 
     // TODO: should we convert to locale encoding ??
     dirname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(wizard->entry)));
-  } while (!check_workdir_valid(&dirname));
+  } while (check_workdir_valid(&dirname, TRUE, wizard->dialog) == LIVES_RESPONSE_RETRY);
 
   lives_widget_destroy(wizard->dialog);
   lives_freep((void **)&wizard);
@@ -164,7 +194,8 @@ boolean do_workdir_query(void) {
 
   mainw->has_session_workdir = FALSE;
 
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+                 prefs->workdir, prefs->configdir);
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
   lives_free(dirname);

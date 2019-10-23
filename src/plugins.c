@@ -112,9 +112,9 @@ LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_nam
       return reslist;
     }
 
-    // some types live in home directory...
+    // some types live in the config directory...
     if (!strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_CUSTOM) || !strcmp(plugin_type, PLUGIN_RENDERED_EFFECTS_TEST)) {
-      comfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, plugin_type, plugin_name, NULL);
+      comfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, plugin_type, plugin_name, NULL);
     } else if (!strcmp(plugin_type, PLUGIN_RFX_SCRAP)) {
       // scraps are in the workdir
       comfile = lives_build_filename(prefs->workdir, plugin_name, NULL);
@@ -166,10 +166,10 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
              !strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_CUSTOM)
             ) {
     // look in home
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, capable->home_dir,
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->configdir,
                               LIVES_CONFIG_DIR, plugin_type, ext);
   } else if (!strcmp(plugin_type, PLUGIN_THEMES_CUSTOM)) {
-    com = lives_strdup_printf("%s list_plugins 0 1 \"%s"LIVES_DIR_SEP"%s%s\"", prefs->backend_sync, capable->home_dir,
+    com = lives_strdup_printf("%s list_plugins 0 1 \"%s"LIVES_DIR_SEP"%s%s\"", prefs->backend_sync, prefs->configdir,
                               LIVES_CONFIG_DIR, PLUGIN_THEMES);
   } else if (!strcmp(plugin_type, PLUGIN_EFFECTS_WEED)) {
     com = lives_strdup_printf("%s list_plugins 1 1 \"%s\" \"%s\"", prefs->backend_sync,
@@ -2523,13 +2523,13 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
                               PLUGIN_RENDERED_EFFECTS_BUILTIN, rfx->name);
     break;
   case RFX_STATUS_CUSTOM:
-    dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, NULL);
+    dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
     com = lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"", prefs->backend_sync,
                               cfile->handle, cfile->start, cfile->end, dir,
                               PLUGIN_RENDERED_EFFECTS_CUSTOM, rfx->name);
     break;
   case RFX_STATUS_TEST:
-    dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, NULL);
+    dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
     com = lives_strdup_printf("%s plugin_clear \"%s\" %d %d \"%s\" \"%s\" \"%s\"", prefs->backend_sync,
                               cfile->handle, cfile->start, cfile->end, dir,
                               PLUGIN_RENDERED_EFFECTS_TEST, rfx->name);

@@ -378,7 +378,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
 
     switch (status) {
     case RFX_STATUS_CUSTOM:
-      script_file = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      script_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                          PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, script_name, NULL);
       break;
     case RFX_STATUS_BUILTIN:
@@ -386,7 +386,7 @@ rfx_build_window_t *make_rfx_build_window(const char *script_name, lives_rfx_sta
                                          PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS, script_name, NULL);
       break;
     default:
-      script_file = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      script_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                          PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, script_name, NULL);
       break;
     }
@@ -2998,7 +2998,7 @@ boolean rfxbuilder_to_script(rfx_build_window_t *rfxbuilder) {
 
   mainw->com_failed = FALSE;
 
-  script_file_dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
+  script_file_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
   if (!lives_file_test(script_file_dir, LIVES_FILE_TEST_IS_DIR)) {
     if (lives_mkdir_with_parents(script_file_dir, capable->umask) == -1) {
@@ -3711,16 +3711,16 @@ void on_delete_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (strlen(script_name)) {
     switch (status) {
     case RFX_STATUS_TEST:
-      rfx_exec_dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      rfx_exec_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                           PLUGIN_RENDERED_EFFECTS_TEST, NULL);
-      rfx_script_dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      rfx_script_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                             PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
       rfx_script_file = lives_build_filename(rfx_script_dir, script_name, NULL);
       break;
     case RFX_STATUS_CUSTOM:
-      rfx_exec_dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      rfx_exec_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                           PLUGIN_RENDERED_EFFECTS_CUSTOM, NULL);
-      rfx_script_dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+      rfx_script_dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                             PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
       rfx_script_file = lives_build_filename(rfx_script_dir, script_name, NULL);
       break;
@@ -3774,12 +3774,12 @@ void on_promote_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (script_name == NULL) return; // user cancelled
 
   if (strlen(script_name)) {
-    rfx_dir_from = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+    rfx_dir_from = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                         PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
     rfx_script_from = lives_build_filename(rfx_dir_from, script_name, NULL);
 
-    rfx_dir_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+    rfx_dir_to = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                       PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
 
     rfx_script_to = lives_build_filename(rfx_dir_to, script_name, NULL);
@@ -3841,7 +3841,7 @@ void on_export_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (filename == NULL) return;
 
-  rfx_script_from = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+  rfx_script_from = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                          PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, script_name, NULL);
 
   d_print(_("Copying %s to %s..."), rfx_script_from, filename);
@@ -3878,7 +3878,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   switch (status) {
   case RFX_STATUS_TEST:
-    rfx_dir_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
+    rfx_dir_to = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, NULL);
 
     lives_mkdir_with_parents((tmp = lives_filename_from_utf8(rfx_dir_to, -1, NULL, NULL, NULL)), capable->umask);
 
@@ -3887,7 +3887,7 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_free(rfx_dir_to);
     break;
   case RFX_STATUS_CUSTOM:
-    rfx_dir_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
+    rfx_dir_to = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS, NULL);
 
     lives_mkdir_with_parents((tmp = lives_filename_from_utf8(rfx_dir_to, -1, NULL, NULL, NULL)), capable->umask);
 
@@ -4103,9 +4103,9 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
           char *tmp;
 
           from_name = lives_strdup(lives_entry_get_text(LIVES_ENTRY(script_combo_entry)));
-          rfx_script_from = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+          rfx_script_from = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                                  PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, from_name, NULL);
-          rfx_script_to = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR,
+          rfx_script_to = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR,
                                                PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS, xname, NULL);
           d_print(_("Renaming RFX test script %s to %s..."), from_name, xname);
           lives_free(from_name);

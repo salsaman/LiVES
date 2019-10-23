@@ -1939,6 +1939,7 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
+  lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
@@ -1960,6 +1961,7 @@ void create_LiVES(void) {
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
   mainw->pl_eventbox = lives_event_box_new();
+  lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
   lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
@@ -1975,6 +1977,7 @@ void create_LiVES(void) {
 
   mainw->eventbox4 = lives_event_box_new();
   lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
+  lives_widget_set_app_paintable(mainw->eventbox4, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
                      (LiVESAttachOptions)(0),
@@ -2005,6 +2008,7 @@ void create_LiVES(void) {
 
   // the actual playback image for the internal player
   mainw->play_image = lives_image_new_from_pixbuf(NULL);
+  lives_widget_set_app_paintable(mainw->play_image, TRUE);
 
   lives_widget_show(mainw->play_image); // needed to get size
   lives_widget_object_ref(mainw->play_image);
@@ -3964,6 +3968,30 @@ void make_play_window(void) {
 }
 
 
+LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
+  // get the size of the player in fullscreen / sepwin mode
+  // returns TRUE if we span multiple monitors, FALSE for single monitor mode
+
+  if (prefs->play_monitor == 0) {
+    if (capable->nmonitors > 1) {
+      // spread over all monitors
+      *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
+      *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
+      return TRUE;
+    } else {
+      // but we only have one...
+      *opwidth = mainw->mgeom[0].width;
+      *opheight = mainw->mgeom[0].height;
+    }
+  } else {
+    // single monitor
+    *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
+    *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
+  }
+  return FALSE;
+}
+
+
 void resize_play_window(void) {
   int opwx, opwy, pmonitor = prefs->play_monitor, gmonitor = widget_opts.monitor;
 
@@ -4371,7 +4399,11 @@ void add_to_playframe(void) {
       }
       lives_widget_show(mainw->plug);
       lives_box_pack_start(LIVES_BOX(mainw->plug), mainw->play_image, TRUE, FALSE, 0);
-      lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
+      if (mainw->multitrack != NULL) {
+        lives_widget_set_vexpand(mainw->play_image, TRUE); // centers it in mt
+      } else {
+        lives_widget_set_vexpand(mainw->play_image, FALSE);
+      }
     }
   }
   resize(1);
@@ -4629,8 +4661,8 @@ void reset_message_area(void) {
   if (!mainw->is_ready || !prefs->show_gui) return;
   // need to shrink the message_box then re-expand it after redrawing the widgets
   // otherwise the main window can expand beyond the bottom of the screen
-  lives_widget_set_size_request(mainw->message_box, -1, 1);
-  lives_widget_set_size_request(mainw->msg_area, -1, 1);
-  lives_widget_set_size_request(mainw->msg_scrollbar, -1, 1);
+  lives_widget_set_size_request(mainw->message_box, 1, 1);
+  lives_widget_set_size_request(mainw->msg_area, 1, 1);
+  lives_widget_set_size_request(mainw->msg_scrollbar, 1, 1);
 }
 

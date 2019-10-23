@@ -251,7 +251,7 @@ void lives_exit(int signum) {
       if (!mainw->leave_recovery) {
         if (mainw->write_vpp_file) {
           // save video playback plugin parameters
-          char *vpp_file = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "vpp_defaults", NULL);
+          char *vpp_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "vpp_defaults", NULL);
           save_vpp_defaults(mainw->vpp, vpp_file);
         }
       }
@@ -629,7 +629,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
     if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
       if (strcmp(dirname, fname)) {
-        if (!check_workdir_valid(&dirname)) {
+        if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), FALSE) == LIVES_RESPONSE_RETRY) {
+          lives_free(dirname);
           dirname = lives_strdup(fname);
         }
       }
@@ -1703,7 +1704,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   // check for existing dupes
 
-  themedir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_THEMES, tname, NULL);
+  themedir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES, tname, NULL);
 
   if (lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
     if (!do_theme_exists_warn(tname)) {
@@ -6833,11 +6834,11 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         // in frame window
         if (mainw->multitrack == NULL) {
           if (!mainw->faded) {
+            lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
             if (mainw->double_size) {
-              lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
               lives_widget_hide(mainw->sep_image);
               lives_widget_hide(mainw->message_box);
-            } else lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+            }
             unfade_background();
           } else {
             lives_widget_hide(mainw->frame1);

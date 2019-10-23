@@ -183,6 +183,7 @@ typedef enum {
   LIVES_DIALOG_WARN_WITH_CANCEL,
   LIVES_DIALOG_YESNO,
   LIVES_DIALOG_QUESTION,
+  LIVES_DIALOG_ABORT_RETRY,
   LIVES_DIALOG_ABORT_CANCEL_RETRY,
   LIVES_DIALOG_CANCEL_RETRY_BROWSE
 } lives_dialog_t;
@@ -1468,7 +1469,7 @@ typedef struct {
   int assumed_width;
   int assumed_height;
 
-#define DEF_IDLE_MAX 1
+#define DEF_IDLE_MAX 0
 
   int idlemax;
 

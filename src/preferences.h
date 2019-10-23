@@ -56,6 +56,7 @@ typedef struct {
 #define Q_SMOOTH 1
 
   char workdir[PATH_MAX];  ///< kept in locale encoding
+  char configdir[PATH_MAX];  ///< kept in locale encoding
 
   // utf8 encoding
   char def_vid_load_dir[PATH_MAX];

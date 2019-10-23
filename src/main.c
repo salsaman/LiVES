@@ -134,7 +134,7 @@ static int xxwidth = 0, xxheight = 0;
 
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
-static boolean was_temp_workdir = FALSE;
+static boolean needs_workdir = FALSE;
 
 ////////////////////
 
@@ -158,6 +158,7 @@ void tr_msg(void) {
 
 
 void break_me(void) {
+  g_print("BANG !\n");
   // breakpoint for gdb
 }
 
@@ -480,8 +481,13 @@ static boolean pre_init(void) {
 
   register int i;
 
-  // check the backend is there, get some system details and prefs
-  capable = get_capabilities();
+  // pre-checked conditions. We will check for these agian
+  if (capable->has_perl && capable->can_write_to_workdir && capable->can_write_to_config &&
+      capable->can_write_to_config_backup && capable->can_write_to_config_new && capable->can_read_from_config &&
+      capable->has_smogrify && capable->smog_version_correct) {
+    // check the backend is there, get some system details and prefs
+    capable = get_capabilities();
+  }
 
   //FATAL ERRORS
 
@@ -498,18 +504,27 @@ static boolean pre_init(void) {
                 "Please review the README file which came with this package\nbefore running LiVES.\n"));
       startup_message_fatal(msg);
     }
-    if (!capable->can_write_to_home) {
-      startup_message_fatal(lives_strdup_printf(
-                              _("\nLiVES was unable to write a small file to %s\n"
-                                "Please make sure you have write access to the directory and try again.\n"),
-                              capable->home_dir));
-    }
     if (!capable->smog_version_correct) {
       startup_message_fatal(lives_strdup(
                               _("\nAn incorrect version of smogrify was found in your path.\n\n"
                                 "Please review the README file which came with this package\nbefore running LiVES."
                                 "\n\nThankyou.\n")));
     }
+
+    /* if (!capable->can_read_from_config) { */
+    /*   startup_message_fatal(lives_strdup_printf( */
+    /* 						_("\nLiVES was unable to read from the configuration directory %s\n" */
+    /* 						  "Please make sure you have write access to the directory and try again.\n"), */
+    /* 						prefs->config_dir)); */
+    /* } */
+    /* if (!capable->can_write_to_config_dir) { */
+    /*   startup_message_fatal(lives_strdup_printf( */
+    /* 						_("\nLiVES was unable to write to the directory %s\n", */
+    /* 						  "In order to create some small configuration files." */
+    /*                             "Please make sure you have write access to the directory and try again.\n"), */
+    /*                           prefs->config_dir)); */
+    /* } */
+
     if (!capable->can_read_from_config) {
       msg = lives_strdup_printf(
               _("\nLiVES was unable to read from its configuration file\n%s\n\n"
@@ -518,6 +533,7 @@ static boolean pre_init(void) {
       lives_free(tmp);
       startup_message_fatal(msg);
     }
+
     if (!capable->can_write_to_config_new || !capable->can_write_to_config_backup || !capable->can_write_to_config) {
       msg = lives_strdup_printf(
               _("\nAn error occured when writing to the configuration files\n%s*\n\n"
@@ -527,6 +543,7 @@ static boolean pre_init(void) {
       lives_free(tmp2);
       startup_message_fatal(msg);
     }
+
     if (!capable->can_write_to_workdir) {
       tmp2 = lives_strdup("");
       if (!mainw->has_session_workdir) {
@@ -624,7 +641,7 @@ static boolean pre_init(void) {
       tmp = ds_critical_msg(prefs->workdir, mainw->dsval);
       msg = lives_strdup_printf("\n%s\n", tmp);
       lives_free(tmp);
-      startup_message_fatal(msg);
+      startup_message_nonfatal(msg);
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
@@ -1818,7 +1835,8 @@ static void lives_init(_ign_opts *ign_opts) {
       }
     }
 
-    mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(), lives_getgid(), capable->mainpid);
+    mainw->recovery_file = lives_strdup_printf("%s/recovery.%d.%d.%d", prefs->workdir, lives_getuid(),
+                           lives_getgid(), capable->mainpid);
 
     if (capable->has_jackd) naudp++;
     if (capable->has_pulse_audio) naudp++;
@@ -1965,13 +1983,13 @@ static void show_detected_or_not(boolean cap, const char *pname) {
 
 static void do_start_messages(void) {
   int w, h;
-  char *endian, *phase = NULL;
+  char *tmp, *endian, *fname, *phase = NULL;
 
   d_print(_("\nWorking directory is %s\n"), prefs->workdir);
   if (mainw->has_session_workdir) {
     d_print(_("(Set by -workdir commandline option)\n"));
   } else {
-    if (!was_temp_workdir) {
+    if (initial_startup_phase != -1) {
       if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
         lives_free(old_vhash);
         old_vhash = lives_strdup(LiVES_VERSION);
@@ -1984,34 +2002,44 @@ static void do_start_messages(void) {
 
   if (initial_startup_phase == 0) {
     if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup(_("(forced reinstall, error in recovery phase)"));
+      phase = lives_strdup(_("startup error ocurred - forced reinstall"));
     } else {
       if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
         phase = lives_strdup_printf(_("upgrade from version %s"), mainw->old_vhash);
       } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
         phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
-      } else phase = lives_strdup(_("(normal startup)"));
+      }
     }
   } else if (initial_startup_phase == -1) {
     if (!strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup_printf(_("reinstall after failed recovery; check %s.damaged for errors"), capable->rcfile);
+      phase = lives_strdup(_("reinstall after failed recovery"));
+      fname = lives_strdup_printf("%s.damaged", capable->rcfile);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
+        lives_free(phase);
+        phase = tmp;
+      }
+      lives_free(fname);
+      d_print("\n");
     } else {
-      phase = lives_strdup(_("(fresh install)"));
+      phase = lives_strdup(_("fresh install"));
     }
+  } else {
+    phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
   }
-  if (phase == NULL) phase = lives_strdup_printf(_("installation phase %d"), initial_startup_phase);
-
-  d_print(_("Initial startup phase was %d %s\n"), initial_startup_phase, phase);
+  if (phase == NULL)  phase = lives_strdup(_("normal startup"));
+  d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
   lives_free(phase);
   lives_free(old_vhash);
 
   if (initial_startup_phase == 0) {
-    char *fname = lives_strdup_printf("%s.recovery.succeeded", capable->rcfile);
+    fname = lives_strdup_printf("%s.recovery.tried.succeeded", capable->rcfile);
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-      phase = lives_strdup_printf(_("%s was possibly recovered from %s\n"), capable->rcfile, fname);
+      phase = lives_strdup_printf(_("%s was possibly recovered from %s.recovery\n"), capable->rcfile, capable->rcfile);
       d_print("%s", phase);
       lives_free(phase);
     }
+    lives_free(fname);
   }
 
   d_print(_("\nChecking optional dependencies: "));
@@ -2244,7 +2272,7 @@ boolean set_palette_colours(boolean force_reload) {
 
   if (force_reload) {
     // check if theme is custom:
-    themedir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_THEMES, prefs->theme, NULL);
+    themedir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_THEMES, prefs->theme, NULL);
 
     if (!lives_file_test(themedir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(themedir);
@@ -2437,23 +2465,7 @@ capability *get_capabilities(void) {
   get_location("echo", capable->echo_cmd, PATH_MAX);
   get_location("eject", capable->eject_cmd, PATH_MAX);
 
-  // required
-  capable->can_write_to_workdir = TRUE;
-  capable->can_write_to_home = TRUE;
-  capable->can_write_to_config = TRUE;
-  capable->can_write_to_config_backup = TRUE;
-  capable->can_write_to_config_new = TRUE;
-  capable->can_read_from_config = TRUE;
-  capable->has_smogrify = TRUE;
-  capable->smog_version_correct = TRUE;
-
-#ifdef GUI_GTK
-  lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
-#endif
-
-  capable->rcfile = lives_build_filename(capable->home_dir, LIVES_RC_FILENAME, NULL);
-
-  capable->startup_msg[0] = '\0';
+  capable->rcfile = lives_build_filename(prefs->configdir, LIVES_RC_FILENAME, NULL);
 
   // optional
   capable->has_mplayer = FALSE;
@@ -2481,36 +2493,20 @@ capability *get_capabilities(void) {
   capable->has_xdg_screensaver = FALSE;
 
   capable->has_smogrify = FALSE;
+
   lives_snprintf(capable->backend_path, PATH_MAX, "%s", lives_find_program_in_path(BACKEND_NAME));
   if (strlen(capable->backend_path) == 0) return capable;
   capable->has_smogrify = TRUE;
 
-  capable->can_write_to_workdir = FALSE;
   if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->tmp_workdir, PATH_MAX, "%s", (tmp = lives_build_path(capable->home_dir, "livestmp-XXXXXX", NULL)));
-    lives_free(tmp);
-    capable->can_write_to_home = FALSE;
-    if (mkdtemp(prefs->tmp_workdir) == NULL) {
-      return capable;
-    }
-    capable->can_write_to_home = TRUE;
-    capable->can_write_to_workdir = TRUE;
-
-    // we created a temp workdir, but we will let the backend search for an exsting value
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\"", EXEC_PERL, capable->backend_path);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
-    if (!lives_make_writeable_dir(prefs->workdir)) {
-      // abort if we cannot create the new subdir
-      return capable;
-    }
-
     // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+                   prefs->workdir, prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
-
-  capable->can_write_to_workdir = TRUE;
 
   capable->has_smogrify = FALSE;
 
@@ -2591,12 +2587,6 @@ capability *get_capabilities(void) {
     return capable;
   }
 
-  capable->can_write_to_home = TRUE;
-  capable->can_write_to_config_new = TRUE;
-  capable->can_write_to_config_backup = TRUE;
-  capable->can_write_to_config = TRUE;
-  capable->can_read_from_config = TRUE;
-
   // the startup phase
   // this is 0 for normal operation
   // -1 for a fresh install
@@ -2620,71 +2610,66 @@ capability *get_capabilities(void) {
     old_vhash = lives_strdup(mainw->old_vhash);
   }
 
-  was_temp_workdir = FALSE;
-
   if (!mainw->has_session_workdir) {
-    size_t tmplen = strlen(prefs->tmp_workdir);
-    // The backend process returned a value. If the user has a valid, undamaged config file, it returned the stored value
-    // from there; otherwise it returned tmp_workdir, which we created earlier with mkdtemp() and set the startup_phase
-    // so we prompt the user for the real directory in workdir_query(), and then we can safely remove tmp_workdir
+    size_t dirlen = strlen(array[1]);
+    boolean dir_valid = TRUE;
 
-    // if the user set the value with -workdir then we use the supplied value, and of course we dont' remove it,
-    // although we may still prompt for the working dir if it's a fresh install.
-
-    lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
-    if (strlen(prefs->workdir) == 0) {
-      lives_snprintf(prefs->workdir, PATH_MAX, "%s", prefs->tmp_workdir);
-      was_temp_workdir = TRUE;
-    }
-    if (strcmp(prefs->workdir, prefs->tmp_workdir)) {
-      if (prefs->startup_phase == -1) {
-        msg = lives_strdup_printf("The backend found a workdir (%s), but set startup_phase to -1 !", prefs->workdir);
-        LIVES_WARN(msg);
-        lives_free(msg);
-      }
-      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+    if (dirlen > 0) {
+      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !!strcmp(mainw->old_vhash, "0")) {
         msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", prefs->workdir, old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
       }
-      if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
-        lives_rmdir(prefs->tmp_workdir, TRUE);
-        prefs->tmp_workdir[0] = '\0';
+
+      if (dirlen < PATH_MAX - MAX_SET_NAME_LEN * 2) {
+        ensure_isdir(array[1]);
+
+        if (dirlen >= PATH_MAX - MAX_SET_NAME_LEN * 2) {
+          dir_toolong_error(array[1], (tmp = lives_strdup(_("working"))), PATH_MAX - MAX_SET_NAME_LEN * 2);
+          lives_free(tmp);
+          dir_valid = FALSE;
+        }
+
+        if (!lives_make_writeable_dir(array[1])) {
+          do_bad_dir_perms_error(array[1]);
+          dir_valid = FALSE;
+        }
       }
-      ensure_isdir(prefs->workdir);
-      if (!is_writeable_dir(prefs->workdir)) {
-        capable->can_write_to_workdir = FALSE;
-        return capable;
+
+      if (dir_valid) {
+        lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
+
+        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+                       prefs->workdir, prefs->configdir);
+        lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
+
+        set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
+
+        // for backwards compatibility only
+        set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
+      } else {
+        needs_workdir = TRUE;
+        prefs->startup_phase = -1;
       }
-      capable->can_write_to_workdir = TRUE;
-
-      lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-      lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
-
-      set_string_pref_priority(PREF_WORKING_DIR, prefs->workdir);
-
-      // for backwards compatibility only
-      set_string_pref(PREF_WORKING_DIR_OLD, prefs->workdir);
     } else {
       if (prefs->startup_phase != -1) {
         msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s", prefs->startup_phase, prefs->workdir);
         LIVES_ERROR(msg);
         lives_free(msg);
       }
+      needs_workdir = TRUE;
       prefs->startup_phase = -1;
-      lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path, prefs->workdir);
-      lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
     }
-  }
 
-  if (strlen(mainw->old_vhash) > 0 && strcmp(mainw->old_vhash, "0")) {
-    if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
-      if (prefs->startup_phase == 0) {
-        msg = get_upd_msg();
-        lives_snprintf(capable->startup_msg, 1024, "%s", msg);
-        lives_free(msg);
-        if (numtok > 4 && strlen(array[4])) {
-          lives_strappend(capable->startup_msg, 1024, array[4]);
+    if (strlen(mainw->old_vhash) > 0 && strcmp(mainw->old_vhash, "0")) {
+      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
+        if (prefs->startup_phase == 0) {
+          msg = get_upd_msg();
+          lives_snprintf(capable->startup_msg, 1024, "%s", msg);
+          lives_free(msg);
+          if (numtok > 4 && strlen(array[4])) {
+            lives_strappend(capable->startup_msg, 1024, array[4]);
+          }
         }
       }
     }
@@ -2749,7 +2734,9 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("opts can be:\n"));
   fprintf(stderr, "%s", _("-help, --help               : show this help text and exit\n"));
   fprintf(stderr, "%s", _("-version, --version         : show the LiVES version and exit\n"));
-  fprintf(stderr, "%s", _("-workdir <tempdir>          : use alternate working directory (e.g /var/ramdisk)\n"));
+  fprintf(stderr, "%s", _("-workdir <workdir>          : specify the working directory, overriding any value set in preferences\n"));
+  fprintf(stderr, "%s", _("-configdir <tempdir>        : specify the configuration directory"));
+  fprintf(stderr,  _("                                       [default is %s]\n"), capable->home_dir);
   fprintf(stderr, "%s", _("-set <setname>              : autoload clip set setname\n"));
   fprintf(stderr, "%s", _("-noset                      : do not load any set on startup\n"));
   fprintf(stderr, "%s", _("-norecover                  : force no-loading of crash recovery\n"));
@@ -2764,11 +2751,10 @@ void print_opthelp(void) {
 #ifdef ENABLE_OSC
   fprintf(stderr, "%s", _("-oscstart <port>            : start OSC listener on UDP port <port>\n"));
   fprintf(stderr, "%s", _("-nooscstart                 : do not start OSC listener\n"));
-  fprintf(stderr,
 #endif
-          _("-asource <source>           : set the initial audio source; <source> can be 'internal' or 'external' \n"
-            "                                    [only valid for %s and %s players]\n"),
-          AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
+  fprintf(stderr, "%ss", _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' \n"));
+  fprintf(stderr, _("                                         [only valid for %s and %s players]\n"), AUDIO_PLAYER_JACK,
+          AUDIO_PLAYER_PULSE_AUDIO);
   fprintf(stderr, "%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
   fprintf(stderr, "%s", AUDIO_PLAYER_PULSE);
@@ -2827,7 +2813,7 @@ static boolean open_yuv4m_startup(livespointer data) {
 #endif
 
 
-/////////////////////////////////
+///////////////////////////////// TODO - move idle functions into another file //////////////////////////////////////
 
 static boolean render_choice_idle(livespointer data) {
   // TODO: *** figure out why we cant preview with only scrap_file loaded
@@ -2881,16 +2867,22 @@ boolean resize_message_area(livespointer data) {
   return FALSE;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
 
-  boolean got_files = FALSE;
-  boolean layout_recovered = FALSE;
   size_t tmplen;
   char *tmp, *tmp2, *msg;
+  boolean got_files = FALSE;
+  boolean layout_recovered = FALSE;
 
+  // check the working directory
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
+    needs_workdir = TRUE;
+  }
+
+  if (needs_workdir) {
     // get initial workdir
     if (!do_workdir_query()) {
       lives_exit(0);
@@ -3232,9 +3224,6 @@ static boolean lives_startup(livespointer data) {
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
     lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
-
-    // this must be done right at the end
-    // it slows down every single call to g_main_context_iteration - therefore it should be disabled before calling that
     if (mainw->multitrack->idlefunc == 0) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
@@ -3274,7 +3263,8 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ssize_t mynsize;
-  char fbuff[PATH_MAX];
+  char cdir[PATH_MAX];
+  boolean toolong = FALSE;
   char *tmp, *dir, *msg;
 
 #ifdef GUI_QT
@@ -3357,9 +3347,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // init prefs
   prefs = (_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
-  future_prefs->workdir[0] = '\0';
-
+  prefs->workdir[0] = '\0';
   prefs->tmp_workdir[0] = '\0';
+  future_prefs->workdir[0] = '\0';
+  prefs->configdir[0] = '\0';
+
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
   prefs->show_playwin = TRUE;
@@ -3368,8 +3360,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef HAVE_YUV4MPEG
   prefs->yuvin[0] = '\0';
 #endif
-
-  prefs->workdir[0] = '\0';
 
   mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
@@ -3394,6 +3384,24 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
   capable = (capability *)lives_malloc(sizeof(capability));
+  capable->startup_msg[0] = '\0';
+
+  capable->has_perl = TRUE;
+  capable->has_smogrify = TRUE;
+  capable->smog_version_correct = TRUE;
+  capable->can_read_from_config = TRUE;
+  capable->can_write_to_config = TRUE;
+  capable->can_write_to_config_backup = TRUE;
+  capable->can_write_to_config_new = TRUE;
+  capable->can_write_to_workdir = TRUE;
+
+#ifdef GUI_GTK
+  lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
+#else
+  tmp = getenv("HOME");
+  lives_snprintf(capable->home_dir, PATH_MAX, "%s", tmp);
+  lives_free(tmp);
+#endif
 
   // get opts first
   if (argc > 1) {
@@ -3407,15 +3415,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
       capable->myname_full = lives_find_program_in_path(argv[0]);
 
-      if ((mynsize = lives_readlink(capable->myname_full, fbuff, PATH_MAX)) != -1) {
-        memset(fbuff + mynsize, 0, 1);
+      if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
+        memset(cdir + mynsize, 0, 1);
         lives_free(capable->myname_full);
-        capable->myname_full = lives_strdup(fbuff);
+        capable->myname_full = lives_strdup(cdir);
       }
 
-      lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
-      get_basename(fbuff);
-      capable->myname = lives_strdup(fbuff);
+      lives_snprintf(cdir, PATH_MAX, "%s", capable->myname_full);
+      get_basename(cdir);
+      capable->myname = lives_strdup(cdir);
 
       print_opthelp();
       exit(0);
@@ -3427,6 +3435,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         {"aplayer", 1, 0, 0},
         {"asource", 1, 0, 0},
         {"workdir", 1, 0, 0},
+        {"configdir", 1, 0, 0},
         {"set", 1, 0, 0},
         {"noset", 0, 0, 0},
 #ifdef ENABLE_OSC
@@ -3468,26 +3477,56 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         charopt = longopts[option_index].name;
 
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
-          char cdir[PATH_MAX];
-          boolean toolong = FALSE;
+          mainw->has_session_workdir = TRUE;
 
-          if (strlen(optarg) > PATH_MAX) {
+          if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
-            lives_snprintf(cdir, PATH_MAX, "%s", optarg);
-            ensure_isdir(cdir);
-            if (strlen(optarg) > PATH_MAX) {
+            ensure_isdir(optarg);
+            if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
               toolong = TRUE;
             }
           }
           if (toolong) {
-            msg = lives_strdup(_("The working directory name specified is too long.\n"));
+            // TODO
+            capable->can_write_to_workdir = FALSE;
+            break;
+          }
+
+          lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
+
+          if (!lives_make_writeable_dir(prefs->workdir)) {
+            // abort if we cannot write to the specified workdir
+            capable->can_write_to_workdir = FALSE;
+            break;
+          }
+
+          continue;
+        }
+
+        if (!strcmp(charopt, "configdir")) {
+          if (strlen(optarg) > PATH_MAX - 64) {
+            toolong = TRUE;
+          } else {
+            ensure_isdir(optarg);
+            if (strlen(optarg) > PATH_MAX - 64) {
+              toolong = TRUE;
+            }
+          }
+          if (toolong) {
+            msg = lives_strdup_printf(_("The configuration directory name specified is too long.\n"
+                                        "The maximum allowed is %d characters\n"), PATH_MAX - 64);
             startup_message_fatal(msg);
           }
 
-          // override workdir setting
-          mainw->has_session_workdir = TRUE;
-          lives_snprintf(prefs->workdir, PATH_MAX, "%s", cdir);
+          lives_snprintf(prefs->configdir, PATH_MAX, "%s", optarg);
+
+          if (!lives_make_writeable_dir(prefs->configdir)) {
+            // abort if we cannot write to the specified configdir
+            capable->can_write_to_config = FALSE;
+            break;
+          }
+
           continue;
         }
 
@@ -3552,7 +3591,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           get_basename(devmap);
           if (!strcmp(devmap, devmap2)) {
             lives_free(dir);
-            dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
+            dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, LIVES_DEVICEMAPS_DIR, NULL);
           }
           lives_snprintf(devmap, PATH_MAX, "%s", (tmp = lives_build_filename(dir, devmap, NULL)));
           lives_free(tmp);
@@ -3735,6 +3774,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     }
   }
 
+  if (strlen(prefs->configdir) == 0) {
+    lives_snprintf(prefs->configdir, PATH_MAX, "%s", capable->home_dir);
+  }
+
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
@@ -3746,17 +3789,17 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // what's my name ?
   capable->myname_full = lives_find_program_in_path(argv[0]);
 
-  if ((mynsize = lives_readlink(capable->myname_full, fbuff, PATH_MAX)) != -1) {
+  if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
     // no. i mean, what's my real name ?
-    memset(fbuff + mynsize, 0, 1);
+    memset(cdir + mynsize, 0, 1);
     lives_free(capable->myname_full);
-    capable->myname_full = lives_strdup(fbuff);
+    capable->myname_full = lives_strdup(cdir);
   }
 
   // what's my short name (without the path) ?
-  lives_snprintf(fbuff, PATH_MAX, "%s", capable->myname_full);
-  get_basename(fbuff);
-  capable->myname = lives_strdup(fbuff);
+  lives_snprintf(cdir, PATH_MAX, "%s", capable->myname_full);
+  get_basename(cdir);
+  capable->myname = lives_strdup(cdir);
 
   // format is:
   // lives [opts] [filename [start_time] [frames]]
@@ -3767,7 +3810,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   future_prefs->vpp_argv = NULL;
 
   if (!ign_opts.ign_vppdefs)
-    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", capable->home_dir, LIVES_CONFIG_DIR);
+    lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s/%svpp_defaults", prefs->configdir, LIVES_CONFIG_DIR);
 
   lives_idle_add(lives_startup, NULL);
 
@@ -3828,6 +3871,8 @@ boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) 
   return TRUE;
 }
 
+
+///////////////////////////////// GUI section - TODO: move into another file //////////////////////////////////////
 
 void set_main_title(const char *file, int untitled) {
   char *title, *tmp;
@@ -5761,39 +5806,22 @@ LIVES_GLOBAL_INLINE LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const ch
 }
 
 
-static void get_max_opsize(int *opwidth, int *opheight) {
-  // calc max output size for display
-
+static void get_player_size(int *opwidth, int *opheight) {
+  // calc output size for display
+  // TODO:
   // hq: - during effects processing we resize eveything to the largest input size
   //     - after all processing we only resize if the player needs a fixed size
 
-  // !hq - during fx processing we resize all the smaller of largest input size, output size
+  // !hq - during fx processing we resize all to min(largest input size, output size)
   //     - after all processing we only resize if the player needs a fixed size
 
-  int pmonitor;
-
+  ///// external playback plugin
   if (mainw->ext_playback) {
     // playback plugin (therefore fullscreen / separate window)
-    //
     if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
       if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
-        // plugin can resize. Set whichever is smaller of screen size, clip size.
-        if (prefs->play_monitor == 0) {
-          *opwidth = GUI_SCREEN_WIDTH;
-          *opheight = GUI_SCREEN_HEIGHT;
-          if (capable->nmonitors > 1) {
-            // spread over all monitors
-            *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-            *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-          }
-        } else {
-          // single monitor
-          *opwidth = mainw->mgeom[prefs->play_monitor - 1].width;
-          *opheight = mainw->mgeom[prefs->play_monitor - 1].height;
-        }
-        // use smaller of clip size, screen size (blend file size if applicable)
-        if (cfile->hsize < *opwidth) *opwidth = cfile->hsize;
-        if (cfile->vsize < *opheight) *opheight = cfile->vsize;
+        // plugin can resize, max is the screen size
+        get_play_screen_size(opwidth, opheight);
       } else {
         // ext plugin can't resize, use its fixed size
         *opwidth = mainw->vpp->fwidth;
@@ -5802,112 +5830,60 @@ static void get_max_opsize(int *opwidth, int *opheight) {
     } else {
       // remote display
       if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-        // cant resize, we use the width it gave us
+        // cant resize, we use the width it gave us if it can't resize
         *opwidth = mainw->vpp->fwidth;
         *opheight = mainw->vpp->fheight;
       } else {
+        // else the clip size
         *opwidth = cfile->hsize;
         *opheight = cfile->vsize;
       }
     }
-  } else {
-    if (mainw->multitrack != NULL) {
-      // multitrack mode
-      if (mainw->multitrack->is_rendering) {
-        // if we are rendering, use the render file size
-        *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
-        *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
-      } else if (!mainw->ext_playback) {
-        // not rendering or using playback plugin
-        if (!mainw->fs || mainw->play_window == NULL) {
-          // not full screen, or inset, use the play window size (keeping aspect ratio)
-          *opwidth = mainw->files[mainw->multitrack->render_file]->hsize;
-          *opheight = mainw->files[mainw->multitrack->render_file]->vsize;
-          calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
-        } else {
-          // fullscreen, sepwin
-          // use screen size. We dealt with pb plugins above
-          if (prefs->play_monitor == 0) {
-            *opwidth = GUI_SCREEN_WIDTH;
-            *opheight = GUI_SCREEN_HEIGHT;
-            if (capable->nmonitors > 1  && !prefs->force_single_monitor) {
-              // spread over all monitors
-              *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-              *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-            }
-          } else {
-            if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
-            else pmonitor = prefs->gui_monitor;
-            *opwidth = mainw->mgeom[pmonitor - 1].width;
-            *opheight = mainw->mgeom[pmonitor - 1].height;
-          }
-        }
-      }
-    } else {
-      // clip edit mode
-      if (mainw->fs && !mainw->is_rendering) {
-        // fullscreen, not rendering
-        if (!mainw->sep_win) {
-          do {
-            *opwidth = lives_widget_get_allocation_width(mainw->playframe);
-            *opheight = lives_widget_get_allocation_height(mainw->playframe);
-            if (*opwidth * (*opheight) == 0) {
-              lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-            }
-          } while (*opwidth * (*opheight) == 0);
-        } else {
-          // sep win full screen, no plugin
-          if (!mainw->ext_playback) {
-            if (prefs->play_monitor == 0) {
-              if (capable->nmonitors == 1) {
-                *opwidth = GUI_SCREEN_WIDTH;
-                *opheight = GUI_SCREEN_HEIGHT;
-              } else {
-                // spread over all monitors
-                *opwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-                *opheight = lives_screen_get_height(mainw->mgeom[0].screen);
-              }
-            } else {
-              if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
-              else pmonitor = prefs->gui_monitor;
-              *opwidth = mainw->mgeom[pmonitor - 1].width;
-              *opheight = mainw->mgeom[pmonitor - 1].height;
-            }
-          }
-        }
-      } else {
-        if (mainw->is_rendering) {
-          if (cfile->hsize > *opwidth) *opwidth = cfile->hsize;
-          if (cfile->vsize > *opheight) *opheight = cfile->vsize;
-        } else {
-          // not full screen, not rendering
-          if (!mainw->sep_win) {
-            // in GUI
-#if GTK_CHECK_VERSION(3, 0, 0)
-            int rwidth = mainw->ce_frame_width;
-            int rheight = mainw->ce_frame_height;
-            *opwidth = cfile->hsize;
-            *opheight = cfile->vsize;
-            calc_maxspect(rwidth, rheight, opwidth, opheight);
-#else
-            do {
-              *opwidth = lives_widget_get_allocation_width(mainw->playframe);
-              *opheight = lives_widget_get_allocation_height(mainw->playframe);
-              if (*opwidth * (*opheight) == 0) {
-                lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-              }
-            } while (*opwidth * (*opheight) == 0);
-#endif
-          } else {
-            // in sep. window
-            if (mainw->pwidth < *opwidth || mainw->pheight < *opheight || *opwidth == 0 || *opheight == 0) {
-              *opwidth = mainw->pwidth;
-              *opheight = mainw->pheight;
-            }
-          }
-        }
-      }
+    return;
+  }
+
+  if (mainw->sep_win) {
+    // playback in separate window
+    *opwidth = lives_widget_get_allocation_width(mainw->play_window);
+    *opheight = lives_widget_get_allocation_height(mainw->play_window);
+    return;
+  }
+
+  /////////////////////////////////////////////////////////////////////////////////
+  // multitrack: we ignore double size, and fullscreen unless playing in the separate window
+  if (mainw->multitrack != NULL) {
+    // frame max sizes for multitrack
+    mainw->pwidth = mainw->files[mainw->multitrack->render_file]->hsize;
+    mainw->pheight = mainw->files[mainw->multitrack->render_file]->vsize;
+    if (!mainw->multitrack->is_rendering) {
+      calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, &mainw->pwidth, &mainw->pheight);
     }
+    return;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  // clip edit mode
+  if (mainw->is_rendering) {
+    *opwidth = cfile->hsize;
+    *opheight = cfile->vsize;
+    return;
+  }
+
+  if (!mainw->fs) {
+    // embedded player (not sure about this, it seems to require recalculation later)
+    int rwidth = mainw->ce_frame_width;
+    int rheight = mainw->ce_frame_height;
+
+    *opwidth = cfile->hsize;
+    *opheight = cfile->vsize;
+
+    if (prefs->ce_maxspect) {
+      calc_maxspect(rwidth, rheight, opwidth, opheight);
+    }
+  } else {
+    // try to get exact inner size of the main window
+    lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
+    *opheight -= 2; // necessary, or screen expands too much (!?)
   }
 }
 
@@ -6005,12 +5981,11 @@ void load_frame_image(int frame) {
   int layer_palette, cpal;
 
   int opwidth = 0, opheight = 0;
-  int pmonitor;
   int pwidth, pheight;
   int lb_width = 0, lb_height = 0;
   int bad_frame_count = 0;
   int fg_file = mainw->current_file;
-
+  int pmonitor;
 #if defined ENABLE_JACK || defined HAVE_PULSE_AUDIO
   lives_alarm_t alarm_handle;
 #endif
@@ -6298,12 +6273,11 @@ void load_frame_image(int frame) {
     }
 
     // limit max frame size unless we are saving to disk or rendering
-
     // frame_layer will in any case be equal to or smaller than this depending on maximum source frame size
 
     if (!(mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_EFFECTS) &&
           (!CURRENT_CLIP_IS_NORMAL || (IS_VALID_CLIP(mainw->blend_file) && !IS_NORMAL_CLIP(mainw->blend_file))))) {
-      get_max_opsize(&opwidth, &opheight);
+      get_player_size(&opwidth, &opheight);
     }
 
     ////////////////////////////////////////////////////////////
@@ -6605,36 +6579,10 @@ void load_frame_image(int frame) {
         check_layer_ready(mainw->frame_layer);
         save_to_scrap_file(mainw->frame_layer);
       }
-      get_max_opsize(&opwidth, &opheight);
+      get_player_size(&opwidth, &opheight);
     }
 
-    if (LIVES_IS_PLAYING && prefs->letterbox && mainw->fs &&
-        (mainw->multitrack == NULL || mainw->sep_win) &&
-        (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-      // consider letterboxing
-      lb_width = cfile->hsize;
-      lb_height = cfile->vsize;
-
-      if (mainw->multitrack == NULL && mainw->is_rendering &&
-          !(cfile->proc_ptr != NULL && mainw->preview) && mainw->clip_index[0] > -1) {
-        if (mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
-          // scrap file playback - use original clip size
-          check_layer_ready(mainw->frame_layer);
-          lb_width = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
-          lb_height = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
-        } else {
-          // playing from event list, use original clip size
-          lb_width = mainw->files[mainw->clip_index[0]]->hsize;
-          lb_height = mainw->files[mainw->clip_index[0]]->vsize;
-        }
-      }
-
-      // calc inner frame size
-      calc_maxspect(opwidth, opheight, &lb_width, &lb_height);
-      if (lb_width == opwidth && lb_height == opheight) lb_width = lb_height = 0;
-    }
-
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && lb_width == 0) {
+    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox) {
       // here we are outputting video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
@@ -6753,6 +6701,34 @@ void load_frame_image(int frame) {
       }
     }
 
+    if (LIVES_IS_PLAYING && prefs->letterbox && mainw->fs &&
+        (mainw->multitrack == NULL || mainw->sep_win) &&
+        (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
+      // consider letterboxing
+      lb_width = cfile->hsize;
+      lb_height = cfile->vsize;
+
+      if (mainw->multitrack == NULL && mainw->is_rendering &&
+          !(cfile->proc_ptr != NULL && mainw->preview) && mainw->clip_index[0] > -1) {
+        if (mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
+          // scrap file playback - use original clip size
+          check_layer_ready(mainw->frame_layer);
+          lb_width = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
+          lb_height = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
+        } else {
+          // playing from event list, use original clip size
+          lb_width = mainw->files[mainw->clip_index[0]]->hsize;
+          lb_height = mainw->files[mainw->clip_index[0]]->vsize;
+        }
+      }
+
+      // calc inner frame size
+      calc_maxspect(mainw->pwidth, mainw->pheight, &lb_width, &lb_height);
+      if (lb_width == opwidth && lb_height == opheight) lb_width = lb_height = 0;
+    }
+
+    // This next bit is horrible, but necessary...
+
     if ((mainw->multitrack == NULL && mainw->double_size && !mainw->fs && (!prefs->ce_maxspect || mainw->sep_win)) ||
         (mainw->fs && (!mainw->ext_playback || !(mainw->vpp->capabilities & VPP_CAN_RESIZE))) ||
         (mainw->must_resize && ((mainw->multitrack == NULL && mainw->sep_win) ||
@@ -6820,15 +6796,7 @@ void load_frame_image(int frame) {
             }
           }
         }
-        // non-multitrack / dbl_size / sepwin or non ce_maxspect
-        // or
-        // fullscreen internal, or pb plugin which cannot resize
-        // or double size / sepwin
-
-        // handled below
       }
-      // ext playback and can resize
-      // handled below
     } else {
       // clip edit mode
       pmonitor = prefs->play_monitor;
@@ -6855,49 +6823,49 @@ void load_frame_image(int frame) {
           }
         }
       }
+    }
 
-      // mainw->pwidth, mainw->pheight are set to clip width / height
+    if (mainw->multitrack == NULL && mainw->play_window == NULL && prefs->ce_maxspect) {
+      // this is where we set the size of the player image for clip editor internal frame
+      // the value is set in mainw->pwidth, mainw->pheight
 
-      if (mainw->multitrack == NULL && mainw->play_window == NULL && prefs->ce_maxspect) {
-        // this is where we set the size of the player image for clip editor internal frame
-        // the value is set in mainw->pwidth, mainw->pheight
-
-        // rwidth and rheight are the bounding rectangle
-        // we maxspect mainw->pwidth and mainw->pheight to this
+      // rwidth and rheight are the bounding rectangle
+      // we maxspect mainw->pwidth and mainw->pheight to this
+      mainw->pwidth = cfile->hsize;
+      mainw->pheight = cfile->vsize;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-        int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
-        int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
+      int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
+      int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 
-        if (mainw->double_size && !mainw->fs) {
-          // ce_frame_* was set to half for the first / last frames
-          // so we multiply by 4 to get double size
-          rwidth *= 4;
-          rheight *= 4;
-        }
+      if (mainw->double_size && !mainw->fs) {
+        // ce_frame_* was set to half for the first / last frames
+        // so we multiply by 4 to get double size
+        rwidth *= 4;
+        rheight *= 4;
+      }
 #else
-        int rwidth = lives_widget_get_allocation_width(mainw->play_image);
-        int rheight = lives_widget_get_allocation_height(mainw->play_image);
+      int rwidth = lives_widget_get_allocation_width(mainw->play_image);
+      int rheight = lives_widget_get_allocation_height(mainw->play_image);
 #endif
 
-        if (mainw->double_size && !mainw->fs) {
-          mainw->pwidth = (mainw->pwidth - H_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-          mainw->pheight = (mainw->pheight - V_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-
-          if (mainw->pwidth < 2) mainw->pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
-          if (mainw->pheight < 2) mainw->pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
-        }
-
-        calc_maxspect(rwidth, rheight, &mainw->pwidth, &mainw->pheight);
-
-        check_layer_ready(mainw->frame_layer);
+      if (mainw->double_size && !mainw->fs) {
+        mainw->pwidth = (mainw->pwidth - H_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
+        mainw->pheight = (mainw->pheight - V_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
 
         if (mainw->pwidth < 2) mainw->pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
         if (mainw->pheight < 2) mainw->pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
       }
+
+      calc_maxspect(rwidth, rheight, &mainw->pwidth, &mainw->pheight);
+
+      /* check_layer_ready(mainw->frame_layer); */
+
+      /* if (mainw->pwidth < 2) mainw->pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error); */
+      /* if (mainw->pheight < 2) mainw->pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error); */
     }
 
-    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || lb_width != 0)) {
+    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox)) {
       // here we are playing through an external video playback plugin which cannot resize
       // we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
@@ -6916,7 +6884,7 @@ void load_frame_image(int frame) {
 
       interp = get_interp_value(prefs->pb_quality);
 
-      if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->vpp->fwidth > 0 && mainw->vpp->fheight > 0 &&
+      if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && !(mainw->vpp->capabilities & VPP_CAN_RESIZE) &&
           ((mainw->vpp->fwidth / weed_palette_get_pixels_per_macropixel(layer_palette) <
             mainw->pwidth) ||
            (mainw->vpp->fheight / weed_palette_get_pixels_per_macropixel(layer_palette) <
@@ -6935,9 +6903,34 @@ void load_frame_image(int frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
-      if ((mainw->vpp->fwidth > 0 && mainw->vpp->fheight > 0) && lb_width == 0) {
+      if (!prefs->letterbox) {
         resize_layer(frame_layer, mainw->vpp->fwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                      mainw->vpp->fheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
+      } else {
+        pwidth = weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error) *
+                 weed_palette_get_pixels_per_macropixel(layer_palette);
+        pheight = weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error);
+
+        lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
+        lb_height = weed_layer_get_height(frame_layer);
+
+        if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
+          double player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
+          if ((double)lb_height * player_aspect > lb_width) pwidth = (double)lb_height * player_aspect;
+          if ((double)lb_width / player_aspect > lb_height) pheight = (double)lb_width / player_aspect;
+        } else {
+          calc_maxspect(mainw->vpp->fwidth, mainw->vpp->fheight, &lb_width, &lb_height);
+          pwidth = mainw->vpp->fwidth;
+          pheight = mainw->vpp->fwidth;
+        }
+        if (pwidth != lb_width || pheight != lb_height) {
+          if (frame_layer == mainw->frame_layer) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+          letterbox_layer(frame_layer, lb_width /
+                          weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+                          lb_height, pwidth /
+                          weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
+                          pheight);
+        }
       }
 
       // resize_layer can change palette
@@ -6970,22 +6963,6 @@ void load_frame_image(int frame) {
       }
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
-
-      if (mainw->vpp->fwidth != pwidth || mainw->vpp->fheight != pheight || lb_width != 0) {
-        if (lb_width == 0) {
-          lb_width = pwidth;
-          lb_height = pheight;
-
-          calc_maxspect(mainw->vpp->fwidth, mainw->vpp->fheight, &lb_width, &lb_height);
-        }
-
-        letterbox_layer(frame_layer, lb_width /
-                        weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-                        lb_height, mainw->vpp->fwidth /
-                        weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-                        mainw->vpp->fheight);
-
-      }
 
       if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
@@ -7095,40 +7072,7 @@ void load_frame_image(int frame) {
 
     if (mainw->fs && !mainw->ext_playback && (mainw->multitrack == NULL || mainw->sep_win)) {
       // set again, in case vpp was turned off because of preview conditions
-      if (!mainw->sep_win) {
-        do {
-          mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe);
-          mainw->pheight = lives_widget_get_allocation_height(mainw->playframe);
-          if (mainw->pwidth * mainw->pheight == 0) {
-            lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          }
-        } while (mainw->pwidth * mainw->pheight == 0);
-      } else {
-        if (prefs->play_monitor == 0) {
-          mainw->pwidth = GUI_SCREEN_WIDTH;
-          mainw->pheight = GUI_SCREEN_HEIGHT;
-          if (capable->nmonitors > 1) {
-            // spread over all monitors
-            mainw->pwidth = lives_screen_get_width(mainw->mgeom[0].screen);
-            mainw->pheight = lives_screen_get_height(mainw->mgeom[0].screen);
-          }
-        } else {
-          if (mainw->play_window != NULL) pmonitor = prefs->play_monitor;
-          else pmonitor = prefs->gui_monitor;
-          mainw->pwidth = mainw->mgeom[pmonitor - 1].width;
-          mainw->pheight = mainw->mgeom[pmonitor - 1].height;
-        }
-      }
-    }
-
-    if (mainw->play_window != NULL && (!mainw->fs || mainw->ext_playback)) {
-      mainw->pwidth = lives_widget_get_allocation_width(mainw->play_window);
-      mainw->pheight = lives_widget_get_allocation_height(mainw->play_window);
-    } else if (!mainw->fs || (mainw->multitrack != NULL && !mainw->sep_win)) {
-      if (mainw->pwidth > lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2)
-        mainw->pwidth = lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2;
-      if (mainw->pheight > lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2)
-        mainw->pheight = lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2;
+      get_player_size(&mainw->pwidth, &mainw->pheight);
     }
 
     pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error) *

@@ -953,7 +953,7 @@ load_done:
   if (mainw->multitrack == NULL) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
-    lives_widget_queue_draw(mainw->LiVES);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
   } else {
     lives_mt *multi = mainw->multitrack;
     mainw->multitrack = NULL; // allow getting of afilesize
@@ -2859,7 +2859,6 @@ void play_file(void) {
       reset_message_area(); // necessary
     }
 
-    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
     lives_widget_show(mainw->frame1);
     lives_widget_show(mainw->frame2);
     lives_widget_show(mainw->eventbox3);
@@ -2868,18 +2867,6 @@ void play_file(void) {
 
     if (!prefs->hide_framebar && !prefs->hfbwnp) {
       lives_widget_show(mainw->framebar);
-    }
-
-    if (prefs->show_gui && (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
-                            lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH)) {
-      // the screen grew too much...remaximise it
-      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      mainw->noswitch = TRUE;
-      lives_widget_context_update();
-      mainw->noswitch = FALSE;
-      if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
-      if (prefs->open_maximised)
-        lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     }
   }
 
@@ -3101,12 +3088,35 @@ void play_file(void) {
     load_start_image(cfile->start);
     load_end_image(cfile->end);
   }
+
+  if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
+                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
+                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
+    // the screen grew too much...remaximise it
+    lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    mainw->noswitch = TRUE;
+    lives_widget_context_update();
+    mainw->noswitch = FALSE;
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+    if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    mainw->noswitch = TRUE;
+    lives_widget_context_update();
+    mainw->noswitch = FALSE;
+  }
+  if (mainw->multitrack == NULL) {
+    lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+  }
   if (prefs->show_msg_area && mainw->multitrack == NULL) {
     if (mainw->idlemax == 0) {
       lives_idle_add(resize_message_area, NULL);
     }
     mainw->idlemax = DEF_IDLE_MAX;
   }
+
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 }
 

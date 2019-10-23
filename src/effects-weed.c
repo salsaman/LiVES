@@ -5936,7 +5936,7 @@ static int load_compound_fx(void) {
 
   threaded_dialog_spin(0.);
 
-  lives_compound_plugin_path = lives_build_filename(capable->home_dir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
+  lives_compound_plugin_path = lives_build_filename(prefs->configdir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM, TRUE, lives_compound_plugin_path, NULL);
 
   for (plugin_idx = 0; plugin_idx < lives_list_length(compound_plugin_list); plugin_idx++) {

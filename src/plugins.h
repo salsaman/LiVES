@@ -328,14 +328,14 @@ lives_decoder_t *clone_decoder(int fileno);
 /// external rendered fx plugins (RFX plugins)
 #define PLUGIN_RENDERED_EFFECTS_BUILTIN "effects/rendered/"
 
-/// in the home directory
+/// in the config directory
 #define PLUGIN_RENDERED_EFFECTS_CUSTOM "plugins/effects/rendered/custom/"
 #define PLUGIN_RENDERED_EFFECTS_TEST "plugins/effects/rendered/test/"
 
 /// rfx scripts for the SDK
 #define PLUGIN_RENDERED_EFFECTS_BUILTIN_SCRIPTS "effects/RFXscripts/"
 
-/// in the home directory
+/// in the config directory
 #define PLUGIN_RENDERED_EFFECTS_CUSTOM_SCRIPTS "plugins/effects/RFXscripts/custom/"
 #define PLUGIN_RENDERED_EFFECTS_TEST_SCRIPTS "plugins/effects/RFXscripts/test/"
 

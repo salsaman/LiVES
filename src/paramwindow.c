@@ -3257,10 +3257,10 @@ LiVESList *do_onchange(LiVESWidgetObject *object, lives_rfx_t *rfx) {
       plugdir = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, NULL);
       break;
     case RFX_STATUS_CUSTOM:
-      plugdir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_CUSTOM, NULL);
+      plugdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_CUSTOM, NULL);
       break;
     case RFX_STATUS_TEST:
-      plugdir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST, NULL);
+      plugdir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, PLUGIN_RENDERED_EFFECTS_TEST, NULL);
       break;
     default:
       plugdir = lives_strdup_printf("%s", prefs->workdir);

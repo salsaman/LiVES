@@ -438,9 +438,9 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   LiVESList *list = NULL;
 
   char *msg, *tmp;
-  char *keymap_file = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap", NULL);
-  char *keymap_file2 = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
-  char *keymap_file3 = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
+  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL);
+  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
+  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
 
   boolean update = FALSE;
 
@@ -534,11 +534,11 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   register int i;
 
   if (prefs->fxdefsfile == NULL) {
-    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
+    prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
   if (prefs->fxsizesfile == NULL) {
-    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
+    prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
   d_print(_("Saving real time effect defaults to %s..."), prefs->fxdefsfile);
@@ -634,7 +634,7 @@ void load_rte_defs(void) {
   int retval;
 
   if (prefs->fxdefsfile == NULL) {
-    prefs->fxdefsfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
+    prefs->fxdefsfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_DEFS_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxdefsfile, LIVES_FILE_TEST_EXISTS)) {
@@ -673,7 +673,7 @@ void load_rte_defs(void) {
   }
 
   if (prefs->fxsizesfile == NULL) {
-    prefs->fxsizesfile = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
+    prefs->fxsizesfile = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, FX_SIZES_FILENAME, NULL);
   }
 
   if (lives_file_test(prefs->fxsizesfile, LIVES_FILE_TEST_EXISTS)) {
@@ -1238,9 +1238,9 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *line = NULL;
   char *whashname;
 
-  char *keymap_file = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap", NULL);
-  char *keymap_file2 = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
-  char *keymap_file3 = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
+  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL);
+  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
+  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
 
   int *def_modes;
   uint8_t **badkeymap;
@@ -2771,7 +2771,7 @@ resetdefs1:
 
 void load_default_keymap(void) {
   // called on startup
-  char *dir = lives_build_filename(capable->home_dir, LIVES_CONFIG_DIR, NULL);
+  char *dir = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, NULL);
   char *keymap_file = lives_build_filename(dir, "default.keymap", NULL);
   char *keymap_template = lives_build_filename(prefs->prefix_dir, DATA_DIR, "default.keymap", NULL);
   char *tmp;
@@ -2794,7 +2794,7 @@ void load_default_keymap(void) {
     if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
       // give up
       d_print((tmp = lives_strdup_printf
-                     (_("Unable to create default keymap file: %s\nPlease make sure your home directory is writable.\n"),
+                     (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
                       keymap_file)));
 
       retval = do_abort_cancel_retry_dialog(tmp, NULL);

@@ -2499,7 +2499,7 @@ capability *get_capabilities(void) {
   capable->has_smogrify = TRUE;
 
   if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->configdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
     // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
@@ -2615,8 +2615,8 @@ capability *get_capabilities(void) {
     boolean dir_valid = TRUE;
 
     if (dirlen > 0) {
-      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !!strcmp(mainw->old_vhash, "0")) {
-        msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", prefs->workdir, old_vhash);
+      if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+        msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", array[1], old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
       }

@@ -62,19 +62,6 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
     exit 1;
 }
 
-
-
-
-broken, do not use yet !!!!!!
-
-
-
-
-
-
-
-    
-
 #$DEBUG_SMOGRIFY=1;
 
 ###################################################################
@@ -94,7 +81,11 @@ if (defined($ARGV[0])) {
     
     $configdir = "";
     
-    if ($command eq "report" || $command eq "get_pref" || $command eq "set_pref") {
+    if ($command eq "report" || $command eq "get_pref" || $command eq "set_pref" ||
+	$command eq "set_pref_priority" || $command eq "set_pref_if_not_set" || $command eq "delete_pref" ||
+	$command eq "get_workdir" || $command eq "print_pref" || $command eq "set_clip_value" || 
+	$command eq "get_clip_value"
+	) {
 	$configdir = "";
 	$config = "$CONFIGDIR";
 
@@ -118,15 +109,16 @@ if (defined($ARGV[0])) {
 			exit 98;
 		    }
 		}
+		$configdir = $home;
 	    }
 	}
+	$rc_filename = ".lives";
 	$rcfile = "$configdir/$rc_filename";
 	$rcfile_damaged = "$rcfile.damaged";
 	$recrcfile = "$rcfile.recovery";
 	$recrcfile_tried = "$recrcfile.tried";
 	$recrcfile_succeeded = "$recrcfile_tried.succeeded";
 	$newrcfile = "$rcfile.new";
-	$rc_filename = ".lives";
     }
 
     $nulfile = "/dev/null";
@@ -147,15 +139,15 @@ if (defined($ARGV[0])) {
 	    $workdir = $work;
 	}
 
-	if ($command ne "report") {
-	    if ($workdir eq "") {
-		$has_rcfile = 0 + -e $rcfile;
-		if ($has_rcfile) {
-		    # can exit 3 here
-		    $workdir = &rc_get("workdir");
-		    if ($workdir eq "") {
-			$workdir = &rc_get("tempdir");
-		    }
+	if ($workdir eq "") {
+	    $has_rcfile = 0 + -e $rcfile;
+	    if ($has_rcfile) {
+		# can exit 3 here
+		$workdir = &rc_get("workdir");
+		if ($workdir eq "") {
+		    $workdir = &rc_get("tempdir");
+		}
+		if ($command ne "report") {
 		    if ($workdir eq "") {
 			if (!caller) {
 			    print STDERR "smogrify for $GUI_NAME v$version: workdir not defined for command $command, ";
@@ -169,10 +161,11 @@ if (defined($ARGV[0])) {
 	}
     }
 
-
     if (!caller || $command eq "save" || $command eq "plugin_clear") {
+	#$DEBUG_SM_CMDS = 1;
         if (defined $DEBUG_SM_CMDS) {
             print STDERR "command is $command\n";
+            print STDERR join(" ", @ARGV) . "\n";
         }
 
 	## blocking calls
@@ -226,6 +219,7 @@ if (defined($ARGV[0])) {
 		# try to get the version
 		$old_version = &rc_get("version");
 		if ($old_version eq "") {
+		    print "BOO\n";
 		    #failed  to get version from rcfile
 		    $has_rcfile = 0;
 		    if ($upd) {
@@ -7476,11 +7470,17 @@ sub printlen {
 sub rc_set {
     # set/modify/delete a value in the .rc file
     my ($key, $value, $dversion) = @_;
+
     my $xrcfile = $rcfile;
 
     if (defined($prefs_file)) {
         $xrcfile = $prefs_file;
     }
+
+    if ($xrcfile eq "") {
+	&startup_error(4, "rc_set", "defined_xrcfile0", "$rcfile:$prefs_file:$key:@:");
+    }
+
     if ($xrcfile ne $rcfile && $key eq "") {
 	return 0;
     }
@@ -8011,6 +8011,10 @@ sub rc_get {
 
     if (defined($prefs_file)) {
         $xrcfile = $prefs_file;
+    }
+
+    if ($xrcfile eq "") {
+	&startup_error(3, "rc_get", "defined_xrcfile0", "$rcfile:$prefs_file:$key:@:");
     }
 
     if (! -s $xrcfile) {

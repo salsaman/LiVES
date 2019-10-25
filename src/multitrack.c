@@ -8572,7 +8572,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   // poly in_out_box
   mt->in_out_box = lives_hbox_new(TRUE, 0);
   lives_widget_object_ref(mt->in_out_box);
-  lives_widget_apply_theme2(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL, TRUE);
+  lives_widget_apply_theme(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL);
 
   vbox = lives_vbox_new(FALSE, widget_opts.packing_height);
   lives_box_pack_start(LIVES_BOX(mt->in_out_box), vbox, TRUE, TRUE, widget_opts.packing_width);

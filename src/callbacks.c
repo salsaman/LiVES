@@ -5495,13 +5495,14 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   }
 
   d_print(_("Cleaning up disk space..."));
-
+  g_print("cf is %d\n", mainw->current_file);
   // get a temporary clip for receiving data from backend
   if (!get_temp_handle(-1)) {
     d_print_failed();
     mainw->next_ds_warn_level = ds_warn_level;
     return;
   }
+  g_print("cf2 is %d\n", mainw->current_file);
 
   cfile->cb_src = current_file;
 
@@ -5568,9 +5569,11 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
       lives_strfreev(array);
     }
   }
+  g_print("cf3 is %d\n", mainw->current_file);
 
   // close the temporary clip
   close_temp_handle(current_file);
+  g_print("cf4 is %d\n", mainw->current_file);
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {

@@ -158,7 +158,9 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                         get_image_ext_for_type(cfile->img_type), mainw->opening_loc, is_audio);
   lives_free(tmp);
+  g_print("A1\n");
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
+  g_print("A12\n");
   lives_free(com);
   if (mainw->com_failed) {
     mainw->com_failed = FALSE;
@@ -3142,21 +3144,24 @@ int close_temp_handle(int new_clip) {
   int clipno = mainw->current_file;
 
   if (!IS_VALID_CLIP(new_clip)) new_clip = -1;
-  if (!IS_VALID_CLIP(clipno)) return new_clip;
-
+  if (!IS_VALID_CLIP(clipno)) {
+    mainw->current_file = new_clip;
+    return new_clip;
+  }
   if (cfile->clip_type != CLIP_TYPE_TEMP) {
     close_current_file(new_clip);
   }
-
-  mainw->current_file = new_clip;
 
   com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
   lives_system(com, TRUE);
   lives_free(com);
   lives_freep((void **)&mainw->files[clipno]);
 
+  mainw->current_file = new_clip;
+
   if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
     mainw->first_free_file = clipno;
+  mainw->current_file = new_clip;
   return new_clip;
 }
 
@@ -3164,6 +3169,7 @@ int close_temp_handle(int new_clip) {
 static void get_next_free_file(void) {
   // get next free file slot, or -1 if we are full
   // can support MAX_FILES files (default 65536)
+  mainw->first_free_file++;
   while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
     mainw->first_free_file++;
     if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
@@ -3183,8 +3189,7 @@ boolean get_temp_handle(int index) {
 
   // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
 
-  boolean is_unique, create = TRUE;
-  int current_file = mainw->current_file;
+  boolean is_unique, create = FALSE;
 
   if (index < -1 || index > MAX_FILES) {
     char *msg = lives_strdup_printf("Attempt to create invalid new temp clip %d\n", index);
@@ -3204,21 +3209,15 @@ boolean get_temp_handle(int index) {
   }
 
   do {
-    mainw->current_file = -1; // stop update of start/end frames
-
     is_unique = TRUE;
-
-    // ignore return value here, as it will be dealt with in get_handle_from_info_file()
-    mainw->current_file = current_file;
 
     //get handle from info file, the first time we will also malloc a new "file" struct here
     if (!get_handle_from_info_file(index)) {
       lives_freep((void **)&mainw->files[index]);
-      mainw->current_file = current_file;
+      if (mainw->first_free_file == ALL_USED || index < mainw->first_free_file)
+	mainw->first_free_file = index;
       return FALSE;
     }
-
-    mainw->current_file = index;
 
     if (strlen(mainw->set_name) > 0) {
       char *setclipdir = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, cfile->handle, NULL);
@@ -3226,6 +3225,8 @@ boolean get_temp_handle(int index) {
       lives_free(setclipdir);
     }
   } while (!is_unique);
+
+  mainw->current_file = index;
 
   if (create) {
     create_cfile(index, cfile->handle, FALSE);
@@ -3391,6 +3392,7 @@ boolean get_new_handle(int index, const char *name) {
 
   int current_file = mainw->current_file;
   if (!get_temp_handle(index)) return FALSE;
+  create_cfile(index, cfile->handle, FALSE);
 
   // note : don't need to update first_free_file for the clipboard
   if (index != 0) {

@@ -3346,7 +3346,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -5860,7 +5860,7 @@ static void get_player_size(int *opwidth, int *opheight) {
     return;
   }
 
-  if (mainw->sep_win) {
+  if (mainw->play_window != NULL) {
     // playback in separate window
     *opwidth = lives_widget_get_allocation_width(mainw->play_window);
     *opheight = lives_widget_get_allocation_height(mainw->play_window);

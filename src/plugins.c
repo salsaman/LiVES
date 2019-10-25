@@ -1430,11 +1430,10 @@ int64_t get_best_audio(_vid_playback_plugin *vpp) {
 
         com = lives_strdup_printf("\"%s\" check %d", astreamer, fmts[i]);
         mainw->com_failed = FALSE;
-        lives_popen(com, TRUE, buf, 1024);
+        lives_popen(com, FALSE, buf, 1024);
         lives_free(com);
 
         if (mainw->com_failed) {
-          do_system_failed_error(com, 0, NULL);
           lives_free(astreamer);
           lives_free(com);
           lives_free(sfmts);
@@ -1975,7 +1974,7 @@ LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) 
     listnext = list->next;
 
     while (blacklist[i] != NULL) {
-      if (strlen((char *)list->data) == strlen(blacklist[i]) && !strcmp((char *)list->data, blacklist[i])) {
+      if (!strcmp((const char *)list->data, blacklist[i])) {
         // skip blacklisted encoders
         lives_free((livespointer)list->data);
         encoders = lives_list_delete_link(encoders, list);
@@ -2027,7 +2026,31 @@ boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette) {
 }
 
 
-static LiVESList *load_decoders(void) {
+boolean decoder_plugin_move_to_first(const char *name) {
+  LiVESList *decoder_plugin, *last_decoder_plugin = NULL;
+  if (!mainw->decoders_loaded) {
+    mainw->decoder_list = load_decoders();
+    mainw->decoders_loaded = TRUE;
+  }
+  decoder_plugin = mainw->decoder_list;
+  while (decoder_plugin != NULL) {
+    if (!strcmp((const char *)(decoder_plugin->data), name)) {
+      if (last_decoder_plugin != NULL) {
+	last_decoder_plugin->next = decoder_plugin->next;
+	decoder_plugin->next = mainw->decoder_list;
+	mainw->decoder_list = decoder_plugin;
+      }
+      return TRUE;
+    }
+    last_decoder_plugin = decoder_plugin;
+    decoder_plugin = decoder_plugin->next;
+  }
+  return FALSE;
+}
+
+
+
+LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
   char *decplugdir = lives_strdup_printf("%s%s%s", prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS);
   LiVESList *dlist = NULL;
@@ -2040,14 +2063,14 @@ static LiVESList *load_decoders(void) {
     NULL
   };
 
-  char *dplugname;
+  const char *dplugname;
   boolean skip;
 
   register int i;
 
   while (decoder_plugins != NULL) {
     skip = FALSE;
-    dplugname = (char *)decoder_plugins->data;
+    dplugname = (const char *)(decoder_plugins->data);
     for (i = 0; blacklist[i] != NULL; i++) {
       if (!strcmp(dplugname, blacklist[i])) {
         // skip blacklisted decoders
@@ -2122,6 +2145,7 @@ lives_decoder_t *clone_decoder(int fileno) {
 static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
   lives_decoder_t *dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
   LiVESList *decoder_plugin = mainw->decoder_list;
+  //LiVESList *last_decoder_plugin = NULL;
 
   while (decoder_plugin != NULL) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
@@ -2143,6 +2167,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
       // check for sanity
 
       if (!sanity_check_cdata(dplug->cdata)) {
+	//last_decoder_plugin = decoder_plugin;
         decoder_plugin = decoder_plugin->next;
         continue;
       }
@@ -2151,13 +2176,19 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
 
       dplug->decoder = dpsys;
 
-      if (strncmp(dpsys->name, "zz", 2)) {
-        mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
-      }
+      /* if (strncmp(dpsys->name, "zz", 2)) { */
+      /* 	// if libav decoder opened us, move it to the first, since it can save time */
+      /* 	if (last_decoder_plugin != NULL) { */
+      /* 	  last_decoder_plugin->next = decoder_plugin->next; */
+      /* 	  decoder_plugin->next = mainw->decoder_list; */
+      /* 	  mainw->decoder_list = decoder_plugin; */
+      /* } */
       break;
     }
+    //last_decoder_plugin = decoder_plugin;
     decoder_plugin = decoder_plugin->next;
   }
+
   if (decoder_plugin == NULL) {
     lives_freep((void **)&dplug);
   }

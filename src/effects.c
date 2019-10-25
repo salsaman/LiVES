@@ -433,7 +433,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     lives_free(com);
     mainw->keep_pre = FALSE;
 
-    check_backend_return(cfile);
+    check_backend_return(cfile, NULL);
 
     if (mainw->error) {
       if (!mainw->cancelled) {
@@ -704,7 +704,7 @@ lives_render_error_t realfx_progress(boolean reset) {
       lives_free(com);
       mainw->internal_messaging = FALSE;
 
-      check_backend_return(cfile);
+      check_backend_return(cfile, NULL);
 
       if (mainw->error) write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
       //cfile->may_be_damaged=TRUE;

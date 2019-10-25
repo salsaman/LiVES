@@ -735,6 +735,9 @@ typedef struct {
 
   boolean needs_update; ///< loaded values were incorrect, update header
 
+  boolean checked_for_old_header;
+  boolean has_old_header;
+  
   float **audio_waveform; ///< values for drawing the audio wave
   int *aw_sizes; ///< size of each audio_waveform in floats
   char md5sum[64];
@@ -918,7 +921,7 @@ boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
-void do_abort_retry_dialog(const char *text, LiVESWindow *transient);
+LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
 int do_error_dialog(const char *text);
 int do_error_dialogf(const char *fmt, ...);
@@ -936,7 +939,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                                    int warn_mask_number, boolean is_blocking);
 LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
 LiVESWindow *get_transient_full();
-void do_system_failed_error(const char *com, int retval, const char *addinfo);
+LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry, LiVESWindow *transient);
 int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
 int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
@@ -945,8 +948,8 @@ boolean do_header_write_error(int clip);
 int do_header_read_error_with_retry(int clip) WARN_UNUSED;
 int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
-void handle_backend_errors(void);
-boolean check_backend_return(lives_clip_t *sfile);
+LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient);
+boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient);
 
 /** warn about disk space */
 char *ds_critical_msg(const char *dir, uint64_t dsval);
@@ -1356,7 +1359,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes);
 char *repl_workdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
-void save_clip_value(int which, lives_clip_details_t, void *val);
+boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx);
 void count_opening_frames(void);
 void get_frame_count(int idx);
@@ -1469,7 +1472,7 @@ void break_me(void);
 
 #ifndef LIVES_ERROR
 #ifndef LIVES_NO_ERROR
-#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES error: %s\n", x); break_me();}
+#define LIVES_ERROR(x)      {fprintf(stderr, "LiVES ERROR: %s\n", x); break_me();}
 #else // LIVES_NO_ERROR
 #define LIVES_ERROR(x)      dummychar = x
 #endif // LIVES_NO_ERROR
@@ -1477,7 +1480,7 @@ void break_me(void);
 
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES fatal: %s\n", x); raise (LIVES_SIGSEGV);}
+#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); break_me(); raise (LIVES_SIGSEGV);}
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL

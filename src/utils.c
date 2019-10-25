@@ -190,6 +190,7 @@ LIVES_GLOBAL_INLINE boolean lives_setenv(const char *name, const char *value) {
 
 
 int lives_system(const char *com, boolean allow_error) {
+  LiVESResponseType response;
   int retval;
   boolean cnorm = FALSE;
 
@@ -204,24 +205,27 @@ int lives_system(const char *com, boolean allow_error) {
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
 
-  retval = system(com);
+  do {
+    response = LIVES_RESPONSE_NONE;
+    retval = system(com);
 
-  if (retval) {
-    char *msg = NULL;
-    mainw->com_failed = TRUE;
-    if (!allow_error) {
-      msg = lives_strdup_printf("lives_system failed with code %d: %s", retval, com);
-      LIVES_ERROR(msg);
-      do_system_failed_error(com, retval, NULL);
-    }
+    if (retval) {
+      char *msg = NULL;
+      mainw->com_failed = TRUE;
+      if (!allow_error) {
+	msg = lives_strdup_printf("lives_system failed with code %d: %s", retval, com);
+	LIVES_ERROR(msg);
+	response = do_system_failed_error(com, retval, NULL, TRUE, NULL);
+      }
 #ifndef LIVES_NO_DEBUG
-    else {
-      msg = lives_strdup_printf("lives_system failed with code %d: %s (not an error)", retval, com);
-      LIVES_DEBUG(msg);
-    }
+      else {
+	msg = lives_strdup_printf("lives_system failed with code %d: %s (not an error)", retval, com);
+	LIVES_DEBUG(msg);
+      }
 #endif
-    if (msg != NULL) lives_free(msg);
-  }
+      if (msg != NULL) lives_free(msg);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
 
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
@@ -238,6 +242,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
 
   FILE *fp;
   size_t bytes_read = 0;
+  LiVESResponseType response;
   int err;
   boolean cnorm = FALSE;
 
@@ -251,33 +256,37 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
 
-  fp = popen(com, "r");
-  if (fp == NULL) {
-    err = errno;
-  } else {
-    bytes_read = fread(buff, 1, buflen - 1, fp);
-    err = ferror(fp);
-    fclose(fp);
-  }
-
-  memset(buff + bytes_read, 0, 1);
-
-  if (bytes_read == 0 && err != 0) {
-    char *msg = NULL;
-    mainw->com_failed = TRUE;
-    if (!allow_error) {
-      msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
-      LIVES_ERROR(msg);
-      do_system_failed_error(com, err, NULL);
+  do {
+    response = LIVES_RESPONSE_NONE;
+    fp = popen(com, "r");
+    if (fp == NULL) {
+      err = errno;
+    } else {
+      bytes_read = fread(buff, 1, buflen - 1, fp);
+      err = ferror(fp);
+      fclose(fp);
     }
+
+    memset(buff + bytes_read, 0, 1);
+
+    if (bytes_read == 0 && err != 0) {
+      char *msg = NULL;
+      mainw->com_failed = TRUE;
+      if (!allow_error) {
+	msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
+	LIVES_ERROR(msg);
+	response = do_system_failed_error(com, err, NULL, TRUE, NULL);
+      }
 #ifndef LIVES_NO_DEBUG
-    else {
-      msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
-      LIVES_DEBUG(msg);
-    }
+      else {
+	msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
+	LIVES_DEBUG(msg);
+      }
 #endif
-    if (msg != NULL) lives_free(msg);
-  }
+      if (msg != NULL) lives_free(msg);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   if (err != 0) return -ABS(err);
   return bytes_read;
@@ -2600,11 +2609,22 @@ LIVES_GLOBAL_INLINE boolean has_executable(const char *exe) {
 
 uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
   /// get version hash output for an executable from the backend
-  char val[16];
-  char *com = lives_strdup_printf("%s get_version_hash \"%s\" \"%s\" %d", prefs->backend_sync, exe, sep, piece);
-  lives_popen(com, TRUE, val, 16);
-  lives_free(com);
-  return strtol(val, NULL, 10);
+  uint64_t val;
+  char buff[128];
+  char **array;
+  int ntok;
+
+  lives_popen(exe, TRUE, buff, 128);
+  if (mainw->com_failed) {
+    mainw->com_failed = FALSE;
+    return -2;
+  }
+  ntok = get_token_count(buff, sep[0]);
+  if (ntok < piece) return -1;
+  array = lives_strsplit(buff, sep, ntok);
+  val = make_version_hash(array[piece]);
+  lives_strfreev(array);
+  return val;
 }
 
 
@@ -4141,6 +4161,7 @@ boolean cache_file_contents(const char *filename) {
 
 
 char *get_val_from_cached_list(const char *key, size_t maxlen) {
+  // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
   LiVESList *clist = mainw->cached_list;
   char *keystr_start = lives_strdup_printf("<%s>", key);
   char *keystr_end = lives_strdup_printf("</%s>", key);
@@ -4275,31 +4296,36 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
 
 
 boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_t maxlen) {
-  time_t old_time = 0, new_time = 0;
-  struct stat mystat;
-
+  lives_clip_t *sfile = mainw->files[which];
   char *lives_header = NULL;
-  char *old_header;
   char *val;
   char *key;
   char *tmp;
 
   int retval2 = LIVES_RESPONSE_NONE;
 
+  if (!IS_VALID_CLIP(which)) return FALSE;
+  
   if (mainw->cached_list == NULL) {
     lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
-    old_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER_OLD, NULL);
-
-    // TODO - remove this some time before 2038
-    if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
-    if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
-    lives_free(old_header);
-
-    if (old_time > new_time) {
-      lives_free(lives_header);
-      return FALSE; // clip has been edited by an older version of LiVES
+    if (!sfile->checked_for_old_header) {
+      struct stat mystat;
+      time_t old_time = 0, new_time = 0;
+      char *old_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
+      sfile->checked_for_old_header = TRUE;
+      if (!lives_file_test(old_header, LIVES_FILE_TEST_EXISTS)) {
+	if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
+	if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
+	if (old_time > new_time) {
+	  sfile->has_old_header = TRUE;
+	  lives_free(lives_header);
+	  return FALSE; // clip has been edited by an older version of LiVES
+	}
+      }
+      lives_free(old_header);
     }
   }
+
   //////////////////////////////////////////////////
   key = clip_detail_to_string(what, &maxlen);
 
@@ -4319,12 +4345,14 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     if (val == NULL) return FALSE;
   } else {
     val = (char *)lives_malloc(maxlen);
+    if (val == NULL) return FALSE;
     retval2 = get_pref_from_file(lives_header, key, val, maxlen);
     lives_free(lives_header);
     lives_free(key);
   }
 
   if (retval2 == LIVES_RESPONSE_CANCEL) {
+    lives_free(val);
     return FALSE;
   }
 
@@ -4341,7 +4369,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_ASIGNED:
     *(int *)retval = 0;
-    if (mainw->files[which]->header_version == 0) *(int *)retval = atoi(val);
+    if (sfile->header_version == 0) *(int *)retval = atoi(val);
     if (*(int *)retval == 0 && (!strcasecmp(val, "false"))) *(int *)retval = 1; // unsigned
     break;
   case CLIP_DETAILS_PB_FRAMENO:
@@ -4350,7 +4378,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_PB_ARATE:
     *(int *)retval = atoi(val);
-    if (retval == 0) *(int *)retval = mainw->files[which]->arps;
+    if (retval == 0) *(int *)retval = sfile->arps;
     break;
   case CLIP_DETAILS_INTERLACE:
     *(int *)retval = atoi(val);
@@ -4361,7 +4389,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     break;
   case CLIP_DETAILS_PB_FPS:
     *(double *)retval = strtod(val, NULL);
-    if (*(double *)retval == 0.) *(double *)retval = mainw->files[which]->fps;
+    if (*(double *)retval == 0.) *(double *)retval = sfile->fps;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     if (capable->cpu_bits == 32) {
@@ -4386,14 +4414,16 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     lives_free(tmp);
     break;
   default:
-    break;
+    lives_free(val);
+    return FALSE;
   }
   lives_free(val);
   return TRUE;
 }
 
 
-void save_clip_value(int which, lives_clip_details_t what, void *val) {
+boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
+  lives_clip_t *sfile = mainw->files[which];
   char *lives_header;
   char *com, *tmp;
   char *myval;
@@ -4403,9 +4433,11 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
 
   mainw->write_failed = mainw->com_failed = FALSE;
 
-  if (which == 0 || which == mainw->scrap_file) return;
+  if (which == 0 || which == mainw->scrap_file) return FALSE;
 
-  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+  if (!IS_VALID_CLIP(which)) return FALSE;
+  
+  lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
   key = clip_detail_to_string(what, NULL);
 
   if (key == NULL) {
@@ -4413,7 +4445,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     LIVES_ERROR(tmp);
     lives_free(tmp);
     lives_free(lives_header);
-    return;
+    return FALSE;
   }
 
   switch (what) {
@@ -4421,14 +4453,14 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval = lives_strdup_printf("%d", *(int *)val);
     break;
   case CLIP_DETAILS_FPS:
-    if (!mainw->files[which]->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
+    if (!sfile->ratio_fps) myval = lives_strdup_printf("%.3f", *(double *)val);
     else myval = lives_strdup_printf("%.8f", *(double *)val);
     // dont need to block this because it does nothing during non-playback, and we shouldnt be updating clip details during playback
     if (which == mainw->current_file &&
         mainw->is_ready) lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), *(double *)val);
     break;
   case CLIP_DETAILS_PB_FPS:
-    if (mainw->files[which]->ratio_fps && (mainw->files[which]->pb_fps == mainw->files[which]->fps))
+    if (sfile->ratio_fps && (sfile->pb_fps == sfile->fps))
       myval = lives_strdup_printf("%.8f", *(double *)val);
     else myval = lives_strdup_printf("%.3f", *(double *)val);
     break;
@@ -4494,7 +4526,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval = lives_strdup_printf("%d", *(int *)val);
     break;
   default:
-    return;
+    return FALSE;
   }
 
   if (mainw->clip_header != NULL) {
@@ -4521,7 +4553,7 @@ void save_clip_value(int which, lives_clip_details_t what, void *val) {
   lives_free(myval);
   lives_free(key);
 
-  return;
+  return TRUE;
 }
 
 
@@ -4939,6 +4971,7 @@ LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
 LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) {
   // move item to first in list
   LiVESList *xlist = lives_list_remove_link(list, item); // item becomes standalone list
+  if (xlist == NULL) return list;
   return lives_list_concat(item, xlist); // concat rest of list after item
 }
 

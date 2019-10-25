@@ -436,7 +436,7 @@ static boolean pass_test(LiVESWidget *table, int row) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_context_update();
   return TRUE;
 }
 
@@ -463,7 +463,7 @@ static boolean fail_test(LiVESWidget *table, int row, char *ftext) {
   lives_table_attach(LIVES_TABLE(table), image, 2, 3, row, row + 1, (LiVESAttachOptions)0, (LiVESAttachOptions)0, 0, 10);
   lives_widget_show(image);
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  lives_widget_context_update();
   allpassed = FALSE;
   return FALSE;
 }
@@ -557,8 +557,8 @@ boolean do_startup_tests(boolean tshoot) {
   table = lives_table_new(10, 4, FALSE);
   lives_container_add(LIVES_CONTAINER(dialog_vbox), table);
 
+  gtk_window_set_urgency_hint(LIVES_WINDOW(dialog), TRUE);
   lives_widget_show_all(dialog);
-
   lives_widget_context_update();
 
   // check for sox presence
@@ -717,6 +717,7 @@ boolean do_startup_tests(boolean tshoot) {
   res = 1;
 
   if (success2) {
+    // TODO - add a timeout
 #ifndef IS_MINGW
     com = lives_strdup_printf("LANG=en LANGUAGE=en %s -ao help | grep pcm >/dev/null 2>&1", prefs->video_open_command);
     res = lives_system(com, TRUE);
@@ -881,10 +882,12 @@ boolean do_startup_tests(boolean tshoot) {
 
   lives_widget_set_sensitive(okbutton, TRUE);
   if (!tshoot) {
-    if (allpassed)
-      lives_widget_grab_focus(okbutton);
-    else
+    if (allpassed) {
+      gtk_widget_grab_focus(okbutton);
+    }
+    else {
       lives_widget_grab_focus(cancelbutton);
+    }
   }
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && capable->has_mpv) {

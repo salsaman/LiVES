@@ -550,8 +550,9 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *t
 }
 
 
-LIVES_GLOBAL_INLINE void do_abort_retry_dialog(const char *text, LiVESWindow *transient) {
-  _do_abort_cancel_retry_dialog(text, transient, FALSE);
+// always returns LIVES_RESPONSE_RETRY
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient) {
+  return _do_abort_cancel_retry_dialog(text, transient, FALSE);
 }
 
 
@@ -742,16 +743,17 @@ void do_memory_error_dialog(void) {
 }
 
 
-void handle_backend_errors(void) {
+LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient) {
   // handle error conditions returned from the back end
 
-  int i;
-  int pxstart = 1;
   char **array;
   char *addinfo;
+  LiVESResponseType response = LIVES_RESPONSE_NONE;
+  int pxstart = 1;
   int numtok;
+  int i;
 
-  if (mainw->cancelled) return; // if the user/system cancelled we can expect errors !
+  if (mainw->cancelled) return LIVES_RESPONSE_ACCEPT; // if the user/system cancelled we can expect errors !
 
   numtok = get_token_count(mainw->msg, '|');
 
@@ -767,6 +769,7 @@ void handle_backend_errors(void) {
     mainw->read_failed = TRUE;
     mainw->read_failed_file = lives_strdup(array[2]);
     mainw->cancelled = CANCEL_ERROR;
+    response = LIVES_RESPONSE_CANCEL;
   }
 
   else if (numtok > 2 && !strcmp(array[1], "write")) {
@@ -779,16 +782,20 @@ void handle_backend_errors(void) {
     mainw->write_failed = TRUE;
     mainw->write_failed_file = lives_strdup(array[2]);
     mainw->cancelled = CANCEL_ERROR;
+    response = LIVES_RESPONSE_CANCEL;
   }
 
   else if (numtok > 3 && !strcmp(array[1], "system")) {
     // got (sub) system error from backend
     if (numtok > 4 && strlen(array[4])) addinfo = array[4];
     else addinfo = NULL;
-    if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_sys_errors)
-      do_system_failed_error(array[2], atoi(array[3]), addinfo);
+    if (!CURRENT_CLIP_IS_VALID || !cfile->no_proc_sys_errors) {
+      response = do_system_failed_error(array[2], atoi(array[3]), addinfo, can_retry, transient);
+      if (response == LIVES_RESPONSE_RETRY) return response;
+    }
     pxstart = 3;
     mainw->cancelled = CANCEL_ERROR;
+    response = LIVES_RESPONSE_CANCEL;
   }
 
   // for other types of errors...more info....
@@ -802,10 +809,11 @@ void handle_backend_errors(void) {
   lives_strfreev(array);
 
   mainw->error = TRUE;
+  return response;
 }
 
 
-boolean check_backend_return(lives_clip_t *sfile) {
+boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient) {
   // check return code after synchronous (foreground) backend commands
 
   FILE *infofile;
@@ -817,7 +825,8 @@ boolean check_backend_return(lives_clip_t *sfile) {
   lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
   fclose(infofile);
 
-  if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors();
+  // TODO: consider permitting retry here
+  if (!strncmp(mainw->msg, "error", 5)) handle_backend_errors(FALSE, transient);
 
   return TRUE;
 }
@@ -2037,7 +2046,7 @@ finish:
 
   // get error message (if any)
   if (!strncmp(mainw->msg, "error", 5)) {
-    handle_backend_errors();
+    handle_backend_errors(FALSE, NULL);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;
@@ -2170,7 +2179,7 @@ boolean do_auto_dialog(const char *text, int type) {
 
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {
-    handle_backend_errors();
+    handle_backend_errors(FALSE, NULL);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (mainw->current_file > -1 && cfile != NULL)
@@ -2915,9 +2924,11 @@ void end_threaded_dialog(void) {
 
   if (prefs->show_msg_area) {
     // TODO
-    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_grab_focus(mainw->msg_area);
-    gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
+    if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
+      lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_widget_grab_focus(mainw->msg_area);
+      gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
+    }
   }
 
   if (mainw->is_ready && prefs->show_gui)
@@ -2930,7 +2941,8 @@ void response_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-void do_system_failed_error(const char *com, int retval, const char *addinfo) {
+LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry, LiVESWindow *transient) {
+  // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   char *msg, *tmp, *emsg, *msgx;
   char *bit;
   char *retstr = lives_strdup_printf("%d", retval >> 8);
@@ -2942,6 +2954,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   uint64_t dsval1, dsval2;
 
   lives_storage_status_t ds1 = get_storage_status(prefs->workdir, prefs->ds_crit_level, &dsval1), ds2;
+  LiVESResponseType response = LIVES_RESPONSE_NONE;
 
   if (mainw->current_file > -1 && cfile != NULL && cfile->op_dir != NULL) {
     ds2 = get_storage_status(cfile->op_dir, prefs->ds_crit_level, &dsval2);
@@ -2974,7 +2987,12 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   lives_free(emsg);
 
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
-  do_error_dialog(msgx);
+  if (can_retry) {
+    response = do_abort_retry_dialog(msgx, transient);
+  }
+  else {
+    do_error_dialog(msgx);
+  }
   lives_free(msgx);
   lives_free(msg);
   lives_free(dsmsg1);
@@ -2983,6 +3001,7 @@ void do_system_failed_error(const char *com, int retval, const char *addinfo) {
   lives_free(bit2);
   lives_free(addbit);
   lives_free(retstr);
+  return response;
 }
 
 

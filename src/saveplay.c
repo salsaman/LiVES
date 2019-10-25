@@ -35,7 +35,7 @@
 
 
 boolean save_clip_values(int which) {
-  char *lives_header;
+  char *lives_header_new;
 
   int asigned;
   int endian;
@@ -43,25 +43,29 @@ boolean save_clip_values(int which) {
 
   if (which == 0 || which == mainw->scrap_file || which == mainw->ascrap_file) return TRUE;
 
+  set_signal_handlers((SignalHandlerPointer)defer_sigint); // ignore ctrl-c
+
   asigned = !(mainw->files[which]->signed_endian & AFORM_UNSIGNED);
   endian = mainw->files[which]->signed_endian & AFORM_BIG_ENDIAN;
-  lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+  lives_header_new = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER_NEW, NULL);
 
   do {
-    mainw->clip_header = fopen(lives_header, "w");
-
+    mainw->com_failed = mainw->write_failed = FALSE;
+    mainw->clip_header = fopen(lives_header_new, "w");
     if (mainw->clip_header == NULL) {
-      retval = do_write_failed_error_s_with_retry(lives_header, lives_strerror(errno), NULL);
+      retval = do_write_failed_error_s_with_retry(lives_header_new, lives_strerror(errno), NULL);
       if (retval == LIVES_RESPONSE_CANCEL) {
-        lives_free(lives_header);
-        return FALSE;
+	set_signal_handlers((SignalHandlerPointer)catch_sigint);
+	if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+	lives_free(lives_header_new);
+	return FALSE;
       }
     } else {
       mainw->files[which]->header_version = LIVES_CLIP_HEADER_VERSION;
       do {
         retval = 0;
-        set_signal_handlers((SignalHandlerPointer)defer_sigint);
-        save_clip_value(which, CLIP_DETAILS_HEADER_VERSION, &mainw->files[which]->header_version);
+	save_clip_value(which, CLIP_DETAILS_HEADER_VERSION, &mainw->files[which]->header_version);
+	// TODO: can we just check for FALSE ?
         if (mainw->com_failed || mainw->write_failed) break;
         save_clip_value(which, CLIP_DETAILS_BPP, &mainw->files[which]->bpp);
         if (mainw->com_failed || mainw->write_failed) break;
@@ -116,19 +120,28 @@ boolean save_clip_values(int which) {
         }
       } while (FALSE);
 
-      if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
-      set_signal_handlers((SignalHandlerPointer)catch_sigint);
+      fclose(mainw->clip_header);
 
       if (mainw->com_failed || mainw->write_failed) {
-        fclose(mainw->clip_header);
-        retval = do_write_failed_error_s_with_retry(lives_header, NULL, NULL);
+        retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
+      }
+      else {
+	char *lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
+	// TODO - check the sizes before and after
+	lives_cp(lives_header_new, lives_header);
+	lives_free(lives_header);
+	if (mainw->com_failed || mainw->write_failed) {
+	  retval = do_write_failed_error_s_with_retry(lives_header_new, NULL, NULL);
+	}
+	else lives_rm(lives_header_new);
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
-  lives_free(lives_header);
+  if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
+  set_signal_handlers((SignalHandlerPointer)catch_sigint);
 
-  fclose(mainw->clip_header);
+  lives_free(lives_header_new);
   mainw->clip_header = NULL;
 
   if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
@@ -1018,7 +1031,7 @@ boolean get_handle_from_info_file(int index) {
   lives_free(com);
 
   if (!strncmp(mainw->msg, "error|", 6)) {
-    handle_backend_errors();
+    handle_backend_errors(FALSE, NULL);
     return FALSE;
   }
 
@@ -3290,6 +3303,10 @@ void create_cfile(void) {
   cfile->laudio_drawable = NULL;
   cfile->raudio_drawable = NULL;
 
+  // backwards compat.
+  cfile->checked_for_old_header = FALSE;
+  cfile->has_old_header = FALSE;
+
   // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
 }
 
@@ -4905,6 +4922,8 @@ boolean reload_clip(int fileno, int maxframe) {
 
   const lives_clip_data_t *cdata = NULL;
 
+  char decoder_name[PATH_MAX];
+  
   char *ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
   char *orig_filename = lives_strdup(sfile->file_name);
 
@@ -4920,6 +4939,12 @@ boolean reload_clip(int fileno, int maxframe) {
 
   lives_chdir(ppath, FALSE);
   lives_free(ppath);
+
+  retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
+  if (retb && strlen(decoder_name)) {
+    decoder_plugin_move_to_first(decoder_name);
+  }
+  retb = FALSE;
 
   while (1) {
     threaded_dialog_spin(0.);
@@ -4988,14 +5013,15 @@ manual_locate:
         if (was_renamed) goto manual_locate;
         do_no_decoder_error(sfile->file_name);
       }
-
+    
       // NOT openable, or not found and user cancelled, switch back to original clip
-
-      check_clip_integrity(fileno, cdata, maxframe);
-      if (sfile->frames > 0 || sfile->afilesize > 0) {
-        // recover whatever we can
-        sfile->clip_type = CLIP_TYPE_FILE;
-        retb = check_if_non_virtual(fileno, 1, sfile->frames);
+      if (cdata != NULL) {
+	check_clip_integrity(fileno, cdata, maxframe);
+	if (sfile->frames > 0 || sfile->afilesize > 0) {
+	  // recover whatever we can
+	  sfile->clip_type = CLIP_TYPE_FILE;
+	  retb = check_if_non_virtual(fileno, 1, sfile->frames);
+	}
       }
       if (!retb) {
         current_file = mainw->current_file;
@@ -5007,7 +5033,7 @@ manual_locate:
       lives_free(orig_filename);
       return retb;
     }
-
+  
     // got cdata
     if (was_renamed) {
       // manual relocation

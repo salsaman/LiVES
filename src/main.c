@@ -795,10 +795,10 @@ static boolean pre_init(void) {
   add_messages_to_list(_("Starting...\n"));
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
+  
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme, 64, "none");
   }
-  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
 
   if (!set_palette_colours(FALSE)) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -1375,9 +1375,11 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->no_bandwidth = FALSE;
   prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
-  // we set the theme here in case it got reset to 'none'
-  set_string_pref(PREF_GUI_THEME, prefs->theme);
-  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+  if (strcmp(future_prefs->theme, prefs->theme)) {
+      // we set the theme here in case it got reset to 'none'
+      set_string_pref(PREF_GUI_THEME, prefs->theme);
+      lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+  }
 
   prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);
   future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
@@ -2561,6 +2563,7 @@ capability *get_capabilities(void) {
   array = lives_strsplit(buffer, "|", numtok);
 
   if (!strcmp(array[0], "smogrify::error")) {
+    LIVES_ERROR(buffer);
     if (!strcmp(array[1], "rc_get")) {
       lives_strfreev(array);
       capable->can_read_from_config = FALSE;

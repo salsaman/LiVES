@@ -10623,7 +10623,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_system(com, FALSE);
     if (!mainw->com_failed) {
       do_auto_dialog(_("Cancelling"), 0);
-      check_backend_return(cfile);
+      check_backend_return(cfile, NULL);
     }
     lives_free(com);
     reget_afilesize(mainw->current_file);
@@ -10661,7 +10661,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     }
 
     do_auto_dialog(_("Committing audio"), 0);
-    check_backend_return(cfile);
+    check_backend_return(cfile, NULL);
     if (mainw->error) {
       d_print_failed();
       if (mainw->cancelled != CANCEL_ERROR) do_error_dialog(mainw->msg);

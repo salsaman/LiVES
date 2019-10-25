@@ -16036,7 +16036,7 @@ boolean on_render_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
       lives_system(com, FALSE);
       lives_free(com);
-      check_backend_return(cfile);
+      check_backend_return(cfile, NULL);
       if (mainw->error) return FALSE;
     }
     mt->has_audio_file = TRUE;

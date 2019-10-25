@@ -126,7 +126,7 @@ static void widget_state_cb(LiVESWidgetObject *object, livespointer pspec, lives
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   // backdrop state removes the focus, so ignore it
-  if (state & LIVES_WIDGET_STATE_BACKDROP) return;
+  //if (state & LIVES_WIDGET_STATE_BACKDROP) return;
 #endif
 
   if (LIVES_IS_BUTTON(widget)) {
@@ -1213,11 +1213,13 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType ret = gtk_dialog_run(dialog);
-  if (prefs->show_msg_area) {
-    // TODO
-    lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_grab_focus(mainw->msg_area);
-    gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
+  if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
+    if (prefs->show_msg_area) {
+      // TODO
+      lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_widget_grab_focus(mainw->msg_area);
+      gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
+    }
   }
   return ret;
 #endif
@@ -8330,6 +8332,11 @@ static void default_changed_cb(LiVESWidgetObject *object, livespointer pspec, li
   LiVESWidget *button = (LiVESWidget *)object;
   LiVESWidgetState state = lives_widget_get_state(button);
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+  // backdrop state removes the focus, so ignore it
+  //if (state & LIVES_WIDGET_STATE_BACKDROP) return;
+#endif
+
   widget_opts.apply_theme = TRUE;
   if (!lives_widget_is_sensitive(button)) set_child_dimmed_colour(button, BUTTON_DIM_VAL);
   else {
@@ -8367,7 +8374,7 @@ static void button_state_changed_cb(LiVESWidget *widget, LiVESWidgetState state,
 
   widget_opts.apply_theme = TRUE;
   if (lives_widget_is_sensitive(widget) && (state & LIVES_WIDGET_STATE_FOCUSED)) {
-    //lives_widget_grab_default(widget);
+    lives_widget_grab_default(widget);
     lives_widget_object_set_data(toplevel, "current_default", widget);
     if (!(state & (LIVES_WIDGET_STATE_PRELIGHT))) set_child_colour(widget, TRUE);
     else set_child_alt_colour(widget, TRUE);

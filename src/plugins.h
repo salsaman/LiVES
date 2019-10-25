@@ -313,6 +313,8 @@ typedef struct {
   lives_clip_data_t *cdata;
 } lives_decoder_t;
 
+LiVESList *load_decoders(void);
+boolean decoder_plugin_move_to_first(const char *name);
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_t *);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);

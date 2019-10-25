@@ -406,6 +406,7 @@ enum {
 #define LIVES_THEME_CAMERA "camera"
 
 #define LIVES_CLIP_HEADER "header.lives"
+#define LIVES_CLIP_HEADER_NEW "header.new"
 #define LIVES_CLIP_HEADER_OLD "header"
 #define LIVES_CLIP_HEADER_OLD2 "header2"
 

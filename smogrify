@@ -16,7 +16,7 @@
     // *INDENT-OFF*
     =end comment
 =cut
-    
+
 ##################################################################
 use POSIX;     # Needed for setlocale()
 setlocale(LC_NUMERIC, "C");
@@ -48,12 +48,16 @@ $uid = $ >;
 $gid = $);
 $gid =~ s/\W.*//;
 
-#if (caller) {
-#    print "yes\n";
-#}
-#else {
-#    print "no\n";
-#}
+if ($DEBUG_CALLERS) {
+    if (caller) {
+	# from other scripts
+	print STDERR "yes\n";
+    }
+    else {
+	# from lives
+	print STDERR "no\n";
+    }
+}
 
 if ($^O eq "MSWin32" || $^O eq "msys") {
     if (!caller) {
@@ -67,9 +71,10 @@ if ($^O eq "MSWin32" || $^O eq "msys") {
 ###################################################################
 
 if (defined($ARGV[0])) {
+    ## cant use my because callers need this
     $command = $ARGV[0];
 
-    if ($command eq "version") {
+    if ($command eq "version" && !caller) {
 	print "smogrify $version\n";
 	exit 0;
     }
@@ -78,83 +83,85 @@ if (defined($ARGV[0])) {
 	&listemall;
 	exit 0;
     }
-    
-    $configdir = "";
-    
-    if ($command eq "report" || $command eq "get_pref" || $command eq "set_pref" ||
-	$command eq "set_pref_priority" || $command eq "set_pref_if_not_set" || $command eq "delete_pref" ||
-	$command eq "get_workdir" || $command eq "print_pref" || $command eq "set_clip_value" || 
-	$command eq "get_clip_value"
-	) {
-	$configdir = "";
-	$config = "$CONFIGDIR";
 
-	if ($config) {
-	    $configdir = $config;
-	}
+    my $workdir = "";
+    my $configdir = "";
 
-	if (!caller) {
-	    if ($configdir eq "") {
-		# configdir not set, try with $HONE
-		$home = $ENV {"HOME"};
-		if ($home eq "") {
-		    if ($command ne "....") {  ## TODO: allow some commands
-			if (!caller) {
-			    print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command $command, ";
-			    print STDERR "cannot continue with $command. Exiting with code 98\n";
-			    print STDERR "You can override the default configdir setting ";
-			    print STDERR "by starting %GUI_NAME with the -configdir commandline option.\n";
-			    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
-			}
-			exit 98;
-		    }
-		}
-		$configdir = $home;
-	    }
-	}
-	$rc_filename = ".lives";
-	$rcfile = "$configdir/$rc_filename";
-	$rcfile_damaged = "$rcfile.damaged";
-	$recrcfile = "$rcfile.recovery";
-	$recrcfile_tried = "$recrcfile.tried";
-	$recrcfile_succeeded = "$recrcfile_tried.succeeded";
-	$newrcfile = "$rcfile.new";
-    }
-
-    $nulfile = "/dev/null";
-
-    $encoder = "ffmpeg_encoder";
-    $smog_composite_command = "composite -quiet";
-    $smog_convert_command = "convert -quiet";
-
-    $workdir = "";
-
-    $has_rcfile = -1;
-    $bad_rcfile = 0;
-
-    if ($command ne "get_pref" && $command ne "set_pref" ) {
-	$work = "$WORKDIR";
+    if (!caller) {
+	my $work = "$WORKDIR";
 
 	if ($work) {
 	    $workdir = $work;
 	}
 
-	if ($workdir eq "") {
-	    $has_rcfile = 0 + -e $rcfile;
-	    if ($has_rcfile) {
-		# can exit 3 here
-		$workdir = &rc_get("workdir");
-		if ($workdir eq "") {
-		    $workdir = &rc_get("tempdir");
+	my $config = "$CONFIGDIR";
+	if ($config) {
+	    $configdir = $config;
+	}
+	
+	my @needs_configdir = {"report", "get_pref", "set_pref", "set_pref_priority", "set_pref_if_not_set", "delete_pref", "print_pref",
+			       "set_clip_value", "get_clip_value", "get_pref_default", "make_thumb", "play", "play_opening_preview",
+			       "open", "open_test", "save", "append_audio", "trim_audio", "resample_audio", "commit_audio",
+			       "cdopen", "insert", "get_details", "fill_and_redo_frames", "audioopen"};
+
+	if ($configdir == "" && ($workdir eq "" || grep(/^$command$/, @needs_configdir) || 
+				 $command =~ /^pfxrender_/ || $command =~ /^fxrender_/)) {
+	    ## commands that require $configdir
+
+	    if ($configdir eq "") {
+		# configdir not set, try with $HOME
+		$home = $ENV {"HOME"};
+		if ($home eq "") {
+		    print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command \"$command\", ";
+		    print STDERR "and default of \$HOME not found\n";
+		    print STDERR "cannot continue. Exiting with code 98\n";
+		    print STDERR "You can override the default configdir setting ";
+		    print STDERR "by starting $GUI_NAME with the -configdir commandline option.\n";
+		    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+		    exit 98;
 		}
-		if ($command ne "report") {
+	    }
+	    $configdir = $home;
+
+	}
+
+	if ($configdir ne "") {
+	    $rc_filename = ".lives";
+	    $rcfile = "$configdir/$rc_filename";
+	    $rcfile_damaged = "$rcfile.damaged";
+	    $recrcfile = "$rcfile.recovery";
+	    $recrcfile_tried = "$recrcfile.tried";
+	    $recrcfile_succeeded = "$recrcfile_tried.succeeded";
+	    $newrcfile = "$rcfile.new";
+	}
+
+	$nulfile = "/dev/null";
+
+	$encoder = "ffmpeg_encoder";
+	$smog_composite_command = "composite -quiet";
+	$smog_convert_command = "convert -quiet";
+
+	$has_rcfile = -1;
+	$bad_rcfile = 0;
+
+	if ($command ne "get_pref" && $command ne "set_pref" ) {
+	    if ($workdir eq "") {
+		$has_rcfile = 0 + -e $rcfile;
+		if ($has_rcfile) {
+		    # can exit 3 here
+		    $workdir = &rc_get("workdir");
 		    if ($workdir eq "") {
-			if (!caller) {
-			    print STDERR "smogrify for $GUI_NAME v$version: workdir not defined for command $command, ";
-			    print STDERR "cannot continue. Exiting with code 97\.n";
-			    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+			$workdir = &rc_get("tempdir");
+		    }
+		    if ($command ne "report") {
+			if ($workdir eq "") {
+			    if (!caller) {
+				print STDERR "smogrify for $GUI_NAME v$version: workdir not defined for command $command, ";
+				print STDERR "cannot continue. Exiting with code 97\.n";
+				print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+			    }
+			    exit 97;
 			}
-			exit 97;
 		    }
 		}
 	    }
@@ -202,7 +209,6 @@ if (defined($ARGV[0])) {
 	    if ($has_rcfile == -1) {
 		$has_rcfile = 0 + -e $rcfile;
 	    }
-	    print STDERR "1nrc is $has_rcfile\n";
 
 	    if (!$has_rcfile) {
 		if ($upd) {
@@ -219,7 +225,6 @@ if (defined($ARGV[0])) {
 		# try to get the version
 		$old_version = &rc_get("version");
 		if ($old_version eq "") {
-		    print "BOO\n";
 		    #failed  to get version from rcfile
 		    $has_rcfile = 0;
 		    if ($upd) {
@@ -232,7 +237,7 @@ if (defined($ARGV[0])) {
 			    &startup_error(5, "report", "remove_noversion0", "$rcfile:@:");
 			}
 
-			if ($old_version_hash eq "0") {
+			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newrcfile || -s $newrcfile == 0)) {
 			    &startup_error(5, "report", "rc_recover_version0", "$rcfile:$recovery_file:$xsize:@:");
 			}
 			else {
@@ -315,7 +320,7 @@ if (defined($ARGV[0])) {
 			#older versions used tempdir instead of workdir
 			$xworkdir = &rc_get("tempdir");
 			if ($workdir eq "") {
-			    $xworkdir = &rc_get("tempdir");
+			    $xworkdir = &rc_get("workdir");
 			}
 		    }
 		    else {
@@ -331,7 +336,6 @@ if (defined($ARGV[0])) {
             my $startup_phase = -1;
 
             if (!$has_rcfile) {
-		print STDERR "a1sp is $startup_phase\n";
 		if ($upd) {
 		    unlink $rcfile;
 		    if (-e $rcfile) {
@@ -485,10 +489,14 @@ if (defined($ARGV[0])) {
 		# bless this version
 		&rc_set_priority("version", "$version");
 		# can exit with code 3, 4, or 5
+		&rc_deprecate("tempdir", "workdir", "3.0.3");
 	    }
-	    print STDERR "sp is $startup_phase\n";
+
             if ($gui_bootstrap_file eq "-") {
 		print "$version|$workdir|$startup_phase|$old_version_hash|$msg|";
+		if (!$upd) {
+		    print "\n";
+		}
 	    }
 	    else {
 		# only for backwards compatibility with older LiVES.
@@ -640,19 +648,6 @@ if (defined($ARGV[0])) {
         if ($command eq "get_workdir") {
 	    # safer version - writes to stdout
             print $workdir;
-            exit 0;
-        }
-
-        if ($command eq "get_version_hash") {
-            $com = $ARGV[1];
-            $sep = $ARGV[2];
-            $piece = $ARGV[3];
-            $res = smog_system_direct("$com");
-            chomp($res);
-
-            $ver = (split( /$sep/, $res))[$piece];
-
-            print &version_hash($ver);
             exit 0;
         }
 
@@ -853,7 +848,7 @@ if (defined($ARGV[0])) {
 	    $statusfile = "$curworkdir/.status";
 
 	    # check the file is writable
-            unless(&is_writeable($nfile)) {
+            unless (&is_writeable($nfile)) {
                 &sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
             }
 
@@ -1116,7 +1111,7 @@ if (defined($ARGV[0])) {
             while (my $file = readdir(DIR)) {
                 if ($file=~/^lock\.(.*)/) {
 		    #found a lockfile
-                    my $proc=$1;
+                    my $proc = $1;
                     unless ($proc eq $pid) {
                         my $exe = smog_system_direct("/bin/readlink -n /proc/$proc/exe");  #allowed to fail
                         my $short_exe = &my_basename($exe);
@@ -1418,7 +1413,7 @@ if (defined($ARGV[0])) {
 
 	    exit 0;
 	}
-
+    
 	####################################################################
 	# run the rest in background
 	if ($background == 1) {
@@ -1433,7 +1428,7 @@ if (defined($ARGV[0])) {
             &usage;
             exit 1;
         }
-
+    
         $handle = $ARGV[1];
         $curworkdir = "$workdir/$handle";
 	$statusfile = "$curworkdir/.status";
@@ -1592,10 +1587,10 @@ if (defined($ARGV[0])) {
                 if (! -d "$curworkdir" || -f "$curworkdir/.stoploop" || -f "$curworkdir/stoploop" || ! -f $audiofile) {
                     $loop = 0;
                 } else {
-                    $syscom3 = $syscom2.">$nulfile 2>&1";
+                    $syscom3 = $syscom2 . ">$nulfile 2>&1";
                     $retval = smog_system("$syscom3");
                     if ($retval > 255) {
-                        unless($showed_err) {
+                        unless ($showed_err) {
                             print STDERR "Error playing audio !\n";
                             print STDERR "Failed command was: $syscom2\n";
                             smog_system("$syscom2");
@@ -1618,7 +1613,7 @@ if (defined($ARGV[0])) {
             $command = "open";
             $opentest = 1;
         }
-
+    
         if ($command eq "open") {
 	    ## this is used now only in 3 circumstances
 	    # - the user chooses to disable instant opening
@@ -2105,7 +2100,7 @@ if (defined($ARGV[0])) {
 	    }
 	    exit 0;
 	}
-
+    
 	if ($command eq "open_fw_card") {
 	    $cardno=$ARGV[2];
 	    $cache=$ARGV[3];
@@ -2292,7 +2287,7 @@ if (defined($ARGV[0])) {
 			    $audiofile=$audio_in=$origaudio;
 			}
 		    }
-		    if ($areq&2) {
+		    if ($areq & 2) {
 			# convert raw audio to wav
 			$audio_out="$curworkdir/audiodump.wav";
 			&convert_audio_to_wav;
@@ -4050,7 +4045,7 @@ if (defined($ARGV[0])) {
 	    # with -ve end means "allow missing frames" (used for copying to clipboard)
 
 	    unlink "$curworkdir/pause";
-	    $img_ext = ".".$ARGV[2];
+	    $img_ext = "." . $ARGV[2];
 	    $img_prefix = &get_img_prefix($img_ext);
 	    $where = $ARGV[3];
 	    $start = $ARGV[4];
@@ -4075,6 +4070,8 @@ if (defined($ARGV[0])) {
 		$end = -$end;
 	    }
 
+	    ### bad ####
+	    
 	    if (defined($ARGV[17])) {
 		$times = $ARGV[17];
 		if ($times < 0) {
@@ -4099,6 +4096,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
+
 	    if ($with_audio < 2) {
 		if (!$undo_cut) {
 		    if (!$allow_missing) {
@@ -4121,6 +4119,9 @@ if (defined($ARGV[0])) {
 		    sleep(1);
 		}
 	    }
+
+
+	    ### end bad ###
 
 	    if ($with_audio) {
 		$fps = $ARGV[11];
@@ -4165,9 +4166,12 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
+
 	    if ($undo_cut) {
 		&clean_old;
 	    }
+
+
 
 	    &sig_complete;
 	    exit 0;
@@ -4198,25 +4202,26 @@ if (defined($ARGV[0])) {
 
 	# effects
 
-	if (substr($command, 0, 10) eq "pfxrender_") {
+	if ($command =~ /$pfxrender_/) {
 	    #fx preview
 	    $fx_prev = 1;
 	    $command = substr($command, 1);
 	    $out_ext = ".pre";
 	}
 
-	if (substr($command, 0, 9) eq "fxrender_") {
+
+	if ($command =~ /$fxrender_(.*)/) {
 	    my $lives_config_dir = "$configdir/.lives-dir";
 	    smog_chdir("$curworkdir");
 	    unlink "$curworkdir/pause";
-	    $command = substr($command, 9);
+	    $command = $1;
 	    $status = $ARGV[2];
 	    $start = $ARGV[3];
 	    $end = $ARGV[4];
 	    $nwidth = $width = $ARGV[5];
 	    $nheight = $height = $ARGV[6];
 
-	    $img_ext = ".".$ARGV[7];
+	    $img_ext = "." . $ARGV[7];
 	    $img_prefix = &get_img_prefix($img_ext);
 	    splice(@ARGV, 7, 1);
 
@@ -4225,7 +4230,7 @@ if (defined($ARGV[0])) {
 
 	    # call render plugins in plugins/effects/rendered/$command
 
-	    unless(defined($fx_prev)) {
+	    unless (defined($fx_prev)) {
 		$out_ext = ".mgk";
 		$out_prefix = $img_prefix;
 		&clean_old;
@@ -4420,8 +4425,6 @@ if (defined($ARGV[0])) {
     print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
     unlink "$pidfile";
     exit 99;
-}
-
 
 ######################################################
 
@@ -4468,7 +4471,7 @@ sub kill_child_pids {
         smog_system("kill -$sig $target_pid >/dev/null 2>&1");
     } else {
         smog_system("pkill -$sig -P $target_pid");
-	# must not ! >/dev/null 2>&1");
+	# must not ! >/dev/null 2>&1
     }
 
     if (-s "$workdir/.pids.$target_pid" && defined(open IN,"$workdir/.pids.$target_pid")) {
@@ -4477,7 +4480,7 @@ sub kill_child_pids {
             chomp($pid);
             &kill_child_pids($pid,$sig);
         }
-        close IN;s
+        close IN;
     }
 
     unlink "$workdir/.pids.$target_pid";
@@ -6180,8 +6183,8 @@ sub get_ext {
     my $fname = shift;
     my $ext = (split(/\./,$fname))[-1];
 
-    if ($ext=~/(.*)\"$/) {
-	$ext=$1;
+    if ($ext = ~/(.*)\"$/) {
+	$ext = $1;
     }
 
     return "." . $ext;
@@ -7455,7 +7458,7 @@ sub rc_deprecate {
 sub rc_find {
     my $key = shift;
     $find = 1;
-    return &rc_set($key, "");
+    return &rc_get($key);
 }
 
 
@@ -7478,19 +7481,12 @@ sub rc_set {
     }
 
     if ($xrcfile eq "") {
-	&startup_error(4, "rc_set", "defined_xrcfile0", "$rcfile:$prefs_file:$key:@:");
+	&startup_error(4, "rc_set", "defined_xrcfile0", "$command:$rcfile:$prefs_file:$key:@:");
     }
 
     if ($xrcfile ne $rcfile && $key eq "") {
 	return 0;
     }
-
-    if (!defined($find)) {
-	# find a value, no update
-        $find = 0;
-    }
-
-    return 0 if ($find && $key eq "");
 
     my $orcsize = -s $xrcfile;
 
@@ -7498,21 +7494,20 @@ sub rc_set {
 	return 0;
     }
 
-    if (!$find) {
-	unlink($newrcfile);
-	if (-e $newrcfile) {
-	    &startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:@:");
-	}
-	if (!defined(open OUT,"> $newrcfile")) {
-	    &startup_error(4, "rc_set_new", "open_new0", "$newrcfile:@:");
-	}
-	# autoflush output
-	select((select(OUT), $| = 1)[0]);
+    unlink($newrcfile);
+    if (-e $newrcfile) {
+	&startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:@:");
+    }
+    if (!defined(open OUT,"> $newrcfile")) {
+	&startup_error(4, "rc_set_new", "open_new0", "$newrcfile:@:");
     }
 
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
+
     if ($value ne "" && substr($value, -1, 1) eq "\"" && substr($value, 0, 1) ne "\"") {
-	# strip trailing unmatched "
-        $value = substr($value, 0, length($value) - 1);
+	# strip trailing unmatched quotes
+       $value = substr($value, 0, length($value) - 1);
     }
 
     my $rcfilesize = 0;
@@ -7531,48 +7526,21 @@ sub rc_set {
         $deprecate = 0;
     }
 
-    ## the process here is that we read in the rc_file a line at a time, constructing a copy of it.
+    ## the process here is that we read in the $rcfile a line at a time, constructing a new copy of it.
     ## if we find <key> in the old file, we stop copying until we reach the next non-blankspace line after the next </key>
     ## then insert <key>, value, </key>, newline
     ## then continue to the end of the file
 
-    # if we are just looking for the existence of the pref ($find == 1)
-    ## we do not write anything, just return if we find <key> followed by </key>, or we reach the end
-
     ## if $noreplace is 1, we return if we find <key> followed by </key>
-
     ## if $delpref is 1, we skip writing the key, and just insert a newline
-
     ## some keys are "priority" keys and get inserted at the start
 
-    ## as we write we record the exact number of bytes written. If the filesize of the new file is not what we expect then we abort
-    ## the operation
+    ## as we create the new file, we record the exact number of bytes written. 
+    ## If the filesize of the new file is not what we expect then we abort the operation
 
-    ## otherwise we rename the new file to the old file
+    ## otherwise, we copy the old file to a recovery backup, then copy new file to the old file
 
-    ## after copying we check again. IF the overwritten file has the wrong size we delete it, which will cause the user to
-    ## go through the setup process again the next time they use the app.
-
-
-    # $stage defines the action applied to the line:
-    # -1 == initial comments: we leave the comments as they are but skip whitespace lines, unless we hit another comment
-    #       then the whitespace is re added
-    ##
-    # when we hit a non-comment, non-whitespace line, we isert a single newline, then got to stage 0
-    # or for a priority pref we go to stage 2
-    ##
-    # stage 0 we just output the lines, until we find <key>, then we go to stage 1
-    #
-    # stage 1 we output nothing until we reach </key> and the we go to stage 2
-    ##
-    # stage 2, we still output nothing until we reach a non-blank line
-    ##
-    # when we hit a non blank line, we output a newline, <key>, value </Key>, newline
-    ## - if we are in delpref mode, we just insert a single newline
-    ## - if we are in find or noreplace mode, we exit the function
-    #
-    ## stage 3: we just output the lines, but we act like delpref; if we hit another copy of the key we go back to stage 1
-    ##
+    ## after copying we check again. If the overwritten file has the wrong size, we delete it and abort.
 
     my $stage = -1;
     my $extrablanks = 0;
@@ -7580,9 +7548,8 @@ sub rc_set {
     my $lastline = "";
 
     if ($key eq "") {
-	## if $key is "" then we write comments at the start
-
-        $date=&get_current_datetime;
+	## if $key is "" then we just write comments at the start (we already checked to make sure the file doesn't exist)
+        $date = &get_current_datetime;
         $addsize = &printlen(OUT, "# This file was autogenerated by $GUI_NAME version $version on $date\n");
 	if ($addsize == -1) {
 	    close OUT;
@@ -7590,7 +7557,8 @@ sub rc_set {
 	    &startup_error(4, "rc_set_new", "write_new_header0", "$newrcfile:@:");
 	}
 	$rcfilesize += $addsize;
-        $addsize = &printlen(OUT, "# You are STRONGLY advised to change the values only through the GUI ($GUI_NAME), unless otherwise directed.\n");
+        $addsize = &printlen(OUT, "# You are STRONGLY advised to change the values only through the GUI ($GUI_NAME) ",
+			     "unless otherwise directed.\n");
 	if ($addsize == -1) {
 	    close OUT;
 	    unlink $newrcfile;
@@ -7599,30 +7567,145 @@ sub rc_set {
 	$rcfilesize += $addsize;
     }
     else {
-	if (-s $xrcfile) {
+	if ($orcsize) {
 	    if (!defined(open IN,"< $xrcfile") && -e $xrcfile) {
 		close OUT;
 		unlink $newrcfile;
 		&startup_error(3, "rc_get", "rc_set_open_file", "$xrcfile:@:");
 	    }
 
-	    while (<IN>) {
-		$lastline = $current;
-		$current = $_;
+	    ## $stage defines the action applied to the line:
+	    # first we remove the newline from the end, then:
+	    #
+	    ## stage -1 = scan mode: 
+	    # - if it's a whitespace line, we increment $extrablanks and skip it
+	    # - if it's a ^#comment and not a ^#deprecated comment, we insert $extrablanks whitespace lines, then reset $extrablanks
+	    # - copy the #comment
+	    #
+	    # otherwise, we insert a single newline, then proceed to stage 0
+	    # or for a priority pref we go to straight to stage 2
+	    #
+	    ## stage 0 = copy mode:
+	    # - we just copy the lines verbatim, re-adding the newline, until: 
+	    # if we match ^<$key>, then we proceed to stage 1
+	    # - if $deprecate is 1 and the last line wasnt a ^#deprecated comment, we insert the #deprecated comment
+	    #
+	    ## stage 1 = look for end: 
+	    # - in deprecate mode we output the line, newline
+	    # - in delpref mode, we output nothing
+	    # - otherwise, we output only #comments
+	    # - if we match </key>$ then we proceed to stage 2
+	    #   - in deprecate mode, we reset $deprecate, set $delpref = 1 and $stage = 0
+	    #
+	    ## stage 2 = skip mode:
+	    # - skip whitespace
+	    #
+	    # otherwise:
+	    # - if we are in $noreplace mode, and it wasn't EOF, we exit the subroutine after deleting $newrcfile; otherwise:
+	    # - if we are in delpref mode, we write the line, newline and go back to stage 0; otherwise:
+	    # - we output <$key>, newline, value, newline, </$key>, newline
+	    # - we set $delpref to 1
+	    # - we set $priority to 0
+	    # - if the line ends with </$key> we skip it, go to stage 0
+	    # - otherwise, if the line starts with <$key> we skip it and go back to stage 1 (now with $delpref set)
+	    # - otherwise, we ouptut a newline, the line, newline, and go back to stage 0
 
-		if ($current =~ /(<\/$key>)$/ && !($current =~ /^(<$key>)/)) {
-		    if ($stage == 1) {
-			if ($find || $noreplace) {
+	    while (<IN>) {
+		$current = $_;
+		$current =~ s/\n//g;
+
+		if ($stage != 0 && ($current eq "" || $current =~ /^\s+$/)) {
+		    # skip whitespace, unless stage is 0
+		    if ($stage == -1) {
+			$extrablanks++;
+		    }
+		    next;
+		}
+
+		if ($stage < 2 && $current =~ /^#/ && !($delpref && $stage > 0) && !($stage == -1 && $current =~ /^#deprecated/)) {
+		    # handle comments
+		    next if (($delpref || $deprecate) && $current =~ /^#deprecated <$key>/);
+		    if ($stage == -1) {
+			for ($i = 0; $i < $extrablanks; $i++) {
+			    # add back skipped whitespace
+			    $addsize = &printlen(OUT, "\n");
+			    if ($addsize == -1) {
+				close OUT;
+				unlink $newrcfile;
+				&startup_error(4, "rc_set_new", "write_new0",
+					       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+			    }
+			    $rcfilesize += $addsize;
+			}
+			$extrablanks = 0;
+		    }
+		
+		    $addsize = &printlen(OUT, "$current\n");
+		    if ($addsize == -1) {
+			    close OUT;
+			    unlink $newrcfile;
+			    &startup_error(4, "rc_set_new", "write_new1",
+					   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+		    }
+		    $rcfilesize += $addsize;
+		    next;
+		}
+
+		if ($stage == -1) {
+		    # the first non-comment, non whitespace line
+		    #insert a single newline because we skipped all the whitespace
+		    $addsize = &printlen(OUT, "\n");
+		    if ($addsize == -1) {
+			close OUT;
+			unlink $newrcfile;
+			&startup_error(4, "rc_set_new", "write_new2", 
+				       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+		    }
+		    $rcfilesize += $addsize;
+		    if ($priority == 1) {
+			# insert the key now, we already skipped excess whitespace
+			$stage = 2;
+		    }
+		    else {
+			$stage = 0;
+		    }
+		}
+		
+		if (!$priority && $current =~ /^<$key>/) {
+		    # we found <key>
+		    next if $stage > 0; # if we already found key, ignore the duplicate
+		    if ($deprecate) {
+			$deprecate = 0;
+			if ($value eq "") {
+			    $addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion\n");
+			}
+			else {
+			    $addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion, use <$value> instead\n");
+			}
+			if ($addsize == -1) {
+			    close OUT;
+			    unlink $newrcfile;
+			    &startup_error(4, "rc_set_new",
+					   "write_new3", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+			}
+			$rcfilesize += $addsize;
+			$delpref = 1; # should be safe as we are in stage 0, but it stops us re-adding the key at the end
+		    } else {
+			$stage = 1;
+		    }
+		}
+
+		if ($stage == 1) { 
+		    if ($current =~ /<\/$key>$/) {
+			if ($noreplace) {
 			    close IN;
 			    close OUT;
-			    if ($noreplace) {
-				unlink "$newrcfile";
-				if (-e $newrcfile) {
-				    close OUT;
-				    &startup_error(4, "rc_set_new", "remove_new1", "$newrcfile:@:");
-				}
+			    unlink "$newrcfile";
+			    if (-e $newrcfile) {
+				close OUT;
+				&startup_error(4, "rc_set_new", "remove_new1", "$newrcfile:@:");
 			    }
-			    $find = $noreplace = 0;
+			    $noreplace = 0;
 			    return 1;
 			}
 			$stage = 2;
@@ -7630,149 +7713,46 @@ sub rc_set {
 		    next;
 		}
 
-		if ($stage == -1) {
-		    # skip whitespace during initial comments
-		    if ($current =~ s/^\s+//) {
-			if (!$find) {
-			    $extrablanks++;
-			}
-			next;
-		    }
-		    if ($current =~ /^#.*/ && !($current =~ /^#deprecated/)) {
-			#initial comments
-			if (!$find) {
-			    for ($i = 0; $i < $extrablanks; $i++) {
-				# add back skipped whitespace
-				$addsize = &printlen(OUT, "\n");
-				if ($addsize == -1) {
-				    close OUT;
-				    unlink $newrcfile;
-				    &startup_error(4, "rc_set_new", "write_new0", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
-				}
-				$rcfilesize += $addsize;
-			    }
-			    $extrablanks = 0;
-			    # write the line and continue
-			    $addsize = &printlen(OUT, $current);
-			    if ($addsize == -1) {
-				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new", "write_new1", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
-			    }
-			    $rcfilesize += $addsize;
-			}
-			next;
-		    }
-		    else {
-			# the first non-comment, non whitespace line
-			$stage = 0;
-			if (!$find) {
-			    # write a single newline
-			    $addsize = &printlen(OUT, "\n");
-			    if ($addsize == -1) {
-				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new", "write_new2", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
-			    }
-			    $rcfilesize += $addsize;
-			}
-			if ($priority == 1) {
-			    # insert the key after any whitespace
-			    $stage = 2;
-			}
-		    }
-		}
-
-		if ($current =~ /^(<$key>)/) {
-		    # we found <key>
-		    next if $stage > 0;
-		    $stage = 1;
-		    if ($deprecate) {
-			unless ($lastline =~ /^#deprecated/) {
-			    if ($value eq "") {
-				$addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion\n");
-			    }
-			    else {
-				$addsize = &printlen(OUT, "#deprecated <$key> as of $GUI_NAME version $dversion, use <$value> instead\n");
-			    }
-			    if ($addsize == -1) {
-				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new", "write_new3", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
-			    }
-			    $rcfilesize += $addsize;
-			}
-		    }
-		    if ($current =~ /(<\/$key>)$/) {
-			# <key> and </key> on same line..
-			if ($find || $noreplace) {
-			    close IN;
-			    close OUT;
-			    if ($noreplace) {
-				unlink "$newrcfile";
-				if (-e $newrcfile) {
-				    close OUT;
-				    &startup_error(4, "rc_set_new", "remove_new2", "$newrcfile:@:");
-				}
-			    }
-			    $find = $noreplace = 0;
-			    return 1;
-			}
-			if ($deprecate && !$delpref) {
-			    # rewrite <key> and value on separate lines
-			    my $klen = length("<$key>");
-			    my $nvalue = substr($current, $klen, -($klen + length("/") + length("\n")));
-			    $addsize = &printlen(OUT, "<$key>\n$myvalue\n");
-			    if ($addsize == -1) {
-				close OUT;
-				unlink $newrcfile;
-				&startup_error(4, "rc_set_new", "write_new4", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
-			    }
-			    $rcfilesize += $addsize;
-			}
-			$stage = 2;
-			next;
-		    }
-		}
-
-		next if ($find);
-		next if ($stage == 1 && !$deprecate);
-
 		if ($stage == 2) {
-		    # skip whitespace after the </key>
-		    next if ($current =~ s/^\s+//);
+		    # skipped whitespace after the </key>
 		    if (!$delpref) {
-			if ($deprecate) {
-			    $addsize = &printlen(OUT, "</$key>\n\n");
-			}
-			else {
-			    # inject the key / value, and add a newline
-			    $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
-			}
+			# inject the key / value, and add a newline
+			$addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
 			if ($addsize == -1) {
 			    close OUT;
 			    unlink $newrcfile;
-			    &startup_error(4, "rc_set_new", "write_new5", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+			    &startup_error(4, "rc_set_new",
+					   "write_new4", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
 			}
 			$rcfilesize += $addsize;
-			$delpref = 1;
 		    }
-		    if ($current =~ /^(<$key>)/) {
+		    $priority = 0;
+		    $delpref = 1;
+
+		    if ($current =~ /<\/$key>$/) {
+			# we should write nothing until we reach the key end and skip whitespace
+			$stage = 2;
+			next;
+		    }
+
+		    if ($current =~ /^<$key>/) {
+			# we should write nothing until we reach the key end and skip whitespace
 			$stage = 1;
 			next;
 		    }
-		    else {
-			$stage = 0;
-		    }
+
+		    $stage = 0;
 		}
 
-		next if ($delpref && $current =~ /^(#deprecated <$key>)/);
-
-		$addsize = &printlen(OUT, $current);
+		# $stage should always be 0 if we reach here, but just in case
+		next if ($stage != 0);
+		
+		$addsize = &printlen(OUT, "$current\n");
 		if ($addsize == -1) {
 		    close OUT;
 		    unlink $newrcfile;
-		    &startup_error(4, "rc_set_new", "write_new6", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
+		    &startup_error(4, "rc_set_new", "write_new6",
+				   "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
 		}
 		$rcfilesize += $addsize;
 	    }
@@ -7780,13 +7760,8 @@ sub rc_set {
 	close IN;
     }
 
-    if ($find) {
-	$find = 0;
-	return 0;
-    }
-
     if ($key ne "") {
-	if ($stage == 0 && !($current =~ s/^\s+//)) {
+	if ($stage == 0 && !($current eq "" || $current =~ /^\s+$/)) {
 	    $addsize = &printlen(OUT, "\n");
 	    if ($addsize == -1) {
 		close OUT;
@@ -7795,13 +7770,8 @@ sub rc_set {
 	    }
 	    $rcfilesize += $addsize;
 	}
-	if (!$delpref && $key ne "") {
-	    if ($deprecate) {
-		$addsize = &printlen(OUT, "</$key>\n\n");
-	    }
-	    else {
-		$addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
-	    }
+	if (!$delpref) {
+	    $addsize = &printlen(OUT, "<$key>\n$value\n</$key>\n\n");
 	    if ($addsize == -1) {
 		close OUT;
 		unlink $newrcfile;
@@ -7815,14 +7785,15 @@ sub rc_set {
 
      if (-s $newrcfile != $rcfilesize) {
 	unlink $newrcfile;
-	&startup_error(4, "rc_set_new", "check_new_size0", "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $newrcfile . ":$rcfilesize:@:");
-    }
+	&startup_error(4, "rc_set_new", "check_new_size0", 
+		       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $newrcfile . ":$rcfilesize:@:");
+     }
 
     if ($xrcfile eq $rcfile) {
 	# attempt to backup $rcfile before replacement
 	unlink $recrcfile;
 	if (-e $recrcfile) {
-	    &startup_error(4, "rc_set_rec", "renove_recovery1", "$recrcfile:@:");
+	    &startup_error(4, "rc_set_rec", "remove_recovery1", "$recrcfile:@:");
 	}
 	if (-s $rcfile) {
 	    $panic = 0;
@@ -7864,17 +7835,11 @@ sub rc_set {
 
     $delpref = $noreplace = 0;
 
-    if (!$deprecate && $key eq "tempdir") {
-	&rc_deprecate("tempdir", "workdir", "3.0.3");
-    }
-    else {
-	$deprecate = 0;
+    unlink $newrcfile;
+    if (-e $newrcfile) {
+	&startup_error(4, "rc_set_new", "remove_new2", "$newrcfile:@:");
     }
 
-    if ($xrcfile ne $rcfile) {
-	unlink $newrcfile;
-	return 0;
-    }
     return 0;
 }
 
@@ -8014,7 +7979,7 @@ sub rc_get {
     }
 
     if ($xrcfile eq "") {
-	&startup_error(3, "rc_get", "defined_xrcfile0", "$rcfile:$prefs_file:$key:@:");
+	&startup_error(3, "rc_get", "defined_xrcfile0", "$command:$rcfile:$prefs_file:$key:@:");
     }
 
     if (! -s $xrcfile) {
@@ -8025,31 +7990,44 @@ sub rc_get {
 	&startup_error(3, "rc_get", "open_file0", "$xrcfile:$key:@:");
     }
 
-    $stage = 0;
+    my $stage = 0;
     while (<IN>) {
-	$line = $_;
-        if ($stage == 1 && $line =~ /(<\/$key>)$/) {
-            close IN;
-            return $string;
-        }
-        if ($stage == 1 || $line =~ /^(<$key>)/) {
-            if ($stage == 1) {
-                $line =~ s/\n//g;
-                if ($string eq "") {
-                    $string = $line;
-                }
-                else {
-                    $string .= "\n" . $line;
-                }
-            }
-            else {
-                $stage = 1;
-                $string = $2;
-            }
-        }
+	my $line = $_;
+	next if $line =~ /^#/;
+	$line =~ s/\n//g;
+        if ($stage == 0 && $line =~ /^<$key>(.*)/) {
+	    if (!$find) {
+		$string = $1;
+	    }
+	    $stage = 1;
+	}
+	
+        if ($stage > 0) {
+	    if ($line =~ /<\/$key>$/) {
+		close IN;
+		if ($find) {
+		    $find = 0;
+		    return 1;
+		}
+		return $string;
+	    }
+	    if (!$find && $stage == 2) {
+		if ($string eq "") {
+		    $string = $line;
+		}
+		else {
+		    $string .= "\n" . $line;
+		}
+	    }
+	    $stage = 2;
+	}
     }
     close IN;
-    return $string;
+    if ($find) {
+	$find = 0;
+	return 0;
+    }
+    return "";
 }
 
 

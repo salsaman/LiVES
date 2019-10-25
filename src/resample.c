@@ -820,14 +820,13 @@ void on_resaudio_ok_clicked(LiVESButton *button, LiVESEntry *entry) {
       mainw->error = FALSE;
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
-      check_backend_return(cfile);
+      check_backend_return(cfile, NULL);
       if (mainw->com_failed) {
         unbuffer_lmap_errors(FALSE);
         return;
       }
       do_progress_dialog(TRUE, FALSE, _("Resampling audio"));
       lives_free(com);
-
     }
   }
 

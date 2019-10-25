@@ -174,6 +174,7 @@ boolean do_workdir_query(void) {
   char *dirname = NULL;
 
   _entryw *wizard = create_rename_dialog(6);
+  gtk_window_set_urgency_hint(LIVES_WINDOW(wizard->dialog), TRUE); // dont know if this actually does anything...
 
   do {
     lives_freep((void **)&dirname);

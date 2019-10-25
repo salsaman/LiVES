@@ -5455,7 +5455,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
                          cfile->frames, 0., FALSE);
           lives_list_free_all(&mainw->xlays);
           mask |= WARN_MASK_LAYOUT_DELETE_FRAMES;
-          g_print("FRMS %d\n", cfile->frames);
+          //g_print("FRMS %d\n", cfile->frames);
         }
 
         mainw->xlays = layout_audio_is_affected(mainw->current_file, cfile->laudio_time, 0., mainw->xlays);
@@ -5464,7 +5464,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
                          cfile->frames, cfile->laudio_time, FALSE);
           lives_list_free_all(&mainw->xlays);
           mask |= WARN_MASK_LAYOUT_DELETE_AUDIO;
-          g_print("AUD %f\n", cfile->laudio_time);
+          //g_print("AUD %f\n", cfile->laudio_time);
         }
         if (mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(mask));
 
@@ -5493,7 +5493,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       switch_to_file(mainw->current_file, start_file);
     }
   }
-
+  else {
+    mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
+  }
   fclose(rfile);
 
 recovery_done:

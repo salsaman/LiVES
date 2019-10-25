@@ -1470,7 +1470,7 @@ typedef struct {
   int assumed_width;
   int assumed_height;
 
-#define DEF_IDLE_MAX 0
+#define DEF_IDLE_MAX 1
 
   int idlemax;
 

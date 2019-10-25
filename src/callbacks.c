@@ -5173,12 +5173,20 @@ boolean reload_set(const char *set_name) {
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
+  boolean needs_idlefunc = FALSE;
 
   int last_file = -1, new_file = -1;
   int current_file = mainw->current_file;
   int clipnum = 0;
   int maxframe;
-
+  
+  if (mainw->multitrack != NULL) {
+    if (mainw->multitrack->idlefunc > 0) {
+      lives_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc = 0;
+      needs_idlefunc = TRUE;
+    }
+  }
   memset(mainw->set_name, 0, 1);
 
   // check if set is locked
@@ -5188,7 +5196,9 @@ boolean reload_set(const char *set_name) {
       if (mainw->multitrack != NULL) {
         mainw->current_file = mainw->multitrack->render_file;
         mt_sensitise(mainw->multitrack);
-        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+	if (needs_idlefunc) {
+	  mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+	}
       }
     }
     return FALSE;
@@ -5247,12 +5257,14 @@ boolean reload_set(const char *set_name) {
             polymorph(mainw->multitrack, POLY_NONE);
             polymorph(mainw->multitrack, POLY_CLIPS);
             mt_sensitise(mainw->multitrack);
-            mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-          }
+	    if (needs_idlefunc) {
+	      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+	    }
+	  }
           lives_chdir(cwd, FALSE);
           lives_free(cwd);
           return FALSE;
-        }
+	}
         mainw->current_file = new_file;
         get_handle_from_info_file(new_file);
       }
@@ -5260,9 +5272,10 @@ boolean reload_set(const char *set_name) {
       if (lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile) == NULL) clear_mainw_msg();
       else memset(mainw->msg + strlen(mainw->msg) - strlen("\n"), 0, 1);
     }
+  }
 
-    if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
-      if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
+  if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
+    if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
 
       if (!keep_threaded_dialog) end_threaded_dialog();
 
@@ -5311,12 +5324,14 @@ boolean reload_set(const char *set_name) {
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
-        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+	if (needs_idlefunc) {
+	  mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+	}
       }
-
       if (!keep_threaded_dialog) end_threaded_dialog();
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
+      mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
       return TRUE;
     }
 
@@ -5328,7 +5343,7 @@ boolean reload_set(const char *set_name) {
       lives_free(recovery_entry);
       added_recovery = TRUE;
     }
-
+    
     if (orderfile != NULL) {
       // newer style (0.9.6+)
       char *set_lock_file;
@@ -5466,7 +5481,7 @@ boolean reload_set(const char *set_name) {
     }
 
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
-  }
+    }
 
   // should never reach here
   lives_chdir(cwd, FALSE);

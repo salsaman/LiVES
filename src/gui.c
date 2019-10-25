@@ -1097,6 +1097,7 @@ void create_LiVES(void) {
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(menuitem), mainw->effects_menu);
 
   mainw->custom_effects_menu = NULL;
+  mainw->custom_effects_separator = NULL;
 
   mainw->run_test_rfx_submenu = lives_standard_menu_item_new_with_label(_("_Run Test Rendered Effect/Tool/Generator..."));
   mainw->run_test_rfx_menu = NULL;
@@ -1143,6 +1144,7 @@ void create_LiVES(void) {
   // add RFX plugins
   mainw->rte_separator = NULL;
   mainw->custom_gens_menu = NULL;
+  mainw->custom_gens_submenu = NULL;
   mainw->rendered_fx = NULL;
   mainw->custom_tools_menu = NULL;
 

@@ -1963,6 +1963,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (prefs->startup_phase != 0) {
     splash_end();
+    show_lives();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
     do_startup_interface_query();
@@ -2466,11 +2467,9 @@ capability *get_capabilities(void) {
   umask(capable->umask);
   capable->umask = (0777 & ~capable->umask);
 
-  get_location("rm", capable->rm_cmd, PATH_MAX);
   get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
   get_location("cp", capable->cp_cmd, PATH_MAX);
   get_location("mv", capable->mv_cmd, PATH_MAX);
-  get_location("touch", capable->touch_cmd, PATH_MAX);
   get_location("ln", capable->ln_cmd, PATH_MAX);
   get_location("chmod", capable->chmod_cmd, PATH_MAX);
   get_location("cat", capable->cat_cmd, PATH_MAX);
@@ -2521,8 +2520,8 @@ capability *get_capabilities(void) {
   }
 
   capable->has_smogrify = FALSE;
-
   lives_snprintf(command, PATH_MAX * 4, "%s version", prefs->backend_sync);
+
   lives_popen(command, TRUE, buffer, PATH_MAX * 4);
 
   if (mainw->com_failed) {
@@ -2915,6 +2914,9 @@ static boolean lives_startup(livespointer data) {
     }
     prefs->startup_phase = 3;
     set_int_pref(PREF_STARTUP_PHASE, 3);
+
+    // we can show this now
+    if (prefs->show_splash) splash_init();
   }
 
   get_string_pref(PREF_VID_PLAYBACK_PLUGIN, buff, 256);
@@ -3210,9 +3212,8 @@ static boolean lives_startup(livespointer data) {
     switch_clip(1, mainw->current_file, TRUE);
   }
 
-  do_start_messages();
-
   // anything that d_prints messages should go here:
+  do_start_messages();
 
   if (devmap != NULL)
     on_devicemap_load_activate(NULL, devmap);
@@ -3417,6 +3418,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   ensure_isdir(capable->home_dir);
+  get_location("touch", capable->touch_cmd, PATH_MAX); // needed for make_writeable_dir()
+  get_location("rm", capable->rm_cmd, PATH_MAX); // ditto
 
   // get opts first
   if (argc > 1) {

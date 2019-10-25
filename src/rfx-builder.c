@@ -4247,6 +4247,19 @@ void add_rfx_effects(lives_rfx_status_t status) {
     if (mainw->custom_utilities_submenu != NULL) lives_widget_destroy(mainw->custom_utilities_submenu);
     if (mainw->custom_tools_menu != NULL) lives_widget_destroy(mainw->custom_tools_menu);
     if (mainw->utilities_menu != NULL) lives_widget_destroy(mainw->utilities_menu);
+
+    mainw->custom_effects_separator = NULL;
+    mainw->custom_effects_menu = NULL;
+    mainw->custom_effects_submenu = NULL;
+    mainw->custom_gens_menu = NULL;
+    mainw->custom_gens_submenu = NULL;
+    mainw->gens_menu = NULL;
+
+    mainw->custom_utilities_separator = NULL;
+    mainw->custom_utilities_menu = NULL;
+    mainw->custom_utilities_submenu = NULL;
+    mainw->custom_tools_menu = NULL;
+    mainw->utilities_menu = NULL;
   }
 
   if (status == RFX_STATUS_TEST && mainw->run_test_rfx_menu != NULL) {
@@ -4717,7 +4730,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
 void update_rfx_menus(void) {
   if (prefs->show_gui) {
     if (!mainw->has_custom_effects) {
-      lives_widget_hide(mainw->custom_effects_separator);
+      if (mainw->custom_effects_separator != NULL)
+	lives_widget_hide(mainw->custom_effects_separator);
     } else {
       lives_widget_set_no_show_all(mainw->custom_effects_submenu, FALSE);
       lives_widget_show_all(mainw->custom_effects_submenu);
@@ -4738,7 +4752,7 @@ void update_rfx_menus(void) {
     lives_widget_show_all(mainw->tools_menu);
 
     if (!mainw->has_custom_utilities) {
-      lives_widget_hide(mainw->custom_utilities_separator);
+      if (mainw->custom_utilities_separator != NULL) lives_widget_hide(mainw->custom_utilities_separator);
     }
 
     if (!mainw->has_custom_tools) {

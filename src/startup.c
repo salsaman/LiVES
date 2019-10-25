@@ -80,7 +80,7 @@ void close_file(int current_file, boolean tshoot) {
     // kill any active processes: for other OSes the backend does this
     lives_kill_subprocesses(cfile->handle, TRUE);
 #endif
-    mainw->current_file = close_temp_handle(mainw->current_file, current_file);
+    close_temp_handle(current_file);
   }
 }
 
@@ -195,7 +195,7 @@ boolean do_workdir_query(void) {
 
   mainw->has_session_workdir = FALSE;
 
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
                  prefs->workdir, prefs->configdir);
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
@@ -579,7 +579,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!tshoot) set_string_pref(PREF_DEFAULT_IMAGE_FORMAT, LIVES_IMAGE_TYPE_PNG);
   lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_PNG);
 
-  get_temp_handle(mainw->first_free_file, TRUE);
+  get_temp_handle(-1);
 
   if (success) {
     info_fd = -1;

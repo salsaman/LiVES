@@ -7708,15 +7708,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   filter_mutex_lock(key);
 
   if (mainw->current_file < 1 || cfile->frames > 0) {
-    new_file = mainw->first_free_file;
-
-    if (new_file == -1) {
-      weed_instance_unref(inst);
-      filter_mutex_unlock(key);
-      too_many_files();
-      return FALSE;
-    }
-
     if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
       close_current_file(0);
       old_file = -1;
@@ -7751,42 +7742,36 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   if (old_file > -1 && LIVES_IS_PLAYING && mainw->num_tr_applied > 0) is_bg = TRUE;
 
   filter = weed_instance_get_filter(inst, FALSE);
+  filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
 
   if (mainw->current_file > 0 && cfile->frames == 0) {
     // audio clip - we will init the generator as fg video in the same clip
     // otherwise known as "showoff mode"
-    new_file = mainw->current_file;
     cfile->frames = 1;
     cfile->start = cfile->end = 1;
     cfile->clip_type = CLIP_TYPE_GENERATOR;
     cfile->frameno = 1;
     mainw->play_start = mainw->play_end = 1;
     mainw->startticks = mainw->currticks;
-  }
+  } else {
+    if (create_cfile(-1, filter_name, TRUE) == NULL) {
+      weed_instance_unref(inst);
+      filter_mutex_unlock(key);
+      return FALSE;
+    }
 
-  if (new_file != mainw->current_file) {
-    mainw->current_file = new_file;
-
-    cfile = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-    lives_snprintf(cfile->handle, 256, "ephemeral%d", mainw->current_file);
-    create_cfile();
     cfile->clip_type = CLIP_TYPE_GENERATOR;
-    get_next_free_file();
 
-    filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
     lives_snprintf(cfile->type, 40, "generator:%s", filter_name);
     lives_snprintf(cfile->file_name, PATH_MAX, "generator: %s", filter_name);
     lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "generator: %s", filter_name);
     lives_free(filter_name);
-    cfile->achans = 0;
-    cfile->asampsize = 0;
 
     // open as a clip with 1 frame
     cfile->start = cfile->end = cfile->frames = 1;
-    cfile->arps = cfile->arate = 0;
-    cfile->changed = FALSE;
   }
 
+  new_file = mainw->current_file;
   cfile->ext_src = inst;
 
   if (is_bg) {
@@ -7841,8 +7826,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     register_audio_channels(1);
   }
 
-  // allow clip switching
-  cfile->is_loaded = TRUE;
   weed_instance_unref(inst);
 
   // if not playing, start playing

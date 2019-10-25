@@ -222,7 +222,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   mainw->effects_paused = FALSE;
 
   if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
-    // pull a batch of frames for the backend to start processing
+    // start decoding frames for the rendered effect plugins to start processing
     cfile->fx_frame_pump = cfile->start;
   } else cfile->fx_frame_pump = 0;
 

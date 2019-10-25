@@ -4731,7 +4731,7 @@ void update_rfx_menus(void) {
   if (prefs->show_gui) {
     if (!mainw->has_custom_effects) {
       if (mainw->custom_effects_separator != NULL)
-	lives_widget_hide(mainw->custom_effects_separator);
+        lives_widget_hide(mainw->custom_effects_separator);
     } else {
       lives_widget_set_no_show_all(mainw->custom_effects_submenu, FALSE);
       lives_widget_show_all(mainw->custom_effects_submenu);

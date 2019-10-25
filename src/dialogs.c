@@ -1452,13 +1452,11 @@ int process_one(boolean visible) {
 
     frames_done = cfile->proc_ptr->frames_done;
 
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0 &&
-        (cfile->progress_start + frames_done + FX_FRAME_PUMP_VAL > cfile->fx_frame_pump)) {
-      int vend = cfile->fx_frame_pump;
-      boolean retb = virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL);
-      if (retb) cfile->fx_frame_pump = vend + 1;
-      else mainw->cancelled = CANCEL_ERROR;
-      if (vend == cfile->end) cfile->fx_frame_pump = 0; // all frames were realised
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) {
+      if (virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
+        cfile->fx_frame_pump++;
+      } else mainw->cancelled = CANCEL_ERROR;
+      if (cfile->fx_frame_pump >= cfile->end) cfile->fx_frame_pump = 0; // all frames were realised
     }
   }
 
@@ -1611,40 +1609,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_widget_set_sensitive(cfile->proc_ptr->stop_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->pause_button, FALSE);
       lives_widget_set_sensitive(cfile->proc_ptr->preview_button, FALSE);
-    }
-
-    // if we have virtual frames make sure the first FX_FRAME_PUMP_VAL are decoded for the backend
-    // as we are processing we will continue to decode 1 frame in time with the backend
-    // in this way we hope to stay ahead of the backend
-
-    // the backend can either restrict itself to processing in the range x -> x + (FX_FRAME_PUMP_VAL) frames
-    // -> if it needs frames further in the range (like "jumble") it can check carefully and wait
-
-    // cfile->fx_frame_pump_val is currently only set for realtime effects and tools
-    // it is also used for resampling
-
-    // default FX_FRAME_PUMP_VAL is 200
-
-    // (encoding and copying have their own mechanism which realises all frames in the selection first)
-
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump > 0) {
-      int vend = cfile->fx_frame_pump + FX_FRAME_PUMP_VAL;
-      if (vend > cfile->progress_end) vend = cfile->progress_end;
-      if (vend >= cfile->fx_frame_pump) {
-        register int i;
-        for (i = cfile->fx_frame_pump; i <= vend; i++) {
-          boolean retb = virtual_to_images(mainw->current_file, i, i, FALSE, NULL);
-          if (mainw->cancelled || !retb) {
-            cancel_process(TRUE);
-            lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-            if (mainw->current_file > -1 && cfile != NULL) lives_freep((void **)&cfile->op_dir);
-            return FALSE;
-          }
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          if (cfile->clip_type != CLIP_TYPE_FILE) break;
-        }
-        cfile->fx_frame_pump += FX_FRAME_PUMP_VAL >> 1;
-      }
     }
 
     if (cfile->opening && (capable->has_sox_play || (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) ||

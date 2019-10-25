@@ -2514,7 +2514,7 @@ capability *get_capabilities(void) {
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
     // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
                    prefs->workdir, prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
@@ -2651,7 +2651,7 @@ capability *get_capabilities(void) {
       if (dir_valid) {
         lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
 
-        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" -- ", EXEC_PERL, capable->backend_path,
+        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
                        prefs->workdir, prefs->configdir);
         lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
@@ -7247,9 +7247,11 @@ void load_frame_image(int frame) {
 
   /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-  LiVESError *lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
-                                LiVESError **gerrorptr) {
+  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
+                            LiVESError **gerrorptr) {
     int fd;
+    ticks_t timeout;
+    lives_alarm_t alarm_handle;
     // CALLER should check for errors
 
     // fname should be in local charset
@@ -7257,9 +7259,14 @@ void load_frame_image(int frame) {
     // do_chmod is ignored now
 
     fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-    if (flock(fd, LOCK_EX)) {
-      return NULL;
+    alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+    while (flock(fd, LOCK_EX) && (timeout = lives_alarm_check(alarm_handle)) > 0) {
+      lives_widget_context_update();
+      sched_yield();
+      lives_usleep(prefs->sleep_time);
     }
+    lives_alarm_clear(alarm_handle);
+    if (timeout == 0) return FALSE;
 
     if (imgtype == IMG_TYPE_JPEG) {
       char *qstr = lives_strdup_printf("%d", quality);
@@ -7284,8 +7291,8 @@ void load_frame_image(int frame) {
     }
 
     close(fd);
-
-    return *gerrorptr;
+    if (*gerrorptr != NULL) return FALSE;
+    return TRUE;
   }
 
 
@@ -7300,6 +7307,9 @@ void load_frame_image(int frame) {
     //update the bar text
     if (CURRENT_CLIP_IS_VALID) {
       register int i;
+      if (cfile->clip_type == CLIP_TYPE_TEMP) {
+        close_temp_handle(file_to_switch_to);
+      }
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
           mainw->current_file != mainw->ascrap_file &&
           (mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file)) {

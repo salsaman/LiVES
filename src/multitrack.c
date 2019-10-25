@@ -651,9 +651,9 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
 
 boolean write_backup_layout_numbering(lives_mt *mt) {
   // link clip numbers in the auto save event_list to actual clip numbers
-
-  int fd, i, vali, hdlsize;
+  lives_clip_t *sfile;
   double vald;
+  int fd, i, vali, hdlsize;
   char *asave_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
                                          capable->mainpid);
   LiVESList *clist = mainw->cliplist;
@@ -664,33 +664,19 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
   mainw->write_failed = FALSE;
 
   if (fd != -1) {
-    while (!mainw->write_failed && clist != NULL) {
+    for (clist = mainw->cliplist; !mainw->write_failed && clist != NULL; clist = clist->next) {
       i = LIVES_POINTER_TO_INT(clist->data);
-      if (!IS_NORMAL_CLIP(i)) {
-        clist = clist->next;
-        continue;
-      }
-      if (mt != NULL) {
-        lives_write_le_buffered(fd, &i, 4, TRUE);
-        vald = mainw->files[i]->fps;
-        lives_write_le_buffered(fd, &vald, 8, TRUE);
-        hdlsize = strlen(mainw->files[i]->handle);
-        lives_write_le_buffered(fd, &hdlsize, 4, TRUE);
-        lives_write_buffered(fd, (const char *)&mainw->files[i]->handle, hdlsize, TRUE);
-      } else {
-        vali = mainw->files[i]->stored_layout_idx;
-        if (vali != -1) {
-          lives_write_le_buffered(fd, &vali, 4, TRUE);
-          vald = mainw->files[i]->fps;
-          lives_write_le_buffered(fd, &vald, 8, TRUE);
-          hdlsize = strlen(mainw->files[i]->handle);
-          lives_write_le_buffered(fd, &hdlsize, 4, TRUE);
-          lives_write_buffered(fd, (const char *)&mainw->files[i]->handle, hdlsize, TRUE);
-        }
-      }
-      clist = clist->next;
+      if (i < 1 || !IS_NORMAL_CLIP(i)) continue;
+      sfile = mainw->files[i];
+      if (mt != NULL) vali = i;
+      else vali = sfile->stored_layout_idx;
+      lives_write_le_buffered(fd, &vali, 4, TRUE);
+      vald = sfile->fps;
+      lives_write_le_buffered(fd, &vald, 8, TRUE);
+      hdlsize = strlen(sfile->handle);
+      lives_write_le_buffered(fd, &hdlsize, 4, TRUE);
+      lives_write_buffered(fd, sfile->handle, hdlsize, TRUE);
     }
-
     lives_close_buffered(fd);
   }
 
@@ -717,24 +703,25 @@ static void upd_layout_maps(weed_plant_t *event_list) {
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   // this is used only for crash recovery
 
-  // layout_numbering simply maps our clip handles to clip numbers in the current layout
-  // we assume the order hasnt changed (it cant) and there are no gaps (we have just reloaded)
+  // layout_numbering simply maps our clip unique_id to clip numbers in the current layout
+  // we assume the order hasnt changed (it cant), but there may be gaps in the numbering
+  // the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
 
-  //but the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
-
-  int fd, vari, clipn, offs, restart = 0;
   double vard;
-  char *aload_file;
   char buf[512];
+  char *aload_file;
   boolean gotvalid = FALSE;
+  int fd, vari, clipn, offs, restart = 0;
 
   if (mt != NULL) {
-    aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+    aload_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
+                                     lives_getuid(), lives_getgid(),
                                      capable->mainpid);
     // ensure file layouts are updated
     upd_layout_maps(NULL);
   } else {
-    aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+    aload_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME,
+                                     lives_getuid(), lives_getgid(),
                                      capable->mainpid);
   }
 
@@ -743,35 +730,31 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   if (fd != -1) {
     while (1) {
       offs = restart;
-      if (lives_read_le_buffered(fd, &clipn, 4, TRUE) == 4) {
-        if (lives_read_le_buffered(fd, &vard, 8, TRUE) == 8) {
-          if (lives_read_le_buffered(fd, &vari, 4, TRUE) == 4) {
-            // compare the handle - assume clip ordering has not changed
-            if (vari > 511) vari = 511;
-            if (lives_read_buffered(fd, buf, vari, TRUE) == vari) {
-              memset(buf + vari, 0, 1);
-              gotvalid = FALSE;
-              while (++offs < MAX_FILES) {
-                if (!IS_VALID_CLIP(offs)) {
-                  if (!gotvalid) restart = offs;
-                  continue;
-                }
-                gotvalid = TRUE;
-                if (strcmp(mainw->files[offs]->handle, buf)) {
-                  // dont increase restart
-                  continue;
-                }
-                // got a match - index the current clip order -> clip order in layout
-                renumbered_clips[clipn] = offs;
-                // lfps contains the fps at the time of the crash
-                lfps[offs] = vard;
-                restart = offs;
-                break;
-              }
-            } else break;
-          } else break;
-        } else break;
-      } else break;
+      if (lives_read_le_buffered(fd, &clipn, 4, TRUE) < 4) break;
+      if (lives_read_le_buffered(fd, &vard, 8, TRUE) < 8) break;
+      if (lives_read_le_buffered(fd, &vari, 4, TRUE) < 4) break;
+      if (vari > 511) vari = 511;
+      if (lives_read_buffered(fd, buf, vari, TRUE) < vari) break;
+      memset(buf + vari, 0, 1);
+      if (clipn < 0 || clipn > MAX_FILES) continue;
+      gotvalid = FALSE;
+      while (++offs < MAX_FILES) {
+        if (!IS_VALID_CLIP(offs)) {
+          if (!gotvalid) restart = offs;
+          continue;
+        }
+        gotvalid = TRUE;
+
+        // dont increase restart, in case we cant match this clip
+        if (strcmp(mainw->files[offs]->handle, buf)) continue;
+
+        // got a match - index the current clip order -> clip order in layout
+        renumbered_clips[clipn] = offs;
+        // lfps contains the fps at the time of the crash
+        lfps[offs] = vard;
+        restart = offs;
+        break;
+      }
     }
     lives_close_buffered(fd);
   }
@@ -2796,10 +2779,6 @@ static void set_fxlist_label(lives_mt *mt) {
 static void renumber_clips(void) {
   // remove gaps in our mainw->files array - caused when clips are closed
   // we also ensure each clip has a (non-zero) 64 bit unique_id to help with later id of the clips
-  // this is not strictly necessary any more, since we now track clips in the layout by
-  // handle and unique id
-
-  // however, it helps to keep the numbers low if many files have been closed
 
   // called once when we enter multitrack mode
 
@@ -2853,9 +2832,8 @@ static void renumber_clips(void) {
       if (i == cclip) i++;
     }
 
-    if (mainw->files[cclip] != NULL && cclip != mainw->scrap_file && cclip != mainw->ascrap_file &&
-        IS_NORMAL_CLIP(cclip) &&
-        mainw->files[cclip]->unique_id == 0l) {
+    if (mainw->files[cclip] != NULL && (cclip == mainw->scrap_file || cclip == mainw->ascrap_file ||
+                                        IS_NORMAL_CLIP(cclip)) && mainw->files[cclip]->unique_id == 0l) {
       mainw->files[cclip]->unique_id = lives_random();
       save_clip_value(cclip, CLIP_DETAILS_UNIQUE_ID, &mainw->files[cclip]->unique_id);
       if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
@@ -2897,8 +2875,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
   if (lfile != NULL) {
     // lfile is supplied layout file name
     for (i = 1; i <= MAX_FILES && mainw->files[i] != NULL; i++) {
-      lmap = mainw->files[i]->layout_map;
-      while (lmap != NULL) {
+      for (lmap = mainw->files[i]->layout_map; lmap != NULL; lmap = lmap->next) {
         // lmap->data starts with layout name
         if (!strncmp((char *)lmap->data, lfile, strlen(lfile))) {
           threaded_dialog_spin(0.);
@@ -2907,7 +2884,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
 
           // piece 2 is the clip number
           rnc = atoi(array[1]);
-
+          if (rnc < 0 || rnc > MAX_FILES) continue;
           renumbered_clips[rnc] = i;
 
           // original fps
@@ -2916,7 +2893,6 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
           lives_strfreev(array);
           threaded_dialog_spin(0.);
         }
-        lmap = lmap->next;
       }
     }
   } else {
@@ -9860,7 +9836,8 @@ void mt_init_tracks(lives_mt *mt, boolean set_min_max) {
 
         for (j = 0; j < num_tracks; j++) {
           // TODO - tracks should be linked list
-          if (clip_index[j] > 0 && frame_index[j] > -1 && renumbered_clips[clip_index[j]] > 0 && frame_index[j] <=
+          if (clip_index[j] > 0 && frame_index[j] > -1 && clip_index[j] <= MAX_FILES &&
+              renumbered_clips[clip_index[j]] > 0 && frame_index[j] <=
               mainw->files[renumbered_clips[clip_index[j]]]->frames) {
             forced_end = FALSE;
             if (tc == block_marker_tc && int_array_contains_value(block_marker_tracks, block_marker_num_tracks, j))

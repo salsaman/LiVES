@@ -485,7 +485,8 @@ typedef enum {
   CLIP_TYPE_GENERATOR, ///< frames from generator plugin
   CLIP_TYPE_FILE, ///< unimported video, not or partially broken in frames
   CLIP_TYPE_LIVES2LIVES, ///< type for LiVES to LiVES streaming
-  CLIP_TYPE_VIDEODEV  ///< frames from video device
+  CLIP_TYPE_VIDEODEV,  ///< frames from video device
+  CLIP_TYPE_TEMP ///< temp type, for internal use only
 } lives_clip_type_t;
 
 typedef enum {
@@ -695,7 +696,7 @@ typedef struct {
 
   int fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
-#define FX_FRAME_PUMP_VAL 200 ///< how many frames to prime the pump for realtime effects and resampler
+#define FX_FRAME_PUMP_VAL 50 ///< how many frames to prime the pump for realtime effects and resampler
 
 #define IMG_BUFF_SIZE 4096 ///< chunk size for reading images
 
@@ -1090,10 +1091,10 @@ ulong open_file_sel(const char *file_name, double start_time, int frames);
 void open_fw_device(void);
 char *get_untitled_name(int number);
 boolean get_new_handle(int index, const char *name);
-boolean get_temp_handle(int index, boolean create);
-int close_temp_handle(int clipno, int new_clip);
+boolean get_temp_handle(int index);
+int close_temp_handle(int new_clip);
 boolean get_handle_from_info_file(int index);
-void create_cfile(void);
+lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
 void save_file(int clip, int start, int end, const char *filename);
 void play_file(void);
 void save_frame(LiVESMenuItem *menuitem, livespointer user_data);
@@ -1158,8 +1159,8 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
                                        int width, int height, LiVESInterpType interp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);
 
-LiVESError *lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype,
-                              int quality, boolean do_chmod, LiVESError **gerrorptr);
+boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype,
+                          int quality, boolean do_chmod, LiVESError **gerrorptr);
 
 void init_track_decoders(void);
 void free_track_decoders(void);
@@ -1174,7 +1175,6 @@ void sensitize(void);
 void desensitize(void);
 void procw_desensitize(void);
 void close_current_file(int file_to_switch_to);   ///< close current file, and try to switch to file_to_switch_to
-void get_next_free_file(void);
 void switch_to_file(int old_file, int new_file);
 void do_quick_switch(int new_file);
 void switch_audio_clip(int new_file, boolean activate);

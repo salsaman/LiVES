@@ -3797,6 +3797,14 @@ autolives_window *autolives_pre_dialog(void) {
 }
 
 
+static boolean special_cleanup_cb(LiVESWidget *widget, void *userdata) {
+  // need to call special_cleanup(TRUE) before destroying the toplevel if you want to prompt
+  // for filewrite overwrites
+  special_cleanup(FALSE);
+  return FALSE;
+}
+
+
 const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *box) {
   static lives_param_t aspect_width, aspect_height;
 
@@ -3809,6 +3817,10 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 
   check_for_special(NULL, &aspect_width, box);
   check_for_special(NULL, &aspect_height, box);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_DESTROY_SIGNAL,
+                       LIVES_GUI_CALLBACK(special_cleanup_cb),
+                       NULL);
 
   return paramspecial_get_aspect();
 }

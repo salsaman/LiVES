@@ -3132,46 +3132,75 @@ void play_file(void) {
 }
 
 
-int close_temp_handle(int clipno, int new_clip) {
-  // close sfile and switch to new clip (may be -1)
+int close_temp_handle(int new_clip) {
+  // close cfile and switch to new clip (may be -1)
   // note this only closes the disk and basic resources, it does not affect the interface
   // (c.f. close_current_file())
   // returns new_clip
-  lives_clip_t *sfile;
-  char *com;
 
-  mainw->current_file = new_clip;
+  char *com;
+  int clipno = mainw->current_file;
+
+  if (!IS_VALID_CLIP(new_clip)) new_clip = -1;
   if (!IS_VALID_CLIP(clipno)) return new_clip;
 
-  sfile = mainw->files[clipno];
-  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, sfile->handle);
+  if (cfile->clip_type != CLIP_TYPE_TEMP) {
+    close_current_file(new_clip);
+  }
+
+  mainw->current_file = new_clip;
+
+  com = lives_strdup_printf("%s close \"%s\"", prefs->backend, cfile->handle);
   lives_system(com, TRUE);
   lives_free(com);
   lives_freep((void **)&mainw->files[clipno]);
+
   if (mainw->first_free_file == ALL_USED || mainw->first_free_file > clipno)
     mainw->first_free_file = clipno;
   return new_clip;
 }
 
 
-boolean get_temp_handle(int index, boolean create) {
+static void get_next_free_file(void) {
+  // get next free file slot, or -1 if we are full
+  // can support MAX_FILES files (default 65536)
+  while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
+    mainw->first_free_file++;
+    if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
+  }
+}
+
+
+boolean get_temp_handle(int index) {
   // we can call this to get a temp handle for returning info from the backend
   // this function is also called from get_new_handle to create a permanent handle
   // for an opened file
 
-  // if a temp handle is required, pass in index as mainw->first_free_file, and
-  // call 'smogrify close cfile->handle' on it after use, then restore mainw->current_file
+  // if a temp handle is required, pass in index as -1
+  // call close_temp_handle() on it after use, then restore mainw->current_file
 
   // returns FALSE if we couldn't write to workdir
 
   // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
 
-  boolean is_unique;
+  boolean is_unique, create = TRUE;
   int current_file = mainw->current_file;
 
-  if (index == -1) {
-    too_many_files();
+  if (index < -1 || index > MAX_FILES) {
+    char *msg = lives_strdup_printf("Attempt to create invalid new temp clip %d\n", index);
+    LIVES_WARN(msg);
+    lives_free(msg);
     return FALSE;
+  }
+
+  if (index == -1) {
+    index = mainw->first_free_file;
+    if (index == ALL_USED) {
+      too_many_files();
+      return FALSE;
+    }
+    get_next_free_file();
+    create = TRUE;
   }
 
   do {
@@ -3182,7 +3211,7 @@ boolean get_temp_handle(int index, boolean create) {
     // ignore return value here, as it will be dealt with in get_handle_from_info_file()
     mainw->current_file = current_file;
 
-    //get handle from info file, we will also malloc a new "file" struct here
+    //get handle from info file, the first time we will also malloc a new "file" struct here
     if (!get_handle_from_info_file(index)) {
       lives_freep((void **)&mainw->files[index]);
       mainw->current_file = current_file;
@@ -3198,18 +3227,53 @@ boolean get_temp_handle(int index, boolean create) {
     }
   } while (!is_unique);
 
-  if (create) create_cfile();
-
+  if (create) {
+    create_cfile(index, cfile->handle, FALSE);
+    cfile->clip_type = CLIP_TYPE_TEMP;
+  }
   return TRUE;
 }
 
 
-void create_cfile(void) {
-  // create a new "clip" with default values
+lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
+  // if handle is NULL we create one automatically
 
+  // create a new "clip" with default values
   // call close_current_file() to close it
 
+  // WARNING: on success, changes the value of mainw->current_file !!
+  lives_clip_t *sfile;
   char *stfile;
+
+  if (new_file == -1) {
+    new_file = mainw->first_free_file;
+    if (new_file == -1) {
+      too_many_files();
+      return NULL;
+    }
+    mainw->current_file = new_file;
+    get_next_free_file();
+
+    if (new_file < 0 || new_file > MAX_FILES || IS_VALID_CLIP(new_file)) {
+      char *msg = lives_strdup_printf("Attempt to create invalid new clip %d\n", new_file);
+      LIVES_WARN(msg);
+      lives_free(msg);
+      return NULL;
+    }
+
+    if (handle == NULL) {
+      if (!get_handle_from_info_file(new_file)) return NULL;
+      sfile = mainw->files[new_file];
+    } else {
+      sfile = mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
+      if (sfile == NULL) return NULL;
+      lives_snprintf(sfile->handle, 256, "%s", handle);
+    }
+  }
+
+  mainw->current_file = new_file;
+
+  cfile->is_loaded = is_loaded;
 
   // any cfile (clip) initialisation goes in here
   cfile->menuentry = NULL;
@@ -3236,7 +3300,7 @@ void create_cfile(void) {
   cfile->opening_audio = cfile->opening = cfile->opening_only_audio = FALSE;
   cfile->pointer_time = 0.;
   cfile->real_pointer_time = 0.;
-  cfile->restoring = cfile->opening_loc = cfile->nopreview = cfile->is_loaded = FALSE;
+  cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
   cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
   cfile->frameno = cfile->last_frameno = 0;
@@ -3248,7 +3312,7 @@ void create_cfile(void) {
   cfile->clip_type = CLIP_TYPE_DISK;
   cfile->ratio_fps = FALSE;
   cfile->aseek_pos = 0;
-  cfile->unique_id = lives_random();
+  cfile->unique_id = lives_random(); // TODO: use libuuid
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;
   cfile->fx_frame_pump = 0;
@@ -3305,7 +3369,8 @@ void create_cfile(void) {
   cfile->checked_for_old_header = FALSE;
   cfile->has_old_header = FALSE;
 
-  // remember to set cfile->is_loaded=TRUE !!!!!!!!!!
+  return cfile;
+  // remember to set sfile->is_loaded=TRUE !!!!!!!!!!
 }
 
 
@@ -3325,7 +3390,7 @@ boolean get_new_handle(int index, const char *name) {
   char *xname;
 
   int current_file = mainw->current_file;
-  if (!get_temp_handle(index, TRUE)) return FALSE;
+  if (!get_temp_handle(index)) return FALSE;
 
   // note : don't need to update first_free_file for the clipboard
   if (index != 0) {
@@ -4538,31 +4603,16 @@ void add_to_ascrap_mb(uint64_t bytes) {
 boolean open_scrap_file(void) {
   // create a scrap file for recording generated video frames
   int current_file = mainw->current_file;
-  int new_file = mainw->first_free_file;
-
   char *dir;
-  char *scrap_handle;
+  char *handle, *scrap_handle;
 
-  if (new_file == -1) {
-    too_many_files();
-    return FALSE;
-  }
+  handle = lives_strdup_printf("scrap%d", capable->mainpid);
+  if (create_cfile(-1, handle, FALSE) == NULL) return FALSE;
+  lives_free(handle);
 
-  mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-
-  // TODO: introduce CLIP_TYPE_SCRAP, CLIP_TYPE_ASCRAP
-  mainw->files[new_file]->clip_type = CLIP_TYPE_DISK; // the default
-  lives_snprintf(mainw->files[new_file]->handle, 256, "scrap%d", capable->mainpid);
-
-  get_next_free_file();
-
-  mainw->scrap_file = mainw->current_file = new_file;
-  create_cfile();
+  mainw->scrap_file = mainw->current_file;
 
   lives_snprintf(cfile->type, 40, "scrap");
-  cfile->frames = 0;
-
-  cfile->unique_id = 0;
 
   scrap_handle = lives_strdup_printf("scrap|%s", cfile->handle);
   if (prefs->crash_recovery) add_to_recovery_file(scrap_handle);
@@ -4588,29 +4638,16 @@ boolean open_scrap_file(void) {
 boolean open_ascrap_file(void) {
   // create a scrap file for recording audio
   int current_file = mainw->current_file;
-  int new_file = mainw->first_free_file;
-
   char *dir;
-  char *ascrap_handle;
+  char *handle, *ascrap_handle;
 
-  if (new_file == -1) {
-    too_many_files();
-    return FALSE;
-  }
+  handle = lives_strdup_printf("ascrap%d", capable->mainpid);
+  if (create_cfile(-1, handle, FALSE) == NULL) return FALSE;
+  lives_free(handle);
 
-  mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-  mainw->files[new_file]->clip_type = CLIP_TYPE_DISK; // the default
-  lives_snprintf(mainw->files[new_file]->handle, 256, "ascrap%d", capable->mainpid);
-
-  get_next_free_file();
-
-  mainw->ascrap_file = mainw->current_file = new_file;
-  create_cfile();
-
+  mainw->ascrap_file = mainw->current_file;
   lives_snprintf(cfile->type, 40, "ascrap");
 
-  cfile->frames = 0;
-  cfile->unique_id = 0;
   cfile->opening = FALSE;
 
   cfile->achans = 2;
@@ -5118,7 +5155,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   uint32_t mask;
 
   int retval;
-  int new_file, clipnum = 0;
+  int clipnum = 0;
   int maxframe;
   int last_good_file = -1;
 
@@ -5249,13 +5286,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         continue;
       }
       lives_free(clipdir);
-      if ((new_file = mainw->first_free_file) == -1) {
-        end_threaded_dialog();
-        mainw->suppress_dprint = FALSE;
-        d_print_failed();
-        too_many_files();
-        break;
-      }
+
       if (strstr(buffptr, "/" CLIPS_DIRNAME "/")) {
         char **array;
         threaded_dialog_spin(0.);
@@ -5273,18 +5304,16 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           }
           did_set_check = TRUE;
         }
-
-        threaded_dialog_spin(0.);
       }
-      mainw->current_file = new_file;
-      threaded_dialog_spin(0.);
-      cfile = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-      lives_snprintf(cfile->handle, 256, "%s", buffptr);
-      cfile->clip_type = CLIP_TYPE_DISK; // the default
 
       //create a new cfile and fill in the details
-      create_cfile();
-      threaded_dialog_spin(0.);
+      if (create_cfile(-1, buffptr, FALSE) == NULL) {
+        threaded_dialog_spin(0.);
+        end_threaded_dialog();
+        mainw->suppress_dprint = FALSE;
+        d_print_failed();
+        break;
+      }
 
       if (!is_scrap) {
         if (!is_ascrap) {
@@ -5406,7 +5435,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // add to clip menu
         threaded_dialog_spin(0.);
         add_to_clipmenu();
-        get_next_free_file();
         cfile->start = cfile->frames > 0 ? 1 : 0;
         cfile->end = cfile->frames;
         cfile->is_loaded = TRUE;
@@ -5473,7 +5501,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         pthread_mutex_lock(&mainw->clip_list_mutex);
         mainw->cliplist = lives_list_append(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->current_file));
         pthread_mutex_unlock(&mainw->clip_list_mutex);
-        get_next_free_file();
       }
     }
   }
@@ -5492,8 +5519,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (start_file != mainw->current_file) {
       switch_to_file(mainw->current_file, start_file);
     }
-  }
-  else {
+  } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
   }
   fclose(rfile);

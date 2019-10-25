@@ -2395,16 +2395,6 @@ void get_frames_sizes(int fileno, int frame) {
 }
 
 
-void get_next_free_file(void) {
-  // get next free file slot, or -1 if we are full
-  // can support MAX_FILES files (default 65536)
-  while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
-    mainw->first_free_file++;
-    if (mainw->first_free_file >= MAX_FILES) mainw->first_free_file = ALL_USED;
-  }
-}
-
-
 boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
   char *textx;
   va_list xargs;
@@ -3326,7 +3316,6 @@ boolean after_foreign_play(void) {
   char *capfile = lives_strdup_printf("%s/.capture.%d", prefs->workdir, capable->mainpid);
   char capbuf[256];
   ssize_t length;
-  int new_file = -1;
   int new_frames = 0;
   int old_file = mainw->current_file;
 
@@ -3343,12 +3332,8 @@ boolean after_foreign_play(void) {
         new_frames = atoi(array[1]);
 
         if (new_frames > 0) {
-          new_file = mainw->first_free_file;
-          mainw->current_file = new_file;
-          cfile = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-          lives_snprintf(cfile->handle, 255, "%s", array[0]);
+          create_cfile(-1, array[0], FALSE);
           lives_strfreev(array);
-          create_cfile();
           lives_snprintf(cfile->file_name, 256, "Capture %d", mainw->cap_number);
           lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "Capture %d", mainw->cap_number++);
           lives_snprintf(cfile->type, 40, "Frames");
@@ -3382,9 +3367,7 @@ boolean after_foreign_play(void) {
           lives_system(com, FALSE);
 
           cfile->nopreview = TRUE;
-          if (!mainw->com_failed && do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
-            get_next_free_file();
-          } else {
+          if (mainw->com_failed || !do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
             // cancelled cleanup
             new_frames = 0;
             close_current_file(old_file);
@@ -3410,6 +3393,7 @@ boolean after_foreign_play(void) {
   if (mainw->multitrack == NULL) switch_to_file(old_file, mainw->current_file);
 
   else {
+    int new_file = mainw->current_file;
     mainw->current_file = mainw->multitrack->render_file;
     mt_init_clips(mainw->multitrack, new_file, TRUE);
     mt_clip_select(mainw->multitrack, TRUE);

@@ -134,7 +134,7 @@ static void cleanup_set_dir(const char *set_name) {
 
 
 void lives_exit(int signum) {
-  char *cwd, *tmp;
+  char *cwd, *tmp, *com, *set_lock_file = NULL, *set_locker = NULL;
 
   register int i;
 
@@ -161,8 +161,6 @@ void lives_exit(int signum) {
   }
 
   if (mainw->is_ready) {
-    char *com;
-
     lives_close_all_file_buffers();
 
     if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
@@ -403,8 +401,8 @@ void lives_exit(int signum) {
     }
 
     if (strlen(mainw->set_name)) {
-      char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-      char *set_locker = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
+      set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+      set_locker = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
       lives_rm(set_locker);
       lives_free(set_lock_file);
       lives_free(set_locker);
@@ -965,7 +963,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   int current_file = mainw->current_file;
 
   if (!CURRENT_CLIP_IS_VALID) {
-    if (!get_temp_handle(mainw->first_free_file, TRUE)) {
+    if (!get_temp_handle(-1)) {
       d_print_failed();
       return;
     }
@@ -990,8 +988,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     lives_free(com);
 
     if (mainw->com_failed) {
-      if (current_file == -1) {
-        close_temp_handle(mainw->current_file, -1);
+      if (!IS_VALID_CLIP(current_file)) {
+        close_temp_handle(-1);
       }
       lives_free(dfile);
       d_print_failed();
@@ -1007,8 +1005,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     // or the selected format
     if (!do_auto_dialog(_("Getting format list"), 0)) {
       lives_free(dfile);
-      if (current_file == -1) {
-        close_temp_handle(mainw->current_file, -1);
+      if (!IS_VALID_CLIP(current_file)) {
+        close_temp_handle(-1);
       }
       if (mainw->cancelled) d_print_cancelled();
       if (mainw->error) {
@@ -1024,8 +1022,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     if (!strlen(mainw->msg)) {
       lives_free(dfile);
       d_print_failed();
-      if (current_file == -1) {
-        close_temp_handle(mainw->current_file, -1);
+      if (!IS_VALID_CLIP(current_file)) {
+        close_temp_handle(-1);
       }
       do_blocking_error_dialog(
         _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \nthe latest youtube-dl installed.\n"));
@@ -1036,8 +1034,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
       // show a list of the video formats and let the user pick one
       if (!youtube_select_format(req)) {
-        if (current_file == -1) {
-          close_temp_handle(mainw->current_file, -1);
+        if (!IS_VALID_CLIP(current_file)) {
+          close_temp_handle(-1);
         }
         lives_free(dfile);
         d_print_failed();
@@ -1069,9 +1067,9 @@ void on_utube_select(lives_remote_clip_request_t *req) {
       mainw->cancelled = CANCEL_NONE;
     } else {
       lives_kill_subprocesses(cfile->handle, TRUE);
-      if (current_file == -1) {
+      if (!IS_VALID_CLIP(current_file)) {
         // we made a temp file so close it
-        close_temp_handle(mainw->current_file, -1);
+        close_temp_handle(-1);
       }
 
       if (mainw->error) {
@@ -1102,8 +1100,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   cfile->no_proc_sys_errors = FALSE;
   cfile->keep_without_preview = FALSE;
 
-  if (current_file == -1) {
-    close_temp_handle(mainw->current_file, -1);
+  if (!IS_VALID_CLIP(current_file)) {
+    close_temp_handle(-1);
   }
 
   mainw->img_concat_clip = -1;
@@ -1346,7 +1344,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   d_print(_("Importing the project %s as set %s..."), proj_file, new_set);
 
-  if (!get_temp_handle(mainw->first_free_file, TRUE)) {
+  if (!get_temp_handle(-1)) {
     lives_free(proj_file);
     lives_free(new_set);
     d_print_failed();
@@ -1360,7 +1358,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(proj_file);
 
   if (mainw->com_failed) {
-    mainw->current_file = close_temp_handle(mainw->current_file, current_file);
+    mainw->current_file = close_temp_handle(current_file);
     lives_free(new_set);
     d_print_failed();
     return;
@@ -1368,7 +1366,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   do_progress_dialog(TRUE, FALSE, _("Importing project"));
 
-  mainw->current_file = close_temp_handle(mainw->current_file, current_file);
+  mainw->current_file = close_temp_handle(current_file);
   sensitize();
 
   if (mainw->error) {
@@ -2810,7 +2808,8 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
 
     // close clipboard, it is invalid
-    mainw->current_file = close_temp_handle(CLIPBOARD_FILE, current_file);
+    mainw->current_file = CLIPBOARD_FILE;
+    close_temp_handle(current_file);
 
     sensitize();
     mainw->cancelled = CANCEL_USER;
@@ -3976,7 +3975,7 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_select_all_activate(LiVESWidget *widget, livespointer user_data) {
-  if (mainw->current_file == -1) return;
+  if (!CURRENT_CLIP_IS_VALID) return;
 
   if (mainw->selwidth_locked) {
     if (widget != NULL) do_error_dialog(_("\n\nSelection is locked.\n"));
@@ -4969,7 +4968,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             new_dir = lives_build_filename(prefs->workdir, new_handle, NULL);
             if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
               // get a new unique handle
-              get_temp_handle(i, FALSE);
+              get_temp_handle(i);
               lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
             }
             lives_free(new_dir);
@@ -5162,6 +5161,7 @@ boolean reload_set(const char *set_name) {
   // setname should be in filesystem encoding
 
   FILE *orderfile;
+  lives_clip_t *sfile;
 
   char *msg;
   char *com;
@@ -5170,6 +5170,8 @@ boolean reload_set(const char *set_name) {
   char vid_open_dir[PATH_MAX];
   char *cwd;
   char *tfile;
+  char *handle = NULL;
+  char *set_lock_file;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
@@ -5179,7 +5181,7 @@ boolean reload_set(const char *set_name) {
   int current_file = mainw->current_file;
   int clipnum = 0;
   int maxframe;
-  
+
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
@@ -5196,9 +5198,9 @@ boolean reload_set(const char *set_name) {
       if (mainw->multitrack != NULL) {
         mainw->current_file = mainw->multitrack->render_file;
         mt_sensitise(mainw->multitrack);
-	if (needs_idlefunc) {
-	  mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-	}
+        if (needs_idlefunc) {
+          mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+        }
       }
     }
     return FALSE;
@@ -5243,39 +5245,13 @@ boolean reload_set(const char *set_name) {
                                 set_name, capable->mainpid);
       lives_system(com, FALSE);
       lives_free(com);
-
-      if (strlen(mainw->msg) > 0 && (strncmp(mainw->msg, "none", 4))) {
-        if ((new_file = mainw->first_free_file) == -1) {
-          recover_layout_map(MAX_FILES);
-
-          if (!keep_threaded_dialog) end_threaded_dialog();
-
-          mainw->suppress_dprint = FALSE;
-          too_many_files();
-          if (mainw->multitrack != NULL) {
-            mainw->current_file = mainw->multitrack->render_file;
-            polymorph(mainw->multitrack, POLY_NONE);
-            polymorph(mainw->multitrack, POLY_CLIPS);
-            mt_sensitise(mainw->multitrack);
-	    if (needs_idlefunc) {
-	      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-	    }
-	  }
-          lives_chdir(cwd, FALSE);
-          lives_free(cwd);
-          return FALSE;
-	}
-        mainw->current_file = new_file;
-        get_handle_from_info_file(new_file);
-      }
     } else {
       if (lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile) == NULL) clear_mainw_msg();
       else memset(mainw->msg + strlen(mainw->msg) - strlen("\n"), 0, 1);
     }
-  }
 
-  if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
-    if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
+    if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
+      if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
 
       if (!keep_threaded_dialog) end_threaded_dialog();
 
@@ -5324,9 +5300,9 @@ boolean reload_set(const char *set_name) {
         polymorph(mainw->multitrack, POLY_NONE);
         polymorph(mainw->multitrack, POLY_CLIPS);
         mt_sensitise(mainw->multitrack);
-	if (needs_idlefunc) {
-	  mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-	}
+        if (needs_idlefunc) {
+          mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+        }
       }
       if (!keep_threaded_dialog) end_threaded_dialog();
       lives_chdir(cwd, FALSE);
@@ -5343,10 +5319,9 @@ boolean reload_set(const char *set_name) {
       lives_free(recovery_entry);
       added_recovery = TRUE;
     }
-    
+
     if (orderfile != NULL) {
       // newer style (0.9.6+)
-      char *set_lock_file;
       char *clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
@@ -5354,45 +5329,44 @@ boolean reload_set(const char *set_name) {
       }
       lives_free(clipdir);
       threaded_dialog_spin(0.);
-      if ((new_file = mainw->first_free_file) == -1) {
-        mainw->suppress_dprint = FALSE;
 
-        if (!keep_threaded_dialog) end_threaded_dialog();
-
-        too_many_files();
-
-        if (mainw->multitrack != NULL) {
-          mainw->current_file = mainw->multitrack->render_file;
-          polymorph(mainw->multitrack, POLY_NONE);
-          polymorph(mainw->multitrack, POLY_CLIPS);
-          mt_sensitise(mainw->multitrack);
-          mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-        }
-
-        recover_layout_map(MAX_FILES);
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-        fclose(orderfile);
-        return FALSE;
-      }
-      mainw->current_file = new_file;
-      cfile = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
-      cfile->cb_src = -1;
-      lives_snprintf(cfile->handle, 256, "%s", mainw->msg);
-      cfile->clip_type = CLIP_TYPE_DISK; // the default
-      cfile->progress_start = cfile->progress_end = 0; // set this for threaded_dialog
-      // lock the set
-      threaded_dialog_spin(0.);
-      set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-      tfile = lives_build_filename(prefs->workdir, set_name, set_lock_file, NULL);
-      lives_touch(tfile);
-      lives_free(tfile);
-      lives_free(set_lock_file);
+      //create a new cfile and fill in the details
+      lives_snprintf(handle, 256, "%s", mainw->msg);
     }
 
-    //create a new cfile and fill in the details
-    create_cfile();
+    // changes mainw->current_file on success
+    sfile = create_cfile(-1, handle, FALSE);
+    if (handle != NULL) lives_free(handle);
+    handle = NULL;
     threaded_dialog_spin(0.);
+
+    if (sfile == NULL) {
+      mainw->suppress_dprint = FALSE;
+
+      if (!keep_threaded_dialog) end_threaded_dialog();
+
+      if (mainw->multitrack != NULL) {
+        mainw->current_file = mainw->multitrack->render_file;
+        polymorph(mainw->multitrack, POLY_NONE);
+        polymorph(mainw->multitrack, POLY_CLIPS);
+        mt_sensitise(mainw->multitrack);
+        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+      }
+
+      recover_layout_map(MAX_FILES);
+      lives_chdir(cwd, FALSE);
+      lives_free(cwd);
+      fclose(orderfile);
+      return FALSE;
+    }
+
+    // lock the set
+    threaded_dialog_spin(0.);
+    set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+    tfile = lives_build_filename(prefs->workdir, set_name, set_lock_file, NULL);
+    lives_touch(tfile);
+    lives_free(tfile);
+    lives_free(set_lock_file);
 
     // get file details
     read_headers(".");
@@ -5461,7 +5435,6 @@ boolean reload_set(const char *set_name) {
     // add to clip menu
     threaded_dialog_spin(0.);
     add_to_clipmenu();
-    get_next_free_file();
     cfile->start = cfile->frames > 0 ? 1 : 0;
     cfile->end = cfile->frames;
     cfile->is_loaded = TRUE;
@@ -5481,7 +5454,7 @@ boolean reload_set(const char *set_name) {
     }
 
     lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
-    }
+  }
 
   // should never reach here
   lives_chdir(cwd, FALSE);
@@ -5524,7 +5497,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   d_print(_("Cleaning up disk space..."));
 
   // get a temporary clip for receiving data from backend
-  if (!get_temp_handle(mainw->first_free_file, TRUE)) {
+  if (!get_temp_handle(-1)) {
     d_print_failed();
     mainw->next_ds_warn_level = ds_warn_level;
     return;
@@ -5597,7 +5570,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   }
 
   // close the temporary clip
-  mainw->current_file = close_temp_handle(mainw->current_file, current_file);
+  close_temp_handle(current_file);
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
@@ -6285,13 +6258,13 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
   }
 
   if (file_open_params != NULL) {
-    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\" \"%s\"", prefs->backend, capable->mainpid,
-                              xwin, width, height, start_time, preview_frames,
+    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d %d \"%s\" \"%s\"", prefs->backend, capable->mainpid,
+                              xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), file_open_params);
 
   } else {
-    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d \"%s\"", prefs->backend, capable->mainpid,
-                              xwin, width, height, start_time, preview_frames,
+    com = lives_strdup_printf("%s fs_preview fsp%d %"PRIu64" %d %d %.2f %d %d \"%s\"", prefs->backend, capable->mainpid,
+                              xwin, width, height, start_time, preview_frames, (int)(prefs->volume * 100.),
                               (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
   }
 
@@ -7818,21 +7791,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
   if (!lives_ascii_strncasecmp(a_type, LIVES_FILE_EXT_WAV, 3)) israw = 0;
 
   if (HAS_EXTERNAL_PLAYER) {
-    int current_file = mainw->current_file;
-
-    // create temp handle to read file details into (otherwise it can mess up our current clip)
-    if (!get_temp_handle(mainw->first_free_file, TRUE)) {
-      d_print_failed();
-      mainw->noswitch = FALSE;
-      if (mainw->multitrack != NULL) {
-        mt_sensitise(mainw->multitrack);
-        mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
-      }
-      lives_free(a_type);
-      unbuffer_lmap_errors(FALSE);
-      return;
-    }
-
     if (read_file_details(file_name, TRUE)) {
       if (get_token_count(mainw->msg, '|') >= 14) {
         array = lives_strsplit(mainw->msg, "|", -1);
@@ -7844,8 +7802,6 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
         preparse = TRUE;
       }
     }
-
-    mainw->current_file = close_temp_handle(mainw->current_file, current_file);
   }
 
   if (!preparse) {
@@ -10233,7 +10189,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   prefs->show_gui = sgui;
 
   // an example of using 'get_temp_handle()' ////////
-  if (!get_temp_handle(mainw->first_free_file, TRUE)) {
+  if (!get_temp_handle(-1)) {
     if (prefs->show_gui) {
       lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -10252,7 +10208,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_free(com);
 
   if (mainw->com_failed) {
-    mainw->current_file = close_temp_handle(mainw->current_file, curr_file);
+    close_temp_handle(curr_file);
     if (prefs->show_gui) {
       lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -10268,7 +10224,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   do_progress_dialog(TRUE, FALSE, _("Click on a Window to Capture it\nPress 'q' to stop recording"));
 
   if (get_token_count(mainw->msg, '|') < 6) {
-    mainw->current_file = close_temp_handle(mainw->current_file, curr_file);
+    close_temp_handle(curr_file);
     if (prefs->show_gui) {
       lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -10297,7 +10253,7 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->foreign_visual = lives_strdup(array[5]);
   lives_strfreev(array);
 
-  mainw->current_file = close_temp_handle(mainw->current_file, curr_file);
+  close_temp_handle(curr_file);
 
   ////////////////////////////////////////
 
@@ -11158,14 +11114,14 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
   if (cfile->arate <= 0) {
     do_audrate_error_dialog();
     mainw->is_processing = FALSE;
-    close_temp_handle(mainw->current_file, old_file);
+    close_temp_handle(old_file);
     return;
   }
 
   if (mainw->rec_end_time == 0.) {
     do_error_dialog(_("\nRecord time must be greater than 0.\n"));
     mainw->is_processing = FALSE;
-    close_temp_handle(mainw->current_file, old_file);
+    close_temp_handle(old_file);
     return;
   }
 
@@ -11225,7 +11181,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
       mainw->files[old_file]->signed_endian = ose;
     }
     mainw->is_processing = FALSE;
-    close_temp_handle(mainw->current_file, old_file);
+    close_temp_handle(old_file);
     mainw->suppress_dprint = FALSE;
     d_print_cancelled();
     mainw->no_switch_dprint = FALSE;
@@ -11249,7 +11205,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     if (aud_end == 0.) {
       end_threaded_dialog();
-      close_temp_handle(mainw->current_file, old_file);
+      close_temp_handle(old_file);
       mainw->suppress_dprint = FALSE;
       d_print("nothing recorded...");
       d_print_failed();
@@ -11266,7 +11222,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
       if (mainw->com_failed) {
         end_threaded_dialog();
-        close_temp_handle(mainw->current_file, old_file);
+        close_temp_handle(old_file);
         mainw->suppress_dprint = FALSE;
         d_print_failed();
         return;

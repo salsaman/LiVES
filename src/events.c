@@ -4225,11 +4225,10 @@ boolean render_to_clip(boolean new_clip) {
       do {
         rdet->suggestion_followed = FALSE;
         response = lives_dialog_run(LIVES_DIALOG(rdet->dialog));
-        if (response == LIVES_RESPONSE_RESET) continue; // reset to current clip values
         if (response == LIVES_RESPONSE_OK && rdet->enc_changed) {
           check_encoder_restrictions(FALSE, TRUE, TRUE);
         }
-      } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RETRY);
+      } while (rdet->suggestion_followed || response == LIVES_RESPONSE_RETRY || response == LIVES_RESPONSE_RESET);
 
       xarate = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_arate)));
       xachans = (int)atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));

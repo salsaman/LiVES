@@ -362,6 +362,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
   LiVESPixbuf *pixbuf = NULL;
   LiVESError *error = NULL;
   char *oname;
+  boolean retb;
   int retval;
 
   int progress = 1;
@@ -391,11 +392,13 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       do {
         retval = LIVES_RESPONSE_NONE;
-        lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
+        retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
         if (error != NULL && pbr == NULL) {
           retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
           lives_error_free(error);
           error = NULL;
+        } else if (!retb) {
+          retval = do_write_failed_error_s_with_retry(oname, NULL, NULL);
         }
       } while (retval == LIVES_RESPONSE_RETRY);
 
@@ -705,4 +708,14 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
   sfile->frames += nframes;
 
   if (blankp != NULL) lives_widget_object_unref(blankp);
+}
+
+
+boolean pull_frame_idle(livespointer data) {
+  if (cfile->fx_frame_pump >= cfile->end) return FALSE;
+  if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
+    return FALSE;
+  }
+  cfile->fx_frame_pump++;
+  return TRUE;
 }

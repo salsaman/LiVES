@@ -578,8 +578,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   int retval;
   int current_file = mainw->current_file;
 
-  boolean retb;
-
   const char *img_ext;
 
   if (mainw->framedraw_frame > mainw->fd_max_frame) {
@@ -601,14 +599,13 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
     do {
       lives_widget_context_update();
-      if (is_virtual_frame(mainw->current_file, vend)) {
-        retb = virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL);
-        if (!retb) return;
+      if (!virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL)) {
+        return;
       }
       vend++;
       timeout = lives_alarm_check(alarm_handle);
     } while (vend <= cfile->end && timeout > 0 && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL);
-    cfile->fx_frame_pump = vend - 1;
+    cfile->fx_frame_pump = vend;
     lives_alarm_clear(alarm_handle);
   }
 
@@ -621,20 +618,16 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   while (!(infofile = fopen(cfile->info_file, "r")) && !mainw->cancelled) {
     // wait until we get at least 1 frame
     lives_widget_context_update();
-    if (cfile->clip_type == CLIP_TYPE_FILE && vend <= cfile->end) {
+    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump <= cfile->end) {
       // if we have a virtual clip (frames inside a video file)
       // pull some more frames to images to get us started
-      do {
-        retb = FALSE;
-        if (is_virtual_frame(mainw->current_file, vend)) {
-          retb = virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL);
-          if (!retb) {
-            return;
-          }
+      if (cfile->fx_frame_pump > 0) {
+        if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
+          return;
         }
-        vend++;
-      } while (vend <= cfile->end && !retb);
-      cfile->fx_frame_pump = vend;
+        if (cfile->fx_frame_pump == cfile->end) cfile->fx_frame_pump = 0;
+        else cfile->fx_frame_pump++;
+      }
     } else {
       // otherwise wait
       lives_usleep(prefs->sleep_time);
@@ -689,6 +682,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
     if (mainw->framedraw_frame > mainw->fd_max_frame) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), mainw->fd_max_frame);
+      lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), mainw->fd_max_frame);
       mainw->current_file = current_file;
       return;
     }
@@ -710,6 +704,8 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     redraw_framedraw_image(mainw->fd_layer);
   }
   mainw->current_file = current_file;
+  // add an idlefunc to pull more frames
+  //mainw->framepump_idle = lives_idle_add(pull_frame_idle, NULL); // TODO
 }
 
 

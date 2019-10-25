@@ -31,21 +31,19 @@ static LiVESList *fileread;
 static LiVESList *filewrite;
 static LiVESList *passwd_widgets;
 
-static boolean special_do_setup = TRUE;
+static boolean special_inited = FALSE;
 
 void init_special(void) {
-  framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
-  if (special_do_setup) {
-    // first time init
-    aspect.no_reset = FALSE;
-    special_do_setup = FALSE;
-  }
+  if (special_inited) return;
 
-  if (!aspect.no_reset) {
-    aspect.width_param = aspect.height_param = NULL;
-    aspect.lockbutton = NULL;
-    aspect.nwidgets = 0;
-  }
+  special_inited = TRUE;
+
+  framedraw.type = LIVES_PARAM_SPECIAL_TYPE_NONE;
+
+  aspect.width_param = aspect.height_param = NULL;
+  aspect.lockbutton = NULL;
+  aspect.nwidgets = 0;
+
   framedraw.xstart_param = framedraw.ystart_param = framedraw.xend_param = framedraw.yend_param = NULL;
   framedraw.stdwidgets = 0;
   framedraw.extra_params = NULL;
@@ -522,34 +520,36 @@ boolean check_filewrite_overwrites(void) {
 
 boolean special_cleanup(boolean is_ok) {
   // free some memory now
-  if (is_ok && !check_filewrite_overwrites()) return FALSE;
+  if (special_inited) {
+    if (is_ok && !check_filewrite_overwrites()) return FALSE;
+    aspect.no_reset = FALSE;
 
-  aspect.no_reset = FALSE;
+    mainw->framedraw = mainw->framedraw_reset = NULL;
+    mainw->framedraw_spinbutton = NULL;
 
-  mainw->framedraw = mainw->framedraw_reset = NULL;
-  mainw->framedraw_spinbutton = NULL;
+    if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
+    mainw->fd_layer = NULL;
 
-  if (mainw->fd_layer != NULL) weed_layer_free(mainw->fd_layer);
-  mainw->fd_layer = NULL;
+    if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
+    mainw->fd_layer_orig = NULL;
 
-  if (mainw->fd_layer_orig != NULL) weed_layer_free(mainw->fd_layer_orig);
-  mainw->fd_layer_orig = NULL;
+    mainw->framedraw_preview = NULL;
 
-  mainw->framedraw_preview = NULL;
+    if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
+    framedraw.extra_params = NULL;
 
-  if (framedraw.extra_params != NULL) lives_free(framedraw.extra_params);
-  framedraw.extra_params = NULL;
+    if (fileread != NULL) lives_list_free(fileread);
+    fileread = NULL;
 
-  if (fileread != NULL) lives_list_free(fileread);
-  fileread = NULL;
+    if (filewrite != NULL) lives_list_free(filewrite);
+    filewrite = NULL;
 
-  if (filewrite != NULL) lives_list_free(filewrite);
-  filewrite = NULL;
+    if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
+    passwd_widgets = NULL;
 
-  if (passwd_widgets != NULL) lives_list_free(passwd_widgets);
-  passwd_widgets = NULL;
-
-  framedraw.added = FALSE;
+    framedraw.added = FALSE;
+    special_inited = FALSE;
+  }
   return TRUE;
 }
 

@@ -1228,6 +1228,7 @@ typedef struct {
   pthread_mutex_t audio_resync_mutex; ///< sync for audio
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t gamma_lut_mutex; ///< refcounting for instances
+  //pthread_mutex_t frame_index_mutex; /// access to current file frame_index
 
   volatile lives_rfx_t *vrfx_update;
 

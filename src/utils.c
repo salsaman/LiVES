@@ -1581,7 +1581,7 @@ void init_clipboard(void) {
     }
 
     mainw->com_failed = FALSE;
-    com = lives_strdup_printf("%s delete_all \"%s\"", prefs->backend, clipboard->handle);
+    com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
     lives_rm(clipboard->info_file);
     lives_system(com, FALSE);
     lives_free(com);

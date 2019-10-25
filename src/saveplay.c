@@ -3922,12 +3922,17 @@ boolean read_headers(const char *file_name) {
 
   ssize_t sizhead = 8 * 4 + 8 + 8;
 
-  time_t old_time = 0, new_time = 0;
+  time_t old_time = 0, new_time = 1;
   struct stat mystat;
 
-  // TODO - remove this some time before 2038...
-  if (!stat(old_hdrfile, &mystat)) old_time = mystat.st_mtime;
-  if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
+  cfile->checked_for_old_header = TRUE;
+
+  if (lives_file_test(old_hdrfile, LIVES_FILE_TEST_EXISTS)) {
+    cfile->has_old_header = TRUE;
+    if (!stat(old_hdrfile, &mystat)) old_time = mystat.st_mtime;
+    if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
+  }
+
   ///////////////
 
   if (old_time <= new_time) {
@@ -4094,10 +4099,10 @@ boolean read_headers(const char *file_name) {
     return TRUE;
   }
 
-  // old style headers (pre 0.9.6)
   lives_free(lives_header);
 
   do {
+    // old style headers (pre 0.9.6)
     retval = LIVES_RESPONSE_OK;
     mainw->read_failed = FALSE;
     memset(version, 0, 32);
@@ -5087,9 +5092,13 @@ manual_locate:
       if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     } else {
       lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
-      lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
-      save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
-      if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+      if (dplug != NULL) {
+        lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
+        if (dpsys != NULL && strlen(dpsys->name) > 0 && strcmp(dpsys->name, decoder_name)) {
+          save_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, (void *)dpsys->name);
+          if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
+        }
+      }
     }
 
     if (bad_header) do_header_write_error(fileno);

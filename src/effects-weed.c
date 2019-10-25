@@ -352,7 +352,8 @@ boolean has_alpha_palette(weed_plant_t *ctmpl) {
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent) {
   int error;
   if (get_compound_parent &&
-      (weed_plant_has_leaf(inst, WEED_LEAF_HOST_COMPOUND_CLASS))) return weed_get_plantptr_value(inst, WEED_LEAF_HOST_COMPOUND_CLASS, &error);
+      (weed_plant_has_leaf(inst, WEED_LEAF_HOST_COMPOUND_CLASS)))
+    return weed_get_plantptr_value(inst, WEED_LEAF_HOST_COMPOUND_CLASS, &error);
   return weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
 }
 
@@ -5936,12 +5937,12 @@ static int load_compound_fx(void) {
 
   threaded_dialog_spin(0.);
 
-  lives_compound_plugin_path = lives_build_filename(prefs->configdir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
+  lives_compound_plugin_path = lives_build_path(prefs->configdir, PLUGIN_COMPOUND_EFFECTS_CUSTOM, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_CUSTOM, TRUE, lives_compound_plugin_path, NULL);
 
   for (plugin_idx = 0; plugin_idx < lives_list_length(compound_plugin_list); plugin_idx++) {
     plugin_name = (char *)lives_list_nth_data(compound_plugin_list, plugin_idx);
-    plugin_path = lives_build_filename(lives_compound_plugin_path, plugin_name, NULL);
+    plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
     threaded_dialog_spin(0.);
@@ -5952,12 +5953,12 @@ static int load_compound_fx(void) {
   threaded_dialog_spin(0.);
   lives_free(lives_compound_plugin_path);
 
-  lives_compound_plugin_path = lives_build_filename(prefs->prefix_dir, PLUGIN_COMPOUND_DIR, PLUGIN_COMPOUND_EFFECTS_BUILTIN, NULL);
+  lives_compound_plugin_path = lives_build_path(prefs->prefix_dir, PLUGIN_COMPOUND_DIR, PLUGIN_COMPOUND_EFFECTS_BUILTIN, NULL);
   compound_plugin_list = get_plugin_list(PLUGIN_COMPOUND_EFFECTS_BUILTIN, TRUE, lives_compound_plugin_path, NULL);
 
   for (plugin_idx = 0; plugin_idx < lives_list_length(compound_plugin_list); plugin_idx++) {
     plugin_name = (char *)lives_list_nth_data(compound_plugin_list, plugin_idx);
-    plugin_path = lives_build_filename(lives_compound_plugin_path, plugin_name, NULL);
+    plugin_path = lives_build_path(lives_compound_plugin_path, plugin_name, NULL);
     load_compound_plugin(plugin_name, plugin_path);
     lives_free(plugin_path);
     threaded_dialog_spin(0.);

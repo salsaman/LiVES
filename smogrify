@@ -599,7 +599,7 @@ if (defined($ARGV[0])) {
 	    # write mini-info file
 
             do {
-                $handle=int(rand 1000000000)+65536;
+                $handle=int(rand 1000000000) + 65536;
                 $curworkdir="$workdir/$handle";
             } while (-d $curworkdir);
 
@@ -797,8 +797,8 @@ if (defined($ARGV[0])) {
             $handle = $ARGV[1];
 	    #clear old backups (e.g. when saving a set)
             $curworkdir = "$workdir/$handle";
-            smog_chdir("$curworkdir");
-            unlink glob "*.pre";
+            smog_chdir($curworkdir);
+	    unlink glob "*.pre";
             &sig_complete;
             exit 0;
         }
@@ -817,8 +817,8 @@ if (defined($ARGV[0])) {
             $handle = $ARGV[1];
             $curworkdir = "$workdir/$handle";
 	    $statusfile = "$curworkdir/.status";
-            smog_chdir("$curworkdir");
-            &backup_audio;
+            smog_chdir($curworkdir);
+	    &backup_audio;
             if ($panic) {
                 exit 1;
             }
@@ -881,7 +881,10 @@ if (defined($ARGV[0])) {
             $curworkdir = "$workdir/$handle";
 	    $statusfile = "$curworkdir/.status";
 
+	    unlink "$curworkdir/pause";
+
             smog_chdir("$curworkdir");
+
             $fsize = -s "$nfile";
             $afsize = -s "audio";
             unlink glob "*.tar";
@@ -890,7 +893,7 @@ if (defined($ARGV[0])) {
 
             $img_type = "jpg";
 
-            unless(-f "header.lives") {
+            unless (-f "header.lives") {
                 if (defined(open IN, "< header2")) {
                     read IN, $val, 4;
 
@@ -910,9 +913,9 @@ if (defined($ARGV[0])) {
                 if (! -f "header2") {
                     unless ($nfile eq "") {
                         unlink glob "event.*";
-                        $img_ext=&get_img_ext($curworkdir);
-                        $img_prefix=&get_img_prefix($img_ext);
-                        $frames=&count_frames;
+                        $img_ext = &get_img_ext($curworkdir);
+                        $img_prefix = &get_img_prefix($img_ext);
+                        $frames = &count_frames;
                     }
                 }
 
@@ -961,12 +964,12 @@ if (defined($ARGV[0])) {
                 opendir DIR,$plugindir;
                 my @files = readdir(DIR);
                 closedir DIR;
-                @files = sort (@files);
+                #@files = sort (@files);
 
                 foreach my $plugname (@files) {
                     unless ($plugname =~ /^\./) {
-                        if ((-f $plugname && (-x $plugname || $allow_nonex)) || ($allow_subdirs == 1 && -d $plugname)) {
-                            unless($allow_nonex) {
+                        if (-f $plugname || ($allow_subdirs == 1 && -d $plugname)) {
+                            unless ($allow_nonex) {
                                 next if ! -x "$plugindir/$plugname";
 			    }
 			    unless ($plugname eq "") {
@@ -1030,7 +1033,7 @@ if (defined($ARGV[0])) {
                 exit 0;
             }
 
-            smog_chdir("$curworkdir");
+            smog_chdir($curworkdir);
 
             $name=&mkname(1);
 
@@ -1052,7 +1055,7 @@ if (defined($ARGV[0])) {
             $handle=$ARGV[1];
             $curworkdir="$workdir/$handle";
 	    $statusfile="$curworkdir/.status";
-            smog_chdir("$curworkdir");
+            smog_chdir($curworkdir);
             $start=$ARGV[2];
             $end=$ARGV[3];
             $plugdir=$ARGV[4];
@@ -1082,8 +1085,7 @@ if (defined($ARGV[0])) {
                 }
             }
 
-	    #need this again - something resets us
-            smog_chdir("$curworkdir");
+            smog_chdir($curworkdir);
 
 	    $com="\"$plugin\" clear $start $end $img_ext";
 
@@ -1183,7 +1185,7 @@ if (defined($ARGV[0])) {
 	    }
 
             opendir DIR, "$workdir";
-            smog_chdir("$workdir");
+            smog_chdir($workdir);
 
             while (my $file = readdir(DIR)) {
                 if ($file =~ /^recovery\.$uid\.$gid\.(.*)/ || $file =~ /^layout\.$uid\.$gid\.(.*)/ ||
@@ -1245,28 +1247,24 @@ if (defined($ARGV[0])) {
         }
 
 
-        if ($command eq "cleanup" || $command eq "weed") {
-            smog_chdir("$workdir");
+        if ($command eq "weed") {
+            smog_chdir($workdir);
+
             print "Cleaning up working directory for $GUI_NAME.\n";
-            if ($command eq "cleanup") {
-                unlink glob "* .* *.*";
-		# will not remove directories
-            } else {
-                $new_work = $ARGV[1];
-                unless($new_work eq "") {
-		    # here is where we create a new work directory
-                    unless(-d $new_work || (mkdir $new_work)) {
-                        print "Smogrify: Unable to create new directory $new_work!\n";
-                        exit 1;
-                    }
-                    print "Smogrify: moving sets from $workdir to $new_work\n";
-                }
-                else {
-                    print "Smogrify: Leaving sets intact.\n";
-                }
-                &weed(0);
-            }
-            exit 0;
+	    $new_work = $ARGV[1];
+	    unless($new_work eq "") {
+		# here is where we create a new work directory
+		unless(-d $new_work || (mkdir $new_work)) {
+		    print "Smogrify: Unable to create new directory $new_work!\n";
+		    exit 1;
+		}
+		print "Smogrify: moving sets from $workdir to $new_work\n";
+	    }
+	    else {
+		print "Smogrify: Leaving sets intact.\n";
+	    }
+	    &weed(0);
+	    exit 0;
         }
 
 
@@ -2115,14 +2113,19 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "close") {
+	    if (! -d $curworkdir || ! -f "$curworkdir/header.lives") {
+		unlink $pidfile;
+		exit 1;
+	    }
+
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
 		smog_system("smogrify stopsubsub \"$handle\"");
 	    }
-	    if (chdir("$curworkdir")) {
+	    if (chdir($curworkdir)) {
 		unlink glob "* .* *.*";
-		smog_chdir("$workdir");
+		smog_chdir($workdir);
 		rmdir $curworkdir;
 	    }
 	    exit 0;
@@ -2530,8 +2533,9 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "resize_all") {
+	    smog_chdir($curworkdir);
+
 	    unlink "$curworkdir/pause";
-	    smog_chdir("$curworkdir");
 	    $end=$ARGV[2];
 
 	    my $iwidth = $ARGV[3];
@@ -2655,7 +2659,7 @@ if (defined($ARGV[0])) {
 	    $nfile=$ARGV[5];
 
 	    unlink "$curworkdir/pause";
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    # check the file is writable
 	    unless (&is_writeable($nfile)) {
@@ -2722,7 +2726,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "restore") {
 	    $nfile=$ARGV[2];
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    $com="tar -zxf \"$nfile\" 2>$nulfile";
 	    smog_system ($com);
@@ -2794,7 +2798,7 @@ if (defined($ARGV[0])) {
 	    $newframe=-1;
 	    $event_file="$curworkdir/event.frames";
 	    $resize_ext=".tmp";
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    unless ($leave_bak==1) {
 		&clean_old;
@@ -3006,7 +3010,7 @@ if (defined($ARGV[0])) {
 		$leave_bak = 0;
 	    }
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    $oend = $end;
 
@@ -3082,14 +3086,15 @@ if (defined($ARGV[0])) {
 	}
 
 
-	if ($command eq "delete_all") {
+	if ($command eq "clear_clipboard") {
 	    $frames = $ARGV[2];
-	    if (! -d $curworkdir) {
+	    if (int($handle) < 65535 || ! -d $curworkdir) {
 		&sig_complete;
 		exit 1;
 	    }
-	    smog_chdir("$curworkdir");
-	    unlink glob "* *.* .*";
+	    smog_chdir($curworkdir);
+	    unlink glob "*.png *.jpg audio";
+
 	    if ($GUI_NAME eq "LiVES") {
 		# LiVES needs this to stop the progress dialog from flickering
 		sleep(1);
@@ -3265,7 +3270,7 @@ if (defined($ARGV[0])) {
 	    $file = $ARGV[8];
 	    $audio_in = "audiodump.wav";
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    $audiofile = "audio";
 
@@ -3364,7 +3369,7 @@ if (defined($ARGV[0])) {
 	    $asigned = $ARGV[7];
 	    $aendian = $ARGV[8];
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    unless(&rc_get("conserve_space") eq "true") {
 		&backup_audio;
@@ -3605,7 +3610,8 @@ if (defined($ARGV[0])) {
 		$allow_nonex = $ARGV[2];
 	    }
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
+
 	    $audio_out = "audio";
 	    $audio_bak = "audio.bak";
 
@@ -3683,7 +3689,7 @@ if (defined($ARGV[0])) {
 	    # remove the audio file in audiodump/audiodump.wav
 	    # plus any audio.new files (e.g. from append audio)
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 	    unlink glob "audiodump* audio.new";
 
 	    &sig_complete;
@@ -4005,7 +4011,7 @@ if (defined($ARGV[0])) {
 
 	    $file = $ARGV[2];
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    $audio_in = "audiodump.wav";
 
@@ -4058,7 +4064,7 @@ if (defined($ARGV[0])) {
 
 	    $new_frames = $num_frames;
 
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 
 	    $allow_missing = 0;
 	    if ($end < 0) {
@@ -4203,7 +4209,7 @@ if (defined($ARGV[0])) {
 
 	if ($command =~ /^fxrender_(.*)/) {
 	    my $lives_config_dir = "$configdir/.lives-dir";
-	    smog_chdir("$curworkdir");
+	    smog_chdir($curworkdir);
 	    unlink "$curworkdir/pause";
 	    $command = $1;
 	    $status = $ARGV[2];
@@ -4365,7 +4371,7 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "import_project") {
 	    $proj_file = $ARGV[2];
-	    smog_chdir("$workdir");
+	    smog_chdir($workdir);
 	    umask 0;
 	    $com = "tar --no-same-owner -xzf \"$proj_file\"";
 	    $smerr = smog_system($com);
@@ -4710,7 +4716,7 @@ sub mv_pre {
         unlink "$pidfile";
     }
 
-    smog_chdir("$curworkdir");
+    smog_chdir($curworkdir);
     unlink glob "*.mgk";
 
     for ($i = $start; $i <= $end; $i++) {
@@ -7182,7 +7188,7 @@ sub get_mplayer_format {
 
 sub clean_old {
     # clear away any old backup files, etc.
-    return if (! -d "$workdir/$handle");
+    return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
     smog_chdir("$workdir/$handle");
     unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();
@@ -8328,7 +8334,8 @@ sub weed {
     #
 
     my $file;
-    smog_chdir("$workdir");
+
+    smog_chdir($workdir);
 
     # get starting disk space
     my $start_total = (split / /, (smog_system_direct("du -sb . 2>$nulfile")))[0];
@@ -8349,7 +8356,7 @@ sub weed {
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
                                 smog_chdir("$workdir/$file");
-                                &prune;
+				&prune;
 				unlink glob "$workdir/$file/lock.*";
                                 smog_chdir("$workdir");
                             }
@@ -8371,8 +8378,8 @@ sub weed {
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
                                 smog_chdir("$workdir/$file");
-                                &prune;
-                                smog_chdir("$workdir");
+				&prune;
+				smog_chdir("$workdir");
                             }
                         }
                         unless (!defined($new_work)||$new_work eq "") {
@@ -8407,11 +8414,11 @@ sub weed {
 
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
-        smog_chdir("$workdir");
-        unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout*";
-        unless (!defined($new_work)||$new_work eq "") {
-            unlink glob "firew.* encoder_log_* stream.*";
-        }
+	smog_chdir($workdir);
+	unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout*";
+	unless (!defined($new_work)||$new_work eq "") {
+	    unlink glob "firew.* encoder_log_* stream.*";
+	}
     }
 
     # total disk space at end

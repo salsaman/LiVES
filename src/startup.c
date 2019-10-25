@@ -55,7 +55,7 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 
 
 void dir_toolong_error(char *dirname, const char *dirtype, size_t max) {
-  char *msg = lives_strdup_printf(_("The name of the %s directory provided\n(%s)\nis too long (maximum is %d characters)"
+  char *msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)"
                                     "Please click Retry to select an alternative directory, or Abort to exit immediately"
                                     "from LiVES"), dirtype, dirname, max);
   do_abort_retry_dialog(msg, NULL);

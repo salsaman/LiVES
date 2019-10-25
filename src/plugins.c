@@ -196,6 +196,7 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
   pluglist = get_plugin_result(com, "|", FALSE, TRUE);
   lives_free(com);
   threaded_dialog_spin(0.);
+  pluglist = lives_list_sort_alpha(pluglist, TRUE);
   return pluglist;
 }
 

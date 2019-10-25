@@ -135,6 +135,7 @@ static int xxwidth = 0, xxheight = 0;
 static char *old_vhash = NULL;
 static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
+static boolean user_configdir = FALSE;
 
 ////////////////////
 
@@ -795,6 +796,7 @@ static boolean pre_init(void) {
   add_messages_to_list(_("Starting...\n"));
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
+  lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
 
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -1987,63 +1989,6 @@ static void do_start_messages(void) {
   int w, h;
   char *tmp, *endian, *fname, *phase = NULL;
 
-  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
-  if (mainw->has_session_workdir) {
-    d_print(_("(Set by -workdir commandline option)\n"));
-  } else {
-    if (initial_startup_phase != -1) {
-      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
-        lives_free(old_vhash);
-        old_vhash = lives_strdup(LiVES_VERSION);
-      }
-      d_print(_("(Retrieved from %s, version %s)\n"), capable->rcfile, old_vhash);
-    } else {
-      d_print(_("(Set by user during setup phase)\n"));
-    }
-  }
-
-  if (initial_startup_phase == 0) {
-    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup(_("startup error ocurred - forced reinstall"));
-    } else {
-      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
-        phase = lives_strdup_printf(_("upgrade from version %s"), mainw->old_vhash);
-      } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
-        phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
-      }
-    }
-  } else if (initial_startup_phase == -1) {
-    if (!strcmp(mainw->old_vhash, "0")) {
-      phase = lives_strdup(_("reinstall after failed recovery"));
-      fname = lives_strdup_printf("%s.damaged", capable->rcfile);
-      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-        tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
-        lives_free(phase);
-        phase = tmp;
-      }
-      lives_free(fname);
-      d_print("\n");
-    } else {
-      phase = lives_strdup(_("fresh install"));
-    }
-  } else {
-    phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
-  }
-  if (phase == NULL)  phase = lives_strdup(_("normal startup"));
-  d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
-  lives_free(phase);
-  lives_free(old_vhash);
-
-  if (initial_startup_phase == 0) {
-    fname = lives_strdup_printf("%s.recovery.tried.succeeded", capable->rcfile);
-    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-      phase = lives_strdup_printf(_("%s was possibly recovered from %s.recovery\n"), capable->rcfile, capable->rcfile);
-      d_print("%s", phase);
-      lives_free(phase);
-    }
-    lives_free(fname);
-  }
-
   d_print(_("\nChecking optional dependencies: "));
 
   show_detected_or_not(capable->has_mplayer, "mplayer");
@@ -2132,6 +2077,71 @@ static void do_start_messages(void) {
   d_print(_("Gui screen size is %d X %d, scale was set to %.3f\n"), GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, widget_opts.scale);
   if (get_screen_usable_size(&w, &h)) {
     d_print(_("GUI Screen usable size appears to be %d X %d, with %d dpi.\n"), w, h, (int)mainw->mgeom[widget_opts.monitor].dpi);
+  }
+
+  if (user_configdir) {
+    tmp = lives_strdup(_("set via -configdir commandline option"));
+  } else {
+    tmp = lives_strdup(_("default value"));
+  }
+  d_print(_("\nConfig directory is %s (%s)\n"), prefs->configdir, tmp);
+
+
+  d_print(_("\nWorking directory is %s\n"), prefs->workdir);
+  if (mainw->has_session_workdir) {
+    d_print(_("(Set by -workdir commandline option)\n"));
+  } else {
+    if (initial_startup_phase != -1) {
+      if (!strcmp(mainw->version_hash, mainw->old_vhash)) {
+        lives_free(old_vhash);
+        old_vhash = lives_strdup(LiVES_VERSION);
+      }
+      d_print(_("(Retrieved from %s, version %s)\n"), capable->rcfile, old_vhash);
+    } else {
+      d_print(_("(Set by user during setup phase)\n"));
+    }
+  }
+
+  if (initial_startup_phase == 0) {
+    if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
+      phase = lives_strdup(_("STARTUP ERROR OCCURRED - FORCED REINSTALL"));
+    } else {
+      if (atoi(mainw->old_vhash) < atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("upgrade from version %s. Welcome !"), mainw->old_vhash);
+      } else if (atoi(mainw->old_vhash) > atoi(mainw->version_hash)) {
+        phase = lives_strdup_printf(_("downgrade from version %s !"), mainw->old_vhash);
+      }
+    }
+  } else if (initial_startup_phase == -1) {
+    if (!strcmp(mainw->old_vhash, "0")) {
+      phase = lives_strdup(_("REINSTALL AFTER FAILED RECOVERY"));
+      fname = lives_strdup_printf("%s.damaged", capable->rcfile);
+      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+        tmp = lives_strdup_printf(_("%s; check %s for possible errors before re-running LiVES"), phase, fname);
+        lives_free(phase);
+        phase = tmp;
+      }
+      lives_free(fname);
+      d_print("\n");
+    } else {
+      phase = lives_strdup(_("fresh install. Welcome !"));
+    }
+  } else {
+    phase = lives_strdup_printf(_("continue with installation"), initial_startup_phase);
+  }
+  if (phase == NULL)  phase = lives_strdup(_("normal startup"));
+  d_print(_("Initial startup phase was %d: (%s)\n"), initial_startup_phase, phase);
+  lives_free(phase);
+  lives_free(old_vhash);
+
+  if (initial_startup_phase == 0) {
+    fname = lives_strdup_printf("%s.recovery.tried.succeeded", capable->rcfile);
+    if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+      phase = lives_strdup_printf(_("%s WAS POSSIBLY RECOVERED FROM %s.recovery\n"), capable->rcfile, capable->rcfile);
+      d_print("%s", phase);
+      lives_free(phase);
+    }
+    lives_free(fname);
   }
 }
 
@@ -3406,6 +3416,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_free(tmp);
 #endif
 
+  ensure_isdir(capable->home_dir);
+
   // get opts first
   if (argc > 1) {
     if (!strcmp(argv[1], "-capture")) {
@@ -3480,8 +3492,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         charopt = longopts[option_index].name;
 
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
-          mainw->has_session_workdir = TRUE;
-
           if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
@@ -3491,11 +3501,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             }
           }
           if (toolong) {
-            // TODO
+            dir_toolong_error(optarg, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2);
+            lives_free(tmp);
             capable->can_write_to_workdir = FALSE;
             break;
           }
 
+          mainw->has_session_workdir = TRUE;
           lives_snprintf(prefs->workdir, PATH_MAX, "%s", optarg);
 
           if (!lives_make_writeable_dir(prefs->workdir)) {
@@ -3529,7 +3541,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             capable->can_write_to_config = FALSE;
             break;
           }
-
+          user_configdir = TRUE;
           continue;
         }
 

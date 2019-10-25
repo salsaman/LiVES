@@ -108,21 +108,18 @@ if (defined($ARGV[0])) {
 				 $command =~ /^pfxrender_/ || $command =~ /^fxrender_/)) {
 	    ## commands that require $configdir
 
-	    if ($configdir eq "") {
-		# configdir not set, try with $HOME
-		$home = $ENV {"HOME"};
-		if ($home eq "") {
-		    print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command \"$command\", ";
-		    print STDERR "and default of \$HOME not found\n";
-		    print STDERR "cannot continue. Exiting with code 98\n";
-		    print STDERR "You can override the default configdir setting ";
-		    print STDERR "by starting $GUI_NAME with the -configdir commandline option.\n";
-		    print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
-		    exit 98;
-		}
+	    # configdir not set, try with $HOME
+	    $home = $ENV {"HOME"};
+	    if ($home eq "") {
+		print STDERR "smogrify for $GUI_NAME v$version: configdir not defined for command \"$command\", ";
+		print STDERR "and default of \$HOME not found\n";
+		print STDERR "cannot continue. Exiting with code 98\n";
+		print STDERR "You can override the default configdir setting ";
+		print STDERR "by starting $GUI_NAME with the -configdir commandline option.\n";
+		print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
+		exit 98;
 	    }
 	    $configdir = $home;
-
 	}
 
 	if ($configdir ne "") {
@@ -4202,7 +4199,7 @@ if (defined($ARGV[0])) {
 
 	# effects
 
-	if ($command =~ /$pfxrender_/) {
+	if ($command =~ /^pfxrender_/) {
 	    #fx preview
 	    $fx_prev = 1;
 	    $command = substr($command, 1);
@@ -4210,7 +4207,7 @@ if (defined($ARGV[0])) {
 	}
 
 
-	if ($command =~ /$fxrender_(.*)/) {
+	if ($command =~ /^fxrender_(.*)/) {
 	    my $lives_config_dir = "$configdir/.lives-dir";
 	    smog_chdir("$curworkdir");
 	    unlink "$curworkdir/pause";
@@ -8489,5 +8486,5 @@ sub is_non_empty_dir {
     return 0;
 }
 
-1; # for require
+1; # for require (really !)
 }

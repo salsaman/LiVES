@@ -884,8 +884,7 @@ boolean do_startup_tests(boolean tshoot) {
   if (!tshoot) {
     if (allpassed) {
       gtk_widget_grab_focus(okbutton);
-    }
-    else {
+    } else {
       lives_widget_grab_focus(cancelbutton);
     }
   }

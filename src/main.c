@@ -795,7 +795,7 @@ static boolean pre_init(void) {
   add_messages_to_list(_("Starting...\n"));
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
-  
+
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme, 64, "none");
   }
@@ -1376,9 +1376,9 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
   if (strcmp(future_prefs->theme, prefs->theme)) {
-      // we set the theme here in case it got reset to 'none'
-      set_string_pref(PREF_GUI_THEME, prefs->theme);
-      lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+    // we set the theme here in case it got reset to 'none'
+    set_string_pref(PREF_GUI_THEME, prefs->theme);
+    lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
   }
 
   prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);

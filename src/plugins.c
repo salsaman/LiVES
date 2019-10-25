@@ -2036,9 +2036,9 @@ boolean decoder_plugin_move_to_first(const char *name) {
   while (decoder_plugin != NULL) {
     if (!strcmp((const char *)(decoder_plugin->data), name)) {
       if (last_decoder_plugin != NULL) {
-	last_decoder_plugin->next = decoder_plugin->next;
-	decoder_plugin->next = mainw->decoder_list;
-	mainw->decoder_list = decoder_plugin;
+        last_decoder_plugin->next = decoder_plugin->next;
+        decoder_plugin->next = mainw->decoder_list;
+        mainw->decoder_list = decoder_plugin;
       }
       return TRUE;
     }
@@ -2167,7 +2167,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
       // check for sanity
 
       if (!sanity_check_cdata(dplug->cdata)) {
-	//last_decoder_plugin = decoder_plugin;
+        //last_decoder_plugin = decoder_plugin;
         decoder_plugin = decoder_plugin->next;
         continue;
       }

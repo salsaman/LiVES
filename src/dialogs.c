@@ -294,7 +294,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   form_text = lives_strdup_printf("\n%s%s%s\n", pad, textx, pad);
 
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  widget_opts.mnemonic_label = FALSE;
   label = lives_standard_label_new(form_text);
+  widget_opts.mnemonic_label = TRUE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_free(form_text);
@@ -2989,8 +2991,7 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
   if (can_retry) {
     response = do_abort_retry_dialog(msgx, transient);
-  }
-  else {
+  } else {
     do_error_dialog(msgx);
   }
   lives_free(msgx);

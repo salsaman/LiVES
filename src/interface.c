@@ -1080,8 +1080,10 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   lives_snprintf(tmp_label, 256, "%s...\n", text);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  widget_opts.mnemonic_label = FALSE;
   procw->label = lives_standard_label_new(tmp_label);
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  widget_opts.mnemonic_label = TRUE;
   lives_box_pack_start(LIVES_BOX(vbox), procw->label, FALSE, FALSE, 0);
 
   procw->progressbar = lives_progress_bar_new();
@@ -1182,7 +1184,9 @@ xprocess *create_processing(const char *text) {
 
   lives_snprintf(tmp_label, 256, "%s...\n", text);
   widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  widget_opts.mnemonic_label = FALSE;
   procw->label = lives_standard_label_new(tmp_label);
+  widget_opts.mnemonic_label = TRUE;
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
 
   lives_box_pack_start(LIVES_BOX(vbox3), procw->label, TRUE, TRUE, 0);
@@ -1635,7 +1639,6 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
       lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(on_resizecb_toggled),
                                  checkbutton2);
-
   }
 
   if (text2 != NULL) {
@@ -2774,7 +2777,9 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(commentsw->comments_dialog));
 
   if (filename != NULL) {
+    widget_opts.mnemonic_label = FALSE;
     label = lives_standard_label_new((extrabit = lives_strdup_printf(_("File Name: %s"), filename)));
+    widget_opts.mnemonic_label = TRUE;
     lives_free(extrabit);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, widget_opts.packing_height);
   }

@@ -737,7 +737,7 @@ typedef struct {
 
   boolean checked_for_old_header;
   boolean has_old_header;
-  
+
   float **audio_waveform; ///< values for drawing the audio wave
   int *aw_sizes; ///< size of each audio_waveform in floats
   char md5sum[64];

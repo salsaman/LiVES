@@ -213,14 +213,14 @@ int lives_system(const char *com, boolean allow_error) {
       char *msg = NULL;
       mainw->com_failed = TRUE;
       if (!allow_error) {
-	msg = lives_strdup_printf("lives_system failed with code %d: %s", retval, com);
-	LIVES_ERROR(msg);
-	response = do_system_failed_error(com, retval, NULL, TRUE, NULL);
+        msg = lives_strdup_printf("lives_system failed with code %d: %s", retval, com);
+        LIVES_ERROR(msg);
+        response = do_system_failed_error(com, retval, NULL, TRUE, NULL);
       }
 #ifndef LIVES_NO_DEBUG
       else {
-	msg = lives_strdup_printf("lives_system failed with code %d: %s (not an error)", retval, com);
-	LIVES_DEBUG(msg);
+        msg = lives_strdup_printf("lives_system failed with code %d: %s (not an error)", retval, com);
+        LIVES_DEBUG(msg);
       }
 #endif
       if (msg != NULL) lives_free(msg);
@@ -273,14 +273,14 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
       char *msg = NULL;
       mainw->com_failed = TRUE;
       if (!allow_error) {
-	msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
-	LIVES_ERROR(msg);
-	response = do_system_failed_error(com, err, NULL, TRUE, NULL);
+        msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
+        LIVES_ERROR(msg);
+        response = do_system_failed_error(com, err, NULL, TRUE, NULL);
       }
 #ifndef LIVES_NO_DEBUG
       else {
-	msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
-	LIVES_DEBUG(msg);
+        msg = lives_strdup_printf("lives_popen failed with code %d: %s (not an error)", err, com);
+        LIVES_DEBUG(msg);
       }
 #endif
       if (msg != NULL) lives_free(msg);
@@ -4305,7 +4305,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   int retval2 = LIVES_RESPONSE_NONE;
 
   if (!IS_VALID_CLIP(which)) return FALSE;
-  
+
   if (mainw->cached_list == NULL) {
     lives_header = lives_build_filename(prefs->workdir, mainw->files[which]->handle, LIVES_CLIP_HEADER, NULL);
     if (!sfile->checked_for_old_header) {
@@ -4314,13 +4314,13 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
       char *old_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER_OLD, NULL);
       sfile->checked_for_old_header = TRUE;
       if (!lives_file_test(old_header, LIVES_FILE_TEST_EXISTS)) {
-	if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
-	if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
-	if (old_time > new_time) {
-	  sfile->has_old_header = TRUE;
-	  lives_free(lives_header);
-	  return FALSE; // clip has been edited by an older version of LiVES
-	}
+        if (!stat(old_header, &mystat)) old_time = mystat.st_mtime;
+        if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
+        if (old_time > new_time) {
+          sfile->has_old_header = TRUE;
+          lives_free(lives_header);
+          return FALSE; // clip has been edited by an older version of LiVES
+        }
       }
       lives_free(old_header);
     }
@@ -4436,7 +4436,7 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
   if (which == 0 || which == mainw->scrap_file) return FALSE;
 
   if (!IS_VALID_CLIP(which)) return FALSE;
-  
+
   lives_header = lives_build_filename(prefs->workdir, sfile->handle, LIVES_CLIP_HEADER, NULL);
   key = clip_detail_to_string(what, NULL);
 

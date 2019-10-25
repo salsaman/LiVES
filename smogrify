@@ -98,13 +98,13 @@ if (defined($ARGV[0])) {
 	if ($config) {
 	    $configdir = $config;
 	}
-	
+
 	my @needs_configdir = {"report", "get_pref", "set_pref", "set_pref_priority", "set_pref_if_not_set", "delete_pref", "print_pref",
 			       "set_clip_value", "get_clip_value", "get_pref_default", "make_thumb", "play", "play_opening_preview",
 			       "open", "open_test", "save", "append_audio", "trim_audio", "resample_audio", "commit_audio",
 			       "cdopen", "insert", "get_details", "fill_and_redo_frames", "audioopen"};
 
-	if ($configdir == "" && ($workdir eq "" || grep(/^$command$/, @needs_configdir) || 
+	if ($configdir == "" && ($workdir eq "" || grep(/^$command$/, @needs_configdir) ||
 				 $command =~ /^pfxrender_/ || $command =~ /^fxrender_/)) {
 	    ## commands that require $configdir
 
@@ -1410,7 +1410,7 @@ if (defined($ARGV[0])) {
 
 	    exit 0;
 	}
-    
+
 	####################################################################
 	# run the rest in background
 	if ($background == 1) {
@@ -1425,7 +1425,7 @@ if (defined($ARGV[0])) {
             &usage;
             exit 1;
         }
-    
+
         $handle = $ARGV[1];
         $curworkdir = "$workdir/$handle";
 	$statusfile = "$curworkdir/.status";
@@ -1610,7 +1610,7 @@ if (defined($ARGV[0])) {
             $command = "open";
             $opentest = 1;
         }
-    
+
         if ($command eq "open") {
 	    ## this is used now only in 3 circumstances
 	    # - the user chooses to disable instant opening
@@ -2097,7 +2097,7 @@ if (defined($ARGV[0])) {
 	    }
 	    exit 0;
 	}
-    
+
 	if ($command eq "open_fw_card") {
 	    $cardno=$ARGV[2];
 	    $cache=$ARGV[3];
@@ -4067,8 +4067,6 @@ if (defined($ARGV[0])) {
 		$end = -$end;
 	    }
 
-	    ### bad ####
-	    
 	    if (defined($ARGV[17])) {
 		$times = $ARGV[17];
 		if ($times < 0) {
@@ -4093,7 +4091,6 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-
 	    if ($with_audio < 2) {
 		if (!$undo_cut) {
 		    if (!$allow_missing) {
@@ -4116,9 +4113,6 @@ if (defined($ARGV[0])) {
 		    sleep(1);
 		}
 	    }
-
-
-	    ### end bad ###
 
 	    if ($with_audio) {
 		$fps = $ARGV[11];
@@ -7532,7 +7526,7 @@ sub rc_set {
     ## if $delpref is 1, we skip writing the key, and just insert a newline
     ## some keys are "priority" keys and get inserted at the start
 
-    ## as we create the new file, we record the exact number of bytes written. 
+    ## as we create the new file, we record the exact number of bytes written.
     ## If the filesize of the new file is not what we expect then we abort the operation
 
     ## otherwise, we copy the old file to a recovery backup, then copy new file to the old file
@@ -7574,7 +7568,7 @@ sub rc_set {
 	    ## $stage defines the action applied to the line:
 	    # first we remove the newline from the end, then:
 	    #
-	    ## stage -1 = scan mode: 
+	    ## stage -1 = scan mode:
 	    # - if it's a whitespace line, we increment $extrablanks and skip it
 	    # - if it's a ^#comment and not a ^#deprecated comment, we insert $extrablanks whitespace lines, then reset $extrablanks
 	    # - copy the #comment
@@ -7583,11 +7577,11 @@ sub rc_set {
 	    # or for a priority pref we go to straight to stage 2
 	    #
 	    ## stage 0 = copy mode:
-	    # - we just copy the lines verbatim, re-adding the newline, until: 
+	    # - we just copy the lines verbatim, re-adding the newline, until:
 	    # if we match ^<$key>, then we proceed to stage 1
 	    # - if $deprecate is 1 and the last line wasnt a ^#deprecated comment, we insert the #deprecated comment
 	    #
-	    ## stage 1 = look for end: 
+	    ## stage 1 = look for end:
 	    # - in deprecate mode we output the line, newline
 	    # - in delpref mode, we output nothing
 	    # - otherwise, we output only #comments
@@ -7636,7 +7630,7 @@ sub rc_set {
 			}
 			$extrablanks = 0;
 		    }
-		
+
 		    $addsize = &printlen(OUT, "$current\n");
 		    if ($addsize == -1) {
 			    close OUT;
@@ -7655,7 +7649,7 @@ sub rc_set {
 		    if ($addsize == -1) {
 			close OUT;
 			unlink $newrcfile;
-			&startup_error(4, "rc_set_new", "write_new2", 
+			&startup_error(4, "rc_set_new", "write_new2",
 				       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:@:");
 		    }
 		    $rcfilesize += $addsize;
@@ -7667,7 +7661,7 @@ sub rc_set {
 			$stage = 0;
 		    }
 		}
-		
+
 		if (!$priority && $current =~ /^<$key>/) {
 		    # we found <key>
 		    next if $stage > 0; # if we already found key, ignore the duplicate
@@ -7692,7 +7686,7 @@ sub rc_set {
 		    }
 		}
 
-		if ($stage == 1) { 
+		if ($stage == 1) {
 		    if ($current =~ /<\/$key>$/) {
 			if ($noreplace) {
 			    close IN;
@@ -7743,7 +7737,7 @@ sub rc_set {
 
 		# $stage should always be 0 if we reach here, but just in case
 		next if ($stage != 0);
-		
+
 		$addsize = &printlen(OUT, "$current\n");
 		if ($addsize == -1) {
 		    close OUT;
@@ -7782,7 +7776,7 @@ sub rc_set {
 
      if (-s $newrcfile != $rcfilesize) {
 	unlink $newrcfile;
-	&startup_error(4, "rc_set_new", "check_new_size0", 
+	&startup_error(4, "rc_set_new", "check_new_size0",
 		       "$newrcfile:$key:$value:$priority:$delpref:$deprecate:$dversion:" . -s $newrcfile . ":$rcfilesize:@:");
      }
 
@@ -7998,7 +7992,7 @@ sub rc_get {
 	    }
 	    $stage = 1;
 	}
-	
+
         if ($stage > 0) {
 	    if ($line =~ /<\/$key>$/) {
 		close IN;

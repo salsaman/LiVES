@@ -141,23 +141,35 @@ void lives_exit(int signum) {
   if (mainw == NULL) _exit(0);
 
   if (!mainw->only_close) {
-    if (prefs != NULL) {
-      size_t tmplen = strlen(prefs->tmp_workdir);
-      if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
-        // created with mkdtemp
-        lives_rmdir(prefs->tmp_workdir, TRUE);
-        prefs->tmp_workdir[0] = '\0';
-        if (capable != NULL) {
-          if (mainw->old_vhash != NULL) {
-            if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-              lives_rm(capable->rcfile);
-            }
-            lives_free(mainw->old_vhash);
-          }
-        } else _exit(0);
-      }
-    } else _exit(0);
     mainw->is_exiting = TRUE;
+
+    // unlock all mutexes to prevent deadlocks
+
+    // recursive
+    while (!pthread_mutex_unlock(&mainw->gtk_mutex));
+    while (!pthread_mutex_unlock(&mainw->interp_mutex));
+    while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
+    while (!pthread_mutex_unlock(&mainw->abuf_mutex));
+    while (!pthread_mutex_unlock(&mainw->audio_resync_mutex));
+
+    // non-recursive
+    pthread_mutex_trylock(&mainw->abuf_frame_mutex);
+    pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+    pthread_mutex_trylock(&mainw->fxd_active_mutex);
+    pthread_mutex_unlock(&mainw->fxd_active_mutex);
+    pthread_mutex_trylock(&mainw->event_list_mutex);
+    pthread_mutex_unlock(&mainw->event_list_mutex);
+    pthread_mutex_trylock(&mainw->clip_list_mutex);
+    pthread_mutex_unlock(&mainw->clip_list_mutex);
+    pthread_mutex_trylock(&mainw->vpp_stream_mutex);
+    pthread_mutex_unlock(&mainw->vpp_stream_mutex);
+    pthread_mutex_trylock(&mainw->cache_buffer_mutex);
+    pthread_mutex_unlock(&mainw->cache_buffer_mutex);
+    pthread_mutex_trylock(&mainw->audio_filewriteend_mutex);
+    pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
+    pthread_mutex_trylock(&mainw->gamma_lut_mutex);
+    pthread_mutex_unlock(&mainw->gamma_lut_mutex);
+    // filter mutexes are unlocked in weed_unload_all
   }
 
   if (mainw->is_ready) {
@@ -502,11 +514,6 @@ void lives_exit(int signum) {
 
 #ifdef ENABLE_OSC
   if (prefs->osc_udp_started) lives_osc_end();
-
-#ifdef IS_MINGW
-  WSACleanup();
-#endif
-
 #endif
 
   pconx_delete_all();
@@ -551,6 +558,9 @@ void lives_exit(int signum) {
   lives_freep((void **)&mainw->read_failed_file);
   lives_freep((void **)&mainw->write_failed_file);
   lives_freep((void **)&mainw->bad_aud_file);
+
+  lives_freep((void **)&mainw->old_vhash);
+  lives_freep((void **)&mainw->version_hash);
 
   unload_decoder_plugins();
 

@@ -49,6 +49,7 @@ static boolean via_shortcut = FALSE;
 
 #define FX_MAX FX_KEYS_MAX_VIRTUAL-1
 
+// TODO: replace mainw->osc_block with filter_mutex_lock()
 
 static boolean osc_playall(livespointer data) {
   mainw->osc_auto = 1; ///< request notifiction of success

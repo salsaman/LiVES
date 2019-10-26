@@ -2236,8 +2236,7 @@ _entryw *create_rename_dialog(int type) {
     lives_entry_set_completion_from_list(LIVES_ENTRY(renamew->entry), renamew->setlist);
   } else {
     if (type == 6) {
-      if (strlen(prefs->workdir) > 0 && (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->workdir, prefs->tmp_workdir)))
-        workdir = lives_strdup(prefs->workdir);
+      if (strlen(prefs->workdir) > 0) workdir = lives_strdup(prefs->workdir);
       else workdir = lives_strdup_printf("%s/%s/", capable->home_dir, LIVES_DEF_WORK_NAME);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),

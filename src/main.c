@@ -546,17 +546,14 @@ static boolean pre_init(void) {
     }
 
     if (!capable->can_write_to_workdir) {
-      tmp2 = lives_strdup("");
       if (!mainw->has_session_workdir) {
-        if (strlen(prefs->tmp_workdir) == 0 || strcmp(prefs->tmp_workdir, prefs->workdir)) {
-          lives_free(tmp2);
-          tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
-                                     (mainw->old_vhash != NULL && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
-                                     ? "<tempdir>" : "<workdir>",
-                                     (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-          lives_free(tmp);
-        }
-      }
+	tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
+				   (mainw->old_vhash != NULL && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
+				   ? "<tempdir>" : "<workdir>",
+				   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+	lives_free(tmp);
+      } else tmp2 = lives_strdup("");
+
       msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
                                 prefs->workdir, tmp2);
       lives_free(tmp2);
@@ -643,6 +640,7 @@ static boolean pre_init(void) {
       msg = lives_strdup_printf("\n%s\n", tmp);
       lives_free(tmp);
       startup_message_nonfatal(msg);
+      lives_free(msg);
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
@@ -662,30 +660,22 @@ static boolean pre_init(void) {
   // set to allow multiple locking by the same thread
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+
+  // recursive locks
   pthread_mutex_init(&mainw->gtk_mutex, &mattr);
-
   pthread_mutex_init(&mainw->interp_mutex, &mattr);
-
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
-
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
-
-  pthread_mutex_init(&mainw->abuf_frame_mutex, NULL);
-
-  pthread_mutex_init(&mainw->fxd_active_mutex, NULL);
-
-  pthread_mutex_init(&mainw->event_list_mutex, NULL);
-
-  pthread_mutex_init(&mainw->clip_list_mutex, NULL);
-
-  pthread_mutex_init(&mainw->vpp_stream_mutex, NULL);
-
-  pthread_mutex_init(&mainw->cache_buffer_mutex, NULL);
-
-  pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
-
   pthread_mutex_init(&mainw->audio_resync_mutex, &mattr);
 
+  // non-recursive
+  pthread_mutex_init(&mainw->abuf_frame_mutex, NULL);
+  pthread_mutex_init(&mainw->fxd_active_mutex, NULL);
+  pthread_mutex_init(&mainw->event_list_mutex, NULL);
+  pthread_mutex_init(&mainw->clip_list_mutex, NULL);
+  pthread_mutex_init(&mainw->vpp_stream_mutex, NULL);
+  pthread_mutex_init(&mainw->cache_buffer_mutex, NULL);
+  pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
   pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
@@ -2884,7 +2874,6 @@ boolean resize_message_area(livespointer data) {
 static boolean lives_startup(livespointer data) {
   // this is run in an idlefunc
 
-  size_t tmplen;
   char *tmp, *tmp2, *msg;
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
@@ -2898,11 +2887,6 @@ static boolean lives_startup(livespointer data) {
     // get initial workdir
     if (!do_workdir_query()) {
       lives_exit(0);
-    }
-    tmplen = strlen(prefs->tmp_workdir);
-    if (tmplen > 0 && (tmplen > strlen(prefs->workdir) || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen))) {
-      lives_rmdir(prefs->tmp_workdir, TRUE);
-      prefs->tmp_workdir[0] = '\0';
     }
     prefs->startup_phase = 2;
     set_int_pref(PREF_STARTUP_PHASE, 2);
@@ -3362,7 +3346,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs = (_prefs *)lives_malloc(sizeof(_prefs));
   future_prefs = (_future_prefs *)lives_malloc(sizeof(_future_prefs));
   prefs->workdir[0] = '\0';
-  prefs->tmp_workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->configdir[0] = '\0';
 
@@ -3847,22 +3830,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 
 void startup_message_fatal(char *msg) {
-  size_t tmplen = strlen(prefs->tmp_workdir);
   if (mainw->splash_window != NULL) splash_end();
 
-  do_blocking_error_dialog(msg);
+  lives_freep((void **)&mainw->old_vhash);
+  lives_freep((void **)&old_vhash);
 
-  if (tmplen > 0 && (tmplen > strlen(prefs->workdir) - 1 || strncmp(prefs->workdir, prefs->tmp_workdir, tmplen - 1))) {
-    // created with mkdtemp
-    lives_rmdir(prefs->tmp_workdir, TRUE);
-    prefs->tmp_workdir[0] = '\0';
-    if (mainw->old_vhash != NULL) {
-      if (strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-        lives_rm(capable->rcfile);
-      }
-      lives_free(mainw->old_vhash);
-    }
-  }
+  do_blocking_error_dialog(msg);
 
   // needs notify_socket and prefs->omc_events, so most likely will do nothing
   lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
@@ -8067,7 +8040,8 @@ void load_frame_image(int frame) {
 
     mainw->whentostop = NEVER_STOP;
 
-    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && new_file != mainw->current_file &&
+    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
+	new_file != mainw->current_file &&
         new_file != mainw->blend_file && !mainw->is_rendering) {
       if (IS_NORMAL_CLIP(new_file))
         mainw->pre_src_file = new_file;

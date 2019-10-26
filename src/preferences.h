@@ -390,8 +390,6 @@ typedef struct {
 
   double screen_scale;
 
-  char tmp_workdir[PATH_MAX];
-
   boolean load_rfx_builtin;
 
   boolean apply_gamma;

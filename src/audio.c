@@ -2328,6 +2328,11 @@ boolean resync_audio(int frameno) {
 static lives_audio_buf_t *cache_buffer = NULL;
 static pthread_t athread;
 
+#ifdef TEST_COND
+static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 static void *cache_my_audio(void *arg) {
   // run as a thread (from audio_cache_init())
   //
@@ -2338,6 +2343,8 @@ static void *cache_my_audio(void *arg) {
 
   // currently the output is always in the s16 buffer, resampling is done
 
+  // TODO: should also serve requests from fill_abuffer_from
+
   lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
   char *filename;
   register int i;
@@ -2346,11 +2353,17 @@ static void *cache_my_audio(void *arg) {
 
   while (!cbuffer->die) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
+
+#ifdef TEST_COND
+    pthread_mutex_lock(&cond_mutex);
+    rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+    pthread_mutex_unlock(&cond_mutex);
+#else
     while (cbuffer->is_ready && !cbuffer->die) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
     }
-
+#endif
     if (cbuffer->die) {
       if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
       return cbuffer;
@@ -2619,6 +2632,14 @@ static void *cache_my_audio(void *arg) {
 }
 
 
+#ifdef TEST_COND
+void wake_audio_thread(void) {
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+}
+#endif
+
 lives_audio_buf_t *audio_cache_init(void) {
   cache_buffer = (lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
   cache_buffer->is_ready = FALSE;
@@ -2659,6 +2680,9 @@ void audio_cache_end(void) {
 
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
   cache_buffer->die = TRUE; ///< tell cache thread to exit when possible
+#ifdef TEST_COND
+  wake_audio_thread();
+#endif
   pthread_join(athread, NULL);
   pthread_mutex_unlock(&mainw->cache_buffer_mutex);
 
@@ -3453,5 +3477,20 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
     nullaudio_get_rec_avals();
   }
 }
+
+
+
+/// audio buffer thread - should do various things:
+// 1) for jack or pulse, fill pushe cache buffers
+//
+
+
+
+
+
+
+
+
+
 
 #endif

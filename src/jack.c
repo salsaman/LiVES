@@ -345,6 +345,9 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
 
   cache_buffer->operation = LIVES_READ_OPERATION;
   cache_buffer->is_ready = FALSE;
+#ifdef TEST_COND
+  wake_audio_thread();
+#endif
 }
 
 

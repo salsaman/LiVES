@@ -1094,13 +1094,15 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess *proc
 
 
 static int progress_count;
+static double progress_speed;
+static int prog_fs_check;
 
 #define PROG_LOOP_VAL 200
 
 static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   double timesofar, fraction_done;
 
-  if (progress_count++ >= (mainw->is_rendering ? PROG_LOOP_VAL / 4 : PROG_LOOP_VAL)) {
+  if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
       mainw->currticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
@@ -1110,9 +1112,11 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
       disp_fraction(fraction_done, timesofar, sfile->proc_ptr);
       progress_count = 0;
+      progress_speed = 4.;
     } else {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
       progress_count = 0;
+      if (!mainw->is_rendering)  progress_speed = 1.;
     }
   }
 }
@@ -1570,6 +1574,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->cevent_tc = 0;
 
   progress_count = 0;
+  progress_speed = 4.;
+  prog_fs_check = 0;
 
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
 
@@ -1860,7 +1866,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         cfile->proc_ptr->frames_done = 0;
 
       if (!mainw->effects_paused) {
-        if (progress_count == 0) check_storage_space(cfile, TRUE);
+        if (prog_fs_check-- <= 0) {
+          check_storage_space(cfile, TRUE);
+          prog_fs_check = PROG_LOOP_VAL;
+        }
         progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
       }
     }

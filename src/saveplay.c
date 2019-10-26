@@ -2132,7 +2132,9 @@ void play_file(void) {
   cfile->play_paused = FALSE;
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
-  if (audio_player == AUD_PLAYER_JACK) audio_cache_init();
+  if (audio_player == AUD_PLAYER_JACK
+      //|| audio_player == AUD_PLAYER_PULSE
+     ) audio_cache_init();
 
   if (mainw->blend_file != -1 && mainw->files[mainw->blend_file] == NULL) mainw->blend_file = -1;
 
@@ -3215,7 +3217,7 @@ boolean get_temp_handle(int index) {
     if (!get_handle_from_info_file(index)) {
       lives_freep((void **)&mainw->files[index]);
       if (mainw->first_free_file == ALL_USED || index < mainw->first_free_file)
-	mainw->first_free_file = index;
+        mainw->first_free_file = index;
       return FALSE;
     }
 

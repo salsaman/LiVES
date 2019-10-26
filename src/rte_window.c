@@ -1893,6 +1893,9 @@ boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, live
   lives_widget_set_sensitive(mainw->rte_defs_menu, TRUE);
   if (user_data == NULL) {
     // first time around we come here, and just hide the window
+    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1)) {
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
+    }
     lives_widget_hide(rte_window);
     rte_window_is_hidden = TRUE;
   } else {
@@ -2459,11 +2462,18 @@ LiVESWidget *refresh_rte_window(void) {
 
 
 void on_assign_rte_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  if (rte_window != NULL && !rte_window_is_hidden) on_rtew_delete_event(NULL, NULL, NULL);
+  if (rte_window != NULL && !rte_window_is_hidden) {
+    on_rtew_delete_event(NULL, NULL, NULL);
+  }
   else {
     rte_window = create_rte_window();
     rte_window_set_interactive(mainw->interactive);
     lives_widget_show(rte_window);
+    if (mainw->play_window != NULL && !mainw->fs && (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1)) {
+      lives_widget_hide(mainw->play_window);
+      lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), LIVES_WINDOW(rte_window));
+      lives_widget_show(mainw->play_window);
+    }
   }
 }
 

@@ -11017,6 +11017,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    // shouldn't be playing, so OK to just call this
     weed_generator_end((weed_plant_t *)cfile->ext_src);
   }
 

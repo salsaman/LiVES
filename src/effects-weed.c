@@ -6664,9 +6664,9 @@ boolean weed_init_effect(int hotkey) {
   weed_plant_t *event_list;
 
   boolean fg_modeswitch = FALSE, is_trans = FALSE, gen_start = FALSE, is_modeswitch = FALSE;
-  boolean is_audio_gen = FALSE;
   boolean all_out_alpha;
-  boolean needs_relock = FALSE;
+  boolean is_gen = FALSE;
+  boolean is_audio_gen = FALSE;
 
   int num_tr_applied;
   int rte_keys = mainw->rte_keys;
@@ -6705,9 +6705,11 @@ boolean weed_init_effect(int hotkey) {
 
   if (all_ins_alpha(filter, TRUE)) inc_count = 0;
 
+  if (inc_count == 0) is_gen = TRUE;
+
   // check first if it is an audio generator
 
-  if ((inc_count == 0 || (has_audio_chans_in(filter, FALSE) &&
+  if ((is_gen || (has_audio_chans_in(filter, FALSE) &&
                           !has_video_chans_in(filter, TRUE))) &&
       has_audio_chans_out(filter, FALSE) &&
       !has_video_chans_out(filter, TRUE)) {
@@ -6720,7 +6722,7 @@ boolean weed_init_effect(int hotkey) {
       return FALSE;
     }
 
-    if (inc_count == 0) {
+    if (is_gen) {
       if (mainw->agen_key != 0) {
         // we had an existing audio gen running - stop that one first
         int agen_key = mainw->agen_key - 1;
@@ -6753,34 +6755,40 @@ boolean weed_init_effect(int hotkey) {
   // TODO - block template channel changes
   // we must stop any old generators
 
-  if (!all_out_alpha && inc_count == 0 && outc_count > 0 && hotkey != fg_generator_key && mainw->num_tr_applied > 0 &&
+  if (!all_out_alpha && is_gen && outc_count > 0 && hotkey != fg_generator_key && mainw->num_tr_applied > 0 &&
       mainw->blend_file != -1 &&
-      mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
-      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR && inc_count == 0 && !is_audio_gen) {
+      mainw->blend_file != mainw->current_file &&
+      mainw->files[mainw->blend_file] != NULL &&
+      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
+      !is_audio_gen) {
+    /////////////////////////////////////// if blend_file is a generator we should finish it 
     if (bg_gen_to_start == -1) {
-      if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
-      filter_mutex_unlock(hotkey);
+      //if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
+      //filter_mutex_unlock(hotkey);
       weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-      if (needs_relock) filter_mutex_lock(hotkey);
-      needs_relock = FALSE;
+      //if (needs_relock) filter_mutex_lock(hotkey);
+      //needs_relock = FALSE;
     }
+
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     mainw->blend_file = -1;
   }
 
   if (mainw->current_file > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR &&
-      (fg_modeswitch || (inc_count == 0 && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
+      (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
     if (mainw->noswitch || mainw->is_processing || mainw->preview) {
       mainw->error = TRUE;
       return FALSE; // stopping fg gen will cause clip to switch
     }
-    if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && inc_count != 0) {
+    if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && !is_gen) {
+      // stop on vid end, and the playing generator stopped
       mainw->cancelled = CANCEL_GENERATOR_END;
     } else {
-      if (inc_count == 0 && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
+      if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
+      //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
       //no filter_mutex lock
-      if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
-      filter_mutex_unlock(hotkey);
+      //if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
+      //filter_mutex_unlock(hotkey);
       weed_generator_end((weed_plant_t *)cfile->ext_src);
       fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
       if (mainw->current_file > -1 && (cfile->achans == 0 || cfile->frames > 0)) {
@@ -6788,8 +6796,8 @@ boolean weed_init_effect(int hotkey) {
         // otherwise we will get killed in generator_start
         mainw->current_file = -1;
       }
-      if (needs_relock) filter_mutex_lock(hotkey);
-      needs_relock = FALSE;
+      //if (needs_relock) filter_mutex_lock(hotkey);
+      //needs_relock = FALSE;
     }
   }
 
@@ -6802,7 +6810,7 @@ boolean weed_init_effect(int hotkey) {
     if (mainw->num_tr_applied == 1 && !is_modeswitch) {
       mainw->blend_file = mainw->current_file;
     }
-  } else if (inc_count == 0 && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
+  } else if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
     // aha - a generator
     if (!LIVES_IS_PLAYING) {
       // if we are not playing, we will postpone creating the instance
@@ -6933,7 +6941,7 @@ deinit2:
     filter = weed_filters[idx];
   }
 
-  if (inc_count == 0 && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
+  if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
     // generator start
     if (mainw->num_tr_applied > 0 && !fg_modeswitch && mainw->current_file > -1 && LIVES_IS_PLAYING) {
       // transition is on, make into bg clip
@@ -7024,8 +7032,7 @@ deinit2:
   // enable param recording, in case the instance was obtained from a param window
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
-  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && (inc_count > 0 ||
-      outc_count == 0)) {
+  if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && !is_gen) {
     ticks_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
@@ -7179,6 +7186,7 @@ void weed_deinit_effect(int hotkey) {
   boolean is_modeswitch = FALSE;
   boolean was_transition = FALSE;
   boolean is_audio_gen = FALSE;
+  boolean is_video_gen = FALSE;
   int num_in_chans, num_out_chans;
 
   int error;
@@ -7206,17 +7214,18 @@ void weed_deinit_effect(int hotkey) {
   num_out_chans = enabled_out_channels(last_inst, FALSE);
 
   if (hotkey + 1 == mainw->agen_key) is_audio_gen = TRUE;
+  else if (num_in_chans == 0) is_video_gen = TRUE;
 
   filter = weed_instance_get_filter(instance, TRUE);
-  if ((num_in_chans == 0 || all_ins_alpha(filter, TRUE)) && num_out_chans > 0 && !is_audio_gen && !all_outs_alpha(filter, TRUE)) {
-    // is (video) generator
+  if ((is_video_gen || all_ins_alpha(filter, TRUE)) && num_out_chans > 0 && !all_outs_alpha(filter, TRUE)) {
+    /////////////////////////////////// deinit a (video) generator
     if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && (hotkey != bg_generator_key)) {
       mainw->cancelled = CANCEL_GENERATOR_END;
     } else {
       // filter_mutex_unlocked
-      filter_mutex_unlock(hotkey);
+      //filter_mutex_unlock(hotkey);
       weed_generator_end(instance);
-      filter_mutex_lock(hotkey);
+      //filter_mutex_lock(hotkey);
     }
     weed_instance_unref(instance); // remove ref from weed instance obtain
     return;
@@ -7413,19 +7422,17 @@ void weed_deinit_all(boolean shutdown) {
       filter_mutex_lock(i);
     }
     else {
+      // on shutdown, another thread might be deadlocked on this
+      // so we will unlock it after
       filter_mutex_trylock(i);
-      filter_mutex_unlock(i);
-    }
-    if (rte_key_valid(i + 1, TRUE)) {
-      g_print("chk2 %d\n", i);
-      if (rte_window != NULL) rtew_set_keych(i, FALSE);
-      if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
     }
     if ((rte_key_is_enabled(1 + i))) {
       g_print("chk3 %d\n", i);
       if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
 	g_print("deinit %d %p\n", i+ 1, instance);
         if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->ext_src != instance) {
+	  if (rte_window != NULL) rtew_set_keych(i, FALSE);
+	  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_deinit_effect(i);
           pthread_mutex_lock(&mainw->event_list_mutex);
           mainw->rte ^= (GU641 << i);
@@ -7434,7 +7441,7 @@ void weed_deinit_all(boolean shutdown) {
         weed_instance_unref(instance);
       }
     }
-    if (!shutdown) filter_mutex_unlock(i);
+    filter_mutex_unlock(i);
   }
 
   mainw->osc_block = FALSE;
@@ -7744,10 +7751,12 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   if (old_file != -1 && mainw->blend_file != -1 && mainw->blend_file != mainw->current_file &&
       mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] != NULL &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+    ////////////////////////// switching background generator: stop the old one first
+    
     weed_instance_unref(inst);
-    filter_mutex_unlock(key);
+    //filter_mutex_unlock(key);
     weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-    filter_mutex_lock(key);
+    //filter_mutex_lock(key);
     mainw->current_file = mainw->blend_file;
   }
 
@@ -8000,6 +8009,8 @@ void weed_generator_end(weed_plant_t *inst) {
     return;
   }
 
+  /////// update the key checkboxes //////
+  /// TODO: do we want to do this if switching from one gen to another ?
   if (rte_window != NULL && !mainw->is_rendering && mainw->multitrack == NULL) {
     // update real time effects window if we are showing it
     if (!is_bg) {
@@ -8097,7 +8108,7 @@ void weed_generator_end(weed_plant_t *inst) {
 
 
 void weed_bg_generator_end(weed_plant_t *inst) {
-  // when we stop with a bg generator we want it to be restarted next time
+  // when we stop with a bg generator we want it to be restarted next time ??? TODO !
   // i.e we will need a new clip for it
   int bg_gen_key = bg_generator_key;
 
@@ -8227,6 +8238,8 @@ deinit4:
   inst = NULL;
 
   if (bg_gen_to_start != -1) {
+    break_me();
+    
     if (mainw->blend_file == -1) {
       mainw->osc_block = FALSE;
       return TRUE; // for example if transition was swapped for filter in mapper

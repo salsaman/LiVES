@@ -4265,6 +4265,7 @@ boolean render_to_clip(boolean new_clip) {
     }
 
     if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+      // can call this simply, because we arent playing
       weed_generator_end((weed_plant_t *)cfile->ext_src);
     }
 

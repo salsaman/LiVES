@@ -3890,12 +3890,8 @@ void make_play_window(void) {
   if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
 
   if (prefs->show_gui) {
-    LiVESWindow *transient;
-    if (rte_window != NULL && !rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
-    else transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
-    lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), transient);
+    lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
   }
-
   lives_widget_set_events(mainw->play_window, LIVES_SCROLL_MASK | LIVES_SMOOTH_SCROLL_MASK);
 
   // cannot do this or it forces showing on the GUI monitor
@@ -3971,7 +3967,7 @@ void make_play_window(void) {
 
 
 LIVES_GLOBAL_INLINE boolean get_play_screen_size(int *opwidth, int *opheight) {
-  // get the size of the player in fullscreen / sepwin mode
+  // get the size of the screen / player in fullscreen / sepwin mode
   // returns TRUE if we span multiple monitors, FALSE for single monitor mode
 
   if (prefs->play_monitor == 0) {

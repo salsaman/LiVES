@@ -5845,12 +5845,17 @@ void switch_clip(int type, int newclip, boolean force) {
     if (newclip != mainw->blend_file) {
       if (mainw->blend_file != -1 && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
           mainw->blend_file != mainw->current_file) {
-        mainw->osc_block = TRUE;
-        if (rte_window != NULL) rtew_set_keych(rte_bg_gen_key(), FALSE);
-        if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_bg_gen_key(), FALSE);
-        mainw->new_blend_file = newclip;
-        weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-        mainw->osc_block = FALSE;
+	weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
+	if (inst != NULL) {
+	  mainw->osc_block = TRUE;
+	  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+	    int error;
+	    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+	    rte_key_on_off(key + 1, FALSE);
+	  }
+	  mainw->new_blend_file = newclip;
+	  mainw->osc_block = FALSE;
+	}
       }
       mainw->blend_file = newclip;
       mainw->whentostop = NEVER_STOP;

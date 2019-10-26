@@ -93,6 +93,7 @@ void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc);
 void rte_keymodes_backup(int nkeys);
 void rte_keymodes_restore(int nkeys);
 
+boolean rte_key_on_off(int key, boolean on);
 boolean rte_key_toggle(int key);
 void rte_keys_reset(void);
 

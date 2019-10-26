@@ -968,6 +968,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
 ////////////////////////////////////////////////////////////////////
 // keypresses
+// TODO - we should mutex lock mainw->rte
 
 boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
@@ -990,16 +991,14 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     key = -key;
   }
 
-  key--;
-
-  new_rte = GU641 << (key);
-
-  if (key == (EFFECT_NONE - 1)) {
+  if (key == EFFECT_NONE) {
     // switch up/down keys to default (fps change)
     weed_deinit_all(FALSE);
   } else {
     // the idea here is this gets set if a generator starts play, because in weed_init_effect() we will run playback
     // and then we come out of there and do not wish to set the key on
+    key--;
+    new_rte = GU641 << (key);
     mainw->gen_started_play = FALSE;
 
     if (!(mainw->rte & new_rte)) {
@@ -1189,6 +1188,23 @@ LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
   if (key < 0) key = -key;
   return rte_key_is_enabled(key);
+}
+
+
+boolean rte_key_on_off(int key, boolean on) {
+  // key is 1 based
+  // returns the state of the key afterwards
+  uint64_t new_rte;
+  if (key < 1 || key >= FX_KEYS_MAX_VIRTUAL) return FALSE;
+  key--;
+  new_rte = GU641 << (key);
+  if (mainw->rte & new_rte) {
+    if (on) return TRUE;
+  }
+  else if (!on) return FALSE;
+  key++;
+  rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
+  return (mainw->rte & new_rte);
 }
 
 

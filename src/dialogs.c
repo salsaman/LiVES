@@ -465,7 +465,7 @@ LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
-    else if (rte_window != NULL && !rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
+    else if (!rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
     else if (LIVES_MAIN_WINDOW_WIDGET != NULL) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
   }
   return transient;

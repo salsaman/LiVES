@@ -8032,6 +8032,23 @@ void load_frame_image(int frame) {
     osc_block = mainw->osc_block;
     mainw->osc_block = TRUE;
 
+    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
+	new_file != mainw->current_file &&
+        new_file != mainw->blend_file && !mainw->is_rendering) {
+      // switched from generator to another clip, end the generator
+      // will cause recursion, but second time around cfile->ext_src should be NULL
+      int error, key;
+      weed_plant_t *inst = cfile->ext_src;
+      mainw->osc_block = TRUE;
+      if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file;
+      key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      rte_key_on_off(key + 1, FALSE);
+       if (mainw->current_file == -1) {
+	mainw->osc_block = osc_block;
+      }
+      return;
+    }
+
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit || prefs->audio_src == AUDIO_SRC_EXT))) {
@@ -8039,22 +8056,6 @@ void load_frame_image(int frame) {
     }
 
     mainw->whentostop = NEVER_STOP;
-
-    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
-	new_file != mainw->current_file &&
-        new_file != mainw->blend_file && !mainw->is_rendering) {
-      if (IS_NORMAL_CLIP(new_file))
-        mainw->pre_src_file = new_file;
-
-      if (rte_window != NULL) rtew_set_keych(rte_fg_gen_key(), FALSE);
-      if (mainw->ce_thumbs) ce_thumbs_set_keych(rte_fg_gen_key(), FALSE);
-      if (mainw->current_file == mainw->blend_file) mainw->new_blend_file = new_file;
-      weed_generator_end((weed_plant_t *)cfile->ext_src);
-      if (mainw->current_file == -1) {
-        mainw->osc_block = osc_block;
-        return;
-      }
-    }
 
     mainw->switch_during_pb = TRUE;
     mainw->clip_switched = TRUE;

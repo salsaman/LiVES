@@ -3035,7 +3035,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       next_tc = get_event_timecode(next_frame_event);
       // drop frame if it is too far behind
       if (LIVES_IS_PLAYING && !mainw->noframedrop && next_tc <= curr_tc) break;
-      if (!mainw->fs && !prefs->hide_framebar) {
+      if (!mainw->fs && !prefs->hide_framebar && mainw->multitrack == NULL) {
         lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
         lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);

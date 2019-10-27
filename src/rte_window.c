@@ -1571,6 +1571,8 @@ cleanup1:
   lives_free(def_modes);
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
   if (rte_window != NULL) check_clear_all_button();
+
+  d_print_done();
   return FALSE;
 }
 

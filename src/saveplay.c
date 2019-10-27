@@ -2001,7 +2001,6 @@ void play_file(void) {
   if (!mainw->preview && !mainw->foreign) jack_pb_start();
 #endif
 
-  if (mainw->multitrack == NULL) mainw->must_resize = FALSE;
   mainw->ext_playback = FALSE;
   mainw->deltaticks = 0;
 
@@ -2213,7 +2212,6 @@ void play_file(void) {
 
         if (mainw->multitrack == NULL || mainw->fs) {
           resize_play_window();
-          play_window_set_title();
         }
 
         // needed
@@ -2693,9 +2691,7 @@ void play_file(void) {
 
       if (mainw->pulsed_read != NULL) {
         mainw->pulsed_read->in_use = FALSE;
-        pa_mloop_lock();
         pulse_driver_cork(mainw->pulsed_read);
-        pa_mloop_unlock();
       }
 
       // tell pulse client to close audio file
@@ -2724,9 +2720,7 @@ void play_file(void) {
             lives_usleep(prefs->sleep_time);
           }
           if (mainw->pulsed != NULL) {
-            pa_mloop_lock();
             pulse_driver_cork(mainw->pulsed);
-            pa_mloop_unlock();
           }
         }
       }
@@ -2912,15 +2906,6 @@ void play_file(void) {
         mainw->playing_file = -2;
         resize_play_window();
         mainw->playing_file = -1;
-
-        if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-        else xtrabit = lives_strdup("");
-        title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW
-                                    (LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-        lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-        lives_free(title);
-        lives_free(xtrabit);
-
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
         //mainw->noswitch = TRUE;
 

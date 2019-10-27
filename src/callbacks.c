@@ -6813,7 +6813,6 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
 
         resize_play_window();
-        play_window_set_title();
 
         if (mainw->opwx > -1) {
           //opwx and opwy were stored when we first switched to full screen
@@ -6941,7 +6940,6 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if (mainw->sep_win) {
       if (prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
         resize_play_window();
-        play_window_set_title();
       } else {
         if (mainw->play_window != NULL) {
           resize_play_window();
@@ -7110,7 +7108,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->pheight = mainw->vpp->fheight;
 
           if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-            play_window_set_title();
             unfade_background();
           }
           resize(1.);
@@ -7137,8 +7134,8 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         kill_play_window();
 
         if (!mainw->fs && mainw->multitrack == NULL) {
-          mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
-          mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+          //mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
+          //mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
 
           lives_widget_show(mainw->t_bckground);
           lives_widget_show(mainw->t_double);
@@ -7163,11 +7160,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             fade_background();
             fullscreen_internal();
           }
-        }
-        if (mainw->multitrack != NULL) {
-          mainw->must_resize = TRUE;
-          mainw->pwidth = mainw->multitrack->play_width;
-          mainw->pheight = mainw->multitrack->play_height;
         }
 
         hide_cursor(lives_widget_get_xwindow(mainw->playarea));
@@ -9215,7 +9207,6 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 
   in_preview_func = TRUE;
 
-  mainw->preview = TRUE;
   old_rte = mainw->rte;
   xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
   mainw->timeout_ticks -= xticks;
@@ -9267,6 +9258,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
         mainw->play_end = INT_MAX;
       }
     } else {
+      mainw->preview = TRUE;
       if (!mainw->is_processing && !mainw->is_rendering) {
         mainw->play_start = cfile->start = cfile->undo_start;
         mainw->play_end = cfile->end = cfile->undo_end;

@@ -569,11 +569,6 @@ struct _mt {
 
   ticks_t auto_back_time; ///< time when last backup was done (not to be confused with prefs->auto_back)
 
-  // stuff to do with framedraw "special" widgets
-  int inwidth;
-  int inheight;
-  int outwidth;
-  int outheight;
   lives_special_framedraw_rect_t *framedraw;
   int track_index;
 
@@ -632,9 +627,9 @@ struct _mt {
   int play_width;
   int play_height;
 
-  /* current size of playback/preview area */
-  int play_window_width;
-  int play_window_height;
+  /* /\* current size of playback/preview area *\/ */
+  /* int play_window_width; */
+  /* int play_window_height; */
 
   int selected_filter; ///< filter selected in poly window tab
 

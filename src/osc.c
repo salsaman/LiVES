@@ -6406,6 +6406,7 @@ boolean lives_osc_record_toggle(void *context, int arglen, const void *vargs, OS
 
 
 boolean lives_osc_cb_ping(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+  g_print("send pong\n");
   return lives_status_send("pong");
 }
 

@@ -1775,7 +1775,6 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
   register int i;
 
   mt->track_index = -1;
-  mt->inwidth = mt->inheight = 0;
 
   if (event == NULL || mt->play_width == 0 || mt->play_height == 0) return retval;
 
@@ -1804,11 +1803,6 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
     for (i = 0; i < num_in_tracks; i++) {
       if (in_tracks[i] == mt->current_track) {
         mt->track_index = i;
-        if (mt->current_track >= 0 && mt->current_track < numtracks &&
-            (clips[mt->current_track] > -1)) {
-          mt->inwidth = mainw->files[clips[mt->current_track]]->hsize * opwidth / cfile->hsize;
-          mt->inheight = mainw->files[clips[mt->current_track]]->vsize * opheight / cfile->vsize;
-        }
         if (track_index == -1 && mt->fx_box != NULL) {
           add_mt_param_box(mt);
           retval = TRUE;
@@ -3287,30 +3281,33 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3, GUI_SCREEN_HEIGHT / 3);
   }
 
-  mt->outwidth = cfile->hsize;
-  mt->outheight = cfile->vsize;
-  calc_maxspect(mt->play_width, mt->play_height, &mt->outwidth, &mt->outheight);
+  /* mt->outwidth = cfile->hsize; */
+  /* mt->outheight = cfile->vsize; */
+  /* calc_maxspect(mt->play_width, mt->play_height, &mt->outwidth, &mt->outheight); */
 
-  if (lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2 > 0) {
-    // make sure we are consistent with main.c
-    if (mt->outwidth > lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2)
-      mt->outwidth = lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2;
-    if (mt->outheight > lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2)
-      mt->outheight = lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2;
-    needs_clear = FALSE;
-  } else needs_clear = TRUE;
+  /* lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
+  /* lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
+  /* lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
+
+  /* xyzzy; */
+  /* if (lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2 > 0) { */
+  /*   // make sure we are consistent with main.c */
+  /*   if (mt->outwidth > lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2) */
+  /*     mt->outwidth = lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2; */
+  /*   if (mt->outheight > lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2) */
+  /*     mt->outheight = lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2; */
+  /*   needs_clear = FALSE; */
+  /* } else needs_clear = TRUE; */
 
   if (mainw->frame_layer != NULL) {
     LiVESPixbuf *pixbuf = NULL;
     int weed_error;
-    mainw->pwidth = mt->outwidth;
-    mainw->pheight = mt->outheight;
 
-    if ((mt->outwidth != (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)) ||
-         mt->outheight != weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error)))
+    if ((mt->play_width != (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)) ||
+         mt->play_height != weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error)))
       resize_layer(mainw->frame_layer,
-                   mt->outwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
-                   mt->outheight, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
+                   mt->play_width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                   mt->play_height, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
 
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
 
@@ -5308,31 +5305,33 @@ void set_mt_play_sizes(lives_mt *mt, int width, int height) {
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
 
-  lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-  lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
-
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
     needs_idlefunc = TRUE;
     mt->idlefunc = 0;
   }
 
-  lives_widget_context_update();
+  lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
+  lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
+  lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
 
-  if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+  if (!LIVES_IS_PLAYING) {
+    lives_widget_context_update();
+    if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+  }
 
-  rwidth = lives_widget_get_allocation_width(mt->play_box);
-  rheight = lives_widget_get_allocation_height(mt->play_box);
+  rwidth = lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2;
+  rheight = lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2;
 
   if (rwidth * rheight < 64) {
-    rwidth = GUI_SCREEN_WIDTH / 3.;
-    rheight = GUI_SCREEN_HEIGHT / 3.;
+    rwidth = GUI_SCREEN_WIDTH / 3. - widget_opts.border_width * 2;
+    rheight = GUI_SCREEN_HEIGHT / 3. - widget_opts.border_width * 2;
   }
 
   calc_maxspect(rwidth, rheight, &width, &height);
 
-  mt->play_width = mt->play_window_width = width;
-  mt->play_height = mt->play_window_height = height;
+  mt->play_width = width;
+  mt->play_height = height;
 }
 
 
@@ -5898,7 +5897,7 @@ static boolean expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer 
   lives_mt *mt = (lives_mt *)user_data;
   if (mt->no_expose) return TRUE;
   if (LIVES_IS_PLAYING) return TRUE;
-  lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
+  //lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
   set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mt->frame_pixbuf, cr);
   return TRUE;
 }
@@ -8253,6 +8252,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   mt->play_blank = lives_image_new_from_pixbuf(mainw->imframe);
   mt->preview_frame = lives_standard_frame_new(_("Preview"), 0.5, FALSE);
+  //lives_container_set_border_width(LIVES_CONTAINER(mt->preview_frame), widget_opts.border_width);
   lives_box_pack_start(LIVES_BOX(mt->hbox), mt->preview_frame, FALSE, FALSE, 0);
   mt->fd_frame = mt->preview_frame;
 
@@ -8272,6 +8272,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_hexpand(mt->preview_eventbox, TRUE);
   lives_widget_set_vexpand(mt->preview_eventbox, TRUE);
 
+  // does nothing
   //lives_widget_set_valign(mt->preview_eventbox, LIVES_ALIGN_CENTER);
   //lives_widget_set_halign(mt->preview_eventbox, LIVES_ALIGN_CENTER);
 
@@ -11177,18 +11178,9 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
   }
 
   if (mainw->play_window != NULL) {
-    char *title, *xtrabit;
-
     lives_window_remove_accel_group(LIVES_WINDOW(mainw->play_window), mainw->accel_group);
     lives_window_add_accel_group(LIVES_WINDOW(mainw->play_window), multi->accel_group);
-
     resize_play_window();
-    if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-    else xtrabit = lives_strdup("");
-    title = lives_strdup_printf("%s%s", lives_window_get_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)), xtrabit);
-    lives_window_set_title(LIVES_WINDOW(mainw->play_window), title);
-    lives_free(title);
-    lives_free(xtrabit);
   }
 
   if (cfile->achans > 0 && !is_realtime_aplayer(prefs->audio_player)) {
@@ -17143,17 +17135,6 @@ void mt_prepare_for_playback(lives_mt *mt) {
   lives_widget_set_sensitive(mt->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
   //if (!mt->is_paused&&!mt->playing_sel) mt->ptr_time=lives_ruler_get_value(LIVES_RULER(mt->timeline));
-
-  mainw->must_resize = TRUE;
-
-  if (mainw->play_window == NULL) {
-    mainw->pwidth = cfile->hsize;
-    mainw->pheight = cfile->vsize;
-    calc_maxspect(mt->play_width, mt->play_height, &mainw->pwidth, &mainw->pheight);
-  } else {
-    mainw->pwidth = cfile->hsize;
-    mainw->pheight = cfile->vsize;
-  }
 }
 
 
@@ -17161,7 +17142,6 @@ void mt_post_playback(lives_mt *mt) {
   // called from on_preview_clicked
 
   unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
-  mainw->must_resize = FALSE;
 
   lives_widget_show(mainw->playarea);
 

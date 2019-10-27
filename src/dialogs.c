@@ -1222,39 +1222,39 @@ int process_one(boolean visible) {
       }
 #endif
 
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
-          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
-          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
-           mainw->offsetticks || audio_ticks == -1)) {
-        if (audio_ticks == -1) {
-          if (mainw->cancelled == CANCEL_NONE) {
-            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-            else mainw->cancelled = CANCEL_AUDIO_ERROR;
-            return mainw->cancelled;
-          }
-        }
-        // fps is synched to external source, so we adjust the audio rate to fit
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
-            audio_stretch > 0.5) {
-          // if audio_stretch is > 1. it means that audio is playing too fast
-          // < 1. it is playing too slow
+      /* #ifdef HAVE_PULSE_AUDIO */
+      /*       if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && */
+      /*           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) && */
+      /*           (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && */
+      /*           ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) > */
+      /*            mainw->offsetticks || audio_ticks == -1)) { */
+      /*         if (audio_ticks == -1) { */
+      /*           if (mainw->cancelled == CANCEL_NONE) { */
+      /*             if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE; */
+      /*             else mainw->cancelled = CANCEL_AUDIO_ERROR; */
+      /*             return mainw->cancelled; */
+      /*           } */
+      /*         } */
+      /*         // fps is synched to external source, so we adjust the audio rate to fit */
+      /*         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. && */
+      /*             audio_stretch > 0.5) { */
+      /*           // if audio_stretch is > 1. it means that audio is playing too fast */
+      /*           // < 1. it is playing too slow */
 
-          // if too fast we increase the apparent sample rate so that it gets downsampled more
-          // if too slow we decrease the apparent sample rate so that it gets upsampled more
+      /*           // if too fast we increase the apparent sample rate so that it gets downsampled more */
+      /*           // if too slow we decrease the apparent sample rate so that it gets upsampled more */
 
-          if (mainw->multitrack == NULL) {
-            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-              if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch;
-              else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch;
-            } else mainw->pulsed->in_arate = cfile->arate * audio_stretch;
-          } else {
-            if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch;
-          }
-        }
-      }
-#endif
+      /*           if (mainw->multitrack == NULL) { */
+      /*             if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) { */
+      /*               if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch; */
+      /*               else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch; */
+      /*             } else mainw->pulsed->in_arate = cfile->arate * audio_stretch; */
+      /*           } else { */
+      /*             if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch; */
+      /*           } */
+      /*         } */
+      /*       } */
+      /* #endif */
     }
 #endif
 
@@ -1670,9 +1670,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 #ifdef HAVE_PULSE_AUDIO
   // start audio recording now
   if (mainw->pulsed_read != NULL) {
-    pa_mloop_lock();
     pulse_driver_uncork(mainw->pulsed_read);
-    pa_mloop_unlock();
   }
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_PULSE &&
       prefs->ahold_threshold > 0.) {
@@ -2100,9 +2098,7 @@ boolean do_auto_dialog(const char *text, int type) {
     lives_widget_show(proc_ptr->cancel_button);
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed_read != NULL) {
-      pa_mloop_lock();
       pulse_driver_uncork(mainw->pulsed_read);
-      pa_mloop_unlock();
     }
 #endif
     if (mainw->rec_samples != 0) {

@@ -7111,10 +7111,8 @@ deinit2:
           }
           pa_time_reset(mainw->pulsed, -audio_ticks);
           pulse_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), FALSE);
-          pa_mloop_lock();
           pulse_driver_uncork(mainw->pulsed);
           pulse_driver_cork(mainw->pulsed_read);
-          pa_mloop_unlock();
         }
         if (mainw->pulsed != NULL && (mainw->pulsed_read == NULL || !mainw->pulsed_read->in_use)) {
           mainw->pulsed->in_use = TRUE;
@@ -7291,10 +7289,8 @@ void weed_deinit_effect(int hotkey) {
               return;
             }
             pa_time_reset(mainw->pulsed_read, -audio_ticks); // ensure time continues monotonically
-            pa_mloop_lock();
             pulse_driver_uncork(mainw->pulsed_read);
             if (mainw->pulsed != NULL) pulse_driver_cork(mainw->pulsed);
-            pa_mloop_unlock();
           }
           if (mainw->record) mainw->pulsed_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
           mainw->pulsed_read->is_paused = FALSE;
@@ -9565,10 +9561,8 @@ boolean rte_key_setmode(int key, int newmode) {
     key_modes[real_key] = newmode;
 
     mainw->blend_file = blend_file;
-    g_print("pt xx %p\n", inst);
     if (inst != NULL) {
       if (!weed_init_effect(key)) {
-        g_print("pt xx3 %p\n", inst);
         weed_instance_unref(inst);
         // TODO - unblock template channel changes
         mainw->whentostop = whentostop;
@@ -9579,7 +9573,6 @@ boolean rte_key_setmode(int key, int newmode) {
         mainw->osc_block = FALSE;
         return FALSE;
       }
-      g_print("pt xx4 %p\n", inst);
       weed_instance_unref(inst);
       if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key, TRUE);
     }
@@ -10711,7 +10704,6 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
     use_extra_authors = FALSE;
     xsep = lives_strdup(" ");
     xsep[0] = sep;
-    g_print("sep was %c so xsep is %s\n", sep, xsep);
   } else xsep = lives_strdup("");
 
   filter = weed_filters[filter_idx];

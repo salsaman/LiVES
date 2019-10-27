@@ -3942,8 +3942,6 @@ void make_play_window(void) {
     }
   }
 
-  play_window_set_title();
-
   if ((!CURRENT_CLIP_IS_VALID || (!cfile->is_loaded && !mainw->preview) ||
        (cfile->frames == 0 && (mainw->multitrack == NULL || !LIVES_IS_PLAYING))) && mainw->imframe != NULL) {
     lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
@@ -4036,32 +4034,32 @@ void resize_play_window(void) {
     } else {
       mainw->pwidth = mainw->files[mainw->multitrack->render_file]->hsize;
       mainw->pheight = mainw->files[mainw->multitrack->render_file]->vsize;
-      mainw->must_resize = FALSE;
     }
   }
 
-  if (LIVES_IS_PLAYING) {
-    if (mainw->double_size && !mainw->fs && mainw->multitrack == NULL) {
-      mainw->pheight *= 2;
-      mainw->pwidth *= 2;
+  if (mainw->double_size && !mainw->fs && mainw->multitrack == NULL) {
+    // double size
+    mainw->pheight *= 2;
+    mainw->pwidth *= 2;
+  }
 
-      if (pmonitor == 0) {
-        if (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY || mainw->pheight > scr_height - SCR_HEIGHT_SAFETY) {
-          calc_maxspect(scr_width - SCR_WIDTH_SAFETY, scr_height - SCR_HEIGHT_SAFETY, &mainw->pwidth, &mainw->pheight);
-          mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
-        }
-      } else {
-        if (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY ||
-            mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) {
-          calc_maxspect(mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY, mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY,
-                        &mainw->pwidth, &mainw->pheight);
-          mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
-        }
-      }
+  if (pmonitor == 0) {
+    if (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY || mainw->pheight > scr_height - SCR_HEIGHT_SAFETY) {
+      calc_maxspect(scr_width - SCR_WIDTH_SAFETY, scr_height - SCR_HEIGHT_SAFETY, &mainw->pwidth, &mainw->pheight);
+      mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
     }
+  } else {
+    if (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY ||
+        mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) {
+      calc_maxspect(mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY, mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY,
+                    &mainw->pwidth, &mainw->pheight);
+      mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
+    }
+  }
 
+
+  if (LIVES_IS_PLAYING) {
     // fullscreen
-
     if (mainw->fs) {
       if (!lives_widget_is_visible(mainw->play_window)) {
         if (prefs->show_playwin) {
@@ -4079,19 +4077,7 @@ void resize_play_window(void) {
         }
       }
 
-      if (pmonitor == 0) {
-        mainw->pwidth = scr_width;
-        mainw->pheight = scr_height;
-        if (capable->nmonitors > 1) {
-          // spread over all monitors
-          mainw->pwidth = GUI_SCREEN_WIDTH;
-          mainw->pheight = GUI_SCREEN_HEIGHT;
-          // TODO:  gdk_window_set_fullscreen_mode
-        }
-      } else {
-        mainw->pwidth = mainw->mgeom[pmonitor - 1].width;
-        mainw->pheight = mainw->mgeom[pmonitor - 1].height;
-      }
+      get_play_screen_size(&mainw->pwidth, &mainw->pheight);
 
       if (lives_widget_is_visible(mainw->play_window)) {
         // store old postion of window
@@ -4158,9 +4144,6 @@ void resize_play_window(void) {
 
             // * leave this alone !
             lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-
-            play_window_set_title();
-
             lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
             lives_widget_queue_resize(mainw->play_window);
           }
@@ -4250,26 +4233,26 @@ void resize_play_window(void) {
         end_ce_thumb_mode();
       }
 
-      if (mainw->playing_file == 0) {
-        mainw->pheight = clipboard->vsize;
-        mainw->pwidth = clipboard->hsize;
+      /* if (mainw->playing_file == 0) { */
+      /*   mainw->pheight = clipboard->vsize; */
+      /*   mainw->pwidth = clipboard->hsize; */
 
-        if (pmonitor == 0) {
-          while (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY ||
-                 mainw->pheight > scr_height - SCR_HEIGHT_SAFETY) {
-            mainw->pheight = (mainw->pheight >> 2) << 1;
-            mainw->pwidth = (mainw->pwidth >> 2) << 1;
-            mainw->sepwin_scale /= 2.;
-          }
-        } else {
-          while (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY ||
-                 mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) {
-            mainw->pheight = (mainw->pheight >> 2) << 1;
-            mainw->pwidth = (mainw->pwidth >> 2) << 1;
-            mainw->sepwin_scale /= 2.;
-          }
-        }
-      }
+      /*   if (pmonitor == 0) { */
+      /*     while (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY || */
+      /*            mainw->pheight > scr_height - SCR_HEIGHT_SAFETY) { */
+      /*       mainw->pheight = (mainw->pheight >> 2) << 1; */
+      /*       mainw->pwidth = (mainw->pwidth >> 2) << 1; */
+      /*       mainw->sepwin_scale /= 2.; */
+      /*     } */
+      /*   } else { */
+      /*     while (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY || */
+      /*            mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) { */
+      /*       mainw->pheight = (mainw->pheight >> 2) << 1; */
+      /*       mainw->pwidth = (mainw->pwidth >> 2) << 1; */
+      /*       mainw->sepwin_scale /= 2.; */
+      /*     } */
+      /*   } */
+      /* } */
 
       if (pmonitor == 0) lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->pwidth) / 2,
                                              (scr_height - mainw->pheight) / 2);
@@ -4356,6 +4339,7 @@ void resize_play_window(void) {
       load_preview_image(FALSE);
     }
   }
+  play_window_set_title();
 }
 
 
@@ -4377,7 +4361,7 @@ void kill_play_window(void) {
   }
   if (mainw->multitrack == NULL) {
     add_to_playframe();
-  } else mainw->must_resize = TRUE;
+  }// else mainw->must_resize = TRUE;
   if ((!CURRENT_CLIP_IS_VALID || cfile->frames > 0) && mainw->multitrack == NULL && LIVES_IS_PLAYING) {
     lives_widget_show_all(mainw->playframe);
   }

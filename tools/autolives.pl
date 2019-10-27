@@ -35,7 +35,7 @@ $allow_dirchange = 0; ## should be automatic, depending on whether current clip 
 
 $play_dir = 0; ## assume forwards
 
-$timeout = 10;
+$timeout = 20;
 
 if (defined($ARGV[0])) {
     $remote_host=$ARGV[0];
@@ -114,26 +114,26 @@ if ($remote_host eq "localhost") {
 
 if ($DEBUG) {print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";}
 
-if ($noty) {
-    if ($ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
-				   LocalAddr => $my_ip_addr)) {
-	$s->add($ip1);
-	if ($DEBUG) {print STDERR "Status port ready.\n";}
-    }
-    else{
-	if ($DEBUG) {print STDERR "error creating UDP listener for $my_ip_addr  $@\n");
-	$noty = 0;
-    }
+if ($ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
+			       LocalAddr => $my_ip_addr)) {
+    $s->add($ip1);
+    if ($DEBUG) {print STDERR "Status port ready.\n";}
+}
+else {
+    die "error creating UDP status socket for $my_ip_addr  $@\n";
 }
 
 if ($DEBUG) {print STDERR "Status port ready.\n";}
 
 if ($noty) {
     if ($DEBUG) {print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n";}
-    my $ip2=IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
-				  LocalAddr => $my_ip_addr)
-	or die "error creating UDP notification listener for $my_ip_addr  $@\n";
-    $s->add($ip2);
+    if ($ip2 = IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
+				     LocalAddr => $my_ip_addr)) {
+	$s->add($ip2);
+    }
+    else {
+	print STDERR "error creating notify socket for $my_ip_addr  $@\n";
+    }
 }
 
 #################################################################
@@ -254,7 +254,7 @@ if (!$waitforplay) {
 
 if ($DEBUG) {print STDERR "Performing magic...\n";}
 
-ny $reselect = 0;
+my $reselect = 0;
 
 while (1) {
     if ($noty) {
@@ -280,7 +280,7 @@ while (1) {
     }
 
     $action=int(rand(20))+1;
-    
+    print STDERR "Action is $action $action\n";
     if ($action<6) {
 	# 1,2,3,4,5
 	# random clip switch
@@ -327,6 +327,9 @@ while (1) {
     elsif ($action==17) {
 	if ($allow_fgbgswap) {
 	    &send_command("/clip/foreground/background/swap");
+	}
+	else {
+	    $reselect = 1;
 	}
     }
     else {
@@ -387,19 +390,22 @@ sub finish {
 
 
 sub get_newmsg {
+    print STDERR "getmsg\n";
     my $newmsg;
     while (1) {
+    print STDERR "getmsg2\n";
 	$lport = -1;
 	foreach $server($s->can_read($timeout)){
+    print STDERR "getmsg3\n";
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
-	    #if ($DEBUG) {print STDERR "check $lport $local_port\n";}
+	    if ($DEBUG) {print STDERR "check $lport $local_port\n";}
 
 	    next if ($lport != $local_port);
 	    
 	    # TODO - check from address is our host
-	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
+	    if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
 	    
 	    last;
 	}
@@ -475,4 +481,5 @@ sub HUP_handler {
     if ($DEBUG) {print STDERR "autolives.pl exiting now\n";}
 
     exit(0);
+}
 }

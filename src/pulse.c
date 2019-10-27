@@ -34,26 +34,41 @@ static boolean seek_err;
 
 ///////////////////////////////////////////////////////////////////
 
-void pa_mloop_lock(void) {
-  pa_threaded_mainloop_lock(pa_mloop);
+LIVES_GLOBAL_INLINE void pa_mloop_lock(void) {
+  if (!pa_threaded_mainloop_in_thread(pa_mloop)) {
+    pa_threaded_mainloop_lock(pa_mloop);
+  } else {
+    LIVES_ERROR("tried to lock pa mainloop within audio thread");
+  }
 }
 
-
-void pa_mloop_unlock(void) {
-  pa_threaded_mainloop_unlock(pa_mloop);
+LIVES_GLOBAL_INLINE void pa_mloop_unlock(void) {
+  if (!pa_threaded_mainloop_in_thread(pa_mloop))
+    pa_threaded_mainloop_unlock(pa_mloop);
+  else {
+    LIVES_ERROR("tried to unlock pa mainloop within audio thread");
+  }
 }
 
 
 static void pulse_server_cb(pa_context *c, const pa_server_info *info, void *userdata) {
   if (info == NULL) {
     pulse_server_rate = 0;
-    return;
+  } else {
+    pulse_server_rate = info->sample_spec.rate;
   }
-  pulse_server_rate = info->sample_spec.rate;
+  pa_threaded_mainloop_signal(pa_mloop, 0);
+}
+
+
+static void pulse_success_cb(pa_stream *stream, int i, void *userdata) {
+  pa_threaded_mainloop_signal(pa_mloop, 0);
 }
 
 
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
+  // TODO - increase tlen ?
+  //pa_stream_set_buffer_attr(s, battr, success_cb, NULL);
   fprintf(stderr, "PA Stream underrun.\n");
 }
 
@@ -279,7 +294,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   boolean wait_cache_buffer = FALSE;
 #endif
   size_t offs = 0;
-
+  boolean got_cmd = FALSE;
   pa_volume_t pavol;
 
   pulsed->real_seek_pos = pulsed->seek_pos;
@@ -294,7 +309,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     return;
   }
 
-  while ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
+  if ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
+    got_cmd = TRUE;
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
       new_file = atoi((char *)msg->data);
@@ -352,6 +368,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     msg->command = ASERVER_CMD_PROCESSED;
     pulsed->msgq = msg->next;
     if (pulsed->msgq != NULL && pulsed->msgq->next == pulsed->msgq) pulsed->msgq->next = NULL;
+  }
+  if (got_cmd) {
+    sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
+    return;
   }
 
   if (pulsed->chunk_size != nbytes) pulsed->chunk_size = nbytes;
@@ -776,6 +796,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       // playback from memory or file
 
       if (future_prefs->volume != pulsed->volume_linear) {
+        // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +)
         pa_operation *paop;
         pavol = pa_sw_volume_from_linear(future_prefs->volume);
         pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
@@ -1149,6 +1170,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
     pa_stream_drop(pulsed->pstream);
     if (pulsed->is_paused) {
       // This is NECESSARY to reduce / eliminate huge latencies.
+
+      // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +)
       pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
       pa_operation_unref(paop);
     }
@@ -1201,14 +1224,14 @@ void pulse_shutdown(void) {
 
 void pulse_close_client(pulse_driver_t *pdriver) {
   if (pdriver->pstream != NULL) {
-    pa_threaded_mainloop_lock(pa_mloop);
+    pa_mloop_lock();
     pa_stream_disconnect(pdriver->pstream);
     pa_stream_set_write_callback(pdriver->pstream, NULL, NULL);
     pa_stream_set_read_callback(pdriver->pstream, NULL, NULL);
     pa_stream_set_underflow_callback(pdriver->pstream, NULL, NULL);
     pa_stream_set_overflow_callback(pdriver->pstream, NULL, NULL);
     pa_stream_unref(pdriver->pstream);
-    pa_threaded_mainloop_unlock(pa_mloop);
+    pa_mloop_unlock();
   }
   if (pdriver->pa_props != NULL) pa_proplist_free(pdriver->pa_props);
   pdriver->pa_props = NULL;
@@ -1379,15 +1402,15 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_battr.minreq = (uint32_t) - 1;
   pa_battr.prebuf = -1;
 
+  pa_mloop_lock();
   if (pulse_server_rate == 0) {
-    pa_op = pa_context_get_server_info(pdriver->con, pulse_server_cb, NULL);
-
+    pa_op = pa_context_get_server_info(pdriver->con, pulse_server_cb, pa_mloop);
     while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
+      pa_threaded_mainloop_wait(pa_mloop);
     }
     pa_operation_unref(pa_op);
   }
+  pa_mloop_unlock();
 
   if (pulse_server_rate == 0) {
     LIVES_WARN("Problem getting pulseaudio rate...expect more problems ahead.");
@@ -1396,7 +1419,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
   pa_spec.rate = pdriver->out_arate = pdriver->in_arate = pulse_server_rate;
 
-  pa_threaded_mainloop_lock(pa_mloop);
   pdriver->pstream = pa_stream_new_with_proplist(pdriver->con, pa_clientname, &pa_spec, &pa_map, pdriver->pa_props);
 
   if (pdriver->is_output) {
@@ -1418,21 +1440,16 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
                                PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
-    pa_threaded_mainloop_unlock(pa_mloop);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
     }
 
-    pa_threaded_mainloop_lock(pa_mloop);
     pa_stream_set_underflow_callback(pdriver->pstream, stream_underflow_callback, pdriver);
     pa_stream_set_overflow_callback(pdriver->pstream, stream_overflow_callback, pdriver);
     pa_stream_set_moved_callback(pdriver->pstream, stream_moved_callback, pdriver);
     pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
-
-    // set write callback
-    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
 
     pdriver->volume_linear = -1;
 
@@ -1446,7 +1463,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
     pa_operation_unref(pa_op);
 #endif
-
+    // set write callback
+    pa_stream_set_write_callback(pdriver->pstream, pulse_audio_write_process, pdriver);
   } else {
     // set read callback
     pdriver->frames_written = 0;
@@ -1465,18 +1483,14 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE |
                                  PA_STREAM_NOT_MONOTONIC));
-    pa_threaded_mainloop_unlock(pa_mloop);
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
       lives_usleep(prefs->sleep_time);
     }
-
-    pa_threaded_mainloop_lock(pa_mloop);
     pa_stream_set_read_callback(pdriver->pstream, pulse_audio_read_process, pdriver);
   }
 
-  pa_threaded_mainloop_unlock(pa_mloop);
   return 0;
 }
 
@@ -1499,6 +1513,7 @@ static void corked_cb(pa_stream *s, int success, void *userdata) {
 #endif
   pdriver->is_corked = TRUE;
   prefs->force_system_clock = TRUE;
+  pa_threaded_mainloop_signal(pa_mloop, 0);
 }
 
 
@@ -1509,9 +1524,9 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 
   if (!pdriver->is_corked) return;
 
-  pa_threaded_mainloop_lock(pa_mloop);
+  pa_mloop_lock();
   paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
-  pa_threaded_mainloop_unlock(pa_mloop);
+  pa_mloop_unlock();
 
   if (pdriver->is_output) {
     pa_operation_unref(paop);
@@ -1530,13 +1545,17 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
     return;
   }
 
-  pa_threaded_mainloop_lock(pa_mloop);
+  pa_mloop_lock();
   paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
+  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING)
+    pa_threaded_mainloop_wait(pa_mloop);
   pa_operation_unref(paop);
+  pa_mloop_unlock();
 
+  pa_mloop_lock();
   paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
-  pa_threaded_mainloop_unlock(pa_mloop);
   pa_operation_unref(paop);
+  pa_mloop_unlock();
 }
 
 
@@ -1556,9 +1575,17 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
 
 void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pa_usec_t usec;
-  pa_threaded_mainloop_lock(pa_mloop);
+  pa_operation *pa_op;
+
+  pa_mloop_lock();
+  pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
+  while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
+    pa_threaded_mainloop_wait(pa_mloop);
+  }
+  pa_operation_unref(pa_op);
+
   pa_stream_get_time(pulsed->pstream, &usec);
-  pa_threaded_mainloop_unlock(pa_mloop);
+  pa_mloop_unlock();
   pulsed->usec_start = usec + offset / USEC_TO_TICKS;
   pulsed->frames_written = 0;
   mainw->currticks = offset;
@@ -1587,9 +1614,9 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   do {
-    pa_threaded_mainloop_lock(pa_mloop);
+    pa_mloop_lock();
     err = pa_stream_get_time(pulsed->pstream, &usec);
-    pa_threaded_mainloop_unlock(pa_mloop);
+    pa_mloop_unlock();
     sched_yield();
     lives_usleep(prefs->sleep_time);
   } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && usec == 0 && err == 0);
@@ -1732,9 +1759,7 @@ void pulse_aud_pb_ready(int fileno) {
   int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
   int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
 
-  pa_threaded_mainloop_lock(pa_mloop);
   if (mainw->pulsed != NULL) pulse_driver_uncork(mainw->pulsed);
-  pa_threaded_mainloop_unlock(pa_mloop);
 
   // called at pb start and rec stop (after rec_ext_audio)
   if (mainw->pulsed != NULL && mainw->aud_rec_fd == -1) {

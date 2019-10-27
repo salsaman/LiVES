@@ -32,7 +32,7 @@ static boolean storedfdsset = FALSE;
 
 
 LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
-  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE);
+  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE);
 }
 
 

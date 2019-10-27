@@ -499,7 +499,6 @@ typedef struct {
   boolean loop_cont;
   boolean ping_pong;
   boolean mute;
-  boolean must_resize; ///< fixed playback size in gui; playback plugins have their own fwidth and fheight
   int audio_start;
   int audio_end;
 

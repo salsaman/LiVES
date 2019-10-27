@@ -569,9 +569,6 @@ static boolean pre_init(void) {
   sizdbl = sizeof(double);
   sizshrt = sizeof(short);
 
-  /* TRANSLATORS: localised name may be used here */
-  lives_set_application_name(_("LiVES"));
-
   // try to get randomness from /dev/urandom
   randfd = lives_open2("/dev/urandom", O_RDONLY);
 
@@ -3335,6 +3332,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
   widget_helper_init();
+
+  /* TRANSLATORS: localised name may be used here */
+  lives_set_application_name(_("LiVES"));
   widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
 
   // init prefs
@@ -5975,16 +5975,28 @@ static void get_player_size(int *opwidth, int *opheight) {
   }
 
   if (!mainw->fs) {
-    // embedded player (not sure about this, it seems to require recalculation later)
-    int rwidth = mainw->ce_frame_width;
-    int rheight = mainw->ce_frame_height;
+    // embedded player
+#if GTK_CHECK_VERSION(3, 0, 0)
+    int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
+    int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 
+    /* if (mainw->double_size && !mainw->fs) { */
+    /*   // ce_frame_* was set to half for the first / last frames */
+    /*   // so we multiply by 4 to get double size */
+    /*   rwidth *= 4; */
+    /*   rheight *= 4; */
+    /* } */
+#else
+    int rwidth = lives_widget_get_allocation_width(mainw->play_image);
+    int rheight = lives_widget_get_allocation_height(mainw->play_image);
+#endif
+    if (mainw->double_size) {
+      *opwidth = (*opwidth - H_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
+      *opheight = (*opheight - V_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
+    }
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
-
-    if (prefs->ce_maxspect) {
-      calc_maxspect(rwidth, rheight, opwidth, opheight);
-    }
+    calc_maxspect(rwidth, rheight, opwidth, opheight);
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
@@ -6626,6 +6638,7 @@ void load_frame_image(int frame) {
       if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) {
         size_ok = TRUE;
       } else {
+        // this is no longer true - the frame can be any size. We need to check when pulling it
         check_layer_ready(mainw->frame_layer);
         if ((weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error) == cfile->vsize) &&
             (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)*
@@ -6685,7 +6698,7 @@ void load_frame_image(int frame) {
     }
 
     if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox) {
-      // here we are outputting video through a video playback plugin which can resize: thus we just send whatever we have
+      // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
       //
@@ -6830,147 +6843,6 @@ void load_frame_image(int frame) {
       // calc inner frame size
       calc_maxspect(mainw->pwidth, mainw->pheight, &lb_width, &lb_height);
       if (lb_width == opwidth && lb_height == opheight) lb_width = lb_height = 0;
-    }
-
-    // This next bit is horrible, trying to remove it...
-
-    if ((mainw->multitrack == NULL && mainw->double_size && !mainw->fs && (!prefs->ce_maxspect || mainw->sep_win)) ||
-        (mainw->fs && (!mainw->ext_playback || !(mainw->vpp->capabilities & VPP_CAN_RESIZE)))) {
-
-      int pmonitor;
-      // dblsize sepwin ce
-      // or fullscreen internal player or external which can't resize
-      // or fixed size and sepwin / or multitrack
-
-      if (!mainw->ext_playback || (mainw->pwidth != mainw->vpp->fwidth || mainw->pheight != mainw->vpp->fheight)) {
-        // non ext playback, or ext pb and wrong frame sizes
-        /* if (mainw->multitrack != NULL) { */
-        /*   // frame max sizes for multitrack */
-        /*   if (!mainw->fs || mainw->multitrack->is_rendering || mainw->play_window == NULL) { */
-        /*     if (mainw->play_window == NULL || mainw->multitrack->is_rendering) { */
-        /*       // internal */
-        /*       mainw->pwidth = mainw->files[mainw->multitrack->render_file]->hsize; */
-        /*       mainw->pheight = mainw->files[mainw->multitrack->render_file]->vsize; */
-        /*       if (!mainw->multitrack->is_rendering) */
-        /*         calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, &mainw->pwidth, &mainw->pheight); */
-        /*     } else { */
-        /*       // multitrack, sepwin, non-fs */
-        /*       mainw->pwidth = cfile->hsize; */
-        /*       mainw->pheight = cfile->vsize; */
-
-        /*       mainw->sepwin_scale = 100.; */
-
-        /*       pmonitor = prefs->play_monitor; */
-        /*       if (pmonitor == 0) { */
-        /*         while (mainw->pwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY || */
-        /*                mainw->pheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) { */
-        /*           mainw->pheight = (mainw->pheight >> 2) << 1; */
-        /*           mainw->pwidth = (mainw->pwidth >> 2) << 1; */
-        /*           mainw->sepwin_scale /= 2.; */
-        /*         } */
-        /*       } else { */
-        /*         while (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY || */
-        /*                mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) { */
-        /*           mainw->pheight = (mainw->pheight >> 2) << 1; */
-        /*           mainw->pwidth = (mainw->pwidth >> 2) << 1; */
-        /*           mainw->sepwin_scale /= 2.; */
-        /*         } */
-        /*       } */
-        /*     } */
-        /*   } else { */
-        /*     // multitrack fullscreen / sepwin */
-        /*     // internal player */
-        /*     // or external which cannot resize */
-        /*     pmonitor = prefs->play_monitor; */
-        /*     if (pmonitor == 0) { */
-        /*       mainw->pwidth = GUI_SCREEN_WIDTH; */
-        /*       mainw->pheight = GUI_SCREEN_HEIGHT; */
-        /*       if (capable->nmonitors > 1) { */
-        /*         // spread over all monitors */
-        /*         mainw->pwidth = lives_screen_get_width(mainw->mgeom[0].screen); */
-        /*         mainw->pheight = lives_screen_get_height(mainw->mgeom[0].screen); */
-        /*       } */
-        /*     } else { */
-        /*       if (mainw->play_window != NULL) pmonitor = prefs->play_monitor; */
-        /*       else pmonitor = prefs->gui_monitor; */
-        /*       mainw->pwidth = mainw->mgeom[pmonitor - 1].width; */
-        /*       mainw->pheight = mainw->mgeom[pmonitor - 1].height; */
-        /*     } */
-        /*   } */
-        /* } */
-        //}
-      } else {
-        /* // clip edit mode */
-        /* pmonitor = prefs->play_monitor; */
-
-        /* mainw->pwidth = cfile->hsize; */
-        /* mainw->pheight = cfile->vsize; */
-
-        /* mainw->sepwin_scale = 100.; */
-
-        /* if (!mainw->is_rendering && !mainw->fs) { */
-        /*   if (pmonitor == 0) { */
-        /*     while (mainw->pwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY || */
-        /*            mainw->pheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) { */
-        /*       mainw->pheight = (mainw->pheight >> 2) << 1; */
-        /*       mainw->pwidth = (mainw->pwidth >> 2) << 1; */
-        /*       mainw->sepwin_scale /= 2.; */
-        /*     } */
-        /*   } else { */
-        /*     while (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY || */
-        /*            mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) { */
-        /*       mainw->pheight = (mainw->pheight >> 2) << 1; */
-        /*       mainw->pwidth = (mainw->pwidth >> 2) << 1; */
-        /*       mainw->sepwin_scale /= 2.; */
-        /*     } */
-        /*   } */
-        /* } */
-        /* if (mainw->play_window != NULL) { */
-        /*   mainw->pwidth = lives_widget_get_allocation_width(mainw->play_window); */
-        /*   mainw->pheight = lives_widget_get_allocation_height(mainw->play_window); */
-        /* } */
-      }
-    }
-
-    if (mainw->multitrack == NULL && mainw->play_window == NULL && prefs->ce_maxspect) {
-      // this is where we set the size of the player image for clip editor internal frame
-      // the value is set in mainw->pwidth, mainw->pheight
-
-      // rwidth and rheight are the bounding rectangle
-      // we maxspect mainw->pwidth and mainw->pheight to this
-
-      mainw->pwidth = cfile->hsize;
-      mainw->pheight = cfile->vsize;
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-      int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
-      int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
-
-      if (mainw->double_size && !mainw->fs) {
-        // ce_frame_* was set to half for the first / last frames
-        // so we multiply by 4 to get double size
-        rwidth *= 4;
-        rheight *= 4;
-      }
-#else
-      int rwidth = lives_widget_get_allocation_width(mainw->play_image);
-      int rheight = lives_widget_get_allocation_height(mainw->play_image);
-#endif
-
-      if (mainw->double_size && !mainw->fs) {
-        mainw->pwidth = (mainw->pwidth - H_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-        mainw->pheight = (mainw->pheight - V_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-
-        if (mainw->pwidth < 2) mainw->pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
-        if (mainw->pheight < 2) mainw->pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
-      }
-
-      calc_maxspect(rwidth, rheight, &mainw->pwidth, &mainw->pheight);
-
-      /* check_layer_ready(mainw->frame_layer); */
-
-      /* if (mainw->pwidth < 2) mainw->pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error); */
-      /* if (mainw->pheight < 2) mainw->pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error); */
     }
 
     if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox)) {
@@ -8098,9 +7970,6 @@ void load_frame_image(int frame) {
     // handle clip switching during playback
 
     // calling this function directly is now deprecated in favour of switch_clip()
-
-    int ovsize = mainw->pheight;
-    int ohsize = mainw->pwidth;
     boolean osc_block;
 
     if (mainw->current_file < 1 || mainw->files[new_file] == NULL) return;

@@ -1971,7 +1971,6 @@ void play_file(void) {
   char *com3 = lives_strdup(" ");
   char *stopcom = NULL;
   char *stfile;
-  char *xtrabit, *title;
 #ifdef GDK_WINDOWING_X11
   char *tmp;
 #endif

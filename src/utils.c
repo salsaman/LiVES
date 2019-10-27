@@ -3675,10 +3675,10 @@ boolean check_dir_access(const char *dir) {
   // see also is_writeable_dir() which uses statvfs
 
   // WARNING: may leave some parents around
-
+  char test[5] = "1234";
   boolean exists = lives_file_test(dir, LIVES_FILE_TEST_EXISTS);
-  boolean is_OK = FALSE;
-
+  //boolean is_OK = FALSE;
+  int fp;
   char *testfile;
 
   if (!exists) {
@@ -3687,16 +3687,51 @@ boolean check_dir_access(const char *dir) {
 
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
 
-  testfile = lives_build_filename(dir, "livestst.txt", NULL);
-  lives_touch(testfile);
-  if ((is_OK = lives_file_test(testfile, LIVES_FILE_TEST_EXISTS))) {
-    lives_rm(testfile);
+  testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
+  fp = mkstemp(testfile);
+  if (fp == -1) {
+    lives_free(testfile);
+    if (!exists) {
+      lives_rmdir(dir, FALSE);
+    }
+    return FALSE;
   }
-  lives_free(testfile);
+  if (lives_write(fp, test, 4, TRUE) != 4) {
+    close(fp);
+    lives_rm(testfile);
+    if (!exists) {
+      lives_rmdir(dir, FALSE);
+    }
+    return FALSE;
+  }
+  close(fp);
+  fp = lives_open2(testfile, O_RDONLY);
+  if (fp < 0) {
+    lives_rm(testfile);
+    if (!exists) {
+      lives_rmdir(dir, FALSE);
+    }
+    return FALSE;
+  }
+  if (lives_read(fp, test, 4, TRUE) != 4) {
+    close(fp);
+    lives_rm(testfile);
+    if (!exists) {
+      lives_rmdir(dir, FALSE);
+    }
+    return FALSE;
+  }
+  close(fp);
+  lives_rm(testfile);
   if (!exists) {
     lives_rmdir(dir, FALSE);
   }
-  return is_OK;
+  return TRUE;
+  //lives_touch(testfile);
+  //if ((is_OK = lives_file_test(testfile, LIVES_FILE_TEST_EXISTS))) {
+  //  lives_rm(testfile);
+  //}
+  //return is_OK;
 }
 
 

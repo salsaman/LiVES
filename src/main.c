@@ -2452,12 +2452,6 @@ capability *get_capabilities(void) {
 
   capable->mainpid = lives_getpid();
 
-  // this is the version we should pass into mkdir
-  capable->umask = umask(0);
-  umask(capable->umask);
-  capable->umask = (0777 & ~capable->umask);
-
-  get_location("rmdir", capable->rmdir_cmd, PATH_MAX);
   get_location("cp", capable->cp_cmd, PATH_MAX);
   get_location("mv", capable->mv_cmd, PATH_MAX);
   get_location("ln", capable->ln_cmd, PATH_MAX);
@@ -3392,6 +3386,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   capable->can_write_to_config_new = TRUE;
   capable->can_write_to_workdir = TRUE;
 
+  // this is the version we should pass into mkdir
+  capable->umask = umask(0);
+  umask(capable->umask);
+  capable->umask = (0777 & ~capable->umask);
+
 #ifdef GUI_GTK
   lives_snprintf(capable->home_dir, PATH_MAX, "%s", g_get_home_dir());
 #else
@@ -3403,6 +3402,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   ensure_isdir(capable->home_dir);
   get_location("touch", capable->touch_cmd, PATH_MAX); // needed for make_writeable_dir()
   get_location("rm", capable->rm_cmd, PATH_MAX); // ditto
+  get_location("rmdir", capable->rmdir_cmd, PATH_MAX); // ditto
 
   // get opts first
   if (argc > 1) {
@@ -3476,7 +3476,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         c = getopt_long_only(argc, argv, "", longopts, &option_index);
         if (c == -1) break; // end of options
         charopt = longopts[option_index].name;
-
+        g_print("charopt is %s and %s %c\n", charopt, optarg, c);
+        if (c == '?') continue;
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
           if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
@@ -3506,6 +3507,14 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "configdir")) {
+          if (strlen(optarg) == 0) {
+            LIVES_ERROR(_("configdir may not be blank"));
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           if (strlen(optarg) > PATH_MAX - 64) {
             toolong = TRUE;
           } else {

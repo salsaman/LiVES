@@ -139,7 +139,7 @@ void *convert_swab_frame_thread(void *cc_params);
 // these functions should be used in future
 boolean convert_layer_palette(weed_plant_t *layer, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_plant_t *layer, int outpl, int out_sampling);
-boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, boolean oclamping, int osubspace);
+boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype, int oclamping, int osubspace);
 //boolean apply_gamma (weed_plant_t *ilayer, weed_plant_t *olayer, double gamma); ///< not used
 boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer(weed_plant_t *layer, int width, int height, int nwidth, int nheight);
@@ -185,7 +185,7 @@ void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
 const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
-char *weed_palette_get_name_full(int pal, int clamped, int subspace);
+char *weed_palette_get_name_full(int pal, int clamping, int subspace);
 
 #ifdef USE_SWSCALE
 void sws_free_context(void);

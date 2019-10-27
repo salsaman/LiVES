@@ -5845,17 +5845,17 @@ void switch_clip(int type, int newclip, boolean force) {
     if (newclip != mainw->blend_file) {
       if (mainw->blend_file != -1 && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
           mainw->blend_file != mainw->current_file) {
-	weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
-	if (inst != NULL) {
-	  mainw->osc_block = TRUE;
-	  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-	    int error;
-	    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-	    rte_key_on_off(key + 1, FALSE);
-	  }
-	  mainw->new_blend_file = newclip;
-	  mainw->osc_block = FALSE;
-	}
+        weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
+        if (inst != NULL) {
+          mainw->osc_block = TRUE;
+          if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
+            int error;
+            int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+            rte_key_on_off(key + 1, FALSE);
+          }
+          mainw->new_blend_file = newclip;
+          mainw->osc_block = FALSE;
+        }
       }
       mainw->blend_file = newclip;
       mainw->whentostop = NEVER_STOP;
@@ -8418,6 +8418,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   char *debug;
   char string[PATH_MAX];
   char *com = NULL;
+  boolean cancelled = FALSE;
 
   if (mainw->alives_pgid > 0) {
     // already running, kill the old process
@@ -8457,6 +8458,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   }
   if (lives_dialog_run(LIVES_DIALOG(alwindow->dialog)) == LIVES_RESPONSE_CANCEL) {
     // user cancelled
+    cancelled = TRUE;
     goto autolives_fail;
   }
 
@@ -8513,7 +8515,7 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
 
 autolives_fail:
   if (alwindow != NULL) {
-    lives_widget_destroy(alwindow->dialog);
+    if (!cancelled) lives_widget_destroy(alwindow->dialog);
     lives_free(alwindow);
   }
 
@@ -9943,7 +9945,8 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
   if (!LIVES_IS_PLAYING || (mainw->is_processing && cfile->is_loaded)) return TRUE;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return TRUE;
 
-  if (group != NULL) mainw->rte_keys = -1;
+  // TODO: make pref (reset keymode grab on freeze)
+  //if (group != NULL) mainw->rte_keys = -1;
 
   if (cfile->play_paused) {
     cfile->pb_fps = cfile->freeze_fps;

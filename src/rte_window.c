@@ -1470,7 +1470,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     if ((mode = weed_add_effectkey(key, whashname, TRUE)) == -1) {
       // could not locate effect
       d_print((tmp = lives_strdup_printf(_("Unknown effect %s in %s\n"), whashname, keymap_file)));
-      LIVES_ERROR(tmp);
+      LIVES_WARN(tmp);
       lives_free(tmp);
       notfound = TRUE;
       lives_free(hashname);
@@ -2464,8 +2464,7 @@ LiVESWidget *refresh_rte_window(void) {
 void on_assign_rte_keys_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (rte_window != NULL && !rte_window_is_hidden) {
     on_rtew_delete_event(NULL, NULL, NULL);
-  }
-  else {
+  } else {
     rte_window = create_rte_window();
     rte_window_set_interactive(mainw->interactive);
     lives_widget_show(rte_window);

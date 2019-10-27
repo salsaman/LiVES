@@ -547,11 +547,11 @@ static boolean pre_init(void) {
 
     if (!capable->can_write_to_workdir) {
       if (!mainw->has_session_workdir) {
-	tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
-				   (mainw->old_vhash != NULL && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
-				   ? "<tempdir>" : "<workdir>",
-				   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
-	lives_free(tmp);
+        tmp2 = lives_strdup_printf(_("Please check the %s setting in \n%s\nand try again.\n"),
+                                   (mainw->old_vhash != NULL && atoi(mainw->old_vhash) != 0 && atoi(mainw->old_vhash) < 3003003)
+                                   ? "<tempdir>" : "<workdir>",
+                                   (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+        lives_free(tmp);
       } else tmp2 = lives_strdup("");
 
       msg = lives_strdup_printf(_("\nLiVES was unable to use the working directory\n%s\n\n%s"),
@@ -5378,6 +5378,28 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 }
 
 
+static void create_blank_layer(weed_plant_t *layer, const char *image_ext, int width, int height, int target_palette) {
+  // TODO - see if this is useful elsewhere
+  int error;
+  if ((width == 0 || height == 0) && weed_plant_has_leaf(layer, WEED_LEAF_WIDTH) && weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) {
+    width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+    height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+  }
+  if (width == 0) width = DEFAULT_FRAME_HSIZE_UNSCALED;
+  if (height == 0) height = DEFAULT_FRAME_VSIZE_UNSCALED;
+  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
+  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
+  if (target_palette == WEED_PALETTE_END) {
+    if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
+      if (image_ext == NULL || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
+        weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
+      else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
+    } else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, target_palette);
+  }
+  create_empty_pixel_data(layer, TRUE, TRUE);
+}
+
+
 boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height,
                            int target_palette) {
   // pull a frame from an external source into a layer
@@ -5430,19 +5452,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     // frame number can be 0 during rendering
     if (frame == 0) {
       mainw->osc_block = FALSE;
-      if ((width == 0 || height == 0) && weed_plant_has_leaf(layer, WEED_LEAF_WIDTH) && weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) {
-        width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
-        height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
-      }
-      if (width == 0) width = DEFAULT_FRAME_HSIZE_UNSCALED;
-      if (height == 0) height = DEFAULT_FRAME_VSIZE_UNSCALED;
-      weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-      weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
-      if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
-        if (image_ext == NULL || !strcmp(image_ext, LIVES_FILE_EXT_JPG)) weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
-        else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
-      }
-      create_empty_pixel_data(layer, TRUE, TRUE);
+      create_blank_layer(layer, image_ext, width, height, target_palette);
       return TRUE;
     } else if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
@@ -5626,15 +5636,28 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
     weed_layer_set_from_lives2lives(layer, clip, (lives_vstream_t *)sfile->ext_src);
     mainw->osc_block = FALSE;
     return TRUE;
-  case CLIP_TYPE_GENERATOR:
+  case CLIP_TYPE_GENERATOR: {
     // special handling for clips where host controls size
     // Note: vlayer is actually the out channel of the generator, so we should
-    // never free it
-    vlayer = weed_layer_create_from_generator((weed_plant_t *)sfile->ext_src, tc);
-    weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
-    weed_set_voidptr_value(vlayer, WEED_LEAF_PIXEL_DATA, NULL);
+    // never free it !
+    weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
+    if (inst != NULL) {
+      int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      while (filter_mutex_trylock(key)) {
+        sched_yield();
+        lives_usleep(prefs->sleep_time);
+      }
+      vlayer = weed_layer_create_from_generator(inst, tc);
+      weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
+      weed_set_voidptr_value(vlayer, WEED_LEAF_PIXEL_DATA, NULL);
+      filter_mutex_unlock(key);
+    } else {
+      mainw->osc_block = FALSE;
+      create_blank_layer(layer, image_ext, width, height, target_palette);
+    }
     mainw->osc_block = FALSE;
-    return TRUE;
+  }
+  return TRUE;
   default:
     mainw->osc_block = FALSE;
     return FALSE;
@@ -8033,7 +8056,7 @@ void load_frame_image(int frame) {
     mainw->osc_block = TRUE;
 
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
-	new_file != mainw->current_file &&
+        new_file != mainw->current_file &&
         new_file != mainw->blend_file && !mainw->is_rendering) {
       // switched from generator to another clip, end the generator
       // will cause recursion, but second time around cfile->ext_src should be NULL
@@ -8043,8 +8066,8 @@ void load_frame_image(int frame) {
       if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file;
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
       rte_key_on_off(key + 1, FALSE);
-       if (mainw->current_file == -1) {
-	mainw->osc_block = osc_block;
+      if (mainw->current_file == -1) {
+        mainw->osc_block = osc_block;
       }
       return;
     }

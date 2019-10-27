@@ -1014,7 +1014,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         if (rte_window != NULL) rtew_set_keych(key, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
-        filter_mutex_unlock(key);
+        //filter_mutex_unlock(key);
         return TRUE;
       }
 
@@ -1200,8 +1200,7 @@ boolean rte_key_on_off(int key, boolean on) {
   new_rte = GU641 << (key);
   if (mainw->rte & new_rte) {
     if (on) return TRUE;
-  }
-  else if (!on) return FALSE;
+  } else if (!on) return FALSE;
   key++;
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
   return (mainw->rte & new_rte);

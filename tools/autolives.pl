@@ -114,11 +114,17 @@ if ($remote_host eq "localhost") {
 
 if ($DEBUG) {print STDERR "Opening status port UDP $local_port on $my_ip_addr...\n";}
 
-my $ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
-			      LocalAddr => $my_ip_addr)
-    or die "error creating UDP listener for $my_ip_addr  $@\n";
-
-$s->add($ip1);
+if ($noty) {
+    if ($ip1=IO::Socket::INET->new(LocalPort => $local_port, Proto=>'udp',
+				   LocalAddr => $my_ip_addr)) {
+	$s->add($ip1);
+	if ($DEBUG) {print STDERR "Status port ready.\n";}
+    }
+    else{
+	if ($DEBUG) {print STDERR "error creating UDP listener for $my_ip_addr  $@\n");
+	$noty = 0;
+    }
+}
 
 if ($DEBUG) {print STDERR "Status port ready.\n";}
 
@@ -135,11 +141,11 @@ if ($noty) {
 
 if ($DEBUG) {print STDERR "Beginning OMC handshake...\n";}
 
-send_command("/lives/open_status_socket,$my_ip_addr,$local_port");
+&send_command("/lives/open_status_socket,$my_ip_addr,$local_port");
 
 if ($DEBUG) {print STDERR "Sent request to open status socket. Sending ping.\n";}
 
-send_command("/lives/ping");
+&send_command("/lives/ping");
 my $retmsg=&get_newmsg;
 
 if ($DEBUG) {print STDERR "got $retmsg\n";}
@@ -151,7 +157,7 @@ unless ($retmsg eq "pong") {
 
 if ($allow_fxchanges) {
     # get number of realtime effect keys
-    send_command("/effect_key/count");
+    &send_command("/effect_key/count");
 
     my $numeffectkeys=&get_newmsg;
 
@@ -166,7 +172,7 @@ if ($allow_fxchanges) {
 
     # get number of keymodes
 
-    send_command("/effect_key/maxmode/get");
+    &send_command("/effect_key/maxmode/get");
 
     $nummodes=&get_newmsg;
 
@@ -178,7 +184,7 @@ if ($allow_fxchanges) {
 }
 
 # get number of clips
-send_command("/clip/count");
+&send_command("/clip/count");
 
 $numclips=&get_newmsg;
 
@@ -190,44 +196,44 @@ if (!$numclips) {
 }
 
 if ($noty) {
-    send_command("/lives/open_notify_socket,$my_ip_addr,$notify_port");
+    &send_command("/lives/open_notify_socket,$my_ip_addr,$notify_port");
 }
 
 # get some constants we need
-send_command("/lives/constant/value/get,LIVES_STATUS_PLAYING");
+&send_command("/lives/constant/value/get,LIVES_STATUS_PLAYING");
 
 $playstat=&get_newmsg;
 
 if ($loop) {
-    send_command("/lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS");
+    &send_command("/lives/constant/value/get,LIVES_LOOP_MODE_CONTINUOUS");
 
     $loopconst=&get_newmsg;
 
     # get current loop mode
-    send_command("/video/loop/get");
+    &send_command("/video/loop/get");
     $currloop=&get_newmsg;
 }
 
 if ($mute) {
     #mute the sound if requested
-    send_command("/audio/mute/get");
+    &send_command("/audio/mute/get");
     $mute = 1 - &get_newmsg;
     if ($mute) {
-	send_command("/audio/mute/set,1");
+	&send_command("/audio/mute/set,1");
     }
 }
 
 if (!$waitforplay) {
     #trigger playback
     if ($loop) {
-	send_command("/video/loop/set,$loopconst");
+	&send_command("/video/loop/set,$loopconst");
     }
 
-    send_command("/video/play");
+    &send_command("/video/play");
 
     #wait $timeout seconds for playback to start, else bail
     for ($i=0; $i<$timeout; $i++) {
-	send_command("/lives/status/get");
+	&send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
 	    sleep 1;
@@ -248,18 +254,24 @@ if (!$waitforplay) {
 
 if ($DEBUG) {print STDERR "Performing magic...\n";}
 
+ny $reselect = 0;
+
 while (1) {
     if ($noty) {
 	for ($ii=0;$ii<4;$ii++) {
-	    get_notify();
+	    &get_notify;
 	}
     }
     else {
-	select(undef, undef, undef, $ctime);
+	if (!$reselect) {
+	    select(undef, undef, undef, $ctime);
+	}
     }
-    
+
+    $reselect = 0;
+
     if ($waitforplay) {
-	send_command("/lives/status/get");
+	&send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
 	    sleep 1;
@@ -274,7 +286,10 @@ while (1) {
 	# random clip switch
 	if ($allow_clipswitch) {
 	    $nextclip=int(rand($numclips)+1);
-	    send_command("/clip/select,$nextclip");
+	    &send_command("/clip/select,$nextclip");
+	}
+	else {
+	    $reselect = 1;
 	}
     }
     elsif ($action<15) {
@@ -284,13 +299,13 @@ while (1) {
 	    if ($action<10) {
 		# 6,7,8,9
 		if ($nexteffectkey!=$key_to_avoid) {
-		    send_command("/effect_key/disable,$nexteffectkey");
+		    &send_command("/effect_key/disable,$nexteffectkey");
 		}
 	    }
 	    elsif ($action<13) {
 		#10,11,12
 		if ($nexteffectkey!=$key_to_avoid) {
-		    send_command("/effect_key/enable,$nexteffectkey");
+		    &send_command("/effect_key/enable,$nexteffectkey");
 		}
 	    }
 	    else {
@@ -301,14 +316,17 @@ while (1) {
 		    $maxmode=&get_newmsg;
 		    $newmode=int(rand($maxmode))+1;
 
-		    send_command("/effect_key/mode/set,$nexteffectkey,$newmode");
+		    &send_command("/effect_key/mode/set,$nexteffectkey,$newmode");
 		}
 	    }
+	}
+	else {
+	    $reselect = 1;
 	}
     }
     elsif ($action==17) {
 	if ($allow_fgbgswap) {
-	    send_command("/clip/foreground/background/swap");
+	    &send_command("/clip/foreground/background/swap");
 	}
     }
     else {
@@ -318,12 +336,15 @@ while (1) {
 		#make flipping from backwards to forwards more likely
 		# so that we actually make some progress in the clip
 		$play_reversed = !$play_reversed;
-		send_command("/video/play/reverse");
+		&send_command("/video/play/reverse");
 	    }
+	}
+	else {
+	    $reselect = 1;
 	}
     }
 
-    if (!$waitforplay) {
+    if (!$reselect && !$waitforplay) {
 	send_command("/lives/status/get");
 	$status=&get_newmsg;
 	if ($status != $playstat) {
@@ -354,12 +375,12 @@ sub send_command {
 sub finish {
     if ($loop) {
 	#reset loop mode
-	send_command("/video/loop/set,$currloop");
+	&send_command("/video/loop/set,$currloop");
     }
 
     # reset mute status
     if ($mute) {
-	send_command("/audio/mute/set,0");
+	&send_command("/audio/mute/set,0");
 	$mute = 0;
     }
 }
@@ -432,7 +453,7 @@ sub print_layout {
     my ($i,$j);
     for ($i=1;$i<=$keys;$i++) {
 	for ($j=1;$j<=$modes;$j++) {
-	    send_command("/effect_key/name/get,$i,$j");
+	    &send_command("/effect_key/name/get,$i,$j");
 	    $name=&get_newmsg;
 	    unless ($name eq "") {
 		if ($DEBUG) {print STDERR "key $i, mode $j: $name    ";}

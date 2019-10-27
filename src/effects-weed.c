@@ -266,26 +266,49 @@ LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 #ifdef DEBUG_FILTER_MUTEXES
   int retval;
   g_print("trylock of %d\n", key);
-  if (key == -1) return 0;
-  if (key >= 0 && key < FX_KEYS_MAX) retval = pthread_mutex_trylock(&mainw->fx_mutex[key]);
-  else retval = 0;
+#endif
+  if (key < 0 || key >= FX_KEYS_MAX) {
+    if (key != -1) {
+      char *msg = lives_strdup_printf("attempted lock of bad fx key %d", key);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+    }
+    return 0;
+  }
+#ifdef DEBUG_FILTER_MUTEXES
+  retval = return pthread_mutex_trylock(&mainw->fx_mutex[key]);
   g_print("trylock of %d returned %d\n", key, retval);
   return retval;
-#else
-  if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_trylock(&mainw->fx_mutex[key]);
-  return 0;
 #endif
+  return pthread_mutex_trylock(&mainw->fx_mutex[key]);
 }
 
 #ifndef DEBUG_FILTER_MUTEXES
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
-  if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_lock(&mainw->fx_mutex[key]);
-  return 0;
+  int ret = filter_mutex_trylock(key);
+  if (ret != 0 && !mainw->is_exiting) {
+    char *msg = lives_strdup_printf("attempted double lock of fx key %d, err was %d", key, ret);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+  }
+  return ret;
 }
 
 
 LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
-  if (key >= 0 && key < FX_KEYS_MAX) return pthread_mutex_unlock(&mainw->fx_mutex[key]);
+  if (key >= 0 && key < FX_KEYS_MAX) {
+    int ret = pthread_mutex_unlock(&mainw->fx_mutex[key]);
+    if (ret != 0 && !mainw->is_exiting) {
+      char *msg = lives_strdup_printf("attempted double unlock of fx key %d, err was %d", key, ret);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+    }
+    return ret;
+  } else {
+    char *msg = lives_strdup_printf("attempted unlock of bad fx key %d", key);
+    LIVES_ERROR(msg);
+    lives_free(msg);
+  }
   return 0;
 }
 #endif
@@ -2457,8 +2480,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     layer = layers[in_tracks[i]];
 
-    if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
-    else iclamping = WEED_YUV_CLAMPING_CLAMPED;
+    if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) {
+      iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
+    } else iclamping = WEED_YUV_CLAMPING_CLAMPED;
 
     if (oclamping == -1 || (channel_flags & WEED_CHANNEL_PALETTE_CAN_VARY)) {
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_YUV_CLAMPING)) {
@@ -2524,13 +2548,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 
     if (weed_palette_is_yuv_palette(palette)) {
-      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING))
+      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) {
         oclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
+      }
 
       if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SAMPLING))
         osampling = (weed_get_int_value(layer, WEED_LEAF_YUV_SAMPLING, &error));
 
-      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING))
+      if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SUBSPACE))
         osubspace = (weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, &error));
 
       weed_set_int_value(channel, WEED_LEAF_YUV_CLAMPING, oclamping);
@@ -6193,16 +6218,25 @@ LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   if (inst == NULL) return -2;
   pthread_mutex_lock(&mainw->instance_ref_mutex);
   if (!weed_plant_has_leaf(inst, WEED_LEAF_HOST_REFS)) nrefs = -1;
-  else nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error) - 1;
+  else nrefs = weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error);
+  if (nrefs <= -1) {
+    char *msg = lives_strdup_printf("unref of filter instance (%p) with nrefs == %d\n", inst, nrefs);
+    pthread_mutex_unlock(&mainw->instance_ref_mutex);
+    LIVES_ERROR(msg);
+    break_me();
+    return nrefs;
+  }
+  nrefs--;
+  weed_set_int_value(inst, WEED_LEAF_HOST_REFS, nrefs);
 #ifdef DEBUG_REFCOUNT
   g_print("unref %p, nrefs==%d\n", inst, nrefs);
 #endif
-  if (nrefs < 0) {
+  if (nrefs == -1) {
 #ifdef DEBUG_REFCOUNT
     g_print("FREE %p\n", inst);
 #endif
     lives_free_instance(inst);
-  } else weed_set_int_value(inst, WEED_LEAF_HOST_REFS, nrefs);
+  }
   pthread_mutex_unlock(&mainw->instance_ref_mutex);
   return nrefs;
 }
@@ -6658,7 +6692,7 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
 
 boolean weed_init_effect(int hotkey) {
   // mainw->osc_block should be set to TRUE before calling this function !
-  // filter_mutex MUST be locked
+  // filter_mutex MUST be locked, on FALSE return is unlocked
   weed_plant_t *filter;
   weed_plant_t *new_instance, *inst;
   weed_plant_t *event_list;
@@ -6710,7 +6744,7 @@ boolean weed_init_effect(int hotkey) {
   // check first if it is an audio generator
 
   if ((is_gen || (has_audio_chans_in(filter, FALSE) &&
-                          !has_video_chans_in(filter, TRUE))) &&
+                  !has_video_chans_in(filter, TRUE))) &&
       has_audio_chans_out(filter, FALSE) &&
       !has_video_chans_out(filter, TRUE)) {
     if (!is_realtime_aplayer(prefs->audio_player)) {
@@ -6719,6 +6753,7 @@ boolean weed_init_effect(int hotkey) {
       d_print(_("Effect %s cannot be used with this audio player.\n"), fxname);
       lives_free(fxname);
       mainw->error = TRUE;
+      filter_mutex_unlock(hotkey);
       return FALSE;
     }
 
@@ -6761,13 +6796,9 @@ boolean weed_init_effect(int hotkey) {
       mainw->files[mainw->blend_file] != NULL &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
       !is_audio_gen) {
-    /////////////////////////////////////// if blend_file is a generator we should finish it 
+    /////////////////////////////////////// if blend_file is a generator we should finish it
     if (bg_gen_to_start == -1) {
-      //if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
-      //filter_mutex_unlock(hotkey);
       weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-      //if (needs_relock) filter_mutex_lock(hotkey);
-      //needs_relock = FALSE;
     }
 
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
@@ -6778,6 +6809,7 @@ boolean weed_init_effect(int hotkey) {
       (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
     if (mainw->noswitch || mainw->is_processing || mainw->preview) {
       mainw->error = TRUE;
+      filter_mutex_unlock(hotkey);
       return FALSE; // stopping fg gen will cause clip to switch
     }
     if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && !is_gen) {
@@ -6786,9 +6818,6 @@ boolean weed_init_effect(int hotkey) {
     } else {
       if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
       //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
-      //no filter_mutex lock
-      //if (filter_mutex_trylock(hotkey)) needs_relock = TRUE;
-      //filter_mutex_unlock(hotkey);
       weed_generator_end((weed_plant_t *)cfile->ext_src);
       fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
       if (mainw->current_file > -1 && (cfile->achans == 0 || cfile->frames > 0)) {
@@ -6796,8 +6825,6 @@ boolean weed_init_effect(int hotkey) {
         // otherwise we will get killed in generator_start
         mainw->current_file = -1;
       }
-      //if (needs_relock) filter_mutex_lock(hotkey);
-      //needs_relock = FALSE;
     }
   }
 
@@ -6821,6 +6848,7 @@ boolean weed_init_effect(int hotkey) {
       gen_start = TRUE;
     } else if (!fg_modeswitch && mainw->num_tr_applied == 0 && (mainw->noswitch || mainw->is_processing || mainw->preview))  {
       mainw->error = TRUE;
+      filter_mutex_unlock(hotkey);
       return FALSE;
     }
   }
@@ -6832,12 +6860,11 @@ boolean weed_init_effect(int hotkey) {
     lives_rfx_t *rfx = fx_dialog[1]->rfx;
 
     new_instance = (weed_plant_t *)rfx->source;
-    // add 2 refs since we will remove one below
-    weed_instance_ref(new_instance);
+    // add a ref since we will remove one below, the param window should already have a ref
     weed_instance_ref(new_instance);
     redraw_pwindow(hotkey, key_modes[hotkey]);
   } else {
-    new_instance = weed_instance_from_filter(filter);
+    new_instance = weed_instance_from_filter(filter); //adds a ref
 
     // if it is a key effect, set key defaults
     if (hotkey < FX_KEYS_MAX_VIRTUAL && key_defaults[hotkey][key_modes[hotkey]] != NULL) {
@@ -6926,6 +6953,7 @@ deinit2:
         lives_free(cwd);
         if (is_audio_gen) mainw->agen_needs_reinit = FALSE;
         mainw->error = TRUE;
+        filter_mutex_unlock(hotkey);
         return FALSE;
       }
       set_param_gui_readonly(inst);
@@ -6958,9 +6986,6 @@ deinit2:
     if (fg_modeswitch) mainw->num_tr_applied = 0; // force to fg
 
     key_to_instance[hotkey][key_modes[hotkey]] = inst;
-
-    filter_mutex_unlock(hotkey);
-
     // enable param recording, in case the instance was obtained from a param window
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
@@ -6981,8 +7006,8 @@ deinit2:
       key_to_instance[hotkey][key_modes[hotkey]] = NULL;
 
       // reduce refcount by 2
-      weed_instance_unref(inst);
-      weed_instance_unref(inst);
+      //weed_instance_unref(inst);
+      //weed_instance_unref(inst);
       filter_mutex_unlock(hotkey);
       if (!LIVES_IS_PLAYING) {
         int current_file = mainw->current_file;
@@ -6990,14 +7015,15 @@ deinit2:
       }
 
       mainw->error = TRUE;
-      filter_mutex_lock(hotkey);
       return FALSE;
     }
 
-    if (playing_file == -1 && mainw->gen_started_play) return FALSE;
+    if (playing_file == -1 && mainw->gen_started_play) {
+      return FALSE;
+    }
 
     // weed_generator_start can change the instance
-    inst = weed_instance_obtain(hotkey, key_modes[hotkey]);
+    //inst = weed_instance_obtain(hotkey, key_modes[hotkey]);/////
 
     // TODO - problem if modeswitch triggers playback
     // hence we do not allow mixing of generators and non-gens on the same key
@@ -7050,7 +7076,7 @@ deinit2:
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
 
-  weed_instance_unref(inst);
+  weed_instance_unref(inst); // release the ref we added earlier
 
   if (is_audio_gen) {
     mainw->agen_key = hotkey + 1;
@@ -7200,6 +7226,7 @@ void weed_deinit_effect(int hotkey) {
 
   if (hotkey >= FX_KEYS_MAX) return;
 
+  // adds a ref
   if ((instance = weed_instance_obtain(hotkey, key_modes[hotkey])) == NULL) return;
 
   // disable param recording, in case the instance is still attached to a param window
@@ -7218,16 +7245,13 @@ void weed_deinit_effect(int hotkey) {
 
   filter = weed_instance_get_filter(instance, TRUE);
   if ((is_video_gen || all_ins_alpha(filter, TRUE)) && num_out_chans > 0 && !all_outs_alpha(filter, TRUE)) {
+    weed_instance_unref(instance); // remove ref from weed instance obtain
     /////////////////////////////////// deinit a (video) generator
     if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && (hotkey != bg_generator_key)) {
-      mainw->cancelled = CANCEL_GENERATOR_END;
+      mainw->cancelled = CANCEL_GENERATOR_END; // will be unreffed on pb end
     } else {
-      // filter_mutex_unlocked
-      //filter_mutex_unlock(hotkey);
-      weed_generator_end(instance);
-      //filter_mutex_lock(hotkey);
+      weed_generator_end(instance); // removes 1 ref
     }
-    weed_instance_unref(instance); // remove ref from weed instance obtain
     return;
   }
 
@@ -7263,7 +7287,7 @@ void weed_deinit_effect(int hotkey) {
             ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
             if (audio_ticks == -1) {
               mainw->cancelled = handle_audio_timeout();
-	      weed_instance_unref(instance); // remove ref from weed instance obtain
+              weed_instance_unref(instance); // remove ref from weed instance obtain
               return;
             }
             pa_time_reset(mainw->pulsed_read, -audio_ticks); // ensure time continues monotonically
@@ -7327,13 +7351,12 @@ deinit3:
 
   weed_call_deinit_func(inst);
   weed_instance_unref(inst); // remove ref from weed_instance_obtain
-
   weed_instance_unref(inst);  // free if no other refs
 
   if (next_inst != NULL) {
     // handle compound fx
     inst = next_inst;
-    weed_instance_ref(inst); // proxy for weed_instance_obtain 
+    weed_instance_ref(inst); // proxy for weed_instance_obtain
     goto deinit3;
   }
 
@@ -7352,11 +7375,11 @@ deinit3:
         if (!filter_mutex_trylock(bg_generator_key)) {
           needs_unlock = bg_generator_key; // will get reset to -1
         }
-	weed_deinit_effect(bg_generator_key);
+        weed_deinit_effect(bg_generator_key);
         if (needs_unlock != -1) {
-	  filter_mutex_unlock(needs_unlock);
-	  needs_unlock = -1;
-	}
+          filter_mutex_unlock(needs_unlock);
+          needs_unlock = -1;
+        }
       }
       mainw->blend_file = -1;
     }
@@ -7416,23 +7439,19 @@ void weed_deinit_all(boolean shutdown) {
   mainw->last_grabbable_effect = -1;
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
-    g_print("chk %d %d\n", i, mainw->rte);
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
       filter_mutex_lock(i);
-    }
-    else {
+    } else {
       // on shutdown, another thread might be deadlocked on this
       // so we will unlock it after
       filter_mutex_trylock(i);
     }
     if ((rte_key_is_enabled(1 + i))) {
-      g_print("chk3 %d\n", i);
       if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
-	g_print("deinit %d %p\n", i+ 1, instance);
         if (shutdown || !LIVES_IS_PLAYING || mainw->current_file == -1 || cfile->ext_src != instance) {
-	  if (rte_window != NULL) rtew_set_keych(i, FALSE);
-	  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+          if (rte_window != NULL) rtew_set_keych(i, FALSE);
+          if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
           weed_deinit_effect(i);
           pthread_mutex_lock(&mainw->event_list_mutex);
           mainw->rte ^= (GU641 << i);
@@ -7710,7 +7729,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   // cf. yuv4mpeg.c
   // start "playing" but receive frames from a plugin
 
-  // filter_mutex must NOT be locked
+  // filter_mutex MUST be locked, on FALSE return is unlocked
 
   weed_plant_t **out_channels, *channel, *filter, *achan;
   char *filter_name;
@@ -7722,26 +7741,21 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   int new_file = 0;
   boolean is_bg = FALSE;
 
-  weed_instance_ref(inst);
+  //weed_instance_ref(inst);
+  //filter_mutex_lock(key);
 
-  filter_mutex_lock(key);
-
-  if (mainw->current_file < 1 || cfile->frames > 0) {
-    if (mainw->current_file > -1 && cfile != NULL && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
-      close_current_file(0);
-      old_file = -1;
-    }
+  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
+    close_current_file(0);
+    old_file = -1;
   }
 
   if (mainw->is_processing && !mainw->preview) {
-    weed_instance_unref(inst);
     filter_mutex_unlock(key);
     return FALSE;
   }
 
   if ((mainw->preview || (mainw->current_file > -1 && cfile != NULL && cfile->opening)) &&
       (mainw->num_tr_applied == 0 || mainw->blend_file == -1 || mainw->blend_file == mainw->current_file)) {
-    weed_instance_unref(inst);
     filter_mutex_unlock(key);
     return FALSE;
   }
@@ -7752,11 +7766,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
       mainw->num_tr_applied > 0 && mainw->files[mainw->blend_file] != NULL &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     ////////////////////////// switching background generator: stop the old one first
-    
-    weed_instance_unref(inst);
-    //filter_mutex_unlock(key);
     weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
-    //filter_mutex_lock(key);
     mainw->current_file = mainw->blend_file;
   }
 
@@ -7777,7 +7787,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     mainw->startticks = mainw->currticks;
   } else {
     if (create_cfile(-1, filter_name, TRUE) == NULL) {
-      weed_instance_unref(inst);
       filter_mutex_unlock(key);
       return FALSE;
     }
@@ -7817,7 +7826,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   }
 
   if ((num_channels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS)) == 0) {
-    weed_instance_unref(inst);
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
     close_current_file(mainw->pre_src_file);
@@ -7826,7 +7834,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
   out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
   if ((channel = get_enabled_channel(inst, 0, FALSE)) == NULL) {
     lives_free(out_channels);
-    weed_instance_unref(inst);
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
     close_current_file(mainw->pre_src_file);
@@ -7849,8 +7856,6 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
     register_audio_channels(1);
   }
-
-  weed_instance_unref(inst);
 
   // if not playing, start playing
   if (!LIVES_IS_PLAYING) {
@@ -7889,16 +7894,18 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
     }
     filter_mutex_unlock(key);
 
-    weed_instance_unref(inst);  // release ref from weed_instance_from_filter
+    weed_instance_unref(inst);  // release ref from weed_instance_from_filter, normally we would do this on return
     play_file();
 
-    filter_mutex_lock(key);
+    //filter_mutex_lock(key);
     // need to set this after playback ends; this stops the key from being activated (again) in effects.c
+    // also stops the (now defunt instance being unreffed)
     mainw->gen_started_play = TRUE;
 
     if (mainw->play_window != NULL) {
       lives_widget_queue_draw(mainw->play_window);
     }
+    return FALSE;
   } else {
     // already playing
 
@@ -7911,7 +7918,9 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
       if (mainw->current_file == -1) mainw->current_file = new_file;
 
       if (new_file != old_file) {
+        filter_mutex_unlock(key); // else we get stuck pulling a frame
         do_quick_switch(new_file);
+        filter_mutex_lock(key);
 
         // switch audio clip
         if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
@@ -7947,38 +7956,25 @@ boolean weed_generator_start(weed_plant_t *inst, int key) {
 }
 
 
-void wge_inner(weed_plant_t *inst, boolean unref) {
+void wge_inner(weed_plant_t *inst) {
   weed_plant_t *next_inst = NULL;
-  int error;
-  int key = -1;
-
   // called from weed_generator_end() below and also called directly after playback ends
 
   // during playback, MUST call this with filter_mutex locked
 
-  // unrefs inst
-  
+  // unrefs inst 1 times
+
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-    key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-    //filter_mutex_lock(key);
+    int error;
+    int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
     key_to_instance[key][key_modes[key]] = NULL;
-    //filter_mutex_unlock(key);
   }
 
-  next_inst = get_next_compound_inst(inst);
-
-  //if (key != -1) filter_mutex_lock(key);
-  weed_call_deinit_func(inst);
-  //if (key != -1) filter_mutex_unlock(key);
-
-  if (unref) {
+  while (inst != NULL) {
+    next_inst = get_next_compound_inst(inst);
+    weed_call_deinit_func(inst);
     weed_instance_unref(inst);
-  }
-
-  if (next_inst != NULL) {
-    // handle compound fx
     inst = next_inst;
-    wge_inner(inst, unref);
   }
 }
 
@@ -8003,8 +7999,9 @@ void weed_generator_end(weed_plant_t *inst) {
       mainw->files[mainw->blend_file]->ext_src == inst) is_bg = TRUE;
   else mainw->new_blend_file = mainw->blend_file;
 
-  if (!is_bg && mainw->whentostop == STOP_ON_VID_END && mainw->playing_file > 0) {
+  if (LIVES_IS_PLAYING && !is_bg && mainw->whentostop == STOP_ON_VID_END) {
     // we will close the file after playback stops
+    // and also unref the instance
     mainw->cancelled = CANCEL_GENERATOR_END;
     return;
   }
@@ -8057,7 +8054,7 @@ void weed_generator_end(weed_plant_t *inst) {
     if (mainw->blend_file == mainw->current_file) mainw->blend_file = -1;
   }
 
-  if (inst != NULL) wge_inner(inst, TRUE);
+  if (inst != NULL) wge_inner(inst); // removes 1 ref
 
   // if the param window is already open, show any reinits now
   if (fx_dialog[1] != NULL) {
@@ -8239,7 +8236,7 @@ deinit4:
 
   if (bg_gen_to_start != -1) {
     break_me();
-    
+
     if (mainw->blend_file == -1) {
       mainw->osc_block = FALSE;
       return TRUE; // for example if transition was swapped for filter in mapper
@@ -8252,7 +8249,6 @@ deinit4:
       if ((inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start])) == NULL) {
         // restart bg generator
         if (!weed_init_effect(bg_gen_to_start)) {
-          filter_mutex_unlock(bg_gen_to_start);
           mainw->osc_block = FALSE;
           return TRUE;
         }
@@ -8268,6 +8264,7 @@ deinit4:
         int playing_file = mainw->playing_file;
         mainw->playing_file = -100; //kludge to stop playing a second time
         if (!weed_init_effect(bg_gen_to_start)) {
+          filter_mutex_unlock(bg_gen_to_start);
           error++;
         }
         mainw->playing_file = playing_file;
@@ -9165,8 +9162,12 @@ boolean weed_delete_effectkey(int key, int mode) {
       if (mode == orig_mode && key_modes[key] == mode) {
         key_modes[key] = 0;
         if (was_started) {
-          if (key_to_fx[key][0] != -1) weed_init_effect(modekey);
-          else {
+          if (key_to_fx[key][0] != -1) {
+            if (!weed_init_effect(modekey)) {
+              // TODO
+              filter_mutex_lock(key);
+            }
+          } else {
             pthread_mutex_lock(&mainw->event_list_mutex);
             if (rte_key_is_enabled(1 + key)) mainw->rte ^= (GU641 << key);
             pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -9485,7 +9486,6 @@ boolean rte_key_setmode(int key, int newmode) {
   int blend_file;
   lives_whentostop_t whentostop = mainw->whentostop;
   int real_key;
-  int error;
 
   if (key == 0) {
     if ((key = mainw->rte_keys) == -1) return FALSE;
@@ -9538,7 +9538,7 @@ boolean rte_key_setmode(int key, int newmode) {
 
   // TODO - block template channel changes
 
-  if ((inst = weed_instance_obtain(key, oldmode)) != NULL) {
+  if ((inst = weed_instance_obtain(key, oldmode)) != NULL) {  // adds a ref
     if (enabled_in_channels(inst, FALSE) == 2 && enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 2) {
       // transition --> transition, allow any bg generators to survive
       key = -key - 1;
@@ -9551,11 +9551,11 @@ boolean rte_key_setmode(int key, int newmode) {
     if (inst != NULL) {
       // handle compound fx
       last_inst = inst;
-      while (weed_plant_has_leaf(last_inst, WEED_LEAF_HOST_NEXT_INSTANCE)) last_inst = weed_get_plantptr_value(last_inst,
-            WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+      while (get_next_compound_inst(last_inst) != NULL) last_inst = get_next_compound_inst(last_inst);
     }
 
-    if (inst != NULL && (enabled_in_channels(inst, FALSE) > 0 || enabled_out_channels(last_inst, FALSE) == 0 || is_pure_audio(inst, FALSE))) {
+    if (inst != NULL && (enabled_in_channels(inst, FALSE) > 0 || enabled_out_channels(last_inst, FALSE) == 0 ||
+                         is_pure_audio(inst, FALSE))) {
       // not a (video or video/audio) generator
       weed_deinit_effect(key);
     } else if (enabled_in_channels(weed_filters[key_to_fx[key][newmode]], FALSE) == 0 &&
@@ -9565,9 +9565,10 @@ boolean rte_key_setmode(int key, int newmode) {
     key_modes[real_key] = newmode;
 
     mainw->blend_file = blend_file;
-
+    g_print("pt xx %p\n", inst);
     if (inst != NULL) {
       if (!weed_init_effect(key)) {
+        g_print("pt xx3 %p\n", inst);
         weed_instance_unref(inst);
         // TODO - unblock template channel changes
         mainw->whentostop = whentostop;
@@ -9575,10 +9576,10 @@ boolean rte_key_setmode(int key, int newmode) {
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (rte_key_is_enabled(1 + key)) mainw->rte ^= (GU641 << key);
         pthread_mutex_unlock(&mainw->event_list_mutex);
-        filter_mutex_unlock(real_key);
         mainw->osc_block = FALSE;
         return FALSE;
       }
+      g_print("pt xx4 %p\n", inst);
       weed_instance_unref(inst);
       if (mainw->ce_thumbs) ce_thumbs_add_param_box(real_key, TRUE);
     }
@@ -9679,7 +9680,10 @@ int rte_switch_keymode(int key, int mode, const char *hashname) {
     key_modes[key] = mode;
     weed_deinit_effect(-key - 1); // set is_modeswitch
     key_to_fx[key][mode] = id;
-    weed_init_effect(-key - 1);
+    if (!weed_init_effect(-key - 1)) {
+      // TODO
+      filter_mutex_lock(key);
+    }
     key_modes[key] = oldkeymode;
     weed_instance_unref(inst);
   } else key_to_fx[key][mode] = id;

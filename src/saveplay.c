@@ -3037,15 +3037,17 @@ void play_file(void) {
     lives_freep((void **)&mainw->bad_aud_file);
   }
 
-  // need to do this here, in case we want to preview a generator which will close to -1
+  // need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {
     if (!mainw->preview && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-      // just deinit the generator here, to possibly save CPU cycles
+      // deinit the generator here, to possibly save CPU cycles in case it's running in a thread
+      weed_plant_t *inst = (weed_plant_t *)cfile->ext_src;
       mainw->osc_block = TRUE;
-      wge_inner((weed_plant_t *)cfile->ext_src, FALSE);
+      weed_instance_ref(inst);
+      wge_inner(inst);
       mainw->osc_block = FALSE;
     }
-    deal_with_render_choice(TRUE);
+    deal_with_render_choice(TRUE); // will finish closing the generator if applicable
   }
 
   mainw->record_paused = mainw->record_starting = FALSE;

@@ -342,7 +342,7 @@ boolean weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
 void weed_generator_end(weed_plant_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);
-void wge_inner(weed_plant_t *inst, boolean unref); ///< deinit instance(s) for generator
+void wge_inner(weed_plant_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
 weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc);
@@ -465,7 +465,7 @@ int weed_general_error;
 #define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
 #endif
 
-#define DEBUG_REFCOUNT
+//#define DEBUG_REFCOUNT
 #ifdef DEBUG_REFCOUNT
 #define weed_instance_ref(a) {g_print ("ref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_ref(a);}
 #define weed_instance_unref(a) {g_print ("unref %p at line %d in file %s\n",a,__LINE__,__FILE__); _weed_instance_unref(a);}

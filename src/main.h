@@ -922,6 +922,7 @@ boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
 boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
 int do_error_dialog(const char *text);

@@ -2731,8 +2731,8 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("-help, --help               : show this help text and exit\n"));
   fprintf(stderr, "%s", _("-version, --version         : show the LiVES version and exit\n"));
   fprintf(stderr, "%s", _("-workdir <workdir>          : specify the working directory, overriding any value set in preferences\n"));
-  fprintf(stderr, "%s", _("-configdir <tempdir>        : specify the configuration directory"));
-  fprintf(stderr,  _("                                       [default is %s]\n"), capable->home_dir);
+  fprintf(stderr, "%s", _("-configdir <tempdir>        : specify the configuration directory\n"));
+  fprintf(stderr,  _("                                     [default is %s]\n"), capable->home_dir);
   fprintf(stderr, "%s", _("-set <setname>              : autoload clip set setname\n"));
   fprintf(stderr, "%s", _("-noset                      : do not load any set on startup\n"));
   fprintf(stderr, "%s", _("-norecover                  : force no-loading of crash recovery\n"));
@@ -2748,8 +2748,8 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("-oscstart <port>            : start OSC listener on UDP port <port>\n"));
   fprintf(stderr, "%s", _("-nooscstart                 : do not start OSC listener\n"));
 #endif
-  fprintf(stderr, "%ss", _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' \n"));
-  fprintf(stderr, _("                                         [only valid for %s and %s players]\n"), AUDIO_PLAYER_JACK,
+  fprintf(stderr, "%s", _("-asource <source>          : set the initial audio source; <source> can be 'internal' or 'external' \n"));
+  fprintf(stderr, _("                                   [only valid for %s and %s players]\n"), AUDIO_PLAYER_JACK,
           AUDIO_PLAYER_PULSE_AUDIO);
   fprintf(stderr, "%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
@@ -2772,7 +2772,7 @@ void print_opthelp(void) {
             "4 = start/stop jack transport server, \n"
             "                                     "
             "8 = pause transport when video paused, \n"
-            "                                     "
+            "                                    "
             "16 = start/stop jack audio server] \n"));
 #else // no jack
   if (capable->has_sox_play) {
@@ -3476,9 +3476,19 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         c = getopt_long_only(argc, argv, "", longopts, &option_index);
         if (c == -1) break; // end of options
         charopt = longopts[option_index].name;
-        g_print("charopt is %s and %s %c\n", charopt, optarg, c);
         if (c == '?') continue;
         if (!strcmp(charopt, "workdir") || !strcmp(charopt, "tmpdir")) {
+          if (strlen(optarg) == 0) {
+            msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
+                                        "to continue with the default value."), charopt);
+            do_abort_ok_dialog(msg, NULL);
+            lives_free(msg);
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           if (strlen(optarg) > PATH_MAX - MAX_SET_NAME_LEN * 2) {
             toolong = TRUE;
           } else {
@@ -3508,7 +3518,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "configdir")) {
           if (strlen(optarg) == 0) {
-            LIVES_ERROR(_("configdir may not be blank"));
+            msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
+                                        "to continue with the default value."), charopt);
+            do_abort_ok_dialog(msg, NULL);
+            lives_free(msg);
             continue;
           }
           if (optarg[0] == '-') {
@@ -3561,6 +3574,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (!strcmp(charopt, "yuvin")) {
 #ifdef HAVE_YUV4MPEG
           char *dir;
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           lives_snprintf(prefs->yuvin, PATH_MAX, "%s", optarg);
           prefs->startup_interface = STARTUP_CE;
           ign_opts.ign_stmode = TRUE;
@@ -3585,6 +3605,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "set") && optarg != NULL) {
           // force clipset loading
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           lives_snprintf(prefs->ar_clipset_name, 128, "%s", optarg);
           prefs->ar_clipset = TRUE;
           ign_opts.ign_clipset = TRUE;
@@ -3595,6 +3622,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         if (!strcmp(charopt, "devicemap") && optarg != NULL) {
           // force devicemap loading
           char *devmap2;
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           lives_snprintf(devmap, PATH_MAX, "%s", optarg);
           devmap2 = lives_strdup(devmap);
           dir = get_dir(devmap);
@@ -3613,6 +3647,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "vppdefaults") && optarg != NULL) {
           // load alternate vpp file
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           lives_snprintf(mainw->vpp_defs_file, PATH_MAX, "%s", optarg);
           ign_opts.ign_vppdefs = TRUE;
           dir = get_dir(mainw->vpp_defs_file);
@@ -3625,6 +3666,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "aplayer")) {
           boolean apl_valid = FALSE;
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
 
           lives_snprintf(buff, 256, "%s", optarg);
           // override aplayer default
@@ -3663,6 +3711,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "asource")) {
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           lives_snprintf(buff, 256, "%s", optarg);
           // override audio source
           if (!strcmp(buff, _("external")) || !strcmp(buff, "external")) { // handle translated and original strings
@@ -3706,6 +3761,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "fxmodesmax") && optarg != NULL) {
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           // set number of fx modes
           prefs->max_modes_per_key = atoi(optarg);
           if (prefs->max_modes_per_key < 1) prefs->max_modes_per_key = 1;
@@ -3723,6 +3785,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef ENABLE_OSC
 
         if (!strcmp(charopt, "oscstart") && optarg != NULL) {
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           // force OSC start
           prefs->osc_udp_port = atoi(optarg);
           prefs->osc_start = TRUE;
@@ -3740,6 +3809,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifdef ENABLE_JACK
         if (!strcmp(charopt, "jackopts") && optarg != NULL) {
+          if (strlen(optarg) == 0) {
+            continue;
+          }
+          if (optarg[0] == '-') {
+            optind--;
+            continue;
+          }
           // override jackopts in config file
           ign_opts.ign_jackopts = TRUE;
           future_prefs->jack_opts = prefs->jack_opts = atoi(optarg);

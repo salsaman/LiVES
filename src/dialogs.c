@@ -235,6 +235,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   case LIVES_DIALOG_ABORT_CANCEL_RETRY:
   case LIVES_DIALOG_ABORT_RETRY:
+  case LIVES_DIALOG_ABORT_OK:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_ERROR, LIVES_BUTTONS_NONE, NULL);
     abortbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_QUIT, _("_Abort"),
                   LIVES_RESPONSE_ABORT);
@@ -243,8 +244,13 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
       cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_CANCEL, NULL,
                      LIVES_RESPONSE_CANCEL);
     }
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Retry"),
-               LIVES_RESPONSE_RETRY);
+    if (diat == LIVES_DIALOG_ABORT_OK) {
+      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_OK, NULL,
+                 LIVES_RESPONSE_OK);
+    } else {
+      okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), LIVES_STOCK_REFRESH, _("_Retry"),
+                 LIVES_RESPONSE_RETRY);
+    }
     break;
 
   case LIVES_DIALOG_CANCEL_RETRY_BROWSE:
@@ -506,7 +512,7 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient, boolean has_cancel) {
+static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient, lives_dialog_t dtype) {
   int response;
   char *mytext;
   LiVESWidget *warning;
@@ -516,11 +522,7 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
   if (transient == NULL) transient = get_transient_full();
 
   do {
-    if (has_cancel)
-      warning = create_message_dialog(LIVES_DIALOG_ABORT_CANCEL_RETRY, mytext, transient, 0, TRUE);
-    else
-      warning = create_message_dialog(LIVES_DIALOG_ABORT_RETRY, mytext, transient, 0, TRUE);
-
+    warning = create_message_dialog(dtype, mytext, transient, 0, TRUE);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -528,7 +530,7 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
     if (response == LIVES_RESPONSE_ABORT) {
       if (mainw->is_ready) {
         if (do_abort_check()) {
-          if (mainw->current_file > -1) {
+          if (CURRENT_CLIP_IS_VALID) {
             if (cfile->handle != NULL) {
               // stop any processing
               lives_kill_subprocesses(cfile->handle, TRUE);
@@ -548,13 +550,19 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
 
 // returns LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) {
-  return _do_abort_cancel_retry_dialog(text, transient, TRUE);
+  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_CANCEL_RETRY);
 }
 
 
 // always returns LIVES_RESPONSE_RETRY
 LIVES_GLOBAL_INLINE LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient) {
-  return _do_abort_cancel_retry_dialog(text, transient, FALSE);
+  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_RETRY);
+}
+
+
+// always returns LIVES_RESPONSE_OK
+LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient) {
+  return _do_abort_cancel_retry_dialog(text, transient, LIVES_DIALOG_ABORT_OK);
 }
 
 

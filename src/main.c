@@ -6634,7 +6634,7 @@ void load_frame_image(int frame) {
 
     if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL) &&
         !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) && !(mainw->multitrack != NULL && cfile->opening)) {
-      boolean size_ok = FALSE;
+      boolean size_ok = TRUE;//FALSE;  -- TODO
       if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) {
         size_ok = TRUE;
       } else {

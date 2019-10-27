@@ -3281,24 +3281,6 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3, GUI_SCREEN_HEIGHT / 3);
   }
 
-  /* mt->outwidth = cfile->hsize; */
-  /* mt->outheight = cfile->vsize; */
-  /* calc_maxspect(mt->play_width, mt->play_height, &mt->outwidth, &mt->outheight); */
-
-  /* lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
-  /* lives_widget_set_size_request(mt->preview_eventbox, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
-  /* lives_widget_set_size_request(mt->play_box, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.); */
-
-  /* xyzzy; */
-  /* if (lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2 > 0) { */
-  /*   // make sure we are consistent with main.c */
-  /*   if (mt->outwidth > lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2) */
-  /*     mt->outwidth = lives_widget_get_allocation_width(mainw->play_image) - widget_opts.border_width * 2; */
-  /*   if (mt->outheight > lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2) */
-  /*     mt->outheight = lives_widget_get_allocation_height(mainw->play_image) - widget_opts.border_width * 2; */
-  /*   needs_clear = FALSE; */
-  /* } else needs_clear = TRUE; */
-
   if (mainw->frame_layer != NULL) {
     LiVESPixbuf *pixbuf = NULL;
     int weed_error;

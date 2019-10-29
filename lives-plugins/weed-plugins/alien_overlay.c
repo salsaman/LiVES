@@ -1,6 +1,6 @@
 // alien_overlay.c
 // Weed plugin
-// (c) G. Finch (salsaman) 2005
+// (c) G. Finch (salsaman) 2005 - 2019
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -17,9 +17,6 @@
 
 
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
@@ -148,7 +145,7 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
 
   if (plugin_info != NULL) {
     int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};

@@ -5,11 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include "support.h"

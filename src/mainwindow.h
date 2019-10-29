@@ -1266,7 +1266,7 @@ typedef struct {
   boolean block_param_updates; ///< block visual param changes from updating real values
   boolean no_interp; ///< block interpolation (for single frame previews)
 
-  weed_timecode_t cevent_tc; ///< timecode of currently processing event
+  ticks_t cevent_tc; ///< timecode of currently processing event
 
   boolean opening_multi; ///< flag to indicate multiple file selection
 
@@ -1465,7 +1465,7 @@ typedef struct {
 
   boolean recovering_files;
 
-  weed_timecode_t flush_audio_tc;
+  ticks_t flush_audio_tc;
 
   // mainw window resizing
   int assumed_width;

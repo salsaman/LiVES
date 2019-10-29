@@ -13,14 +13,6 @@
 #include "callbacks.h"
 #include "effects-weed.h"
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-palettes.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #define NEED_FOURCC_COMPAT
 
 #ifdef HAVE_SYSTEM_WEED_COMPAT

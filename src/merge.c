@@ -5,13 +5,6 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "callbacks.h"
 #include "merge.h"
 #include "paramwindow.h"

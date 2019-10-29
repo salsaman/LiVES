@@ -42,10 +42,6 @@ LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_n
 LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request, const char *delim,
                                  boolean allow_blanks);
 
-#ifndef  __WEED_EFFECTS_H__
-typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int num_versions, int *plugin_versions);
-#endif
-
 /// video playback plugins
 typedef boolean(*plugin_keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
 
@@ -75,8 +71,10 @@ typedef struct {
 
   const char *(*get_init_rfx)(int intention);
 
+#ifdef __WEED_EFFECTS_H__
   ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
   const weed_plant_t **(*get_play_params)(weed_bootstrap_f f);
+#endif
 
   // optional for YUV palettes
   int *(*get_yuv_palette_sampling)(int palette);
@@ -125,17 +123,17 @@ typedef struct {
   int num_alpha_chans;
 } _vid_playback_plugin;
 
-#define DEFAULT_VPP "openGL"
-
-#define MAX_VPP_HSIZE 1024.
-#define MAX_VPP_VSIZE 576.
-
 _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use);
 void vid_playback_plugin_exit(void);
 void close_vid_playback_plugin(_vid_playback_plugin *);
 int64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
 void load_vpp_defaults(_vid_playback_plugin *, char *file);
+
+#define DEFAULT_VPP "openGL"
+
+#define MAX_VPP_HSIZE 1024.
+#define MAX_VPP_VSIZE 576.
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
 const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);
@@ -561,6 +559,7 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// video playback plugin window - fixed part
+
 typedef struct {
   _vid_playback_plugin *plugin;
   LiVESWidget *dialog;
@@ -575,6 +574,7 @@ typedef struct {
 } _vppaw;
 
 _vppaw *on_vpp_advanced_clicked(LiVESButton *, livespointer);
+
 void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data);
 
 LiVESList *get_external_window_hints(lives_rfx_t *rfx);

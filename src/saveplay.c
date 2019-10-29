@@ -4,24 +4,7 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-palettes.h"
-#endif
-
-#include <unistd.h>
-#include <stdlib.h>
-
-#include <string.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "main.h"
 #include "callbacks.h"

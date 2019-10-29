@@ -546,8 +546,8 @@ struct _mt {
   boolean tl_selecting; ///< for mouse select mode
 
   /* start and end offset overrides for inserting (used during block move) */
-  weed_timecode_t insert_start;
-  weed_timecode_t insert_end;
+  ticks_t insert_start;
+  ticks_t insert_end;
 
   /// override for avel used during audio insert
   double insert_avel;
@@ -670,7 +670,7 @@ struct _mt {
 
 typedef struct {
   lives_mt_undo_t action;
-  weed_timecode_t tc;
+  ticks_t tc;
   void *extra;
   size_t data_len; ///< including this mt_undo
 } mt_undo;
@@ -703,7 +703,7 @@ struct _track_rect {
   weed_plant_t *start_event;
   weed_plant_t *end_event;
 
-  weed_timecode_t offset_start; ///< offset in sourcefile of first frame
+  ticks_t offset_start; ///< offset in sourcefile of first frame
 
   lives_mt_block_state_t state;
   boolean start_anchored;
@@ -778,7 +778,7 @@ boolean on_render_activate(LiVESMenuItem *, livespointer mt);
 void mt_set_autotrans(int idx);
 
 // event_list functions
-weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *start_event, weed_timecode_t end_tc, double fps);
+weed_plant_t *add_blank_frames_up_to(weed_plant_t *event_list, weed_plant_t *start_event, ticks_t end_tc, double fps);
 
 // track functions
 char *get_track_name(lives_mt *, int track_num, boolean is_audio);
@@ -821,9 +821,9 @@ boolean on_track_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointe
 boolean on_track_header_move(LiVESWidget *widget, LiVESXEventMotion *event, livespointer mt);
 
 void unselect_all(lives_mt *);  ///< unselect all blocks
-void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc,
+void insert_frames(int filenum, ticks_t offset_start, ticks_t offset_end, ticks_t tc,
                    lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
-void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t offset_end, weed_timecode_t tc,
+void insert_audio(int filenum, ticks_t offset_start, ticks_t offset_end, ticks_t tc,
                   double avel, lives_direction_t direction, LiVESWidget *eventbox, lives_mt *, track_rect *in_block);
 void on_seltrack_toggled(LiVESWidget *, livespointer mt);
 void scroll_track_by_scrollbar(LiVESScrollbar *sbar, livespointer mt);
@@ -898,7 +898,7 @@ void on_node_spin_value_changed(LiVESSpinButton *, livespointer mt);
 double mt_get_effect_time(lives_mt *);
 
 void on_frame_preview_clicked(LiVESButton *, livespointer mt);
-void show_preview(lives_mt *, weed_timecode_t tc);
+void show_preview(lives_mt *, ticks_t tc);
 
 boolean add_mt_param_box(lives_mt *);
 
@@ -930,8 +930,8 @@ boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,
                             int ctrack); ///< ctrack can be -1 to compare all events, else we cf for ctrack
 void move_init_in_filter_map(lives_mt *, weed_plant_t *event_list, weed_plant_t *fmap, weed_plant_t *ifrom,
                              weed_plant_t *ito, int track, boolean after);
-void update_filter_events(lives_mt *, weed_plant_t *first_event, weed_timecode_t start_tc, weed_timecode_t end_tc,
-                          int track, weed_timecode_t new_start_tc, int new_track);
+void update_filter_events(lives_mt *, weed_plant_t *first_event, ticks_t start_tc, ticks_t end_tc,
+                          int track, ticks_t new_start_tc, int new_track);
 void mt_fixup_events(lives_mt *, weed_plant_t *old_event, weed_plant_t *new_event);
 
 // event_list load/save

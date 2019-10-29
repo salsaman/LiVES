@@ -44,19 +44,6 @@
 
 #endif // USE_SWSCALE
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-host.h>
-
-#else // HAVE_SYSTEM_WEED
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #ifdef USE_SWSCALE
 
 #ifdef HAVE_SYSTEM_WEED_COMPAT
@@ -10113,6 +10100,7 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       if (phint != WEED_HINT_COLOR) continue;
 
       ptype = weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT);
+
       if (ptype != WEED_SEED_INT) gamma_type = WEED_GAMMA_SRGB;
 
       if (!prefs->apply_gamma || !weed_plant_has_leaf(param, WEED_LEAF_GAMMA_TYPE)) {

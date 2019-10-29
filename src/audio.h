@@ -80,7 +80,7 @@ typedef struct {
 
   // use one or other
   off_t seek;
-  weed_timecode_t start_tc;
+  ticks_t start_tc;
 
   int arate;
 
@@ -174,8 +174,8 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
 boolean float_interleave(float *fbuffer, int nsamps, int nchans) GNU_HOT;
 
-int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, weed_timecode_t tc_start,
-                             weed_timecode_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
+int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, ticks_t tc_start,
+                             ticks_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
 

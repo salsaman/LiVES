@@ -7,12 +7,7 @@
 // portions of this file (c) Dan Dennedy (dan@dennedy.org)
 
 #include <sys/poll.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <netinet/in.h>
-#include <errno.h>
-
-#include <sys/time.h>
 #include <sys/resource.h>
 
 #define RX_CHANNEL 63

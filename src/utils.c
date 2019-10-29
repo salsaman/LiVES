@@ -4,17 +4,9 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
 #include <fcntl.h>
 #include <dirent.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/file.h>
 
 #include "main.h"
 #include "support.h"
@@ -22,12 +14,6 @@
 #include "audio.h"
 #include "resample.h"
 #include "callbacks.h"
-
-#if HAVE_SYSTEM_WEED
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed-host.h"
-#endif
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 

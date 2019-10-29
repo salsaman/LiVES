@@ -8,12 +8,6 @@
 
 #include <dlfcn.h>
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed-palettes.h"
-#endif
-
 #include "main.h"
 #include "paramwindow.h"
 #include "callbacks.h"

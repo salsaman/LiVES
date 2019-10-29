@@ -6,18 +6,6 @@
 
 #ifdef ENABLE_OSC
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#endif
-
 #include "main.h"
 #include "paramwindow.h"
 #include "effects.h"

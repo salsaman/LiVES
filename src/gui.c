@@ -6,16 +6,6 @@
 
 // code for drawing the main window
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #include "main.h"
 #include "callbacks.h"
 #include "interface.h"

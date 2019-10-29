@@ -8,16 +8,6 @@
 
 //#define DEBUG_PCONX
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-effects.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-effects.h"
-#endif
-
 #include "main.h"
 #include "effects.h"
 #include "support.h"

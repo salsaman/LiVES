@@ -6,14 +6,6 @@
 
 // functions for reordering, resampling video and audio
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #include "main.h"
 #include "resample.h"
 #include "support.h"
@@ -28,31 +20,31 @@ static boolean reorder_leave_back = FALSE;
 
 /////////////////////////////////////////////////////
 
-LIVES_GLOBAL_INLINE weed_timecode_t q_gint64(weed_timecode_t in, double fps) {
+LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   // quantise timecode to fps
-  if (in > (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps +
+  if (in > (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps +
                                          (long double).5) /
-                                         (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  if (in < (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps -
+                                         (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  if (in < (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps -
                                          (long double).5) /
-                                         (long double)fps) * (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  return (weed_timecode_t)0;
+                                         (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  return (ticks_t)0;
 }
 
-LIVES_GLOBAL_INLINE weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps) {
-  if (in != (weed_timecode_t)0) return ((weed_timecode_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) /
+LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
+  if (in != (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) /
                                           (long double)fps) *
-                                         (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  return (weed_timecode_t)0;
+                                         (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  return (ticks_t)0;
 }
 
-LIVES_GLOBAL_INLINE weed_timecode_t q_dbl(double in, double fps) {
+LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
-  if (in > 0.) return ((weed_timecode_t)((long double)in * (long double)fps + (long double).5) / (long double)fps) *
-                        (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  if (in < 0.) return ((weed_timecode_t)((long double)in * (long double)fps - (long double).5) / (long double)fps) *
-                        (weed_timecode_t)TICKS_PER_SECOND; // quantise to frame timing
-  return (weed_timecode_t)0;
+  if (in > 0.) return ((ticks_t)((long double)in * (long double)fps + (long double).5) / (long double)fps) *
+                        (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  if (in < 0.) return ((ticks_t)((long double)in * (long double)fps - (long double).5) / (long double)fps) *
+                        (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+  return (ticks_t)0;
 }
 
 
@@ -463,12 +455,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   weed_plant_t *out_list;
   weed_plant_t *last_audio_event = NULL;
   weed_plant_t *event, *last_frame_event, *penultimate_frame_event, *next_frame_event, *shortcut = NULL;
-  weed_timecode_t out_tc = 0, in_tc = -1, nearest_tc = LONG_MAX;
+  ticks_t out_tc = 0, in_tc = -1, nearest_tc = LONG_MAX;
   boolean is_first = TRUE;
-  weed_timecode_t tc_end, tp;
+  ticks_t tc_end, tp;
   int *out_clips = NULL, *out_frames = NULL;
   int numframes = 0;
-  weed_timecode_t tl = q_dbl(1. / qfps, qfps);
+  ticks_t tl = q_dbl(1. / qfps, qfps);
   int error;
   boolean needs_audio = FALSE, add_audio = FALSE;
   int *aclips = NULL;
@@ -495,7 +487,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     tp = tc_end - tp;
   } else {
     // only one event, use cfile->fps
-    tp = (weed_timecode_t)(TICKS_PER_SECOND_DBL / cfile->fps);
+    tp = (ticks_t)(TICKS_PER_SECOND_DBL / cfile->fps);
   }
 
   tc_end += tp;
@@ -541,7 +533,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         tp -= in_tc;
       } else {
         // only one event, use cfile->fps
-        tp = (weed_timecode_t)(TICKS_PER_SECOND_DBL / cfile->fps);
+        tp = (ticks_t)(TICKS_PER_SECOND_DBL / cfile->fps);
       }
 #ifdef RESAMPLE_USE_MIDPOINTS
       // calc mid-point of in frame
@@ -962,7 +954,7 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
   int oend = cfile->end;
   double oundo1_dbl = cfile->undo1_dbl;
   char *msg;
-  weed_timecode_t in_time = 0;
+  ticks_t in_time = 0;
   double old_fps = cfile->fps;
   boolean ratio_fps;
   boolean bad_header = FALSE;
@@ -991,7 +983,7 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
         do_memory_error_dialog();
         return;
       }
-      in_time += (weed_timecode_t)(1. / cfile->fps * TICKS_PER_SECOND_DBL + .5);
+      in_time += (ticks_t)(1. / cfile->fps * TICKS_PER_SECOND_DBL + .5);
     }
     cfile->event_list = new_event_list;
   }
@@ -1932,7 +1924,7 @@ int reorder_frames(int rwidth, int rheight) {
 
 int deorder_frames(int old_frames, boolean leave_bak) {
   char *com;
-  weed_timecode_t time_start;
+  ticks_t time_start;
   int perf_start, perf_end;
 
   if (cfile->event_list != NULL) return cfile->frames;

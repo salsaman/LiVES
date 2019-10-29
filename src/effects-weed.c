@@ -6,26 +6,14 @@
 
 #include <dlfcn.h>
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #ifdef __cplusplus
 #ifdef HAVE_OPENCV
 #include "opencv2/core/core.hpp"
 using namespace cv;
 #endif
 #endif
+
+#define NEED_PLUGIN_SET_FUNC
 
 #include "main.h"
 #include "effects.h"
@@ -144,123 +132,6 @@ LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
 
 ////////////////////////////////////////////////////////////////////////////
 
-void weed_add_plant_flags(weed_plant_t *plant, int flags) {
-  char **leaves = weed_plant_list_leaves(plant);
-  int i, currflags;
-
-  for (i = 0; leaves[i] != NULL; i++) {
-    currflags = flags;
-    if (flags & WEED_LEAF_READONLY_PLUGIN && (!strncmp(leaves[i], "plugin_", 7))) currflags ^= WEED_LEAF_READONLY_PLUGIN;
-    weed_leaf_set_flags(plant, leaves[i], weed_leaf_get_flags(plant, leaves[i]) | currflags);
-    lives_free(leaves[i]);
-  }
-  lives_freep((void **)&leaves);
-}
-
-
-static void weed_clear_plant_flags(weed_plant_t *plant, int flags) {
-  char **leaves = weed_plant_list_leaves(plant);
-  int i;
-
-  for (i = 0; leaves[i] != NULL; i++) {
-    weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags)^flags);
-    lives_free(leaves[i]);
-  }
-  lives_freep((void **)&leaves);
-}
-
-
-static int match_highest_version(int *hostv, int hostn, int *plugv, int plugn) {
-  int hmatch = 0;
-  int i, j;
-
-  for (i = 0; i < plugn; i++) {
-    for (j = 0; j < hostn; j++) {
-      if (hostv[j] > plugv[i]) break;
-      if (hostv[j] == plugv[i] && plugv[i] > hmatch) {
-        hmatch = plugv[i];
-        break;
-      }
-    }
-  }
-  return hmatch;
-}
-
-// symbols (function pointers) which are exported to plugins
-weed_default_getter_f wdg;
-
-weed_leaf_get_f wlg;
-weed_plant_new_f wpn;
-weed_plant_list_leaves_f wpll;
-weed_leaf_num_elements_f wlne;
-weed_leaf_element_size_f wles;
-weed_leaf_seed_type_f wlst;
-weed_leaf_get_flags_f wlgf;
-weed_leaf_set_f wlsp;
-weed_malloc_f weedmalloc;
-weed_free_f weedfree;
-weed_memcpy_f weedmemcpy;
-weed_memset_f weedmemset;
-
-
-weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions) {
-  int host_api_versions_supported[] = {131, 133}; // must be ordered in ascending order
-  int host_api_version;
-
-  weed_plant_t *host_info = weed_plant_new(WEED_PLANT_HOST_INFO);
-
-  // these functions are defined in weed-host.h and set in weed_init()
-  wdg = weed_default_get;
-
-  wlg = weed_leaf_get;
-  wpn = weed_plant_new;
-  wpll = weed_plant_list_leaves;
-  wlne = weed_leaf_num_elements;
-  wles = weed_leaf_element_size;
-  wlst = weed_leaf_seed_type;
-  wlgf = weed_leaf_get_flags;
-
-  wlsp = weed_leaf_set_plugin; // we pass the plugin's version to the plugin - an example of overloading with Weed
-  weedmalloc = weed_malloc;
-  weedfree = weed_free;
-
-  weedmemcpy = weed_memcpy;
-  weedmemset = weed_memset;
-
-  if (num_versions < 1) return NULL;
-  if ((host_api_version = match_highest_version(host_api_versions_supported, 1, plugin_versions, num_versions)) == 0) return NULL;
-  switch (host_api_version) {
-  case 100:
-  case 110:
-  case 120:
-  case 130:
-  case 131:
-  case 133:
-    value[0] = wdg; // bootstrap weed_default_get (the plugin's default_getter)
-
-    weed_set_int_value(host_info, WEED_LEAF_API_VERSION, host_api_version);
-
-    // here we set (void *)&fn_ptr
-    weed_set_voidptr_value(host_info, WEED_LEAF_GET_FUNC, &wlg);
-    weed_set_voidptr_value(host_info, WEED_LEAF_SET_FUNC, &wlsp);
-    weed_set_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, &wpn);
-    weed_set_voidptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, &wpll);
-    weed_set_voidptr_value(host_info, WEED_LEAF_NUM_ELEMENTS_FUNC, &wlne);
-    weed_set_voidptr_value(host_info, WEED_LEAF_ELEMENT_SIZE_FUNC, &wles);
-    weed_set_voidptr_value(host_info, WEED_LEAF_SEED_TYPE_FUNC, &wlst);
-    weed_set_voidptr_value(host_info, WEED_LEAF_GET_FLAGS_FUNC, &wlgf);
-    weed_set_voidptr_value(host_info, WEED_LEAF_MALLOC_FUNC, &weedmalloc);
-    weed_set_voidptr_value(host_info, WEED_LEAF_FREE_FUNC, &weedfree);
-    weed_set_voidptr_value(host_info, WEED_LEAF_MEMSET_FUNC, &weedmemset);
-    weed_set_voidptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, &weedmemcpy);
-
-    weed_add_plant_flags(host_info, WEED_LEAF_READONLY_PLUGIN);
-    break;
-  default:
-    return NULL;
-  }
-  return host_info;
-}
 
 LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 #ifdef DEBUG_FILTER_MUTEXES
@@ -2629,10 +2500,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (prefs->apply_gamma) {
       // gamma correction
-      if (filter_flags & WEED_FILTER_HINT_SRGB)
-        gamma_correct_layer(WEED_GAMMA_SRGB, layer);
-      else
+      if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
         gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+      else
+        gamma_correct_layer(WEED_GAMMA_SRGB, layer);
     }
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(layer));
     weed_leaf_set_flags(channel, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(channel, WEED_LEAF_GAMMA_TYPE) |
@@ -2826,10 +2697,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // and update width and height if necessary
       create_empty_pixel_data(channel, FALSE, TRUE);
 
-      if (filter_flags & WEED_FILTER_HINT_SRGB)
-        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-      else
+      if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
         weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+      else
+        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(channel));
 
@@ -2869,9 +2740,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   }
 
   if (prefs->apply_gamma) {
-    // do gamma correction of any integer RGB(A) parameters
-    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB)) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, TRUE);
-    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_SRGB)) ? WEED_GAMMA_SRGB : WEED_GAMMA_LINEAR, inst, FALSE);
+    // do gamma correction of any RGB(A) parameters
+    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)) ? WEED_GAMMA_LINEAR : WEED_GAMMA_SRGB, inst, TRUE);
+    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)) ? WEED_GAMMA_LINEAR : WEED_GAMMA_SRGB, inst, FALSE);
   }
 
   if (CURRENT_CLIP_IS_VALID)
@@ -4976,9 +4847,9 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 }
 
 
-void weed_memory_init(void) {
+LIVES_GLOBAL_INLINE void weed_functions_init(void) {
 #ifndef IS_LIBLIVES
-  weed_init(133, (weed_malloc_f)_lives_malloc, (weed_free_f)_lives_free, (weed_memcpy_f)lives_memcpy, (weed_memset_f)lives_memset);
+  weed_init(WEED_API_VERSION);
 #endif
 }
 
@@ -7605,10 +7476,10 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
 
   create_empty_pixel_data(channel, FALSE, TRUE);
 
-  if (filter_flags & WEED_FILTER_HINT_SRGB)
-    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-  else
+  if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+  else
+    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
   // align memory if necessary
   if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT)) {
@@ -7663,10 +7534,10 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
           set_main_title(cfile->file_name, 0);
         }
         create_empty_pixel_data(channel, FALSE, TRUE);
-        if (filter_flags & WEED_FILTER_HINT_SRGB)
-          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-        else
+        if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
           weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+        else
+          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
       }
     }
 

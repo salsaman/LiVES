@@ -45,125 +45,8 @@ typedef enum {
 #define WEED_PLANT_LAYER WEED_PLANT_CHANNEL
 #endif
 
-#define WEED_LEAF_TYPE "type"
-#define WEED_LEAF_PLUGIN_INFO "plugin_info"
-#define WEED_LEAF_FILTERS "filters"
-#define WEED_LEAF_MAINTAINER "maintainer"
-#define WEED_LEAF_HOST_INFO "host_info"
-#define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
-#define WEED_LEAF_PACKAGE_NAME "package_name"
-
-// host info
-#define WEED_LEAF_API_VERSION "api_version"
-#define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
-#define WEED_LEAF_SET_FUNC "weed_leaf_set_func"
-#define WEED_PLANT_NEW_FUNC "weed_plant_new_func"
-#define WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
-#define WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
-#define WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"
-#define WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
-#define WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
-#define WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
-#define WEED_LEAF_FREE_FUNC "weed_free_func"
-#define WEED_LEAF_MEMSET_FUNC "weed_memset_func"
-#define WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
-
-// filter_class
-#define WEED_LEAF_INIT_FUNC "init_func"
-#define WEED_LEAF_DEINIT_FUNC "deinit_func"
-#define WEED_LEAF_PROCESS_FUNC "process_func"
-#define WEED_LEAF_DISPLAY_FUNC "display_func"
-#define WEED_LEAF_INTERPOLATE_FUNC "interpolate_func"
-#define WEED_LEAF_TARGET_FPS "target_fps"
-#define WEED_LEAF_GUI "gui"
-#define WEED_LEAF_DESCRIPTION "description"
-#define WEED_LEAF_AUTHOR "author"
-#define WEED_LEAF_EXTRA_AUTHORS "extra_authors"
-#define WEED_LEAF_URL "url"
-#define WEED_LEAF_ICON "icon"
-#define WEED_LEAF_LICENSE "license"
-#define WEED_LEAF_COPYRIGHT "copyright"
-#define WEED_LEAF_VERSION "version"
-
-// instance
-#define WEED_LEAF_FILTER_CLASS "filter_class"
-#define WEED_LEAF_TIMECODE "timecode"
-#define WEED_LEAF_FPS "fps"
-
-// channels / chan template
-#define WEED_LEAF_PIXEL_DATA "pixel_data"
-#define WEED_LEAF_WIDTH "width"
-#define WEED_LEAF_HEIGHT "height"
-#define WEED_LEAF_PALETTE_LIST "palette_list"
-#define WEED_LEAF_CURRENT_PALETTE "current_palette"
-#define WEED_LEAF_ROWSTRIDES "rowstrides"
-#define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
-#define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
-#define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
-#define WEED_LEAF_IN_CHANNELS "in_channels"
-#define WEED_LEAF_OUT_CHANNELS "out_channels"
-#define WEED_LEAF_IN_CHANNEL_TEMPLATES "in_channel_templates"
-#define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_channel_templates"
-#define WEED_LEAF_OFFSET "offset"
-#define WEED_LEAF_HSTEP "hstep"
-#define WEED_LEAF_VSTEP "vstep"
-#define WEED_LEAF_MAXWIDTH "maxwidth"
-#define WEED_LEAF_MAXHEIGHT "maxheight"
-#define WEED_LEAF_OPTIONAL "optional"
-#define WEED_LEAF_DISABLED "disabled"
-#define WEED_LEAF_ALIGNMENT "alignment"
-#define WEED_LEAF_TEMPLATE "template"
-#define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
-#define WEED_LEAF_ROWSTRIDE_ALIGNMENT_HINT "rowstride_alignment_hint"
-#define WEED_LEAF_MAX_REPEATS "max_repeats"
-#define WEED_LEAF_GAMMA_TYPE "gamma_type"
-
 #define WEED_GAMMA_BT709 1024
 #define WEED_GAMMA_MONITOR 1025
-
-// params / param tmpl
-#define WEED_LEAF_IN_PARAMETERS "in_parameters"
-#define WEED_LEAF_OUT_PARAMETERS "out_parameters"
-#define WEED_LEAF_VALUE "value"
-#define WEED_LEAF_FLAGS "flags"
-#define WEED_LEAF_HINT "hint"
-#define WEED_LEAF_GROUP "group"
-#define WEED_LEAF_NAME "name"
-#define WEED_LEAF_DEFAULT "default"
-#define WEED_LEAF_MIN "min"
-#define WEED_LEAF_MAX "max"
-#define WEED_LEAF_IGNORE "ignore"
-#define WEED_LEAF_NEW_DEFAULT "new_default"
-#define WEED_LEAF_COLORSPACE "colorspace"
-#define WEED_LEAF_IN_PARAMETER_TEMPLATES "in_parameter_templates"
-#define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_parameter_templates"
-#define WEED_LEAF_TRANSITION "transition"
-#define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
-
-// audio
-#define WEED_LEAF_IS_AUDIO "is_audio"
-#define WEED_LEAF_AUDIO_DATA "audio_data"
-#define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_length"
-#define WEED_LEAF_AUDIO_RATE "audio_rate"
-#define WEED_LEAF_AUDIO_CHANNELS "audio_channels"
-#define WEED_LEAF_AUDIO_INTERLEAF "audio_interleaf"
-
-// param gui
-#define WEED_LEAF_WRAP "wrap"
-#define WEED_LEAF_MAXCHARS "maxchars"
-#define WEED_LEAF_LABEL "label"
-#define WEED_LEAF_DECIMALS "decimals"
-#define WEED_LEAF_STEP_SIZE "step_size"
-#define WEED_LEAF_CHOICES "choices"
-#define WEED_LEAF_USE_MNEMONIC "use_mnemonic"
-#define WEED_LEAF_HIDDEN "hidden"
-#define WEED_LEAF_DISPLAY_VALUE "display_value"
-#define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
-
-// plugin gui: layout
-#define WEED_LEAF_LAYOUT_SCHEME "layout_scheme"
-#define WEED_LEAF_RFX_STRINGS "rfx_strings"
-#define WEED_LEAF_RFX_DELIM "rfx_delim"
 
 // plugin specific values
 #define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
@@ -207,9 +90,6 @@ typedef enum {
 
 #define WEED_LEAF_CLIP "clip"
 #define WEED_LEAF_FRAME "frame"
-
-/// bootstrap function for weed plugins
-weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int num_versions, int *plugin_versions);
 
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_package_name(int filter_idx) WARN_UNUSED;
@@ -298,8 +178,8 @@ boolean has_perchannel_multiw(weed_plant_t *filter);
 boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
 
 /// parameter interpolation
-boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc);
-boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc);
+boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, ticks_t tc);
+boolean interpolate_params(weed_plant_t *inst, void **pchains, ticks_t tc);
 
 int filter_mutex_lock(int key);  // 0 based key
 int filter_mutex_trylock(int key);  // 0 based key
@@ -319,7 +199,7 @@ weed_plant_t *get_textparm();
 void weed_set_blend_factor(int hotkey);  // 0 based key
 int weed_get_blend_factor(int hotkey); // 0 based key
 
-void weed_memory_init(void); ///< call weed_init() with mem functions
+void weed_functions_init(void); ///< call weed_init() to set our weed core functions
 
 void weed_load_all(void);  ///< load effects
 void weed_unload_all(void); ///< unload all effects
@@ -327,16 +207,16 @@ int get_next_free_key(void); ///< next free "key" for the multitrack system
 
 void weed_deinit_all(boolean shutdown); ///< deinit all active effects
 
-weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, int opwidth, int opheight,
+weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map, ticks_t tc, int opwidth, int opheight,
                                  void ***pchains);
 lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
-    int opwidth, int opheight, weed_timecode_t tc);
+    int opwidth, int opheight, ticks_t tc);
 void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate,
-                              weed_timecode_t tc, double *vis);
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, weed_timecode_t tc, boolean analysers_only);
+                              ticks_t tc, double *vis);
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, ticks_t tc, boolean analysers_only);
 
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
-    double arate, weed_timecode_t tc, double *vis);
+    double arate, ticks_t tc, double *vis);
 
 boolean weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
 void weed_generator_end(weed_plant_t *inst);
@@ -345,7 +225,7 @@ void weed_bg_generator_end(weed_plant_t *inst);
 void wge_inner(weed_plant_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
-weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode_t tc);
+weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, ticks_t tc);
 weed_plant_t *weed_layer_new();
 weed_plant_t *weed_layer_new_for_frame();
 void **weed_layer_get_pixel_data(weed_plant_t *layer);
@@ -424,7 +304,7 @@ int rte_fg_gen_mode(void) GNU_PURE;
 
 char *get_weed_display_string(weed_plant_t *inst, int pnum);
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list);
-weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t tc);
+weed_plant_t *add_filter_init_events(weed_plant_t *event_list, ticks_t tc);
 void deinit_render_effects(void);
 
 boolean write_filter_defaults(int fd, int idx);
@@ -446,7 +326,6 @@ void update_host_info(weed_plant_t *inst);
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
 // some general utilities
-
 #define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_PLUGIN_INFO ? 1 : 0)
 #define WEED_PLANT_IS_HOST_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_HOST_INFO ? 1 : 0)
 #define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_get_plant_type(plant) == WEED_PLANT_FILTER_CLASS ? 1 : 0)

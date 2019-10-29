@@ -5,20 +5,6 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include "main.h"
-
-#include <errno.h>
-#include <sys/stat.h>
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-effects.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-effects.h"
-#endif
-
 #include "support.h"
 #include "rte_window.h"
 #include "effects.h"

@@ -83,11 +83,11 @@ boolean rtemode_callback_hook(LiVESToggleButton *, livespointer user_data);  ///
 
 boolean swap_fg_bg_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-weed_plant_t *get_blend_layer(weed_timecode_t tc);
+weed_plant_t *get_blend_layer(ticks_t tc);
 
-weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, weed_timecode_t tc);
+weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, ticks_t tc);
 
-void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc);
+void deinterlace_frame(weed_plant_t *layer, ticks_t tc);
 
 // rte keys state
 void rte_keymodes_backup(int nkeys);

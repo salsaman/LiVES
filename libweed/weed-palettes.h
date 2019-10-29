@@ -42,7 +42,7 @@
 
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2010 */
+/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
 
 #ifndef __WEED_PALETTES_H__
 #define __WEED_PALETTES_H__
@@ -112,7 +112,7 @@ extern "C"
 #define WEED_YUV_SUBSPACE_BT709 2
 
 /* GAMMA Values */
-/* API version 133 */
+/* API version 200 */
 #define WEED_GAMMA_UNKNOWN 0
 #define WEED_GAMMA_SRGB 1
 #define WEED_GAMMA_LINEAR 2

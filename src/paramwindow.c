@@ -6,23 +6,6 @@
 
 // dynamic window generation from parameter arrays :-)
 
-// NOTE: this is now the "house style" for all LiVES widgets, there should be a consistent look across all
-// windows.
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #include "main.h"
 #include "paramwindow.h"
 #include "callbacks.h"

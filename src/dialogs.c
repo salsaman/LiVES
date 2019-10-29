@@ -1265,7 +1265,7 @@ int process_one(boolean visible) {
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
         // handle transport jump in multitrack : end current playback and restart it from the new position
-        weed_timecode_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
+        ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
         mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
         if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif

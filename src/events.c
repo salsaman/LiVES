@@ -8,18 +8,6 @@
 
 #include "main.h"
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #include "effects.h"
 #include "support.h"
 #include "interface.h"

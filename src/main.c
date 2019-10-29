@@ -40,20 +40,6 @@
 #include <glib.h>
 #endif
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#include <weed/weed-host.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-palettes.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-host.h"
-#endif
-
 #define NEED_DEF_WIDGET_OPTS
 
 #define NEED_ENDIAN_TEST
@@ -769,12 +755,6 @@ static boolean pre_init(void) {
   memset(mainw->frameblank_path, 0, 1);
 
   mainw->imsep = mainw->imframe = NULL;
-
-  // The idea was to set pointers to memory and other functions to be passed to Weed plugins as function pointers.
-  // However this doesn't really work because if libdl finds functions with the same name in the host,
-  // it will use those instead. This rather annoying since the plugins thus have to be compiled with a fragment of C code
-  // in order to use their own versions, rather than the host versions.
-  weed_memory_init();
 
   prefs->max_messages = get_int_prefd(PREF_MAX_MSGS, DEF_MAX_MSGS);
   prefs->msg_textsize = get_int_prefd(PREF_MSG_TEXTSIZE, DEF_MSG_TEXTSIZE);
@@ -3331,6 +3311,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
 
+  weed_functions_init();
+
   widget_helper_init();
 
   /* TRANSLATORS: localised name may be used here */
@@ -3990,7 +3972,12 @@ void sensitize(void) {
   // READY MODE
   int i;
 
-  if (mainw->multitrack != NULL) return;
+  if (LIVES_IS_PLAYING || mainw->is_processing || mainw->go_away) return;
+
+  if (mainw->multitrack != NULL) {
+    mt_sensitise(mainw->multitrack);
+    return;
+  }
 
   lives_widget_set_sensitive(mainw->open, TRUE);
   lives_widget_set_sensitive(mainw->open_sel, TRUE);
@@ -4185,7 +4172,10 @@ void desensitize(void) {
   // desensitize the main window when we are playing/processing a clip
   int i;
 
-  if (mainw->multitrack != NULL) return;
+  if (mainw->multitrack != NULL) {
+    mt_desensitise(mainw->multitrack);
+    return;
+  }
 
   //lives_widget_set_sensitive (mainw->open, mainw->playing_file>-1);
   lives_widget_set_sensitive(mainw->open, FALSE);
@@ -6046,7 +6036,6 @@ static void load_frame_cleanup(boolean noswitch) {
   char *tmp;
 
   check_layer_ready(mainw->frame_layer);
-
   if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
   mainw->frame_layer = NULL;
   mainw->noswitch = noswitch;
@@ -7270,6 +7259,7 @@ void load_frame_image(int frame) {
       register int i;
       if (cfile->clip_type == CLIP_TYPE_TEMP) {
         close_temp_handle(file_to_switch_to);
+	return;
       }
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
           mainw->current_file != mainw->ascrap_file &&
@@ -7521,24 +7511,26 @@ void load_frame_image(int frame) {
     int orig_file = mainw->current_file;
 
     // should use close_current_file
-    if (new_file == -1 || new_file > MAX_FILES) {
-      fprintf(stderr, "warning - attempt to switch to invalid clip %d\n", new_file);
+    if (!IS_VALID_CLIP(new_file)) {
+      char *msg = lives_strdup_printf("attempt to switch to invalid clip %d", new_file);
+      LIVES_WARN(msg);
+      lives_free(msg);
       return;
     }
 
-    if (mainw->files[new_file] == NULL) return;
+    if (mainw->multitrack != NULL) return;
 
+    if (LIVES_IS_PLAYING && (mainw->fs || mainw->faded)) do_quick_switch(new_file);
+    
     mainw->current_file = new_file;
-
-    if (!LIVES_IS_PLAYING && mainw->multitrack != NULL) return;
 
     if (CURRENT_CLIP_HAS_VIDEO) {
       mainw->play_start = 1;
       mainw->play_end = cfile->frames;
 
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
       if (LIVES_IS_PLAYING) {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
-        changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+       changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
       }
 
       if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
@@ -7566,7 +7558,7 @@ void load_frame_image(int frame) {
         }
         if (new_file * old_file > 0 && mainw->files[old_file] != NULL && mainw->files[old_file]->opening) {
           // switch while opening - come out of processing dialog
-          if (!(mainw->files[old_file]->proc_ptr == NULL)) {
+          if (mainw->files[old_file]->proc_ptr != NULL) {
             lives_widget_destroy(mainw->files[old_file]->proc_ptr->processing);
             lives_freep((void **)&mainw->files[old_file]->proc_ptr);
           }
@@ -7574,12 +7566,11 @@ void load_frame_image(int frame) {
       }
     }
 
-    if (!mainw->go_away && !mainw->switch_during_pb && !cfile->opening) {
+    if (!cfile->opening) {
       sensitize();
     }
 
-    if ((!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded)
-        && orig_file != new_file) {
+    if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded && orig_file != new_file) {
       // if the clip is loaded
       if (mainw->preview_box == NULL) {
         // create the preview box that shows frames...
@@ -7620,6 +7611,7 @@ void load_frame_image(int frame) {
 
     if (!mainw->switch_during_pb) {
       // switch on/off loop video if we have/don't have audio
+      // TODO: can we just call sensitize() ?
       if (!CURRENT_CLIP_HAS_AUDIO) {
         mainw->loop = FALSE;
       } else {
@@ -7977,24 +7969,13 @@ void load_frame_image(int frame) {
     if (mainw->noswitch || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
         mainw->foreign || (mainw->preview && !mainw->is_rendering && mainw->multitrack == NULL)) return;
 
-    if (!mainw->sep_win && mainw->multitrack == NULL) {
-      lives_widget_show(mainw->playframe);
-    }
-
-    if (new_file == mainw->current_file && (!LIVES_IS_PLAYING || mainw->playing_file == mainw->current_file)) {
-      if (!((mainw->fs && (prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1)) || (mainw->faded && mainw->double_size &&
-            !mainw->fs) ||
-            mainw->multitrack != NULL)) {
-        switch_to_file(mainw->current_file = 0, new_file);
-        /* if (mainw->play_window != NULL && !mainw->double_size && !mainw->fs && CURRENT_CLIP_IS_VALID && */
-        /*     (ohsize != cfile->hsize || ovsize != cfile->vsize)) { */
-        /*   // for single size sepwin, we resize frames to fit the window */
-        /*   mainw->pheight = ovsize; */
-        /*   mainw->pwidth = ohsize; */
-        /* } else if (mainw->multitrack == NULL) mainw->must_resize = FALSE; */
-      }
+    if (!mainw->fs || !mainw->faded) {
+      switch_to_file(mainw->current_file, new_file);
       return;
     }
+
+    osc_block = mainw->osc_block;
+    mainw->osc_block = TRUE;
 
     // reset old info file
     if (CURRENT_CLIP_IS_VALID) {
@@ -8004,9 +7985,6 @@ void load_frame_image(int frame) {
       lives_free(tmp);
     }
 
-    osc_block = mainw->osc_block;
-    mainw->osc_block = TRUE;
-
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
         new_file != mainw->current_file &&
         new_file != mainw->blend_file && !mainw->is_rendering) {
@@ -8014,7 +7992,6 @@ void load_frame_image(int frame) {
       // will cause recursion, but second time around cfile->ext_src should be NULL
       int error, key;
       weed_plant_t *inst = cfile->ext_src;
-      mainw->osc_block = TRUE;
       if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file;
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
       rte_key_on_off(key + 1, FALSE);
@@ -8026,7 +8003,8 @@ void load_frame_image(int frame) {
 
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit || prefs->audio_src == AUDIO_SRC_EXT))) {
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
+							|| prefs->audio_src == AUDIO_SRC_EXT))) {
       switch_audio_clip(new_file, TRUE);
     }
 
@@ -8034,34 +8012,13 @@ void load_frame_image(int frame) {
 
     mainw->switch_during_pb = TRUE;
     mainw->clip_switched = TRUE;
-
-    if (mainw->fs || (mainw->faded && mainw->double_size && !mainw->fs) || mainw->multitrack != NULL) {
-      mainw->current_file = new_file;
-      if (!mainw->sep_win) {
-        if (mainw->faded && mainw->double_size && !mainw->fs) resize(2);
-        if (cfile->menuentry != NULL) {
-          set_main_title(cfile->name, 0);
-        } else set_main_title(cfile->file_name, 0);
-      }
-    } else {
-      // force update of labels, prevent widgets becoming sensitized
-      switch_to_file(mainw->current_file, new_file);
-    }
+    mainw->current_file = new_file;
+    set_main_title(cfile->name, 0);
 
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
 
     mainw->play_start = 1;
     mainw->play_end = cfile->frames;
-
-    if (mainw->play_window != NULL) {
-      play_window_set_title();
-      /* if (mainw->double_size && !mainw->fs && (ohsize != cfile->hsize || ovsize != cfile->vsize)) { */
-      /*   // for single size sepwin, we resize frames to fit the window */
-      /*   mainw->must_resize = TRUE; */
-      /*   mainw->pheight = ovsize; */
-      /*   mainw->pwidth = ohsize; */
-      /* } */
-    } //else if (mainw->multitrack == NULL) mainw->must_resize = FALSE;
 
     if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
       mainw->play_end = INT_MAX;
@@ -8081,6 +8038,7 @@ void load_frame_image(int frame) {
     cfile->next_event = NULL;
     mainw->deltaticks = 0;
     mainw->startticks = mainw->currticks;
+
     // force loading of a frame from the new clip
     if (!mainw->noswitch && !mainw->is_rendering && CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;

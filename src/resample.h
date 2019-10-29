@@ -43,9 +43,9 @@ typedef struct __resaudw {
 
 _resaudw *resaudw;
 
-weed_timecode_t q_gint64(weed_timecode_t in, double fps);
-weed_timecode_t q_gint64_floor(weed_timecode_t in, double fps);
-weed_timecode_t q_dbl(double in, double fps);
+ticks_t q_gint64(ticks_t in, double fps);
+ticks_t q_gint64_floor(ticks_t in, double fps);
+ticks_t q_dbl(double in, double fps);
 
 
 weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps,

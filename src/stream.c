@@ -13,16 +13,6 @@
 #include "interface.h"
 #include "effects-weed.h"
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-palettes.h"
-#endif
-
 #define L2L_PACKET_LEN 1024
 
 static char pckbuf[L2L_PACKET_LEN * 2];

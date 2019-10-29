@@ -115,7 +115,6 @@ typedef int lives_pgid_t;
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <signal.h>
 #include <assert.h>
@@ -363,11 +362,19 @@ typedef struct {
 } lives_audio_track_state_t;
 
 #if HAVE_SYSTEM_WEED
+#include <weed/weed-host.h>
 #include <weed/weed.h>
 #include <weed/weed-events.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
+#include "../libweed/weed-host.h"
 #include "../libweed/weed.h"
 #include "../libweed/weed-events.h"
+#include "../libweed/weed-palettes.h"
+#include "../libweed/weed-effects.h"
+#include "../libweed/weed-utils.h"
 #endif
 
 // see weed event spec. for more info
@@ -1151,14 +1158,14 @@ void load_end_image(int frame);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 
-boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc);
-void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc);
+boolean pull_frame(weed_plant_t *layer, const char *image_ext, ticks_t tc);
+void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, ticks_t tc);
 void check_layer_ready(weed_plant_t *layer);
-boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc,
+boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
-LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
+LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
                                        int width, int height, LiVESInterpType interp);
-LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc);
+LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
 boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype,
                           int quality, boolean do_chmod, LiVESError **gerrorptr);

@@ -4,12 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed-palettes.h"
-#endif
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -4218,7 +4212,7 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (LIVES_IS_PLAYING) {
     // we are playing a clip
-    weed_timecode_t tc;
+    ticks_t tc;
     if (!mainw->record || mainw->record_paused) {
       // recording is starting
       mainw->record_starting = TRUE;
@@ -6937,18 +6931,8 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     } while (mainw->pwidth == 0 || mainw->pheight == 0);
     unblock_expose();
 
-    if (mainw->sep_win) {
-      if (prefs->sepwin_type == SEPWIN_TYPE_STICKY) {
-        resize_play_window();
-      } else {
-        if (mainw->play_window != NULL) {
-          resize_play_window();
-        } else make_play_window();
-        if (mainw->play_window != NULL) {
-          hide_cursor(lives_widget_get_xwindow(mainw->play_window));
-          lives_widget_set_app_paintable(mainw->play_window, TRUE);
-        }
-      }
+    if (mainw->play_window != NULL) {
+      resize_play_window();
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
@@ -6956,22 +6940,22 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
+	  check_layer_ready(mainw->frame_layer);
+	  if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
           mainw->frame_layer = frame_layer;
         }
       }
     } else {
       // in-frame
       if (mainw->double_size) {
-        if (!mainw->sep_win) {
-          if (!mainw->faded) {
-            if (palette->style & STYLE_1) {
-              lives_widget_hide(mainw->sep_image);
-            }
-            lives_widget_hide(mainw->message_box);
-          }
-          lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-          resize(2.);
-        }
+	if (!mainw->faded) {
+	  if (palette->style & STYLE_1) {
+	    lives_widget_hide(mainw->sep_image);
+	  }
+	  lives_widget_hide(mainw->message_box);
+	}
+	lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+	resize(2.);
       } else {
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
         resize(1.);
@@ -11065,7 +11049,7 @@ void on_recaudsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 #ifdef RT_AUDIO
-  weed_timecode_t ins_pt;
+  ticks_t ins_pt;
   double aud_start, aud_end, vel = 1., vol = 1.;
 
   uint32_t chk_mask;
@@ -11247,7 +11231,7 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
 
     // insert audio from old (new) clip to current
     render_audio_segment(1, &(mainw->current_file), old_file, &vel, &aud_start, ins_pt,
-                         ins_pt + (weed_timecode_t)((aud_end - aud_start)*TICKS_PER_SECOND_DBL), &vol, vol, vol, NULL);
+                         ins_pt + (ticks_t)((aud_end - aud_start)*TICKS_PER_SECOND_DBL), &vol, vol, vol, NULL);
 
     end_threaded_dialog();
     close_current_file(old_file);

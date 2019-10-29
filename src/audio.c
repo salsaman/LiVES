@@ -4,21 +4,6 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-effects.h"
-#include "../libweed/weed-palettes.h"
-#endif
-
 #include "main.h"
 #include "audio.h"
 #include "events.h"

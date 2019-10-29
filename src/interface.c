@@ -5,13 +5,6 @@
 // see file ../COPYING for licensing details
 
 #include "main.h"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdio.h>
-
 #include "callbacks.h"
 #include "interface.h"
 #include "paramwindow.h"
@@ -653,12 +646,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   if (which == 0) {
     // playback cursors
     if (LIVES_IS_PLAYING) {
-      //      if (cfile->frames > 0) {
       draw_little_bars((mainw->actual_frame - 1.) / cfile->fps, 0);
-      /* } */
-      /* if (cfile->frames == 0) { */
-      /*   lives_ce_update_timeline(0, offset); */
-      /* } */
     }
 
     if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {

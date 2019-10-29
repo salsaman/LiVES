@@ -5,16 +5,6 @@
 
 // functions for the 'framedraw' widget - lets users draw on frames :-)
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-host.h>
-#include <weed/weed-palettes.h>
-#else
-#include "../libweed/weed.h"
-#include "../libweed/weed-host.h"
-#include "../libweed/weed-palettes.h"
-#endif
-
 #include "main.h"
 #include "callbacks.h"
 #include "support.h"

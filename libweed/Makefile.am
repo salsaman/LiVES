@@ -24,19 +24,19 @@ docs-doxygen:
 	@echo "Doxygen not installed, skipping sourcecode documentation"
 endif
 
-WEED_SO_VERSION = 0:12:0
-WEED_PSO_VERSION = 0:15:0
+WEED_SO_VERSION = 1:13:1
+WEED_PSO_VERSION = 1:14:1
 
 LIBS =
 
 if IS_DARWIN
 extra_ldflags = 
 
-extra_cflags = 
+extra_cflags = -Wno-unused-function
 else
 extra_ldflags = -fPIC -DPIC
 
-extra_cflags = -fPIC -DPIC -O3
+extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function
 endif
 
 lib_LTLIBRARIES = libweed.la libweed_slice.la libweed-utils.la libweed_slice_scripting.la libweed-utils_scripting.la
@@ -61,7 +61,7 @@ libweedincludedir = "$(includedir)/weed"
 libweed_ladir = "$(libdir)/weed"
 libweed_scripting_ladir = "$(libdir)/weed"
 
-libweed_la_CFLAGS = -fvisibility=hidden
+libweed_la_CFLAGS = -fvisibility=hidden $(extra_cflags)
 
 shared_LDFLAGS = -shared --tag=disable-static
 

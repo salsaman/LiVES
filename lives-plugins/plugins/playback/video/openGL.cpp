@@ -4,8 +4,6 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include "videoplugin.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -16,10 +14,12 @@
 #include <iostream>
 
 #ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-plugin.h>
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
 #else
+#include "../../../../libweed/weed-plugin.h"
 #include "../../../../libweed/weed.h"
 #include "../../../../libweed/weed-effects.h"
 #include "../../../../libweed/weed-palettes.h"
@@ -31,7 +31,9 @@
 #include "../../../../libweed/weed-plugin.h"
 #endif
 
-#include "../../../../lives-plugins/weed-plugins/weed-utils-code.c"
+#include "videoplugin.h"
+
+// TODO: replace with lib
 #include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -281,15 +283,10 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
 }
 
 
-const void **get_play_params(func_ptr weed_bootd) {
-  weed_bootstrap_f weed_boot = (weed_bootstrap_f)weed_bootd;
-
-  //weed_plant_t *gui;
-
-  //int api,error;
-
+const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
+  
   if (plugin_info == NULL) {
-    plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+    plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
 
     // play params
     params[0] = weed_integer_init("mode", "Playback _mode", -1, -1, 10);
@@ -313,7 +310,7 @@ const void **get_play_params(func_ptr weed_bootd) {
     params[6] = NULL;
   }
 
-  return (const void **)params;
+  return (const weed_plant_t **)params;
 }
 
 

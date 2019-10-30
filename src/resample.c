@@ -470,7 +470,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (in_list == NULL) return NULL;
 
   out_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
-  weed_add_plant_flags(out_list, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(out_list, WEED_LEAF_READONLY_PLUGIN);
   weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, NULL);
   weed_set_voidptr_value(out_list, WEED_LEAF_LAST, NULL);
   weed_set_double_value(out_list, WEED_LEAF_FPS, qfps);

@@ -26,6 +26,11 @@
 #define WEED_LEAF_LIVES_CREATED_VERSION "created_version"
 #define WEED_LEAF_LIVES_EDITED_VERSION "edited_version"
 
+#define WEED_LEAF_CREATED_DATE "host_created_date"
+#define WEED_LEAF_EDITED_DATE "host_edited_date"
+
+#define WEED_LEAF_FILTER_API_VERSION "host_filter_version"
+
 // frame event
 #define WEED_LEAF_FRAMES "frames"
 #define WEED_LEAF_CLIPS "clips"

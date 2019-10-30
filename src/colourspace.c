@@ -10110,8 +10110,8 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       }
 
       weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
-      weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) |
-                          WEED_LEAF_READONLY_PLUGIN));
+      /* weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) | */
+      /*                     WEED_LEAF_READONLY_PLUGIN)); */
 
       // no change needed
       if (gamma_type == ogamma_type) continue;
@@ -10131,8 +10131,8 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       weed_set_int_array(param, WEED_LEAF_VALUE, nvals, ivals);
       lives_free(ivals);
       weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
-      weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) |
-                          WEED_LEAF_READONLY_PLUGIN));
+      /* weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) | */
+      /*                     WEED_LEAF_READONLY_PLUGIN)); */
     }
 
     lives_free(params);

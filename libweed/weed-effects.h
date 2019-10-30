@@ -122,13 +122,6 @@ extern "C"
 /* API version 110 */
 #define WEED_PARAMETER_ELEMENT_PER_CHANNEL    (1<<2)
 
-/* Leaf flags */
-#define WEED_LEAF_READONLY_PLUGIN (1<<0)
-#define WEED_LEAF_READONLY_HOST (1<<1)
-
-/* Plugin errors */
-#define WEED_ERROR_LEAF_READONLY WEED_ERROR_FLAGALL
-
 #define WEED_ERROR_TOO_MANY_INSTANCES 64
 #define WEED_ERROR_HARDWARE 65
 #define WEED_ERROR_INIT_ERROR 66
@@ -159,13 +152,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 
 #ifdef __WEED_HOST__
 weed_default_getter_f weed_default_get;
-
-#ifdef NEED_PLUGIN_SET_FUNC
-weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
-  return weed_leaf_flag_set(plant, key, seed_type, num_elems, values, NULL, WEED_LEAF_READONLY_PLUGIN);
-}
-#endif
-
 #else
 static weed_default_getter_f weed_default_get;
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
@@ -191,6 +177,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
 #define WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
 #define WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
 #define WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
+#define WEED_LEAF_REALLOC_FUNC "weed_realloc_func"
 #define WEED_LEAF_FREE_FUNC "weed_free_func"
 #define WEED_LEAF_MEMSET_FUNC "weed_memset_func"
 #define WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"

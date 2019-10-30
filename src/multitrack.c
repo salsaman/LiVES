@@ -251,7 +251,10 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
   int64_t *uievs;
   int64_t iev = 0l;
 
+  struct timeval otv;
+
   char *cversion;
+  char *cdate;
 
   int count = 0;
   int nivs = 0;
@@ -261,6 +264,9 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
   register int i;
 
   if (event_list == NULL) return TRUE;
+
+  gettimeofday(&otv, NULL);
+  cdate = lives_datetime(&otv);
 
   event = get_first_event(event_list);
 
@@ -273,12 +279,18 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
   weed_set_int_value(event_list, WEED_LEAF_AUDIO_SAMPLE_SIZE, cfile->asampsize);
 
   weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
+  weed_set_int_value(event_list, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
+  weed_set_int_value(event_list, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
 
   cversion = lives_strdup_printf("LiVES version %s", LiVES_VERSION);
-  if (!weed_plant_has_leaf(event_list, WEED_LEAF_LIVES_CREATED_VERSION))
+  if (!weed_plant_has_leaf(event_list, WEED_LEAF_LIVES_CREATED_VERSION)) {
     weed_set_string_value(event_list, WEED_LEAF_LIVES_CREATED_VERSION, cversion);
+    weed_set_string_value(event_list, WEED_LEAF_CREATED_DATE, cdate);
+  }
   weed_set_string_value(event_list, WEED_LEAF_LIVES_EDITED_VERSION, cversion);
+  weed_set_string_value(event_list, WEED_LEAF_EDITED_DATE, cdate);
   lives_free(cversion);
+  lives_free(cdate);
 
   if (cfile->signed_endian & AFORM_UNSIGNED) weed_set_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, WEED_FALSE);
   else weed_set_boolean_value(event_list, WEED_LEAF_AUDIO_SIGNED, WEED_TRUE);
@@ -5489,7 +5501,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
         weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, event);
       }
       weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);
-      weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+      //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
       eventprev = event;
       if (num_events != NULL)(*num_events)++;
     }
@@ -5497,7 +5509,7 @@ static weed_plant_t *load_event_list_inner(lives_mt *mt, int fd, boolean show_er
 
   if (mt == NULL) return event_list;
 
-  weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
 
   if (weed_plant_has_leaf(event_list, WEED_LEAF_GAMMA_ENABLED)) {
     err = NULL;
@@ -19149,7 +19161,7 @@ void on_set_pvals_clicked(LiVESWidget *button, livespointer user_data) {
     } else was_changed = TRUE;
 
     weed_leaf_copy(pchange, WEED_LEAF_VALUE, param, WEED_LEAF_VALUE);
-    weed_add_plant_flags(pchange, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(pchange, WEED_LEAF_READONLY_PLUGIN);
 
     // mark the default value as changed, so the user can delete this node (which will reset to defaults)
     if (weed_plant_has_leaf(pchange, WEED_LEAF_IS_DEF_VALUE))
@@ -22838,7 +22850,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     weed_set_voidptr_value(enevent, WEED_LEAF_INIT_EVENT, mt->init_event);
     weed_set_voidptr_value(enevent, WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value(enevent, WEED_LEAF_PREV_CHANGE, stevent);
-    weed_add_plant_flags(enevent, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(enevent, WEED_LEAF_READONLY_PLUGIN);
 
     weed_set_voidptr_value(stevent, WEED_LEAF_NEXT_CHANGE, enevent);
 
@@ -22907,7 +22919,7 @@ void mt_do_autotransition(lives_mt *mt, track_rect *block) {
     weed_set_voidptr_value(enevent, WEED_LEAF_INIT_EVENT, mt->init_event);
     weed_set_voidptr_value(enevent, WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value(enevent, WEED_LEAF_PREV_CHANGE, stevent);
-    weed_add_plant_flags(enevent, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(enevent, WEED_LEAF_READONLY_PLUGIN);
 
     weed_set_voidptr_value(stevent, WEED_LEAF_NEXT_CHANGE, enevent);
 

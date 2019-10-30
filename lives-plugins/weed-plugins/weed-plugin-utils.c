@@ -124,7 +124,6 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   /////////////////////////////////////////////////////////
   // get our bootstrap values
   // every plugin should call this in its weed_setup()
-  int api_version;
   weed_error_t error;
   weed_default_getter_f weed_default_getp;
 
@@ -139,10 +138,16 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
 
   (weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get);
 
+  weed_api_version = weed_get_int_value(host_info, WEED_LEAF_WEED_API_VERSION, &error);
+
   weed_malloc = ((weed_malloc_f)weed_get_voidptr_value(host_info, WEED_LEAF_MALLOC_FUNC, &error));
   weed_free = ((weed_free_f)weed_get_voidptr_value(host_info, WEED_LEAF_FREE_FUNC, &error));
   weed_memset = ((weed_memset_f)weed_get_voidptr_value(host_info, WEED_LEAF_MEMSET_FUNC, &error));
   weed_memcpy = ((weed_memcpy_f)weed_get_voidptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, &error));
+
+  // need: weed_plant_has_leaf, weed_leaf_seed_type, weed_get_value
+
+
   weed_leaf_set = ((weed_leaf_set_f)weed_get_voidptr_value(host_info, WEED_LEAF_SET_FUNC, &error));
   weed_plant_new = ((weed_plant_new_f)weed_get_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, &error));
   weed_plant_list_leaves = ((weed_plant_list_leaves_f)weed_get_voidptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, &error));

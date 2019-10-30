@@ -527,7 +527,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
     event_before = NULL;
   } else {
     event_before = get_last_event(event_list);
@@ -1001,7 +1001,7 @@ void insert_param_change_event_at(weed_plant_t *event_list, weed_plant_t *at_eve
   weed_timecode_t tc = get_event_timecode(at_event);
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
 
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN); // protect it for interpolation
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN); // protect it for interpolation
 
   while (at_event != NULL) {
     if (get_event_timecode(at_event) < tc) {
@@ -1265,7 +1265,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, 
     weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
     weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
     weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -1287,7 +1287,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, 
   } else {
     weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);
@@ -1311,7 +1311,7 @@ weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_
   if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
     weed_set_int_value(event, WEED_LEAF_TRACKS, LIVES_POINTER_TO_INT(data));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
 
   while (at_event != NULL) {
     at_event = get_prev_event(at_event);
@@ -2466,7 +2466,7 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = create_frame_event(tc, numframes, clips, frames);
@@ -2481,7 +2481,7 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
     error = weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) {
     error = weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
@@ -2562,7 +2562,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_NEXT_CHANGE, NULL);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_PREV_CHANGE, NULL);
     weed_set_boolean_value((weed_plant_t *)pchain[i], WEED_LEAF_IS_DEF_VALUE, WEED_TRUE);
-    weed_add_plant_flags((weed_plant_t *)pchain[i], WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags((weed_plant_t *)pchain[i], WEED_LEAF_READONLY_PLUGIN);
 
     insert_param_change_event_at(event_list, init_event, (weed_plant_t *)pchain[i]);
   }
@@ -2606,7 +2606,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     error = weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2735,7 +2735,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
   } else {
     weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);
@@ -2752,7 +2752,7 @@ weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode
     weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
     weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
     weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2775,7 +2775,7 @@ weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode
   } else {
     weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);
@@ -2795,7 +2795,7 @@ weed_plant_t *append_param_change_event(weed_plant_t *event_list, weed_timecode_
     weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
     weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
     weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2822,7 +2822,7 @@ weed_plant_t *append_param_change_event(weed_plant_t *event_list, weed_timecode_
   } else {
     weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);
@@ -2840,7 +2840,7 @@ weed_plant_t *append_filter_map_event(weed_plant_t *event_list, weed_timecode_t 
     weed_set_int_value(event_list, WEED_LEAF_WEED_EVENT_API_VERSION, WEED_EVENT_API_VERSION);
     weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, NULL);
     weed_set_voidptr_value(event_list, WEED_LEAF_LAST, NULL);
-    weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
+    //weed_add_plant_flags(event_list, WEED_LEAF_READONLY_PLUGIN);
   }
 
   event = weed_plant_new(WEED_PLANT_EVENT);
@@ -2865,7 +2865,7 @@ weed_plant_t *append_filter_map_event(weed_plant_t *event_list, weed_timecode_t 
   } else {
     weed_set_voidptr_value(event, WEED_LEAF_PREVIOUS, get_last_event(event_list));
   }
-  weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
+  //weed_add_plant_flags(event, WEED_LEAF_READONLY_PLUGIN);
   prev = get_prev_event(event);
   if (prev != NULL) weed_set_voidptr_value(prev, WEED_LEAF_NEXT, event);
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, event);

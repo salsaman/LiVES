@@ -84,7 +84,6 @@ extern weed_leaf_set_flags_f weed_leaf_set_flags;
 
 extern weed_leaf_get_f weed_leaf_get;
 extern weed_leaf_set_f weed_leaf_set;
-extern weed_leaf_flag_set_f weed_leaf_flag_set;
 extern weed_plant_new_f weed_plant_new;
 extern weed_plant_list_leaves_f weed_plant_list_leaves;
 extern weed_leaf_num_elements_f weed_leaf_num_elements;
@@ -280,7 +279,6 @@ static inline void weed_leaf_append(weed_plant_t *leaf, weed_leaf_t *newleaf) {
 
 weed_error_t _weed_plant_free(weed_plant_t *leaf) {
   weed_leaf_t *leafnext;
-  if (leaf->flags != 0) return WEED_ERROR_FLAGALL;
   while (leaf != NULL) {
     leafnext = leaf->next;
     weed_leaf_free(leaf);
@@ -292,8 +290,8 @@ weed_error_t _weed_plant_free(weed_plant_t *leaf) {
 
 static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   // don't delete the first ("type") leaf
-  if (!weed_strcmp(key, plant->key)) return WEED_ERROR_FLAGALL;
-  else {
+  if (0) {
+  } else {
     weed_leaf_t *leaf = plant->next, *leafprev = plant;
     uint32_t hash = weed_hash(key);
     while (leaf != NULL) {

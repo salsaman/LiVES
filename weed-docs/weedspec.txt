@@ -260,12 +260,12 @@ Weed offers the following '''fundamental''' types (number <64):[[BR]]
  * WEED_SEED_INT     : signed /unsigned 32 bit integer
  * WEED_SEED_DOUBLE  : corresponds to C type "double"
  * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, constrained to take values WEED_FALSE or WEED_TRUE 
- * WEED_SEED_STRING  : NUL terminated array of char (max length is size_t max)
+ * WEED_SEED_STRING  : NUL terminated array of char (max length is int32_t max, but strings should preferably be under 65536 bytes)
  * WEED_SEED_INT64   : signed /unsigned 64 bit integer
 
 '''Pointer''' types (number >= 64 and < 512):
 
- * WEED_SEED_VOIDPTR     : corresponds to a 64 bit C void * type (i.e uint64_t).
+ * WEED_SEED_VOIDPTR     : corresponds to a 64 bit C void * type
    			   If the size is non-zero, and the value is non-NULL, will be freed when the leaf is deleted.
  * WEED_SEED_PLANTPTR    : uint64_t : a pointer / reference to another weed plant
 
@@ -300,77 +300,106 @@ freed after getting or setting. For all other seed_types, copy is by reference.
 
 
 
+
 == WEED CORE FUNCTIONS ==
 
  * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates a new weed_plant with "type" set to plant_type
 
  * char **weed_plant_list_leaves (weed_plant_t *plant) : returns a NULL terminated char * array of leaf keys
 
- * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values)
+ * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) :
+    an array of the appropriate size and type should be cast to a voidptr. If num_elems is 0 then only the seed_type is set,
+    and the leaf value is set to NULL.
 
- * weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, void *value)
+ * weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, void *values) : values should be typecast
+    to an array of the appropriate size, and freed after use. For WEED_SEED_STRING, and non NULL strings should also be freed.
 
  * weed_size_t weed_leaf_num_elements (weed_plant_t *plant, const char *key)
  
- * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int idx)
+ * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int32_t idx)
 
    For WEED_SEED_STRING, returns the string length in bytes; equivalent to strlen().
 
    For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_voidptr_caller() function, returns the size set.
    Otherwise, returns 0.
 
-   NOTE: the meaning of this changed as of API 200. Prior to this it would return the seed_type size.
-   It is therefore advisable to enclose code in #ifdef WEED_VOIDPTR_SIZE before relying on this to free or copy the data.
+   NOTE: the meaning of this changed as of API 200. Prior to this, for WEED_SEED_VOIDPTR it would return sizeof(void *).
+   weed.h now defines WEED_VOIDPTR_SIZE so 
+   it may be advisable to enclose code in #ifdef WEED_VOIDPTR_SIZE if dealing with older versions of the API.
    if the old behavior is required, then weed_init() can be called with an API version < 200 (e.g. 199).
 
-   For all other seed types, returns the seed_type size in bytes, (e.g. for WEED_SEED_INT, returns 4, for WEED_SEED_INt64, returns 8).
+   For all other seed types, returns sizeof(seed_type), (e.g. for WEED_SEED_INT, returns 4, for WEED_SEED_INt64, returns 8).
 
  * int32_t weed_leaf_seed_type(weed_plant_t *plant, const char *key) : get the seed_type for a leaf
 
  * int32_t weed_leaf_get_flags(weed_plant_t *plant, const char *key) : set the flags for a leaf
 
- * weed_error_t weed_plant_free (weed_plant_t *plant)
+ * weed_error_t weed_plant_free (weed_plant_t *plant) : returns error WEED_ERROR_UNDELETABLE if the "type" flag contains
+   WEED_LEAF_UNDELETABLE
+
+ * weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
+
 
 
 As of API 200:
 
- * weed_error_t weed_leaf_flag_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values, weed_size_t *sizes, int32_t flagbits)
+ * weed_error_t weed_leaf_set_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems, void *values, weed_size_t *sizes)
 
-Creates or changes the leaf with key "key" in "plant" with seed_type "seed_type" and the specified number of elements,
- using the "values" array and setting "sizes" array (if non-NULL and the seed_type is WEED_SEED_VOIDPTR),
- doing a bitwise AND of flagbits and the leaf flag 
+ Only valid for leaves with a seed type WEED_SEED_VOIDPTR. Will amend or create the leaf with num_elems void pointers,
+ and set the data sizes for the array. When the leaf is freed (with weed_plant_free or weed_leaf_delete) any non-NULL values
+ will be automaticaly freed UNLESS the WEED_FLAG_IMMUTABLE flag bit is set.
 
- * weed_error_t weed_leaf_flag_get (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, void *values, weed_size_t **sizes, int32_t *flags)
+ * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, void *values, weed_size_t **sizes, int32_t *flags)
 
 Retrieves the seed_type, num_elements, values, sizes and flags for the specified leaf. "values" should be freed after use as well as
- any strings thus retrieved.
-
-
-The host may implement the following functions itself:
-
- * void *weed_malloc_f (size_t size)
- * void *weed_realloc_f (void *ptr, size_t size)
- * void weed_free_f (void *ptr)
- * void *weed_memset_f (void *s, int c, size_t n)
- * void *weed_memcpy_f (void *dest, const void *src, size_t n)
-
-passing them into weed_init()
+ any string values retrieved.
 
 
 This may be useful for memory profiling a particular plugin, for example.
 
-The host has access to additional functions which are not passed to the plugin
-in the HOST_INFO plant:
+
+== Additional functions for the host ==
+
+The host has access to an additional function which is not passed to plugins in the HOST_INFO plant:
 
  * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
 
- * weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
+
+
+
+
+== SPECIAL LEAF FLAGS ==
+
+Two special flag bits are defined in weed.h:
+
+WEED_FLAG_UNDELETABLE [1 << 0] :: the leaf cannot be deleted, weed_leaf_delete will return WEED_ERROR_UNDELETABLE if you try it
+
+and
+
+WEED_FLAG_IMMUTABLE [1 << 1] :: the leaf value cannot be changed (but it may be deleted),
+                                   weed_leaf_set returns WEED_ERROR_IMMUTABLE if you try to do so
+
+
+When creating a new plant, libweed automatically will set the immutable flag for the "type" leaf.
+Thus if you want to change the plant type, you must first clear the WEED_LEAF_IMMUTABLE flag bit, e.g.
+
+int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
+weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags ^ (flags & WEED_FLAG_IMMUTABLE));
+
+// now you can change the "type" of the plant
+
+If the "type" leaf is set undeletable, then the plant cannot be deleted - weed_plant_free() will return WEED_ERROR_UNDELETABLE.
+In this case you need to clear the flag bit to free the plant.
+
+
+
+
 
 
 '''Notes''':[[BR]]
 
 The void * for weed_leaf_set_*() and weed_leaf_get() is a (void *) typecast to/from an *array* of the appropriate type:
-e.g. for WEED_SEED_INT it is an int *, for WEED_SEED_STRING it is a char ** for WEED_SEED_VOIDPTR a uint64_t *, etc.
+e.g. for WEED_SEED_INT it is an int32_t *, for WEED_SEED_STRING it is a char ** for WEED_SEED_VOIDPTR actually a uint64_t *, etc.
 The number of elements in the array MUST match num_elems in weed_leaf_set().
 
 - weed_plant_new() will set the "type" leaf to the plant_type
@@ -429,17 +458,32 @@ Errors are listed here in order of precedence from highest to lowest.
     you attempt such a thing, and the value of the leaf will not be amended.
 
  *  WEED_ERROR_FLAGALL [[BR]]
-    may be returned from weed_leaf_flagset and weed_lead_flagdelet. Indicates that all of the bits set in flagbits
+    may be returned from weed_leaf_flagset. Indicates that all of the bits set in flagbits
     were set in the leaf flags.
     In this case the leaf will not be amended / deleted.
 
 *  WEED_ERROR_FLAGBIT [[BR]]
-    may be returned from weed_leaf_flagset and weed_leaf_flagdelete. Indicates that one or more of the bits (but not all)
+    may be returned from weed_leaf_flagset. Indicates that one or more of the bits (but not all)
     set in flagbits was also set in the leaf flags.
     In this case the leaf will not be amended / deleted.
 
 *  WEED_ERROR_BADVERSION [[BR]]
    returned from weed_init() if the host specifies an api version that the library cannot support.
+
+
+==== Leaf flags ====
+
+ * WEED_FLAG_IMMUTABLE
+   Leaf value cannot be altered, but the leaf may be deleted or freed. Automatically set for the "type" leaf.
+
+ * WEED_FLAG_UNDELETABLE
+   Leaf cannot be deleted, and additionally if the "type" leaf is undeletable, the plant cannot be freed with weed_plant_free.
+
+
+
+Flag bits > (1 << 15) are reserved for custom flags.
+
+
 
 
 ==== Other symbols ====
@@ -453,6 +497,8 @@ WEED_API_VERSION is #defined as 200 in the header.
 WEED_API_VERSION_200 is also #defined in the header.
 
 WEED_VOIDPTR_SIZE is #defined as 8
+
+weed_voidptr_t is typedefed to (uint64_t *)
 
 
 == Leaf names ==
@@ -510,11 +556,6 @@ weed-compat.h is provided for compatibily with some external libraries.
 
 Compiling a plugin with Weed is dealt with below.
 
--------------------------------------------------
-== LEAF RESTRICTIONS ==
-
-The "type" leaf of a plant is automatically set READONLY for the plugin in weed_plant_new().
-See below: leaf flags. The "type" leaf should not be changed by the host.
 
 
 == WEED EFFECTS EXAMPLE ==
@@ -530,21 +571,6 @@ which are documented separately.
 '''Note''': STRINGS are all utf-8 encoded in Weed, except leaf Keys, which are ASCII encoded.
 
   (The weed_function_t is a pointer to a function, which may be cast to/from a pointer to any function type)
-
-
-
-
-
-==== Leaf flags ====
-
- * WEED_LEAF_PLUGIN_READONLY
-   The leaf is readonly for the plugin.
-
- * WEED_LEAF_HOST_READONLY
-   The leaf is readonly for the host.
-
-Flag bits >=30 are reserved for custom flags.
-
 
 
 

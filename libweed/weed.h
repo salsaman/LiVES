@@ -19,7 +19,6 @@
 
    mainly based on LiViDO, which is developed by:
 
-
    Niels Elburg - http://veejay.sf.net
 
    Gabriel "Salsaman" Finch - http://lives.sourceforge.net
@@ -54,7 +53,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#define __need_size_t
+#define __need_size_t // for malloc, realloc, etc
 #define __need_NULL
 #include <stddef.h>
 #include <inttypes.h>
@@ -74,8 +73,8 @@ extern "C"
 #define WEED_ERROR_NOSUCH_LEAF 2
 #define WEED_ERROR_NOSUCH_ELEMENT 3
 #define WEED_ERROR_WRONG_SEED_TYPE 4
-#define WEED_ERROR_FLAGALL 5
-#define WEED_ERROR_FLAGBIT 6
+#define WEED_ERROR_IMMUTABLE 5
+#define WEED_ERROR_UNDELETABLE 6
 #define WEED_ERROR_BADVERSION 7
 
 /* Seed types */
@@ -90,16 +89,21 @@ extern "C"
 #define WEED_SEED_VOIDPTR  65
 #define WEED_SEED_PLANTPTR 66
 
+/* flag bits */
+#define WEED_FLAG_UNDELETABLE (1 << 0)
+#define WEED_FLAG_IMMUTABLE (1 << 1)
+
 #define WEED_LEAF_TYPE "type"
 
 typedef uint32_t weed_size_t;
 typedef int32_t weed_error_t;
+typedef uint8_t *weed_voidptr_t;
 
 #ifndef HAVE_WEED_DATA_T
 #define HAVE_WEED_DATA_T
 typedef struct {
   weed_size_t size;
-  void *value;
+  weed_voidptr_t value;
 } weed_data_t;
 #endif
 
@@ -138,28 +142,28 @@ typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key)
 typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, int32_t idx);
 typedef int32_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
 typedef int32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
+typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
+typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
 /* API 200 */
-typedef weed_error_t (*weed_leaf_flag_set_f)(weed_plant_t *, const char *key, int32_t seed_type,
+typedef weed_error_t (*weed_leaf_set_sizes_f)(weed_plant_t *, const char *key, int32_t seed_type,
     weed_size_t num_elems, void **values, weed_size_t *sizes, int32_t flagmask);
-typedef weed_error_t (*weed_leaf_flag_get_f)(weed_plant_t *, const char *key, int32_t *seed_type,
+typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type,
     weed_size_t *num_elems, void **values, weed_size_t **sizes, int32_t *flags);
 
 #ifdef __WEED_HOST__
 // host only functions
-typedef void (*weed_plant_free_f)(weed_plant_t *);
-typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, int32_t flags);
 
-// host MUST call this to set up the lib, passing in the API version it wants to use
+// host MUST call this if it wants to use the library, passing in the API version it wants to use
+// the function returns either WEED_NO_ERROR or WEED_ERROR_BADVERSION
+
 weed_error_t weed_init(int32_t api);
 
 #ifndef _SKIP_WEED_API_
 // function pointers which get set in weed_init()
 weed_leaf_get_f weed_leaf_get;
 weed_leaf_set_f weed_leaf_set;
-weed_leaf_flag_set_f weed_leaf_flag_set;
-weed_leaf_flag_get_f weed_leaf_flag_get;
 weed_plant_new_f weed_plant_new;
 weed_plant_list_leaves_f weed_plant_list_leaves;
 weed_leaf_num_elements_f weed_leaf_num_elements;
@@ -168,7 +172,10 @@ weed_leaf_seed_type_f weed_leaf_seed_type;
 weed_leaf_get_flags_f weed_leaf_get_flags;
 
 weed_malloc_f weed_malloc;
+
+// added in API 200
 weed_realloc_f weed_realloc;
+
 weed_free_f weed_free;
 weed_memcpy_f weed_memcpy;
 weed_memset_f weed_memset;
@@ -177,7 +184,6 @@ weed_memset_f weed_memset;
 weed_plant_free_f weed_plant_free;
 weed_leaf_delete_f weed_leaf_delete;
 weed_leaf_set_flags_f weed_leaf_set_flags;
-
 #endif
 
 #else
@@ -185,8 +191,6 @@ weed_leaf_set_flags_f weed_leaf_set_flags;
 // plugin then sets them from the plugin_info
 static weed_leaf_get_f weed_leaf_get;
 static weed_leaf_set_f weed_leaf_set;
-static weed_leaf_flag_set_f weed_leaf_flag_set;
-static weed_leaf_flag_get_f weed_leaf_flag_get;
 static weed_plant_new_f weed_plant_new;
 static weed_plant_list_leaves_f weed_plant_list_leaves;
 static weed_leaf_num_elements_f weed_leaf_num_elements;
@@ -195,7 +199,10 @@ static weed_leaf_seed_type_f weed_leaf_seed_type;
 static weed_leaf_get_flags_f weed_leaf_get_flags;
 
 static weed_malloc_f weed_malloc;
+
+// added in API 200
 static weed_realloc_f weed_realloc;
+
 static weed_free_f weed_free;
 static weed_memcpy_f weed_memcpy;
 static weed_memset_f weed_memset;

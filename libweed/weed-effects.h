@@ -54,11 +54,11 @@ extern "C"
 
 #include <inttypes.h>
 
-  /* API version * 200 */
+/* API version * 200 */
 #define WEED_FILTER_API_VERSION 200
 #define WEED_FILTER_API_VERSION_200
 
-  /* plant types */
+/* plant types */
 #define WEED_PLANT_UNKNOWN 0
 #define WEED_PLANT_PLUGIN_INFO 1
 #define WEED_PLANT_FILTER_CLASS 2
@@ -70,7 +70,7 @@ extern "C"
 #define WEED_PLANT_GUI 8
 #define WEED_PLANT_HOST_INFO 255
 
-  /* Parameter hints */
+/* Parameter hints */
 #define WEED_HINT_UNSPECIFIED     0
 #define WEED_HINT_INTEGER         1
 #define WEED_HINT_FLOAT           2
@@ -78,32 +78,32 @@ extern "C"
 #define WEED_HINT_SWITCH          4
 #define WEED_HINT_COLOR           5
 
-  /* Colorspaces for Color parameters */
+/* Colorspaces for Color parameters */
 #define WEED_COLORSPACE_RGB   1
 #define WEED_COLORSPACE_RGBA  2
 
-  /* host_info flags */
-  /* API version 200 */
+/* host_info flags */
+/* API version 200 */
 #define WEED_HOST_SUPPORTS_LINEAR_GAMMA    (1<<0)
 
-  /* Filter flags */
+/* Filter flags */
 #define WEED_FILTER_NON_REALTIME    (1<<0)
 #define WEED_FILTER_IS_CONVERTER    (1<<1)
 #define WEED_FILTER_HINT_IS_STATELESS (1<<2)
 
-  /* API version 200 */
+/* API version 200 */
 #define WEED_FILTER_HINT_LINEAR_GAMMA (1<<3)
 
-  /* API version 131 */
+/* API version 131 */
 #define WEED_FILTER_PROCESS_LAST (1<<4)
 
-  /* API version 132 */
+/* API version 132 */
 #define WEED_FILTER_HINT_MAY_THREAD (1<<5)
 
-  /* Channel template flags */
+/* Channel template flags */
 #define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE    (1<<0)
 
-  /* API version 130 */
+/* API version 130 */
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    (1<<6)
 #define WEED_CHANNEL_OUT_ALPHA_PREMULT (1<<7)
 
@@ -112,21 +112,21 @@ extern "C"
 #define WEED_CHANNEL_SIZE_CAN_VARY            (1<<3)
 #define WEED_CHANNEL_PALETTE_CAN_VARY         (1<<4)
 
-  /* Channel flags */
+/* Channel flags */
 #define WEED_CHANNEL_ALPHA_PREMULT (1<<0)
 
-  /* Parameter template flags */
+/* Parameter template flags */
 #define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE (1<<0)
 #define WEED_PARAMETER_VARIABLE_ELEMENTS      (1<<1)
 
-  /* API version 110 */
+/* API version 110 */
 #define WEED_PARAMETER_ELEMENT_PER_CHANNEL    (1<<2)
 
-  /* Leaf flags */
+/* Leaf flags */
 #define WEED_LEAF_READONLY_PLUGIN (1<<0)
 #define WEED_LEAF_READONLY_HOST (1<<1)
 
-  /* Plugin errors */
+/* Plugin errors */
 #define WEED_ERROR_LEAF_READONLY WEED_ERROR_FLAGALL
 
 #define WEED_ERROR_TOO_MANY_INSTANCES 64
@@ -134,44 +134,44 @@ extern "C"
 #define WEED_ERROR_INIT_ERROR 66
 #define WEED_ERROR_PLUGIN_INVALID 67
 
-  typedef int64_t weed_timecode_t;
+typedef int64_t weed_timecode_t;
 
-  typedef void (*weed_function_f)();
-  
-  // allows the plugin to get the plugin_info before weed_leaf_get() is defined
-  typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_function_f *value);
+typedef void (*weed_function_f)();
 
-  /* host bootstrap function */
-  typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int32_t plugin_weed_api_version, int32_t plugin_filter_api_version);
+// allows the plugin to get the plugin_info before weed_leaf_get() is defined
+typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_function_f *value);
 
-  /* mandatory plugin functions */
-  typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
-  typedef weed_error_t (*weed_process_f)(weed_plant_t *filter_instance, weed_timecode_t timestamp);
+/* host bootstrap function */
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int32_t plugin_weed_api_version, int32_t plugin_filter_api_version);
 
-  /* optional plugin functions */
-  typedef void (*weed_desetup_f)(void);
-  typedef weed_error_t (*weed_init_f)(weed_plant_t *filter_instance);
-  typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
+/* mandatory plugin functions */
+typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
+typedef weed_error_t (*weed_process_f)(weed_plant_t *filter_instance, weed_timecode_t timestamp);
 
-  /* special plugin functions */
-  typedef void (*weed_display_f)(weed_plant_t *parameter);
-  typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
+/* optional plugin functions */
+typedef void (*weed_desetup_f)(void);
+typedef weed_error_t (*weed_init_f)(weed_plant_t *filter_instance);
+typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
+
+/* special plugin functions */
+typedef void (*weed_display_f)(weed_plant_t *parameter);
+typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
 #ifdef __WEED_HOST__
 weed_default_getter_f weed_default_get;
 
 #ifdef NEED_PLUGIN_SET_FUNC
-  weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
-    return weed_leaf_flag_set(plant, key, seed_type, num_elems, values, NULL, WEED_LEAF_READONLY_PLUGIN);
-  }
+weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
+  return weed_leaf_flag_set(plant, key, seed_type, num_elems, values, NULL, WEED_LEAF_READONLY_PLUGIN);
+}
 #endif
 
 #else
 static weed_default_getter_f weed_default_get;
-  weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
+weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
 #endif
 
-  // leaf naems
+// leaf naems
 #define WEED_LEAF_PLUGIN_INFO "plugin_info"
 #define WEED_LEAF_FILTERS "filters"
 #define WEED_LEAF_MAINTAINER "maintainer"
@@ -179,7 +179,7 @@ static weed_default_getter_f weed_default_get;
 #define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
 #define WEED_LEAF_PACKAGE_NAME "package_name"
 
-  // host info
+// host info
 #define WEED_LEAF_WEED_API_VERSION "weed_api_version"
 #define WEED_LEAF_API_VERSION "api_version"
 #define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
@@ -195,7 +195,7 @@ static weed_default_getter_f weed_default_get;
 #define WEED_LEAF_MEMSET_FUNC "weed_memset_func"
 #define WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
 
-  // filter_class
+// filter_class
 #define WEED_LEAF_INIT_FUNC "init_func"
 #define WEED_LEAF_DEINIT_FUNC "deinit_func"
 #define WEED_LEAF_PROCESS_FUNC "process_func"
@@ -212,12 +212,12 @@ static weed_default_getter_f weed_default_get;
 #define WEED_LEAF_COPYRIGHT "copyright"
 #define WEED_LEAF_VERSION "version"
 
-  // instance
+// instance
 #define WEED_LEAF_FILTER_CLASS "filter_class"
 #define WEED_LEAF_TIMECODE "timecode"
 #define WEED_LEAF_FPS "fps"
 
-  // channels / chan template
+// channels / chan template
 #define WEED_LEAF_PIXEL_DATA "pixel_data"
 #define WEED_LEAF_WIDTH "width"
 #define WEED_LEAF_HEIGHT "height"

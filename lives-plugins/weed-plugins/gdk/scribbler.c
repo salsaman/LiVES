@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../../libweed/weed-plugin.h" // optional
+#endif
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -17,18 +23,9 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 3; // number of different weed api versions supported
-static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../../libweed/weed-plugin.h" // optional
-#endif
 
 #include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
@@ -460,7 +457,7 @@ static int font_compare(const void *p1, const void *p2) {
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   weed_plant_t **clone1, **clone2;
 
   const char *def_fonts[] = {"serif", NULL};
@@ -476,8 +473,6 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     int api_used = weed_get_api_version(plugin_info);
     int filter_flags = 0, param_flags, error;
-
-    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     if (is_big_endian())
       palette_list[0] = WEED_PALETTE_ARGB32;

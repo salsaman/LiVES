@@ -6940,22 +6940,22 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
-	  check_layer_ready(mainw->frame_layer);
-	  if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
+          check_layer_ready(mainw->frame_layer);
+          if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
           mainw->frame_layer = frame_layer;
         }
       }
     } else {
       // in-frame
       if (mainw->double_size) {
-	if (!mainw->faded) {
-	  if (palette->style & STYLE_1) {
-	    lives_widget_hide(mainw->sep_image);
-	  }
-	  lives_widget_hide(mainw->message_box);
-	}
-	lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
-	resize(2.);
+        if (!mainw->faded) {
+          if (palette->style & STYLE_1) {
+            lives_widget_hide(mainw->sep_image);
+          }
+          lives_widget_hide(mainw->message_box);
+        }
+        lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
+        resize(2.);
       } else {
         lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
         resize(1.);

@@ -4647,7 +4647,7 @@ static boolean set_out_channel_palettes(weed_plant_t *filter, int num_channels) 
 
 static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   weed_setup_f setup_fn;
-  weed_bootstrap_f bootstrap = (weed_bootstrap_f)&weed_bootstrap_func;
+  weed_bootstrap_f bootstrap = weed_bootstrap_func;
 
   weed_plant_t *plugin_info, **filters, *filter;
 
@@ -4678,7 +4678,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   mainw->chdir_failed = FALSE;
 
   // walk list and create fx structures
-  //  #define DEBUG_WEED
+  //#define DEBUG_WEED
 #ifdef DEBUG_WEED
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif
@@ -4698,6 +4698,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       // chdir to plugin dir, in case it needs to load data
 
       lives_chdir(dir, TRUE);
+
       plugin_info = (*setup_fn)(bootstrap);
       if (plugin_info == NULL || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
         char *msg = lives_strdup_printf(_("No usable filters found in plugin %s\n"), plugin_path);
@@ -4708,7 +4709,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
         lives_chdir(pwd, FALSE);
         return;
       }
-
       weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, plugin_name); // for hashname
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, dir);
@@ -4798,17 +4798,14 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
             lives_freep((void **)&filter_name);
             continue;
           }
-
           // we start with all optional channels disabled (unless forced to use them)
           set_in_channel_palettes(filter, enabled_in_channels(filters[mode], FALSE));
           set_out_channel_palettes(filter, 1);
-
           // skip hidden/duplicate filters
           if (!pdup && key < FX_KEYS_PHYSICAL && kmode < prefs->max_modes_per_key &&
               (!weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) ||
                (weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_FALSE))) {
             key_to_fx[key][kmode++] = idx;
-
 #ifdef DEBUG_WEED
             if (!pdup && key < FX_KEYS_PHYSICAL && kmode < prefs->max_modes_per_key)
               d_print("Loaded filter \"%s\" in plugin \"%s\"; assigned to key ctrl-%d, mode %d.\n",
@@ -10999,9 +10996,11 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 }
 
 
+#define MAX_FRAME_SIZE 1000000000
+
 static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, unsigned char **mem,
                                  boolean check_key) {
-  // if plant is NULL, returns "type"
+  // returns "type" on succes or a -ve error code on failure
 
   // WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
 
@@ -11018,6 +11017,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   // -7 : plant "type" mismatch
   // -9 : key length mismatch
   // - 10 : key length too long
+  // - 11 : data length too long
 
   void **values;
 
@@ -11027,7 +11027,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   double *dubs;
   int64_t *int64s;
 
-  uint32_t len, vlen;
+  uint32_t len;
+  weed_size_t vlen;
 
   char *mykey = NULL;
   char *msg;
@@ -11051,7 +11052,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
     if (check_key && len != strlen(key)) return -9;
 
-    if (len > 65535) return -10;
+    if (len > MAX_WEED_STRLEN) return -10;
 
     mykey = (char *)lives_try_malloc((size_t)len + 1);
     if (mykey == NULL) return -5;
@@ -11091,12 +11092,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   if (st != WEED_SEED_INT && st != WEED_SEED_BOOLEAN && st != WEED_SEED_DOUBLE && st != WEED_SEED_INT64 &&
       st != WEED_SEED_STRING && st != WEED_SEED_VOIDPTR && st != WEED_SEED_PLANTPTR) {
+    lives_freep((void **)&mykey);
     return -6;
   }
 
   if (check_key && !strcmp(key, WEED_LEAF_TYPE)) {
     // for the WEED_LEAF_TYPE leaf perform some extra checks
     if (st != WEED_SEED_INT) {
+      lives_freep((void **)&mykey);
       return -2;
     }
   }
@@ -11111,14 +11114,33 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     *mem += 4;
   }
 
+  if (ne > MAX_WEED_STRLEN) {
+    lives_freep((void **)&mykey);
+    return -11;
+  }
+
+
+  if (!strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+    if (ne > 4) {
+      // max planes is 4 (YUVA4444P)
+      for (j = ne ; j >= 0; lives_freep((void **)&values[j--]));
+      lives_freep((void **)&mykey);
+      return -11;
+    }
+  }
+
   if (ne > 0) {
     values = (void **)lives_malloc(ne * sizeof(void *));
-    if (values == NULL) return -5;
+    if (values == NULL) {
+      lives_freep((void **)&mykey);
+      return -5;
+    }
   } else values = NULL;
 
   if (check_key && !strcmp(key, WEED_LEAF_TYPE)) {
     // for the WEED_LEAF_TYPE leaf perform some extra checks
     if (ne != 1) {
+      lives_freep((void **)&mykey);
       return -3;
     }
   }
@@ -11133,6 +11155,13 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         lives_freep((void **)&mykey);
         return -4;
       }
+      if (vlen > MAX_FRAME_SIZE) {
+        for (--j; j >= 0; lives_freep((void **)&values[j--]));
+        lives_freep((void **)&values);
+        lives_freep((void **)&mykey);
+        return -11;
+      }
+
       values[j] = lives_try_malloc(vlen);
       if (values[j] == NULL) {
         msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
@@ -11145,7 +11174,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       }
       lives_read_buffered(fd, values[j], vlen, TRUE);
     }
-    weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, ne, values);
+    if (plant != NULL) weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, ne, values);
     lives_free(values);
     values = NULL;
     goto done;
@@ -11165,6 +11194,12 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       }
 
       if (st == WEED_SEED_STRING) {
+        if (vlen > MAX_WEED_STRLEN) {
+          for (--i; i >= 0; lives_freep((void **)&values[i--]));
+          lives_freep((void **)&values);
+          lives_freep((void **)&mykey);
+          return -11;
+        }
         values[i] = lives_malloc((size_t)vlen + 1);
       } else {
         if (vlen <= 8) {
@@ -11193,75 +11228,77 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
   }
 
-  if (plant == NULL && !strcmp(key, WEED_LEAF_TYPE)) {
-    type = *(int32_t *)(values[0]);
-  } else {
-    if (values == NULL) weed_leaf_set(plant, key, st, 0, NULL);
-    else {
-      switch (st) {
-      case WEED_SEED_INT:
-      // fallthrough
-      case WEED_SEED_BOOLEAN:
-        ints = (int32_t *)lives_malloc(ne * 4);
-        for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
-        if (!strcmp(key, WEED_LEAF_TYPE)) {
-          if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
-            type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
-            if (type == WEED_PLANT_UNKNOWN) {
-              weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
-            } else {
-              if (*ints != type) {
-                msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
-                                          type, *ints);
-                lives_free(ints);
-                LIVES_ERROR(msg);
-                lives_free(msg);
-                return -7;
+  if (plant != NULL) {
+    if (!strcmp(key, WEED_LEAF_TYPE)) {
+      type = *(int32_t *)(values[0]);
+    } else {
+      if (values == NULL) {
+        if (plant != NULL) weed_leaf_set(plant, key, st, 0, NULL);
+      } else {
+        switch (st) {
+        case WEED_SEED_INT:
+        // fallthrough
+        case WEED_SEED_BOOLEAN:
+          ints = (int32_t *)lives_malloc(ne * 4);
+          for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
+          if (!strcmp(key, WEED_LEAF_TYPE)) {
+            if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
+              type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+              if (type == WEED_PLANT_UNKNOWN) {
+                weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
+              } else {
+                if (*ints != type) {
+                  msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
+                                            type, *ints);
+                  lives_free(ints);
+                  LIVES_ERROR(msg);
+                  lives_free(msg);
+                  return -7;
+                }
+                // type already OK
               }
-              // type already OK
+            } else {
+              weed_leaf_set(plant, key, st, ne, (void *)ints);
             }
           } else {
             weed_leaf_set(plant, key, st, ne, (void *)ints);
           }
-        } else {
-          weed_leaf_set(plant, key, st, ne, (void *)ints);
-        }
-        lives_freep((void **)&ints);
-        break;
-      case WEED_SEED_DOUBLE:
-        dubs = (double *)lives_malloc(ne * sizdbl);
-        for (j = 0; j < ne; j++) dubs[j] = *(double *)values[j];
-        weed_leaf_set(plant, key, st, ne, (void *)dubs);
-        lives_freep((void **)&dubs);
-        break;
-      case WEED_SEED_INT64:
-        int64s = (int64_t *)lives_malloc(ne * 8);
-        for (j = 0; j < ne; j++) int64s[j] = *(int64_t *)values[j];
-        weed_leaf_set(plant, key, st, ne, (void *)int64s);
-        lives_freep((void **)&int64s);
-        break;
-      case WEED_SEED_STRING:
-        weed_leaf_set(plant, key, st, ne, (void *)values);
-        break;
-      default:
-        if (plant != NULL) {
-          if (mem == NULL && prefs->force64bit) {
-            // force pointers to uint64_t
-            uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
-            for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
-            weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
-            lives_freep((void **)&voids);
-          } else {
-            void **voids = (void **)lives_malloc(ne * sizeof(void *));
-            for (j = 0; j < ne; j++) voids[j] = *(void **)values[j];
-            weed_leaf_set(plant, key, st, ne, (void *)voids);
-            lives_freep((void **)&voids);
+          lives_freep((void **)&ints);
+          break;
+        case WEED_SEED_DOUBLE:
+          dubs = (double *)lives_malloc(ne * sizdbl);
+          for (j = 0; j < ne; j++) dubs[j] = *(double *)values[j];
+          weed_leaf_set(plant, key, st, ne, (void *)dubs);
+          lives_freep((void **)&dubs);
+          break;
+        case WEED_SEED_INT64:
+          int64s = (int64_t *)lives_malloc(ne * 8);
+          for (j = 0; j < ne; j++) int64s[j] = *(int64_t *)values[j];
+          weed_leaf_set(plant, key, st, ne, (void *)int64s);
+          lives_freep((void **)&int64s);
+          break;
+        case WEED_SEED_STRING:
+          weed_leaf_set(plant, key, st, ne, (void *)values);
+          break;
+        default:
+          if (plant != NULL) {
+            if (mem == NULL && prefs->force64bit) {
+              // force pointers to uint64_t
+              uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
+              for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
+              weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
+              lives_freep((void **)&voids);
+            } else {
+              void **voids = (void **)lives_malloc(ne * sizeof(void *));
+              for (j = 0; j < ne; j++) voids[j] = *(void **)values[j];
+              weed_leaf_set(plant, key, st, ne, (void *)voids);
+              lives_freep((void **)&voids);
+            }
           }
         }
       }
     }
   }
-
 done:
 
   if (values != NULL) {
@@ -11269,8 +11306,7 @@ done:
     lives_freep((void **)&values);
   }
   lives_freep((void **)&mykey);
-  if (plant == NULL) return type;
-  return 0;
+  return type;
 }
 
 
@@ -11411,7 +11447,7 @@ boolean read_filter_defaults(int fd) {
       }
     }
 
-    if (vlen > 65535) return FALSE;
+    if (vlen > MAX_WEED_STRLEN) return FALSE;
 
     buf = lives_malloc(vlen + 1);
     if (lives_read_buffered(fd, buf, vlen, TRUE) < vlen) break;
@@ -11550,6 +11586,7 @@ boolean read_generator_sizes(int fd) {
   char *tmp;
 
   boolean found = FALSE;
+  boolean ready;
 
   int vleni, vlenz;
   int i, error;
@@ -11584,7 +11621,7 @@ boolean read_generator_sizes(int fd) {
       }
     }
 
-    if (vlen > 65535) {
+    if (vlen > MAX_WEED_STRLEN) {
       return FALSE;
     }
 
@@ -11617,32 +11654,43 @@ boolean read_generator_sizes(int fd) {
     lives_free(buf);
     ctmpls = NULL;
 
+    ready = FALSE;
+    filter = NULL;
     if (i < num_weed_filters) {
-      boolean ready = FALSE;
       filter = weed_filters[i];
       num_chans = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
       if (num_chans > 0) ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-
-      while (!ready) {
-        ready = TRUE;
-        bytes = lives_read_le_buffered(fd, &cnum, 4, TRUE);
-        if (bytes < 4) {
-          break;
+    }
+    while (!ready) {
+      ready = TRUE;
+      bytes = lives_read_le_buffered(fd, &cnum, 4, TRUE);
+      if (bytes < 4) {
+        break;
+      }
+      if (filter == NULL) {
+        // we still need to read the values even if we didn't find the filter
+        if (cnum == -1) {
+          if (weed_leaf_deserialise(fd, NULL, WEED_LEAF_HOST_FPS, NULL, FALSE) < 0) break;
+          ready = FALSE;
+        } else {
+          if (weed_leaf_deserialise(fd, NULL, WEED_LEAF_HOST_WIDTH, NULL, FALSE) < 0) break;
+          if (weed_leaf_deserialise(fd, NULL, WEED_LEAF_HOST_HEIGHT, NULL, FALSE) < 0) break;
         }
-
+      } else {
         if (cnum < num_chans && cnum >= 0) {
-          weed_leaf_deserialise(fd, ctmpls[cnum], WEED_LEAF_HOST_WIDTH, NULL, FALSE);
-          weed_leaf_deserialise(fd, ctmpls[cnum], WEED_LEAF_HOST_HEIGHT, NULL, FALSE);
+          if (weed_leaf_deserialise(fd, ctmpls[cnum], WEED_LEAF_HOST_WIDTH, NULL, FALSE) < 0) break;
+          if (weed_leaf_deserialise(fd, ctmpls[cnum], WEED_LEAF_HOST_HEIGHT, NULL, FALSE) < 0) break;
           if (weed_get_int_value(ctmpls[cnum], WEED_LEAF_HOST_WIDTH, &error) == 0)
             weed_set_int_value(ctmpls[cnum], WEED_LEAF_HOST_WIDTH, DEF_GEN_WIDTH);
           if (weed_get_int_value(ctmpls[cnum], WEED_LEAF_HOST_HEIGHT, &error) == 0)
             weed_set_int_value(ctmpls[cnum], WEED_LEAF_HOST_HEIGHT, DEF_GEN_HEIGHT);
         } else if (cnum == -1) {
-          weed_leaf_deserialise(fd, filter, WEED_LEAF_HOST_FPS, NULL, FALSE);
+          if (weed_leaf_deserialise(fd, filter, WEED_LEAF_HOST_FPS, NULL, FALSE) < 0) break;
           ready = FALSE;
         }
       }
     }
+
     lives_freep((void **)&ctmpls);
 
     if (mainw->read_failed) {

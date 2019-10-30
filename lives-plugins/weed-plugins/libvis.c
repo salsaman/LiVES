@@ -14,6 +14,12 @@
 
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
 
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../libweed/weed-plugin.h" // optional
+#endif
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -26,18 +32,9 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 3; // number of different weed api versions supported
-static int api_versions[] = {133, 131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
 
 #include "weed-utils-code.c" // optional
 
@@ -268,7 +265,7 @@ int libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
 
   if (plugin_info != NULL) {
     dlink_list_t *list = NULL;
@@ -288,10 +285,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     char *vdir;
 
-    int api_used = weed_get_api_version(plugin_info);
     int filter_flags = 0;
-
-    if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
     if (lpp == NULL) return NULL;
 

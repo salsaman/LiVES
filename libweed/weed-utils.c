@@ -597,7 +597,8 @@ static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, weed
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
   if (leaf == NULL) return WEED_ERROR_NOSUCH_LEAF;
   if (value == NULL) return WEED_NO_ERROR;
-  if (weed_seed_is_ptr(leaf->seed_type)) memcpy(value, ((weed_data_t *)leaf->data)->value, WEED_VOIDPTR_SIZE);
+
+  if (weed_seed_is_ptr(leaf->seed_type)) memcpy(value, &leaf->data[0]->value, WEED_VOIDPTR_SIZE);
   else {
     if (leaf->seed_type == WEED_SEED_STRING) {
       size_t size = ((weed_data_t *)leaf->data)->size;
@@ -609,24 +610,24 @@ static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, weed
   return WEED_NO_ERROR;
 }
 
+weed_leaf_get_f *wlg;
+weed_plant_new_f *wpn;
+weed_plant_list_leaves_f *wpll;
+weed_leaf_num_elements_f *wlne;
+weed_leaf_element_size_f *wles;
+weed_leaf_seed_type_f *wlst;
+weed_leaf_get_flags_f *wlgf;
+weed_leaf_set_f *wlsp;
+weed_malloc_f *weedmalloc;
+weed_free_f *weedfree;
+weed_memcpy_f *weedmemcpy;
+weed_memset_f *weedmemset;
+
 
 weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int32_t plugin_weed_api_version, int32_t plugin_filter_api_version) {
   // symbols (function pointers) which are exported to plugins
 
-  fprintf(stderr, "value is %p %d %d\n", value, plugin_weed_api_version, plugin_filter_api_version);
-  
-  weed_leaf_get_f wlg;
-  weed_plant_new_f wpn;
-  weed_plant_list_leaves_f wpll;
-  weed_leaf_num_elements_f wlne;
-  weed_leaf_element_size_f wles;
-  weed_leaf_seed_type_f wlst;
-  weed_leaf_get_flags_f wlgf;
-  weed_leaf_set_f wlsp;
-  weed_malloc_f weedmalloc;
-  weed_free_f weedfree;
-  weed_memcpy_f weedmemcpy;
-  weed_memset_f weedmemset;
+  wlg = weed_leaf_get;
 
   int host_api_version = WEED_API_VERSION;
   int host_filter_api_version = WEED_FILTER_API_VERSION;
@@ -638,7 +639,6 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int32_t plugin_w
   // set pointers to the functions the plugin will use
   //wdg = weed_default_get;
 
-  wlg = weed_leaf_get;
   wpn = weed_plant_new;
   wpll = weed_plant_list_leaves;
   wlne = weed_leaf_num_elements;
@@ -660,6 +660,7 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int32_t plugin_w
   weed_set_int_value(host_info, WEED_LEAF_API_VERSION, host_filter_api_version);
 
   // fn pointers are typecast to uint64_t, and set in weed leaves
+
   weed_set_voidptr_value(host_info, WEED_LEAF_GET_FUNC, wlg);
   weed_set_voidptr_value(host_info, WEED_LEAF_SET_FUNC, wlsp);
   weed_set_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, wpn);

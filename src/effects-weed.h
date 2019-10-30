@@ -7,6 +7,8 @@
 #ifndef HAS_LIVES_EFFECTS_WEED_H
 #define HAS_LIVES_EFFECTS_WEED_H
 
+#define MAX_WEED_STRLEN 65535 // soft limit for LiVES
+
 /// filter apply errors
 typedef enum {
   FILTER_NO_ERROR = 0,

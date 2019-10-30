@@ -18,6 +18,12 @@
 
 ///////////////////////////////////////////////////////////////////
 
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../libweed/weed-plugin.h" // optional
+#endif
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -30,18 +36,9 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {133, 131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
 
 #include "weed-utils-code.c" // optional
 
@@ -263,7 +260,7 @@ static int num_filters;
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   if (FREI0R_MAJOR_VERSION < 1 || FREI0R_MINOR_VERSION < 1) return NULL;
 
-  plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
 
   if (plugin_info != NULL) {
     dlink_list_t *list = NULL;
@@ -914,12 +911,15 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
           switch (f0rinfo.plugin_type) {
           case F0R_PLUGIN_TYPE_SOURCE:
             weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
-            if (api_used >= 133) weed_set_int_value(filter_class, "flags", WEED_FILTER_HINT_SRGB);
+            weed_set_voidptr_value(filter_class, "plugin_f0r_update", f0r_update);
+            break;
           case F0R_PLUGIN_TYPE_FILTER:
             weed_set_voidptr_value(filter_class, "plugin_f0r_update", f0r_update);
+            weed_set_int_value(filter_class, "flags", WEED_FILTER_HINT_LINEAR_GAMMA);
             break;
           default:
             weed_set_voidptr_value(filter_class, "plugin_f0r_update2", f0r_update2);
+            weed_set_int_value(filter_class, "flags", WEED_FILTER_HINT_LINEAR_GAMMA);
             break;
           }
 

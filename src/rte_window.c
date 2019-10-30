@@ -612,7 +612,7 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
 void load_rte_defs(void) {
   ssize_t bytes;
-  void *buf;
+  char *buf;
 
   char *msg;
 
@@ -633,9 +633,8 @@ void load_rte_defs(void) {
         d_print(_("Loading real time effect defaults from %s..."), prefs->fxdefsfile);
 
         msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
-        buf = lives_malloc(strlen(msg));
+        buf = lives_malloc(strlen(msg) + 1);
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
-
         if (bytes == strlen(msg) && !strncmp((char *)buf, msg, strlen(msg))) {
           if (read_filter_defaults(fd)) {
             d_print_done();
@@ -672,18 +671,20 @@ void load_rte_defs(void) {
         d_print(_("Loading generator default sizes from %s..."), prefs->fxsizesfile);
 
         msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
-        buf = lives_malloc(strlen(msg));
+        buf = lives_malloc(strlen(msg) + 1);
         bytes = lives_read_buffered(fd, buf, strlen(msg), TRUE);
         if (bytes == strlen(msg) && !strncmp((char *)buf, msg, strlen(msg))) {
           if (read_generator_sizes(fd)) {
             d_print_done();
           } else {
+            g_print("err1\n");
             d_print_file_error_failed();
             retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
           }
         } else {
           d_print_file_error_failed();
           if (bytes < strlen(msg)) {
+            g_print("err2ef\n");
             retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
           }
         }

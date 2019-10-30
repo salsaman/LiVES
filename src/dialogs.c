@@ -472,7 +472,7 @@ LiVESWindow *get_transient_full(void) {
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
     else if (!rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
-    else if (LIVES_MAIN_WINDOW_WIDGET != NULL) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+    else if (LIVES_MAIN_WINDOW_WIDGET != NULL && mainw->is_ready) transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
   }
   return transient;
 }
@@ -523,6 +523,7 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
 
   do {
     warning = create_message_dialog(dtype, mytext, transient, 0, TRUE);
+    lives_widget_show_all(warning);
     response = lives_dialog_run(LIVES_DIALOG(warning));
     lives_widget_destroy(warning);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

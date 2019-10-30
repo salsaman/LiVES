@@ -1,3 +1,4 @@
+#if 0
 // haar_analyser.cpp
 // weed plugin
 // (c) G. Finch (salsaman) 2012
@@ -54,6 +55,15 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../../libweed/weed-plugin.h" // optional
+#endif
+
+/////////////////////////////////////////////////////////////
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
@@ -64,27 +74,15 @@
 #include "../../../libweed/weed-effects.h"
 #endif
 
-
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order (most preferred first)
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../../libweed/weed-plugin.h" // optional
-#endif
-
 #include "../weed-utils-code.c" // optional
 #define NEED_PALETTE_UTILS
 #include "../weed-plugin-utils.c" // optional
 
-/////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
 
 /* C Includes */
 #include <math.h>
@@ -558,8 +556,8 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 //
 #define VLIMIT 4096
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+weed_plant_t *weed_setup(weed_bootstrap_f *weed_boot) {
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   if (plugin_info != NULL) {
     int palette_list[] = {WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888,
                           WEED_PALETTE_END
@@ -583,3 +581,4 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   }
   return plugin_info;
 }
+#endif

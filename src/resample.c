@@ -23,18 +23,18 @@ static boolean reorder_leave_back = FALSE;
 LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   // quantise timecode to fps
   if (in > (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps +
-                                         (long double).5) /
-                                         (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+                                           (long double).5) /
+                                 (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
   if (in < (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps -
-                                         (long double).5) /
-                                         (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+                                           (long double).5) /
+                                 (long double)fps) * (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
   return (ticks_t)0;
 }
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
   if (in != (ticks_t)0) return ((ticks_t)((long double)in / (long double)TICKS_PER_SECOND_DBL * (long double)fps) /
-                                          (long double)fps) *
-                                         (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
+                                  (long double)fps) *
+                                 (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
   return (ticks_t)0;
 }
 

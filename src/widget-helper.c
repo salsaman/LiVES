@@ -10402,8 +10402,9 @@ LiVESList *add_sorted_list_to_menu(LiVESMenu *menu, LiVESList *menu_list) {
   LiVESList **seclist;
   LiVESList *xmenu_list = menu_list = lives_menu_list_sort_alpha(menu_list, TRUE);
   while (menu_list != NULL) {
-    if (!(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "hidden"))))
+    if (!(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "hidden")))) {
       lives_container_add(LIVES_CONTAINER(menu), (LiVESWidget *)menu_list->data);
+    }
     if ((seclist = (LiVESList **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list")) != NULL)
       * seclist = lives_list_prepend(*seclist, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list_value"));
     menu_list = menu_list->next;

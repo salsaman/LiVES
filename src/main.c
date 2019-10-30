@@ -7259,7 +7259,7 @@ void load_frame_image(int frame) {
       register int i;
       if (cfile->clip_type == CLIP_TYPE_TEMP) {
         close_temp_handle(file_to_switch_to);
-	return;
+        return;
       }
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
           mainw->current_file != mainw->ascrap_file &&
@@ -7521,7 +7521,7 @@ void load_frame_image(int frame) {
     if (mainw->multitrack != NULL) return;
 
     if (LIVES_IS_PLAYING && (mainw->fs || mainw->faded)) do_quick_switch(new_file);
-    
+
     mainw->current_file = new_file;
 
     if (CURRENT_CLIP_HAS_VIDEO) {
@@ -7530,7 +7530,7 @@ void load_frame_image(int frame) {
 
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
       if (LIVES_IS_PLAYING) {
-       changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
+        changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
       }
 
       if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
@@ -8004,7 +8004,7 @@ void load_frame_image(int frame) {
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
-							|| prefs->audio_src == AUDIO_SRC_EXT))) {
+                                    || prefs->audio_src == AUDIO_SRC_EXT))) {
       switch_audio_clip(new_file, TRUE);
     }
 

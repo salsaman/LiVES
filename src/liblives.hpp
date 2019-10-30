@@ -31,7 +31,6 @@
 */
 #define LIVES_CHECK_VERSION(major, minor, micro) (major > LIVES_VERSION_MAJOR || (major == LIVES_VERSION_MAJOR && (minor > LIVES_VERSION_MINOR || (minor == LIVES_VERSION_MINOR && micro >= LIVES_VERSION_MICRO)))) ///< 
 
-
 // defs shared with lbindings.c
 
 /**
@@ -109,7 +108,6 @@ typedef enum {
 } lives_callback_t;
 
 
-
 /**
    Character encoding types
 */
@@ -167,14 +165,12 @@ typedef enum {
 } lives_audio_player_t;
 
 
-
 /**
    Multitrack insert modes
 */
 typedef enum {
   LIVES_INSERT_MODE_NORMAL
 } lives_insert_mode_t;
-
 
 
 /**
@@ -185,7 +181,6 @@ typedef enum {
   LIVES_GRAVITY_LEFT, ///< inserted blocks gravitate to the left
   LIVES_GRAVITY_RIGHT ///< inserted blocks gravitate to the right
 } lives_gravity_t;
-
 
 
 /**
@@ -225,9 +220,6 @@ void binding_cb(lives_callback_t cb_type, const char *msgstring, uint64_t id);
 using namespace std;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 
 /**
@@ -402,7 +394,6 @@ typedef bool (*appQuit_callback_f)(livesApp *, appQuitInfo *, void *);
    @see livesApp::addCallback(lives_callback_t cb_type, objectDestroyed_callback_f func, void *data)
 */
 typedef bool (*objectDestroyed_callback_f)(livesApp *, void *);
-
 
 
 /**
@@ -685,7 +676,6 @@ private:
   livesApp(const livesApp &other); // Don't implement
 
 };
-
 
 
 

@@ -5,6 +5,11 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../libweed/weed-plugin.h" // optional
+#endif
 
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
@@ -18,26 +23,15 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
 #include <math.h>
-
 
 #define FIVE_PI3 5.23598775598f
 #define FOUR_PI3 4.18879020479f
@@ -81,7 +75,6 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
   if (j > 0.) j += hsidex;
   else j -= hsidex;
 
-
   // find the square first
   gridy = i / sidey;
   gridx = j / sidex;
@@ -107,8 +100,6 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
       *x += hsidex;
     }
   }
-
-
   else {
     // odd row, center is left or right (Y)
     if (secx <= hsidex) {
@@ -122,7 +113,6 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
     }
   }
 }
-
 
 
 static float calc_angle(float y, float x) {
@@ -153,7 +143,6 @@ static void rotate(float r, float theta, float angle, float *x, float *y) {
 }
 
 
-
 static int put_pixel(void *src, void *dst, int psize, float angle, float theta, float r, int irowstride, int hheight, int hwidth) {
   // dest point is at i,j; r tells us which point to copy, and theta related to angle gives us the transform
 
@@ -180,7 +169,6 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
     // get coords of src point
     stheta = TWO_PI3 - theta;
   }
-
 
   else if (adif < M_PI) {
     // get coords of src point
@@ -214,8 +202,7 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
 }
 
 
-
-int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
@@ -352,8 +339,7 @@ int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-int kal_init(weed_plant_t *inst) {
+static int kal_init(weed_plant_t *inst) {
   sdata *sd = (sdata *)weed_malloc(sizeof(sdata));
   if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
@@ -365,12 +351,10 @@ int kal_init(weed_plant_t *inst) {
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
   return WEED_NO_ERROR;
-
-
 }
 
 
-int kal_deinit(weed_plant_t *inst) {
+static int kal_deinit(weed_plant_t *inst) {
   int error;
   sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -380,11 +364,8 @@ int kal_deinit(weed_plant_t *inst) {
 }
 
 
-
-
-
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   if (plugin_info != NULL) {
     int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 

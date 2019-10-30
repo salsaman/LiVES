@@ -150,13 +150,6 @@ typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 typedef void (*weed_display_f)(weed_plant_t *parameter);
 typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
-#ifdef __WEED_HOST__
-weed_default_getter_f weed_default_get;
-#else
-static weed_default_getter_f weed_default_get;
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot);
-#endif
-
 // leaf naems
 #define WEED_LEAF_PLUGIN_INFO "plugin_info"
 #define WEED_LEAF_FILTERS "filters"

@@ -58,6 +58,7 @@ endif
 if ENABLE_OSC
 osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
 osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
+osc_shared_LDADD = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 
@@ -265,14 +266,13 @@ extra_LDFLAGS = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ \
 	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
 if HAVE_SYSTEM_WEED
-libweed_scripting_LDADD = -lweed_slice_scripting -lweed-utils_scripting
+libweed_scripting_LDADD = -lweed_slice -lweed-utils
 libweed_scripting_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1 -D_WEED_VISIBLE_FUNCTIONS_
 else
-libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice_scripting.la $(abs_top_srcdir)/libweed/libweed-utils_scripting.la
-libweed_scripting_CFLAGS = -D_WEED_VISIBLE_FUNCTIONS_
+libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
 endif
 
-liblives_la_LDFLAGS = $(extra_LDFLAGS) $(libweed_scripting_LDADD) $(osc_LDADD)
+liblives_la_LDFLAGS = $(extra_LDFLAGS) $(libweed_scripting_LDADD) -lOSC
 
 liblives_la_CFLAGS += $(AM_CFLAGS) $(libweed_scripting_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
 

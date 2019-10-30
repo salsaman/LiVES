@@ -68,28 +68,22 @@ shared_LDFLAGS = -shared --tag=disable-static
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
-
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
-
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_slice_scripting_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
-
 libweed_slice_scripting_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_utils_scripting_la_CFLAGS = $(extra_cflags) @GLIB_CFLAGS@
-
 libweed_utils_scripting_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS) @GLIB_LIBS@
-
 
 uninstall-local:
 	rm -rf "$(libweedincludedir)"
 	rm -rf "$(libweed_ladir)"
 	rm -rf "$(libdir)/libweed"*
 	rm -rf "$(libdir)/pkgconfig/libweed"*
-
 
 install-exec-hook:
 	rm -f /usr/lib/libweed*.la

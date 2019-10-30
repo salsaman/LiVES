@@ -4673,7 +4673,7 @@ void load_end_image(int frame) {
     hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5;
     if (LIVES_IS_PLAYING && mainw->double_size) {
-      hsize /= 2;
+      hsize = 2;
       vsize /= 2;
     }
     lives_widget_set_size_request(mainw->end_image, hsize, vsize);
@@ -5969,6 +5969,10 @@ static void get_player_size(int *opwidth, int *opheight) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
+    if (mainw->double_size) {
+      rwidth = mainw->ce_frame_width * 4 - H_RESIZE_ADJUST * 2;
+      rheight = mainw->ce_frame_height * 4 - V_RESIZE_ADJUST * 8;
+    }
 
     /* if (mainw->double_size && !mainw->fs) { */
     /*   // ce_frame_* was set to half for the first / last frames */
@@ -5980,10 +5984,6 @@ static void get_player_size(int *opwidth, int *opheight) {
     int rwidth = lives_widget_get_allocation_width(mainw->play_image);
     int rheight = lives_widget_get_allocation_height(mainw->play_image);
 #endif
-    if (mainw->double_size) {
-      *opwidth = (*opwidth - H_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-      *opheight = (*opheight - V_RESIZE_ADJUST) * 4 + H_RESIZE_ADJUST;
-    }
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
     calc_maxspect(rwidth, rheight, opwidth, opheight);
@@ -7520,22 +7520,12 @@ void load_frame_image(int frame) {
 
     if (mainw->multitrack != NULL) return;
 
-    if (LIVES_IS_PLAYING && (mainw->fs || mainw->faded)) do_quick_switch(new_file);
+    if (LIVES_IS_PLAYING) {
+      do_quick_switch(new_file);
+      return;
+    }
 
     mainw->current_file = new_file;
-
-    if (CURRENT_CLIP_HAS_VIDEO) {
-      mainw->play_start = 1;
-      mainw->play_end = cfile->frames;
-
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
-      if (LIVES_IS_PLAYING) {
-        changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
-      }
-
-      if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
-        mainw->play_end = INT_MAX;
-    }
 
     if (old_file != new_file) {
       if (old_file != 0 && new_file != 0) mainw->preview_frame = 0;
@@ -7673,30 +7663,8 @@ void load_frame_image(int frame) {
     }
 
     resize(1);
-
-    if (LIVES_IS_PLAYING) {
-      if (mainw->fs) {
-        //on_full_screen_activate (NULL,LIVES_INT_TO_POINTER (1));
-      } else {
-        if (!mainw->faded && CURRENT_CLIP_HAS_VIDEO) {
-          lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-          lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-
-          lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-          lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
-        }
-        if (mainw->double_size) {
-          frame_size_update();
-        }
-      }
-    } else {
-      if (!mainw->go_away) {
-        get_play_times();
-      }
+    if (!mainw->go_away) {
+      get_play_times();
     }
 
     // if the file was opening, continue...
@@ -7707,15 +7675,14 @@ void load_frame_image(int frame) {
       load_end_image(cfile->end);
       if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
-    if (!LIVES_IS_PLAYING) {
-      if (mainw->multitrack == NULL && !mainw->reconfig) {
-        if (prefs->show_msg_area && !mainw->only_close) {
-          reset_message_area(); // necessary
-          if (mainw->idlemax == 0) {
-            lives_idle_add(resize_message_area, NULL);
-          }
-          mainw->idlemax = DEF_IDLE_MAX;
+
+    if (mainw->multitrack == NULL && !mainw->reconfig) {
+      if (prefs->show_msg_area && !mainw->only_close) {
+        reset_message_area(); // necessary
+        if (mainw->idlemax == 0) {
+          lives_idle_add(resize_message_area, NULL);
         }
+        mainw->idlemax = DEF_IDLE_MAX;
       }
     }
   }
@@ -7969,20 +7936,9 @@ void load_frame_image(int frame) {
     if (mainw->noswitch || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
         mainw->foreign || (mainw->preview && !mainw->is_rendering && mainw->multitrack == NULL)) return;
 
-    if (!mainw->fs || !mainw->faded) {
+    if (!LIVES_IS_PLAYING) {
       switch_to_file(mainw->current_file, new_file);
       return;
-    }
-
-    osc_block = mainw->osc_block;
-    mainw->osc_block = TRUE;
-
-    // reset old info file
-    if (CURRENT_CLIP_IS_VALID) {
-      char *tmp;
-      tmp = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
-      lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
-      lives_free(tmp);
     }
 
     if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&
@@ -7995,11 +7951,11 @@ void load_frame_image(int frame) {
       if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file;
       key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
       rte_key_on_off(key + 1, FALSE);
-      if (mainw->current_file == -1) {
-        mainw->osc_block = osc_block;
-      }
       return;
     }
+
+    osc_block = mainw->osc_block;
+    mainw->osc_block = TRUE;
 
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
@@ -8012,13 +7968,21 @@ void load_frame_image(int frame) {
 
     mainw->switch_during_pb = TRUE;
     mainw->clip_switched = TRUE;
+
     mainw->current_file = new_file;
+
     set_main_title(cfile->name, 0);
 
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) ce_thumbs_highlight_current_clip();
 
-    mainw->play_start = 1;
-    mainw->play_end = cfile->frames;
+    if (CURRENT_CLIP_IS_VALID) {
+      char *tmp;
+      tmp = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
+      lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+    }
+
+
 
     if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
       mainw->play_end = INT_MAX;
@@ -8038,6 +8002,28 @@ void load_frame_image(int frame) {
     cfile->next_event = NULL;
     mainw->deltaticks = 0;
     mainw->startticks = mainw->currticks;
+
+    if (CURRENT_CLIP_HAS_VIDEO) {
+      if (!mainw->fs && !mainw->faded) {
+        if (CURRENT_CLIP_HAS_VIDEO) {
+          lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+          lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+
+          lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+          lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+
+          if (mainw->play_window == NULL) {
+            if (mainw->double_size) {
+              frame_size_update();
+            } else resize(1);
+          } else resize(1);
+        }
+      }
+    } else resize(1);
 
     // force loading of a frame from the new clip
     if (!mainw->noswitch && !mainw->is_rendering && CURRENT_CLIP_IS_NORMAL) {
@@ -8206,5 +8192,14 @@ void load_frame_image(int frame) {
       lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
       load_start_image(0);
       load_end_image(0);
+    }
+
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    else if (w > scr_width - bx || h > scr_height - by) {
+      w = scr_width - bx;
+      h = scr_height - by;
+      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
     }
   }

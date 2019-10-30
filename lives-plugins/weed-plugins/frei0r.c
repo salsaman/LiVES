@@ -40,8 +40,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-utils-code.c" // optional
-
 #define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 

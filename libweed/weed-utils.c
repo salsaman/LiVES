@@ -49,12 +49,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define __LIBWEED__
+
 #ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-host.h>
 #include <weed/weed.h>
 #include <weed/weed-effects.h>
 #else
-#include "weed-host.h"
 #include "weed.h"
 #include "weed-effects.h"
 #endif
@@ -604,9 +604,9 @@ static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, weed
 }
 
 
-
 weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value, int32_t plugin_weed_api_version, int32_t plugin_filter_api_version) {
   // here is where we define the functions for the plugin to use
+  // the host is free to implement its own version and then pass a pointer to that function in weed_setup() for the plugin
 
   static weed_leaf_get_f wlg;
   static weed_plant_new_f wpn;

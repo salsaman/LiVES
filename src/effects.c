@@ -1002,7 +1002,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         if (rte_window != NULL) rtew_set_keych(key, FALSE);
         if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);
         mainw->osc_block = FALSE;
-        //filter_mutex_unlock(key);
+        filter_mutex_unlock(key);
         return TRUE;
       }
 
@@ -1078,6 +1078,10 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   mainw->osc_block = TRUE;
   if (rte_window != NULL) {
     if (group != NULL) rtew_set_keygr(mainw->rte_keys);
+  }
+  if (mainw->rte_keys == -1) {
+    mainw->osc_block = FALSE;
+    return TRUE;
   }
   filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);

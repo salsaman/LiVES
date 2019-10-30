@@ -52,11 +52,13 @@
 #define __WEED_INTERNAL__
 
 #ifdef HAVE_SYSTEM_WEED
+#include <weed/weed-plugin.h>
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
 #include <weed/weed-utils.h>
 #else
+#include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
@@ -127,7 +129,7 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   weed_error_t error;
   weed_default_getter_f weed_default_getp;
 
-  weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, 200, 200), *plugin_info;
+  weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, weed_api_version, weed_filter_api_version), *plugin_info;
   if (host_info == NULL) return NULL; // matching version was not found
 
   //////////// get api version /////////
@@ -147,7 +149,6 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
 
   // need: weed_plant_has_leaf, weed_leaf_seed_type, weed_get_value
 
-
   weed_leaf_set = ((weed_leaf_set_f)weed_get_voidptr_value(host_info, WEED_LEAF_SET_FUNC, &error));
   weed_plant_new = ((weed_plant_new_f)weed_get_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, &error));
   weed_plant_list_leaves = ((weed_plant_list_leaves_f)weed_get_voidptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, &error));
@@ -159,9 +160,7 @@ static weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t w
   // get any additional functions for higher API versions ////////////
 
   if (weed_api_version >= 200) {
-
-
-
+    weed_realloc = ((weed_realloc_f)weed_get_voidptr_value(host_info, WEED_LEAF_REALLOC_FUNC, &error));
   }
   //////////////////////////////////////////////////////////////////////
 

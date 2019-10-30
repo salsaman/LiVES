@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../libweed/weed-plugin.h" // optional
+#endif
+
 #ifdef HAVE_SYSTEM_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h> // optional
@@ -17,20 +23,9 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "weed-utils-code.c" // optional
 
 #define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
@@ -501,7 +496,7 @@ static int num_filters;
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   unsigned long num_plugins = 0;
-  plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   num_filters = 0;
 
   if (plugin_info != NULL) {

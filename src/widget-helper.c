@@ -11439,13 +11439,19 @@ void lives_general_button_clicked(LiVESButton *button, livespointer data_to_free
 }
 
 
-LiVESWidget *add_hsep_to_box(LiVESBox *box) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_hseparator_new(void) {
   LiVESWidget *hseparator = lives_hseparator_new();
+  lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
+  lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+  return hseparator;
+}
+
+
+LiVESWidget *add_hsep_to_box(LiVESBox *box) {
+  LiVESWidget *hseparator = lives_standard_hseparator_new();
   int packing_height = widget_opts.packing_height;
   if (LIVES_IS_HBOX(box)) packing_height = 0;
   lives_box_pack_start(box, hseparator, LIVES_IS_HBOX(box) || LIVES_SHOULD_EXPAND_EXTRA_FOR(box), TRUE, packing_height);
-  lives_widget_apply_theme(hseparator, LIVES_WIDGET_STATE_NORMAL);
-  lives_widget_set_fg_color(hseparator, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
   return hseparator;
 }
 

@@ -72,28 +72,28 @@
 
 // Define EXPORTED for any platform
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
-  #ifdef WIN_EXPORT
-    #ifdef __GNUC__
-      #define EXPORTED __attribute__ ((dllexport))
-    #else
-      #define EXPORTED __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
-    #endif
-  #else
-    #ifdef __GNUC__
-      #define EXPORTED __attribute__ ((dllimport))
-    #else
-      #define EXPORTED __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
-    #endif
-  #endif
-  #define NOT_EXPORTED
+#ifdef WIN_EXPORT
+#ifdef __GNUC__
+#define EXPORTED __attribute__ ((dllexport))
 #else
-  #if __GNUC__ >= 4
-    #define EXPORTED __attribute__ ((visibility ("default")))
-    #define NOT_EXPORTED  __attribute__ ((visibility ("hidden")))
-  #else
-    #define EXPORTED
-    #define NOT_EXPORTED
-  #endif
+#define EXPORTED __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+#endif
+#else
+#ifdef __GNUC__
+#define EXPORTED __attribute__ ((dllimport))
+#else
+#define EXPORTED __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+#endif
+#endif
+#define NOT_EXPORTED
+#else
+#if __GNUC__ >= 4
+#define EXPORTED __attribute__ ((visibility ("default")))
+#define NOT_EXPORTED  __attribute__ ((visibility ("hidden")))
+#else
+#define EXPORTED
+#define NOT_EXPORTED
+#endif
 #endif
 
 EXPORTED weed_error_t weed_init(int32_t api);
@@ -176,11 +176,11 @@ static inline uint32_t weed_hash(const char *string) {
 
 static inline weed_size_t weed_seed_get_size(int32_t seed_type, void *value) {
   return (seed_type == WEED_SEED_BOOLEAN || seed_type == WEED_SEED_INT) ? 4 :
-    (seed_type == WEED_SEED_DOUBLE) ? 8 :
-    (seed_type == WEED_SEED_INT64) ? 8 :
-    (seed_type == WEED_SEED_STRING) ? weed_strlen((const char *)value) :
-    weed_seed_is_ptr(seed_type) ? WEED_VOIDPTR_SIZE :
-    0;
+         (seed_type == WEED_SEED_DOUBLE) ? 8 :
+         (seed_type == WEED_SEED_INT64) ? 8 :
+         (seed_type == WEED_SEED_STRING) ? weed_strlen((const char *)value) :
+         weed_seed_is_ptr(seed_type) ? WEED_VOIDPTR_SIZE :
+         0;
 }
 
 
@@ -217,13 +217,12 @@ static inline weed_data_t **weed_data_new(int32_t seed_type, weed_size_t num_ele
       if (seed_type == WEED_SEED_STRING) {
         if ((data[i]->size = weed_strlen(valuec[i])) > 0) data[i]->value = (weed_voidptr_t)g_slice_copy(data[i]->size, valuec[i]);
         else data[i]->value = NULL;
-      }
-      else {
+      } else {
         data[i]->size = weed_seed_get_size(seed_type, NULL);
         data[i]->value = (weed_voidptr_t)g_slice_copy(data[i]->size, (char *)values + i * data[i]->size);
       }
       if (data[i]->size > 0 && data[i]->value == NULL) // memory error
-	return weed_data_free(data, --i, seed_type, 0);
+        return weed_data_free(data, --i, seed_type, 0);
     }
   }
   return data;
@@ -240,10 +239,10 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key) 
 #define NO_OPTIMISE_ORDER
 #ifndef NO_OPTIMISE_ORDER
       if (leaf != plant && plant->next != leaf) {
-	// optimise by moving leaf to front
-	prev->next = leaf->next;
-	leaf->next = plant->next;
-	plant->next = leaf;
+        // optimise by moving leaf to front
+        prev->next = leaf->next;
+        leaf->next = plant->next;
+        plant->next = leaf;
       }
 #endif
       return leaf;

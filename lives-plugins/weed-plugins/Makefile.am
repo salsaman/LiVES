@@ -61,14 +61,23 @@ weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
 endif
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
-AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
 
+if HAVE_OPENGL
+if HAVE_SDL_ANYVERSION
+if HAVE_PROJECTM
+projectM_libs = projectM.la
+projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(LIBPROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
+projectM_la_CPPFLAGS = $(LIBPROJECTM_CFLAGS) $(CFLAGS_SDL) \
+	-DPROJECTM_PREFIX=\"`pkg-config --variable=libdir libprojectM`/libprojectM\" $(AM_CPPFLAGS) \
+	 @X11_CFLAGS@ @GL_CFLAGS@
+projectMdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
+projectM_LTLIBRARIES = $(projectM_libs)
+endif
+endif
+endif
 
-
-
-fxpluginslib_LTLIBRARIES = negate.la
-
-
+fxpluginslib_LTLIBRARIES = negate.la simple_blend.la
 
 EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
 

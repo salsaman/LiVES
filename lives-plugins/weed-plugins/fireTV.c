@@ -280,9 +280,9 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
 
     weed_plant_t *filter_class = weed_filter_class_init("fireTV", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA,
-							&fire_init, &fire_process, &fire_deinit, in_chantmpls,
-							out_chantmpls,
-							NULL, NULL);
+                                 &fire_init, &fire_process, &fire_deinit, in_chantmpls,
+                                 out_chantmpls,
+                                 NULL, NULL);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

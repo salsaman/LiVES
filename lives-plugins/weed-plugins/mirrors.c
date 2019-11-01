@@ -62,7 +62,7 @@ int mirrorx_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     dst += offset * orowstride;
     end = src + dheight * irowstride;
   }
-  
+
   for (; src < end; src += irowstride) {
     for (i = 0; i < hwidth; i += psize) {
       weed_memcpy(&dst[width - i - psize], &src[i], psize);
@@ -95,7 +95,7 @@ int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   width *= psize;
 
- // new threading arch
+  // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
     int offset = weed_get_int_value(out_channel, "offset", &error);
     int dheight = weed_get_int_value(out_channel, "height", &error);
@@ -104,7 +104,7 @@ int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     if (end > dst + height * orowstride / 2) end = dst + height * orowstride / 2;
     dst += offset * orowstride;
   }
-  
+
   if (weed_plant_has_leaf(inst, "plugin_combined") && weed_get_boolean_value(inst, "plugin_combined", &error) == WEED_TRUE) {
     inplace = WEED_TRUE;
     src = dst;
@@ -116,12 +116,11 @@ int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       weed_memcpy(dst, src, width);
       src += irowstride;
     }
-  }
-  else {
+  } else {
     src = dst = end;
   }
   end = oend;
-  
+
   for (; dst < end; dst += orowstride) {
     weed_memcpy(dst, src, width);
     src -= irowstride;
@@ -150,11 +149,13 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("mirrorx", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorx_process, NULL, in_chantmpls, out_chantmpls,
+    weed_plant_t *filter_class = weed_filter_class_init("mirrorx", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorx_process, NULL,
+                                 in_chantmpls, out_chantmpls,
                                  NULL, NULL);
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    filter_class = weed_filter_class_init("mirrory", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrory_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
+    filter_class = weed_filter_class_init("mirrory", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrory_process, NULL,
+                                          (clone1 = weed_clone_plants(in_chantmpls)),
                                           (clone2 = weed_clone_plants(out_chantmpls)), NULL, NULL);
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
     weed_free(clone1);

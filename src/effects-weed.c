@@ -4705,7 +4705,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       lives_chdir(dir, TRUE);
 
       plugin_info = (*setup_fn)(bootstrap);
-      g_print("PI is %p\n", plugin_info);
       if (plugin_info == NULL || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
         char *msg = lives_strdup_printf(_("No usable filters found in plugin %s\n"), plugin_path);
         LIVES_INFO(msg);
@@ -4722,8 +4721,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       //weed_add_plant_flags(plugin_info, WEED_LEAF_READONLY_PLUGIN);
 
       filters = weed_get_plantptr_array(plugin_info, WEED_LEAF_FILTERS, &error);
-      g_print("NFILT is %d %p %p\n", filters_in_plugin, filters, filters[0]);
-      
 
       if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
         package_name = lives_strdup_printf("%s: ", (tmp = weed_get_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, &error)));
@@ -4733,14 +4730,12 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       oidx = idx;
       phashnames = NULL;
       phashes = 0;
-      
+
       while (mode < filters_in_plugin - 1) {
         mode++;
         filter = filters[mode];
-	g_print("ptrs %p %s\n", filter, filter->key);
         filter_name = lives_strdup_printf("%s%s:", package_name, (tmp = weed_get_string_value(filter, WEED_LEAF_NAME, &error)));
         lives_free(tmp);
-	g_print("Fname is %s\n", filter_name);
         if (!(reason = check_for_lives(filter, idx))) {
           boolean dup = FALSE, pdup = FALSE;
 

@@ -396,13 +396,14 @@ static int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START {
   const char *modes[] = {"Scanner", "Random", "Spiral", NULL};
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888,
-			WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+                        WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END
+                       };
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL};
   weed_plant_t *in_params[] = {weed_integer_init("r", "Number of _rows", 3, 1, 256), weed_integer_init("c", "Number of _Columns", 3, 1, 256), weed_string_list_init("m", "Stepping Mode", 0, modes), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("videowall", "salsaman", 1, 0, &videowall_init, &videowall_process, &videowall_deinit,
-						      in_chantmpls, out_chantmpls, in_params, NULL);
+                               in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

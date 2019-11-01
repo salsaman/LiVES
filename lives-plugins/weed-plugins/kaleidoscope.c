@@ -99,8 +99,7 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
       *y += sidey;
       *x += hsidex;
     }
-  }
-  else {
+  } else {
     // odd row, center is left or right (Y)
     if (secx <= hsidex) {
       if (secy < (sidey - secx * RT322)) {

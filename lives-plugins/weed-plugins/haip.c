@@ -352,7 +352,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
     weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
     weed_plant_t *filter_class = weed_filter_class_init("haip", "salsaman", 1, 0,
-							&haip_init, &haip_process, &haip_deinit, in_chantmpls,
+                                 &haip_init, &haip_process, &haip_deinit, in_chantmpls,
                                  out_chantmpls,
                                  NULL, NULL);
 

@@ -134,10 +134,11 @@ typedef void (*weed_function_f)();
 typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_function_f *value);
 
 /* host bootstrap function */
-  typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version, int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
+    int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 
 /* mandatory plugin functions */
-  typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
+typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
 
 /* optional plugin functions */
 typedef void (*weed_desetup_f)(void);

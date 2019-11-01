@@ -63,7 +63,7 @@ extern "C"
 #ifndef WEED_FOURCC_COMPAT
 #define WEED_FOURCC_COMPAT
 #endif
-  
+
 int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
                      int *sspace, int *clamping) {
   // inputs are fourcc and bpp

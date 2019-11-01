@@ -92,17 +92,12 @@ WEED_SETUP_START(200, 200) {
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, NULL,
-					&negate_process, NULL,
-					in_chantmpls,
-					out_chantmpls, NULL, NULL);
+                                        &negate_process, NULL,
+                                        in_chantmpls,
+                                        out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  fprintf(stderr, "negate added fclass %p to pi %p\n", filter_class, plugin_info);
-
-  int error;
-  fprintf(stderr, "NAME is %s\n", weed_get_string_value(filter_class, "name", &error));
-  
   weed_set_int_value(plugin_info, "version", package_version);
 }
 WEED_SETUP_END;

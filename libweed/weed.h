@@ -73,7 +73,7 @@
 
 typedef uint32_t weed_size_t;
 typedef int32_t weed_error_t;
-typedef void * weed_voidptr_t;
+typedef void *weed_voidptr_t;
 
 #define WEED_VOIDPTR_SIZE sizeof(weed_voidptr_t)
 
@@ -118,7 +118,7 @@ typedef void *(*weed_memcpy_f)(void *dest, const void *src, size_t n);
 typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
 typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *);
 typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, int32_t seed_type, weed_size_t num_elems,
-					weed_voidptr_t values);
+                                        weed_voidptr_t values);
 typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, int32_t idx, weed_voidptr_t value);
 typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
 typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, int32_t idx);

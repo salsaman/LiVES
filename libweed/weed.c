@@ -137,11 +137,11 @@ static inline uint32_t weed_hash(const char *string) {
 
 static inline weed_size_t weed_seed_get_size(int32_t seed_type, void *value) {
   return (seed_type == WEED_SEED_BOOLEAN || seed_type == WEED_SEED_INT) ? 4 :
-    (seed_type == WEED_SEED_DOUBLE) ? 8 :
-    (seed_type == WEED_SEED_INT64) ? 8 :
-    (seed_type == WEED_SEED_STRING) ? weed_strlen((const char *)value) :
-    weed_seed_is_ptr(seed_type) ? WEED_VOIDPTR_SIZE :
-    0;
+         (seed_type == WEED_SEED_DOUBLE) ? 8 :
+         (seed_type == WEED_SEED_INT64) ? 8 :
+         (seed_type == WEED_SEED_STRING) ? weed_strlen((const char *)value) :
+         weed_seed_is_ptr(seed_type) ? WEED_VOIDPTR_SIZE :
+         0;
 }
 
 
@@ -203,10 +203,10 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key) 
     if (hash == leaf->key_hash && !weed_strcmp((char *)leaf->key, (char *)key)) {
 #ifndef NO_OPTIMISE_ORDER
       if (leaf != plant && plant->next != leaf) {
-	// optimise by moving leaf to front
-	prev->next = leaf->next;
-	leaf->next = plant->next;
-	plant->next = leaf;
+        // optimise by moving leaf to front
+        prev->next = leaf->next;
+        leaf->next = plant->next;
+        plant->next = leaf;
       }
 #endif
       return leaf;

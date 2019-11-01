@@ -202,7 +202,7 @@ static int avlumo_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200, 200, 200);
   weed_plant_t **clone1, **clone2, **clone3;
 
   if (plugin_info != NULL) {

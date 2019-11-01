@@ -12,14 +12,11 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
 
    Gabriel "Salsaman" Finch - http://lives.sourceforge.net
 
-
    mainly based on LiViDO, which is developed by:
-
 
    Niels Elburg - http://veejay.sf.net
 
@@ -45,25 +42,14 @@
 
 /* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
 
-
 #include <string.h>
 #include <stdio.h>
 
-#define __WEED_INTERNAL__
-
- #ifdef HAVE_SYSTEM_WEED
-/* #include <weed/weed-plugin.h> */
-/* #include <weed/weed.h> */
-/* #include <weed/weed-palettes.h> */
+#include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#include <weed/weed-utils.h> 
-#else
-/* #include "../../libweed/weed-plugin.h" */
-/* #include "../../libweed/weed.h" */
-/* #include "../../libweed/weed-palettes.h" */
-#include "../../libweed/weed-effects.h"
-#include "../../libweed/weed-utils.h"
-#endif
+#include <weed/weed-utils.h>
 
 #ifndef ALLOW_UNUSED
 #ifdef __GNUC__
@@ -74,11 +60,12 @@
 #endif
 
 static int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
-weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api_min_version, int32_t weed_api_max_version, int32_t filter_api_min_version, int32_t weed_filter_api_max_version) ALLOW_UNUSED;
+weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api_min_version, int32_t weed_api_max_version,
+                                    int32_t filter_api_min_version, int32_t weed_filter_api_max_version) ALLOW_UNUSED;
 static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) ALLOW_UNUSED;
 weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags, weed_init_f init_func,
-    weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
-    weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) ALLOW_UNUSED;
+                                     weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
+                                     weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) ALLOW_UNUSED;
 weed_plant_t *weed_text_init(const char *name, const char *label, const char *def) ALLOW_UNUSED;
 weed_plant_t *weed_float_init(const char *name, const char *label, double def, double min, double max) ALLOW_UNUSED;
 weed_plant_t *weed_switch_init(const char *name, const char *label, int def) ALLOW_UNUSED;
@@ -111,7 +98,7 @@ static inline int _leaf_exists(weed_plant_t *plant, const char *key) {
 
 
 static int weed_get_api_version(weed_plant_t *plugin_info) {
-  // return api version selected by host
+  // return the FILTER_API version selected by host
   int api_version;
   weed_plant_t *host_info;
   weed_leaf_get(plugin_info, WEED_LEAF_HOST_INFO, 0, &host_info);
@@ -123,58 +110,65 @@ static int weed_get_api_version(weed_plant_t *plugin_info) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api_min_version,
-				    int32_t weed_api_max_version,
-				    int32_t weed_filter_api_min_version,
-				    int32_t weed_filter_api_max_version
-				    ) {
+                                    int32_t weed_api_max_version,
+                                    int32_t weed_filter_api_min_version,
+                                    int32_t weed_filter_api_max_version
+                                   ) {
   /////////////////////////////////////////////////////////
   // get our bootstrap values
-  // every plugin should call this in its weed_setup()
-  weed_error_t error;
+
+  // every plugin should call this at the beginning of its weed_setup(), and return NULL if this function returns NULL
+  // otherwise it may add its filter classes to the returned plugin_info, and then return the plugin_info to the host
+
   weed_default_getter_f weed_default_getp;
 
-  weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, weed_api_min_version, weed_api_max_version, weed_filter_api_min_version, weed_filter_api_max_version), *plugin_info;
-  int weed_api_version;
+  weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, weed_api_min_version, weed_api_max_version,
+                                         weed_filter_api_min_version, weed_filter_api_max_version);
+  weed_plant_t *plugin_info;
+  int32_t weed_api_version = WEED_API_VERSION;
 
   if (host_info == NULL) return NULL; // matching version was not found
 
-  //////////// get api version /////////
+  // we must use the default getter to bootstrap our actual API functions
 
-  // depending on the api version we could have different functions
+  if ((weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
+  if ((weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_function_f *)&weed_malloc) != WEED_SUCCESS) return NULL;
+  if ((weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_function_f *)&weed_free) != WEED_SUCCESS) return NULL;
+  if ((weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_function_f *)&weed_memset) != WEED_SUCCESS) return NULL;
+  if ((weed_default_getp)(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_function_f *)&weed_memcpy) != WEED_SUCCESS) return NULL;
 
-  // we must use the default getter to get our API functions
+  // now we can use the normal get function (weed_leaf_get)
 
-  (weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get);
-  (weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_function_f *)&weed_malloc);
-  (weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_function_f *)&weed_free);
-  (weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_function_f *)&weed_memset);
-  (weed_default_getp)(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_function_f *)&weed_memcpy);
+  //////////// get weed api version /////////
+  weed_leaf_get(host_info, WEED_LEAF_WEED_API_VERSION, 0, &weed_api_version);
 
-  // now we can use the normal get / set functions
-  weed_api_version = weed_get_int_value(host_info, WEED_LEAF_WEED_API_VERSION, &error);
-
-  weed_leaf_set = ((weed_leaf_set_f)weed_get_voidptr_value(host_info, WEED_LEAF_SET_FUNC, &error));
-  weed_plant_new = ((weed_plant_new_f)weed_get_voidptr_value(host_info, WEED_PLANT_NEW_FUNC, &error));
-  weed_plant_free = ((weed_plant_free_f)weed_get_voidptr_value(host_info, WEED_PLANT_FREE_FUNC, &error));
-  weed_plant_list_leaves = ((weed_plant_list_leaves_f)weed_get_voidptr_value(host_info, WEED_PLANT_LIST_LEAVES_FUNC, &error));
-  weed_leaf_num_elements = ((weed_leaf_num_elements_f)weed_get_voidptr_value(host_info, WEED_LEAF_NUM_ELEMENTS_FUNC, &error));
-  weed_leaf_element_size = ((weed_leaf_element_size_f)weed_get_voidptr_value(host_info, WEED_LEAF_ELEMENT_SIZE_FUNC, &error));
-  weed_leaf_seed_type = ((weed_leaf_seed_type_f)weed_get_voidptr_value(host_info, WEED_LEAF_SEED_TYPE_FUNC, &error));
-  weed_leaf_get_flags = ((weed_leaf_get_flags_f)weed_get_voidptr_value(host_info, WEED_LEAF_GET_FLAGS_FUNC, &error));
+  // base functions 1.0
+  if (weed_leaf_get(host_info, WEED_LEAF_SET_FUNC, 0, &weed_leaf_set) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_PLANT_NEW_FUNC, 0, &weed_plant_new) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_PLANT_LIST_LEAVES_FUNC, 0, &weed_plant_list_leaves) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_LEAF_NUM_ELEMENTS_FUNC, 0, &weed_leaf_num_elements) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_LEAF_ELEMENT_SIZE_FUNC, 0, &weed_leaf_element_size) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_LEAF_SEED_TYPE_FUNC, 0, &weed_leaf_seed_type) != WEED_SUCCESS) return NULL;
+  if (weed_leaf_get(host_info, WEED_LEAF_GET_FLAGS_FUNC, 0, &weed_leaf_get_flags) != WEED_SUCCESS) return NULL;
 
   // get any additional functions for higher API versions ////////////
+  weed_realloc = NULL;
+  weed_plant_free = NULL;
 
+  // 2.0
   if (weed_api_version >= 200) {
-    weed_realloc = ((weed_realloc_f)weed_get_voidptr_value(host_info, WEED_LEAF_REALLOC_FUNC, &error));
+    // added weed_realloc
+    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
+
+    // added weed_plant_free
+    if (weed_leaf_get(host_info, WEED_PLANT_FREE_FUNC, 0, &weed_plant_free) != WEED_SUCCESS) return NULL;
   }
   //////////////////////////////////////////////////////////////////////
 
-  // we can now use the normal API functions
-
   plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO);
+  if (plugin_info == NULL) return NULL;
 
   weed_leaf_set(plugin_info, WEED_LEAF_HOST_INFO, WEED_SEED_PLANTPTR, 1, &host_info);
-  fprintf(stderr, "VLRR %p and %p\n", plugin_info, host_info);
   return plugin_info;
 }
 
@@ -205,8 +199,8 @@ weed_plant_t *weed_audio_channel_template_init(const char *name, int flags) {
 
 
 weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags, weed_init_f init_func,
-    weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
-    weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) {
+                                     weed_process_f process_func, weed_deinit_f deinit_func, weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
+                                     weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) {
   int i;
   weed_plant_t *filter_class = weed_plant_new(WEED_PLANT_FILTER_CLASS);
 

@@ -57,8 +57,16 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-  /* functions do not check if plant is NULL */
-weed_error_t weed_plant_has_leaf(weed_plant_t *, const char *key);
+/* functions return WEED_TRUE or WEED_FALSE */
+
+/* check if leaf exists and has a value */
+int weed_plant_has_leaf(weed_plant_t *, const char *key);
+
+/* check if leaf exists; may have a seed_type but no value set */
+int weed_leaf_exists(weed_plant_t *, const char *key);
+
+#define WEED_ERROR_NOSUCH_PLANT 32
+
 weed_error_t weed_set_int_value(weed_plant_t *, const char *key, int32_t value);
 weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double value);
 weed_error_t weed_set_boolean_value(weed_plant_t *, const char *key, int32_t value);
@@ -91,28 +99,29 @@ char **weed_get_string_array(weed_plant_t *, const char *key, weed_error_t *erro
 void **weed_get_voidptr_array(weed_plant_t *, const char *key, weed_error_t *error);
 weed_plant_t **weed_get_plantptr_array(weed_plant_t *, const char *key, weed_error_t *error);
 
-int weed_plant_has_leaf(weed_plant_t *, const char *key);
-
-  
-#define WEED_ERROR_NOSUCH_PLANT 32
-
-  /* functions which may return WEED_ERROR_NOSUCH_PLANT */
 weed_error_t weed_leaf_copy(weed_plant_t *dest, const char *keyt, weed_plant_t *src, const char *keyf);
 weed_plant_t *weed_plant_copy(weed_plant_t *src);
+int32_t weed_get_plant_type(weed_plant_t *); // returns WEED_PLANT_UNKNOWN if plant is NULL
 
-  int32_t weed_get_plant_type(weed_plant_t *); // returns WEED_PLANT_UNKNOWN if plant is NULL
+/* plugin only function, host should pass a pointer to this to the plugin when calling its weed_setup function */
+weed_plant_t *weed_bootstrap_func(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
+                                  int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 
+#if defined(__WEED_HOST__) || defined(__LIBWEED__)
+/* host only functions */
 void weed_add_plant_flags(weed_plant_t *plant, int32_t flags);
 void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags);
 
-weed_plant_t *weed_bootstrap_func(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version, int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
+typedef void (*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
+
+void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
+#endif
 
 #define WEED_LEAF_MIN_WEED_API_VERSION "min_weed_version"
 #define WEED_LEAF_MAX_WEED_API_VERSION "max_weed_version"
 #define WEED_LEAF_MIN_FILTER_API_VERSION "min_filter_version"
 #define WEED_LEAF_MAX_FILTER_API_VERSION "max_filter_version"
 
-  
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

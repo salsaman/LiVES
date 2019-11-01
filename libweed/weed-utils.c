@@ -66,154 +66,217 @@ static int host_weed_api_version = WEED_API_VERSION;
 
 /////////////////////////////////////////////////////////////////
 
+#define weed_get_value(plant, key, value) weed_leaf_get(plant, key, 0, value)
+#define weed_check_leaf(plant, key) weed_get_value(plant, key, NULL)
+
+
 int weed_plant_has_leaf(weed_plant_t *plant, const char *key) {
-  if (weed_leaf_get(plant, key, 0, NULL) == WEED_ERROR_NOSUCH_LEAF) return WEED_FALSE;
-  return WEED_TRUE;
+  if (plant == NULL) return 0;
+  return (weed_check_leaf(plant, key) == WEED_SUCCESS);
 }
 
 
 /////////////////////////////////////////////////////////////////
 // leaf setters
 
-int weed_set_int_value(weed_plant_t *plant, const char *key, int value) {
+// old
+
+/* int weed_set_int_value(weed_plant_t *plant, const char *key, int value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_INT, 1, &value); */
+/* } */
+
+
+/* int weed_set_double_value(weed_plant_t *plant, const char *key, double value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, 1, &value); */
+/* } */
+
+
+/* int weed_set_boolean_value(weed_plant_t *plant, const char *key, int value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, 1, &value); */
+/* } */
+
+
+/* int weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_INT64, 1, &value); */
+/* } */
+
+
+/* int weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, &value); */
+/* } */
+
+
+/* int weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, 1, &value); */
+/* } */
+
+
+/* int weed_set_voidptr_value(weed_plant_t *plant, const char *key, void *value) { */
+/*   // returns a WEED_ERROR */
+/*   return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, 1, &value); */
+/* } */
+
+weed_error_t weed_set_int_value(weed_plant_t *plant, const char *key, int32_t value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_INT, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_INT, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_double_value(weed_plant_t *plant, const char *key, double value) {
+weed_error_t weed_set_double_value(weed_plant_t *plant, const char *key, double value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_boolean_value(weed_plant_t *plant, const char *key, int value) {
+weed_error_t weed_set_boolean_value(weed_plant_t *plant, const char *key, int32_t value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value) {
+weed_error_t weed_set_int64_value(weed_plant_t *plant, const char *key, int64_t value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_INT64, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_INT64, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {
+weed_error_t weed_set_string_value(weed_plant_t *plant, const char *key, const char *value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_STRING, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value) {
+weed_error_t weed_set_voidptr_value(weed_plant_t *plant, const char *key, weed_voidptr_t value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, 1, (weed_voidptr_t)&value);
 }
 
 
-int weed_set_voidptr_value(weed_plant_t *plant, const char *key, void *value) {
+weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_plant_t *value) {
   // returns a WEED_ERROR
-  return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, 1, &value);
+  return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, 1, (weed_voidptr_t)&value);
+}
+
+
+weed_error_t weed_set_custom_value(weed_plant_t *plant, const char *key, int32_t seed_type, weed_voidptr_t value) {
+  // returns a WEED_ERROR
+  return weed_leaf_set(plant, key, seed_type, 1, (weed_voidptr_t)&value);
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-// general leaf getter
 
-static inline int weed_get_value(weed_plant_t *plant, const char *key, void *value) {
-  // returns a WEED_ERROR
-  return weed_leaf_get(plant, key, 0, value);
+static inline weed_error_t weed_leaf_check(weed_plant_t *plant, const char *key, int32_t seed_type) {
+  weed_error_t err;
+  if ((err = weed_check_leaf(plant, key)) != WEED_SUCCESS) return err;
+  if (weed_leaf_seed_type(plant, key) != seed_type) {
+    return WEED_ERROR_WRONG_SEED_TYPE;
+  }
+  return WEED_SUCCESS;
+}
+
+
+static inline weed_error_t weed_value_get(weed_plant_t *plant, const char *key, int32_t seed_type, weed_voidptr_t retval) {
+  weed_error_t err;
+  if ((err = weed_leaf_check(plant, key, seed_type)) != WEED_SUCCESS) return err;
+  return weed_get_value(plant, key, retval);
 }
 
 
 ////////////////////////////////////////////////////////////
 
-int weed_get_int_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  int retval = 0;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_INT) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  } else *error = weed_get_value(plant, key, &retval);
+int32_t weed_get_int_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
+  int32_t retval = 0;
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_INT, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
 double weed_get_double_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
   double retval = 0.;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_DOUBLE) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  }
-  *error = weed_get_value(plant, key, &retval);
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_DOUBLE, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
-int weed_get_boolean_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  int retval = 0;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_BOOLEAN) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  }
-  *error = weed_get_value(plant, key, &retval);
+int32_t weed_get_boolean_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
+  int32_t retval = WEED_FALSE;
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_BOOLEAN, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
 int64_t weed_get_int64_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
   int64_t retval = 0;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_INT64) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  }
-  *error = weed_get_value(plant, key, &retval);
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_INT64, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
 char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  size_t size;
+  weed_size_t size;
   char *retval = NULL;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_STRING) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
+  weed_error_t err = weed_check_leaf(plant, key);
+  if (err != WEED_SUCCESS) {
+    if (error != NULL) *error = err;
+    return NULL;
+  }
+  if (weed_leaf_seed_type(plant, key) != WEED_SEED_STRING) {
+    if (error != NULL) *error = WEED_ERROR_WRONG_SEED_TYPE;
     return NULL;
   }
   if ((retval = (char *)malloc((size = weed_leaf_element_size(plant, key, 0)) + 1)) == NULL) {
-    *error = WEED_ERROR_MEMORY_ALLOCATION;
+    if (error != NULL) *error = WEED_ERROR_MEMORY_ALLOCATION;
     return NULL;
   }
-  if ((*error = weed_get_value(plant, key, &retval)) != WEED_NO_ERROR) {
-    free(retval);
-    return NULL;
+  if ((err = weed_value_get(plant, key, WEED_SEED_STRING, &retval)) != WEED_SUCCESS) {
+    if (retval != NULL) {
+      free(retval);
+      retval = NULL;
+    }
   }
-  memset(retval + size, 0, 1);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
-void *weed_get_voidptr_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  void *retval = NULL;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_VOIDPTR) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  }
-  *error = weed_get_value(plant, key, &retval);
+weed_voidptr_t weed_get_voidptr_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
+  weed_voidptr_t retval = NULL;
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_VOIDPTR, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
 weed_plant_t *weed_get_plantptr_value(weed_plant_t *plant, const char *key, weed_error_t *error) {
   weed_plant_t *retval = NULL;
-  if (weed_plant_has_leaf(plant, key) && weed_leaf_seed_type(plant, key) != WEED_SEED_PLANTPTR) {
-    *error = WEED_ERROR_WRONG_SEED_TYPE;
-    return retval;
-  }
-  *error = weed_get_value(plant, key, &retval);
+  weed_error_t err = weed_value_get(plant, key, WEED_SEED_PLANTPTR, &retval);
+  if (error != NULL) *error = err; 
+  return retval;
+}
+
+
+weed_voidptr_t weed_get_custom_value(weed_plant_t *plant, const char *key, int32_t seed_type, weed_error_t *error) {
+  weed_voidptr_t retval = NULL;
+  weed_error_t err = weed_value_get(plant, key, seed_type, &retval);
+  if (error != NULL) *error = err; 
   return retval;
 }
 
 
 ////////////////////////////////////////////////////////////
+
+// old..working
 
 int *weed_get_int_array(weed_plant_t *plant, const char *key, weed_error_t *error) {
   int i;
@@ -412,44 +475,183 @@ weed_plant_t **weed_get_plantptr_array(weed_plant_t *plant, const char *key, wee
 }
 
 
+// new...borked
+
+
+/* static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key, size_t dsize, char **retval) { */
+/*   weed_error_t err; */
+/*   weed_size_t num_elems = weed_leaf_num_elements(plant, key); */
+/*   int i; */
+
+/*   if ((*retval = (char *)malloc(num_elems * dsize)) == NULL) { */
+/*     return WEED_ERROR_MEMORY_ALLOCATION; */
+/*   } */
+
+/*   for (i = 0; i < num_elems; i++) { */
+/*     if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t)&retval[i * dsize])) != WEED_SUCCESS) { */
+/*       free(*retval); */
+/*       return err; */
+/*     } */
+/*   } */
+
+/*   return WEED_SUCCESS; */
+/* } */
+
+
+/* int32_t *weed_get_int_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   int32_t *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_INT); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, 4, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* double *weed_get_double_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   double *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_DOUBLE); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, 8, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* int *weed_get_boolean_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   int32_t *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_BOOLEAN); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, 4, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* int64_t *weed_get_int64_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   int64_t *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_DOUBLE); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, 8, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* char **weed_get_string_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   int i; */
+/*   weed_size_t num_elems; */
+/*   char **retvals; */
+/*   weed_size_t size; */
+
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_STRING); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   if ((num_elems = weed_leaf_num_elements(plant, key)) == 0) return NULL; */
+
+/*   if ((retvals = (char **)malloc(num_elems * sizeof(char *))) == NULL) { */
+/*     if (error != NULL) *error = WEED_ERROR_MEMORY_ALLOCATION; */
+/*     return NULL; */
+/*   } */
+
+/*   for (i = 0; i < num_elems; i++) { */
+/*     if ((retvals[i] = (char *)malloc((size = weed_leaf_element_size(plant, key, i)) + 1)) == NULL) { */
+/*       for (--i; i >= 0; i--) free(retvals[i]); */
+/*       if (error != NULL) *error = WEED_ERROR_MEMORY_ALLOCATION; */
+/*       free(retvals); */
+/*       return NULL; */
+/*     } */
+/*     if ((err = weed_leaf_get(plant, key, i, &retvals[i])) != WEED_SUCCESS) { */
+/*       for (--i; i >= 0; i--) free(retvals[i]); */
+/*       free(retvals); */
+/*       if (error != NULL) *error = err; */
+/*       return NULL; */
+/*     } */
+/*     memset(retvals[i] + size, 0, 1); */
+/*   } */
+/*   return retvals; */
+/* } */
+
+
+/* weed_voidptr_t *weed_get_voidptr_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   weed_voidptr_t *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_VOIDPTR); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, WEED_VOIDPTR_SIZE, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* weed_plant_t **weed_get_plantptr_array(weed_plant_t *plant, const char *key, weed_error_t *error) { */
+/*   weed_plant_t **retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_PLANTPTR); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, WEED_VOIDPTR_SIZE, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+/* weed_voidptr_t *weed_get_custom_array(weed_plant_t *plant, const char *key, int32_t seed_type, weed_error_t *error) { */
+/*   weed_voidptr_t *retvals = NULL; */
+/*   weed_error_t err = weed_leaf_check(plant, key, seed_type); */
+
+/*   if (err != WEED_SUCCESS) { */
+/*     if (error != NULL) *error = err; */
+/*     return NULL; */
+/*   } */
+
+/*   err = weed_get_values(plant, key, WEED_VOIDPTR_SIZE, (char **)&retvals); */
+  
+/*   if (error != NULL) *error = err; */
+/*   return retvals; */
+/* } */
+
+
+
+
 /////////////////////////////////////////////////////
-
-/* int weed_set_int_array(weed_plant_t *plant, const char *key, int num_elems, int *values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_INT, num_elems, values); */
-/* } */
-
-
-/* int weed_set_double_array(weed_plant_t *plant, const char *key, int num_elems, double *values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_DOUBLE, num_elems, values); */
-/* } */
-
-
-/* int weed_set_boolean_array(weed_plant_t *plant, const char *key, int num_elems, int *values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_BOOLEAN, num_elems, values); */
-/* } */
-
-
-/* int weed_set_int64_array(weed_plant_t *plant, const char *key, int num_elems, int64_t *values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_INT64, num_elems, values); */
-/* } */
-
-
-/* int weed_set_string_array(weed_plant_t *plant, const char *key, int num_elems, char **values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_STRING, num_elems, values); */
-/* } */
-
-
-/* int weed_set_voidptr_array(weed_plant_t *plant, const char *key, int num_elems, void **values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, num_elems, values); */
-/* } */
-
-
-/* int weed_set_plantptr_array(weed_plant_t *plant, const char *key, int num_elems, weed_plant_t **values) { */
-/*   return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, num_elems, values); */
-/* } */
-
-
-
 
 weed_error_t weed_set_int_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, int32_t *values) {
   return weed_leaf_set(plant, key, WEED_SEED_INT, num_elems, (weed_voidptr_t)values);
@@ -494,8 +696,9 @@ weed_error_t weed_set_custom_array(weed_plant_t *plant, const char *key, int32_t
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int32_t weed_get_plant_type(weed_plant_t *plant) {
-  weed_error_t error;
-  return weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+  //weed_error_t error;
+  if (plant == NULL) return WEED_PLANT_UNKNOWN;
+  return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
 }
 
 
@@ -603,14 +806,6 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
 
   return plant;
 }
-
-/// broken
-
-
-/* int32_t weed_get_plant_type(weed_plant_t *plant) { */
-/*   if (plant == NULL) return WEED_PLANT_UNKNOWN; */
-/*   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL); */
-/* } */
 
 
 void weed_add_plant_flags(weed_plant_t *plant, int32_t flags) {

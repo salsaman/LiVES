@@ -66,7 +66,7 @@ AM_CPPFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
 
 
 
-fxpluginslib_LTLIBRARIES = 	alien_overlay.la negate.la blurzoom.la colorkey.la bump2d.la RGBdelay.la  mirrors.la haip.la frei0r.la
+fxpluginslib_LTLIBRARIES = negate.la
 
 
 

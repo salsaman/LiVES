@@ -5,35 +5,29 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#endif
-
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
 #ifdef HAVE_SYSTEM_WEED_PLUGIN_H
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../../libweed/weed-plugin.h" // optional
 #endif
 
-#include "../weed-utils-code.c" // optional
-#include "../weed-plugin-utils.c" // optional
+#ifdef HAVE_SYSTEM_WEED
+#include <weed/weed.h>
+#include <weed/weed-effects.h>
+//#include <weed/weed-palettes.h>
+#else
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-effects.h"
+//#include "../../../libweed/weed-palettes.h"
+#endif
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#include "../weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
@@ -45,13 +39,13 @@ typedef struct _sdata {
   uint32_t fastrand_val;
 } sdata;
 
+
 static inline uint32_t fastrand(struct _sdata *sdata) {
 #define rand_a 1073741789L
 #define rand_c 32749L
 
   return ((sdata->fastrand_val = (rand_a * sdata->fastrand_val + rand_c)));
 }
-
 
 
 #include <gdk/gdk.h>
@@ -62,10 +56,12 @@ inline G_GNUC_CONST int pl_gdk_rowstride_value(int rowstride) {
   return (rowstride + 3) & ~3;
 }
 
+
 inline int G_GNUC_CONST pl_gdk_last_rowstride_value(int width, int nchans) {
   // from gdk pixbuf docs
   return width * (((nchans << 3) + 7) >> 3);
 }
+
 
 static void plugin_free_buffer(guchar *pixels, gpointer data) {
   return;
@@ -79,7 +75,6 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
   int rowstride = pl_gdk_rowstride_value(width * channels);
   return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
 }
-
 
 
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
@@ -139,9 +134,7 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 }
 
 
-
-
-int videowall_init(weed_plant_t *inst) {
+static int videowall_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height, video_width, video_area;
   int palette;
@@ -160,7 +153,6 @@ int videowall_init(weed_plant_t *inst) {
   video_height = weed_get_int_value(in_channel, "height", &error);
   video_width = weed_get_int_value(in_channel, "width", &error);
   video_area = video_width * video_height;
-
 
   sdata->bgbuf = weed_malloc((psize = video_area * (palette == WEED_PALETTE_RGB24 ? 3 : 4)));
 
@@ -204,7 +196,6 @@ int videowall_init(weed_plant_t *inst) {
     }
   }
 
-
   sdata->count = 0;
   sdata->fastrand_val = 0;
   sdata->dir = 0;
@@ -213,11 +204,10 @@ int videowall_init(weed_plant_t *inst) {
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_NO_ERROR;
-
 }
 
 
-int videowall_deinit(weed_plant_t *inst) {
+static int videowall_deinit(weed_plant_t *inst) {
   int error;
   struct _sdata *sdata;
 
@@ -227,15 +217,10 @@ int videowall_deinit(weed_plant_t *inst) {
   weed_free(sdata);
 
   return WEED_NO_ERROR;
-
 }
 
 
-
-
-
-
-int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
@@ -408,26 +393,27 @@ int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+WEED_SETUP_START {
+  const char *modes[] = {"Scanner", "Random", "Spiral", NULL};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888,
+			WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
 
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL};
+  weed_plant_t *in_params[] = {weed_integer_init("r", "Number of _rows", 3, 1, 256), weed_integer_init("c", "Number of _Columns", 3, 1, 256), weed_string_list_init("m", "Stepping Mode", 0, modes), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("videowall", "salsaman", 1, 0, &videowall_init, &videowall_process, &videowall_deinit,
+						      in_chantmpls, out_chantmpls, in_params, NULL);
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    const char *modes[] = {"Scanner", "Random", "Spiral", NULL};
-    //const char *modes[]={"Scanner","Random","Spiral",NULL};
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL};
-    weed_plant_t *in_params[] = {weed_integer_init("r", "Number of _rows", 3, 1, 256), weed_integer_init("c", "Number of _Columns", 3, 1, 256), weed_string_list_init("m", "Stepping Mode", 0, modes), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("videowall", "salsaman", 1, 0, &videowall_init, &videowall_process, &videowall_deinit,
-                                 in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-
-  }
-  return plugin_info;
+  WEED_SETUP_END;
 }
 
+
+WEED_DESETUP_START {
+
+
+  WEED_DESETUP_END;
+}

@@ -52,6 +52,7 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#define WEED_COMPAT_VERSION 0.11.0
 
 #ifdef NEED_FOURCC_COMPAT
 
@@ -59,16 +60,16 @@ extern "C"
 #include <weed/weed-palettes.h>
 #endif
 
-#define WEED_COMPAT_VERSION 0.10.0
-
+#ifndef WEED_FOURCC_COMPAT
+#define WEED_FOURCC_COMPAT
+#endif
+  
 int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling,
                      int *sspace, int *clamping) {
   // inputs are fourcc and bpp
   // returns int weed_palette
 
   // optionally sets interlaced (0 = none, 1 = interlaced), sampling, subspace and clamping
-
-
 
   // TODO - this is probably wrong for some formats and needs testing/verifying with various devices
   // fourcc colorcodes are a nasty mess, and should be avoided whenever possible
@@ -102,7 +103,6 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     if (bpp == 32) return WEED_PALETTE_RGBA32;
     break;
 
-
   // YUV packed formats
 
   case 0x56595549: // IUYV
@@ -132,7 +132,6 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x20203859: // Y8
     return WEED_PALETTE_A8;
 
-
   // YUV planar formats
   case 0x41565559: // YUVA
     return WEED_PALETTE_YUVA4444P;
@@ -160,7 +159,6 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
     if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
 
-
   // known formats we cannot use
   case 0x50424752: // RGBP - palettised RGB
   case 0x4f424752: // RGB0 - 15 or 16 bit RGB
@@ -184,17 +182,7 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   return WEED_PALETTE_END;
 }
 
-
-
-
 #endif
-
-
-
-
-
-
-
 
 #ifdef HAVE_AVCODEC
 #ifdef HAVE_AVUTIL
@@ -203,6 +191,10 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
 
 #include <libavcodec/avcodec.h>
 #include <libavutil/pixfmt.h>
+
+#ifndef __WEED_PALETTES_H__
+#include <weed/weed-palettes.h>
+#endif
 
 typedef struct AVCodecTag {
   int id;
@@ -368,9 +360,6 @@ typedef struct AVCodecTag {
 #define AV_CODEC_ID_SGI CODEC_ID_SGI
 #define AV_CODEC_ID_DPX CODEC_ID_DPX
 #define AV_CODEC_ID_PRORES CODEC_ID_PRORES
-
-
-
 
 #endif
 
@@ -589,11 +578,6 @@ const AVCodecTag codec_bmp_tags[] = {
   { AV_CODEC_ID_NONE,         0 }
 };
 
-
-#ifndef __WEED_PALETTES_H__
-#include <weed/weed-palettes.h>
-#endif
-
 #ifdef FF_API_PIX_FMT
 
 int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
@@ -640,7 +624,6 @@ int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
     return WEED_PALETTE_END;
   }
 }
-
 
 enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
@@ -729,7 +712,6 @@ int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
     return WEED_PALETTE_END;
   }
 }
-
 
 enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {

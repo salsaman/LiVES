@@ -58,7 +58,7 @@ endif
 if ENABLE_OSC
 osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
 osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
-osc_shared_LDADD = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
+#osc_shared_LDADD = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
 osc_CFLAGS = -DENABLE_OSC=1
 endif
 

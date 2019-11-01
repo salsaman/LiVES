@@ -2840,7 +2840,7 @@ void reinit_audio_gen(void) {
   weed_plant_t *inst = rte_keymode_get_instance(agen_key, rte_key_getmode(mainw->agen_key));
 
   ret = weed_reinit_effect(inst, TRUE);
-  if (ret == FILTER_NO_ERROR || ret == FILTER_INFO_REINITED) {
+  if (ret == FILTER_SUCCESS || ret == FILTER_INFO_REINITED) {
     mainw->agen_needs_reinit = FALSE;
     mainw->agen_key = agen_key;
   }

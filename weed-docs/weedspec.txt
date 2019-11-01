@@ -20,7 +20,7 @@ Possibly non-backwards compatible:
   - removed weed_leaf_set_caller(),
   - changed meaning of return value from weed_leaf_element_size() for WEED_SEED_VOIDPTR
   - WEED_SEED_VOIDPTR will now be cast to / from uint64_t instead of void *.
-  - added WEED_VOIDPTR_SIZE, defined as 8
+  - added WEED_VOIDPTR_SIZE, defined as sizeof(void *)
   - changed typedef for weed_size_t to be uint32_t, (replacing size_t in previous versions)
   - added typedef for weed_error_t as int32_t, (replacing int in previous versions)
 
@@ -164,7 +164,7 @@ weed.h:
 Added WEED_API_VERSION (set to 200).
 Added WEED_API_200
 
-Added WEED_VOIDPTR_SIZE defined as 8.
+Added WEED_VOIDPTR_SIZE defined as sizeof(void *)
 
 Changed typedef of weed_size_t from size_t to uint32_t.
 Added typedef for weed_error_t
@@ -204,27 +204,8 @@ timeline style events (weed-events).
 
 A ''plant'' in Weed is a set of one or more ''leaves''.
 
-Each plant has one mandatory leaf with a key "type", and depending
-upon the value of this leaf, the plant has other mandatory and optional leaves.
-
-For example, for Weed Effect and Event  plugins, the value of the plant leaf "type" MAY be one of:
-
-  * WEED_PLANT_HOST_INFO          : Information about host and core functions
-  * WEED_PLANT_PLUGIN_INFO        : Information about plugin and list of filter classes it includes
-  * WEED_PLANT_FILTER_CLASS       : Descriptive information about single filter class
-  * WEED_PLANT_CHANNEL_TEMPLATE   : Information about what kinds of channels filter accepts
-  * WEED_PLANT_PARAMETER_TEMPLATE : Information about what kinds of parameters filter has
-  * WEED_PLANT_FILTER_INSTANCE    : All data about an instance
-  * WEED_PLANT_CHANNEL            : Instantiation of a channel
-  * WEED_PLANT_PARAMETER          : Instantiation of a parameter
-
-  * WEED_PLANT_GUI                : Used for GUI hints for the
-                                    filter_classes and parameter_templates.
-
-  * WEED_PLANT_EVENT              : plant used for events (described
-                                            in the Weed EVENTS extension
-  * WEED_PLANT_EVENT_LIST         : plant used for event lists (described
-                                            in the Weed EVENTS extension
+Each plant has one mandatory leaf with a key WEED_LEAF_TYPE (defined as "type" in weed.h) , and depending
+upon the value of this leaf, the plant has other mandatory and optional leaves. See below for examples.
 
 "type" is a single valued leaf with seed_type WEED_SEED_INT (See below: seed_types).
 
@@ -242,7 +223,7 @@ Plant types >= 512 are reserved for custom use.
 As mentioned above, each "plant" is simply a set of one or more "leaves".
 
 Each leaf has at least:
- * a ''key'' (which is a non-NULL string - (const char *) ASCII encoded)
+ * a ''key'' (which is a non-NULL string - (const char *) ASCII encoded - NOT uf8, unicode or anything else)
  * a ''value'' (0 or more elements)
  * ''number of elements'' (>= 0) contained in the value field.
  * a ''seed_type'' (int32_t)
@@ -258,37 +239,50 @@ The "seed type" denotes the type of the value field in a leaf.
 Weed offers the following '''fundamental''' types (number <64):[[BR]]
 
  * WEED_SEED_INT     : signed /unsigned 32 bit integer
- * WEED_SEED_DOUBLE  : corresponds to C type "double"
+ * WEED_SEED_DOUBLE  : corresponds to 64 bit C type signed double
  * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, constrained to take values WEED_FALSE or WEED_TRUE 
  * WEED_SEED_STRING  : NUL terminated array of char (max length is int32_t max, but strings should preferably be under 65536 bytes)
  * WEED_SEED_INT64   : signed /unsigned 64 bit integer
 
-'''Pointer''' types (number >= 64 and < 512):
+'''Pointer''' types (number >= 64)
+Pointers may be of any size, however they will be stored as 64 bit. It is up to the application to handle any problems caused.
 
- * WEED_SEED_VOIDPTR     : corresponds to a 64 bit C void * type
-   			   If the size is non-zero, and the value is non-NULL, will be freed when the leaf is deleted.
- * WEED_SEED_PLANTPTR    : uint64_t : a pointer / reference to another weed plant
-
-Types >= 512 are reserved for custom use. Custom seeds MUST be pointer seeds, however only WEED_SEED_VOIDPTR
-may be auto-freed on deletion.
+ * WEED_SEED_VOIDPTR     : corresponds to a 32 or 64 bit C void * type. Will be stored internally as uint64_t
 
 
+ * WEED_SEED_PLANTPTR    : a pointer / reference to another weed plant.
+   			   
 
-== Weed library functions for the host ==
+Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer seeds, however only WEED_SEED_VOIDPTR
+may be auto-freed on deletion (see below).
 
+
+== COMPILING WITH WEED ==
+
+In order to use the reference build of Weed, a program should #include
+
+weed/weed.h
+
+and link with libweed. More advanced uses of Weed (e.g for effects plugins or events require further headers, see below for
+an example).
+
+
+
+== Weed library functions  ==
 
 
 == Weed_init() ==
 
-   Prior to calling any other weed functions, a host must call:
+   Prior to calling any other weed functions, a program (but not a plugin) must call:
 
  * weed_error_t weed_init(int32_t api_version)
 
-     The host passes in the API version it wants to use. The function will set function
-     pointers to the correct API versions of the core functions.
+     The application passes in the API version it wants to use. The function will set function
+     pointers to the correct API versions of the core functions. Usually the program would use WEED_API_VERSION defined in
+     weed.h
 
      If the host selects an API version < 100 or > the highest version the library supports, WEED_ERROR_BADVERSION will
-     be returned, otherwise WEED_NO_ERROR is returned.
+     be returned, otherwise WEED_SUCCESS is returned.
 
 
 
@@ -300,27 +294,86 @@ freed after getting or setting. For all other seed_types, copy is by reference.
 
 
 
-
 == WEED CORE FUNCTIONS ==
 
- * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates a new weed_plant with "type" set to plant_type
+ * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates and returns a new Weed plant
+   with "type" set to plant_type.
+   In case of memory error, the plant will not be created and NULL will be returned.
 
- * char **weed_plant_list_leaves (weed_plant_t *plant) : returns a NULL terminated char * array of leaf keys
 
- * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) :
-    an array of the appropriate size and type should be cast to a voidptr. If num_elems is 0 then only the seed_type is set,
-    and the leaf value is set to NULL.
+ * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, weed_voidptr_t values)
 
- * weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, void *values) : values should be typecast
-    to an array of the appropriate size, and freed after use. For WEED_SEED_STRING, and non NULL strings should also be freed.
+    Set leaf values and number of elements. A pointer to an array of the appropriate type and array
+    size should be cast to a weed_voidptr_t and passed to the function along with the array size.
+
+    E.g for WEED_SEED_INT, values should be (weed_voidptr_t)(int32_t[num_elems]) or (weed_voidptr_t)(unt32_t[num_elems]),
+    for WEED_SEED_STRING, it should be (weed_voidptr_t)(char *[num_elems]),
+    for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
+
+    No checking is performed to see if plant is NULL or a valid plant, or whether the seed_type is valid. This is left to the caller.
+    The array is assumed to be of the correct size and type.
+
+    If the leaf doesn't exist in the plant then it will be created and added to the plant, otherwise the value and array size
+    of the existing leaf will be amended.
+
+    If num_elems is 0 then only the seed_type is set, and the leaf value is set to NULL.
+
+    Passing a NULL pointer for values and num_elems > 0 will likely lead to undesired behaviour.
+
+    In case of a memory error, WEED_ERROR_MEMORY_ALLOCATION is returned, and either the leaf is not created,
+    or its num_elems is set to zero and its value to NULL.
+
+    If the leaf exists and has a different seed_type, then WEED_ERROR_WRONG_SEED_TYPE is returned and the value is not altered.
+
+    (as of API 200) If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
+    is returned and the leaf is not altered.
+
+
+* weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) :
+
+    returns the nth (starting from 0) element of the specified leaf.
+
+    value should be typecast to a weed_voidptr_t from a pointer of the appropriate type (depending on the seed_type of the leaf.)
+    E.g for WEED_SEED_INT it should be int32_t * or uint32_t *. For WEED_SEED_STRING, a char **,
+    for WEED_SEED_VOIDPTR a weed_voidptr_t *. etc.
+
+    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller.
+
+    For WEED_SEED_STRING, you should first check that the leaf and element exist, that the seed_type is correct,
+    and if so, get the string length with weed_leaf_element size(),
+    allocate a char array of the returned size + 1 (to hold the terminating NUL) and
+    pass in a pointer to the array, typecast to weed_voidptr_t to receive the value. You will need to add the terminating NUL
+    as Weed will not do so for you. The returned value should also be freed after use.
+    (For this reason it may be easier to use a utilities library such as libweed-utils which will perform this process in a more
+    convenient fashion.)
+    
+    If the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF is returned.
+
+    If the leaf exists but the element doesn't exist, then WEED_ERROR_NOSUCH_ELEMENT is returned.
+    Note: prior to API version 200, this would erroneously return WEED_ERROR_NOSUCH_LEAF. If this behaviour is
+    still required, then set the api version < 200 in weed_init(). 
+
+    the value of the leaf element will be copied to value (IF value is non-NULL), and WEED_SUCCESS will be returned.
+
+    In this way, it is possible to check if a leaf exists in the plant or not, by calling weed_leaf_get(plant, key, 0, NULL);
+    - if the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF will be returned
+    - if the value of the leaf is NULL, then number of elements should be 0, and WEED_ERROR_NOSUCH_ELEMENT will be returned
+    - if the value of the leaf has 1 or more elements, then WEED_SUCCESS will be returned.
+
 
  * weed_size_t weed_leaf_num_elements (weed_plant_t *plant, const char *key)
- 
+   - returns the number of elements for the specified leaf.
+
+   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
+
+
  * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int32_t idx)
 
-   For WEED_SEED_STRING, returns the string length in bytes; equivalent to strlen().
+   No checking is done to ensure that plant, leaf or idx are valid, this is left to the caller.
 
-   For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_voidptr_caller() function, returns the size set.
+   For WEED_SEED_STRING, returns the string length in bytes (without a terminating NUL); equivalent to strlen().
+
+   For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_sizes() function, returns the size set.
    Otherwise, returns 0.
 
    NOTE: the meaning of this changed as of API 200. Prior to this, for WEED_SEED_VOIDPTR it would return sizeof(void *).
@@ -329,46 +382,117 @@ freed after getting or setting. For all other seed_types, copy is by reference.
    if the old behavior is required, then weed_init() can be called with an API version < 200 (e.g. 199).
 
    For all other seed types, returns sizeof(seed_type), (e.g. for WEED_SEED_INT, returns 4, for WEED_SEED_INt64, returns 8).
+   
 
  * int32_t weed_leaf_seed_type(weed_plant_t *plant, const char *key) : get the seed_type for a leaf
+   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
 
- * int32_t weed_leaf_get_flags(weed_plant_t *plant, const char *key) : set the flags for a leaf
 
- * weed_error_t weed_plant_free (weed_plant_t *plant) : returns error WEED_ERROR_UNDELETABLE if the "type" flag contains
-   WEED_LEAF_UNDELETABLE
 
- * weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
+ * int32_t weed_leaf_get_flags(weed_plant_t *plant, const char *key) : get the flags for a leaf
+   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
+
+
+ * weed_error_t weed_plant_free (weed_plant_t *plant) :
+
+   No checking is done to ensure that plant is non-NULL and valid, this is left to the caller.
+
+   returns error WEED_ERROR_UNDELETABLE if the "type" flag has WEED_LEAF_UNDELETABLE set, and nothing will be freed.
+   
+   otherwise returns WEED_SUCCESS.
+
+   Each leaf is handled as in weed_leaf_delete() (see belwo), execept that the "type" leaf will also be freed.
+
+
+
+ * char **weed_plant_list_leaves (weed_plant_t *plant)
+   returns a NULL terminated char * array of leaf keys.
+   No checking is performed to see if plant is NULL or a valid plant, this is left to the caller.
+   In case of memory error, NULL is returned and the array is not created. The caller should free any non-NULL elements
+   when no longer required.
+
 
 
 
 As of API 200:
 
- * weed_error_t weed_leaf_set_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems, void *values, weed_size_t *sizes)
+ * weed_error_t weed_leaf_set_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems,
+ weed_voidptr_t values, weed_size_t *sizes)
 
- Only valid for leaves with a seed type WEED_SEED_VOIDPTR. Will amend or create the leaf with num_elems void pointers,
+ Only valid for leaves with a seed type WEED_SEED_VOIDPTR. Will amend or create the leaf with
+ (weed_voidptr_t)weed_voidptr_t[num_elems], Otherwis will return WEED_ERROR_WRONG_SEED_TYPE.
+
  and set the data sizes for the array. When the leaf is freed (with weed_plant_free or weed_leaf_delete) any non-NULL values
  will be automaticaly freed UNLESS the WEED_FLAG_IMMUTABLE flag bit is set.
 
- * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, void *values, weed_size_t **sizes, int32_t *flags)
+ If the leaf is later amended with weed_leaf_set(), the sizes will be reset to 0.
 
-Retrieves the seed_type, num_elements, values, sizes and flags for the specified leaf. "values" should be freed after use as well as
- any string values retrieved.
+    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller. The arrays are assumed to be of
+    the correct size and type.
+
+    If num_elems is 0 then only the seed_type is set, and the leaf value is set to NULL.
+
+    Passing a NULL pointer for values or sizes and num_elems > 0 will likely lead to undesired behaviour.
+
+    In case of a memory error, WEED_ERROR_MEMORY_ALLOCATION is returned, and either the leaf is not created,
+    or its num_elems is set to zero and its value to NULL.
+
+    If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
+    is returned and the leaf is not altered.
 
 
-This may be useful for memory profiling a particular plugin, for example.
+ * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, weed_voidptr_t *values, weed_size_t **sizes, int32_t *flags)
+
+ Retrieves the num_elements, values, sizes and flags for the specified leaf. "values" should be freed after use as well as
+ any string values retrieved. Any of the fields may be NULL (except for plant).
+ Will return WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_MEMORY.
+
+ If key is NULL, then values will be a NULL terminated array of the leaves (similar to weed_plant_list_leaves()),
+ seed_type will be set to the plant type, num_elems to the length of the vakues array (minus the final NULL), and sizes will hold
+ the number of elements in each leaf, and flags will be set to the flags for the "type" leaf. All returned arrays should be freed
+ after use, plus all the (string) values (except the final NULL).
+
+ Will return WEED_SUCCESS or WEED_ERROR_MEMORY.
+
+ Any of the other paraneters nay be NULL. IF *seed_type is passed with a value 0, then on return it will hokd the seed_type
+ of the leaf (if it exists). If any other valus is set, the function will return WEED_ERROR_WRONG_SEED_TYPE and will not set
+ any values.
 
 
-== Additional functions for the host ==
 
-The host has access to an additional function which is not passed to plugins in the HOST_INFO plant:
+
+== Additional functions not available to plugins ==
+
+The host has access to additional functions which are not available to plugins.
 
  * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
+   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
+   
+   Clearing the immutable bit for the "type" leaf allows the plant type to be changed.
+   Setting the undeletable bit for the type leaf prevents the plant and leaves from being free via weed_plant-free.
+   Setting the immutable bit for leaves of type WEED_SEED_VOIDPTR prevents the data from being freed when the leaf is deleted.
+
+   Will return WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
 
 
 
+* weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
+   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
+
+   if the leaf does not exist, WEED_ERROR_NOSUCH_LEAF is returned.
+   if the WEED_FLAG_UNDELETABLE flag bit is set then WEED_ERROR_UNDELETABLE is returned. and the leaf is not deleted.
+   For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
+   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
+   weed_leaf_set_sizes()), is freed, unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
+
+   The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attampt to delete it with weed_leaf_delete()
+   then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set), otherwise WEED_ERROR_NOSUCH_LEAF
+   will be returned. (Note the normal order of precedence of errors is reversed in this case, WEED_ERROR_NOSUCH_LEAF would normally
+   be returned BEFORE WEED_ERROR_UNDELETABLE).
 
 
-== SPECIAL LEAF FLAGS ==
+
+== LEAF FLAGS ==
 
 Two special flag bits are defined in weed.h:
 
@@ -394,43 +518,7 @@ In this case you need to clear the flag bit to free the plant.
 
 
 
-
-
 '''Notes''':[[BR]]
-
-The void * for weed_leaf_set_*() and weed_leaf_get() is a (void *) typecast to/from an *array* of the appropriate type:
-e.g. for WEED_SEED_INT it is an int32_t *, for WEED_SEED_STRING it is a char ** for WEED_SEED_VOIDPTR actually a uint64_t *, etc.
-The number of elements in the array MUST match num_elems in weed_leaf_set().
-
-- weed_plant_new() will set the "type" leaf to the plant_type
-
-- weed_leaf_set(), weed_leaf_flag_set() will create the leaf if the leaf does not exist.
-
-- weed_leaf_set(), weed_leaf_flag_set will return an error WEED_ERROR_WRONG_SEED_TYPE if you try to change the seed_type of a leaf.
-
-For weed_leaf_set () num_elems can be 0 and value can then be NULL. In this way, just the seed_type of a leaf can be set, without
-setting an explicit value.
-
-- weed_leaf_get() will return WEED_ERROR_NOSUCH_LEAF if a leaf does not exist.
-
-In this way the existence of a leaf can be determined. weed_leaf_get() 
-can be called with a NULL value. The function will then not attempt to copy the value, 
-but will return either WEED_ERROR_NOSUCH_LEAF, WEED_ERROR_NOSUCH_ELEMENT, or WEED_NO_ERROR 
-depending on whether the leaf/element exists or not.
-
-- weed_leaf_set_flags() will return WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
-
-- weed_leaf_delete() will return WEED_ERROR_FLAGALL if you try to delete the "type" leaf for a plant.
-  		     NB. prior to API 200 it would return WEED_ERROR_NOSUCH_LEAF.
-
-The returned values of weed_leaf_num_elements(),
-weed_leaf_element_size(), weed_leaf_get_flags(), and weed_leaf_seed_type()
-are all undefined if the leaf/element does not exist.
-
-Functions weed_malloc_f(), weed_realloc_f(), weed_free_f(), weed_memset_f(), weed_memcpy_f() have exactly the same
-semantics as malloc, realloc, free(), memset() and memcpy() from libc. Their purpose is to allow a host to provide a plugin
-with the application-specific memory managment. 
-Plugins SHOULD NOT use malloc, realloc, free, memcpy or memset directly, but instead use the weed counterparts. 
 
 
 
@@ -442,8 +530,8 @@ Errors are listed here in order of precedence from highest to lowest.
  *  WEED_NO_ERROR[[BR]]
     returned if no errors occured.
 
- *  WEED_ERROR_MEMORY_ALLOCATION[[BR]]
-    memory allocation has failed
+*   WEED_SUCCESS[[BR]]
+    synonym for WEED_NO_ERROR (added in api version 200)
 
  *  WEED_ERROR_NOSUCH_LEAF[[BR]]
     leaf does not exist for the specified plant; returned from
@@ -457,18 +545,18 @@ Errors are listed here in order of precedence from highest to lowest.
     it. weed_leaf_set_*() will return this error if
     you attempt such a thing, and the value of the leaf will not be amended.
 
- *  WEED_ERROR_FLAGALL [[BR]]
-    may be returned from weed_leaf_flagset. Indicates that all of the bits set in flagbits
-    were set in the leaf flags.
-    In this case the leaf will not be amended / deleted.
+ *  WEED_ERROR_IMMUTABLE[[BR]]
+    returned if you try to alter the value of a leaf which has the WEED_FLAG_IMMUTABLE bit set
 
-*  WEED_ERROR_FLAGBIT [[BR]]
-    may be returned from weed_leaf_flagset. Indicates that one or more of the bits (but not all)
-    set in flagbits was also set in the leaf flags.
-    In this case the leaf will not be amended / deleted.
+ *  WEED_ERROR_UNDELETABLE[[BR]]
+    returned if you try to delete a leaf which has the WEED_FLAG_UNDELETABLE bit set
 
-*  WEED_ERROR_BADVERSION [[BR]]
-   returned from weed_init() if the host specifies an api version that the library cannot support.
+*   WEED_ERROR_BADVERSION [[BR]]
+    returned from weed_init() if the host specifies an api version that the library cannot support.
+
+ *  WEED_ERROR_MEMORY_ALLOCATION[[BR]]
+    memory allocation has failed
+
 
 
 ==== Leaf flags ====
@@ -481,7 +569,15 @@ Errors are listed here in order of precedence from highest to lowest.
 
 
 
-Flag bits > (1 << 15) are reserved for custom flags.
+Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used.
+
+
+== Plant types ==
+
+weed.h defines a single plamt type, WEED_PLANT_UNKNOWN, with value zero.
+Other weed libraries provide more plant types.
+
+
 
 
 
@@ -499,6 +595,8 @@ WEED_API_VERSION_200 is also #defined in the header.
 WEED_VOIDPTR_SIZE is #defined as 8
 
 weed_voidptr_t is typedefed to (uint64_t *)
+
+
 
 
 == Leaf names ==
@@ -532,29 +630,7 @@ HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for lower level overloading.
 
 
 
-== WEED UTILITY FUNCTIONS ==
 
-To make life easier for host and plugin writers, there exists a Weed
-utility library, which wraps some of the core functions in simpler
-variants. This is documented in the Weed Utility Library spec. (TODO).
-
-== COMPILING A HOST WITH WEED ==
-
-A host wishing to use the reference build of Weed should be linked 
-(shared or static) with libweed, and #include (at least) weed-host.h followed by weed.h. The order of inclusion is important.
-
-If the host wishes to use the Weed effects system in should #include weed-effects.h and most likely weed-palettes.h
-
-If the host makes use of the Weed Utility Library, it may also be 
-linked (shared or static) with libweed-utils, and #include weed-utils.h
-
-If the host wishes to use Weed events, it should #include weed-events.h
-
-weed-compat.h is provided for compatibily with some external libraries.
-
-
-
-Compiling a plugin with Weed is dealt with below.
 
 
 
@@ -573,22 +649,102 @@ which are documented separately.
   (The weed_function_t is a pointer to a function, which may be cast to/from a pointer to any function type)
 
 
+Weed Effects (and Event) plugins, the value of the plant leaf "type" MAY be one of:
+
+  * WEED_PLANT_HOST_INFO          : Information about host and core functions
+  * WEED_PLANT_PLUGIN_INFO        : Information about plugin and list of filter classes it includes
+  * WEED_PLANT_FILTER_CLASS       : Descriptive information about single filter class
+  * WEED_PLANT_CHANNEL_TEMPLATE   : Information about what kinds of channels filter accepts
+  * WEED_PLANT_PARAMETER_TEMPLATE : Information about what kinds of parameters filter has
+  * WEED_PLANT_FILTER_INSTANCE    : All data about an instance
+  * WEED_PLANT_CHANNEL            : Instantiation of a channel
+  * WEED_PLANT_PARAMETER          : Instantiation of a parameter
+
+  * WEED_PLANT_GUI                : Used for GUI hints for the
+                                    filter_classes and parameter_templates.
+
+
+
+  * WEED_PLANT_EVENT              : plant used for events (described
+                                            in the Weed EVENTS extension
+  * WEED_PLANT_EVENT_LIST         : plant used for event lists (described
+                                            in the Weed EVENTS extension
+
+
+
+
+
+== WEED UTILITY FUNCTIONS ==
+
+To make life easier for host and plugin writers, there exists a Weed
+utility library, which wraps some of the core functions in simpler
+variants. This is documented in the Weed Utility Library spec. (TODO).
+
+== COMPILING A PLUGIN HOST WITH WEED ==
+
+A host (ie. the application which will dlopen() the plugins)
+wishing to use the reference build of Weed should #include the following headers:
+
+weed/weed-host.h // BEFORE weed.h
+weed/weed.h
+
+and link with libweed
+
+If the host wishes to use the Weed effects system:
+
+weed/weed-effects.h
+
+If using video effects:
+weed/weed-palettes.h // before or after any other headers
+
+If the host makes use of the Weed Utility Library, it may also be 
+linked (shared or static) with libweed-utils, and #include weed/weed-utils.h
+
+If the host wishes to use Weed events, it should #include weed/weed-events.h
+
+weed-compat.h is provided for compatibily with some external libraries (see below).
+
 
 
 == COMPILING A PLUGIN WITH WEED ==
 
-An effects plugin wishing to use the reference build of Weed 
-should #include <weed/weed.h>, <weed/weed-palettes.h>,
-<weed/weed-effects.h> and (optionally) <weed/weed-plugin.h>
+An effects plugin wishing to use the reference build of Weed should #include the following headers:
 
-<weed/weed-compat.h> is provided for compatibility with some external libraries.
+weed/weed-plugin.h // BEFORE weed.h
+weed/weed.h
+weed/weed-effects.h // AFTER weed.h
+
+and for a video effect:
+weed/weed-palettes.h // before or after any other headers
+
+Plugins may optionally link with libweed-plugin (TODO - for now #include weed-plugin.c)
+
+Plugins should NOT be linked directly with libweed, libweed-utils or any other library which uses the Weed API directly.
 
 
-Plugins MUST declare their versions of the Weed functions as static. This is because they are set through the API
-from the host. If the functions were not declared static in the plugin then setting them would also set the host's 
-version, which could very well cause problems and crashes in the host.
+== WEED-COMPAT.H ==
+weed/weed-compat.h is an optional include, provided for compatibility with some external libraries.
+It will automatically include weed/weed-palettes.h if necessary
 
-Plugins should NOT be linked directly with libweed, libweed-utils or any other Weed library which uses the Weed API directly.
+It will #define WEED_COMPAT_VERSION
+
+If you #define NEED_FOURCC_COMPAT before calling it, then it will provides the following function:
+
+int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *sampling, int *sspace, int *clamping)
+which will attempt to return a weed palette from an input fourcc code and bpp
+- bpp is the pixel size in bits, currentl only 24 and 32 are recognised (e.g 24 for RGB, 32 for RGBA)
+
+interlaced will be set to 1 if the palette is interlaced, otherwise 0
+sampling will return the YUV sampling (or WEED_YUV_SAMPLING_DEFAULT if it could not be ascertained)
+sspace will return the YUV subspace e.g. WEED_YUV_SUBSPACE_YCBCR, WEED_YUV_SUBSPACE_BT709
+clamping will return the YUV clamping type, WEED_YUV_CLAMPING_CLAMPED or WEED_YUV_CLAMPING_UNCLAMPED
+
+as of WEED_COMPAT_VERSION 0.11.0 it will also #define WEED_FOURCC_COMPAT in this case.
+
+
+
+The header also provides compatibility with other libraries, eg. libav. Check the header for details.
+
 
 
 == WEED_API_VERSION ==
@@ -631,8 +787,6 @@ without reference to absolute colour.
 
 
 
-
-
 == PLANT TYPES ==
 
 There now follows a description of the various plant types for weed effects, 
@@ -668,9 +822,8 @@ and their mandatory and optional leaves.
 == PLANT TYPE PLUGIN_INFO ==
 
 The plugin_info plant is returned from the plugin setup function weed_setup(), to tell the host what
-filter classes are available in that plugin. After receiving this plant, the host should
-set all leaves in it READONLY for the plugin and should not change any leaf
-values itself.
+filter classes are available in that plugin. After receiving this plant, the host nay
+set all leaves in it IMMUTABLE  and should not change any leaf values itself.
 
  * "type" == WEED_PLANT_PLUGIN_INFO
 
@@ -749,10 +902,9 @@ the plugin after weed_setup(), and should not be altered by the host.
 == PLANT TYPE FILTER_INSTANCE ==
 
 Plant type filter_instance is created by the host, and used to hold all data that are related to
-a single instance of the filter. Mandatory leaves SHOULD be set
-READONLY for the plugin by the host after weed_setup(), and should
-not be altered by the host. 
-Optional leaves created by the host MAY be set READONLY for the plugin.
+a single instance of the filter. Mandatory leaves MAY be set
+IMMUTABLE by the host after weed_setup(), and should not be altered by the host. 
+Optional leaves created by the host MAY be set IMMUTABLE.
 
 The host examines a filter_class and prepares a filter_instance from
 it. After this the host can pass the filter_instance into the filter's
@@ -1076,6 +1228,7 @@ value for the parameter. The host should not change any other leaves.
 
 The "hint" is a mandatory WEED_SEED_INT leaf of every parameter; the defined values are:
 
+ * WEED_HINT_UNSPECIFIED
  * WEED_HINT_INTEGER
  * WEED_HINT_FLOAT
  * WEED_HINT_TEXT
@@ -1083,6 +1236,10 @@ The "hint" is a mandatory WEED_SEED_INT leaf of every parameter; the defined val
  * WEED_HINT_COLOR
 
 Depending on the "hint" parameter seed type additional leaves are:
+
+ * WEED_HINT_UNSPECIFIED
+This is a special "placeholder" value and requires no mandatory leaves.
+
 
  * WEED_HINT_INTEGER
 "value" and "default" are constrained by min and max: min <= value <= max
@@ -1356,7 +1513,33 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 == PLUGIN FUNCTIONS ==
 
-The only fixed function name the plugin MUST implement is weed_setup(), all other information is passed through respective plants (classes, functions, etc...)
+The only fixed function name the plugin MUST implement is weed_setup().
+
+Normally, host and plugin would use utility functions to simplify the prcedure outlined below. In the simplifed version,
+the host does:
+
+weed_plant_t *plugin_info = weed_setup(weed_bootstrao_func);
+if (plugin_info != NULL)
+
+....
+
+
+and the plugin does:
+
+WEED_SETUP_START(weed_api_current_version, filter_api_current_version) {
+// api_versions should be specified manually by the plugin writer, do not use the version macros directly !
+
+.. setup the plugin info
+
+
+WEED_SETUP_END;
+}
+
+
+Howeer the full details are escribed below.
+
+
+
 
 ==== weed_setup ====
 
@@ -1369,15 +1552,16 @@ function, weed_bootstrap, which must be called first by the plugin.
 
 The typedef of weed_bootstrap_f is:
 {{{
-    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t weed_api_version, int32_t weed_filter_api_version)
+    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t weed_api_min_version, int32_t weed_api_max_version,
+     int32_t weed_filter_api_min_version, weed_filter_api_max_version);
 }}}
 
 
 ( NB: prior to API version 200, the function had a slightly different prototype:
    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t num_versions, int32_t *plugin_versions) )
 
-The plugin must call this, passing in a pointer to a default_getter_f, and the lowest versions of WEED_API_VERSION and
-WEED_FILTER_API_VERSION it supposrts.
+The plugin must call this, passing in a pointer to receive default_getter_f, and the lowest and highest versions of
+WEED_API_VERSION and WEED_FILTER_API_VERSION it supposrts.
 
 If the host does not support the plugin's api versions, it should return NULL.
 In this case the plugin should return NULL from the weed_setup() function, so that the host can unload it.
@@ -1582,21 +1766,57 @@ more information about the host, and optional functions.
 
 == OUTLINE WEED PROCESS FLOW OVERVIEW ==
 
- * Host calls weed_init()
- * Host loads plugin (dlopen)
- * Host calls the weed_setup() function in the plugin.
- * plugin calls weed_bootstrap and host checks api_versions supported by
-   the plugin. If it finds a version which it can use it sets this in
-   HOST_INFO and returns the HOST_INFO to the plugin, otherwise it must return NULL to the plugin.
- * plugin uses default_getter to get the leaves of the HOST_INFO plant.
-   In weed_setup(), for each filter class, the plugin creates and
-   initializes a plant of type WEED_PLANT_FILTER_CLASS and adds it
-   to the "filters" leaf of the returned PLUGIN_INFO plant. 
+ * Host calls weed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
+   for the host.
+
+ *  Host loads plugin (ysing dlopen)
+
+ *  Host calls the weed_setup() function in the plugin, passing in a pointer to the bootstrap function (normally this would be
+    weed_bootstrap in the weed_utils library.
+
+ *  plugin calls the bootstrap function, passing an address to return the default getter function, as well as the minimum and
+    maximum weed and filter api versions the plugin supports. The library checks weed and filter api_versions supported by
+    the plugin. If either host version is less then the plugin minumin version the plugin
+    cannot be loaded. If one or both of the values are greater than the maximum, the library checks for compatibility.
+    If the host version and plugin version are incompatible, the plugin cannot be loaded so NULL is returned. Otherwise it is OK
+    to proceed. The weed_boostrap function will create a HOST_INFO plant and set leaves with the host api versions,
+    pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter functio,
+    Optionally, the library will call a callback function in the host before returnin the PLUGIN_INFO, so that the host can
+    check, alter or add leaves before it is returned to the plugin (TODO).
+
+
+*  if the HOST_INFO is NULL, the plugin MUST return NULL from its weed_setup() function. Otherwise the plugin uses the
+   default_getter to get the leaves of the HOST_INFO plantm until it has enough functions defined to use the normal
+   Weed get function for its weed api version. Then it uses this to get the remaining leaves. Once this is done it creates a
+   PLUGIN_INFO plant. All this would normally be done in the weed-plugin-utils library, weed_plugin_info_init().
+
+
+*  plugin sets a leaf in the PLUGIN_INFO to point to the HOST_INFO plant. It also sets the filter classes and other mandatory leaves.
+   Then returns the PLUGIN_INFO from the weed_setup() function.
+
+
+
+
+
+All of this is simplified by the Weed utility libraries. The host simply calls weed_setup() in the plugin, passing in
+weed_bootstrap as the only parameter, and receives back a PLUGIN_INFO.
+
+
+On the plugin side, a simple macro taking 2 parameters, the minimum weed and filter APIs supported (the plugin may simply use
+WEED_API_VERSION and WEED_FILTER_API_VERSION) may be used to call the bootstrap function and initialise the PLUGIN_INFO,
+returning NULL to the host if it is NULL..
+
+
+
+
+
+When host wants to use the plugin,
 
  * Host creates a FILTER_INSTANCE: Host examines the in_channel and out_channel plants, and sets the "disabled" flag for any optional channels it does not wish to use. It also checks "palette_list", selects a palette it would like to start using on that channel and sets the chosen value in the "current_palette" leaf. It also sets the sizes ("width" and "height" leaves) if the plugin left them as zero. All input parameters have to have values set at this point. This means host now has a plant that it will instantiate.
 
  * Host calls init_func() [if it exists] from the filter info plant, passing a pointer to a FILTER_INSTANCE it would like to instantiate.
- * Plugin now knows the channel sizes, palettes and which channels are in use. The plugin may now weed_malloc() internal data.
+
+* Plugin now knows the channel sizes, palettes and which channels are in use. The plugin may now weed_malloc() internal data.
 
  * Host may now change parameter values (respecting "max" and "min" leaves) and it after that it may call process_func() in the plugin, passing in the initialised FILTER_INSTANCE. 
  * When the host has finished with the FILTER_INSTANCE, or if it needs
@@ -1664,23 +1884,6 @@ T.B.D
   * WEED_PLANT_EVENT_LIST         257
 
 
-==== Seed types ====
-
- * WEED_SEED_INT        1
-
- * WEED_SEED_DOUBLE     2
-
- * WEED_SEED_BOOLEAN    3
-
- * WEED_SEED_STRING     4
-
- * WEED_SEED_INT64      5
-
- * WEED_SEED_VOIDPTR    65 
-
- * WEED_SEED_PLANTPTR   66
-
-
 
 ==== Weed parameter hints ====
 
@@ -1700,7 +1903,7 @@ T.B.D
 
  * WEED_HINT_COLOR  5
 
-Parameter hints >=1024 are reserved for custom parameters.
+Parameter hints >= 1024 are reserved for custom parameters.
 
 
 
@@ -1711,7 +1914,7 @@ Parameter hints >=1024 are reserved for custom parameters.
 
  * WEED_COLORSPACE_RGBA  2
 
-Colorspaces >=1024 are reserved for custom color spaces.
+Colorspaces >= 1024 are reserved for custom color spaces.
 
 
 
@@ -1904,7 +2107,7 @@ Palette numbers >=2048 are reserved for custom palettes.
    Valid for input parameter templates only.
 
 
-Flag bits >=30 are reserved for custom flags.
+Flag bits >= 30 are reserved for custom flags.
 
 
 
@@ -1941,7 +2144,7 @@ specified otherwise.
    horizontal frequency but is aligned horizontally with luma samples
    (YUV 4:2:2 / YUV 4:1:1) [similar to mpeg, but vertically aligned] (top left)
 
-Sampling types >=1024 are reserved for custom samplings.
+Sampling types >= 1024 are reserved for custom samplings.
 
 
 
@@ -1953,7 +2156,7 @@ Sampling types >=1024 are reserved for custom samplings.
  * WEED_YUV_CLAMPING_UNCLAMPED  1  :: Y, U and V are unclamped (0 - 255 range
    for each) [used in jpeg for example]
 
-clamping types >=512 are reserved for custom clampings.
+clamping types >= 512 are reserved for custom clampings.
 
 
 
@@ -1969,17 +2172,8 @@ clamping types >=512 are reserved for custom clampings.
  * WEED_YUV_SUBSPACE_BT709   2  :: BT.709 high definition TV which uses different
    conversion factors than Y'CbCr digital/ananlog (Kr=0.2125, Kb=0.0721, UV offset 128)
 
-subspace types >=512 are reserved for custom subspaces.
+subspace types >= 512 are reserved for custom subspaces.
 
-
-
-
-Generic errors:
-Defined in weed-effects.h
-
- *  WEED_ERROR_LEAF_READONLY
-
-Can be returned from an overloaded weed_leaf_set() function depending on the leaf flags and caller.
 
 
 

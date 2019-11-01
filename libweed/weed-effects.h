@@ -59,7 +59,6 @@ extern "C"
 #define WEED_FILTER_API_VERSION_200
 
 /* plant types */
-#define WEED_PLANT_UNKNOWN 0
 #define WEED_PLANT_PLUGIN_INFO 1
 #define WEED_PLANT_FILTER_CLASS 2
 #define WEED_PLANT_FILTER_INSTANCE 3
@@ -135,14 +134,14 @@ typedef void (*weed_function_f)();
 typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_function_f *value);
 
 /* host bootstrap function */
-typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *value, int32_t plugin_weed_api_version, int32_t plugin_filter_api_version);
+  typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version, int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 
 /* mandatory plugin functions */
-typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
-typedef weed_error_t (*weed_process_f)(weed_plant_t *filter_instance, weed_timecode_t timestamp);
+  typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);
 
 /* optional plugin functions */
 typedef void (*weed_desetup_f)(void);
+typedef weed_error_t (*weed_process_f)(weed_plant_t *filter_instance, weed_timecode_t timestamp);
 typedef weed_error_t (*weed_init_f)(weed_plant_t *filter_instance);
 typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 
@@ -150,7 +149,7 @@ typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 typedef void (*weed_display_f)(weed_plant_t *parameter);
 typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
-// leaf naems
+// leaf names
 #define WEED_LEAF_PLUGIN_INFO "plugin_info"
 #define WEED_LEAF_FILTERS "filters"
 #define WEED_LEAF_MAINTAINER "maintainer"
@@ -160,10 +159,11 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 
 // host info
 #define WEED_LEAF_WEED_API_VERSION "weed_api_version"
-#define WEED_LEAF_API_VERSION "api_version"
+#define WEED_LEAF_FILTER_API_VERSION "api_version"
 #define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
 #define WEED_LEAF_SET_FUNC "weed_leaf_set_func"
 #define WEED_PLANT_NEW_FUNC "weed_plant_new_func"
+#define WEED_PLANT_FREE_FUNC "weed_plant_free_func"
 #define WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
 #define WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
 #define WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"

@@ -81,27 +81,29 @@ int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *filter_class;
-    int api_used = weed_get_api_version(plugin_info);
-    int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
+  static weed_plant_t *filter_class;
+  int api_used = weed_get_api_version(plugin_info);
+  int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
-    filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, NULL,
-                                          &negate_process, NULL,
-                                          in_chantmpls,
-                                          out_chantmpls, NULL, NULL);
+  filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, NULL,
+					&negate_process, NULL,
+					in_chantmpls,
+					out_chantmpls, NULL, NULL);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  fprintf(stderr, "negate added fclass %p to pi %p\n", filter_class, plugin_info);
+
+  int error;
+  fprintf(stderr, "NAME is %s\n", weed_get_string_value(filter_class, "name", &error));
+  
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

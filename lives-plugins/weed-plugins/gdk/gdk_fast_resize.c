@@ -27,9 +27,7 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-//#include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
-
 
 /////////////////////////////////////////////////////////////
 
@@ -185,8 +183,6 @@ int resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   return WEED_NO_ERROR;
 }
-
-
 
 
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {

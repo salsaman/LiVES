@@ -11,7 +11,7 @@
 
 /// filter apply errors
 typedef enum {
-  FILTER_NO_ERROR = 0,
+  FILTER_SUCCESS = 0,
   FILTER_ERROR_MISSING_LAYER,
   FILTER_ERROR_BLANK_FRAME,
   FILTER_ERROR_MISSING_FRAME,
@@ -32,6 +32,7 @@ typedef enum {
   FILTER_ERROR_TEMPLATE_MISMATCH,
   FILTER_ERROR_MEMORY_ERROR,
   FILTER_ERROR_DONT_THREAD,
+  FILTER_ERROR_BUSY,
 
   /// values >= 512 are info
   FILTER_INFO_REINITED = 512
@@ -220,7 +221,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
-boolean weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
+lives_filter_error_t weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
 void weed_generator_end(weed_plant_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);

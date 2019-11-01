@@ -27,7 +27,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -598,6 +597,9 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+extern "C"
+{
+
 weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   if (plugin_info != NULL) {
@@ -613,10 +615,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                      WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL
                                     };
     weed_plant_t *filter_class;
-    int api_used = weed_get_api_version(plugin_info);
-    int filter_flags = 0;
 
-    filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, filter_flags, &projectM_init,
+    filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, &projectM_init,
                                           &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
     //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
@@ -658,4 +658,6 @@ void weed_desetup(void) {
     statsd = NULL;
   }
   inited = 0;
+}
+
 }

@@ -32,6 +32,8 @@ static uint32_t prefs_current_page;
 
 static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 
+#define ACTIVE(widget, signal) lives_signal_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
+
 
 void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx) {
   // callback to set to make a togglebutton directly control a boolean pref (non-permanent)
@@ -5048,10 +5050,10 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   if (prefsw->checkbutton_show_ttips != NULL)
     lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_ttips), LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_ce), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rb_startup_mt), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+
+  ACTIVE(rb_startup_mt, TOGGLED);
+  ACTIVE(rb_startup_ce, TOGGLED);
+
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(spinbutton_crit_ds_value_changed), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_crit_ds), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,

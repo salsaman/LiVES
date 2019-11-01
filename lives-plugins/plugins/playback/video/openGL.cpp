@@ -286,7 +286,7 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
 const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
 
   if (plugin_info == NULL) {
-    plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+    plugin_info = weed_plugin_info_init(weed_boot, 200, 200, 200, 200);
 
     // play params
     params[0] = weed_integer_init("mode", "Playback _mode", -1, -1, 10);

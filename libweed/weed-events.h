@@ -43,8 +43,13 @@ extern "C"
 #define WEED_EVENT_HINT_PARAM_CHANGE 5
 #define WEED_EVENT_HINT_MARKER 6
 
+#ifndef WEED_AUDIO_LITTLE_ENDIAN
 #define WEED_AUDIO_LITTLE_ENDIAN 0
+#endif
+
+#ifndef WEED_AUDIO_BIG_ENDIAN
 #define WEED_AUDIO_BIG_ENDIAN 1
+#endif
 
 #ifdef __cplusplus
 }

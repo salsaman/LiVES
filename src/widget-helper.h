@@ -1060,6 +1060,8 @@ boolean set_tooltips_state(LiVESWidget *widget, boolean state);
 boolean get_border_size(LiVESWidget *win, int *bx, int *by);
 boolean lives_window_get_inner_size(LiVESWindow *, int *x, int *y);
 
+LiVESWidget *lives_standard_hseparator_new(void);
+
 LiVESWidget *add_hsep_to_box(LiVESBox *);
 LiVESWidget *add_vsep_to_box(LiVESBox *);
 

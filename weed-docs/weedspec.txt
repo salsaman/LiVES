@@ -744,9 +744,13 @@ and for a video effect:
 weed/weed-palettes.h // before or after any other headers
 
 TODO:
-Plugins may optionally link with libweed-plugin and / or libweed-utils (TODO - for now #include weed-plugin.c)
-Plugins should NOT be linked directly with libweed.
+If plugins wish to use weed-utils then they should #include weed/weed-utils AFTER weed-plugin.h.
 
+Plugins may optionally be link with libweed-plugin (TODO) and if they wish to use Weed utils they should simply
+#include weed/weed-utils.h
+
+Plugins should NOT be linked directly with libweed or libweed-utils, as they would be using the host version of the core
+functions.
 
 
 
@@ -827,23 +831,38 @@ and their mandatory and optional leaves.
  * "type" == WEED_PLANT_HOST_INFO
 
 '''Mandatory leaves''':[[BR]]
- 
- * "weed_api_version" : WEED_SEED_INT : weed api version supported by host,
 
- * "api_version" : WEED_SEED_INT : filter api version supported by host,
+WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_VOIDPTR - pointer to function of type weed_leaf_get_f for the plugin to use
+WEED_LEAF_SET_FUNC "weed_leaf_set_func"       :: etc...
+WEED_PLANT_NEW_FUNC "weed_plant_new_func"
+WEED_PLANT_FREE_FUNC "weed_plant_free_func"
+WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
+WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
+WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"
+WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
+WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
 
- * "weed_leaf_get_func" : WEED_SEED_VOIDPTR : pointer to function pointer to weed_leaf_get function; versions should match "api_version"
+WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
+WEED_LEAF_FREE_FUNC "weed_free_func"
+WEED_LEAF_MEMSET_FUNC "weed_memset_func"
+WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
 
- etc for all functions (except weed_leaf_set_flags,
- weed_plant_free, and weed_leaf_delete)
+Addded in API version 200:
+WEED_LEAF_CALLOC_FUNC "weed_calloc_func"
+WEED_LEAF_REALLOC_FUNC "weed_realloc_func"
+WEED_LEAF_MEMMOVE_FUNC "weed_memmove_func"
+
+
 
 '''Optional leaves''': [[BR]]
 
- * "host_name" : WEED_SEED_STRING : host name
+ * "weed_api_version" : WEED_SEED_INT : weed api version exposed in host,
+ * "filter_api_version" : WEED_SEED_INT : filter api version provided by host
+ * "plugin_info" : WEED_SEED_PLANTPTR : a pointer to the most recent PLUGIN_INFO created from this template
+
+ * "host_name"    : WEED_SEED_STRING : host name
  * "host_version" : WEED_SEED_STRING : host version
  * "flags"        : WEED_SEED_INT : bitmap of host_info flags (see below)
-
-
 
 
 
@@ -857,18 +876,23 @@ set all leaves in it IMMUTABLE  and should not change any leaf values itself.
 
 '''Mandatory leaves''':[[BR]]
 
- * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO
-   plant returned from the host in weed_bootstrap()
-
  * "filters"	  : WEED_SEED_PLANTPTR : array of pointers to the filters in the plugin
  * "version"	  : WEED_SEED_INT : plugin package version
 
 
 '''Optional leaves''':[[BR]]
 
+ * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO
+   plant returned from the host in weed_bootstrap()
+
  * "package_name" : WEED_SEED_STRING : for wrapper filters, the name of the package which is wrapped, e.g. "frei0r"
  * "maintainer"	  : WEED_SEED_STRING : maintainer of plugin package
  * "url"	  : WEED_SEED_STRING : URL of plugin package
+
+ * "min_weed_api_version"      : WEED_SEED_INT        :: min versions of the Weed API that the plugin supports
+ * "max_weed_api_version"      : WEED_SEED_INT
+ * "min_weed_filter_version"   : WEED_SEED_INT
+ * "max_weed_filter_version"   " WEED_SEED_INT
 
 
 

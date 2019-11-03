@@ -114,8 +114,9 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
   weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, weed_api_min_version, weed_api_max_version,
                                          weed_filter_api_min_version, weed_filter_api_max_version);
 
-  weed_plant_t *plugin_info;
+  weed_plant_t *plugin_info = NULL;
   int32_t weed_api_version = WEED_API_VERSION;
+  weed_error_t err;
 
   if (host_info == NULL) return NULL; // matching version was not found
 
@@ -161,8 +162,22 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
   }
   //////////////////////////////////////////////////////////////////////
 
-  plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO);
-  if (plugin_info == NULL) return NULL;
+  if (weed_plant_has_leaf(host_info, WEED_LEAF_PLUGIN_INFO)) {
+    plugin_info = weed_get_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, &err);
+    if (err == WEED_SUCCESS) {
+      int32_t type = weed_get_int_value(plugin_info, WEED_LEAF_TYPE, &err);
+      if (err != WEED_SUCCESS) {
+        return NULL;
+      }
+      if (type != WEED_PLANT_PLUGIN_INFO) plugin_info = NULL;
+    } else {
+      return NULL;
+    }
+  }
+  if (plugin_info == NULL) {
+    plugin_info = weed_plant_new(WEED_PLANT_PLUGIN_INFO);
+    if (plugin_info == NULL) return NULL;
+  }
 
   weed_leaf_set(plugin_info, WEED_LEAF_HOST_INFO, WEED_SEED_PLANTPTR, 1, &host_info);
   return plugin_info;

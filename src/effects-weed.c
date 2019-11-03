@@ -4592,6 +4592,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
                                 weed_voidptr_t values) {
   // change even immutable leaves
   weed_error_t err;
+  //fprintf(stderr, "wlsh %s\n", key);
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_SUCCESS) return err;
@@ -4608,21 +4609,84 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
 
 
 static int our_plugin_id = 0;
-static weed_plant_t *host_info = NULL;
+static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
+static boolean suspect = FALSE;
+static int ncbcalls = 0;
 
-static void host_info_cb(weed_plant_t *xhost_info, void *data) {
+static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   // if the plugin called weed_boostrap during its weed_setup() as we requested, then we will end up here
   // from weed_bootstrap()
   int id = LIVES_POINTER_TO_INT(data);
-  if (id == our_plugin_id) {
-    // plugin called weed_bootstrap as requested
-    g_print("plugin called weed_bootstrap, and we assigned it ID %d\n", our_plugin_id);
-    weed_set_int_value(xhost_info, WEED_LEAF_HOST_IDENTIFIER, id);
-  } else {
-    weed_set_int_value(xhost_info, WEED_LEAF_HOST_IDENTIFIER, 0);
+
+  int lib_weed_version = 0;
+  int lib_filter_version = 0;
+
+  /* int pl_min_weed_api; */
+  /* int pl_max_weed_api; */
+  /* int pl_min_filter_api; */
+  /* int pl_max_filter_api; */
+
+  suspect = TRUE;
+
+  ncbcalls++;
+  if (ncbcalls > 1) {
+    return NULL;
   }
 
-  // we can do cool stuff here like override plugin functions...
+  if (xhost_info == NULL) {
+    return NULL;
+  }
+
+  expected_hi = xhost_info;
+
+  if (id == our_plugin_id) {
+    // plugin called weed_bootstrap as requested
+    //g_print("plugin called weed_bootstrap, and we assigned it ID %d\n", our_plugin_id);
+    weed_set_int_value(xhost_info, WEED_LEAF_HOST_IDENTIFIER, id);
+    weed_set_boolean_value(xhost_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_FALSE);
+    suspect = FALSE;
+  } else {
+    weed_set_int_value(xhost_info, WEED_LEAF_HOST_IDENTIFIER, 0);
+    weed_set_boolean_value(xhost_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_TRUE);
+  }
+
+  // we can do cool stuff here !
+
+  if (!suspect) {
+    // let's check the versions the library is using...
+    if (weed_plant_has_leaf(xhost_info, WEED_LEAF_WEED_API_VERSION)) {
+      lib_weed_version = weed_get_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, NULL);
+      if (lib_weed_version > WEED_API_VERSION) weed_set_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, WEED_API_VERSION);
+    }
+    if (weed_plant_has_leaf(xhost_info, WEED_LEAF_FILTER_API_VERSION)) {
+      lib_filter_version = weed_get_int_value(xhost_info, WEED_LEAF_FILTER_API_VERSION, NULL);
+      if (lib_filter_version > WEED_FILTER_API_VERSION) weed_set_int_value(xhost_info, WEED_LEAF_FILTER_API_VERSION, WEED_FILTER_API_VERSION);
+    }
+  }
+
+  if (weed_plant_has_leaf(xhost_info, WEED_LEAF_PLUGIN_INFO)) {
+    // let's check the versions the plugin supports
+    weed_plant_t *plugin_info = weed_get_plantptr_value(xhost_info, WEED_LEAF_PLUGIN_INFO, NULL);
+    if (plugin_info != NULL) {
+      expected_pi = plugin_info;
+      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */
+      /* 	pl_min_weed_api = weed_get_int_value(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION, NULL); */
+      /* } */
+      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) { */
+      /* 	pl_max_weed_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION, NULL); */
+      /* } */
+      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */
+      /* 	pl_min_filter_api = weed_get_int_value(plugin_info, WEED_LEAF_MIN_FILTER_API_VERSION, NULL); */
+      /* } */
+      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) { */
+      /* 	pl_max_filter_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_FILTER_API_VERSION, NULL); */
+      /* } */
+    }
+  }
+
+  //  fprintf(stderr, "API versions %d %d / %d %d : %d %d\n", lib_weed_version, lib_filter_version, pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api);
+
+  // let's override some plugin functions...
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_malloc);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, lives_realloc);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, lives_calloc);
@@ -4631,18 +4695,19 @@ static void host_info_cb(weed_plant_t *xhost_info, void *data) {
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, lives_memset);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, lives_memmove);
 
+  // we can also monitor a particular plugin
   //weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, weed_leaf_get_plugin);
 
   update_host_info(xhost_info);
-  host_info = xhost_info;
+  return xhost_info;
 }
-
 
 
 static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   weed_setup_f setup_fn;
 
   weed_plant_t *plugin_info = NULL, **filters = NULL, *filter = NULL;
+  weed_plant_t *host_info;
 
   void *handle;
 
@@ -4694,12 +4759,15 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       host_info = NULL;
 
       do {
-        our_plugin_id += (int)(lives_random() & 0xFFFF);
+        our_plugin_id += (int)((lives_random() * lives_random()) & 0xFFFF);
       } while (our_plugin_id == 0);
 
       weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(our_plugin_id));
 
       lives_chdir(dir, TRUE);
+      suspect = TRUE;
+      expected_hi = expected_pi = NULL;
+      ncbcalls = 0;
 
       plugin_info = (*setup_fn)(weed_bootstrap);
       if (plugin_info == NULL || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
@@ -4711,7 +4779,60 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
         lives_chdir(pwd, FALSE);
         return;
       }
-
+      if (expected_pi != NULL && plugin_info != expected_pi) suspect = TRUE;
+      if (weed_plant_has_leaf(plugin_info, WEED_LEAF_HOST_INFO)) {
+        host_info = weed_get_plantptr_value(plugin_info, WEED_LEAF_HOST_INFO, NULL);
+        if (host_info == NULL || host_info != expected_hi) {
+          // filter switched the host_info...very naughty
+          if (host_info != NULL) weed_plant_free(host_info);
+          msg = lives_strdup_printf("Badly behaved plugin (%s)\n", plugin_path);
+          LIVES_WARN(msg);
+          lives_free(msg);
+          if (plugin_info != NULL) weed_plant_free(plugin_info);
+          dlclose(handle);
+          lives_chdir(pwd, FALSE);
+          return;
+        }
+        if (weed_plant_has_leaf(host_info, WEED_LEAF_PLUGIN_INFO)) {
+          weed_plant_t *pi = weed_get_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, NULL);
+          if (pi == NULL || pi != plugin_info) {
+            // filter switched the host_info...very naughty
+            msg = lives_strdup_printf("Badly behaved plugin - %s %p %p %p %p\n", plugin_path, pi, plugin_info, host_info, expected_hi);
+            LIVES_WARN(msg);
+            lives_free(msg);
+            if (pi != NULL) weed_plant_free(pi);
+            if (host_info != NULL) weed_plant_free(host_info);
+            if (plugin_info != NULL) weed_plant_free(plugin_info);
+            dlclose(handle);
+            lives_chdir(pwd, FALSE);
+            return;
+          }
+        } else {
+          suspect = TRUE;
+          weed_set_plantptr_value(host_info, WEED_LEAF_PLUGIN_INFO, plugin_info);
+        }
+      } else {
+        if (suspect || expected_hi == NULL) {
+          msg = lives_strdup_printf("Badly behaved plugin: %s\n", plugin_path);
+          LIVES_WARN(msg);
+          lives_free(msg);
+          if (host_info != NULL) weed_plant_free(host_info);
+          if (plugin_info != NULL) weed_plant_free(plugin_info);
+          dlclose(handle);
+          lives_chdir(pwd, FALSE);
+          return;
+        }
+        host_info = expected_hi;
+        suspect = TRUE;
+        weed_set_plantptr_value(plugin_info, WEED_LEAF_HOST_INFO, expected_hi);
+      }
+      if (!suspect) {
+        weed_set_boolean_value(plugin_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_FALSE);
+        weed_set_boolean_value(host_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_FALSE);
+      } else {
+        weed_set_boolean_value(plugin_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_TRUE);
+        weed_set_boolean_value(host_info, WEED_LEAF_HOST_SUSPICIOUS, WEED_TRUE);
+      }
       weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, plugin_name); // for hashname
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, dir);

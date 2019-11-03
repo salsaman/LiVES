@@ -10940,12 +10940,11 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
+  boolean lm_needs_idlefunc = FALSE;
   int nulleventcount = 0;
   int loops = 0;
 
   if (mainw->no_context_update) return FALSE;
-
-  if (pthread_mutex_trylock(&mainw->gtk_mutex)) return FALSE;
 
   if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
 #ifdef GUI_GTK
@@ -10958,6 +10957,12 @@ boolean lives_widget_context_update(void) {
 
     mainw->multitrack->idlefunc = 0;
     mt_needs_idlefunc = TRUE;
+  }
+
+  if (mainw->loadmeasure != 0) {
+    lives_source_remove(mainw->loadmeasure);
+    mainw->loadmeasure = 0;
+    lm_needs_idlefunc = TRUE;
   }
 
   if (!mainw->is_exiting) {
@@ -10975,15 +10980,20 @@ boolean lives_widget_context_update(void) {
       GdkEvent *ev = gtk_get_current_event();
       nulleventcount++;
       loops++;
-      if (loops > 1000) fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
-                                  ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
+      if (loops > 1000) {
+        fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
+                ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
+        break;
+      }
       if (nulleventcount > MAX_NULL_EVENTS) break;
       if (ev != NULL) {
         if (ev->type != GDK_BUTTON_RELEASE && ev->type != GDK_EXPOSE && ev->type != GDK_DELETE &&
             ev->type != GDK_KEY_PRESS && ev->type != GDK_KEY_RELEASE)
           nulleventcount = 0;
       }
+      if (pthread_mutex_trylock(&mainw->gtk_mutex)) break;
       g_main_context_iteration(NULL, FALSE);
+      pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif
 #ifdef GUI_QT
@@ -10995,7 +11005,12 @@ boolean lives_widget_context_update(void) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  pthread_mutex_unlock(&mainw->gtk_mutex);
+  if (!mainw->is_exiting && lm_needs_idlefunc) {
+    if (prefs->loadchecktime > 0.) {
+      mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
+    }
+  }
+
 
   return TRUE;
 }

@@ -100,6 +100,7 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   weed_set_int_value(plugin_info, "version", package_version);
+  fprintf(stderr, "NEG pi is %p\n", plugin_info);
 }
 WEED_SETUP_END;
 

@@ -4,7 +4,16 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-// functions for dealing with externalaties
+// functions for dealing with externalities
+
+/// disk/storage status values
+typedef enum {
+  LIVES_STORAGE_STATUS_UNKNOWN = 0,
+  LIVES_STORAGE_STATUS_NORMAL,
+  LIVES_STORAGE_STATUS_WARNING,
+  LIVES_STORAGE_STATUS_CRITICAL,
+  LIVES_STORAGE_STATUS_OFFLINE
+} lives_storage_status_t;
 
 #define INIT_LOAD_CHECK_COUNT 1000 // initial loops to get started
 #define N_QUICK_CHECKS 10 // how many times we should run with quick checks after that
@@ -15,6 +24,9 @@
 // ignore variance outside these limits
 #define VAR_MAX 1.2
 #define VAR_MIN .8
+
+
+void init_random(void);
 
 boolean load_measure_idle(livespointer data);
 
@@ -53,6 +65,4 @@ void lives_log(const char *what);
 #endif
 
 lives_cancel_t check_for_bad_ffmpeg(void);
-
-
 

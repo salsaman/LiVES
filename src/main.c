@@ -455,16 +455,12 @@ static boolean pre_init(void) {
   LiVESError *gerr = NULL;
   char *icon;
 #endif
-  ssize_t randres = -1;
-  uint32_t rseed;
 
   pthread_mutexattr_t mattr;
 
   char *msg, *tmp, *tmp2;
 
   boolean needs_update = FALSE;
-
-  int randfd;
 
   register int i;
 
@@ -554,37 +550,6 @@ static boolean pre_init(void) {
   sizint = sizeof(int);
   sizdbl = sizeof(double);
   sizshrt = sizeof(short);
-
-  // try to get randomness from /dev/urandom
-  randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-  if (randfd > -1) {
-    randres = read(randfd, &rseed, sizint);
-    close(randfd);
-  }
-
-  if (randres != sizint) {
-    gettimeofday(&tv, NULL);
-    rseed = tv.tv_sec + tv.tv_usec;
-  }
-
-  lives_srandom(rseed);
-
-  randres = -1;
-
-  randfd = lives_open2("/dev/urandom", O_RDONLY);
-
-  if (randfd > -1) {
-    randres = read(randfd, &rseed, sizint);
-    close(randfd);
-  }
-
-  if (randres != sizint) {
-    gettimeofday(&tv, NULL);
-    rseed = tv.tv_sec + tv.tv_usec;
-  }
-
-  fastsrand(rseed);
 
   // TRANSLATORS: text saying "Any", for encoder and output format (as in "does not matter")
   mainw->string_constants[LIVES_STRING_CONSTANT_ANY] = lives_strdup(_("Any"));
@@ -3117,9 +3082,9 @@ static boolean lives_startup(livespointer data) {
 
   // begin load measuring
   prefs->loadchecktime = get_double_prefd(PREF_LOADCHECK_TIME, 10.);
-  if (prefs->loadchecktime > 0.) {
-    lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
-  }
+  /* if (prefs->loadchecktime > 0.) { */
+  /*   mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
+  /* } */
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
@@ -3371,6 +3336,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   mainw->msg[0] = '\0';
   mainw->com_failed = FALSE;
   mainw->error = FALSE;
+  mainw->loadmeasure = 0;
+
+  init_random();
 
   mainw->has_session_workdir = FALSE;
   mainw->old_vhash = NULL;

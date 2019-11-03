@@ -438,7 +438,7 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
     leaf->data = (weed_data_t **)weed_data_free(leaf->data, leaf->num_elements, seed_type, leaf->flags);
   }
   leaf->num_elements = 0;
-  if (num_elems > 0 && (data = weed_data_new(seed_type, num_elems, values)) == NULL) {
+  if (num_elems > 0 && ((data = (weed_data_t **)weed_data_new(seed_type, num_elems, values)) == NULL)) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
   leaf->data = data;

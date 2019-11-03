@@ -963,6 +963,7 @@ capability *capable;
 #include "colourspace.h"
 #include "paramspecial.h"
 #include "multitrack.h"
+#include "machinestate.h"
 #include "mainwindow.h"
 #include "events.h"
 #include "keyboard.h"
@@ -1507,7 +1508,6 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 #include "osc_notify.h"
-#include "machinestate.h"
 
 // inlines
 #define cfile mainw->files[mainw->current_file]

@@ -95,7 +95,8 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_ap
 void weed_add_plant_flags(weed_plant_t *plant, int32_t flags);
 void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags);
 
-typedef void (*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
+/* typedef for host callback from weed_bootstrap; host must return a host_info, the original one or a new one */
+typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
 
 void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 #endif
@@ -405,10 +406,10 @@ static weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key
 
 #endif
 
-#define WEED_LEAF_MIN_WEED_API_VERSION   "min_weed_version"
-#define WEED_LEAF_MAX_WEED_API_VERSION   "max_weed_version"
-#define WEED_LEAF_MIN_FILTER_API_VERSION "min_filter_version"
-#define WEED_LEAF_MAX_FILTER_API_VERSION "max_filter_version"
+#define WEED_LEAF_MIN_WEED_API_VERSION   "min_weed_api_version"
+#define WEED_LEAF_MAX_WEED_API_VERSION   "max_weed_api_version"
+#define WEED_LEAF_MIN_FILTER_API_VERSION "min_weed_filter_version"
+#define WEED_LEAF_MAX_FILTER_API_VERSION "max_weed_filter_version"
 
 #ifdef __cplusplus
 }

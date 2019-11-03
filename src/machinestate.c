@@ -10,6 +10,51 @@
 
 #include "main.h"
 
+
+void init_random() {
+  ssize_t randres = -1;
+  uint32_t rseed;
+  int randfd;
+  int i;
+
+  // try to get randomness from /dev/urandom
+  randfd = lives_open2("/dev/urandom", O_RDONLY);
+
+  if (randfd > -1) {
+    randres = read(randfd, &rseed, sizint);
+    close(randfd);
+  }
+
+  gettimeofday(&tv, NULL);
+  rseed += tv.tv_sec + tv.tv_usec;
+
+  lives_srandom(rseed);
+
+  for (i = 0; i < 10000; i++) {
+    long int a, b;
+    a = lives_random();
+    b = a * lives_random();
+    a = b * lives_random();
+  }
+
+  randres = -1;
+
+  randfd = lives_open2("/dev/urandom", O_RDONLY);
+
+  if (randfd > -1) {
+    randres = read(randfd, &rseed, sizint);
+    close(randfd);
+  }
+
+  if (randres != sizint) {
+    gettimeofday(&tv, NULL);
+    rseed = tv.tv_sec + tv.tv_usec;
+  }
+
+  fastsrand(rseed);
+}
+
+
 boolean load_measure_idle(livespointer data) {
   // function is called as an idlefunc, and we count how many calls per second
   // to give an estimate of machine load
@@ -51,6 +96,8 @@ boolean load_measure_idle(livespointer data) {
   double check_time = TARGET_CHECK_TIME; // adjust load_check_count so we check this number of secs.
   double variance;
 
+  if (mainw->loadmeasure == 0) return FALSE;
+
   if (prefs->loadchecktime <= 0.) return FALSE; // function disabled
 
   if (load_count == -1) {
@@ -72,7 +119,7 @@ boolean load_measure_idle(livespointer data) {
     if (capable->time_per_idle > 0.) {
       load_check_count = 1. + check_time / capable->time_per_idle;
     }
-    if (nchecks < 10) {
+    if (nchecks > 10) {
       // variance tells us the ratio of delta time to the current target time
       // if this is very large or small we ignore this check. For example when playing the, idlefunc is not called so time
       // passes without any checking, producing false results.

@@ -217,15 +217,6 @@ typedef enum {
   LIVES_RENDER_ERROR_WRITE_FRAME,
 } lives_render_error_t;
 
-/// disk/storage status values
-typedef enum {
-  LIVES_STORAGE_STATUS_UNKNOWN = 0,
-  LIVES_STORAGE_STATUS_NORMAL,
-  LIVES_STORAGE_STATUS_WARNING,
-  LIVES_STORAGE_STATUS_CRITICAL,
-  LIVES_STORAGE_STATUS_OFFLINE
-} lives_storage_status_t;
-
 #define DVD_AUDIO_CHAN_MIN 128
 #define DVD_AUDIO_CHAN_DEFAULT 128
 #define DVD_AUDIO_CHAN_MAX 159
@@ -1502,6 +1493,8 @@ typedef struct {
 
   char *version_hash;
   char *old_vhash;
+
+  volatile uint32_t loadmeasure;
   ////////////////////
 } mainwindow;
 

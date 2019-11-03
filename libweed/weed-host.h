@@ -39,5 +39,8 @@
 
 #define __WEED_HOST__
 
+#define WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"
+#define WEED_LEAF_SET_FLAGS_FUNC "weed_leaf_set_flags_func"
+
 #endif // #ifndef __WEED_HOST_H__
 

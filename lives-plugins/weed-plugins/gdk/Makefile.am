@@ -12,26 +12,24 @@ shared_ldflags = -shared -fPIC -DPIC -no-undefined -module -avoid-version --tag=
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
-
-
-if HAVE_SYSTEM_WEED
-AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ 
-weed_CFLAGS = -DHAVE_SYSTEM_WEED
+if !NEED_LOCAL_WEED
+AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@
+weed_CFLAGS = 
 else
 if IS_MINGW
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@ -D IS_MINGW=1
 else
 AM_LDFLAGS = $(shared_ldflags) @GTK_LIBS@
 endif
-weed_CFLAGS =
+weed_CFLAGS = -DNEED_LOCAL_WEED
 endif
 
-if HAVE_SYSTEM_WEED_PLUGIN
-weed_CFLAGS = -DHAVE_SYSTEM_WEED_PLUGIN_H
+if NEED_LOCAL_WEED_PLUGIN
+weed_CFLAGS = -DNEED_LOCAL_WEED_PLUGIN
 endif
 
-if HAVE_SYSTEM_WEED_COMPAT
-weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
+if NEED_LOCAL_WEED_COMPAT
+weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math

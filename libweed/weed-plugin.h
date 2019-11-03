@@ -14,35 +14,22 @@
 
 
    Weed is developed by:
-
    Gabriel "Salsaman" Finch - http://lives.sourceforge.net
 
-   mainly based on LiViDO, which is developed by:
-
-
+   partly based on LiViDO, which is developed by:
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #ifndef __WEED_PLUGIN_H__
 #define __WEED_PLUGIN_H__
@@ -99,7 +86,7 @@
     weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_version, weed_api_version, filter_api_version, filter_api_version); \
  if (plugin_info == NULL) {return NULL;} {
 
-#define WEED_SETUP_START_MINMAX(weed_api_min_version, weed_api_max_version, filter_api_min_version, filter_api_max_version) EXPORTED weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) { \
+#define WEED_SETUP_START_MINMAX(weed_api_min_version, weed_api_max_version, filter_api_min_version, filter_api_max_version) EXPORTED wyeed_plant_t *weed_setup(weed_bootstrap_f weed_boot) { \
     weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_min_version, weed_api_max_version, filter_api_min_version, filter_api_max_version); \
  if (plugin_info == NULL) {return NULL;} {
 

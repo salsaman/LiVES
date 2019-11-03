@@ -3,11 +3,11 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include/weed
 
-Name: libweed
+Name: libweed_gslice
 Description: libweed for hosts (using faster memory slice implementation)
 Requires: 
 Requires.private: 
 Version: 2.0.0
-Libs: -L${libdir} -lweed_slice
-Static: -L${libdir} -lweed_slice_static
+Libs: -L${libdir} -lweed_gslice
+Static: -L${libdir} -lweed_gslice_static
 Cflags: -I${includedir}

@@ -44,16 +44,6 @@
 
 #endif // USE_SWSCALE
 
-#ifdef USE_SWSCALE
-
-#ifdef HAVE_SYSTEM_WEED_COMPAT
-#include <weed/weed-compat.h>
-#else
-#include "../libweed/weed-compat.h"
-#endif // HAVE_SYSTEM_WEED_COMPAT
-
-#endif // USE_SWSCALE
-
 #include "main.h"
 
 #include "cvirtual.h"

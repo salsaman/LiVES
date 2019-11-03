@@ -12,37 +12,23 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
-   mainly based on LiViDO, which is developed by:
-
-
+   partly based on LiViDO, which is developed by:
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #ifdef __WEED_PLUGIN__
 #error Hosts must not include weed-plugin.h !

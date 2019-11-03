@@ -3316,7 +3316,29 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
 
-  weed_functions_init();
+#ifndef IS_LIBLIVES
+  // start up the Weed system
+  weed_init(WEED_API_VERSION);
+
+  // backup the core functions so we can override them
+  _weed_plant_new = weed_plant_new;
+  _weed_plant_free = weed_plant_free;
+  _weed_leaf_set = weed_leaf_set;
+  _weed_leaf_get = weed_leaf_get;
+  _weed_leaf_delete = weed_leaf_delete;
+  _weed_plant_list_leaves = weed_plant_list_leaves;
+  _weed_leaf_num_elements = weed_leaf_num_elements;
+  _weed_leaf_element_size = weed_leaf_element_size;
+  _weed_leaf_seed_type = weed_leaf_seed_type;
+  _weed_leaf_get_flags = weed_leaf_get_flags;
+  _weed_leaf_set_flags = weed_leaf_set_flags;
+#endif
+
+  // allow us to set immutable values (plugins can't)
+  weed_leaf_set = weed_leaf_set_host;
+
+  // allow us to free undeletable plants (plugins cant')
+  weed_plant_free = weed_plant_free_host;
 
   widget_helper_init();
 

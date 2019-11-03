@@ -5,20 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifdef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -597,67 +599,60 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-extern "C"
-{
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
 
-  weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-    weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200, 200, 200);
-    if (plugin_info != NULL) {
-      int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  const char *xlist[3] = {"- Random -", "Choose...", NULL};
 
-      const char *xlist[3] = {"- Random -", "Choose...", NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
 
-      weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
 
-      weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
+                                   WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL
+                                  };
+  weed_plant_t *filter_class;
 
-      weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
-                                       WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL
-                                      };
-      weed_plant_t *filter_class;
+  filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, &projectM_init,
+                                        &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
-      filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, &projectM_init,
-                                            &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+  //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-      //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[0], "max", INT_MAX);
 
-      weed_set_int_value(in_params[0], "max", INT_MAX);
+  weed_set_int_value(in_chantmpls[0], "audio_channels", 1);
+  weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_TRUE);
+  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
 
-      weed_set_int_value(in_chantmpls[0], "audio_channels", 1);
-      weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_TRUE);
-      weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  weed_set_double_value(filter_class, "target_fps", TARGET_FPS); // set reasonable default fps
 
-      weed_set_double_value(filter_class, "target_fps", TARGET_FPS); // set reasonable default fps
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-      weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-      weed_set_int_value(plugin_info, "version", package_version);
-    }
-
-    statsd = NULL;
-
-    return plugin_info;
-  }
-
-
-  void weed_desetup(void) {
-    if (inited && statsd != NULL) {
-      statsd->die = true;
-      pthread_join(statsd->thread, NULL);
-      if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
-      if (statsd->audio != NULL) weed_free(statsd->audio);
-      if (statsd->prnames != NULL) {
-        for (int i = 0; i < statsd->nprs; i++) {
-          free(statsd->prnames[i]);
-        }
-        weed_free(statsd->prnames);
-      }
-      pthread_mutex_destroy(&statsd->mutex);
-      pthread_mutex_destroy(&statsd->pcm_mutex);
-      weed_free(statsd);
-      statsd = NULL;
-    }
-    inited = 0;
-  }
-
+  statsd = NULL;
 }
+WEED_SETUP_END;
+
+
+WEED_DESETUP_START {
+  if (inited && statsd != NULL) {
+    statsd->die = true;
+    pthread_join(statsd->thread, NULL);
+    if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
+    if (statsd->audio != NULL) weed_free(statsd->audio);
+    if (statsd->prnames != NULL) {
+      for (int i = 0; i < statsd->nprs; i++) {
+        free(statsd->prnames[i]);
+      }
+      weed_free(statsd->prnames);
+    }
+    pthread_mutex_destroy(&statsd->mutex);
+    pthread_mutex_destroy(&statsd->pcm_mutex);
+    weed_free(statsd);
+    statsd = NULL;
+  }
+  inited = 0;
+}
+WEED_DESETUP_END;
+

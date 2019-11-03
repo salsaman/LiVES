@@ -16,8 +16,8 @@ boolean load_measure_idle(livespointer data) {
 
   // measured values: 161 - 215, avg 154 - 181
 
-  static int load_count = -1; // count the fn calls until we reach load_check_count
-  static int load_check_count = INIT_LOAD_CHECK_COUNT;
+  static int64_t load_count = -1; // count the fn calls until we reach load_check_count
+  static int64_t load_check_count = INIT_LOAD_CHECK_COUNT;
   static int64_t tchecks = 0;
   static ticks_t last_check_ticks = 0; // last time we checked
   static ticks_t total_check = 0; // sum of all deltas
@@ -68,6 +68,7 @@ boolean load_measure_idle(livespointer data) {
     delta_ticks = lives_get_current_ticks() - last_check_ticks;
     total_check += delta_ticks;
     capable->time_per_idle = (double)delta_ticks / (double)load_count / TICKS_PER_SECOND_DBL;
+    fprintf(stderr, "%.3f %ld %ld\n", capable->time_per_idle, delta_ticks, load_count);
     if (capable->time_per_idle > 0.) {
       load_check_count = 1. + check_time / capable->time_per_idle;
     }

@@ -4577,10 +4577,33 @@ static boolean set_out_channel_palettes(weed_plant_t *filter, int num_channels) 
 }
 
 
-static weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems,
-    weed_voidptr_t values) {
-  g_print("plugin is setting %s\n", key);
-  return weed_leaf_set(plant, key, seed_type, num_elems, values);
+weed_error_t weed_plant_free_host(weed_plant_t *plant) {
+  // delete even undeletable plants
+  weed_error_t err;
+  if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_plant_free(plant);
+  if (err == WEED_SUCCESS) return err;
+  weed_leaf_set_flags(plant, WEED_LEAF_TYPE, 0);
+  return _weed_plant_free(plant);
+}
+
+
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems,
+                                weed_voidptr_t values) {
+  // change even immutable leaves
+  weed_error_t err;
+  if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+  if (err == WEED_SUCCESS) return err;
+  if (err == WEED_ERROR_IMMUTABLE) {
+    int32_t flags = weed_leaf_get_flags(plant, key);
+    flags ^= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+    err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+    flags |= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+  }
+  return err;
 }
 
 
@@ -4607,6 +4630,8 @@ static void host_info_cb(weed_plant_t *xhost_info, void *data) {
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, lives_memcpy);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, lives_memset);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, lives_memmove);
+
+  //weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, weed_leaf_get_plugin);
 
   update_host_info(xhost_info);
   host_info = xhost_info;
@@ -4651,7 +4676,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif
 
-  if ((handle = dlopen(plugin_path, RTLD_NOW))) {
+  if ((handle = dlopen(plugin_path, RTLD_LAZY | RTLD_DEEPBIND))) {
     dlerror(); // clear existing errors
 
     if ((setup_fn = (weed_setup_f)dlsym(handle, "weed_setup")) == NULL) {
@@ -4827,13 +4852,6 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   lives_chdir(pwd, FALSE);
 
   // TODO - add any rendered effects to fx submenu
-}
-
-
-LIVES_GLOBAL_INLINE void weed_functions_init(void) {
-#ifndef IS_LIBLIVES
-  weed_init(WEED_API_VERSION);
-#endif
 }
 
 

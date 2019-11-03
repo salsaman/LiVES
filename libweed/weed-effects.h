@@ -12,37 +12,23 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
-   mainly based on LiViDO, which is developed by:
-
-
+   partly based on LiViDO, which is developed by:
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #ifndef __WEED_EFFECTS_H__
 #define __WEED_EFFECTS_H__
@@ -134,8 +120,10 @@ typedef void (*weed_function_f)();
 typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_function_f *value);
 
 /* host bootstrap function */
-typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
-    int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version,
+    int32_t plugin_weed_max_api_version,
+    int32_t plugin_filter_min_api_version,
+    int32_t plugin_filter_max_api_version);
 
 /* mandatory plugin functions */
 typedef weed_plant_t *(*weed_setup_f)(weed_bootstrap_f weed_boot);

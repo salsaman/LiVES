@@ -315,22 +315,12 @@ static inline weed_data_t **weed_data_new(int32_t seed_type, weed_size_t num_ele
 
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *plant, const char *key) {
-  weed_plant_t *leaf, *prev = NULL;
+  weed_plant_t *leaf;
   uint32_t hash = weed_hash(key);
   for (leaf = plant; leaf != NULL; leaf = leaf->next) {
     if (hash == leaf->key_hash && !weed_strcmp((char *)leaf->key, (char *)key)) {
-#define NO_OPTIMISE_ORDER
-#ifndef NO_OPTIMISE_ORDER
-      if (leaf != plant && plant->next != leaf) {
-        // optimise by moving leaf to front
-        prev->next = leaf->next;
-        leaf->next = plant->next;
-        plant->next = leaf;
-      }
-#endif
       return leaf;
     }
-    prev = leaf;
   }
   return NULL;
 }

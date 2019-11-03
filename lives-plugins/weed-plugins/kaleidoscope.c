@@ -5,20 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -363,40 +365,36 @@ static int kal_deinit(weed_plant_t *inst) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-    weed_plant_t *in_params[] = {			       weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
-                                             weed_float_init("offset", "_Offset angle", 0., 0., 359.),
-                                             weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
-                                             weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),
-                                             weed_radio_init("cw", "_Clockwise", WEED_FALSE, 1),
-                                             weed_switch_init("szc", "_Switch direction on frame size change", WEED_FALSE),
-                                             NULL
-                                };
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_params[] = {			       weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
+                                           weed_float_init("offset", "_Offset angle", 0., 0., 359.),
+                                           weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
+                                           weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),
+                                           weed_radio_init("cw", "_Clockwise", WEED_FALSE, 1),
+                                           weed_switch_init("szc", "_Switch direction on frame size change", WEED_FALSE),
+                                           NULL
+                              };
 
-    weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
-                                 &kal_init, &kal_process, &kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+                               &kal_init, &kal_process, &kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
-    weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);
+  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);
 
-    weed_set_boolean_value(in_params[1], "wrap", WEED_TRUE);
+  weed_set_boolean_value(in_params[1], "wrap", WEED_TRUE);
 
-    weed_set_double_value(gui, "step_size", .1);
+  weed_set_double_value(gui, "step_size", .1);
 
-    gui = weed_parameter_template_get_gui(in_params[0]);
+  gui = weed_parameter_template_get_gui(in_params[0]);
 
-    weed_set_double_value(gui, "step_size", .1);
+  weed_set_double_value(gui, "step_size", .1);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END
 

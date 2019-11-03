@@ -435,23 +435,35 @@ typedef struct {
   double vel;
 } lives_audio_track_state_t;
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed-host.h>
-#include <weed/weed.h>
-#include <weed/weed-events.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
+#if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
 #include "../libweed/weed.h"
 #include "../libweed/weed-events.h"
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
 #include "../libweed/weed-utils.h"
+#include "../libweed/weed-compat.h"
+#else
+#include <weed/weed-host.h>
+#include <weed/weed.h>
+#include <weed/weed-events.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#include <weed/weed-compat.h>
 #endif
 
-// see weed event spec. for more info
+weed_leaf_get_f _weed_leaf_get;
+weed_leaf_set_f _weed_leaf_set;
+weed_plant_new_f _weed_plant_new;
+weed_plant_list_leaves_f _weed_plant_list_leaves;
+weed_leaf_num_elements_f _weed_leaf_num_elements;
+weed_leaf_element_size_f _weed_leaf_element_size;
+weed_leaf_seed_type_f _weed_leaf_seed_type;
+weed_leaf_get_flags_f _weed_leaf_get_flags;
+weed_plant_free_f _weed_plant_free;
+weed_leaf_set_flags_f _weed_leaf_set_flags;
+weed_leaf_delete_f _weed_leaf_delete;
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"

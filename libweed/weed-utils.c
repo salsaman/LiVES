@@ -14,44 +14,30 @@
 
 
    Weed is developed by:
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
-
-   mainly based on LiViDO, which is developed by:
-
+   partlyly based on LiViDO, which is developed by:
 
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
 /* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #define __LIBWEED__
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-effects.h>
 #include <weed/weed-utils.h>
@@ -706,13 +692,13 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
   if (plugin_min_weed_api_version > plugin_max_weed_api_version) {
     // plugin author may be confused
     tmp = plugin_min_weed_api_version;
-    plugin_min_weed_api_version = plugin_max_weed_apl_version;
-    plugin_max_weed_apl_version = tmp;
+    plugin_min_weed_api_version = plugin_max_weed_api_version;
+    plugin_max_weed_api_version = tmp;
   }
   if (plugin_min_filter_api_version > plugin_max_filter_api_version) {
     tmp = plugin_min_weed_api_version;
-    plugin_min_weed_api_version = plugin_max_weed_apl_version;
-    plugin_max_weed_apl_version = tmp;
+    plugin_min_weed_api_version = plugin_max_weed_api_version;
+    plugin_max_weed_api_version = tmp;
   }
 
   // set pointers to the functions the plugin will use

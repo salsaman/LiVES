@@ -12,37 +12,23 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
-   mainly based on LiViDO, which is developed by:
-
-
+   partly based on LiViDO, which is developed by:
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2016 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #ifndef __WEED_COMPAT_H__
 #define __WEED_COMPAT_H__
@@ -52,12 +38,18 @@ extern "C"
 {
 #endif /* __cplusplus */
 
+#include <string.h>
+
 #define WEED_COMPAT_VERSION 0.11.0
 
 #ifdef NEED_FOURCC_COMPAT
 
 #ifndef __WEED_PALETTES_H__
+#ifdef NEED_LOCAL_WEED
+#include "weed-palettes.h"
+#else
 #include <weed/weed-palettes.h>
+#endif
 #endif
 
 #ifndef WEED_FOURCC_COMPAT

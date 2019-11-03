@@ -366,4 +366,9 @@ int weed_instance_unref(weed_plant_t *inst);
 weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 
+#define WEED_ERROR_NOSUCH_PLANT 65536
+
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, weed_voidptr_t value);
+weed_error_t weed_plant_free_host(weed_plant_t *plant);
+
 #endif

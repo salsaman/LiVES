@@ -54,10 +54,10 @@ const char *plugin_version = "LiVES mkv decoder version 1.4";
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
-#ifdef HAVE_SYSTEM_WEED_COMPAT
-#include <weed/weed-compat.h>
-#else
+#ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
 #endif
 
 #include <libavformat/avformat.h>

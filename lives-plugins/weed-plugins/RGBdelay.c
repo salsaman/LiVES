@@ -7,20 +7,22 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 #include <stdlib.h>
@@ -390,88 +392,82 @@ static int RGBd_deinit(weed_plant_t *inst) {
 
 
 WEED_SETUP_START(200, 200) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   weed_plant_t **clone;
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  int palette_list2[] = {WEED_PALETTE_YUV888, WEED_PALETTE_END};
 
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-    int palette_list2[] = {WEED_PALETTE_YUV888, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls2[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list2), NULL};
+  weed_plant_t *out_chantmpls2[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list2), NULL};
+  weed_plant_t *filter_class, *gui;
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-    weed_plant_t *in_chantmpls2[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list2), NULL};
-    weed_plant_t *out_chantmpls2[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list2), NULL};
-    weed_plant_t *filter_class, *gui;
+  weed_plant_t *in_params[206];
+  char *rfx_strings[54];
+  char label[256];
+  int i, j;
 
-    weed_plant_t *in_params[206];
-    char *rfx_strings[54];
-    char label[256];
-    int i, j;
+  in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size (max)", 20, 0, 50);
+  weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-    in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size (max)", 20, 0, 50);
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-
-    for (i = 1; i < 205; i += 4) {
-      for (j = 0; j < 3; j++) {
-        if (j == 2) snprintf(label, 256, "        Frame -%-2d       ", (i - 1) / 4);
-        else weed_memset(label, 0, 1);
-        in_params[i + j] = weed_switch_init("", label, (i + j == 1 || i + j == 18 || i + j == 35) ? WEED_TRUE : WEED_FALSE);
-      }
-      in_params[i + j] = weed_float_init("", "", 1., 0., 1.);
-
-      if (i >= 80) {
-        gui = weed_parameter_template_get_gui(in_params[i]);
-        weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-        gui = weed_parameter_template_get_gui(in_params[i + 1]);
-        weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-        gui = weed_parameter_template_get_gui(in_params[i + 2]);
-        weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-        gui = weed_parameter_template_get_gui(in_params[i + 3]);
-        weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-      }
+  for (i = 1; i < 205; i += 4) {
+    for (j = 0; j < 3; j++) {
+      if (j == 2) snprintf(label, 256, "        Frame -%-2d       ", (i - 1) / 4);
+      else weed_memset(label, 0, 1);
+      in_params[i + j] = weed_switch_init("", label, (i + j == 1 || i + j == 18 || i + j == 35) ? WEED_TRUE : WEED_FALSE);
     }
+    in_params[i + j] = weed_float_init("", "", 1., 0., 1.);
 
-    in_params[205] = NULL;
-
-    filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &RGBd_init, &RGBd_process, &RGBd_deinit,
-                                          in_chantmpls, out_chantmpls,
-                                          in_params,
-                                          NULL);
-
-    gui = weed_filter_class_get_gui(filter_class);
-    rfx_strings[0] = "layout|p0|";
-    rfx_strings[1] = "layout|hseparator|";
-    rfx_strings[2] = "layout|\"R\"|\"G\"|\"B\"|fill|fill|\"Blend Strength\"|fill|";
-
-    for (i = 3; i < 54; i++) {
-      rfx_strings[i] = weed_malloc(1024);
-      snprintf(rfx_strings[i], 1024, "layout|p%d|p%d|p%d|p%d|", (i - 3) * 4 + 1, (i - 3) * 4 + 2, (i - 3) * 4 + 3, (i - 2) * 4);
+    if (i >= 80) {
+      gui = weed_parameter_template_get_gui(in_params[i]);
+      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      gui = weed_parameter_template_get_gui(in_params[i + 1]);
+      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      gui = weed_parameter_template_get_gui(in_params[i + 2]);
+      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      gui = weed_parameter_template_get_gui(in_params[i + 3]);
+      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
     }
-
-    weed_set_string_value(gui, "layout_scheme", "RFX");
-    weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    rfx_strings[2] = "layout|\"Y\"|\"U\"|\"V\"|fill|fill|\"Blend Strength\"|fill|";
-
-    filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, &RGBd_init, &RGBd_process, &RGBd_deinit, in_chantmpls2, out_chantmpls2,
-                                          (clone = weed_clone_plants(in_params)), NULL);
-    weed_free(clone);
-
-    gui = weed_filter_class_get_gui(filter_class);
-    weed_set_string_value(gui, "layout_scheme", "RFX");
-    weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    for (i = 3; i < 54; i++) weed_free(rfx_strings[i]);
-
-    weed_set_int_value(plugin_info, "version", package_version);
   }
-  return plugin_info;
-}
 
-#WEED_STARTUP_END
+  in_params[205] = NULL;
+
+  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &RGBd_init, &RGBd_process, &RGBd_deinit,
+                                        in_chantmpls, out_chantmpls,
+                                        in_params,
+                                        NULL);
+
+  gui = weed_filter_class_get_gui(filter_class);
+  rfx_strings[0] = "layout|p0|";
+  rfx_strings[1] = "layout|hseparator|";
+  rfx_strings[2] = "layout|\"R\"|\"G\"|\"B\"|fill|fill|\"Blend Strength\"|fill|";
+
+  for (i = 3; i < 54; i++) {
+    rfx_strings[i] = weed_malloc(1024);
+    snprintf(rfx_strings[i], 1024, "layout|p%d|p%d|p%d|p%d|", (i - 3) * 4 + 1, (i - 3) * 4 + 2, (i - 3) * 4 + 3, (i - 2) * 4);
+  }
+
+  weed_set_string_value(gui, "layout_scheme", "RFX");
+  weed_set_string_value(gui, "rfx_delim", "|");
+  weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  rfx_strings[2] = "layout|\"Y\"|\"U\"|\"V\"|fill|fill|\"Blend Strength\"|fill|";
+
+  filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, &RGBd_init, &RGBd_process, &RGBd_deinit, in_chantmpls2, out_chantmpls2,
+                                        (clone = weed_clone_plants(in_params)), NULL);
+  weed_free(clone);
+
+  gui = weed_filter_class_get_gui(filter_class);
+  weed_set_string_value(gui, "layout_scheme", "RFX");
+  weed_set_string_value(gui, "rfx_delim", "|");
+  weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  for (i = 3; i < 54; i++) weed_free(rfx_strings[i]);
+
+  weed_set_int_value(plugin_info, "version", package_version);
+}
+WEED_SETUP_END

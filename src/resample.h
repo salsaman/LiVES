@@ -10,13 +10,6 @@
 #ifndef HAS_LIVES_RESAMPLE_H
 #define HAS_LIVES_RESAMPLE_H
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#else
-#include "../libweed/weed.h"
-#endif
-
-
 #define RESIZE_ALL_NEEDS_CONVERT 1
 #define LETTERBOX_NEEDS_COMPOSITE 1
 #define LETTERBOX_NEEDS_CONVERT 1

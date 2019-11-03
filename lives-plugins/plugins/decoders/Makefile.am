@@ -12,23 +12,15 @@ shared_ldflags =  -lpthread -shared -fPIC -DPIC -module -avoid-version --tag=dis
 shared_cflags =  -fPIC -DPIC
 endif
 
-
-if IS_MINGW
-shared_cflags =  -DIS_MINGW -I /usr/include/ffmpeg -I /usr/i686-pc-mingw32/sys-root/mingw/include
-shared_ldflags += -no-undefined -Wl,/home/gabriel/lives-wine-test/ffmpeg/avcodec-54.dll -Wl,/home/gabriel/lives-wine-test/ffmpeg/avformat-54.dll -Wl,/home/gabriel/lives-wine-test/ffmpeg/avutil-51.dll
-endif
-
-
-if HAVE_SYSTEM_WEED
-weed_cflags = -DHAVE_SYSTEM_WEED=1
+if NEED_LOCAL_WEED
+weed_cflags = -DNEED_LOCAL_WEED=1
 else
 weed_cflags =
 endif
 
-if HAVE_SYSTEM_WEED_COMPAT
-weed_cflags += -DHAVE_SYSTEM_WEED_COMPAT
+if NEED_LOCAL_WEED_COMPAT
+weed_cflags += -DNEED_LOCAL_WEED_COMPAT
 endif
-
 
 if HAVE_LIBDV
 dv_libs = dv_decoder.la
@@ -61,8 +53,6 @@ HAVE_AVUTIL = true
 ogg_decoder_la_LDFLAGS = $(shared_ldflags) -Wl,/usr/i686-pc-mingw32/sys-root/mingw/lib/libogg.dll.a
 
 endif
-
-
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC
@@ -118,8 +108,6 @@ if HAVE_AVPRIV_SET_PTS_INFO
 libav_cflags += -DHAVE_AVPRIV_SET_PTS_INFO=1
 endif
 
-
-
 flv_libs = flv_decoder.la
 FLVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 FLVDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
@@ -127,15 +115,12 @@ flv_decoder_la_SOURCES = flv_decoder.c flv_decoder.h dec_helper.c
 flv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(FLVDEC_CFLAGS)
 flv_decoder_la_LDFLAGS = $(shared_ldflags) $(FLVDEC_LIBS)
 
-
 asf_libs = asf_decoder.la
 ASFDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 ASFDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
 asf_decoder_la_SOURCES = asf_decoder.c asf_decoder.h dec_helper.c
 asf_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(ASFDEC_CFLAGS)
 asf_decoder_la_LDFLAGS = $(shared_ldflags) $(ASFDEC_LIBS)
-
-
 
 mkv_libs = mkv_decoder.la
 MKVDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@ @LIBZ_LIBS@ @LIBBZ_LIBS@
@@ -145,8 +130,6 @@ mkv_decoder_la_SOURCES = mkv_decoder.c mkv_decoder.h dec_helper.c
 mkv_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MKVDEC_CFLAGS)
 mkv_decoder_la_LDFLAGS = $(shared_ldflags) $(MKVDEC_LIBS)
 
-
-
 mpegts_libs = mpegts_decoder.la
 MPEGTSDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVUTIL_LIBS@
 MPEGTSDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ @LIBAVUTIL_CFLAGS@ \
@@ -155,7 +138,6 @@ mpegts_decoder_la_SOURCES = mpegts_decoder.c mpegts_decoder.h dec_helper.c
 mpegts_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(MPEGTSDEC_CFLAGS)
 mpegts_decoder_la_LDFLAGS = $(shared_ldflags) $(MPEGTSDEC_LIBS)
 
-
 zzavformat_libs = zzavformat_decoder.la
 AVIDEC_LIBS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@
 AVIDEC_CFLAGS = @LIBAVFORMAT_CFLAGS@ @LIBAVCODEC_CFLAGS@ -Wno-deprecated-declarations
@@ -163,11 +145,9 @@ zzavformat_decoder_la_SOURCES = avformat_decoder.c avformat_decoder.h
 zzavformat_decoder_la_CFLAGS = $(libav_cflags) $(shared_cflags) $(weed_cflags) $(AVIDEC_CFLAGS)
 zzavformat_decoder_la_LDFLAGS = $(shared_ldflags) $(AVIDEC_LIBS)
 
-
 endif
 endif
 endif
-
 
 decoderpluginslib_LTLIBRARIES = $(ogg_libs) $(dv_libs) $(flv_libs) $(asf_libs) $(mkv_libs) $(mpegts_libs) $(zzavformat_libs)
 

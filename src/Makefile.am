@@ -108,24 +108,26 @@ wayland_LDADD = @WAYLAND_LIBS@
 wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
-if DISABLE_GLSLICE
-if HAVE_SYSTEM_WEED
+if DISABLE_GSLICE
+if !NEED_LOCAL_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
-libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
+libweed_CFLAGS = @WEED_CFLAGS@
 else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 else
-if HAVE_SYSTEM_WEED
-libweed_LDADD = @WEED_SLICE_LIBS@ @WEED_UTILS_LIBS@
-libweed_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1
+if !NEED_LOCAL_WEED
+libweed_LDADD = @WEED_GSLICE_LIBS@ @WEED_UTILS_LIBS@
+libweed_CFLAGS = @WEED_CFLAGS@
 else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_gslice.la $(abs_top_srcdir)/libweed/libweed-utils.la
+libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 endif
 
-if HAVE_SYSTEM_WEED_COMPAT
-libweed_compat_CFLAGS = -DHAVE_SYSTEM_WEED_COMPAT=1
+if NEED_LOCAL_WEED_COMPAT
+libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
 endif
 
 if HAVE_PULSE_AUDIO
@@ -266,16 +268,18 @@ extra_LDFLAGS = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
 	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
 
-if HAVE_SYSTEM_WEED
-libweed_scripting_LDADD = -lweed_slice -lweed-utils
-libweed_scripting_CFLAGS = @WEED_CFLAGS@ -DHAVE_SYSTEM_WEED=1 -D_WEED_VISIBLE_FUNCTIONS_
-else
-libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
-endif
+#if NEED_SCRIPTING_LIBS
+#if !NEED_LOCAL_WEED
+#libweed_scripting_LDADD = -lweed_gslice -lweed-utils
+#libweed_scripting_CFLAGS = @WEED_CFLAGS@
+#else
+#libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
+#libweed_scripting_CFLAGS = @WEED_CFLAGS@ -D__LIBWED__ -DNEED_LOCAL_WEED=1
+#endif
+#endif
 
-liblives_la_LDFLAGS = $(extra_LDFLAGS) $(libweed_scripting_LDADD) -lOSC
-
-liblives_la_CFLAGS += $(AM_CFLAGS) $(libweed_scripting_CFLAGS) -Wno-unused-function -DIS_LIBLIVES
+liblives_la_LDFLAGS = $(extra_LDFLAGS) -lOSC
+liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function
 
 install-exec-local:
 	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"

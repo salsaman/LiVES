@@ -13,34 +13,23 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
    Weed is developed by:
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
-   mainly based on LiViDO, which is developed by:
-
+   partly based on LiViDO, which is developed by:
    Niels Elburg - http://veejay.sf.net
-
    Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #include <string.h>
 #include <stdio.h>
@@ -49,7 +38,6 @@
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
 
 #ifndef ALLOW_UNUSED
 #ifdef __GNUC__
@@ -60,7 +48,8 @@
 #endif
 
 static int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
-weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api_min_version, int32_t weed_api_max_version,
+weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot,
+                                    int32_t weed_api_min_version, int32_t weed_api_max_version,
                                     int32_t filter_api_min_version, int32_t weed_filter_api_max_version) ALLOW_UNUSED;
 static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) ALLOW_UNUSED;
 weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags, weed_init_f init_func,
@@ -124,6 +113,7 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
 
   weed_plant_t *host_info = (*weed_boot)(&weed_default_getp, weed_api_min_version, weed_api_max_version,
                                          weed_filter_api_min_version, weed_filter_api_max_version);
+
   weed_plant_t *plugin_info;
   int32_t weed_api_version = WEED_API_VERSION;
 
@@ -131,11 +121,11 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
 
   // we must use the default getter to bootstrap our actual API functions
 
-  if ((weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
-  if ((weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_function_f *)&weed_malloc) != WEED_SUCCESS) return NULL;
-  if ((weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_function_f *)&weed_free) != WEED_SUCCESS) return NULL;
-  if ((weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_function_f *)&weed_memset) != WEED_SUCCESS) return NULL;
-  if ((weed_default_getp)(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_function_f *)&weed_memcpy) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_function_f *)&weed_malloc) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_FREE_FUNC, (weed_function_f *)&weed_free) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_MEMSET_FUNC, (weed_function_f *)&weed_memset) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_MEMCPY_FUNC, (weed_function_f *)&weed_memcpy) != WEED_SUCCESS) return NULL;
 
   // now we can use the normal get function (weed_leaf_get)
 
@@ -159,6 +149,12 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
   if (weed_api_version >= 200) {
     // added weed_realloc
     if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
+
+    // added weed_calloc
+    if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
+
+    // added weed_memmove
+    if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
 
     // added weed_plant_free
     if (weed_leaf_get(host_info, WEED_PLANT_FREE_FUNC, 0, &weed_plant_free) != WEED_SUCCESS) return NULL;

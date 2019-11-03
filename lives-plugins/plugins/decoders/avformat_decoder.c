@@ -10,10 +10,10 @@
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-compat.h>
-#else
+#ifdef NEED_LOCAL_WEED
 #include "../../../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
 #endif
 
 ///////////////////////////////////////////////////////

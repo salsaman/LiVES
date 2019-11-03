@@ -15,10 +15,10 @@ extern "C"
 #include <sys/types.h>
 
 // palettes, etc.
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed-palettes.h>
-#else
+#ifdef NEED_LOCAL_WEED
 #include "../../../libweed/weed-palettes.h"
+#else
+#include <weed/weed-palettes.h>
 #endif
 
 #if defined (IS_DARWIN) || defined (__FreeBSD__)

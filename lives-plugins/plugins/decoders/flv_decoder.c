@@ -42,17 +42,13 @@ const char *plugin_version = "LiVES flv decoder version 1.1";
 #undef HAVE_AV_CONFIG_H
 #endif
 
-#ifndef HAVE_SYSTEM_WEED
-#include "../../../libweed/weed-palettes.h"
-#endif
-
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
-#ifdef HAVE_SYSTEM_WEED_COMPAT
-#include <weed/weed-compat.h>
-#else
+#ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
 #endif
 
 #include <libavformat/avformat.h>

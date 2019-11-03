@@ -7,12 +7,6 @@
 #ifndef HAS_LIVES_EFFECTS_H
 #define HAS_LIVES_EFFECTS_H
 
-#if HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#else
-#include "../libweed/weed.h"
-#endif
-
 // general effects
 typedef enum {
   LIVES_FX_CAT_NONE = 0,

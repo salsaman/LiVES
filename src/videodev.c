@@ -3,6 +3,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#define NEED_FOURCC_COMPAT
+
+#ifdef NEED_LOCAL_WEED_COMPAT
+#include "../libweed/weed-compat.h"
+#else
+#include <weed/weed-compat.h>
+#endif
+
 #include "main.h"
 
 #ifdef HAVE_UNICAP
@@ -12,14 +20,6 @@
 #include "interface.h"
 #include "callbacks.h"
 #include "effects-weed.h"
-
-#define NEED_FOURCC_COMPAT
-
-#ifdef HAVE_SYSTEM_WEED_COMPAT
-#include <weed/weed-compat.h>
-#else
-#include "../libweed/weed-compat.h"
-#endif
 
 #include <unicap/unicap.h>
 

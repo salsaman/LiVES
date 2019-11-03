@@ -43,21 +43,20 @@ else
 HAVE_SDL_ANYVERSION = false
 endif
 
-
 AM_LDFLAGS = $(shared_ldflags)
 
 weed_CFLAGS =
 
-if HAVE_SYSTEM_WEED
-weed_CFLAGS += -DHAVE_SYSTEM_WEED
+if NEED_LOCAL_WEED
+weed_CFLAGS += -DNEED_LOCAL_WEED
 endif
 
-if HAVE_SYSTEM_WEED_PLUGIN
-weed_CFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_H
+if NEED_LOCAL_WEED_PLUGIN
+weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
 endif
 
-if HAVE_SYSTEM_WEED_COMPAT
-weed_CFLAGS += -DHAVE_SYSTEM_WEED_COMPAT
+if NEED_LOCAL_WEED_COMPAT
+weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall
@@ -77,9 +76,9 @@ endif
 endif
 endif
 
-fxpluginslib_LTLIBRARIES = negate.la simple_blend.la haip.la RGDdelay.la kaleidoscope.la
+fxpluginslib_LTLIBRARIES = negate.la simple_blend.la haip.la RGBdelay.la kaleidoscope.la
 
-EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
+EXTRA_DIST=data icons syna.h weed-plugin-utils.c
 
 install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
@@ -90,4 +89,3 @@ install-data-local:
 install-data-local-remove-vcs-files:
 	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".gitignore
 	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".gitignore
-

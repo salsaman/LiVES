@@ -14,19 +14,19 @@ MAINTAINERCLEANFILES = Makefile.in aclocal.m4 configure config.h.in \
 
 if !IS_MINGW
 
-if !HAVE_SYSTEM_WEED
+if NEED_LOCAL_WEED
 WEED_SUBDIRS=libweed
 endif
 
-if !HAVE_SYSTEM_WEED_UTILS
+if NEED_LOCAL_WEED_UTILS
 WEED_SUBDIRS=libweed
 endif
 
-if !HAVE_SYSTEM_WEED_COMPAT
+if NEED_LOCAL_WEED_COMPAT
 WEED_SUBDIRS=libweed
 endif
 
-if !HAVE_SYSTEM_WEED_PLUGIN
+if NEED_LOCAL_WEED_PLUGIN
 WEED_SUBDIRS=libweed
 endif
 
@@ -107,9 +107,7 @@ endif
 	$(MKDIR_P) "$(DESTDIR)$(docdir)/html/libweed"
 
 
-if HAVE_SYSTEM_WEED
-
-else
+if NEED_LOCAL_WEED
 	cp -rf "$(srcdir)/weed-docs/doxygen/html/"* "$(DESTDIR)$(docdir)/html/libweed"
 endif
 

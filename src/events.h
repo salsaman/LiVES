@@ -153,11 +153,6 @@ weed_plant_t *get_prev_event(weed_plant_t *event);
 weed_plant_t *get_next_event(weed_plant_t *event);
 
 //////////////////////////////////////////////////////////
-#if HAVE_SYSTEM_WEED
-#include <weed/weed-utils.h>
-#else
-#include "../libweed/weed-utils.h"
-#endif
 
 ticks_t get_event_timecode(weed_plant_t *);
 int get_event_hint(weed_plant_t *);

@@ -12,41 +12,34 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
 
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
+   Gabriel "Salsaman" Finch - http://lives-video.com
 
-   mainly based on LiViDO, which is developed by:
-
+   partly based on LiViDO, which was developed by:
    Niels Elburg - http://veejay.sf.net
-
-   Gabriel "Salsaman" Finch - http://lives.sourceforge.net
-
    Denis "Jaromil" Rojo - http://freej.dyne.org
-
    Tom Schouten - http://zwizwa.fartit.com
-
    Andraz Tori - http://cvs.cinelerra.org
 
    reviewed with suggestions and contributions from:
-
    Silvano "Kysucix" Galliani - http://freej.dyne.org
-
    Kentaro Fukuchi - http://megaui.net/fukuchi
-
    Jun Iio - http://www.malib.net
-
    Carlo Prelz - http://www2.fluido.as:8080/
-
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 ///////////////// host applications should #include weed-host.h before this header /////////////////////////
 
 #ifndef __WEED_H__
 #define __WEED_H__
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif /* __cplusplus */
 
 #define __need_size_t // for malloc, realloc, etc
 #define __need_NULL
@@ -225,5 +218,9 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 /* may be used by any plant to set the API / ABI version, WEED_SEED_INT */
 #define WEED_LEAF_WEED_API_VERSION "weed_api_version"
 #define WEED_LEAF_WEED_ABI_VERSION WEED_LEAF_WEED_API_VERSION
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif // #ifndef __WEED_H__

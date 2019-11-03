@@ -29,8 +29,8 @@ LDFLAGS_SDL = -lSDL
 endif
 endif
 
-if HAVE_SYSTEM_WEED
-weed_cflags = -DHAVE_SYSTEM_WEED=1
+if NEED_LOCAL_WEED
+weed_cflags = -DNEED_LOCAL_WEED
 endif
 
 if HAVE_MJPEGTOOLS
@@ -54,14 +54,12 @@ openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
 openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLU_CFLAGS@
 openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLU_LIBS@
 
-if HAVE_SYSTEM_WEED
-openGL_la_CPPFLAGS += -DHAVE_SYSTEM_WEED
-else
-openGL_la_LDFLAGS += $(shared_ldflags)
+if NEED_LOCAL_WEED
+openGL_la_CPPFLAGS += -DNEED_LOCAL_WEED
 endif
 
-if HAVE_SYSTEM_WEED_PLUGIN
-openGL_la_CPPFLAGS += -DHAVE_SYSTEM_WEED_PLUGIN_H
+if NEED_LOCAL_WEED_PLUGIN
+openGL_la_CPPFLAGS += -DNEED_LOCAL_WEED_PLUGIN
 endif
 
 endif

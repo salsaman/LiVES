@@ -334,10 +334,10 @@ AC_SUBST(GTK_LIBS_NODYNAMIC)
 PKG_CHECK_EXISTS([glib-2.0 >= 2.14.0],[HAVE_GLIB_VERSION214=true],[HAVE_GLIB_VERSION214=false])
 PKG_CHECK_EXISTS([glib-2.0 >= 2.4.0],[HAVE_GLIB_VERSION24=true],[HAVE_GLIB_VERSION24=false])
 
-DISABLE_GLSLICE=true
-AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_glslice=yes)
-if test "x$disable_glslice" != "xyes" ; then
-DISABLE_GLSLICE=false
+DISABLE_GSLICE=true
+AC_ARG_ENABLE(glib-slice-allocator, [  --disable-glib-slice-allocator           Disable the glib slice allocator (not recommended).] , disable_gslice=yes)
+if test "x$disable_gslice" != "xyes" ; then
+DISABLE_GSLICE=false
 if test "x$HAVE_GLIB_VERSION24" = "xfalse"; then
 echo "***********************************************"
 echo "LiVES requires glib-2.0 version 2.4.0 or higher"
@@ -367,7 +367,7 @@ fi
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-AM_CONDITIONAL(DISABLE_GLSLICE,$DISABLE_GLSLICE)
+AM_CONDITIONAL(DISABLE_GSLICE, $DISABLE_GSLICE)
 
 dnl giw
 if test "x$HAVE_GTK_VERSION206" = "xfalse"; then
@@ -859,67 +859,75 @@ fi
 fi
 AM_CONDITIONAL(ENABLE_LDVGRAB,$HAVE_LDVGRAB)
 
-HAVE_SYSTEM_WEED=false
-HAVE_SYSTEM_WEED_SLICE=false
-HAVE_SYSTEM_WEED_UTILS=false
-HAVE_SYSTEM_WEED_COMPAT=false
-HAVE_SYSTEM_WEED_PLUGIN=false
+NEED_LOCAL_WEED=false
+NEED_LOCAL_WEED_GSLICE=false
+NEED_LOCAL_WEED_UTILS=false
+NEED_LOCAL_WEED_COMPAT=false
+NEED_LOCAL_WEED_PLUGIN=false
 
 if test "$IS_MINGW" = "false"; then
 
-PKG_CHECK_MODULES(WEED, libweed >= 2.0.0, HAVE_SYSTEM_WEED=true, HAVE_SYSTEM_WEED=false)
+if test "$DISABLE_GSLICE" = "false"; then
+PKG_CHECK_MODULES(WEED_GSLICE, libweed_gslice >= 2.0.0, NEED_LOCAL_WEED_GSLICE=false, NEED_LOCAL_WEED_GSLICE=true)
 
-if test "$HAVE_SYSTEM_WEED" = "false"; then
-echo "...this is not a problem if we have WEED_SLICE"
+if test "$NEED_LOCAL_WEED_GSLICE" = "true"; then
+echo "...will try to build from included sources"
+NEED_LOCAL_WEED=true
 fi
 
-AC_SUBST(WEED_CFLAGS)
-AC_SUBST(WEED_LIBS)
+AC_SUBST(WEED_GSLICE_LIBS)
 
-PKG_CHECK_MODULES(WEED_SLICE, libweed_slice >= 2.0.0, HAVE_SYSTEM_WEED_SLICE=true, HAVE_SYSTEM_WEED_SLICE=false)
-
-if test "$HAVE_SYSTEM_WEED_SLICE" = "true"; then
-HAVE_SYSTEM_WEED=true
 else
+echo "gslice allocator disabled, so..."
+
+PKG_CHECK_MODULES(WEED, libweed >= 2.0.0, NEED_LOCAL_WEED=false, NEED_LOCAL_WEED=true)
+
+if test "$NEED_LOCAL_WEED" = "true"; then
 echo "...will try to build from included sources"
 fi
 
-dnl CFLAGS will be the same
-AC_SUBST(WEED_SLICE_LIBS)
+AC_SUBST(WEED_LIBS)
 
-PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.0, HAVE_SYSTEM_WEED_UTILS=true, HAVE_SYSTEM_WEED_UTILS=false)
+fi
 
-if test "$HAVE_SYSTEM_WEED_UTILS" = "false"; then
+AC_SUBST(WEED_CFLAGS)
+
+PKG_CHECK_MODULES(WEED_UTILS, libweed-utils >= 2.0.0, NEED_LOCAL_WEED_UTILS=false, NEED_LOCAL_WEED_UTILS=true)
+
+if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
 echo "...will try to build from included sources"
 fi
 
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
-PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.10.0, HAVE_SYSTEM_WEED_COMPAT=true, HAVE_SYSTEM_WEED_COMPAT=false)
+PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.10.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
+
+if test "$NEED_LOCAL_WEED_COMPAT" = "true"; then
+echo "...will user version from included sources"
+fi
 
 AC_SUBST(WEED_COMPAT_CFLAGS)
 AC_SUBST(WEED_COMPAT_LIBS)
 
+PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.0.0, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
 
-if test "$HAVE_SYSTEM_WEED_COMPAT" = "false"; then
-echo "...will try to build from included sources"
+if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
+echo "...plugins will be compiled with included sources"
 fi
-
-PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.0.0, HAVE_SYSTEM_WEED_PLUGIN=true, HAVE_SYSTEM_WEED_PLUGIN=false)
 
 AC_SUBST(WEED_PLUGIN_CFLAGS)
 AC_SUBST(WEED_PLUGIN_LIBS)
 
 fi
 
-AM_CONDITIONAL(HAVE_SYSTEM_WEED,$HAVE_SYSTEM_WEED)
-AM_CONDITIONAL(HAVE_SYSTEM_WEED_SLICE,$HAVE_SYSTEM_WEED_SLICE)
-AM_CONDITIONAL(HAVE_SYSTEM_WEED_UTILS,$HAVE_SYSTEM_WEED_UTILS)
-AM_CONDITIONAL(HAVE_SYSTEM_WEED_COMPAT,$HAVE_SYSTEM_WEED_COMPAT)
-AM_CONDITIONAL(HAVE_SYSTEM_WEED_PLUGIN,$HAVE_SYSTEM_WEED_PLUGIN)
+AM_CONDITIONAL(NEED_LOCAL_WEED,         $NEED_LOCAL_WEED)
+AM_CONDITIONAL(NEED_LOCAL_WEED_GSLICE,  $NEED_LOCAL_WEED_GSLICE)
+AM_CONDITIONAL(NEED_LOCAL_WEED_UTILS,   $NEED_LOCAL_WEED_UTILS)
+AM_CONDITIONAL(NEED_LOCAL_WEED_COMPAT,  $NEED_LOCAL_WEED_COMPAT)
+AM_CONDITIONAL(NEED_LOCAL_WEED_PLUGIN,  $NEED_LOCAL_WEED_PLUGIN)
 
-AM_CONDITIONAL(BUILD_EXPERIMENTAL,false)
+AM_CONDITIONAL(BUILD_EXPERIMENTAL, false)
 
 AC_ARG_ENABLE(liblives, [  --enable-liblives     Build additional liblives static library.] , liblives=yes, liblives=no)
 

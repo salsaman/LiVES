@@ -32,24 +32,6 @@ typedef struct {
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
 
-char *get_md5sum(const char *filename) {
-  char **array;
-  char *md5;
-  char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
-  mainw->com_failed = FALSE;
-  lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
-  lives_free(com);
-  if (mainw->com_failed) {
-    mainw->com_failed = FALSE;
-    return NULL;
-  }
-  array = lives_strsplit(mainw->msg, " ", 2);
-  md5 = lives_strdup(array[0]);
-  lives_strfreev(array);
-  return md5;
-}
-
-
 char *filename_from_fd(char *val, int fd) {
   // return filename from an open fd, freeing val first
 
@@ -823,47 +805,6 @@ ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean a
 
 /////////////////////////////////////////////
 
-char *lives_format_storage_space_string(uint64_t space) {
-  char *fmt;
-
-  if (space > lives_10pow(18)) {
-    // TRANSLATORS: Exabytes
-    fmt = lives_strdup_printf(_("%.2f EB"), (double)space / (double)lives_10pow(18));
-  } else if (space > lives_10pow(15)) {
-    // TRANSLATORS: Petabytes
-    fmt = lives_strdup_printf(_("%.2f PB"), (double)space / (double)lives_10pow(15));
-  } else if (space > lives_10pow(12)) {
-    // TRANSLATORS: Terabytes
-    fmt = lives_strdup_printf(_("%.2f TB"), (double)space / (double)lives_10pow(12));
-  } else if (space > lives_10pow(9)) {
-    // TRANSLATORS: Gigabytes
-    fmt = lives_strdup_printf(_("%.2f GB"), (double)space / (double)lives_10pow(9));
-  } else if (space > lives_10pow(6)) {
-    // TRANSLATORS: Megabytes
-    fmt = lives_strdup_printf(_("%.2f MB"), (double)space / (double)lives_10pow(6));
-  } else if (space > 1024) {
-    // TRANSLATORS: Kilobytes (1024 bytes)
-    fmt = lives_strdup_printf(_("%.2f KiB"), (double)space / 1024.);
-  } else {
-    fmt = lives_strdup_printf(_("%d bytes"), space);
-  }
-
-  return fmt;
-}
-
-
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval) {
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
-  uint64_t ds;
-  if (!is_writeable_dir(dir)) return LIVES_STORAGE_STATUS_UNKNOWN;
-  ds = get_fs_free(dir);
-  if (dsval != NULL) *dsval = ds;
-  if (ds < prefs->ds_crit_level) return LIVES_STORAGE_STATUS_CRITICAL;
-  if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
-  return LIVES_STORAGE_STATUS_NORMAL;
-}
-
-
 int lives_chdir(const char *path, boolean allow_fail) {
   int retval;
 
@@ -938,16 +879,6 @@ LIVES_GLOBAL_INLINE int get_approx_ln(uint32_t x) {
 }
 
 
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
-#ifdef USE_MONOTONIC_TIME
-  return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
-#else
-  gettimeofday(&tv, NULL);
-  return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
-#endif
-}
-
-
 ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
@@ -1016,11 +947,6 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
   return lives_get_relative_ticks(origsecs, origusecs);
 }
 
-
-LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
-  //  return current (wallclock) time in ticks (units of 10 nanoseconds)
-  return lives_get_relative_ticks(0, 0);
-}
 
 
 /** set alarm for now + delta ticks (10 nanosec)
@@ -1116,21 +1042,6 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
   return TRUE;
 }
 
-
-char *lives_datetime(struct timeval *tv) {
-  char buf[128];
-  char *datetime = NULL;
-  struct tm *gm = gmtime(&tv->tv_sec);
-  ssize_t written;
-
-  if (gm) {
-    written = (ssize_t)strftime(buf, 128, "%Y-%m-%d    %H:%M:%S", gm);
-    if ((written > 0) && ((size_t)written < 128)) {
-      datetime = lives_strdup(buf);
-    }
-  }
-  return datetime;
-}
 
 
 LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
@@ -1228,6 +1139,7 @@ LIVES_GLOBAL_INLINE int calc_frame_from_time4(int filenum, double time) {
 
 
 static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame) {
+  // this is only used for older versions with non-realtime players
   // return FALSE if audio stops playback
 
 #ifdef ENABLE_JACK
@@ -1699,8 +1611,6 @@ int free_n_msgs(int frval) {
     lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
   return WEED_NO_ERROR;
 }
-
-
 
 
 int add_messages_to_list(const char *text) {
@@ -3721,28 +3631,6 @@ boolean check_dir_access(const char *dir) {
 }
 
 
-boolean check_dev_busy(char *devstr) {
-  int ret;
-#ifdef IS_SOLARIS
-  struct flock lock;
-  lock.l_start = 0;
-  lock.l_whence = SEEK_SET;
-  lock.l_len = 0;
-  lock.l_type = F_WRLCK;
-#endif
-  int fd = open(devstr, O_RDONLY | O_NONBLOCK);
-  if (fd == -1) return FALSE;
-#ifdef IS_SOLARIS
-  ret = fcntl(fd, F_SETLK, &lock);
-#else
-  ret = flock(fd, LOCK_EX | LOCK_NB);
-#endif
-  close(fd);
-  if (ret == -1) return FALSE;
-  return TRUE;
-}
-
-
 void activate_url_inner(const char *link) {
 #if GTK_CHECK_VERSION(2, 14, 0)
   LiVESError *err = NULL;
@@ -3775,29 +3663,6 @@ void show_manual_section(const char *lang, const char *section) {
 }
 
 
-uint64_t get_file_size(int fd) {
-  // get the size of file fd
-  struct stat filestat;
-  fstat(fd, &filestat);
-  return (uint64_t)(filestat.st_size);
-}
-
-
-uint64_t sget_file_size(const char *name) {
-  // get the size of file fd
-  struct stat filestat;
-  int fd;
-
-  if ((fd = open(name, O_RDONLY)) == -1) {
-    return (uint32_t)0;
-  }
-
-  fstat(fd, &filestat);
-  close(fd);
-
-  return (uint64_t)(filestat.st_size);
-}
-
 
 void wait_for_bg_audio_sync(int fileno) {
   char *afile = lives_get_audio_file_name(fileno);
@@ -3815,50 +3680,6 @@ void wait_for_bg_audio_sync(int fileno) {
 }
 
 
-uint64_t reget_afilesize_inner(int fileno) {
-  // safe version that just returns the audio file size
-  uint64_t filesize;
-  char *afile = lives_get_audio_file_name(fileno);
-  lives_sync(1);
-  filesize = sget_file_size(afile);
-  lives_free(afile);
-  return filesize;
-}
-
-
-void reget_afilesize(int fileno) {
-  // re-get the audio file size
-  lives_clip_t *sfile = mainw->files[fileno];
-  boolean bad_header = FALSE;
-
-  if (mainw->multitrack != NULL) return; // otherwise achans gets set to 0...
-
-  sfile->afilesize = reget_afilesize_inner(fileno);
-
-  if (sfile->afilesize == 0l) {
-    if (!sfile->opening && fileno != mainw->ascrap_file && fileno != mainw->scrap_file) {
-      if (sfile->arate != 0 || sfile->achans != 0 || sfile->asampsize != 0 || sfile->arps != 0) {
-        sfile->arate = sfile->achans = sfile->asampsize = sfile->arps = 0;
-        save_clip_value(fileno, CLIP_DETAILS_ACHANS, &sfile->achans);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_ARATE, &sfile->arps);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_PB_ARATE, &sfile->arate);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        save_clip_value(fileno, CLIP_DETAILS_ASAMPS, &sfile->asampsize);
-        if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
-        if (bad_header) do_header_write_error(fileno);
-      }
-    }
-  }
-
-  if (mainw->is_ready && fileno > 0 && fileno == mainw->current_file) {
-    // force a redraw
-    update_play_times();
-  }
-}
-
-
 boolean create_event_space(int length) {
   // try to create desired events
   // if we run out of memory, all events requested are freed, and we return FALSE
@@ -3869,7 +3690,7 @@ boolean create_event_space(int length) {
   if (cfile->resample_events != NULL) {
     lives_free(cfile->resample_events);
   }
-  if ((cfile->resample_events = (event *)(lives_try_malloc(sizeof(event) * length))) == NULL) {
+  if ((cfile->resample_events = (event *)(lives_malloc(sizeof(event) * length))) == NULL) {
     // memory overflow
     return FALSE;
   }
@@ -4021,21 +3842,6 @@ int verhash(char *xv) {
   lives_free(version);
   return major * 1000000 + minor * 1000 + micro;
 }
-
-
-#ifdef PRODUCE_LOG
-// disabled by default
-void lives_log(const char *what) {
-  char *lives_log_file = lives_build_filename(prefs->workdir, LIVES_LOG_FILE, NULL);
-  if (mainw->log_fd < 0) mainw->log_fd = open(lives_log_file, O_WRONLY | O_CREAT, DEF_FILE_PERMS);
-  if (mainw->log_fd != -1) {
-    char *msg = lives_strdup("%s|%d|", what, mainw->current_file);
-    write(mainw->log_fd, msg, strlen(msg));
-    lives_free(msg);
-  }
-  lives_free(lives_log_file);
-}
-#endif
 
 
 // TODO - move into undo.c
@@ -4933,39 +4739,6 @@ boolean lives_make_writeable_dir(const char *newdir) {
 }
 
 
-uint64_t get_fs_free(const char *dir) {
-  // get free space in bytes for volume containing directory dir
-  // return 0 if we cannot create/write to dir
-
-  // caller should test with is_writeable_dir() first before calling this
-  // since 0 is a valid return value
-
-  // dir should be in locale encoding
-
-  // WARNING: this will actually create the directory (since we dont know if its parents are needed)
-
-  struct statvfs sbuf;
-
-  uint64_t bytes = 0;
-  boolean must_delete = FALSE;
-
-  if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) must_delete = TRUE;
-  if (!is_writeable_dir(dir)) goto getfserr;
-
-  // use statvfs to get fs details
-  if (statvfs(dir, &sbuf) == -1) goto getfserr;
-  if (sbuf.f_flag & ST_RDONLY) goto getfserr;
-
-  // result is block size * blocks available
-  bytes = sbuf.f_bsize * sbuf.f_bavail;
-
-getfserr:
-  if (must_delete) lives_rmdir(dir, FALSE);
-
-  return bytes;
-}
-
-
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
   if (quality == PB_QUALITY_HIGH) return LIVES_INTERP_BEST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
@@ -5042,40 +4815,3 @@ boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
   return FALSE;
 }
 
-
-lives_cancel_t check_for_bad_ffmpeg(void) {
-  int i;
-
-  int fcount, ofcount;
-
-  char *fname_next;
-
-  boolean maybeok = FALSE;
-
-  ofcount = cfile->frames;
-
-  get_frame_count(mainw->current_file);
-
-  fcount = cfile->frames;
-
-  for (i = 1; i <= fcount; i++) {
-    fname_next = make_image_file_name(cfile, i, get_image_ext_for_type(cfile->img_type));
-    if (sget_file_size(fname_next) > 0) {
-      lives_free(fname_next);
-      maybeok = TRUE;
-      break;
-    }
-    lives_free(fname_next);
-  }
-
-  cfile->frames = ofcount;
-
-  if (!maybeok) {
-    do_error_dialog(
-      _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"
-        "You can work around this temporarily by switching to jpeg output in Preferences/Decoding.\n\n"
-        "Try running Help/Troubleshoot for more information."));
-    return CANCEL_ERROR;
-  }
-  return CANCEL_NONE;
-}

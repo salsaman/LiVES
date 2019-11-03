@@ -10936,8 +10936,12 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
+#define MAX_NULL_EVENTS 50
+
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
+  int nulleventcount = 0;
+  int loops = 0;
 
   if (mainw->no_context_update) return FALSE;
 
@@ -10967,10 +10971,20 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
-    while (!mainw->is_exiting && gtk_events_pending()) {
-      gtk_main_iteration();
+    while (!mainw->is_exiting && g_main_context_pending(NULL)) {
+      GdkEvent *ev = gtk_get_current_event();
+      nulleventcount++;
+      loops++;
+      if (loops > 1000) fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
+                                  ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
+      if (nulleventcount > MAX_NULL_EVENTS) break;
+      if (ev != NULL) {
+        if (ev->type != GDK_BUTTON_RELEASE && ev->type != GDK_EXPOSE && ev->type != GDK_DELETE &&
+            ev->type != GDK_KEY_PRESS && ev->type != GDK_KEY_RELEASE)
+          nulleventcount = 0;
+      }
+      g_main_context_iteration(NULL, FALSE);
     }
-    //while (!mainw->is_exiting && g_main_context_iteration(NULL, FALSE));
 #endif
 #ifdef GUI_QT
     QCoreApplication::processEvents();

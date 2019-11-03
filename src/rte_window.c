@@ -807,7 +807,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           break;
         }
 
-        hashname = (char *)lives_try_malloc(hlen + 1);
+        hashname = (char *)lives_malloc(hlen + 1);
 
         if (hashname == NULL) {
           eof = TRUE;
@@ -900,7 +900,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               break;
             }
 
-            hashname = (char *)lives_try_malloc(hlen + 1);
+            hashname = (char *)lives_malloc(hlen + 1);
 
             if (hashname == NULL) {
               eof = TRUE;
@@ -1002,7 +1002,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           break;
         }
 
-        hashname = (char *)lives_try_malloc(hlen + 1);
+        hashname = (char *)lives_malloc(hlen + 1);
 
         if (hashname == NULL) {
           eof = TRUE;
@@ -1090,7 +1090,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               break;
             }
 
-            hashname = (char *)lives_try_malloc(hlen + 1);
+            hashname = (char *)lives_malloc(hlen + 1);
 
             if (hashname == NULL) {
               eof = TRUE;
@@ -1399,7 +1399,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
         break;
       }
 
-      hashname = (char *)lives_try_malloc(hlen + 1);
+      hashname = (char *)lives_malloc(hlen + 1);
 
       if (hashname == NULL) {
         eof = TRUE;

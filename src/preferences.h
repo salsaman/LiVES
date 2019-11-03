@@ -181,6 +181,8 @@ typedef struct {
 
   boolean show_msg_area;
 
+  double loadchecktime;
+
   uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
@@ -231,7 +233,7 @@ typedef struct {
   boolean mt_pertrack_audio;
   int mt_backaudio;
 
-  ticks_t mt_auto_back; ///< time diff to backup (-1 == never, 0 == after every change, >0 == seconds)
+  int mt_auto_back; ///< time diff to backup (-1 == never, 0 == after every change, > 0 == seconds)
 
   boolean ar_clipset;
   boolean ar_layout;
@@ -705,24 +707,16 @@ _prefsw *prefsw;
 void set_acodec_list_from_allowed(_prefsw *, render_details *);
 void  rdet_acodec_changed(LiVESCombo *acodec_combo, livespointer user_data);
 
-_prefsw *create_prefs_dialog(LiVESWidget *saved_dialog);
-
-boolean on_prefs_delete_event(LiVESWidget *, LiVESXEvent *, livespointer prefsw);
-
-void on_preferences_activate(LiVESMenuItem *, livespointer);
-
-void on_prefs_close_clicked(LiVESButton *, livespointer);
-
-void on_prefs_revert_clicked(LiVESButton *, livespointer);
-
-void on_prefs_apply_clicked(LiVESButton *, livespointer user_data);
-
 void set_vpp(boolean set_in_prefs);
 
+_prefsw *create_prefs_dialog(LiVESWidget *saved_dialog);
+boolean on_prefs_delete_event(LiVESWidget *, LiVESXEvent *, livespointer prefsw);
+void on_preferences_activate(LiVESMenuItem *, livespointer);
+void on_prefs_close_clicked(LiVESButton *, livespointer);
+void on_prefs_revert_clicked(LiVESButton *, livespointer);
+void on_prefs_apply_clicked(LiVESButton *, livespointer user_data);
 void on_prefDomainChanged(LiVESTreeSelection *, livespointer);
-
 void populate_combo_box(LiVESCombo *, LiVESList *data);
-
 void set_combo_box_active_string(LiVESCombo *, char *active_str);
 
 void prefsw_set_astream_settings(_vid_playback_plugin *, _prefsw *);
@@ -733,9 +727,6 @@ void pref_change_xcolours(void);
 void pref_change_colours(void);
 
 void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
-
-// NOTE: the following definitions must match with equivalent keys in smogrify
-// factories (pseudo prefs), called from cpp binding
 
 // TODO:
 /*typedef struct {
@@ -752,6 +743,7 @@ then:
 widget = lives_standard_widget_for_pref(const char *prefname, const char *label, val, min, max, step, page, dp, box, rb_group_or_combo_list, tooltip);
 */
 
+// NOTE: the following definitions must match with equivalent keys in smogrify
 
 #define PREF_REC_EXT_AUDIO "rec_ext_audio"
 #define PREF_AUDIO_OPTS "audio_opts"
@@ -815,11 +807,12 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_VID_SAVE_DIR "vid_save_dir"
 #define PREF_VID_LOAD_DIR "vid_load_dir"
 
-#define PREF_RECENT "recent"
-#define PREF_RECENT1 "recent1"
-#define PREF_RECENT2 "recent2"
-#define PREF_RECENT3 "recent3"
-#define PREF_RECENT4 "recent4"
+#define _PREF_RECENT(n) "recent##n"
+#define PREF_RECENT _PREF_RECENT()
+#define PREF_RECENT1 _PREF_RECENT(1)
+#define PREF_RECENT2 _PREF_RECENT(2)
+#define PREF_RECENT3 _PREF_RECENT(3)
+#define PREF_RECENT4 _PREF_RECENT(4)
 
 /////////////////// integer64 values
 #define PREF_DS_WARN_LEVEL "ds_warn_level"
@@ -915,6 +908,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_SHOW_TOOLTIPS "show_tooltips"
 #define PREF_SHOW_URGENCY "show_urgency_messages"
 #define PREF_UNSTABLE_FX "allow_unstable_effects"
+#define PREF_LOADCHECK_TIME "machine_load_check_secs"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

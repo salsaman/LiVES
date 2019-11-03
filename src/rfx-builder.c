@@ -897,7 +897,7 @@ void on_triggers_cancel(LiVESButton *button, livespointer user_data) {
   int i;
 
   if (rfxbuilder->num_params > 0)
-    valid_triggers = (uint8_t *)lives_malloc0(rfxbuilder->num_params);
+    valid_triggers = (uint8_t *)lives_calloc(rfxbuilder->num_params, 1);
 
   for (i = 0; i < rfxbuilder->num_triggers; i++) {
     lives_free(rfxbuilder->copy_triggers[i].code);

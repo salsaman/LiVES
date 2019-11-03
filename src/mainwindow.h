@@ -37,6 +37,8 @@
 #define LIVES_LONGER_TIMEOUT  (20. * TICKS_PER_SECOND_DBL) // 20 sec timeout
 #define LIVES_LONGEST_TIMEOUT  (30. * TICKS_PER_SECOND_DBL) // 30 sec timeout
 
+#define DEF_FPS 25.
+
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
 #define PB_CHANGE_RATE .0005
 
@@ -49,11 +51,14 @@
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
-#define V_RESIZE_ADJUST ((W_PACKING_WIDTH + 2) * 3)
-#define H_RESIZE_ADJUST ((W_PACKING_HEIGHT + 2) * 2)
+#define H_RESIZE_ADJUST ((widget_opts.packing_width + 2) * 2)
+#define V_RESIZE_ADJUST ((widget_opts.packing_height + 2) * 2)
+
+// space to reserve for the CE timeline
+// IMPORTANT to fine tune this - TODO
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-#define CE_FRAME_HSPACE ((int)(320. * widget_opts.scale))
+#define CE_FRAME_HSPACE ((int)(420. * widget_opts.scale))
 #else
 #define CE_FRAME_HSPACE ((int)(420. * widget_opts.scale))
 #endif
@@ -67,6 +72,7 @@
 /// char width of preview spinbutton
 #define PREVSBWIDTHCHARS 8
 
+// min sizes for the separate play window
 #define MIN_SEPWIN_WIDTH 600
 #define MIN_SEPWIN_HEIGHT 36
 
@@ -74,11 +80,8 @@
 #define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
 #define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))
 
+// min screen height to show the message area
 #define MIN_MSG_AREA_SCRNHEIGHT 720
-
-/// default size for generators
-#define DEF_GEN_WIDTH 1024
-#define DEF_GEN_HEIGHT 720
 
 /// height of preview widgets in sepwin
 #define PREVIEW_BOX_HT ((int)(100. * widget_opts.scale))
@@ -94,11 +97,21 @@
 
 #define SCREEN_SCALE_DEF_WIDTH 1600
 
-#define DEFAULT_FRAME_HSIZE_UNSCALED 640
-#define DEFAULT_FRAME_VSIZE_UNSCALED 480
+/// default size for generators
+#define DEF_GEN_WIDTH 1024
+#define DEF_GEN_HEIGHT 720
 
-#define DEFAULT_FRAME_HSIZE ((int)((double)DEFAULT_FRAME_HSIZE_UNSCALED * widget_opts.scale))
-#define DEFAULT_FRAME_VSIZE ((int)((double)DEFAULT_FRAME_VSIZE_UNSCALED * widget_opts.scale))
+#define DEF_FRAME_HSIZE_169_UNSCALED 640
+#define DEF_FRAME_VSIZE_169_UNSCALED 480
+
+#define DEF_FRAME_HSIZE_43_UNSCALED 640
+#define DEF_FRAME_VSIZE_43_UNSCALED 480
+
+#define DEF_FRAME_HSIZE_UNSCALED (GUI_SCREEN_WIDTH >= 1440 ? DEF_FRAME_HSIZE_169_UNSCALED : DEF_FRAME_HSIZE_43_UNSCALED)
+#define DEF_FRAME_VSIZE_UNSCALED (GUI_SCREEN_WIDTH >= 1440 ? DEF_FRAME_VSIZE_169_UNSCALED : DEF_FRAME_VSIZE_43_UNSCALED)
+
+#define DEF_FRAME_HSIZE ((int)((double)DEF_FRAME_HSIZE_UNSCALED * widget_opts.scale))
+#define DEF_FRAME_VSIZE ((int)((double)DEF_FRAME_VSIZE_UNSCALED * widget_opts.scale))
 
 #define FRAMEBLANK_MIN_WIDTH ((int)(240. * widget_opts.scale))
 #define FRAMEBLANK_MAX_WIDTH ((int)(600. * widget_opts.scale))

@@ -55,6 +55,85 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#ifndef lives_malloc
+#define lives_malloc malloc
+#endif
+#ifndef lives_realloc
+#define lives_realloc realloc
+#endif
+#ifndef lives_free
+#define lives_free free
+#endif
+#ifndef lives_memcpy
+#define lives_memcpy memcpy
+#endif
+#ifndef lives_memset
+#define lives_memset memset
+#endif
+#ifndef lives_memmove
+#define lives_memmove memmove
+#endif
+#ifndef lives_calloc
+#define lives_calloc calloc
+#endif
+
+#ifdef _lives_malloc
+#undef _lives_malloc
+#endif
+#ifdef _lives_realloc
+#undef _lives_realloc
+#endif
+#ifdef _lives_free
+#undef _lives_free
+#endif
+#ifdef _lives_memcpy
+#undef _lives_memcpy
+#endif
+#ifdef _lives_memset
+#undef _lives_memset
+#endif
+#ifdef _lives_memmove
+#undef _lives_memmove
+#endif
+#ifdef _lives_calloc
+#undef _lives_calloc
+#endif
+
+#ifndef USE_STD_MEMFUNCS
+// here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
+// at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
+// the same values are passed into realtime fx plugins via Weed function overloading
+#ifdef HAVE_OPENCV
+#ifndef NO_OPENCV_MEMFUNCS
+#define _lives_malloc  fastMalloc
+#define _lives_free    fastFree
+#define _lives_realloc proxy_realloc
+#endif
+#endif
+
+#ifndef __cplusplus
+
+#ifdef ENABLE_ORC
+#ifndef NO_ORC_MEMFUNCS
+#define _lives_memcpy lives_orc_memcpy
+#endif
+#endif
+
+#else
+
+#ifdef ENABLE_OIL
+#ifndef NO_OIL_MEMFUNCS
+#define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \
+      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);		\
+      return dest;\							\
+    }
+#endif
+#endif
+
+#endif // __cplusplus
+#endif // USE_STD_MEMFUNCS
+
+
 #define ENABLE_OSC2
 
 #ifndef GUI_QT
@@ -268,11 +347,6 @@ typedef int lives_pgid_t;
 #  define GNU_NORETURN
 #  define GNU_FLATTEN
 #  define GNU_HOT
-#endif
-
-#ifdef PRODUCE_LOG
-// disabled by default
-#define LIVES_LOG "lives.log"
 #endif
 
 // math macros / functions
@@ -827,6 +901,11 @@ typedef struct {
   pid_t mainpid;
 
   mode_t umask;
+
+  // machine load estimates
+  double time_per_idle;
+  double load_value;
+  double avg_load;
 } capability;
 
 /// some shared structures
@@ -1091,8 +1170,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 boolean reload_clip(int fileno, int maxframe);
 void wait_for_bg_audio_sync(int fileno);
-uint64_t reget_afilesize_inner(int fileno);
-void reget_afilesize(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
 ulong open_file(const char *filename);
 ulong open_file_sel(const char *file_name, double start_time, int frames);
@@ -1215,6 +1292,7 @@ void splash_end(void);
 void splash_msg(const char *msg, double pct);
 void resize_widgets_for_monitor(boolean get_play_times);
 void reset_message_area(void);
+
 #if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);
 boolean expose_pim(LiVESWidget *, lives_painter_t *, livespointer);
@@ -1272,6 +1350,7 @@ int lives_cat(const char *from, const char *to, boolean append);
 int lives_echo(const char *text, const char *to, boolean append);
 int lives_ln(const char *from, const char *to);
 
+
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 int lives_utf8_strcmp(const char *s1, const char *s2);
 LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd);
@@ -1280,16 +1359,11 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 
 char *filename_from_fd(char *val, int fd);
 
-ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t origusecs);
 ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
-ticks_t lives_get_current_ticks(void);
 
 lives_alarm_t lives_alarm_set(ticks_t ticks);
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle);
 boolean lives_alarm_clear(lives_alarm_t alarm_handle);
-lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
-char *lives_format_storage_space_string(uint64_t space);
-char *lives_datetime(struct timeval *tv);
 
 void get_dirname(char *filename);
 char *get_dir(const char *filename);
@@ -1328,14 +1402,10 @@ boolean after_foreign_play(void);
 boolean check_file(const char *file_name, boolean check_exists);  ///< check if file exists
 boolean check_dir_access(const char *dir);
 boolean lives_make_writeable_dir(const char *newdir);
-uint64_t get_file_size(int fd);
-uint64_t sget_file_size(const char *name);
-uint64_t get_fs_free(const char *dir);
 boolean is_writeable_dir(const char *dir);
 boolean ensure_isdir(char *fname);
 boolean dirs_equal(const char *dira, const char *dirb);
 char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
-boolean check_dev_busy(char *devstr);
 void activate_url_inner(const char *link);
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);
@@ -1416,20 +1486,6 @@ void fastsrand(uint32_t seed);
 
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
-lives_cancel_t check_for_bad_ffmpeg(void);
-
-//callbacks.c
-
-// paramspecial.c
-
-// effects-weed.c
-livespointer _lives_malloc(size_t size) GNU_MALLOC;
-livespointer lives_memcpy(livespointer dest, livesconstpointer src, size_t n);
-livespointer lives_memset(livespointer s, int c, size_t n);
-void _lives_free(livespointer ptr);
-livespointer lives_calloc(size_t n_blocks, size_t n_block_bytes);
-livespointer _lives_realloc(livespointer ptr, size_t new_size);
-
 // pangotext.c
 boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);
 void subtitles_free(lives_clip_t *sfile);
@@ -1439,6 +1495,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 #include "osc_notify.h"
+#include "machinestate.h"
 
 // inlines
 #define cfile mainw->files[mainw->current_file]
@@ -1493,6 +1550,39 @@ void break_me(void);
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL
 #endif // LIVES_FATAL
+
+#ifndef USE_STD_MEMFUNCS
+
+#ifdef _lives_malloc
+#undef  lives_malloc
+#define lives_malloc _lives_malloc
+#endif
+#ifdef _lives_realloc
+#undef  lives_realloc
+#define lives_realloc _lives_realloc
+#endif
+#ifdef _lives_free
+#undef  lives_free
+#define lives_free _lives_free
+#endif
+#ifdef _lives_memcpy
+#undef  lives_memcpy
+#define lives_memcpy _lives_memcpy
+#endif
+#ifdef _lives_memset
+#undef  lives_memset
+#define lives_memset _lives_memset
+#endif
+#ifdef _lives_memmove
+#undef  lives_memmove
+#define lives_memmove _lives_memmove
+#endif
+#ifdef _lives_calloc
+#undef  lives_calloc
+#define lives_calloc _lives_calloc
+#endif
+
+#endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

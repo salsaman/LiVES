@@ -190,7 +190,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
 #endif
     if (nbytes < xbytes) xbytes = nbytes;
 #if !HAVE_PA_STREAM_BEGIN_WRITE
-    buff = (uint8_t *)lives_try_malloc0(xbytes);
+    buff = (uint8_t *)lives_calloc(xbytes);
 #endif
     if (!buff || ret != 0) {
       return;
@@ -473,7 +473,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (LIVES_UNLIKELY((in_bytes > pulsed->aPlayPtr->max_size && !(*pulsed->cancelled) && ABS(shrink_factor) <= 100.f))) {
             boolean update_sbuffer = FALSE;
             if (pulsed->sound_buffer == pulsed->aPlayPtr->data) update_sbuffer = TRUE;
-            pulsed->aPlayPtr->data = lives_try_realloc(pulsed->aPlayPtr->data, in_bytes);
+            pulsed->aPlayPtr->data = lives_realloc(pulsed->aPlayPtr->data, in_bytes);
             if (update_sbuffer) pulsed->sound_buffer = pulsed->aPlayPtr->data;
             if (pulsed->aPlayPtr->data != NULL) {
               memset(pulsed->aPlayPtr->data, 0, in_bytes);
@@ -611,7 +611,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->sound_buffer = buffer;
           } else {
             if (pulsed->sound_buffer != pulsed->aPlayPtr->data) lives_freep((void **)&pulsed->sound_buffer);
-            pulsed->sound_buffer = (uint8_t *)lives_try_malloc0(pulsed->chunk_size);
+            pulsed->sound_buffer = (uint8_t *)lives_calloc(pulsed->chunk_size, 1);
             if (!pulsed->sound_buffer) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
                                    (pulsed->out_asamps >> 3), xbytes);
@@ -640,7 +640,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             // we have audio filters; convert to float, pass through any audio filters, then back to s16
             for (i = 0; i < pulsed->out_achans; i++) {
               // convert s16 to non-interleaved float
-              fltbuf[i] = (float *)lives_try_malloc(numFramesToWrite * sizeof(float));
+              fltbuf[i] = (float *)lives_malloc(numFramesToWrite * sizeof(float));
               if (fltbuf[i] == NULL) {
                 memok = FALSE;
                 for (--i; i >= 0; i--) {
@@ -697,8 +697,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (LIVES_UNLIKELY(nbytes > pulsed->aPlayPtr->max_size)) {
               boolean update_sbuffer = FALSE;
               if (pulsed->sound_buffer == pulsed->aPlayPtr->data) update_sbuffer = TRUE;
-              pulsed->aPlayPtr->data = lives_try_realloc(pulsed->aPlayPtr->data, nbytes);
-              g_print("realloc 2\n");
+              pulsed->aPlayPtr->data = lives_realloc(pulsed->aPlayPtr->data, nbytes);
+              //g_print("realloc 2\n");
               if (update_sbuffer) pulsed->sound_buffer = pulsed->aPlayPtr->data;
               if (pulsed->aPlayPtr->data != NULL) {
                 memset(pulsed->aPlayPtr->data, 0, in_bytes);
@@ -729,7 +729,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               // we have audio filters; convert to float, pass through any audio filters, then back to s16
               for (i = 0; i < pulsed->out_achans; i++) {
                 // convert s16 to non-interleaved float
-                fp[i] = (float *)lives_try_malloc(numFramesToWrite * sizeof(float));
+                fp[i] = (float *)lives_malloc(numFramesToWrite * sizeof(float));
                 if (fp[i] == NULL) {
                   memok = FALSE;
                   for (--i; i >= 0; i--) {
@@ -829,7 +829,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               ret = pa_stream_begin_write(pulsed->pstream, (void **)&buffer, &xbytes);
               if (nbytes < xbytes) xbytes = nbytes;
 #else
-              buffer = (uint8_t *)lives_try_malloc(nbytes);
+              buffer = (uint8_t *)lives_malloc(nbytes);
 #endif
             }
             if (!pulsed->sound_buffer || ret != 0 || !buffer) {
@@ -872,7 +872,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
             if (nbytes < xbytes) xbytes = nbytes;
 #if !HAVE_PA_STREAM_BEGIN_WRITE
-            shortbuffer = (short *)lives_try_malloc0(xbytes);
+            shortbuffer = (short *)lives_calloc(xbytes);
 #endif
             if (!shortbuffer || ret != 0) {
               sample_silence_pulse(pulsed, nsamples * pulsed->out_achans *
@@ -956,7 +956,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     if (prb <= PULSE_READ_BYTES * 2) {
       gbuf = (short *)data;
     } else {
-      gbuf = (short *)lives_try_malloc(prb);
+      gbuf = (short *)lives_malloc(prb);
       if (!gbuf) return 0;
       if (prb > rbytes) lives_memcpy((void *)gbuf, prbuf, prb - rbytes);
       lives_memcpy((void *)gbuf + (prb - rbytes > 0 ? prb - rbytes : 0), data, rbytes);
@@ -981,7 +981,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 
   bytes_out = frames_out * ofile->achans * (ofile->asampsize >> 3);
 
-  holding_buff = lives_try_malloc(bytes_out);
+  holding_buff = lives_malloc(bytes_out);
 
   if (!holding_buff) {
     if (gbuf != (short *)data) lives_free(gbuf);
@@ -1125,7 +1125,7 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
       for (i = 0; i < pulsed->in_achans; i++) {
         // convert s16 to non-interleaved float
-        fltbuf[i] = (float *)lives_try_malloc(xnsamples * sizeof(float));
+        fltbuf[i] = (float *)lives_malloc(xnsamples * sizeof(float));
         if (fltbuf[i] == NULL) {
           memok = FALSE;
           for (--i; i >= 0; i--) {

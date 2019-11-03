@@ -196,7 +196,7 @@ void pconx_delete_all(void) {
 
 
 static lives_pconnect_t *pconx_new(int okey, int omode) {
-  lives_pconnect_t *pconx = (lives_pconnect_t *)lives_malloc0(sizeof(struct _lives_pconnect_t));
+  lives_pconnect_t *pconx = (lives_pconnect_t *)lives_calloc(1, sizeof(struct _lives_pconnect_t));
   pconx->next = NULL;
   pconx->okey = okey;
   pconx->omode = omode;
@@ -1619,7 +1619,7 @@ void cconx_delete_all(void) {
 
 
 static lives_cconnect_t *cconx_new(int okey, int omode) {
-  lives_cconnect_t *cconx = (lives_cconnect_t *)lives_malloc0(sizeof(struct _lives_cconnect_t));
+  lives_cconnect_t *cconx = (lives_cconnect_t *)lives_calloc(1, sizeof(struct _lives_cconnect_t));
   cconx->next = NULL;
   cconx->okey = okey;
   cconx->omode = omode;

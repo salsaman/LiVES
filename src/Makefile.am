@@ -201,6 +201,7 @@ lives_exe_SOURCES = \
 	cvirtual.c cvirtual.h \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
+	machinestate.c machinestate,h \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \

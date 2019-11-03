@@ -1,4 +1,4 @@
-## Process this with automake to create Makefile.in
+## Process this with automake to create Makefile.inaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 LIBS =
 
@@ -77,7 +77,7 @@ endif
 endif
 endif
 
-fxpluginslib_LTLIBRARIES = negate.la simple_blend.la
+fxpluginslib_LTLIBRARIES = negate.la simple_blend.la haip.la RGDdelay.la kaleidoscope.la
 
 EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
 

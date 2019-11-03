@@ -45,12 +45,11 @@ EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_slice.pc libwe
 
 libweed_la_SOURCES = weed.c
 
-libweed_slice_la_SOURCES = weed-gslice.c
+libweed_slice_la_SOURCES = weed.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
 
 libweed_slice_scripting_la_SOURCES = weed-gslice_scripting.c
-
 libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
@@ -67,7 +66,7 @@ shared_LDFLAGS = -shared --tag=disable-static
 
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
-libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
+libweed_slice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS) -DUSE_GSLICE
 libweed_slice_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)

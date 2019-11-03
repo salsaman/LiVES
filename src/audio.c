@@ -153,7 +153,7 @@ void init_audio_frame_buffers(short aplayer) {
 
   for (i = 0; i < 2; i++) {
     lives_audio_buf_t *abuf;
-    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
+    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
 
     abuf->samples_filled = 0;
     abuf->swap_endian = FALSE;
@@ -306,7 +306,7 @@ void sample_silence_stream(int nchans, int nframes) {
   int i;
 
   for (i = 0; i < nchans; i++) {
-    fbuff[i] = (float *)lives_try_malloc0(nframes * sizeof(float));
+    fbuff[i] = (float *)lives_calloc(nframes, sizeof(float));
     if (!fbuff[i]) memok = FALSE;
   }
   if (memok) {
@@ -879,7 +879,7 @@ boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i, j;
 
-  float *tmpfbuffer = (float *)lives_try_malloc(nsamps * nchans * sizeof(float));
+  float *tmpfbuffer = (float *)lives_malloc(nsamps * nchans * sizeof(float));
   if (tmpfbuffer == NULL) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
@@ -897,7 +897,7 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i, j;
 
-  float *tmpfbuffer = (float *)lives_try_malloc(nsamps * nchans * sizeof(float));
+  float *tmpfbuffer = (float *)lives_malloc(nsamps * nchans * sizeof(float));
   if (tmpfbuffer == NULL) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
@@ -952,7 +952,7 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
 #endif
   if (sbytes > 0) {
     lseek64(out_fd, oins_size, SEEK_SET);
-    if (!aunsigned) zero_buff = (uint8_t *)lives_malloc0(SILENCE_BLOCK_SIZE);
+    if (!aunsigned) zero_buff = (uint8_t *)lives_calloc(SILENCE_BLOCK_SIZE, 1);
     else {
       zero_buff = (uint8_t *)lives_malloc(SILENCE_BLOCK_SIZE);
       if (asamps == 1) memset(zero_buff, 0x80, SILENCE_BLOCK_SIZE);
@@ -2041,7 +2041,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     lives_freep((void **)&avels);
     lives_freep((void **)&aseeks);
 
-    if (mainw->multitrack != NULL) nfiles = weed_leaf_num_elements(mainw->multitrack->avol_init_event, WEED_LEAF_IN_TRACKS);
+    if (mainw->multitrack != NULL && mainw->multitrack->avol_init_event != NULL)
+      nfiles = weed_leaf_num_elements(mainw->multitrack->avol_init_event, WEED_LEAF_IN_TRACKS);
 
     else nfiles = 1;
 
@@ -2626,7 +2627,7 @@ void wake_audio_thread(void) {
 #endif
 
 lives_audio_buf_t *audio_cache_init(void) {
-  cache_buffer = (lives_audio_buf_t *)lives_malloc0(sizeof(lives_audio_buf_t));
+  cache_buffer = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
   cache_buffer->is_ready = FALSE;
   cache_buffer->in_achans = 0;
 
@@ -2935,11 +2936,11 @@ boolean apply_rte_audio(int nframes) {
 
   onframes = nframes;
 
-  in_buff = (uint8_t *)lives_try_malloc(tbytes);
+  in_buff = (uint8_t *)lives_malloc(tbytes);
   if (in_buff == NULL) return FALSE;
 
   if (cfile->asampsize == 8) {
-    shortbuf = (short *)lives_try_malloc(tbytes);
+    shortbuf = (short *)lives_malloc(tbytes);
     if (shortbuf == NULL) {
       lives_free(in_buff);
       return FALSE;
@@ -2975,7 +2976,7 @@ boolean apply_rte_audio(int nframes) {
 
     for (i = 0; i < cfile->achans; i++) {
       // convert s16 to non-interleaved float
-      fltbuf[i] = (float *)lives_try_malloc(nframes * sizeof(float));
+      fltbuf[i] = (float *)lives_malloc(nframes * sizeof(float));
       if (fltbuf[i] == NULL) {
         for (--i; i >= 0; i--) {
           lives_free(fltbuf[i]);
@@ -2993,7 +2994,7 @@ boolean apply_rte_audio(int nframes) {
   } else {
     // read from plugin. This should already be float.
 
-    fltbufni = (float *)lives_try_malloc(nframes * cfile->achans * sizeof(float));
+    fltbufni = (float *)lives_malloc(nframes * cfile->achans * sizeof(float));
     if (fltbufni == NULL) {
       lives_free(fltbuf);
       if (shortbuf != (short *)in_buff) lives_free(shortbuf);

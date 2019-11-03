@@ -6201,8 +6201,8 @@ void on_fs_preview_clicked(LiVESWidget *widget, livespointer user_data) {
       lives_strfreev(array);
 
       if (height == 0 || width == 0) {
-        width = DEFAULT_FRAME_HSIZE / 2;
-        height = DEFAULT_FRAME_VSIZE / 2;
+        width = DEF_FRAME_HSIZE / 2;
+        height = DEF_FRAME_VSIZE / 2;
       }
 
       owidth = width;
@@ -6921,13 +6921,13 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_double), sngl_img);
   }
 
-  if (LIVES_IS_PLAYING && !mainw->fs) {
+  if (!LIVES_IS_PLAYING || !mainw->fs) {
     // needed
     block_expose();
     do {
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-      mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
-      mainw->pheight = DEFAULT_FRAME_VSIZE - V_RESIZE_ADJUST;
+      mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
+      mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
     } while (mainw->pwidth == 0 || mainw->pheight == 0);
     unblock_expose();
 
@@ -8085,8 +8085,8 @@ void on_load_cdtrack_ok_clicked(LiVESButton *button, livespointer user_data) {
     add_to_clipmenu();
     was_new = TRUE;
     cfile->opening = cfile->opening_audio = cfile->opening_only_audio = TRUE;
-    cfile->hsize = DEFAULT_FRAME_HSIZE;
-    cfile->vsize = DEFAULT_FRAME_VSIZE;
+    cfile->hsize = DEF_FRAME_HSIZE;
+    cfile->vsize = DEF_FRAME_VSIZE;
   } else {
     mainw->noswitch = TRUE;
 

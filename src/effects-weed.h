@@ -82,6 +82,8 @@ typedef enum {
 
 #define WEED_LEAF_HOST_SCRAP_FILE_OFFSET "scrap_file_offset" // special value for scrap_file
 
+#define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"
+
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
@@ -323,7 +325,7 @@ void set_param_gui_readonly(weed_plant_t *inst);
 
 void weed_add_plant_flags(weed_plant_t *plant, int flags);
 
-void update_host_info(weed_plant_t *inst);
+void update_all_host_info(void);
 
 /// add default filler values to a parameter or pchange.
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);

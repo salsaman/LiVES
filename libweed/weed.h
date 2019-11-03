@@ -48,15 +48,16 @@
 #ifndef __WEED_H__
 #define __WEED_H__
 
-
 #define __need_size_t // for malloc, realloc, etc
 #define __need_NULL
 #include <stddef.h>
 #include <inttypes.h>
 
-/* API version * 200 */
-#define WEED_API_VERSION 200
-#define WEED_API_VERSION_200  // do not remove this, even in higher versions
+/* API / ABI version * 200 */
+#define WEED_ABI_VERSION 200
+#define WEED_ABI_VERSION_200  // do not remove this, even in higher versions
+#define WEED_API_VERSION WEED_ABI_VERSION
+#define WEED_API_VERSION_200  WEED_ABI_VERSION_200 // do not remove this, even in higher versions
 
 #define WEED_TRUE 1
 #define WEED_FALSE 0
@@ -80,18 +81,18 @@ typedef void *weed_voidptr_t;
 #ifndef HAVE_WEED_DATA_T
 #define HAVE_WEED_DATA_T
 typedef struct _weed_data weed_data_t;
-//#ifdef __LIBWEED__
+#ifdef __LIBWEED__
 struct _weed_data {
   weed_size_t size;
   weed_voidptr_t value;
 };
-//#endif
+#endif
 #endif
 
 #ifndef HAVE_WEED_LEAF_T
 #define HAVE_WEED_LEAF_T
 typedef struct _weed_leaf weed_leaf_t;
-//#ifdef __LIBWEED__
+#ifdef __LIBWEED__
 struct _weed_leaf {
   const char *key;
   uint32_t key_hash;
@@ -101,7 +102,7 @@ struct _weed_leaf {
   int32_t flags;
   weed_leaf_t *next;
 };
-//#endif
+#endif
 #endif
 
 #ifndef HAVE_WEED_PLANT_T
@@ -109,11 +110,15 @@ struct _weed_leaf {
 typedef weed_leaf_t weed_plant_t;
 #endif
 
-typedef void *(*weed_malloc_f)(size_t size);
-typedef void *(*weed_realloc_f)(void *, size_t size);
+typedef void *(*weed_malloc_f)(size_t);
 typedef void (*weed_free_f)(void *);
-typedef void *(*weed_memset_f)(void *, int c, size_t n);
-typedef void *(*weed_memcpy_f)(void *dest, const void *src, size_t n);
+typedef void *(*weed_memset_f)(void *, int, size_t);
+typedef void *(*weed_memcpy_f)(void *, const void *, size_t);
+
+/* added in ABI 200 */
+typedef void *(*weed_realloc_f)(void *, size_t);
+typedef void *(*weed_calloc_f)(size_t, size_t);
+typedef void *(*weed_memmove_f)(void *, const void *, size_t);
 
 typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
 typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *);
@@ -126,11 +131,11 @@ typedef int32_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
 typedef int32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
 typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
 
-/* added in API 200 */
-typedef weed_error_t (*weed_leaf_set_sizes_f)(weed_plant_t *, const char *key, int32_t seed_type,
-    weed_size_t num_elems, void **values, weed_size_t *sizes, int32_t flagmask);
+/* added in ABI 200 */
+typedef weed_error_t (*weed_leaf_set_voidptr_sizes_f)(weed_plant_t *, const char *key,
+    weed_size_t num_elems, weed_voidptr_t values, weed_size_t *sizes);
 typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type,
-    weed_size_t *num_elems, void **values, weed_size_t **sizes, int32_t *flags);
+    weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags);
 
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
 /* host only functions */
@@ -141,7 +146,7 @@ __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
 __WEED_FN_DEF__ weed_leaf_delete_f weed_leaf_delete;
 
 #ifndef __LIBWEED__
-weed_error_t weed_init(int32_t api);
+weed_error_t weed_init(int32_t abi);
 #endif
 #endif
 
@@ -155,14 +160,17 @@ __WEED_FN_DEF__ weed_leaf_seed_type_f weed_leaf_seed_type;
 __WEED_FN_DEF__ weed_leaf_get_flags_f weed_leaf_get_flags;
 __WEED_FN_DEF__ weed_plant_free_f weed_plant_free;
 
+#ifndef __LIBWEED__
 __WEED_FN_DEF__ weed_malloc_f weed_malloc;
-
-/* added in API 200 */
-__WEED_FN_DEF__ weed_realloc_f weed_realloc;
-
 __WEED_FN_DEF__ weed_free_f weed_free;
 __WEED_FN_DEF__ weed_memcpy_f weed_memcpy;
 __WEED_FN_DEF__ weed_memset_f weed_memset;
+
+/* added in API 200 */
+__WEED_FN_DEF__ weed_realloc_f weed_realloc;
+__WEED_FN_DEF__ weed_calloc_f weed_calloc;
+__WEED_FN_DEF__ weed_memmove_f weed_memmove;
+#endif
 
 /* plant types */
 #define WEED_PLANT_UNKNOWN 0
@@ -183,9 +191,9 @@ __WEED_FN_DEF__ weed_memset_f weed_memset;
 
 /* Seed types */
 /* Fundamental seeds */
-#define WEED_SEED_INT     1 // int32_t
-#define WEED_SEED_DOUBLE  2 // double
-#define WEED_SEED_BOOLEAN 3 // int32_t, should only be set to values WEED_TRUE or WEED_FALSE
+#define WEED_SEED_INT     1 // int32_t / uint_32t
+#define WEED_SEED_DOUBLE  2 // 64 bit signed double
+#define WEED_SEED_BOOLEAN 3 // int32_t: should only be set to values WEED_TRUE or WEED_FALSE
 #define WEED_SEED_STRING  4 // NUL terminated array of char
 #define WEED_SEED_INT64   5 // int64_t
 
@@ -211,7 +219,11 @@ __WEED_FN_DEF__ weed_memset_f weed_memset;
 #define WEED_FLAG_RESERVED_12 (1 << 14) // reserved for future use by Weed
 #define WEED_FLAG_RESERVED_13 (1 << 15) // reserved for future use by Weed
 
+/* mandatory leaf for all WEED_PLANTs, WEED_SEED_INT */
+#define WEED_LEAF_TYPE "type"
 
-#define WEED_LEAF_TYPE "type" // mandatory leaf for all WEED_PLANTs, WEED_SEED_INT
+/* may be used by any plant to set the API / ABI version, WEED_SEED_INT */
+#define WEED_LEAF_WEED_API_VERSION "weed_api_version"
+#define WEED_LEAF_WEED_ABI_VERSION WEED_LEAF_WEED_API_VERSION
 
 #endif // #ifndef __WEED_H__

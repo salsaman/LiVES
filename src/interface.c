@@ -421,9 +421,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     if (cfile->audio_waveform[0] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
-      cfile->audio_waveform[0] = (float *)lives_try_malloc((int)offset_end * sizeof(float));
+      cfile->audio_waveform[0] = (float *)lives_malloc((int)offset_end * sizeof(float));
     } else if (cfile->aw_sizes[0] != offset_end) {
-      cfile->audio_waveform[0] = (float *)lives_try_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
+      cfile->audio_waveform[0] = (float *)lives_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
     }
 
     cfile->aw_sizes[0] = 0;
@@ -538,9 +538,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     if (cfile->audio_waveform[1] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
-      cfile->audio_waveform[1] = (float *)lives_try_malloc(offset_end * sizeof(float));
+      cfile->audio_waveform[1] = (float *)lives_malloc(offset_end * sizeof(float));
     } else if (cfile->aw_sizes[1] != offset_end) {
-      cfile->audio_waveform[1] = (float *)lives_try_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
+      cfile->audio_waveform[1] = (float *)lives_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
     cfile->aw_sizes[1] = 0;
 
@@ -981,8 +981,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
-                                    (int)(DEFAULT_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2,
-                                    (int)(DEFAULT_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2);
+                                    (int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2,
+                                    (int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2);
     } else {
       lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
     }
@@ -4113,7 +4113,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
 
-  req = (lives_remote_clip_request_t *)lives_try_malloc(sizeof(lives_remote_clip_request_t));
+  req = (lives_remote_clip_request_t *)lives_malloc(sizeof(lives_remote_clip_request_t));
   if (req == NULL) {
     lives_widget_destroy(dialog);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

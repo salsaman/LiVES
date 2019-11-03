@@ -402,7 +402,6 @@ if (defined($ARGV[0])) {
 		    &rc_set_if_not_set("output_type", "mjpeg");
 		    &rc_set_if_not_set("audio_effect", "none");
 		    &rc_set_if_not_set("default_image_format", "png");
-		    &rc_set_if_not_set("default_fps", 25);
 		    &rc_set_if_not_set("save_directories", "false");
 		    &rc_set_if_not_set("stop_screensaver", "true");
 		    &rc_set_if_not_set("open_maximised", "true");
@@ -426,29 +425,11 @@ if (defined($ARGV[0])) {
 		    # start aserver on startup
 		    &rc_set_if_not_set("jack_opts", 0);
 		    &rc_set_if_not_set("audio_opts", 3);
-		    &rc_set_if_not_set("rte_keys_virtual", 9);
 
-		    &rc_set_if_not_set("instant_open", "true");
-		    &rc_set_if_not_set("auto_deinterlace", "true");
 		    &rc_set_if_not_set("auto_trim_pad_audio", "true");
-		    &rc_set_if_not_set("auto_cut_borders", "false");
 
 		    &rc_set_if_not_set("mt_undo_buf", 32);
-		    &rc_set_if_not_set("mt_enter_prompt", "true");
-		    &rc_set_if_not_set("render_prompt", "true");
-		    &rc_set_if_not_set("mt_exit_render", "true");
-		    &rc_set_if_not_set("mt_def_width", 1024);
-		    &rc_set_if_not_set("mt_def_height", 768);
-		    &rc_set_if_not_set("mt_def_achans", 2);
-		    &rc_set_if_not_set("mt_def_signed_endian", 2 * !&get_endian);
-		    &rc_set_if_not_set("mt_backaudio", "1");
-		    &rc_set_if_not_set("mt_pertrack_audio", "true");
-		    &rc_set_if_not_set("mt_auto_back", 120);
 
-		    &rc_set_if_not_set("ar_clipset", "");
-		    &rc_set_if_not_set("ar_layout", "");
-
-		    &rc_set_if_not_set("rec_desktop_audio", "false");
 		    &rc_set_if_not_set("osc_start", "false");
 		    &rc_set_if_not_set("osc_port", 49999);
 

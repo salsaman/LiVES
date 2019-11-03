@@ -236,8 +236,6 @@ weed_voidptr_t weed_get_custom_value(weed_plant_t *plant, const char *key, int32
 
 ////////////////////////////////////////////////////////////
 
-// old..working
-
 static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key, size_t dsize, char **retval) {
   weed_error_t err;
   weed_size_t num_elems = weed_leaf_num_elements(plant, key);
@@ -259,35 +257,30 @@ static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key,
 }
 
 
-int32_t *weed_get_int_array(weed_plant_t *plant, const char *key, weed_error_t *error) {
-  int32_t *retvals = NULL;
-
-  weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_INT);
+static inline weed_voidptr_t weed_get_array(weed_plant_t *plant, const char *key,
+    int32_t seed_type, weed_size_t typelen, weed_voidptr_t retvals, weed_error_t *error) {
+  weed_error_t err = weed_leaf_check(plant, key, seed_type);
 
   if (err != WEED_SUCCESS) {
     if (error != NULL) *error = err;
     return NULL;
   }
 
-  err = weed_get_values(plant, key, 4, (char **)&retvals);
+  err = weed_get_values(plant, key, typelen, (char **)&retvals);
   if (error != NULL) *error = err;
   return retvals;
 }
 
 
+int32_t *weed_get_int_array(weed_plant_t *plant, const char *key, weed_error_t *error) {
+  int32_t *retvals = NULL;
+  return (int32_t *)(weed_get_array(plant, key, WEED_SEED_INT, 4, (uint8_t **)&retvals, error));
+}
+
+
 double *weed_get_double_array(weed_plant_t *plant, const char *key, weed_error_t *error) {
   double *retvals = NULL;
-
-  weed_error_t err = weed_leaf_check(plant, key, WEED_SEED_DOUBLE);
-
-  if (err != WEED_SUCCESS) {
-    if (error != NULL) *error = err;
-    return NULL;
-  }
-
-  err = weed_get_values(plant, key, 8, (char **)&retvals);
-  if (error != NULL) *error = err;
-  return retvals;
+  return (double *)(weed_get_array(plant, key, WEED_SEED_DOUBLE, 8, (uint8_t **)&retvals, error));
 }
 
 
@@ -646,15 +639,14 @@ void weed_set_host_info_callback(weed_host_info_callback_f cb, void *user_data) 
 }
 
 
-static inline int check_weed_api_compat(int32_t hostv, int32_t filterv) {
-  // hostv always > filterv
-  if (filterv < 200) return 0; // API 200 made breaking changes
-  return 1;
+int check_weed_abi_compat(int32_t higher, int32_t lower) {
+  if (lower < 200 && higher >= 200) return WEED_FALSE; // ABI 200 made breaking changes
+  return WEED_TRUE;
 }
 
 
-static inline int check_filter_api_compat(int32_t hostv, int32_t filterv) {
-  return 1;
+int check_filter_api_compat(int32_t higher, int32_t lower) {
+  return WEED_TRUE;
 }
 
 
@@ -668,7 +660,7 @@ static int check_version_compat(int host_weed_api_version,
     return 0;
 
   if (host_weed_api_version > plugin_weed_api_max_version) {
-    if (check_weed_api_compat(host_weed_api_version, plugin_weed_api_max_version) == 0) return 0;
+    if (check_weed_abi_compat(host_weed_api_version, plugin_weed_api_max_version) == 0) return 0;
   }
 
   if (host_filter_api_version > plugin_filter_api_max_version) {
@@ -678,11 +670,11 @@ static int check_version_compat(int host_weed_api_version,
 }
 
 
-weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value,
-                                  int32_t plugin_min_weed_api_version,
-                                  int32_t plugin_max_weed_api_version,
-                                  int32_t plugin_min_filter_api_version,
-                                  int32_t plugin_max_filter_api_version) {
+weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
+                             int32_t plugin_min_weed_api_version,
+                             int32_t plugin_max_weed_api_version,
+                             int32_t plugin_min_filter_api_version,
+                             int32_t plugin_max_filter_api_version) {
   // function is called from weed_setup() in the plugin, using the fn ptr passed by the host
 
   // here is where we define the functions for the plugin to use
@@ -698,15 +690,30 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value,
   static weed_leaf_set_f wls;
   static weed_malloc_f weedmalloc;
   static weed_realloc_f weedrealloc;
+  static weed_calloc_f weedcalloc;
   static weed_free_f weedfree;
   static weed_memcpy_f weedmemcpy;
   static weed_memset_f weedmemset;
+  static weed_memmove_f weedmemmove;
   static weed_plant_free_f wpf;
+  int32_t tmp;
 
   int32_t host_weed_api_version = WEED_API_VERSION;
   int32_t host_filter_api_version = WEED_FILTER_API_VERSION;
 
   weed_plant_t *host_info = weed_plant_new(WEED_PLANT_HOST_INFO);
+
+  if (plugin_min_weed_api_version > plugin_max_weed_api_version) {
+    // plugin author may be confused
+    tmp = plugin_min_weed_api_version;
+    plugin_min_weed_api_version = plugin_max_weed_apl_version;
+    plugin_max_weed_apl_version = tmp;
+  }
+  if (plugin_min_filter_api_version > plugin_max_filter_api_version) {
+    tmp = plugin_min_weed_api_version;
+    plugin_min_weed_api_version = plugin_max_weed_apl_version;
+    plugin_max_weed_apl_version = tmp;
+  }
 
   // set pointers to the functions the plugin will use
 
@@ -732,7 +739,9 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value,
   weed_set_voidptr_value(host_info, WEED_LEAF_FREE_FUNC, weedfree);
   weed_set_voidptr_value(host_info, WEED_LEAF_MEMSET_FUNC, weedmemset);
   weed_set_voidptr_value(host_info, WEED_LEAF_MEMCPY_FUNC, weedmemcpy);
+  weed_set_voidptr_value(host_info, WEED_LEAF_MEMMOVE_FUNC, weedmemmove);
   weed_set_voidptr_value(host_info, WEED_LEAF_REALLOC_FUNC, weedrealloc);
+  weed_set_voidptr_value(host_info, WEED_LEAF_CALLOC_FUNC, weedcalloc);
 
   weed_set_voidptr_value(host_info, WEED_LEAF_GET_FUNC, wlg);
 
@@ -774,7 +783,12 @@ weed_plant_t *weed_bootstrap_func(weed_default_getter_f *value,
   // readjust the ABI depending on the weed_api_version selected by the host
 
   if (host_weed_api_version < 200) {
+    // added in ABI 200
     weed_leaf_delete(host_info, WEED_LEAF_REALLOC_FUNC);
+    weedrealloc = NULL;
+    weed_leaf_delete(host_info, WEED_LEAF_CALLOC_FUNC);
+    weedrealloc = NULL;
+    weed_leaf_delete(host_info, WEED_LEAF_MEMMOVE_FUNC);
     weedrealloc = NULL;
   }
 

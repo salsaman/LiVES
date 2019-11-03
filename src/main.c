@@ -1358,7 +1358,7 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }
 
-  prefs->default_fps = get_double_pref(PREF_DEFAULT_FPS);
+  prefs->default_fps = get_double_prefd(PREF_DEFAULT_FPS, DEF_FPS);
   if (prefs->default_fps < 1.) prefs->default_fps = 1.;
   if (prefs->default_fps > FPS_MAX) prefs->default_fps = FPS_MAX;
 
@@ -1444,40 +1444,39 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
 
-    prefs->mt_auto_back = (ticks_t)get_int_pref(PREF_MT_AUTO_BACK);
-
-    get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
+    prefs->mt_auto_back = get_int_prefd(PREF_MT_AUTO_BACK, 120);
 
     if (!ign_opts->ign_aplayer) {
       get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2);
     }
 
-    memset(mppath, 0, 1);
+    get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
-    if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
-      get_location(EXEC_MPLAYER, mppath, PATH_MAX);
+    if (strlen(prefs->video_open_command) == 0) {
+      memset(mppath, 0, 1);
+
+      if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
+        get_location(EXEC_MPLAYER, mppath, PATH_MAX);
+      }
+
+      if (!strlen(prefs->video_open_command) && capable->has_mplayer2) {
+        get_location(EXEC_MPLAYER2, mppath, PATH_MAX);
+      }
+
+      if (!strlen(prefs->video_open_command) && capable->has_mpv) {
+        get_location(EXEC_MPV, mppath, PATH_MAX);
+      }
+
+      if (strlen(mppath)) {
+        lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
+        set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
+      }
     }
 
-    if (!strlen(prefs->video_open_command) && capable->has_mplayer2) {
-      get_location(EXEC_MPLAYER2, mppath, PATH_MAX);
-    }
+    prefs->warn_file_size = get_int_prefd(PREF_WARN_FILE_SIZE, WARN_FILE_SIZE);
 
-    if (!strlen(prefs->video_open_command) && capable->has_mpv) {
-      get_location(EXEC_MPV, mppath, PATH_MAX);
-    }
-
-    if (strlen(mppath)) {
-      lives_snprintf(prefs->video_open_command, PATH_MAX + 2, "\"%s\"", mppath);
-      set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
-    }
-
-    prefs->warn_file_size = get_int_pref(PREF_WARN_FILE_SIZE);
-    if (prefs->warn_file_size == 0) {
-      prefs->warn_file_size = WARN_FILE_SIZE;
-    }
-
-    prefs->rte_keys_virtual = get_int_pref(PREF_RTE_KEYS_VIRTUAL);
-    if (prefs->rte_keys_virtual < FX_KEYS_PHYSICAL) prefs->rte_keys_virtual = FX_KEYS_PHYSICAL;
+    prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL);
+    if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
     if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
 
     prefs->show_rdet = TRUE;
@@ -1486,43 +1485,42 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mt_undo_buf = get_int_pref(PREF_MT_UNDO_BUF);
 
-    prefs->mt_enter_prompt = get_boolean_pref(PREF_MT_ENTER_PROMPT);
+    prefs->mt_enter_prompt = get_boolean_prefd(PREF_MT_ENTER_PROMPT, TRUE);
 
-    prefs->mt_def_width = get_int_pref(PREF_MT_DEF_WIDTH);
-    prefs->mt_def_height = get_int_pref(PREF_MT_DEF_HEIGHT);
-    prefs->mt_def_fps = get_double_pref(PREF_MT_DEF_FPS);
-    prefs->mt_def_arate = get_int_pref(PREF_MT_DEF_ARATE);
-    prefs->mt_def_achans = get_int_pref(PREF_MT_DEF_ACHANS);
-    prefs->mt_def_asamps = get_int_pref(PREF_MT_DEF_ASAMPS);
-    prefs->mt_def_signed_endian = get_int_pref(PREF_MT_DEF_SIGNED_ENDIAN);
+    // default frame sizes (TODO)
+    mainw->def_width = DEF_FRAME_HSIZE;
+    mainw->def_height = DEF_FRAME_HSIZE;
 
-    if (prefs->mt_def_width == 0) prefs->mt_def_width = DEFAULT_FRAME_HSIZE_UNSCALED;
-    if (prefs->mt_def_height == 0) prefs->mt_def_height = DEFAULT_FRAME_VSIZE_UNSCALED;
-    if (prefs->mt_def_fps == 0.) prefs->mt_def_fps = prefs->default_fps;
-    if (prefs->mt_def_arate == 0) prefs->mt_def_arate = DEFAULT_AUDIO_RATE;
-    if (prefs->mt_def_asamps == 0) prefs->mt_def_asamps = DEFAULT_AUDIO_SAMPS;
+    prefs->mt_def_width = get_int_prefd(PREF_MT_DEF_WIDTH, DEF_FRAME_HSIZE_UNSCALED);
+    prefs->mt_def_height = get_int_prefd(PREF_MT_DEF_HEIGHT, DEF_FRAME_VSIZE_UNSCALED);
+    prefs->mt_def_fps = get_double_prefd(PREF_MT_DEF_FPS, prefs->default_fps);
+    prefs->mt_def_arate = get_int_prefd(PREF_MT_DEF_ARATE, DEFAULT_AUDIO_RATE);
+    prefs->mt_def_achans = get_int_prefd(PREF_MT_DEF_ACHANS, DEFAULT_AUDIO_CHANS);
+    prefs->mt_def_asamps = get_int_prefd(PREF_MT_DEF_ASAMPS, DEFAULT_AUDIO_SAMPS);
+    prefs->mt_def_signed_endian = get_int_prefd(PREF_MT_DEF_SIGNED_ENDIAN, (capable->byte_order == LIVES_BIG_ENDIAN)
+                                  ? 2 : 0 + (prefs->mt_def_asamps == 8) ? 1 : 0);
 
-    prefs->mt_exit_render = get_boolean_pref(PREF_MT_EXIT_RENDER);
-    prefs->render_prompt = get_boolean_pref(PREF_RENDER_PROMPT);
+    prefs->mt_exit_render = get_boolean_prefd(PREF_MT_EXIT_RENDER, TRUE);
+    prefs->render_prompt = get_boolean_prefd(PREF_RENDER_PROMPT, TRUE);
 
-    prefs->mt_pertrack_audio = get_boolean_pref(PREF_MT_PERTRACK_AUDIO);
-    prefs->mt_backaudio = get_int_pref(PREF_MT_BACKAUDIO);
+    prefs->mt_pertrack_audio = get_boolean_prefd(PREF_MT_PERTRACK_AUDIO, TRUE);
+    prefs->mt_backaudio = get_int_prefd(PREF_MT_BACKAUDIO, 1);
 
-    prefs->instant_open = get_boolean_pref(PREF_INSTANT_OPEN);
-    prefs->auto_deint = get_boolean_pref(PREF_AUTO_DEINTERLACE);
-    prefs->auto_nobord = get_boolean_pref(PREF_AUTO_CUT_BORDERS);
+    prefs->instant_open = get_boolean_prefd(PREF_INSTANT_OPEN, TRUE);
+    prefs->auto_deint = get_boolean_prefd(PREF_AUTO_DEINTERLACE, TRUE);
+    prefs->auto_nobord = get_boolean_prefd(PREF_AUTO_CUT_BORDERS, FALSE);
 
     if (!ign_opts->ign_clipset) {
-      get_string_pref(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128);
+      get_string_prefd(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128, "");
       if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset = TRUE;
       else prefs->ar_clipset = FALSE;
     } else set_string_pref(PREF_AR_CLIPSET, "");
 
-    get_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name, PATH_MAX);
+    get_string_prefd(PREF_AR_LAYOUT, prefs->ar_layout_name, PATH_MAX, "");
     if (strlen(prefs->ar_layout_name)) prefs->ar_layout = TRUE;
     else prefs->ar_layout = FALSE;
 
-    prefs->rec_desktop_audio = get_boolean_pref(PREF_REC_DESKTOP_AUDIO);
+    prefs->rec_desktop_audio = get_boolean_prefd(PREF_REC_DESKTOP_AUDIO, FALSE);
 
     future_prefs->startup_interface = get_int_prefd(PREF_STARTUP_INTERFACE, STARTUP_CE);
     if (!ign_opts->ign_stmode) {
@@ -2627,7 +2625,8 @@ capability *get_capabilities(void) {
       }
     } else {
       if (prefs->startup_phase != -1) {
-        msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s", prefs->startup_phase, prefs->workdir);
+        msg = lives_strdup_printf("The backend found no workdir, but set startup_phase to %d !\n%s",
+                                  prefs->startup_phase, prefs->workdir);
         LIVES_ERROR(msg);
         lives_free(msg);
       }
@@ -3116,6 +3115,12 @@ static boolean lives_startup(livespointer data) {
     switch_aud_to_none(FALSE);
   }
 
+  // begin load measuring
+  prefs->loadchecktime = get_double_prefd(PREF_LOADCHECK_TIME, 10.);
+  if (prefs->loadchecktime > 0.) {
+    lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
+  }
+
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
 
   if (!mainw->foreign && !got_files && prefs->ar_clipset) {
@@ -3368,6 +3373,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   capable->can_write_to_config_backup = TRUE;
   capable->can_write_to_config_new = TRUE;
   capable->can_write_to_workdir = TRUE;
+  capable->time_per_idle = capable->load_value = -1.;
+  capable->avg_load = 0.;
 
   // this is the version we should pass into mkdir
   capable->umask = umask(0);
@@ -4476,9 +4483,14 @@ void load_start_image(int frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5;
+    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
+    /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
+      // NB:
+      /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
+      /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
       hsize /= 2;
       vsize /= 2;
     }
@@ -4581,6 +4593,9 @@ void load_start_image(int frame) {
     // TODO *** - if width*height==0, show broken frame image
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+    // NB:
+    /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -4670,9 +4685,14 @@ void load_end_image(int frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
-    hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5;
+    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
+    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
+    /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
+      // NB:
+      /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
+      /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
       hsize = 2;
       vsize /= 2;
     }
@@ -4772,6 +4792,9 @@ void load_end_image(int frame) {
     height = cfile->vsize;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+    // NB:
+    /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -5463,8 +5486,8 @@ static void create_blank_layer(weed_plant_t *layer, const char *image_ext, int w
     width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
     height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
   }
-  if (width == 0) width = DEFAULT_FRAME_HSIZE_UNSCALED;
-  if (height == 0) height = DEFAULT_FRAME_VSIZE_UNSCALED;
+  if (width == 0) width = DEF_FRAME_HSIZE_UNSCALED;
+  if (height == 0) height = DEF_FRAME_VSIZE_UNSCALED;
   weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
   if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
@@ -5967,22 +5990,31 @@ static void get_player_size(int *opwidth, int *opheight) {
   if (!mainw->fs) {
     // embedded player
 #if GTK_CHECK_VERSION(3, 0, 0)
+    // NB:
+    /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
     int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
     if (mainw->double_size) {
-      rwidth = mainw->ce_frame_width * 4 - H_RESIZE_ADJUST * 2;
-      rheight = mainw->ce_frame_height * 4 - V_RESIZE_ADJUST * 8;
+      // NB:
+      /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
+      /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
+      /* rwidth = mainw->ce_frame_width * 4 - H_RESIZE_ADJUST * 2; */
+      /* rheight = mainw->ce_frame_height * 4 - V_RESIZE_ADJUST * 8; */
     }
 
-    /* if (mainw->double_size && !mainw->fs) { */
-    /*   // ce_frame_* was set to half for the first / last frames */
-    /*   // so we multiply by 4 to get double size */
-    /*   rwidth *= 4; */
-    /*   rheight *= 4; */
-    /* } */
+    if (mainw->double_size && !mainw->fs) {
+      // ce_frame_* was set to half for the first / last frames
+      // so we multiply by 4 to get double size
+      rwidth *= 4;
+      rheight *= 4;
+    }
 #else
-    int rwidth = lives_widget_get_allocation_width(mainw->play_image);
-    int rheight = lives_widget_get_allocation_height(mainw->play_image);
+    // NB:
+    /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
+    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+    int rwidth = lives_widget_get_allocation_width(mainw->play_frame) - H_RESIZE_ADJUST;
+    int rheight = lives_widget_get_allocation_height(mainw->play_image) - V_RESIZE_ADJUST;
 #endif
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
@@ -5990,7 +6022,8 @@ static void get_player_size(int *opwidth, int *opheight) {
   } else {
     // try to get exact inner size of the main window
     lives_window_get_inner_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), opwidth, opheight);
-    *opheight -= 2; // necessary, or screen expands too much (!?)
+    //*opheight -= 2; // necessary, or screen expands too much (!?)
+    *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
   }
 }
 
@@ -7269,6 +7302,9 @@ void load_frame_image(int frame) {
       }
 
       // resize frame widgets to default
+      // NB:
+      /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
+      /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
       cfile->hsize = mainw->def_width - H_RESIZE_ADJUST;
       cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
 
@@ -8045,7 +8081,7 @@ void load_frame_image(int frame) {
 
   void resize(double scale) {
     // resize the frame widgets
-    // set scale<0. to _force_ the playback frame to expand (for external capture)
+    // set scale < 0. to _force_ the playback frame to expand (for external capture)
 
     LiVESPixbuf *sepbuf;
 
@@ -8054,7 +8090,9 @@ void load_frame_image(int frame) {
     int xsize;
     int bx, by;
 
-    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
+    // height of the separator imeage
+    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ?
+                 lives_pixbuf_get_height(sepbuf) : 0;
 
     // maximum values
     int hsize, vsize;
@@ -8068,6 +8106,7 @@ void load_frame_image(int frame) {
     w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
     h = lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET);
 
+    // resize the main window so it fits the gui monitor
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     else if (w > scr_width - bx || h > scr_height - by) {
@@ -8077,7 +8116,9 @@ void load_frame_image(int frame) {
       lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
     }
 
-    hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
+    if (mainw->play_window != NULL) return;
+
+    hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
 
     if (scale < 0.) {
@@ -8087,34 +8128,38 @@ void load_frame_image(int frame) {
       vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
     }
 
-    if (!CURRENT_CLIP_IS_VALID || cfile->hsize == 0) {
-      hsize = mainw->def_width - H_RESIZE_ADJUST;
-    } else {
-      if (cfile->hsize < hsize) {
-        hsize = cfile->hsize;
-      }
-    }
+    /* if (!CURRENT_CLIP_IS_VALID || cfile->hsize == 0) { */
+    /*   hsize = mainw->def_width - H_RESIZE_ADJUST; */
+    /* } else { */
+    /*   if (cfile->hsize < hsize) { */
+    /*     hsize = cfile->hsize; */
+    /*   } */
+    /* } */
 
-    if (!CURRENT_CLIP_IS_VALID || cfile->vsize == 0) {
-      vsize = mainw->def_height - V_RESIZE_ADJUST;
-    } else {
-      if (cfile->hsize > 0 && (cfile->vsize * hsize / cfile->hsize < vsize)) {
-        vsize = cfile->vsize * hsize / cfile->hsize;
-      }
-    }
+    /* if (!CURRENT_CLIP_IS_VALID || cfile->vsize == 0) { */
+    /*   vsize = mainw->def_height - V_RESIZE_ADJUST; */
+    /* } else { */
+    /*   if (cfile->hsize > 0 && (cfile->vsize * hsize / cfile->hsize < vsize)) { */
+    /*     vsize = cfile->vsize * hsize / cfile->hsize; */
+    /*   } */
+    /* } */
 
     mainw->ce_frame_width = hsize;
     mainw->ce_frame_height = vsize;
 
     if (oscale == 2.) {
-      if (hsize * 4 < scr_width - SCR_WIDTH_SAFETY) {
+      if (hsize * 2 > scr_width - SCR_WIDTH_SAFETY) {
         scale = 1.;
       }
     }
 
     if (oscale > 0.) {
-      mainw->ce_frame_width = (int)(hsize / scale + H_RESIZE_ADJUST);
-      mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
+      if (scale > 1.) {
+        // this is the size for the start and end frames
+        // they shrink when scale is 2.0
+        mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST;
+        mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST;
+      }
 
       if (CURRENT_CLIP_IS_VALID) {
         if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
@@ -8138,26 +8183,28 @@ void load_frame_image(int frame) {
       }
 
       if (LIVES_IS_PLAYING && mainw->fs && !mainw->sep_win && CURRENT_CLIP_HAS_VIDEO) {
-        mainw->ce_frame_width = w;
-        mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->btoolbar);
+        hsize = mainw->ce_frame_width = w;
+        vsize = mainw->ce_frame_height = h - lives_widget_get_allocation_height(mainw->btoolbar);
       }
 
       // THE SIZES OF THE FRAME CONTAINERS
-      lives_widget_set_size_request(mainw->frame1, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->eventbox3, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->frame2, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->eventbox4, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->frame1, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->eventbox3, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->frame2, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->eventbox4, mainw->ce_frame_width, mainw->ce_frame_height);
 
-      lives_widget_set_size_request(mainw->start_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->end_image, (int)(hsize / scale) + H_RESIZE_ADJUST, vsize / scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->start_image, mainw->ce_frame_width, mainw->ce_frame_height);
+      lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, mainw->ce_frame_height);
 
-      lives_widget_set_size_request(mainw->playframe, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->pl_eventbox, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
-      lives_widget_set_size_request(mainw->playarea, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+      // use unscaled size in dblsize
+      lives_widget_set_size_request(mainw->playframe, hsize, vsize);
+      lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
+      lives_widget_set_size_request(mainw->playarea, hsize, vsize);
 
       // IMPORTANT (or the entire image will not be shown)
-      lives_widget_set_size_request(mainw->play_image, hsize * scale + H_RESIZE_ADJUST, vsize * scale + V_RESIZE_ADJUST);
+      lives_widget_set_size_request(mainw->play_image, hsize, vsize);
     } else {
+      // capture window size
       xsize = (scr_width - hsize * -oscale - H_RESIZE_ADJUST) / 2;
       if (xsize > 0) {
         lives_widget_set_size_request(mainw->frame1, xsize / scale, vsize + V_RESIZE_ADJUST);
@@ -8167,7 +8214,6 @@ void load_frame_image(int frame) {
         mainw->ce_frame_width = xsize / scale;
         mainw->ce_frame_height = vsize + V_RESIZE_ADJUST;
       } else {
-        // this is for foreign capture
         lives_widget_hide(mainw->frame1);
         lives_widget_hide(mainw->frame2);
         lives_widget_hide(mainw->eventbox3);
@@ -8181,25 +8227,27 @@ void load_frame_image(int frame) {
     }
 
     if (!mainw->foreign && mainw->current_file == -1) {
-      // mostly needs overriding in load_start/end_image()
-
-      hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST)
-      vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.;
-      lives_widget_set_size_request(mainw->frame1, vsize, hsize);
-      lives_widget_set_size_request(mainw->eventbox3, vsize, hsize);
-      lives_widget_set_size_request(mainw->frame2, vsize, hsize);
-      lives_widget_set_size_request(mainw->eventbox4, vsize, hsize);
+      /* // mostly needs overriding in load_start/end_image() */
+      /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
+      /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.; */
+      /* lives_widget_set_size_request(mainw->frame1, vsize, hsize); */
+      /* lives_widget_set_size_request(mainw->eventbox3, vsize, hsize); */
+      /* lives_widget_set_size_request(mainw->frame2, vsize, hsize); */
+      /* lives_widget_set_size_request(mainw->eventbox4, vsize, hsize); */
       lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
       load_start_image(0);
       load_end_image(0);
     }
 
-    if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    else if (w > scr_width - bx || h > scr_height - by) {
-      w = scr_width - bx;
-      h = scr_height - by;
-      lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+    if (scale != oscale) {
+      lives_widget_context_update();
+      if (prefs->open_maximised)
+        lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      else if (w > scr_width - bx || h > scr_height - by) {
+        w = scr_width - bx;
+        h = scr_height - by;
+        lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+        lives_window_resize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), w, h);
+      }
     }
   }

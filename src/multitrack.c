@@ -876,6 +876,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
 
   set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
+  // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldnt
   retval = lives_idle_add_full(G_PRIORITY_LOW, mt_auto_backup, mt, NULL);
 
   if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
@@ -6276,7 +6277,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->render_file = mainw->current_file;
 
   if (mainw->sl_undo_mem == NULL) {
-    mt->undo_mem = (uint8_t *)lives_try_malloc(prefs->mt_undo_buf * 1024 * 1024);
+    mt->undo_mem = (uint8_t *)lives_malloc(prefs->mt_undo_buf * 1024 * 1024);
     if (mt->undo_mem == NULL) {
       do_mt_undo_mem_error();
     }

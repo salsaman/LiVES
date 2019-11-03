@@ -577,7 +577,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
       filter = get_weed_filter(idx);
       if ((num_params = num_in_params(filter, FALSE, FALSE)) > 0) {
-        in_pchanges = (void **)lives_try_malloc((num_params + 1) * sizeof(void *));
+        in_pchanges = (void **)lives_malloc((num_params + 1) * sizeof(void *));
         if (in_pchanges == NULL) return NULL;
         for (i = 0; i < num_params; i++) in_pchanges[i] = NULL;
         error = weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, in_pchanges); // set all to NULL, we will re-fill as we go along
@@ -3252,7 +3252,6 @@ filterinit1:
           weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
           init_func = init_func_ptr_ptr[0];
           set_param_gui_readwrite(inst);
-          update_host_info(inst);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
             (*init_func)(inst);
@@ -3920,7 +3919,6 @@ filterinit2:
           weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
           init_func = init_func_ptr_ptr[0];
           set_param_gui_readwrite(inst);
-          update_host_info(inst);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
             (*init_func)(inst);

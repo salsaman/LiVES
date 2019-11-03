@@ -1934,7 +1934,7 @@ void create_LiVES(void) {
   lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
-  lives_widget_set_size_request(mainw->eventbox3, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
@@ -1955,7 +1955,7 @@ void create_LiVES(void) {
   mainw->pl_eventbox = lives_event_box_new();
   lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_set_size_request(mainw->playframe, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
   lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
 
@@ -1968,7 +1968,7 @@ void create_LiVES(void) {
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
-  lives_widget_set_size_request(mainw->eventbox4, DEFAULT_FRAME_HSIZE / 2, DEFAULT_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->eventbox4, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
   lives_widget_set_app_paintable(mainw->eventbox4, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
@@ -1984,10 +1984,6 @@ void create_LiVES(void) {
   mainw->freventbox1 = lives_event_box_new();
   lives_container_add(LIVES_CONTAINER(mainw->frame2), mainw->freventbox1);
   lives_container_add(LIVES_CONTAINER(mainw->freventbox1), mainw->end_image);
-
-  // default frame sizes
-  mainw->def_width = DEFAULT_FRAME_HSIZE;
-  mainw->def_height = DEFAULT_FRAME_HSIZE;
 
   if (!(mainw->imframe == NULL)) {
     if (lives_pixbuf_get_width(mainw->imframe) + H_RESIZE_ADJUST < mainw->def_width) {
@@ -4013,8 +4009,8 @@ void resize_play_window(void) {
       mainw->pheight = lives_pixbuf_get_height(mainw->imframe);
     } else {
       if (mainw->multitrack == NULL) {
-        mainw->pwidth = DEFAULT_FRAME_HSIZE;
-        mainw->pheight = DEFAULT_FRAME_VSIZE;
+        mainw->pwidth = DEF_FRAME_HSIZE;
+        mainw->pheight = DEF_FRAME_VSIZE;
       }
     }
   } else {
@@ -4027,26 +4023,26 @@ void resize_play_window(void) {
     }
   }
 
-  if (mainw->double_size && !mainw->fs && mainw->multitrack == NULL) {
-    // double size
-    mainw->pheight *= 2;
-    mainw->pwidth *= 2;
+  if (mainw->double_size && !mainw->fs) {
+    // double size: maxspect to the screen size
+    mainw->pwidth = cfile->hsize;
+    mainw->pheight = cfile->vsize;
   }
 
   if (pmonitor == 0) {
-    if (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY || mainw->pheight > scr_height - SCR_HEIGHT_SAFETY) {
-      calc_maxspect(scr_width - SCR_WIDTH_SAFETY, scr_height - SCR_HEIGHT_SAFETY, &mainw->pwidth, &mainw->pheight);
+    if ((mainw->double_size && !mainw->fs) || (mainw->pwidth > scr_width - SCR_WIDTH_SAFETY / 2 ||
+        mainw->pheight > scr_height - SCR_HEIGHT_SAFETY / 2)) {
+      calc_maxspect(scr_width - SCR_WIDTH_SAFETY / 2, scr_height - SCR_HEIGHT_SAFETY / 2, &mainw->pwidth, &mainw->pheight);
       mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
     }
   } else {
-    if (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY ||
-        mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) {
-      calc_maxspect(mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY, mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY,
+    if ((mainw->double_size && !mainw->fs) || (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
+        mainw->pheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2)) {
+      calc_maxspect(mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2, mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2,
                     &mainw->pwidth, &mainw->pheight);
       mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
     }
   }
-
 
   if (LIVES_IS_PLAYING) {
     // fullscreen
@@ -4104,8 +4100,10 @@ void resize_play_window(void) {
         lives_widget_queue_resize(mainw->play_window);
       }
 
-      // init the playback plugin, unless there is a possibility of wrongly sized frames (i.e. during a preview)
-      if (mainw->vpp != NULL && (!mainw->preview || mainw->multitrack != NULL)) {
+      // init the playback plugin, unless the player cannot resize and there is a possibility of
+      // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
+      if (mainw->vpp != NULL && (!mainw->preview || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) &&
+          (mainw->multitrack != NULL || (mainw->vpp->capabilities & VPP_CAN_RESIZE))) {
         mainw->ptr_x = mainw->ptr_y = -1;
         if (pmonitor == 0) {
           // fullscreen playback on all screens (of first display)
@@ -4125,8 +4123,8 @@ void resize_play_window(void) {
         if (mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
           // fixed o/p size for stream
           if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-            mainw->vpp->fwidth = MAX_VPP_HSIZE;
-            mainw->vpp->fheight = MAX_VPP_VSIZE;
+            mainw->vpp->fwidth = DEF_VPP_HSIZE;
+            mainw->vpp->fheight = DEF_VPP_VSIZE;
           }
           if (!mainw->vpp->capabilities & VPP_CAN_RESIZE) {
             mainw->pwidth = mainw->vpp->fwidth;
@@ -4305,15 +4303,15 @@ void resize_play_window(void) {
 
   pmonitor = prefs->play_monitor;
   if (pmonitor == 0 || !LIVES_IS_PLAYING) {
-    while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY ||
-           nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY) {
+    while (nwidth > GUI_SCREEN_WIDTH - SCR_WIDTH_SAFETY / 2 ||
+           nheight > GUI_SCREEN_HEIGHT - SCR_HEIGHT_SAFETY / 2) {
       nheight = (nheight >> 2) << 1;
       nwidth = (nwidth >> 2) << 1;
       mainw->sepwin_scale /= 2.;
     }
   } else {
-    while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY ||
-           nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY) {
+    while (nwidth > mainw->mgeom[pmonitor - 1].width - SCR_WIDTH_SAFETY / 2 ||
+           nheight > mainw->mgeom[pmonitor - 1].height - SCR_HEIGHT_SAFETY / 2) {
       nheight = (nheight >> 2) << 1;
       nwidth = (nwidth >> 2) << 1;
       mainw->sepwin_scale /= 2.;

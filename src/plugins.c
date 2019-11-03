@@ -862,7 +862,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth : MAX_VPP_HSIZE;
+    hsize = tmpvpp->fwidth > 0 ? tmpvpp->fwidth : DEF_VPP_HSIZE;
 
     vppa->spinbuttonw = lives_standard_spin_button_new(_("_Width"),
                         hsize,
@@ -870,7 +870,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
     add_fill_to_box(LIVES_BOX(hbox));
 
-    vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight : MAX_VPP_VSIZE;
+    vsize = tmpvpp->fheight > 0 ? tmpvpp->fheight : DEF_VPP_VSIZE;
 
     vppa->spinbuttonh = lives_standard_spin_button_new(_("_Height"),
                         vsize,
@@ -1300,7 +1300,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   // get the play parameters (and alpha channels) if any and convert to weed params
   if (vpp->get_play_params != NULL) {
-    vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap_func);
+    vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap);
   }
 
   // create vpp->play_params

@@ -7402,7 +7402,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       black[0] = y_black;
       black[1] = black[2] = 128;
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       for (i = 0; i < height; i++) {
@@ -7429,7 +7429,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       black[1] = black[3] = y_black;
       black[0] = black[2] = 128;
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       //rowstride -= width * 4;
@@ -7458,7 +7458,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       black[0] = black[2] = y_black;
       black[1] = black[3] = 128;
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       //rowstride -= width * 4;
@@ -7485,7 +7485,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       pixel_data = (uint8_t *)lives_calloc(framesize >> 4, 16);
       if (pixel_data == NULL) return;
     } else {
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       rowstride -= width * 4;
@@ -7512,7 +7512,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       pixel_data = (uint8_t *)lives_calloc(framesize >> 4, 16);
       if (pixel_data == NULL) return;
     } else {
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       rowstride -= width * 4;
@@ -7541,7 +7541,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       black[0] = 255;
       black[3] = 0;
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       rowstride -= width * 4;
@@ -7570,7 +7570,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     } else {
       black[0] = y_black;
       black[1] = black[2] = 128;
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       //rowstride -= width * 4;
@@ -7633,20 +7633,20 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
           return;
         }
       } else {
-        pd_array[0] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[0] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[0] == NULL) {
           lives_free(pd_array);
           return;
         }
         memset(pd_array[0], y_black, framesize);
-        pd_array[1] = (uint8_t *)lives_try_malloc(framesize2);
+        pd_array[1] = (uint8_t *)lives_malloc(framesize2);
         if (pd_array[1] == NULL) {
           lives_free(pd_array[0]);
           lives_free(pd_array);
           return;
         }
         memset(pd_array[1], 128, framesize2);
-        pd_array[2] = (uint8_t *)lives_try_malloc((framesize2) + 64);
+        pd_array[2] = (uint8_t *)lives_malloc((framesize2) + 64);
         if (pd_array[2] == NULL) {
           lives_free(pd_array[1]);
           lives_free(pd_array[0]);
@@ -7664,7 +7664,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         pd_array[1] = (uint8_t *)(memblock + framesize);
         pd_array[2] = (uint8_t *)(memblock + framesize + framesize2);
       } else {
-        memblock = (uint8_t *)lives_try_malloc(framesize * framesize2 * 2);
+        memblock = (uint8_t *)lives_malloc(framesize * framesize2 * 2);
         if (memblock == NULL) return;
         pd_array[0] = (uint8_t *)memblock;
         memset(pd_array[0], y_black, framesize);
@@ -7723,20 +7723,20 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
           return;
         }
       } else {
-        pd_array[0] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[0] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[0] == NULL) {
           lives_free(pd_array);
           return;
         }
         memset(pd_array[0], y_black, framesize);
-        pd_array[1] = (uint8_t *)lives_try_malloc(framesize2);
+        pd_array[1] = (uint8_t *)lives_malloc(framesize2);
         if (pd_array[1] == NULL) {
           lives_free(pd_array[0]);
           lives_free(pd_array);
           return;
         }
         memset(pd_array[1], 128, framesize2);
-        pd_array[2] = (uint8_t *)lives_try_malloc(framesize2 + 64);
+        pd_array[2] = (uint8_t *)lives_malloc(framesize2 + 64);
         if (pd_array[2] == NULL) {
           lives_free(pd_array[1]);
           lives_free(pd_array[0]);
@@ -7754,7 +7754,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         pd_array[1] = (uint8_t *)(memblock + framesize);
         pd_array[2] = (uint8_t *)(memblock + framesize + framesize2);
       } else {
-        memblock = (uint8_t *)lives_try_malloc(framesize + framesize2 * 2 + 64);
+        memblock = (uint8_t *)lives_malloc(framesize + framesize2 * 2 + 64);
         if (memblock == NULL) return;
         pd_array[0] = (uint8_t *)memblock;
         pd_array[1] = (uint8_t *)(memblock + framesize);
@@ -7803,20 +7803,20 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
           return;
         }
       } else {
-        pd_array[0] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[0] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[0] == NULL) {
           lives_free(pd_array);
           return;
         }
         memset(pd_array[0], y_black, framesize);
-        pd_array[1] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[1] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[1] == NULL) {
           lives_free(pd_array[0]);
           lives_free(pd_array);
           return;
         }
         memset(pd_array[1], 128, framesize);
-        pd_array[2] = (uint8_t *)lives_try_malloc(framesize + 64);
+        pd_array[2] = (uint8_t *)lives_malloc(framesize + 64);
         if (pd_array[2] == NULL) {
           lives_free(pd_array[1]);
           lives_free(pd_array[0]);
@@ -7834,7 +7834,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         pd_array[1] = memblock + framesize;
         pd_array[2] = memblock + framesize * 2;
       } else {
-        memblock = (uint8_t *)lives_try_malloc(framesize * 3 + 64);
+        memblock = (uint8_t *)lives_malloc(framesize * 3 + 64);
         if (memblock == NULL) return;
         pd_array[0] = memblock;
         memset(pd_array[0], y_black, framesize);
@@ -7891,20 +7891,20 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
           return;
         }
       } else {
-        pd_array[0] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[0] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[0] == NULL) {
           lives_free(pd_array);
           return;
         }
         memset(pd_array[0], y_black, framesize);
-        pd_array[1] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[1] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[1] == NULL) {
           lives_free(pd_array[0]);
           lives_free(pd_array);
           return;
         }
         memset(pd_array[1], 128, framesize);
-        pd_array[2] = (uint8_t *)lives_try_malloc(framesize);
+        pd_array[2] = (uint8_t *)lives_malloc(framesize);
         if (pd_array[2] == NULL) {
           lives_free(pd_array[1]);
           lives_free(pd_array[0]);
@@ -7912,7 +7912,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
           return;
         }
         memset(pd_array[2], 128, framesize);
-        pd_array[3] = (uint8_t *)lives_try_malloc(framesize + 64);
+        pd_array[3] = (uint8_t *)lives_malloc(framesize + 64);
         if (pd_array[3] == NULL) {
           lives_free(pd_array[2]);
           lives_free(pd_array[1]);
@@ -7933,7 +7933,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
         pd_array[2] = memblock + framesize * 2;
         pd_array[3] = memblock + framesize * 3;
       } else {
-        memblock = (uint8_t *)lives_try_malloc(framesize * 4 + 64);
+        memblock = (uint8_t *)lives_malloc(framesize * 4 + 64);
         if (memblock == NULL) return;
         pd_array[0] = memblock;
         memset(pd_array[0], y_black, framesize);
@@ -8001,7 +8001,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     if (!black_fill) pixel_data = (uint8_t *)lives_calloc(rowstride * height * 64, 1);
     else {
       size_t sizf = 4 * sizeof(float);
-      pixel_data = (uint8_t *)lives_try_malloc(rowstride * height + 64);
+      pixel_data = (uint8_t *)lives_malloc(rowstride * height + 64);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       //rowstride -= width * 4 * sizeof(float);
@@ -8023,7 +8023,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     if (!black_fill) pixel_data = (uint8_t *)lives_calloc(width * height + (64 / sizeof(float)), sizeof(float));
     else {
       size_t sizf = sizeof(float);
-      pixel_data = (uint8_t *)lives_try_malloc(width * height * sizf + 64);
+      pixel_data = (uint8_t *)lives_malloc(width * height * sizf + 64);
       if (pixel_data == NULL) return;
       ptr = pixel_data;
       blackf[0] = 1.;
@@ -8044,7 +8044,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     framesize = CEIL(width * height, 32) + 64;
     if (!black_fill) pixel_data = (uint8_t *)lives_calloc(framesize, 1);
     else {
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       memset(pixel_data, 255, width * height);
     }
@@ -8058,7 +8058,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     framesize = CEIL(rowstride * height, 32) + 64;
     if (!black_fill) pixel_data = (uint8_t *)lives_calloc(framesize, 1);
     else {
-      pixel_data = (uint8_t *)lives_try_malloc(framesize);
+      pixel_data = (uint8_t *)lives_malloc(framesize);
       if (pixel_data == NULL) return;
       memset(pixel_data, 255, rowstride * height);
     }
@@ -10388,7 +10388,7 @@ void compact_rowstrides(weed_plant_t *layer) {
     return;
   }
 
-  npixel_data = (uint8_t *)lives_try_malloc(framesize);
+  npixel_data = (uint8_t *)lives_malloc(framesize);
   if (npixel_data == NULL) {
     lives_free(pixel_data);
     lives_free(rowstrides);
@@ -11252,7 +11252,7 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
         !weed_plant_has_leaf(layer, WEED_LEAF_HOST_ORIG_PDATA)) {
       pixel_data = src;
     } else {
-      dst = pixel_data = (uint8_t *)lives_try_malloc(height * orowstride);
+      dst = pixel_data = (uint8_t *)lives_malloc(height * orowstride);
       if (pixel_data == NULL) return NULL;
       for (i = 0; i < height; i++) {
         lives_memcpy(dst, src, widthx);
@@ -11437,7 +11437,7 @@ weed_plant_t *weed_layer_copy(weed_plant_t *dlayer, weed_plant_t *slayer) {
         totsize += CEIL(size, 32);
       }
       if (totsize > 0) {
-        npixel_data = (uint8_t *)lives_try_malloc(totsize);
+        npixel_data = (uint8_t *)lives_malloc(totsize);
         if (npixel_data == NULL) return layer;
 
         for (i = 0; i < pd_elements; i++) {

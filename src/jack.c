@@ -45,7 +45,7 @@ static boolean jack_playall(livespointer data) {
 
 static boolean check_zero_buff(size_t check_size) {
   if (check_size > zero_buff_count) {
-    zero_buff = (unsigned char *)lives_try_realloc(zero_buff, check_size);
+    zero_buff = (unsigned char *)lives_realloc(zero_buff, check_size);
     if (zero_buff) {
       memset(zero_buff + zero_buff_count, 0, check_size - zero_buff_count);
       zero_buff_count = check_size;
@@ -792,7 +792,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                   if (mainw->agen_key != 0) inbuf = (unsigned char *)cache_buffer->buffer16[0];
                   else oinbuf = inbuf = xbuf;
 
-                  xbuf = (unsigned char *)lives_try_malloc(nbytes);
+                  xbuf = (unsigned char *)lives_malloc(nbytes);
                   if (!xbuf) {
                     // external streaming
                     rbytes = numFramesToWrite * jackd->num_output_channels * 2;
@@ -845,7 +845,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 // need to remap channels to stereo (assumed for now)
                 size_t bysize = 4, tsize = 0;
                 unsigned char *inbuf = (unsigned char *)out_buffer;
-                xbuf = (unsigned char *)lives_try_malloc(nbytes);
+                xbuf = (unsigned char *)lives_malloc(nbytes);
                 if (!xbuf) {
                   output_silence(0, numFramesToWrite, jackd, out_buffer);
                   return 0;
@@ -1016,7 +1016,7 @@ static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofil
   frames_out = (int64_t)((double)nframes / out_scale + 1.);
   bytes_out = frames_out * ofile->achans * (ofile->asampsize >> 3);
 
-  holding_buff = lives_try_malloc(bytes_out);
+  holding_buff = lives_malloc(bytes_out);
   if (!holding_buff) return 0;
 
   frames_out = sample_move_float_int(holding_buff, in_buffer, nframes, out_scale, ofile->achans,

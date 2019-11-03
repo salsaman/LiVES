@@ -132,8 +132,8 @@ void load_vpp_defaults(_vid_playback_plugin *, char *file);
 
 #define DEFAULT_VPP "openGL"
 
-#define MAX_VPP_HSIZE 1024.
-#define MAX_VPP_VSIZE 576.
+#define DEF_VPP_HSIZE 1024
+#define DEF_VPP_VSIZE 768
 
 const weed_plant_t *pp_get_param(weed_plant_t **pparams, int idx);
 const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx);

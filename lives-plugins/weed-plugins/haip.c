@@ -344,7 +344,7 @@ int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
+WEED_SETUP_START(200, 200) {
   weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
   if (plugin_info != NULL) {
     int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
@@ -364,3 +364,4 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
   return plugin_info;
 }
 
+WEED_SETUP_END;

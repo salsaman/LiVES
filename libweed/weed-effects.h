@@ -56,7 +56,7 @@ extern "C"
 
 /* API version * 200 */
 #define WEED_FILTER_API_VERSION 200
-#define WEED_FILTER_API_VERSION_200
+#define WEED_FILTER_API_VERSION 200
 
 /* plant types */
 #define WEED_PLANT_PLUGIN_INFO 1
@@ -159,8 +159,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_PACKAGE_NAME "package_name"
 
 // host info
-#define WEED_LEAF_WEED_API_VERSION "weed_api_version"
-#define WEED_LEAF_FILTER_API_VERSION "api_version"
+#define WEED_LEAF_FILTER_API_VERSION "filter_api_version"
 #define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
 #define WEED_LEAF_SET_FUNC "weed_leaf_set_func"
 #define WEED_PLANT_NEW_FUNC "weed_plant_new_func"
@@ -171,10 +170,12 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
 #define WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
 #define WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
+#define WEED_LEAF_CALLOC_FUNC "weed_calloc_func"
 #define WEED_LEAF_REALLOC_FUNC "weed_realloc_func"
 #define WEED_LEAF_FREE_FUNC "weed_free_func"
 #define WEED_LEAF_MEMSET_FUNC "weed_memset_func"
 #define WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
+#define WEED_LEAF_MEMMOVE_FUNC "weed_memmove_func"
 
 // filter_class
 #define WEED_LEAF_INIT_FUNC "init_func"

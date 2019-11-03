@@ -17,6 +17,7 @@
 #include "rte_window.h"
 #include "interface.h"
 #include "startup.h"
+#include "effects-weed.h"
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -549,6 +550,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
       if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->nullaudio_loop = AUDIO_LOOP_PINGPONG;
       else mainw->nullaudio_loop = AUDIO_LOOP_FORWARD;
 #endif
+      update_all_host_info(); // let fx plugins know about the change
       goto success1;
     } else if (!(strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
       // switch to sox
@@ -596,6 +598,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
           else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
         }
+        update_all_host_info(); // let fx plugins know about the change
         goto success1;
       }
       goto fail1;
@@ -631,6 +634,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
             if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
             else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
           }
+          update_all_host_info(); // let fx plugins know about the change
           goto success1;
         }
       }
@@ -889,7 +893,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
   if (!strcmp(prefidx, PREF_MT_AUTO_BACK)) {
-    if ((ticks_t)newval == prefs->mt_auto_back) goto fail3;
+    if (newval == prefs->mt_auto_back) goto fail3;
     if (mainw->multitrack != NULL) {
       if (newval <= 0 && prefs->mt_auto_back > 0) {
         if (mainw->multitrack->idlefunc > 0) {
@@ -897,7 +901,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
           mainw->multitrack->idlefunc = 0;
         }
         if (newval == 0) {
-          prefs->mt_auto_back = (ticks_t)newval;
+          prefs->mt_auto_back = newval;
           mt_auto_backup(mainw->multitrack);
         }
       }
@@ -2106,7 +2110,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   if (mt_undo_buf != prefs->mt_undo_buf) {
-    if ((new_undo_buf = (unsigned char *)lives_try_malloc(mt_undo_buf * 1024 * 1024)) == NULL) {
+    if ((new_undo_buf = (unsigned char *)lives_malloc(mt_undo_buf * 1024 * 1024)) == NULL) {
       do_mt_set_mem_error(mainw->multitrack != NULL, skip_warn);
     } else {
       if (mainw->multitrack != NULL) {
@@ -2124,7 +2128,7 @@ boolean apply_prefs(boolean skip_warn) {
           lives_free(mainw->multitrack->undo_mem);
           mainw->multitrack->undo_mem = new_undo_buf;
         } else {
-          mainw->multitrack->undo_mem = (unsigned char *)lives_try_malloc(mt_undo_buf * 1024 * 1024);
+          mainw->multitrack->undo_mem = (unsigned char *)lives_malloc(mt_undo_buf * 1024 * 1024);
           if (mainw->multitrack->undo_mem == NULL) {
             do_mt_set_mem_error(TRUE, skip_warn);
           } else {

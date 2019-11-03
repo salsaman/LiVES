@@ -151,39 +151,34 @@ Add missing type documentation for "fps".
 04/03/2016 salsaman
 Add optional "copyright" leaf to PLUGIN_INFO.
 
+
 28/10/2019 salsaman
-Spec changes:
+Version 2.0. Spec changes:
+Added 2 new functions, weed_leaf_set_voidptr_sizes() and weed_leaf_get_all().
+Allow plugins access to weed_plant_free().
+Changed return value from weed_leaf_element_size() for WEED_SEED_VOIDPTR (now returns the data size rather than sizeof(void *)).
+Added WEED_VOIDPTR_SIZE.
+Added typedefs weed_error_t, weed_size_t, weed_voidptr_t.
+Added typedefs weed_realloc_f, weed_calloc_f, weed_memmove_f.
+weed_size_t is now int32_t rather than size_t.
+Calling weed_leaf_get() for an existing leaf but with and invalid idx returns WEED_ERROR_NOSUCH_ELEMENT rather than
+WEED_ERROR_NOSUCH_LEAF (BUGFIX).
+Added WEED_ABI_VERSION (synonym for WEED_API_VERSION).
+Added WEED_ERROR_IMMUTABLE and WEED_ERROR_UNDELETABLE.
+Added WEED_FLAG_UNDELETABLE and WEED_FLAG_IMMUTABLE.
+
+
+Filter API:
 Added WEED_FILTER_API_VERISON, defined as 200 for this release.
-Added new utility functions weed_leaf_set_voidptr_value_s(), weed_leaf_set_voidptr_array_s()
-Added definitions for WEED_GAMMA_UNKNOWN, WEED_GAMMA_LINEAR, WEED_GAMMA_SRGB.
-Added optional "gamma_type" leaves to PARAMETER_TEMPLATE, PARAMETER, CHANNEL.
+Added WEED_ERROR_BADVERSION.
 Added optional "flags" leaf to HOST_INFO.
-Added WEED_ERROR_FLAGBITS / WEED_ERROR_FLAGALL.
-
-weed.h:
-Added WEED_API_VERSION (set to 200).
-Added WEED_API_200
-
-Added WEED_VOIDPTR_SIZE defined as sizeof(void *)
-
-Changed typedef of weed_size_t from size_t to uint32_t.
-Added typedef for weed_error_t
-
-Added WEED_ERROR_FLAGALL and WEED_ERROR_FLAGBIT
-
-weed-palettes.h:
-Added WEED_GAMMA_UNKNOWN, WEED_GAMMA_LINEAR, WEED_GAMMA_SRGB
-
-weed-effects.h:
-Added WEED_FILTER_API_VERSION (set to 200).
-Added WEED_FILTER_API_VERSION_200
+Added WEED_GAMMA_UNKNOWN, WEED_GAMMA_LINEAR, WEED_GAMMA_SRGB (weed-palettes.h)
 Added WEED_HOST_SUPPORTS_LINEAR_GAMMA flag bit for HOST_INFO "flags".
 Added WEED_FILTER_HINT_LINEAR_GAMMA for FILTER_CLASS "flags"
+Added definitions for WEED_GAMMA_UNKNOWN, WEED_GAMMA_LINEAR, WEED_GAMMA_SRGB.
+Added optional "gamma_type" leaves to PARAMETER_TEMPLATE, PARAMETER, CHANNEL.
 Moved typedef weed_timecode_t from weed.h
-Moved WEED_LEAF_READONLY_PLUGIN, WEED_LEAF_READONLY_HOST and WEED_ERROR_LEAF_READONLY from weed.h
-
-
-
+Removed WEED_LEAF_READONLY_PLUGIN, WEED_LEAF_READONLY_HOST and WEED_ERROR_LEAF_READONLY.
 
 
 
@@ -198,22 +193,33 @@ timeline style events (weed-events).
 
 
 
+== WEED_API_VERSION / WEED_ABI_VERSION ==
+
+These equivalent preprocessor symbols are defined as 200 for this version of the specification. This
+number may be increased for future revisions of the spec.
+
+libweed-utils provides the following function:
+
+  int check_weed_abi_compat(int32_t higher, int32_t lower)
+
+which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise.
+
+
 
 
 == WEED PLANTS ==
 
-A ''plant'' in Weed is a set of one or more ''leaves''.
+A ''plant'' in Weed is a collection of one or more ''leaves''.
 
-Each plant has one mandatory leaf with a key WEED_LEAF_TYPE (defined as "type" in weed.h) , and depending
-upon the value of this leaf, the plant has other mandatory and optional leaves. See below for examples.
+Each plant has one MANDATORY leaf, with the key WEED_LEAF_TYPE (defined as "type" in weed.h).
+Depending upon the value of this leaf, the plant may have other mandatory and optional leaves defined by an 
+application specification.
 
 "type" is a single valued leaf with seed_type WEED_SEED_INT (See below: seed_types).
 
 The "type" is passed as a parameter in the weed_plant_new() function.
-This function returns a pointer to newly allocated plant with the "type" leaf set
+This function returns a pointer to newly allocated plant with the "type" leaf value set
 to the plant_type.
-
-Plant types >= 512 are reserved for custom use.
 
 
 
@@ -223,10 +229,10 @@ Plant types >= 512 are reserved for custom use.
 As mentioned above, each "plant" is simply a set of one or more "leaves".
 
 Each leaf has at least:
- * a ''key'' (which is a non-NULL string - (const char *) ASCII encoded - NOT uf8, unicode or anything else)
- * a ''value'' (0 or more elements)
- * ''number of elements'' (>= 0) contained in the value field.
- * a ''seed_type'' (int32_t)
+ * a ''key'' a unique (for the plant) non-NULL ASCII string; cannot be changed after the leaf is created.
+ * a ''value'' (an array of 0 or more elements, the type depends on the seed_type of the leaf)
+ * ''number of elements'' (weed_size_t) contained in the value field.
+ * a ''seed_type'' (int32_t). Defines the type of the value field. Cannot be altered after the leaf is created.
  * a bitmap ''flags'' field (int32_t)
 
 
@@ -236,12 +242,13 @@ Each leaf has at least:
 == SEED TYPES ==
 
 The "seed type" denotes the type of the value field in a leaf.
-Weed offers the following '''fundamental''' types (number <64):[[BR]]
+Weed offers the following '''fundamental''' types:[[BR]]
 
- * WEED_SEED_INT     : signed /unsigned 32 bit integer
- * WEED_SEED_DOUBLE  : corresponds to 64 bit C type signed double
- * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, constrained to take values WEED_FALSE or WEED_TRUE 
- * WEED_SEED_STRING  : NUL terminated array of char (max length is int32_t max, but strings should preferably be under 65536 bytes)
+ * WEED_SEED_INT     : equivalent to a signed /unsigned 32 bit integer
+ * WEED_SEED_DOUBLE  : equivalent to a 64 bit signed double
+ * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE 
+ * WEED_SEED_STRING  : NUL terminated array of char (max length is uint32_max). Zero length strings are treated as NULL
+                       values in Weed.
  * WEED_SEED_INT64   : signed /unsigned 64 bit integer
 
 '''Pointer''' types (number >= 64)
@@ -289,8 +296,8 @@ an example).
 
 == GETTING/SETTING LEAF VALUES ==
 
-For WEED_SEED_STRING, Weed will allocate a new string when getting / setting the value. Therefore the value should be
-freed after getting or setting. For all other seed_types, copy is by reference.
+For WEED_SEED_STRING, Weed will allocate a new string when getting / setting the value. For all other seed_types,
+copy is by reference.
 
 
 
@@ -309,6 +316,7 @@ freed after getting or setting. For all other seed_types, copy is by reference.
     E.g for WEED_SEED_INT, values should be (weed_voidptr_t)(int32_t[num_elems]) or (weed_voidptr_t)(unt32_t[num_elems]),
     for WEED_SEED_STRING, it should be (weed_voidptr_t)(char *[num_elems]),
     for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
+    etc.
 
     No checking is performed to see if plant is NULL or a valid plant, or whether the seed_type is valid. This is left to the caller.
     The array is assumed to be of the correct size and type.
@@ -327,6 +335,9 @@ freed after getting or setting. For all other seed_types, copy is by reference.
 
     (as of API 200) If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
     is returned and the leaf is not altered.
+
+    Attempting to set the number of elements of the "type" leaf to a value other than 1 will result in WEED_ERROR_NOSUCH_ELEMENT
+    being returned and the value will not be altered.
 
 
 * weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) :
@@ -414,9 +425,9 @@ freed after getting or setting. For all other seed_types, copy is by reference.
 
 
 
-As of API 200:
+As of API 200: (TODO):
 
- * weed_error_t weed_leaf_set_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems,
+ * weed_error_t weed_leaf_set_voidptr_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems,
  weed_voidptr_t values, weed_size_t *sizes)
 
  Only valid for leaves with a seed type WEED_SEED_VOIDPTR. Will amend or create the leaf with
@@ -441,29 +452,28 @@ As of API 200:
     is returned and the leaf is not altered.
 
 
- * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, weed_voidptr_t *values, weed_size_t **sizes, int32_t *flags)
+ * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
 
- Retrieves the num_elements, values, sizes and flags for the specified leaf. "values" should be freed after use as well as
+ Retrieves the num_elements, values, sizes and flags for the specified leaf.
+ "values" should be cast to an array of the appropriate type and also freed after use, along with
  any string values retrieved. Any of the fields may be NULL (except for plant).
- Will return WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_MEMORY.
+ Will return WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_MEMORY_ALLOCATION.
 
  If key is NULL, then values will be a NULL terminated array of the leaves (similar to weed_plant_list_leaves()),
- seed_type will be set to the plant type, num_elems to the length of the vakues array (minus the final NULL), and sizes will hold
+ seed_type will be set to the plant type; num_elems to the length of the values array (minus the final NULL); sizes will hold
  the number of elements in each leaf, and flags will be set to the flags for the "type" leaf. All returned arrays should be freed
  after use, plus all the (string) values (except the final NULL).
 
- Will return WEED_SUCCESS or WEED_ERROR_MEMORY.
+ Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION.
 
- Any of the other paraneters nay be NULL. IF *seed_type is passed with a value 0, then on return it will hokd the seed_type
- of the leaf (if it exists). If any other valus is set, the function will return WEED_ERROR_WRONG_SEED_TYPE and will not set
- any values.
-
+    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller. The arrays are assumed to be of
+           the correct size and type.
 
 
 
 == Additional functions not available to plugins ==
 
-The host has access to additional functions which are not available to plugins.
+A Weed host has access to additional functions which are not available to plugins:
 
  * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
    No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
@@ -477,18 +487,22 @@ The host has access to additional functions which are not available to plugins.
 
 
 * weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
-   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
-
+   
    if the leaf does not exist, WEED_ERROR_NOSUCH_LEAF is returned.
-   if the WEED_FLAG_UNDELETABLE flag bit is set then WEED_ERROR_UNDELETABLE is returned. and the leaf is not deleted.
-   For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
-   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
-   weed_leaf_set_sizes()), is freed, unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
+   if the WEED_FLAG_UNDELETABLE flag bit is set then WEED_ERROR_UNDELETABLE is returned, and the leaf is not deleted.
 
-   The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attampt to delete it with weed_leaf_delete()
+   For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
+
+   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
+   weed_leaf_set_voidptr_sizes()), is freed - unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
+
+   The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attempt to delete it with weed_leaf_delete()
    then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set), otherwise WEED_ERROR_NOSUCH_LEAF
    will be returned. (Note the normal order of precedence of errors is reversed in this case, WEED_ERROR_NOSUCH_LEAF would normally
    be returned BEFORE WEED_ERROR_UNDELETABLE).
+
+   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
+
 
 
 
@@ -504,17 +518,24 @@ WEED_FLAG_IMMUTABLE [1 << 1] :: the leaf value cannot be changed (but it may be 
                                    weed_leaf_set returns WEED_ERROR_IMMUTABLE if you try to do so
 
 
-When creating a new plant, libweed automatically will set the immutable flag for the "type" leaf.
+When creating a new plant, libweed automatically will set the WEED_LEAF_IMMUTABLE flag for the "type" leaf.
 Thus if you want to change the plant type, you must first clear the WEED_LEAF_IMMUTABLE flag bit, e.g.
 
 int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
-weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags ^ (flags & WEED_FLAG_IMMUTABLE));
-
+weed_error_t error = weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags ^ (flags & WEED_FLAG_IMMUTABLE));
+if (error == WEED_SUCCESS) {
+...
 // now you can change the "type" of the plant
 
-If the "type" leaf is set undeletable, then the plant cannot be deleted - weed_plant_free() will return WEED_ERROR_UNDELETABLE.
-In this case you need to clear the flag bit to free the plant.
 
+If the "type" leaf is set undeletable, then the plant cannot be freed using weed_plant_free(),
+the function will return WEED_ERROR_UNDELETABLE. In this case you need to clear the flag bit prior to calling weed_plant_free().
+
+The combination of immutable and undeletable flag bits is designed so that Weed hosts can prevent plugins from
+changing readonly values or freeing plants which are still referenced by the host.
+
+
+Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used.
 
 
 
@@ -527,11 +548,9 @@ Defined in weed.h
 
 Errors are listed here in order of precedence from highest to lowest.
 
+ *  WEED_SUCCESS[[BR]]
  *  WEED_NO_ERROR[[BR]]
     returned if no errors occured.
-
-*   WEED_SUCCESS[[BR]]
-    synonym for WEED_NO_ERROR (added in api version 200)
 
  *  WEED_ERROR_NOSUCH_LEAF[[BR]]
     leaf does not exist for the specified plant; returned from
@@ -559,25 +578,11 @@ Errors are listed here in order of precedence from highest to lowest.
 
 
 
-==== Leaf flags ====
-
- * WEED_FLAG_IMMUTABLE
-   Leaf value cannot be altered, but the leaf may be deleted or freed. Automatically set for the "type" leaf.
-
- * WEED_FLAG_UNDELETABLE
-   Leaf cannot be deleted, and additionally if the "type" leaf is undeletable, the plant cannot be freed with weed_plant_free.
-
-
-
-Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used.
-
 
 == Plant types ==
 
-weed.h defines a single plamt type, WEED_PLANT_UNKNOWN, with value zero.
-Other weed libraries provide more plant types.
-
-
+weed.h defines a single plant type, WEED_PLANT_UNKNOWN, with value (int32_t)0.
+Other Weed libraries provide additional plant types.
 
 
 
@@ -592,25 +597,38 @@ WEED_API_VERSION is #defined as 200 in the header.
 
 WEED_API_VERSION_200 is also #defined in the header.
 
-WEED_VOIDPTR_SIZE is #defined as 8
+WEED_ABI_VERSION is #defined as 200 in the header.
+
+WEED_ABI_VERSION_200 is also #defined in the header.
+
+WEED_VOIDPTR_SIZE is #defined as (sizeof(void *)
 
 weed_voidptr_t is typedefed to (uint64_t *)
+weed_size_t is typedefed to (uint32_t)
+weed_error_t is typedefed to (int32_t)
 
 
 
 
-== Leaf names ==
+== Leaf keys ==
+weed.h defines the following leaf keys:
 
 
-#define WEED_LEAF_TYPE "type"
+WEED_LEAF_TYPE "type"
+Mandatory leaf for all plants
+
+WEED_LEAF_WEED_API_VERSION "weed_api_version"
+WEED_LEAF_WEED_ABI_VERSION "weed_api_version"
+Provided for convenience for use by any plant type
+
 
 
 == Pre-processor symbols ==
-The weed header uses the following pre-processor symbols:
+The Weed header checks for the following pre-processor symbols:
 
 ==== HAVE_WEED_PLANT_T ====
 
-The reference implementation provides default (simplest)
+The reference implementation provides default
 implementations of a Weed plant. This can be overriden at compile time using:
 {{{
 #define HAVE_WEED_PLANT_T
@@ -625,7 +643,7 @@ In this way a host can provide its own defintion of a Weed plant, and
 provide its own implementation of the core functions, whilst still making
 use of the rest of the header file.
 
-HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for lower level overloading.
+HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
 
 
 
@@ -643,10 +661,18 @@ There is also a Weed Audio Extension, and a Weed Events Extension,
 which are documented separately.
 
 
+== WEED_FILTER_API_VERSION  ==
 
-'''Note''': STRINGS are all utf-8 encoded in Weed, except leaf Keys, which are ASCII encoded.
+This preprocessor symbol is defined as 200 for this version of the specification. This
+number may be increased for future revisions of the spec.
 
-  (The weed_function_t is a pointer to a function, which may be cast to/from a pointer to any function type)
+libweed-utils provides the following function:
+
+  int check_filter_api_compat(int32_t higher, int32_t lower)
+
+which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise.
+
+
 
 
 Weed Effects (and Event) plugins, the value of the plant leaf "type" MAY be one of:
@@ -717,9 +743,11 @@ weed/weed-effects.h // AFTER weed.h
 and for a video effect:
 weed/weed-palettes.h // before or after any other headers
 
-Plugins may optionally link with libweed-plugin (TODO - for now #include weed-plugin.c)
+TODO:
+Plugins may optionally link with libweed-plugin and / or libweed-utils (TODO - for now #include weed-plugin.c)
+Plugins should NOT be linked directly with libweed.
 
-Plugins should NOT be linked directly with libweed, libweed-utils or any other library which uses the Weed API directly.
+
 
 
 == WEED-COMPAT.H ==
@@ -747,7 +775,7 @@ The header also provides compatibility with other libraries, eg. libav. Check th
 
 
 
-== WEED_API_VERSION ==
+== WEED_API_VERSION / WEED_ABI_VERSION ==
 
 This is defined as 200 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
@@ -1518,7 +1546,7 @@ The only fixed function name the plugin MUST implement is weed_setup().
 Normally, host and plugin would use utility functions to simplify the prcedure outlined below. In the simplifed version,
 the host does:
 
-weed_plant_t *plugin_info = weed_setup(weed_bootstrao_func);
+weed_plant_t *plugin_info = weed_setup(weed_bootstrap_func);
 if (plugin_info != NULL)
 
 ....
@@ -1536,19 +1564,20 @@ WEED_SETUP_END;
 }
 
 
-Howeer the full details are escribed below.
+Howeer the full details are described below.
 
 
 
 
 ==== weed_setup ====
 
+This is the sole mandatory function which every Weed plugin must implement.
+
 {{{
     weed_plant_t *weed_setup(weed_bootstrap_f weed_bootstrap)
 }}}
 
-The host calls this first in a plugin, and passes in a pointer to a
-function, weed_bootstrap, which must be called first by the plugin.
+The host calls this first in a plugin, and passes in a pointer to a function of type weed_bootstrap_f.
 
 The typedef of weed_bootstrap_f is:
 {{{
@@ -1560,11 +1589,45 @@ The typedef of weed_bootstrap_f is:
 ( NB: prior to API version 200, the function had a slightly different prototype:
    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t num_versions, int32_t *plugin_versions) )
 
-The plugin must call this, passing in a pointer to receive default_getter_f, and the lowest and highest versions of
-WEED_API_VERSION and WEED_FILTER_API_VERSION it supposrts.
 
-If the host does not support the plugin's api versions, it should return NULL.
+e.g:
+
+....
+weed_setup_f setup_fn = (weed_setup_f)dlsym(handle, "weed_setup");
+weed_plant_t *plugin_info = (*setup_fn)(weed_bootstrap); // using weed_bootstrap from libweed-utils
+
+
+
+At the start of weed_setup(), the plugin must call the weed_bootstrap function, passing in a pointer to receive default_getter_f,
+and the lowest and highest versions of WEED_API_VERSION and WEED_FILTER_API_VERSION it supports, the returned value will be a
+host_info plant created by the host, e.g.:
+
+
+  weed_default_getter_f weed_default_getf;
+  weed_plant_t *host_info = (*weed_boot)(&weed_default_getf, weed_api_min_version, weed_api_max_version,
+                                         weed_filter_api_min_version, weed_filter_api_max_version);
+
+
+
+
+Control now returns to the host in its weed_bootstrap function.
+
+
+weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
+			     int32_t plugin_min_weed_api_version,
+			     int32_t plugin_max_weed_api_version,
+			     int32_t plugin_min_filter_api_version,
+			     int32_t plugin_max_filter_api_version);
+
+
+
+The host now has a chance to review which weed and filter api versions the plugin supports and to adjust the functionality
+offered to the plugin accordingly. It is for this reason that the host does not pass the host_info plant directly to the plugin
+when calling weed_setup.
+
+If the host does not support the plugin's api versions, it should return NULL from weed_bootstrap.
 In this case the plugin should return NULL from the weed_setup() function, so that the host can unload it.
+
 
 Otherwise, the host will set value to point to a default getter function in the host of the form:
 
@@ -1572,24 +1635,41 @@ Otherwise, the host will set value to point to a default getter function in the 
    weed_error_t default_getter(weed_plant_t *plant, const char *key, weed_function_t *value)
 }}}
 
-and return a HOST_INFO plant. 
+and return a configured HOST_INFO plant.
 
-The plugin should call default_getter to get all of its API functions from the
-host_info plant. It can also retrieve the "api_version" leaf (using the
-retrieved weed_leaf_get() ) to find out which of its API version the host assigned it. 
+
+If using libweed-utils, the provided weed_bootstrap will automatically check versions and set the plugin API accordingly.
+Its weed_bootstrap also provides a callback to the host so that the host can adjust the configured host_info.
+
+
+
+The plugin should call the default_getter define all of its API functions from the
+host_info plant.
+
+
 weed_function_t is a generic pointer-to-function, so the plugin should typecast this as
 appropriate.
 
+example:
+
+
+  if ((weed_default_getf)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
+
+
 [The default getter should use only standard memory functions, so that the plugin can 
-bootstrap the real memory functions (weed_malloc, weed_realloc, weed_free, weed_memset and weed_memcpy).
+bootstrap its memory functions (weed_malloc, weed_free, weed_memcpy etc.).
 There is a version implemented in the weed_utils library which the host can use.]
+
+
+
 
 Normally a plugin would use a utility library which would take care of
 calling the bootstrap function and setting up its API functions.
 
+The plugin can also retrieve the "weed_api_version" and "filter_api_version" leaves to discover the API versions the host
+assigned it. 
 
-
-The weed_setup() function in the plugin then returns a PLUGIN_INFO plant that
+The weed_setup() function in the plugin will return a PLUGIN_INFO plant that
 specifies what is the content of this plugin - which filter classes it has, who is the maintainer, etc.
 
 The Plugin implements weed_setup() in following way: the PLUGIN INFO plant is first created by using weed_plant_new(). 
@@ -1606,16 +1686,37 @@ To recap:
 
 2) host dlopens a plugin, then calls weed_setup() in the plugin, passing in a ponter to the bootstrap_fn
 
-3) plugin calls the bootstrap_fn in the host, passing ptr to default_getter, and an array of api versions it supports, from
-highest to lowest.
+3) plugin calls the bootstrap_fn in the host, passing ptr to default_getter, and and min and max api versions it can support.
+   The maximum versions should be set to the current version at the time the plugin is created.
+   If the plugin is later updated, the max versions can be increased accordingly.
 
-4) host selects api version it will provide (normally this would be the highest version it can), ensuring this is higher than the
-   lowest version that the plugin supports, and sets default_getter function for plugin. If the host cannot support the lowest
-   version of the plugin, then it should return NULL.
+4) host selects weed and filter api versions it will provide, ensuring these are higher than the
+   lowest version that the plugin supports (because it cannot know what features may be added in the future...),
+   and if higher than the maximum, that the versions are compatible.
+   It also sets default_getter function for plugin.
+   If the host cannot support the API versions of the plugin, then it should return NULL.
 
-5) plugin should check the API version returned by the host, and use default_getter function to get the appropriate api functions
+   The idea is that if a plugin relies on features that the host cannot support yet, then it should not be loaded.
+   In addition, if a future change breaks compatibility with the plugin, then the host has the option of using a lower API
+   version so that the plugin can still run.
 
-6) plugin sets up its plugin_info plant and returns it as the value from weed_setup()
+   Thus, it is advisable for a plugin author to set the minimum values as low as possible, and the maximum values to the current
+   versions. If features were added between the highest and lowest versions, then the plugin can check the host API versions to
+   discover whether or not the host supports them.
+
+   The maximum values should be set manually and should not be set from the WEED_API_VERSION or FILTER_API_VERSION symbols,
+   as these may increase each time the plugin is compiled. It may be that a future API version breaks compatibility and
+   the host will assume that the plugin can handle the changes.
+
+
+
+5) after returning from weed_bootstrap, the plugin should check the API version returned by the host,
+   and use the default_getter function to bootstrap itself and then fetch the appropriate functions for that API version.
+
+
+
+
+6) plugin then sets up its plugin_info plant and returns it as the value from weed_setup()
 
 
 
@@ -1623,14 +1724,13 @@ This may seem complex, but it provides several advantages:
 
 - each API version can have its own set of core functions
 
-- host and plugin can negotiate the plugin API version and select the latest which they both 
+- host and plugin can negotiate the plugin API version and select the highest version which they both 
   support
 
 - function overloading can be done. The host and plugin can have functions with the same name
   but which actually resolve to different functions (for example, host and plugin both use
-  weed_leaf_set, although these actually resolve to weed_leaf_set_caller with different caller 
-  flags - this allows us to implement READ_ONLY_HOST and READ_ONLY_PLUGIN). The plugin cannot 
-  access the host's version of the function.
+  weed_leaf_set, but the the host can set this to point to a different version of the function, for example to debug a particular
+  plugin.
 
 - the host can have access to functions which the plugin cannot, for example, only the host 
   can call weed_leaf_delete, (unlocked) weed_plant_free and weed_leaf_set_flags
@@ -1769,10 +1869,10 @@ more information about the host, and optional functions.
  * Host calls weed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
    for the host.
 
- *  Host loads plugin (ysing dlopen)
+ *  Host loads plugin (using dlopen)
 
  *  Host calls the weed_setup() function in the plugin, passing in a pointer to the bootstrap function (normally this would be
-    weed_bootstrap in the weed_utils library.
+    weed_bootstrap in the weed-utils library.
 
  *  plugin calls the bootstrap function, passing an address to return the default getter function, as well as the minimum and
     maximum weed and filter api versions the plugin supports. The library checks weed and filter api_versions supported by
@@ -1780,20 +1880,15 @@ more information about the host, and optional functions.
     cannot be loaded. If one or both of the values are greater than the maximum, the library checks for compatibility.
     If the host version and plugin version are incompatible, the plugin cannot be loaded so NULL is returned. Otherwise it is OK
     to proceed. The weed_boostrap function will create a HOST_INFO plant and set leaves with the host api versions,
-    pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter functio,
-    Optionally, the library will call a callback function in the host before returnin the PLUGIN_INFO, so that the host can
+    pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter function,
+    Optionally, the library will call a callback function in the host before returning the PLUGIN_INFO, so that the host can
     check, alter or add leaves before it is returned to the plugin (TODO).
 
 
 *  if the HOST_INFO is NULL, the plugin MUST return NULL from its weed_setup() function. Otherwise the plugin uses the
-   default_getter to get the leaves of the HOST_INFO plantm until it has enough functions defined to use the normal
+   default_getter to get the leaves of the HOST_INFO plant until it has enough functions defined to use the normal
    Weed get function for its weed api version. Then it uses this to get the remaining leaves. Once this is done it creates a
    PLUGIN_INFO plant. All this would normally be done in the weed-plugin-utils library, weed_plugin_info_init().
-
-
-*  plugin sets a leaf in the PLUGIN_INFO to point to the HOST_INFO plant. It also sets the filter classes and other mandatory leaves.
-   Then returns the PLUGIN_INFO from the weed_setup() function.
-
 
 
 
@@ -1802,9 +1897,10 @@ All of this is simplified by the Weed utility libraries. The host simply calls w
 weed_bootstrap as the only parameter, and receives back a PLUGIN_INFO.
 
 
-On the plugin side, a simple macro taking 2 parameters, the minimum weed and filter APIs supported (the plugin may simply use
-WEED_API_VERSION and WEED_FILTER_API_VERSION) may be used to call the bootstrap function and initialise the PLUGIN_INFO,
-returning NULL to the host if it is NULL..
+On the plugin side, a simple macro taking 2 parameters, the maximum weed and filter APIs supported, may be used to call the
+bootstrap function and initialise the PLUGIN_INFO, returning NULL to the host if it is NULL. The minimum API versions are assumed
+to be equal to the maximum versions. A different variation of the macro can be used which takes an additional 2 parameters if the
+plugin author wants to specify lower minimum values.
 
 
 

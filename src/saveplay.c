@@ -2227,30 +2227,28 @@ void play_file(void) {
 
     // pwidth and pheight are playback width and height
     if (!mainw->sep_win && !mainw->foreign) {
-      do {
-        mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
-        mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST;
-        if (mainw->pwidth * mainw->pheight == 0) {
-          lives_widget_queue_draw(mainw->playframe);
-          mainw->noswitch = TRUE;
-          lives_widget_context_update();
-          mainw->noswitch = FALSE;
-        }
-      } while (mainw->pwidth * mainw->pheight == 0);
-      // double size
-      if (mainw->double_size) {
-        frame_size_update();
-      }
+      resize(1);
+      /* do { */
+      /*   mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST; */
+      /*   mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST; */
+      /*   if (mainw->pwidth * mainw->pheight == 0) { */
+      /*     lives_widget_queue_draw(mainw->playframe); */
+      /*     mainw->noswitch = TRUE; */
+      /*     lives_widget_context_update(); */
+      /*     mainw->noswitch = FALSE; */
+      /*   } */
+      /* } while (mainw->pwidth * mainw->pheight == 0); */
+      /* // double size */
+      /* if (mainw->double_size) { */
+      /*   frame_size_update(); */
+      /* } */
     }
 
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
       // fixed o/p size for stream
       if (mainw->vpp->fwidth * mainw->vpp->fheight == 0) {
-        /*	mainw->vpp->fwidth = cfile->hsize;
-              mainw->vpp->fheight = cfile->vsize;
-              calc_maxspect(MAX_VPP_HSIZE, MAX_VPP_VSIZE, &mainw->vpp->fwidth, &mainw->vpp->fheight);*/
-        mainw->vpp->fwidth = MAX_VPP_HSIZE;
-        mainw->vpp->fheight = MAX_VPP_VSIZE;
+        mainw->vpp->fwidth = DEF_VPP_HSIZE;
+        mainw->vpp->fheight = DEF_VPP_VSIZE;
       }
       if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
         mainw->pwidth = mainw->vpp->fwidth;

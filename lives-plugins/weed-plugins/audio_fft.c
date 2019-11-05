@@ -5,18 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUIN_UTILS
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
+#include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -26,6 +30,9 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
+
+
+///// plugin internal functions  ///////
 
 #include <string.h>
 
@@ -85,14 +92,9 @@ static int create_plans(void) {
 }
 
 
-
-
 /////////////////////////////////////////////////////////////
 
-
-
-int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
-
+static int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
   int chans, nsamps, onsamps, base, inter, rate, k;
 
@@ -161,7 +163,6 @@ int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
     fftwf_execute(plans[base]);
 
     tot += sqrtf(outs[base][k][0] * outs[base][k][0] + outs[base][k][1] * outs[base][k][1]);
-
   }
 
   //fprintf(stderr,"tot is %f\n",tot);
@@ -170,36 +171,28 @@ int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_set_double_value(out_param, "value", (double)(tot / (float)chans));
   weed_set_int64_value(out_param, "timecode", tc);
 
-
   return WEED_NO_ERROR;
 }
 
 
-
-
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info;
-
+WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_NO_ERROR) return NULL;
-  plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
-    weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
-    weed_plant_t *out_params[] = {weed_out_param_float_init("value", 0., 0., 1.), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL, &fftw_process,
-                                 NULL, in_chantmpls, NULL, in_params, out_params);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_string_value(filter_class, "description", "Fast Fourier Transform for audio");
-
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
+  weed_plant_t *out_params[] = {weed_out_param_float_init("value", 0., 0., 1.), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL, &fftw_process,
+						      NULL, in_chantmpls, NULL, in_params, out_params);
+  
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  
+  weed_set_string_value(filter_class, "description", "Fast Fourier Transform for audio");
+  
     weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
 }
+WEED_SETUP_END;
 
 
-void weed_desetup(void) {
+WEED_DESETUP_START {
   register int i;
   for (i = 0; i < MAXPLANS; i++) {
     fftwf_destroy_plan(plans[i]);
@@ -207,3 +200,5 @@ void weed_desetup(void) {
     fftwf_free(outs[i]);
   }
 }
+WEED_DESETUP_END;
+

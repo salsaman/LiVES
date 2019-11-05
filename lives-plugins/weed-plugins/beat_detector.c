@@ -5,19 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
+#include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -272,9 +275,6 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       src++;
     }
 
-
-
-
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);
 
@@ -337,8 +337,6 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     goto done;
   }
 
-
-
   // now we have the current value in sdata->buf, and the buffered total in sdata->av
   // we can calculate the variance, and then use a formula:
   // if curr > C * av && curr > V * var : trigger a beat
@@ -367,11 +365,9 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
   }
 
-
   //if (i==0) fprintf(stderr,"%f %f %f  ",var,av,sdata->buf[i][sdata->bufidx]);
 
   var /= (double)NSLICES;
-
 
   for (i = 0; i < NSLICES; i++) {
     av = sdata->av[i] / (double)sdata->bufidx;
@@ -383,7 +379,6 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       //fprintf(stderr,"PULSE !\n");
       break;
     }
-
   }
 
   //fprintf(stderr,"\n\n");
@@ -403,33 +398,27 @@ done:
 }
 
 
-
-
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info;
+WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_NO_ERROR) return NULL;
-  plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
-    weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE), weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
-                                 weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
-                                };
-    weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE), weed_out_param_switch_init("beat hold", WEED_FALSE), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, &beat_init, &beat_process,
-                                 &beat_deinit, in_chantmpls, NULL, in_params, out_params);
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE), weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
+			       weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
+  };
+  weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE), weed_out_param_switch_init("beat hold", WEED_FALSE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, &beat_init, &beat_process,
+						      &beat_deinit, in_chantmpls, NULL, in_params, out_params);
 
-    weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
+  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 
-void weed_desetup(void) {
+WEED_DESETUP_START {
   register int i;
   for (i = 0; i < MAXPLANS; i++) {
     fftwf_destroy_plan(plans[i]);
@@ -437,3 +426,4 @@ void weed_desetup(void) {
     fftwf_free(outs[i]);
   }
 }
+WEED_DESETUP_END;

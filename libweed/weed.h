@@ -167,6 +167,12 @@ __WEED_FN_DEF__ weed_calloc_f weed_calloc;
 __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #endif
 
+#define __WEED_EXTRA_FUNCS__
+#ifdef __WEED_EXTRA_FUNCS__
+/* added in API 200 */
+__WEED_FN_DEF__ weed_leaf_get_all_f weed_leaf_get_all;
+#endif
+
 /* plant types */
 #define WEED_PLANT_UNKNOWN 0
 

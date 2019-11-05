@@ -118,6 +118,14 @@ static int32_t _weed_leaf_seed_type(weed_plant_t *plant, const char *key) GNU_FL
 static int32_t _weed_leaf_get_flags(weed_plant_t *plant, const char *key) GNU_FLATTEN;
 static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) GNU_FLATTEN;
 
+#define __WEED_EXTRA_FUNCS__
+#ifdef __WEED_EXTRA_FUNCS__
+// added in API 200
+static weed_error_t _weed_leaf_get_all(weed_plant_t *plant, const char *key, int32_t *seed_type,
+				       weed_size_t *num_elements, weed_voidptr_t values,
+				       weed_size_t **sizes, int32_t *flags);
+#endif
+
 /* host only functions */
 static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags) GNU_FLATTEN;
 
@@ -161,8 +169,6 @@ weed_error_t weed_init(int32_t abi) {
 
   if (abi < 0 || abi > WEED_ABI_VERSION) return WEED_ERROR_BADVERSION;
 
-  abi_version = abi;
-
   if (abi < 200) {
     nse_error = WEED_ERROR_NOSUCH_LEAF;
     weed_leaf_get = _weed_leaf_get;
@@ -189,6 +195,7 @@ weed_error_t weed_init(int32_t abi) {
     weed_leaf_seed_type = _weed_leaf_seed_type;
     weed_leaf_get_flags = _weed_leaf_get_flags;
     weed_leaf_set_flags = _weed_leaf_set_flags;
+    weed_leaf_get_all = _weed_leaf_get_all;
   }
   return WEED_SUCCESS;
 }
@@ -479,3 +486,73 @@ static int32_t _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
   return leaf->flags;
 }
 
+
+#ifdef __WEED_EXTRA_FUNCS__
+
+static weed_error_t _weed_leaf_get_all(weed_plant_t *plant, const char *key, int32_t *seed_type,
+				       weed_size_t *num_elements, weed_voidptr_t values,
+				       weed_size_t **sizes, int32_t *flags) {
+  int i, is_ptr;
+  size_t datasize;
+  void *memblock;
+  if (plant == NULL) return WEED_ERROR_NOSUCH_LEAF;
+  else {
+    weed_leaf_t *leaf = weed_find_leaf(plant, key);
+    //if (leaf == NULL) return _weed_plant_get_all(plant, key, seed_type, num_elements, values, sizes, flags);
+    if ((leaf = weed_find_leaf(plant, key)) == NULL) return WEED_ERROR_NOSUCH_LEAF;
+    if (seed_type != NULL) *seed_type = leaf->seed_type;
+    if (num_elements != NULL) *num_elements = leaf->num_elements;
+    if (flags != NULL) *flags = leaf->flags;
+    if (sizes != NULL) *sizes = NULL;
+    if (values != NULL) *((weed_voidptr_t **)values) = 0;
+    is_ptr = (leaf->seed_type >= 64);
+    if (sizes != NULL) {
+      if ((*sizes = malloc(leaf->num_elements * sizeof(weed_size_t))) == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+      for (i = 0; i < leaf->num_elements; i++) *sizes[i] = leaf->data[i]->size;
+    }
+    if (values != NULL && num_elements > 0) {
+      if (weed_seed_is_ptr(leaf->seed_type) || leaf->seed_type == WEED_SEED_STRING) datasize = WEED_VOIDPTR_SIZE;
+      else datasize = leaf->data[0]->size;
+      if ((memblock = malloc(leaf->num_elements * datasize)) == NULL) {
+	goto oom;
+      }
+      for (i = 0; i < leaf->num_elements; i++) {
+	if (leaf->seed_type == WEED_SEED_STRING) {
+	  if (values != NULL) {
+	    if ((weed_voidptr_t)
+		(((char **)memblock)[i] = (char *)malloc((datasize = leaf->data[i]->size + 1))) == NULL) {
+	      for (--i; i > 0; free((weed_voidptr_t)((((char **)memblock))[i--])));
+	      goto oom;
+	    }
+	    if (memcpy((weed_voidptr_t)(((char **)memblock)[i]), leaf->data[i]->value, leaf->data[i]->size) == NULL) {
+	      for (--i; i > 0; free((weed_voidptr_t)((((char **)memblock))[i])));
+	      goto oom;
+	    }
+	    ((char **)memblock)[i][leaf->data[i]->size + 1] = 0;
+	    if (sizes != NULL) *sizes[i] = leaf->data[i]->size;
+	  }
+	  else {
+	    if ((memcpy((((char *)memblock) + i * datasize), leaf->data[i]->value, datasize)) == NULL) {
+	      goto oom;
+	    }
+	    if (sizes != NULL) *sizes[i] = leaf->data[i]->size;
+	  }
+	}
+	if (sizes != NULL) *sizes[i] = (weed_size_t)(is_ptr ? 0 : datasize);
+      }
+    }
+  }
+  *((void **)values) = memblock;
+  return WEED_SUCCESS;
+
+  oom:
+    if (memblock != NULL) free(memblock);
+    if (values != NULL) *((weed_voidptr_t **)values)y = NULL;
+    if (sizes != NULL && *sizes != NULL) {
+    free(*sizes);
+    *sizes = NULL;
+  }
+  return WEED_ERROR_MEMORY_ALLOCATION;
+}
+
+#endif

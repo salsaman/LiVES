@@ -84,7 +84,6 @@ host set size. Clarified some points. API version was updated to 120.
 03/11/08 salsaman
 Removed requirement that weed plugin file extensions be .wo, since this was discovered to be non-portable.
 
-
 11/10/09 salsaman
 Correct a typo, and try to further clarify about function passing.
 
@@ -309,6 +308,7 @@ Weed offers the following '''fundamental''' types:[[BR]]
  * WEED_SEED_STRING  : NUL terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
  * WEED_SEED_INT64   : signed /unsigned 64 bit integer
 
+
 '''Pointer''' types (number >= 64)
 Pointers may be of any size, however they will be stored as 64 bit. It is up to the application to handle any problems caused.
 
@@ -497,15 +497,15 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
 
  * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int32_t idx)
 
-   No checking is done to ensure that plant, leaf or idx are valid, this is left to the caller. In this case (weed_size_t)0 will
-   be returned.
+   If the  plant is NULL, the leaf does not exist or idx is out of range, (weed_size_t)0 will be returned.
 
    If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
    For WEED_SEED_STRING, returns the string length in bytes (without any terminating NUL); equivalent to strlen().
 
+   [T.B.D
    For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_sizes() function, returns the size set.
-   Otherwise, returns 0.
+   Otherwise, returns 0.]
 
    NOTE: the meaning of this changed as of API 200. Prior to this, for WEED_SEED_VOIDPTR it would return sizeof(void *).
    weed.h now defines WEED_VOIDPTR_SIZE so 
@@ -653,8 +653,6 @@ As of API 200: (TODO):
 
  Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION.
 
-    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller. The arrays are assumed to be of
-           the correct size and type.
 
 
 

@@ -24,10 +24,12 @@
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -35,8 +37,6 @@
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
-
-#include "weed-utils-code.c" // optional
 
 #define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
@@ -264,89 +264,85 @@ int libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
+  dlink_list_t *list = NULL;
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plant_t *out_chantmpls[2];
+  char *name = NULL;
+  char fullname[PATH_MAX];
+  weed_plant_t *filter_class;
+  weed_plant_t *in_params[2];
+  const char *listeners[] = {"None", "Alsa", "ESD", "Jack", "Mplayer", "Auto", NULL};
 
-  if (plugin_info != NULL) {
-    dlink_list_t *list = NULL;
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-    weed_plant_t *out_chantmpls[2];
-    char *name = NULL;
-    char fullname[PATH_MAX];
-    weed_plant_t *filter_class;
-    weed_plant_t *in_params[2];
-    const char *listeners[] = {"None", "Alsa", "ESD", "Jack", "Mplayer", "Auto", NULL};
+  DIR *curvdir;
 
-    DIR *curvdir;
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
 
-    weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
+  char *lpp = getenv("VISUAL_PLUGIN_PATH");
 
-    char *lpp = getenv("VISUAL_PLUGIN_PATH");
+  char *vdir;
 
-    char *vdir;
+  int filter_flags = 0;
 
-    int filter_flags = 0;
+  if (lpp == NULL) return NULL;
 
-    if (lpp == NULL) return NULL;
+  weed_set_string_value(plugin_info, "package_name", "libvisual");
 
-    weed_set_string_value(plugin_info, "package_name", "libvisual");
+  // set hints for host
+  weed_set_int_value(in_chantmpls[0], "audio_channels", 2);
+  weed_set_int_value(in_chantmpls[0], "audio_rate", 44100);
+  weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_FALSE);
+  weed_set_boolean_value(in_chantmpls[0], "audio_data_length", 512);
+  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
 
-    // set hints for host
-    weed_set_int_value(in_chantmpls[0], "audio_channels", 2);
-    weed_set_int_value(in_chantmpls[0], "audio_rate", 44100);
-    weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_FALSE);
-    weed_set_boolean_value(in_chantmpls[0], "audio_data_length", 512);
-    weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  instances = 0;
+  old_input = NULL;
+  old_visinput = NULL;
 
-    instances = 0;
-    old_input = NULL;
-    old_visinput = NULL;
+  if (VISUAL_PLUGIN_API_VERSION < 2) return NULL;
+  visual_log_set_verboseness(VISUAL_LOG_VERBOSENESS_NONE);
 
-    if (VISUAL_PLUGIN_API_VERSION < 2) return NULL;
-    visual_log_set_verboseness(VISUAL_LOG_VERBOSENESS_NONE);
-
-    if (visual_init(NULL, NULL) < 0) {
-      fprintf(stderr, "Libvis : Unable to init libvisual plugins\n");
-      return NULL;
-    }
-
-    vdir = strtok(lpp, ":");
-
-    // add lpp paths
-    while (vdir != NULL) {
-      if (!strlen(vdir)) continue;
-
-      curvdir = opendir(vdir);
-      if (curvdir == NULL) {
-        continue;
-      }
-
-      visual_init_path_add(vdir);
-      closedir(curvdir);
-      vdir = strtok(NULL, ":");
-    }
-
-    in_params[1] = NULL;
-    out_chantmpls[1] = NULL;
-
-    while ((name = (char *)visual_actor_get_next_by_name_nogl(name)) != NULL) {
-      snprintf(fullname, PATH_MAX, "%s", name);
-      in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
-      weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-      out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
-      filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
-                                            in_chantmpls, out_chantmpls, in_params, NULL);
-      weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
-
-      list = add_to_list_sorted(list, filter_class, (const char *)name);
-    }
-
-    add_filters_from_list(plugin_info, list);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  if (visual_init(NULL, NULL) < 0) {
+    fprintf(stderr, "Libvis : Unable to init libvisual plugins\n");
+    return NULL;
   }
-  return plugin_info;
+
+  vdir = strtok(lpp, ":");
+
+  // add lpp paths
+  while (vdir != NULL) {
+    if (!strlen(vdir)) continue;
+
+    curvdir = opendir(vdir);
+    if (curvdir == NULL) {
+      continue;
+    }
+
+    visual_init_path_add(vdir);
+    closedir(curvdir);
+    vdir = strtok(NULL, ":");
+  }
+
+  in_params[1] = NULL;
+  out_chantmpls[1] = NULL;
+
+  while ((name = (char *)visual_actor_get_next_by_name_nogl(name)) != NULL) {
+    snprintf(fullname, PATH_MAX, "%s", name);
+    in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
+    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+    out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
+    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
+					  in_chantmpls, out_chantmpls, in_params, NULL);
+    weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
+
+    list = add_to_list_sorted(list, filter_class, (const char *)name);
+  }
+
+  add_filters_from_list(plugin_info, list);
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 
 ///////////// callback so host can supply its own audio sammples //////////

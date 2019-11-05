@@ -1229,8 +1229,9 @@ static boolean align_pixel_data(weed_plant_t *layer, size_t alignment) {
 
 int weed_flagset_array_count(weed_plant_t **array, boolean set_readonly) {
   register int i;
-  //for (i = 0; array[i] != NULL; set_readonly ? weed_add_plant_flags(array[i++], WEED_LEAF_READONLY_PLUGIN) : i++);
-  for (i = 0; array[i] != NULL; i++);
+  for (i = 0; array[i] != NULL; i++) {
+    if (set_readonly) weed_add_plant_flags(array[i], WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
+  }
   return i;
 }
 
@@ -1246,7 +1247,7 @@ void set_param_gui_readonly(weed_plant_t *inst) {
       ptmpl = weed_get_plantptr_value(params[i], WEED_LEAF_TEMPLATE, &error);
       if (weed_plant_has_leaf(ptmpl, WEED_LEAF_GUI)) {
         gui = weed_get_plantptr_value(ptmpl, WEED_LEAF_GUI, &error);
-        //weed_add_plant_flags(gui, WEED_LEAF_READONLY_PLUGIN);
+        weed_add_plant_flags(gui, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
       }
     }
     lives_freep((void **)&params);
@@ -1265,7 +1266,7 @@ void set_param_gui_readwrite(weed_plant_t *inst) {
       ptmpl = weed_get_plantptr_value(params[i], WEED_LEAF_TEMPLATE, &error);
       if (weed_plant_has_leaf(ptmpl, WEED_LEAF_GUI)) {
         gui = weed_get_plantptr_value(ptmpl, WEED_LEAF_GUI, &error);
-        //weed_clear_plant_flags(gui, WEED_LEAF_READONLY_PLUGIN);
+        weed_clear_plant_flags(gui, WEED_FLAG_IMMUTABLE);
       }
     }
     lives_freep((void **)&params);
@@ -4294,10 +4295,10 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (achans_out_mand > 1 || (achans_out_mand == 1 && chans_out_mand > 0)) return 14;
   if (achans_in_mand >= 1 && achans_out_mand == 0 && !(has_out_params)) return 15;
 
-  //weed_add_plant_flags(filter, WEED_LEAF_READONLY_PLUGIN);
+  weed_add_plant_flags(filter, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_GUI)) {
     weed_plant_t *gui = weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error);
-    //weed_add_plant_flags(gui, WEED_LEAF_READONLY_PLUGIN);
+    weed_add_plant_flags(gui, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
     if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN) && weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE)
       hidden = TRUE;
   }
@@ -4577,6 +4578,8 @@ static boolean set_out_channel_palettes(weed_plant_t *filter, int num_channels) 
 }
 
 
+// Weed function overrides /////////////////
+
 weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   // delete even undeletable plants
   weed_error_t err;
@@ -4599,6 +4602,8 @@ weed_error_t weed_leaf_get_plugin(weed_plant_t *plant, const char *key, int32_t 
   return err;
 }
 
+
+// memory profiling for plugins
 
 void *lives_monitor_malloc(size_t size) {
   void *p = malloc(size);
@@ -4664,6 +4669,7 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   expected_hi = xhost_info;
 
   if (id == our_plugin_id) {
+    // GOOD !
     // plugin called weed_bootstrap as requested
     //g_print("plugin called weed_bootstrap, and we assigned it ID %d\n", our_plugin_id);
     weed_set_int_value(xhost_info, WEED_LEAF_HOST_IDENTIFIER, id);
@@ -4720,23 +4726,29 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   //  fprintf(stderr, "API versions %d %d / %d %d : %d %d\n", lib_weed_version, lib_filter_version, pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api);
 
   // let's override some plugin functions...
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_monitor_malloc);
+  weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_malloc);
+  weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, lives_free);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, lives_realloc);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, lives_calloc);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, lives_monitor_free);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, lives_memcpy);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, lives_memset);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, lives_memmove);
 
+  //weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_monitor_malloc);
+  //weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, lives_monitor_free);
+  
   // since we redefined weed_leaf_set and weed_plant_free for ourselves,
   // we need to reset the plugin versions, since it will inherit ours by default when calling setup_func()
-  //weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, weed_leaf_get_plugin);
-  //weed_set_voidptr_value(xhost_info, WEED_PLANT_FREE_FUNC, _weed_plant_free);
+
+  weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, weed_leaf_get_plugin);
+  weed_set_voidptr_value(xhost_info, WEED_PLANT_FREE_FUNC, _weed_plant_free);
 
   update_host_info(xhost_info);
   return xhost_info;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////////////
 
 static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   weed_setup_f setup_fn;
@@ -4776,7 +4788,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif
 
-  if ((handle = dlopen(plugin_path, RTLD_LAZY | RTLD_DEEPBIND))) {
+  if ((handle = dlopen(plugin_path, RTLD_LAZY))) {
     dlerror(); // clear existing errors
 
     if ((setup_fn = (weed_setup_f)dlsym(handle, "weed_setup")) == NULL) {
@@ -4871,7 +4883,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_NAME, plugin_name); // for hashname
       weed_set_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, dir);
-      //weed_add_plant_flags(plugin_info, WEED_LEAF_READONLY_PLUGIN);
+      weed_add_plant_flags(plugin_info, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
 
       filters = weed_get_plantptr_array(plugin_info, WEED_LEAF_FILTERS, &error);
 
@@ -6374,7 +6386,7 @@ static weed_plant_t **weed_channels_create(weed_plant_t *filter, boolean in) {
       if (weed_plant_has_leaf(chantmpls[i], WEED_LEAF_HOST_DISABLED)) {
         weed_set_boolean_value(channels[ccount], WEED_LEAF_DISABLED, weed_get_boolean_value(chantmpls[i], WEED_LEAF_HOST_DISABLED, &error));
       }
-      //weed_add_plant_flags(channels[ccount], WEED_LEAF_READONLY_PLUGIN);
+      weed_add_plant_flags(channels[ccount], WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
       ccount++;
     }
   }
@@ -6409,7 +6421,7 @@ weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in) {
       if (weed_plant_has_leaf(paramtmpls[i], WEED_LEAF_HOST_DEFAULT)) {
         weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_HOST_DEFAULT);
       } else weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
-      //weed_add_plant_flags(params[i], WEED_LEAF_READONLY_PLUGIN);
+      weed_add_plant_flags(params[i], WEED_FLAG_UNDELETABLE | WEED_FLAG_IMMUTABLE);
     } else {
       weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
     }
@@ -6539,8 +6551,7 @@ static weed_plant_t *weed_create_instance(weed_plant_t *filter, weed_plant_t **i
   }
 
   weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_FALSE);
-
-  //weed_add_plant_flags(inst, WEED_LEAF_READONLY_PLUGIN);
+  weed_add_plant_flags(inst, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
   return inst;
 }
 
@@ -9973,7 +9984,7 @@ static weed_plant_t **void_ptrs_to_plant_array(weed_plant_t *tmpl, void *pchain,
     weed_set_plantptr_value(param_array[i], WEED_LEAF_TEMPLATE, tmpl);
     weed_leaf_copy(param_array[i], WEED_LEAF_TIMECODE, pchange, WEED_LEAF_TIMECODE);
     weed_leaf_copy(param_array[i], WEED_LEAF_VALUE, pchange, WEED_LEAF_VALUE);
-    //weed_add_plant_flags(param_array[i], WEED_LEAF_READONLY_PLUGIN);
+    weed_add_plant_flags(param_array[i], WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
     pchange = (weed_plant_t *)weed_get_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, &error);
     i++;
   }
@@ -10157,7 +10168,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       more_available = TRUE; // maybe...
     }
 
-    //weed_add_plant_flags(calc_param, WEED_LEAF_READONLY_PLUGIN);
+    weed_add_plant_flags(calc_param, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
     interpolate_func_ptr = (weed_interpolate_f *)weed_get_voidptr_value(wtmpl, WEED_LEAF_INTERPOLATE_FUNC, &error);
     interpolate_func = (weed_interpolate_f) * interpolate_func_ptr;
     filter = weed_instance_get_filter(inst, FALSE);

@@ -37,6 +37,7 @@
 #include <stdio.h>
 
 #define __LIBWEED__
+#define __WEED__HOST__
 
 #ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
@@ -225,7 +226,7 @@ static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key,
   }
 
   for (i = 0; i < num_elems; i++) {
-    if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t) & (*retval)[i * dsize])) != WEED_SUCCESS) {
+    if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t) &(*retval)[i * dsize])) != WEED_SUCCESS) {
       free(*retval);
       *retval = NULL;
       return err;
@@ -549,20 +550,39 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
 
 
 void weed_add_plant_flags(weed_plant_t *plant, int32_t flags) {
-  // TODO
-}
-
-
-void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags) {
   char **leaves = weed_plant_list_leaves(plant);
   int i;
-
   for (i = 0; leaves[i] != NULL; i++) {
     weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
     free(leaves[i]);
   }
   if (leaves != NULL) free(leaves);
 }
+
+
+void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags) {
+  char **leaves = weed_plant_list_leaves(plant);
+  int i;
+  for (i = 0; leaves[i] != NULL; i++) {
+    weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
+    free(leaves[i]);
+  }
+  if (leaves != NULL) free(leaves);
+}
+
+
+/* weed_error_t weed_map_plant(weed_plant_t plant, FILE *output) { */
+/*   // output a mapping of all the leaves of a plant, along with the seed_types, numer of elements and sizes */
+/*   if (plant == NULL) return WEED_SUCCESS; */
+/*   else { */
+/*     int i; */
+/*     int32_t seed_type, flags; */
+/*     weed_size_t nelems; */
+/*     char **leaves = weed_plant_list_leaves(plant); */
+/*     if (output == NULL) output = stderr; */
+/*     for (i = 0; leaves[i] != NULL; i++) { */
+/*       nelems = weed_leaf_num_elements(plant */
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -722,7 +742,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
     plugin_min_weed_abi_version = plugin_max_weed_abi_version;
     plugin_max_weed_abi_version = tmp;
   }
-
+  
   // set pointers to the functions the plugin will use
 
   wpn = weed_plant_new;

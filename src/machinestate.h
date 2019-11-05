@@ -27,10 +27,13 @@ typedef enum {
 
 #define LOAD_SCALING (100000. / ME_DELAY) // scale factor to get reasonable values
 
+
+#define WEED_SEED_MEMBLOCK 65536
+
 // internal memory allocator
 typedef struct memheader {
-  unsigned int    size;
-  struct memheader   *next;
+  unsigned int size;
+  struct memheader *next;
   size_t align;
 } memheader_t;
 

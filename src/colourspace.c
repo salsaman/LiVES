@@ -7389,7 +7389,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
     rowstride = width * 3;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7401,7 +7401,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUV888:
     rowstride = width * 3;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7414,7 +7414,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_UYVY8888:
     rowstride = width * 4;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7431,7 +7431,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUYV8888:
     rowstride = width * 4;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7450,7 +7450,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
   case WEED_PALETTE_BGRA32:
   case WEED_PALETTE_ARGB32:
     rowstride = width * 4;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7471,7 +7471,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUVA8888:
     rowstride = width * 4;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
@@ -7489,14 +7489,14 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     height = (height >> 1) << 1;
     weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
     rowstride = width;
-#ifdef USE_SWSCALEx
+#ifdef USE_SWSCALExx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE);
     rowstrides = (int *)lives_malloc(sizint * 3);
     rowstrides[0] = rowstride;
     rowstride = width >> 1;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize2 = CEIL(rowstride * (height >> 1), ALIGN_SIZE);
@@ -7551,14 +7551,14 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
     width = (width >> 1) << 1;
     weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
     rowstride = width;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL(rowstride * height, ALIGN_SIZE);
     rowstrides = (int *)lives_malloc(sizint * 3);
     rowstrides[0] = rowstride;
     rowstride = width >> 1;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize2 = CEIL(rowstride * height, ALIGN_SIZE);
@@ -7610,7 +7610,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUV444P:
     rowstride = width;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     rowstrides = (int *)lives_malloc(sizint * 3);
@@ -7663,7 +7663,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUVA4444P:
     rowstride = width;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     rowstrides = (int *)lives_malloc(sizint * 4);
@@ -7728,7 +7728,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_YUV411:
     rowstride = width * 6; // a macro-pixel is 6 bytes, and contains 4 real pixels
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #else
 #endif
@@ -7752,7 +7752,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_RGBFLOAT:
     rowstride = width * 3 * sizeof(float);
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     pixel_data = (uint8_t *)lives_calloc((rowstride * height + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
@@ -7763,7 +7763,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_RGBAFLOAT:
     rowstride = width * 4 * sizeof(float);
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     pixel_data = (uint8_t *)lives_calloc((rowstride * height + EXTRA_BYTES), ALIGN_SIZE);
@@ -7777,7 +7777,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_AFLOAT:
     rowstride = width * sizeof(float);
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     pixel_data = (uint8_t *)lives_calloc((width * height + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
@@ -7792,7 +7792,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
 
   case WEED_PALETTE_A8:
     rowstride = width;
-#ifdef USE_SWSCALE
+#ifdef USE_SWSCALEx
     rowstride = CEIL(rowstride, mainw->rowstride_alignment);
 #endif
     framesize = CEIL((rowstride * height + EXTRA_BYTES), ALIGN_SIZE);

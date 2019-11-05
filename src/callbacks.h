@@ -15,6 +15,9 @@ void lives_notify(int msgnumber, const char *msgstring);
 
 void lives_notify_int(int msgnumber, int msgint);
 
+void lock_set_file(const char *set_name);
+void unlock_set_file(const char *set_name);
+
 void on_effects_paused(LiVESButton *, livespointer);
 
 void on_cancel_keep_button_clicked(LiVESButton *, livespointer);

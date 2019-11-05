@@ -4,12 +4,12 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
-// functions for dealing with externalaties
+// functions for dealing with externalities
 
 #include <sys/statvfs.h>
 
 #include "main.h"
-
+#include "support.h"
 
 void init_random() {
   ssize_t randres = -1;
@@ -56,6 +56,8 @@ void init_random() {
 
 
 boolean load_measure_idle(livespointer data) {
+#ifdef LOADCHECK
+
   // function is called as an idlefunc, and we count how many calls per second
   // to give an estimate of machine load
 
@@ -90,147 +92,203 @@ boolean load_measure_idle(livespointer data) {
   static double xlvariance = 0.;
   static double hload = 0.;
   static double lload = 100000000.;
+  static double rescale = 1.;
+  int64_t timelimit = 0;
+  static int64_t ntimer = -1;
+  static boolean add_idle = TRUE;
+  double tpi;
 
   char *msg;
   ticks_t delta_ticks;
   double check_time = TARGET_CHECK_TIME; // adjust load_check_count so we check this number of secs.
   double variance;
+  static int phase = 0;
 
-  if (mainw->loadmeasure == 0) return FALSE;
+  sched_yield();
 
+  if (mainw->loadmeasure == 0) return FALSE; // was not added so we shouldn't be here
   if (prefs->loadchecktime <= 0.) return FALSE; // function disabled
 
-  if (load_count == -1) {
-    // init the timings
-    last_check_ticks = lives_get_current_ticks();
+  if (ntimer > -1 && mainw->loadmeasure_phase == 2) {
+    if (++ntimer < timelimit) {
+      // during playback, the timer doesnt run so we need to simulate it
+      return TRUE;
+    }
+    ntimer = 0;
   }
 
-  // check once per second until we reach TARGET_CHECK_TIME, then once per TARGET_CHECK_TIME seconds
-  if (total_check < TARGET_CHECK_TIME || nchecks < 10) check_time = 1.;
+  if (mainw->loadmeasure_phase == 1) {
+    // continuous checking uses 100% cpu, so we need to pause it
+    mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL);
+    mainw->loadmeasure_phase = 2; // timer wait phase
+    return FALSE;
+  }
 
-  if (++load_count >= load_check_count) {
-    // count the time to do LOAD_COUNT_CHECK idlefuncs. This should give us an estimate of the machine load
-    double tpi = capable->time_per_idle;
-    tchecks += (int64_t)load_count;
-    delta_ticks = lives_get_current_ticks() - last_check_ticks;
-    total_check += delta_ticks;
-    capable->time_per_idle = (double)delta_ticks / (double)load_count / TICKS_PER_SECOND_DBL;
-    fprintf(stderr, "%.3f %ld %ld\n", capable->time_per_idle, delta_ticks, load_count);
-    if (capable->time_per_idle > 0.) {
-      load_check_count = 1. + check_time / capable->time_per_idle;
+  if (mainw->loadmeasure_phase == 2) {
+    // timer fired mode
+    last_check_ticks = lives_get_current_ticks();
+    mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
+    mainw->loadmeasure_phase = 0;
+    return FALSE;
+  }
+
+  // idlecount mode
+
+  // count idle calls until we reach load_check_count
+  if (++load_count < load_check_count) return TRUE;
+
+  g_print("idlephase finished\n");
+
+  // check once per QUICK_CHECK_TIME until we reach TARGET_CHECK_TIME, then once per TARGET_CHECK_TIME seconds
+  if (total_check < TARGET_CHECK_TIME || nchecks < N_QUICK_CHECKS - 1) check_time = QUICK_CHECK_TIME;
+
+  tpi = capable->time_per_idle;
+
+  delta_ticks = lives_get_current_ticks() - last_check_ticks;
+  g_print("delta_ticks was %ld\n", delta_ticks);
+
+  if (delta_ticks < 100) {
+    // too quick, run more idleloops
+    load_check_count *= 2;
+    return TRUE;
+  }
+
+  // reset to timer
+  mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL);
+  add_idle = TRUE;
+
+  //load_count /= rescale;
+  tchecks += (int64_t)load_count;
+  total_check += delta_ticks;
+
+  capable->time_per_idle = (double)delta_ticks / (double)load_count / TICKS_PER_SECOND_DBL;
+
+  fprintf(stderr, "%.3f %ld %ld\n", capable->time_per_idle, delta_ticks, load_count);
+
+  if (capable->time_per_idle > 0.) {
+    int64_t nload_check_count;
+    nload_check_count = 1. + check_time / capable->time_per_idle;
+    load_check_count = nload_check_count;
+    if (nload_check_count > 1.5 * load_check_count) load_check_count = 1.5 * load_check_count;
+  }
+  if (nchecks > N_QUICK_CHECKS - 1) {
+    // variance tells us the ratio of delta time to the current target time
+    // if this is very large or small we ignore this check. For example when playing the, idlefunc is not called so time
+    // passes without any checking, producing false results.
+    variance = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
+    if (variance < .8) {
+      rescale = variance;
+      check_time = 1;
+      return TRUE;
     }
-    if (nchecks > 10) {
-      // variance tells us the ratio of delta time to the current target time
-      // if this is very large or small we ignore this check. For example when playing the, idlefunc is not called so time
-      // passes without any checking, producing false results.
-      variance = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
-      if (variance > VAR_MAX || variance < VAR_MIN) {
-        double load_value = LOAD_SCALING / (double)load_count * check_time;
-        double tvar = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
-        double cvar = (double)delta_ticks / (double)load_count / (tpi * TICKS_PER_SECOND_DBL);
-        if (xlvariance > 0. && variance < xlvariance && variance * xlvariance > .95) {
-          LIVES_INFO("Spike value detected");
-          spike = TRUE;
-        }
-        if (variance > lvariance) {
-          xlvariance = variance;
-        } else xlvariance = 0.;
-        lvariance = variance;
-        msg = lives_strdup_printf("Load value is %.3f, avg is %3.f, total loops = %ld\nVariance was %.3f, so ignoring this value."
-                                  "time variance was %.3f and count variance was %.3f",
-                                  load_value, capable->avg_load, tchecks, variance, tvar, cvar);
-        LIVES_INFO(msg);
-        g_free(msg);
-        if (spike) {
-          if (varcount > 0) varcount--;
-        } else {
-          varcount++;
-          xvardecay = 0;
-          if (varcount > cstate_limit) {
-            if (cstate == -1.) {
-              cstate = cvar;
-              cstate_count = 1;
-            } else {
-              if ((cvar > cstate && cstate / cvar > varratio) || (cvar < cstate && cvar / cstate > varratio)) {
-                cstate_count++;
-                if (cstate_count >= cstate_reset) {
-                  // reset avg
-                  nchecks_counted = 0;
-                  capable->avg_load = load_value;
-                  cstate_count = 0;
-                  varcount = 0;
-                  cstate = -1;
-                  LIVES_INFO("Load average was reset.");
-                } else {
-                  if (cstate_count > 0) {
-                    cstate_count--;
-                  }
-                  if (cstate_count == 0) {
-                    cstate = cvar;
-                    cstate_count = 1;
-                  }
-                }
-              }
-            }
-          }
-        }
-        // check for periodic variance
-        if (varticks > 0) {
-          vardelta = last_check_ticks + delta_ticks - varticks;
-          if (varperiod == 0) {
-            varperiod = vardelta;
-            xnvarperiod = nvarperiod;
-          } else {
-            if ((varperiod > vardelta && (double)vardelta / (double)varperiod > perratio) ||
-                (vardelta <= varperiod && (double)vardelta / (double)varperiod > perratio)) {
-              xnvarperiod++;
-              if (spike) nvarperiod++;
-              if (xnvarperiod == 6) {
-                msg = lives_strdup_printf("Possible periodic variance with time %.3f\n", varperiod / TICKS_PER_SECOND_DBL);
-                LIVES_INFO(msg);
-                lives_free(msg);
-              }
-            } else {
-              if (xnvarperiod > 0) {
-                xnvarperiod--;
-                if (xnvarperiod == 0) {
-                  varperiod = vardelta;
-                }
-              }
-            }
-          }
-        }
-        varticks = last_check_ticks + delta_ticks;
+    if (variance > VAR_MAX || variance < VAR_MIN) {
+      double load_value = LOAD_SCALING / (double)load_count * check_time;
+      double tvar = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
+      double cvar = (double)delta_ticks / (double)load_count / (tpi * TICKS_PER_SECOND_DBL);
+      if (xlvariance > 0. && variance < xlvariance && variance * xlvariance > .95) {
+        LIVES_INFO("Spike value detected");
+        spike = TRUE;
+      }
+      if (variance > lvariance) {
+        xlvariance = variance;
+      } else xlvariance = 0.;
+      lvariance = variance;
+      msg = lives_strdup_printf("Load value is %.3f, avg is %3.f, total loops = %ld\nVariance was %.3f, so ignoring this value."
+                                "time variance was %f and count variance was %f",
+                                load_value, capable->avg_load, tchecks, variance, tvar, cvar);
+      LIVES_INFO(msg);
+      g_free(msg);
+      if (spike) {
+        if (varcount > 0) varcount--;
       } else {
-        if (nchecks > 0 && nchecks != 0) {
-          varcount--;
-          xvardecay++;
-          if (xvardecay >= vardecay) {
-            cstate = -1.;
-            cstate_count = 0;
-            varcount = 0;
-          }
-          capable->load_value = LOAD_SCALING / (double)load_count * check_time;
-          if (capable->load_value < lload) lload = capable->load_value;
-          if (capable->load_value > hload) hload = capable->load_value;
-          capable->avg_load = (capable->avg_load * (double)nchecks_counted + capable->load_value) / (double)(nchecks_counted + 1.);
-          msg = lives_strdup_printf("Load value is %.3f (%.3f - %.3f), avg is %3.f (%.3f - %.3f), total loops = %ld, variance was %.3f",
-                                    capable->load_value, lload, hload, capable->avg_load, low_avg, high_avg, tchecks, variance);
-          LIVES_INFO(msg);
-          g_free(msg);
-          nchecks_counted++;
-          if (nchecks_counted > 6) {
-            if (capable->avg_load > high_avg) high_avg = capable->avg_load;
-            if (capable->avg_load < low_avg) low_avg = capable->avg_load;
+        varcount++;
+        xvardecay = 0;
+        if (varcount > cstate_limit) {
+          if (cstate == -1.) {
+            cstate = cvar;
+            cstate_count = 1;
+          } else {
+            if ((cvar > cstate && cstate / cvar > varratio) || (cvar < cstate && cvar / cstate > varratio)) {
+              cstate_count++;
+              if (cstate_count >= cstate_reset) {
+                // reset avg
+                nchecks_counted = 0;
+                capable->avg_load = load_value;
+                cstate_count = 0;
+                varcount = 0;
+                cstate = -1;
+                LIVES_INFO("Load average was reset.");
+              } else {
+                if (cstate_count > 0) {
+                  cstate_count--;
+                }
+                if (cstate_count == 0) {
+                  cstate = cvar;
+                  cstate_count = 1;
+                }
+              }
+            }
           }
         }
       }
+      // check for periodic variance
+      if (varticks > 0) {
+        vardelta = last_check_ticks + delta_ticks - varticks;
+        if (varperiod == 0) {
+          varperiod = vardelta;
+          xnvarperiod = nvarperiod;
+        } else {
+          if ((varperiod > vardelta && (double)vardelta / (double)varperiod > perratio) ||
+              (vardelta <= varperiod && (double)vardelta / (double)varperiod > perratio)) {
+            xnvarperiod++;
+            if (spike) nvarperiod++;
+            if (xnvarperiod == 6) {
+              msg = lives_strdup_printf("Possible periodic variance with time %.3f\n", varperiod / TICKS_PER_SECOND_DBL);
+              LIVES_INFO(msg);
+              lives_free(msg);
+            }
+          } else {
+            if (xnvarperiod > 0) {
+              xnvarperiod--;
+              if (xnvarperiod == 0) {
+                varperiod = vardelta;
+              }
+            }
+          }
+        }
+      }
+      varticks = last_check_ticks + delta_ticks;
+    } else {
+      if (nchecks > 0 && nchecks != 0) {
+        varcount--;
+        xvardecay++;
+        if (xvardecay >= vardecay) {
+          cstate = -1.;
+          cstate_count = 0;
+          varcount = 0;
+        }
+        capable->load_value = LOAD_SCALING / (double)load_count * check_time;
+        if (capable->load_value < lload) lload = capable->load_value;
+        if (capable->load_value > hload) hload = capable->load_value;
+        capable->avg_load = (capable->avg_load * (double)nchecks_counted + capable->load_value) / (double)(nchecks_counted + 1.);
+        msg = lives_strdup_printf("Load value is %.3f (%.3f - %.3f), avg is %3.f (%.3f - %.3f), total loops = %ld, variance was %.3f",
+                                  capable->load_value, lload, hload, capable->avg_load, low_avg, high_avg, tchecks, variance);
+        LIVES_INFO(msg);
+        g_free(msg);
+        nchecks_counted++;
+        //if (nchecks_counted > 6) {
+        if (capable->avg_load > high_avg) high_avg = capable->avg_load;
+        if (capable->avg_load < low_avg) low_avg = capable->avg_load;
+        //}
+      }
     }
-    load_count = 0;
-    last_check_ticks += delta_ticks;
-    nchecks++;
   }
-  return TRUE;
+  load_count = 0;
+  last_check_ticks += delta_ticks;
+  nchecks++;
+
+#endif
+  return FALSE;
 }
 
 
@@ -267,6 +325,117 @@ livespointer proxy_realloc(livespointer ptr, size_t new_size) {
   }
   return nptr;
 }
+
+
+static memheader_t base;           /* Zero sized block to get us started. */
+static memheader_t *freep = &base; /* Points to first free block of memory. */
+static memheader_t *usedp;         /* Points to first used block of memory. */
+
+/*
+ * Scan the free list and look for a place to put the block. Basically, we're
+ * looking for any block the to be freed block might have been partitioned from.
+ */
+void quick_free(memheader_t *bp) {
+  memheader_t *p;
+
+  for (p = freep; !(bp > p && bp < p->next); p = p->next)
+    if (p >= p->next && (bp > p || bp < p->next))
+      break;
+
+  if (bp + bp->size == p->next) {
+    bp->size += p->next->size;
+    bp->next = p->next->next;
+  } else
+    bp->next = p->next;
+
+  if (p + p->size == bp) {
+    p->size += bp->size;
+    p->next = bp->next;
+  } else
+    p->next = bp;
+
+  freep = p;
+}
+
+
+#define MIN_ALLOC_SIZE 4096     /* We allocate blocks in page sized chunks. */
+
+/*
+ * Request more memory from the kernel.
+ */
+static memheader_t *morecore(size_t num_units) {
+  void *vp;
+  memheader_t *up;
+
+  if (num_units > MIN_ALLOC_SIZE)
+    num_units = MIN_ALLOC_SIZE / sizeof(memheader_t);
+
+  if ((vp = sbrk(num_units * sizeof(memheader_t))) == (void *) - 1)
+    return NULL;
+
+  up = (memheader_t *) vp;
+  up->size = num_units;
+  quick_free(up); // add to freelist
+  return freep;
+}
+
+
+/*
+ * Find a chunk from the free list and put it in the used list.
+ */
+LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
+  size_t num_units;
+  memheader_t *p, *prevp;
+
+  num_units = (alloc_size + sizeof(memheader_t) - 1) / sizeof(memheader_t) + 1;
+  prevp = freep;
+
+  for (p = prevp->next;; prevp = p, p = p->next) {
+    if (p->size >= num_units) { /* Big enough. */
+      if (p->size == num_units) /* Exact size. */
+        prevp->next = p->next;
+      else {
+        p->size -= num_units;
+        p += p->size;
+        p->size = num_units;
+      }
+
+      freep = prevp;
+
+      /* Add to p to the used list. */
+      if (usedp == NULL)
+        usedp = p->next = p;
+      else {
+        p->next = usedp->next;
+        usedp->next = p;
+      }
+      p->align = align;
+      return (void *)(p + 1);
+    }
+    if (p == freep) { /* Not enough memory. */
+      p = morecore(num_units);
+      if (p == NULL) /* Request for more memory failed. */
+        return NULL;
+    }
+  }
+}
+
+
+/* void *quick_malloc(size_t alloc_size) { */
+/*   return _quick_malloc(alloc_size, 1); */
+/* } */
+
+/* void *quick_calloc(size_t nmemb, size_t size) { */
+/*   return _quick_malloc(nmemb * size, size); */
+/* } */
+
+/*   quick_calloc(); */
+
+/* quick_memcpy(); */
+
+/* quick_memmove(); */
+
+/* quick_memset(); */
 
 
 char *get_md5sum(const char *filename) {

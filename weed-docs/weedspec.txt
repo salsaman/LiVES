@@ -193,16 +193,75 @@ timeline style events (weed-events).
 
 
 
+
 == WEED_API_VERSION / WEED_ABI_VERSION ==
 
 These equivalent preprocessor symbols are defined as 200 for this version of the specification. This
 number may be increased for future revisions of the spec.
 
+Note:
 libweed-utils provides the following function:
 
   int check_weed_abi_compat(int32_t higher, int32_t lower)
 
 which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise.
+(or if either version is higher that the library version, since it can't know the future...)
+
+
+
+=== General overview ===
+
+Weed can be utilsed at different levels depending on the needs of the programmer.
+
+Level 0: -a program would simply #include weed.h and may set the symbols #HAVE_WEED_PLANT, #HAVE_WEED_LEAF and #HAVE_WEED_DATA
+At this level there is no definition of these items, however the core function types (listed below) are defined.
+The fundament types are defined along with some error numbers and so on.
+
+
+
+Level 1: an application #includes weed.h and uses the built-in type definitions weed_data_t, weed_leaf_T, weed_plant_t.
+The application may now use the a reference implementation of libweed for all of the core functions. An application wishing to use
+libweed just needs to call weed_init(int32_t api_level) to get the correct version of the functions for that api version.
+In most cases you would just call weed_init(WEED_API_VERSION) and check that the returned value is not WEED_ERROR_BADVERSION.
+
+
+
+Level 2: at this level we distinguish between plugins and hosts. The host program is normally the one which will dlopen()
+or link with the plugins.
+
+Hosts should #incldue weed-host.h before weed.h, amd plugins should instead #include weed-plugin.h
+
+The main difference is that the plugin gets staticly scoped versions of the core functions,
+whereas the host gets global ones.
+
+Plugins also lose access to the weed_leaf_set_flags() function.
+
+
+
+Level 3: at his level host and plugin may choose to use a utilities library such as weed-utils.
+Only hosts should link with this library. Plugins simply need to include the weed-utils.h header.
+
+
+There also a library (in development) which effects plugins may use, weed-plugin-utils.c
+
+
+
+Level 4: host and pugins would be tailored to a particular role (multiple roles may be selected provide their symbols do not
+conflict.)
+For example for video plugins, host and plugins would #include weed-effects.h
+
+
+Depending on the apllication type there may be other optional or mandatory headers.
+For example, for video effects plugins, Weed offers the optional headers weed-palettes.h amd weed-compat.h
+
+For weed events there is weed-events.h
+
+
+
+
+
+
+
 
 
 
@@ -211,7 +270,7 @@ which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise
 
 A ''plant'' in Weed is a collection of one or more ''leaves''.
 
-Each plant has one MANDATORY leaf, with the key WEED_LEAF_TYPE (defined as "type" in weed.h).
+Each plant has one MANDATORY leaf, with the key WEED_LEAF_TYPE (defined as "" in weed.h).
 Depending upon the value of this leaf, the plant may have other mandatory and optional leaves defined by an 
 application specification.
 
@@ -247,8 +306,7 @@ Weed offers the following '''fundamental''' types:[[BR]]
  * WEED_SEED_INT     : equivalent to a signed /unsigned 32 bit integer
  * WEED_SEED_DOUBLE  : equivalent to a 64 bit signed double
  * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE 
- * WEED_SEED_STRING  : NUL terminated array of char (max length is uint32_max). Zero length strings are treated as NULL
-                       values in Weed.
+ * WEED_SEED_STRING  : NUL terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
  * WEED_SEED_INT64   : signed /unsigned 64 bit integer
 
 '''Pointer''' types (number >= 64)
@@ -304,40 +362,61 @@ copy is by reference.
 == WEED CORE FUNCTIONS ==
 
  * weed_plant_t *weed_plant_new (int32_t plant_type) : allocates and returns a new Weed plant
-   with "type" set to plant_type.
-   In case of memory error, the plant will not be created and NULL will be returned.
+   with a single leaf, "type" with a single elemnt of WEED_SEED_INT, value set to plant_type.
+   In case of memory error, the plant will not be created and NULL shall be returned.
+
+
+
 
 
  * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, weed_voidptr_t values)
 
-    Set leaf values and number of elements. A pointer to an array of the appropriate type and array
-    size should be cast to a weed_voidptr_t and passed to the function along with the array size.
+    Set leaf values and number of elements.
+
+    If plant is NULL, the function shall return WEED_ERROR_NOSUCH_LEAF.
+    If key is NULL or zero length, it is equivalent to setting the "type" leaf.
+
+    IF seed_type is not a pointer type (>= 64) and not one of the fundamental types, then WEED_ERROR_WRONG_SEED_TYPE is returned and
+    the leaf is not created or altered.
+
+    If the leaf already exists and has a different seed_type then WEED_ERROR_WRONG_SEED_TYPE will be returned and the value
+    will not be updated.
+    
+    Values should be A pointer to an array of the appropriate type and array size, cast to a weed_voidptr_t
 
     E.g for WEED_SEED_INT, values should be (weed_voidptr_t)(int32_t[num_elems]) or (weed_voidptr_t)(unt32_t[num_elems]),
-    for WEED_SEED_STRING, it should be (weed_voidptr_t)(char *[num_elems]),
-    for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
+
+for WEED_SEED_STRING, it should be (weed_voidptr_t)(char *[num_elems]),
+
+for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
     etc.
 
-    No checking is performed to see if plant is NULL or a valid plant, or whether the seed_type is valid. This is left to the caller.
-    The array is assumed to be of the correct size and type.
+    The values array is assumed to be of the correct size and type.
 
-    If the leaf doesn't exist in the plant then it will be created and added to the plant, otherwise the value and array size
+    If the leaf does not exist in the plant, then it will be created and added to the plant, otherwise the value and array size
     of the existing leaf will be amended.
 
-    If num_elems is 0 then only the seed_type is set, and the leaf value is set to NULL.
+
+    If num_elems is 0 then only the seed_type is set (or checked if the leaf already exists),
+    and while in this state.
+    any attempts to retrieve the value with weed_leaf_get() shall return WEED_LEAF_NOSUCH_ELEMENT. However this is useful if
+    you want to fix the seed_type of a leaf without setting any particular value.
 
     Passing a NULL pointer for values and num_elems > 0 will likely lead to undesired behaviour.
 
     In case of a memory error, WEED_ERROR_MEMORY_ALLOCATION is returned, and either the leaf is not created,
     or its num_elems is set to zero and its value to NULL.
 
-    If the leaf exists and has a different seed_type, then WEED_ERROR_WRONG_SEED_TYPE is returned and the value is not altered.
 
     (as of API 200) If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
     is returned and the leaf is not altered.
 
+    Note:
     Attempting to set the number of elements of the "type" leaf to a value other than 1 will result in WEED_ERROR_NOSUCH_ELEMENT
     being returned and the value will not be altered.
+
+
+
 
 
 * weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) :
@@ -348,23 +427,26 @@ copy is by reference.
     E.g for WEED_SEED_INT it should be int32_t * or uint32_t *. For WEED_SEED_STRING, a char **,
     for WEED_SEED_VOIDPTR a weed_voidptr_t *. etc.
 
-    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller.
+    If if the leaf does not exist, or plant is NULL, WEED_ERROR_NOSUCH_LEAF is returned.
+    If key is NULL or zero length, it is equivalent to getting the "type" leaf.
 
-    For WEED_SEED_STRING, you should first check that the leaf and element exist, that the seed_type is correct,
-    and if so, get the string length with weed_leaf_element size(),
-    allocate a char array of the returned size + 1 (to hold the terminating NUL) and
-    pass in a pointer to the array, typecast to weed_voidptr_t to receive the value. You will need to add the terminating NUL
-    as Weed will not do so for you. The returned value should also be freed after use.
-    (For this reason it may be easier to use a utilities library such as libweed-utils which will perform this process in a more
-    convenient fashion.)
-    
-    If the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF is returned.
-
-    If the leaf exists but the element doesn't exist, then WEED_ERROR_NOSUCH_ELEMENT is returned.
+    If the leaf exists but the element does not exist, then WEED_ERROR_NOSUCH_ELEMENT is returned.
     Note: prior to API version 200, this would erroneously return WEED_ERROR_NOSUCH_LEAF. If this behaviour is
     still required, then set the api version < 200 in weed_init(). 
 
     the value of the leaf element will be copied to value (IF value is non-NULL), and WEED_SUCCESS will be returned.
+
+    Note:
+    For WEED_SEED_STRING, it may be necessary to first call weed_leaf_element size()
+    and allocate a char array of at least the returned value + 1 (to hold the terminating NUL) in which to receive the value.
+
+
+    (For this reason it may be easier to use a utilities library such as libweed-utils which will perform this process in a more
+    convenient fashion.)
+    
+
+    It is not a programming error to pass in a NULL pointer for value. In this case, Weed will not attemt to copy the value, but will
+    still return an error code: either WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_NOSUCH_ELEMENT.
 
     In this way, it is possible to check if a leaf exists in the plant or not, by calling weed_leaf_get(plant, key, 0, NULL);
     - if the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF will be returned
@@ -372,17 +454,55 @@ copy is by reference.
     - if the value of the leaf has 1 or more elements, then WEED_SUCCESS will be returned.
 
 
- * weed_size_t weed_leaf_num_elements (weed_plant_t *plant, const char *key)
+
+
+
+
+* weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
+   remove the specified leaf from the plant, and free it
+
+   [prior to API 200, this function was not avaiable to plugins]
+
+   if the plant is NULL or the leaf does not exist, WEED_ERROR_NOSUCH_LEAF is returned.
+   If key is NULL or zero length, it is considered equivalent to trying to delete the "type" leaf.
+
+   if the WEED_FLAG_UNDELETABLE flag bit is set then WEED_ERROR_UNDELETABLE is returned, and the leaf is not deleted.
+
+   For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
+
+   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
+   weed_leaf_set_voidptr_sizes()), is freed - unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
+
+   The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attempt to delete it with weed_leaf_delete()
+   then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set), otherwise WEED_ERROR_NOSUCH_LEAF
+   will be returned. (Note the normal order of precedence of errors is reversed in this case, WEED_ERROR_NOSUCH_LEAF would normally
+   be returned BEFORE WEED_ERROR_UNDELETABLE).
+
+   Note that the flag bit WEED_FLAG_IMMUTABLE is ignored in this function.
+
+
+
+
+* weed_size_t weed_leaf_num_elements (weed_plant_t *plant, const char *key)
    - returns the number of elements for the specified leaf.
 
-   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
+   if the leaf does not exist or the plant is NULL, returns 0. Since it is possible to create leaves with 0 elements,
+   this is not a good method to use to check whether a leaf exists or not. If you want to do this you should use weed_leaf_get()
+   with value set to NULL as described above, or weed_leaf_get_seed_type (as described below).
+
+   If key is NULL or zero length, it is considered equivalent to trying to the "type" leaf.
+
+
 
 
  * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int32_t idx)
 
-   No checking is done to ensure that plant, leaf or idx are valid, this is left to the caller.
+   No checking is done to ensure that plant, leaf or idx are valid, this is left to the caller. In this case (weed_size_t)0 will
+   be returned.
 
-   For WEED_SEED_STRING, returns the string length in bytes (without a terminating NUL); equivalent to strlen().
+   If key is NULL or zero length, it is considered equivalent to the "type" leaf.
+
+   For WEED_SEED_STRING, returns the string length in bytes (without any terminating NUL); equivalent to strlen().
 
    For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_sizes() function, returns the size set.
    Otherwise, returns 0.
@@ -395,32 +515,97 @@ copy is by reference.
    For all other seed types, returns sizeof(seed_type), (e.g. for WEED_SEED_INT, returns 4, for WEED_SEED_INt64, returns 8).
    
 
+
+
+
  * int32_t weed_leaf_seed_type(weed_plant_t *plant, const char *key) : get the seed_type for a leaf
-   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
+
+   Returns the seed_type for a leaf. If the plant is NULL or the leaf does not exist, will return WEED_SEED_INVALID.
+   If key is NULL or zero length, it is considered equivalent to the "type" leaf.
+
+   This can be used to check whether a leaf exists or not (provided plant is non-NULL). If you want to differentiate
+   between leaves that have values or not, use the weed_leaf_get() method described above.
+
+
+
 
 
 
  * int32_t weed_leaf_get_flags(weed_plant_t *plant, const char *key) : get the flags for a leaf
-   No checking is done to ensure that plant and leaf are valid, this is left to the caller.
+   No checking is done to ensure that plant is not NULL or that the leaf exists, this is left to the caller.
+   In this case (int32_t)0 will be returned.
+
+   Otherwise the value of the leaf flags is returned.
+
+   If key is NULL or zero length, it is considered equivalent to the "type" leaf.
+
+
+
 
 
  * weed_error_t weed_plant_free (weed_plant_t *plant) :
 
-   No checking is done to ensure that plant is non-NULL and valid, this is left to the caller.
-
    returns error WEED_ERROR_UNDELETABLE if the "type" flag has WEED_LEAF_UNDELETABLE set, and nothing will be freed.
-   
-   otherwise returns WEED_SUCCESS.
 
-   Each leaf is handled as in weed_leaf_delete() (see belwo), execept that the "type" leaf will also be freed.
+   If the plant is NULL then WEED_SUCCESS is returned.
+
+   otherwise, any leaves which do NOT have the WEED_FLAG_UNDELETABLE bit set will be freed in a similar fashion to weed_leaf_delete()
+
+   if all of the leaves except the "type" leaf were deleted, the "type" leaf will be deleted and the plant is freed.
+   Im this case WEED_SUCCESS is returned.
+   
+   If leaves other than the type leaf remain (because they were undeletable), the "type" leaf is not freed, and
+   WEED_ERROR_UNDELETABLE is returned. In this case it will be necesssary to clear the WEED_FLAG_UNDELETABLE
+   flag bit from the remaining leaves (e.g with weed_plant_list_leaves() and weed_leaf_set_flags()),
+   before calling weed_plant_Free() a second time.
+
+   To recap: if none of the leaves have the WEED_FLAG_UNDELETABLE flag bit set, the plant will be freed and WEED_SUCCESS returned.
+   If any of the leaves other than they "type" leaf have the flag bit set, neither they nor the "type" leaf will nbe deleted and
+   WEED_ERROR_UNDELETABLE is returned.
+   If the "Type" leaf has the WEED_FLAG_UNDELETABLE bit set, no leaves will be deleted, and WEED_ERROR_UNDELETABLE is returned.
+
+   Note that as with weed_leaf_delete(), the flag bit WEED_FLAG_IMMUTABLE is ignoredin this function.
+
+
+
 
 
 
  * char **weed_plant_list_leaves (weed_plant_t *plant)
-   returns a NULL terminated char * array of leaf keys.
-   No checking is performed to see if plant is NULL or a valid plant, this is left to the caller.
+   returns a (char *)NULL terminated char * array of leaf keys.
+
    In case of memory error, NULL is returned and the array is not created. The caller should free any non-NULL elements
    when no longer required.
+
+   If plant is NULL, returns an array with just the (char *)NULL final element.
+
+
+
+
+
+A Weed host has access to an additional function which is not available to plugins:
+
+ * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
+
+   If key is NULL or zero length, it is considered equivalent to the "type" leaf.
+
+   Caution ! Clearing the WEED_FLAG_IMMUTABLE bit for the "type" leaf allows the plant type to be changed !
+
+   Setting the WEED_FLAG_UNDELETABLE bit for the "type" leaf prevents the plant and ANY leaves from being freed
+   using weed_plant_free().
+
+   Setting the WEED_FLAG_UNDELETABLE bit for any other leaf prevents the plant and that leaf from being freed
+   using weed_plant_free().
+
+   Setting the WEED_FLAG_UNDELETABLE bit for any leaf also prevents the leaf from being deleted
+   using weed_leaf_delete().
+
+   Will return WEED_ERROR_NOSUCH_LEAF if the plant is NULL or leaf does not exist.
+
+
+
+(T.B.D) Setting the WEED_FLAG_IMMUTABLE  bit for leaves of type WEED_SEED_VOIDPTR prevents the data from being freed when the leaf
+   is deleted.
 
 
 
@@ -452,6 +637,8 @@ As of API 200: (TODO):
     is returned and the leaf is not altered.
 
 
+
+
  * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
 
  Retrieves the num_elements, values, sizes and flags for the specified leaf.
@@ -470,38 +657,6 @@ As of API 200: (TODO):
            the correct size and type.
 
 
-
-== Additional functions not available to plugins ==
-
-A Weed host has access to additional functions which are not available to plugins:
-
- * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
-   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
-   
-   Clearing the immutable bit for the "type" leaf allows the plant type to be changed.
-   Setting the undeletable bit for the type leaf prevents the plant and leaves from being free via weed_plant-free.
-   Setting the immutable bit for leaves of type WEED_SEED_VOIDPTR prevents the data from being freed when the leaf is deleted.
-
-   Will return WEED_ERROR_NOSUCH_LEAF if the leaf does not exist.
-
-
-
-* weed_error_t weed_leaf_delete (weed_plant_t *plant, const char *key)
-   
-   if the leaf does not exist, WEED_ERROR_NOSUCH_LEAF is returned.
-   if the WEED_FLAG_UNDELETABLE flag bit is set then WEED_ERROR_UNDELETABLE is returned, and the leaf is not deleted.
-
-   For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
-
-   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
-   weed_leaf_set_voidptr_sizes()), is freed - unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
-
-   The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attempt to delete it with weed_leaf_delete()
-   then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set), otherwise WEED_ERROR_NOSUCH_LEAF
-   will be returned. (Note the normal order of precedence of errors is reversed in this case, WEED_ERROR_NOSUCH_LEAF would normally
-   be returned BEFORE WEED_ERROR_UNDELETABLE).
-
-   No checking is done to ensure that plant is non NULL and valid, this is left to the caller.
 
 
 
@@ -528,6 +683,8 @@ if (error == WEED_SUCCESS) {
 // now you can change the "type" of the plant
 
 
+
+
 If the "type" leaf is set undeletable, then the plant cannot be freed using weed_plant_free(),
 the function will return WEED_ERROR_UNDELETABLE. In this case you need to clear the flag bit prior to calling weed_plant_free().
 
@@ -535,11 +692,8 @@ The combination of immutable and undeletable flag bits is designed so that Weed 
 changing readonly values or freeing plants which are still referenced by the host.
 
 
-Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used.
+Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used by applications.
 
-
-
-'''Notes''':[[BR]]
 
 
 
@@ -601,7 +755,7 @@ WEED_ABI_VERSION is #defined as 200 in the header.
 
 WEED_ABI_VERSION_200 is also #defined in the header.
 
-WEED_VOIDPTR_SIZE is #defined as (sizeof(void *)
+WEED_VOIDPTR_SIZE is #defined as (sizeof(void *))
 
 weed_voidptr_t is typedefed to (uint64_t *)
 weed_size_t is typedefed to (uint32_t)
@@ -644,6 +798,11 @@ provide its own implementation of the core functions, whilst still making
 use of the rest of the header file.
 
 HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
+
+
+
+
+== Weed Plugin and Weed Host ===
 
 
 
@@ -834,6 +993,7 @@ and their mandatory and optional leaves.
 
 WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_VOIDPTR - pointer to function of type weed_leaf_get_f for the plugin to use
 WEED_LEAF_SET_FUNC "weed_leaf_set_func"       :: etc...
+WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"       :: etc...
 WEED_PLANT_NEW_FUNC "weed_plant_new_func"
 WEED_PLANT_FREE_FUNC "weed_plant_free_func"
 WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"

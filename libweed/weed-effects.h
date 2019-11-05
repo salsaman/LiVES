@@ -150,6 +150,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_FILTER_API_VERSION "filter_api_version"
 #define WEED_LEAF_GET_FUNC "weed_leaf_get_func"
 #define WEED_LEAF_SET_FUNC "weed_leaf_set_func"
+#define WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"
 #define WEED_PLANT_NEW_FUNC "weed_plant_new_func"
 #define WEED_PLANT_FREE_FUNC "weed_plant_free_func"
 #define WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"

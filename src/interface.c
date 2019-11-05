@@ -1053,7 +1053,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   last_t = g_get_monotonic_time();
 
-  procw = (xprocess *)(lives_calloc(1, sizeof(xprocess)));
+  procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 
   procw->processing = lives_standard_dialog_new(_("Processing..."), FALSE, -1, -1);
   lives_window_set_transient_for(LIVES_WINDOW(procw->processing), LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));

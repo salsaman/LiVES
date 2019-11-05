@@ -877,7 +877,7 @@ uint32_t mt_idle_add(lives_mt *mt) {
   set_signal_handlers((SignalHandlerPointer)defer_sigint);
 
   // TODO: last param is a destroy notify, so we can check if something re-adds it or removes it when it shouldnt
-  retval = lives_idle_add_full(G_PRIORITY_LOW, mt_auto_backup, mt, NULL);
+  retval = lives_timer_add(1001, mt_auto_backup, mt);
 
   if (mainw->signal_caught) catch_sigint(mainw->signal_caught);
 

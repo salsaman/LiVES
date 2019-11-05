@@ -49,7 +49,7 @@
 
 static int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
 weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot,
-                                    int32_t weed_api_min_version, int32_t weed_api_max_version,
+                                    int32_t weed_abi_min_version, int32_t weed_abi_max_version,
                                     int32_t filter_api_min_version, int32_t weed_filter_api_max_version) ALLOW_UNUSED;
 static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) ALLOW_UNUSED;
 weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags, weed_init_f init_func,
@@ -80,11 +80,8 @@ weed_plant_t **weed_clone_plants(weed_plant_t **plants) ALLOW_UNUSED;
 
 
 ///////////////////////////////////////////////////////////
-static inline int _leaf_exists(weed_plant_t *plant, const char *key) {
-  if (weed_leaf_get(plant, key, 0, NULL) == WEED_ERROR_NOSUCH_LEAF) return 0;
-  return 1;
-}
-
+// check if leaf exists and has a value
+#define _leaf_exists(plant, key) ((weed_leaf_get(plant, key, 0, NULL) == WEED_SUCCESS) ? 1 : 0)
 
 static int weed_get_api_version(weed_plant_t *plugin_info) {
   // return the FILTER_API version selected by host
@@ -115,7 +112,8 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
                                          weed_filter_api_min_version, weed_filter_api_max_version);
 
   weed_plant_t *plugin_info = NULL;
-  int32_t weed_api_version = WEED_API_VERSION;
+  int32_t weed_abi_version = WEED_ABI_VERSION;
+  int32_t filter_api_version = WEED_API_VERSION;
   weed_error_t err;
 
   if (host_info == NULL) return NULL; // matching version was not found
@@ -131,7 +129,23 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
   // now we can use the normal get function (weed_leaf_get)
 
   //////////// get weed api version /////////
-  weed_leaf_get(host_info, WEED_LEAF_WEED_API_VERSION, 0, &weed_api_version);
+  weed_leaf_get(host_info, WEED_LEAF_WEED_API_VERSION, 0, &weed_abi_version);
+
+  // get any additional functions for higher API versions ////////////
+  weed_realloc = NULL;
+  weed_plant_free = NULL;
+
+  // 2.0
+  if (weed_abi_version >= 200) {
+    // added weed_realloc
+    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
+
+    // added weed_calloc
+    if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
+
+    // added weed_memmove
+    if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
+  }
 
   // base functions 1.0
   if (weed_leaf_get(host_info, WEED_LEAF_SET_FUNC, 0, &weed_leaf_set) != WEED_SUCCESS) return NULL;
@@ -142,24 +156,16 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
   if (weed_leaf_get(host_info, WEED_LEAF_SEED_TYPE_FUNC, 0, &weed_leaf_seed_type) != WEED_SUCCESS) return NULL;
   if (weed_leaf_get(host_info, WEED_LEAF_GET_FLAGS_FUNC, 0, &weed_leaf_get_flags) != WEED_SUCCESS) return NULL;
 
-  // get any additional functions for higher API versions ////////////
-  weed_realloc = NULL;
-  weed_plant_free = NULL;
+  weed_leaf_get(host_info, WEED_LEAF_FILTER_API_VERSION, 0, &filter_api_version);
 
-  // 2.0
-  if (weed_api_version >= 200) {
-    // added weed_realloc
-    if (weed_leaf_get(host_info, WEED_LEAF_REALLOC_FUNC, 0, &weed_realloc) != WEED_SUCCESS) return NULL;
-
-    // added weed_calloc
-    if (weed_leaf_get(host_info, WEED_LEAF_CALLOC_FUNC, 0, &weed_calloc) != WEED_SUCCESS) return NULL;
-
-    // added weed_memmove
-    if (weed_leaf_get(host_info, WEED_LEAF_MEMMOVE_FUNC, 0, &weed_memmove) != WEED_SUCCESS) return NULL;
-
-    // added weed_plant_free
+  // base functions 2.0
+  if (filter_api_version >= 200) {
+    // added weed_plant_free for plugins
     if (weed_leaf_get(host_info, WEED_PLANT_FREE_FUNC, 0, &weed_plant_free) != WEED_SUCCESS) return NULL;
+    // added weed_leaf_delete for plugins
+    if (weed_leaf_get(host_info, WEED_LEAF_DELETE_FUNC, 0, &weed_leaf_delete) != WEED_SUCCESS) return NULL;
   }
+
   //////////////////////////////////////////////////////////////////////
 
   if (weed_plant_has_leaf(host_info, WEED_LEAF_PLUGIN_INFO)) {
@@ -214,6 +220,7 @@ weed_plant_t *weed_filter_class_init(const char *name, const char *author, int v
                                      weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) {
   int i;
   weed_plant_t *filter_class = weed_plant_new(WEED_PLANT_FILTER_CLASS);
+  if (filter_class == NULL) return NULL;
 
   weed_leaf_set(filter_class, "name", WEED_SEED_STRING, 1, &name);
   weed_leaf_set(filter_class, "author", WEED_SEED_STRING, 1, &author);
@@ -222,16 +229,19 @@ weed_plant_t *weed_filter_class_init(const char *name, const char *author, int v
 
   if (init_func != NULL) {
     weed_init_f *fn_ptr_ptr = (weed_init_f *)weed_malloc(sizeof(weed_init_f));
+    if (fn_ptr_ptr == NULL) return NULL;
     *fn_ptr_ptr = init_func;
     weed_leaf_set(filter_class, "init_func", WEED_SEED_VOIDPTR, 1, &fn_ptr_ptr);
   }
   if (process_func != NULL) {
     weed_process_f *fn_ptr_ptr = (weed_process_f *)weed_malloc(sizeof(weed_process_f));
+    if (fn_ptr_ptr == NULL) return NULL;
     *fn_ptr_ptr = process_func;
     weed_leaf_set(filter_class, "process_func", WEED_SEED_VOIDPTR, 1, &fn_ptr_ptr);
   }
   if (deinit_func != NULL) {
     weed_deinit_f *fn_ptr_ptr = (weed_deinit_f *)weed_malloc(sizeof(weed_deinit_f));
+    if (fn_ptr_ptr == NULL) return NULL;
     *fn_ptr_ptr = deinit_func;
     weed_leaf_set(filter_class, "deinit_func", WEED_SEED_VOIDPTR, 1, &fn_ptr_ptr);
   }
@@ -270,6 +280,7 @@ static void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_pl
 
   if (_leaf_exists(plugin_info, "filters")) num_filters = weed_leaf_num_elements(plugin_info, "filters");
   filters = (weed_plant_t **)weed_malloc((num_filters + 1) * sizeof(weed_plant_t *));
+  if (filters == NULL) return;
   for (i = 0; i < num_filters; i++) weed_leaf_get(plugin_info, "filters", i, &filters[i]);
   filters[i] = filter_class;
   weed_leaf_set(plugin_info, "filters", WEED_SEED_PLANTPTR, i + 1, filters);
@@ -645,7 +656,6 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
         stlen = weed_leaf_element_size(from, key, i);
         datac[i] = (char *)weed_malloc(stlen + 1);
         weed_leaf_get(from, key, i, &datac[i]);
-        weed_memset(datac[i] + stlen, 0, 1);
       }
       weed_leaf_set(to, key, WEED_SEED_STRING, num, datac);
       for (i = 0; i < num; i++) weed_free(datac[i]);
@@ -664,10 +674,12 @@ weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
   for (i = 0; plants[i] != NULL; i++);
   num_plants = i;
   ret = (weed_plant_t **)weed_malloc((num_plants + 1) * sizeof(weed_plant_t *));
+  if (ret == NULL) return NULL;
 
   for (i = 0; i < num_plants; i++) {
     weed_leaf_get(plants[i], "type", 0, &type);
     ret[i] = weed_plant_new(type);
+    if (ret[i] == NULL) return NULL;
 
     leaves = weed_plant_list_leaves(plants[i]);
     for (j = 0; leaves[j] != NULL; j++) {
@@ -682,7 +694,7 @@ weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
         }
         weed_free(leaves2);
       } else _weed_clone_leaf(plants[i], leaves[j], ret[i]);
-      weed_free(leaves[j]);
+      //weed_free(leaves[j]);
     }
     weed_free(leaves);
   }
@@ -791,17 +803,17 @@ static inline int myround(double n) {
 
 #ifdef NEED_PALETTE_UTILS
 
-static inline int weed_palette_is_alpha_palette(int pal) {
+static inline int weed_palette_is_alpha(int pal) {
   return (pal >= 1024 && pal < 2048) ? 1 : 0;
 }
 
 
-static inline int weed_palette_is_rgb_palette(int pal) {
+static inline int weed_palette_is_rgb(int pal) {
   return (pal < 512) ? 1 : 0;
 }
 
 
-static inline int weed_palette_is_yuv_palette(int pal) {
+static inline int weed_palette_is_yuv(int pal) {
   return (pal >= 512 && pal < 1024) ? 1 : 0;
 }
 
@@ -817,7 +829,7 @@ static inline int weed_palette_get_numplanes(int pal) {
 }
 
 
-static inline int weed_palette_is_valid_palette(int pal) {
+static inline int weed_palette_is_valid(int pal) {
   if (weed_palette_get_numplanes(pal) == 0) return 0;
   return 1;
 }
@@ -854,7 +866,7 @@ static inline int weed_palette_is_float_palette(int pal) {
 static inline int weed_palette_has_alpha_channel(int pal) {
   return (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
           pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_RGBAFLOAT ||
-          weed_palette_is_alpha_palette(pal)) ? 1 : 0;
+          weed_palette_is_alpha(pal)) ? 1 : 0;
 }
 
 

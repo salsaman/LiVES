@@ -86,6 +86,11 @@ boolean on_LiVES_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, liv
 
 
 static void cleanup_set_dir(const char *set_name) {
+  // this function is called:
+  // - when a set is saved and merged with an existing one
+  // - when a set is deleted
+  // - when the last clip in a set is closed
+
   char *lfiles, *ofile, *sdir;
   char *cdir = lives_build_filename(prefs->workdir, set_name, CLIPS_DIRNAME, NULL);
 
@@ -104,8 +109,8 @@ static void cleanup_set_dir(const char *set_name) {
 
   lives_free(cdir);
 
-  lfiles = lives_build_filename(prefs->workdir, set_name, SET_LOCK_FILENAME, NULL);
-
+  // remove any stale lockfiles
+  lfiles = SET_LOCK_FILES(set_name);
   lives_rmglob(lfiles);
   lives_free(lfiles);
 
@@ -128,7 +133,7 @@ static void cleanup_set_dir(const char *set_name) {
 
 
 void lives_exit(int signum) {
-  char *cwd, *tmp, *com, *set_lock_file = NULL, *set_locker = NULL;
+  char *cwd, *tmp, *com;
 
   register int i;
 
@@ -367,7 +372,8 @@ void lives_exit(int signum) {
             threaded_dialog_spin(0.);
           } else {
             threaded_dialog_spin(0.);
-            // or just clean them up
+            // or just clean them up -
+            // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
             com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, mainw->files[i]->handle);
             lives_system(com, FALSE);
             threaded_dialog_spin(0.);
@@ -407,11 +413,6 @@ void lives_exit(int signum) {
     }
 
     if (strlen(mainw->set_name)) {
-      set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-      set_locker = lives_build_filename(prefs->workdir, mainw->set_name, set_lock_file, NULL);
-      lives_rm(set_locker);
-      lives_free(set_lock_file);
-      lives_free(set_locker);
       threaded_dialog_spin(0.);
     }
 
@@ -434,7 +435,10 @@ void lives_exit(int signum) {
         memset(mainw->set_name, 0, 1);
         mainw->was_set = FALSE;
         lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
+      } else {
+        unlock_set_file(mainw->set_name);
       }
+
       // (B)
 
       mainw->suppress_dprint = FALSE;
@@ -470,6 +474,8 @@ void lives_exit(int signum) {
     }
 
     save_future_prefs();
+
+    unlock_set_file(mainw->set_name);
 
     // stop valgrind from complaining
 #ifdef VALG_COMPLAIN
@@ -4788,7 +4794,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *cwd;
   char *ordfile;
   char *ord_entry;
-  char *msg, *extra;
+  char *tmp;
   char *dfile, *osetn, *nsetn;
 
   boolean is_append = FALSE; // we will overwrite the target layout.map file
@@ -4803,19 +4809,7 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->cliplist == NULL) return FALSE;
 
   // warn the user what will happen
-  if (!mainw->no_exit && !mainw->only_close) extra = lives_strdup(", and LiVES will exit");
-  else extra = lives_strdup("");
-
-  msg = lives_strdup_printf(
-          _("Saving the set will cause copies of all loaded clips to remain on the disk%s.\n\nPlease press 'Cancel' if that is not what you want.\n"),
-          extra);
-  lives_free(extra);
-
-  if (menuitem != NULL && !do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {
-    lives_free(msg);
-    return FALSE;
-  }
-  lives_free(msg);
+  if (menuitem != NULL && !do_save_clipset_warn()) return FALSE;
 
   if (mainw->stored_event_list != NULL && mainw->stored_event_list_changed) {
     // if we have a current layout, give the user the chance to change their mind
@@ -4824,7 +4818,6 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (menuitem != NULL) {
     // this was called from the GUI
-    char *tmp;
     do {
       // prompt for a set name, advise user to save set
       renamew = create_rename_dialog(2);
@@ -4845,13 +4838,10 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", new_set_name);
 
   if (strcmp(mainw->set_name, old_set)) {
-    // THE USER CHANGED the set name
+    // The user CHANGED the set name
+    // we must migrate all physical files for the set, and possibly merge with another set
 
-    // we must migrate all physical files for the set
-
-    // and possibly merge with another set
-
-    new_clips_dir = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, NULL);
+    new_clips_dir = CLIPS_DIR(mainw->set_name);
     // check if target clips dir exists, ask if user wants to append files
     if (lives_file_test(new_clips_dir, LIVES_FILE_TEST_IS_DIR)) {
       lives_free(new_clips_dir);
@@ -5106,7 +5096,10 @@ boolean on_save_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // do a lot of cleanup here, but leave files
     lives_exit(0);
     mainw->leave_files = FALSE;
-  } else end_threaded_dialog();
+  } else {
+    unlock_set_file(old_set);
+    end_threaded_dialog();
+  }
 
   lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
   return TRUE;
@@ -5157,6 +5150,25 @@ char *on_load_set_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
+void lock_set_file(const char *set_name) {
+  // function is called when a set is opened, to prevent multiple acces to the same set
+  char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+  char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
+  lives_touch(set_locker);
+  lives_free(set_locker);
+  lives_free(set_lock_file);
+}
+
+
+void unlock_set_file(const char *set_name) {
+  char *set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
+  char *set_locker = SET_LOCK_FILE(set_name, set_lock_file);
+  lives_rm(set_locker);
+  lives_free(set_lock_file);
+  lives_free(set_locker);
+}
+
+
 boolean reload_set(const char *set_name) {
   // this is the main clip set loader
 
@@ -5173,9 +5185,7 @@ boolean reload_set(const char *set_name) {
   char *subfname;
   char vid_open_dir[PATH_MAX];
   char *cwd;
-  char *tfile;
   char *handle = NULL;
-  char *set_lock_file;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
@@ -5224,6 +5234,7 @@ boolean reload_set(const char *set_name) {
   }
 
   ordfile = lives_build_filename(prefs->workdir, set_name, CLIP_ORDER_FILENAME, NULL);
+
   orderfile = fopen(ordfile, "r"); // no we can't assert this, because older sets did not have this file
   lives_free(ordfile);
 
@@ -5232,12 +5243,13 @@ boolean reload_set(const char *set_name) {
 
   lives_snprintf(vid_open_dir, PATH_MAX, "%s", mainw->vid_load_dir);
 
+  // lock the set
+  lock_set_file(set_name);
+
   cwd = lives_get_current_dir();
 
   while (1) {
-    if (prefs->show_gui) {
-      threaded_dialog_spin(0.);
-    }
+    if (prefs->show_gui) threaded_dialog_spin(0.);
 
     if (mainw->cached_list != NULL) {
       lives_list_free_all(&mainw->cached_list);
@@ -5256,12 +5268,11 @@ boolean reload_set(const char *set_name) {
 
     if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {
       if (!mainw->recovering_files) mainw->suppress_dprint = FALSE;
-
       if (!keep_threaded_dialog) end_threaded_dialog();
 
       if (orderfile != NULL) fclose(orderfile);
 
-      mainw->current_file = current_file;
+      //mainw->current_file = current_file;
 
       if (last_file > 0) {
         threaded_dialog_spin(0.);
@@ -5311,11 +5322,13 @@ boolean reload_set(const char *set_name) {
       if (!keep_threaded_dialog) end_threaded_dialog();
       lives_chdir(cwd, FALSE);
       lives_free(cwd);
-      mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
+      if (mainw->multitrack != NULL)
+        mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
       return TRUE;
     }
 
-    mainw->was_set = TRUE;
+    if (clipnum > 0)
+      mainw->was_set = TRUE;
 
     if (prefs->crash_recovery && !added_recovery) {
       char *recovery_entry = lives_build_filename(set_name, "*", NULL);
@@ -5327,6 +5340,7 @@ boolean reload_set(const char *set_name) {
     if (orderfile != NULL) {
       // newer style (0.9.6+)
       char *clipdir = lives_build_filename(prefs->workdir, mainw->msg, NULL);
+
       if (!lives_file_test(clipdir, LIVES_FILE_TEST_IS_DIR)) {
         lives_free(clipdir);
         continue;
@@ -5335,7 +5349,7 @@ boolean reload_set(const char *set_name) {
       threaded_dialog_spin(0.);
 
       //create a new cfile and fill in the details
-      lives_snprintf(handle, 256, "%s", mainw->msg);
+      handle = lives_strndup(mainw->msg, 256);
     }
 
     // changes mainw->current_file on success
@@ -5364,16 +5378,11 @@ boolean reload_set(const char *set_name) {
       return FALSE;
     }
 
-    // lock the set
-    threaded_dialog_spin(0.);
-    set_lock_file = lives_strdup_printf("%s.%d", SET_LOCK_FILENAME, capable->mainpid);
-    tfile = lives_build_filename(prefs->workdir, set_name, set_lock_file, NULL);
-    lives_touch(tfile);
-    lives_free(tfile);
-    lives_free(set_lock_file);
-
     // get file details
-    read_headers(".");
+    if (!read_headers(".")) {
+      continue;
+    }
+
     threaded_dialog_spin(0.);
 
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE

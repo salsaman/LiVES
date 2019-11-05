@@ -1152,7 +1152,9 @@ int process_one(boolean visible) {
       mainw->pre_src_file = mainw->new_clip;
       mainw->new_clip = -1;
     }
-
+    if (prefs->loadchecktime > 0.) {
+      load_measure_idle(NULL);
+    }
     // get current time
 
     // time is obtained as follows:
@@ -2165,6 +2167,30 @@ boolean do_auto_dialog(const char *text, int type) {
     if (mainw->current_file > -1 && cfile != NULL)
       if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;
   }
+  return TRUE;
+}
+
+
+///// TODO: split warnings etc into separate file   ///
+
+boolean do_save_clipset_warn(void) {
+  char *extra;
+  char *msg;
+
+  if (!mainw->no_exit && !mainw->only_close) extra = lives_strdup(", and LiVES will exit");
+  else extra = lives_strdup("");
+
+  msg = lives_strdup_printf(
+          _("Saving the set will cause copies of all loaded clips to remain on the disk%s.\n\n"
+            "Please press 'Cancel' if that is not what you want.\n"),
+          extra);
+  lives_free(extra);
+
+  if (!do_warning_dialog_with_check(msg, WARN_MASK_SAVE_SET)) {
+    lives_free(msg);
+    return FALSE;
+  }
+  lives_free(msg);
   return TRUE;
 }
 

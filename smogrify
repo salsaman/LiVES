@@ -4151,12 +4151,9 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-
 	    if ($undo_cut) {
 		&clean_old;
 	    }
-
-
 
 	    &sig_complete;
 	    exit 0;

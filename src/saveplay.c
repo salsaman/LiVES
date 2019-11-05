@@ -141,9 +141,7 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
                                         get_image_ext_for_type(cfile->img_type), mainw->opening_loc, is_audio);
   lives_free(tmp);
-  g_print("A1\n");
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
-  g_print("A12\n");
   lives_free(com);
   if (mainw->com_failed) {
     mainw->com_failed = FALSE;
@@ -3189,7 +3187,7 @@ boolean get_temp_handle(int index) {
     }
 
     if (strlen(mainw->set_name) > 0) {
-      char *setclipdir = lives_build_filename(prefs->workdir, mainw->set_name, CLIPS_DIRNAME, cfile->handle, NULL);
+      char *setclipdir = CLIPDIR(cfile->handle);
       if (lives_file_test(setclipdir, LIVES_FILE_TEST_IS_DIR)) is_unique = FALSE;
       lives_free(setclipdir);
     }

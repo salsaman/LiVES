@@ -437,6 +437,21 @@ enum {
 #define CLIPS_DIRNAME "clips"
 #define IMPORTS_DIRNAME "imports"
 
+// special files / dirs
+
+#define SET_LOCK_FILE(set_name, lockfile) lives_build_filename(prefs->workdir, set_name, lockfile, NULL);
+
+#define SET_LOCK_FILES(set_name) SET_LOCK_FILE(set_name, SET_LOCK_FILENAME);
+
+// directory where we store 1 clip / all clips if handle is NULL
+#define MAKE_CLIPS_DIRNAME(set, handle) lives_build_filename(prefs->workdir, set, CLIPS_DIRNAME, handle, NULL);
+
+// directory of a clip in the current set
+#define CLIPDIR(handle) MAKE_CLIPS_DIRNAME(mainw->set_name, handle)
+
+// directory for all clips in set
+#define CLIPS_DIR(set) MAKE_CLIPS_DIRNAME(set, NULL)
+
 // filters
 
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
@@ -1407,7 +1422,7 @@ typedef struct {
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
-  int rowstride_alignment;
+  int rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int rowstride_alignment_hint;
 
   int sepwin_minwidth;

@@ -146,7 +146,7 @@ boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, O
 int padup(char **str, int arglen) {
   int newlen = pad4(arglen);
   char *ostr = *str;
-  *str = (char *)lives_calloc(1, newlen);
+  *str = (char *)lives_calloc(newlen, 1);
   lives_memcpy(*str, ostr, arglen);
   lives_free(ostr);
   return newlen;
@@ -156,7 +156,7 @@ int padup(char **str, int arglen) {
 int add_int_arg(char **str, int arglen, int val) {
   int newlen = arglen + 4;
   char *ostr = *str;
-  *str = (char *)lives_calloc(1, newlen);
+  *str = (char *)lives_calloc(newlen, 1);
   lives_memcpy(*str, ostr, arglen);
   if (!IS_BIG_ENDIAN) {
     (*str)[arglen] = (unsigned char)((val & 0xFF000000) >> 3);
@@ -174,7 +174,7 @@ int add_int_arg(char **str, int arglen, int val) {
 static int add_string_arg(char **str, int arglen, const char *val) {
   int newlen = arglen + strlen(val) + 1;
   char *ostr = *str;
-  *str = (char *)lives_calloc(1, newlen);
+  *str = (char *)lives_calloc(newlen, 1);
   lives_memcpy(*str, ostr, arglen);
   lives_memcpy(*str + arglen, val, strlen(val));
   lives_free(ostr);

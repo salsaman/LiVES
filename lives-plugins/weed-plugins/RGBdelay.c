@@ -57,7 +57,10 @@ static void make_lut(unsigned char *lut, double val, int min) {
   }
 
   for (i = 0; i < 256; i++) {
-    lut[i] = (unsigned char)((double)(i - mina) * val + rnd);
+    val = (double)(i - mina) * val + rnd;
+    if (val < 0) val = 0.;
+    if (val > 255) val = 255.;
+    lut[i] = (unsigned char)val;
   }
 }
 
@@ -444,6 +447,7 @@ WEED_SETUP_START(200, 200) {
 
   for (i = 3; i < 54; i++) {
     rfx_strings[i] = weed_malloc(1024);
+    if (rfx_strings[i] == NULL) return NULL;
     snprintf(rfx_strings[i], 1024, "layout|p%d|p%d|p%d|p%d|", (i - 3) * 4 + 1, (i - 3) * 4 + 2, (i - 3) * 4 + 3, (i - 2) * 4);
   }
 

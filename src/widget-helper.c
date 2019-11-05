@@ -10940,7 +10940,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
-  boolean lm_needs_idlefunc = FALSE;
+  //boolean lm_needs_idlefunc = FALSE;
   int nulleventcount = 0;
   int loops = 0;
 
@@ -10957,12 +10957,6 @@ boolean lives_widget_context_update(void) {
 
     mainw->multitrack->idlefunc = 0;
     mt_needs_idlefunc = TRUE;
-  }
-
-  if (mainw->loadmeasure != 0) {
-    lives_source_remove(mainw->loadmeasure);
-    mainw->loadmeasure = 0;
-    lm_needs_idlefunc = TRUE;
   }
 
   if (!mainw->is_exiting) {
@@ -10992,12 +10986,14 @@ boolean lives_widget_context_update(void) {
           nulleventcount = 0;
       }
       if (pthread_mutex_trylock(&mainw->gtk_mutex)) break;
+      /* if (!mainw->loadmeasure_reset) { */
+      /* 	lives_source_remove(mainw->loadmeasure); */
+      /* 	mainw->loadmeasure = 0; */
+      /* 	lm_needs_idlefunc = TRUE; */
+      /* } */
       g_main_context_iteration(NULL, FALSE);
       pthread_mutex_unlock(&mainw->gtk_mutex);
     }
-#endif
-#ifdef GUI_QT
-    QCoreApplication::processEvents();
 #endif
   }
 
@@ -11005,11 +11001,11 @@ boolean lives_widget_context_update(void) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  if (!mainw->is_exiting && lm_needs_idlefunc) {
-    if (prefs->loadchecktime > 0.) {
-      mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
-    }
-  }
+  /* if (!mainw->is_exiting && lm_needs_idlefunc) { */
+  /*   if (prefs->loadchecktime > 0.) { */
+  /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
+  /*   } */
+  /* } */
 
 
   return TRUE;

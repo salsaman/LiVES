@@ -4588,11 +4588,35 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
+weed_error_t weed_leaf_get_plugin(weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) {
+  // plugins can be monitored for example
+  weed_error_t err = _weed_leaf_get(plant, key, idx, value);
+  // and simulating bugs...
+  /* if (!strcmp(key, WEED_LEAF_WIDTH) && value != NULL) { */
+  /*   int *ww = (int *)value; */
+  /*   *ww -= 100; */
+  /* } */
+  return err;
+}
+
+
+void *lives_monitor_malloc(size_t size) {
+  void *p = malloc(size);
+  fprintf(stderr, "plugin mallocing %ld bytes, got ptr %p\n", size, p);
+  if (size == 1024) break_me();
+  return NULL;
+}
+
+
+void lives_monitor_free(void *p) {
+  fprintf(stderr, "plugin freeing ptr ptr %p\n", p);
+}
+
+
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems,
                                 weed_voidptr_t values) {
   // change even immutable leaves
   weed_error_t err;
-  //fprintf(stderr, "wlsh %s\n", key);
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
   if (err == WEED_SUCCESS) return err;
@@ -4667,36 +4691,47 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   if (weed_plant_has_leaf(xhost_info, WEED_LEAF_PLUGIN_INFO)) {
     // let's check the versions the plugin supports
     weed_plant_t *plugin_info = weed_get_plantptr_value(xhost_info, WEED_LEAF_PLUGIN_INFO, NULL);
+    int pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api;
     if (plugin_info != NULL) {
       expected_pi = plugin_info;
       /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */
       /* 	pl_min_weed_api = weed_get_int_value(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION, NULL); */
       /* } */
-      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) { */
-      /* 	pl_max_weed_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION, NULL); */
-      /* } */
+      if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) {
+        pl_max_weed_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION, NULL);
+        // we can support all versions back to 110
+        if (pl_max_weed_api < WEED_API_VERSION && pl_max_weed_api >= 110) {
+          weed_set_int_value(xhost_info, WEED_LEAF_WEED_API_VERSION, pl_max_weed_api);
+        }
+      }
       /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MIN_WEED_API_VERSION)) { */
       /* 	pl_min_filter_api = weed_get_int_value(plugin_info, WEED_LEAF_MIN_FILTER_API_VERSION, NULL); */
       /* } */
-      /* if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) { */
-      /* 	pl_max_filter_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_FILTER_API_VERSION, NULL); */
-      /* } */
+      if (weed_plant_has_leaf(plugin_info, WEED_LEAF_MAX_WEED_API_VERSION)) {
+        pl_max_filter_api = weed_get_int_value(plugin_info, WEED_LEAF_MAX_FILTER_API_VERSION, NULL);
+        // we can support all versions back to 110
+        if (pl_max_filter_api < WEED_FILTER_API_VERSION && pl_max_filter_api >= 110) {
+          weed_set_int_value(xhost_info, WEED_LEAF_FILTER_API_VERSION, pl_max_filter_api);
+        }
+      }
     }
   }
 
   //  fprintf(stderr, "API versions %d %d / %d %d : %d %d\n", lib_weed_version, lib_filter_version, pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api);
 
   // let's override some plugin functions...
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_malloc);
+  weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, lives_monitor_malloc);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, lives_realloc);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, lives_calloc);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, lives_free);
+  weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, lives_monitor_free);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, lives_memcpy);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, lives_memset);
   weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, lives_memmove);
 
-  // we can also monitor a particular plugin
+  // since we redefined weed_leaf_set and weed_plant_free for ourselves,
+  // we need to reset the plugin versions, since it will inherit ours by default when calling setup_func()
   //weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, weed_leaf_get_plugin);
+  //weed_set_voidptr_value(xhost_info, WEED_PLANT_FREE_FUNC, _weed_plant_free);
 
   update_host_info(xhost_info);
   return xhost_info;
@@ -4759,7 +4794,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       host_info = NULL;
 
       do {
-        our_plugin_id += (int)((lives_random() * lives_random()) & 0xFFFF);
+        our_plugin_id = (int)((lives_random() * lives_random()) & 0xFFFF);
       } while (our_plugin_id == 0);
 
       weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(our_plugin_id));
@@ -10696,9 +10731,11 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 
   filter = weed_filters[filter_idx];
 
-  if (sep == 0 && hashnames[filter_idx] != NULL && fullname && (!use_extra_authors || !weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)))
+  if (sep == 0 && hashnames[filter_idx] != NULL && fullname && (!use_extra_authors ||
+      !weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS))) {
+    lives_free(xsep);
     return lives_strdup(hashnames[filter_idx]);
-
+  }
   if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
     plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
     if (weed_plant_has_leaf(plugin_info, WEED_LEAF_PACKAGE_NAME)) {
@@ -10711,8 +10748,10 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
       // should we really use utf-8 here ? (needs checking)
       filename = F2U8(plugin_fname);
     }
-  } else return lives_strdup("");
-
+  } else {
+    lives_free(xsep);
+    return lives_strdup("");
+  }
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
 
   if (fullname) {
@@ -10731,7 +10770,10 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
     lives_free(xsep);
     lives_free(filter_author);
     lives_free(filter_version);
-  } else hashname = lives_strconcat(filename, filter_name, NULL);
+  } else {
+    lives_free(xsep);
+    hashname = lives_strconcat(filename, filter_name, NULL);
+  }
   lives_free(filter_name);
   lives_free(filename);
 

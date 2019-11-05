@@ -123,6 +123,7 @@ typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key,
 typedef int32_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
 typedef int32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
 typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
+typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
 /* added in ABI 200 */
 typedef weed_error_t (*weed_leaf_set_voidptr_sizes_f)(weed_plant_t *, const char *key,
@@ -133,10 +134,8 @@ typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
 /* host only functions */
 typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, int32_t flags);
-typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
 __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
-__WEED_FN_DEF__ weed_leaf_delete_f weed_leaf_delete;
 
 #ifndef __LIBWEED__
 weed_error_t weed_init(int32_t abi);
@@ -151,7 +150,10 @@ __WEED_FN_DEF__ weed_leaf_num_elements_f weed_leaf_num_elements;
 __WEED_FN_DEF__ weed_leaf_element_size_f weed_leaf_element_size;
 __WEED_FN_DEF__ weed_leaf_seed_type_f weed_leaf_seed_type;
 __WEED_FN_DEF__ weed_leaf_get_flags_f weed_leaf_get_flags;
+
+/* plugins only got these in API 200 */
 __WEED_FN_DEF__ weed_plant_free_f weed_plant_free;
+__WEED_FN_DEF__ weed_leaf_delete_f weed_leaf_delete;
 
 #ifndef __LIBWEED__
 __WEED_FN_DEF__ weed_malloc_f weed_malloc;
@@ -169,10 +171,9 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_PLANT_UNKNOWN 0
 
 /* Weed errors */
-#define WEED_NO_ERROR 0
+#define WEED_SUCCESS 0
 
-/* added in API 200 */
-#define WEED_SUCCESS WEED_NO_ERROR
+#define WEED_NO_ERROR WEED_SUCCESS
 
 #define WEED_ERROR_MEMORY_ALLOCATION 1
 #define WEED_ERROR_NOSUCH_LEAF 2
@@ -183,6 +184,8 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_ERROR_BADVERSION 8
 
 /* Seed types */
+#define WEED_SEED_INVALID 0 // the "seed_type" of a non-existent leaf
+
 /* Fundamental seeds */
 #define WEED_SEED_INT     1 // int32_t / uint_32t
 #define WEED_SEED_DOUBLE  2 // 64 bit signed double

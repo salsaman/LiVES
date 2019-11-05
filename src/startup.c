@@ -995,3 +995,4 @@ void do_startup_interface_query(void) {
 void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   do_startup_tests(TRUE);
 }
+

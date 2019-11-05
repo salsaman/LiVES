@@ -44,6 +44,7 @@
 
 #define NEED_ENDIAN_TEST
 
+#define _MAIN_C_
 #include "main.h"
 #include "interface.h"
 #include "support.h"
@@ -3083,7 +3084,7 @@ static boolean lives_startup(livespointer data) {
   // begin load measuring
   prefs->loadchecktime = get_double_prefd(PREF_LOADCHECK_TIME, 10.);
   /* if (prefs->loadchecktime > 0.) { */
-  /*   mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
+  /*   mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL); */
   /* } */
 
   if (prefs->crash_recovery && !no_recover) got_files = check_for_recovery_files(auto_recover);
@@ -3202,6 +3203,7 @@ void set_signal_handlers(SignalHandlerPointer sigfunc) {
 
 
 int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
+  weed_error_t werr;
   ssize_t mynsize;
   char cdir[PATH_MAX];
   boolean toolong = FALSE;
@@ -3283,7 +3285,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifndef IS_LIBLIVES
   // start up the Weed system
-  weed_init(WEED_API_VERSION);
+  werr = weed_init(WEED_API_VERSION);
+  if (werr != WEED_SUCCESS) {
+    LIVES_FATAL("Failed to init Weed");
+    exit(1);
+  }
+#endif
 
   // backup the core functions so we can override them
   _weed_plant_new = weed_plant_new;
@@ -3297,6 +3304,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_seed_type = weed_leaf_seed_type;
   _weed_leaf_get_flags = weed_leaf_get_flags;
   _weed_leaf_set_flags = weed_leaf_set_flags;
+
+#ifdef WEED_STARTUP_TEST
+  run_weed_startup_tests();
 #endif
 
   // allow us to set immutable values (plugins can't)
@@ -3327,7 +3337,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->yuvin[0] = '\0';
 #endif
 
-  mainw = (mainwindow *)(calloc(1, sizeof(mainwindow)));
+  mainw = (mainwindow *)(calloc(sizeof(mainwindow), 1));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->go_away = TRUE;
@@ -5466,29 +5476,6 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
   }
 
   return layer;
-}
-
-
-static void create_blank_layer(weed_plant_t *layer, const char *image_ext, int width, int height, int target_palette) {
-  // TODO - see if this is useful elsewhere
-  int error;
-  if ((width == 0 || height == 0) && weed_plant_has_leaf(layer, WEED_LEAF_WIDTH) && weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) {
-    width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
-    height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
-  }
-  if (width == 0) width = DEF_FRAME_HSIZE_UNSCALED;
-  if (height == 0) height = DEF_FRAME_VSIZE_UNSCALED;
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
-    if (target_palette != WEED_PALETTE_END) weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, target_palette);
-    else {
-      if (image_ext == NULL || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
-        weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
-      else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
-    }
-  }
-  create_empty_pixel_data(layer, TRUE, TRUE);
 }
 
 

@@ -89,7 +89,6 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
   static weed_plant_t *filter_class;
-  int api_used = weed_get_api_version(plugin_info);
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
   filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, NULL,
@@ -100,7 +99,6 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   weed_set_int_value(plugin_info, "version", package_version);
-  fprintf(stderr, "NEG pi is %p\n", plugin_info);
 }
 WEED_SETUP_END;
 

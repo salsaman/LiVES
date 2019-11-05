@@ -153,7 +153,7 @@ void init_audio_frame_buffers(short aplayer) {
 
   for (i = 0; i < 2; i++) {
     lives_audio_buf_t *abuf;
-    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
+    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_calloc(sizeof(lives_audio_buf_t), 1);
 
     abuf->samples_filled = 0;
     abuf->swap_endian = FALSE;
@@ -2627,7 +2627,7 @@ void wake_audio_thread(void) {
 #endif
 
 lives_audio_buf_t *audio_cache_init(void) {
-  cache_buffer = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
+  cache_buffer = (lives_audio_buf_t *)lives_calloc(sizeof(lives_audio_buf_t), 1);
   cache_buffer->is_ready = FALSE;
   cache_buffer->in_achans = 0;
 

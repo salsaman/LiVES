@@ -3598,6 +3598,7 @@ boolean check_dir_access(const char *dir) {
     if (!exists) {
       lives_rmdir(dir, FALSE);
     }
+    lives_free(testfile);
     return FALSE;
   }
   close(fp);
@@ -3607,6 +3608,7 @@ boolean check_dir_access(const char *dir) {
     if (!exists) {
       lives_rmdir(dir, FALSE);
     }
+    lives_free(testfile);
     return FALSE;
   }
   if (lives_read(fp, test, 4, TRUE) != 4) {
@@ -3615,6 +3617,7 @@ boolean check_dir_access(const char *dir) {
     if (!exists) {
       lives_rmdir(dir, FALSE);
     }
+    lives_free(testfile);
     return FALSE;
   }
   close(fp);
@@ -3622,6 +3625,7 @@ boolean check_dir_access(const char *dir) {
   if (!exists) {
     lives_rmdir(dir, FALSE);
   }
+  lives_free(testfile);
   return TRUE;
   //lives_touch(testfile);
   //if ((is_OK = lives_file_test(testfile, LIVES_FILE_TEST_EXISTS))) {

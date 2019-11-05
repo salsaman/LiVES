@@ -382,6 +382,7 @@ void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
 float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
+uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
 int get_approx_ln(uint32_t val) GNU_CONST;
 
@@ -1068,6 +1069,7 @@ void workdir_warning(void);
 void do_audio_import_error(void);
 void do_mt_backup_space_error(lives_mt *, int memreq_mb);
 
+boolean do_save_clipset_warn(void);
 boolean do_clipboard_fps_warning(void);
 void perf_mem_warning(void);
 void do_dvgrab_error(void);
@@ -1594,6 +1596,12 @@ void break_me(void);
 #define lives_calloc _lives_calloc
 #endif
 
+#endif
+
+char *autotmp;
+
+#ifdef _MAIN_C_
+char *autotmp = NULL;
 #endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H

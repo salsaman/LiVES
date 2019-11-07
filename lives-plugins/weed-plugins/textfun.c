@@ -286,7 +286,7 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
     dst += orow16;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

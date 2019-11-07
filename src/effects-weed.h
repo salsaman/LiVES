@@ -82,6 +82,8 @@ typedef enum {
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
 
+#define WEED_LEAF_FREED_PLANTS "host_freed_plants" // list of freed pointers to avoid freeing dupes during unload
+
 #define WEED_LEAF_HOST_SCRAP_FILE_OFFSET "scrap_file_offset" // special value for scrap_file
 
 #define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"

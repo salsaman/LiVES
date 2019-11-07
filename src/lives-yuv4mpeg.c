@@ -86,7 +86,7 @@ static void *y4frame_thread(void *arg) {
     }
 
     do {
-      memmove(buff, buff + 1, 4);
+      lives_memmove(buff, buff + 1, 4);
       fill_read(yuv4mpeg->fd, buff + 4, 1);
     } while (strncmp(buff, "FRAME", 5));
   }

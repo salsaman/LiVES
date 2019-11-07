@@ -104,7 +104,7 @@ int nnprog_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -208,7 +208,7 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(out_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -221,7 +221,7 @@ int nnprog_deinit(weed_plant_t *inst) {
     if (sdata->vals != NULL) weed_free(sdata->vals);
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

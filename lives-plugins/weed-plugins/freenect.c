@@ -199,7 +199,7 @@ static int lives_freenect_init(weed_plant_t *inst) {
   sd->die = 0;
   pthread_create(&sd->usb_thread, NULL, idle_loop, sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -227,7 +227,7 @@ static int lives_freenect_deinit(weed_plant_t *inst) {
   weed_free(sd->rgb_front);
   weed_free(sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -318,7 +318,7 @@ static int lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp)
   weed_free(ccol);
   weed_free(in_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

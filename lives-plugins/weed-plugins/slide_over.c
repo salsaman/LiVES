@@ -65,7 +65,7 @@ int sover_init(weed_plant_t *inst) {
   else dirpref = 4; // bottom to top
 
   weed_set_int_value(inst, "plugin_direction", dirpref);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -169,7 +169,7 @@ int sover_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   weed_free(in_params);
   weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

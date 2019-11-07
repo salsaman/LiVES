@@ -196,7 +196,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
       return;
     }
 #if HAVE_PA_STREAM_BEGIN_WRITE
-    memset(buff, 0, xbytes);
+    lives_memset(buff, 0, xbytes);
 #endif
     if (pdriver->astream_fd != -1) audio_stream(buff, xbytes, pdriver->astream_fd); // old streaming API
 
@@ -476,7 +476,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->aPlayPtr->data = lives_realloc(pulsed->aPlayPtr->data, in_bytes);
             if (update_sbuffer) pulsed->sound_buffer = pulsed->aPlayPtr->data;
             if (pulsed->aPlayPtr->data != NULL) {
-              memset(pulsed->aPlayPtr->data, 0, in_bytes);
+              lives_memset(pulsed->aPlayPtr->data, 0, in_bytes);
               pulsed->aPlayPtr->max_size = in_bytes;
             } else {
               pulsed->aPlayPtr->max_size = 0;
@@ -701,7 +701,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               //g_print("realloc 2\n");
               if (update_sbuffer) pulsed->sound_buffer = pulsed->aPlayPtr->data;
               if (pulsed->aPlayPtr->data != NULL) {
-                memset(pulsed->aPlayPtr->data, 0, in_bytes);
+                lives_memset(pulsed->aPlayPtr->data, 0, in_bytes);
                 pulsed->aPlayPtr->max_size = nbytes;
               } else {
                 pulsed->aPlayPtr->max_size = 0;

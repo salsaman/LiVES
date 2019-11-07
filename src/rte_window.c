@@ -821,7 +821,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           break;
         }
 
-        memset(hashname + hlen, 0, 1);
+        lives_memset(hashname + hlen, 0, 1);
 
         if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
@@ -914,7 +914,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               break;
             }
 
-            memset(hashname + hlen, 0, 1);
+            lives_memset(hashname + hlen, 0, 1);
 
             if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
@@ -1016,7 +1016,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           break;
         }
 
-        memset(hashname + hlen, 0, 1);
+        lives_memset(hashname + hlen, 0, 1);
 
         if (omode < 0 || omode >= maxmodes) is_valid = FALSE;
 
@@ -1104,7 +1104,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               break;
             }
 
-            memset(hashname + hlen, 0, 1);
+            lives_memset(hashname + hlen, 0, 1);
 
             if (imode < 0 || (ikey >= 0 && imode >= maxmodes)) is_valid2 = FALSE;
 
@@ -1413,7 +1413,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
         break;
       }
 
-      memset(hashname + hlen, 0, 1);
+      lives_memset(hashname + hlen, 0, 1);
 
       array = lives_strsplit(hashname, "|", -1);
       lives_free(hashname);

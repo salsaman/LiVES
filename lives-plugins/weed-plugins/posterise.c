@@ -73,7 +73,7 @@ int posterise_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
     dst += orowstride;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

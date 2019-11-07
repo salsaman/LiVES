@@ -296,7 +296,7 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 
 LIVES_GLOBAL_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
   // send silence to the jack player
-  memset(dst, 0, nsamples * sizeof(float));
+  lives_memset(dst, 0, nsamples * sizeof(float));
 }
 
 
@@ -546,7 +546,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 
   while (nsamples--) { // valgrind
     if (rev_endian) {
-      memcpy(&srcx, src, 2);
+      lives_memcpy(&srcx, src, 2);
       srcxs = ((srcx[1] & 0xFF)  << 8) + (srcx[0] & 0xFF);
       srcp = &srcxs;
     } else srcp = src;
@@ -955,15 +955,15 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
     if (!aunsigned) zero_buff = (uint8_t *)lives_calloc(SILENCE_BLOCK_SIZE, 1);
     else {
       zero_buff = (uint8_t *)lives_malloc(SILENCE_BLOCK_SIZE);
-      if (asamps == 1) memset(zero_buff, 0x80, SILENCE_BLOCK_SIZE);
+      if (asamps == 1) lives_memset(zero_buff, 0x80, SILENCE_BLOCK_SIZE);
       else {
         for (i = 0; i < SILENCE_BLOCK_SIZE; i += 2) {
           if (big_endian) {
-            memset(zero_buff + i, 0x80, 1);
-            memset(zero_buff + i + 1, 0x00, 1);
+            lives_memset(zero_buff + i, 0x80, 1);
+            lives_memset(zero_buff + i + 1, 0x00, 1);
           } else {
-            memset(zero_buff + i, 0x00, 1);
-            memset(zero_buff + i + 1, 0x80, 1);
+            lives_memset(zero_buff + i, 0x00, 1);
+            lives_memset(zero_buff + i + 1, 0x80, 1);
           }
         }
       }
@@ -1273,8 +1273,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
             if (!out_unsigned) obuf->buffer16[0][j * out_achans + i] = 0x00;
             else {
               if (out_bendian) {
-                memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2], 0x80, 1);
-                memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2 + 1], 0x00, 1);
+                lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2], 0x80, 1);
+                lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2 + 1], 0x00, 1);
               } else obuf->buffer16[0][j * out_achans + i] = 0x0080;
             }
           }
@@ -2721,7 +2721,6 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
   weed_plant_t *channel;
   weed_plant_t *ctmpl;
 
-  weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
 
   if (mainw->agen_needs_reinit) {
@@ -2773,7 +2772,7 @@ getaud1:
 
     if (mainw->agen_needs_reinit) {
       // allow main thread to complete the reinit so we do not delay; just return silence
-      memset(fbuffer, 0, nsamps * nchans * sizeof(float));
+      lives_memset(fbuffer, 0, nsamps * nchans * sizeof(float));
       pthread_mutex_unlock(&mainw->interp_mutex);
       weed_instance_unref(inst);
       return FALSE;
@@ -2790,7 +2789,7 @@ getaud1:
 
       if (mainw->agen_needs_reinit) {
         // allow main thread to complete the reinit so we do not delay; just return silence
-        memset(fbuffer, 0, nsamps * nchans * sizeof(float));
+        lives_memset(fbuffer, 0, nsamps * nchans * sizeof(float));
         pthread_mutex_unlock(&mainw->interp_mutex);
         weed_instance_unref(inst);
         return FALSE;
@@ -2798,13 +2797,13 @@ getaud1:
     }
   }
 
-  weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-  process_func = process_func_ptr_ptr[0];
-
-  if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
-    pthread_mutex_unlock(&mainw->interp_mutex);
-    weed_instance_unref(inst);
-    return FALSE;
+  process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
+  if (process_func != NULL) {
+    if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
+      pthread_mutex_unlock(&mainw->interp_mutex);
+      weed_instance_unref(inst);
+      return FALSE;
+    }
   }
   pthread_mutex_unlock(&mainw->interp_mutex);
 
@@ -2986,8 +2985,9 @@ boolean apply_rte_audio(int nframes) {
         lives_free(in_buff);
         return FALSE;
       }
-      memset(fltbuf[i], 0, nframes * sizeof(float));
-      if (nframes > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nframes, cfile->achans, (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
+      lives_memset(fltbuf[i], 0, nframes * sizeof(float));
+      if (nframes > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nframes, cfile->achans, \
+                                               (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
                                                1.0);
     }
 
@@ -3463,20 +3463,5 @@ static void nullaudio_set_rec_avals(boolean is_forward) {
     nullaudio_get_rec_avals();
   }
 }
-
-
-
-/// audio buffer thread - should do various things:
-// 1) for jack or pulse, fill pushe cache buffers
-//
-
-
-
-
-
-
-
-
-
 
 #endif

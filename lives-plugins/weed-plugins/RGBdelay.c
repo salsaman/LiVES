@@ -81,7 +81,7 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
   if (newsize == 0) {
     weed_free(sdata->cache);
     sdata->cache = NULL;
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   sdata->cache = (unsigned char **)weed_realloc(sdata->cache, newsize * sizeof(unsigned char *));
@@ -102,7 +102,7 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
     }
   }
   sdata->tcache = newsize;
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -141,7 +141,7 @@ static int RGBd_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 #define RED_ON(i) (i * 4 + 1)
@@ -196,7 +196,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (maxneeded != sdata->tcache) {
     int ret = realloc_cache(sdata, maxneeded, width, height); // sets sdata->tcache
-    if (ret != WEED_NO_ERROR) {
+    if (ret != WEED_SUCCESS) {
       weed_free(in_params);
       return ret;
     }
@@ -305,7 +305,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       b2 = (weed_get_boolean_value(in_params[GREEN_ON(j)], "value", &error) == WEED_TRUE);
       b3 = (weed_get_boolean_value(in_params[BLUE_ON(j)], "value", &error) == WEED_TRUE);
 
-      if (!b1 && !b2 && !b3 && j > 0) continue;
+      if (!b1 && !b2 && !b3) continue;
 
       if ((!is_bgr && sdata->is_bgr[j]) || (is_bgr && !sdata->is_bgr[j]))
         cross = -1;
@@ -367,7 +367,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
   weed_free(in_params);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -386,7 +386,7 @@ static int RGBd_deinit(weed_plant_t *inst) {
 
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

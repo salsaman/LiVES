@@ -5,20 +5,21 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #else
 #include "../../../libweed/weed-plugin.h"
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../../libweed/weed.h"
 #include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
+#include "../../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -185,21 +186,17 @@ int resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1, WEED_FILTER_IS_CONVERTER, NULL, &resize_process, NULL,
-                                 in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1, WEED_FILTER_IS_CONVERTER, NULL, &resize_process, NULL,
+                               in_chantmpls, out_chantmpls, NULL, NULL);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-  }
-  return plugin_info;
 }
-
+WEED_SETUP_END;

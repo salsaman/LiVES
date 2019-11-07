@@ -72,7 +72,7 @@ int mirrorx_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
     dst += orowstride;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -127,13 +127,13 @@ int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     weed_memcpy(dst, src, width);
     src -= irowstride;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 int mirrorxy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int ret = mirrory_process(inst, timestamp);
-  if (ret != WEED_NO_ERROR) return ret;
+  if (ret != WEED_SUCCESS) return ret;
   weed_set_boolean_value(inst, "plugin_combined", WEED_TRUE);
   ret = mirrorx_process(inst, timestamp);
   return ret;

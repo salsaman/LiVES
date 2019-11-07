@@ -59,7 +59,7 @@ char *filename_from_fd(char *val, int fd) {
     if ((slen = lives_readlink(fdpath, rfdpath, PATH_MAX)) == -1) return val;
     lives_free(fdpath);
 
-    memset(rfdpath + slen, 0, 1);
+    lives_memset(rfdpath + slen, 0, 1);
 
     if (stat(rfdpath, &stb1)) return val;
 
@@ -235,7 +235,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
       fclose(fp);
     }
 
-    memset(buff + bytes_read, 0, 1);
+    lives_memset(buff + bytes_read, 0, 1);
 
     if (bytes_read == 0 && err != 0) {
       char *msg = NULL;
@@ -850,7 +850,7 @@ LIVES_GLOBAL_INLINE int lives_killpg(lives_pgid_t pgrp, int sig) {
 
 
 LIVES_GLOBAL_INLINE void clear_mainw_msg(void) {
-  memset(mainw->msg, 0, MAINW_MSG_SIZE);
+  lives_memset(mainw->msg, 0, MAINW_MSG_SIZE);
 }
 
 
@@ -2360,7 +2360,7 @@ void get_filename(char *filename, boolean strip_dir) {
   char *ptr;
   if (strip_dir) get_basename(filename);
   ptr = strrchr(filename, '.');
-  if (ptr != NULL) memset((void *)ptr, 0, 1);
+  if (ptr != NULL) lives_memset((void *)ptr, 0, 1);
 }
 
 
@@ -2477,7 +2477,7 @@ void get_location(const char *exe, char *val, int maxlen) {
     lives_snprintf(val, maxlen, "%s", loc);
     lives_free(loc);
   } else {
-    memset(val, 0, 1);
+    lives_memset(val, 0, 1);
   }
 }
 
@@ -2679,7 +2679,7 @@ void remove_layout_files(LiVESList *map) {
         // and we dont want to try reloading this next time
         prefs->ar_layout = FALSE;
         set_string_pref(PREF_AR_LAYOUT, "");
-        memset(prefs->ar_layout_name, 0, 1);
+        lives_memset(prefs->ar_layout_name, 0, 1);
       }
       lives_free(fname);
     }
@@ -3221,7 +3221,7 @@ boolean after_foreign_play(void) {
 
   // assume for now we only get one clip passed back
   if ((capture_fd = open(capfile, O_RDONLY)) > -1) {
-    memset(capbuf, 0, 256);
+    lives_memset(capbuf, 0, 256);
     if ((length = read(capture_fd, capbuf, 256))) {
       if (get_token_count(capbuf, '|') > 2) {
         array = lives_strsplit(capbuf, "|", 3);
@@ -3698,7 +3698,7 @@ boolean create_event_space(int length) {
     // memory overflow
     return FALSE;
   }
-  memset(cfile->resample_events, 0, length * sizeof(event));
+  lives_memset(cfile->resample_events, 0, length * sizeof(event));
   return TRUE;
 }
 
@@ -3987,7 +3987,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
   boolean gotit = FALSE;
   char buff[maxlen];
 
-  memset(buff, 0, 1);
+  lives_memset(buff, 0, 1);
 
   while (clist != NULL) {
     if (gotit) {
@@ -4635,7 +4635,7 @@ char *insert_newlines(const char *text, int maxwidth) {
     else {
       runlen++;
       if (needsnl) {
-        memcpy(retstr + req_size, newline, nlen);
+        lives_memcpy(retstr + req_size, newline, nlen);
         req_size += nlen;
       }
     }
@@ -4647,12 +4647,12 @@ char *insert_newlines(const char *text, int maxwidth) {
         runlen = 0;
       }
     } else needsnl = FALSE;
-    memcpy(retstr + req_size, &utfsym, xtoffs);
+    lives_memcpy(retstr + req_size, &utfsym, xtoffs);
     req_size += xtoffs;
 
   }
 
-  memset(retstr + req_size, 0, 1);
+  lives_memset(retstr + req_size, 0, 1);
 
   return retstr;
 }
@@ -4663,7 +4663,7 @@ int hextodec(char *string) {
   int tot = 0;
   char test[2];
 
-  memset(test + 1, 0, 1);
+  lives_memset(test + 1, 0, 1);
 
   for (i = 0; i < strlen(string); i++) {
     tot *= 16;

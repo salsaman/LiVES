@@ -88,7 +88,7 @@ static int plasma_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -98,7 +98,7 @@ static int plasma_deinit(weed_plant_t *inst) {
 
   weed_free(sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -158,7 +158,7 @@ static int plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   sd->pos1 += 9;
   sd->pos3 += 8;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

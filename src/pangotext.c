@@ -1131,7 +1131,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
         int h, m, s, ms;
         double dtim;
 
-        if (!strncmp(text + strlen(text) - 1, "\n", 1)) memset(text + strlen(text) - 1, 0, 1);
+        if (!strncmp(text + strlen(text) - 1, "\n", 1)) lives_memset(text + strlen(text) - 1, 0, 1);
 
         br_text = subst(text, "\n", "[br]");
         if (br_text) {

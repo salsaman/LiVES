@@ -3038,7 +3038,7 @@ char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFi
 
   lives_window_set_modal(LIVES_WINDOW(chooser), TRUE);
 
-  memset(last_good_folder, 0, 1);
+  lives_memset(last_good_folder, 0, 1);
 
   // set this so we know when button is pressed, even if waiting for preview to finish
   mainw->fc_buttonresponse = LIVES_RESPONSE_NONE;

@@ -310,7 +310,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         msg = lives_strdup("LiVES vpp defaults file version 2\n");
         len = lives_read(fd, buf, strlen(msg), FALSE);
         if (len < 0) len = 0;
-        memset(buf + len, 0, 1);
+        lives_memset(buf + len, 0, 1);
 
         if (mainw->read_failed) break;
 
@@ -327,7 +327,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         lives_read_le(fd, &len, 4, FALSE);
         if (mainw->read_failed) break;
         lives_read(fd, buf, len, FALSE);
-        memset(buf + len, 0, 1);
+        lives_memset(buf + len, 0, 1);
 
         if (mainw->read_failed) break;
 
@@ -345,7 +345,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         if (mainw->read_failed) break;
 
-        memset(buf + len, 0, 1);
+        lives_memset(buf + len, 0, 1);
 
         if (strcmp(buf, version)) {
           msg = lives_strdup_printf(
@@ -391,7 +391,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           mainw->vpp->extra_argv[i] = (char *)lives_malloc(len + 1);
           lives_read(fd, mainw->vpp->extra_argv[i], len, FALSE);
           if (mainw->read_failed) break;
-          memset((mainw->vpp->extra_argv[i]) + len, 0, 1);
+          lives_memset((mainw->vpp->extra_argv[i]) + len, 0, 1);
         }
 
         mainw->vpp->extra_argv[i] = NULL;
@@ -485,7 +485,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
         char *clamping = lives_strdup(array[1] + 1);
         lives_free(cur_pal);
         cur_pal = lives_strdup(array[0]);
-        memset(clamping + strlen(clamping) - 1, 0, 1);
+        lives_memset(clamping + strlen(clamping) - 1, 0, 1);
         do {
           tmp = weed_yuv_clamping_get_name(i);
           if (tmp != NULL && !strcmp(clamping, tmp)) {
@@ -639,7 +639,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
         char *clamping = lives_strdup(array[1] + 1);
         lives_free(cur_pal);
         cur_pal = lives_strdup(array[0]);
-        memset(clamping + strlen(clamping) - 1, 0, 1);
+        lives_memset(clamping + strlen(clamping) - 1, 0, 1);
         do {
           tmp = weed_yuv_clamping_get_name(i);
           if (tmp != NULL && !strcmp(clamping, tmp)) {
@@ -1549,12 +1549,12 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
           if (numtok > 5) {
             lives_snprintf(prefs->encoder.ptext, 512, "%s", array[5]);
           } else {
-            memset(prefs->encoder.ptext, 0, 1);
+            lives_memset(prefs->encoder.ptext, 0, 1);
           }
           if (numtok > 4) {
             lives_snprintf(prefs->encoder.of_def_ext, 16, "%s", array[4]);
           } else {
-            memset(prefs->encoder.of_def_ext, 0, 1);
+            lives_memset(prefs->encoder.of_def_ext, 0, 1);
           }
           if (numtok > 3) {
             lives_snprintf(prefs->encoder.of_restrict, 128, "%s", array[3]);
@@ -2211,7 +2211,7 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
     return NULL;
   }
 
-  memset(decplugname, 0, 1);
+  lives_memset(decplugname, 0, 1);
 
   // check sfile->file_name against each decoder plugin,
   // until we get non-NULL cdata
@@ -3386,22 +3386,15 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
         lives_free(rpar[i].label);
         rpar[i].label = string;
       }
-      if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC)) rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
+      if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC))
+        rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
       if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN))
         rpar[i].hidden |= ((weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE) * HIDDEN_GUI);
       if (weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) {
-        weed_display_f *display_func_ptr_ptr;
-        weed_display_f display_func;
-        weed_leaf_get(gui, WEED_LEAF_DISPLAY_FUNC, 0, (void *)&display_func_ptr_ptr);
-        display_func = *display_func_ptr_ptr;
-        rpar[i].display_func = (fn_ptr)display_func;
+        rpar[i].display_func = weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_FUNC, NULL);
       }
       if (weed_plant_has_leaf(gui, WEED_LEAF_INTERPOLATE_FUNC)) {
-        weed_interpolate_f *interp_func_ptr_ptr;
-        weed_interpolate_f interp_func;
-        weed_leaf_get(gui, WEED_LEAF_INTERPOLATE_FUNC, 0, (void *)&interp_func_ptr_ptr);
-        interp_func = *interp_func_ptr_ptr;
-        rpar[i].interp_func = (fn_ptr)interp_func;
+        rpar[i].interp_func = weed_get_funcptr_value(gui, WEED_LEAF_INTERPOLATE_FUNC, NULL);
       }
     }
 

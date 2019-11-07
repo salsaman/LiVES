@@ -231,7 +231,7 @@ int ripple_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -248,7 +248,7 @@ int ripple_deinit(weed_plant_t *inst) {
     weed_free(sdata);
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -508,7 +508,7 @@ int ripple_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     dest += orowstridex;
     vp += 2;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

@@ -312,7 +312,7 @@ static int livetext_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(fg);
   weed_free(bg);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

@@ -317,7 +317,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
         char *nval;
         char *cval = weed_get_string_value(mainw->rte_textparm, WEED_LEAF_VALUE, &error);
         if (unicode == 8 && strlen(cval) > 0) {
-          memset(cval + strlen(cval) - 1, 0, 1); // delete 1 char
+          cval[strlen(cval) - 1] =  0; // delete 1 char
           nval = lives_strdup(cval);
         } else nval = lives_strdup_printf("%s%c", cval, (unsigned char)unicode); // append 1 char
         lives_free(cval);

@@ -1333,7 +1333,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
           if (strlen(label_text) > 1) {
             if (!strcmp(label_text + strlen(label_text) - 1, "\"")) {
-              memset(label_text + strlen(label_text) - 1, 0, 1);
+              lives_memset(label_text + strlen(label_text) - 1, 0, 1);
             }
 
             if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -2990,7 +2990,7 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
     if (strlen(word)) {
       if ((word[strlen(word) - 1] == '\"') && (strlen(word) == 1 || word[strlen(word) - 2] != '\\')) {
         lastword = TRUE;
-        memset(word + strlen(word) - 1, 0, 1);
+        lives_memset(word + strlen(word) - 1, 0, 1);
       }
     }
 
@@ -3010,7 +3010,7 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
   set_int_param(offs, i - start + 1);
 
   // remove trailing space
-  memset(ret + strlen(ret) - 1, 0, 1);
+  lives_memset(ret + strlen(ret) - 1, 0, 1);
   return ret;
 }
 

@@ -818,7 +818,7 @@ static boolean call_wipe_layout(livespointer data) {
     if (force) {
       wipe_layout(mainw->multitrack);
     } else {
-      memset(mainw->recent_file, 0, 1);
+      lives_memset(mainw->recent_file, 0, 1);
       check_for_layout_del(mainw->multitrack, FALSE);
       if (strlen(mainw->recent_file)) {
         lives_free(lname);

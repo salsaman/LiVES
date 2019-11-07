@@ -131,7 +131,7 @@ int alpham_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(vals);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

@@ -66,7 +66,7 @@ int dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params);
   weed_free(out_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

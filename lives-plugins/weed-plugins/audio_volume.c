@@ -54,7 +54,7 @@ int avol_init(weed_plant_t *inst) {
     weed_set_boolean_value(gui2, "hidden", WEED_FALSE);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -178,7 +178,7 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(pan);
   weed_free(in_channels);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

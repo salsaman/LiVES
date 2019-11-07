@@ -74,7 +74,7 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   register int x, y;
 
-  if (height < 2) return WEED_NO_ERROR;
+  if (height < 2) return WEED_SUCCESS;
 
   width *= psize;
 
@@ -214,7 +214,7 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     src += irowstride;
     odd = !odd;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

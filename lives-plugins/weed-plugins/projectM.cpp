@@ -394,7 +394,7 @@ static int projectM_deinit(weed_plant_t *inst) {
     sd->rendering = false;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -485,7 +485,7 @@ static int projectM_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -522,7 +522,7 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     sd->update_size = true;
   }
 
-  if (sd->update_size || sd->fbuffer == NULL) return WEED_NO_ERROR;
+  if (sd->update_size || sd->fbuffer == NULL) return WEED_SUCCESS;
 
   // ex. nprs = 10, we have 10 programs 0 - 9 and -1 is random
   // 0 - 10, we just subtract 1
@@ -595,7 +595,7 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   pthread_mutex_unlock(&sd->mutex);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

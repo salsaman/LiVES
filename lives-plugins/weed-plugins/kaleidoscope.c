@@ -336,7 +336,7 @@ static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     sdata->old_tc = timestamp;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -351,7 +351,7 @@ static int kal_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -361,7 +361,7 @@ static int kal_deinit(weed_plant_t *inst) {
 
   weed_free(sd);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

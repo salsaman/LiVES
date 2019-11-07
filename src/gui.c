@@ -655,7 +655,7 @@ void create_LiVES(void) {
   mainw->recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->recent_menu), mainw->recent_submenu);
 
-  memset(buff, 0, 1);
+  lives_memset(buff, 0, 1);
 
   get_utf8_pref(PREF_RECENT1, buff, 32768);
 

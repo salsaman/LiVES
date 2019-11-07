@@ -313,7 +313,7 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_free(src_array);
   weed_free(dst_array);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

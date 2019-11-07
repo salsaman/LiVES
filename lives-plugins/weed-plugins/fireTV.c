@@ -192,7 +192,7 @@ int fire_init(weed_plant_t *inst) {
   sdata->fastrand_val = 0;
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -208,7 +208,7 @@ int fire_deinit(weed_plant_t *inst) {
     weed_free(sdata);
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -265,7 +265,7 @@ int fire_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

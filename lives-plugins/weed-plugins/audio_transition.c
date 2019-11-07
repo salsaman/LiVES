@@ -34,7 +34,7 @@ static int package_version = 1; // version of this package
 
 int atrans_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // do nothing - it is enough for the host that we have a transition parameter
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

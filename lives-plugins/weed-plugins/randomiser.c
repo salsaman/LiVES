@@ -93,7 +93,7 @@ int randomiser_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 
 }
 
@@ -105,7 +105,7 @@ int randomiser_deinit(weed_plant_t *inst) {
   if (sdata != NULL) {
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -142,7 +142,7 @@ int randomiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params);
   weed_free(out_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

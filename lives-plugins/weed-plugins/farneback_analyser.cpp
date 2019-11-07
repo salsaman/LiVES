@@ -119,7 +119,7 @@ static int farneback_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -132,7 +132,7 @@ static int farneback_deinit(weed_plant_t *inst) {
     weed_free(sdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -216,7 +216,7 @@ static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   if (sdata->inited == WEED_FALSE) {
     sdata->prevgrey = cvgrey;
     sdata->inited = WEED_TRUE;
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   /*
@@ -295,7 +295,7 @@ static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
     dst2 += orow2;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

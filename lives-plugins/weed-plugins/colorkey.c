@@ -97,7 +97,7 @@ static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
     dst += orowstride;
   }
   weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

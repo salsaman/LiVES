@@ -35,22 +35,13 @@ endif
 AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math
 AM_CXXFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math
 
-if ENABLE_VJACK
-vjack_libs = vjack_rcv.la
-vjack_rcv_la_LDFLAGS = -ljack $(AM_LDFLAGS)
-endif
-
-haar_analyser_la_SOURCES = haar_analyser.cpp haar_analyser.h
 
 
 fxpluginslib_LTLIBRARIES = gdk_fast_resize.la \
 	compositor.la \
 	videowall.la \
-	scribbler.la \
-	puretext.la \
-	mask_overlay.la \
-	haar_analyser.la \
-	$(vjack_libs) 
+	scribbler.la
+
 
 
 EXTRA_DIST=data icons

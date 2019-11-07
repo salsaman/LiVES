@@ -4278,7 +4278,7 @@ static void convert_yuvap_to_yuvp_frame(uint8_t **src, int width, int height, ui
 
 static void convert_yuvp_to_yuvap_frame(uint8_t **src, int width, int height, uint8_t **dest) {
   convert_yuvap_to_yuvp_frame(src, width, height, dest);
-  memset(dest[3], 255, width * height);
+  lives_memset(dest[3], 255, width * height);
 }
 
 
@@ -4395,7 +4395,7 @@ static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int hei
     uyvy++;
   }
 
-  if (add_alpha) memset(dest[3], 255, size * 2);
+  if (add_alpha) lives_memset(dest[3], 255, size * 2);
 }
 
 
@@ -4419,7 +4419,7 @@ static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int hei
     yuyv++;
   }
 
-  if (add_alpha) memset(dest[3], 255, size * 2);
+  if (add_alpha) lives_memset(dest[3], 255, size * 2);
 }
 
 
@@ -6735,13 +6735,13 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
       if (alpha_first) {
         for (i = 0; i < width4; i += 4) {
           tmp = dest[i];
-          memmove(&dest[i], &dest[i + 1], 3);
+          lives_memmove(&dest[i], &dest[i + 1], 3);
           dest[i + 3] = tmp;
         }
       } else {
         for (i = 0; i < width4; i += 4) {
           tmp = dest[i + 3];
-          memmove(&dest[i + 1], &dest[i], 3);
+          lives_memmove(&dest[i + 1], &dest[i], 3);
           dest[i] = tmp;
         }
       }
@@ -6975,7 +6975,7 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, uint8_t **
     d_v += width2;
   }
 
-  if (add_alpha) memset(dest + ((width * height) << 3), 255, ((width * height) << 3));
+  if (add_alpha) lives_memset(dest + ((width * height) << 3), 255, ((width * height) << 3));
 }
 
 
@@ -7649,7 +7649,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       pd_array[2] = memblock + framesize * 2;
     }
     if (black_fill) {
-      if (yuv_black[0] != 0) weed_memset(pd_array[0], yuv_black[0], framesize);
+      if (yuv_black[0] != 0) lives_memset(pd_array[0], yuv_black[0], framesize);
       if (may_contig) {
         lives_memset(pd_array[1], yuv_black[1], framesize * 2);
       } else {
@@ -7717,7 +7717,7 @@ void create_empty_pixel_data(weed_plant_t *layer, boolean black_fill, boolean ma
       if (may_contig) {
         lives_memset(pd_array[1], yuv_black[1], framesize * 2);
       } else {
-        memset(pd_array[1], yuv_black[1], framesize);
+        lives_memset(pd_array[1], yuv_black[1], framesize);
         lives_memset(pd_array[2], yuv_black[2], framesize);
       }
       lives_memset(pd_array[3], 255, framesize);
@@ -9687,7 +9687,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 4, (void **)gudest_array);
       convert_double_chroma(gusrc_array, width >> 1, height >> 1, gudest_array, iclamped);
-      memset(gudest_array[3], 255, width * height);
+      lives_memset(gudest_array[3], 255, width * height);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9917,7 +9917,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
     pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_rowstride_value(width, 3);
-    memset(pixels, 0, size);
+    lives_memset(pixels, 0, size);
     break;
   case WEED_PALETTE_RGBA32:
   case WEED_PALETTE_BGRA32:
@@ -9925,14 +9925,14 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette) {
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
     pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_rowstride_value(width, 4);
-    memset(pixels, 0, size);
+    lives_memset(pixels, 0, size);
     break;
   case WEED_PALETTE_ARGB32:
     pixbuf = lives_pixbuf_new(TRUE, width, height);
     rowstride = lives_pixbuf_get_rowstride(pixbuf);
     pixels = lives_pixbuf_get_pixels(pixbuf);
     size = rowstride * (height - 1) + get_last_rowstride_value(width, 4);
-    memset(pixels, 0, size);
+    lives_memset(pixels, 0, size);
     break;
   default:
     return NULL;
@@ -10199,7 +10199,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
         done = TRUE;
       }
       lives_memcpy(pixels, pixel_data, rowstride);
-      if (rowstride < orowstride) memset(pixels + rowstride, 0, orowstride - rowstride);
+      if (rowstride < orowstride) lives_memset(pixels + rowstride, 0, orowstride - rowstride);
       pixel_data += irowstride;
     }
     weed_layer_pixel_data_free(layer);
@@ -11157,7 +11157,7 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
       if (pixel_data == NULL) return NULL;
       for (i = 0; i < height; i++) {
         lives_memcpy(dst, src, widthx);
-        memset(dst + widthx, 0, widthx - orowstride);
+        lives_memset(dst + widthx, 0, widthx - orowstride);
         dst += orowstride;
         src += irowstride;
       }

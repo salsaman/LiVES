@@ -5,20 +5,20 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-effects.h>
-//#include <weed/weed-palettes.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../../libweed/weed.h"
 #include "../../../libweed/weed-effects.h"
-//#include "../../../libweed/weed-palettes.h"
+#include "../../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -393,7 +393,7 @@ static int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-WEED_SETUP_START {
+WEED_SETUP_START(200, 200) {
   const char *modes[] = {"Scanner", "Random", "Spiral", NULL};
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888,
                         WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END
@@ -409,12 +409,6 @@ WEED_SETUP_START {
 
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
-  WEED_SETUP_END;
 }
 
-
-WEED_DESETUP_START {
-
-
-  WEED_DESETUP_END;
-}
+WEED_SETUP_END;

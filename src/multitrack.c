@@ -571,7 +571,7 @@ static void mt_set_cursor_style(lives_mt *mt, lives_cursor_t cstyle, int width, 
               for (j = 0; j < height; j++) {
                 for (k = 0; k < twidth3; k += 3) {
                   lives_memcpy(cpixels, &tpixels[k], 3);
-                  memset(cpixels + 3, 0xFF, 1);
+                  lives_memset(cpixels + 3, 0xFF, 1);
                   cpixels += 4;
                 }
                 tpixels += trow;
@@ -735,7 +735,7 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
       if (lives_read_le_buffered(fd, &vari, 4, TRUE) < 4) break;
       if (vari > 511) vari = 511;
       if (lives_read_buffered(fd, buf, vari, TRUE) < vari) break;
-      memset(buf + vari, 0, 1);
+      lives_memset(buf + vari, 0, 1);
       if (clipn < 0 || clipn > MAX_FILES) continue;
       gotvalid = FALSE;
       while (++offs < MAX_FILES) {
@@ -4938,7 +4938,7 @@ boolean make_backup_space(lives_mt *mt, size_t space_needed) {
     undo = (mt_undo *)(xundo->data);
     space_freed += undo->data_len;
     if ((space_avail + space_freed) >= space_needed) {
-      memmove(mt->undo_mem, mt->undo_mem + space_freed, mt->undo_buffer_used - space_freed);
+      lives_memmove(mt->undo_mem, mt->undo_mem + space_freed, mt->undo_buffer_used - space_freed);
       ulist = lives_list_copy(lives_list_nth(mt->undos, count));
       if (ulist != NULL) ulist->prev = NULL;
       lives_list_free(mt->undos);
@@ -5049,7 +5049,7 @@ void mt_backup(lives_mt *mt, int undo_type, weed_timecode_t tc) {
   save_event_list_inner(NULL, 0, mt->event_list, &memblock);
   remove_markers(mt->event_list);
 
-  memcpy(mt->undo_mem + mt->undo_buffer_used, undo, sizeof(mt_undo));
+  lives_memcpy(mt->undo_mem + mt->undo_buffer_used, undo, sizeof(mt_undo));
   mt->undos = lives_list_append(mt->undos, mt->undo_mem + mt->undo_buffer_used);
   mt->undo_buffer_used += space_needed;
   mt_set_undoable(mt, undo->action, undo->extra, TRUE);
@@ -5727,7 +5727,7 @@ boolean check_for_layout_del(lives_mt *mt, boolean exiting) {
       // wipe
       prefs->ar_layout = FALSE;
       set_string_pref(PREF_AR_LAYOUT, "");
-      memset(prefs->ar_layout_name, 0, 1);
+      lives_memset(prefs->ar_layout_name, 0, 1);
     }
   }
 
@@ -6401,7 +6401,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->moving_fx = NULL;
   mt->fx_order = FX_ORD_NONE;
 
-  memset(mt->layout_name, 0, 1);
+  lives_memset(mt->layout_name, 0, 1);
 
   mt->did_backup = FALSE;
   mt->framedraw = NULL;
@@ -6602,7 +6602,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mt->recent_menu), recent_submenu);
 
-  memset(buff, 0, 1);
+  lives_memset(buff, 0, 1);
   widget_opts.mnemonic_label = FALSE;
 
   get_utf8_pref(PREF_RECENT1, buff, 32768);
@@ -8809,7 +8809,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       set_string_pref(PREF_AR_LAYOUT, prefs->ar_layout_name);
     } else {
       prefs->ar_layout = FALSE;
-      memset(prefs->ar_layout_name, 0, 1);
+      lives_memset(prefs->ar_layout_name, 0, 1);
       mt_init_tracks(mt, TRUE);
       mainw->unordered_blocks = FALSE;
     }
@@ -10672,7 +10672,7 @@ void mt_clear_timeline(lives_mt *mt) {
 
   add_aparam_menuitems(mt);
 
-  memset(mt->layout_name, 0, 1);
+  lives_memset(mt->layout_name, 0, 1);
 
   mt_show_current_frame(mt, FALSE);
 }
@@ -19293,7 +19293,7 @@ LiVESList *load_layout_map(void) {
         if (bytes < len) {
           break;
         }
-        memset(handle + len, 0, 1);
+        lives_memset(handle + len, 0, 1);
         bytes = lives_read_le_buffered(fd, &unique_id, 8, TRUE);
         if (bytes < 8) {
           break;
@@ -19307,7 +19307,7 @@ LiVESList *load_layout_map(void) {
         if (bytes < len) {
           break;
         }
-        memset(name + len, 0, 1);
+        lives_memset(name + len, 0, 1);
         bytes = lives_read_le_buffered(fd, &nm, 4, TRUE);
         if (bytes < 4) {
           break;
@@ -19342,7 +19342,7 @@ LiVESList *load_layout_map(void) {
             err = TRUE;
             break;
           }
-          memset(entry + len, 0, 1);
+          lives_memset(entry + len, 0, 1);
           string = repl_workdir(entry, FALSE); // allow relocation of workdir
           lmap_entry->list = lives_list_append(lmap_entry->list, lives_strdup(string));
           array = lives_strsplit(string, "|", -1);
@@ -19786,7 +19786,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     lives_freep((void **)&layout_map);
     lives_freep((void **)&layout_map_audio);
     mainw->was_set = was_set;
-    if (!was_set) memset(mainw->set_name, 0, 1);
+    if (!was_set) lives_memset(mainw->set_name, 0, 1);
     mainw->cancelled = CANCEL_USER;
 
     if (mt != NULL) {
@@ -19851,7 +19851,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
   if (!ar_layout) {
     prefs->ar_layout = FALSE;
     set_string_pref(PREF_AR_LAYOUT, "");
-    memset(prefs->ar_layout_name, 0, 1);
+    lives_memset(prefs->ar_layout_name, 0, 1);
   } else {
     prefs->ar_layout = TRUE;
     set_string_pref(PREF_AR_LAYOUT, layout_name);
@@ -21539,7 +21539,7 @@ weed_plant_t *load_event_list(lives_mt *mt, char *eload_file) {
     if (!ar_layout) {
       prefs->ar_layout = FALSE;
       set_string_pref(PREF_AR_LAYOUT, "");
-      memset(prefs->ar_layout_name, 0, 1);
+      lives_memset(prefs->ar_layout_name, 0, 1);
     } else {
       if (!mainw->recoverable_layout) {
         prefs->ar_layout = TRUE;
@@ -21603,7 +21603,7 @@ void wipe_layout(lives_mt *mt) {
 
   if (strlen(mt->layout_name) > 0 && !strcmp(mt->layout_name, prefs->ar_layout_name)) {
     set_string_pref(PREF_AR_LAYOUT, "");
-    memset(prefs->ar_layout_name, 0, 1);
+    lives_memset(prefs->ar_layout_name, 0, 1);
     prefs->ar_layout = FALSE;
   }
 

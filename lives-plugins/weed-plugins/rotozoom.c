@@ -26,9 +26,6 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
@@ -103,12 +100,12 @@ int rotozoom_init(weed_plant_t *inst) {
   weed_set_int_value(inst, "plugin_path", 0);
   weed_set_int_value(inst, "plugin_zpath", 0);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 int rotozoom_deinit(weed_plant_t *inst) {
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -167,7 +164,7 @@ int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(in_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

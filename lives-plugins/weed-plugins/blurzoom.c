@@ -333,7 +333,7 @@ static int blurzoom_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -352,7 +352,7 @@ static int blurzoom_deinit(weed_plant_t *inst) {
     weed_free(sdata->snapframe);
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -450,7 +450,7 @@ static int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
       sdata->snapTime = sdata->snapInterval;
     }
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

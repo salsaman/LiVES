@@ -541,7 +541,7 @@ char *midi_mangle(void) {
 
       //g_print("midi pip %d %02X , tg=%d\n",bytes,xbuf[0],target);
 
-      memcpy(midbuf + tot, xbuf, bytes);
+      lives_memcpy(midbuf + tot, xbuf, bytes);
 
       tot += bytes;
     }
@@ -587,7 +587,7 @@ LIVES_INLINE char *cut_string_elems(const char *string, int nelems) {
   for (i = 0; i < slen; i++) {
     if (!strncmp((string + i), " ", 1)) {
       if (--nelems == 0) {
-        memset(retval + i, 0, 1);
+        lives_memset(retval + i, 0, 1);
         return retval;
       }
     }
@@ -1827,7 +1827,7 @@ static int *omclearn_get_values(const char *string, int nfixed) {
         tslen = strlen(tmp);
         for (j = 0; j < tslen; j++) {
           if (!strncmp((tmp + j), " ", 1)) {
-            memset(tmp + j, 0, 1);
+            lives_memset(tmp + j, 0, 1);
             retvals[count++] = atoi(tmp);
             lives_free(tmp);
             break;
@@ -2622,7 +2622,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
       goto load_failed2;
     }
 
-    memset(srch + srchlen, 0, 1);
+    lives_memset(srch + srchlen, 0, 1);
 
     bytes = lives_read_le(fd, &macro, 4, TRUE);
     if (bytes < sizint) {

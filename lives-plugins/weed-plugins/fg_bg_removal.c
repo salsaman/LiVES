@@ -69,7 +69,7 @@ int common_init(weed_plant_t *inst) {
   //
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -82,7 +82,7 @@ int common_deinit(weed_plant_t *inst) {
     weed_free(sdata->av_luma_data);
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -174,7 +174,7 @@ int common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
     dest += orowstride;
     av_luma_data += width;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

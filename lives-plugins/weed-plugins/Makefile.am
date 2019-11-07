@@ -5,7 +5,7 @@ LIBS =
 AUTOMAKE_OPTIONS = subdir-objects
 
 #NOTE - install-exec-local MUST go in the first subdir ONLY !!
-#SUBDIRS = gdk cairo # supercollider experimental
+SUBDIRS = gdk #cairo # supercollider experimental
 
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
@@ -134,7 +134,6 @@ endif
 
 #	alpha_means.la 
 #	alpha_visualizer.la 
-#	alien_overlay.la 
 #	audio_transition.la 
 #	audio_volume.la 
 #	blank_frame_detector.la 
@@ -174,6 +173,7 @@ endif
 #	xeffect.la 
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	alien_overlay.la \
 	haip.la \
 	kaleidoscope.la \
 	negate.la  \
@@ -181,11 +181,11 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	rotozoom.la \
 	lifeTV.la \
 	mirrors.la \
-	vertigo.la \	
+	vertigo.la \
 	bump2d.la \
-	simple_blend.la \ 
+	simple_blend.la \
 	multi_blends.la  \
-	multi_transitions.la \
+	multi_transitions.la
 
 EXTRA_DIST=data icons syna.h 
 

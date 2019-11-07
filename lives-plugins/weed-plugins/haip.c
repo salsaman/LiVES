@@ -95,7 +95,7 @@ int haip_init(weed_plant_t *inst) {
 
   sdata->old_width = sdata->old_height = -1;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 
 
 }
@@ -110,7 +110,7 @@ int haip_deinit(weed_plant_t *inst) {
   weed_free(sdata->px);
   weed_free(sdata->py);
   weed_free(sdata);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -341,7 +341,7 @@ int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   sdata->old_width = width;
   sdata->old_height = height;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

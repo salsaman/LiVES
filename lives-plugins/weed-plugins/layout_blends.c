@@ -130,7 +130,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   }
 
   weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

@@ -3248,18 +3248,15 @@ filterinit1:
         filter = weed_instance_get_filter(inst, FALSE);
 
         if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_deinit_f *init_func_ptr_ptr;
-          weed_init_f init_func;
-          weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-          init_func = init_func_ptr_ptr[0];
-          set_param_gui_readwrite(inst);
+          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
+            set_param_gui_readwrite(inst);
             (*init_func)(inst);
+            set_param_gui_readonly(inst);
             lives_chdir(cwd, FALSE);
             lives_free(cwd);
           }
-          set_param_gui_readonly(inst);
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
@@ -3915,18 +3912,15 @@ filterinit2:
         filter = weed_instance_get_filter(inst, FALSE);
 
         if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_deinit_f *init_func_ptr_ptr;
-          weed_init_f init_func;
-          weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-          init_func = init_func_ptr_ptr[0];
-          set_param_gui_readwrite(inst);
+          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
+            set_param_gui_readwrite(inst);
             (*init_func)(inst);
+            set_param_gui_readonly(inst);
             lives_chdir(cwd, FALSE);
             lives_free(cwd);
           }
-          set_param_gui_readonly(inst);
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);

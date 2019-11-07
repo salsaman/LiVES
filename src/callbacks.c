@@ -126,7 +126,7 @@ static void cleanup_set_dir(const char *set_name) {
 
   if (prefs->ar_clipset && !strcmp(prefs->ar_clipset_name, set_name)) {
     prefs->ar_clipset = FALSE;
-    memset(prefs->ar_clipset_name, 0, 1);
+    lives_memset(prefs->ar_clipset_name, 0, 1);
     set_string_pref(PREF_AR_CLIPSET, "");
   }
 }
@@ -432,7 +432,7 @@ void lives_exit(int signum) {
       if (!mainw->leave_files) {
         // delete the current set (this is for DELETE_SET)
         cleanup_set_dir(mainw->set_name);
-        memset(mainw->set_name, 0, 1);
+        lives_memset(mainw->set_name, 0, 1);
         mainw->was_set = FALSE;
         lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
       } else {
@@ -444,7 +444,7 @@ void lives_exit(int signum) {
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack == NULL) resize(1);
       mainw->was_set = FALSE;
-      memset(mainw->set_name, 0, 1);
+      lives_memset(mainw->set_name, 0, 1);
       mainw->only_close = FALSE;
       prefs->crash_recovery = TRUE;
 
@@ -1290,7 +1290,7 @@ void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // the user closed the last clip in the set, we should remove the set
     d_print(_("Removing set %s since it is now empty..."));
     cleanup_set_dir(mainw->set_name);
-    memset(mainw->set_name, 0, 1);
+    lives_memset(mainw->set_name, 0, 1);
     mainw->was_set = FALSE;
     lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
     d_print_done();
@@ -2004,7 +2004,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (strlen(mainw->set_name) > 0) {
     d_print(_("Set %s was permanently deleted from the disk.\n"), mainw->set_name);
-    memset(mainw->set_name, 0, 1);
+    lives_memset(mainw->set_name, 0, 1);
   }
 
   mainw->leave_recovery = TRUE;
@@ -5203,7 +5203,7 @@ boolean reload_set(const char *set_name) {
       needs_idlefunc = TRUE;
     }
   }
-  memset(mainw->set_name, 0, 1);
+  lives_memset(mainw->set_name, 0, 1);
 
   // check if set is locked
   if (!check_for_lock_file(set_name, 0)) {
@@ -5263,7 +5263,7 @@ boolean reload_set(const char *set_name) {
       lives_free(com);
     } else {
       if (lives_fgets(mainw->msg, MAINW_MSG_SIZE, orderfile) == NULL) clear_mainw_msg();
-      else memset(mainw->msg + strlen(mainw->msg) - strlen("\n"), 0, 1);
+      else lives_memset(mainw->msg + strlen(mainw->msg) - strlen("\n"), 0, 1);
     }
 
     if (strlen(mainw->msg) == 0 || (!strncmp(mainw->msg, "none", 4))) {

@@ -113,7 +113,7 @@ int tonegen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (trate == 0.) {
     memset(dst, 0, nsamps * chans * sizeof(float));
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   nrsamps = ((double)nsamps / (double)rate * trate + .5);
@@ -142,7 +142,7 @@ int tonegen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(buff);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

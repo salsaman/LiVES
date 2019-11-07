@@ -176,7 +176,7 @@ int libvis_init(weed_plant_t *inst) {
     visual_input_set_callback(libvis->input, libvis_host_audio_callback, (void *)libvis);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -198,7 +198,7 @@ int libvis_deinit(weed_plant_t *inst) {
   }
   if (--instances < 0) instances = 0;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -260,7 +260,7 @@ int libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   visual_input_run(libvis->input);
   visual_video_set_buffer(libvis->video, pixel_data);
   visual_actor_run(libvis->actor, libvis->input->audio);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

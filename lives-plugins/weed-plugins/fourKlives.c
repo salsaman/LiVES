@@ -144,7 +144,7 @@ static int syna_init(_sdata *sdata, int freq) {
     sdata->prev[n] = 0;
     sdata->slide[n] = 0;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 #ifndef TINY
@@ -316,7 +316,7 @@ static int syna_get(_sdata *sdata) {
     }
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 #if 0
@@ -612,7 +612,7 @@ int fourk_deinit(weed_plant_t *inst) {
   _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
   if (sdata != NULL) syna_deinit(sdata);
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -640,7 +640,7 @@ int fourk_init(weed_plant_t *inst) {
 
   rate = weed_get_int_value(out_channel, "audio_rate", &error);
 
-  if ((retval = syna_init(sdata, rate)) != WEED_NO_ERROR) {
+  if ((retval = syna_init(sdata, rate)) != WEED_SUCCESS) {
 #ifdef DEBUG
     fprintf(stderr, "4k init failed\n");
 #endif
@@ -652,7 +652,7 @@ int fourk_init(weed_plant_t *inst) {
   fprintf(stderr, "4k: loading tune %s\n", tune);
 #endif
 
-  if ((retval = syna_load(sdata, tune)) != WEED_NO_ERROR) {
+  if ((retval = syna_load(sdata, tune)) != WEED_SUCCESS) {
 
     sprintf(tune + strlen(tune), "%s", ".txt");
 
@@ -660,7 +660,7 @@ int fourk_init(weed_plant_t *inst) {
     fprintf(stderr, "4k: loading tune %s\n", tune);
 #endif
 
-    if ((retval = syna_load(sdata, tune)) != WEED_NO_ERROR) {
+    if ((retval = syna_load(sdata, tune)) != WEED_SUCCESS) {
 
       fourk_deinit(inst);
 #ifdef DEBUG
@@ -673,7 +673,7 @@ int fourk_init(weed_plant_t *inst) {
   //set_tempo(sdata,136.); // bpm: maybe 8. to 263. ?
   //set_base_freq(sdata,272.); // 145. to 400.
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -713,7 +713,7 @@ int fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   syna_play(sdata, dst, nsamps, chans, inter); // dlen is number of samps....does interleaved
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

@@ -113,7 +113,7 @@ static int create_plans(void) {
 
     plans[i] = fftwf_plan_dft_r2c_1d(nsamps, ins[i], outs[i], i < 13 ? FFTW_MEASURE : FFTW_ESTIMATE);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 /////////////////////////////////////////////////////////////
@@ -145,7 +145,7 @@ int beat_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_data", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 
 }
 
@@ -159,7 +159,7 @@ int beat_deinit(weed_plant_t *inst) {
     weed_free(sdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 
 }
 
@@ -394,12 +394,12 @@ done:
 
   weed_free(out_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  if (create_plans() != WEED_NO_ERROR) return NULL;
+  if (create_plans() != WEED_SUCCESS) return NULL;
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE), weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
                                weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL

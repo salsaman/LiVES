@@ -132,7 +132,7 @@ int vertigo_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 
 }
 
@@ -147,7 +147,7 @@ int vertigo_deinit(weed_plant_t *inst) {
     weed_free(sdata->buffer);
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -221,7 +221,7 @@ int vertigo_process(weed_plant_t *inst, weed_timecode_t timecode) {
   sdata->current_buffer = sdata->alt_buffer;
   sdata->alt_buffer = p;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

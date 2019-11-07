@@ -56,7 +56,7 @@ int ptest_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(src);
   weed_free(dst);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

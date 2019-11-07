@@ -119,7 +119,7 @@ int frei0r_init(weed_plant_t *inst) {
   if ((f0r_inst = (*f0r_construct)(width, height)) == NULL) return WEED_ERROR_FILTER_INVALID;
   weed_set_voidptr_value(inst, "plugin_f0r_inst", f0r_inst);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -135,7 +135,7 @@ int frei0r_deinit(weed_plant_t *inst) {
   f0r_destruct = weed_get_voidptr_value(filter, "plugin_f0r_destruct", &error);
   (*f0r_destruct)(f0r_inst);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -250,12 +250,9 @@ int frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     weed_free(in_channels);
     break;
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
-
-static weed_plant_t *plugin_info;
-static int num_filters;
 
 WEED_SETUP_START(200, 200) {
   if (FREI0R_MAJOR_VERSION < 1 || FREI0R_MINOR_VERSION < 1) return NULL;
@@ -315,11 +312,12 @@ WEED_SETUP_START(200, 200) {
   f0r_param_color_t valcol;
   f0r_param_position_t valpos;
 
-  int api_used = weed_get_api_version(plugin_info);
+  //int api_used = weed_get_api_version(plugin_info);
 
   int is_unstable;
 
   int blacklisted;
+  int num_filters = 0;
 
   register int i;
 
@@ -339,7 +337,6 @@ WEED_SETUP_START(200, 200) {
 #endif
 
   weed_set_string_value(plugin_info, "package_name", "Frei0r");
-  num_filters = 0;
 
   if (fpp != NULL) {
     vdirval = 10;

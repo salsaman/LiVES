@@ -5,32 +5,29 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#endif
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #else
 #include "../../../libweed/weed-plugin.h"
 #endif
 
-///////////////////////////////////////////////////////////////////
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../../libweed/weed.h"
+#include "../../../libweed/weed-palettes.h"
+#include "../../../libweed/weed-utils.h"
+#endif
 
-static int num_versions = 4; // number of different weed api versions supported
-static int api_versions[] = {133, 131, 110, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+///////////////////////////////////////////////////////////////////
 
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -280,68 +277,64 @@ int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
 
-    weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL};
 
-    weed_plant_t *filter_class, *gui;
-    int filter_flags = 0;
-    int api_used = weed_get_api_version(plugin_info);
+  weed_plant_t *filter_class, *gui;
+  int filter_flags = 0;
+  int api_used = weed_get_api_version(plugin_info);
 
-    // define RFX layout
-    char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
+  // define RFX layout
+  char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
 
-    //if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
+  //if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
-    filter_class = weed_filter_class_init("compositor", "salsaman", 1, filter_flags, NULL, &compositor_process, NULL, in_chantmpls,
-                                          out_chantmpls,
-                                          in_params, NULL);
+  filter_class = weed_filter_class_init("compositor", "salsaman", 1, filter_flags, NULL, &compositor_process, NULL, in_chantmpls,
+                                        out_chantmpls,
+                                        in_params, NULL);
 
-    gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_class_get_gui(filter_class);
 
-    // set 0 to infinite repeats
-    weed_set_int_value(in_chantmpls[0], "max_repeats", 0);
-    weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  // set 0 to infinite repeats
+  weed_set_int_value(in_chantmpls[0], "max_repeats", 0);
+  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
 
-    // this is necessary for the host
-    if (api_used < 110) {
-      weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-      weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-      weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-      weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-      weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-    } else {
-      // use WEED_PARAMETER_ELEMENT_PER_CHANNEL from spec 110
-      weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-      weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-      weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-      weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-      weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    }
-
-    // set default value for elements added by the host
-    weed_set_double_value(in_params[0], "new_default", 0.);
-    weed_set_double_value(in_params[1], "new_default", 0.);
-    weed_set_double_value(in_params[2], "new_default", 1.);
-    weed_set_double_value(in_params[3], "new_default", 1.);
-    weed_set_double_value(in_params[4], "new_default", 1.);
-
-    weed_set_string_value(in_params[6], "description", "If checked, the rear frames overlay the front ones.");
-
-    // set RFX layout
-    weed_set_string_value(gui, "layout_scheme", "RFX");
-    weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 7, rfx_strings);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  // this is necessary for the host
+  if (api_used < 110) {
+    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+    weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+    weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+    weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+    weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+  } else {
+    // use WEED_PARAMETER_ELEMENT_PER_CHANNEL from spec 110
+    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+    weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+    weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+    weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+    weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
   }
 
-  return plugin_info;
+  // set default value for elements added by the host
+  weed_set_double_value(in_params[0], "new_default", 0.);
+  weed_set_double_value(in_params[1], "new_default", 0.);
+  weed_set_double_value(in_params[2], "new_default", 1.);
+  weed_set_double_value(in_params[3], "new_default", 1.);
+  weed_set_double_value(in_params[4], "new_default", 1.);
+
+  weed_set_string_value(in_params[6], "description", "If checked, the rear frames overlay the front ones.");
+
+  // set RFX layout
+  weed_set_string_value(gui, "layout_scheme", "RFX");
+  weed_set_string_value(gui, "rfx_delim", "|");
+  weed_set_string_array(gui, "rfx_strings", 7, rfx_strings);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;

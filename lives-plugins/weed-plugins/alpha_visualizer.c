@@ -206,7 +206,7 @@ int alphav_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   }
 
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

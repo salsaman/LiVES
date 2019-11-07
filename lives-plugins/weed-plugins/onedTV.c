@@ -100,7 +100,7 @@ int oned_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -114,7 +114,7 @@ int oned_deinit(weed_plant_t *inst) {
     weed_free(sdata->linebuf);
     weed_free(sdata);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -225,7 +225,7 @@ int oned_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     break;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

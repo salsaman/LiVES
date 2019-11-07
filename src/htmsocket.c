@@ -48,7 +48,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
   if (o == NULL) return NULL;
 
   o->len = sizeof(cl_addr);
-  memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
+  lives_memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
   o->serv_addr.sin_family = AF_INET;
 
   if (strcmp(host, "INADDR_ANY")) {
@@ -80,7 +80,7 @@ void *OpenHTMSocket(const char *host, int portnumber, boolean sender) {
 #endif
 
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
-    memset((char *)&cl_addr, 0, sizeof(cl_addr));
+    lives_memset((char *)&cl_addr, 0, sizeof(cl_addr));
     cl_addr.sin_family = AF_INET;
     if (sender) {
       // bind on all interfaces, any port

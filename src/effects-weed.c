@@ -13,8 +13,6 @@ using namespace cv;
 #endif
 #endif
 
-#define NEED_PLUGIN_SET_FUNC
-
 #include "main.h"
 #include "effects.h"
 
@@ -1201,10 +1199,7 @@ reinit:
   }
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-    weed_init_f *init_func_ptr_ptr;
-    weed_init_f init_func;
-    weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-    init_func = init_func_ptr_ptr[0];
+    weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
     cwd = cd_to_plugin_dir(filter);
     if (init_func != NULL) {
       lives_rfx_t *rfx;
@@ -1295,7 +1290,6 @@ void weed_reinit_all(void) {
 
 static void *thread_process_func(void *arg) {
   struct _procvals *procvals = (struct _procvals *)arg;
-  weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
 
   weed_plant_t *inst = procvals->inst;
@@ -1303,8 +1297,7 @@ static void *thread_process_func(void *arg) {
 
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
 
-  weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-  process_func = process_func_ptr_ptr[0];
+  process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
 
   procvals->ret = (*process_func)(inst, tc);
 
@@ -1373,7 +1366,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   procvals = (struct _procvals *)lives_malloc(sizeof(struct _procvals) * to_use);
   if (to_use > 1) {
     xinst = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *) * (to_use - 1));
-    dthreads = (pthread_t *)calloc(sizeof(pthread_t) * (to_use - 1), 1);
+    dthreads = (pthread_t *)lives_calloc(sizeof(pthread_t) * (to_use - 1), 1);
   }
 
   for (j = 1; j < to_use; j++) {
@@ -1560,7 +1553,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   void *pdata;
 
-  weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
   weed_plant_t *def_channel = NULL;
 
@@ -1675,8 +1667,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (!did_thread) {
         // normal single threaded version
         int ret;
-        weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-        process_func = process_func_ptr_ptr[0];
+        process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
         if (key == -1 || !filter_mutex_trylock(key)) {
           if (mainw->current_file > -1)
             weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
@@ -2575,8 +2566,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (!did_thread) {
     // normal single threaded version
     int ret;
-    weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-    process_func = process_func_ptr_ptr[0];
+    process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
     if (key == -1 || !filter_mutex_trylock(key)) {
       ret = (*process_func)(inst, tc);
       if (key != -1) filter_mutex_unlock(key);
@@ -2730,7 +2720,6 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
   weed_plant_t **in_channels, **out_channels = NULL, *channel, *chantmpl;
   weed_plant_t **in_ctmpls;
 
-  weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
   lives_filter_error_t retval = FILTER_SUCCESS;
 
@@ -2782,9 +2771,8 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       if (!did_thread) {
         // normal single threaded version
         int ret;
-        weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-        process_func = process_func_ptr_ptr[0];
-        if (key == -1 || !filter_mutex_trylock(key)) {
+        process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
+        if (process_func != NULL && (key == -1 || !filter_mutex_trylock(key))) {
           ret = (*process_func)(inst, tc);
           if (key != -1) filter_mutex_unlock(key);
           if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
@@ -2985,10 +2973,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
 
   //...finally we are ready to apply the filter
   pthread_mutex_lock(&mainw->interp_mutex); // stop video thread from possibly interpolating our audio effects
-  weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-  process_func = process_func_ptr_ptr[0];
+  process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
   if (key == -1 || !filter_mutex_trylock(key)) {
-    if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
+    if (process_func == NULL || (*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
       retval = FILTER_ERROR_INVALID_PLUGIN;
     }
     if (key != -1) filter_mutex_unlock(key);
@@ -3266,10 +3253,7 @@ audinst1:
 
     // - init inst
     if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-      weed_init_f *init_func_ptr_ptr;
-      weed_init_f init_func;
-      weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-      init_func = init_func_ptr_ptr[0];
+      weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
       if (init_func != NULL) {
         char *cwd = cd_to_plugin_dir(filter);
         set_param_gui_readwrite(instance);
@@ -4507,18 +4491,14 @@ void *lives_monitor_malloc(size_t size) {
 
 
 void lives_monitor_free(void *p) {
-  fprintf(stderr, "plugin freeing ptr ptr %p\n", p);
+  //fprintf(stderr, "plugin freeing ptr ptr %p\n", p);
 }
 
-typedef void *weed_funcptr_t;  // TODO
 typedef void *weed_voidptr64_t;  // TODO
 
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
   // change even immutable leaves
   weed_error_t err;
-  weed_voidptr64_t *p;
-
-  p = (weed_voidptr64_t *)values;
 
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
   /* if (!strcmp(key, WEED_LEAF_NEXT)) { */
@@ -4633,13 +4613,13 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   //  fprintf(stderr, "API versions %d %d / %d %d : %d %d\n", lib_weed_version, lib_filter_version, pl_min_weed_api, pl_max_weed_api, pl_min_filter_api, pl_max_filter_api);
 
   // let's override some plugin functions...
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)malloc);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)free);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)realloc);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)calloc);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)memcpy);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)memset);
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)memmove);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)lives_malloc);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)lives_free);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_REALLOC_FUNC, (weed_funcptr_t)lives_realloc);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_CALLOC_FUNC, (weed_funcptr_t)lives_calloc);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMCPY_FUNC, (weed_funcptr_t)lives_memcpy);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMSET_FUNC, (weed_funcptr_t)lives_memset);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)lives_memmove);
 
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)monitor_malloc);
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)monitor_free);
@@ -4647,8 +4627,8 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   // since we redefined weed_leaf_set and weed_plant_free for ourselves,
   // we need to reset the plugin versions, since it will inherit ours by default when calling setup_func()
 
-  weed_set_voidptr_value(xhost_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t)weed_leaf_get_plugin);
-  weed_set_voidptr_value(xhost_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t)weed_leaf_get_plugin);
+  weed_set_funcptr_value(xhost_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
 
   update_host_info(xhost_info);
   return xhost_info;
@@ -5222,18 +5202,6 @@ void weed_load_all(void) {
 }
 
 
-static void lives_free_if_not_in_list(void *ptr, LiVESList **freed_ptrs) {
-  /// avoid duplicate frees when unloading fx plugins
-  LiVESList *list = *freed_ptrs;
-  while (list != NULL) {
-    if (ptr == (void *)list->data) return;
-    list = list->next;
-  }
-  if (freed_ptrs != NULL) *freed_ptrs = lives_list_prepend(*freed_ptrs, (livespointer)ptr);
-  lives_freep((void **)&ptr);
-}
-
-
 static void weed_plant_free_if_not_in_list(weed_plant_t *plant, LiVESList **freed_ptrs) {
   /// avoid duplicate frees when unloading fx plugins
   LiVESList *list = *freed_ptrs;
@@ -5241,7 +5209,7 @@ static void weed_plant_free_if_not_in_list(weed_plant_t *plant, LiVESList **free
     if (plant == (weed_plant_t *)list->data) return;
     list = list->next;
   }
-  if (freed_ptrs != NULL) *freed_ptrs = lives_list_append(*freed_ptrs, (livespointer)plant);
+  if (freed_ptrs != NULL) *freed_ptrs = lives_list_prepend(*freed_ptrs, (livespointer)plant);
   weed_plant_free(plant);
 }
 
@@ -5249,7 +5217,6 @@ static void weed_plant_free_if_not_in_list(weed_plant_t *plant, LiVESList **free
 static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
   int nitems, error, i;
   weed_plant_t **plants, *gui;
-  void *func;
   boolean is_compound = FALSE;
 
   if (num_compound_fx(filter) > 1) is_compound = TRUE;
@@ -5262,15 +5229,7 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
       for (i = 0; i < nitems; i++) {
         if (weed_plant_has_leaf(plants[i], WEED_LEAF_GUI)) {
           gui = (weed_get_plantptr_value(plants[i], WEED_LEAF_GUI, &error));
-          if (weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) {
-            func = weed_get_voidptr_value(gui, WEED_LEAF_DISPLAY_FUNC, &error);
-            if (func != NULL) lives_free_if_not_in_list(func, freed_ptrs);
-          }
           weed_plant_free_if_not_in_list(gui, freed_ptrs);
-        }
-        if (weed_plant_has_leaf(filter, WEED_LEAF_INTERPOLATE_FUNC)) {
-          func = weed_get_voidptr_value(filter, WEED_LEAF_INTERPOLATE_FUNC, &error);
-          if (func != NULL) lives_free_if_not_in_list(func, freed_ptrs);
         }
         weed_plant_free_if_not_in_list(plants[i], freed_ptrs);
       }
@@ -5281,21 +5240,6 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
   if (is_compound) {
     weed_plant_free(filter);
     return;
-  }
-
-  if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-    func = weed_get_voidptr_value(filter, WEED_LEAF_INIT_FUNC, &error);
-    if (func != NULL) lives_free_if_not_in_list(func, freed_ptrs);
-  }
-
-  if (weed_plant_has_leaf(filter, WEED_LEAF_DEINIT_FUNC)) {
-    func = weed_get_voidptr_value(filter, WEED_LEAF_DEINIT_FUNC, &error);
-    if (func != NULL) lives_free_if_not_in_list(func, freed_ptrs);
-  }
-
-  if (weed_plant_has_leaf(filter, WEED_LEAF_PROCESS_FUNC)) {
-    func = weed_get_voidptr_value(filter, WEED_LEAF_PROCESS_FUNC, &error);
-    if (func != NULL) lives_free_if_not_in_list(func, freed_ptrs);
   }
 
   // free in_channel_templates
@@ -5325,7 +5269,8 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
       plants = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
       threaded_dialog_spin(0.);
       for (i = 0; i < nitems; i++) {
-        if (weed_plant_has_leaf(plants[i], WEED_LEAF_GUI)) weed_plant_free(weed_get_plantptr_value(plants[i], WEED_LEAF_GUI, &error));
+        if (weed_plant_has_leaf(plants[i], WEED_LEAF_GUI))
+          weed_plant_free(weed_get_plantptr_value(plants[i], WEED_LEAF_GUI, &error));
         weed_plant_free_if_not_in_list(plants[i], freed_ptrs);
       }
       lives_freep((void **)&plants);
@@ -5333,8 +5278,8 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
   }
 
   // free gui
-  if (weed_plant_has_leaf(filter, WEED_LEAF_GUI)) weed_plant_free_if_not_in_list(weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error),
-        freed_ptrs);
+  if (weed_plant_has_leaf(filter, WEED_LEAF_GUI))
+    weed_plant_free_if_not_in_list(weed_get_plantptr_value(filter, WEED_LEAF_GUI, &error), freed_ptrs);
 
   // free filter
   weed_plant_free(filter);
@@ -5951,12 +5896,7 @@ static int load_compound_fx(void) {
 
 void weed_unload_all(void) {
   weed_plant_t *filter, *plugin_info, *host_info;
-
-  void *handle;
-
-  weed_desetup_f desetup_fn;
-
-  LiVESList *pinfo = NULL, *xpinfo, *freed_ptrs = NULL;
+  LiVESList *pinfo = NULL, *list, *freed_plants = NULL, *hostinfo_ptrs = NULL;
 
   int error;
 
@@ -5978,49 +5918,56 @@ void weed_unload_all(void) {
 
   for (i = 0; i < num_weed_filters; i++) {
     filter = weed_filters[i];
-
-    if (num_compound_fx(filter) > 1) {
-      weed_filter_free(filter, &freed_ptrs);
+    plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+    if (plugin_info == NULL) {
+      weed_filter_free(filter, &freed_plants);
+      lives_list_free(freed_plants);
+      freed_plants = NULL;
       continue;
     }
-
-    plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-
-    if (pinfo == NULL || lives_list_index(pinfo, plugin_info) == -1) pinfo = lives_list_append(pinfo, plugin_info);
-
-    // TODO: we need to free ALL the filters for a plugin before calling desetup and dlclose. Otherwise we
-    // will end doing this on an unloaded plugin !
-
-    handle = weed_get_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, &error);
-    if (handle != NULL && prefs->startup_phase == 0) {
-      if ((desetup_fn = (weed_desetup_f)dlsym(handle, "weed_desetup")) != NULL) {
-        char *cwd = cd_to_plugin_dir(filter);
-        // call weed_desetup()
-        (*desetup_fn)();
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-      }
-
-      dlclose(handle);
-      threaded_dialog_spin(0.);
-      handle = NULL;
-      weed_set_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, handle);
+    freed_plants = weed_get_voidptr_value(plugin_info, WEED_LEAF_FREED_PLANTS, NULL);
+    weed_filter_free(filter, &freed_plants);
+    if (pinfo == NULL || lives_list_index(pinfo, plugin_info) == -1) {
+      pinfo = lives_list_append(pinfo, plugin_info);
+      weed_set_voidptr_value(plugin_info, WEED_LEAF_FREED_PLANTS, (void *)freed_plants);
     }
-    weed_filter_free(filter, &freed_ptrs);
+    freed_plants = NULL;
   }
 
-  lives_list_free(freed_ptrs);
-
-  xpinfo = pinfo;
+  list = pinfo;
 
   while (pinfo != NULL) {
-    host_info = weed_get_plantptr_value((weed_plant_t *)pinfo->data, WEED_LEAF_HOST_INFO, &error);
-    weed_plant_free(host_info);
-    weed_plant_free((weed_plant_t *)pinfo->data);
+    // We need to free ALL the filters for a plugin before calling desetup and dlclose.
+    // Otherwise we will end doing this on an unloaded plugin !
+    plugin_info = (weed_plant_t *)pinfo->data;
+    if (plugin_info != NULL) {
+      void *handle = weed_get_voidptr_value(plugin_info, WEED_LEAF_HOST_HANDLE, &error);
+      if (handle != NULL && prefs->startup_phase == 0) {
+        weed_desetup_f desetup_fn;
+        if ((desetup_fn = (weed_desetup_f)dlsym(handle, "weed_desetup")) != NULL) {
+          char *cwd = cd_to_plugin_dir(filter);
+          // call weed_desetup()
+          (*desetup_fn)();
+          lives_chdir(cwd, FALSE);
+          lives_free(cwd);
+        }
+        dlclose(handle);
+        threaded_dialog_spin(0.);
+      }
+      freed_plants = weed_get_voidptr_value(plugin_info, WEED_LEAF_FREED_PLANTS, NULL);
+      if (freed_plants != NULL) {
+        lives_list_free(freed_plants);
+        freed_plants = NULL;
+      }
+      host_info = weed_get_plantptr_value((weed_plant_t *)pinfo->data, WEED_LEAF_HOST_INFO, &error);
+      weed_plant_free_if_not_in_list(host_info, &hostinfo_ptrs);
+      weed_plant_free(plugin_info);
+    }
     pinfo = pinfo->next;
   }
 
-  if (xpinfo != NULL) lives_list_free(xpinfo);
+  if (list != NULL) lives_list_free(list);
+  if (hostinfo_ptrs != NULL) lives_list_free(hostinfo_ptrs);
 
   for (i = 0; i < num_weed_filters; i++) {
     if (hashnames[i] != NULL) lives_free(hashnames[i]);
@@ -6848,11 +6795,9 @@ start1:
     filter = weed_instance_get_filter(inst, FALSE);
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-      weed_init_f *init_func_ptr_ptr;
       weed_init_f init_func;
       char *cwd = cd_to_plugin_dir(filter), *tmp;
-      weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-      init_func = init_func_ptr_ptr[0];
+      init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
       set_param_gui_readwrite(inst);
       if (init_func != NULL && (error = (*init_func)(inst)) != WEED_NO_ERROR) {
         int weed_error;
@@ -7094,10 +7039,7 @@ int weed_call_init_func(weed_plant_t *inst) {
 
   filter = weed_instance_get_filter(inst, FALSE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-    weed_init_f *init_func_ptr_ptr;
-    weed_init_f init_func;
-    weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-    init_func = init_func_ptr_ptr[0];
+    weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
     if (init_func != NULL) {
       char *cwd = cd_to_plugin_dir(filter);
       set_param_gui_readwrite(inst);
@@ -7127,10 +7069,7 @@ int weed_call_deinit_func(weed_plant_t *instance) {
     return 1;
   }
   if (weed_plant_has_leaf(filter, WEED_LEAF_DEINIT_FUNC)) {
-    weed_deinit_f *deinit_func_ptr_ptr;
-    weed_deinit_f deinit_func;
-    weed_leaf_get(filter, WEED_LEAF_DEINIT_FUNC, 0, (void *)&deinit_func_ptr_ptr);
-    deinit_func = deinit_func_ptr_ptr[0];
+    weed_deinit_f deinit_func = (weed_deinit_f)weed_get_funcptr_value(filter, WEED_LEAF_DEINIT_FUNC, NULL);
     if (deinit_func != NULL) {
       char *cwd = cd_to_plugin_dir(filter);
       error = (*deinit_func)(instance);
@@ -7504,7 +7443,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   weed_plant_t *filter;
   weed_plant_t *chantmpl;
   weed_plant_t *achan;
-  weed_process_f *process_func_ptr_ptr;
   weed_process_f process_func;
 
   lives_filter_error_t retval;
@@ -7636,9 +7574,9 @@ procfunc1:
   }
   if (!did_thread) {
     // normal single threaded version
-    weed_leaf_get(filter, WEED_LEAF_PROCESS_FUNC, 0, (void *)&process_func_ptr_ptr);
-    process_func = process_func_ptr_ptr[0];
-    retval = (*process_func)(inst, tc);
+    process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
+    if (process_func != NULL)
+      retval = (*process_func)(inst, tc);
   }
   lives_free(out_channels);
 
@@ -8108,10 +8046,7 @@ geninit1:
 
         filter = weed_instance_get_filter(inst, FALSE);
         if (weed_plant_has_leaf(filter, WEED_LEAF_INIT_FUNC)) {
-          weed_init_f *init_func_ptr_ptr;
-          weed_init_f init_func;
-          weed_leaf_get(filter, WEED_LEAF_INIT_FUNC, 0, (void *)&init_func_ptr_ptr);
-          init_func = init_func_ptr_ptr[0];
+          weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
             set_param_gui_readwrite(inst);
@@ -8654,7 +8589,6 @@ char *get_weed_display_string(weed_plant_t *inst, int pnum) {
   weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
   weed_plant_t *ptmpl, *gui, *filter;
   int error;
-  weed_display_f *display_func_ptr;
   weed_display_f display_func;
   char *cwd;
 
@@ -8665,8 +8599,7 @@ char *get_weed_display_string(weed_plant_t *inst, int pnum) {
   gui = weed_get_plantptr_value(ptmpl, WEED_LEAF_GUI, &error);
   if (!weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) return NULL;
 
-  display_func_ptr = (weed_display_f *)weed_get_voidptr_value(gui, WEED_LEAF_DISPLAY_FUNC, &error);
-  display_func = (weed_display_f) * display_func_ptr;
+  display_func = (weed_display_f)weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_FUNC, NULL);
 
   /* weed_leaf_set_flags(gui, WEED_LEAF_DISPLAY_VALUE, (weed_leaf_get_flags(gui, WEED_LEAF_DISPLAY_VALUE) | */
   /*                     WEED_LEAF_READONLY_PLUGIN) ^ WEED_LEAF_READONLY_PLUGIN); */
@@ -10067,7 +10000,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   if (weed_plant_has_leaf(wtmpl, WEED_LEAF_INTERPOLATE_FUNC)) {
     boolean needs_more;
     boolean more_available;
-    weed_interpolate_f *interpolate_func_ptr;
     weed_interpolate_f interpolate_func;
     weed_plant_t *calc_param = weed_plant_new(WEED_PLANT_PARAMETER), *filter;
     char *cwd;
@@ -10092,16 +10024,30 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
     }
 
     weed_add_plant_flags(calc_param, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
-    interpolate_func_ptr = (weed_interpolate_f *)weed_get_voidptr_value(wtmpl, WEED_LEAF_INTERPOLATE_FUNC, &error);
-    interpolate_func = (weed_interpolate_f) * interpolate_func_ptr;
-    filter = weed_instance_get_filter(inst, FALSE);
-    cwd = cd_to_plugin_dir(filter);
-    needs_more = (*interpolate_func)(param_array, calc_param);
-    lives_chdir(cwd, FALSE);
-    lives_free(cwd);
+    interpolate_func = (weed_interpolate_f)weed_get_funcptr_value(wtmpl, WEED_LEAF_INTERPOLATE_FUNC, NULL);
+    if (interpolate_func != NULL) {
+      filter = weed_instance_get_filter(inst, FALSE);
+      cwd = cd_to_plugin_dir(filter);
+      needs_more = (*interpolate_func)(param_array, calc_param);
+      lives_chdir(cwd, FALSE);
+      lives_free(cwd);
 
-    if (needs_more == WEED_FALSE || !more_available) {
-      // got an accurate result from 2 points
+      if (needs_more == WEED_FALSE || !more_available) {
+        // got an accurate result from 2 points
+        weed_leaf_copy(param, WEED_LEAF_VALUE, calc_param, WEED_LEAF_VALUE);
+        weed_plant_free(calc_param);
+        lives_free(in_params);
+        for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]);
+        lives_free(param_array);
+        pthread_mutex_unlock(&mainw->interp_mutex);
+        return TRUE;
+      }
+      // try to pass more values
+      lives_free(param_array);
+      param_array = void_ptrs_to_plant_array(wtmpl, pchain, -1);
+
+      (*interpolate_func)(param_array, calc_param);
+
       weed_leaf_copy(param, WEED_LEAF_VALUE, calc_param, WEED_LEAF_VALUE);
       weed_plant_free(calc_param);
       lives_free(in_params);
@@ -10110,21 +10056,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       pthread_mutex_unlock(&mainw->interp_mutex);
       return TRUE;
     }
-    // try to pass more values
-    lives_free(param_array);
-    param_array = void_ptrs_to_plant_array(wtmpl, pchain, -1);
-
-    (*interpolate_func)(param_array, calc_param);
-
-    weed_leaf_copy(param, WEED_LEAF_VALUE, calc_param, WEED_LEAF_VALUE);
-    weed_plant_free(calc_param);
-    lives_free(in_params);
-    for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]);
-    lives_free(param_array);
-    pthread_mutex_unlock(&mainw->interp_mutex);
-    return TRUE;
   }
-
   num_values = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
 
   if ((num_pvals = weed_leaf_num_elements((weed_plant_t *)pchain, WEED_LEAF_VALUE)) > num_values)
@@ -11165,7 +11097,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       lives_memcpy(mykey, *mem, (size_t)len);
       *mem += len;
     }
-    memset(mykey + (size_t)len, 0, 1);
+    lives_memset(mykey + (size_t)len, 0, 1);
 
     if (check_key && strcmp(mykey, key)) {
       lives_freep((void **)&mykey);
@@ -11323,7 +11255,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         *mem += vlen;
       }
       if (st == WEED_SEED_STRING) {
-        memset((char *)values[i] + vlen, 0, 1);
+        lives_memset((char *)values[i] + vlen, 0, 1);
       }
     }
   }
@@ -11555,7 +11487,7 @@ boolean read_filter_defaults(int fd) {
     buf = lives_malloc(vlen + 1);
     if (lives_read_buffered(fd, buf, vlen, TRUE) < vlen) break;
 
-    memset((char *)buf + vlen, 0, 1);
+    lives_memset((char *)buf + vlen, 0, 1);
     for (i = 0; i < num_weed_filters; i++) {
       if (!strcmp((char *)buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0)))) {
         lives_free(tmp);
@@ -11734,7 +11666,7 @@ boolean read_generator_sizes(int fd) {
     if (bytes < vlen) {
       break;
     }
-    memset((char *)buf + vlen, 0, 1);
+    lives_memset((char *)buf + vlen, 0, 1);
 
     for (i = 0; i < num_weed_filters; i++) {
       if (!strcmp(buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0)))) {

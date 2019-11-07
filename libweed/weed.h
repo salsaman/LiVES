@@ -68,16 +68,23 @@ extern "C"
 typedef uint32_t weed_size_t;
 typedef int32_t weed_error_t;
 typedef void *weed_voidptr_t;
+typedef void (*weed_funcptr_t)();
 
 #define WEED_VOIDPTR_SIZE sizeof(weed_voidptr_t)
+#define WEED_FUNCPTR_SIZE sizeof(weed_funcptr_t)
 
 #ifndef HAVE_WEED_DATA_T
 #define HAVE_WEED_DATA_T
 typedef struct _weed_data weed_data_t;
 #ifdef __LIBWEED__
+union _value {
+  void *voidptr;
+  weed_funcptr_t funcptr;
+};
+#define WEED_UNION_SIZE sizeof(_value);
 struct _weed_data {
   weed_size_t size;
-  weed_voidptr_t value;
+  union _value value;
 };
 #endif
 #endif
@@ -127,8 +134,8 @@ typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
 #ifdef __WEED_EXTRA_FUNCS__
 /* added in ABI 200 */
-/* typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type, */
-/*     weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags); */
+typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type,
+    weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags);
 #endif
 
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
@@ -199,6 +206,7 @@ __WEED_FN_DEF__ weed_leaf_get_all_f weed_leaf_get_all;
 #define WEED_SEED_INT64   5 // int64_t
 
 /* Pointer seeds */
+#define WEED_SEED_FUNCPTR  64 // weed_funcptr_t
 #define WEED_SEED_VOIDPTR  65 // weed_voidptr_t
 #define WEED_SEED_PLANTPTR 66 // weed_plant_t *
 

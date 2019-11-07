@@ -5,13 +5,13 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h> // optional
 #include <weed/weed-effects.h>
@@ -107,7 +107,7 @@ static int float_deinterleave(float *fbuffer, int nsamps, int nchans) {
   }
   weed_memcpy(fbuffer, tmpfbuffer, nsamps * nchans * sizeof(float));
   weed_free(tmpfbuffer);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -125,7 +125,7 @@ static int float_interleave(float *fbuffer, int nsamps, int nchans) {
   }
   weed_memcpy(fbuffer, tmpfbuffer, nsamps * nchans * sizeof(float));
   weed_free(tmpfbuffer);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -193,7 +193,7 @@ int ladspa_init(weed_plant_t *inst) {
     }
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -218,7 +218,7 @@ int ladspa_deinit(weed_plant_t *inst) {
     weed_free(sdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -261,7 +261,7 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
     if (in_channel != NULL) {
       src = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error);
-      if (src == NULL) return WEED_NO_ERROR;
+      if (src == NULL) return WEED_SUCCESS;
       iinc = weed_get_int_value(in_channel, "audio_channels", &error);
       nsamps = weed_get_int_value(in_channel, "audio_data_length", &error);
       inter = weed_get_boolean_value(in_channel, "audio_interleaf", &error);
@@ -273,7 +273,7 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
     if (out_channel != NULL) {
       dst = (float *)weed_get_voidptr_value(out_channel, "audio_data", &error);
-      if (dst == NULL) return WEED_NO_ERROR;
+      if (dst == NULL) return WEED_SUCCESS;
       ioutc = weed_get_int_value(out_channel, "audio_channels", &error);
       nsamps = weed_get_int_value(out_channel, "audio_data_length", &error);
       inter = weed_get_boolean_value(out_channel, "audio_interleaf", &error);
@@ -289,11 +289,11 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   pinc = weed_get_int_value(filter, "plugin_in_channels", &error);
   poutc = weed_get_int_value(filter, "plugin_out_channels", &error);
 
-  if (pinc > 0 && iinc == 0) return WEED_NO_ERROR;
-  if (poutc > 0 && ioutc == 0) return WEED_NO_ERROR;
+  if (pinc > 0 && iinc == 0) return WEED_SUCCESS;
+  if (poutc > 0 && ioutc == 0) return WEED_SUCCESS;
 
-  if (pinc == 2 && iinc == 1) return WEED_NO_ERROR;
-  if (poutc == 2 && ioutc == 1) return WEED_NO_ERROR;
+  if (pinc == 2 && iinc == 1) return WEED_SUCCESS;
+  if (poutc == 2 && ioutc == 1) return WEED_SUCCESS;
 
 
   if (pinc == 1 && iinc == 2) dual = WEED_TRUE;
@@ -313,7 +313,7 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (iinc > 1 && inter == WEED_TRUE) {
     // we asked the host for non-interleaved audio, but just in case...
-    if (float_deinterleave(src, nsamps, iinc) != WEED_NO_ERROR) return WEED_ERROR_MEMORY_ALLOCATION;
+    if (float_deinterleave(src, nsamps, iinc) != WEED_SUCCESS) return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", &error);
@@ -482,23 +482,20 @@ int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   // just in case the host wanted interleaved audio...
   if (inter == WEED_TRUE && oinc > 1) {
-    if (float_interleave(src, nsamps, oinc) != WEED_NO_ERROR) return WEED_ERROR_MEMORY_ALLOCATION;
+    if (float_interleave(src, nsamps, oinc) != WEED_SUCCESS) return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   if (inter == WEED_TRUE && ooutc > 1 && !inplace) {
-    if (float_interleave(dst, nsamps, ooutc) != WEED_NO_ERROR) return WEED_ERROR_MEMORY_ALLOCATION;
+    if (float_interleave(dst, nsamps, ooutc) != WEED_SUCCESS) return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
-static weed_plant_t *plugin_info;
-static int num_filters;
-
 WEED_SETUP_START(200, 200) {
   unsigned long num_plugins = 0;
-  num_filters = 0;
+  int num_filters = 0;
   // get LADSPA path
 
   char *lpp = getenv("LADSPA_PATH");

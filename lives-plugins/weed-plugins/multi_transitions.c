@@ -93,14 +93,14 @@ int dissolve_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 int dissolve_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
   if (sdata->mask != NULL) weed_free(sdata->mask);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -230,7 +230,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
     i++;
   }
   weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

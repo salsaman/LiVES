@@ -88,7 +88,7 @@ static int create_plans(void) {
 
     plans[i] = fftwf_plan_dft_r2c_1d(nsamps, ins[i], outs[i], i < 13 ? FFTW_MEASURE : FFTW_ESTIMATE);
   }
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -117,7 +117,7 @@ static int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   if (onsamps < 2) {
     weed_set_double_value(out_param, "value", 0.);
     weed_set_int64_value(out_param, "timecode", tc);
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   base = rndlog2(onsamps);
@@ -137,7 +137,7 @@ static int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   if (k > (nsamps >> 1)) {
     weed_set_double_value(out_param, "value", 0.);
     weed_set_int64_value(out_param, "timecode", tc);
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   chans = weed_get_int_value(in_channel, "audio_channels", &error);
@@ -171,12 +171,12 @@ static int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   weed_set_double_value(out_param, "value", (double)(tot / (float)chans));
   weed_set_int64_value(out_param, "timecode", tc);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  if (create_plans() != WEED_NO_ERROR) return NULL;
+  if (create_plans() != WEED_SUCCESS) return NULL;
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
   weed_plant_t *out_params[] = {weed_out_param_float_init("value", 0., 0., 1.), NULL};

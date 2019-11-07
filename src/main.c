@@ -717,8 +717,8 @@ static boolean pre_init(void) {
   if (ensure_isdir(prefs->lib_dir)) needs_update = TRUE;
   if (needs_update) set_string_pref(PREF_LIB_DIR, prefs->lib_dir);
 
-  memset(mainw->sepimg_path, 0, 1);
-  memset(mainw->frameblank_path, 0, 1);
+  lives_memset(mainw->sepimg_path, 0, 1);
+  lives_memset(mainw->frameblank_path, 0, 1);
 
   mainw->imsep = mainw->imframe = NULL;
 
@@ -1248,7 +1248,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->afbuffer_clients = mainw->afbuffer_clients_read = 0;
   mainw->afb[0] = mainw->afb[1] = NULL;
 
-  memset(mainw->recent_file, 0, 1);
+  lives_memset(mainw->recent_file, 0, 1);
 
   mainw->aud_data_written = 0;
 
@@ -1292,7 +1292,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->new_lmap_errors = NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
-  memset(mainw->set_name, 0, 1);
+  lives_memset(mainw->set_name, 0, 1);
   mainw->clips_available = 0;
 
   prefs->pause_effect_during_preview = FALSE;
@@ -1419,7 +1419,7 @@ static void lives_init(_ign_opts *ign_opts) {
     get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
     if (strlen(prefs->video_open_command) == 0) {
-      memset(mppath, 0, 1);
+      lives_memset(mppath, 0, 1);
 
       if (!strlen(prefs->video_open_command) && capable->has_mplayer) {
         get_location(EXEC_MPLAYER, mppath, PATH_MAX);
@@ -1499,7 +1499,7 @@ static void lives_init(_ign_opts *ign_opts) {
       lives_list_free_all(&encoders);
     }
 
-    memset(prefs->encoder.of_name, 0, 1);
+    lives_memset(prefs->encoder.of_name, 0, 1);
 
     if ((prefs->startup_phase == 1 || prefs->startup_phase == -1) && capable->has_encoder_plugins && capable->has_python) {
       LiVESList *ofmt_all = NULL;
@@ -1555,8 +1555,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
     lives_snprintf(future_prefs->encoder.name, 64, "%s", prefs->encoder.name);
 
-    memset(future_prefs->encoder.of_restrict, 0, 1);
-    memset(prefs->encoder.of_restrict, 0, 1);
+    lives_memset(future_prefs->encoder.of_restrict, 0, 1);
+    lives_memset(prefs->encoder.of_restrict, 0, 1);
 
     if (capable->has_encoder_plugins) {
       char **array;
@@ -3337,7 +3337,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->yuvin[0] = '\0';
 #endif
 
-  mainw = (mainwindow *)(calloc(sizeof(mainwindow), 1));
+  mainw = (mainwindow *)(lives_calloc(sizeof(mainwindow), 1));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
   mainw->is_ready = mainw->fatal = FALSE;
   mainw->go_away = TRUE;
@@ -3407,7 +3407,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
       capable->myname_full = lives_find_program_in_path(argv[0]);
 
       if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
-        memset(cdir + mynsize, 0, 1);
+        lives_memset(cdir + mynsize, 0, 1);
         lives_free(capable->myname_full);
         capable->myname_full = lives_strdup(cdir);
       }
@@ -3587,7 +3587,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
         if (!strcmp(charopt, "noset")) {
           // override clipset loading
-          memset(prefs->ar_clipset_name, 0, 1);
+          lives_memset(prefs->ar_clipset_name, 0, 1);
           prefs->ar_clipset = FALSE;
           ign_opts.ign_clipset = TRUE;
           continue;
@@ -3859,7 +3859,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
-  memset(start_file, 0, 1);
+  lives_memset(start_file, 0, 1);
 
   mainw->libthread = gtk_thread;
   mainw->id = id;
@@ -3869,7 +3869,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   if ((mynsize = lives_readlink(capable->myname_full, cdir, PATH_MAX)) != -1) {
     // no. i mean, what's my real name ?
-    memset(cdir + mynsize, 0, 1);
+    lives_memset(cdir + mynsize, 0, 1);
     lives_free(capable->myname_full);
     capable->myname_full = lives_strdup(cdir);
   }
@@ -3884,7 +3884,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // need to do this here, before lives_startup but afer setting ign_opts
   mainw->vpp = NULL;
-  memset(future_prefs->vpp_name, 0, 64);
+  lives_memset(future_prefs->vpp_name, 0, 64);
   future_prefs->vpp_argv = NULL;
 
   if (!ign_opts.ign_vppdefs)
@@ -5842,7 +5842,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 #else
 
   pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
-  pthread_t *frame_thread = (pthread_t *)calloc(sizeof(pthread_t), 1);
+  pthread_t *frame_thread = (pthread_t *)lives_calloc(sizeof(pthread_t), 1);
 
   weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
   weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);

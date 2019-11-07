@@ -5,20 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 #include <stdio.h>
@@ -29,7 +31,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -70,7 +71,7 @@ int alien_over_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -84,7 +85,7 @@ int alien_over_deinit(weed_plant_t *inst) {
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -122,7 +123,6 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     i = offset;
   }
 
-
   for (; src < end; src += irowstride) {
     for (j = 0; j < width; j++) {
       if (sdata->inited[i]) {
@@ -141,27 +141,22 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     old_pixel_data += width;
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+  weed_plant_t *filter_class = weed_filter_class_init("alien overlay", "salsaman", 1,
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, &alien_over_init,
+                               &alien_over_process, &alien_over_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plant_t *filter_class = weed_filter_class_init("alien overlay", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, &alien_over_init,
-                                 &alien_over_process, &alien_over_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

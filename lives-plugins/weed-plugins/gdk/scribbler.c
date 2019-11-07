@@ -5,20 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../../libweed/weed.h"
 #include "../../../libweed/weed-palettes.h"
 #include "../../../libweed/weed-effects.h"
+#include "../../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -27,7 +29,6 @@ static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -456,122 +457,118 @@ static int font_compare(const void *p1, const void *p2) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2;
 
   const char *def_fonts[] = {"serif", NULL};
-  if (plugin_info != NULL) {
-    const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
-    // removed palettes with alpha channel
-    int palette_list[2];
-    weed_plant_t *in_chantmpls[2];
-    weed_plant_t *out_chantmpls[2];
-    weed_plant_t *in_params[P_END + 1], *pgui;
-    weed_plant_t *filter_class;
-    PangoContext *ctx;
+  const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
+  // removed palettes with alpha channel
+  int palette_list[2];
+  weed_plant_t *in_chantmpls[2];
+  weed_plant_t *out_chantmpls[2];
+  weed_plant_t *in_params[P_END + 1], *pgui;
+  weed_plant_t *filter_class;
+  PangoContext *ctx;
 
-    int api_used = weed_get_api_version(plugin_info);
-    int filter_flags = 0, param_flags, error;
+  int api_used = weed_get_api_version(plugin_info);
+  int filter_flags = 0, param_flags, error;
 
-    if (is_big_endian())
-      palette_list[0] = WEED_PALETTE_ARGB32;
-    else
-      palette_list[0] = WEED_PALETTE_BGRA32;
+  if (is_big_endian())
+    palette_list[0] = WEED_PALETTE_ARGB32;
+  else
+    palette_list[0] = WEED_PALETTE_BGRA32;
 
-    palette_list[1] = WEED_PALETTE_END;
+  palette_list[1] = WEED_PALETTE_END;
 
-    in_chantmpls[0] = weed_channel_template_init("in channel 0", 0, palette_list);
-    in_chantmpls[1] = NULL;
+  in_chantmpls[0] = weed_channel_template_init("in channel 0", 0, palette_list);
+  in_chantmpls[1] = NULL;
 
-    out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list);
-    out_chantmpls[1] = NULL;
+  out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list);
+  out_chantmpls[1] = NULL;
 
-    init_unal();
+  init_unal();
 
-    // this section contains code
-    // for configure fonts available
-    num_fonts_available = 0;
-    fonts_available = NULL;
+  // this section contains code
+  // for configure fonts available
+  num_fonts_available = 0;
+  fonts_available = NULL;
 
-    ctx = gdk_pango_context_get();
-    if (ctx) {
-      PangoFontMap *pfm = pango_context_get_font_map(ctx);
-      if (pfm) {
-        int num = 0;
-        PangoFontFamily **pff = NULL;
-        pango_font_map_list_families(pfm, &pff, &num);
-        if (num > 0) {
-          // we should reserve num+1 for a final NULL pointer
-          fonts_available = (const char **)weed_malloc((num + 1) * sizeof(char *));
-          if (fonts_available) {
-            register int i;
-            num_fonts_available = num;
-            for (i = 0; i < num; ++i) {
-              fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
-            }
-            // don't forget this thing
-            fonts_available[num] = NULL;
-            // also we sort fonts in alphabetical order
-            qsort(fonts_available, num, sizeof(char *), font_compare);
+  ctx = gdk_pango_context_get();
+  if (ctx) {
+    PangoFontMap *pfm = pango_context_get_font_map(ctx);
+    if (pfm) {
+      int num = 0;
+      PangoFontFamily **pff = NULL;
+      pango_font_map_list_families(pfm, &pff, &num);
+      if (num > 0) {
+        // we should reserve num+1 for a final NULL pointer
+        fonts_available = (const char **)weed_malloc((num + 1) * sizeof(char *));
+        if (fonts_available) {
+          register int i;
+          num_fonts_available = num;
+          for (i = 0; i < num; ++i) {
+            fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
           }
+          // don't forget this thing
+          fonts_available[num] = NULL;
+          // also we sort fonts in alphabetical order
+          qsort(fonts_available, num, sizeof(char *), font_compare);
         }
-        g_free(pff);
       }
-      g_object_unref(ctx);
+      g_free(pff);
     }
-
-    in_params[P_TEXT] = weed_text_init("text", "_Text", "");
-    in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-    if (weed_plant_has_leaf(in_params[P_MODE], "flags"))
-      param_flags = weed_get_int_value(in_params[P_MODE], "flags", &error);
-    param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[P_MODE], "flags", param_flags);
-
-    if (fonts_available)
-      in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, fonts_available);
-    else
-      in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, def_fonts);
-    in_params[P_FOREGROUND] = weed_colRGBi_init("foreground", "_Foreground", 255, 255, 255);
-    in_params[P_BACKGROUND] = weed_colRGBi_init("background", "_Background", 0, 0, 0);
-    in_params[P_FGALPHA] = weed_float_init("fr_alpha", "_Alpha _Foreground", 1.0, 0.0, 1.0);
-    in_params[P_BGALPHA] = weed_float_init("bg_alpha", "_Alpha _Background", 1.0, 0.0, 1.0);
-    in_params[P_FONTSIZE] = weed_float_init("fontsize", "_Font Size", 20.0, 10.0, 128.0);
-    in_params[P_CENTER] = weed_switch_init("center", "_Center text", WEED_TRUE);
-    in_params[P_RISE] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
-    in_params[P_TOP] = weed_float_init("top", "_Top", 0.0, 0.0, 1.0);
-    in_params[P_END] = NULL;
-
-    pgui = weed_parameter_template_get_gui(in_params[P_TEXT]);
-    weed_set_int_value(pgui, "maxchars", 65536);
-
-    pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
-    weed_set_int_value(pgui, "copy_value_to", P_BGALPHA);
-
-    filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL,
-                                          in_chantmpls,
-                                          out_chantmpls,
-                                          in_params, NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
-                                          NULL,
-                                          (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
-    weed_free(clone1);
-    weed_free(clone2);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
-
-    weed_set_int_value(plugin_info, "version", package_version);
+    g_object_unref(ctx);
   }
 
-  return plugin_info;
+  in_params[P_TEXT] = weed_text_init("text", "_Text", "");
+  in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
+  if (weed_plant_has_leaf(in_params[P_MODE], "flags"))
+    param_flags = weed_get_int_value(in_params[P_MODE], "flags", &error);
+  param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+  weed_set_int_value(in_params[P_MODE], "flags", param_flags);
+
+  if (fonts_available)
+    in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, fonts_available);
+  else
+    in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, def_fonts);
+  in_params[P_FOREGROUND] = weed_colRGBi_init("foreground", "_Foreground", 255, 255, 255);
+  in_params[P_BACKGROUND] = weed_colRGBi_init("background", "_Background", 0, 0, 0);
+  in_params[P_FGALPHA] = weed_float_init("fr_alpha", "_Alpha _Foreground", 1.0, 0.0, 1.0);
+  in_params[P_BGALPHA] = weed_float_init("bg_alpha", "_Alpha _Background", 1.0, 0.0, 1.0);
+  in_params[P_FONTSIZE] = weed_float_init("fontsize", "_Font Size", 20.0, 10.0, 128.0);
+  in_params[P_CENTER] = weed_switch_init("center", "_Center text", WEED_TRUE);
+  in_params[P_RISE] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
+  in_params[P_TOP] = weed_float_init("top", "_Top", 0.0, 0.0, 1.0);
+  in_params[P_END] = NULL;
+
+  pgui = weed_parameter_template_get_gui(in_params[P_TEXT]);
+  weed_set_int_value(pgui, "maxchars", 65536);
+
+  pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
+  weed_set_int_value(pgui, "copy_value_to", P_BGALPHA);
+
+  filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL,
+                                        in_chantmpls,
+                                        out_chantmpls,
+                                        in_params, NULL);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
+                                        NULL,
+                                        (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
+  weed_free(clone1);
+  weed_free(clone2);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 
-void weed_desetup(void) {
+WEED_DESETUP_START {
   // clean up what we reserve for font family names
   if (num_fonts_available && fonts_available) {
     int i;
@@ -583,4 +580,4 @@ void weed_desetup(void) {
   num_fonts_available = 0;
   fonts_available = NULL;
 }
-
+WEED_DESETUP_END;

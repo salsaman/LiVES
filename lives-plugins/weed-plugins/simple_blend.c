@@ -59,7 +59,7 @@ static int chroma_init(weed_plant_t *inst) {
   sdata->obf = 0;
   make_blend_table(sdata, 0, 255);
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -68,7 +68,7 @@ static int chroma_deinit(weed_plant_t *inst) {
   int error;
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
   if (sdata != NULL) weed_free(sdata);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -173,7 +173,7 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
     dst += orowstride;
   }
   weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

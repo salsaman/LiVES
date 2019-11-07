@@ -7103,7 +7103,7 @@ static void oscbuf_to_packet(OSCbuf *obuf, OSCPacketBuffer packet) {
     LIVES_ERROR("error, OSC msglen > 100 !");
   }
 
-  memcpy(OSCPacketBufferGetBuffer(packet), OSC_getPacket(obuf), bufsize);
+  lives_memcpy(OSCPacketBufferGetBuffer(packet), OSC_getPacket(obuf), bufsize);
   *psize = bufsize;
 }
 

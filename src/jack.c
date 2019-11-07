@@ -47,7 +47,7 @@ static boolean check_zero_buff(size_t check_size) {
   if (check_size > zero_buff_count) {
     zero_buff = (unsigned char *)lives_realloc(zero_buff, check_size);
     if (zero_buff) {
-      memset(zero_buff + zero_buff_count, 0, check_size - zero_buff_count);
+      lives_memset(zero_buff + zero_buff_count, 0, check_size - zero_buff_count);
       zero_buff_count = check_size;
       return TRUE;
     }

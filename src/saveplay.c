@@ -3311,15 +3311,15 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->event_list = cfile->event_list_back = NULL;
   cfile->next_event = NULL;
 
-  memset(cfile->name, 0, 1);
-  memset(cfile->mime_type, 0, 1);
-  memset(cfile->file_name, 0, 1);
-  memset(cfile->save_file_name, 0, 1);
+  lives_memset(cfile->name, 0, 1);
+  lives_memset(cfile->mime_type, 0, 1);
+  lives_memset(cfile->file_name, 0, 1);
+  lives_memset(cfile->save_file_name, 0, 1);
 
-  memset(cfile->comment, 0, 1);
-  memset(cfile->author, 0, 1);
-  memset(cfile->title, 0, 1);
-  memset(cfile->keywords, 0, 1);
+  lives_memset(cfile->comment, 0, 1);
+  lives_memset(cfile->author, 0, 1);
+  lives_memset(cfile->title, 0, 1);
+  lives_memset(cfile->keywords, 0, 1);
 
   cfile->signed_endian = AFORM_UNKNOWN;
   lives_snprintf(cfile->undo_text, 32, "%s", _("_Undo"));
@@ -4139,8 +4139,8 @@ boolean read_headers(const char *file_name) {
     // old style headers (pre 0.9.6)
     retval = LIVES_RESPONSE_OK;
     mainw->read_failed = FALSE;
-    memset(version, 0, 32);
-    memset(buff, 0, 1024);
+    lives_memset(version, 0, 32);
+    lives_memset(buff, 0, 1024);
 
     header_fd = lives_open2(old_hdrfile, O_RDONLY);
 
@@ -4257,7 +4257,7 @@ void open_set_file(int clipnum) {
 
   if (mainw->current_file < 1) return;
 
-  memset(name, 0, CLIP_NAME_MAXLEN);
+  lives_memset(name, 0, CLIP_NAME_MAXLEN);
 
   if (mainw->cached_list != NULL) {
     boolean retval;
@@ -5215,12 +5215,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
 
     if (buff[strlen(buff) - 1] == '\n')
-      memset(buff + strlen(buff) - strlen("\n"), 0, 1);
+      lives_memset(buff + strlen(buff) - strlen("\n"), 0, 1);
 
     if (!strcmp(buff + strlen(buff) - 1, "*")) {
       boolean crash_recovery = prefs->crash_recovery;
       // set to be opened
-      memset(buff + strlen(buff) - 1 - strlen(LIVES_DIR_SEP), 0, 1);
+      lives_memset(buff + strlen(buff) - 1 - strlen(LIVES_DIR_SEP), 0, 1);
       if (!is_legal_set_name(buff, TRUE)) continue;
 
       // dont write an entry yet, in case we were assigned the same pid as the recovery file

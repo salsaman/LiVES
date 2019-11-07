@@ -188,7 +188,7 @@ int lifetv_init(weed_plant_t *inst) {
   clear_field(sdata, video_area);
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -205,7 +205,7 @@ int lifetv_deinit(weed_plant_t *inst) {
     weed_free(sdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -281,7 +281,7 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   sdata->field1 = sdata->field2;
   sdata->field2 = p;
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

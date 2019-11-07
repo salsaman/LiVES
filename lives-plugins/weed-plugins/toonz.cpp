@@ -757,7 +757,7 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
 
   weed_free(in_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -860,7 +860,7 @@ int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   weed_free(in_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 ///////////////////////////////

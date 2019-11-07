@@ -2164,11 +2164,11 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   orow = weed_get_int_value(dchan, WEED_LEAF_ROWSTRIDES, &error);
 
   if (irow == orow) {
-    memcpy((void *)dpdata, (void *)spdata, irow * iheight);
+    lives_memcpy((void *)dpdata, (void *)spdata, irow * iheight);
   } else {
     int ipwidth = iwidth * weed_palette_get_bits_per_macropixel(ipal) / 8;
     for (i = 0; i < iheight; i++) {
-      memcpy((void *)dpdata, (void *)spdata, ipwidth);
+      lives_memcpy((void *)dpdata, (void *)spdata, ipwidth);
       spdata += irow;
       dpdata += orow;
     }

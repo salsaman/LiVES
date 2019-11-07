@@ -1,4 +1,3 @@
-#ifdef WEED_STARTUP_TESTS
 void run_weed_startup_tests(void) {
   weed_plant_t *plant;
   int a, type, ne, st, flags;
@@ -7,6 +6,12 @@ void run_weed_startup_tests(void) {
   weed_error_t werr;
   char **keys;
   int n;
+  void *ptr, *ptr2;
+  void *ptra[4];
+  char *s[4];
+
+
+
 
   // run some tests..
   plant = weed_plant_new(WEED_PLANT_HOST_INFO);
@@ -325,6 +330,72 @@ void run_weed_startup_tests(void) {
   werr = weed_plant_free(plant);
   fprintf(stderr, "wpf returned %d\n", werr);
 
+  //
+
+  werr = weed_set_voidptr_value(plant, "nullptr",  NULL);
+  fprintf(stderr, "set null void * returned %d\n", werr);
+
+  ptr = weed_get_voidptr_value(plant, "nullptr", &werr);
+  fprintf(stderr, "get null vooid * returned (%p) %d\n", ptr, werr);
+
+  ptr = weed_get_voidptr_value(plant, "nullptrxx", &werr);
+  fprintf(stderr, "get nonexist void * returned (%p) %d\n", ptr, werr);
+
+  werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 0, NULL);
+  fprintf(stderr, "set null basic voidptr zero returned %d\n", werr);
+
+  ptr = weed_get_voidptr_value(plant, "nullbasic", &werr);
+  fprintf(stderr, "get null basic voidptr 0 returned (%p) %d\n", ptr, werr);
+
+  /* werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL); */
+  /* fprintf(stderr, "set null string returned %d\n", werr); */
+
+  /* ptr = weed_get_voidptr_value(plant, "nullbasic", &werr); */
+  /* fprintf(stderr, "get null string returned (%p) %d\n", ptr, werr); */
+
+
+
+  ptr2 = NULL;
+  werr = weed_leaf_set(plant, "indirect", WEED_SEED_VOIDPTR, 1, &ptr2);
+  fprintf(stderr, "set null ptr returned %d\n", werr);
+
+  ptr = weed_get_voidptr_value(plant, "indirect", &werr);
+  fprintf(stderr, "get null string returned (%p) %d\n", ptr, werr);
+
+
+  ptra[0] = &werr;
+  ptra[1] = &keys;
+  ptra[2] = NULL;
+  ptra[3] = &ptra[3];
+
+  weed_leaf_set(plant, "ptrs", WEED_SEED_VOIDPTR, 4, &ptra);
+  fprintf(stderr, "set null array elem ptra returned %d\n", werr);
+
+  void **ptrb = weed_get_voidptr_array(plant, "ptrs", &werr);
+  fprintf(stderr, "get void ** returned (%p %p %p %p) %d\n", ptrb[0], ptrb[1], ptrb[2], ptrb[3], werr);
+
+
+  s[0] = "okok";
+  s[1] = "1ok2ok";
+  s[2] = NULL;
+  s[3] = "1ok2ok";
+
+  weed_leaf_set(plant, "ptrs", WEED_SEED_VOIDPTR, 4, &ptra);
+  fprintf(stderr, "set null array elem ptra returned %d\n", werr);
+
+  ptrb = weed_get_voidptr_array(plant, "ptrs", &werr);
+  fprintf(stderr, "get void ** returned (%p %p %p %p) %d\n", ptrb[0], ptrb[1], ptrb[2], ptrb[3], werr);
+
+
+  weed_leaf_set(plant, "strings", WEED_SEED_STRING, 4, &s);
+  fprintf(stderr, "set char ** %d\n", werr);
+
+  char **stng2;
+  stng2 = weed_get_string_array(plant, "strings", &werr);
+  fprintf(stderr, "get char ** returned (%s %s %s %s) %d\n", stng2[0], stng2[1], stng2[2], stng2[3], werr);
+
+  werr = weed_leaf_set(plant, "arrawn", WEED_SEED_VOIDPTR, 4, ptra);
+  fprintf(stderr, "set null array returned %d\n", werr);
 
   keys = weed_plant_list_leaves(plant);
   n = 0;
@@ -359,6 +430,37 @@ void run_weed_startup_tests(void) {
   werr = weed_leaf_set_flags(plant, "type", WEED_FLAG_IMMUTABLE);
   flags = weed_leaf_get_flags(plant, "type");
   fprintf(stderr, "get flags returned %d\n", flags);
+
+
+  werr = weed_leaf_set_flags(plant, "arrawn", WEED_FLAG_UNDELETABLE);
+  fprintf(stderr, "set flags returned %d\n", werr);
+  flags = weed_leaf_get_flags(plant, "arrawn");
+  fprintf(stderr, "get flags returned %d\n", flags);
+
+  werr = weed_leaf_set_flags(plant, "indirect", WEED_FLAG_UNDELETABLE);
+  werr = weed_leaf_set_flags(plant, "Test2", WEED_FLAG_UNDELETABLE);
+
+  werr = weed_plant_free(plant);
+  fprintf(stderr, "wpf returned %d\n", werr);
+
+  keys = weed_plant_list_leaves(plant);
+  n = 0;
+  while (keys[n] != NULL) {
+    fprintf(stderr, "key %d is %s\n", n, keys[n]);
+    free(keys[n]);
+    n++;
+  }
+  free(keys);
+
+
+  werr = weed_leaf_set_flags(plant, "arrawn", 0);
+  fprintf(stderr, "set flags returned %d\n", werr);
+  flags = weed_leaf_get_flags(plant, "arrawn");
+  fprintf(stderr, "get flags returned %d\n", flags);
+
+  werr = weed_leaf_set_flags(plant, "indirect", WEED_FLAG_IMMUTABLE);
+  werr = weed_leaf_set_flags(plant, "Test2", 0);
+
 
   werr = weed_plant_free(plant);
   fprintf(stderr, "wpf returned %d\n", werr);

@@ -98,6 +98,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifdef _lives_calloc
 #undef _lives_calloc
 #endif
+
 //#define USE_STD_MEMFUNCS
 #ifndef USE_STD_MEMFUNCS
 // here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
@@ -405,8 +406,6 @@ typedef struct {
 } lives_colRGBA64_t;
 
 #include "widget-helper.h"
-
-typedef  void *(*fn_ptr)(void *ptr);
 
 #define ALLOW_PNG24
 

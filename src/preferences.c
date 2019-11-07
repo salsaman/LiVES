@@ -2118,8 +2118,8 @@ boolean apply_prefs(boolean skip_warn) {
           if (mt_undo_buf < prefs->mt_undo_buf) {
             ssize_t space_needed = mainw->multitrack->undo_buffer_used - (size_t)(mt_undo_buf * 1024 * 1024);
             if (space_needed > 0) make_backup_space(mainw->multitrack, space_needed);
-            memcpy(new_undo_buf, mainw->multitrack->undo_mem, mt_undo_buf * 1024 * 1024);
-          } else memcpy(new_undo_buf, mainw->multitrack->undo_mem, prefs->mt_undo_buf * 1024 * 1024);
+            lives_memcpy(new_undo_buf, mainw->multitrack->undo_mem, mt_undo_buf * 1024 * 1024);
+          } else lives_memcpy(new_undo_buf, mainw->multitrack->undo_mem, prefs->mt_undo_buf * 1024 * 1024);
           ulist = mainw->multitrack->undos;
           while (ulist != NULL) {
             ulist->data = new_undo_buf + ((unsigned char *)ulist->data - mainw->multitrack->undo_mem);

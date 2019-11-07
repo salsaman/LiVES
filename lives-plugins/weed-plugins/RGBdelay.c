@@ -252,7 +252,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     if (weed_get_int_value(in_channel, "YUV_clamping", &error) == WEED_YUV_CLAMPING_CLAMPED) {
       // unclamp the values in the lut
       yuvmin = 16;
-      uvmin = 128;
+      uvmin = 16;
       yscale = 255. / 235.;
       uvscale = 255. / 240.;
     }
@@ -338,11 +338,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       for (dst = odst; dst < end; dst += orowstride) {
         for (i = 0; i < width; i += 3) {
           if (j == 0) {
-            if (!is_yuv) weed_memset(&dst[i], 0, 3);
-            else {
-              dst[i] = 0;
-              dst[i + 1] = dst[i + 2] = 128;
-            }
+            weed_memset(&dst[i], 0, 3);
           }
           if (b1) dst[i] += sdata->lut[0][sdata->cache[k][x + i - cross]];
           if (b2) dst[i + 1] += sdata->lut[1][sdata->cache[k][x + i]];

@@ -250,7 +250,7 @@ static inline weed_error_t __weed_get_values__(weed_plant_t *plant, const char *
   if ((*retval = (char *)weed_malloc(num_elems * dsize)) == NULL) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
-  for (i = 0; i < num_elems; i++) {
+  for (i = 0; (weed_size_t)i < num_elems; i++) {
     if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t) & (*retval)[i * dsize])) != WEED_SUCCESS) {
       weed_free(*retval);
       *retval = NULL;
@@ -320,7 +320,7 @@ static char **weed_get_string_array(weed_plant_t *plant, const char *key, weed_e
     if (error != NULL) *error = WEED_ERROR_MEMORY_ALLOCATION;
     return NULL;
   }
-  for (i = 0; i < num_elems; i++) {
+  for (i = 0; (weed_size_t)i < num_elems; i++) {
     if ((retvals[i] = (char *)weed_malloc((size = weed_leaf_element_size(plant, key, i)) + 1)) == NULL) {
       for (--i; i >= 0; i--) weed_free(retvals[i]);
       if (error != NULL) *error = WEED_ERROR_MEMORY_ALLOCATION;

@@ -161,6 +161,10 @@ void create_blank_layer(weed_plant_t *layer, const char *image_ext, int width, i
 
 void alpha_unpremult(weed_plant_t *layer, boolean un);
 
+boolean align_pixel_data(weed_plant_t *layer, size_t alignment);
+
+boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array);
+
 // palette information functions
 boolean weed_palette_is_valid_palette(int pal);
 boolean weed_palette_is_alpha_palette(int pal);

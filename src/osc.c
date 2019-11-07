@@ -146,7 +146,7 @@ static void lives_osc_parse_float_argument(const void *vargs, float *arguments) 
 
 /* memory allocation functions of libOMC_dirty (OSC) */
 void *lives_osc_malloc(int num_bytes) {
-  return _lives_malloc(num_bytes);
+  return lives_malloc(num_bytes);
 }
 
 

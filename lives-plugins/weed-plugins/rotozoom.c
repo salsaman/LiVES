@@ -7,14 +7,21 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h> // optional
+#else
+#include "../../libweed/weed-plugin.h" // optional
+#endif
+
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
+#include "../../lilbweed/weed-palettes.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -26,13 +33,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -171,36 +171,32 @@ int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+WEED_SETUP_START(200, 200) {
+  int i;
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
+                       };
 
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_params[] = {weed_integer_init("zoom", "_Zoom value", 128, 0, 255), weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("rotozoom", "effectTV", 1, WEED_FILTER_HINT_MAY_THREAD, rotozoom_init,
+                               rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    int i;
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                          WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
-                         };
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-    weed_plant_t *in_params[] = {weed_integer_init("zoom", "_Zoom value", 128, 0, 255), weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("rotozoom", "effectTV", 1, WEED_FILTER_HINT_MAY_THREAD, rotozoom_init,
-                                 rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-
-    // static data for all instances
-    for (i = 0; i < 256; i++) {
-      float rad = (float)i * 1.41176 * 0.0174532;
-      float c = sin(rad);
-      roto[i] = (c + 0.8) * 4096.0;
-      roto2[i] = (2.0 * c) * 4096.0;
-    }
+  // static data for all instances
+  for (i = 0; i < 256; i++) {
+    float rad = (float)i * 1.41176 * 0.0174532;
+    float c = sin(rad);
+    roto[i] = (c + 0.8) * 4096.0;
+    roto2[i] = (2.0 * c) * 4096.0;
   }
-  return plugin_info;
 }
+WEED_SETUP_END;
+
 
 
 

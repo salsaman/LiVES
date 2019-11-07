@@ -5,20 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifdef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifdef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
 #include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -138,39 +140,35 @@ int mirrorxy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2;
+  // all planar palettes
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_RGBA32, WEED_PALETTE_ARGB32, WEED_PALETTE_BGRA32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_END};
 
-  if (plugin_info != NULL) {
-    // all planar palettes
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_RGBA32, WEED_PALETTE_ARGB32, WEED_PALETTE_BGRA32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("mirrorx", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorx_process, NULL,
+                               in_chantmpls, out_chantmpls,
+                               NULL, NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plant_t *filter_class = weed_filter_class_init("mirrorx", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorx_process, NULL,
-                                 in_chantmpls, out_chantmpls,
-                                 NULL, NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  filter_class = weed_filter_class_init("mirrory", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrory_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)), NULL, NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
 
-    filter_class = weed_filter_class_init("mirrory", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrory_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)),
-                                          (clone2 = weed_clone_plants(out_chantmpls)), NULL, NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
+  filter_class = weed_filter_class_init("mirrorxy", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorxy_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)), NULL, NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
 
-    filter_class = weed_filter_class_init("mirrorxy", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mirrorxy_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)),
-                                          (clone2 = weed_clone_plants(out_chantmpls)), NULL, NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 

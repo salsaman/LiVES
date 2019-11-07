@@ -302,24 +302,30 @@ Each leaf has at least:
 The "seed type" denotes the type of the value field in a leaf.
 Weed offers the following '''fundamental''' types:[[BR]]
 
- * WEED_SEED_INT     : equivalent to a signed /unsigned 32 bit integer
- * WEED_SEED_DOUBLE  : equivalent to a 64 bit signed double
- * WEED_SEED_BOOLEAN : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE 
- * WEED_SEED_STRING  : NUL terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
- * WEED_SEED_INT64   : signed /unsigned 64 bit integer
+ * WEED_SEED_INT     [1] : equivalent to a signed /unsigned 32 bit integer. size = 4 bytes
+ * WEED_SEED_DOUBLE  [2] : equivalent to a 64 bit signed double. size = 8 bytes
+ * WEED_SEED_BOOLEAN [3] : signed /unsigned 32 bit integer, acceptable values are WEED_FALSE or WEED_TRUE. size = 4 bytes 
+ * WEED_SEED_STRING  [4] : NUL terminated array of char (max length is uint32_max). (char *)NULL is treated as a zero length string.
+   		     	   size = strlen(value)
+ * WEED_SEED_INT64   [5] : signed /unsigned 64 bit integer . size = 8 bytes
 
 
-'''Pointer''' types (number >= 64)
-Pointers may be of any size, however they will be stored as 64 bit. It is up to the application to handle any problems caused.
-
- * WEED_SEED_VOIDPTR     : corresponds to a 32 or 64 bit C void * type. Will be stored internally as uint64_t
 
 
- * WEED_SEED_PLANTPTR    : a pointer / reference to another weed plant.
+ * WEED_SEED_FUNCPTR    [64]  : corresponds to a function pointer. In the case of getting / setting values, the address of a variable
+                                or an array holding the function pointer should be used.
+				Size == WEED_FUNCPTR_SIZE
+
+'''Pointer''' types (number > 64) :
+size == WEED_VOIPTR_SIZE = 8
+
+ * WEED_SEED_VOIDPTR    [65]  : corresponds to a 32 or 64 bit C void * type. Will be stored internally as uint64_t
+
+
+ * WEED_SEED_PLANTPTR   [66]  : a pointer / reference to another weed plant.
    			   
 
-Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer seeds, however only WEED_SEED_VOIDPTR
-may be auto-freed on deletion (see below).
+Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer seeds.
 
 
 == COMPILING WITH WEED ==
@@ -369,43 +375,45 @@ copy is by reference.
 
 
 
- * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, weed_voidptr_t values)
+ * weed_error_t weed_leaf_set (weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values)
 
     Set leaf values and number of elements.
 
     If plant is NULL, the function shall return WEED_ERROR_NOSUCH_LEAF.
     If key is NULL or zero length, it is equivalent to setting the "type" leaf.
 
-    IF seed_type is not a pointer type (>= 64) and not one of the fundamental types, then WEED_ERROR_WRONG_SEED_TYPE is returned and
-    the leaf is not created or altered.
+    IF seed_type is not a pointer / funcptr type (>= 64) and not one of the fundamental types,
+    then WEED_ERROR_WRONG_SEED_TYPE is returned and the leaf is not created or altered.
 
     If the leaf already exists and has a different seed_type then WEED_ERROR_WRONG_SEED_TYPE will be returned and the value
     will not be updated.
     
-    Values should be A pointer to an array of the appropriate type and array size, cast to a weed_voidptr_t
+    values should be pointer to an array of the appropriate type and array size, cast to a void *
 
-    E.g for WEED_SEED_INT, values should be (weed_voidptr_t)(int32_t[num_elems]) or (weed_voidptr_t)(unt32_t[num_elems]),
-
-for WEED_SEED_STRING, it should be (weed_voidptr_t)(char *[num_elems]),
-
-for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
-    etc.
+    for WEED_SEED_INT, values should be (void *)(int32_t[num_elems]) or (void *)(unt32_t[num_elems])
+    for WEED_SEED_DOUBLE, values should be (void *)(double[num_elems])
+    for WEED_SEED_BOOLEAN, values should be (void *)(int32_t[num_elems])
+    for WEED_SEED_INT64, values should be (void *)(int64_t[num_elems])
+    for WEED_SEED_STRING, it should be (void *)(char *[num_elems]),
+    for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t[num_elems])
+    for WEED_SEED_VOIDPTR, (void *)(weed_voidptr64_t[num_elems])
+    for WEED_SEED_PLANTPTR, (void *)(((weed_voidptr64_t)(weed_plant_t *))[num_elems])
+    custom types (seed_type >= 65536) would be similar to WEED_SEED_PLANTPTR, but with a different seed_type.
 
     The values array is assumed to be of the correct size and type.
 
     If the leaf does not exist in the plant, then it will be created and added to the plant, otherwise the value and array size
-    of the existing leaf will be amended.
+    of the existing leaf will be amended and the old data will be freed.
 
 
     If num_elems is 0 then only the seed_type is set (or checked if the leaf already exists),
-    and while in this state.
-    any attempts to retrieve the value with weed_leaf_get() shall return WEED_LEAF_NOSUCH_ELEMENT. However this is useful if
-    you want to fix the seed_type of a leaf without setting any particular value.
+    and while in this state any attempts to retrieve the value with weed_leaf_get() shall return WEED_LEAF_NOSUCH_ELEMENT.
+    This is useful if you want to fix the seed_type of a leaf without setting any particular value.
 
     Passing a NULL pointer for values and num_elems > 0 will likely lead to undesired behaviour.
 
     In case of a memory error, WEED_ERROR_MEMORY_ALLOCATION is returned, and either the leaf is not created,
-    or its num_elems is set to zero and its value to NULL.
+    or if it already exists then its num_elems is set to zero and its value to NULL.
 
 
     (as of API 200) If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
@@ -419,41 +427,52 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
 
 
 
-* weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) :
+* weed_error_t weed_leaf_get (weed_plant_t *plant, const char *key, int32_t idx, void *value) :
 
     returns the nth (starting from 0) element of the specified leaf.
 
-    value should be typecast to a weed_voidptr_t from a pointer of the appropriate type (depending on the seed_type of the leaf.)
-    E.g for WEED_SEED_INT it should be int32_t * or uint32_t *. For WEED_SEED_STRING, a char **,
-    for WEED_SEED_VOIDPTR a weed_voidptr_t *. etc.
+    value should be typecast to a (void *) from a pointer of the appropriate type, depending on the seed_type of the leaf.
+    (If the seed_type is not known, it should be retrieved first with weed_leaf_get_seed_type()).
+
+    For WEED_SEED_INT it should be (void *)(int32_t *) or (void *)(uint32_t *).
+    For WEED_SEED_DOUBLE it should be (void *)(double *)
+    For WEED_SEED_BOOLEAN it should be (void *)(int32_t *)
+    For WEED_SEED_INT64 it should be (void *)(int64_t *)
+    For WEED_SEED_STRING, a (void *)(char **),
+    for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t *),
+
+    for WEED_SEED_VOIDPTR (void *)(weed_voidptr64_t *),
+    for WEED_SEED_PLANTPTR (void *)(*((weed_voidptr64_t)(weed_plant_t *)))
+
+    custom types (>= 65536) would be similar to WEED_SEED_PLANTPTR but with a different seed_type.
 
     If if the leaf does not exist, or plant is NULL, WEED_ERROR_NOSUCH_LEAF is returned.
     If key is NULL or zero length, it is equivalent to getting the "type" leaf.
 
     If the leaf exists but the element does not exist, then WEED_ERROR_NOSUCH_ELEMENT is returned.
-    Note: prior to API version 200, this would erroneously return WEED_ERROR_NOSUCH_LEAF. If this behaviour is
-    still required, then set the api version < 200 in weed_init(). 
+    Note: prior to API version 200, this would erroneously return WEED_ERROR_NOSUCH_LEAF. In the unlikely case that this behaviour
+    is still required (e.g. for backwards compatibility), then set the api version < 200 in weed_init().
 
-    the value of the leaf element will be copied to value (IF value is non-NULL), and WEED_SUCCESS will be returned.
+    the value of the leaf element will be copied to value (IF value is non-NULL) using standard memcpy(),
+    and WEED_SUCCESS will be returned.
 
     Note:
     For WEED_SEED_STRING, it may be necessary to first call weed_leaf_element size()
     and allocate a char array of at least the returned value + 1 (to hold the terminating NUL) in which to receive the value.
 
-
-    (For this reason it may be easier to use a utilities library such as libweed-utils which will perform this process in a more
-    convenient fashion.)
     
-
-    It is not a programming error to pass in a NULL pointer for value. In this case, Weed will not attemt to copy the value, but will
+    Note:
+    It is not a programming error to pass in a NULL pointer for value. In this case, Weed will not attemt to copy to value, but will
     still return an error code: either WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_NOSUCH_ELEMENT.
 
-    In this way, it is possible to check if a leaf exists in the plant or not, by calling weed_leaf_get(plant, key, 0, NULL);
-    - if the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF will be returned
+    thus by calling:      weed_leaf_get(plant, key, 0, NULL),
+    it is possible to check whether a leaf exists, and whether it has a value set.
+    - if the leaf doesn't exist, then WEED_ERROR_NOSUCH_LEAF will be returned.
     - if the value of the leaf is NULL, then number of elements should be 0, and WEED_ERROR_NOSUCH_ELEMENT will be returned
     - if the value of the leaf has 1 or more elements, then WEED_SUCCESS will be returned.
 
-
+   If you just want to check whether a leaf exists or not, it may be simpler to call weed_leaf_seed_type() and test if it
+   returns WEED_SEED_INVALID.
 
 
 
@@ -470,15 +489,13 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
 
    For leaves with seed type WEED_SEED_STRING, the data is freed for each non NULL element.
 
-   For leaves with type WEED_SEED_VOIDPTR, the data of any elements with non-zero size (meaning the value was last set with
-   weed_leaf_set_voidptr_sizes()), is freed - unless the WEED_FLAG_IMMUTABLE bit is set in the leaf flags.
-
    The "type" leaf of a plant may only ever be deleted via weed_plant_free(). If you attempt to delete it with weed_leaf_delete()
-   then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set), otherwise WEED_ERROR_NOSUCH_LEAF
-   will be returned. (Note the normal order of precedence of errors is reversed in this case, WEED_ERROR_NOSUCH_LEAF would normally
+   then either WEED_ERROR_UNDELETABLE will be returned (if the WEED_FLAG_UNDELETABLE bit is set for it),
+   otherwise WEED_ERROR_NOSUCH_LEAF will be returned.
+   (Note the normal order of precedence of errors is here reversed: WEED_ERROR_NOSUCH_LEAF would normally
    be returned BEFORE WEED_ERROR_UNDELETABLE).
 
-   Note that the flag bit WEED_FLAG_IMMUTABLE is ignored in this function.
+   The flag bit WEED_FLAG_IMMUTABLE is ignored in this function.
 
 
 
@@ -487,30 +504,24 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
    - returns the number of elements for the specified leaf.
 
    if the leaf does not exist or the plant is NULL, returns 0. Since it is possible to create leaves with 0 elements,
-   this is not a good method to use to check whether a leaf exists or not. If you want to do this you should use weed_leaf_get()
-   with value set to NULL as described above, or weed_leaf_get_seed_type (as described below).
+   this is not a good method to use to check whether a leaf exists or not. If you want to do this you should use
+   weed_leaf_get_seed_type (as described below), or weed_leaf_get() with value set to NULL as described above.
 
-   If key is NULL or zero length, it is considered equivalent to trying to the "type" leaf.
+   If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
 
 
 
  * weed_size_t weed_leaf_element_size (weed_plant_t *plant, const char *key, int32_t idx)
 
-   If the  plant is NULL, the leaf does not exist or idx is out of range, (weed_size_t)0 will be returned.
+   If the plant is NULL, the leaf does not exist, or idx is out of range, (weed_size_t)0 will be returned.
 
    If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
    For WEED_SEED_STRING, returns the string length in bytes (without any terminating NUL); equivalent to strlen().
 
-   [T.B.D
-   For WEED_SEED_VOIDPTR, if the value was last set via the weed_leaf_set_sizes() function, returns the size set.
-   Otherwise, returns 0.]
-
-   NOTE: the meaning of this changed as of API 200. Prior to this, for WEED_SEED_VOIDPTR it would return sizeof(void *).
-   weed.h now defines WEED_VOIDPTR_SIZE so 
-   it may be advisable to enclose code in #ifdef WEED_VOIDPTR_SIZE if dealing with older versions of the API.
-   if the old behavior is required, then weed_init() can be called with an API version < 200 (e.g. 199).
+   if the seed_type is WEED_SEED_VOIDPTR or WEED_SEED_FUNCPTR and the value is NULL, weed_size_t(0) is returned.
+   otherwise it will return WEED_VOIDPTR_SIZE or WEED_FUNCPTR_SIZE respectively.
 
    For all other seed types, returns sizeof(seed_type), (e.g. for WEED_SEED_INT, returns 4, for WEED_SEED_INt64, returns 8).
    
@@ -523,17 +534,17 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
    Returns the seed_type for a leaf. If the plant is NULL or the leaf does not exist, will return WEED_SEED_INVALID.
    If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
-   This can be used to check whether a leaf exists or not (provided plant is non-NULL). If you want to differentiate
-   between leaves that have values or not, use the weed_leaf_get() method described above.
-
+   This fact can be used to check whether a leaf exists or not (provided plant is non-NULL). If you want to differentiate
+   between leaves that have values or not, you should also call weed_leaf_num_elements(),
+   or use the weed_leaf_get() method described above.
 
 
 
 
 
  * int32_t weed_leaf_get_flags(weed_plant_t *plant, const char *key) : get the flags for a leaf
-   No checking is done to ensure that plant is not NULL or that the leaf exists, this is left to the caller.
-   In this case (int32_t)0 will be returned.
+
+   If plant is NULL or the leaf does not exist, (int32_t)0 will be returned.
 
    Otherwise the value of the leaf flags is returned.
 
@@ -547,11 +558,12 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
 
    returns error WEED_ERROR_UNDELETABLE if the "type" flag has WEED_LEAF_UNDELETABLE set, and nothing will be freed.
 
-   If the plant is NULL then WEED_SUCCESS is returned.
+   If the plant is NULL the function simply returns WEED_SUCCESS.
 
    otherwise, any leaves which do NOT have the WEED_FLAG_UNDELETABLE bit set will be freed in a similar fashion to weed_leaf_delete()
 
-   if all of the leaves except the "type" leaf were deleted, the "type" leaf will be deleted and the plant is freed.
+   if all of the leaves except the "type" leaf were deleted, and the "type" leaf does not have the WEED_FLAG_UNDELETABLE bit set,
+   the "type" leaf will be deleted and the plant is therefore freed.
    Im this case WEED_SUCCESS is returned.
    
    If leaves other than the type leaf remain (because they were undeletable), the "type" leaf is not freed, and
@@ -559,26 +571,29 @@ for WEED_SEED_VOIDPTR, (weed_voidptr_t)(weed_voidptr_t[num_elems])
    flag bit from the remaining leaves (e.g with weed_plant_list_leaves() and weed_leaf_set_flags()),
    before calling weed_plant_Free() a second time.
 
-   To recap: if none of the leaves have the WEED_FLAG_UNDELETABLE flag bit set, the plant will be freed and WEED_SUCCESS returned.
-   If any of the leaves other than they "type" leaf have the flag bit set, neither they nor the "type" leaf will nbe deleted and
+   To recap:
+
+   If the "type" leaf has the WEED_FLAG_UNDELETABLE bit set, no leaves will be deleted, and WEED_ERROR_UNDELETABLE is returned.
+
+   If any of the other leaves have the flag bit set, neither they nor the "type" leaf will be deleted and
    WEED_ERROR_UNDELETABLE is returned.
-   If the "Type" leaf has the WEED_FLAG_UNDELETABLE bit set, no leaves will be deleted, and WEED_ERROR_UNDELETABLE is returned.
 
-   Note that as with weed_leaf_delete(), the flag bit WEED_FLAG_IMMUTABLE is ignoredin this function.
+   if none of the leaves have the WEED_FLAG_UNDELETABLE flag bit set, all the leaves will be deleted and WEED_SUCCESS returned.
 
-
-
+   Note that as with weed_leaf_delete(), the flag bit WEED_FLAG_IMMUTABLE is ignored in this function.
 
 
 
  * char **weed_plant_list_leaves (weed_plant_t *plant)
-   returns a (char *)NULL terminated char * array of leaf keys.
+   returns a (char *)[] array of leaf keys, with the final element set to NULL.
 
-   In case of memory error, NULL is returned and the array is not created. The caller should free any non-NULL elements
-   when no longer required.
+   In case of memory error, NULL is returned and the array is not created.
 
-   If plant is NULL, returns an array with just the (char *)NULL final element.
+   The caller should free any non-NULL elements when no longer required.
 
+   If plant is NULL, the function returns a char ** array of size one, with the single elemnt set to (char *)NULL.
+
+   The standard malloc(), memcpy() and free() functions will be used when creating the array and all the strings.
 
 
 
@@ -591,58 +606,30 @@ A Weed host has access to an additional function which is not available to plugi
 
    Caution ! Clearing the WEED_FLAG_IMMUTABLE bit for the "type" leaf allows the plant type to be changed !
 
-   Setting the WEED_FLAG_UNDELETABLE bit for the "type" leaf prevents the plant and ANY leaves from being freed
+   Setting the WEED_FLAG_UNDELETABLE bit for the "type" leaf prevents ANY leaves from being freed
    using weed_plant_free().
 
-   Setting the WEED_FLAG_UNDELETABLE bit for any other leaf prevents the plant and that leaf from being freed
+   Setting the WEED_FLAG_UNDELETABLE bit for any other leaf prevents the "type" leaf and that leaf from being freed
    using weed_plant_free().
 
-   Setting the WEED_FLAG_UNDELETABLE bit for any leaf also prevents the leaf from being deleted
+   Setting the WEED_FLAG_UNDELETABLE bit for any leaf prevents that leaf from being deleted
    using weed_leaf_delete().
 
    Will return WEED_ERROR_NOSUCH_LEAF if the plant is NULL or leaf does not exist.
 
 
 
-(T.B.D) Setting the WEED_FLAG_IMMUTABLE  bit for leaves of type WEED_SEED_VOIDPTR prevents the data from being freed when the leaf
-   is deleted.
-
 
 
 
 As of API 200: (TODO):
 
- * weed_error_t weed_leaf_set_voidptr_sizes (weed_plant_t *plant, const char *key, weed_size_t num_elems,
- weed_voidptr_t values, weed_size_t *sizes)
 
- Only valid for leaves with a seed type WEED_SEED_VOIDPTR. Will amend or create the leaf with
- (weed_voidptr_t)weed_voidptr_t[num_elems], Otherwis will return WEED_ERROR_WRONG_SEED_TYPE.
-
- and set the data sizes for the array. When the leaf is freed (with weed_plant_free or weed_leaf_delete) any non-NULL values
- will be automaticaly freed UNLESS the WEED_FLAG_IMMUTABLE flag bit is set.
-
- If the leaf is later amended with weed_leaf_set(), the sizes will be reset to 0.
-
-    No checking is performed to see if plant is NULL or a valid plant, this is left to the caller. The arrays are assumed to be of
-    the correct size and type.
-
-    If num_elems is 0 then only the seed_type is set, and the leaf value is set to NULL.
-
-    Passing a NULL pointer for values or sizes and num_elems > 0 will likely lead to undesired behaviour.
-
-    In case of a memory error, WEED_ERROR_MEMORY_ALLOCATION is returned, and either the leaf is not created,
-    or its num_elems is set to zero and its value to NULL.
-
-    If the WEED_FLAG_IMMUTABLE flag bit is set for the leaf, then WEED_ERROR_IMMUTABLE
-    is returned and the leaf is not altered.
-
-
-
-
- * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
+ * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems,
+   weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
 
  Retrieves the num_elements, values, sizes and flags for the specified leaf.
- "values" should be cast to an array of the appropriate type and also freed after use, along with
+ "values" should be cast to an array of the appropriate type (depending on the seed type) and freed after use, along with
  any string values retrieved. Any of the fields may be NULL (except for plant).
  Will return WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_MEMORY_ALLOCATION.
 
@@ -651,7 +638,10 @@ As of API 200: (TODO):
  the number of elements in each leaf, and flags will be set to the flags for the "type" leaf. All returned arrays should be freed
  after use, plus all the (string) values (except the final NULL).
 
- Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION.
+ The standard malloc(), memcpy() amd free() functions will be used when creating the values array. 
+
+ Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION. In case of memory allocation error both the sizes and values arrays will
+ be freed and set to NULL.
 
 
 
@@ -683,7 +673,7 @@ if (error == WEED_SUCCESS) {
 
 
 
-If the "type" leaf is set undeletable, then the plant cannot be freed using weed_plant_free(),
+If the "type" leaf is set undeletable, then no leaves will be freed using weed_plant_free(),
 the function will return WEED_ERROR_UNDELETABLE. In this case you need to clear the flag bit prior to calling weed_plant_free().
 
 The combination of immutable and undeletable flag bits is designed so that Weed hosts can prevent plugins from
@@ -712,21 +702,24 @@ Errors are listed here in order of precedence from highest to lowest.
     plugin/host tried to read value of an invalid element number in a leaf; returned from weed_leaf_get()
 
  *  WEED_ERROR_WRONG_SEED_TYPE[[BR]]
-    once the seed_type of a leaf is set, you cannot change
-    it. weed_leaf_set_*() will return this error if
-    you attempt such a thing, and the value of the leaf will not be amended.
+    returned from weed_leaf_set() if the leaf has the WEED_FLAG_IMMUTABLE bit set
 
  *  WEED_ERROR_IMMUTABLE[[BR]]
-    returned if you try to alter the value of a leaf which has the WEED_FLAG_IMMUTABLE bit set
+    returned from weed_leaf_set() if you try to alter the value of a leaf which has the WEED_FLAG_IMMUTABLE bit set
 
  *  WEED_ERROR_UNDELETABLE[[BR]]
-    returned if you try to delete a leaf which has the WEED_FLAG_UNDELETABLE bit set
+    returned if you try to delete a leaf which has the WEED_FLAG_UNDELETABLE bit set, or if weed_plant_free() finds any leaves
+    with this flag bit set
 
 *   WEED_ERROR_BADVERSION [[BR]]
     returned from weed_init() if the host specifies an api version that the library cannot support.
 
  *  WEED_ERROR_MEMORY_ALLOCATION[[BR]]
     memory allocation has failed
+
+
+
+Error numbers >= 65536 are reserved for custom errors.
 
 
 
@@ -754,6 +747,8 @@ WEED_ABI_VERSION is #defined as 200 in the header.
 WEED_ABI_VERSION_200 is also #defined in the header.
 
 WEED_VOIDPTR_SIZE is #defined as (sizeof(void *))
+
+WEED_FUNCPTR_SIZE is #defined as (sizeof(weed_funcptr_t))
 
 weed_voidptr_t is typedefed to (uint64_t *)
 weed_size_t is typedefed to (uint32_t)
@@ -797,10 +792,6 @@ use of the rest of the header file.
 
 HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
 
-
-
-
-== Weed Plugin and Weed Host ===
 
 
 
@@ -936,43 +927,31 @@ The header also provides compatibility with other libraries, eg. libav. Check th
 
 
 
-== WEED_API_VERSION / WEED_ABI_VERSION ==
-
-This is defined as 200 for this version of the specification. This
-number will be increased for future revisions of the spec. if a
-function or a symbol is changed or added.
+=== functions ===
+Add here
 
 
 
-== NOTE ABOUT COLOUR SPACES ==
-N.B. if you don't understand this section, you can safely ignore it.
 
-As of API version 200, Weed effect plugins may choose to operate in the LINEAR (i.e. perceptual) colour space. This means that
-for RGB type palettes, the component values (R, G, B) represent the values which are displayed on the monitor.
+=== Re-entrancy ===
 
-For example, since the human eye perceives darker values more strongly than lighter values, a mid-grey in this colour space has
-an (R, G, B) value of (55, 55, 55). This colour space is used since it is much better for calculating visual brightness (luma)
-values, and for mixing (adding) and multiplying colour values perceptually. Thus all colour "pixel_data" values for RGB(A) will
-be supplied by the host or generated by the plugin using this colour space ('transfer function' to be more precise).
+Add here
 
-In addition to the "pixel_data" values, the R, G, B VALUEs of any WEED_HINT_COLOR type parameters will be converted to this
-colour space by the host. So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the plugin would
-receive the values (55, 55, 55). When creating the parameter templates, the DEFAULT and NEW_DEFAULT values should also be
-in linear gamma. (For float types, the equivalent is 0.5 and 0.181818...).
-
-If the host supports this, it will set the WEED_HOST_SUPPORTS_LINEAR_GAMMA bit in the HOST_INFO "flags"
-It will then set the "gamma_type" leaves for RGB CHANNEL instances and colour PARAMETER instances to WEED_GAMMA_LINEAR.
-
-The plugin can request this behaviour be overridden for individual parameters (in or out) by setting the
-PARAMETER_TEMPLATE's "gamma_type" leaf to WEED_GAMMA_SRGB.
-The host should then leave the VALUEs in the sRGB space and set "gamma_type" to WEED_GAMMA_SRGB for the PARAMETER instance.
-Note this applies only to paramters, individual channels cannot be overridden.
+ * static data per instance
 
 
-If a plugin desires this behaviour it can set the flag bit WEED_FILTER_HINT_LINEAR_GAMMA in the FILTER_CLASS.
+=== Multiple filters in one plugin ===
 
-This mode may be much better for plugins that want to mix / overlay channels or colour values, or use perceptual brightness values
-without reference to absolute colour. 
+Add here
+
+* weed_clone_plants
+
+
+
+
+
+
+
 
 
 
@@ -1010,17 +989,20 @@ WEED_LEAF_CALLOC_FUNC "weed_calloc_func"
 WEED_LEAF_REALLOC_FUNC "weed_realloc_func"
 WEED_LEAF_MEMMOVE_FUNC "weed_memmove_func"
 
+ * "weed_api_version" : WEED_SEED_INT : weed api version exposed in host,
+
+ * "filter_api_version" : WEED_SEED_INT : filter api version provided by host
 
 
 '''Optional leaves''': [[BR]]
 
- * "weed_api_version" : WEED_SEED_INT : weed api version exposed in host,
- * "filter_api_version" : WEED_SEED_INT : filter api version provided by host
- * "plugin_info" : WEED_SEED_PLANTPTR : a pointer to the most recent PLUGIN_INFO created from this template
+ * "plugin_info" : WEED_SEED_PLANTPTR : array of pointers to PLUGIN_INFO created from this template
 
  * "host_name"    : WEED_SEED_STRING : host name
  * "host_version" : WEED_SEED_STRING : host version
  * "flags"        : WEED_SEED_INT : bitmap of host_info flags (see below)
+
+
 
 
 
@@ -1071,17 +1053,16 @@ the plugin after weed_setup(), and should not be altered by the host.
  * "author"       : WEED_SEED_STRING : the filter author(s) - DO NOT change this unless a new "version" of the plugin is made - instead add to the 
                       "extra_authors" leaf (see below)
  * "version"      : WEED_SEED_INT : filter version. Adding more parameters does not require a version update. However, removing parameters, changing 
-   		    their order or type, adding or removing channel templates does require an update. Prior versions of the filter MUST be left in 
-		    plugin, as hosts may be using them.
- * "process_func" : WEED_SEED_VOIDPTR : pointer to the process_func()
- * "plugin_info"  : WEED_SEED_PLANTPTR : pointer to the PLUGIN_INFO plant containing this FILTER_CLASS
+   		    their order or type, adding or removing channel templates does require an update.
+		    Prior versions of the filter MUST be left in plugin, as hosts may be using them.
 
 '''Optional leaves''': [[BR]]
 
  * "flags"        : WEED_SEED_INT : bitmap of filter flags (see below)
- * "init_func"    : WEED_SEED_VOIDPTR : pointer to the init_func()
+ * "process_func" : WEED_SEED_FUNCPTR : pointer to the process_func()
+ * "init_func"    : WEED_SEED_FUNCPTR : pointer to the init_func()
                     (can also be NULL)
- * "deinit_func"  : WEED_SEED_VOIDPTR : pointer to a the deinit_func()
+ * "deinit_func"  : WEED_SEED_FUNCPTR : pointer to a the deinit_func()
                     (can also be NULL)
  * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
  * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
@@ -1419,7 +1400,7 @@ value for the parameter. The host should not change any other leaves.
 
  * "description"      : WEED_SEED_STRING : parameter description
 
- * "interpolate_func" : WEED_SEED_VOIDPTR : pointer to interpolate_func pointer.
+ * "interpolate_func" : WEED_SEED_FUNCPTR : pointer to interpolate_func pointer.
    		      	 See below, Plugin Functions. For in parameters only.
 
  * "gui" : WEED_SEED_PLANTPTR : each parameter_template (for in_parameters) can have a
@@ -1729,9 +1710,11 @@ Normally, host and plugin would use utility functions to simplify the prcedure o
 the host does:
 
 weed_plant_t *plugin_info = weed_setup(weed_bootstrap_func);
-if (plugin_info != NULL)
+if (plugin_info != NULL) {
+
 
 ....
+
 
 
 and the plugin does:
@@ -1741,9 +1724,9 @@ WEED_SETUP_START(weed_api_current_version, filter_api_current_version) {
 
 .. setup the plugin info
 
-
-WEED_SETUP_END;
 }
+WEED_SETUP_END;
+
 
 
 Howeer the full details are described below.
@@ -1919,6 +1902,20 @@ This may seem complex, but it provides several advantages:
 
 
 
+==== weed_desetup ====
+This is an optional function in Weed.
+
+{{{
+    void weed_desetup(void);
+}}}
+
+If the plugin has this function, the host should call it before
+unloading the plugin. This is to allow the plugin to reset any hardware, free allocated memory, etc.
+
+The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
+parameter_templates, gui), that job is left to the host to perform.
+
+
 
 ==== init_func ====
 This is an optional function in Weed.
@@ -1928,7 +1925,9 @@ This is an optional function in Weed.
     int init_func(weed_plant_t *filter_instance)
 }}}
 
-The host calls this and passes in the desired filter_instance.
+If this function is set in the plugin_info, the host MUST call this function exactly once before it can use the process_func.
+passing in the filter_instance to be used.
+
 The filter plant instance passed to the init_func MUST have been
 correctly setup to match the filter class it relates to, 
 this means that all the mandatory leaves of input and output channels and of input parameters MUST be set.
@@ -1944,49 +1943,49 @@ the "gui" settings for parameter_templates (see below).
 
 
 ==== process_func ====
-This is a mandatory function in Weed.
+This is an optional function in the plugin. Ths host may call this as often as it wishes after calling the init_func (if it exists).
 
 {{{
     int process_func(weed_plant_t *filter_instance, long timestamp)
 }}}
 
-Host calls this for each processing cycle; the plugin can do its frame
-processing here. The function returns a weed error code (see
-below). Timestamp is the presentation time in ticks (1/100 of a microsecond) (can be e.g. time since playback start). The function returns a weed error code (see below). 
+Host calls this for each processing cycle; the plugin should process the in parameters and in channels (if any) and
+write data to the out channels and out parameters (if any).
+
+Timestamp is the presentation time in ticks (1/100 of a microsecond).
+Normally it will increase monotonically for each frame but that is not guaranteed, although hosts should attempt to keep it so
+between calling init_func and deinit_func.
+
+The function returns an error code (see below). 
 
 
 
 ==== deinit_func ====
-This is an optional function in Weed.
+This is an optional function in the plugin. If present, the host must call it once after running the init_func and completing
+the processing run.
 
 
 {{{
     int deinit_func(weed_plant_t *filter_instance)
 }}}
 
-The host will call this to allow the plugin to free() any internal
-memory. Following this the host may free() the filter_instance
-plant. The plugin does not need to free any plants or leaves; the host should take care of this.
+The host will call this once after it has finished running the process_func()
+to allow the plugin to free() any internal memory and reset its internal values.
+
+Following this the host may call the init_func() again if it wishes to continue using the plugin,
+otherwise it may call the desetup function and then free the host_info, plugin_info and any filter_instance plants.
+
+The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
+parameter_templates, gui), that job is left to the host to perform.
 
 
 
 
-==== weed_desetup ====
-This is an optional function in Weed.
-
-{{{
-    void weed_desetup(void);
-}}}
-
-If the plugin has this function, the host should call it before
-unloading the plugin. This is to allow the plugin to reset any
-hardware, etc.
-
-
+Less commonly used functions:
 
 
 ==== display_func ====
-This is an optional function in Weed.
+This is an optional function for a host to call.
 
 {{{
     void display_func(weed_plant_t *parameter);
@@ -1995,7 +1994,7 @@ This is an optional function in Weed.
 For the given parameter, the plugin should examine its "value", get
 its "template" leaf, get the "gui" leaf from this, and finally, set the
 "display_value" in the "gui". The "display_value" should be of
-seed_type WEED_SEED_STRING.  This "display_value" should be displayed
+seed_type WEED_SEED_STRING.  This "display_value" may be displayed
 by the host instead of the normal parameter "value". 
 "display_func" is an optional leaf of a parameter_template "gui". 
 The host MUST ensure that "display_value" is writable by the plugin
@@ -2006,14 +2005,14 @@ plugin afterwards.
 
 
 ==== interpolate_func ====
-This is an optional function in Weed.
+This is an optional function for a host to call.
 
 {{{
     int interpolate_func(weed_param_t **in_params, weed_param_t *out_param);
 }}}
 
 The function takes a NULL terminated array of parameters for a single
-parameter_template, with "timecode","value" and possibly "ignore" 
+parameter_template, with "timecode", "value" and possibly "ignore" 
 leaves, and returns a best guess for the "value" of out_param. The
 in_params array MUST be in ascending "timecode" order. The "timecode"
 leaf of out_param MUST be set. All the parameter values in_params and
@@ -2024,8 +2023,7 @@ The value returned is actually a boolean. A return value of WEED_TRUE
 means the "value" set in out_param is exact. A return value of
 WEED_FALSE means that the "value" in out_param is a guess. In the
 latter case, the host can recall the function with more elements in
-in_params to get a more accurate result.
-
+in_params to try to get a more accurate result.
 
 
 
@@ -2046,92 +2044,241 @@ The HOST_INFO plant can also have other optional leaves to provide
 more information about the host, and optional functions.
 
 
-== OUTLINE WEED PROCESS FLOW OVERVIEW ==
-
- * Host calls weed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
-   for the host.
-
- *  Host loads plugin (using dlopen)
-
- *  Host calls the weed_setup() function in the plugin, passing in a pointer to the bootstrap function (normally this would be
-    weed_bootstrap in the weed-utils library.
-
- *  plugin calls the bootstrap function, passing an address to return the default getter function, as well as the minimum and
-    maximum weed and filter api versions the plugin supports. The library checks weed and filter api_versions supported by
-    the plugin. If either host version is less then the plugin minumin version the plugin
-    cannot be loaded. If one or both of the values are greater than the maximum, the library checks for compatibility.
-    If the host version and plugin version are incompatible, the plugin cannot be loaded so NULL is returned. Otherwise it is OK
-    to proceed. The weed_boostrap function will create a HOST_INFO plant and set leaves with the host api versions,
-    pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter function,
-    Optionally, the library will call a callback function in the host before returning the PLUGIN_INFO, so that the host can
-    check, alter or add leaves before it is returned to the plugin (TODO).
-
-
-*  if the HOST_INFO is NULL, the plugin MUST return NULL from its weed_setup() function. Otherwise the plugin uses the
-   default_getter to get the leaves of the HOST_INFO plant until it has enough functions defined to use the normal
-   Weed get function for its weed api version. Then it uses this to get the remaining leaves. Once this is done it creates a
-   PLUGIN_INFO plant. All this would normally be done in the weed-plugin-utils library, weed_plugin_info_init().
 
 
 
+==== Filter errors ====
 
-All of this is simplified by the Weed utility libraries. The host simply calls weed_setup() in the plugin, passing in
-weed_bootstrap as the only parameter, and receives back a PLUGIN_INFO.
+Defined in weed-effects.h
 
+ *  WEED_SUCCESS
+    (This is a standard Weed error code defined in weed.h)
+    The plugin should return this if it encountered no errors in the function. a.k.a WEED_NO_ERROR.
 
-On the plugin side, a simple macro taking 2 parameters, the maximum weed and filter APIs supported, may be used to call the
-bootstrap function and initialise the PLUGIN_INFO, returning NULL to the host if it is NULL. The minimum API versions are assumed
-to be equal to the maximum versions. A different variation of the macro can be used which takes an additional 2 parameters if the
-plugin author wants to specify lower minimum values.
+ *  WEED_ERROR_PLUGIN_INVALID    [[BR]]
+    May be returned from any plugin function.
+    The plugin encountered a fatal error and should no longer be used. The host should call deinit_func() for any active instances
+    and then the desetup function for the plugin, and refrain from using it further.
+
+ *  WEED_ERROR_FILTER_INVALID    [[BR]]
+    May be returned from init_func() or process_func(). The filter_class from which this instance was created from is no longer valid.
+    The host should call deinit_func() for any active instances created from the corresponding filter class, and refrain from
+    using them further.
+
+ *  WEED_ERROR_TOO_MANY_INSTANCES   [[BR]]
+    If a plugin allows only a limited number of filter instances, it may return this from the init_func().
+    The host must not call any further plugin functions for the instance.
+
+*   WEED_ERROR_MEMORY_ALLOCATION
+    (This is a standard Weed error code defined in weed.h)
+    The plugin may return this from the init_func() or process_func(). The plugin iself should call deinit_func() on the instance
+    and free any internal memory structures. The host must not call process_func() or deinit_func() for the instance,
+    but may retry the init_func() with the same or a new instance.
+
+ *  WEED_ERROR_REINIT_NEEDED
+    Returned from process_func(). The plugin enountered an error condition and requires that the host call deinit_func() and
+    init_func() again before retrying the process_func(). If the plugin returns this error again after reiniting by the host,
+    then there is a fault either in the plugin or in the host.
 
 
 
 
 
-When host wants to use the plugin,
+Deprecated:
+ *  WEED_ERROR_HARDWARE    [[BR]]
+    there was a hardware error using the filter; returned
+    from init_func() or from process_func(). If returned from
+    process_func(), the filter should be deinited/reinited. (deprecated)
 
- * Host creates a FILTER_INSTANCE: Host examines the in_channel and out_channel plants, and sets the "disabled" flag for any optional channels it does not wish to use. It also checks "palette_list", selects a palette it would like to start using on that channel and sets the chosen value in the "current_palette" leaf. It also sets the sizes ("width" and "height" leaves) if the plugin left them as zero. All input parameters have to have values set at this point. This means host now has a plant that it will instantiate.
-
- * Host calls init_func() [if it exists] from the filter info plant, passing a pointer to a FILTER_INSTANCE it would like to instantiate.
-
-* Plugin now knows the channel sizes, palettes and which channels are in use. The plugin may now weed_malloc() internal data.
-
- * Host may now change parameter values (respecting "max" and "min" leaves) and it after that it may call process_func() in the plugin, passing in the initialised FILTER_INSTANCE. 
- * When the host has finished with the FILTER_INSTANCE, or if it needs
-   to re-initialise it, the host must call deinit_func() in the plugin
- [if the plugin has one], passing in a pointer to the FILTER_INSTANCE. The plugin MUST now weed_free() any internally allocated data.
-
- * Host can now weed_plant_free() the FILTER_INSTANCE, or it can reuse the FILTER_INSTANCE by calling init_func() once more.
-
-
-
-
-== Plugin locations ==
-
-The list of directories to be searched can be set in the environment
-variable WEED_PLUGIN_PATH; directories in WEED_PLUGIN_PATH should be separated by
-colons (:) the indicated directory and one level of subdirectories
-should be searched for each entry. The directories should be searched
-in order, first to last, and any effects with duplicate Hashnames may
-be ignored. [See hashnames, below].
-
-Icons for each filter may be placed in a /icons subdirectory.
-
-Redonly data files for each filter may be placed in a /data subdirectory.
-The host must run all plugin functions from within the directory above it, so that the plugin can easily 
-find its data files as data/file. In case the plugin needs to write to a file, it should either request a directory 
-location from the user (as a parameter), or else use (a subdirectory of) /tmp.
-
-Note: There is no need for API versioning of the weed directories themselves, as the
-weed_bootstrap system takes care of different Weed API versions.
+ *  WEED_ERROR_INIT_ERROR    [[BR]]
+    other unspecified error during initialisation (deprecated)
 
 
 
 
 
-== Weed Hashnames ==
 
-T.B.D
+==== host plugin flags ====
+
+ * WEED_HOST_SUPPORTS_LINEAR_GAMMA  1  [BR]] (api 200 and above)
+   Denotes that the host will pay attention to the WEED_FILTER_HINT_LINEAR_GAMMA filter flag.
+
+
+
+==== Filter_class flags ====
+
+ *  WEED_FILTER_NON_REALTIME  1  [[BR]]
+    non-realtime filter: the filter is too slow to use in realtime processing.
+    The exact definition of what is realtime and what is not is left to the plugin author to decide.
+
+
+ *  WEED_FILTER_IS_CONVERTER  2  [[BR]]
+    This flag bit should be set if the plugin does not alter the image
+    pixels except for resizing or palette conversion between in
+    channel and out channel(s). It should only be set for the
+    following types of plugins: plugins which only resize the in frame
+    to out frame(s); plugins which only convert the palette from in
+    frame to out frame(s), plugins which simply duplicate the in frame
+    to out frame(s), and for plugins which handle only audio, where the
+    plugin only alters the audio volume [see the Weed Audio
+    Extension].
+
+    It is used to assist with categorisation of the
+    plugin type. To be useful, such filters may also want to use the
+    *_CAN_VARY channel flags below.
+
+ * WEED_FILTER_HINT_IS_STATELESS  4  [[BR]]
+   This is optional, if the filter is stateless (i.e. not dependant on
+   past calls to process_func() ) then this this flag
+   bit can be set. Used mainly for compatibility with other plugin architectures.
+
+ * WEED_FILTER_HINT_LINEAR_GAMMA  8  [BR]] (api 200 +)
+   This is a hint to the host that the plugin prefers to use R, G, B values in linear gamma space.
+   (see note below about colour spaces)
+
+ * WEED_FILTER_HINT_PROCESS_LAST
+   This is a hint to the host that the filter should be run AFTER all other filters have performed their processing.
+   Examples would be a video filter that overlays subtitles on the finished frame,
+   or an audio filter that mixes the final output of several input audio channels. If there are several filters like this in
+   the processing chain, then the host should decide the order to run them in.
+
+*  WEED_FILTER_HINT_MAY_THREAD
+   If a video plugin operates in such a manner that its output may be subdivided vertically, then it may set this hint.
+   The plugin can set this if it can still produce its output when the destination frame is subdivided into non-overlapping,
+   contiguous horizontal areas each with a reduced height.
+   In this case, the process_func() may be called several times with the same timecode, with the "height" of the output
+   channel(s) reduced, and with an extra "offset" leaf added to each output channel,
+   containing the offset in rows of the top of its block
+   from the top of the destination channel pixel_data. The plugin MUST only write to the destination rows between
+   offset and offset + height - 1. The plugin may read from any area of the input channel data, but be aware that if
+   the plugin is running "inplace" then the values read from the in channels may or may not have been processed by another thread.
+
+   If the plugin has internal values which need updating each frame then it needs to implement some method to ensure this
+   happens correctly. For example, the thread with offset zero could do this, but the order the threads are called in is not
+   defined. The first thread with a new timecode could also do it, but it would need to mutex lock the values while updating them.
+   The threads could add their heights together before returning and when the sum equals the full destination height then
+   that thread knows it is the last thread. But again this requires a mutex lock when incrementing the height value.
+
+   For most plugins, the full frame height can be obtained from reading the height of the in channel(s).
+
+   
+
+==== Channel template flags ====
+
+ *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE  1  [[BR]]
+    host must reinit the plugin before calling process_func() if the
+    channel size (height or width in (macro)pixels) is changed.
+
+ *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE  2  [[BR]]
+    host must reinit the plugin before calling process_func() if the channel palette is changed
+
+ *  WEED_CHANNEL_CAN_DO_INPLACE  4  [[BR]]
+    If this flag bit is set, the filter can do inplace operations.
+    Hosts can select this mode by setting "pixel_data" of this out channel
+    equal to the "pixel_data" of the corresponding (same number; not counting "disabled" channels) 
+    in channel. The flag bit is only valid for OUT channels. 
+
+ *  WEED_CHANNEL_SIZE_CAN_VARY  8  [[BR]]
+    All channels are assumed to have the same (macro) pixel size (width and height, but not necessarily rowstrides)
+    as the first non-disabled in_channel (or first non-disabled
+    out_channel for filters that have no in channels). If this flag
+    bit is set, then the host can set this channel to a different (macro) pixel size.
+    For fixed size channels, it is not necessary to set this.
+    Plugins should avoid resizing internally as much as possible, unless they have a "high-performance" resize routine.
+    Otherwise resizing should be left to the host.
+
+ *  WEED_CHANNEL_PALETTE_CAN_VARY  16  [[BR]]
+    In Weed, all channels are assumed to have the same "current_palette"
+    as the first non-disabled in_channel (or first non-disabled
+    out_channel for filters that have no in channels). If this flag
+    bit is set, then the host can set this channel to a different
+    allowed palette. Plugins should not perform palette conversions
+    unless it is unavoidable, and they have a "high-performance" palette
+    conversion routine. Otherwise palette conversion should be left to
+    the host.
+
+ *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE  32  [[BR]]
+    host must reinit the plugin before calling process_func() if the
+    any of the rowstrides are changed. Note that	 
+    changing the palette can sometimes affect the rowstrides. [API 130 and higher].
+
+    This is useful; for example, if the input palette were to change from RGB to RGBA, then the
+    even though the width in pixels might be the same, the rowstrides value will change (e.g from
+    3 * width to 4 * width. So if a plugin is sensitive to frame size changes it may want to set
+    WEED_CHANNEL_REININT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE.
+
+    In the above example, the plugin could set the hints REINIT_ON_SIZE_CHANGE | REINIT_ON_PALETTE_CHANGE instead.
+    However, if the palette were changed from RGB24 to BGR24 for example, it may be possible for the plugin to continue
+    processing, since in this case the frame size (rowstride * height) would remain the same.
+
+*  WEED_CHANNEL_ALPHA_OUT_PREMULT  64  [[BR]]
+    For out channel_templates only (ignored for in channel templates ???).
+    Indicates that alpha is pre-multiplied with the other channels.
+    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
+    For compatibility with applications.
+
+
+Flag bits >=30 are reserved for custom flags.
+
+
+
+
+
+
+==== Channel flags =====
+????
+
+
+* WEED_CHANNEL_ALPHA_PREMULT  1  [[BR]]
+    Indicates that alpha is pre-multiplied with the other channels.
+    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
+    For compatibility with applications.
+
+
+
+
+
+
+==== Parameter template flags ====
+
+ * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE  1  [[BR]]
+   host must reinit the plugin if the parameter "value" is
+   changed. This is to allow the plugin to alter the "gui" settings
+   for the parameters and for the instance. The host must temporarily
+   allow the plugin read/write access to the "gui" plants during the init.
+   Not valid for out parameters.
+
+
+ * WEED_PARAMETER_VARIABLE_ELEMENTS  2  [[BR]]
+   plugin can set this to inform the host that the number of elements in
+   the parameter "value" leaf can vary. If not set, then the number of
+   elements in "value" is fixed; it must always match the number of elements in
+   "default".
+
+   If this is set, then the plugin may only use one element
+   in each of "min" and "max" for the parameter, except for COLOR
+   parameters which may use 3 or 4 depending on the "colorspace".
+
+   Note also that 0 is a valid number of elements. [0 elements means the leaf
+   exists but has no value, since the SEED_TYPE must be known.]
+
+   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for
+   the parameter.
+
+   This flag is assumed for out_parameters.
+
+
+ * WEED_PARAMETER_ELEMENT_PER_CHANNEL  4  [[BR]] - API version 110 and higher
+   This flag bit indicates that each element in the parameter "value"
+   corresponds to one input channel. If a
+   channel template has "max_repeats" set to other than 1, then
+   WEED_PARAMETER_VARIABLE_ELEMENTS is also assumed to be set for the
+   parameter, and so the "new_default" leaf must also be set [see above].
+   Valid for input parameter templates only.
+
+
+Flag bits >= 30 are reserved for custom flags.
+
 
 
 == WEED FLAGS AND TYPES ==
@@ -2188,7 +2335,7 @@ Parameter hints >= 1024 are reserved for custom parameters.
 ==== Weed colorspaces ====
  // Used for WEED_HINT_COLOR parameters.
 
-* WEED_COLORSPACE_RGB  1
+ * WEED_COLORSPACE_RGB  1
 
  * WEED_COLORSPACE_RGBA  2
 
@@ -2299,96 +2446,6 @@ For other data a different range may be used.
 Palette numbers >=2048 are reserved for custom palettes.
 
 
-==== host plugin flags ====
-
- * WEED_HOST_SUPPORTS_LINEAR_GAMMA  1  [BR]] (api 200 and above)
-   Denotes that the host will pay attention to the WEED_FILTER_HINT_LINEAR_GAMMA filter flag.
-
-
-
-==== Filter_class flags ====
-
- *  WEED_FILTER_NON_REALTIME  1  [[BR]]
-    non-realtime filter: the filter is too slow to use in realtime processing.
-    Generally, filters which take more than about 0.1 second to process
-    a frame are considered non-realtime.
-
- *  WEED_FILTER_IS_CONVERTER  2  [[BR]]
-    This flag bit should be set if the plugin does not alter the image
-    pixels except for resizing or palette conversion between in
-    channel and out channel(s). It should only be set for the
-    following types of plugins: plugins which only resize the in frame
-    to out frame(s); plugins which only convert the palette from in
-    frame to out frame(s), plugins which simply duplicate the in frame
-    to out frame(s), and for plugins which handle only audio, where the
-    plugin only alters the audio volume [see the Weed Audio
-    Extension].
-
-    It is used to assist with categorisation of the
-    plugin type. To be useful, such filters may also want to use the
-    *_CAN_VARY channel flags below.
-
- * WEED_FILTER_HINT_IS_STATELESS  4  [[BR]]
-   This is optional, if the filter is stateless (i.e. not dependant on
-   past calls to process_func() ) then this this flag
-   bit can be set. Used for compatibility with other plugin architectures.
-
- * WEED_FILTER_HINT_LINEAR_GAMMA  8  [BR]] (api 200 +)
-
-==== Channel flags =====
-
-* WEED_CHANNEL_ALPHA_PREMULT  1  [[BR]]
-    Indicates that alpha is pre-multiplied with the other channels.
-    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
-    For compatibility with applications.
-
-
-
-
-
-
-==== Parameter template flags ====
-
- * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE  1  [[BR]]
-   host must reinit the plugin if the parameter "value" is
-   changed. This is to allow the plugin to alter the "gui" settings
-   for the parameters and for the instance. The host must temporarily
-   allow the plugin read/write access to the "gui" plants during the init.
-   Not valid for out parameters.
-
-
- * WEED_PARAMETER_VARIABLE_ELEMENTS  2  [[BR]]
-   plugin can set this to inform the host that the number of elements in
-   the parameter "value" leaf can vary. If not set, then the number of
-   elements in "value" is fixed; it must always match the number of elements in
-   "default".
-
-   If this is set, then the plugin may only use one element
-   in each of "min" and "max" for the parameter, except for COLOR
-   parameters which may use 3 or 4 depending on the "colorspace".
-
-   Note also that 0 is a valid number of elements. [0 elements means the leaf
-   exists but has no value, since the SEED_TYPE must be known.]
-
-   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for
-   the parameter.
-
-   This flag is assumed for out_parameters.
-
-
- * WEED_PARAMETER_ELEMENT_PER_CHANNEL  4  [[BR]] - API version 110 and higher
-   This flag bit indicates that each element in the parameter "value"
-   corresponds to one input channel. If a
-   channel template has "max_repeats" set to other than 1, then
-   WEED_PARAMETER_VARIABLE_ELEMENTS is also assumed to be set for the
-   parameter, and so the "new_default" leaf must also be set [see above].
-   Valid for input parameter templates only.
-
-
-Flag bits >= 30 are reserved for custom flags.
-
-
-
 ==== Gamma types (api 200 and above) ====
 
  * WEED_GAMMA_UNKNOWN 0
@@ -2453,27 +2510,135 @@ clamping types >= 512 are reserved for custom clampings.
 subspace types >= 512 are reserved for custom subspaces.
 
 
+== NOTE ABOUT COLOUR SPACES ==
+N.B. if you don't understand this section, you can safely ignore it.
+
+As of API version 200, Weed effect plugins may choose to operate in the LINEAR (i.e. perceptual) colour space. This means that
+for RGB type palettes, the component values (R, G, B) represent the values which are displayed on the monitor.
+
+For example, since the human eye perceives darker values more strongly than lighter values, a mid-grey in this colour space has
+an (R, G, B) value of (55, 55, 55). This colour space is used since it is much better for calculating visual brightness (luma)
+values, and for mixing (adding) and multiplying colour values perceptually. Thus all colour "pixel_data" values for RGB(A) will
+be supplied by the host or generated by the plugin using this colour space ('transfer function' to be more precise).
+
+In addition to the "pixel_data" values, the R, G, B VALUEs of any WEED_HINT_COLOR type parameters will be converted to this
+colour space by the host. So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the plugin would
+receive the values (55, 55, 55). When creating the parameter templates, the DEFAULT and NEW_DEFAULT values should also be
+in linear gamma. (For float types, the equivalent is 0.5 and 0.181818...).
+
+If the host supports this, it will set the WEED_HOST_SUPPORTS_LINEAR_GAMMA bit in the HOST_INFO "flags"
+It will then set the "gamma_type" leaves for RGB CHANNEL instances and colour PARAMETER instances to WEED_GAMMA_LINEAR.
+
+The plugin can request this behaviour be overridden for individual parameters (in or out) by setting the
+PARAMETER_TEMPLATE's "gamma_type" leaf to WEED_GAMMA_SRGB.
+The host should then leave the VALUEs in the sRGB space and set "gamma_type" to WEED_GAMMA_SRGB for the PARAMETER instance.
+Note this applies only to paramters, individual channels cannot be overridden.
 
 
-==== Filter errors ====
+If a plugin desires this behaviour it can set the flag bit WEED_FILTER_HINT_LINEAR_GAMMA in the FILTER_CLASS.
 
-Defined in weed-effects.h
-
- *  WEED_ERROR_TOO_MANY_INSTANCES   [[BR]]
-    can't create: plugin allows only limited number of filter instances, returned from init_func()
-
- *  WEED_ERROR_HARDWARE    [[BR]]
-    there was a hardware error using the filter; returned
-    from init_func() or from process_func(). If returned from
-    process_func(), the filter should be deinited/reinited.
-
- *  WEED_ERROR_INIT_ERROR    [[BR]]
-    other unspecified error during initialisation
-
- *  WEED_ERROR_PLUGIN_INVALID    [[BR]]
-    one or more of the filter_classes is no longer valid. The filter
-    instance should be deinitialised and not reused; returned from process_func().
+This mode may be much better for plugins that want to mix / overlay channels or colour values, or use perceptual brightness values
+without reference to absolute colour. 
 
 
-Error numbers >= 65536 are reserved for custom errors.
+
+
+
+
+
+
+
+
+== OUTLINE WEED PROCESS FLOW OVERVIEW ==
+
+ * Host calls weed_init(), passing in the weed api version it wants to use. If successful, the function sets the core Weed functions
+   for the host.
+
+ *  Host loads plugin (using dlopen)
+
+ *  Host calls the weed_setup() function in the plugin, passing in a pointer to the bootstrap function (normally this would be
+    weed_bootstrap in the weed-utils library.
+
+ *  plugin calls the bootstrap function, passing an address to return the default getter function, as well as the minimum and
+    maximum weed and filter api versions the plugin supports. The library checks weed and filter api_versions supported by
+    the plugin. If either host version is less then the plugin minumin version the plugin
+    cannot be loaded. If one or both of the values are greater than the maximum, the library checks for compatibility.
+    If the host version and plugin version are incompatible, the plugin cannot be loaded so NULL is returned. Otherwise it is OK
+    to proceed. The weed_boostrap function will create a HOST_INFO plant and set leaves with the host api versions,
+    pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter function,
+    Optionally, the library will call a callback function in the host before returning the PLUGIN_INFO, so that the host can
+    check, alter or add leaves before it is returned to the plugin (TODO).
+
+
+*  if the HOST_INFO is NULL, the plugin MUST return NULL from its weed_setup() function. Otherwise the plugin uses the
+   default_getter to get the leaves of the HOST_INFO plant until it has enough functions defined to use the normal
+   Weed get function for its weed api version. Then it uses this to get the remaining leaves. Once this is done it creates a
+   PLUGIN_INFO plant. All this would normally be done in the weed-plugin-utils library, weed_plugin_info_init().
+
+
+
+
+All of this is simplified by the Weed utility libraries. The host simply calls weed_setup() in the plugin, passing in
+weed_bootstrap as the only parameter, and receives back a PLUGIN_INFO.
+
+
+On the plugin side, a simple macro taking 2 parameters, the maximum weed and filter APIs supported, may be used to call the
+bootstrap function and initialise the PLUGIN_INFO, returning NULL to the host if it is NULL. The minimum API versions are assumed
+to be equal to the maximum versions. A different variation of the macro can be used which takes an additional 2 parameters if the
+plugin author wants to specify lower minimum values.
+
+
+
+
+
+When host wants to use the plugin,
+
+ * Host creates a FILTER_INSTANCE: Host examines the in_channel and out_channel plants, and sets the "disabled" flag for any optional channels it does not wish to use. It also checks "palette_list", selects a palette it would like to start using on that channel and sets the chosen value in the "current_palette" leaf. It also sets the sizes ("width" and "height" leaves) if the plugin left them as zero. All input parameters have to have values set at this point. This means host now has a plant that it will instantiate.
+
+ * Host calls init_func() [if it exists] from the filter info plant, passing a pointer to a FILTER_INSTANCE it would like to instantiate.
+
+* Plugin now knows the channel sizes, palettes and which channels are in use. The plugin may now weed_malloc() internal data.
+
+ * Host may now change parameter values (respecting "max" and "min" leaves) and it after that it may call process_func() in the plugin, passing in the initialised FILTER_INSTANCE. 
+ * When the host has finished with the FILTER_INSTANCE, or if it needs
+   to re-initialise it, the host must call deinit_func() in the plugin
+ [if the plugin has one], passing in a pointer to the FILTER_INSTANCE. The plugin MUST now weed_free() any internally allocated data.
+
+ * Host can now weed_plant_free() the FILTER_INSTANCE, or it can reuse the FILTER_INSTANCE by calling init_func() once more.
+
+
+
+
+== Plugin locations ==
+
+The list of directories to be searched can be set in the environment
+variable WEED_PLUGIN_PATH; directories in WEED_PLUGIN_PATH should be separated by
+colons (:) the indicated directory and one level of subdirectories
+should be searched for each entry. The directories should be searched
+in order, first to last, and any effects with duplicate Hashnames may
+be ignored. [See hashnames, below].
+
+Icons for each filter may be placed in a /icons subdirectory.
+
+Redonly data files for each filter may be placed in a /data subdirectory.
+The host must run all plugin functions from within the directory above it, so that the plugin can easily 
+find its data files as data/file. In case the plugin needs to write to a file, it should either request a directory 
+location from the user (as a parameter), or else use (a subdirectory of) /tmp.
+
+Note: There is no need for API versioning of the weed directories themselves, as the
+weed_bootstrap system takes care of different Weed API versions.
+
+
+
+
+
+== Weed Hashnames ==
+
+T.B.D
+
+
+
+
+
+
 

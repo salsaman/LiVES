@@ -5,32 +5,31 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
 
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
+#include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
+#endif
+
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
@@ -227,69 +226,67 @@ static int burn_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
 
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), weed_channel_template_init("in channel 1", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-    weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), weed_channel_template_init("in channel 1", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("blend_multiply", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mpy_process, NULL,
-                                 in_chantmpls, out_chantmpls, in_params1, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("blend_multiply", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &mpy_process, NULL,
+                               in_chantmpls, out_chantmpls, in_params1, NULL);
 
-    weed_set_boolean_value(in_params1[0], "transition", WEED_TRUE);
+  weed_set_boolean_value(in_params1[0], "transition", WEED_TRUE);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    filter_class = weed_filter_class_init("blend_screen", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &screen_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_screen", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &screen_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    filter_class = weed_filter_class_init("blend_darken", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &darken_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_darken", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &darken_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    filter_class = weed_filter_class_init("blend_lighten", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &lighten_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_lighten", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &lighten_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    filter_class = weed_filter_class_init("blend_overlay", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &overlay_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_overlay", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &overlay_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    filter_class = weed_filter_class_init("blend_dodge", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &dodge_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_dodge", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &dodge_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    filter_class = weed_filter_class_init("blend_burn", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &burn_process, NULL,
-                                          (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_free(clone1);
-    weed_free(clone2);
-    weed_free(clone3);
+  filter_class = weed_filter_class_init("blend_burn", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &burn_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_free(clone1);
+  weed_free(clone2);
+  weed_free(clone3);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-    init_RGB_to_YCbCr_tables();
-    init_Y_to_Y_tables();
-  }
-  return plugin_info;
+  init_RGB_to_YCbCr_tables();
+  init_Y_to_Y_tables();
 }
+WEED_SETUP_END;
+

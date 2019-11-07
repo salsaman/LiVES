@@ -125,11 +125,11 @@ typedef int32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
 typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
 typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
+#ifdef __WEED_EXTRA_FUNCS__
 /* added in ABI 200 */
-typedef weed_error_t (*weed_leaf_set_voidptr_sizes_f)(weed_plant_t *, const char *key,
-    weed_size_t num_elems, weed_voidptr_t values, weed_size_t *sizes);
-typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type,
-    weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags);
+/* typedef weed_error_t (*weed_leaf_get_all_f)(weed_plant_t *, const char *key, int32_t *seed_type, */
+/*     weed_size_t *num_elems, weed_voidptr_t values, weed_size_t **sizes, int32_t *flags); */
+#endif
 
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
 /* host only functions */
@@ -167,7 +167,6 @@ __WEED_FN_DEF__ weed_calloc_f weed_calloc;
 __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #endif
 
-#define __WEED_EXTRA_FUNCS__
 #ifdef __WEED_EXTRA_FUNCS__
 /* added in API 200 */
 __WEED_FN_DEF__ weed_leaf_get_all_f weed_leaf_get_all;

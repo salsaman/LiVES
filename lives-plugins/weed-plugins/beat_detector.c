@@ -402,11 +402,11 @@ WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_NO_ERROR) return NULL;
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE), weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
-			       weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
-  };
+                               weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
+                              };
   weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE), weed_out_param_switch_init("beat hold", WEED_FALSE), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, &beat_init, &beat_process,
-						      &beat_deinit, in_chantmpls, NULL, in_params, out_params);
+                               &beat_deinit, in_chantmpls, NULL, in_params, out_params);
 
   weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
   weed_set_boolean_value(gui, "hidden", WEED_TRUE);

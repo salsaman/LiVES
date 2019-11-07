@@ -14,13 +14,13 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifdef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifdef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
@@ -28,7 +28,7 @@
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-utilss.h"
+#include "../../libweed/weed-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -464,9 +464,9 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &blurzoom_init,
-						      &blurzoom_process, &blurzoom_deinit,
-						      in_chantmpls,
-						      out_chantmpls, in_params, NULL);
+                               &blurzoom_process, &blurzoom_deinit,
+                               in_chantmpls,
+                               out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

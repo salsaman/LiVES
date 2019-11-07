@@ -19,7 +19,8 @@ typedef enum {
   FILTER_ERROR_UNABLE_TO_RESIZE,
   FILTER_ERROR_INVALID_PALETTE_SETTINGS,
   FILTER_ERROR_COULD_NOT_REINIT,
-  FILTER_ERROR_MUST_RELOAD,
+  FILTER_ERROR_INVALID_PLUGIN,
+  FILTER_ERROR_NEEDS_REINIT,   // TODO
   FILTER_ERROR_NO_IN_CHANNELS,
   FILTER_ERROR_INVALID_TRACK,
   FILTER_ERROR_INTERPOLATION_FAILED,
@@ -369,7 +370,7 @@ weed_plant_t *weed_instance_obtain(int key, int mode);
 
 #define WEED_ERROR_NOSUCH_PLANT 65536
 
-weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, weed_voidptr_t value);
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *value);
 weed_error_t weed_plant_free_host(weed_plant_t *plant);
 
 #endif

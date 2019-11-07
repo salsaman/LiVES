@@ -226,7 +226,7 @@ static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key,
   }
 
   for (i = 0; i < num_elems; i++) {
-    if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t) &(*retval)[i * dsize])) != WEED_SUCCESS) {
+    if ((err = weed_leaf_get(plant, key, i, (weed_voidptr_t) & (*retval)[i * dsize])) != WEED_SUCCESS) {
       free(*retval);
       *retval = NULL;
       return err;
@@ -742,7 +742,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
     plugin_min_weed_abi_version = plugin_max_weed_abi_version;
     plugin_max_weed_abi_version = tmp;
   }
-  
+
   // set pointers to the functions the plugin will use
 
   wpn = weed_plant_new;

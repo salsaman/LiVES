@@ -301,28 +301,28 @@ static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 WEED_SETUP_START(200, 200) {
   int ipalette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-			 WEED_PALETTE_YUVA4444P,
-			 WEED_PALETTE_YUV444P,
-			 WEED_PALETTE_YUV422P,
-			 WEED_PALETTE_YUV420P,
-			 WEED_PALETTE_YVU420P,
-			 WEED_PALETTE_END
-  };
+                         WEED_PALETTE_YUVA4444P,
+                         WEED_PALETTE_YUV444P,
+                         WEED_PALETTE_YUV422P,
+                         WEED_PALETTE_YUV420P,
+                         WEED_PALETTE_YVU420P,
+                         WEED_PALETTE_END
+                        };
   // define a vector output
   int opalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel",
-							     WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
-							     WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE |
-							     WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,
-							     ipalette_list), NULL
-  };
+                                  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
+                                  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE |
+                                  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,
+                                  ipalette_list), NULL
+                                 };
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("X values", WEED_CHANNEL_PALETTE_CAN_VARY, opalette_list),
-				   weed_channel_template_init("Y values", WEED_CHANNEL_PALETTE_CAN_VARY, opalette_list), NULL
-  };
+                                   weed_channel_template_init("Y values", WEED_CHANNEL_PALETTE_CAN_VARY, opalette_list), NULL
+                                  };
   weed_plant_t *filter_class = weed_filter_class_init("farneback_analyser", "salsaman", 1, 0, &farneback_init,
-						      &farneback_process, &farneback_deinit,
-						      in_chantmpls, out_chantmpls, NULL, NULL);
+                               &farneback_process, &farneback_deinit,
+                               in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

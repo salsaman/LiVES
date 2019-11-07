@@ -4514,7 +4514,7 @@ void splash_init(void) {
 
   LiVESError *error = NULL;
   char *tmp = lives_strdup_printf("%s/%s/lives-splash.png", prefs->prefix_dir, THEME_DIR);
-
+  g_print("LODING splash from %s\n", tmp);
   lives_window_set_auto_startup_notification(FALSE);
 
   mainw->splash_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);

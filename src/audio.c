@@ -401,7 +401,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   // take care of rounding errors
   src_end = src + tbytes / sizeof(short) - nSrcChannels;
 
-  while (nsamples--) {
+  while (nsamples--) {  // vagrind
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
       // same number of channels
 
@@ -544,7 +544,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
   xa = 2.*vol / (SAMPLE_MAX_16BIT_P + SAMPLE_MAX_16BIT_N);
 #endif
 
-  while (nsamples--) {
+  while (nsamples--) { // valgrind
     if (rev_endian) {
       memcpy(&srcx, src, 2);
       srcxs = ((srcx[1] & 0xFF)  << 8) + (srcx[0] & 0xFF);
@@ -1344,14 +1344,14 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT32)) *
                in_asamps[track] * in_achans[track];
 
-      in_buff = (uint8_t *)lives_malloc(tbytes);
+      in_buff = (uint8_t *)lives_malloc(tbytes); // valgrind
 
       if (zavel < 0. && in_fd[track] > -1) lseek64(in_fd[track], seekstart[track] - tbytes, SEEK_SET);
 
       bytes_read = 0;
       mainw->read_failed = FALSE;
 
-      if (in_fd[track] > -1) bytes_read = lives_read(in_fd[track], in_buff, tbytes, TRUE);
+      if (in_fd[track] > -1) bytes_read = lives_read(in_fd[track], in_buff, tbytes, TRUE); // ## valgrind
 
       if (bytes_read < 0) bytes_read = 0;
 
@@ -1363,10 +1363,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (zavel < 0.) seekstart[track] -= bytes_read;
 
       if (bytes_read < tbytes && bytes_read >= 0) {
-        if (zavel > 0) memset(in_buff + bytes_read, 0, tbytes - bytes_read);
+        if (zavel > 0) lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
         else {
-          memmove(in_buff + tbytes - bytes_read, in_buff, bytes_read);
-          memset(in_buff, 0, tbytes - bytes_read);
+          lives_memmove(in_buff + tbytes - bytes_read, in_buff, bytes_read);
+          lives_memset(in_buff, 0, tbytes - bytes_read);
         }
       }
 

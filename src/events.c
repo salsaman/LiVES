@@ -2917,7 +2917,7 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
         nintracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
         in_tracks = weed_get_int_array(init_events[i], WEED_LEAF_IN_TRACKS, &error);
         for (j = 0; j < nintracks; j++) {
-          mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];
+          mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];   // valgrind
         }
         lives_free(in_tracks);
       }
@@ -3035,11 +3035,12 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     lives_freep((void **)&mainw->clip_index);
     lives_freep((void **)&mainw->frame_index);
 
+    // valgrind
     mainw->clip_index = weed_get_int_array(next_event, WEED_LEAF_CLIPS, &error);
     mainw->frame_index = weed_get_int_array(next_event, WEED_LEAF_FRAMES, &error);
 
     if (mainw->scrap_file != -1) {
-      int nclips = weed_leaf_num_elements(next_event, WEED_LEAF_CLIPS);
+      int nclips = mainw->num_tracks;
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, & error);

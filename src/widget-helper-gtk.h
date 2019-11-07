@@ -104,21 +104,34 @@ typedef uint8_t                           boolean;
 #define G_ENCODE_VERSION(major, minor) ((major) << 16 | (minor) << 8)
 #endif
 
-#ifndef _lives_free
-#define _lives_free g_free
-#endif
+/* #define _lives_free(a) g_free(a) */
+/* #define _lives_malloc(a) g_malloc(a) */
+/* #define _lives_malloc0(a) g_malloc0(a) */
+/* #define _lives_realloc(a, b) g_realloc(a, b) */
+/* #define _lives_try_malloc0_n(a, b) g_try_malloc0_n(a, b) */
+/* #define _lives_try_malloc(a) g_try_malloc(a) */
+/* #define _lives_try_malloc0(a) g_try_malloc0(a) */
+/* #define _lives_try_realloc(a, b) g_try_realloc(a, b) */
+/* #define _lives_calloc(a, b) g_malloc0_n(a, b) */
 
-#ifndef _lives_malloc
-#define _lives_malloc g_try_malloc
-#endif
 
-#ifndef _lives_realloc
-#define _lives_realloc g_try_realloc
-#endif
+/* #ifndef _lives_free */
+/* #define _lives_free g_free */
+/* #endif */
 
-#ifndef _lives_calloc
-#define _lives_calloc g_try_malloc0_n
-#endif
+/* #ifndef _lives_malloc */
+/* #define _lives_malloc g_malloc */
+
+/* //#define _lives_malloc g_try_malloc */
+/* #endif */
+
+/* #ifndef _lives_realloc */
+/* #define _lives_realloc g_try_realloc */
+/* #endif */
+
+/* #ifndef _lives_calloc */
+/* #define _lives_calloc g_try_malloc0_n */
+/* #endif */
 
 typedef GError                            LiVESError;
 

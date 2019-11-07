@@ -14,8 +14,7 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static -Wl,--whole-archive -lweed-utils -Wl,--no-whole-archive
-
+shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
@@ -138,7 +137,6 @@ endif
 #	alien_overlay.la 
 #	audio_transition.la 
 #	audio_volume.la 
-#	bump2d.la \
 #	blank_frame_detector.la 
 #	$(opencv_LIBS) 
 #	ccorrect.la 
@@ -152,12 +150,8 @@ endif
 #	fireTV.la 
 #	fourKlives.la \
 #	layout_blends.la 
-#	lifeTV.la 
 #	livetext.la 
 #	log_sig.la 
-#	mirrors.la 
-#	multi_blends.la 
-#	multi_transitions.la \
 #
 #	nn_programmer.la 
 #	noise.la 
@@ -168,7 +162,6 @@ endif
 #	randomiser.la 
 #	revTV.la 
 #	rippleTV.la 
-#	rotozoom.la 
 #	shift.la \
 #
 #	slide_over.la 
@@ -177,7 +170,6 @@ endif
 #	textfun.la 
 #	tone_gen.la 
 #	tvpic.la 
-#	vertigo.la 
 #	warpTV.la 
 #	xeffect.la 
 
@@ -186,7 +178,14 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	kaleidoscope.la \
 	negate.la  \
 	blurzoom.la \
-	simple_blend.la
+	rotozoom.la \
+	lifeTV.la \
+	mirrors.la \
+	vertigo.la \	
+	bump2d.la \
+	simple_blend.la \ 
+	multi_blends.la  \
+	multi_transitions.la \
 
 EXTRA_DIST=data icons syna.h 
 

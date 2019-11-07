@@ -470,7 +470,7 @@ static int projectM_init(weed_plant_t *inst) {
     if (rc == ETIMEDOUT && !sd->worker_ready) {
       // if we timedout then die
       projectM_deinit(inst);
-      return WEED_ERROR_INIT_ERROR;
+      return WEED_ERROR_PLUGIN_INVALID;
     }
 
     inited = 1;

@@ -138,7 +138,7 @@ int libvis_init(weed_plant_t *inst) {
 
   if (libvis->input == NULL) { // wish this worked
     weed_free(libvis);
-    return WEED_ERROR_INIT_ERROR;
+    return WEED_ERROR_PLUGIN_INVALID;
   }
 
   libvis->video = visual_video_new();
@@ -332,7 +332,7 @@ WEED_SETUP_START(200, 200) {
     weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
     out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
     filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
-					  in_chantmpls, out_chantmpls, in_params, NULL);
+                                          in_chantmpls, out_chantmpls, in_params, NULL);
     weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
 
     list = add_to_list_sorted(list, filter_class, (const char *)name);

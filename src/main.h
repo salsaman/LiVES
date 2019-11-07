@@ -98,7 +98,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #ifdef _lives_calloc
 #undef _lives_calloc
 #endif
-
+//#define USE_STD_MEMFUNCS
 #ifndef USE_STD_MEMFUNCS
 // here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
 // at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
@@ -362,6 +362,9 @@ typedef int lives_pgid_t;
 
 // round a up to next (integer) multiple of b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
+
+// round a up to next (integer) multiple of b, unless a is already a multiple of b
+#define ALIGN_CEIL(a, b) ((int)((int)a / (int)b) * (int)b == (int)a ? (int)a : CEIL(a, b))
 
 // round a down to nearest (integer) multiple of b
 #define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)

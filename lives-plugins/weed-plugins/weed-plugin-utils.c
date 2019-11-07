@@ -168,8 +168,8 @@ weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t weed_api
 
   //////////////////////////////////////////////////////////////////////
 
-    if (_leaf_exists(host_info, WEED_LEAF_PLUGIN_INFO)) {
-    weed_leaf_get(host_info, WEED_LEAF_PLUGIN_INFO, 0, &plugin_info);
+  if (_leaf_exists(host_info, WEED_LEAF_PLUGIN_INFO)) {
+    err = weed_leaf_get(host_info, WEED_LEAF_PLUGIN_INFO, 0, &plugin_info);
     if (err == WEED_SUCCESS) {
       int32_t type;
       weed_leaf_get(plugin_info, WEED_LEAF_TYPE, 0, &type);

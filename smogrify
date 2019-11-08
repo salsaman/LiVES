@@ -7175,6 +7175,8 @@ sub clean_old {
     # clear away any old backup files, etc.
     return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
     smog_chdir("$workdir/$handle");
+    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip";
+    print STDERR "smogrify: from directory $workdir/$handle\n";
     unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();
 }
@@ -8334,46 +8336,95 @@ sub weed {
     smog_chdir($workdir);
 
     # get starting disk space
-    my $start_total = (split / /, (smog_system_direct("du -sb . 2>$nulfile")))[0];
-
+    my $start_total = int((split / /, (smog_system_direct("du -sb . 2>$nulfile")))[0]);
+    if (!defined($new_work) || $new_work eq "") {
+	print STDERR "\n\n\n\nsmogrify: running diskspace cleanup in $workdir\n";
+    }
+    else {
+	print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
+    }
+    print STDERR "smogrify: size of directory at start is $start_total bytes\n";
     use File::Find;
     opendir DIR,$workdir;
     while ($file=readdir(DIR)) {
         unless ($file =~ /^\./) {
             if (-d "$workdir/$file") {
+		print STDERR "\n\nchecking subdir $workdir/$file\n";
 		# remove a set unlesss it has clips OR (layouts AND NOT (opts & 0x04))
                 if (&is_non_empty_dir("$workdir/$file/clips") || (&is_non_empty_dir("$workdir/$file/layouts") && !($opts & 0x04))) {
 		    # new style sets, check clips and optionally layouts
                     unless (!defined($new_work)||$new_work eq "") {
+			print STDERR "smogrify: moving $workdir/$file to $new_work/$file\n";
 			# we are to move this set
                         if (-d "$new_work/$file") {
+			    print STDERR "smogrify: backing up $new_work/$file to $new_work/$file.bak first\n";
                             smog_rename( "$new_work/$file","$new_work/$file.bak");
                         }
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
+				print STDERR "smogrify: removing unnecessary files from $workdir/$file\n";
                                 smog_chdir("$workdir/$file");
 				&prune;
+				print STDERR "smogrify: removing lock.* files from $workdir/$file\n";
 				unlink glob "$workdir/$file/lock.*";
                                 smog_chdir("$workdir");
                             }
                         }
                         smog_rename( "$workdir/$file","$new_work/$file");
+			print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
                     }
+		    else {
+			print STDERR "smogrify: directory contains clips or layouts, skipping it\n";
+		    }
                 }
                 else {
                     $in_set=0;
                     find (\&fndset,"$workdir/$file/");
+		    print STDERR "smogrify: checking $workdir/$file\n";
                     if (!$in_set) {
+			print STDERR "smogrify: file does not contain set.* file, assuming it is not in a set\n";
 			if (!($opts & 0x01)) {
-			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9](5, )$/)
+			    print STDERR "considering $workdir/$file for removal\n";
+			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
 				|| $file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
+				print STDERR "removing it\n";
 				smog_system("/bin/rm -rf \"$workdir/$file\"");
+			    }
+			    else {
+				print STDERR "leaving it because: \n";
+				if (! -f "$workdir/$file/order") {
+				    print STDERR "    - $workdir/$file/order does not exist\n";
+				}
+				unless (int($file) > 65535 && $file =~ /^[0-9]{5,}$/) {
+				    unless (int($file > 0)) {
+					print STDERR "     - directory name contains non digit\n";
+				    }
+				    else {
+					unless ($file =~ /^[0-9]{5,}$/) {
+					    print STDERR "     - directory name $file contains fewer than 5 digits\n";
+					}
+					else {
+					    unless (int($file) > 65535) {
+						print STDERR "     - directory name < 65536\n";
+					    }
+					    else {
+						print STDERR "     - unspecified reason ???!!?\n";
+					    }
+					}
+				    }
+				}
+				unless ($file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
+				    print STDERR "     - directory name does not begin with scrap, ascrap or fsp followed by digits.\n";
+				}
+				print STDERR "smogrify: manual cleanup may be required if this directory is no longer needed\n";
 			    }
 			}
 		    }
                     else {
                         unless ($opts & 0x02) {
+			    print STDERR "smogrify: file contain set.* file, assuming it is in a set\n";
                             unless (-f "$workdir/$file/noprune") {
+				print STDERR "smogrify: removing unnecessary files from directory\n";
                                 smog_chdir("$workdir/$file");
 				&prune;
 				smog_chdir("$workdir");
@@ -8383,15 +8434,19 @@ sub weed {
 			    # workdir was changed, so we move all sets (subdirs) from old workdir to new 
 			    # [TODO - check for set name collision !]
                             if (-d "$workdir/$file") {
+				print STDERR "smogrify: moving $workdir/$file to $new_work/$file\n";
                                 if (-d "$new_work/$file") {
+				    print STDERR "smogrify: first I will backup $new_work/$file to $new_work/$file.bak\n";
                                     smog_rename( "$new_work/$file","$new_work/$file.bak");
                                 }
                                 smog_rename( "$workdir/$file","$new_work/$file");
+				print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
                             }
                         }
                     }
                 }
                 unless ($opts & 0x08) {
+		    print STDERR "smogrify: removing temporary marker files set. and noprune from $workdir/$file\n";
                     unlink "$workdir/$file/set.";
                     unlink "$workdir/$file/noprune";
                 }
@@ -8400,6 +8455,7 @@ sub weed {
 		# move crash recovery files
                 unless (!defined($new_work)||$new_work eq "") {
                     if ($file =~ /^recovery/ || $file =~ /^layout/) {
+			print STDERR "smogrify: moving recovery files recovery* and layout* from $workdir to $new_work\n";
                         smog_rename( "$workdir/$file","$new_work/$file");
                     }
                 }
@@ -8412,8 +8468,10 @@ sub weed {
     unless ($opts & 0x10) {
 	# clean up a few extra remnants
 	smog_chdir($workdir);
+	print STDERR "smogrify: removing rfx.* .smogplugin.* .smogval.* and keep_layout* from $workdir\n";
 	unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout*";
 	unless (!defined($new_work)||$new_work eq "") {
+	    print STDERR "smogrify: removing firew* encoder_log_* and stream.* from $workdir\n";
 	    unlink glob "firew.* encoder_log_* stream.*";
 	}
     }
@@ -8421,9 +8479,11 @@ sub weed {
     # total disk space at end
     smog_chdir("$workdir");
     my $end_total = (split / /, (smog_system_direct("du -sb .")))[0];
+    print STDERR "smogrify: size of directory at end is $end_total bytes\n";
+    print STDERR "smogrify: recovered " . ($start_total - $end_total) . " bytes\n";
 
     # return disk space gained (in bytes)
-    return $start_total-$end_total;
+    return $start_total - $end_total;
 }
 
 

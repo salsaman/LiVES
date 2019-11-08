@@ -472,7 +472,8 @@ copy is by reference.
     - if the value of the leaf has 1 or more elements, then WEED_SUCCESS will be returned.
 
    If you just want to check whether a leaf exists or not, it may be simpler to call weed_leaf_seed_type() and test if it
-   returns WEED_SEED_INVALID.
+   returns WEED_SEED_INVALID. If you just want to check if it exists and has a value, you can call
+   weed_leaf_num_elements() and test if the returned value is > 0.
 
 
 
@@ -535,7 +536,7 @@ copy is by reference.
    If key is NULL or zero length, it is considered equivalent to the "type" leaf.
 
    This fact can be used to check whether a leaf exists or not (provided plant is non-NULL). If you want to differentiate
-   between leaves that have values or not, you should also call weed_leaf_num_elements(),
+   between leaves that have values or not, you should call weed_leaf_num_elements() and test if the returned value is > 0,
    or use the weed_leaf_get() method described above.
 
 
@@ -968,7 +969,7 @@ and their mandatory and optional leaves.
 
 '''Mandatory leaves''':[[BR]]
 
-WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_VOIDPTR - pointer to function of type weed_leaf_get_f for the plugin to use
+WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_FUNCPTR - pointer to function of type weed_leaf_get_f for the plugin to use
 WEED_LEAF_SET_FUNC "weed_leaf_set_func"       :: etc...
 WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"       :: etc...
 WEED_PLANT_NEW_FUNC "weed_plant_new_func"
@@ -1042,8 +1043,8 @@ set all leaves in it IMMUTABLE  and should not change any leaf values itself.
 
 Plant type filter_class is used to describe all properties of a single
 filter in a plugin. It is created by the plugin in weed_setup() and
-then added to the plugin_info plant. All leaves in this plant should be set READONLY for
-the plugin after weed_setup(), and should not be altered by the host.
+then added to the plugin_info plant. The plugin should not alter any values in the plant after weed_setup()
+but may add private leaves with keys prefixed "plugin_"
 
 "type" == WEED_PLANT_FILTER_CLASS
 
@@ -1088,6 +1089,7 @@ the plugin after weed_setup(), and should not be altered by the host.
  * Every plugin can store internal data in leaves inside the
    filter_class  plant, and host MUST NOT change their values. Those internal leaves MUST have keys prefixed with "plugin_"
 
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
 
 
 == PLANT TYPE FILTER_INSTANCE ==
@@ -1130,26 +1132,17 @@ filter_class or filter_instance:
 
 Other optional leaves:
 
- * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of
-                                       the target fps rate(s) for the
-                                       host to run the instance.
-				       Host should set "fps" for the
-                                       instance in this case. Host may
-                                       optionally 
-                                       set this READONLY_PLUGIN after
-                                       the plugin has set it, or may
-                                       ignore it.
+ * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
+                                       host to run the instance. The host may choose to ignore this.
 
  * "rowstride_alignment_hint" : WEED_SEED_INT : this is a *hint* to the host that the plugin prefers rowstrides aligned to a certain byte size. It 
   			       		     may be ignored by the host.		      
 
 
- * Every plugin can store internal data in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func.
+ * Every plugin can store internal data in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
 
 
 
@@ -1157,10 +1150,10 @@ Other optional leaves:
 
 == PLANT TYPE CHANNEL_TEMPLATE ==
 
-Plant type channel template is used as a description of a single
-channel (input or output) a filter can handle. All leaves SHOULD
-be set READONLY for the plugin after weed_setup(), and should not
-be altered by the host.
+Plant type channel template is used as a description of a single channel (input or output) a filter can handle.
+The plugin must not alter any leaves after weed_setup(), except it may add its own leaves with keys prefixed "plugin_",
+which the host must not alter.
+
 
  * "type" == WEED_PLANT_CHANNEL_TEMPLATE
 
@@ -1206,10 +1199,11 @@ be altered by the host.
       this template. This is allowed even if the template is not marked "optional" - though in the latter case the number 
       of non-disabled repeats must always be at least 1.
 
- * Every filter can have its internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_"
+ * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_"
+
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
+
 
 
 '''Optional leaves for channels with video''': [[BR]]
@@ -1309,11 +1303,12 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
  * "flags"        : channel flags set by host. e.g WEED_CHANNEL_ALPHA_PREMULT.
 
 
- * Every filter can have its internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func.
+ * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
+
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
+
+
 
 '''Optional leaves for channel plants with video''': [[BR]]
 
@@ -1409,10 +1404,11 @@ value for the parameter. The host should not change any other leaves.
  to display this particular parameter. The plugin can create it, and
  set leaf values in it in weed_setup() and/or in init_func().
 
- * Every filter can have internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func.
+ * Every plugin can have internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
+
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
+
 
 
 ==== PARAMETER HINTS ====
@@ -1583,12 +1579,10 @@ parameters, the host should create the parameters from their templates, but not 
 				  colour space in which the parameter operates.
    		  		  If not set, it can be assumed to be WEED_GAMMA_SRGB.
 
- * Every filter can have its internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func.
+ * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
 
 
 
@@ -1601,7 +1595,9 @@ This plant type has differing properties depending on whether it is
 referenced from (i.e. contained in) filter_instance or from a parameter_template.
 
 ==== filter_class GUI ====
-Plugin may set any of these leaves in weed_setup(). After this they should be set READONLY for the plugin.
+Plugin may set any of these leaves in weed_setup(). After that the plugin must not alter any leaves, except for private leaves
+with keys prefixed "plugin_".
+
 
 '''Mandatory leaves''': [[BR]]
  * "layout_scheme" : WEED_SEED_STRING : string defining the layout
@@ -1617,22 +1613,16 @@ Plugin may set any of these leaves in weed_setup(). After this they should be se
 
  * other optional leaves depend on the "layout_scheme" used
 
- * Every filter can have its internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func.
+ * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
+
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
+
 
 
 ==== parameter_template GUI ====
-Plugin may set and change these leaves in weed_setup() and/or in
-init_func(). At all other times they should
-be set READONLY for the plugin. If the filter is re-inited
-(e.g. because a flagged parameter value was changed, or because a
-channel size or palette was changed), then the
-READONLY_PLUGIN flag should be cleared by the host before calling init_func(), then set again afterwards.
-An exception to this is "display_value", which can be set by the
-plugin whenever "display_func" (if defined) is called.
+Plugin may set and change these leaves in weed_setup() and/or in init_func(). At other times the plugin must not
+alter any of the leaves, excet for those with keys prefixed "plugin_"
 
 All of these leaves indicate optional functionality for the
 host. For example, the plugin should not rely on setting "maxchars" to
@@ -1668,14 +1658,9 @@ rely on setting "copy_value_to" to force the host to set indentical
    STRING hint. For other hints, this will be ignored. A value < 1 should
    also be ignored.
 
- * "display_func" : WEED_SEED_VOIDPTR : pointer to a function pointer that 
-   returns a value
-   for display. See below, Plugin Functions. This can be disabled by
-   setting it to NULL.
+ * "display_func" : WEED_SEED_FUNCPTR : (deprecated)
 
- * "display_value" : WEED_SEED_STRING : Value to be displayed by the
-   host. The plugin should only set this leaf if and when "display_func" is
-   called by the host. See below, Plugin Functions.
+ * "display_value" : WEED_SEED_STRING : (deprecated)
 
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
    may be hidden by the host.
@@ -1692,12 +1677,10 @@ rely on setting "copy_value_to" to force the host to set indentical
    this ! This can be disabled by setting it to a value < 0, or by
    setting it to point to itself.
 
- * Every filter can have its internal data stored in leaves
- inside this plant, and host MUST NOT change their values or make them
- READONLY for the plugin. Those internal leaves MUST have keys
- prefixed with "plugin_". The plugin is responsible for weed_free()ing
- any memory buffers in the deinit_func().
+ * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
+ * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
 
 
 
@@ -1797,35 +1780,34 @@ In this case the plugin should return NULL from the weed_setup() function, so th
 Otherwise, the host will set value to point to a default getter function in the host of the form:
 
 {{{
-   weed_error_t default_getter(weed_plant_t *plant, const char *key, weed_function_t *value)
+   weed_error_t default_getter(weed_plant_t *plant, const char *key, void *value)
 }}}
 
 and return a configured HOST_INFO plant.
+
+value should be a pointer to a variable suitable for the value requested. The plugin (or library) should first fetch the Weed API
+version (key = WEED_LEAF_WEED_API_VERSION or WEED_LEAF_WEED_ABI_VERSION, type = int32_t)
+then depending on the value of that it can retrieve the core Weed functions for the API version, or return NULL if it's an
+unsupported version.
+
+After this, the plugin or library  may retrieve the filter API version (key = WEED_LEAF_FILTER_API_VERSION, seed_type =
+WEED_SEED_INT, using the normal Weed functions, and either choose to continue or else return NULL.
+
+
 
 
 If using libweed-utils, the provided weed_bootstrap will automatically check versions and set the plugin API accordingly.
 Its weed_bootstrap also provides a callback to the host so that the host can adjust the configured host_info.
 
 
-
-The plugin should call the default_getter define all of its API functions from the
-host_info plant.
-
-
-weed_function_t is a generic pointer-to-function, so the plugin should typecast this as
-appropriate.
-
 example:
 
-
-  if ((weed_default_getf)(host_info, WEED_LEAF_GET_FUNC, (weed_function_f *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
 
 
 [The default getter should use only standard memory functions, so that the plugin can 
 bootstrap its memory functions (weed_malloc, weed_free, weed_memcpy etc.).
 There is a version implemented in the weed_utils library which the host can use.]
-
-
 
 
 Normally a plugin would use a utility library which would take care of
@@ -1984,27 +1966,11 @@ parameter_templates, gui), that job is left to the host to perform.
 Less commonly used functions:
 
 
-==== display_func ====
-This is an optional function for a host to call.
-
-{{{
-    void display_func(weed_plant_t *parameter);
-}}}
-
-For the given parameter, the plugin should examine its "value", get
-its "template" leaf, get the "gui" leaf from this, and finally, set the
-"display_value" in the "gui". The "display_value" should be of
-seed_type WEED_SEED_STRING.  This "display_value" may be displayed
-by the host instead of the normal parameter "value". 
-"display_func" is an optional leaf of a parameter_template "gui". 
-The host MUST ensure that "display_value" is writable by the plugin
-before calling display_func(), and should set it readonly for the
-plugin afterwards.
-
-
-
 
 ==== interpolate_func ====
+This function is under review and will likely change after filter API version 200.
+
+
 This is an optional function for a host to call.
 
 {{{
@@ -2024,6 +1990,11 @@ means the "value" set in out_param is exact. A return value of
 WEED_FALSE means that the "value" in out_param is a guess. In the
 latter case, the host can recall the function with more elements in
 in_params to try to get a more accurate result.
+
+
+==== display_func ====
+(deprecated)
+
 
 
 

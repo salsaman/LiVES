@@ -2087,6 +2087,26 @@ LiVESList *load_decoders(void) {
 }
 
 
+static void set_cdata_memfuncs(lives_clip_data_t *cdata) {
+  // set specific memory functions for decoder plugins to use
+  static malloc_f  ext_malloc  = (malloc_f)  _ext_malloc;
+  static free_f    ext_free    = (free_f)    _ext_free;
+  static memcpy_f  ext_memcpy  = (memcpy_f)  _ext_memcpy;
+  static memset_f  ext_memset = (memset_f)  _ext_memset;
+  static memmove_f ext_memmove = (memmove_f) _ext_memmove;
+  static realloc_f ext_realloc = (realloc_f) _ext_realloc;
+  static calloc_f  ext_calloc  = (calloc_f)  _ext_calloc;
+  if (cdata == NULL) return;
+  cdata->ext_malloc  = &ext_malloc;
+  cdata->ext_free    = &ext_free;
+  cdata->ext_memcpy  = &ext_memcpy;
+  cdata->ext_memset  = &ext_memset;
+  cdata->ext_memmove = &ext_memmove;
+  cdata->ext_realloc = &ext_realloc;
+  cdata->ext_calloc  = &ext_calloc;
+}
+
+
 static boolean sanity_check_cdata(lives_clip_data_t *cdata) {
   if (cdata->nframes <= 0 || cdata->nframes >= INT_MAX) {
     return FALSE;
@@ -2124,15 +2144,28 @@ lives_decoder_t *clone_decoder(int fileno) {
 
   dplug->decoder = dpsys;
   dplug->cdata = cdata;
-
+  set_cdata_memfuncs((lives_clip_data_t *)cdata);
   return dplug;
 }
 
 
 static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
+  // here we test each decoder in turn to see if it can open "file_name"
+
+  // if we are reopening a clip, then fake cdata is a partially initialised cdata, but with only the frame count and fps set
+  // this allows the decoder plugins to startup quicker as they don't have to seek to the last frame or calculate the fps.
+
+  // we pass this to each decoder in turn and check what it returns. If the values look sane then we use that decoder,
+  // otherwise we try the next one.
+
+  // when reloading clips we try the decoder which last opened them first, othwerwise they could get picked up by another
+  // decoder and the frames could come out different
+
   lives_decoder_t *dplug = (lives_decoder_t *)lives_malloc(sizeof(lives_decoder_t));
   LiVESList *decoder_plugin = mainw->decoder_list;
   //LiVESList *last_decoder_plugin = NULL;
+
+  set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
 
   while (decoder_plugin != NULL) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
@@ -2158,7 +2191,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
         decoder_plugin = decoder_plugin->next;
         continue;
       }
-
+      set_cdata_memfuncs(dplug->cdata);
       //////////////////////
 
       dplug->decoder = dpsys;

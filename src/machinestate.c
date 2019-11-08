@@ -55,6 +55,8 @@ void init_random() {
 }
 
 
+/// load measuring function - TODO ----
+
 boolean load_measure_idle(livespointer data) {
 #ifdef LOADCHECK
 
@@ -292,6 +294,8 @@ boolean load_measure_idle(livespointer data) {
 }
 
 
+////// memory funcs ////
+
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 #define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
 
@@ -326,6 +330,54 @@ livespointer proxy_realloc(livespointer ptr, size_t new_size) {
   return nptr;
 }
 
+
+#define _cpy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
+
+// functions with fixed pointers that we can pass to plugins ///
+void *_ext_malloc(size_t n) {
+  if (n == 0) return NULL;
+  return lives_malloc(n);
+}
+void *_ext_malloc_and_copy(size_t bsize, const void *block) {
+  if (!block || bsize == 0) return NULL;
+#ifdef lives_malloc_and_copy
+  return lives_malloc_and_copy(bsize, block);
+#endif
+  return (_cpy_if_nonnull(malloc(bsize), block, bsize));
+}
+void _ext_unmalloc_and_copy(size_t bsize, void *p) {
+  if (!p || bsize == 0) return;
+#ifdef lives_unmalloc_and_copy
+  lives_unmalloc_and_copy(bsize, p);
+#else
+  lives_free(p);
+#endif
+}
+void _ext_free(void *p) {
+  if (p) lives_free(p);
+}
+void *_ext_free_and_return(void *p) {
+  if (p) lives_free(p);
+  return NULL;
+}
+void *_ext_memcpy(void *dest, const void *src, size_t n) {
+  return lives_memcpy(dest, src, n);
+}
+void *_ext_memset(void *p, int i, size_t n) {
+  return lives_memset(p, i, n);
+}
+void *_ext_memmove(void *dest, const void *src, size_t n) {
+  return lives_memmove(dest, src, n);
+}
+void *_ext_realloc(void *p, size_t n) {
+  return lives_realloc(p, n);
+}
+void *_ext_calloc(size_t nmemb, size_t msize) {
+  return lives_calloc(nmemb, msize);
+}
+
+
+// slice allocator //// TODO
 
 static memheader_t base;           /* Zero sized block to get us started. */
 static memheader_t *freep = &base; /* Points to first free block of memory. */

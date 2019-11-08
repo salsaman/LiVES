@@ -5,33 +5,30 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
+#include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
+#endif
+
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
@@ -52,7 +49,7 @@ typedef struct {
 static uint8_t onescount[65536];
 
 
-void makeonescount(void) {
+static void makeonescount(void) {
   int i, j;
   for (i = 0; i < 65536; i++) {
     onescount[i] = 0;
@@ -199,7 +196,7 @@ static inline void fill_block(int fontnum, unsigned char *src, unsigned char *ds
 
 /////////////////////////////////////////////////////////////
 
-int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   unsigned int widthx, irow16, orow16;
   unsigned int startx, starty, endx;
@@ -274,7 +271,8 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
             if ((numones += onescount[(uint16_t)(((uint16_t)lb[l] << 8) + (uint16_t)lb2[l])^font_tables[fontnum].fonttable[k +
                                       (m++)]]) >= minones) break;
         } else {
-          for (l = 0; l < 16; l++) if ((numones += onescount[(lb[l] ^ (uint8_t)(font_tables[fontnum].fonttable[k + (m++)]))]) >= minones) break;
+          for (l = 0; l < 16; l++) if ((numones += onescount[(lb[l] ^ (uint8_t)(font_tables[fontnum].fonttable[k + (m++)]))])
+                                         >= minones) break;
         }
         if (numones < minones) {
           minones = numones;
@@ -290,55 +288,50 @@ int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+WEED_SETUP_START(200, 200) {
+  const char *modes[] = {"colour pixels", "monochrome", "greyscale", "solid colours", NULL};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_params[4];
+  weed_plant_t *filter_class;
 
-  if (plugin_info != NULL) {
-    const char *modes[] = {"colour pixels", "monochrome", "greyscale", "solid colours", NULL};
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-    weed_plant_t *in_params[4];
-    weed_plant_t *filter_class;
+  const char *fonts[NFONTMAPS + 1];
+  int i;
 
-    const char *fonts[NFONTMAPS + 1];
-    int i;
+  make_font_tables();
 
-    make_font_tables();
-
-    for (i = 0; i < NFONTMAPS; i++) {
-      fonts[i] = font_tables[i].fontname;
-    }
-    fonts[i] = NULL;
-
-    in_params[0] = weed_integer_init("threshold", "Pixel _threshold", 96, 0, 255);
-    in_params[1] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-    in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
-    in_params[3] = NULL;
-
-    filter_class = weed_filter_class_init("textfun", "salsaman", 2, 0, NULL, &textfun_process, NULL, in_chantmpls, out_chantmpls, in_params,
-                                          NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-
-    init_RGB_to_YCbCr_tables();
-    init_Y_to_Y_tables();
-
-    makeonescount();
+  for (i = 0; i < NFONTMAPS; i++) {
+    fonts[i] = font_tables[i].fontname;
   }
+  fonts[i] = NULL;
 
-  return plugin_info;
+  in_params[0] = weed_integer_init("threshold", "Pixel _threshold", 70, 0, 255);
+  in_params[1] = weed_string_list_init("mode", "Colour _mode", 0, modes);
+  in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
+  in_params[3] = NULL;
+
+  filter_class = weed_filter_class_init("textfun", "salsaman", 2, WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
+                                        &textfun_process, NULL, in_chantmpls, out_chantmpls, in_params,
+                                        NULL);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, "version", package_version);
+
+  init_RGB_to_YCbCr_tables();
+  init_Y_to_Y_tables();
+
+  makeonescount();
 }
+WEED_SETUP_END;
 
 
-
-void weed_desetup(void) {
+WEED_DESETUP_START {
   int k;
   for (k = 0; k < NFONTMAPS; k++) {
     weed_free(font_tables[k].fontname);
     weed_free(font_tables[k].fonttable);
   }
-
 }
+WEED_DESETUP_END;

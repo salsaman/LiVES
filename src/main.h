@@ -55,6 +55,20 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#include <sys/types.h>
+#include <string.h>
+
+typedef void *(*malloc_f)(size_t);
+typedef void (*free_f)(void *);
+typedef void *(*free_and_return_f)(void *); // like free() but returns NULL
+typedef void *(*memcpy_f)(void *, const void *, size_t);
+typedef void *(*memset_f)(void *, int, size_t);
+typedef void *(*memmove_f)(void *, const void *, size_t);
+typedef void *(*realloc_f)(void *, size_t);
+typedef void *(*calloc_f)(size_t, size_t);
+typedef void *(*malloc_and_copy_f)(size_t, const void *);
+typedef void (*unmalloc_and_copy_f)(size_t, void *);
+
 #ifndef lives_malloc
 #define lives_malloc malloc
 #endif
@@ -79,6 +93,9 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #ifdef _lives_malloc
 #undef _lives_malloc
+#endif
+#ifdef _lives_malloc_and_copy
+#undef _lives_malloc_and_copy
 #endif
 #ifdef _lives_realloc
 #undef _lives_realloc
@@ -147,7 +164,6 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef ENABLE_GIW
 #endif
 
-#include <sys/types.h>
 #include <sys/file.h>
 #include <unistd.h>
 
@@ -195,7 +211,6 @@ typedef int lives_pgid_t;
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <signal.h>
 #include <assert.h>
 #include <errno.h>
@@ -1594,7 +1609,7 @@ void break_me(void);
 #define lives_memmove _lives_memmove
 #endif
 #ifdef _lives_calloc
-#undef  lives_calloc
+#undef  lives_calplloc
 #define lives_calloc _lives_calloc
 #endif
 

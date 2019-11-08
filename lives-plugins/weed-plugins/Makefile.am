@@ -135,7 +135,6 @@ endif
 #	alpha_means.la 
 #	alpha_visualizer.la 
 #	audio_transition.la 
-#	audio_volume.la 
 #	blank_frame_detector.la 
 #	$(opencv_LIBS) 
 #	ccorrect.la 
@@ -143,8 +142,6 @@ endif
 #	comic.la 
 #	data_processor.la 
 #	data_unpacker.la 
-#	deinterlace.la 
-#	edge.la 
 #	fg_bg_removal.la 
 #	fireTV.la 
 #	fourKlives.la \
@@ -165,14 +162,13 @@ endif
 #
 #	slide_over.la 
 #	softlight.la 
-#	targeted_zoom.la 
-#	textfun.la 
 #	tone_gen.la 
 #	tvpic.la 
 #	warpTV.la 
 #	xeffect.la 
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	audio_volume.la \
 	alien_overlay.la \
 	haip.la \
 	kaleidoscope.la \
@@ -185,7 +181,11 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	bump2d.la \
 	simple_blend.la \
 	multi_blends.la  \
-	multi_transitions.la
+	multi_transitions.la \
+	deinterlace.la \
+	edge.la \
+	textfun.la \
+	targeted_zoom.la 
 
 EXTRA_DIST=data icons syna.h 
 

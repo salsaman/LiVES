@@ -116,7 +116,7 @@ extern "C"
 typedef int64_t weed_timecode_t;
 
 // allows the plugin to get the plugin_info before weed_leaf_get() is defined
-typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, weed_voidptr_t value);
+typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, void *value);
 
 /* host bootstrap function */
 typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version,

@@ -65,6 +65,7 @@ const char *plugin_version = "LiVES mkv decoder version 1.4";
 #include <libavcodec/version.h>
 #include <libavutil/mem.h>
 
+#define NEED_CLONEFUNC
 #include "decplugin.h"
 
 #include <libavutil/intreadwrite.h>
@@ -2177,38 +2178,7 @@ static lives_clip_data_t *mkv_clone(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);
-  clone->nclips = cdata->nclips;
-  snprintf(clone->container_name, 512, "%s", cdata->container_name);
-  clone->current_clip = cdata->current_clip;
-  clone->width = cdata->width;
-  clone->height = cdata->height;
-  clone->nframes = cdata->nframes;
-  clone->interlace = cdata->interlace;
-  clone->offs_x = cdata->offs_x;
-  clone->offs_y = cdata->offs_y;
-  clone->frame_width = cdata->frame_width;
-  clone->frame_height = cdata->frame_height;
-  clone->par = cdata->par;
-  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
-  clone->fps = cdata->fps;
-  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
-  clone->current_palette = cdata->current_palette;
-  clone->YUV_sampling = cdata->YUV_sampling;
-  clone->YUV_clamping = cdata->YUV_clamping;
-  snprintf(clone->video_name, 512, "%s", cdata->video_name);
-  clone->arate = cdata->arate;
-  clone->achans = cdata->achans;
-  clone->asamps = cdata->asamps;
-  clone->asigned = cdata->asigned;
-  clone->ainterleaf = cdata->ainterleaf;
-  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
-  clone->seek_flag = cdata->seek_flag;
-  clone->sync_hint = cdata->sync_hint;
-
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  clone_cdata(clone, cdata);
 
   // create "priv" elements
   dpriv = clone->priv;
@@ -2794,6 +2764,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int64_t nextframe = 0;
   lives_mkv_priv_t *priv = cdata->priv;
   int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
+  int rowstride;
   int btop = cdata->offs_y, bbot = xheight - 1 - btop;
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int rescan_limit = 16; // pick some arbitrary value
@@ -2946,38 +2917,61 @@ framedone2:
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];
     src = priv->picture->data[p];
-
-    for (i = 0; i < xheight; i++) {
-      if (i < btop || i > bbot) {
-        // top or bottom border, copy black row
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], dstwidth + (bleft + bright)*psize);
-          dst += dstwidth + (bleft + bright) * psize;
-        } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
-        continue;
+    if ((rowstride = rowstrides[p]) > 0) {
+      rowstride -= dstwidth + (bleft + bright) * psize;
+      if (rowstride < 0) {
+        bleft += rowstride / (psize * 2);
+        bright += rowstride / (psize * 2);
+        if (bleft < 0 && bright > 0) {
+          bright += bleft;
+          bleft = 0;
+        }
+        if (bright < 0 && bleft > 0) {
+          bleft += bright;
+          bright = 0;
+        }
+        if (bleft < 0 || bright < 0) {
+          dstwidth += (bleft + bright) * psize;
+          bleft = bright = 0;
+        }
       }
+    }
 
-      if (bleft > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bleft * psize);
-          dst += bleft * psize;
-        } else dst += write_black_pixel(dst, pal, bleft, y_black);
+    if (rowstrides[p] == priv->picture->linesize[p]) {
+      (*cdata->ext_memcpy)(dst, src, rowstrides[p] * xheight);
+    } else {
+      for (i = 0; i < xheight; i++) {
+        if (i < btop || i > bbot) {
+          // top or bottom border, copy black row
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], dstwidth + (bleft + bright)*psize);
+            dst += dstwidth + (bleft + bright) * psize;
+          } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
+          continue;
+        }
+
+        if (bleft > 0) {
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], bleft * psize);
+            dst += bleft * psize;
+          } else dst += write_black_pixel(dst, pal, bleft, y_black);
+        }
+
+        memcpy(dst, src, dstwidth);
+        dst += dstwidth;
+
+        if (bright > 0) {
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], bright * psize);
+            dst += bright * psize;
+          } else dst += write_black_pixel(dst, pal, bright, y_black);
+        }
+        dst += rowstride;
+        src += priv->picture->linesize[p];
       }
-
-      memcpy(dst, src, dstwidth);
-      dst += dstwidth;
-
-      if (bright > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bright * psize);
-          dst += bright * psize;
-        } else dst += write_black_pixel(dst, pal, bright, y_black);
-      }
-
-      src += priv->picture->linesize[p];
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
       dstwidth >>= 1;

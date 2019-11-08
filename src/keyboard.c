@@ -140,11 +140,13 @@ boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespo
 void handle_cached_keys(void) {
   // smooth out auto repeat for VJ scratch keys
 
-  static int last_kb_time = 0, current_kb_time;
+  static ticks_t last_kb_time = 0, current_kb_time;
+  int adjust = 1000000;
+  if (cfile->pb_fps == 0.) return;
 
-  current_kb_time = mainw->currticks * (1000 / USEC_TO_TICKS);
+  current_kb_time = mainw->currticks;
 
-  if (cached_key && current_kb_time - last_kb_time > KEY_RPT_INTERVAL * 10) {
+  if (cached_key && (current_kb_time - last_kb_time) > KEY_RPT_INTERVAL * adjust) {
     last_kb_time = current_kb_time;
     lives_accel_groups_activate(LIVES_WIDGET_OBJECT(LIVES_MAIN_WINDOW_WIDGET), (uint32_t)cached_key, (LiVESXModifierType)cached_mod);
   }

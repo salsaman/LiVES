@@ -1279,7 +1279,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     calc_aframeno(fileno);
   }
 
-  if (mainw->playing_file == fileno && !mainw->clip_switched) {
+  if (mainw->playing_file == fileno && !mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
     last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
     if (last_frame > sfile->frames) last_frame = sfile->frames;
     first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;

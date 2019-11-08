@@ -8431,7 +8431,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_end(LIVES_BOX(mt->fx_contents_box), hbox, FALSE, FALSE, 0);
 
-  mt->solo_check = lives_standard_check_button_new(_("Solo"), TRUE, LIVES_BOX(hbox),
+  mt->solo_check = lives_standard_check_button_new(_("Preview _Solo"), TRUE, LIVES_BOX(hbox),
                    (tmp = lives_strdup(_("Preview only the selected effect"))));
   lives_free(tmp);
 

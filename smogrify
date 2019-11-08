@@ -8365,7 +8365,8 @@ sub weed {
                     find (\&fndset,"$workdir/$file/");
                     if (!$in_set) {
 			if (!($opts & 0x01)) {
-			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]*$/)) { 
+			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9](5, )$/)
+				|| $file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
 				smog_system("/bin/rm -rf \"$workdir/$file\"");
 			    }
 			}

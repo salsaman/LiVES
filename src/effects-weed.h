@@ -144,14 +144,14 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 boolean has_audio_filters(lives_af_t af_type);
 #endif
 
-char *weed_seed_type_to_text(int seed_type);
-char *weed_error_to_text(int error);
+char *weed_seed_type_to_text(int32_t seed_type);
+char *weed_error_to_text(weed_error_t error);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list(int *palette_list, int num_palettes, int palette);
 
-int weed_call_init_func(weed_plant_t *instance);
-int weed_call_deinit_func(weed_plant_t *instance);
+weed_error_t weed_call_init_func(weed_plant_t *instance);
+weed_error_t weed_call_deinit_func(weed_plant_t *instance);
 
 char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
@@ -227,7 +227,7 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
-lives_filter_error_t weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
+int weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
 void weed_generator_end(weed_plant_t *inst);
 boolean weed_playback_gen_start(void);
 void weed_bg_generator_end(weed_plant_t *inst);

@@ -5,38 +5,36 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#include <weed/weed-palettes.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
+#else
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-palettes.h"
+#include "../../libweed/weed-effects.h"
+#include "../../libweed/weed-utils.h"
+#endif
+
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
 
-int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
+static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
@@ -114,37 +112,32 @@ int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    // all planar palettes
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_RGBA32, WEED_PALETTE_ARGB32, WEED_PALETTE_BGRA32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_RGBA32, WEED_PALETTE_ARGB32, WEED_PALETTE_BGRA32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_END};
 
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
 
-    weed_plant_t *in_params[] = {weed_float_init("scale", "_Scale", 1., 1., 16.), weed_float_init("xoffs", "_X center", 0.5, 0., 1.), weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("scale", "_Scale", 1., 1., 16.), weed_float_init("xoffs", "_X center", 0.5, 0., 1.), weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &tzoom_process, NULL,
-                                 in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &tzoom_process, NULL,
+                               in_chantmpls, out_chantmpls, in_params, NULL);
 
-    weed_plant_t *gui = weed_filter_class_get_gui(filter_class), *pgui;
+  weed_plant_t *gui = weed_filter_class_get_gui(filter_class), *pgui;
 
-    // define RFX layout
-    char *rfx_strings[] = {"layout|p0|", "layout|p1|p2|", "special|framedraw|scaledpoint|1|2|"};
+  // define RFX layout
+  char *rfx_strings[] = {"layout|p0|", "layout|p1|p2|", "special|framedraw|scaledpoint|1|2|"};
 
-    weed_set_string_value(gui, "layout_scheme", "RFX");
-    weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 3, rfx_strings);
+  weed_set_string_value(gui, "layout_scheme", "RFX");
+  weed_set_string_value(gui, "rfx_delim", "|");
+  weed_set_string_array(gui, "rfx_strings", 3, rfx_strings);
 
-    pgui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_double_value(pgui, "step_size", 0.1);
+  pgui = weed_parameter_template_get_gui(in_params[0]);
+  weed_set_double_value(pgui, "step_size", 0.1);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-  }
-
-  return plugin_info;
 }
+WEED_SETUP_END;

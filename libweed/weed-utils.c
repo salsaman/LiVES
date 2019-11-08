@@ -647,7 +647,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key) {
 }
 
 
-static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, weed_voidptr_t value) {
+static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, void *value) {
   // we pass a pointer to this function back to the plugin so that it can bootstrap its real functions
 
   // here we must assume that the plugin does not yet have its (static) memory functions, so we can only
@@ -655,23 +655,30 @@ static weed_error_t _weed_default_get(weed_plant_t *plant, const char *key, weed
 
   weed_leaf_t *leaf = weed_find_leaf(plant, key);
   if (leaf == NULL) return WEED_ERROR_NOSUCH_LEAF;
+  if (leaf->num_elements == 0) return WEED_ERROR_NOSUCH_ELEMENT;
   if (value == NULL) return WEED_SUCCESS; // value can be NULL to check if leaf exists
 
   if (leaf->seed_type == WEED_SEED_FUNCPTR) {
-    memcpy(value, (weed_funcptr_t)&leaf->data[0]->value.funcptr, WEED_FUNCPTR_SIZE);
+    if (leaf->data[0]->value.funcptr == NULL) {
+      // because this is a special function, we return an error if the value is NULL, even though the value exists
+      *((weed_funcptr_t **)value) = NULL;
+      return WEED_ERROR_NOSUCH_ELEMENT;
+    }
+    memcpy(value, &leaf->data[0]->value.funcptr, WEED_FUNCPTR_SIZE);
     return WEED_SUCCESS;
   }
   if (weed_seed_is_ptr(leaf->seed_type)) {
-    memcpy(value, (weed_voidptr_t)&leaf->data[0]->value.voidptr, WEED_VOIDPTR_SIZE);
+    if (leaf->data[0]->value.voidptr == NULL) *((void **)value) = NULL;
+    else memcpy(value, &leaf->data[0]->value.voidptr, WEED_VOIDPTR_SIZE);
     return WEED_SUCCESS;
   } else {
     if (leaf->seed_type == WEED_SEED_STRING) {
-      weed_size_t size = ((weed_data_t *)leaf->data)->size;
+      weed_size_t size = leaf->data[0]->size;
       char **valuecharptrptr = (char **)value;
-      if (size > 0) memcpy(*valuecharptrptr, ((weed_data_t *)leaf->data)->value.voidptr, size);
+      if (size > 0) memcpy(*valuecharptrptr, leaf->data[0]->value.voidptr, size);
       memset(*valuecharptrptr + size, 0, 1);
-    } else memcpy(value, ((weed_data_t *)leaf->data)->value.voidptr,
-                    weed_seed_get_size(leaf->seed_type, ((weed_data_t *)leaf->data)->value.voidptr));
+    } else memcpy(value, leaf->data[0]->value.voidptr,
+                    weed_seed_get_size(leaf->seed_type, leaf->data[0]->value.voidptr));
   }
   return WEED_SUCCESS;
 }

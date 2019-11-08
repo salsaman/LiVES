@@ -1225,39 +1225,39 @@ int process_one(boolean visible) {
       }
 #endif
 
-      /* #ifdef HAVE_PULSE_AUDIO */
-      /*       if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && */
-      /*           cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) && */
-      /*           (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && */
-      /*           ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) > */
-      /*            mainw->offsetticks || audio_ticks == -1)) { */
-      /*         if (audio_ticks == -1) { */
-      /*           if (mainw->cancelled == CANCEL_NONE) { */
-      /*             if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE; */
-      /*             else mainw->cancelled = CANCEL_AUDIO_ERROR; */
-      /*             return mainw->cancelled; */
-      /*           } */
-      /*         } */
-      /*         // fps is synched to external source, so we adjust the audio rate to fit */
-      /*         if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. && */
-      /*             audio_stretch > 0.5) { */
-      /*           // if audio_stretch is > 1. it means that audio is playing too fast */
-      /*           // < 1. it is playing too slow */
+#ifdef HAVE_PULSE_AUDIO
+      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
+          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
+          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
+           mainw->offsetticks || audio_ticks == -1)) {
+        if (audio_ticks == -1) {
+          if (mainw->cancelled == CANCEL_NONE) {
+            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+            else mainw->cancelled = CANCEL_AUDIO_ERROR;
+            return mainw->cancelled;
+          }
+        }
+        // fps is synched to external source, so we adjust the audio rate to fit
+        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
+            audio_stretch > 0.5) {
+          // if audio_stretch is > 1. it means that audio is playing too fast
+          // < 1. it is playing too slow
 
-      /*           // if too fast we increase the apparent sample rate so that it gets downsampled more */
-      /*           // if too slow we decrease the apparent sample rate so that it gets upsampled more */
+          // if too fast we increase the apparent sample rate so that it gets downsampled more
+          // if too slow we decrease the apparent sample rate so that it gets upsampled more
 
-      /*           if (mainw->multitrack == NULL) { */
-      /*             if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) { */
-      /*               if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch; */
-      /*               else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch; */
-      /*             } else mainw->pulsed->in_arate = cfile->arate * audio_stretch; */
-      /*           } else { */
-      /*             if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch; */
-      /*           } */
-      /*         } */
-      /*       } */
-      /* #endif */
+          if (mainw->multitrack == NULL) {
+            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+              if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch;
+              else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch;
+            } else mainw->pulsed->in_arate = cfile->arate * audio_stretch;
+          } else {
+            if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch;
+          }
+        }
+      }
+#endif
     }
 #endif
 
@@ -1280,28 +1280,28 @@ int process_one(boolean visible) {
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
             cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
-
-            // see if we need to fill an audio buffer
-            // TODO - we should hand this off to another thread to do
+            if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
+            else {
+              // see if we need to fill an audio buffer
+              // TODO - we should hand this off to another thread to do
 #ifdef ENABLE_JACK
-            if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
-              mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
-              fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-            }
+              if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
+                mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
+                fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+              }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-            if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
-              mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
-              fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-            }
+              if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
+                mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
+                fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+              }
 #endif
+            }
           }
         }
       }
-
       lives_widget_context_update(); // animate GUI, allow kb timer to run
 
-      if (cfile->next_event == NULL && mainw->preview) mainw->cancelled = CANCEL_EVENT_LIST_END;
       if (mainw->cancelled == CANCEL_NONE) return 0;
       cancel_process(visible);
       return mainw->cancelled;

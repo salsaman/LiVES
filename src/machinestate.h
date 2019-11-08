@@ -38,6 +38,18 @@ typedef struct memheader {
 } memheader_t;
 
 
+void *_ext_malloc(size_t n);
+void *_ext_malloc_and_copy(size_t, const void *);
+void _ext_unmalloc_and_copy(size_t, void *);
+void _ext_free(void *);
+void *_ext_free_and_return(void *);
+void *_ext_memcpy(void *, const void *, size_t);
+void *_ext_memset(void *, int, size_t);
+void *_ext_memmove(void *, const void *, size_t);
+void *_ext_realloc(void *, size_t);
+void *_ext_calloc(size_t, size_t);
+
+// TODO
 void quick_free(memheader_t *bp);
 void *quick_malloc(size_t alloc_size) GNU_MALLOC;
 

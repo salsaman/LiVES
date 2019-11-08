@@ -68,11 +68,11 @@
 
 #ifdef __cplusplus
 #define WEED_SETUP_START(weed_api_version, filter_api_version) extern "C" { EXPORTED weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) { \
-    EXPORTED weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_version, weed_api_version, filter_api_version, filter_api_version); \
+    weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_version, weed_api_version, filter_api_version, filter_api_version); \
  if (plugin_info == NULL) {return NULL;} {
 
 #define WEED_SETUP_START_MINMAX(weed_api_min_version, weed_api_max_version, filter_api_min_version, filter_api_max_version) extern "C" { EXPORTED weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) { \
-    EXPORTED weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_min_version, weed_api_max_version, filter_api_min_Version, filter_api_max_version); \
+    weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, weed_api_min_version, weed_api_max_version, filter_api_min_Version, filter_api_max_version); \
  if (plugin_info == NULL) {return NULL;} {
 
 #define WEED_SETUP_END } return plugin_info;}}

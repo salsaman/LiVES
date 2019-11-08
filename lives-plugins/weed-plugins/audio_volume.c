@@ -5,16 +5,17 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h> // optional
 #else
 #include "../../libweed/weed-plugin.h" // optional
 #endif
 
-#ifdef HAVE_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../libweed/weed.h"
 #include "../../libweed/weed-palettes.h"
@@ -182,36 +183,30 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
-    weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.), weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 1, WEED_FILTER_IS_CONVERTER, &avol_init,
-                                 &avol_process,
-                                 NULL, in_chantmpls, out_chantmpls, in_params, NULL);
-    int api_used = weed_get_api_version(plugin_info);
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.), weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 1, WEED_FILTER_IS_CONVERTER, &avol_init,
+                               &avol_process,
+                               NULL, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_set_int_value(in_chantmpls[0], "max_repeats", 0); // set optional repeats of this channel
 
-    weed_set_int_value(in_chantmpls[0], "max_repeats", 0); // set optional repeats of this channel
+  weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+  weed_set_double_value(in_params[0], "new_default", 1.0);
+  weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+  weed_set_double_value(in_params[1], "new_default", 0.0);
+  weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+  weed_set_double_value(in_params[2], "new_default", WEED_FALSE);
 
-    // use WEED_PARAMETER_ELEMENT_PER_CHANNEL from spec 110
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_double_value(in_params[0], "new_default", 1.0);
-    weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_double_value(in_params[1], "new_default", 0.0);
-    weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_double_value(in_params[2], "new_default", WEED_FALSE);
+  // set is_volume_master from weedaudio spec 110
+  weed_set_boolean_value(in_params[0], "is_volume_master", WEED_TRUE);
 
-    // set is_volume_master from weedaudio spec 110
-    weed_set_boolean_value(in_params[0], "is_volume_master", WEED_TRUE);
+  weed_set_int_value(filter_class, "flags", WEED_FILTER_PROCESS_LAST | WEED_FILTER_IS_CONVERTER);
 
-    if (api_used >= 131) weed_set_int_value(filter_class, "flags", WEED_FILTER_PROCESS_LAST | WEED_FILTER_IS_CONVERTER);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

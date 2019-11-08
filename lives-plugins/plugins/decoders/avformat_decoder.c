@@ -5,10 +5,10 @@
 //
 // some code adapted from vlc (GPL v2 or higher)
 
-#include "decplugin.h"
-
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
+
+#include "decplugin.h"
 
 #ifdef NEED_LOCAL_WEED
 #include "../../../libweed/weed-compat.h"
@@ -45,7 +45,7 @@
 
 #include "avformat_decoder.h"
 
-const char *plugin_version = "LiVES avformat decoder version 1.0";
+const char *plugin_version = "LiVES avformat decoder version 1.1";
 
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -1069,6 +1069,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int ret;
 
   int jump_frames;
+  int rowstride;
 
   register int p, i;
 
@@ -1315,37 +1316,61 @@ framedone2:
     dst = pixel_data[p];
     src = priv->pFrame->data[p];
 
-    for (i = 0; i < xheight; i++) {
-      if (i < btop || i > bbot) {
-        // top or bottom border, copy black row
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], dstwidth + (bleft + bright)*psize);
-          dst += dstwidth + (bleft + bright) * psize;
-        } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
-        continue;
+    if ((rowstride = rowstrides[p]) > 0) {
+      rowstride -= dstwidth + (bleft + bright) * psize;
+      if (rowstride < 0) {
+        bleft += rowstride / (psize * 2);
+        bright += rowstride / (psize * 2);
+        if (bleft < 0 && bright > 0) {
+          bright += bleft;
+          bleft = 0;
+        }
+        if (bright < 0 && bleft > 0) {
+          bleft += bright;
+          bright = 0;
+        }
+        if (bleft < 0 || bright < 0) {
+          dstwidth += (bleft + bright) * psize;
+          bleft = bright = 0;
+        }
       }
+    }
 
-      if (bleft > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bleft * psize);
-          dst += bleft * psize;
-        } else dst += write_black_pixel(dst, pal, bleft, y_black);
+    if (rowstrides[p] == priv->pFrame->linesize[p]) {
+      (*cdata->ext_memcpy)(dst, src, rowstrides[p] * xheight);
+    } else {
+      for (i = 0; i < xheight; i++) {
+        if (i < btop || i > bbot) {
+          // top or bottom border, copy black row
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], dstwidth + (bleft + bright) * psize);
+            dst += rowstride;
+          } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
+          continue;
+        }
+
+        if (bleft > 0) {
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], bleft * psize);
+            dst += bleft * psize;
+          } else dst += write_black_pixel(dst, pal, bleft, y_black);
+        }
+
+        (*cdata->ext_memcpy)(dst, src, dstwidth);
+        dst += dstwidth;
+
+        if (bright > 0) {
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
+            memset(dst, black[p], bright * psize);
+            dst += bright * psize;
+          } else dst += write_black_pixel(dst, pal, bright, y_black);
+        }
+        dst += rowstride;
+        src += priv->pFrame->linesize[p];
       }
-
-      memcpy(dst, src, dstwidth);
-      dst += dstwidth;
-
-      if (bright > 0) {
-        if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
-            pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-          memset(dst, black[p], bright * psize);
-          dst += bright * psize;
-        } else dst += write_black_pixel(dst, pal, bright, y_black);
-      }
-
-      src += priv->pFrame->linesize[p];
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P)) {
       dstwidth >>= 1;

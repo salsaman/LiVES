@@ -13,8 +13,18 @@ extern "C"
 
 #include <inttypes.h>
 #include <sys/types.h>
+#include <string.h>
+#include <stdio.h>
 
-// palettes, etc.
+#ifndef ALLOW_UNUSED
+#ifdef __GNUC__
+#  define ALLOW_UNUSED  __attribute__((unused))
+#else
+#  define ALLOW_UNUSED
+#endif
+#endif
+
+// palettes, etc. :: don't include weed-compat.h, since plugins need to #define stuff first
 #ifdef NEED_LOCAL_WEED
 #include "../../../libweed/weed-palettes.h"
 #else
@@ -49,7 +59,25 @@ typedef enum {
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
+// memfuncs
+typedef void *(*malloc_f)(size_t);
+typedef void (*free_f)(void *);
+typedef void *(*memset_f)(void *, int, size_t);
+typedef void *(*memcpy_f)(void *, const void *, size_t);
+typedef void *(*realloc_f)(void *, size_t);
+typedef void *(*calloc_f)(size_t, size_t);
+typedef void *(*memmove_f)(void *, const void *, size_t);
+
 typedef struct {
+  malloc_f  *ext_malloc;
+  free_f    *ext_free;
+  memcpy_f  *ext_memcpy;
+  memset_f  *ext_memset;
+  memmove_f *ext_memmove;
+  realloc_f *ext_realloc;
+  calloc_f  *ext_calloc;
+
+  // TODO use fix sized array
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
@@ -81,6 +109,7 @@ typedef struct {
 
   float fps;
 
+  // TODO use fix sized array
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
   /// plugin should init this to palettes[0] if URI changes
@@ -89,7 +118,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  int frame_gamma; // values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
+  int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
@@ -111,6 +140,7 @@ typedef struct {
 #define SYNC_HINT_VIDEO_PAD_END (1<<5)
 
   int sync_hint;
+
   void *priv; ///< private data for demuxer/decoder
 } lives_clip_data_t;
 
@@ -161,6 +191,56 @@ enum LiVESMediaType {
   LIVES_MEDIA_TYPE_AUDIO,
   LIVES_MEDIA_TYPE_DATA
 };
+
+#ifdef NEED_CLONEFUNC
+
+static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip_data_t *cdata) ALLOW_UNUSED;
+
+static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip_data_t *cdata) {
+  if (clone == NULL || cdata == NULL) return NULL;
+  if (cdata->URI != NULL) clone->URI = strdup(cdata->URI);
+  clone->nclips = cdata->nclips;
+  snprintf(clone->container_name, 512, "%s", cdata->container_name);
+  clone->current_clip = cdata->current_clip;
+  clone->width = cdata->width;
+  clone->height = cdata->height;
+  clone->nframes = cdata->nframes;
+  clone->interlace = cdata->interlace;
+  clone->offs_x = cdata->offs_x;
+  clone->offs_y = cdata->offs_y;
+  clone->frame_width = cdata->frame_width;
+  clone->frame_height = cdata->frame_height;
+  clone->par = cdata->par;
+  clone->frame_gamma = WEED_GAMMA_UNKNOWN;
+  clone->fps = cdata->fps;
+  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
+  clone->current_palette = cdata->current_palette;
+  clone->YUV_sampling = cdata->YUV_sampling;
+  clone->YUV_clamping = cdata->YUV_clamping;
+  snprintf(clone->video_name, 512, "%s", cdata->video_name);
+  clone->arate = cdata->arate;
+  clone->achans = cdata->achans;
+  clone->asamps = cdata->asamps;
+  clone->asigned = cdata->asigned;
+  clone->ainterleaf = cdata->ainterleaf;
+  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
+  clone->seek_flag = cdata->seek_flag;
+  clone->sync_hint = cdata->sync_hint;
+
+  clone->ext_malloc  = cdata->ext_malloc;
+  clone->ext_free    = cdata->ext_free;
+  clone->ext_memcpy  = cdata->ext_memcpy;
+  clone->ext_memset  = cdata->ext_memset;
+  clone->ext_memmove = cdata->ext_memmove;
+  clone->ext_realloc = cdata->ext_realloc;
+  clone->ext_calloc  = cdata->ext_calloc;
+
+  snprintf(clone->author, 256, "%s", cdata->author);
+  snprintf(clone->title, 256, "%s", cdata->title);
+  snprintf(clone->comment, 256, "%s", cdata->comment);
+  return clone;
+}
+#endif
 
 #ifdef __cplusplus
 }

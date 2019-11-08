@@ -204,9 +204,15 @@ extern const char *anames[AUDIO_CODEC_MAX];
 #define LIVES_SEEK_NEEDS_CALCULATION (1<<1)
 #define LIVES_SEEK_QUALITY_LOSS (1<<2)
 
-// must be exactly the same as in decplugin.h
-
 typedef struct {
+  malloc_f  *ext_malloc;
+  free_f    *ext_free;
+  memcpy_f  *ext_memcpy;
+  memset_f  *ext_memset;
+  memmove_f *ext_memmove;
+  realloc_f *ext_realloc;
+  calloc_f  *ext_calloc;
+
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
@@ -229,16 +235,16 @@ typedef struct {
   /// for primary pixel plane
   int offs_x;
   int offs_y;
-  int frame_width; // frame width and height are the size of the outer frame
+  int frame_width;   ///< frame is the surrounding part, including any black border (>=width)
   int frame_height;
 
-  float par; ///< pixel aspect ratio
+  float par;  ///< pixel aspect ratio (sample width / sample height)
 
   float video_start_time;
 
   float fps;
 
-  int *palettes;
+  int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
@@ -246,7 +252,7 @@ typedef struct {
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
-  int frame_gamma;
+  int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
@@ -257,7 +263,7 @@ typedef struct {
   boolean ainterleaf;
   char audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
-  int seek_flag;
+  int seek_flag; ///< bitmap of seek properties
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
 #define SYNC_HINT_AUDIO_PAD_START (1<<1)

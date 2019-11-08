@@ -27,12 +27,17 @@ using namespace cv;
 
 ////////////////////////////////////////////////////////////////////////
 
+static int our_plugin_id = 0;
+static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
+static boolean suspect = FALSE;
+static int ncbcalls = 0;
+
 static boolean fx_inited = FALSE;
 
 struct _procvals {
   weed_plant_t *inst;
   weed_timecode_t tc;
-  int ret;
+  weed_error_t ret;
 };
 
 static int load_compound_fx(void);
@@ -91,9 +96,11 @@ LIVES_GLOBAL_INLINE int filter_mutex_unlock(int key) {
     }
     return ret;
   } else {
-    char *msg = lives_strdup_printf("attempted unlock of bad fx key %d", key);
-    LIVES_ERROR(msg);
-    lives_free(msg);
+    if (key != -1) {
+      char *msg = lives_strdup_printf("attempted unlock of bad fx key %d", key);
+      LIVES_ERROR(msg);
+      lives_free(msg);
+    }
   }
   return 0;
 }
@@ -167,7 +174,7 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 }
 
 
-char *weed_error_to_text(int error) {
+char *weed_error_to_text(weed_error_t error) {
   // value should be freed after use
 
   switch (error) {
@@ -337,20 +344,26 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 }
 
 
-char *weed_seed_type_to_text(int seed_type) {
+char *weed_seed_type_to_text(int32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT:
-    return lives_strdup(_("integer"));
+    return lives_strdup("integer");
   case WEED_SEED_INT64:
-    return lives_strdup(_("int64"));
+    return lives_strdup("int64");
   case WEED_SEED_BOOLEAN:
-    return lives_strdup(_("boolean"));
+    return lives_strdup("boolean");
   case WEED_SEED_DOUBLE:
-    return lives_strdup(_("double"));
+    return lives_strdup("double");
   case WEED_SEED_STRING:
     return lives_strdup(_("string"));
+  case WEED_SEED_FUNCPTR:
+    return lives_strdup(_("function pointer"));
+  case WEED_SEED_VOIDPTR:
+    return lives_strdup("void *");
+  case WEED_SEED_PLANTPTR:
+    return lives_strdup("weed_plant_t *");
   default:
-    return lives_strdup(_("pointer"));
+    return lives_strdup(_("custom pointer type"));
   }
 }
 
@@ -1179,7 +1192,8 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   boolean deinit_first = FALSE;
 
-  int error, retval, key = -1;
+  int error, key = -1;
+  weed_error_t retval;
 
   weed_instance_ref(inst);
 
@@ -1223,7 +1237,7 @@ reinit:
         }
       }
 
-      if (retval != WEED_NO_ERROR) {
+      if (retval != WEED_SUCCESS) {
         weed_instance_unref(orig_inst);
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
@@ -1314,8 +1328,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   boolean got_invalid = FALSE;
   boolean needs_reinit = FALSE;
 
+  weed_error_t retval;
+
   int nchannels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS), pal, vrt;
-  int retval;
   int minh, xminh;
 
   int slices, slices_per_thread, to_use;
@@ -1421,7 +1436,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   // wait for threads to finish
   for (j = 0; j < nthreads; j++) {
-    retval = WEED_NO_ERROR;
+    retval = WEED_SUCCESS;
 
     pthread_join(dthreads[j], NULL);
     retval = procvals[j].ret;
@@ -1666,9 +1681,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
       if (!did_thread) {
         // normal single threaded version
-        int ret;
         process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
         if (key == -1 || !filter_mutex_trylock(key)) {
+          weed_error_t ret;
           if (mainw->current_file > -1)
             weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
           ret = (*process_func)(inst, tc);
@@ -2565,10 +2580,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   }
   if (!did_thread) {
     // normal single threaded version
-    int ret;
     process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
     if (key == -1 || !filter_mutex_trylock(key)) {
-      ret = (*process_func)(inst, tc);
+      weed_error_t ret = (*process_func)(inst, tc);
       if (key != -1) filter_mutex_unlock(key);
       if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
     } else retval = FILTER_ERROR_INVALID_PLUGIN;
@@ -2770,10 +2784,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
       }
       if (!did_thread) {
         // normal single threaded version
-        int ret;
         process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
         if (process_func != NULL && (key == -1 || !filter_mutex_trylock(key))) {
-          ret = (*process_func)(inst, tc);
+          weed_error_t ret = (*process_func)(inst, tc);
           if (key != -1) filter_mutex_unlock(key);
           if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
         } else retval = FILTER_ERROR_INVALID_PLUGIN;
@@ -3257,7 +3270,7 @@ audinst1:
       if (init_func != NULL) {
         char *cwd = cd_to_plugin_dir(filter);
         set_param_gui_readwrite(instance);
-        if ((*init_func)(instance) != WEED_NO_ERROR) {
+        if ((*init_func)(instance) != WEED_SUCCESS) {
           key_to_instance[key][key_modes[key]] = NULL;
           lives_chdir(cwd, FALSE);
           lives_free(cwd);
@@ -3375,7 +3388,7 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
 
   void **init_events;
 
-  lives_filter_error_t filter_error;
+  weed_error_t filter_error;
   int key, num_inst, error;
 
   boolean needs_reinit;
@@ -3466,7 +3479,7 @@ apply_inst2:
 
           filter_error = weed_apply_instance(instance, init_event, layers, 0, 0, tc);
 
-          if (filter_error == WEED_NO_ERROR && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
+          if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
           if (filter_error == WEED_ERROR_REINIT_NEEDED) {
             // TODO...
           }
@@ -3574,7 +3587,7 @@ apply_inst3:
 #ifdef DEBUG_RTE
           if (filter_error != FILTER_SUCCESS) lives_printerr("Render error was %d\n", filter_error);
 #endif
-          if (filter_error == WEED_NO_ERROR && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst3;
+          if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst3;
 
           if (mainw->pconx != NULL && (filter_error == FILTER_SUCCESS || filter_error == FILTER_INFO_REINITED)) {
             pconx_chain_data_omc(orig_inst, i, key_modes[i]);
@@ -3758,7 +3771,7 @@ apply_audio_inst2:
         // will unref instance
         filter_error = weed_apply_audio_instance(instance, abuf, 0, nchans, nsamps, arate, tc, NULL);
 
-        if (filter_error == WEED_NO_ERROR && (instance = get_next_compound_inst(instance)) != NULL) {
+        if (filter_error == FILTER_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) {
           goto apply_audio_inst2;
         }
         if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
@@ -4521,12 +4534,6 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
   return err;
 }
 
-
-
-static int our_plugin_id = 0;
-static weed_plant_t *expected_hi = NULL, *expected_pi = NULL;
-static boolean suspect = FALSE;
-static int ncbcalls = 0;
 
 static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   // if the plugin called weed_boostrap during its weed_setup() as we requested, then we will end up here
@@ -6592,6 +6599,7 @@ boolean weed_init_effect(int hotkey) {
   weed_plant_t *filter;
   weed_plant_t *new_instance, *inst;
   weed_plant_t *event_list;
+  weed_error_t error;
 
   boolean fg_modeswitch = FALSE, is_trans = FALSE, gen_start = FALSE, is_modeswitch = FALSE;
   boolean all_out_alpha;
@@ -6602,7 +6610,6 @@ boolean weed_init_effect(int hotkey) {
   int rte_keys = mainw->rte_keys;
   int inc_count, outc_count;
   int ntracks;
-  int error;
   int idx;
   int playing_file = mainw->playing_file;
 
@@ -6799,11 +6806,10 @@ start1:
       char *cwd = cd_to_plugin_dir(filter), *tmp;
       init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
       set_param_gui_readwrite(inst);
-      if (init_func != NULL && (error = (*init_func)(inst)) != WEED_NO_ERROR) {
-        int weed_error;
+      if (init_func != NULL && (error = (*init_func)(inst)) != WEED_SUCCESS) {
         char *filter_name;
         filter = weed_filters[idx];
-        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
+        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
         set_param_gui_readonly(inst);
         d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
         lives_free(tmp);
@@ -6814,8 +6820,9 @@ start1:
 
 deinit2:
 
-        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
-              &error);
+        if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
+          next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
+                                              &error);
         else next_inst = NULL;
 
         weed_call_deinit_func(inst);
@@ -6881,12 +6888,12 @@ deinit2:
     if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
     error = weed_generator_start(inst, hotkey);
-    if (error != FILTER_SUCCESS) {
+    if (error != 0) {
       int weed_error;
       char *filter_name;
       filter_mutex_lock(hotkey);
       filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
-      d_print(_("Unable to start generator %s (%d)\n"), filter_name, error);
+      d_print(_("Unable to start generator %s (error code: %d)\n"), filter_name, error);
       lives_free(filter_name);
       if (mainw->num_tr_applied && mainw->current_file > -1) {
         bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
@@ -7031,9 +7038,9 @@ deinit2:
 }
 
 
-int weed_call_init_func(weed_plant_t *inst) {
+weed_error_t weed_call_init_func(weed_plant_t *inst) {
   weed_plant_t *filter;
-  int error = 0;
+  weed_error_t error = WEED_SUCCESS;
 
   weed_instance_ref(inst);
 
@@ -7055,10 +7062,10 @@ int weed_call_init_func(weed_plant_t *inst) {
 }
 
 
-int weed_call_deinit_func(weed_plant_t *instance) {
+weed_error_t weed_call_deinit_func(weed_plant_t *instance) {
   // filter_mutex MUST be locked
   weed_plant_t *filter;
-  int error = 0;
+  weed_error_t error = WEED_SUCCESS;
 
   weed_instance_ref(instance);
 
@@ -7446,6 +7453,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   weed_process_f process_func;
 
   lives_filter_error_t retval;
+  weed_error_t ret;
 
   int num_channels;
   int error;
@@ -7576,11 +7584,11 @@ procfunc1:
     // normal single threaded version
     process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
     if (process_func != NULL)
-      retval = (*process_func)(inst, tc);
+      ret = (*process_func)(inst, tc);
   }
   lives_free(out_channels);
 
-  if (retval == WEED_ERROR_REINIT_NEEDED) {
+  if (ret == WEED_ERROR_REINIT_NEEDED) {
     if (reinits == 1) {
       weed_instance_unref(inst);
       return channel;
@@ -7614,7 +7622,7 @@ procfunc1:
 }
 
 
-lives_filter_error_t weed_generator_start(weed_plant_t *inst, int key) {
+int weed_generator_start(weed_plant_t *inst, int key) {
   // key here is zero based
   // make an "ephemeral clip"
 
@@ -7797,7 +7805,7 @@ lives_filter_error_t weed_generator_start(weed_plant_t *inst, int key) {
     if (mainw->play_window != NULL) {
       lives_widget_queue_draw(mainw->play_window);
     }
-    return FILTER_SUCCESS;
+    return 0;
   } else {
     // already playing
 
@@ -7844,7 +7852,7 @@ lives_filter_error_t weed_generator_start(weed_plant_t *inst, int key) {
 
   filter_mutex_unlock(key);
 
-  return FILTER_SUCCESS;
+  return 0;
 }
 
 
@@ -8018,8 +8026,8 @@ boolean weed_playback_gen_start(void) {
 
   char *filter_name;
 
-  int error = WEED_NO_ERROR;
-  int weed_error;
+  weed_error_t error = WEED_SUCCESS;
+
   int bgs = bg_gen_to_start;
   boolean was_started = FALSE;
 
@@ -8057,7 +8065,7 @@ geninit1:
           }
         }
 
-        if (error != WEED_NO_ERROR) {
+        if (error != WEED_SUCCESS) {
           weed_plant_t *oldinst = inst;
           orig_inst = inst = weed_instance_obtain(fg_gen_to_start, key_modes[fg_gen_to_start]);
           weed_instance_unref(oldinst);
@@ -8065,8 +8073,9 @@ geninit1:
           if (inst != NULL) {
             char *tmp;
             filter = weed_instance_get_filter(inst, TRUE);
-            filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
-            d_print(_("Failed to start generator %s (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
+            filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
+            d_print(_("Failed to start generator %s (%s)\n"), filter_name,
+                    (tmp = lives_strdup(weed_error_to_text(error))));
             lives_free(tmp);
             lives_free(filter_name);
 
@@ -8175,12 +8184,12 @@ genstart2:
 
       inst = orig_inst;
 
-      if (error != WEED_NO_ERROR) {
+      if (error != WEED_SUCCESS) {
         key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
         if (inst != NULL) {
           char *tmp;
           filter = weed_instance_get_filter(inst, TRUE);
-          filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
+          filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
           d_print(_("Failed to start generator %s, (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
           lives_free(tmp);
           lives_free(filter_name);
@@ -8790,7 +8799,8 @@ void weed_set_blend_factor(int hotkey) {
     mini = weed_get_int_value(paramtmpl, WEED_LEAF_MIN, &error);
     maxi = weed_get_int_value(paramtmpl, WEED_LEAF_MAX, &error);
 
-    weed_set_int_value(in_param, WEED_LEAF_VALUE, (int)((double)mini + (mainw->blend_factor / KEYSCALE * (double)(maxi - mini)) + .5));
+    weed_set_int_value(in_param, WEED_LEAF_VALUE, (int)((double)mini +
+                       (mainw->blend_factor / KEYSCALE * (double)(maxi - mini)) + .5));
 
     vali = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
 
@@ -10895,7 +10905,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
   // format is [key_len (4 bytes) | key (key_len bytes)] seed_type (4 bytes) n_elements (4 bytes)
   // then for each element: value_size (4 bytes) value
 
-  void *value = NULL;
+  void *value = NULL, *valuer = NULL;
 
   size_t totsize = 0;
 
@@ -10960,26 +10970,50 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
   } else {
     // for each element, write the data size followed by the data
     for (j = 0; j < ne; j++) {
-      if (st >= 64) vlen = WEED_VOIDPTR_SIZE;
       vlen = (weed_size_t)weed_leaf_element_size(plant, key, j);
+      if (mem == NULL && vlen == 0) {
+        // we need to do this because NULL pointers return a size of 0, and older versions of LiVES
+        // expected to always read 8 bytes for a void *
+        if (st > 64) vlen = 8;
+      }
       if (st != WEED_SEED_STRING) {
-        value = lives_malloc((size_t)vlen);
-        weed_leaf_get(plant, key, j, value);
+        if (vlen == 0) value = NULL;
+        else {
+          value = lives_malloc((size_t)vlen);
+          weed_leaf_get(plant, key, j, value);
+        }
       } else {
         // need to create a buffer to receive the string + terminating NULL
         value = lives_malloc((size_t)(vlen + 1));
+        // weed_leaf_get() will assume it's a pointer to a variable of the correct type, and fill in the value
         weed_leaf_get(plant, key, j, &value);
       }
 
+      if (mem == NULL && weed_leaf_seed_type(plant, key) > 64) {
+        // save voidptr as 64 bit
+        valuer = (uint64_t *)lives_malloc(sizeof(uint64_t));
+
+        // 'valuer' is a void * (size 8). and 'value' is void * (of whatever size)
+        // but we can cast 'value' to a (void **),
+        // and then we can dereference it and cast that value to a uint64, and store the result in valuer
+        *((uint64_t *)valuer) = (uint64_t)(*((void **)value));
+        vlen = sizeof(uint64_t);
+      } else valuer = value;
+
       if (mem == NULL) {
         lives_write_le_buffered(fd, &vlen, 4, TRUE);
-        lives_write_le_buffered(fd, value, (size_t)vlen, TRUE);
+        if (st != WEED_SEED_STRING) {
+          lives_write_le_buffered(fd, valuer, (size_t)vlen, TRUE);
+        } else lives_write_buffered(fd, (const char *)valuer, (size_t)vlen, TRUE);
       } else {
         lives_memcpy(*mem, &vlen, 4);
         *mem += 4;
-        lives_memcpy(*mem, value, (size_t)vlen);
-        *mem += vlen;
+        if (vlen > 0) {
+          lives_memcpy(*mem, value, (size_t)vlen);
+          *mem += vlen;
+        }
       }
+      if (valuer != value) lives_freep((void **)&valuer);
       totsize += 4 + vlen;
       lives_freep((void **)&value);
     }
@@ -11081,7 +11115,6 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
 
     if (check_key && len != strlen(key)) return -9;
-
     if (len > MAX_WEED_STRLEN) return -10;
 
     mykey = (char *)lives_malloc((size_t)len + 1);
@@ -11120,7 +11153,6 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     lives_memcpy(&st, *mem, 4);
     *mem += 4;
   }
-
   if (st < 64 && (st != WEED_SEED_INT && st != WEED_SEED_BOOLEAN && st != WEED_SEED_DOUBLE && st != WEED_SEED_INT64 &&
                   st != WEED_SEED_STRING && st != WEED_SEED_VOIDPTR && st != WEED_SEED_PLANTPTR)) {
     lives_freep((void **)&mykey);
@@ -11144,7 +11176,6 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     lives_memcpy(&ne, *mem, 4);
     *mem += 4;
   }
-
   if (ne > MAX_WEED_STRLEN) {
     lives_freep((void **)&mykey);
     return -11;
@@ -11233,26 +11264,30 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         }
         values[i] = lives_malloc((size_t)vlen + 1);
       } else {
-        if (st >= 64) vlen = WEED_VOIDPTR_SIZE;
-        if (vlen <= 8 || vlen <= WEED_VOIDPTR_SIZE) {
+        if (vlen == 0) {
+          if (st >= 64) {
+            values[i] = NULL;
+          } else return -4;
+        } else {
           values[i] = lives_malloc((size_t)vlen);
-        } else return -4;
-      }
-
-      if (mem == NULL) {
-        if (st != WEED_SEED_STRING)
-          bytes = lives_read_le_buffered(fd, values[i], vlen, TRUE);
-        else
-          bytes = lives_read_buffered(fd, values[i], vlen, TRUE);
-        if (bytes < vlen) {
-          for (--i; i >= 0; lives_freep((void **)&values[i--]));
-          lives_freep((void **)&values);
-          lives_freep((void **)&mykey);
-          return -4;
         }
-      } else {
-        lives_memcpy(values[i], *mem, vlen);
-        *mem += vlen;
+      }
+      if (vlen > 0) {
+        if (mem == NULL) {
+          if (st != WEED_SEED_STRING)
+            bytes = lives_read_le_buffered(fd, values[i], vlen, TRUE);
+          else
+            bytes = lives_read_buffered(fd, values[i], vlen, TRUE);
+          if (bytes < vlen) {
+            for (--i; i >= 0; lives_freep((void **)&values[i--]));
+            lives_freep((void **)&values);
+            lives_freep((void **)&mykey);
+            return -4;
+          }
+        } else {
+          lives_memcpy(values[i], *mem, vlen);
+          *mem += vlen;
+        }
       }
       if (st == WEED_SEED_STRING) {
         lives_memset((char *)values[i] + vlen, 0, 1);
@@ -11260,75 +11295,77 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
   }
 
+  if (!strcmp(key, WEED_LEAF_TYPE)) {
+    type = *(int32_t *)(values[0]);
+  }
   if (plant != NULL) {
-    if (!strcmp(key, WEED_LEAF_TYPE)) {
-      type = *(int32_t *)(values[0]);
+    if (values == NULL) {
+      weed_leaf_set(plant, key, st, 0, NULL);
     } else {
-      if (values == NULL) {
-        if (plant != NULL) weed_leaf_set(plant, key, st, 0, NULL);
-      } else {
-        switch (st) {
-        case WEED_SEED_INT:
-        // fallthrough
-        case WEED_SEED_BOOLEAN:
-          ints = (int32_t *)lives_malloc(ne * 4);
-          for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
-          if (!strcmp(key, WEED_LEAF_TYPE)) {
-            if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
-              type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
-              if (type == WEED_PLANT_UNKNOWN) {
-                int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
-                weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags ^ (flags & WEED_FLAG_IMMUTABLE));
-                weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
-                weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags | WEED_FLAG_IMMUTABLE);
-              } else {
-                if (*ints != type) {
-                  msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
-                                            type, *ints);
-                  lives_free(ints);
-                  LIVES_ERROR(msg);
-                  lives_free(msg);
-                  return -7;
-                }
-                // type already OK
-              }
+      switch (st) {
+      case WEED_SEED_INT:
+      // fallthrough
+      case WEED_SEED_BOOLEAN:
+        ints = (int32_t *)lives_malloc(ne * 4);
+        for (j = 0; j < ne; j++) ints[j] = *(int32_t *)values[j];
+        if (!strcmp(key, WEED_LEAF_TYPE)) {
+          if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
+            type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
+            if (type == WEED_PLANT_UNKNOWN) {
+              int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
+              // clear the default flags to allow the "type" leaf to be altered
+              weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~(WEED_FLAG_IMMUTABLE));
+              weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
+              // lock the "type" leaf again so it cannot be altered accidentally
+              weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_FLAG_IMMUTABLE);
+              type = weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
             } else {
-              weed_leaf_set(plant, key, st, ne, (void *)ints);
+              if (*ints != type) {
+                msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
+                                          type, *ints);
+                lives_free(ints);
+                LIVES_ERROR(msg);
+                lives_free(msg);
+                return -7;
+              }
+              // type already OK
             }
           } else {
             weed_leaf_set(plant, key, st, ne, (void *)ints);
           }
-          lives_freep((void **)&ints);
-          break;
-        case WEED_SEED_DOUBLE:
-          dubs = (double *)lives_malloc(ne * sizdbl);
-          for (j = 0; j < ne; j++) dubs[j] = *(double *)values[j];
-          weed_leaf_set(plant, key, st, ne, (void *)dubs);
-          lives_freep((void **)&dubs);
-          break;
-        case WEED_SEED_INT64:
-          int64s = (int64_t *)lives_malloc(ne * 8);
-          for (j = 0; j < ne; j++) int64s[j] = *(int64_t *)values[j];
-          weed_leaf_set(plant, key, st, ne, (void *)int64s);
-          lives_freep((void **)&int64s);
-          break;
-        case WEED_SEED_STRING:
-          weed_leaf_set(plant, key, st, ne, (void *)values);
-          break;
-        default:
-          if (plant != NULL) {
-            if (mem == NULL && prefs->force64bit) {
-              // force pointers to uint64_t
-              uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
-              for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
-              weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
-              lives_freep((void **)&voids);
-            } else {
-              void **voids = (void **)lives_malloc(ne * sizeof(void *));
-              for (j = 0; j < ne; j++) voids[j] = *(void **)values[j];
-              weed_leaf_set(plant, key, st, ne, (void *)voids);
-              lives_freep((void **)&voids);
-            }
+        } else {
+          weed_leaf_set(plant, key, st, ne, (void *)ints);
+        }
+        lives_freep((void **)&ints);
+        break;
+      case WEED_SEED_DOUBLE:
+        dubs = (double *)lives_malloc(ne * sizdbl);
+        for (j = 0; j < ne; j++) dubs[j] = *(double *)values[j];
+        weed_leaf_set(plant, key, st, ne, (void *)dubs);
+        lives_freep((void **)&dubs);
+        break;
+      case WEED_SEED_INT64:
+        int64s = (int64_t *)lives_malloc(ne * 8);
+        for (j = 0; j < ne; j++) int64s[j] = *(int64_t *)values[j];
+        weed_leaf_set(plant, key, st, ne, (void *)int64s);
+        lives_freep((void **)&int64s);
+        break;
+      case WEED_SEED_STRING:
+        weed_leaf_set(plant, key, st, ne, (void *)values);
+        break;
+      default:
+        if (plant != NULL) {
+          if (mem == NULL && prefs->force64bit) {
+            // force pointers to uint64_t
+            uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
+            for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
+            weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
+            lives_freep((void **)&voids);
+          } else {
+            void **voids = (void **)lives_malloc(ne * sizeof(void *));
+            for (j = 0; j < ne; j++) voids[j] = *(void **)values[j];
+            weed_leaf_set(plant, key, st, ne, (void *)voids);
+            lives_freep((void **)&voids);
           }
         }
       }
@@ -11364,12 +11401,13 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   }
 
   if (plant == NULL) {
+    // create a new plant with type unknown
     plant = weed_plant_new(WEED_PLANT_UNKNOWN);
-    weed_leaf_set_flags(plant, WEED_LEAF_TYPE, 0);
   }
 
   if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
     // check the WEED_LEAF_TYPE leaf first
+    g_print("errtype was %d\n", type);
     weed_plant_free(plant);
     return NULL;
   }
@@ -11377,18 +11415,19 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   numleaves--;
 
   while (numleaves--) {
-    if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE))) {
+    if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
+      g_print("err was %d\n", err);
       weed_plant_free(plant);
       return NULL;
     }
   }
 
-  if (weed_get_plant_type(plant) == WEED_PLANT_UNKNOWN) {
+  if ((type = weed_get_plant_type(plant)) == WEED_PLANT_UNKNOWN) {
+    g_print("badplant was %d\n", type);
     weed_plant_free(plant);
     return NULL;
   }
-
-  //weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_LEAF_READONLY_PLUGIN | WEED_LEAF_READONLY_HOST);
+  g_print("goodplant %p\n", plant);
   return plant;
 }
 

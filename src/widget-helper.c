@@ -1255,7 +1255,7 @@ WIDGET_HELPER_GLOBAL_INLINE int lives_dialog_get_response_for_widget(LiVESDialog
 
 #if GTK_CHECK_VERSION(3, 16, 0)
 
-#define RND_STRLEN 6
+#define RND_STRLEN 12
 #define RND_STR_PREFIX "XXX"
 
 static char *make_random_string(const char *prefix) {
@@ -4477,6 +4477,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_get_parent(LiVESWidget *wi
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_widget_get_toplevel(LiVESWidget *widget) {
 #ifdef GUI_GTK
+  if (!GTK_IS_WIDGET(widget)) return NULL;
   return gtk_widget_get_toplevel(widget);
 #endif
 #ifdef GUI_QT

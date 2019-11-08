@@ -5499,10 +5499,11 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   mainw->tried_ds_recover = TRUE; ///< indicates we tried ds recovery already
 
   mainw->add_clear_ds_adv = TRUE; ///< auto reset by do_warning_dialog()
-  if (!do_warning_dialog(
+  if (!do_warning_dialogf(
         _("LiVES will attempt to recover some disk space.\n"
+          "Unnecessary files will be removed from %s\n"
           "You should ONLY run this if you have no other copies of LiVES running on this machine.\n"
-          "Click OK to proceed.\n"))) {
+          "Click OK to proceed.\n"), prefs->workdir)) {
     mainw->next_ds_warn_level = ds_warn_level;
     return;
   }
@@ -9902,7 +9903,7 @@ void on_back_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  mainw->deltaticks -= (ticks_t)(change_speed * 3. * mainw->period);
+  mainw->deltaticks -= (ticks_t)(change_speed * 10. * mainw->period);
   mainw->scratch = SCRATCH_BACK;
 }
 

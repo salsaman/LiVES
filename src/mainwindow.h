@@ -40,13 +40,13 @@
 #define DEF_FPS 25.
 
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
-#define PB_CHANGE_RATE .0005
+#define PB_CHANGE_RATE .0025
 
 /// forward/back scratch value (TODO: make pref)
 #define PB_SCRATCH_VALUE 0.001
 
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
-#define BLEND_AMOUNT 0.2
+#define BLEND_AMOUNT 2.
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 

@@ -8,21 +8,11 @@
 #include <stdio.h>
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h> // optional
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#include "../../libweed/weed-utils.h"
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 #include <stdlib.h>
@@ -48,7 +38,7 @@ typedef struct {
 
 static void make_lut(unsigned char *lut, double val, int min) {
   int i, mina = min, minb = 0;
-  double rnd = 0.5;
+  double rnd = 0.5, rval;
 
   if (min < 0) {
     mina = 0;
@@ -57,10 +47,10 @@ static void make_lut(unsigned char *lut, double val, int min) {
   }
 
   for (i = 0; i < 256; i++) {
-    val = (double)(i - mina) * val + rnd;
-    if (val < 0) val = 0.;
-    if (val > 255) val = 255.;
-    lut[i] = (unsigned char)val;
+    rval = (double)(i - mina) * val + rnd;
+    if (rval < 0.) rval = 0.;
+    if (rval > 255.) rval = 255.;
+    lut[i] = (unsigned char)rval;
   }
 }
 
@@ -106,7 +96,7 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
 }
 
 
-static int RGBd_init(weed_plant_t *inst) {
+static weed_error_t RGBd_init(weed_plant_t *inst) {
   int error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error), *gui, *ptmpl;
   int maxcache = weed_get_int_value(in_params[0], "value", &error);
@@ -149,7 +139,7 @@ static int RGBd_init(weed_plant_t *inst) {
 #define BLUE_ON(i) (i * 4 + 3)
 #define STRENGTH(i) (i * 4 + 4)
 
-static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
@@ -281,6 +271,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     make_lut(sdata->lut[1], cstr_green * uvscale, yuvmin);
     make_lut(sdata->lut[blue], cstr_blue * uvscale, yuvmin);
 
+    height--;
     src = osrc;
     end = odst + height * orowstride;
 
@@ -305,12 +296,12 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       b2 = (weed_get_boolean_value(in_params[GREEN_ON(j)], "value", &error) == WEED_TRUE);
       b3 = (weed_get_boolean_value(in_params[BLUE_ON(j)], "value", &error) == WEED_TRUE);
 
-      if (!b1 && !b2 && !b3) continue;
+      if (!b1 && !b2 && !b3 && j > 0) continue;
 
       if ((!is_bgr && sdata->is_bgr[j]) || (is_bgr && !sdata->is_bgr[j]))
-        cross = -1;
+        cross = 2;
       else
-        cross = 1;
+        cross = 0;
 
       cstr = weed_get_double_value(in_params[STRENGTH(j)], "value", &error);
       cstr_red = cstr / tstr_red;
@@ -340,9 +331,9 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           if (j == 0) {
             weed_memset(&dst[i], 0, 3);
           }
-          if (b1) dst[i] += sdata->lut[0][sdata->cache[k][x + i - cross]];
-          if (b2) dst[i + 1] += sdata->lut[1][sdata->cache[k][x + i]];
-          if (b3) dst[i + 2] += sdata->lut[2][sdata->cache[k][x + i + cross]];
+          if (b1) dst[i] += sdata->lut[0][sdata->cache[k][x + i + cross]];
+          if (b2) dst[i + 1] += sdata->lut[1][sdata->cache[k][x + i + 1]];
+          if (b3) dst[i + 2] += sdata->lut[2][sdata->cache[k][x + i + 2 - cross]];
         }
         x += width;
       }
@@ -371,7 +362,7 @@ static int RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-static int RGBd_deinit(weed_plant_t *inst) {
+static weed_error_t RGBd_deinit(weed_plant_t *inst) {
   int error, i;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
   if (sdata != NULL) {

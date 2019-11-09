@@ -666,7 +666,7 @@ typedef struct {
   double fps;  /// framerate of the clip
   int hsize; ///< frame width (horizontal) in pixels (NOT macropixels !)
   int vsize; ///< frame height (vertical) in pixels
-  int arps; ///< audio sample rate (the actual physical sample rate of the medium)
+  int arps; ///< audio physical sample rate (the actual physical sample rate of the medium)
   uint32_t signed_endian; ///< bitfield
 
   int arate; ///< current audio playback rate (may vary from arps), can even be 0 or negative

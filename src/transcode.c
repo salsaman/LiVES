@@ -162,13 +162,13 @@ boolean transcode(int start, int end) {
   }
   //
   if (vpp->init_audio != NULL && mainw->save_with_sound && cfile->achans * cfile->arps > 0) {
-    int in_arate = (int)((float)cfile->arps / (float)cfile->arate * (float)cfile->arps);
+    int in_arate = cfile->arate;
     if ((*vpp->init_audio)(in_arate, cfile->achans, mainw->vpp->extra_argc, mainw->vpp->extra_argv)) {
       // we will buffer audio and send it in packets of one frame worth of audio
       // buffers will be used to convert to float audio
 
       audio = TRUE;
-      ospf = spf = (double)in_arate / cfile->fps;
+      ospf = spf = (double)(cfile->arate) / cfile->fps;
 
       afname = lives_build_filename(prefs->workdir, cfile->handle, CLIP_AUDIO_FILENAME, NULL);
       fd = lives_open_buffered_rdonly(afname);

@@ -7,19 +7,10 @@
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h>
 #else
 #include "../../../libweed/weed-plugin.h"
-#endif
-
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-utils.h"
+#include "../../../libweed/weed-plugin-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////

@@ -6,21 +6,11 @@
 // see file COPYING or www.gnu.org for details
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h> // optional
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifndef NEED_LOCAL_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#include "../../../libweed/weed-utils.h"
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -38,18 +28,6 @@ static int package_version = 2; // version of this package
 
 #include <pango/pangocairo.h>
 #include <gdk/gdk.h>
-
-union memtest {
-  int32_t num;
-  char chr[4];
-};
-
-static int is_big_endian() {
-  union memtest mm;
-  mm.num = 0x12345678;
-  if (mm.chr[0] == 0x78) return 0;
-  return 1;
-}
 
 // defines for configure dialog elements
 enum DlgControls {
@@ -471,7 +449,7 @@ WEED_SETUP_START(200, 200) {
   PangoContext *ctx;
 
   int api_used = weed_get_api_version(plugin_info);
-  int filter_flags = 0, param_flags, error;
+  int filter_flags = 0, param_flags = 0, error;
 
   if (is_big_endian())
     palette_list[0] = WEED_PALETTE_ARGB32;

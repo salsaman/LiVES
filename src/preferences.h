@@ -183,6 +183,11 @@ typedef struct {
 
   double loadchecktime;
 
+  // values for trickplay - TODO: add to prefs dialog
+  double blendchange_amount;
+  int scratchfwd_amount, scratchback_amount;
+  double fpschange_amount;
+
   uint32_t jack_opts;
 #define JACK_OPTS_TRANSPORT_CLIENT (1<<0)   ///< jack can start/stop
 #define JACK_OPTS_TRANSPORT_MASTER (1<<1)  ///< transport master
@@ -873,6 +878,9 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 #define PREF_DL_BANDWIDTH_K "dl_bandwidth_K"
 
+#define PREF_SCFWD_AMOUNT "trickplay_scratch_fwd"
+#define PREF_SCBACK_AMOUNT "trickplay_scratch_back"
+
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
 #define PREF_FORCE_SINGLE_MONITOR "force_single_monitor"
@@ -912,8 +920,10 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
-
 #define PREF_DEFAULT_FPS "default_fps"
+
+#define PREF_BLEND_AMOUNT "trickplay_blend_change"
+#define PREF_FPSCHANGE_AMOUNT "trickplay_fpschange"
 
 ///////// float values
 #define PREF_AHOLD_THRESHOLD "ahold_threshold"

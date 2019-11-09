@@ -53,7 +53,7 @@ libweed_gslice_scripting_la_SOURCES = weed-gslice_scripting.c
 libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
 
 libweedinclude_HEADERS = weed.h weed-host.h weed-plugin.h weed-utils.h weed-events.h weed-palettes.h weed-effects.h \
-	weed-compat.h
+	weed-compat.h weed-plugin-utils.h
 
 libweedincludedir = "$(includedir)/weed"
 

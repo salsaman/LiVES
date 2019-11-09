@@ -862,7 +862,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     // flush buffers
     ret = avcodec_encode_audio2(c, &pkt, NULL, &got_packet);
     if (ret < 0) {
-      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %ld\n", av_err2str(ret), nsamps, c->sample_rate, c->sample_fmt,
+      fprintf(stderr, "Error 1 encoding audio frame: %s %d %d %d %ld\n", av_err2str(ret), nsamps, c->sample_rate, c->sample_fmt,
               c->channel_layout);
       return FALSE;
     }
@@ -892,7 +892,6 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
         spb_len += nsamps;
         return TRUE;
       }
-
       if (spb_len > 0) {
         // have data in buffers from last call. fill these up and clear them first
         for (i = 0; i < in_nchans; i++) {
@@ -922,11 +921,13 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     osta.frame->pts = av_rescale_q(osta.samples_count, (AVRational) {
       1, c->sample_rate
     }, c->time_base);
+
     osta.samples_count += nb_samples;
 
     ret = avcodec_encode_audio2(c, &pkt, osta.frame, &got_packet);
     if (ret < 0) {
-      fprintf(stderr, "Error encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps, nb_samples, c->sample_rate, c->sample_fmt,
+      fprintf(stderr, "Error 2 encoding audio frame: %s %d %d %d %d %ld\n", av_err2str(ret), nsamps,
+              nb_samples, c->sample_rate, c->sample_fmt,
               c->channel_layout);
       return FALSE;
     }
@@ -934,7 +935,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
     if (got_packet) {
       ret = write_frame(&c->time_base, aStream, &pkt);
       if (ret < 0) {
-        fprintf(stderr, "Error while writing audio frame: %s\n",
+        fprintf(stderr, "Error 2 while writing audio frame: %s\n",
                 av_err2str(ret));
         return FALSE;
       }
@@ -951,6 +952,7 @@ boolean render_audio_frame_float(float **audio, int nsamps)  {
       if (osta.frame != NULL) av_frame_unref(osta.frame);
       osta.frame = NULL;
       in_nb_samples = 0;
+      return TRUE;
     }
   }
   return TRUE;

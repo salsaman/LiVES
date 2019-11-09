@@ -64,7 +64,9 @@ boolean sepwin_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESX
 
 boolean fade_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
-#define KEY_RPT_INTERVAL 4
+#define EXT_TRIGGER_INTERVAL 4 // polling time for osc / midi / joystick etc. (milliseconds)
+
+#define KEY_RPT_INTERVAL 40  // repeat rate for cached keys (ctrl-left, ctrl-right, ctrl-up, ctrl-down) (milliseconds)
 
 /** default MIDI checks per keyboard cycle (i.e. normally x checks per 4 ms - raw MIDI only) */
 /* can be over-ridden in prefs */

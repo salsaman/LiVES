@@ -539,7 +539,6 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               mainw->ext_audio = FALSE;
               pthread_mutex_unlock(&mainw->vpp_stream_mutex);
               lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-              mainw->ext_keyboard = FALSE;
               if (mainw->vpp->exit_screen != NULL) {
                 (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
               }
@@ -595,7 +594,6 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
               mainw->ext_audio = ext_audio; // cannot set this until after init_screen()
               if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && prefs->play_monitor == 0) {
                 lives_window_set_keep_below(LIVES_WINDOW(mainw->play_window), TRUE);
-                mainw->ext_keyboard = TRUE;
                 lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
               }
             } else {
@@ -985,7 +983,6 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
 
   if (vpp != NULL) {
     if (vpp == mainw->vpp) {
-      mainw->ext_keyboard = FALSE;
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
       if (mainw->ext_playback) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -1352,7 +1349,6 @@ void vid_playback_plugin_exit(void) {
     pthread_mutex_lock(&mainw->vpp_stream_mutex);
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
-    mainw->ext_keyboard = FALSE;
     lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
     if (mainw->vpp->exit_screen != NULL) {
       (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);

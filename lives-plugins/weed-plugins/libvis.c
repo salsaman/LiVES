@@ -14,22 +14,12 @@
 
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#include <weed/weed-utils.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#include "../../libweed/weed-utils.h"
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 ///////////////////////////////////////////////////////////////////

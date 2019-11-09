@@ -1242,11 +1242,12 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   double fps;
 
   if (sfile == NULL) {
+    mainw->scratch = SCRATCH_NONE;
     nframe = -1;
     return 0;
   }
 
-  if (nframe != -1) return nframe; // prevent infinite loops
+  if (nframe != -1) return nframe; // prevent infinite loops if we "bounce" off one end or another
 
   fps = sfile->pb_fps;
 
@@ -1257,6 +1258,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   if (fps == 0.) {
     *ntc = otc;
     if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
+    mainw->scratch = SCRATCH_NONE;
     return cframe;
   }
 
@@ -1271,6 +1273,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   if (nframe == cframe || mainw->foreign) {
     cframe = nframe;
     nframe = -1;
+    mainw->scratch = SCRATCH_NONE;
     return cframe;
   }
 
@@ -1301,6 +1304,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
       if (mainw->whentostop == STOP_ON_VID_END) {
         mainw->cancelled = CANCEL_VID_END;
+        mainw->scratch = SCRATCH_NONE;
         nframe = -1;
         return 0;
       }
@@ -1311,6 +1315,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0 && sfile->frames > 0) {
       if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
         mainw->cancelled = CANCEL_AUD_END;
+        mainw->scratch = SCRATCH_NONE;
         nframe = -1;
         return 0;
       }
@@ -1319,6 +1324,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   }
 
   if (sfile->frames == 0) {
+    mainw->scratch = SCRATCH_NONE;
     nframe = -1;
     return 0;
   }
@@ -1426,6 +1432,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       }
     }
   }
+  mainw->scratch = SCRATCH_NONE;
   cframe = nframe;
   nframe = -1;
   return cframe;

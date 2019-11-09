@@ -40,13 +40,14 @@
 #define DEF_FPS 25.
 
 /// rate to change pb fps when faster/slower pressed (TODO: make pref)
-#define PB_CHANGE_RATE .0025
+#define DEF_FPSCHANGE_AMOUNT 30000
 
 /// forward/back scratch value (TODO: make pref)
-#define PB_SCRATCH_VALUE 0.001
+#define DEF_SCRATCHBACK_AMOUNT 160000
+#define DEF_SCRATCHFWD_AMOUNT 80000
 
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
-#define BLEND_AMOUNT 2.
+#define DEF_BLENDCHANGE_AMOUNT 100
 
 /////// GUI related constants /////////////////////////////////////////////////////////
 
@@ -523,7 +524,6 @@ typedef struct {
 
   boolean ext_playback; ///< using external video playback plugin
   volatile boolean ext_audio; ///< using external video playback plugin to stream audio
-  volatile boolean ext_keyboard; ///< keyboard codes must be polled from video playback plugin
 
   int ptr_x;
   int ptr_y;

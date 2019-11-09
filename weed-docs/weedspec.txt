@@ -233,7 +233,7 @@ Hosts should #incldue weed-host.h before weed.h, amd plugins should instead #inc
 The main difference is that the plugin gets staticly scoped versions of the core functions,
 whereas the host gets global ones.
 
-Plugins also lose access to the weed_leaf_set_flags() function.
+Plugins also relinquish access to the weed_leaf_set_flags() function.
 
 
 
@@ -929,29 +929,259 @@ The header also provides compatibility with other libraries, eg. libav. Check th
 
 
 === functions ===
-Add here
+The folowwing functions are defined in weed-effects.h:
+
+
+== PLUGIN FUNCTIONS ==
+
+The only fixed function name the plugin MUST implement is weed_setup(), with prototype:
+
+    weed_plant_t *weed_setup(weed_bootstrap_f weed_bootstrap)
+
+The host calls this first in a plugin, and passes in a pointer to a function of type weed_bootstrap_f.
+
+
+The prototype of weed_bootstrap_f is:
+
+    weed_plant_t *weed_bootstrap(default_getter_f *, int32_t weed_api_min_version, int32_t weed_api_max_version,
+     int32_t weed_filter_api_min_version, weed_filter_api_max_version);
+
+
+
+The plugin should call the bootstrap function which should check the versions are compatible with the host, set up the plugin
+versions of the core Weed functions using default getter, and return either a PLUGIN_INFO plant or NULL.
+
+
+The precise details of this are described below. weed-plugin-utils.h provides macros to assist with this. A plugin need only do:
+
+WEED_SETUP_START(int weed_api_version, int filter_api_version)
+
+e.g.
+
+WEED_SETUP_START(200, 200) { // either sets weed_plant_t *plugin_info, or returns NULL to the host
+// set up plugin_info
+
+
+// .....
+
+
+// no return necessary
+}
+WEED_SETP_END;  // returns plugin_info to the host. may be positioned before or after the closing brace. The semi-colon is optional
+
+
+WEED_SETUP_START also ensures that the weed_setup() function is exported from the plugin on any platform.
+
+
+
+
+If the plugin supports earlier versions than the current version, e.g. when being updated, it may instead use:
+
+
+WEED_SETUP_START_MINMAX(int min_weed_api_version, int max_weed_api_version, int min_filter_api_version, int max_filter_api_version)
+
+The original values (or higher) should then be used as the minimum versions, and the maximum versions set to the current versions
+at the time of the update.
+
+In this case the plugin should then check the versions returned from the host to discover which features are available at run time.
+
+
+
+
+
+
+
+( NB: prior to API version 200, the bootstrap function had a slightly different prototype:
+   weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t num_versions, int32_t *plugin_versions) )
+
+
+
+
+
+==== weed_desetup ====
+This is an optional function in for plugins.
+
+    void weed_desetup(void);
+
+
+
+If the plugin has this function, the host should call it before
+unloading the plugin. This is to allow the plugin to reset any hardware, free allocated memory, etc.
+
+The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
+parameter_templates, gui), that job is left to the host to perform.
+
+
+weed-plugin-utils.h also provides macros to wrap this function:
+
+
+WEED_DESETUP_START {
+
+// clean up here
+
+//
+
+}
+WEED_DESETUP_END; // may be positioned before or after the closing brace. The semi-colon is optional
+
+
+
+WEED_DESETUP_START also ensures that the weed_desetup() function is exported from the plugin on any platform.
+
+
+
+
+==== init_func ====
+
+
+    weed_error_t init_func(weed_plant_t *filter_instance)
+
+
+This is an optional function in the plugin.
+
+
+If this function is included in the filter_class (see below),
+the host MUST call this function exactly once before it can start to use process_func().
+passing in the filter_instance to be used there.
+
+The filter plant instance passed to the init_func MUST have been
+correctly setup to match the filter class it relates to, 
+this means that all the mandatory leaves of input and output channels and of input parameters MUST be set.
+The function returns a weed error code (see below).
+
+The init_func() function allows the plugin to create any internal
+memory structures it needs; the plugin can store internal data as
+leaves that have keys prefixed with "plugin_" in the filter_instance 
+(see the definition of filter instance plant). The plugin can also (re)set
+the "gui" settings for parameter_templates (see below).
+
+The function returns WEED_SUCCESS or another error code (see below). 
+
+
+
+==== process_func ====
+
+   weed_error_t process_func(weed_plant_t *filter_instance, weed_timestamp_t timestamp)
+
+This is an optional function in the plugin, however without it the plugin cannot process any data.
+Ths host may call this as often as it wishes after calling the init_func (if it exists).
+
+Host calls this for each processing cycle; the plugin should process the in parameters and in channels (as appropriate) and
+produce data in the out channels and out parameters (as appropriate).
+
+Timestamp is nominally in units of 10 ^ -8 of a second since playback started.
+Normally it will increase monotonically for each frame but that is not guaranteed,
+although hosts should attempt to keep it so between calling init_func() and deinit_func().
+
+The function returns WEED_SUCCESS or another error code (see below). 
+
+
+
+==== deinit_func ====
+This is an optional function in the plugin. If present, the host must call it once after running the init_func and completing
+the processing run.
+
+
+    weed_error_t deinit_func(weed_plant_t *filter_instance)
+
+
+The host will call this once after it has finished running the process_func()
+to allow the plugin to free() any internal memory and reset its internal values.
+
+Following this the host may call the init_func() again if it wishes to continue using the plugin,
+otherwise it may call the desetup function and then free the host_info, plugin_info and any filter_instance plants.
+
+The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
+parameter_templates, gui), that job is left to the host to perform.
+
+
+
+
+Less commonly used functions:
+
+
+
+==== interpolate_func ====
+
+This function is under review and will likely change in filter API version 200.
+
+
+This is an optional function for a host to call.
+
+{{{
+    int interpolate_func(weed_param_t **in_params, weed_param_t *out_param);
+}}}
+
+The function takes a NULL terminated array of parameters for a single
+parameter_template, with "timecode", "value" and possibly "ignore" 
+leaves, and returns a best guess for the "value" of out_param. The
+in_params array MUST be in ascending "timecode" order. The "timecode"
+leaf of out_param MUST be set. All the parameter values in_params and
+out_param reference the same parameter_template. Interpolate_func is
+an optional leaf of that parameter_template.
+
+The value returned is actually a boolean. A return value of WEED_TRUE
+means the "value" set in out_param is exact. A return value of
+WEED_FALSE means that the "value" in out_param is a guess. In the
+latter case, the host can recall the function with more elements in
+in_params to try to get a more accurate result.
+
+
+==== display_func ====
+(deprecated)
+
+
+
+
+
+== HOST FUNCTIONS ==
+
+The host provides just one mandatory function to the plugins:
+weed_bootstrap (see above for its definition).
+
+The bootstrap function takes a list of Weed api versions supported by the
+plugin, sets a getter function, and returns a host_info plant, or NULL
+if none of the plugin api versions are supported.
+
+The plugin can use the getter function to get the leaves of the host
+info plant.
+
+The HOST_INFO plant can also have other optional leaves to provide
+more information about the host, and optional functions.
+
+
 
 
 
 
 === Re-entrancy ===
 
-Add here
+Plugins should be re-entrant, i.e the host should be able to create multiple instances from the filter class,
+provided each instance follows the rules for init_func(), process_func(), deinit_func().
 
- * static data per instance
+This means that a plugin should only maintain data common to all instances locally. The data for each separate instance
+should be stored inside the instance itself.
+
+If this is not possible for the filter class, the plugin should return 
+
+
 
 
 === Multiple filters in one plugin ===
 
-Add here
+A plugin may provide multiple filters amd include them all as an array in the plugin_info.
+
+Each filter should have its own set of in_parameter_templates, out_parameter_templates,
+in_channel_templates and out_channel_templates and any related gui plants.
+
+(See below for more details).
+
+
+It should be noted that to assist with this, weed-plugin-utils offers a function:
 
 * weed_clone_plants
 
-
-
-
-
-
+which takes as input an array of plants and produces a copy, including producing new gui plants. as appropriate.
 
 
 
@@ -965,74 +1195,139 @@ and their mandatory and optional leaves.
 
 == PLANT TYPE HOST_INFO ==
 
+This plant is created and returned in the weed_bootstrap function which the plugin must call from its weed_setup().
+
+If weed_boostrap() from the weed-utils library is passed as the parameter to weed_setup(),
+then the host_info will be created automatically using default values.
+
+The host gains access to this plant either by providing its own weed_bootstrap, or by using the one from libweed-utils and
+setting a host_info callback.
+
+
+
  * "type" == WEED_PLANT_HOST_INFO
 
-'''Mandatory leaves''':[[BR]]
+'''Mandatory leaves''':
 
-WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_FUNCPTR - pointer to function of type weed_leaf_get_f for the plugin to use
-WEED_LEAF_SET_FUNC "weed_leaf_set_func"       :: etc...
-WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"       :: etc...
-WEED_PLANT_NEW_FUNC "weed_plant_new_func"
-WEED_PLANT_FREE_FUNC "weed_plant_free_func"
-WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
-WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
-WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"
-WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
-WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
+As of the current Weed and Filter API versions
+
 
 WEED_LEAF_MALLOC_FUNC "weed_malloc_func"
+
 WEED_LEAF_FREE_FUNC "weed_free_func"
+
 WEED_LEAF_MEMSET_FUNC "weed_memset_func"
+
 WEED_LEAF_MEMCPY_FUNC "weed_memcpy_func"
 
-Addded in API version 200:
+
+(Addded in API version 200):-
 WEED_LEAF_CALLOC_FUNC "weed_calloc_func"
+
 WEED_LEAF_REALLOC_FUNC "weed_realloc_func"
+
 WEED_LEAF_MEMMOVE_FUNC "weed_memmove_func"
+
+-----------
+
+WEED_PLANT_NEW_FUNC "weed_plant_new_func"
+
+WEED_PLANT_FREE_FUNC "weed_plant_free_func"
+
+WEED_LEAF_GET_FUNC "weed_leaf_get_func"  :: WEED_SEED_FUNCPTR - pointer to function of type weed_leaf_get_f for the plugin to use
+
+WEED_LEAF_SET_FUNC "weed_leaf_set_func"       :: etc...
+
+WEED_LEAF_DELETE_FUNC "weed_leaf_delete_func"       :: etc...
+
+WEED_LEAF_NUM_ELEMENTS_FUNC "weed_leaf_num_elements_func"
+
+WEED_LEAF_ELEMENT_SIZE_FUNC "weed_leaf_element_size_func"
+
+WEED_LEAF_SEED_TYPE_FUNC "weed_leaf_seed_type_func"
+
+WEED_LEAF_GET_FLAGS_FUNC "weed_leaf_get_flags_func"
+
+WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
+
+
 
  * "weed_api_version" : WEED_SEED_INT : weed api version exposed in host,
 
  * "filter_api_version" : WEED_SEED_INT : filter api version provided by host
 
 
+
+
 '''Optional leaves''': [[BR]]
 
- * "plugin_info" : WEED_SEED_PLANTPTR : array of pointers to PLUGIN_INFO created from this template
+ * "plugin_info" : WEED_SEED_PLANTPTR : array of pointers to PLUGIN_INFO plants created from this template
 
  * "host_name"    : WEED_SEED_STRING : host name
+
  * "host_version" : WEED_SEED_STRING : host version
- * "flags"        : WEED_SEED_INT : bitmap of host_info flags (see below)
+
+ * "flags"        : WEED_SEED_INT    : bitmap of host_info flags (see below)
 
 
+The host may add any number of additional leaves, but it is recommended that it use keys prefixed "host_" to avoid
+possible conflicts with future versions of the spec.
 
 
 
 == PLANT TYPE PLUGIN_INFO ==
 
-The plugin_info plant is returned from the plugin setup function weed_setup(), to tell the host what
-filter classes are available in that plugin. After receiving this plant, the host nay
-set all leaves in it IMMUTABLE  and should not change any leaf values itself.
+The plugin_info plant should be created by plugin in weed_setup() after receiving the host_info plant from weed_bootstrap()
+
+The plugin may opt to call weed_plugin_info_init() (provided in libweed-plugin) instead,
+passing weed_bootstrap as a parameter, in which case weed_bootstrap() will be run for it and the return value
+used to create and return the plugin_info() plant.
+
+The WEED_SETUP_START macro defined in weed-plugin-utils.h also calls weed_plugin_info_init().
+
+
+
+
+The plugin should set up the leaves of that plant and then return it to the host from weed_setup().
+
+Plugin info describes the filter classes which are available in the plugin.
+
+After receiving the plant, the host may set all leaves in it IMMUTABLE / UNDELETABLE
+and should not change any leaf values itself, except:
+
+The plugin may add any nuber of additional private leaves with keys prefixed "plugin_"
+
+
 
  * "type" == WEED_PLANT_PLUGIN_INFO
 
 '''Mandatory leaves''':[[BR]]
 
  * "filters"	  : WEED_SEED_PLANTPTR : array of pointers to the filters in the plugin
+
  * "version"	  : WEED_SEED_INT : plugin package version
 
+ * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO plant created in weed_bootstrap() which contains information
+                                         about the host.
 
 '''Optional leaves''':[[BR]]
 
- * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO
-   plant returned from the host in weed_bootstrap()
 
- * "package_name" : WEED_SEED_STRING : for wrapper filters, the name of the package which is wrapped, e.g. "frei0r"
+ * "package_name" : WEED_SEED_STRING : for wrapper filters, the name of the package which is wrapped
+
  * "maintainer"	  : WEED_SEED_STRING : maintainer of plugin package
+
  * "url"	  : WEED_SEED_STRING : URL of plugin package
 
+
+The following may be set inside the weed_bootstrap() function from the values supplied by the plugin:
+
  * "min_weed_api_version"      : WEED_SEED_INT        :: min versions of the Weed API that the plugin supports
+
  * "max_weed_api_version"      : WEED_SEED_INT
+
  * "min_weed_filter_version"   : WEED_SEED_INT
+
  * "max_weed_filter_version"   " WEED_SEED_INT
 
 
@@ -1043,8 +1338,9 @@ set all leaves in it IMMUTABLE  and should not change any leaf values itself.
 
 Plant type filter_class is used to describe all properties of a single
 filter in a plugin. It is created by the plugin in weed_setup() and
-then added to the plugin_info plant. The plugin should not alter any values in the plant after weed_setup()
-but may add private leaves with keys prefixed "plugin_"
+then added to the plugin_info plant.
+
+The plugin should not alter any values in the plant after weed_setup() but may add private leaves with keys prefixed "plugin_"
 
 "type" == WEED_PLANT_FILTER_CLASS
 
@@ -1685,63 +1981,19 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 
 
-== PLUGIN FUNCTIONS ==
 
-The only fixed function name the plugin MUST implement is weed_setup().
+=== WEED_SETUP ===========
 
-Normally, host and plugin would use utility functions to simplify the prcedure outlined below. In the simplifed version,
-the host does:
+The full details of the plugin / host initialisation are described here.
 
-weed_plant_t *plugin_info = weed_setup(weed_bootstrap_func);
-if (plugin_info != NULL) {
-
-
-....
-
-
-
-and the plugin does:
-
-WEED_SETUP_START(weed_api_current_version, filter_api_current_version) {
-// api_versions should be specified manually by the plugin writer, do not use the version macros directly !
-
-.. setup the plugin info
-
-}
-WEED_SETUP_END;
-
-
-
-Howeer the full details are described below.
-
-
-
-
-==== weed_setup ====
-
-This is the sole mandatory function which every Weed plugin must implement.
-
-{{{
-    weed_plant_t *weed_setup(weed_bootstrap_f weed_bootstrap)
-}}}
-
-The host calls this first in a plugin, and passes in a pointer to a function of type weed_bootstrap_f.
-
-The typedef of weed_bootstrap_f is:
-{{{
-    weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t weed_api_min_version, int32_t weed_api_max_version,
-     int32_t weed_filter_api_min_version, weed_filter_api_max_version);
-}}}
-
-
-( NB: prior to API version 200, the function had a slightly different prototype:
-   weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t num_versions, int32_t *plugin_versions) )
+The host should first load the plugin and then at some later point mat call the weed_setup() function in it.
 
 
 e.g:
 
 ....
 weed_setup_f setup_fn = (weed_setup_f)dlsym(handle, "weed_setup");
+
 weed_plant_t *plugin_info = (*setup_fn)(weed_bootstrap); // using weed_bootstrap from libweed-utils
 
 
@@ -1881,138 +2133,6 @@ This may seem complex, but it provides several advantages:
 
 - the host can have access to functions which the plugin cannot, for example, only the host 
   can call weed_leaf_delete, (unlocked) weed_plant_free and weed_leaf_set_flags
-
-
-
-==== weed_desetup ====
-This is an optional function in Weed.
-
-{{{
-    void weed_desetup(void);
-}}}
-
-If the plugin has this function, the host should call it before
-unloading the plugin. This is to allow the plugin to reset any hardware, free allocated memory, etc.
-
-The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
-parameter_templates, gui), that job is left to the host to perform.
-
-
-
-==== init_func ====
-This is an optional function in Weed.
-
-
-{{{
-    int init_func(weed_plant_t *filter_instance)
-}}}
-
-If this function is set in the plugin_info, the host MUST call this function exactly once before it can use the process_func.
-passing in the filter_instance to be used.
-
-The filter plant instance passed to the init_func MUST have been
-correctly setup to match the filter class it relates to, 
-this means that all the mandatory leaves of input and output channels and of input parameters MUST be set.
-The function returns a weed error code (see below).
-
-The init_func() function allows the plugin to create any internal
-memory structures it needs; the plugin can store internal data as
-leaves that have keys prefixed with "plugin_" in the filter_instance 
-(see the definition of filter instance plant). The plugin can also (re)set
-the "gui" settings for parameter_templates (see below).
-
-
-
-
-==== process_func ====
-This is an optional function in the plugin. Ths host may call this as often as it wishes after calling the init_func (if it exists).
-
-{{{
-    int process_func(weed_plant_t *filter_instance, long timestamp)
-}}}
-
-Host calls this for each processing cycle; the plugin should process the in parameters and in channels (if any) and
-write data to the out channels and out parameters (if any).
-
-Timestamp is the presentation time in ticks (1/100 of a microsecond).
-Normally it will increase monotonically for each frame but that is not guaranteed, although hosts should attempt to keep it so
-between calling init_func and deinit_func.
-
-The function returns an error code (see below). 
-
-
-
-==== deinit_func ====
-This is an optional function in the plugin. If present, the host must call it once after running the init_func and completing
-the processing run.
-
-
-{{{
-    int deinit_func(weed_plant_t *filter_instance)
-}}}
-
-The host will call this once after it has finished running the process_func()
-to allow the plugin to free() any internal memory and reset its internal values.
-
-Following this the host may call the init_func() again if it wishes to continue using the plugin,
-otherwise it may call the desetup function and then free the host_info, plugin_info and any filter_instance plants.
-
-The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
-parameter_templates, gui), that job is left to the host to perform.
-
-
-
-
-Less commonly used functions:
-
-
-
-==== interpolate_func ====
-This function is under review and will likely change after filter API version 200.
-
-
-This is an optional function for a host to call.
-
-{{{
-    int interpolate_func(weed_param_t **in_params, weed_param_t *out_param);
-}}}
-
-The function takes a NULL terminated array of parameters for a single
-parameter_template, with "timecode", "value" and possibly "ignore" 
-leaves, and returns a best guess for the "value" of out_param. The
-in_params array MUST be in ascending "timecode" order. The "timecode"
-leaf of out_param MUST be set. All the parameter values in_params and
-out_param reference the same parameter_template. Interpolate_func is
-an optional leaf of that parameter_template.
-
-The value returned is actually a boolean. A return value of WEED_TRUE
-means the "value" set in out_param is exact. A return value of
-WEED_FALSE means that the "value" in out_param is a guess. In the
-latter case, the host can recall the function with more elements in
-in_params to try to get a more accurate result.
-
-
-==== display_func ====
-(deprecated)
-
-
-
-
-
-== HOST FUNCTIONS ==
-
-The host provides just one mandatory function to the plugins:
-weed_bootstrap (see above for its definition).
-
-The bootstrap function takes a list of Weed api versions supported by the
-plugin, sets a getter function, and returns a host_info plant, or NULL
-if none of the plugin api versions are supported.
-
-The plugin can use the getter function to get the leaves of the host
-info plant.
-
-The HOST_INFO plant can also have other optional leaves to provide
-more information about the host, and optional functions.
 
 
 

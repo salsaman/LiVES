@@ -2236,26 +2236,36 @@ void create_LiVES(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(nextclip_callback), NULL, NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+  // Let the player handle this
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down, (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up, (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_back_callback), NULL, NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Right, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Right,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_forward_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -4150,7 +4160,6 @@ void resize_play_window(void) {
         }
         if (mainw->ext_playback) {
           lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-          mainw->ext_keyboard = FALSE;
 #ifdef RT_AUDIO
           stop_audio_stream();
 #endif
@@ -4204,7 +4213,6 @@ void resize_play_window(void) {
 
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY && (pmonitor == 0 || capable->nmonitors == 1)) {
             lives_grab_add(LIVES_MAIN_WINDOW_WIDGET);
-            mainw->ext_keyboard = TRUE;
           }
         } else if (mainw->vpp->init_screen != NULL) {
           LIVES_ERROR("Failed to start playback plugin");

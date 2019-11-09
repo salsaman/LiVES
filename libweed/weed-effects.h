@@ -119,7 +119,8 @@ typedef int64_t weed_timecode_t;
 typedef weed_error_t (*weed_default_getter_f)(weed_plant_t *plant, const char *key, void *value);
 
 /* host bootstrap function */
-typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *, int32_t plugin_weed_min_api_version,
+typedef weed_plant_t *(*weed_bootstrap_f)(weed_default_getter_f *,
+    int32_t plugin_weed_min_api_version,
     int32_t plugin_weed_max_api_version,
     int32_t plugin_filter_min_api_version,
     int32_t plugin_filter_max_api_version);
@@ -134,7 +135,7 @@ typedef weed_error_t (*weed_init_f)(weed_plant_t *filter_instance);
 typedef weed_error_t (*weed_deinit_f)(weed_plant_t *filter_instance);
 
 /* special plugin functions */
-typedef void (*weed_display_f)(weed_plant_t *parameter);
+typedef void (*weed_display_f)(weed_plant_t *parameter); // deprecated
 typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_t *out_value);
 
 // leaf names

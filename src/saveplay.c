@@ -3146,15 +3146,22 @@ static void get_next_free_file(void) {
 
 boolean get_temp_handle(int index) {
   // we can call this to get a temp handle for returning info from the backend
-  // this function is also called from get_new_handle to create a permanent handle
-  // for an opened file
+  // (this function is also called from get_new_handle to create a permanent handle
+  // for an opened file)
 
-  // if a temp handle is required, pass in index as -1
-  // call close_temp_handle() on it after use, then restore mainw->current_file
+  // if an index is required, pass in index as -1 (the normal case)
+  // -- handle will be fetched and a directory created in workdir.
+  // -- clip_type is set to CLIP_TYPE_TEMP
+  // -- call close_temp_handle() on it after use, then restore mainw->current_file
 
   // returns FALSE if we couldn't write to workdir
 
-  // WARNING: this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
+  // WARNING:
+  // this function changes mainw->current_file, unless it returns FALSE (could not create cfile)
+
+  // get_new_handle() calls this with the index value passed to it, which should not be -1,
+  // and sets clip type to CLIP_TYPE_DISK
+  // and also sets the clip name and filename. That function should be used instead to create permanent clips.
 
   boolean is_unique, create = FALSE;
 
@@ -3166,19 +3173,20 @@ boolean get_temp_handle(int index) {
   }
 
   if (index == -1) {
-    index = mainw->first_free_file;
-    if (index == ALL_USED) {
+    if (mainw->first_free_file == ALL_USED) {
       too_many_files();
       return FALSE;
     }
-    get_next_free_file();
     create = TRUE;
+    index = mainw->first_free_file;
+    get_next_free_file();
   }
 
   do {
     is_unique = TRUE;
 
     //get handle from info file, the first time we will also malloc a new "file" struct here
+    // and create a directory in prefs->workdir
     if (!get_handle_from_info_file(index)) {
       lives_freep((void **)&mainw->files[index]);
       if (mainw->first_free_file == ALL_USED || index < mainw->first_free_file)
@@ -3196,6 +3204,7 @@ boolean get_temp_handle(int index) {
   mainw->current_file = index;
 
   if (create) {
+    // fill with default values
     create_cfile(index, cfile->handle, FALSE);
     cfile->clip_type = CLIP_TYPE_TEMP;
   }
@@ -3204,21 +3213,32 @@ boolean get_temp_handle(int index) {
 
 
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
-  // if handle is NULL we create one automatically
-
-  // create a new "clip" with default values
-  // call close_current_file() to close it
-
+  // set default values for a clip (in memory)
+  //
+  // if new_file == -1 we create a new clip
+  // - if handle is NULL we also create a directory for it, setting handle from that
+  // - otherwise, just create it in memory, and set its handle to "handle"
+  //
+  // if new_file != -1 the parameter "handle" is ignored, and we switch to new_file
+  // "handle" in the clip must have been set already
+  //
+  // default values are set for the clip
+  // type is set to CLIP_TYPE_DISK
+  // loaded is set = to is_loaded
+  //
   // WARNING: on success, changes the value of mainw->current_file !!
+
   lives_clip_t *sfile;
   char *stfile;
 
   if (new_file == -1) {
+    // if new_file == -1, we are going to create a new clip
     new_file = mainw->first_free_file;
     if (new_file == -1) {
       too_many_files();
       return NULL;
     }
+
     mainw->current_file = new_file;
     get_next_free_file();
 
@@ -3230,9 +3250,11 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
     }
 
     if (handle == NULL) {
+      // if handle is NULL, we create a new clip on disk, switch to it
       if (!get_handle_from_info_file(new_file)) return NULL;
       sfile = mainw->files[new_file];
     } else {
+      // else just create the in-memory part and set the handle
       sfile = mainw->files[new_file] = (lives_clip_t *)(lives_malloc(sizeof(lives_clip_t)));
       if (sfile == NULL) return NULL;
       lives_snprintf(sfile->handle, 256, "%s", handle);
@@ -3338,7 +3360,6 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->has_old_header = FALSE;
 
   return cfile;
-  // remember to set sfile->is_loaded=TRUE !!!!!!!!!!
 }
 
 
@@ -3350,18 +3371,34 @@ LIVES_GLOBAL_INLINE char *get_untitled_name(int number) {
 
 boolean get_new_handle(int index, const char *name) {
   // here is where we first initialize for the clipboard
-  // and for paste_as_new, and restore
+  // and for paste_as_new, and restore, etc.
   // pass in name as NULL or "" and it will be set with an untitled number
 
-  // this function *does not* change mainw->current_file, or add to the menu
+  // this function *does not* change mainw->current_file (except briefly), or add to the menu
   // or update mainw->clips_available
+
+  // differences from get_temp_handle:
+  // - here we dont't switch clips;
+  // - index is normally passed in rather than generated (pulled from next_free_file) - this allows some
+  //     the caller to know the index number and do preconfig before calling
+  // - we set name and file_name from the name parameter, or if name is NULL, we set an untitled name
+  //        and increment mainw->untitled_number
+  // - the clip should be closed using close_current_file() instead of close_temp_handle()
+
   char *xname;
 
   int current_file = mainw->current_file;
+
+  // if TRUE, changes mainw->current_file (and hence cfile)
   if (!get_temp_handle(index)) return FALSE;
-  create_cfile(index, cfile->handle, FALSE);
+
+  // setup would have been done already in get_temp_handle()
+  if (index == -1) index = mainw->current_file;
+
+  else create_cfile(index, cfile->handle, FALSE);
 
   // note : don't need to update first_free_file for the clipboard
+  // because we used index 0 instead of a free index number
   if (index != 0) {
     get_next_free_file();
   }
@@ -3373,6 +3410,7 @@ boolean get_new_handle(int index, const char *name) {
 
   lives_snprintf(cfile->file_name, PATH_MAX, "%s", xname);
   lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "%s", xname);
+
   mainw->current_file = current_file;
 
   lives_free(xname);

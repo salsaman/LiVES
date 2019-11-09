@@ -69,7 +69,6 @@ boolean ext_triggers_poll(livespointer data) {
   static int priority = G_PRIORITY_DEFAULT;
 #endif
   boolean needs_check = FALSE;
-
   if (mainw->is_exiting) return FALSE;
 
   // check for external controller events
@@ -133,22 +132,18 @@ LiVESFilterReturn filter_func(LiVESXXEvent *xevent, LiVESXEvent *event, livespoi
 
 
 boolean key_press_or_release(LiVESWidget *widget, LiVESXEventKey *event, livespointer user_data) {
-  return pl_key_function(event->type == LIVES_KEY_PRESS, event->keyval, event->state);
+  boolean ret = pl_key_function(event->type == LIVES_KEY_PRESS, event->keyval, event->state);
+  //if (ckey !=0 && cached_key == 0) g_print("unaching key\n");
+  return ret;
 }
 
 
 void handle_cached_keys(void) {
   // smooth out auto repeat for VJ scratch keys
-
-  static ticks_t last_kb_time = 0, current_kb_time;
-  int adjust = 1000000;
   if (cfile->pb_fps == 0.) return;
-
-  current_kb_time = mainw->currticks;
-
-  if (cached_key && (current_kb_time - last_kb_time) > KEY_RPT_INTERVAL * adjust) {
-    last_kb_time = current_kb_time;
-    lives_accel_groups_activate(LIVES_WIDGET_OBJECT(LIVES_MAIN_WINDOW_WIDGET), (uint32_t)cached_key, (LiVESXModifierType)cached_mod);
+  if (cached_key != 0) {
+    lives_accel_groups_activate(LIVES_WIDGET_OBJECT(LIVES_MAIN_WINDOW_WIDGET),
+                                (uint32_t)cached_key, (LiVESXModifierType)(cached_mod | LIVES_SPECIAL_MASK));
   }
 }
 
@@ -345,12 +340,16 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 // key callback functions - ones which have keys and need wrappers
 
 boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_slower_pressed(NULL, user_data);
   return TRUE;
 }
 
 
 boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_faster_pressed(NULL, user_data);
   return TRUE;
 }
@@ -358,6 +357,8 @@ boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
 
 boolean skip_back_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_back_pressed(NULL, user_data);
   return TRUE;
 }
@@ -365,6 +366,8 @@ boolean skip_back_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 
 boolean skip_forward_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                               livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_forward_pressed(NULL, user_data);
   return TRUE;
 }

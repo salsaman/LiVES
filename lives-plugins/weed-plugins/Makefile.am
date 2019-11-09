@@ -169,6 +169,7 @@ endif
 
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	audio_volume.la \
+	bump2d.la \
 	alien_overlay.la \
 	haip.la \
 	kaleidoscope.la \
@@ -178,7 +179,6 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	lifeTV.la \
 	mirrors.la \
 	vertigo.la \
-	bump2d.la \
 	simple_blend.la \
 	multi_blends.la  \
 	multi_transitions.la \

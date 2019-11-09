@@ -1301,7 +1301,7 @@ static void lives_init(_ign_opts *ign_opts) {
   if (prefs->pb_quality != PB_QUALITY_LOW && prefs->pb_quality != PB_QUALITY_HIGH &&
       prefs->pb_quality != PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_MED;
 
-  mainw->ext_playback = mainw->ext_keyboard = mainw->ext_audio = FALSE;
+  mainw->ext_playback = mainw->ext_audio = FALSE;
 
   get_string_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
   if (!strcmp(buff, LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
@@ -1327,6 +1327,12 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->default_fps = get_double_prefd(PREF_DEFAULT_FPS, DEF_FPS);
   if (prefs->default_fps < 1.) prefs->default_fps = 1.;
   if (prefs->default_fps > FPS_MAX) prefs->default_fps = FPS_MAX;
+
+  // values for trickplay
+  prefs->blendchange_amount = get_double_prefd(PREF_BLEND_AMOUNT,     DEF_BLENDCHANGE_AMOUNT);
+  prefs->scratchfwd_amount  = get_int_prefd(PREF_SCFWD_AMOUNT,     DEF_SCRATCHFWD_AMOUNT);
+  prefs->scratchback_amount = get_int_prefd(PREF_SCBACK_AMOUNT,    DEF_SCRATCHBACK_AMOUNT);
+  prefs->fpschange_amount   = get_double_prefd(PREF_FPSCHANGE_AMOUNT, DEF_FPSCHANGE_AMOUNT);
 
   prefs->q_type = Q_SMOOTH;
 
@@ -3120,7 +3126,7 @@ static boolean lives_startup(livespointer data) {
 
   // timer to poll for external commands: MIDI, joystick, jack transport, osc, etc.
   mainw->kb_timer_end = FALSE;
-  mainw->kb_timer = lives_timer_add(KEY_RPT_INTERVAL, &ext_triggers_poll, NULL);
+  mainw->kb_timer = lives_timer_add(EXT_TRIGGER_INTERVAL, &ext_triggers_poll, NULL);
 
 #ifdef HAVE_YUV4MPEG
   if (strlen(prefs->yuvin) > 0) lives_idle_add(open_yuv4m_startup, NULL);
@@ -7205,6 +7211,7 @@ void load_frame_image(int frame) {
     lives_freep((void **)&framecount);
   }
 
+
   /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
   boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
@@ -7994,8 +8001,6 @@ void load_frame_image(int frame) {
       lives_snprintf(cfile->info_file, PATH_MAX, "%s", tmp);
       lives_free(tmp);
     }
-
-
 
     if (!CURRENT_CLIP_IS_NORMAL || (mainw->event_list != NULL && !mainw->record))
       mainw->play_end = INT_MAX;

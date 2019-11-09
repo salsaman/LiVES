@@ -33,7 +33,7 @@ static double disp_fraction_done;
 
 static ticks_t last_open_check_ticks;
 
-static ticks_t prev_ticks;
+static ticks_t last_kbd_ticks;
 
 static boolean shown_paused_frames;
 static boolean force_show;
@@ -1181,12 +1181,6 @@ int process_one(boolean visible) {
     }
     last_time_source = time_source;
 
-    if (time_source == LIVES_TIME_SOURCE_SYSTEM) {
-      // got time from system clock
-      if (LIVES_UNLIKELY(mainw->currticks < prev_ticks)) mainw->currticks = prev_ticks;
-      prev_ticks = mainw->currticks;
-    }
-
 #define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
     // adjust audio rate slightly if we are behind or ahead
@@ -1308,10 +1302,18 @@ int process_one(boolean visible) {
     }
 
     // free playback
+
+    if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
+      // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
+      // this is to avoid the keyboard repeat delay (dammit !) so we get smooth trickplay
+      // BUT we need a timer sufficiently large so it isn't triggered on every loop, to produce a constant repeat rate
+      // but not so large so it doesn't get triggered enough
+      if (last_kbd_ticks > 0) handle_cached_keys();
+      last_kbd_ticks = mainw->currticks;
+    }
+
     new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
     cfile->last_frameno = cfile->frameno;
-
-    handle_cached_keys();
 
     show_frame = FALSE;
 
@@ -1325,8 +1327,28 @@ int process_one(boolean visible) {
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // which will be <= the current time
       // and cfile->frameno is set to the frame to show
+      double opbfps = cfile->pb_fps;
+      short scratch = mainw->scratch; // this gets reset in calc_new_playback_position()
+
+      if (scratch == SCRATCH_BACK) {
+        // scratch backwards: we temporarily play backwards at a quicker value
+        new_ticks += KEY_RPT_INTERVAL * prefs->scratchback_amount;
+        cfile->pb_fps = -cfile->pb_fps;
+      }
+      if (scratch == SCRATCH_FWD) {
+        // scratch forwards: simpler; we just add to mainw->deltaticks
+        new_ticks += (ticks_t)KEY_RPT_INTERVAL * (ticks_t)prefs->scratchfwd_amount;
+        mainw->deltaticks += (ticks_t)KEY_RPT_INTERVAL * (ticks_t)prefs->scratchfwd_amount;
+      }
+
       pthread_mutex_lock(&mainw->audio_resync_mutex);
       cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+
+      if (scratch == SCRATCH_BACK) {
+        // reset framerate to the proper value now
+        if (cfile->pb_fps * opbfps > 0.) cfile->pb_fps = -opbfps;
+        cfile->pb_fps = opbfps;
+      }
 
       if (new_ticks != mainw->startticks) {
         mainw->startticks = new_ticks;
@@ -1650,8 +1672,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->startticks = mainw->currticks = mainw->offsetticks = 0;
   last_open_check_ticks = 0;
 
-  prev_ticks = 0;
-
 #ifdef ENABLE_JACK
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
       mainw->jackd_read != NULL && prefs->ahold_threshold > 0.) {
@@ -1688,7 +1708,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     if (mainw->cancelled != CANCEL_NONE) return FALSE;
   }
 #endif
-
+  last_kbd_ticks = 0;
   mainw->scratch = SCRATCH_NONE;
   if (mainw->iochan != NULL) lives_widget_show(cfile->proc_ptr->pause_button);
   display_ready = TRUE;

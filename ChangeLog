@@ -14,7 +14,7 @@ Crash recovery now restores the config file from backup if the original is damag
 Improvements to RFX script builder tool.
 Improvements to Fileselector preview / Selection opener.
 Improvements to effects previews.
-Improvements to "targetted_zoom" effect in multitrack; add "scaledpoint" layout element in RFX windows.
+Improvements to "targeted_zoom" effect in multitrack; add "scaledpoint" layout element in RFX windows.
 New "auto-layout" mode to improve the appearance of all parameter windows.
 Tweaks for Preferences window.
 Fix mkv_decoder so it can decode webm clips.

@@ -203,7 +203,6 @@ void lives_exit(int signum) {
 
     if (LIVES_IS_PLAYING) {
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
-      mainw->ext_keyboard = FALSE;
       if (mainw->ext_playback) {
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         mainw->ext_audio = FALSE;
@@ -5509,14 +5508,12 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   }
 
   d_print(_("Cleaning up disk space..."));
-  g_print("cf is %d\n", mainw->current_file);
   // get a temporary clip for receiving data from backend
   if (!get_temp_handle(-1)) {
     d_print_failed();
     mainw->next_ds_warn_level = ds_warn_level;
     return;
   }
-  g_print("cf2 is %d\n", mainw->current_file);
 
   cfile->cb_src = current_file;
 
@@ -5583,11 +5580,9 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
       lives_strfreev(array);
     }
   }
-  g_print("cf3 is %d\n", mainw->current_file);
 
   // close the temporary clip
   close_temp_handle(current_file);
-  g_print("cf4 is %d\n", mainw->current_file);
 
   // remove the protective markers
   for (i = 0; i < MAX_FILES; i++) {
@@ -9823,7 +9818,7 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->rte_keys != -1 && user_data == NULL) {
-    mainw->blend_factor -= BLEND_AMOUNT;
+    mainw->blend_factor -= prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }
@@ -9831,7 +9826,7 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
   if (sfile->next_event != NULL) return;
 
-  change *= PB_CHANGE_RATE * sfile->pb_fps;
+  change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL * sfile->pb_fps;
 
   if (sfile->pb_fps == 0.) return;
   if (sfile->pb_fps > 0.) {
@@ -9859,25 +9854,27 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
   if (cfile->next_event != NULL) return;
 
   if (user_data != NULL) {
+    // change bg fps more slowly (I forget why)
     type = LIVES_POINTER_TO_INT(user_data);
     if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
     change = 0.1;
   }
 
   if (mainw->rte_keys != -1 && user_data == NULL) {
-    mainw->blend_factor += BLEND_AMOUNT;
+    mainw->blend_factor += prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }
 
   if (sfile->play_paused && sfile->freeze_fps < 0.) {
-    sfile->pb_fps = -.00000001;
+    sfile->pb_fps = -.00000001; // want to keep this as a negative value so when we unfreeze we still play in reverse
   }
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
   if (sfile->next_event != NULL) return;
 
-  change = PB_CHANGE_RATE * (sfile->pb_fps == 0. ? 1. : sfile->pb_fps);
+  change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL
+            * (sfile->pb_fps == 0. ? 1. : sfile->pb_fps);
 
   if (sfile->pb_fps >= 0.) {
     if (sfile->pb_fps == FPS_MAX) return;
@@ -9895,29 +9892,23 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
 
 
 void on_back_pressed(LiVESButton *button, livespointer user_data) {
-  double change_speed;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
-  change_speed = cfile->pb_fps * (double)KEY_RPT_INTERVAL * PB_SCRATCH_VALUE;
-
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  mainw->deltaticks -= (ticks_t)(change_speed * 10. * mainw->period);
   mainw->scratch = SCRATCH_BACK;
 }
 
 
 void on_forward_pressed(LiVESButton *button, livespointer user_data) {
-  double change_speed;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
-  change_speed = cfile->pb_fps * (double)KEY_RPT_INTERVAL * PB_SCRATCH_VALUE;
-
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  mainw->deltaticks += (ticks_t)(change_speed * mainw->period);
   mainw->scratch = SCRATCH_FWD;
 }
 

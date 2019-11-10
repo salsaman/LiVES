@@ -170,27 +170,33 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int b1, b2, b3, bx;
   int maxneeded = 0;
   int is_bgr = 0, is_yuv = 0, yuvmin = 0, uvmin = 0;
+  int is_easing = 0;
 
   register int i, j, k;
+  if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL) > 0) {
+    is_easing = 1;
+  }
 
   if (maxcache < 0) maxcache = 0;
   else if (maxcache > 50) maxcache = 50;
 
-  for (i = 1; i < maxcache; i++) {
-    if (weed_get_boolean_value(in_params[RED_ON(i)], "value", &error) == WEED_TRUE ||
-        weed_get_boolean_value(in_params[GREEN_ON(i)], "value", &error) == WEED_TRUE ||
-        weed_get_boolean_value(in_params[BLUE_ON(i)], "value", &error) == WEED_TRUE) {
-      maxneeded = i + 1;
+  if (!is_easing) {
+    for (i = 1; i < maxcache; i++) {
+      if (weed_get_boolean_value(in_params[RED_ON(i)], "value", &error) == WEED_TRUE ||
+          weed_get_boolean_value(in_params[GREEN_ON(i)], "value", &error) == WEED_TRUE ||
+          weed_get_boolean_value(in_params[BLUE_ON(i)], "value", &error) == WEED_TRUE) {
+        maxneeded = i + 1;
+      }
     }
-  }
 
-  if (maxneeded != sdata->tcache) {
-    int ret = realloc_cache(sdata, maxneeded, width, height); // sets sdata->tcache
-    if (ret != WEED_SUCCESS) {
-      weed_free(in_params);
-      return ret;
+    if (maxneeded != sdata->tcache) {
+      int ret = realloc_cache(sdata, maxneeded, width, height); // sets sdata->tcache
+      if (ret != WEED_SUCCESS) {
+        weed_free(in_params);
+        return ret;
+      }
+      if (sdata->ccache > sdata->tcache) sdata->ccache = sdata->tcache;
     }
-    if (sdata->ccache > sdata->tcache) sdata->ccache = sdata->tcache;
   }
 
   if (sdata->tcache > 1) {
@@ -340,8 +346,12 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     }
   }
 
-  if (sdata->ccache < sdata->tcache) {
-    sdata->ccache++;
+  if (!is_easing) {
+    if (sdata->ccache < sdata->tcache) {
+      sdata->ccache++;
+    }
+  } else {
+    if (sdata->ccache > 0) sdata->ccache--;
   }
 
   if (is_yuv && yuvmin == 16) {
@@ -356,7 +366,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       }
     }
   }
-
+  weed_set_int_value(inst, WEED_LEAF_PLUGIN_EASING, sdata->ccache);
   weed_free(in_params);
   return WEED_SUCCESS;
 }

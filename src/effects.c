@@ -1025,10 +1025,11 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     } else {
       // effect is OFF
       filter_mutex_lock(key);
-      weed_deinit_effect(key);
-      pthread_mutex_lock(&mainw->event_list_mutex);
-      if (mainw->rte & new_rte) mainw->rte ^= new_rte;
-      pthread_mutex_unlock(&mainw->event_list_mutex);
+      if (weed_deinit_effect(key)) {
+        pthread_mutex_lock(&mainw->event_list_mutex);
+        if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+        pthread_mutex_unlock(&mainw->event_list_mutex);
+      }
       filter_mutex_unlock(key);
       if (rte_window != NULL) rtew_set_keych(key, FALSE);
       if (mainw->ce_thumbs) ce_thumbs_set_keych(key, FALSE);

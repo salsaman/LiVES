@@ -1332,7 +1332,7 @@ static void draw_aparams(lives_mt *mt, LiVESWidget *eventbox, lives_painter_t *c
   inst = weed_instance_from_filter(filter);
   in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
 
   start_tc = get_event_timecode(init_event);
   end_tc = get_event_timecode(deinit_event);
@@ -1636,7 +1636,7 @@ boolean add_mt_param_box(lives_mt *mt) {
   int dbw = widget_opts.border_width;
 
   tc = get_event_timecode((weed_plant_t *)mt->init_event);
-  deinit_event = (weed_plant_t *)weed_get_voidptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  deinit_event = weed_get_plantptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
 
   fx_start_time = tc / TICKS_PER_SECOND_DBL;
   fx_end_time = get_event_timecode(deinit_event) / TICKS_PER_SECOND_DBL;
@@ -3373,7 +3373,7 @@ void mt_tl_move(lives_mt *mt, double pos) {
   if (mt->init_event != NULL) {
     int error;
     weed_timecode_t tc = q_gint64(pos * TICKS_PER_SECOND_DBL, mt->fps);
-    weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
+    weed_plant_t *deinit_event = weed_get_plantptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
     if (tc < get_event_timecode(mt->init_event) || tc > get_event_timecode(deinit_event)) {
       mt->init_event = NULL;
       if (mt->poly_state == POLY_PARAMS) polymorph(mt, POLY_FX_STACK);
@@ -5215,7 +5215,7 @@ static void apply_avol_filter(lives_mt *mt) {
   }
 
   // init event is already there - we will move the deinit event to tc==new_end event
-  deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   new_tc = get_event_timecode(new_end_event);
 
   move_filter_deinit_event(mt->event_list, new_tc, deinit_event, mt->fps, FALSE);
@@ -15757,7 +15757,7 @@ void on_mt_delfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mt->current_fx = weed_get_idx_for_hashname(fhash, TRUE);
   lives_free(fhash);
 
-  deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
   start_tc = get_event_timecode(init_event);
   end_tc = get_event_timecode(deinit_event) + TICKS_PER_SECOND_DBL / mt->fps;
@@ -16304,7 +16304,7 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
             weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) == 1 && weed_get_int_value(event, WEED_LEAF_IN_TRACKS, &error) == track) {
           // this effect has a deinit_event, it has one in_track, which is this one
 
-          deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+          deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
           if (get_event_timecode(deinit_event) <= end_tc) {
             //if the effect also ends within the block, we will move it to the new block
 
@@ -16359,7 +16359,7 @@ void update_filter_events(lives_mt *mt, weed_plant_t *first_event, weed_timecode
             // the effect is removed.
             // Effects with one in_track which is other, or effects with >2 in tracks, do not suffer this fate.
 
-            deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+            deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
 
             if (get_event_timecode(deinit_event) <= end_tc) {
               remove_filter_from_event_list(mt->event_list, event);
@@ -19954,7 +19954,7 @@ static void **remove_nulls_from_filter_map(void **init_events, int *num_events) 
 void move_init_in_filter_map(lives_mt *mt, weed_plant_t *event_list, weed_plant_t *event, weed_plant_t *ifrom,
                              weed_plant_t *ito, int track, boolean after) {
   int error, i, j;
-  weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(ifrom, WEED_LEAF_DEINIT_EVENT, &error);
+  weed_plant_t *deinit_event = weed_get_plantptr_value(ifrom, WEED_LEAF_DEINIT_EVENT, &error);
   void **events_before = NULL;
   void **events_after = NULL;
   int num_before = 0, j1;
@@ -20693,7 +20693,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
           was_deleted = TRUE;
         } else {
           weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT);
-          weed_set_voidptr_value((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT, event);
+          weed_set_plantptr_value((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT, event);
 
           host_tag_s = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &error);
           host_tag = atoi(host_tag_s);

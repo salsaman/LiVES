@@ -1003,7 +1003,7 @@ static void audio_process_events_to(weed_timecode_t tc) {
       if (!weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT)) {
         LIVES_ERROR("Init event with no deinit !\n");
       } else {
-        deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+        deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
         if (deinit_event == NULL) {
           LIVES_ERROR("NULL deinit !\n");
         } else {
@@ -1951,7 +1951,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     if (WEED_EVENT_IS_FILTER_MAP(event)) {
       mainw->afilter_map = mainw->filter_map = event;
     } else if (WEED_EVENT_IS_FILTER_INIT(event)) {
-      deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+      deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
       if (get_event_timecode(deinit_event) >= fill_tc) {
         // this effect should be activated
         process_events(event, FALSE, get_event_timecode(event));

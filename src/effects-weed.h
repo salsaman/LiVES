@@ -88,6 +88,8 @@ typedef enum {
 
 #define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"
 
+#define WEED_LEAF_AUTO_EASING "host_auto_easing"
+
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
@@ -155,7 +157,7 @@ weed_error_t weed_call_deinit_func(weed_plant_t *instance);
 
 char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1
-void weed_deinit_effect(int hotkey); ///< hotkey starts at 1
+boolean  weed_deinit_effect(int hotkey); ///< hotkey starts at 1
 weed_plant_t *weed_instance_from_filter(weed_plant_t *filter);
 int _wood_instance_ref(weed_plant_t *inst);
 int _wood_instance_unref(weed_plant_t *inst);

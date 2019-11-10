@@ -599,7 +599,7 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     error = weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID,
                                    (void *)new_init_event);  // useful later for event_list_rectify
     weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
-    weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT, event);
+    weed_set_plantptr_value((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT, event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     break;
   case WEED_EVENT_HINT_FILTER_MAP:
@@ -1362,7 +1362,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *insert_blank_frame_event_at(weed_plant_t *even
 
 void remove_filter_from_event_list(weed_plant_t *event_list, weed_plant_t *init_event) {
   int error;
-  weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   weed_plant_t *event = init_event;
   weed_plant_t *filter_map = get_filter_map_before(init_event, LIVES_TRACK_ANY, NULL);
   void **new_init_events;
@@ -1514,7 +1514,7 @@ void delete_param_changes_after_deinit(weed_plant_t *event_list, weed_plant_t *i
 
   int error, num_inits;
 
-  weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   weed_timecode_t deinit_tc = get_event_timecode(deinit_event);
 
   weed_timecode_t pchain_tc;
@@ -1686,7 +1686,7 @@ void add_init_event_to_filter_map(weed_plant_t *fmap, weed_plant_t *event, void 
 void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, weed_plant_t *init_event, double fps) {
   int error, i, j = 0;
   weed_timecode_t tc = get_event_timecode(init_event);
-  weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
   weed_timecode_t deinit_tc = get_event_timecode(deinit_event);
   weed_plant_t *event = init_event, *event_next;
   weed_plant_t *filter_map, *copy_filter_map;
@@ -1984,7 +1984,7 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
   // now we have xevent, new_tc
 
   if (WEED_EVENT_IS_FILTER_INIT(event)) {
-    weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+    weed_plant_t *deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
     if (xevent == NULL || get_event_timecode(deinit_event) < new_tc) {
       // if we are moving a filter_init past its deinit event, remove it, remove deinit, remove param_change events,
       // remove from all filter_maps, and check for duplicate filter maps
@@ -1995,7 +1995,7 @@ boolean move_event_right(weed_plant_t *event_list, weed_plant_t *event, boolean 
   } else {
     // otherwise, for a param_change, just insert it at new_tc
     weed_plant_t *init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
-    weed_plant_t *deinit_event = (weed_plant_t *)weed_get_voidptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
+    weed_plant_t *deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, &error);
     if (xevent == NULL || get_event_timecode(deinit_event) < new_tc) {
       delete_event(event_list, event);
       return FALSE;
@@ -2762,7 +2762,7 @@ weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, weed_timecode
   weed_set_int_value(event, WEED_LEAF_HINT, WEED_EVENT_HINT_FILTER_DEINIT);
   weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
   weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
-  weed_set_voidptr_value((weed_plant_t *)init_event, WEED_LEAF_DEINIT_EVENT, event);
+  weed_set_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, (void *)event);
   if (pchain != NULL) {
     int num_params = 0;
     while (pchain[num_params] != NULL) num_params++;
@@ -2962,6 +2962,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
   int new_file;
   int hint;
   int key, idx;
+  int easing;
 
   register int i;
 
@@ -3082,6 +3083,13 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 #ifdef DEBUG_EVENTS
       g_print("event: front frame is %d tc %"PRId64" curr_tc=%"PRId64"\n", mainw->frame_index[0], tc, curr_tc);
 #endif
+      if ((inst = weed_get_plantptr_value(next_event, WEED_LEAF_PLUGIN_EASING, NULL)) != NULL) {
+        easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL);
+        if (weed_get_int_value(inst, WEED_LEAF_PLUGIN_EASING, NULL) > 0) {
+          weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
+          weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
+        }
+      }
 
       // handle case where new_file==-1: we must somehow create a blank frame in load_frame_image
       if (new_file == -1) new_file = mainw->current_file;
@@ -3147,7 +3155,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 #ifdef DEBUG_EVENTS
       g_print("event: init effect on key %d at tc %"PRId64" curr_tc=%"PRId64"\n", key, tc, curr_tc);
 #endif
-
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_COUNT)) {
         num_in_count = weed_leaf_num_elements(next_event, WEED_LEAF_IN_COUNT);
         in_count = weed_get_int_array(next_event, WEED_LEAF_IN_COUNT, &error);
@@ -3272,6 +3279,21 @@ filterinit1:
 
         weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hostkey);
         weed_set_int_value(inst, WEED_LEAF_HOST_MODE, hostmode);
+
+        if ((easing = weed_get_int_value(next_event, WEED_LEAF_EASE_OUT, NULL)) > 0) {
+          g_print("precev found easing %d on %p\n", easing, next_event);
+          weed_plant_t *deinit = weed_get_plantptr_value(next_event, WEED_LEAF_DEINIT_EVENT, NULL);
+          if (deinit != NULL) {
+            weed_plant_t *event = deinit;
+            for (i = 0; i < easing && event != NULL; i++) {
+              event = get_prev_frame_event(event);
+            }
+            if (event != deinit && event != NULL) {
+              weed_set_int_value(event, WEED_LEAF_EASE_OUT, easing);
+              weed_set_plantptr_value(event, WEED_LEAF_PLUGIN_EASING, inst);
+            }
+          }
+        }
       }
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
@@ -3379,6 +3401,7 @@ lives_render_error_t render_events(boolean reset) {
   int num_in_channels = 0, num_out_channels = 0;
   int mytrack;
   int scrap_track = -1;
+  int easing;
 
   static int progress;
   static int xaclips[MAX_AUDIO_TRACKS];
@@ -3576,6 +3599,14 @@ lives_render_error_t render_events(boolean reset) {
               }
             }
             layers[i] = NULL;
+
+            if ((inst = weed_get_plantptr_value(event, WEED_LEAF_PLUGIN_EASING, NULL)) != NULL) {
+              easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL);
+              if (weed_get_int_value(inst, WEED_LEAF_PLUGIN_EASING, NULL) > 0) {
+                weed_set_int_value(inst, WEED_LEAF_EASE_OUT, easing);
+                weed_set_boolean_value(inst, WEED_LEAF_AUTO_EASING, WEED_TRUE);
+              }
+            }
 
             layer = weed_apply_effects(layers, mainw->filter_map, tc, 0, 0, pchains);
 
@@ -3936,6 +3967,20 @@ filterinit2:
 
         weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hostkey);
         weed_set_int_value(inst, WEED_LEAF_HOST_MODE, hostmode);
+
+        if ((easing = weed_get_int_value(event, WEED_LEAF_EASE_OUT, NULL)) > 0) {
+          weed_plant_t *deinit = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
+          if (deinit != NULL) {
+            weed_plant_t *xevent = deinit;
+            for (i = 0; i < easing; i++) {
+              xevent = get_prev_frame_event(xevent);
+            }
+            if (xevent != deinit && xevent != NULL) {
+              weed_set_int_value(xevent, WEED_LEAF_EASE_OUT, easing);
+              weed_set_plantptr_value(xevent, WEED_LEAF_PLUGIN_EASING, inst);
+            }
+          }
+        }
       }
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {

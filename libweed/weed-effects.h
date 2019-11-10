@@ -188,6 +188,9 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_TIMECODE "timecode"
 #define WEED_LEAF_FPS "fps"
 
+#define WEED_LEAF_EASE_OUT "ease_out" // host request val, <= WEED_LEAF_PLUGIN_EASING
+#define WEED_LEAF_PLUGIN_EASING "plugin_easing"
+
 // channels / chan template
 #define WEED_LEAF_PIXEL_DATA "pixel_data"
 #define WEED_LEAF_WIDTH "width"

@@ -30,7 +30,9 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 // input is nextImg : this is cached in memory to provide prevImg for the next call
 // output is two channels of type ALPHA FLOAT (the flow(y,x)[0] in the first, and the flow(y,x)[1] in the second)
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
+#define NEED_PALETTE_UTILS
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
 #else
@@ -44,7 +46,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -71,7 +72,7 @@ static void unclamp_frame(uint8_t *data, int width, int row, int height) {
 
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
-      *data = YCL_YUCL[*data];
+      *data = y_clamped_to_unclamped(*data);
       data++;
     }
     data += row;
@@ -98,7 +99,7 @@ static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) 
 }
 
 
-static int farneback_init(weed_plant_t *inst) {
+static weed_error_t farneback_init(weed_plant_t *inst) {
   _sdata *sdata;
 
   sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -113,7 +114,7 @@ static int farneback_init(weed_plant_t *inst) {
 }
 
 
-static int farneback_deinit(weed_plant_t *inst) {
+static weed_error_t farneback_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -126,7 +127,7 @@ static int farneback_deinit(weed_plant_t *inst) {
 }
 
 
-static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
+static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
 
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -192,10 +193,10 @@ static int farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
     if (weed_plant_has_leaf(in_channel, "YUV_clamping") &&
         (weed_get_int_value(in_channel, "YUV_clamping", &error) == WEED_YUV_CLAMPING_CLAMPED)) {
       srcMat = Mat(height, width, CV_8U, src, irow);
-      ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
+      //ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
       LUT(srcMat, ucMat, *cvgrey);
     } else {
-      srcMat = Mat(height, width, CV_8U, src, irow);
+      //srcMat = Mat(height, width, CV_8U, src, irow);
       srcMat.copyTo(*cvgrey);
     }
     break;
@@ -319,8 +320,6 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(in_chantmpls[0], "YUV_clamping", WEED_YUV_CLAMPING_UNCLAMPED);
 
   weed_set_int_value(plugin_info, "version", package_version);
-
-  init_Y_to_Y_tables();
 }
 WEED_SETUP_END;
 

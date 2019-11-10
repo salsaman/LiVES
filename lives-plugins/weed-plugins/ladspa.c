@@ -5,6 +5,8 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#define NEED_ALPHA_SORT
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -19,7 +21,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 
 #include <string.h>
@@ -121,7 +122,7 @@ static int float_interleave(float *fbuffer, int nsamps, int nchans) {
 
 /////////////////////////////////////////////////////////////
 
-int ladspa_init(weed_plant_t *inst) {
+static weed_error_t ladspa_init(weed_plant_t *inst) {
   int error;
   weed_plant_t *channel = NULL;
   weed_plant_t *filter = weed_get_plantptr_value(inst, "filter_class", &error);
@@ -187,7 +188,7 @@ int ladspa_init(weed_plant_t *inst) {
 }
 
 
-int ladspa_deinit(weed_plant_t *inst) {
+static weed_error_t ladspa_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", &error);
   weed_plant_t *filter = weed_get_plantptr_value(inst, "filter_class", &error);
@@ -212,7 +213,7 @@ int ladspa_deinit(weed_plant_t *inst) {
 }
 
 
-int ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   int nsamps = 0;
 

@@ -15,6 +15,9 @@ shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
 shared_cflags = -fno-common
 else
 shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+
+## --whole-archive is supposed to work, but doesn't....
+#shared_cflags = -fPIC -DPIC -Wno-unused-function -Wl,--whole-archive $(libdir)/libweed-plugin-utils.a -Wl,--no-whole-archive
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 

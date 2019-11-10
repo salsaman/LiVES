@@ -140,21 +140,16 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
 }
 
 
-
-
-
-
-int resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
+static weed_error_t resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
-                             &error);
+                             NULL);
 
-  int inwidth = weed_get_int_value(in_channel, "width", &error);
-  int inheight = weed_get_int_value(in_channel, "height", &error);
+  int inwidth = weed_get_int_value(in_channel, "width", NULL);
+  int inheight = weed_get_int_value(in_channel, "height", NULL);
 
-  int outwidth = weed_get_int_value(out_channel, "width", &error);
-  int outheight = weed_get_int_value(out_channel, "height", &error);
+  int outwidth = weed_get_int_value(out_channel, "width", NULL);
+  int outheight = weed_get_int_value(out_channel, "height", NULL);
 
   GdkPixbuf *in_pixbuf = pl_channel_to_pixbuf(in_channel);
   GdkPixbuf *out_pixbuf;
@@ -182,7 +177,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1, WEED_FILTER_IS_CONVERTER, NULL, &resize_process, NULL,
+  weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1, WEED_FILTER_IS_CONVERTER, NULL, resize_process, NULL,
                                in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

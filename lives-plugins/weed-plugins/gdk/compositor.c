@@ -114,7 +114,7 @@ static void paint_pixel(unsigned char *dst, int dof, unsigned char *src, int sof
 }
 
 
-int compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
+static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
   weed_plant_t **in_channels = NULL;
   int num_in_channels = 0;

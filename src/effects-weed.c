@@ -4481,17 +4481,22 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
-weed_error_t weed_leaf_get_plugin(weed_plant_t *plant, const char *key, int32_t idx, void *value) {
-  // plugins can be monitored for example
-  weed_error_t err = _weed_leaf_get(plant, key, idx, value);
-  // and simulating bugs...
-  /* if (!strcmp(key, WEED_LEAF_WIDTH) && value != NULL) { */
-  /*   int *ww = (int *)value; */
-  /*   *ww -= 100; */
-  /* } */
-  return err;
-}
+/* weed_error_t weed_leaf_get_plugin(weed_plant_t *plant, const char *key, int32_t idx, void *value) { */
+/*   // plugins can be monitored for example */
+/*   weed_error_t err = _weed_leaf_get(plant, key, idx, value); */
+/*   // and simulating bugs... */
+/*   /\* if (!strcmp(key, WEED_LEAF_WIDTH) && value != NULL) { *\/ */
+/*   /\*   int *ww = (int *)value; *\/ */
+/*   /\*   *ww -= 100; *\/ */
+/*   /\* } *\/ */
+/*   return err; */
+/* } */
 
+
+weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
+  fprintf(stderr, "pl setting %s\n", key);
+  return _weed_leaf_set(plant, key, seed_type, num_elems, values);
+}
 
 // memory profiling for plugins
 
@@ -4514,14 +4519,8 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
   weed_error_t err;
 
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
-  /* if (!strcmp(key, WEED_LEAF_NEXT)) { */
-  /*   g_print("seeting, ptr %p val %d\n", values, (p[0] == NULL)); */
-  /* } */
-
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-  /* if (!strcmp(key, WEED_LEAF_NEXT)) { */
-  /*   g_print("seetingsss, ptr %p val %d\n", values, err); */
-  /* } */
+
   if (err == WEED_SUCCESS) return err;
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
@@ -4634,7 +4633,7 @@ static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   // since we redefined weed_leaf_set and weed_plant_free for ourselves,
   // we need to reset the plugin versions, since it will inherit ours by default when calling setup_func()
 
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t)weed_leaf_get_plugin);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)weed_leaf_set_plugin);
   weed_set_funcptr_value(xhost_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
 
   update_host_info(xhost_info);

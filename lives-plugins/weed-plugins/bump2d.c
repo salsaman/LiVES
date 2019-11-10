@@ -23,7 +23,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -70,13 +69,12 @@ static void bumpmap_x_init(void) {
 }
 
 
-static weed_error_r bumpmap_init(weed_plant_t *inst) {
+static weed_error_t bumpmap_init(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->sin_index = 0;
   sdata->sin_index2 = 80;
-  sdata->owidth = sdata->oheight = 0;
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_SUCCESS;
@@ -168,7 +166,7 @@ static weed_error_t bumpmap_process(weed_plant_t *inst, weed_timecode_t timestam
         if (palette == WEED_PALETTE_YUV888 || palette == WEED_PALETTE_YUVA8888) {
           if (yuv_clamping == WEED_YUV_CLAMPING_UNCLAMPED)
             *dst = reflectionmap[normalx][normaly];
-          else *dst = y_unclamped_to_clamped[reflectionmap[normalx][normaly]];
+          else *dst = y_unclamped_to_clamped(reflectionmap[normalx][normaly]);
           dst[1] = dst[2] = 128;
         } else {
           if (palette == WEED_PALETTE_ARGB32) dst[0] = src[0];

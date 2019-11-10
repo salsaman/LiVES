@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 ///////////////////////////////////////////////////////////////////
+#define NEED_ALPHA_SORT
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -32,7 +33,6 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
 
 ////////////////////////////////////////////////////////////////
 
-int frei0r_init(weed_plant_t *inst) {
+static weed_error_t frei0r_init(weed_plant_t *inst) {
   weed_plant_t *out_channel, *filter;
   int error, height, width, cpalette;
   f0r_instance_t f0r_inst;
@@ -113,7 +113,7 @@ int frei0r_init(weed_plant_t *inst) {
 }
 
 
-int frei0r_deinit(weed_plant_t *inst) {
+static weed_error_t frei0r_deinit(weed_plant_t *inst) {
   int error;
   f0r_instance_t f0r_inst;
   f0r_destruct_f f0r_destruct;
@@ -182,7 +182,7 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
 }
 
 
-int frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
   f0r_instance_t f0r_inst;

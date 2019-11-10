@@ -49,6 +49,8 @@ libweed_gslice_la_SOURCES = weed.c
 
 libweed_utils_la_SOURCES = weed-utils.c 
 
+#libweed_plugin_utils_la_SOURCES = weed-plugin-utils.c
+
 libweed_gslice_scripting_la_SOURCES = weed-gslice_scripting.c
 libweed_utils_scripting_la_SOURCES = weed-utils_scripting.c 
 
@@ -71,6 +73,9 @@ libweed_gslice_la_LDFLAGS = @GLIB_LIBS@ $(libweed_la_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
 libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+
+libweed_plugin_utils_la_CFLAGS =
+libweed_plugin_utils_la_LDFLAGS = -version-info $(WEED_PSO_VERSION) -static
 
 libweed_gslice_scripting_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS)
 libweed_gslice_scripting_la_LDFLAGS = @GLIB_LIBS@ -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)

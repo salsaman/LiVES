@@ -23,7 +23,7 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-int negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",

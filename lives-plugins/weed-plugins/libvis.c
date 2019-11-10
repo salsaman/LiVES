@@ -14,6 +14,8 @@
 
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
 
+#define NEED_ALPHA_SORT
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -28,7 +30,6 @@ static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#define NEED_ALPHA_SORT
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -63,7 +64,7 @@ static VisInput *old_visinput;
 
 ///////////////////////////////////////////////////////////////
 
-int libvis_init(weed_plant_t *inst) {
+static weed_error_t libvis_init(weed_plant_t *inst) {
   weed_libvis_t *libvis = NULL;
   weed_plant_t *out_channel, *filter;
 
@@ -170,7 +171,7 @@ int libvis_init(weed_plant_t *inst) {
 }
 
 
-int libvis_deinit(weed_plant_t *inst) {
+static weed_error_t libvis_deinit(weed_plant_t *inst) {
   weed_libvis_t *libvis;
   int error;
 
@@ -238,7 +239,7 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 }
 
 
-int libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_libvis_t *libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);

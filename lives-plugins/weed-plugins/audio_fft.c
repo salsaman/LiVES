@@ -21,7 +21,6 @@ static int package_version = 1; // version of this package
 
 #include "weed-plugin-utils.c" // optional
 
-
 ///// plugin internal functions  ///////
 
 #include <string.h>
@@ -84,7 +83,7 @@ static int create_plans(void) {
 
 /////////////////////////////////////////////////////////////
 
-static int fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
+static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
   int chans, nsamps, onsamps, base, inter, rate, k;
 

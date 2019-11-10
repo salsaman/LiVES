@@ -35,7 +35,7 @@
 #error This header is intended only for Weed plugins
 #endif
 
-#ifndef __LIBWEED__
+#ifndef __LIBWEED_PLUGIN_UTILS__
 #ifndef __WEED_PLUGIN__
 #error weed-plugin.h should be included first
 #endif
@@ -90,12 +90,12 @@ extern "C"
 #endif
 #endif
 
-#ifndef __LIBWEED__
+#ifndef __LIBWEED_PLUGIN_UTILS__
 
 #define ALLOW_UNUSED
 #define FN_DECL static
 
-#else // __LIBWEED__
+#else // __LIBWEED_PLUGIN_UTILS__
 
 #ifndef ALLOW_UNUSED
 #ifdef __GNUC__
@@ -105,7 +105,7 @@ extern "C"
 #endif
 #endif
 
-#define FN_DECL static // will change
+#define FN_DECL EXPORTED
 
 #endif
 
@@ -178,25 +178,25 @@ FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int
 
 
 
-int is_big_endian(void);
+FN_DECL int is_big_endian(void);
 
 // functions for process_func()
 
-#if defined(NEED_RANDOM) || defined(__LIBWEED__)
+#if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
 FN_DECL uint32_t fastrand(uint32_t oldval);
 FN_DECL double drand(double max);
 FN_DECL void seed_rand(void);
 #endif
 
 
-#if defined (NEED_ALPHA_SORT) || defined(__LIBWEED__) // for wrappers, use this to sort filters alphabetically
+#if defined (NEED_ALPHA_SORT) || defined(__LIBWEED_PLUGIN_UTILS__) // for wrappers, use this to sort filters alphabetically
 typedef struct dlink_list dlink_list_t;
 FN_DECL dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name);
 FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list);
 #endif
 
 
-#if defined(NEED_PALETTE_UTILS) || defined(__LIBWEED__)
+#if defined(NEED_PALETTE_UTILS) || defined(__LIBWEED_PLUGIN_UTILS__)
 FN_DECL int weed_palette_is_alpha(int pal);
 FN_DECL int weed_palette_is_rgb(int pal);
 FN_DECL int weed_palette_is_yuv(int pal);
@@ -209,7 +209,9 @@ FN_DECL int weed_palette_has_alpha_channel(int pal);
 FN_DECL double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 FN_DECL double weed_palette_get_plane_ratio_vertical(int pal, int plane);
 FN_DECL uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping);
-
+FN_DECL uint8_t y_unclamped_to_clamped(uint8_t y);
+FN_DECL uint8_t y_clamped_to_unclamped(uint8_t y);
+FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
 
 // set src to non-null to preserve the alpha channel (if applicable)
 // othwerwise alpha will be set to 255
@@ -262,7 +264,6 @@ FN_DECL void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int
 #define WEED_DESETUP_END }
 
 #endif
-
 
 #ifdef __cplusplus
 }

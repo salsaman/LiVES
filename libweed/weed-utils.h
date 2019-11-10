@@ -123,6 +123,9 @@ void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 
 /* functions need to be defined here for the plugin, else it will use the host versions, breaking function overloading */
 
+extern weed_leaf_set_f plugin_weed_leaf_set;
+
+
 #ifdef __weed_get_value__
 #undef __weed_get_value__
 #endif

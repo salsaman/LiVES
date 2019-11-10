@@ -89,8 +89,6 @@
 
 EXPORTED weed_error_t weed_init(int32_t abi);
 
-static int abi_version = WEED_ABI_VERSION;
-
 static weed_plant_t *_weed_plant_new(int32_t plant_type) GNU_FLATTEN;
 static weed_error_t _weed_plant_free(weed_plant_t *plant) GNU_FLATTEN;
 static char **_weed_plant_list_leaves(weed_plant_t *plant) GNU_FLATTEN;

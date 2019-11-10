@@ -21,8 +21,6 @@ static int package_version = 1; // version of this package
 
 #include "../weed-plugin-utils.c" // optional
 
-/////////////////////////////////////////////////////////////
-
 typedef struct _sdata {
   unsigned char *bgbuf;
   int count;
@@ -126,7 +124,7 @@ static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
 }
 
 
-static int videowall_init(weed_plant_t *inst) {
+static weed_error_t videowall_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height, video_width, video_area;
   int palette;
@@ -199,7 +197,7 @@ static int videowall_init(weed_plant_t *inst) {
 }
 
 
-static int videowall_deinit(weed_plant_t *inst) {
+static weed_error_t videowall_deinit(weed_plant_t *inst) {
   int error;
   struct _sdata *sdata;
 
@@ -212,7 +210,7 @@ static int videowall_deinit(weed_plant_t *inst) {
 }
 
 
-static int videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",

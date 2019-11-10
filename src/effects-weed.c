@@ -1161,10 +1161,13 @@ void set_param_gui_readwrite(weed_plant_t *inst) {
 ///
 /// returns copy of current directory (before directory change) which should be freed after use
 char *cd_to_plugin_dir(weed_plant_t *filter) {
+  weed_plant_t *plugin_info;
+  char *ppath;
   char *ret;
   int error;
-  weed_plant_t *plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  char *ppath = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, &error);
+  if (WEED_PLANT_IS_PLUGIN_INFO(filter)) plugin_info = filter; // on shutdown the filters are freed.
+  else plugin_info = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
+  ppath = weed_get_string_value(plugin_info, WEED_LEAF_HOST_PLUGIN_PATH, &error);
   ret = lives_get_current_dir();
   // allow this to fail -it's not that important - it just means any plugin data files wont be found
   // besides, we dont want to show warnings at 50 fps
@@ -5978,7 +5981,7 @@ void weed_unload_all(void) {
       if (handle != NULL && prefs->startup_phase == 0) {
         weed_desetup_f desetup_fn;
         if ((desetup_fn = (weed_desetup_f)dlsym(handle, "weed_desetup")) != NULL) {
-          char *cwd = cd_to_plugin_dir(filter);
+          char *cwd = cd_to_plugin_dir(plugin_info);
           // call weed_desetup()
           (*desetup_fn)();
           lives_chdir(cwd, FALSE);

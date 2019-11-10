@@ -7175,7 +7175,7 @@ sub clean_old {
     # clear away any old backup files, etc.
     return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
     smog_chdir("$workdir/$handle");
-    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip";
+    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip\n";
     print STDERR "smogrify: from directory $workdir/$handle\n";
     unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();

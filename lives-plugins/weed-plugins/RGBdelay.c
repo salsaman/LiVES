@@ -175,6 +175,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   register int i, j, k;
   if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL) > 0) {
     is_easing = 1;
+    fprintf(stderr, "easing %d\n", sdata->ccache);
   }
 
   if (maxcache < 0) maxcache = 0;

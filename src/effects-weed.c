@@ -2170,12 +2170,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_plant_has_leaf(chantmpl, WEED_LEAF_FLAGS)) channel_flags = weed_get_int_value(chantmpl, WEED_LEAF_FLAGS, &error);
 
     layer = layers[in_tracks[i]];
+    cpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 
     if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) {
       iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
     } else iclamping = WEED_YUV_CLAMPING_CLAMPED;
 
-    if (oclamping == -1 || (channel_flags & WEED_CHANNEL_PALETTE_CAN_VARY)) {
+    if (oclamping == -1 || (channel_flags & WEED_CHANNEL_PALETTE_CAN_VARY) || !weed_palette_is_yuv_palette(cpalette)) {
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_YUV_CLAMPING)) {
         oclamping = (weed_get_int_value(chantmpl, WEED_LEAF_YUV_CLAMPING, &error));
       } else oclamping = iclamping;
@@ -2236,7 +2237,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     }
 
-    palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
+    palette = cpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 
     if (weed_palette_is_yuv_palette(palette)) {
       if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_CLAMPING)) {

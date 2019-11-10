@@ -7067,7 +7067,6 @@ void load_frame_image(int frame) {
     if (pwidth != mainw->pwidth || pheight != mainw->pheight || lb_width != 0) {
       if (lb_width != 0) {
         convert_layer_palette(mainw->frame_layer, cpal, 0);
-
         letterbox_layer(mainw->frame_layer, lb_width /
                         weed_palette_get_pixels_per_macropixel(layer_palette),
                         lb_height, mainw->pwidth /
@@ -7077,24 +7076,22 @@ void load_frame_image(int frame) {
         interp = get_interp_value(prefs->pb_quality);
         resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                      mainw->pheight, interp, cpal, 0);
-        convert_layer_palette(mainw->frame_layer, cpal, 0);
       }
     } else {
       if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
         interp = get_interp_value(prefs->pb_quality);
         resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                      mainw->pheight, interp, cpal, 0);
-        convert_layer_palette(mainw->frame_layer, cpal, 0);
       }
     }
 
     if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
       if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
         mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
-        convert_layer_palette(mainw->frame_layer, cpal, 0);
       }
-    } else if (prefs->show_urgency_msgs) convert_layer_palette(mainw->frame_layer, cpal, 0);
+    }
 
+    convert_layer_palette(mainw->frame_layer, cpal, 0);
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;

@@ -4302,7 +4302,7 @@ static void convert_yuvp_to_yuvap_frame(uint8_t **src, int width, int height, ui
 }
 
 
-static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, uint8_t **dest, boolean clamped) {
+static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, int *irows, int *orows, uint8_t **dest, boolean clamped) {
   // halve the chroma samples vertically and horizontally, with sub-sampling
 
   // convert 444p to 420p
@@ -4343,12 +4343,12 @@ static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, u
       }
     }
     if (chroma) {
-      d_u += hwidth;
-      d_v += hwidth;
+      d_u += orows[1];
+      d_v += orows[2];
     }
     chroma = !chroma;
-    s_u += width;
-    s_v += width;
+    s_u += irows[1];
+    s_v += irows[2];
   }
 }
 
@@ -4632,7 +4632,7 @@ static void convert_yuyv_to_yuv411_frame(yuyv_macropixel *yuyv, int width, int h
 }
 
 
-static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height, int irowstride,
+static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height, int irowstride, int *orows,
     uint8_t **yuv4, boolean src_alpha, boolean clamped) {
   // subsample vertically and horizontally
 
@@ -4651,7 +4651,7 @@ static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height,
 
   boolean chroma = TRUE;
 
-  size_t hwidth = width >> 1, ipsize = 3, ipsize2;
+  size_t ipsize = 3, ipsize2;
   int widthx;
 
   set_conversion_arrays(clamped ? WEED_YUV_CLAMPING_CLAMPED : WEED_YUV_CLAMPING_UNCLAMPED, WEED_YUV_SUBSPACE_YCBCR);
@@ -4683,8 +4683,8 @@ static void convert_yuv888_to_yuv420_frame(uint8_t *yuv8, int width, int height,
       }
     }
     if (chroma) {
-      d_u -= hwidth;
-      d_v -= hwidth;
+      d_u -= orows[1];
+      d_v -= orows[2];
     }
     chroma = !chroma;
     yuv8 += irowstride;
@@ -5788,6 +5788,7 @@ static void convert_yuv420_to_yuv411_frame(uint8_t **src, int hsize, int vsize, 
 
 static void convert_splitplanes_frame(uint8_t *src, int width, int height, int irowstride,
                                       uint8_t **dest, boolean src_alpha, boolean dest_alpha) {
+  // TODO - orowstrides
   // convert 888(8) packed to 444(4)P planar
   size_t size = width * height;
   int ipsize = 3;
@@ -6860,7 +6861,8 @@ void *convert_swab_frame_thread(void *data) {
 }
 
 
-static void convert_halve_chroma(uint8_t **src, int width, int height, int *istrides, uint8_t **dest, boolean clamped) {
+static void convert_halve_chroma(uint8_t **src, int width, int height, int *istrides, int *ostrides,
+                                 uint8_t **dest, boolean clamped) {
   // width and height here are width and height of src *chroma* planes, in bytes
 
   // halve the chroma samples vertically, with sub-sampling, e.g. 422p to 420p
@@ -6887,17 +6889,18 @@ static void convert_halve_chroma(uint8_t **src, int width, int height, int *istr
       }
     }
     if (chroma) {
-      d_u += width;
-      d_v += width;
+      d_u += ostrides[1];
+      d_v += ostrides[2];
     }
     chroma = !chroma;
-    s_u += width;
-    s_v += width;
+    s_u += istrides[1];
+    s_v += istrides[2];
   }
 }
 
 
-static void convert_double_chroma(uint8_t **src, int width, int height, int *istrides, uint8_t **dest, boolean clamped) {
+static void convert_double_chroma(uint8_t **src, int width, int height, int *istrides, int *ostrides,
+                                  uint8_t **dest, boolean clamped) {
   // width and height here are width and height of src *chroma* planes, in bytes
 
   // double two chroma planes vertically, with interpolation: eg: 420p to 422p
@@ -6919,22 +6922,22 @@ static void convert_double_chroma(uint8_t **src, int width, int height, int *ist
       if (!chroma && i > 0) {
         // pass 2
         // average two src rows
-        d_u[j - width] = avg_chroma(d_u[j - width], s_u[j]);
-        d_v[j - width] = avg_chroma(d_v[j - width], s_v[j]);
+        d_u[j - ostrides[1]] = avg_chroma(d_u[j - ostrides[1]], s_u[j]);
+        d_v[j - ostrides[2]] = avg_chroma(d_v[j - ostrides[2]], s_v[j]);
       }
     }
     if (chroma) {
-      s_u += width;
-      s_v += width;
+      s_u += istrides[1];
+      s_v += istrides[2];
     }
     chroma = !chroma;
-    d_u += width;
-    d_v += width;
+    d_u += ostrides[1];
+    d_v += ostrides[2];
   }
 }
 
 
-static void convert_quad_chroma(uint8_t **src, int width, int height, int *istrides, uint8_t **dest,
+static void convert_quad_chroma(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t **dest,
                                 boolean add_alpha, boolean clamped) {
   // width and height here are width and height of dest chroma planes, in bytes
 
@@ -6976,30 +6979,31 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, int *istri
         // pass 2
         // average two src rows (e.g 2 with 1, 4 with 3, ... etc) for odd dst rows
         // thus dst row 1 becomes average of src chroma rows 0 and 1, etc.)
-        d_u[j - width2] = avg_chroma(d_u[j - width2], d_u[j]);
-        d_v[j - width2] = avg_chroma(d_v[j - width2], d_v[j]);
-        d_u[j - 1 - width2] = avg_chroma(d_u[j - 1 - width2], d_u[j - 1]);
-        d_v[j - 1 - width2] = avg_chroma(d_v[j - 1 - width2], d_v[j - 1]);
+        d_u[j - ostride] = avg_chroma(d_u[j - ostride], d_u[j]);
+        d_v[j - ostride] = avg_chroma(d_v[j - ostride], d_v[j]);
+        d_u[j - 1 - ostride] = avg_chroma(d_u[j - 1 - ostride], d_u[j - 1]);
+        d_v[j - 1 - ostride] = avg_chroma(d_v[j - 1 - ostride], d_v[j - 1]);
       }
     }
     if (!chroma && i > 0) {
-      d_u[j - 1 - width2] = avg_chroma(d_u[j - 1 - width2], d_u[j - 1]);
-      d_v[j - 1 - width2] = avg_chroma(d_v[j - 1 - width2], d_v[j - 1]);
+      d_u[j - 1 - ostride] = avg_chroma(d_u[j - 1 - ostride], d_u[j - 1]);
+      d_v[j - 1 - ostride] = avg_chroma(d_v[j - 1 - ostride], d_v[j - 1]);
     }
     if (chroma) {
       s_u += istrides[1];
       s_v += istrides[2];
     }
     chroma = !chroma;
-    d_u += width2;
-    d_v += width2;
+    d_u += ostride;
+    d_v += ostride;
   }
 
   if (add_alpha) lives_memset(dest + ((width * height) << 3), 255, ((width * height) << 3));
 }
 
 
-static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t *dest, boolean add_alpha,
+static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride,
+                                       uint8_t *dest, boolean add_alpha,
                                        boolean clamped) {
   // width and height here are width and height of dest chroma planes, in bytes
   // stretch (double) the chroma samples vertically and horizontally, with interpolation
@@ -7053,15 +7057,15 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
       if (!chroma && i > 0) {
         // pass 2
         // average two src rows
-        dest[j + 1 - widthx] = avg_chroma(dest[j + 1 - widthx], dest[j + 1]);
-        dest[j + 2 - widthx] = avg_chroma(dest[j + 2 - widthx], dest[j + 2]);
-        dest[j - opsize + 1 - widthx] = avg_chroma(dest[j - opsize + 1 - widthx], dest[j - opsize + 1]);
-        dest[j - opsize + 2 - widthx] = avg_chroma(dest[j - opsize + 2 - widthx], dest[j - opsize + 2]);
+        dest[j + 1 - ostride] = avg_chroma(dest[j + 1 - ostride], dest[j + 1]);
+        dest[j + 2 - ostride] = avg_chroma(dest[j + 2 - ostride], dest[j + 2]);
+        dest[j - opsize + 1 - ostride] = avg_chroma(dest[j - opsize + 1 - ostride], dest[j - opsize + 1]);
+        dest[j - opsize + 2 - ostride] = avg_chroma(dest[j - opsize + 2 - ostride], dest[j - opsize + 2]);
       }
     }
     if (!chroma && i > 0) {
-      dest[j - opsize + 1 - widthx] = avg_chroma(dest[j - opsize + 1 - widthx], dest[j - opsize + 1]);
-      dest[j - opsize + 2 - widthx] = avg_chroma(dest[j - opsize + 2 - widthx], dest[j - opsize + 2]);
+      dest[j - opsize + 1 - ostride] = avg_chroma(dest[j - opsize + 1 - ostride], dest[j - opsize + 1]);
+      dest[j - opsize + 2 - ostride] = avg_chroma(dest[j - opsize + 2 - ostride], dest[j - opsize + 2]);
     }
     if (chroma) {
       s_u += istrides[1];
@@ -7074,7 +7078,7 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
 }
 
 
-static void convert_double_chroma_packed(uint8_t **src, int width, int height, int *istrides, uint8_t *dest, boolean add_alpha,
+static void convert_double_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t *dest, boolean add_alpha,
     boolean clamped) {
   // width and height here are width and height of dest chroma planes, in bytes
   // double the chroma samples horizontally, with interpolation
@@ -7122,7 +7126,7 @@ static void convert_double_chroma_packed(uint8_t **src, int width, int height, i
     s_y += irow;
     s_u += istrides[1];
     s_v += istrides[2];
-    dest += widthx;
+    dest += ostride;
   }
 }
 
@@ -8191,7 +8195,7 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   // TODO - inplace for RGB <-> BGR, RGBA - BGRA - ARGB
 
   uint8_t *gusrc = NULL, **gusrc_array = NULL, *gudest = NULL, **gudest_array, *tmp;
-  int width, height, orowstride, irowstride, *istrides;
+  int width, height, orowstride, irowstride, *istrides, *ostrides;
   int error, inpl, flags = 0;
   int isamtype, isubspace;
   int new_gamma_type;
@@ -8215,10 +8219,13 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   if (weed_plant_has_leaf(layer, WEED_LEAF_YUV_SUBSPACE)) isubspace = weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, &error);
   else isubspace = WEED_YUV_SUBSPACE_YUV;
 
-  //#define DEBUG_PCONV
+  width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
+  height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+
+  // #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
-  g_print("converting palette %s(%s) to %s(%s)\n", weed_palette_get_name(inpl),
-          weed_yuv_clamping_get_name(iclamped),
+  g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
+          weed_yuv_clamping_get_name(iclamping),
           weed_palette_get_name(outpl),
           weed_yuv_clamping_get_name(oclamping));
 #endif
@@ -8822,7 +8829,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_halve_chroma(gusrc_array, width, height, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_halve_chroma(gusrc_array, width, height, istrides, ostrides, gudest_array, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -8899,7 +8907,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuvp_to_yuv420_frame(gusrc_array, width, height, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_yuvp_to_yuv420_frame(gusrc_array, width, height, istrides, ostrides, gudest_array, iclamped);
       lives_free(gudest_array);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osamtype);
@@ -8950,7 +8959,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_halve_chroma(gusrc_array, width, height, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_halve_chroma(gusrc_array, width, height, istrides, ostrides, gudest_array, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9027,7 +9037,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuvp_to_yuv420_frame(gusrc_array, width, height, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_yuvp_to_yuv420_frame(gusrc_array, width, height, istrides, ostrides, gudest_array, iclamped);
       lives_free(gudest_array);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osamtype);
@@ -9349,7 +9360,10 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv888_to_yuv420_frame(gusrc, width, height, irowstride, gudest_array, FALSE, iclamped);
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
+      convert_yuv888_to_yuv420_frame(gusrc, width, height, irowstride, ostrides, gudest_array, FALSE, iclamped);
+      weed_free(ostrides);
       lives_free(gudest_array);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osamtype);
@@ -9452,7 +9466,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv888_to_yuv420_frame(gusrc, width, height, irowstride, gudest_array, TRUE, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_yuv888_to_yuv420_frame(gusrc, width, height, irowstride, ostrides, gudest_array, TRUE, iclamped);
       lives_free(gudest_array);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osamtype);
@@ -9558,7 +9573,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9569,7 +9585,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_quad_chroma(gusrc_array, width, height, istrides, gudest_array, FALSE, iclamped);
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_quad_chroma(gusrc_array, width, height, istrides, orowstride, gudest_array, FALSE, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9580,7 +9597,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 4, (void **)gudest_array);
-      convert_quad_chroma(gusrc_array, width, height, istrides, gudest_array, TRUE, iclamped);
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_quad_chroma(gusrc_array, width, height, istrides, orowstride, gudest_array, TRUE, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9700,7 +9718,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_halve_chroma(gusrc_array, width >> 1, height >> 1, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_halve_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamped);
       lives_free(gudest_array);
       gusrc_array[0] = NULL;
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, isamtype);
@@ -9712,7 +9731,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)gudest_array);
-      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamped);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
       break;
@@ -9723,7 +9743,8 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       lives_free(gudest_array[0]);
       gudest_array[0] = gusrc_array[0];
       weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 4, (void **)gudest_array);
-      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, gudest_array, iclamped);
+      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
+      convert_double_chroma(gusrc_array, width >> 1, height >> 1, istrides, ostrides, gudest_array, iclamped);
       lives_memset(gudest_array[3], 255, width * height);
       gusrc_array[0] = NULL;
       lives_free(gudest_array);
@@ -9732,13 +9753,15 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_double_chroma_packed(gusrc_array, width, height, istrides, gudest, FALSE, iclamped);
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
+      convert_double_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, FALSE, iclamped);
       break;
     case WEED_PALETTE_YUVA8888:
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
       create_empty_pixel_data(layer, FALSE, TRUE);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_double_chroma_packed(gusrc_array, width, height, istrides, gudest, TRUE, iclamped);
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
+      convert_double_chroma_packed(gusrc_array, width, height, istrides, orowstride, gudest, TRUE, iclamped);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
@@ -10458,7 +10481,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       if (iwidth == width && iheight == height) return TRUE; // no resize needed
       palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 #ifdef DEBUG_RESIZE
-      g_print("intermediate conversion to %s\n", weed_palette_get_name_full(palette, iclamping, 0));
+      g_print("intermediate conversion 1 to %s\n", weed_palette_get_name_full(palette, iclamping, 0));
 #endif
     }
   }
@@ -10495,7 +10518,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
         convert_layer_palette(layer, WEED_PALETTE_YUV888, WEED_YUV_CLAMPING_UNCLAMPED);
         iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
 #ifdef DEBUG_RESIZE
-        g_print("intermediate conversion to %s\n", weed_palette_get_name_full(palette, iclamping, 0));
+        g_print("intermediate conversion 2 to %s\n", weed_palette_get_name_full(palette, iclamping, 0));
 #endif
       }
       if (iclamping == WEED_YUV_CLAMPING_UNCLAMPED) {
@@ -10517,7 +10540,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       xpalette = palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
       iclamping = weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error);
 #ifdef DEBUG_RESIZE
-      g_print("intermediate conversion to %s\n", weed_palette_get_name_full(xpalette, iclamping, 0));
+      g_print("intermediate conversion 3 to %s\n", weed_palette_get_name_full(xpalette, iclamping, 0));
 #endif
     }
   } else if (palette == WEED_PALETTE_YUVA8888) {
@@ -10546,7 +10569,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       xpalette = palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
       iclamping = (weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error));
 #ifdef DEBUG_RESIZE
-      g_print("intermediate conversion to %s\n", weed_palette_get_name_full(xpalette, iclamping, 0));
+      g_print("intermediate conversion 4 to %s\n", weed_palette_get_name_full(xpalette, iclamping, 0));
 #endif
     }
   }

@@ -250,8 +250,8 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       // unclamp the values in the lut
       yuvmin = 16;
       uvmin = 16;
-      yscale = 255. / 235.;
-      uvscale = 255. / 240.;
+      yscale = 255. / 219.;
+      uvscale = 255. / 224.;
     }
   }
 

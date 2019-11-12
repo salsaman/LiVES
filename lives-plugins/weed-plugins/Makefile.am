@@ -5,7 +5,7 @@ LIBS =
 AUTOMAKE_OPTIONS = subdir-objects
 
 #NOTE - install-exec-local MUST go in the first subdir ONLY !!
-SUBDIRS = gdk #cairo # supercollider experimental
+SUBDIRS = gdk cairo # supercollider experimental
 
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
@@ -16,8 +16,10 @@ shared_cflags = -fno-common
 else
 shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 
+
 ## --whole-archive is supposed to work, but doesn't....
 #shared_cflags = -fPIC -DPIC -Wno-unused-function -Wl,--whole-archive $(libdir)/libweed-plugin-utils.a -Wl,--no-whole-archive
+
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
@@ -55,7 +57,7 @@ weed_CFLAGS += -DNEED_LOCAL_WEED
 endif
 
 if NEED_LOCAL_WEED_PLUGIN
-weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
+weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN_H
 endif
 
 if NEED_LOCAL_WEED_COMPAT
@@ -87,7 +89,14 @@ farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_cor
 farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
 farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
+if ENABLE_TOONZ
+toonz_libs = toonz.la
+toonz_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_imgproc
+toonz_la_CPPFLAGS = $(AM_CPPFLAGS) -std=c++11
+toonz_la_SOURCES = toonz.cpp
+else
 toonz_libs =
+endif
 
 opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
@@ -111,13 +120,13 @@ ladspadir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 ladspa_LTLIBRARIES = $(ladspa_libs)
 endif
 
-#if HAVE_LIBFREENECT
-#freenect_libs = freenect.la
-#freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) -lpthread $(AM_LDFLAGS)
-#freenect_la_CFLAGS = $(LIBFREENECT_CFLAGS) $(AM_CFLAGS)
-#freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
-#freenect_LTLIBRARIES = $(freenect_libs)
-#endif
+if HAVE_LIBFREENECT
+freenect_libs = freenect.la
+freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) -lpthread $(AM_LDFLAGS)
+freenect_la_CFLAGS = $(LIBFREENECT_CFLAGS) $(AM_CFLAGS)
+freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+freenect_LTLIBRARIES = $(freenect_libs)
+endif
 
 if HAVE_OPENGL
 if HAVE_SDL_ANYVERSION
@@ -134,63 +143,59 @@ endif
 endif
 endif
 
-
-#	alpha_means.la 
-#	alpha_visualizer.la 
-#	audio_transition.la 
-#	blank_frame_detector.la 
-#	$(opencv_LIBS) 
-#	ccorrect.la 
-#	colorkey.la 
-#	comic.la 
-#	data_processor.la 
-#	data_unpacker.la 
-#	fg_bg_removal.la 
-#	fireTV.la 
-#	fourKlives.la \
-#	layout_blends.la 
-#	livetext.la 
-#	log_sig.la 
-#
-#	nn_programmer.la 
-#	noise.la 
-#	onedTV.la 
-#	palette_test.la
-#	plasma.la 
-#	posterise.la 
-#	randomiser.la 
-#	revTV.la 
-#	rippleTV.la 
-#	shift.la \
-#
-#	slide_over.la 
-#	softlight.la 
-#	tone_gen.la 
-#	tvpic.la 
-#	warpTV.la 
-#	xeffect.la 
-
 fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	alpha_means.la \
+	alpha_visualizer.la \
+	alien_overlay.la \
+	audio_transition.la \
 	audio_volume.la \
 	bump2d.la \
-	alien_overlay.la \
-	haip.la \
-	kaleidoscope.la \
-	negate.la  \
 	blurzoom.la \
-	rotozoom.la \
-	lifeTV.la \
-	mirrors.la \
-	vertigo.la \
-	simple_blend.la \
-	multi_blends.la  \
-	multi_transitions.la \
+	blank_frame_detector.la \
+	$(opencv_LIBS) \
+	ccorrect.la \
+	colorkey.la \
+	comic.la \
+	data_processor.la \
+	data_unpacker.la \
 	deinterlace.la \
 	edge.la \
+	fg_bg_removal.la \
+	fireTV.la \
+	fourKlives.la \
+	haip.la \
+	kaleidoscope.la \
+	layout_blends.la \
+	lifeTV.la \
+	livetext.la \
+	log_sig.la \
+	mirrors.la \
+	multi_blends.la \
+	multi_transitions.la \
+	negate.la \
+	nn_programmer.la \
+	noise.la \
+	onedTV.la \
+	palette_test.la\
+	plasma.la \
+	posterise.la \
+	randomiser.la \
+	revTV.la \
+	rippleTV.la \
+	rotozoom.la \
+	shift.la \
+	simple_blend.la \
+	slide_over.la \
+	softlight.la \
+	targeted_zoom.la \
 	textfun.la \
-	targeted_zoom.la 
+	tone_gen.la \
+	tvpic.la \
+	vertigo.la \
+	warpTV.la \
+	xeffect.la
 
-EXTRA_DIST=data icons syna.h 
+EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
 
 install-data-local:
 	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"

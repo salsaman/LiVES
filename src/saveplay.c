@@ -4012,41 +4012,42 @@ boolean read_headers(const char *file_name) {
       retval2 = LIVES_RESPONSE_OK;
 
       detail = CLIP_DETAILS_FRAMES;
-      if (get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
+      if (prefs->vj_mode || get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
         int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
         char *tmp;
 
         // use new style header (LiVES 0.9.6+)
         lives_free(old_hdrfile);
 
-        // clean up and get file sizes
-        com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
-                                  (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
+        if (!prefs->vj_mode) {
+          // clean up and get file sizes
+          com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
+                                    (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
 
-        lives_popen(com, FALSE, buff, 1024);
+          lives_popen(com, FALSE, buff, 1024);
 
-        lives_free(com);
-        lives_free(tmp);
+          lives_free(com);
+          lives_free(tmp);
 
-        if (mainw->com_failed) {
-          mainw->com_failed = FALSE;
-          return FALSE;
-        }
-
-        pieces = get_token_count(buff, '|');
-
-        if (pieces > 3) {
-          array = lives_strsplit(buff, "|", pieces);
-          cfile->f_size = strtol(array[1], NULL, 10);
-          cfile->afilesize = strtol(array[2], NULL, 10);
-          if (cfile->clip_type == CLIP_TYPE_DISK) {
-            if (!strcmp(array[3], LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
-            else cfile->img_type = IMG_TYPE_PNG;
+          if (mainw->com_failed) {
+            mainw->com_failed = FALSE;
+            return FALSE;
           }
-          lives_strfreev(array);
-        }
 
-        threaded_dialog_spin(0.);
+          pieces = get_token_count(buff, '|');
+
+          if (pieces > 3) {
+            array = lives_strsplit(buff, "|", pieces);
+            cfile->f_size = strtol(array[1], NULL, 10);
+            cfile->afilesize = strtol(array[2], NULL, 10);
+            if (cfile->clip_type == CLIP_TYPE_DISK) {
+              if (!strcmp(array[3], LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
+              else cfile->img_type = IMG_TYPE_PNG;
+            }
+            lives_strfreev(array);
+          }
+          threaded_dialog_spin(0.);
+        }
 
         do {
           retval2 = LIVES_RESPONSE_OK;
@@ -4061,6 +4062,10 @@ boolean read_headers(const char *file_name) {
 
         threaded_dialog_spin(0.);
         do {
+          if (prefs->vj_mode) {
+            detail = CLIP_DETAILS_FRAMES;
+            retval = get_clip_value(mainw->current_file, detail, &cfile->frames, 0);
+          }
           detail = CLIP_DETAILS_HEADER_VERSION;
           retval = get_clip_value(mainw->current_file, detail, &cfile->header_version, 16);
           if (retval) {
@@ -5393,19 +5398,21 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
       if (cfile->clip_type == CLIP_TYPE_DISK) {
         // CLIP_TYPE_DISK
-        if (!check_frame_count(mainw->current_file)) {
-          get_frame_count(mainw->current_file);
-          cfile->needs_update = TRUE;
-        }
-        if (!is_scrap && cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
-          get_frames_sizes(mainw->current_file, 1);
-          cfile->needs_update = TRUE;
-        }
-        if (is_ascrap && cfile->afilesize == 0) {
-          int current_file = mainw->current_file;
-          mainw->current_file = -1; // prevent drawing of timeline bars for now
-          reget_afilesize(current_file);
-          mainw->current_file = current_file;
+        if (!prefs->vj_mode) {
+          if (!check_frame_count(mainw->current_file)) {
+            get_frame_count(mainw->current_file);
+            cfile->needs_update = TRUE;
+          }
+          if (!is_scrap && cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
+            get_frames_sizes(mainw->current_file, 1);
+            cfile->needs_update = TRUE;
+          }
+          if (is_ascrap && cfile->afilesize == 0) {
+            int current_file = mainw->current_file;
+            mainw->current_file = -1; // prevent drawing of timeline bars for now
+            reget_afilesize(current_file);
+            mainw->current_file = current_file;
+          }
         }
       }
 

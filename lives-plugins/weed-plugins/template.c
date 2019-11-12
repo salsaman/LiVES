@@ -1,8 +1,5 @@
-// example plugin
+a// example plugin
 
-// include header files
-#include <weed/weed-plugin.h>
-#include <weed/weed-plugin-utils.h> // optional
 
 ///////////////////////////////////////////////////////////////////
 
@@ -10,10 +7,14 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // to be replaced by libweed-plugin-utils
+// include header files
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+
+#include "weed-plugin-utils.c"
 
 
-///// plugin internal functions  ///////
+///// plugin internal functions go here  ///////
 
 
 
@@ -23,28 +24,25 @@ static int package_version = 1; // version of this package
 
 
 
-///// plugin standard functions ////////////////////
+///// plugin standard functions go here ////////////////////
 
 
 // OPTIONAL FUNCTION
 static weed_error_t myplugin_init(weed_plant_t *inst) {
-  // example:
+  // EXAMPLE:
 
-  weed_plant_t *in_channel;
-  int height, width;
+  // get any data needed from in_channels, out_channels, in_params, out_params (see below, myplugin_process() for examples)
+
+
 
   // alloc somewhere to store static data for the instance
   // static_data should be a struct to hold static values for the instance
+
+  size_t pixel_size = 3; // varies depending on palette (see below)
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  // get width X height of in_channel
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
-  width = weed_get_int_value(in_channel, "width", NULL);
-
-  // create some example data
-  sdata->map = weed_calloc(width * height, PIXEL_SIZE * 2);
+  sdata->map = weed_calloc(width * height, pixel_size * 2);
   if (sdata->map == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -62,11 +60,11 @@ static weed_error_t myplugin_init(weed_plant_t *inst) {
 static weed_error_t myplugin_deinit(weed_plant_t *inst) {
   // clean up anything we allocated
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
+  if (sdata) {
     weed_free(sdata->map);
     weed_free(sdata);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
-
   return WEED_SUCCESS;
 }
 
@@ -76,46 +74,244 @@ static weed_error_t myplugin_deinit(weed_plant_t *inst) {
 
 static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
 
-  // get the in channel(s)
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  // get the in_channel (if applicable) /////////////////
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  // get the out channel(s)
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-
-  // get the pixel_data
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL), *osrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
-
-  // input palette
-  int pal = weed_get_int_value(in_channel, "current_palette", NULL);
-
-  // pixel size of in frame
-  int width = weed_get_int_value(in_channel, "width", NULL), widthx;
-  int height = weed_get_int_value(in_channel, "height", NULL);
-
-  // rowstrides
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  // OR: if we have multiple in_channels
+  weed_plant_t **pin_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t *in_channel = pin_channels[0];
+  weed_plant_t *in_channel1 = pin_channels[1];
+  // etc....for all in_channels
 
 
-  // for an audio channel:
-  float *src = (float *)weed_get_voidptr_value(in_channel, "audio_data", NULL);
+  // get the out_channel (if applicable) /////////////////////////
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  // in and out parameter arrays
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  weed_plant_t *out_param = weed_get_plantptr_value(inst, "out_parameters", NULL);
+  // OR: if we have multiple out_channels
+  weed_plant_t **pout_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *out_channel = pout_channels[0];
+  weed_plant_t *out_channel1 = pout_channels[1];
+  // etc....for all out_channels
 
-  // value of first in parameter
-  double freq = weed_get_double_value(in_params[0], "value", NULL);
 
-  // etc.
+  // for VIDEO channels:  ///////////////////////////////////////////////////////////
 
-  // process one frame or one audio block...
+  // get the palette (see weed-palettes.h) [if we have no in_channels, we can get this from out_channel instead]
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  // palettes for each channel will match unless WEED_CHANNEL_PALETTE_CAN_VARY was set in channel_template flags
 
-  //...
+  // get the pixel_data ////////////////////////////////////
 
-  weed_free(in_params);
-  weed_free(out_params);
+  // in_channel pixel_data (if we have one in_channel only):
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  unsigned char **psrc = weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+
+  // out_channel pixel_data (if we have one out_channel only)
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  unsigned char **pdst = weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+
+  // if we have multiple VIDEO channels:
+  unsigned char *src1 = weed_get_voidptr_value(in_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  unsigned char **psrc1 = weed_get_voidptr_array(in_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+  // out_channel pixel_data:
+  unsigned char *dst1 = weed_get_voidptr_value(out_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  unsigned char **pdst1 = weed_get_voidptr_array(out_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+  // etc for all VIDEO channels....
+
+  // frame sizes, width X height. If we have no in_channels we can get this out_channel instead
+  // channel width in (macro)pixels  [for planar palettes, this is the width of the first plane]
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), widthx;
+  // channel height in rows          [for planar palettes, this is the height of the first plane]
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  // (sizes for each channel will match unless WEED_CHANNEL_SIZE_CAN_VARY was set in channel_template flags)
+
+  //  rowstrides
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have in_channels
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have out_channels
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have in_channels
+  int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have out_channels
+  // (rowstrides for each channel will match unless WEED_CHANNEL_SIZE_CAN_VARY or WEED_CHANNEL_PALETTE_CAN_VARY
+  // was set in the channel_template)
+
+  // if the palette is WEED_PALETTE_YUV*:   (see weed-palettes.h)
+  int clamping = weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL);
+  int sampling = weed_get_int_value(in_channel, WEED_LEAF_YUV_SAMPLING, NULL);
+  int subspace = weed_get_int_value(in_channel, WEED_LEAF_YUV_SUBSPACE, NULL);
+  // (values for each YUV channel will match unless WEED_CHANNEL_PALETTE_CAN_VARY was set in the channel_template)
+
+
+  // for AUDIO channels: ////////////////////////////////////
+  float *fsrc = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, NULL); // if we have audio in_channels
+  float *fdst = (float *)weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL); // if we have audio out_channels
+  // OR: for multiple AUDIO channels:
+  float *fsrc1 = (float *)weed_get_voidptr_value(in_channel1, WEED_LEAF_AUDIO_DATA, NULL); // if we have audio in_channels
+  float *fdst1 = (float *)weed_get_voidptr_value(out_channel1, WEED_LEAF_AUDIO_DATA, NULL); // if we have audio out_channels
+  // etc for all AUDIO channels....
+
+  int nsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL); // if no in_channels, use out_channel
+  int nchans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL); // if no in_channels, use out_channel
+  int arate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, NULL); // if no in_channels, use out_channel
+  int interleaved = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
+
+
+  // if we set WEED_CHANNEL_CAN_DO_INPLACE on an out_channel, check if it's inplace:
+  int inplace = (dst == src);
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  int inplace = (pdst == psrc);
+
+  // if we have multiple out_channels:
+  int inplace1 = (dst1 == src1);   // if src1 exists
+  // OR: (if palette is planar, ie. the palette name ends with 'P')
+  int inplace1 = (psrc1 == pdst1); // if psrc1 exists
+
+
+  // if we set WEED_FILTER_HINT_MAY_THREAD, check if we are threading:
+  int is_master_thread = 1;
+  int real_height = height;
+  int offset = 0;
+
+  if (weed_leaf_num_elements(out_channel, WEED_LEAF_HEIGHT) == 2) {
+    // we are threading...
+
+    // height of our destination slice:
+    int *heights = weed_get_int_array(out_channel, WEED_LEAF_HEIGHT, NULL);
+
+    // get the height of our "slice"
+    height = heights[0];
+
+    // real height of out_channel if we need it, this is also the src height unless we set WEED_CHANNEL_SIZE_MAY_VARY
+    src_height = heights[1];
+
+    // get the offset. We must only write to destination rows between offs and (offs + height - 1)
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+
+    // only the master thread may update the plugin internal state
+    if (offset) is_master_thread = 0;
+
+    // adjust dst: ////////////////////////////////////////////////////////////////////////
+    dst += orowstride * offs;
+
+    // OR: (if palette is planar, ie. the palette name ends with 'P')
+    pdst[0] += orowstrides[0] * offs;
+    pdst[1] += orowstrides[1] * offs; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    pdst[2] += orowstrides[2] * offs;  // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    // for WEED_PALETTE_YUVA4444P only:
+    pdst[3] += orowstrides[3] * offs;
+
+    // OR: for multiple out_channels:
+    dst[0] += orowstride * offs;
+    dst[1] += orowstride * offs;
+    // etc for all out_channels...
+
+    // OR: for multiple out_channels (if palette is planar, ie. the palette name ends with 'P')
+    pdst[0][0] += orowstrides[0] * offs;
+    pdst[0][1] += orowstrides[1] * offs; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    pdst[0][2] += orowstrides[2] * offs; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    // for WEED_PALETTE_YUVA4444P only:
+    pdst[0][3] += orowstrides[3] * offs;
+
+    pdst[1][0] += orowstrides[0] * offs;
+    pdst[1][1] += orowstrides[1] * offs; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    pdst[1][2] += orowstrides[2] * offs; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P, use (offs / 2)
+    // for WEED_PALETTE_YUVA4444P only:
+    pdst[1][3] += orowstrides[3] * offs;
+    // etc for all out_channels...
+  }
+
+
+  // in parameter array (if applicable) ////////////////////////////////////
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+
+  // value of first in_parameter (example)
+  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
+
+  // etc...
+
+
+  // out parameter array (if applicable) ////////////////////////////////////
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  // etc....
+  // we may set WEED_LEAF_VALUE for each out_param (if we are threading, only the master thread may do so)
+
+
+  // process one frame or one audio block.......
+
+  // if check each channel before processing it:
+  if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_TRUE) {
+    // plugin must ignore this channel
+  }
+  //else {
+  //.....
+
+  // processing examples: //////////////////////////////
+
+
+
+
+  // EXAMPLE1:
+  // packed (non-planar) palettes (palette name does NOT end with 'P')
+  int x, y;
+  unsigned char *d = dst;
+  size_t pixel_size = 3;
+
+  // pixel_size should be set to 4 for palettes WITH alpha
+  // pixel_size should be set to 6 for WEED_PALETTE_YUV411
+
+  for (d = dst; d < dst + (height - 1) * orowstride; d += orowstride) {
+    for (x = 0; x < width * pixel_size; x += pixel_size) {
+      // write (pixel_size) bytes to d[x]
+    }
+  }
+
+  // for multiple out_channels, process dst1, dst2, etc.
+
+
+  // EXAMPLE2:
+  // planar palettes (palette name ends with 'P')
+  int x, y;
+  unsigned char *d0 = pdst[0];
+  unsigned char *d1 = pdst[1];
+  unsigned char *d2 = pdst[2];
+  // for WEED_PALETTE_YUVA4444P only:
+  unsigned char *d3 = pdst[3];
+
+  // pixel_size should be set to 4 for palettes WITH alpha
+
+  for (y = 0; y < height; y++) {
+    for (x = 0; x < width; x++) {
+      // set (unsigned char) d0[y][x], d1[y][x], d2[y][x] and for WEED_PALETTE_YUVA4444P, d3[y][x]
+      // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P:
+      //    set d1[y][x>>1] and d2[y][x>>1] instead (may be done only on every other loop)
+    }
+    d0 += orowstrides[0];
+    d1 += orowstrides[1]; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P do this only if (y % 2) == 0
+    d2 += orowstrides[2]; // for WEED_PALETTE_YUV420P or WEED_PALETTE_YVU420P do this only if (y % 2) == 0
+    // for WEED_PALETTE_YUVA4444P only:
+    d3 += orowstrides[3];
+  }
+
+  // for multiple out_channels, process pdst1, pdst2, etc.
+
+
+  // free any arrays created
+  if (in_channels)  weed_free(in_channels);
+  if (out_channels) weed_free(out_channels);
+  if (irowstrides)  weed_free(irowstrides);
+  if (orowstrides)  weed_free(orowstrides);
+  if (in_params)    weed_free(in_params);
+  if (out_params)   weed_free(out_params);
+
+  if (psrc) weed_free(psrc);
+  if (pdst) weed_free(pdst);
+
+  if (psrc1) weed_free(psrc1);
+  if (pdst1) weed_free(pdst1);
+  // etc...
 
   return WEED_SUCCESS;
 }

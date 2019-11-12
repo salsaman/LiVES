@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -13,13 +19,7 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#include "weed-plugin-utils.c" // optional
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 

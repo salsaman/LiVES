@@ -329,8 +329,6 @@ int step_val(int val, int step);
 void set_param_gui_readwrite(weed_plant_t *inst);
 void set_param_gui_readonly(weed_plant_t *inst);
 
-void weed_add_plant_flags(weed_plant_t *plant, int flags);
-
 void update_all_host_info(void);
 
 /// add default filler values to a parameter or pchange.

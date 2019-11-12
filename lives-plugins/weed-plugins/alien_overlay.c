@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,28 +18,20 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-#include <stdio.h>
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
+
+#include <stdio.h>
 
 typedef struct {
   uint8_t *inited;
   unsigned char *old_pixel_data;
 } static_data;
 
-
 //////////////////////////////////////////////
 
-int alien_over_init(weed_plant_t *inst) {
+static weed_error_t alien_over_init(weed_plant_t *inst) {
   int error;
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
 
@@ -65,7 +63,7 @@ int alien_over_init(weed_plant_t *inst) {
 }
 
 
-int alien_over_deinit(weed_plant_t *inst) {
+static weed_error_t alien_over_deinit(weed_plant_t *inst) {
   int error;
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
   if (sdata != NULL) {
@@ -79,17 +77,16 @@ int alien_over_deinit(weed_plant_t *inst) {
 }
 
 
-int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
+static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error) * 3;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+                             NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  int width = weed_get_int_value(in_channel, "width", NULL) * 3;
+  int height = weed_get_int_value(in_channel, "height", NULL);
+  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
   int inplace = (src == dst);
   unsigned char val;
 
@@ -98,13 +95,13 @@ int alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   static_data *sdata;
   register int j, i = 0;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   old_pixel_data = sdata->old_pixel_data;
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+    int offset = weed_get_int_value(out_channel, "offset", NULL);
+    int dheight = weed_get_int_value(out_channel, "height", NULL);
 
     src += offset * irowstride;
     dst += offset * orowstride;
@@ -141,8 +138,8 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("alien overlay", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, &alien_over_init,
-                               &alien_over_process, &alien_over_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
+                               WEED_FILTER_HINT_MAY_THREAD, alien_over_init,
+                               alien_over_process, alien_over_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

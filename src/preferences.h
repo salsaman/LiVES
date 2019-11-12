@@ -404,6 +404,8 @@ typedef struct {
   boolean show_tooltips;
 
   double volume; ///< audio volume level (for jack and pulse)
+
+  boolean vj_mode; // optimise for VJing (in progress, experimental)
 } _prefs;
 
 enum {

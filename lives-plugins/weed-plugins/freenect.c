@@ -5,27 +5,19 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
 
 #include "weed-plugin-utils.c" // optional
 
@@ -36,7 +28,6 @@ static int package_version = 1; // version of this package
 #include <stdio.h>
 
 #include "libfreenect.h"
-
 
 typedef struct {
   freenect_context *f_ctx;
@@ -49,7 +40,6 @@ typedef struct {
   pthread_t usb_thread;
   int die;
 } _sdata;
-
 
 
 static void *idle_loop(void *user_data) {
@@ -82,7 +72,6 @@ static void rgb_cb(freenect_device *dev, void *rgb, uint32_t timestamp) {
 }
 
 
-
 static void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp) {
   _sdata *sd = (_sdata *)freenect_get_user(dev);
 
@@ -95,8 +84,6 @@ static void depth_cb(freenect_device *dev, void *v_depth, uint32_t timestamp) {
 
   pthread_mutex_unlock(&sd->backbuf_mutex);
 }
-
-
 
 
 static int lives_freenect_prep(_sdata *sdata) {
@@ -133,7 +120,6 @@ static int lives_freenect_prep(_sdata *sdata) {
 
   return 1;
 }
-
 
 
 static int lives_freenect_init(weed_plant_t *inst) {
@@ -178,7 +164,7 @@ static int lives_freenect_init(weed_plant_t *inst) {
     weed_free(sd->rgb_back);
     weed_free(sd->rgb_front);
     weed_free(sd);
-    return WEED_ERROR_HARDWARE;
+    return WEED_ERROR_PLUGIN_INVALID;
   }
 
   pthread_mutex_init(&sd->backbuf_mutex, NULL);
@@ -201,8 +187,6 @@ static int lives_freenect_init(weed_plant_t *inst) {
 
   return WEED_SUCCESS;
 }
-
-
 
 
 static int lives_freenect_deinit(weed_plant_t *inst) {
@@ -231,9 +215,7 @@ static int lives_freenect_deinit(weed_plant_t *inst) {
 }
 
 
-
-
-static int lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
 
@@ -282,7 +264,7 @@ static int lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   offs = rowstride - width * psize;
 
-  fprintf(stderr, "min %d max %d\n", cmin, cmax);
+  //fprintf(stderr, "min %d max %d\n", cmin, cmax);
 
   pthread_mutex_lock(&sd->backbuf_mutex);
   for (i = 0; i < height; i++) {
@@ -322,39 +304,35 @@ static int lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp)
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
-    int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
+  int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list),
-                                     weed_channel_template_init("depth", 0, apalette_list), NULL
-                                    };
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list),
+                                   weed_channel_template_init("depth", 0, apalette_list), NULL
+                                  };
 
-    weed_plant_t *in_params[] = {weed_integer_init("minthresh", "Cut depth (cm) <", 0, 0, 65535),
-                                 weed_integer_init("maxthresh", "Cut depth (cm) >=", 65536, 0, 65536),
-                                 weed_colRGBi_init("ccol", "_Replace with colour", 0, 0, 0),
-                                 NULL
-                                };
+  weed_plant_t *in_params[] = {weed_integer_init("minthresh", "Cut depth (cm) <", 0, 0, 65535),
+                               weed_integer_init("maxthresh", "Cut depth (cm) >=", 65536, 0, 65536),
+                               weed_colRGBi_init("ccol", "_Replace with colour", 0, 0, 0),
+                               NULL
+                              };
 
-    weed_plant_t *filter_class = weed_filter_class_init("freenect", "salsaman", 1, 0, &lives_freenect_init,
-                                 &lives_freenect_process,
-                                 &lives_freenect_deinit,
-                                 NULL, out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("freenect", "salsaman", 1, 0, &lives_freenect_init,
+                               &lives_freenect_process,
+                               &lives_freenect_deinit,
+                               NULL, out_chantmpls, in_params, NULL);
 
-    weed_set_int_value(out_chantmpls[0], "width", 640);
-    weed_set_int_value(out_chantmpls[0], "height", 480);
+  weed_set_int_value(out_chantmpls[0], "width", 640);
+  weed_set_int_value(out_chantmpls[0], "height", 480);
 
-    weed_set_boolean_value(out_chantmpls[1], "optional", WEED_TRUE);
+  weed_set_boolean_value(out_chantmpls[1], "optional", WEED_TRUE);
 
-    weed_set_double_value(filter_class, "target_fps", 25.);
+  weed_set_double_value(filter_class, "target_fps", 25.);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
-
+WEED_SETUP_END;
 

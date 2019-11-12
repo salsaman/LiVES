@@ -258,20 +258,20 @@ static int blurzoom_init(weed_plant_t *inst) {
   sdata->buf_margin_right = video_width - sdata->buf_width - sdata->buf_margin_left;
   buf_area = sdata->buf_width * sdata->buf_height;
 
-  sdata->blurzoombuf = (unsigned char *)weed_malloc(buf_area * 2);
+  sdata->blurzoombuf = (unsigned char *)weed_calloc(buf_area * 2, 1);
   if (sdata->blurzoombuf == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sdata->blurzoomx = (int *)weed_malloc(sdata->buf_width * sizeof(int));
+  sdata->blurzoomx = (int *)weed_calloc(sdata->buf_width, sizeof(int));
   if (sdata->blurzoomx == NULL) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sdata->blurzoomy = (int *)weed_malloc(sdata->buf_height * sizeof(int));
+  sdata->blurzoomy = (int *)weed_calloc(sdata->buf_height, sizeof(int));
   if (sdata->blurzoomy == NULL) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomx);
@@ -283,7 +283,7 @@ static int blurzoom_init(weed_plant_t *inst) {
 
   sdata->threshold = MAGIC_THRESHOLD * 7;
 
-  sdata->snapframe = (RGB32 *)weed_malloc(video_area * PIXEL_SIZE);
+  sdata->snapframe = (RGB32 *)weed_calloc(video_area, PIXEL_SIZE);
   if (sdata->snapframe == NULL) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomy);
@@ -292,7 +292,7 @@ static int blurzoom_init(weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sdata->background = (short *)weed_malloc(video_height * video_width * sizeof(short));
+  sdata->background = (short *)weed_calloc(video_height * video_width, sizeof(short));
   if (sdata->background == NULL) {
     weed_free(sdata->blurzoombuf);
     weed_free(sdata->blurzoomy);
@@ -302,7 +302,7 @@ static int blurzoom_init(weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  sdata->diff = (unsigned char *)weed_malloc(video_height * video_width * 4 * sizeof(unsigned char));
+  sdata->diff = (unsigned char *)weed_calloc(video_height * video_width, 4 * sizeof(unsigned char));
   if (sdata->diff == NULL) {
     weed_free(sdata->background);
     weed_free(sdata->blurzoombuf);
@@ -312,8 +312,6 @@ static int blurzoom_init(weed_plant_t *inst) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
-
-  weed_memset(sdata->diff, 0, video_height * video_width * 4 * sizeof(unsigned char));
 
   setTable(sdata);
   makePalette(weed_get_int_value(in_channel, "current_palette", &error));

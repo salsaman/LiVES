@@ -7175,8 +7175,10 @@ sub clean_old {
     # clear away any old backup files, etc.
     return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
     smog_chdir("$workdir/$handle");
-    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip\n";
-    print STDERR "smogrify: from directory $workdir/$handle\n";
+    if ($notify) {
+	print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip\n";
+	print STDERR "smogrify: from directory $workdir/$handle\n";
+    }
     unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
     smog_system_sync();
 }
@@ -8231,7 +8233,8 @@ sub version_check_and_upgrade {
 	    &rc_deprecate("audio_encode_quality", "encoder_acodec", "0.9.1");
 	}
 	#encoder plugin names changed
-	$msg .= "Encoder names have changed since version $old_version.\nPlease make sure you delete all the old encoder plugins and re-install the new ones.\n";
+	$msg .= "Encoder names have changed since version $old_version.\n" .
+	    "Please make sure you delete all the old encoder plugins and re-install the new ones.\n";
     }
 
     if ($upd) {
@@ -8290,7 +8293,6 @@ sub version_hash {
 
 sub RGB24_to_string {
     # convert input like 255,255,255 to #FFFFFF
-
     my ($red, $green, $blue) = @_;
     sprintf("\"#%02X%02X%02XFF\"", int($red), int($green), int($blue));
 }
@@ -8491,10 +8493,12 @@ sub prune {
     # clean up old backup images etc in $workdir/$file
     # part of the diskspace recovery process
 
-    $old_handle=$handle;
-    $handle=$file;
+    $old_handle = $handle;
+    $handle = $file;
+    $notify = 1;
     &clean_old;
-    $handle=$old_handle;
+    $notify = 0;
+    $handle = $old_handle;
 }
 
 
@@ -8517,7 +8521,7 @@ sub clear_symlinks {
     }
 
     #create dir so next step works
-    smog_system("mkdir.exe /p \"$linksdir\"");
+    smog_system("/bin/mkdir -p \"$linksdir\"");
 
     # remove dir + any empty parents
     smog_system("/bin/rmdir -p \"$linksdir\" 2>$nulfile");
@@ -8543,6 +8547,15 @@ sub is_non_empty_dir {
     closedir TDIR;
     return 0;
 }
+
+
+
+
+
+
+
+
+
 
 1; # for require (really !)
 }

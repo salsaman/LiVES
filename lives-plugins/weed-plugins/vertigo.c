@@ -10,6 +10,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -18,24 +24,15 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
 #include <math.h>
 
-//////////////////////////////////////////////
-
 typedef unsigned int RGB32;
 
 #define PIXEL_SIZE (sizeof(RGB32))
-
 
 typedef struct _sdata {
   int dx, dy;
@@ -45,9 +42,7 @@ typedef struct _sdata {
   double phase;
 } sdata;
 
-
 ////////////////////////////////////////////////
-
 
 static void setParams(int video_width, int video_height, sdata *sdata, double phase_increment, double zoomrate) {
   double vx, vy;
@@ -90,15 +85,13 @@ static void setParams(int video_width, int video_height, sdata *sdata, double ph
 }
 
 
-
-int vertigo_init(weed_plant_t *inst) {
+static weed_error_t vertigo_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height, video_width, video_area;
   int error;
   weed_plant_t *in_channel;
 
   sdata = weed_malloc(sizeof(struct _sdata));
-
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
@@ -107,14 +100,12 @@ int vertigo_init(weed_plant_t *inst) {
   video_width = weed_get_int_value(in_channel, "width", &error);
   video_area = video_width * video_height;
 
-  sdata->buffer = (RGB32 *)weed_malloc(PIXEL_SIZE * video_area * 2);
+  sdata->buffer = (RGB32 *)weed_calloc(video_area, PIXEL_SIZE * 2);
 
   if (sdata->buffer == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
-
-  weed_memset(sdata->buffer, 0, video_area * 2 * PIXEL_SIZE);
 
   sdata->current_buffer = sdata->buffer;
   sdata->alt_buffer = sdata->buffer + video_area;
@@ -123,25 +114,21 @@ int vertigo_init(weed_plant_t *inst) {
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_SUCCESS;
-
 }
 
 
-int vertigo_deinit(weed_plant_t *inst) {
-  struct _sdata *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-
+static weed_error_t vertigo_deinit(weed_plant_t *inst) {
+  struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
-    weed_free(sdata->buffer);
+    if (sdata->buffer) weed_free(sdata->buffer);
     weed_free(sdata);
+    weed_get_voidptr_value(inst, "plugin_internal", NULL);
   }
   return WEED_SUCCESS;
 }
 
 
-int vertigo_process(weed_plant_t *inst, weed_timecode_t timecode) {
+static weed_error_t vertigo_process(weed_plant_t *inst, weed_timecode_t timecode) {
   struct _sdata *sdata;
   weed_plant_t *in_channel, *out_channel, **in_params;
 
@@ -149,36 +136,33 @@ int vertigo_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   size_t offs = 0;
 
-  RGB32 *p;
   RGB32 v;
-  RGB32 *src, *dest;
+  RGB32 *p, *src, *dest;
 
   int video_width, video_height, video_area, irow, orow;
-  int error;
 
-  int ox, oy;
-  int i;
+  int ox, oy, i;
 
   register int x, y;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
 
-  video_width = weed_get_int_value(in_channel, "width", &error);
-  video_height = weed_get_int_value(in_channel, "height", &error);
+  video_width = weed_get_int_value(in_channel, "width", NULL);
+  video_height = weed_get_int_value(in_channel, "height", NULL);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", &error) / 4 - video_width;
-  orow = weed_get_int_value(out_channel, "rowstrides", &error) / 4;
+  irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4 - video_width;
+  orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
 
   video_area = video_width * video_height;
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  pinc = weed_get_double_value(in_params[0], "value", &error);
-  zoomrate = weed_get_double_value(in_params[1], "value", &error);
+  in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  pinc = weed_get_double_value(in_params[0], "value", NULL);
+  zoomrate = weed_get_double_value(in_params[1], "value", NULL);
   weed_free(in_params);
 
   setParams(video_width, video_height, sdata, pinc, zoomrate);
@@ -220,11 +204,12 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *in_params[] = {weed_float_init("pinc", "_Phase increment", 0.2, 0.1, 1.0), weed_float_init("zoom", "_Zoom", 1.01, 1.01, 1.10), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("pinc", "_Phase increment", 0.2, 0.1, 1.0),
+                               weed_float_init("zoom", "_Zoom", 1.01, 1.01, 1.10), NULL
+                              };
 
-  weed_plant_t *filter_class = weed_filter_class_init("vertigo", "effectTV", 1, 0, &vertigo_init, &vertigo_process, &vertigo_deinit,
-                               in_chantmpls,
-                               out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("vertigo", "effectTV", 1, 0, vertigo_init, vertigo_process, vertigo_deinit,
+                               in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

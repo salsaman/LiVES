@@ -5,33 +5,20 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
-//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../../libweed/weed-plugin.h" // optional
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include "../weed-utils-code.c" // optional
 #include "../weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -52,25 +39,9 @@ typedef struct {
   float y;
 } list_ent;
 
-
 // TODO - make non-static
 static list_ent xlist[MAX_ELEMS];
 static cairo_user_data_key_t crkey;
-
-
-union memtest {
-  int32_t num;
-  char chr[4];
-};
-
-static int is_big_endian() {
-  union memtest mm;
-  mm.num = 0x12345678;
-  if (mm.chr[0] == 0x78) return 0;
-  return 1;
-}
-
-
 
 static int unal[256][256];
 static int al[256][256];
@@ -92,8 +63,7 @@ static void init_unal(void) {
 }
 
 
-
-void clear_xlist(void) {
+static void clear_xlist(void) {
   register int i;
 
   for (i = 0; i < MAX_ELEMS; i++) {
@@ -102,8 +72,7 @@ void clear_xlist(void) {
 }
 
 
-
-void add_to_list(float len, int i, int j, float x, float y) {
+static void add_to_list(float len, int i, int j, float x, float y) {
   register int k, l;
 
   for (k = 0; k < MAX_ELEMS; k++) {
@@ -129,8 +98,7 @@ void add_to_list(float len, int i, int j, float x, float y) {
 }
 
 
-
-void alpha_premult(weed_plant_t *channel) {
+static void alpha_premult(weed_plant_t *channel) {
   // premultply alpha - this only occurs when going from palette with alpha to one without
 
   int error;
@@ -169,10 +137,10 @@ void alpha_premult(weed_plant_t *channel) {
 }
 
 
-
 static void pdfree(void *data) {
   weed_free(data);
 }
+
 
 static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // convert a weed channel to cairo
@@ -239,7 +207,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     }
   }
 
-
   surf = cairo_image_surface_create_for_data(pixel_data,
          cform,
          width, height,
@@ -252,10 +219,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 
   return cairo;
 }
-
-
-
-
 
 
 static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
@@ -312,16 +275,12 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 }
 
 
-
-
 /////////////////////////////////////////////////////////////
 
 enum {
   MD_GRID,
   MD_LARGEST
 };
-
-
 
 static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
   // draw arrow from point i-x,j-y to i, j
@@ -338,12 +297,10 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
 
   cairo_arc(cr, i, j, len / 4., 0, M_PI * 2.);
   cairo_stroke(cr);
-
-
 }
 
 
-int vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   cairo_t *cr;
 
   int error;
@@ -356,7 +313,6 @@ int vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   float *alpha0 = (float *)weed_get_voidptr_value(in_channels[1], "pixel_data", &error);
   float *alpha1 = (float *)weed_get_voidptr_value(in_channels[2], "pixel_data", &error);
 
-
   float x, y, scale = 1.;
 
   int mode = MD_GRID;
@@ -367,9 +323,7 @@ int vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int width = weed_get_int_value(out_channel, "width", &error);
   int height = weed_get_int_value(out_channel, "height", &error);
 
-
   int enabled = weed_get_boolean_value(in_params[0], "value", &error);
-
 
   register int i, j;
 
@@ -415,14 +369,11 @@ int vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     for (i = 0; i < MAX_ELEMS; i++) {
       if (xlist[i].len > 0.) draw_arrow(cr, xlist[i].j, xlist[i].i, xlist[i].x * scale, xlist[i].y * scale);
     }
-
   }
   break;
 
   default:
     break;
-
-
   }
 
   cairo_to_channel(cr, out_channel);
@@ -434,45 +385,36 @@ int vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+WEED_SETUP_START(200, 200) {
+  int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
+  int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
 
+  weed_plant_t *in_chantmpls[] = {
+    weed_channel_template_init("video in", 0, vpalette_list),
+    weed_channel_template_init("X-plane", 0, apalette_list),
+    weed_channel_template_init("Y-plane", 0, apalette_list), NULL
+  };
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("video out", WEED_CHANNEL_CAN_DO_INPLACE, vpalette_list), NULL};
 
-    int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
+  weed_plant_t *in_params[] = {weed_switch_init("enabled", "_Enabled", WEED_TRUE), NULL};
 
-    int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
+  weed_plant_t *filter_class = weed_filter_class_init("cairo vector visualiser", "salsaman", 1, 0,
+                               NULL, &vector_visualiser_process, NULL,
+                               in_chantmpls, out_chantmpls,
+                               in_params, NULL);
 
-    weed_plant_t *in_chantmpls[] = {
-      weed_channel_template_init("video in", 0, vpalette_list),
-      weed_channel_template_init("X-plane", 0, apalette_list),
-      weed_channel_template_init("Y-plane", 0, apalette_list), NULL
-    };
+  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
+  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
 
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("video out", WEED_CHANNEL_CAN_DO_INPLACE, vpalette_list), NULL};
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_plant_t *in_params[] = {weed_switch_init("enabled", "_Enabled", WEED_TRUE), NULL};
-
-    weed_plant_t *filter_class = weed_filter_class_init("cairo vector visualiser", "salsaman", 1, 0,
-                                 NULL, &vector_visualiser_process, NULL,
-                                 in_chantmpls, out_chantmpls,
-                                 in_params, NULL);
-
-    weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    if (is_big_endian()) {
-      weed_set_int_value(in_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
-      weed_set_int_value(out_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
-    }
-
-    weed_set_int_value(plugin_info, "version", package_version);
-
+  if (is_big_endian()) {
+    weed_set_int_value(in_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
+    weed_set_int_value(out_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
   }
 
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

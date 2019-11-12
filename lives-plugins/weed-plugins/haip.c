@@ -5,6 +5,15 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_CONVERSIONS
+#define NEED_RANDOM
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +21,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -28,128 +31,86 @@ static int package_version = 1; // version of this package
 typedef struct {
   int x;
   int y;
-  uint32_t fastrand_val;
   int *px;
   int *py;
   int *wt;
+  uint32_t fastrand_val;
   int old_width;
   int old_height;
 } _sdata;
 
-
-static inline uint32_t fastrand(_sdata *sdata) {
-#define rand_a 1073741789L
-#define rand_c 32749L
-
-  return ((sdata->fastrand_val *= rand_a) + rand_c);
-}
-
 static int ress[8];
 
-static unsigned short Y_R[256];
-static unsigned short Y_G[256];
-static unsigned short Y_B[256];
-
-
-static void init_luma_arrays(void) {
-  register int i;
-
-  for (i = 0; i < 256; i++) {
-    Y_R[i] = .299 * (float)i * 256.;
-    Y_G[i] = .587 * (float)i * 256.;
-    Y_B[i] = .114 * (float)i * 256.;
-  }
-
-}
-
-
-int haip_init(weed_plant_t *inst) {
-  _sdata *sdata;
-  int i;
-  sdata = weed_malloc(sizeof(_sdata));
-
+static weed_error_t haip_init(weed_plant_t *inst) {
+  _sdata *sdata = weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->x = sdata->y = -1;
 
-  sdata->fastrand_val = 0; // TODO - seed with random seed
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   sdata->px = weed_malloc(NUM_WRMS * sizeof(int));
   sdata->py = weed_malloc(NUM_WRMS * sizeof(int));
   sdata->wt = weed_malloc(NUM_WRMS * sizeof(int));
 
-  for (i = 0; i < NUM_WRMS; i++) {
+  for (int i = 0; i < NUM_WRMS; i++) {
     sdata->px[i] = sdata->py[i] = -1;
   }
 
   sdata->old_width = sdata->old_height = -1;
-
-  return WEED_SUCCESS;
-
-
-}
-
-
-int haip_deinit(weed_plant_t *inst) {
-  _sdata *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  weed_free(sdata->wt);
-  weed_free(sdata->px);
-  weed_free(sdata->py);
-  weed_free(sdata);
   return WEED_SUCCESS;
 }
 
 
-static inline int calc_luma(unsigned char *pt) {
-  return (Y_R[pt[0]] + Y_G[pt[1]] + Y_B[pt[2]]) >> 8;
+static weed_error_t haip_deinit(weed_plant_t *inst) {
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  if (sdata) {
+    if (sdata->wt) weed_free(sdata->wt);
+    if (sdata->px) weed_free(sdata->px);
+    if (sdata->py) weed_free(sdata->py);
+    weed_free(sdata);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  }
+  return WEED_SUCCESS;
 }
 
 
-
-static int make_eight_table(unsigned char *pt, int row, int luma, int adj) {
+static int make_eight_table(unsigned char *pt, int row, int luma, int adj, int pal) {
   int n = 0;
-
   for (n = 0; n < 8; n++) ress[n] = -1;
-
   n = 0;
-
-  if (calc_luma(&pt[-row - 3]) >= (luma - adj)) {
+  if (calc_luma(&pt[-row - 3], pal, 0) >= (luma - adj)) {
     ress[n] = 0;
     n++;
   }
-  if (calc_luma(&pt[-row]) >= (luma - adj)) {
+  if (calc_luma(&pt[-row], pal, 0) >= (luma - adj)) {
     ress[n] = 1;
     n++;
   }
-  if (calc_luma(&pt[-row + 3]) >= (luma - adj)) {
+  if (calc_luma(&pt[-row + 3], pal, 0) >= (luma - adj)) {
     ress[n] = 2;
     n++;
   }
-  if (calc_luma(&pt[-3]) >= (luma - adj)) {
+  if (calc_luma(&pt[-3], pal, 0) >= (luma - adj)) {
     ress[n] = 3;
     n++;
   }
-  if (calc_luma(&pt[3]) >= (luma - adj)) {
+  if (calc_luma(&pt[3], pal, 0) >= (luma - adj)) {
     ress[n] = 4;
     n++;
   }
-  if (calc_luma(&pt[row - 3]) >= (luma - adj)) {
+  if (calc_luma(&pt[row - 3], pal, 0) >= (luma - adj)) {
     ress[n] = 5;
     n++;
   }
-  if (calc_luma(&pt[row]) >= (luma - adj)) {
+  if (calc_luma(&pt[row], pal, 0) >= (luma - adj)) {
     ress[n] = 6;
     n++;
   }
-  if (calc_luma(&pt[row + 3]) >= (luma - adj)) {
+  if (calc_luma(&pt[row + 3], pal, 0) >= (luma - adj)) {
     ress[n] = 7;
     n++;
   }
-
   return n;
 }
 
@@ -165,8 +126,8 @@ static int select_dir(_sdata *sdata) {
 
   if (num_choices == 0) return 1;
 
-  sdata->fastrand_val = fastrand(sdata);
-  mychoice = (int)(((sdata->fastrand_val >> 24) / 255.*num_choices));
+  sdata->fastrand_val = fastrand(sdata->fastrand_val);
+  mychoice = (int)((float)((unsigned char)(sdata->fastrand_val & 0XFF)) / 255. * num_choices);
 
   switch (ress[mychoice]) {
   case 0:
@@ -201,45 +162,32 @@ static int select_dir(_sdata *sdata) {
   return 0;
 }
 
-static inline void
-nine_fill(unsigned char *new_data, int row, unsigned char *old_data) {
+
+static inline void nine_fill(unsigned char *new_data, int row, unsigned char o0, unsigned char o1, unsigned char o2) {
   // fill nine pixels with the centre colour
-  new_data[-row - 3] = new_data[-row] = new_data[-row + 3] = new_data[-3] = new_data[0] = new_data[3] = new_data[row - 3] = new_data[row] =
-                                          new_data[row + 3] =
-                                              old_data[0];
-  new_data[-row - 2] = new_data[-row + 1] = new_data[-row + 4] = new_data[-2] = new_data[1] = new_data[4] = new_data[row - 2] = new_data[row +
-                       1] = new_data[row + 4] =
-                              old_data[1];
-  new_data[-row - 1] = new_data[-row + 2] = new_data[-row + 5] = new_data[-1] = new_data[2] = new_data[5] = new_data[row - 1] = new_data[row +
-                       2] = new_data[row + 5] =
-                              old_data[2];
+  new_data[-row - 3] = new_data[-row] = new_data[-row + 3] = new_data[-3] = new_data[0] =
+                                          new_data[3] = new_data[row - 3] = new_data[row] = new_data[row + 3] = o0;
+  new_data[-row - 2] = new_data[-row + 1] = new_data[-row + 4] = new_data[-2] = new_data[1] =
+                         new_data[4] = new_data[row - 2] = new_data[row + 1] = new_data[row + 4] = o1;
+  new_data[-row - 1] = new_data[-row + 2] = new_data[-row + 5] = new_data[-1] = new_data[2] =
+                         new_data[5] = new_data[row - 1] = new_data[row + 2] = new_data[row + 5] = o2;
 }
 
-static inline void
-black_fill(unsigned char *new_data, int row) {
-  // fill nine pixels with the centre colour
-  new_data[-row - 3] = new_data[-row] = new_data[-row + 3] = new_data[-3] = new_data[0] = new_data[3] = new_data[row - 3] = new_data[row] =
-                                          new_data[row + 3] = 0;
-  new_data[-row - 2] = new_data[-row + 1] = new_data[-row + 4] = new_data[-2] = new_data[1] = new_data[4] = new_data[row - 2] = new_data[row +
-                       1] = new_data[row + 4] = 0;
-  new_data[-row - 1] = new_data[-row + 2] = new_data[-row + 5] = new_data[-1] = new_data[2] = new_data[5] = new_data[row - 1] = new_data[row +
-                       2] = new_data[row + 5] = 0;
+
+static inline void black_fill(unsigned char *new_data, int row) {
+  // fill nine pixels with black
+  nine_fill(new_data, row, 0, 0, 0);
 }
 
-static inline void
-white_fill(unsigned char *new_data, int row) {
-  // fill nine pixels with the centre colour
-  new_data[-row - 3] = new_data[-row] = new_data[-row + 3] = new_data[-3] = new_data[0] = new_data[3] = new_data[row - 3] = new_data[row] =
-                                          new_data[row + 3] = 255;
-  new_data[-row - 2] = new_data[-row + 1] = new_data[-row + 4] = new_data[-2] = new_data[1] = new_data[4] = new_data[row - 2] = new_data[row +
-                       1] = new_data[row + 4] = 255;
-  new_data[-row - 1] = new_data[-row + 2] = new_data[-row + 5] = new_data[-1] = new_data[2] = new_data[5] = new_data[row - 1] = new_data[row +
-                       2] = new_data[row + 5] = 255;
+
+static inline void white_fill(unsigned char *new_data, int row) {
+  // fill nine pixels with white
+  nine_fill(new_data, row, 255, 255, 255);
 }
 
 
 static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int orows, int irows, int wt) {
-  //nine_fill(&dest[rows*y+x*3],rows,&src[rows*y+x*3]);
+  size_t offs;
   switch (wt) {
   case 0:
     black_fill(&dest[orows * y + x * 3], orows);
@@ -248,34 +196,39 @@ static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int o
     white_fill(&dest[orows * y + x * 3], orows);
     break;
   case 2:
-    nine_fill(&dest[orows * y + x * 3], orows, &src[irows * y + x * 3]);
+    offs = irows * y + x * 3;
+    nine_fill(&dest[orows * y + x * 3], orows, src[offs], src[offs + 1], src[offs + 2]);
     break;
   }
 }
 
-int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+
+static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata;
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error), width3 = width * 3;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  register int i;
 
-  float scalex, scaley;
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
+                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
   unsigned char *pt;
-  int count;
 
+  int width = weed_get_int_value(in_channel, "width", NULL), width3 = width * 3;
+  int height = weed_get_int_value(in_channel, "height", NULL);
+  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
+
+  int count;
   int luma, adj;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  uint32_t fastrand_val;
+  float scalex, scaley;
 
+  register int i;
+
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  sdata->fastrand_val = fastrand_val = fastrand(0);
 
   for (i = 0; i < height; i++) {
     weed_memcpy(&dst[i * orowstride], &src[i * irowstride], width3);
@@ -292,12 +245,12 @@ int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   for (i = 0; i < NUM_WRMS; i++) {
     count = 1000;
     if (sdata->px[i] == -1) {
-      sdata->fastrand_val = fastrand(sdata);
-      sdata->px[i] = (int)(((sdata->fastrand_val >> 24) / 255.*(width - 2))) + 1;
-      sdata->fastrand_val = fastrand(sdata);
-      sdata->py[i] = (int)(((sdata->fastrand_val >> 24) / 255.*(height - 2))) + 1;
-      sdata->fastrand_val = fastrand(sdata);
-      sdata->wt[i] = (int)(((sdata->fastrand_val >> 24) / 255.*2));
+      fastrand_val = fastrand(fastrand_val);
+      sdata->px[i] = (int)(((fastrand_val >> 24) / 255.*(width - 2))) + 1;
+      fastrand_val = fastrand(fastrand_val);
+      sdata->py[i] = (int)(((fastrand_val >> 24) / 255.*(height - 2))) + 1;
+      fastrand_val = fastrand(fastrand_val);
+      sdata->wt[i] = (int)(((fastrand_val >> 24) / 255.*2));
     }
 
     sdata->x = (float)sdata->px[i] * scalex;
@@ -317,10 +270,10 @@ int haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       if (sdata->y > height - 2) sdata->y = height - 2;
       pt = &src[sdata->y * irowstride + sdata->x * 3];
 
-      luma = calc_luma(pt);
+      luma = calc_luma(pt, palette, 0);
       adj = 0;
 
-      make_eight_table(pt, irowstride, luma, adj);
+      make_eight_table(pt, irowstride, luma, adj, palette);
       if (((count << 7) >> 7) == count) select_dir(sdata);
       count--;
     }
@@ -348,6 +301,5 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   weed_set_int_value(plugin_info, "version", package_version);
-  init_luma_arrays();
 }
 WEED_SETUP_END;

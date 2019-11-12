@@ -5,6 +5,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_CONVERSIONS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +20,6 @@
 #include "../../../libweed/weed-plugin.h"
 #include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "../weed-plugin-utils.c" // optional
 
@@ -52,69 +54,6 @@ typedef struct {
 } rgb_t;
 
 /////////////////////////////////////////////
-static int unal[256][256];
-static int al[256][256];
-
-
-static void init_unal(void) {
-  // premult to postmult and vice-versa
-
-  register int i, j;
-
-  for (i = 0; i < 256; i++) { //alpha val
-    for (j = 0; j < 256; j++) { // val to be converted
-      unal[i][j] = (float)j * 255. / (float)i;
-      al[i][j] = (float)j * (float)i / 255.;
-    }
-  }
-}
-
-
-static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, int pal, int un) {
-  int aoffs, coffs, psizel;
-  int alpha;
-  int psize = 4;
-
-  register int i, j, p;
-
-  switch (pal) {
-  case WEED_PALETTE_BGRA32:
-    psizel = 3;
-    coffs = 0;
-    aoffs = 3;
-    break;
-  case WEED_PALETTE_ARGB32:
-    psizel = 4;
-    coffs = 1;
-    aoffs = 0;
-    break;
-  default:
-    return;
-  }
-
-  if (un) {
-    for (i = 0; i < height; i++) {
-      for (j = 0; j < width; j += psize) {
-        alpha = ptr[j + aoffs];
-        for (p = coffs; p < psizel; p++) {
-          ptr[j + p] = unal[alpha][ptr[j + p]];
-        }
-      }
-      ptr += rowstride;
-    }
-  } else {
-    for (i = 0; i < height; i++) {
-      for (j = 0; j < width; j += psize) {
-        alpha = ptr[j + aoffs];
-        for (p = coffs; p < psizel; p++) {
-          ptr[j + p] = al[alpha][ptr[j + p]];
-        }
-      }
-      ptr += rowstride;
-    }
-  }
-}
-
 
 static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // convert a weed channel to cairo
@@ -448,7 +387,6 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
   PangoContext *ctx;
 
-  int api_used = weed_get_api_version(plugin_info);
   int filter_flags = 0, param_flags = 0, error;
 
   if (is_big_endian())
@@ -532,9 +470,11 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags, &scribbler_init, &scribbler_process, NULL,
+  filter_class = weed_filter_class_init("scribbler_generator", "Aleksej Penkov", 1, filter_flags,
+                                        scribbler_init, scribbler_process, NULL,
                                         NULL,
-                                        (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
+                                        (clone1 = weed_clone_plants(out_chantmpls)),
+                                        (clone2 = weed_clone_plants(in_params)), NULL);
   weed_free(clone1);
   weed_free(clone2);
 

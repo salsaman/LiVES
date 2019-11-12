@@ -9,30 +9,21 @@
 //#define DEBUG
 #include <stdio.h>
 
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -53,7 +44,6 @@ typedef struct {
   short error;
 } _sdata;
 
-
 typedef struct _node node;
 
 struct _node {
@@ -66,7 +56,6 @@ struct _node {
 };
 
 static node *rootnode;
-
 
 static node *new_node(char *value) {
   node *newnode = weed_malloc(sizeof(node));
@@ -105,8 +94,6 @@ static node *add_right(node *xnode, char *value) {
 }
 
 
-
-
 static void free_all(node *xnode) {
   if (xnode == NULL) return;
   free_all(xnode->left);
@@ -139,7 +126,6 @@ static double getval(char *what, _sdata *sdata) {
   }
 
   return strtod(what, NULL);
-
 }
 
 
@@ -171,10 +157,7 @@ static char *simplify2(node *left, node *right, node *op, _sdata *sdata) {
   free_all(right);
   op->left = op->right = NULL;
   return op->value;
-
 }
-
-
 
 
 static char *simplify(node *xnode, _sdata *sdata) {
@@ -551,11 +534,6 @@ static void print_tree(node *xnode, int visits) {
 #endif
 
 
-
-
-
-
-
 static int preproc(const char *exp) {
   // put parens around *, /
   char tmp[65536];
@@ -565,7 +543,6 @@ static int preproc(const char *exp) {
   size_t len = strlen(exp);
 
   register int i;
-
 
   for (i = 0; i < len; i++) {
     switch (exp[i]) {
@@ -647,8 +624,6 @@ preprocdone:
 }
 
 
-
-
 static double evaluate(const char *exp, _sdata *sdata) {
   double res;
 
@@ -695,8 +670,7 @@ static double evaluate(const char *exp, _sdata *sdata) {
 
 //////////////////////////////////////////////////////////////////////////////////
 
-
-int dataproc_init(weed_plant_t *inst) {
+static weed_error_t dataproc_init(weed_plant_t *inst) {
   register int i;
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -720,12 +694,10 @@ int dataproc_init(weed_plant_t *inst) {
 }
 
 
-
-int dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", NULL);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   double res = 0.;
 
@@ -743,7 +715,7 @@ int dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i = EQS; i < EQN; i++) {
     if (ip != NULL) weed_free(ip);
-    ip = weed_get_string_value(in_params[i], "value", &error);
+    ip = weed_get_string_value(in_params[i], "value", NULL);
 
     if (!strlen(ip)) continue;
 
@@ -839,7 +811,6 @@ int dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       default:
         break;
       }
-
     }
 
     else {
@@ -860,9 +831,8 @@ int dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-int dataproc_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+static weed_error_t dataproc_deinit(weed_plant_t *inst) {
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   if (sdata != NULL) {
     if (sdata->store != NULL) weed_free(sdata->store);
@@ -872,53 +842,56 @@ int dataproc_deinit(weed_plant_t *inst) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *filter_class, *gui;
 
-  if (plugin_info != NULL) {
-    weed_plant_t *filter_class, *gui;
+  weed_plant_t *in_params[EQN + 1];
+  weed_plant_t *out_params[EQN - EQS + 1];
 
-    weed_plant_t *in_params[EQN + 1];
-    weed_plant_t *out_params[EQN - EQS + 1];
+  register int i;
 
-    register int i;
+  char name[256];
+  char name2[256];
+  char label[256];
+  char desc[512];
 
-    char name[256];
-    char name2[256];
-    char label[256];
-    char desc[512];
-
-    for (i = 0; i < EQS; i++) {
-      snprintf(name, 256, "input%03d", i);
-      in_params[i] = weed_float_init(name, "", 0., -1000000000000., 1000000000000.);
-      gui = weed_parameter_template_get_gui(in_params[i]);
-      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-    }
-
-    for (i = EQS; i < EQN; i++) {
-      snprintf(name, 256, "equation%03d", i - EQS);
-      snprintf(label, 256, "Equation %03d", i - EQS);
-      snprintf(name2, 256, "output%03d", i - EQS);
-      in_params[i] = weed_text_init(name, label, "");
-      out_params[i - EQS] = weed_out_param_float_init_nominmax(name2, 0.);
-    }
-
-    in_params[EQN] = NULL;
-    out_params[EQN - EQS] = NULL;
-
-    filter_class = weed_filter_class_init("data_processor", "salsaman", 1, 0, &dataproc_init, &dataproc_process,
-                                          &dataproc_deinit, NULL, NULL, in_params, out_params);
-
-    snprintf(desc, 512,
-             "Generically process out[x] from a combination of in[y], store[z] and arithmetic expressions.\nE.g:\no[0]=s[0]\ns[0]=i[0]*4\n\nArray subscripts can be from 0 - %d",
-             EQS - 1);
-
-    weed_set_string_value(filter_class, "description", desc);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  for (i = 0; i < EQS; i++) {
+    snprintf(name, 256, "input%03d", i);
+    in_params[i] = weed_float_init(name, "", 0., -1000000000000., 1000000000000.);
+    gui = weed_parameter_template_get_gui(in_params[i]);
+    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
   }
-  return plugin_info;
-}
 
+  for (i = EQS; i < EQN; i++) {
+    snprintf(name, 256, "equation%03d", i - EQS);
+    snprintf(label, 256, "Equation %03d", i - EQS);
+    snprintf(name2, 256, "output%03d", i - EQS);
+    in_params[i] = weed_text_init(name, label, "");
+    out_params[i - EQS] = weed_out_param_float_init_nominmax(name2, 0.);
+  }
+
+  in_params[EQN] = NULL;
+  out_params[EQN - EQS] = NULL;
+
+  filter_class = weed_filter_class_init("data_processor", "salsaman", 1, 0, &dataproc_init, &dataproc_process,
+                                        &dataproc_deinit, NULL, NULL, in_params, out_params);
+
+  snprintf(desc, 512,
+           "Produce (double) output values o[] from a combination of\n"
+           "in values i[],"
+           "stored values s[], and arithmetic expressions.\nE.g:\n"
+           "o[0]=s[0]-0.5\ns[0]=i[0]*4.2\n\nWhitespace in equations is not permitted.\n"
+           "Array subscripts can be from 0 - %d\n"
+           "s values are initialized to 0., and retained between processing cycles\n"
+           "Valid operators are + - / * and ( )\n"
+           "Each equation must set either an o value or an s value. Setting i values in equations is not permitted.\n"
+           "Equations are processed in sequence on each cycle; empty equation strings are ignored.\n"
+           , EQS - 1);
+
+  weed_set_string_value(filter_class, "description", desc);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, "version", package_version);
+}
+WEED_SETUP_END;

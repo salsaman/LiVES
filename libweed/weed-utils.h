@@ -109,8 +109,10 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_ap
                              int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 
 /* host only functions */
-void weed_add_plant_flags(weed_plant_t *plant, int32_t flags);
-void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags);
+// set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
+// this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
+void weed_add_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix);
+void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix);
 
 /* typedef for host callback from weed_bootstrap; host MUST return a host_info, either the original one or a new one */
 typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);

@@ -13,7 +13,6 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package

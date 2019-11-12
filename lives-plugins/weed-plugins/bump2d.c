@@ -7,6 +7,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+#define NEED_PALETTE_CONVERSIONS
 #define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
@@ -41,7 +42,7 @@ typedef struct {
 } BUMP;
 
 
-static void bumpmap_x_init(void) {
+static void bumpmap_setup(void) {
   int i;
   short x, y;
   float rad;
@@ -82,8 +83,7 @@ static weed_error_t bumpmap_init(weed_plant_t *inst) {
 
 
 static weed_error_t bumpmap_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata);
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -208,6 +208,6 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_int_value(plugin_info, "version", package_version);
 
-  bumpmap_x_init();
+  bumpmap_setup();
 }
 WEED_SETUP_END;

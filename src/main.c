@@ -811,7 +811,10 @@ static boolean pre_init(void) {
 
   prefs->midi_rcv_channel = get_int_prefd(PREF_MIDI_RCV_CHANNEL, -1);
 
-  mainw->ccpd_with_sound = TRUE;
+  if (prefs->vj_mode)
+    mainw->ccpd_with_sound = FALSE;
+  else
+    mainw->ccpd_with_sound = TRUE;
 
   mainw->loop = TRUE;
   mainw->loop_cont = FALSE;
@@ -1397,7 +1400,10 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->screen_gamma = DEF_SCREEN_GAMMA;
 
-  prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
+  if (prefs->vj_mode)
+    prefs->load_rfx_builtin = FALSE;
+  else
+    prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
 
@@ -2858,23 +2864,29 @@ static boolean lives_startup(livespointer data) {
     }
   }
 
-  if (!ign_opts.ign_aplayer) {
-    get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
-    if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
-      prefs->audio_player = AUD_PLAYER_NONE;  // experimental
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
-    } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-      prefs->audio_player = AUD_PLAYER_SOX;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-    } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
-      prefs->audio_player = AUD_PLAYER_JACK;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-    } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
-      prefs->audio_player = AUD_PLAYER_PULSE;
-      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-    }
+  if (prefs->vj_mode) {
+    prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+    auto_recover = TRUE;
   } else {
-    set_string_pref(PREF_AUDIO_PLAYER, prefs->aplayer);
+    if (!ign_opts.ign_aplayer) {
+      get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
+      if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
+        prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+      } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
+        prefs->audio_player = AUD_PLAYER_SOX;
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
+      } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
+        prefs->audio_player = AUD_PLAYER_JACK;
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+      } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
+        prefs->audio_player = AUD_PLAYER_PULSE;
+        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
+      }
+    } else {
+      set_string_pref(PREF_AUDIO_PLAYER, prefs->aplayer);
+    }
   }
 
 #ifdef HAVE_PULSE_AUDIO
@@ -3333,6 +3345,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->configdir[0] = '\0';
+  prefs->vj_mode = FALSE; // testing
 
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
@@ -7092,6 +7105,7 @@ void load_frame_image(int frame) {
     }
 
     convert_layer_palette(mainw->frame_layer, cpal, 0);
+
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;

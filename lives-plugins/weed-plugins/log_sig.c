@@ -8,24 +8,6 @@
 // converts float values to log_sig values
 
 //#define DEBUG
-#include <stdio.h>
-#include <math.h>
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
 
 ///////////////////////////////////////////////////////////////////
 
@@ -33,13 +15,25 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
+#include <stdio.h>
+#include <math.h>
 
-int logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
+#define N_PARAMS 128
+
+static weed_error_t logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_error_t error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
   weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
   double fval;
@@ -60,40 +54,40 @@ int logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *filter_class;
 
-  if (plugin_info != NULL) {
-    weed_plant_t *filter_class;
+  weed_plant_t *in_params[N_PARAMS + 1];
+  weed_plant_t *out_params[N_PARAMS + 1];
 
-    weed_plant_t *in_params[257];
-    weed_plant_t *out_params[257];
+  register int i;
 
-    register int i;
+  char name[256];
+  char label[256];
 
-    char name[256];
-    char label[256];
-
-    for (i = 0; i < 256; i++) {
-      snprintf(name, 256, "input%03d", i);
-      snprintf(label, 256, "Input %03d", i);
-      in_params[i] = weed_float_init(name, label, 0., -1000000000000., 1000000000000.);
-      snprintf(name, 256, "Output %03d", i);
-      out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
-    }
-
-    in_params[i] = NULL;
-    out_params[i] = NULL;
-
-    filter_class = weed_filter_class_init("log_sig", "salsaman", 1, 0, NULL, &logsig_process,
-                                          NULL, NULL, NULL, in_params, out_params);
-
-    weed_set_string_value(filter_class, "description", "Scales float values between -1.0 and 1.0 using a log-sig function");
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  for (i = 0; i < N_PARAMS; i++) {
+    snprintf(name, N_PARAMS, "input%03d", i);
+    snprintf(label, N_PARAMS, "Input %03d", i);
+    in_params[i] = weed_float_init(name, label, 0., -1000000000000., 1000000000000.);
+    snprintf(name, N_PARAMS, "Output %03d", i);
+    out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
   }
-  return plugin_info;
+
+  in_params[i] = NULL;
+  out_params[i] = NULL;
+
+  filter_class = weed_filter_class_init("log_sig", "salsaman", 1, 0, NULL, &logsig_process,
+                                        NULL, NULL, NULL, in_params, out_params);
+
+  weed_set_string_value(filter_class, "description",
+                        "Scales float values between -1.0 and 1.0 using a log-sig function\n"
+                        "Inputs may be fed from the outputs of the data_processor or data_unpacker plugins\n"
+                        "for example.\n"
+                       );
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

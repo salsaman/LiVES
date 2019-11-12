@@ -38,26 +38,23 @@ typedef struct {
 //static int video_width_margin;
 
 
-static int edge_init(weed_plant_t *inst) {
+static weed_error_t edge_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
-  int error, height, width;
+  int height, width;
 
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  height = weed_get_int_value(in_channel, "height", &error);
-  width = weed_get_int_value(in_channel, "width", &error);
+  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  height = weed_get_int_value(in_channel, "height", NULL);
+  width = weed_get_int_value(in_channel, "width", NULL);
 
-  sdata->map = weed_malloc(width * height * PIXEL_SIZE * 2);
+  sdata->map = weed_calloc(width * height, PIXEL_SIZE * 2);
   if (sdata->map == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
-  weed_memset(sdata->map, 0, width * height * PIXEL_SIZE * 2);
-
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
   return WEED_SUCCESS;
 }
 
@@ -66,7 +63,7 @@ static int edge_deinit(weed_plant_t *inst) {
   static_data *sdata;
   int error;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->map);
     weed_free(sdata);
@@ -84,24 +81,27 @@ static inline RGB32 copywalpha(RGB32 *dest, size_t doffs, RGB32 *src, size_t off
 
 
 int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
-                             &error);
-  RGB32 *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  RGB32 *dest = weed_get_voidptr_value(out_channel, "pixel_data", &error), *odest;
-  int video_width = weed_get_int_value(in_channel, "width", &error);
-  int video_height = weed_get_int_value(in_channel, "height", &error);
-  int irow = weed_get_int_value(in_channel, "rowstrides", &error) / 4; // get val in pixels
-  int orow = weed_get_int_value(out_channel, "rowstrides", &error) / 4;
-  int r, g, b;
-  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+                             NULL);
+
+  RGB32 *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  RGB32 *dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL), *odest;
   RGB32 *map = sdata->map;
-  int map_width = video_width / 2;
-  int map_height = video_height;
-  register int x, y;
   RGB32 p, q;
   RGB32 v0, v1, v2, v3;
+
+  int video_width = weed_get_int_value(in_channel, "width", NULL);
+  int video_height = weed_get_int_value(in_channel, "height", NULL);
+  int irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4; // get val in pixels
+  int orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
+  int r, g, b;
+
+  int map_width = video_width / 2;
+  int map_height = video_height;
+
+  register int x, y;
 
   odest = dest;
 
@@ -139,18 +139,14 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       r >>= 5;
       g >>= 5;
       b >>= 4;
+
       if (r > 127) r = 127;
       if (g > 127) g = 127;
       if (b > 255) b = 255;
       v3 = (r << 17) | (g << 9) | b;
 
-      map[y * video_width + x * 2 + 2] =
-        v3;//copywalpha(dest,2,src,2,copywalpha(dest,3,src,3,copywalpha(dest,orow+2,src,irow+2,copywalpha(dest,orow+3,src,
-      //											      irow+3,
-      //														      v3))));
-      map[y * video_width * 2 + x * 2] =
-        v2; //copywalpha(dest,orow*2,src,irow*2,copywalpha(dest,orow*2+1,src,irow*2+1,copywalpha(dest,orow*3,src,irow*3,
-      //													  copywalpha(dest,orow*3+1,src,irow*3+1,v2))));
+      map[y * video_width + x * 2 + 2] = v3;
+      map[y * video_width * 2 + x * 2] = v2;
 
       v0 = map[(y - 1) * video_width * 2 + x * 2];
       v1 = map[y * video_width * 2 + x * 2 + 2];

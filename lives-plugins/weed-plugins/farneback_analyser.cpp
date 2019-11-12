@@ -30,7 +30,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 // input is nextImg : this is cached in memory to provide prevImg for the next call
 // output is two channels of type ALPHA FLOAT (the flow(y,x)[0] in the first, and the flow(y,x)[1] in the second)
 
-#define NEED_PALETTE_UTILS
+#define NEED_PALETTE_CONVERSIONS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -100,14 +100,10 @@ static uint8_t *copy_frame(const uint8_t *csrc, int width, int row, int height) 
 
 
 static weed_error_t farneback_init(weed_plant_t *inst) {
-  _sdata *sdata;
-
-  sdata = (_sdata *)weed_malloc(sizeof(_sdata));
-
+  _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->inited = WEED_FALSE;
-
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_SUCCESS;
@@ -115,12 +111,12 @@ static weed_error_t farneback_init(weed_plant_t *inst) {
 
 
 static weed_error_t farneback_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  if (sdata != NULL) {
+  if (sdata) {
     if (sdata->inited) delete sdata->prevgrey;
     weed_free(sdata);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
 
   return WEED_SUCCESS;
@@ -128,23 +124,21 @@ static weed_error_t farneback_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
-  int error;
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  weed_plant_t **out_channels = weed_get_plantptr_array(inst, "out_channels", NULL);
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  weed_plant_t **out_channels = weed_get_plantptr_array(inst, "out_channels", &error);
+  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", NULL);
 
-  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
+  float *dst1 = (float *)weed_get_voidptr_value(out_channels[0], "pixel_data", NULL);
+  float *dst2 = (float *)weed_get_voidptr_value(out_channels[1], "pixel_data", NULL);
 
-  float *dst1 = (float *)weed_get_voidptr_value(out_channels[0], "pixel_data", &error);
-  float *dst2 = (float *)weed_get_voidptr_value(out_channels[1], "pixel_data", &error);
+  int width = weed_get_int_value(in_channel, "width", NULL);
+  int height = weed_get_int_value(in_channel, "height", NULL);
+  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
 
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-
-  int irow = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orow1 = weed_get_int_value(out_channels[0], "rowstrides", &error);
-  int orow2 = weed_get_int_value(out_channels[1], "rowstrides", &error);
+  int irow = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orow1 = weed_get_int_value(out_channels[0], "rowstrides", NULL);
+  int orow2 = weed_get_int_value(out_channels[1], "rowstrides", NULL);
 
   register int i, j;
 
@@ -153,7 +147,7 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   float *fptr;
 
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   weed_free(out_channels);
 
@@ -191,12 +185,12 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_YUV420P:
   case WEED_PALETTE_YVU420P:
     if (weed_plant_has_leaf(in_channel, "YUV_clamping") &&
-        (weed_get_int_value(in_channel, "YUV_clamping", &error) == WEED_YUV_CLAMPING_CLAMPED)) {
+        (weed_get_int_value(in_channel, "YUV_clamping", NULL) == WEED_YUV_CLAMPING_CLAMPED)) {
       srcMat = Mat(height, width, CV_8U, src, irow);
-      //ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
+      ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
       LUT(srcMat, ucMat, *cvgrey);
     } else {
-      //srcMat = Mat(height, width, CV_8U, src, irow);
+      srcMat = Mat(height, width, CV_8U, src, irow);
       srcMat.copyTo(*cvgrey);
     }
     break;

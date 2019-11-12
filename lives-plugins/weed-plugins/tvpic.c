@@ -7,39 +7,25 @@
 
 // simulate a TV display
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
+#define NEED_PALETTE_UTILS
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed-plugin.h" // optional
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
-static void set_black(unsigned char *dst, unsigned char *src, size_t alpha, int psize) {
-  weed_memset(dst, 0, psize);
-  if (alpha != -1) dst[alpha] = src[alpha];
-}
 
 static void set_avg(unsigned char *dst, unsigned char *src1, unsigned char *src2, size_t col, size_t alpha, int psize) {
   unsigned char avg = (src1[col] + src2[col]) / 2;
@@ -49,21 +35,19 @@ static void set_avg(unsigned char *dst, unsigned char *src1, unsigned char *src2
 }
 
 
-static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
+static weed_error_t tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
                              "out_channels",
-                             &error);
+                             NULL);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dest = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  unsigned char *dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
 
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int pal = weed_get_int_value(in_channel, "current_palette", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int width = weed_get_int_value(in_channel, "width", NULL);
+  int pal = weed_get_int_value(in_channel, "current_palette", NULL);
+  int height = weed_get_int_value(in_channel, "height", NULL);
+  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
   int psize = (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) ? 3 : 4;
   int offset = 0, dheight = height;
   int odd = 0;
@@ -72,7 +56,7 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   size_t red, green, blue, alpha;
 
-  register int x, y;
+  register int x, y, i;
 
   if (height < 2) return WEED_SUCCESS;
 
@@ -83,8 +67,8 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
-    offset = weed_get_int_value(out_channel, "offset", &error);
-    dheight = weed_get_int_value(out_channel, "height", &error);
+    offset = weed_get_int_value(out_channel, "offset", NULL);
+    dheight = weed_get_int_value(out_channel, "height", NULL);
     dheight += offset;
 
     src += offset * irowstride;
@@ -125,23 +109,20 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     blue = 3;
   }
 
-
   for (y = offset; y < dheight; y++) {
     x = 0;
     while (x < width) {
       if (x < lbord || x > rbord) {
-        set_black(&dest[x], &src[x], alpha, psize);
+        blank_pixel(&dest[x], pal, 0, &src[x]);
         x += psize;
       } else if (y == height - 1) {
         // bottom row, 2 possibilities
         // if odd, rgb from row, rgb from row/row-1
         if (odd) {
-          weed_memcpy(&dest[x], &src[x], psize);
-          x += psize;
-          weed_memcpy(&dest[x], &src[x], psize);
-          x += psize;
-          weed_memcpy(&dest[x], &src[x], psize);
-          x += psize;
+          for (i = 0; i < 3; i++) {
+            blank_pixel(&dest[x], pal, 0, &src[x]);
+            x += psize;
+          }
           set_avg(&dest[x], &src[x], &src[x - irowstride], red, alpha, psize);
           x += psize;
           set_avg(&dest[x], &src[x], &src[x - irowstride], green, alpha, psize);
@@ -156,21 +137,17 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
           x += psize;
           set_avg(&dest[x], &src[x], &src[x - irowstride], blue, alpha, psize);
           x += psize;
-          set_black(&dest[x], &src[x], alpha, psize);
-          x += psize;
-          set_black(&dest[x], &src[x], alpha, psize);
-          x += psize;
-          set_black(&dest[x], &src[x], alpha, psize);
-          x += psize;
+          for (i = 0; i < 3; i++) {
+            blank_pixel(&dest[x], pal, 0, &src[x]);
+            x += psize;
+          }
         }
       } else if (y == 0) {
         // top row has 3 black, rgb from row/row+1, 3 black, etc
-        set_black(&dest[x], &src[x], alpha, psize);
-        x += psize;
-        set_black(&dest[x], &src[x], alpha, psize);
-        x += psize;
-        set_black(&dest[x], &src[x], alpha, psize);
-        x += psize;
+        for (i = 0; i < 3; i++) {
+          blank_pixel(&dest[x], pal, 0, &src[x]);
+          x += psize;
+        }
         set_avg(&dest[x], &src[x], &src[x + irowstride], red, alpha, psize);
         x += psize;
         set_avg(&dest[x], &src[x], &src[x + irowstride], green, alpha, psize);
@@ -218,23 +195,18 @@ static int tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_ARGB32, WEED_PALETTE_END
+                       };
 
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("tvpic", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+                               NULL, tvpic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
-
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("tvpic", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &tvpic_process, NULL,
-                                 in_chantmpls,
-                                 out_chantmpls, NULL, NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-  return plugin_info;
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

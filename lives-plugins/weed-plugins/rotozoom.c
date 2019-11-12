@@ -7,6 +7,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -14,12 +20,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -49,7 +49,6 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
   sx = -yd * offset;
   sy = xd * offset;
-
 
   /* Stepping across and down the screen, each screen row has a
    * starting coordinate in the texture: (sx, sy).  As each screen
@@ -87,59 +86,52 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 //////////////////////////////////////////////////////////
 
 
-int rotozoom_init(weed_plant_t *inst) {
+static weed_error_t rotozoom_init(weed_plant_t *inst) {
   weed_set_int_value(inst, "plugin_path", 0);
   weed_set_int_value(inst, "plugin_zpath", 0);
-
   return WEED_SUCCESS;
 }
 
 
-int rotozoom_deinit(weed_plant_t *inst) {
-  return WEED_SUCCESS;
-}
-
-
-int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *src, *dst;
-  int error;
   weed_plant_t *in_channel, *out_channel;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
 
   int width, height, irowstride, orowstride, palette;
   int psize = 3;
   int zoom, autozoom;
 
-  int path = weed_get_int_value(inst, "plugin_path", &error);
-  int zpath = weed_get_int_value(inst, "plugin_zpath", &error);
+  int path = weed_get_int_value(inst, "plugin_path", NULL);
+  int zpath = weed_get_int_value(inst, "plugin_zpath", NULL);
 
   int offset = 0, dheight;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
-  src = (unsigned char *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  dst = (unsigned char *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  src = (unsigned char *)weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  dst = (unsigned char *)weed_get_voidptr_value(out_channel, "pixel_data", NULL);
 
-  width = weed_get_int_value(in_channel, "width", &error);
-  height = weed_get_int_value(in_channel, "height", &error);
-  palette = weed_get_int_value(in_channel, "current_palette", &error);
-  irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  width = weed_get_int_value(in_channel, "width", NULL);
+  height = weed_get_int_value(in_channel, "height", NULL);
+  palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
 
-  autozoom = weed_get_boolean_value(in_params[1], "value", &error);
+  autozoom = weed_get_boolean_value(in_params[1], "value", NULL);
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
-    offset = weed_get_int_value(out_channel, "offset", &error);
-    dheight = weed_get_int_value(out_channel, "height", &error);
+    offset = weed_get_int_value(out_channel, "offset", NULL);
+    dheight = weed_get_int_value(out_channel, "height", NULL);
     dst += offset * orowstride;
   } else dheight = height;
 
   if (autozoom == WEED_TRUE) {
     weed_set_int_value(inst, "plugin_zpath", (zpath + 1) & 255);
   } else {
-    zpath = weed_get_int_value(in_params[0], "value", &error);
+    zpath = weed_get_int_value(in_params[0], "value", NULL);
     weed_set_int_value(inst, "plugin_zpath", zpath);
   }
   zoom = roto2[zpath];
@@ -162,14 +154,15 @@ int rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   int i;
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
+                        WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888,
+                        WEED_PALETTE_END
                        };
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
   weed_plant_t *in_params[] = {weed_integer_init("zoom", "_Zoom value", 128, 0, 255), weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("rotozoom", "effectTV", 1, WEED_FILTER_HINT_MAY_THREAD, rotozoom_init,
-                               rotozoom_process, rotozoom_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+                               rotozoom_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

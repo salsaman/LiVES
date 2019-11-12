@@ -5,30 +5,21 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -101,27 +92,24 @@ static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), weed_channel_template_init("in channel 1", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), weed_channel_template_init("in channel 1", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
 
-    weed_plant_t *in_params[] = {weed_float_init("delta", "_Delta", .2, 0., 1.), weed_float_init("opacity", "_Opacity", 1., 0., 1.), weed_colRGBi_init("col", "_Colour", 0, 0, 255), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("delta", "_Delta", .2, 0., 1.), weed_float_init("opacity", "_Opacity", 1., 0., 1.), weed_colRGBi_init("col", "_Colour", 0, 0, 255), NULL};
 
-    weed_plant_t *filter_class;
-    int api_used = weed_get_api_version(plugin_info);
-    int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
+  weed_plant_t *filter_class;
+  int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
-    filter_class = weed_filter_class_init("colour key", "salsaman", 1, filter_flags, NULL, &ckey_process, NULL, in_chantmpls, out_chantmpls,
-                                          in_params,
-                                          NULL);
+  filter_class = weed_filter_class_init("colour key", "salsaman", 1, filter_flags, NULL, &ckey_process,
+                                        NULL, in_chantmpls, out_chantmpls,
+                                        in_params,
+                                        NULL);
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, "version", package_version);
 
-  }
-  return plugin_info;
 }
+WEED_SETUP_END;

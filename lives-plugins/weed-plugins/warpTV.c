@@ -17,33 +17,20 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed-plugin.h" // optional
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -69,7 +56,6 @@ struct _sdata {
   int tval;
 };
 
-
 static void initSinTable(struct _sdata *sdata) {
   Sint32 *tptr, *tsinptr;
   double i;
@@ -82,8 +68,6 @@ static void initSinTable(struct _sdata *sdata) {
   for (i = 0; i < 256; i++)
     *tptr++ = *tsinptr++;
 }
-
-
 
 
 static void initDistTable(struct _sdata *sdata, int width, int height) {
@@ -140,7 +124,6 @@ static void doWarp(int xw, int yw, int cw, RGB32 *src, RGB32 *dst, int width, in
       dx = sdata->ctable[i + 1] + x;
       dy = sdata->ctable[i] + y;
 
-
       if (dx < 0) dx = 0;
       else if (dx > maxx) dx = maxx;
 
@@ -152,26 +135,22 @@ static void doWarp(int xw, int yw, int cw, RGB32 *src, RGB32 *dst, int width, in
     }
     destptr += skip;
   }
-
 }
+
 
 /////////////////////////////////////////////////////////////
 
-int warp_init(weed_plant_t *inst) {
+static weed_error_t warp_init(weed_plant_t *inst) {
+  weed_plant_t *in_channel;
   int video_height;
   int video_width;
-  int error;
-  weed_plant_t *in_channel;
-  struct _sdata *sdata;
-
-  sdata = weed_malloc(sizeof(struct _sdata));
-
+  struct _sdata *sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
 
-  video_height = weed_get_int_value(in_channel, "height", &error);
-  video_width = weed_get_int_value(in_channel, "width", &error);
+  video_height = weed_get_int_value(in_channel, "height", NULL);
+  video_width = weed_get_int_value(in_channel, "width", NULL);
 
   video_width = video_width / 2. + .5;
   video_width *= 2;
@@ -179,7 +158,7 @@ int warp_init(weed_plant_t *inst) {
   video_height = video_height / 2. + .5;
   video_height *= 2;
 
-  sdata->disttable = weed_malloc(video_width * video_height * sizeof(int));
+  sdata->disttable = weed_calloc(video_width * video_height, sizeof(int));
   if (sdata->disttable == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -196,12 +175,10 @@ int warp_init(weed_plant_t *inst) {
 }
 
 
-int warp_deinit(weed_plant_t *inst) {
-  int error;
-  struct _sdata *sdata;
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+static weed_error_t warp_deinit(weed_plant_t *inst) {
+  struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
-    weed_free(sdata->disttable);
+    if (sdata->disttable) weed_free(sdata->disttable);
     weed_free(sdata);
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
@@ -209,30 +186,27 @@ int warp_deinit(weed_plant_t *inst) {
 }
 
 
-int warp_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   RGB32 *src, *dest;
   struct _sdata *sdata;
 
-  int error;
   int xw, yw, cw;
-
   int width, height, irow, orow;
 
   weed_plant_t *in_channel, *out_channel;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
 
-  width = weed_get_int_value(in_channel, "width", &error);
-  height = weed_get_int_value(in_channel, "height", &error);
+  width = weed_get_int_value(in_channel, "width", NULL);
+  height = weed_get_int_value(in_channel, "height", NULL);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", &error) / 4;
-  orow = weed_get_int_value(out_channel, "rowstrides", &error) / 4;
-
+  irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4;
+  orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
 
   xw  = (int)(sin((sdata->tval + 100) * M_PI / 128) * 30);
   yw  = (int)(sin((sdata->tval) * M_PI / 256) * -35);
@@ -247,26 +221,17 @@ int warp_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
 
+  weed_plant_t *filter_class = weed_filter_class_init("warpTV", "effectTV", 1, 0, &warp_init,
+                               warp_process, warp_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-
-    weed_plant_t *filter_class = weed_filter_class_init("warpTV", "effectTV", 1, 0, &warp_init, &warp_process, &warp_deinit, in_chantmpls,
-                                 out_chantmpls,
-                                 NULL, NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-  }
-
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
 }
-
+WEED_SETUP_END;
 

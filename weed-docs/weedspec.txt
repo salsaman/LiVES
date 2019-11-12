@@ -1162,7 +1162,7 @@ provided each instance follows the rules for init_func(), process_func(), deinit
 This means that a plugin should only maintain data common to all instances locally. The data for each separate instance
 should be stored inside the instance itself.
 
-If this is not possible for the filter class, the plugin should return 
+If this is not possible for the filter class, the plugin should return WEED_ERROR_TOO_MANY_INSTANCES.
 
 
 
@@ -1182,8 +1182,6 @@ It should be noted that to assist with this, weed-plugin-utils offers a function
 * weed_clone_plants
 
 which takes as input an array of plants and produces a copy, including producing new gui plants. as appropriate.
-
-
 
 
 == PLANT TYPES ==
@@ -1380,7 +1378,7 @@ The plugin should not alter any values in the plant after weed_setup() but may a
  * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
            type GUI [see below - GUI plants]. The host should not change this value, or any of the
            leaves inside it. The plugin may create it and set leaves
-           it in weed_setup().
+           in it weed_setup().
 
  * Every plugin can store internal data in leaves inside the
    filter_class  plant, and host MUST NOT change their values. Those internal leaves MUST have keys prefixed with "plugin_"
@@ -1412,9 +1410,12 @@ The following are mandatory only if there are corresponding templates
 in the filter class:
 
  * "in_channels"    : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in channels, '''type''' of the referenced plants MUST be WEED_PLANT_CHANNEL
- * "out_channels"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channels , '''type''' of the referenced plants MUST be WEED_PLANT_CHANNEL
- * "in_parameters"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
- * "out_parameters" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
+
+* "out_channels"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channels , '''type''' of the referenced plants MUST be WEED_PLANT_CHANNEL
+
+* "in_parameters"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
+
+* "out_parameters" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameters, '''type''' of the referenced plants MUST be WEED_PLANT_PARAMETER
 
 
 
@@ -1428,8 +1429,13 @@ filter_class or filter_instance:
 
 Other optional leaves:
 
+
+TODO: move to filter_class ?
+
  * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
                                        host to run the instance. The host may choose to ignore this.
+
+TODO: move to channel template ?
 
  * "rowstride_alignment_hint" : WEED_SEED_INT : this is a *hint* to the host that the plugin prefers rowstrides aligned to a certain byte size. It 
   			       		     may be ignored by the host.		      
@@ -1474,6 +1480,7 @@ which the host must not alter.
 
  * "description"  : WEED_SEED_STRING : description of this channel
 
+ // TODO ***: make flag
  * "optional"     : WEED_SEED_BOOLEAN : the plugin may set this to
                     WEED_TRUE for channels that can be left out at initialization time. If
                     the host decides not to use the channel, it must set "disabled" to
@@ -1521,6 +1528,7 @@ which the host must not alter.
 
  * "maxheight" : WEED_SEED_INT : If set, the host must set the channel height <= maxheight (in pixels)
 
+// TODO ***: is this the same as rowstride_alignment ?
  * "alignment" : WEED_SEED_INT : If set, each element in "pixel_data" will be aligned
                              to this many bytes boundary. Must be a
                              power of 2, and a multiple of
@@ -1571,15 +1579,20 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
 
 '''Mandatory leaves for channel plants with video''': [[BR]]
  * "timecode" : WEED_SEED_INT64 : video frame time in ticks (1/100 of a microsecond) for this channel
- * "width" : WEED_SEED_INT    : The chosen frame width in pixels. For
+
+* "width" : WEED_SEED_INT    : The chosen frame width in pixels. For
   YUV packed type palettes, the width is in macropixels (e.g for
   WEED_PALETTE_UYVY888, it is the width in UYVY macropixels). For
   planar YUV palettes, it is measured in the Y plane.
- * "height" : WEED_SEED_INT   : The chosen height in pixels
- * "current_palette" : WEED_SEED_INT: The chosen palette, which must be one of the palettes contained in "palette_list" of a channel template
- * "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to
+
+* "height" : WEED_SEED_INT   : The chosen height in pixels
+
+* "current_palette" : WEED_SEED_INT: The chosen palette, which must be one of the palettes contained in "palette_list" of a channel template
+
+* "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to
  the image pixel data. Depending on the value of "current_palette",  there is 1 element for packed palettes, >1 elements for planar palettes
- * "rowstrides" : WEED_SEED_INT     : array carrying the row width of EACH PLANE in bytes (include padding). Number of elements
+
+* "rowstrides" : WEED_SEED_INT     : array carrying the row width of EACH PLANE in bytes (include padding). Number of elements
  must match with number of elements in "pixel_data".
 
 '''Mandatory leaves for channel plants with audio''': [[BR]]
@@ -1612,6 +1625,7 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
    	      		      process_func several times with different "offset"s and reduced height in the 
 			      destination channel. Offset is the number of rows offset of "pixel_data" in the destination 
 			      frame(s). Will only be used if the plugin sets the filter flag bit WEED_FILTER_HINT_MAY_THREAD.
+			      See below - threading.
 
  * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
                                                of the pixel of the image (pixel aspect ratio 
@@ -1639,8 +1653,8 @@ possible, and process video accordingly:
 
 For RGB type channels:
 
- * "gamma_type" : WEED_SEED_INT : (optional) [api 200 and above]
-   		  		  	     set by the host to indicate the gamma function of the RGB(A)
+ * "gamma_type" : WEED_SEED_INT :  [api 200 and above]
+   		  		  	     set by the host to indicate the gamma transfer function of the RGB(A)
 					     colour space in which the channel operates.
    		  		  	     If not set, it can be assumed to be WEED_GAMMA_SRGB.
 
@@ -1685,6 +1699,8 @@ value for the parameter. The host should not change any other leaves.
 
  * "hint" : WEED_SEED_INT : subdivides parameters into different kinds
  [see below]
+
+
 
 '''Optional leaves''':[[BR]]
  * "flags"            : WEED_SEED_INT : bitmap of parameter flags
@@ -1786,39 +1802,38 @@ Additional leaves that hint causes:
 
 
 ==== Number of elements in the leaves ====
+
 The "default" leaf must contain at least one value* UNLESS the plugin sets the parameter flag
 WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "default" may
-take any number (0 or more) of elements,  [0 elements means the leaf
-exists but has no value, since the SEED_TYPE must be known], and
-"new_default" must be set.
+take any number (0 or more) of elements or be absent; if it is 0, then "new_default" MUST contain at least one value. 
 
-The number of elements in "value" MUST match the number of elements in
-"default" UNLESS the plugin sets the parameter flag
-WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "value" may
-take any number (0 or more) of elements, [0 elements means the leaf
-exists but has no value, since the SEED_TYPE must be known], and
-"new_default" must be set.
+The number of elements in "value" will be set by the host and MUST match the number of elements in
+"default", UNLESS the plugin sets the parameter flag WEED_PARAMETER_VARIABLE_ELEMENTS (see below);
+then the "value" may take any number (0 or more) of elements.
+
+[Zero elements means just the seed_type is set]
+
 
 The only exception is for "COLOR" parameters; there the number of
 elements in "default" and "value" MUST always be a multiple of 3 or 4
-(depending on the "colorspace") - the multiple must be 1 or higher unless WEED_PARAMETER_VARIABLE_ELEMENTS is set, in which case it may be 0 or higher.
+(depending on the "colorspace" - 3 for RGB, 4 for RGBA).
+
 
 The number of elements in each of "min" and "max" can be either 1, or equal to
 the number of elements in "default". If the plugin sets the flag
-WEED_PARAMETER_VARIABLE_ELEMENTS for the parameter, then the number of elements in each of "min" and "max" may only
-be 1.
+WEED_PARAMETER_VARIABLE_ELEMENTS for the parameter,
+then the number of elements in each of "min" and "max" may only be 1, and should be assumed to apply to all elements.
 
 Note:
 
 There is a further exception for "COLOR" parameters; there the number of
 elements in "min" and "max" may be:
 
-1 (each element uses the same min and/or max)
-n (where n is 3 or 4 depending on colorkey)
+1 (each R, G, B component uses the same min and/or max) [alpha may take any value]
+n (where n is 3 or 4 depending on colorkey) [each RGB or RGBA value will use the same set]
 N (where N is a multiple of 3 or 4, matching the number of elements in "default").
 
-The last option is not valid if the parameter has the flag bit
-WEED_PARAMETER_VARIABLE_ELEMENTS set.
+The last option is not valid if the parameter has the flag bit WEED_PARAMETER_VARIABLE_ELEMENTS set.
 
 
 
@@ -1859,15 +1874,7 @@ parameters, the host should create the parameters from their templates, but not 
 				  microsecond) used in "interpolate_func"; or for out parameters, the
 				  timecode when the "value" was last set.
 
- * "ignore" : array of WEED_SEED_BOOLEAN : for interpolation of in parameters with
-	      multiple elements in "value", "ignore" can be used to block "value"
-	      elements which are to be ignored at that timecode. Thus, if
-	      present, the number of elements in "ignore" should match the number of elements in
-	      "value" at the timecode (except for COLOR parameters,
-	      where the number of elements in "ignore" is divided by 3
-	      or 4 depending on "colorspace"). A setting of WEED_TRUE indicates the
-	      corresponding element in "value" should *not* be considered an
-	      interpolation point (i.e. it is just a "filler" element).
+
 
  * "gamma_type" : WEED_SEED_INT : [api 200 and above]
    		  		  if the plugin set the WEED_FILTER_LINEAR_GAMMA flag, and the parameter hint is
@@ -1906,6 +1913,7 @@ with keys prefixed "plugin_".
 
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the filter
    may be hidden from user menus by the host. Intended for internal type filters.
+
 
  * other optional leaves depend on the "layout_scheme" used
 
@@ -2152,9 +2160,10 @@ Defined in weed-effects.h
     and then the desetup function for the plugin, and refrain from using it further.
 
  *  WEED_ERROR_FILTER_INVALID    [[BR]]
-    May be returned from init_func() or process_func(). The filter_class from which this instance was created from is no longer valid.
+    May be returned from init_func() or process_func(). Only applies to plugins which create multiple filters (e.g. wrapper
+    plugins.) The filter_class from which this instance was created from is no longer valid.
     The host should call deinit_func() for any active instances created from the corresponding filter class, and refrain from
-    using them further.
+    using them further. The host may still use other, valid filters in the plugin.
 
  *  WEED_ERROR_TOO_MANY_INSTANCES   [[BR]]
     If a plugin allows only a limited number of filter instances, it may return this from the init_func().
@@ -2170,12 +2179,13 @@ Defined in weed-effects.h
     Returned from process_func(). The plugin enountered an error condition and requires that the host call deinit_func() and
     init_func() again before retrying the process_func(). If the plugin returns this error again after reiniting by the host,
     then there is a fault either in the plugin or in the host.
+    This should only be used for emergency situations; generally the channel_template or parameter_template flags should be
+    sufficient.
 
 
 
 
-
-Deprecated:
+Deprecated (do not use in newly written code):
  *  WEED_ERROR_HARDWARE    [[BR]]
     there was a hardware error using the filter; returned
     from init_func() or from process_func(). If returned from
@@ -2234,23 +2244,9 @@ Deprecated:
    the processing chain, then the host should decide the order to run them in.
 
 *  WEED_FILTER_HINT_MAY_THREAD
-   If a video plugin operates in such a manner that its output may be subdivided vertically, then it may set this hint.
-   The plugin can set this if it can still produce its output when the destination frame is subdivided into non-overlapping,
-   contiguous horizontal areas each with a reduced height.
-   In this case, the process_func() may be called several times with the same timecode, with the "height" of the output
-   channel(s) reduced, and with an extra "offset" leaf added to each output channel,
-   containing the offset in rows of the top of its block
-   from the top of the destination channel pixel_data. The plugin MUST only write to the destination rows between
-   offset and offset + height - 1. The plugin may read from any area of the input channel data, but be aware that if
-   the plugin is running "inplace" then the values read from the in channels may or may not have been processed by another thread.
-
-   If the plugin has internal values which need updating each frame then it needs to implement some method to ensure this
-   happens correctly. For example, the thread with offset zero could do this, but the order the threads are called in is not
-   defined. The first thread with a new timecode could also do it, but it would need to mutex lock the values while updating them.
-   The threads could add their heights together before returning and when the sum equals the full destination height then
-   that thread knows it is the last thread. But again this requires a mutex lock when incrementing the height value.
-
-   For most plugins, the full frame height can be obtained from reading the height of the in channel(s).
+   If a video plugin (TODO - implement for audio ) operates in such a manner that its output may be subdivided vertically,
+   then it may set this hint. Ignored for filters which have no out_channels.
+   See note below about threading.
 
    
 
@@ -2394,10 +2390,6 @@ Flag bits >= 30 are reserved for custom flags.
   * WEED_PLANT_PARAMETER          7
 
   * WEED_PLANT_GUI                8
-
-  * WEED_PLANT_EVENT              256
-
-  * WEED_PLANT_EVENT_LIST         257
 
 
 
@@ -2718,6 +2710,52 @@ location from the user (as a parameter), or else use (a subdirectory of) /tmp.
 
 Note: There is no need for API versioning of the weed directories themselves, as the
 weed_bootstrap system takes care of different Weed API versions.
+
+
+
+
+
+==== Plugin threading ====
+
+
+The plugin can set this if it can still produce its output when the destination frame is subdivided into non-overlapping,
+   contiguous horizontal areas each with a reduced height.
+
+In this case, the process_func() may be called several times with the same timecode, with the "height" of the output
+   channel(s) reduced, and with an extra "offset" leaf added to each output channel,
+   containing the offset in rows of the top of its block
+   from the top of the destination channel pixel_data. The plugin MUST only write to the destination rows between
+   offset and offset + height - 1.
+
+Each channel will have an extra "offset" leaf, and the height leaf will now contain 2 values, the first is the reduced height
+and the second the original (real) height.
+
+Each thread MUST ONLY write to the destination channels in the rows from offset to offset + height (first value).
+
+The plugin may read from any area of the input channel(s) data, but be aware that if
+   the plugin is running "inplace" then the values read from the in channels may or may not have been processed by another thread.
+   Thus this hint should only be combined with inplace if each pixel retains its original position in the output and does not
+   depend on the values of pixels in other rows.
+
+The host should create a copy of the instance for each thread. The copies should have duplicated output channels,
+thus the host can set the "offset" and "height" leaves for the channels to differing values for each thread.
+
+the instance passed to the thread with offset 0 should be used by the host to make new copies for the next frame.
+
+This means that the thread with offset 0 (the master thread) can update internal values each frame (provided the values are in
+stored in normal "plugin_*" leaves with fundamental types, and not in shared memory (allocated) pointed to,
+and the new values will be readable by all the threads on the subsequent frame.
+In this way the plugin may update its internal state consistently. 
+
+Note that voidptr values are copied by reference. Thus any internal data (allocated memory) referenced by VOIDPTR
+will still be shared, as will the pixel_data (and audio data).
+
+Also care must be taken if the filter has output parameters to ensure that only one of the threads (e.g the master thread)
+updates the values.
+
+Any thread may return an error code (plugin_invalid, filter_invalid, memory error, etc.) in which case the order of preceence
+of error values should be observed.
+e.g. if one thread returns plugin_invalid and another returns filter_invalid, the plugin_invalid takes precedence.
 
 
 

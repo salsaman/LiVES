@@ -5,33 +5,25 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-
 // based on code * Copyright (C) 2002 W.P. van Paassen - peter@paassen.tmfweb.nl
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
 
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
+
+/////////////////////////////////////////////////////////////
 
 #include <math.h>
 
@@ -55,8 +47,7 @@ typedef struct {
 static int aSin[512];
 static color_t colors[256];
 
-
-void plasma_prep(void) {
+static void plasma_prep(void) {
   int i;
   float rad;
 
@@ -80,37 +71,35 @@ void plasma_prep(void) {
 }
 
 
-static int plasma_init(weed_plant_t *inst) {
+static weed_error_t plasma_init(weed_plant_t *inst) {
   _sdata *sd = (_sdata *)weed_malloc(sizeof(_sdata));
   if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sd->pos1 = sd->pos2 = sd->pos3 = sd->pos4 = 0;
-
   weed_set_voidptr_value(inst, "plugin_internal", sd);
 
   return WEED_SUCCESS;
 }
 
 
-static int plasma_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", &error);
-
-  weed_free(sd);
-
+static weed_error_t plasma_deinit(weed_plant_t *inst) {
+  _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  if (sd) {
+    weed_free(sd);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  }
   return WEED_SUCCESS;
 }
 
 
-static int plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
-  int palette = weed_get_int_value(out_channel, "current_palette", &error);
-  _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  int rowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  int width = weed_get_int_value(out_channel, "width", NULL);
+  int height = weed_get_int_value(out_channel, "height", NULL);
+  int palette = weed_get_int_value(out_channel, "current_palette", NULL);
+  _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  int rowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
   uint8_t index;
   int widthx = width * 3;
   int offs, x;
@@ -129,16 +118,13 @@ static int plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   while (dst < end) {
     sd->tpos1 = sd->pos1 + 5;
     sd->tpos2 = sd->pos2 + 3;
-
     sd->tpos3 &= 511;
     sd->tpos4 &= 511;
 
     for (j = 0; j < width; ++j) {
       sd->tpos1 &= 511;
       sd->tpos2 &= 511;
-
       x = aSin[sd->tpos1] + aSin[sd->tpos2] + aSin[sd->tpos3] + aSin[sd->tpos4]; /*actual plasma calculation*/
-
       index = 128 + (x >> 4); /*fixed point multiplication but optimized so basically it says (x * (64 * 1024
 				    ) / (1024 * 1024)), x is already multiplied by 1024*/
 
@@ -162,27 +148,21 @@ static int plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *filter_class;
+  int filter_flags = 0;
 
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, &plasma_init, &plasma_process,
+                                        &plasma_deinit, NULL,
+                                        out_chantmpls, NULL, NULL);
+  weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
 
-    weed_plant_t *filter_class;
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    int filter_flags = 0;
-
-    filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, &plasma_init, &plasma_process,
-                                          &plasma_deinit, NULL,
-                                          out_chantmpls, NULL, NULL);
-    weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
-    plasma_prep();
-  }
-  return plugin_info;
+  weed_set_int_value(plugin_info, "version", package_version);
+  plasma_prep();
 }
+WEED_SETUP_END;
 

@@ -5387,18 +5387,20 @@ boolean reload_set(const char *set_name) {
     // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
     // and we must load the frame_index and locate a suitable decoder plugin
 
-    if ((maxframe = load_frame_index(mainw->current_file))) {
+    if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
       // CLIP_TYPE_FILE
       if (!reload_clip(mainw->current_file, maxframe)) continue;
     } else {
       // CLIP_TYPE_DISK
-      if (!check_frame_count(mainw->current_file)) {
-        get_frame_count(mainw->current_file);
-        cfile->needs_update = TRUE;
-      }
-      if (cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
-        get_frames_sizes(mainw->current_file, 1);
-        if (cfile->hsize * cfile->vsize > 0) cfile->needs_update = TRUE;
+      if (!prefs->vj_mode) {
+        if (!check_frame_count(mainw->current_file)) {
+          get_frame_count(mainw->current_file);
+          cfile->needs_update = TRUE;
+        }
+        if (cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
+          get_frames_sizes(mainw->current_file, 1);
+          if (cfile->hsize * cfile->vsize > 0) cfile->needs_update = TRUE;
+        }
       }
     }
 

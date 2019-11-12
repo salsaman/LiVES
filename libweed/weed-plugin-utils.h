@@ -176,25 +176,24 @@ FN_DECL weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int
 
 FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max) ALLOW_UNUSED;
 
-
-
+// general utils
 FN_DECL int is_big_endian(void);
+
+#ifndef ABS
+#define ABS(a)           (((a) < 0) ? -(a) : (a))
+#endif
 
 // functions for process_func()
 
 #if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
 FN_DECL uint32_t fastrand(uint32_t oldval);
-FN_DECL double drand(double max);
-FN_DECL void seed_rand(void);
 #endif
-
 
 #if defined (NEED_ALPHA_SORT) || defined(__LIBWEED_PLUGIN_UTILS__) // for wrappers, use this to sort filters alphabetically
 typedef struct dlink_list dlink_list_t;
 FN_DECL dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name);
 FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list);
 #endif
-
 
 #if defined(NEED_PALETTE_UTILS) || defined(__LIBWEED_PLUGIN_UTILS__)
 FN_DECL int weed_palette_is_alpha(int pal);
@@ -208,10 +207,6 @@ FN_DECL int weed_palette_is_float_palette(int pal);
 FN_DECL int weed_palette_has_alpha_channel(int pal);
 FN_DECL double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 FN_DECL double weed_palette_get_plane_ratio_vertical(int pal, int plane);
-FN_DECL uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping);
-FN_DECL uint8_t y_unclamped_to_clamped(uint8_t y);
-FN_DECL uint8_t y_clamped_to_unclamped(uint8_t y);
-FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
 
 // set src to non-null to preserve the alpha channel (if applicable)
 // othwerwise alpha will be set to 255
@@ -231,6 +226,19 @@ FN_DECL size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src
 // and increase pdst[1], pdst[2] only on the odd rows (pscr is ignored)
 //
 FN_DECL void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int uvcopy, uint8_t **psrc);
+#endif
+
+#if defined(NEED_PALETTE_CONVERSIONS) || defined(__LIBWEED_PLUGIN_UTILS__)
+/* palette conversions use lookup tables for efficiency */
+// calculate a (rough) luma valu for a pixel; works for any palette (for WEED_PALETTE_UYVY add 1 to *pixel)
+FN_DECL uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping);
+
+FN_DECL uint8_t y_unclamped_to_clamped(uint8_t y);
+FN_DECL uint8_t y_clamped_to_unclamped(uint8_t y);
+FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
+
+/* pre multiply or un-pre-multiply alpha for a frame: if un is set to WEED_TRUE we un-pre-multiply, othewise pre-multiply */
+FN_DECL void alpha_unpremult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
 #endif
 
 #ifdef __cplusplus

@@ -193,16 +193,14 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
 }
 
 
-static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
-                             &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
+                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
 
-  sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   float theta, r, xangle;
 
@@ -213,11 +211,11 @@ static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   float anglerot = 0.;
   double dtime, sfac, angleoffs;
 
-  int width = weed_get_int_value(in_channel, "width", &error), hwidth = width >> 1;
-  int height = weed_get_int_value(in_channel, "height", &error), hheight = height >> 1;
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int width = weed_get_int_value(in_channel, "width", NULL), hwidth = width >> 1;
+  int height = weed_get_int_value(in_channel, "height", NULL), hheight = height >> 1;
+  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
   int psize = 4;
 
   int sizerev;
@@ -231,20 +229,20 @@ static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   if (width < height) side = width / 2. / RT32;
   else side = height / 2.;
 
-  sfac = log(weed_get_double_value(in_params[0], "value", &error)) / 2.;
+  sfac = log(weed_get_double_value(in_params[0], "value", NULL)) / 2.;
 
-  angleoffs = weed_get_double_value(in_params[1], "value", &error);
+  angleoffs = weed_get_double_value(in_params[1], "value", NULL);
 
   if (sdata->old_tc != 0 && timestamp > sdata->old_tc) {
-    anglerot = (float)weed_get_double_value(in_params[2], "value", &error);
+    anglerot = (float)weed_get_double_value(in_params[2], "value", NULL);
     dtime = (double)(timestamp - sdata->old_tc) / 100000000.;
     anglerot *= (float)dtime;
     while (anglerot >= TWO_PI) anglerot -= TWO_PI;
   }
 
-  if (weed_get_boolean_value(in_params[4], "value", &error) == WEED_TRUE) anglerot = -anglerot;
+  if (weed_get_boolean_value(in_params[4], "value", NULL) == WEED_TRUE) anglerot = -anglerot;
 
-  sizerev = weed_get_boolean_value(in_params[5], "value", &error);
+  sizerev = weed_get_boolean_value(in_params[5], "value", NULL);
 
   weed_free(in_params);
 
@@ -270,8 +268,8 @@ static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+    int offset = weed_get_int_value(out_channel, "offset", NULL);
+    int dheight = weed_get_int_value(out_channel, "height", NULL);
 
     if (offset > 0) upd = 0;
 
@@ -330,7 +328,7 @@ static int kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-static int kal_init(weed_plant_t *inst) {
+static weed_error_t kal_init(weed_plant_t *inst) {
   sdata *sd = (sdata *)weed_malloc(sizeof(sdata));
   if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
@@ -345,12 +343,12 @@ static int kal_init(weed_plant_t *inst) {
 }
 
 
-static int kal_deinit(weed_plant_t *inst) {
-  int error;
-  sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", &error);
-
-  weed_free(sd);
-
+static weed_error_t kal_deinit(weed_plant_t *inst) {
+  sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  if (sd) {
+    weed_free(sd);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  }
   return WEED_SUCCESS;
 }
 
@@ -360,17 +358,17 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *in_params[] = {			       weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
-                                           weed_float_init("offset", "_Offset angle", 0., 0., 359.),
-                                           weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
-                                           weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),
-                                           weed_radio_init("cw", "_Clockwise", WEED_FALSE, 1),
-                                           weed_switch_init("szc", "_Switch direction on frame size change", WEED_FALSE),
-                                           NULL
+  weed_plant_t *in_params[] = {weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
+                               weed_float_init("offset", "_Offset angle", 0., 0., 359.),
+                               weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
+                               weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),
+                               weed_radio_init("cw", "_Clockwise", WEED_FALSE, 1),
+                               weed_switch_init("szc", "_Switch direction on frame size change", WEED_FALSE),
+                               NULL
                               };
 
   weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
-                               &kal_init, &kal_process, &kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+                               kal_init, kal_process, kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);
 

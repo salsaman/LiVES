@@ -6,6 +6,14 @@
 // see file COPYING or www.gnu.org for details
 
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_CONVERSIONS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -14,13 +22,6 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#define NEED_PALETTE_UTILS
 #include "weed-plugin-utils.c" // optional
 
 
@@ -281,9 +282,6 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   weed_set_int_value(plugin_info, "version", package_version);
-
-  init_RGB_to_YCbCr_tables();
-  init_Y_to_Y_tables();
 }
 WEED_SETUP_END;
 

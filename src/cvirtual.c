@@ -43,14 +43,15 @@ void create_frame_index(int fileno, boolean init, int start_offset, int nframes)
 boolean save_frame_index(int fileno) {
   int fd, i;
   int retval;
-  char *fname;
+  char *fname, *fname_new;
   lives_clip_t *sfile = mainw->files[fileno];
 
   if (fileno == 0) return TRUE;
 
   if (sfile == NULL || sfile->frame_index == NULL) return FALSE;
 
-  fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
+  fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index.back", NULL);
+  fname_new = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
 
   do {
     retval = 0;
@@ -68,11 +69,22 @@ boolean save_frame_index(int fileno) {
 
       if (mainw->write_failed) {
         retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+      } else {
+        if (sget_file_size(fname) != sfile->frames * 4) {
+          retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+        } else {
+          mainw->com_failed = FALSE;
+          lives_cp(fname, fname_new);
+          if (sget_file_size(fname_new) != sfile->frames * 4) {
+            retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
+          }
+        }
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
 
   lives_free(fname);
+  lives_free(fname_new);
 
   if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
@@ -86,7 +98,7 @@ boolean save_frame_index(int fileno) {
 
 int load_frame_index(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
-
+  uint64_t filesize;
   char *fname;
 
   int fd;
@@ -101,10 +113,14 @@ int load_frame_index(int fileno) {
 
   fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
 
-  if (!lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+  filesize = sget_file_size(fname);
+
+  if (filesize <= 0) {
     lives_free(fname);
     return 0;
   }
+
+  if (filesize >> 2 > sfile->frames) sfile->frames = filesize >> 2;
 
   do {
     retval = 0;

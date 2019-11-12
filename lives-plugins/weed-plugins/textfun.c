@@ -5,6 +5,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_CONVERSIONS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -13,14 +21,7 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
-#define NEED_PALETTE_UTILS
-#include "weed-plugin-utils.c" // optional
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -37,7 +38,6 @@ typedef struct {
 /////////////////////////////////////////////
 
 static uint8_t onescount[65536];
-
 
 static void makeonescount(void) {
   int i, j;
@@ -68,7 +68,6 @@ static int get_hex_digit(char *d) {
 
 static char *font_maps[NFONTMAPS];
 static font_table_t font_tables[NFONTMAPS];
-
 
 static void make_font_tables(void) {
   // font_map format is "font_name|glyphbitwidth|bitmap of glyphs"
@@ -186,8 +185,7 @@ static inline void fill_block(int fontnum, unsigned char *src, unsigned char *ds
 
 /////////////////////////////////////////////////////////////
 
-static int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
+static weed_error_t textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned int widthx, irow16, orow16;
   unsigned int startx, starty, endx;
   register int j, k, l, m;
@@ -195,17 +193,16 @@ static int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int mode;
   uint8_t thresh;
   int fontnum;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
+                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  int width = weed_get_int_value(in_channel, "width", NULL);
+  int height = weed_get_int_value(in_channel, "height", NULL);
+  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
   unsigned char *end;
   int skip, glyph16, glyphwidth;
   int psize = 3;
@@ -214,9 +211,9 @@ static int textfun_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) psize = 4;
 
-  thresh = weed_get_int_value(in_params[0], "value", &error) & 0xff;
-  mode = weed_get_int_value(in_params[1], "value", &error);
-  fontnum = weed_get_int_value(in_params[2], "value", &error);
+  thresh = weed_get_int_value(in_params[0], "value", NULL) & 0xff;
+  mode = weed_get_int_value(in_params[1], "value", NULL);
+  fontnum = weed_get_int_value(in_params[2], "value", NULL);
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -308,9 +305,6 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   weed_set_int_value(plugin_info, "version", package_version);
-
-  init_RGB_to_YCbCr_tables();
-  init_Y_to_Y_tables();
 
   makeonescount();
 }

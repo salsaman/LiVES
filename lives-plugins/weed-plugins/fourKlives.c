@@ -5,24 +5,7 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#define DEBUG
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
+//#define DEBUG
 
 ///////////////////////////////////////////////////////////////////
 
@@ -30,14 +13,23 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
+
+/////////////////////////////////////////////////////////////
 
 /*
     The implementation of Syna functions
 
     - Marq + Antti
 */
-
 
 // ported to LiVES by salsaman@gmail.com
 
@@ -62,6 +54,7 @@ static void set_tempo(_sdata *sdata, int tempo) {
   //        ekolen=update*3;
 }
 
+
 static void set_base_freq(_sdata *sdata, int freq) {
   //base_freq=(freq<<13)/BFREQ;
   sdata->base_freq = BFREQ + freq;
@@ -69,14 +62,10 @@ static void set_base_freq(_sdata *sdata, int freq) {
 }
 
 
-
 static int syna_init(_sdata *sdata, int freq) {
   register int n, i;
-
   sdata->module = NULL;
-
   sdata->base_freq = BFREQ;
-
   sdata->maxtracks = 0;
 
   for (n = 0; n < WAVES; n++) {
@@ -138,7 +127,6 @@ static int syna_init(_sdata *sdata, int freq) {
 #ifdef MONO
     sdata->pan[n] = 128;
 #endif
-
     sdata->pola[n] = 0;
     sdata->vol[n] = 255;
     sdata->prev[n] = 0;
@@ -146,6 +134,7 @@ static int syna_init(_sdata *sdata, int freq) {
   }
   return WEED_SUCCESS;
 }
+
 
 #ifndef TINY
 static int syna_load(_sdata *sdata, const char *tune) {
@@ -156,7 +145,7 @@ static int syna_load(_sdata *sdata, const char *tune) {
 
   /* Read the file and call syna_get */
   f = fopen(tune, "rb");
-  if (f == NULL) return WEED_ERROR_INIT_ERROR;
+  if (f == NULL) return WEED_ERROR_REINIT_NEEDED;
   fseek(f, 0, SEEK_END);
   length = ftell(f);
   fseek(f, 0, SEEK_SET);
@@ -165,7 +154,7 @@ static int syna_load(_sdata *sdata, const char *tune) {
   sdata->module[length] = 0; /* String ends in zero */
   fclose(f);
 
-  if (retval < length) return WEED_ERROR_INIT_ERROR;
+  if (retval < length) return WEED_ERROR_REINIT_NEEDED;
 
   return (syna_get(sdata));
 }
@@ -336,6 +325,7 @@ static void set_live_row(_sdata *sdata, int channel, int the_row) {
   sdata->new_live_row[channel] = the_row;
 }
 
+
 static void syna_play(_sdata *sdata, float *dest, int length, int channels, int interleave) {
   int note, li; // li is the "live i"
   int left, right, smp;
@@ -402,9 +392,7 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
           }
         }
       }
-
       //printf("\n");
-
     }
 
 #define MARQ_ARM_OPT
@@ -454,7 +442,6 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       if (interleave) dest[n * 2 + 1] = (float)right / 98301.;
       else dest[n + length] = (float)right / 98301.;
     }
-
 #else
     // sum the instruments
     left = right = 0;
@@ -499,7 +486,6 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       dest[n] = (float)(left * 21 >> 6) / 32767.;
     else {
       dest[n * 2] = (float)(left * 21 >> 6) / 32767.;
-
     }
 
     if (channels == 2) {
@@ -518,10 +504,9 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       ceko = 0;
 
 #endif
-
-
   }
 }
+
 
 /* Make ADSR to instruments */
 static void adsr(_sdata *sdata, int a, int d, int s, int r, int mod, int swp, int ins, int wave, int wave_mod) {
@@ -571,8 +556,8 @@ static void adsr(_sdata *sdata, int a, int d, int s, int r, int mod, int swp, in
       sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
     else
       sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
-
 }
+
 
 /* Fix the fscking Windoze/DOS newlines */
 #ifndef TINY
@@ -599,25 +584,24 @@ static void syna_deinit(_sdata *sdata) {
     if (sdata->echo[n] != NULL) weed_free(sdata->echo[n]);
   }
   if (sdata->module != NULL) weed_free(sdata->module);
-
-  weed_free(sdata);
 }
 
 
 /////////////////////////////////////////////
 
-
-int fourk_deinit(weed_plant_t *inst) {
+static weed_error_t fourk_deinit(weed_plant_t *inst) {
   int error;
   _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  if (sdata != NULL) syna_deinit(sdata);
-  weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  if (sdata != NULL) {
+    syna_deinit(sdata);
+    weed_free(sdata);
+    weed_set_voidptr_value(inst, "plugin_internal", &error);
+  }
   return WEED_SUCCESS;
 }
 
 
-
-int fourk_init(weed_plant_t *inst) {
+static weed_error_t fourk_init(weed_plant_t *inst) {
   int error, retval;
   int rate;
 
@@ -677,11 +661,8 @@ int fourk_init(weed_plant_t *inst) {
 }
 
 
-
-
-
-int fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
+static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_error_t error;
   int chans, nsamps, inter;
 
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
@@ -717,14 +698,18 @@ int fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-
-
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info;
+WEED_SETUP_START(200, 200) {
   DIR *dir = NULL;
   struct dirent *dirent;
   size_t dlen;
   int tcount = 0;
+  char desc[512];
+
+  weed_plant_t *out_chantmpls[2];
+  weed_plant_t *in_params[NCHANNELS + 4]; // tune name + channel rows + tempo + base_freq + NULL
+  weed_plant_t *filter_class;
+
+  register int i;
 
   // make list of tunes
   // scan entries in the ./data/fourklives/songs directory
@@ -745,46 +730,40 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
   tunes[tcount] = NULL;
 
-  plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+  in_params[0] = weed_string_list_init("tune_name", "_Tune", 0, (const char **const)tunes);
+  weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
-  if (plugin_info != NULL) {
-    weed_plant_t *out_chantmpls[2];
-    weed_plant_t *in_params[NCHANNELS + 4]; // tune name + channel rows + tempo + base_freq + NULL
-    weed_plant_t *filter_class;
-
-    register int i;
-
-    in_params[0] = weed_string_list_init("tune_name", "_Tune", 0, (const char **const)tunes);
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-
-    in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
-    in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
+  in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
+  in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
 
 
-    for (i = 3; i < NCHANNELS + 3; i++) {
-      // TODO - unique name
-      in_params[i] = weed_float_init("cparam", "cparam", .5, 0., 1.);
-    }
-
-    in_params[i] = NULL;
-
-    out_chantmpls[0] = weed_audio_channel_template_init("out channel 0", 0);
-    out_chantmpls[1] = NULL;
-
-    filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, &fourk_init, &fourk_process,
-                                          &fourk_deinit, NULL, out_chantmpls, in_params, NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  for (i = 3; i < NCHANNELS + 3; i++) {
+    // TODO - unique name
+    in_params[i] = weed_float_init("cparam", "cparam", .5, 0., 1.);
   }
-  return plugin_info;
+
+  in_params[i] = NULL;
+
+  out_chantmpls[0] = weed_audio_channel_template_init("out channel 0", 0);
+  out_chantmpls[1] = NULL;
+
+  filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, &fourk_init, &fourk_process,
+                                        &fourk_deinit, NULL, out_chantmpls, in_params, NULL);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\n"
+           "text files\n");
+
+  weed_set_string_value(filter_class, "description", desc);
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 
-
-
-void weed_desetup(void) {
+WEED_DESETUP_START {
   register int i;
   for (i = 0; tunes[i] != NULL; i++) weed_free(tunes[i]);
 }
+WEED_DESETUP_END;

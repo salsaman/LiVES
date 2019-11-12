@@ -7,35 +7,24 @@
 
 // works in combination with data_processor to make a neural net
 //#define DEBUG
-#include <stdio.h>
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
 
 ///////////////////////////////////////////////////////////////////
 
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
-
 static int package_version = 1; // version of this package
 
-//////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
+#define NEED_RANDOM
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
-#include "../../libweed/weed-plugin.h" // optional
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -54,24 +43,9 @@ typedef struct {
 
 #define NGAUSS 4
 
-static double drand(double max) {
-  double denom = (double)(2ul << 30) / max;
-  double num = (double)lrand48();
-  return (double)(num / denom);
-}
-
-
-static void seed_rand(void) {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  srand48(tv.tv_sec);
-}
-
-
 //////////////////////////////////////////////////////////////////////////////////
 
-
-int nnprog_init(weed_plant_t *inst) {
+static weed_error_t nnprog_init(weed_plant_t *inst) {
   register int i, j;
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -93,8 +67,6 @@ int nnprog_init(weed_plant_t *inst) {
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
-  seed_rand();
-
   for (i = 0; i < MAXNODES * 2; i++) {
     if (i < MAXNODES) sdata->constvals[i] = drand(2.) - 1.;
     for (j = 0; j < MAXNODES; j++) {
@@ -108,9 +80,8 @@ int nnprog_init(weed_plant_t *inst) {
 }
 
 
-
-int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
+static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_error_t error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
   weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
@@ -141,7 +112,6 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       for (z = 0; z < NGAUSS; z++) {
         rval += (drand(2.) - 1.) * fit;
       }
-
       if (rval > 0.)
         sdata->constvals[i] += (1. - sdata->constvals[i]) * rval;
       else
@@ -151,12 +121,10 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       if (sdata->constvals[i] > 1.) sdata->constvals[i] = 1.;
     }
     for (j = 0; j < MAXNODES; j++) {
-
       rval = 0.;
       for (z = 0; z < NGAUSS; z++) {
         rval += (drand(2.) - 1.) * fit;
       }
-
       if (rval > 0.)
         sdata->vals[idx] += (1. - sdata->vals[idx]) * rval;
       else
@@ -169,8 +137,7 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     }
   }
 
-
-  // create strings for hidden nodes (store values)
+  // create strings for hidden nodes (s values)
 
   for (i = 0; i < hnodes; i++) {
     snprintf(tmp, MAXSTRLEN, "s[%d]=%f", i, sdata->constvals[i]);
@@ -184,7 +151,7 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   k = i;
 
-  // create strings for output nodes (store values)
+  // create strings for output nodes (o values)
 
   for (i = 0; i < outnodes; i++) {
     snprintf(tmp, MAXSTRLEN, "o[%d]=", i);
@@ -196,7 +163,6 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     strings[i + k] = strdup(tmp);
   }
 
-
   for (i = 0; i < hnodes + outnodes; i++) {
     weed_set_string_value(out_params[i], "value", strings[i]);
 #ifdef DEBUG
@@ -205,15 +171,14 @@ int nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     weed_free(strings[i]);
   }
 
-
   weed_free(out_params);
 
   return WEED_SUCCESS;
 }
 
 
-int nnprog_deinit(weed_plant_t *inst) {
-  int error;
+static weed_error_t nnprog_deinit(weed_plant_t *inst) {
+  weed_error_t error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
   if (sdata != NULL) {
@@ -225,41 +190,49 @@ int nnprog_deinit(weed_plant_t *inst) {
 }
 
 
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *filter_class, *gui;
+  char name[256];
+  char desc[512];
 
+  weed_plant_t *in_params[] = {weed_float_init("fitness", "_Fitness", 0., 0., 1.),
+                               weed_integer_init("innodes", "Number of _Input Nodes", 1, 1, 256),
+                               weed_integer_init("outnodes", "Number of _Output Nodes", 1, 1, 128),
+                               weed_integer_init("hnodes", "Number of _Hidden Nodes", 1, 1, 128),
+                               NULL
+                              };
+  weed_plant_t *out_params[MAXNODES * 2 + 1];
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
+  register int i;
 
-  if (plugin_info != NULL) {
-    weed_plant_t *filter_class, *gui;
-
-    weed_plant_t *in_params[] = {weed_float_init("fitness", "_Fitness", 0., 0., 1.), weed_integer_init("innodes", "Number of _Input Nodes", 1, 1, 256), weed_integer_init("outnodes", "Number of _Output Nodes", 1, 1, 128), weed_integer_init("hnodes", "Number of _Hidden Nodes", 1, 1, 128), NULL};
-    weed_plant_t *out_params[MAXNODES * 2 + 1];
-
-    register int i;
-
-    char name[256];
-
-    for (i = 0; i < MAXNODES * 2; i++) {
-      snprintf(name, 256, "Equation%03d", i);
-      out_params[i] = weed_out_param_text_init(name, "");
-    }
-
-    out_params[i] = NULL;
-
-    filter_class = weed_filter_class_init("nn_programmer", "salsaman", 1, 0, &nnprog_init, &nnprog_process,
-                                          &nnprog_deinit, NULL, NULL, in_params, out_params);
-
-    gui = weed_filter_class_get_gui(filter_class);
-    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
-
-    for (i = 1; i < 4; i++)
-      weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  for (i = 0; i < MAXNODES * 2; i++) {
+    snprintf(name, 256, "Equation%03d", i);
+    out_params[i] = weed_out_param_text_init(name, "");
   }
-  return plugin_info;
+
+  out_params[i] = NULL;
+
+  filter_class = weed_filter_class_init("nn_programmer", "salsaman", 1, 0, &nnprog_init, &nnprog_process,
+                                        &nnprog_deinit, NULL, NULL, in_params, out_params);
+
+  gui = weed_filter_class_get_gui(filter_class);
+  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+
+  for (i = 1; i < 4; i++)
+    weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+
+  snprintf(desc, 512, "%s", "Runs a neural net.\n"
+           "On each cycle, generates string equations for the output nodes,\n"
+           "using input nodes and possibly hidden nodes as intermediaries.\n"
+           "The resulting output strings may be fed in as equations to the data_processor plugin\n"
+           "to generate numerical values from real inputs.\n"
+           "Depending on the outputs from the data_processor, the fitness value may be adjusted\n"
+           "For the next cycle. A fitness value of 0. (the default) will produce large variations,\n"
+           "whereas a fitness value of 1. will produce no variations.\n"
+           "A Gaussian randomiser is used to vary the random factors.\n");
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 

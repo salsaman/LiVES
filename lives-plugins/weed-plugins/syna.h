@@ -17,9 +17,6 @@ enum {  Nc1 = 0, NC1, Nd1, ND1, Ne1, Nf1, NF1, Ng1, NG1, Na1, NA1, Nb1,
 
 #define BFREQ 262
 
-
-
-
 // TODO - use enum
 #define KANTTI 0
 #define SINI   1
@@ -47,7 +44,6 @@ enum {  Nc1 = 0, NC1, Nd1, ND1, Ne1, Nf1, NF1, Ng1, NG1, Na1, NA1, Nb1,
 
 #define NCHANNELS 10
 
-
 typedef struct {
   float   *aalto[WAVES];
 
@@ -62,13 +58,9 @@ typedef struct {
        ti[INSTR], pi[INSTR], len[INSTR], ekolen;
 
   char *module, eko[INSTR];
-
   int song_bpm;
-
   int base_freq;
-
   int counter;
-
   int maxtracks;
 } _sdata;
 
@@ -93,10 +85,8 @@ static int notei[] = {
   ECHON, ECHOFF, STOP, VOL, SLIDE, 0
 };
 
-
 static void adsr(_sdata *, int a, int d, int s, int r, int mod, int swp, int ins, int wave, int wave_mod);
 static void cleanup(char *s);
-
 
 /* Some variables that might be useful */
 //extern int syna_counter,syna_row;

@@ -10,34 +10,27 @@
 //#define DEBUG
 #include <stdio.h>
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
+#define N_ELEMS 128
 
-int dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
   weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
@@ -47,7 +40,7 @@ int dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   register int i, j;
 
-  for (i = 0; i < 256; i++) {
+  for (i = 0; i < N_ELEMS; i++) {
     nvals = weed_leaf_num_elements(in_params[i], "value");
     if (nvals > 0) {
       fvals = weed_get_double_array(in_params[i], "value", &error);
@@ -56,11 +49,11 @@ int dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
         if (xval > 1.) xval = 1.;
         if (xval < -1.) xval = -1.;
         weed_set_double_value(out_params[oidx++], "value", xval);
-        if (oidx == 256) break;
+        if (oidx == N_ELEMS) break;
       }
       weed_free(fvals);
     }
-    if (oidx == 256) break;
+    if (oidx == N_ELEMS) break;
   }
 
   weed_free(in_params);
@@ -70,42 +63,44 @@ int dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *filter_class;
 
-  if (plugin_info != NULL) {
-    weed_plant_t *filter_class;
+  weed_plant_t *in_params[N_ELEMS + 1];
+  weed_plant_t *out_params[N_ELEMS + 1];
 
-    weed_plant_t *in_params[257];
-    weed_plant_t *out_params[257];
+  register int i;
 
-    register int i;
+  char name[256];
+  char label[256];
+  char desc[256];
 
-    char name[256];
-    char label[256];
+  for (i = 0; i < N_ELEMS; i++) {
+    snprintf(name, 256, "input%03d", i);
+    snprintf(label, 256, "Input %03d", i);
+    in_params[i] = weed_float_init(name, label, 0., 0., 1.);
+    weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
 
-    for (i = 0; i < 256; i++) {
-      snprintf(name, 256, "input%03d", i);
-      snprintf(label, 256, "Input %03d", i);
-      in_params[i] = weed_float_init(name, label, 0., 0., 1.);
-      weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-
-      snprintf(name, 256, "Output %03d", i);
-      out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
-    }
-
-    in_params[i] = NULL;
-    out_params[i] = NULL;
-
-    filter_class = weed_filter_class_init("data_unpacker", "salsaman", 1, 0, NULL, &dunpack_process,
-                                          NULL, NULL, NULL, in_params, out_params);
-
-    weed_set_string_value(filter_class, "description", "Unpacks multivalued (array) data into single valued outputs");
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, "version", package_version);
+    snprintf(name, 256, "Output %03d", i);
+    out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
   }
-  return plugin_info;
-}
 
+  in_params[i] = NULL;
+  out_params[i] = NULL;
+
+  filter_class = weed_filter_class_init("data_unpacker", "salsaman", 1, 0, NULL, &dunpack_process,
+                                        NULL, NULL, NULL, in_params, out_params);
+
+  snprintf(desc, 256, "Unpacks multivalued (array) data in the input parameters into single valued outputs\n"
+           "Maximum number of values is %d\n"
+           "Output values are clamped between -1.0 and +1.0\n"
+           "The outputs are suitable for passing into the inputs of the data_processing plugin\n"
+           , N_ELEMS);
+
+  weed_set_string_value(filter_class, "description", "desc");
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, "version", package_version);
+}
+WEED_SETUP_END;

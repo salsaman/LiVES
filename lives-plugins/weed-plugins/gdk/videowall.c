@@ -5,6 +5,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_RANDOM
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -13,30 +21,16 @@
 #include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
+#include "../weed-plugin-utils.c" // optional
 
 //////////////////////////////////////////////////////////////////
-
-#include "../weed-plugin-utils.c" // optional
 
 typedef struct _sdata {
   unsigned char *bgbuf;
   int count;
   int idxno;
   int dir;
-  uint32_t fastrand_val;
 } sdata;
-
-
-static inline uint32_t fastrand(struct _sdata *sdata) {
-#define rand_a 1073741789L
-#define rand_c 32749L
-
-  return ((sdata->fastrand_val = (rand_a * sdata->fastrand_val + rand_c)));
-}
-
 
 #include <gdk/gdk.h>
 
@@ -53,17 +47,12 @@ inline int G_GNUC_CONST pl_gdk_last_rowstride_value(int width, int nchans) {
 }
 
 
-static void plugin_free_buffer(guchar *pixels, gpointer data) {
-  return;
-}
-
-
 static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height,
                                       guchar *buf) {
   // we can cheat if our buffer is correctly sized
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
-  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, NULL, NULL);
 }
 
 
@@ -187,7 +176,6 @@ static weed_error_t videowall_init(weed_plant_t *inst) {
   }
 
   sdata->count = 0;
-  sdata->fastrand_val = 0;
   sdata->dir = 0;
   sdata->idxno = -1;
 
@@ -239,6 +227,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
   int row, col, idxno, bdstoffs, rpixoffs;
 
   int offs_x, offs_y;
+  uint32_t fastrand_val = fastrand(0);
 
   xwid = weed_get_int_value(in_params[0], "value", &error);
   xht = weed_get_int_value(in_params[1], "value", &error);
@@ -274,7 +263,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
     break;
   case 1:
     // pseudo-random
-    idxno = (fastrand(sdata) >> 24) % (xwid * xht);
+    idxno = ((fastrand_val = fastrand(fastrand_val)) >> 24) % (xwid * xht);
     break;
   case 2:
     // spiral
@@ -400,5 +389,5 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
-
 WEED_SETUP_END;
+

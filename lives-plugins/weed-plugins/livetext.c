@@ -6,29 +6,21 @@
 // see file COPYING or www.gnu.org for details
 
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#include "weed-plugin-utils.c" // optional
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
 
@@ -47,7 +39,6 @@ typedef struct {
   int green;
   int blue;
 } rgb_t;
-
 
 /////////////////////////////////////////////
 
@@ -208,62 +199,49 @@ static int get_ypos(char *str, int height, int rise) {
 
 /////////////////////////////////////////////////////////////
 
-static int livetext_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
+static weed_error_t livetext_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  char *text;
   //unsigned int irow16,orow16;
   //unsigned int startx,starty,endx;
 
-  register int i;
-
-  //int j;
-
-  int mode;
-  char *text;
-
-  int fontnum;
-
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-
-  int width = weed_get_int_value(out_channel, "width", &error), widthx, widthz;
-  int height = weed_get_int_value(out_channel, "height", &error), heightx = height >> 4;
-
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  int ofill;
-
-  int palette = weed_get_int_value(out_channel, "current_palette", &error);
-
-  int pbits = 3;
-
-  int xpos, ypos, offs;
-
-  rgb_t *fg, *bg;
-
-  int cent, rise;
-
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
   weed_plant_t *in_channel = NULL;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
   unsigned char *src;
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+
+  int width = weed_get_int_value(out_channel, "width", NULL), widthx, widthz;
+  int height = weed_get_int_value(out_channel, "height", NULL), heightx = height >> 4;
+
+  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
   int irowstride = 0;
 
+  int palette = weed_get_int_value(out_channel, "current_palette", NULL);
+
+  rgb_t *fg, *bg;
+  int ofill, mode, fontnum;
+  int pbits = 3;
+  int xpos, ypos, offs, cent, rise;
+
+  register int i;
+
   if (weed_plant_has_leaf(inst, "in_channels")) {
-    in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-    src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-    irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
+    in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+    src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+    irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
   } else src = dst;
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) pbits = 4;
 
-  text = weed_get_string_value(in_params[0], "value", &error);
-  mode = weed_get_int_value(in_params[1], "value", &error);
-  fontnum = weed_get_int_value(in_params[2], "value", &error);
+  text = weed_get_string_value(in_params[0], "value", NULL);
+  mode = weed_get_int_value(in_params[1], "value", NULL);
+  fontnum = weed_get_int_value(in_params[2], "value", NULL);
 
-  fg = (rgb_t *)weed_get_int_array(in_params[3], "value", &error);
-  bg = (rgb_t *)weed_get_int_array(in_params[4], "value", &error);
+  fg = (rgb_t *)weed_get_int_array(in_params[3], "value", NULL);
+  bg = (rgb_t *)weed_get_int_array(in_params[4], "value", NULL);
 
-  cent = weed_get_boolean_value(in_params[5], "value", &error);
-  rise = weed_get_boolean_value(in_params[6], "value", &error);
+  cent = weed_get_boolean_value(in_params[5], "value", NULL);
+  rise = weed_get_boolean_value(in_params[6], "value", NULL);
 
   if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
     int tmp = fg->red;
@@ -278,11 +256,8 @@ static int livetext_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params); // must weed free because we got an array
 
   widthx = width * pbits;
-
   widthz = width / font_tables[fontnum].width;
-
   ofill = orowstride - widthx;
-
   pbits *= font_tables[fontnum].width;
 
   if (src != dst) {
@@ -316,68 +291,63 @@ static int livetext_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 }
 
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
+WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2;
+  const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_params[8], *pgui;
+  weed_plant_t *filter_class;
 
-  if (plugin_info != NULL) {
-    const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
-    int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-    weed_plant_t *in_params[8], *pgui;
-    weed_plant_t *filter_class;
+  const char *fonts[NFONTMAPS + 1];
+  int i;
 
-    const char *fonts[NFONTMAPS + 1];
-    int i;
+  int filter_flags = 0;
 
-    int api_used = weed_get_api_version(plugin_info);
-    int filter_flags = 0;
+  make_font_tables();
 
-    make_font_tables();
-
-    for (i = 0; i < NFONTMAPS; i++) {
-      fonts[i] = font_tables[i].fontname;
-    }
-    fonts[i] = NULL;
-
-    in_params[0] = weed_text_init("text", "_Text", "");
-    in_params[1] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-    in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
-    in_params[3] = weed_colRGBi_init("foreground", "_Foreground", 255, 255, 255);
-    in_params[4] = weed_colRGBi_init("background", "_Background", 0, 0, 0);
-    in_params[5] = weed_switch_init("center", "_Center text", WEED_TRUE);
-    in_params[6] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
-    in_params[7] = NULL;
-
-    pgui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_int_value(pgui, "maxchars", 65536);
-
-    filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls,
-                                          in_params,
-                                          NULL);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, NULL, &livetext_process, NULL, NULL,
-                                          (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
-    weed_free(clone1);
-    weed_free(clone2);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-    weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
-
-    weed_set_int_value(plugin_info, "version", package_version);
+  for (i = 0; i < NFONTMAPS; i++) {
+    fonts[i] = font_tables[i].fontname;
   }
+  fonts[i] = NULL;
 
-  return plugin_info;
+  in_params[0] = weed_text_init("text", "_Text", "");
+  in_params[1] = weed_string_list_init("mode", "Colour _mode", 0, modes);
+  in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
+  in_params[3] = weed_colRGBi_init("foreground", "_Foreground", 255, 255, 255);
+  in_params[4] = weed_colRGBi_init("background", "_Background", 0, 0, 0);
+  in_params[5] = weed_switch_init("center", "_Center text", WEED_TRUE);
+  in_params[6] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
+  in_params[7] = NULL;
+
+  pgui = weed_parameter_template_get_gui(in_params[0]);
+  weed_set_int_value(pgui, "maxchars", 65536);
+
+  filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls,
+                                        in_params,
+                                        NULL);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, NULL, &livetext_process, NULL, NULL,
+                                        (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
+  weed_free(clone1);
+  weed_free(clone2);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
+
+  weed_set_int_value(plugin_info, "version", package_version);
 }
+WEED_SETUP_END;
 
 
-void weed_desetup(void) {
-  int k;
-  for (k = 0; k < NFONTMAPS; k++) {
+WEED_DESETUP_START {
+  for (int k = 0; k < NFONTMAPS; k++) {
     weed_free(font_tables[k].fontname);
     weed_free(font_tables[k].fonttable);
   }
 }
+WEED_DESETUP_END;
+

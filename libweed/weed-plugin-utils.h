@@ -238,7 +238,7 @@ FN_DECL uint8_t y_clamped_to_unclamped(uint8_t y);
 FN_DECL uint8_t uv_clamped_to_unclamped(uint8_t uv);
 
 /* pre multiply or un-pre-multiply alpha for a frame: if un is set to WEED_TRUE we un-pre-multiply, othewise pre-multiply */
-FN_DECL void alpha_unpremult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
+FN_DECL void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
 #endif
 
 #ifdef __cplusplus

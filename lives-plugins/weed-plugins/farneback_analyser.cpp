@@ -124,21 +124,21 @@ static weed_error_t farneback_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  weed_plant_t **out_channels = weed_get_plantptr_array(inst, "out_channels", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t **out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  float *dst1 = (float *)weed_get_voidptr_value(out_channels[0], "pixel_data", NULL);
-  float *dst2 = (float *)weed_get_voidptr_value(out_channels[1], "pixel_data", NULL);
+  float *dst1 = (float *)weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
+  float *dst2 = (float *)weed_get_voidptr_value(out_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
 
-  int width = weed_get_int_value(in_channel, "width", NULL);
-  int height = weed_get_int_value(in_channel, "height", NULL);
-  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
-  int irow = weed_get_int_value(in_channel, "rowstrides", NULL);
-  int orow1 = weed_get_int_value(out_channels[0], "rowstrides", NULL);
-  int orow2 = weed_get_int_value(out_channels[1], "rowstrides", NULL);
+  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orow1 = weed_get_int_value(out_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
+  int orow2 = weed_get_int_value(out_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
 
   register int i, j;
 
@@ -184,8 +184,8 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_YUV422P:
   case WEED_PALETTE_YUV420P:
   case WEED_PALETTE_YVU420P:
-    if (weed_plant_has_leaf(in_channel, "YUV_clamping") &&
-        (weed_get_int_value(in_channel, "YUV_clamping", NULL) == WEED_YUV_CLAMPING_CLAMPED)) {
+    if (weed_plant_has_leaf(in_channel, WEED_LEAF_YUV_CLAMPING) &&
+        (weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL) == WEED_YUV_CLAMPING_CLAMPED)) {
       srcMat = Mat(height, width, CV_8U, src, irow);
       ucMat = Mat(256, 1, CV_8U, YCL_YUCL);
       LUT(srcMat, ucMat, *cvgrey);
@@ -311,9 +311,9 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(in_chantmpls[0], "YUV_clamping", WEED_YUV_CLAMPING_UNCLAMPED);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

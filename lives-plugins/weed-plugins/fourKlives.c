@@ -607,12 +607,12 @@ static weed_error_t fourk_init(weed_plant_t *inst) {
 
   _sdata *sdata;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
   char tune[MAX_TUNELEN];
 
-  snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], "value", &error)]);
+  snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error)]);
 
   weed_free(in_params);
 
@@ -622,7 +622,7 @@ static weed_error_t fourk_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  rate = weed_get_int_value(out_channel, "audio_rate", &error);
+  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, &error);
 
   if ((retval = syna_init(sdata, rate)) != WEED_SUCCESS) {
 #ifdef DEBUG
@@ -665,14 +665,14 @@ static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp)
   weed_error_t error;
   int chans, nsamps, inter;
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  float *dst = weed_get_voidptr_value(out_channel, "audio_data", &error);
+  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, &error);
 
-  double tempo = weed_get_double_value(in_params[1], "value", &error);
-  double bfreq = weed_get_double_value(in_params[2], "value", &error);
+  double tempo = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error);
+  double bfreq = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, &error);
 
   _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -680,10 +680,10 @@ static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   weed_free(in_params);
 
-  chans = weed_get_int_value(out_channel, "audio_channels", &error);
-  nsamps = weed_get_int_value(out_channel, "audio_data_length", &error);
-  inter = weed_get_boolean_value(out_channel, "audio_interleaf", &error);
-  //rate=weed_get_int_value(out_channel,"audio_rate",&error);
+  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
+  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
+  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
+  //rate=weed_get_int_value(out_channel,WEED_LEAF_AUDIO_RATE,&error);
 
   for (i = 0; i < NCHANNELS; i++) {
     set_live_row(sdata, i, (rand() % (sdata->maxtracks * 1000 - 1)) / 1000.f + 1.); // 2nd val can be 2 (?) to npat (?)
@@ -731,7 +731,7 @@ WEED_SETUP_START(200, 200) {
   tunes[tcount] = NULL;
 
   in_params[0] = weed_string_list_init("tune_name", "_Tune", 0, (const char **const)tunes);
-  weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
   in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
@@ -755,9 +755,9 @@ WEED_SETUP_START(200, 200) {
   snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\n"
            "text files\n");
 
-  weed_set_string_value(filter_class, "description", desc);
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

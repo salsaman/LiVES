@@ -122,10 +122,10 @@ int lifetv_init(weed_plant_t *inst) {
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
 
-  height = weed_get_int_value(in_channel, "height", &error);
-  width = weed_get_int_value(in_channel, "width", &error);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
 
   video_area = width * height;
 
@@ -217,17 +217,17 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  width = weed_get_int_value(in_channel, "width", &error);
-  height = weed_get_int_value(in_channel, "height", &error);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", &error) / 4;
-  orow = weed_get_int_value(out_channel, "rowstrides", &error) / 4 - width;
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error) / 4;
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error) / 4 - width;
 
   video_area = width * height;
 
@@ -285,7 +285,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

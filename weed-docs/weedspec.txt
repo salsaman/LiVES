@@ -1,5 +1,10 @@
 = Technical Specification =
 
+TODO: - plugin parameter interpolation
+      - plugin easing
+      - change "choices" to "display_values" ?
+
+
 Weed API Version Changes
 ------------------------
 100 - first release
@@ -1102,30 +1107,7 @@ Less commonly used functions:
 
 
 ==== interpolate_func ====
-
-This function is under review and will likely change in filter API version 200.
-
-
-This is an optional function for a host to call.
-
-{{{
-    int interpolate_func(weed_param_t **in_params, weed_param_t *out_param);
-}}}
-
-The function takes a NULL terminated array of parameters for a single
-parameter_template, with "timecode", "value" and possibly "ignore" 
-leaves, and returns a best guess for the "value" of out_param. The
-in_params array MUST be in ascending "timecode" order. The "timecode"
-leaf of out_param MUST be set. All the parameter values in_params and
-out_param reference the same parameter_template. Interpolate_func is
-an optional leaf of that parameter_template.
-
-The value returned is actually a boolean. A return value of WEED_TRUE
-means the "value" set in out_param is exact. A return value of
-WEED_FALSE means that the "value" in out_param is a guess. In the
-latter case, the host can recall the function with more elements in
-in_params to try to get a more accurate result.
-
+T.B.D
 
 ==== display_func ====
 (deprecated)
@@ -1267,6 +1249,8 @@ WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
 
  * "flags"        : WEED_SEED_INT    : bitmap of host_info flags (see below)
 
+ * "layout_schemes_supported" : WEED_SEED_STRING : an array of layout schemes that the host supports (see below, "layout_scheme")
+
 
 The host may add any number of additional leaves, but it is recommended that it use keys prefixed "host_" to avoid
 possible conflicts with future versions of the spec.
@@ -1369,10 +1353,8 @@ The plugin should not alter any values in the plant after weed_setup() but may a
  * "url"          : WEED_SEED_STRING : filter URL
  * "copyright"    : WEED_SEED_STRING : copyright details for filter
  * "license"      : WEED_SEED_STRING : license of filter
- * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of
-                                       the target fps rate(s) for the
-                                       host to run the plugin. 
-				       Host should set "fps" for the
+ * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
+                                       host to run the plugin. Host should set "fps" for the
 				       instance in this case.
 
  * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
@@ -1427,18 +1409,6 @@ filter_class or filter_instance:
  * "fps" : WEED_SEED_DOUBLE : the current target fps of the host running the instance
    (i.e frequency at which it attempts to call process_func() ).
 
-Other optional leaves:
-
-
-TODO: move to filter_class ?
-
- * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
-                                       host to run the instance. The host may choose to ignore this.
-
-TODO: move to channel template ?
-
- * "rowstride_alignment_hint" : WEED_SEED_INT : this is a *hint* to the host that the plugin prefers rowstrides aligned to a certain byte size. It 
-  			       		     may be ignored by the host.		      
 
 
  * Every plugin can store internal data in leaves inside this plant, and host MUST NOT change their values or make them
@@ -1479,13 +1449,6 @@ which the host must not alter.
  * "flags" : WEED_SEED_INT : bitmap of channel_flags that plugin sets
 
  * "description"  : WEED_SEED_STRING : description of this channel
-
- // TODO ***: make flag
- * "optional"     : WEED_SEED_BOOLEAN : the plugin may set this to
-                    WEED_TRUE for channels that can be left out at initialization time. If
-                    the host decides not to use the channel, it must set "disabled" to
-                    WEED_TRUE for the channel. The host must reinit
-                    the instance if a channel is enabled or disabled after init_func().
 
  * "max_repeats" : WEED_SEED_INT : maximum number of channels that
       the host can create from this template. A value of 0 indicates
@@ -1528,13 +1491,9 @@ which the host must not alter.
 
  * "maxheight" : WEED_SEED_INT : If set, the host must set the channel height <= maxheight (in pixels)
 
-// TODO ***: is this the same as rowstride_alignment ?
- * "alignment" : WEED_SEED_INT : If set, each element in "pixel_data" will be aligned
-                             to this many bytes boundary. Must be a
-                             power of 2, and a multiple of
-                             sizeof (void *). Eg. if set to 16, the
-                             address of each element (plane) in "pixel_data" will
-                             be divisible by 16. Should be avoided if possible for performance reasons.
+ * "alignment_hint" : WEED_SEED_INT : If set, the host should attemp to align each plane in "pixel_data"
+   	       	 	       	 to this many bytes boundary. In addition the rowstrides in each plane should be a multiple
+				 of this value. If "hstep" is set then this value must be a multiple of "hstep".
 
  * "YUV_sampling"     : WEED_SEED_INT : Sampling type for YUV
                                         palettes, defined
@@ -1577,9 +1536,6 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
  * "template" : WEED_SEED_PLANTPTR : Pointer to a channel
  template plant this channel instance is based on.
 
-'''Mandatory leaves for channel plants with video''': [[BR]]
- * "timecode" : WEED_SEED_INT64 : video frame time in ticks (1/100 of a microsecond) for this channel
-
 * "width" : WEED_SEED_INT    : The chosen frame width in pixels. For
   YUV packed type palettes, the width is in macropixels (e.g for
   WEED_PALETTE_UYVY888, it is the width in UYVY macropixels). For
@@ -1609,7 +1565,7 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
 		    that template may be disabled at any time between
 		    processing calls.
 
- * "flags"        : channel flags set by host. e.g WEED_CHANNEL_ALPHA_PREMULT.
+ * "flags"        : channel flags set by host.
 
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
@@ -1686,8 +1642,8 @@ value for the parameter. The host should not change any other leaves.
  * "default" : default value(s) of the parameter : usually must contain at
                least one element, but may have 0 elements for parameters which have
                the WEED_PARAMETER_VARIABLE_ELEMENTS flag set. [0 elements means the leaf
-	       exists but has no value, since the SEED_TYPE must be known.]. Required even for out parameters, as the type
-	       and number of elements must be known.
+	       exists but has no value, since the SEED_TYPE must be known.].
+	       Required even for out parameters, as the type and number of elements must be known.
 
  * "new_default" : required only for in parameters which have the flag WEED_PARAMETER_VARIABLE_ELEMENTS set. 
                    It tells the host the default value of
@@ -1707,14 +1663,14 @@ value for the parameter. The host should not change any other leaves.
 
  * "description"      : WEED_SEED_STRING : parameter description
 
- * "interpolate_func" : WEED_SEED_FUNCPTR : pointer to interpolate_func pointer.
-   		      	 See below, Plugin Functions. For in parameters only.
+ * "interpolate_func" : TODO
 
  * "gui" : WEED_SEED_PLANTPTR : each parameter_template (for in_parameters) can have a
- "gui" leaf. This leaf points to a plant of type
- GUI. Within the GUI plant can be additional leaves to assist the host
- to display this particular parameter. The plugin can create it, and
- set leaf values in it in weed_setup() and/or in init_func().
+   	   		      "gui" leaf. This leaf points to a plant of type
+ 			      	    GUI. Within the GUI plant can be additional leaves to assist the host
+ 				    to display this particular parameter. The plugin can create it, and
+				     set leaf values in it in weed_setup() and/or in init_func().
+				     
 
  * Every plugin can have internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
@@ -1738,30 +1694,53 @@ Depending on the "hint" parameter seed type additional leaves are:
 
  * WEED_HINT_UNSPECIFIED
 This is a special "placeholder" value and requires no mandatory leaves.
+Plugins should not create parameters with this hint.
+
+
 
 
  * WEED_HINT_INTEGER
+
 "value" and "default" are constrained by min and max: min <= value <= max
 The "default" leaf can only be of seed type WEED_SEED_INT. "default"
 may have any number of elements.
 
+ == mandatory ==
+
  * "min" : WEED_SEED_INT : minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
+
  * "max" : WEED_SEED_INT : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
+
+
+== optional ==
+
  * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should wrap when going below min or above max, OPTIONAL
- * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
+
+ * "is_transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
  parameter is a transition, (i.e. at min the effect is fully "off", showing only the first in_channel as output, at
  max it is fully "on", showing only the second in_channel as output) OPTIONAL. For in parameters only.
+
+
+
+
+
 
  * WEED_HINT_FLOAT
 "value" and "default" are constrained by min and max: min <= value <= max
 The "default" leaf can only be of seed type
 WEED_SEED_DOUBLE. "default" may have any number of elements.
 
-Additional leaves that hint causes:
+== mandatory ==
+
  * "min" : WEED_SEED_DOUBLE : minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
+
  * "max" : WEED_SEED_DOUBLE : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
- * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should be wrapped when going below min or above max, OPTIONAL
- * "transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
+
+== optional ==
+
+* "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should be wrapped when going below min or above max, OPTIONAL
+
+* "is_transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this
  parameter is a transition, (i.e. at min the effect is fully "off", showing only the first in_channel as output, at
  max it is fully "on", showing only the second in_channel as output) OPTIONAL. For in parameters only.
 
@@ -1771,30 +1750,42 @@ Hint text means a string, which can be used for passing strings.
 The "default" leaf can only be of seed type
 WEED_SEED_STRING. "default" may have any number of elements.
 
+
+
+
  * WEED_HINT_SWITCH 
-Hint switch can be used for passing yes/no choices.
-The "default" leaf can only be of seed type
-WEED_SEED_BOOLEAN. "default" may have any number of elements. It may
-only take values WEED_TRUE and WEED_FALSE.
+Hint switch can be used for passing yes/no choices. The "default" leaf can only be of seed type WEED_SEED_BOOLEAN.
+"default" may have any number of elements.
 
-Additional leaves that hint causes:
- * "group" : WEED_SEED_INT : for all in_parameters with the same
- non-zero group: the template "default" may only have a
- single value, and WEED_PARAMETER_VARIABLE_ELEMENTS may not be set. 
- Only one parameter per non-zero group may have a "default" of WEED_TRUE. 
- The host must ensure that only one parameter per non-zero group has a 
- "value" of WEED_TRUE. 
 
- 
+== optional ==
+
+* "group" : WEED_SEED_INT : for all in_parameters with the same
+  	    		    non-zero group: the "default" may only have a
+ 			    single value, and WEED_PARAMETER_VARIABLE_ELEMENTS may not be set.
+
+			    Only one parameter per non-zero group may have a "default" of WEED_TRUE. 
+
+			    The host must ensure that only one parameter per non-zero group has a "value" of WEED_TRUE. 
+
+
+
+
  * WEED_HINT_COLOR
-Hint color can be used for passing colors. Colors are represented as a
-list of elements of type WEED_SEED_DOUBLE or WEED_SEED_INT. Depending on the
-"default", host knows the seed type of "value".
+Hint color can be used for passing colors. Colors are represented as a list of elements of type WEED_SEED_DOUBLE or
+WEED_SEED_INT. Depending on the "default", the host knows the seed type of "value".
 
-Additional leaves that hint causes:
- * "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
- * "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
- * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
+== Mandatory ==
+
+* "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
+
+* "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
+
+* "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
+
+
+== optional ==
+
  * "gamma_type" : WEED_SEED_INT : (optional) [api 200 and above] 
    		  		  	     If the plugin set the flag WEED_FLAG_LINEAR_GAMMA, 
 					     then this leaf can be set to WEED_GAMMA_SRGB to indicate the parameter values are in
@@ -1803,39 +1794,30 @@ Additional leaves that hint causes:
 
 ==== Number of elements in the leaves ====
 
-The "default" leaf must contain at least one value* UNLESS the plugin sets the parameter flag
-WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "default" may
-take any number (0 or more) of elements or be absent; if it is 0, then "new_default" MUST contain at least one value. 
+The "default" leaf must contain at least one value UNLESS the plugin sets the parameter flag
+WEED_PARAMETER_VARIABLE_ELEMENTS (see below); then the "default" may take any number of values or be absent;
+- if the number of values is 0 or absent, then "new_default" MUST contain exactly one value. 
 
-The number of elements in "value" will be set by the host and MUST match the number of elements in
+The number of values in "value" set by the host MUST match the number of values in
 "default", UNLESS the plugin sets the parameter flag WEED_PARAMETER_VARIABLE_ELEMENTS (see below);
-then the "value" may take any number (0 or more) of elements.
+then the "value" may take any number (0 or more) of values.
 
-[Zero elements means just the seed_type is set]
-
-
-The only exception is for "COLOR" parameters; there the number of
-elements in "default" and "value" MUST always be a multiple of 3 or 4
+Tthe number of ELEMENTS in "default" MUST always be a multiple of 3 or 4
 (depending on the "colorspace" - 3 for RGB, 4 for RGBA).
 
 
-The number of elements in each of "min" and "max" can be either 1, or equal to
-the number of elements in "default". If the plugin sets the flag
-WEED_PARAMETER_VARIABLE_ELEMENTS for the parameter,
-then the number of elements in each of "min" and "max" may only be 1, and should be assumed to apply to all elements.
+The number of elements in each of "min" and "max" can be either 1, 3 or 4 (depending on the colorsapce), or equal to
+the number of elements in "default". If the plugin sets the flag WEED_PARAMETER_VARIABLE_ELEMENTS for the parameter,
+then the number of elements in each of "min" and "max" shall match the number of elements in "new_default"
 
-Note:
 
-There is a further exception for "COLOR" parameters; there the number of
-elements in "min" and "max" may be:
+For min and max, if the number of elements is:
 
-1 (each R, G, B component uses the same min and/or max) [alpha may take any value]
-n (where n is 3 or 4 depending on colorkey) [each RGB or RGBA value will use the same set]
+1, each R, G, B component uses the same min and/or max, and alpha may take any value
+n (where n is 3 or 4 depending on colorkey) each RGB or RGBA value will use the same set of values.
 N (where N is a multiple of 3 or 4, matching the number of elements in "default").
 
-The last option is not valid if the parameter has the flag bit WEED_PARAMETER_VARIABLE_ELEMENTS set.
-
-
+- The last option is not valid if the parameter has the flag bit WEED_PARAMETER_VARIABLE_ELEMENTS set.
 
 * It is highly recommended to use exactly one value (or 3 or 4 values for color type parameters) for "default", 
   unless WEED_PARAMETER_VARIABLE_ELEMENTS is set.
@@ -1854,8 +1836,9 @@ one to one with parameter templates (same order, same number). For output
 parameters, the host should create the parameters from their templates, but not set the "value" leaf.
 
 
+
 '''Mandatory leaves''': [[BR]]
- * "template" : WEED_SEED_PLANTPTR : pointer to the parameter template
+ * "template" : WEED_SEED_PLANTPTR : pointer to the parameter_template used to create the parameter
 
  * "value" : seed type of the value MUST match the type of "default"
 	     leaf of the parent_template. Lists/arrays can be implemented by
@@ -1864,15 +1847,15 @@ parameters, the host should create the parameters from their templates, but not 
 	     (variable list length). 
 
 	     For out parameters:
-	      this leaf is set by the plugin, first in init_func
-	     (where it should be set to the default), then in process_func. If it holds one or more strings,
-	     or an array, it must be set to NULL in the deinit_function (to avoid leaking memory)
+	      this leaf is set by the plugin, first in init_func() (where it MUST be set to its default),
+	      then optionally in process_func().
+
+ * "timecode" : WEED_SEED_INT64 : for out_parameters, whenever the "value" is set by the plugin in process_func()
+                                  this leaf must also be set with the timecode which was passed as a parameter to
+				  the function.
 
 
 '''Optional leaves''':[[BR]]
- * "timecode" : WEED_SEED_INT64 : time in ticks (1/100 of a
-				  microsecond) used in "interpolate_func"; or for out parameters, the
-				  timecode when the "value" was last set.
 
 
 
@@ -1902,11 +1885,14 @@ Plugin may set any of these leaves in weed_setup(). After that the plugin must n
 with keys prefixed "plugin_".
 
 
-'''Mandatory leaves''': [[BR]]
- * "layout_scheme" : WEED_SEED_STRING : string defining the layout
- scheme used in the rest of the plant
-
 '''Optional leaves''': [[BR]]
+
+ * "layout_scheme" : WEED_SEED_STRING : string defining the layout scheme selected for creating interface windows
+                                        if the value is not equal to one of the elements of "layout_schemes_supported"
+					set by the host in host_info, then the host is free to ignore this.
+
+					Depending on the layout_scheme selected, there may be additional optional
+					leaves describing the layout.
 
  * "icon"         : WEED_SEED_STRING : name of the associated icon (if
                                        any) in the icons subdirectory [see below - Plugin locations/format]
@@ -1916,6 +1902,8 @@ with keys prefixed "plugin_".
 
 
  * other optional leaves depend on the "layout_scheme" used
+
+
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
@@ -1936,7 +1924,8 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 
 '''Optional leaves''': [[BR]]
- * "label" : WEED_SEED_STRING : label for display
+
+* "label" : WEED_SEED_STRING : label for display
 
  * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates whether "label" uses
     underscore as mnemonic
@@ -1961,10 +1950,6 @@ rely on setting "copy_value_to" to force the host to set indentical
  * "maxchars" : WEED_SEED_INT : max display length in (utf-8) chars for a
    STRING hint. For other hints, this will be ignored. A value < 1 should
    also be ignored.
-
- * "display_func" : WEED_SEED_FUNCPTR : (deprecated)
-
- * "display_value" : WEED_SEED_STRING : (deprecated)
 
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
    may be hidden by the host.
@@ -2252,20 +2237,26 @@ Deprecated (do not use in newly written code):
 
 ==== Channel template flags ====
 
- *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE  1  [[BR]]
+  * WEED_CHANNEL_OPTIONAL
+    channel that can be left out at initialization time.
+    the host decides not to use the channel, it must set "disabled" to
+    WEED_TRUE for the channel. The host must reinit
+    the instance if a channel is enabled or disabled after init_func().
+
+ *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE   [[BR]]
     host must reinit the plugin before calling process_func() if the
     channel size (height or width in (macro)pixels) is changed.
 
- *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE  2  [[BR]]
+ *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE   [[BR]]
     host must reinit the plugin before calling process_func() if the channel palette is changed
 
- *  WEED_CHANNEL_CAN_DO_INPLACE  4  [[BR]]
+ *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
     If this flag bit is set, the filter can do inplace operations.
     Hosts can select this mode by setting "pixel_data" of this out channel
     equal to the "pixel_data" of the corresponding (same number; not counting "disabled" channels) 
     in channel. The flag bit is only valid for OUT channels. 
 
- *  WEED_CHANNEL_SIZE_CAN_VARY  8  [[BR]]
+ *  WEED_CHANNEL_SIZE_CAN_VARY    [[BR]]
     All channels are assumed to have the same (macro) pixel size (width and height, but not necessarily rowstrides)
     as the first non-disabled in_channel (or first non-disabled
     out_channel for filters that have no in channels). If this flag
@@ -2274,7 +2265,7 @@ Deprecated (do not use in newly written code):
     Plugins should avoid resizing internally as much as possible, unless they have a "high-performance" resize routine.
     Otherwise resizing should be left to the host.
 
- *  WEED_CHANNEL_PALETTE_CAN_VARY  16  [[BR]]
+ *  WEED_CHANNEL_PALETTE_CAN_VARY    [[BR]]
     In Weed, all channels are assumed to have the same "current_palette"
     as the first non-disabled in_channel (or first non-disabled
     out_channel for filters that have no in channels). If this flag
@@ -2284,7 +2275,7 @@ Deprecated (do not use in newly written code):
     conversion routine. Otherwise palette conversion should be left to
     the host.
 
- *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE  32  [[BR]]
+ *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    [[BR]]
     host must reinit the plugin before calling process_func() if the
     any of the rowstrides are changed. Note that	 
     changing the palette can sometimes affect the rowstrides. [API 130 and higher].
@@ -2298,30 +2289,8 @@ Deprecated (do not use in newly written code):
     However, if the palette were changed from RGB24 to BGR24 for example, it may be possible for the plugin to continue
     processing, since in this case the frame size (rowstride * height) would remain the same.
 
-*  WEED_CHANNEL_ALPHA_OUT_PREMULT  64  [[BR]]
-    For out channel_templates only (ignored for in channel templates ???).
-    Indicates that alpha is pre-multiplied with the other channels.
-    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
-    For compatibility with applications.
-
 
 Flag bits >=30 are reserved for custom flags.
-
-
-
-
-
-
-==== Channel flags =====
-????
-
-
-* WEED_CHANNEL_ALPHA_PREMULT  1  [[BR]]
-    Indicates that alpha is pre-multiplied with the other channels.
-    e.g RGB=0xFFFFFF. We apply an alpha of 0x80 -> we store 0x80808080 (colour vals are stored as C * alpha / 255.)
-    For compatibility with applications.
-
-
 
 
 
@@ -2330,38 +2299,35 @@ Flag bits >=30 are reserved for custom flags.
 
  * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE  1  [[BR]]
    host must reinit the plugin if the parameter "value" is
-   changed. This is to allow the plugin to alter the "gui" settings
-   for the parameters and for the instance. The host must temporarily
-   allow the plugin read/write access to the "gui" plants during the init.
-   Not valid for out parameters.
+   changed. This is to allow the plugin to readjust its internal state as well as to alter the "gui" settings
+   for the parameters and for the instance.
+   The host must emsure the plugin has write access to the "gui" plants during the init_func().
+   Only valid for in parameters.
 
 
- * WEED_PARAMETER_VARIABLE_ELEMENTS  2  [[BR]]
-   plugin can set this to inform the host that the number of elements in
-   the parameter "value" leaf can vary. If not set, then the number of
-   elements in "value" is fixed; it must always match the number of elements in
-   "default".
+ * WEED_PARAMETER_VARIABLE_SIZE  2  [[BR]]
+   plugin can set this to inform the host that the number of values in the parameter "value" leaf can vary.
+   If not set, then the number of values in "value" is fixed; it must always match the number of values in "default".
 
-   If this is set, then the plugin may only use one element
-   in each of "min" and "max" for the parameter, except for COLOR
-   parameters which may use 3 or 4 depending on the "colorspace".
+   If this is set, then the plugin may only use one element in each of "min" and "max" for the parameter,
+   (except for COLOR parameters which may use 3 or 4 depending on the "colorspace".)
 
-   Note also that 0 is a valid number of elements. [0 elements means the leaf
-   exists but has no value, since the SEED_TYPE must be known.]
+   Note also that 0 is a valid number of elements. [0 elements means the leaf exists but has no value]
 
-   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for
-   the parameter.
+   If this is set for an in parameter, the plugin MUST also set the "new_default" leaf for the parameter.
 
-   This flag is assumed for out_parameters.
+   This flag is ASSUMED for out parameters.
 
 
- * WEED_PARAMETER_ELEMENT_PER_CHANNEL  4  [[BR]] - API version 110 and higher
-   This flag bit indicates that each element in the parameter "value"
-   corresponds to one input channel. If a
-   channel template has "max_repeats" set to other than 1, then
-   WEED_PARAMETER_VARIABLE_ELEMENTS is also assumed to be set for the
-   parameter, and so the "new_default" leaf must also be set [see above].
-   Valid for input parameter templates only.
+ * WEED_PARAMETER_VALUE_PER_CHANNEL  4  [[BR]] - 
+   This flag bit indicates that each value in the parameter "value" corresponds to one input channel.
+   The order of channels and values is the same.
+
+   If a channel template has "max_repeats" set to other than 1, then WEED_PARAMETER_VARIABLE_ELEMENTS
+   is ASSUMED to be set for the parameter, and thus the "new_default" leaf MUST also be set.
+   It is good practice to set the flag bit anyway.
+
+   Valid for in parameters only.
 
 
 Flag bits >= 30 are reserved for custom flags.
@@ -2596,6 +2562,9 @@ subspace types >= 512 are reserved for custom subspaces.
 == NOTE ABOUT COLOUR SPACES ==
 N.B. if you don't understand this section, you can safely ignore it.
 
+Alpha is always POST MULTIPLIED in Weed. If you need or produce pre-multiplied alpha, you need to convert it.
+
+
 As of API version 200, Weed effect plugins may choose to operate in the LINEAR (i.e. perceptual) colour space. This means that
 for RGB type palettes, the component values (R, G, B) represent the values which are displayed on the monitor.
 
@@ -2650,7 +2619,7 @@ without reference to absolute colour.
     to proceed. The weed_boostrap function will create a HOST_INFO plant and set leaves with the host api versions,
     pointers to the functions the plugin should use, and return it to the plugin, as well as setting the default getter function,
     Optionally, the library will call a callback function in the host before returning the PLUGIN_INFO, so that the host can
-    check, alter or add leaves before it is returned to the plugin (TODO).
+    check, alter or add leaves before it is returned to the plugin.
 
 
 *  if the HOST_INFO is NULL, the plugin MUST return NULL from its weed_setup() function. Otherwise the plugin uses the
@@ -2726,6 +2695,10 @@ In this case, the process_func() may be called several times with the same timec
    containing the offset in rows of the top of its block
    from the top of the destination channel pixel_data. The plugin MUST only write to the destination rows between
    offset and offset + height - 1.
+
+When allocating the slices, the host MUST take into consideration any "vstep" value set by the host in the out channel template.
+
+
 
 Each channel will have an extra "offset" leaf, and the height leaf will now contain 2 values, the first is the reduced height
 and the second the original (real) height.

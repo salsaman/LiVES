@@ -217,21 +217,21 @@ static int lives_freenect_deinit(weed_plant_t *inst) {
 
 static weed_error_t lives_freenect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  weed_plant_t **outs = weed_get_plantptr_array(inst, "out_channels", &error);
+  weed_plant_t **outs = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
   weed_plant_t *out_channel = outs[0];
   weed_plant_t *out_alpha = outs[1];
 
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  unsigned char *dsta = weed_get_voidptr_value(out_alpha, "pixel_data", &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dsta = weed_get_voidptr_value(out_alpha, WEED_LEAF_PIXEL_DATA, &error);
 
   _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
-  int pal = weed_get_int_value(out_channel, "current_palette", &error);
-  int rowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+  int pal = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int rowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   int cmin, cmax, *ccol;
 
@@ -244,9 +244,9 @@ static weed_error_t lives_freenect_process(weed_plant_t *inst, weed_timecode_t t
 
   register int i, j;
 
-  cmin = weed_get_int_value(in_params[0], "value", &error);
-  cmax = weed_get_int_value(in_params[1], "value", &error);
-  ccol = weed_get_int_array(in_params[2], "value", &error);
+  cmin = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
+  cmax = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
+  ccol = weed_get_int_array(in_params[2], WEED_LEAF_VALUE, &error);
 
   if (pal != WEED_PALETTE_RGB24 && pal != WEED_PALETTE_BGR24) psize = 4;
 
@@ -309,7 +309,7 @@ WEED_SETUP_START(200, 200) {
   int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list),
-                                   weed_channel_template_init("depth", 0, apalette_list), NULL
+                                   weed_channel_template_init("depth", WEED_CHANNEL_OPTIONAL, apalette_list), NULL
                                   };
 
   weed_plant_t *in_params[] = {weed_integer_init("minthresh", "Cut depth (cm) <", 0, 0, 65535),
@@ -323,16 +323,14 @@ WEED_SETUP_START(200, 200) {
                                &lives_freenect_deinit,
                                NULL, out_chantmpls, in_params, NULL);
 
-  weed_set_int_value(out_chantmpls[0], "width", 640);
-  weed_set_int_value(out_chantmpls[0], "height", 480);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_WIDTH, 640);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_HEIGHT, 480);
 
-  weed_set_boolean_value(out_chantmpls[1], "optional", WEED_TRUE);
-
-  weed_set_double_value(filter_class, "target_fps", 25.);
+  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

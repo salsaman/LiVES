@@ -79,10 +79,10 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
   char *ainput = NULL;
 
-  param = weed_get_plantptr_value(inst, "in_parameters", &error);
-  listener = weed_get_int_value(param, "value", &error);
+  param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  listener = weed_get_int_value(param, WEED_LEAF_VALUE, &error);
 
-  filter = weed_get_plantptr_value(inst, "filter_class", &error);
+  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
 
   switch (listener) {
   case 1:
@@ -134,16 +134,17 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
   libvis->video = visual_video_new();
 
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  palette = weed_get_int_value(out_channel, "current_palette", &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
 
   if (palette == WEED_PALETTE_RGB24) visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_24BIT);
   else visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_32BIT);
 
-  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, "width", &error), weed_get_int_value(out_channel, "height",
+  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error), weed_get_int_value(out_channel,
+                             WEED_LEAF_HEIGHT,
                              &error));
 
-  filter_name = weed_get_string_value(filter, "name", &error);
+  filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
   if (!strncmp(filter_name, "libvisual: ", 11)) filtname = filter_name + 11;
   else filtname = filter_name;
   libvis->actor = visual_actor_new(filtname);
@@ -198,15 +199,15 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 
   int error;
 
-  int adlen = weed_get_int_value(in_channel, "audio_data_length", &error);
-  float *adata = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error), *oadata = adata;
+  int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
+  float *adata = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error), *oadata = adata;
 
   register int i, j;
 
   if (adlen > 0 && adata != NULL) {
     short *aud_data;
-    int ainter = weed_get_boolean_value(in_channel, "audio_interleaf", &error);
-    int achans = weed_get_int_value(in_channel, "audio_channels", &error);
+    int ainter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
+    int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
 
     pthread_mutex_lock(&libvis->pcm_mutex);
     aud_data = (short *)weed_malloc((adlen + libvis->audio_frames) * 4);
@@ -242,9 +243,9 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 static weed_error_t libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   weed_libvis_t *libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  void *pixel_data = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  void *pixel_data = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
   if (in_channel != NULL) store_audio(libvis, in_channel);
 
@@ -267,7 +268,7 @@ WEED_SETUP_START(200, 200) {
 
   DIR *curvdir;
 
-  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
 
   char *lpp = getenv("VISUAL_PLUGIN_PATH");
 
@@ -277,14 +278,13 @@ WEED_SETUP_START(200, 200) {
 
   if (lpp == NULL) return NULL;
 
-  weed_set_string_value(plugin_info, "package_name", "libvisual");
+  weed_set_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, "libvisual");
 
   // set hints for host
-  weed_set_int_value(in_chantmpls[0], "audio_channels", 2);
-  weed_set_int_value(in_chantmpls[0], "audio_rate", 44100);
-  weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_FALSE);
-  weed_set_boolean_value(in_chantmpls[0], "audio_data_length", 512);
-  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_CHANNELS, 2);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_RATE, 44100);
+  weed_set_boolean_value(in_chantmpls[0], WEED_LEAF_AUDIO_INTERLEAF, WEED_FALSE);
+  weed_set_boolean_value(in_chantmpls[0], WEED_LEAF_AUDIO_DATA_LENGTH, 512);
 
   instances = 0;
   old_input = NULL;
@@ -320,18 +320,18 @@ WEED_SETUP_START(200, 200) {
   while ((name = (char *)visual_actor_get_next_by_name_nogl(name)) != NULL) {
     snprintf(fullname, PATH_MAX, "%s", name);
     in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+    weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
     out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
     filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
-    weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
+    weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
 
     list = add_to_list_sorted(list, filter_class, (const char *)name);
   }
 
   add_filters_from_list(plugin_info, list);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

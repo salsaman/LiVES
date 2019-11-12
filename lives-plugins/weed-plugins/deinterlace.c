@@ -39,23 +39,23 @@ static inline unsigned char *mix(unsigned char *a, unsigned char *b, int pcpy) {
 
 int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  unsigned char **src_array = (unsigned char **)weed_get_voidptr_array(in_channel, "pixel_data", &error);
-  unsigned char **dst_array = (unsigned char **)weed_get_voidptr_array(out_channel, "pixel_data", &error);
+  unsigned char **src_array = (unsigned char **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char **dst_array = (unsigned char **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
 
   int inplace = (src == dst);
 
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error), orowstride2 = orowstride * 2;
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error), orowstride2 = orowstride * 2;
 
   register int x;
 
@@ -319,7 +319,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

@@ -38,33 +38,33 @@ static int getbit(uint8_t val, int bit) {
 static weed_error_t alphav_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
   float *alphaf;
   uint8_t *alphau;
 
-  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
   uint8_t valu;
 
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irow = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orow = weed_get_int_value(out_channel, "rowstrides", &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
-  int ipal = weed_get_int_value(in_channel, "current_palette", &error);
-  int opal = weed_get_int_value(out_channel, "current_palette", &error);
+  int ipal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int opal = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
 
-  int r = weed_get_boolean_value(in_params[0], "value", &error);
-  int g = weed_get_boolean_value(in_params[1], "value", &error);
-  int b = weed_get_boolean_value(in_params[2], "value", &error);
+  int r = weed_get_boolean_value(in_params[0], WEED_LEAF_VALUE, &error);
+  int g = weed_get_boolean_value(in_params[1], WEED_LEAF_VALUE, &error);
+  int b = weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, &error);
 
   int psize = 4;
 
-  double fmin = weed_get_double_value(in_params[3], "value", &error);
-  double fmax = weed_get_double_value(in_params[4], "value", &error);
+  double fmin = weed_get_double_value(in_params[3], WEED_LEAF_VALUE, &error);
+  double fmax = weed_get_double_value(in_params[4], WEED_LEAF_VALUE, &error);
 
   register int i, j, k;
 
@@ -76,7 +76,7 @@ static weed_error_t alphav_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   if (ipal == WEED_PALETTE_AFLOAT) {
     irow /= sizeof(float);
-    alphaf = (float *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
+    alphaf = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
     for (i = 0; i < height; i++) {
       for (j = 0; j < width; j++) {
         if (fmax > fmin) {
@@ -116,7 +116,7 @@ static weed_error_t alphav_process(weed_plant_t *inst, weed_timecode_t timestamp
     }
   } else if (ipal == WEED_PALETTE_A8) {
     irow -= width;
-    alphau = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
+    alphau = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
     for (i = 0; i < height; i++) {
       for (j = 0; j < width; j++) {
         valu = alphau[j];
@@ -154,7 +154,7 @@ static weed_error_t alphav_process(weed_plant_t *inst, weed_timecode_t timestamp
   } else if (ipal == WEED_PALETTE_A1) {
     width >>= 3;
     irow -= width;
-    alphau = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
+    alphau = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
     for (i = 0; i < height; i++) {
       for (j = 0; j < width; j++) {
         for (k = 0; k < 8; k++) {
@@ -213,19 +213,19 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *filter_class;
 
-  weed_set_int_value(out_chantmpls[0], "flags", WEED_CHANNEL_PALETTE_CAN_VARY);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, WEED_CHANNEL_PALETTE_CAN_VARY);
 
   filter_class = weed_filter_class_init("alpha_visualizer", "salsaman", 1, 0,
                                         NULL, &alphav_process, NULL,
                                         in_chantmpls, out_chantmpls,
                                         in_params, NULL);
 
-  weed_set_string_value(filter_class, "description",
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION,
                         "Visualize a separated alpha channel as red / green / blue (grey)");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
 WEED_SETUP_END;

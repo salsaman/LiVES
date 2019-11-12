@@ -26,18 +26,18 @@ static int package_version = 1; // version of this package
 
 static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                               "out_channels",
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                               WEED_LEAF_OUT_CHANNELS,
                                &error);
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], "pixel_data", &error);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channels[0], "width", &error) * 3;
-  int height = weed_get_int_value(in_channels[0], "height", &error);
-  int irowstride1 = weed_get_int_value(in_channels[0], "rowstrides", &error);
-  int irowstride2 = weed_get_int_value(in_channels[1], "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  int palette = weed_get_int_value(out_channel, "current_palette", &error);
+  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, &error);
+  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, &error);
+  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
   unsigned char *end = src1 + height * irowstride1;
   int inplace = (src1 == dst);
   weed_plant_t **in_params;
@@ -50,10 +50,10 @@ static int ckey_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   register int j;
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  delta = weed_get_double_value(in_params[0], "value", &error);
-  opac = weed_get_double_value(in_params[1], "value", &error);
-  carray = weed_get_int_array(in_params[2], "value", &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  delta = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error);
+  opac = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error);
+  carray = weed_get_int_array(in_params[2], WEED_LEAF_VALUE, &error);
   b_red = carray[0];
   b_green = carray[1];
   b_blue = carray[2];
@@ -109,7 +109,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
 WEED_SETUP_END;

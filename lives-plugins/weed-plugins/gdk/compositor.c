@@ -118,19 +118,19 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
   int error;
   weed_plant_t **in_channels = NULL;
   int num_in_channels = 0;
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
   unsigned char *src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error), *dst2;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error), *dst2;
 
-  int owidth = weed_get_int_value(out_channel, "width", &error), owidth3 = owidth * 3;
-  int oheight = weed_get_int_value(out_channel, "height", &error);
+  int owidth = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error), owidth3 = owidth * 3;
+  int oheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
   int in_width, in_height, out_width, out_height;
 
   int irowstride;
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  //int palette=weed_get_int_value(out_channel,"current_palette",&error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
 
   weed_plant_t **in_params;
 
@@ -153,31 +153,31 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
 
   int starti, endi, stepi;
 
-  if (weed_plant_has_leaf(inst, "in_channels")) {
-    num_in_channels = weed_leaf_num_elements(inst, "in_channels");
-    in_channels = weed_get_plantptr_array(inst, "in_channels", &error);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
+    num_in_channels = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
+    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
   }
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  numoffsx = weed_leaf_num_elements(in_params[0], "value");
-  offsx = weed_get_double_array(in_params[0], "value", &error);
+  numoffsx = weed_leaf_num_elements(in_params[0], WEED_LEAF_VALUE);
+  offsx = weed_get_double_array(in_params[0], WEED_LEAF_VALUE, &error);
 
-  numoffsy = weed_leaf_num_elements(in_params[1], "value");
-  offsy = weed_get_double_array(in_params[1], "value", &error);
+  numoffsy = weed_leaf_num_elements(in_params[1], WEED_LEAF_VALUE);
+  offsy = weed_get_double_array(in_params[1], WEED_LEAF_VALUE, &error);
 
-  numscalex = weed_leaf_num_elements(in_params[2], "value");
-  scalex = weed_get_double_array(in_params[2], "value", &error);
+  numscalex = weed_leaf_num_elements(in_params[2], WEED_LEAF_VALUE);
+  scalex = weed_get_double_array(in_params[2], WEED_LEAF_VALUE, &error);
 
-  numscaley = weed_leaf_num_elements(in_params[3], "value");
-  scaley = weed_get_double_array(in_params[3], "value", &error);
+  numscaley = weed_leaf_num_elements(in_params[3], WEED_LEAF_VALUE);
+  scaley = weed_get_double_array(in_params[3], WEED_LEAF_VALUE, &error);
 
-  numalpha = weed_leaf_num_elements(in_params[4], "value");
-  alpha = weed_get_double_array(in_params[4], "value", &error);
+  numalpha = weed_leaf_num_elements(in_params[4], WEED_LEAF_VALUE);
+  alpha = weed_get_double_array(in_params[4], WEED_LEAF_VALUE, &error);
 
-  bgcol = weed_get_int_array(in_params[5], "value", &error);
+  bgcol = weed_get_int_array(in_params[5], WEED_LEAF_VALUE, &error);
 
-  revz = weed_get_boolean_value(in_params[6], "value", &error);
+  revz = weed_get_boolean_value(in_params[6], WEED_LEAF_VALUE, &error);
 
   weed_free(in_params);
 
@@ -206,8 +206,9 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
   }
 
   for (z = starti; z != endi; z += stepi) {
-    // check if host disabled this channel : this is allowed as we have set "max_repeats"
-    if (weed_plant_has_leaf(in_channels[z], "disabled") && weed_get_boolean_value(in_channels[z], "disabled", &error) == WEED_TRUE) continue;
+    // check if host disabled this channel : this is allowed as we have set WEED_LEAF_MAX_REPEATS
+    if (weed_plant_has_leaf(in_channels[z], WEED_LEAF_DISABLED) &&
+        weed_get_boolean_value(in_channels[z], WEED_LEAF_DISABLED, &error) == WEED_TRUE) continue;
 
     if (z < numoffsx) myoffsx = (int)(offsx[z] * (double)owidth);
     else myoffsx = 0;
@@ -224,11 +225,11 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
     out_height = (oheight * myscaley + .5);
 
     if (out_width * out_height > 3) {
-      in_width = weed_get_int_value(in_channels[z], "width", &error);
-      in_height = weed_get_int_value(in_channels[z], "height", &error);
+      in_width = weed_get_int_value(in_channels[z], WEED_LEAF_WIDTH, &error);
+      in_height = weed_get_int_value(in_channels[z], WEED_LEAF_HEIGHT, &error);
 
-      src = weed_get_voidptr_value(in_channels[z], "pixel_data", &error);
-      irowstride = weed_get_int_value(in_channels[z], "rowstrides", &error);
+      src = weed_get_voidptr_value(in_channels[z], WEED_LEAF_PIXEL_DATA, &error);
+      irowstride = weed_get_int_value(in_channels[z], WEED_LEAF_ROWSTRIDES, &error);
 
       // scale image to new size
 
@@ -277,10 +278,11 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *filter_class, *gui;
   int filter_flags = 0;
-  int api_used = weed_get_api_version(plugin_info);
 
   // define RFX layout
-  char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|", "special|framedraw|multirect|0|1|2|3|4|"};
+  char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|",
+                         "special|framedraw|multirect|0|1|2|3|4|"
+                        };
 
   //if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
@@ -290,42 +292,32 @@ WEED_SETUP_START(200, 200) {
 
   gui = weed_filter_class_get_gui(filter_class);
 
-  // set 0 to infinite repeats
-  weed_set_int_value(in_chantmpls[0], "max_repeats", 0);
-  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  // set to 0 to allow infinite repeats
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_REPEATS, 0);
 
   // this is necessary for the host
-  if (api_used < 110) {
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
-  } else {
-    // use WEED_PARAMETER_ELEMENT_PER_CHANNEL from spec 110
-    weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-    weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS | WEED_PARAMETER_ELEMENT_PER_CHANNEL);
-  }
+  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
+  weed_set_int_value(in_params[1], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
+  weed_set_int_value(in_params[2], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
+  weed_set_int_value(in_params[3], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
+  weed_set_int_value(in_params[4], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
 
   // set default value for elements added by the host
-  weed_set_double_value(in_params[0], "new_default", 0.);
-  weed_set_double_value(in_params[1], "new_default", 0.);
-  weed_set_double_value(in_params[2], "new_default", 1.);
-  weed_set_double_value(in_params[3], "new_default", 1.);
-  weed_set_double_value(in_params[4], "new_default", 1.);
+  weed_set_double_value(in_params[0], WEED_LEAF_NEW_DEFAULT, 0.);
+  weed_set_double_value(in_params[1], WEED_LEAF_NEW_DEFAULT, 0.);
+  weed_set_double_value(in_params[2], WEED_LEAF_NEW_DEFAULT, 1.);
+  weed_set_double_value(in_params[3], WEED_LEAF_NEW_DEFAULT, 1.);
+  weed_set_double_value(in_params[4], WEED_LEAF_NEW_DEFAULT, 1.);
 
-  weed_set_string_value(in_params[6], "description", "If checked, the rear frames overlay the front ones.");
+  weed_set_string_value(in_params[6], WEED_LEAF_DESCRIPTION, "If checked, the rear frames overlay the front ones.");
 
   // set RFX layout
-  weed_set_string_value(gui, "layout_scheme", "RFX");
-  weed_set_string_value(gui, "rfx_delim", "|");
-  weed_set_string_array(gui, "rfx_strings", 7, rfx_strings);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 7, rfx_strings);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

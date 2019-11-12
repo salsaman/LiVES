@@ -87,13 +87,13 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   int error;
   int chans, nsamps, onsamps, base, inter, rate, k;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  float *src = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  float *src = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t *out_param = weed_get_plantptr_value(inst, "out_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t *out_param = weed_get_plantptr_value(inst, WEED_LEAF_OUT_PARAMETERS, &error);
 
-  double freq = weed_get_double_value(in_params[0], "value", &error);
+  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error);
 
   float tot = 0.;
 
@@ -101,18 +101,18 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   weed_free(in_params);
 
-  onsamps = weed_get_int_value(in_channel, "audio_data_length", &error);
+  onsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
 
   if (onsamps < 2) {
-    weed_set_double_value(out_param, "value", 0.);
-    weed_set_int64_value(out_param, "timecode", tc);
+    weed_set_double_value(out_param, WEED_LEAF_VALUE, 0.);
+    weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
     return WEED_SUCCESS;
   }
 
   base = rndlog2(onsamps);
   nsamps = twopow(base);
 
-  rate = weed_get_int_value(in_channel, "audio_rate", &error);
+  rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, &error);
 
   // which element do we want for output ?
   // out array goes from 0 to (nsamps/2 + 1) [div b y 2 rounded down]
@@ -124,13 +124,13 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   k = freq / (double)rate * (double)nsamps;
 
   if (k > (nsamps >> 1)) {
-    weed_set_double_value(out_param, "value", 0.);
-    weed_set_int64_value(out_param, "timecode", tc);
+    weed_set_double_value(out_param, WEED_LEAF_VALUE, 0.);
+    weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
     return WEED_SUCCESS;
   }
 
-  chans = weed_get_int_value(in_channel, "audio_channels", &error);
-  inter = weed_get_boolean_value(in_channel, "audio_interleaf", &error);
+  chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
+  inter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
 
   for (i = 0; i < chans; i++) {
     // do transform for each channel
@@ -157,8 +157,8 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   //fprintf(stderr,"tot is %f\n",tot);
 
   // average over all audio channels
-  weed_set_double_value(out_param, "value", (double)(tot / (float)chans));
-  weed_set_int64_value(out_param, "timecode", tc);
+  weed_set_double_value(out_param, WEED_LEAF_VALUE, (double)(tot / (float)chans));
+  weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
 
   return WEED_SUCCESS;
 }
@@ -168,15 +168,15 @@ WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_SUCCESS) return NULL;
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
-  weed_plant_t *out_params[] = {weed_out_param_float_init("value", 0., 0., 1.), NULL};
+  weed_plant_t *out_params[] = {weed_out_param_float_init(WEED_LEAF_VALUE, 0., 0., 1.), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL, &fftw_process,
                                NULL, in_chantmpls, NULL, in_params, out_params);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_string_value(filter_class, "description", "Fast Fourier Transform for audio");
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "Fast Fourier Transform for audio");
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_CONVERSIONS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -43,42 +45,19 @@ typedef struct {
 static list_ent xlist[MAX_ELEMS];
 static cairo_user_data_key_t crkey;
 
-static int unal[256][256];
-static int al[256][256];
-
-static gboolean unal_inited = FALSE;
-
-static void init_unal(void) {
-  // premult to postmult and vice-versa
-
-  register int i, j;
-
-  for (i = 0; i < 256; i++) { //alpha val
-    for (j = 0; j < 256; j++) { // val to be converted
-      unal[i][j] = (float)j * 255. / (float)i;
-      al[i][j] = (float)j * (float)i / 255.;
-    }
-  }
-  unal_inited = TRUE;
-}
-
 
 static void clear_xlist(void) {
-  register int i;
-
-  for (i = 0; i < MAX_ELEMS; i++) {
+  for (int i = 0; i < MAX_ELEMS; i++) {
     xlist[i].len = 0.;
   }
 }
 
 
 static void add_to_list(float len, int i, int j, float x, float y) {
-  register int k, l;
-
-  for (k = 0; k < MAX_ELEMS; k++) {
+  for (int k = 0; k < MAX_ELEMS; k++) {
     if (len > xlist[k].len) {
       // shift existing elements
-      for (l = MAX_ELEMS - 1; l < k; l--) {
+      for (int l = MAX_ELEMS - 1; l < k; l--) {
         if (xlist[l - 1].len > 0.) {
           xlist[l].len = xlist[l - 1].len;
           xlist[l].i = xlist[l - 1].i;
@@ -95,45 +74,6 @@ static void add_to_list(float len, int i, int j, float x, float y) {
       break;
     }
   }
-}
-
-
-static void alpha_premult(weed_plant_t *channel) {
-  // premultply alpha - this only occurs when going from palette with alpha to one without
-
-  int error;
-  int widthx;
-  int alpha;
-  int flags = 0;
-  int width = weed_get_int_value(channel, "width", &error);
-  int height = weed_get_int_value(channel, "height", &error);
-  int rowstride = weed_get_int_value(channel, "rowstrides", &error);
-
-  unsigned char *ptr;
-
-  register int i, j, p;
-
-  if (!unal_inited) init_unal();
-
-  widthx = width * 4;
-
-  ptr = (unsigned char *)weed_get_voidptr_value(channel, "pixel_data", &error);
-
-  for (i = 0; i < height; i++) {
-    for (j = 0; j < widthx; j += 4) {
-      alpha = ptr[j];
-      for (p = 1; p < 4; p++) {
-        ptr[j + p] = al[alpha][ptr[j + p]];
-      }
-    }
-    ptr += rowstride;
-  }
-
-  if (weed_plant_has_leaf(channel, "flags"))
-    flags = weed_get_int_value(channel, "flags", &error);
-
-  flags |= WEED_CHANNEL_ALPHA_PREMULT;
-  weed_set_int_value(channel, "flags", flags);
 }
 
 
@@ -197,14 +137,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   }
 
   if (cform == CAIRO_FORMAT_ARGB32) {
-    int flags = 0;
-    if (weed_plant_has_leaf(channel, "flags")) flags = weed_get_int_value(channel, "flags", &error);
-    if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-      // if we have post-multiplied alpha, pre multiply
-      alpha_premult(channel);
-      flags |= WEED_CHANNEL_ALPHA_PREMULT;
-      weed_set_int_value(channel, "flags", flags);
-    }
+    alpha_premult(dst, width, height, orowstride, WEED_PALETTE_ARGB32, FALSE);
   }
 
   surf = cairo_image_surface_create_for_data(pixel_data,
@@ -228,7 +161,6 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   void *dst, *src;
 
   int width, height, irowstride, orowstride, widthx, pal;
-  int flags = 0, error;
 
   cairo_surface_t *surface = cairo_get_target(cairo);
 
@@ -237,16 +169,18 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // flush to ensure all writing to the image was done
   cairo_surface_flush(surface);
 
-  dst = weed_get_voidptr_value(channel, "pixel_data", &error);
+  dst = weed_get_voidptr_value(channel, "pixel_data", NULL);
   if (dst == NULL) return FALSE;
 
   src = cairo_image_surface_get_data(surface);
   height = cairo_image_surface_get_height(surface);
   width = cairo_image_surface_get_width(surface);
   irowstride = cairo_image_surface_get_stride(surface);
+  cairo_surface_reference(surface);
+  cairo_destroy(cairo);
 
-  orowstride = weed_get_int_value(channel, "rowstrides", &error);
-  pal = weed_get_int_value(channel, "current_palette", &error);
+  orowstride = weed_get_int_value(channel, "rowstrides", NULL);
+  pal = weed_get_int_value(channel, "current_palette", NULL);
 
   if (irowstride == orowstride) {
     weed_memcpy(dst, src, height * orowstride);
@@ -263,14 +197,9 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     }
   }
 
-  if (pal != WEED_PALETTE_A8 && pal != WEED_PALETTE_A1) {
-    if (weed_plant_has_leaf(channel, "flags"))
-      flags = weed_get_int_value(channel, "flags", &error);
-
-    flags |= WEED_CHANNEL_ALPHA_PREMULT;
-    weed_set_int_value(channel, "flags", flags);
+  if (pal == WEED_PALETTE_ARGB32) {
+    alpha_premult(dst, width, height, orowstride, WEED_PALETTE_ARGB32, TRUE);
   }
-
   return TRUE;
 }
 
@@ -302,28 +231,25 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
 
 static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   cairo_t *cr;
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
 
-  int error;
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-
-  float *alpha0 = (float *)weed_get_voidptr_value(in_channels[1], "pixel_data", &error);
-  float *alpha1 = (float *)weed_get_voidptr_value(in_channels[2], "pixel_data", &error);
+  float *alpha0 = (float *)weed_get_voidptr_value(in_channels[1], "pixel_data", NULL);
+  float *alpha1 = (float *)weed_get_voidptr_value(in_channels[2], "pixel_data", NULL);
 
   float x, y, scale = 1.;
 
   int mode = MD_GRID;
 
-  int irow0 = weed_get_int_value(in_channels[1], "rowstrides", &error) >> 2;
-  int irow1 = weed_get_int_value(in_channels[2], "rowstrides", &error) >> 2;
+  int irow0 = weed_get_int_value(in_channels[1], "rowstrides", NULL) >> 2;
+  int irow1 = weed_get_int_value(in_channels[2], "rowstrides", NULL) >> 2;
 
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
+  int width = weed_get_int_value(out_channel, "width", NULL);
+  int height = weed_get_int_value(out_channel, "height", NULL);
 
-  int enabled = weed_get_boolean_value(in_params[0], "value", &error);
+  int enabled = weed_get_boolean_value(in_params[0], "value", NULL);
 
   register int i, j;
 

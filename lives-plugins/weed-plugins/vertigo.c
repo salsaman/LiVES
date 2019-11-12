@@ -94,10 +94,10 @@ static weed_error_t vertigo_init(weed_plant_t *inst) {
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
 
-  video_height = weed_get_int_value(in_channel, "height", &error);
-  video_width = weed_get_int_value(in_channel, "width", &error);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
   video_area = video_width * video_height;
 
   sdata->buffer = (RGB32 *)weed_calloc(video_area, PIXEL_SIZE * 2);
@@ -146,23 +146,23 @@ static weed_error_t vertigo_process(weed_plant_t *inst, weed_timecode_t timecode
   register int x, y;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  video_width = weed_get_int_value(in_channel, "width", NULL);
-  video_height = weed_get_int_value(in_channel, "height", NULL);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4 - video_width;
-  orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4 - video_width;
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
 
   video_area = video_width * video_height;
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  pinc = weed_get_double_value(in_params[0], "value", NULL);
-  zoomrate = weed_get_double_value(in_params[1], "value", NULL);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  pinc = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  zoomrate = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
   weed_free(in_params);
 
   setParams(video_width, video_height, sdata, pinc, zoomrate);
@@ -213,7 +213,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

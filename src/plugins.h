@@ -400,8 +400,6 @@ typedef struct {
   char *label;
   int flags;
   boolean use_mnemonic;
-  weed_funcptr_t interp_func;
-  weed_funcptr_t display_func;
   int hidden;
 
   // reason(s) for hiding [bitmap]

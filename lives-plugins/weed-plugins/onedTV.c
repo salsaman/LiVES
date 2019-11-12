@@ -51,10 +51,10 @@ static weed_error_t oned_init(weed_plant_t *inst) {
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  map_h = weed_get_int_value(out_channel, "height", &error);
-  map_w = weed_get_int_value(out_channel, "rowstrides", &error);
+  map_h = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+  map_w = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   sdata->linebuf = weed_calloc(map_h * map_w, 1);
 
@@ -97,21 +97,21 @@ static weed_error_t oned_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   register int i;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  osrc = src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  osrc = src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  width = weed_get_int_value(in_channel, "width", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", NULL);
-  orow = weed_get_int_value(out_channel, "rowstrides", NULL);
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
 
-  palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_ARGB32) psize = 4;
 
@@ -121,8 +121,8 @@ static weed_error_t oned_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   pwidth = width * psize;
 
-  nlines = weed_get_int_value(in_params[0], "value", NULL);
-  bounce = weed_get_boolean_value(in_params[1], "value", NULL);
+  nlines = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  bounce = weed_get_boolean_value(in_params[1], WEED_LEAF_VALUE, NULL);
   weed_free(in_params);
 
   for (i = 0; i < nlines; i++) {
@@ -210,7 +210,7 @@ WEED_SETUP_START(200, 200) {
                                in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

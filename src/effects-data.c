@@ -792,7 +792,7 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
   }
 
   if (ndvals > nsvals) {
-    if (!((dflags & WEED_PARAMETER_VARIABLE_ELEMENTS) && !(dflags & WEED_PARAMETER_ELEMENT_PER_CHANNEL))) return FALSE;
+    if (!((dflags & WEED_PARAMETER_VARIABLE_SIZE) && !(dflags & WEED_PARAMETER_VALUE_PER_CHANNEL))) return FALSE;
   }
 
   if (dtype == stype) return TRUE;
@@ -3391,7 +3391,7 @@ static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
 
         pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
 
-        if (pflags & WEED_PARAMETER_VARIABLE_ELEMENTS) array_type = lives_strdup("[]");
+        if (pflags & WEED_PARAMETER_VARIABLE_SIZE) array_type = lives_strdup("[]");
         else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1) array_type = lives_strdup_printf("[%d]", defelems);
         else array_type = lives_strdup("");
 
@@ -4484,7 +4484,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 
           pflags = weed_get_int_value(param, WEED_LEAF_FLAGS, &error);
 
-          if (pflags & WEED_PARAMETER_VARIABLE_ELEMENTS) array_type = lives_strdup("[]");
+          if (pflags & WEED_PARAMETER_VARIABLE_SIZE) array_type = lives_strdup("[]");
           else if ((defelems = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT)) > 1) array_type = lives_strdup_printf("[%d]", defelems);
           else array_type = lives_strdup("");
 

@@ -204,19 +204,19 @@ static weed_error_t livetext_process(weed_plant_t *inst, weed_timecode_t timesta
   //unsigned int irow16,orow16;
   //unsigned int startx,starty,endx;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t *in_channel = NULL;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *src;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  int width = weed_get_int_value(out_channel, "width", NULL), widthx, widthz;
-  int height = weed_get_int_value(out_channel, "height", NULL), heightx = height >> 4;
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL), widthx, widthz;
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL), heightx = height >> 4;
 
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   int irowstride = 0;
 
-  int palette = weed_get_int_value(out_channel, "current_palette", NULL);
+  int palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   rgb_t *fg, *bg;
   int ofill, mode, fontnum;
@@ -225,23 +225,23 @@ static weed_error_t livetext_process(weed_plant_t *inst, weed_timecode_t timesta
 
   register int i;
 
-  if (weed_plant_has_leaf(inst, "in_channels")) {
-    in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-    src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-    irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
+    in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+    src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+    irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
   } else src = dst;
 
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) pbits = 4;
 
-  text = weed_get_string_value(in_params[0], "value", NULL);
-  mode = weed_get_int_value(in_params[1], "value", NULL);
-  fontnum = weed_get_int_value(in_params[2], "value", NULL);
+  text = weed_get_string_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  mode = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  fontnum = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, NULL);
 
-  fg = (rgb_t *)weed_get_int_array(in_params[3], "value", NULL);
-  bg = (rgb_t *)weed_get_int_array(in_params[4], "value", NULL);
+  fg = (rgb_t *)weed_get_int_array(in_params[3], WEED_LEAF_VALUE, NULL);
+  bg = (rgb_t *)weed_get_int_array(in_params[4], WEED_LEAF_VALUE, NULL);
 
-  cent = weed_get_boolean_value(in_params[5], "value", NULL);
-  rise = weed_get_boolean_value(in_params[6], "value", NULL);
+  cent = weed_get_boolean_value(in_params[5], WEED_LEAF_VALUE, NULL);
+  rise = weed_get_boolean_value(in_params[6], WEED_LEAF_VALUE, NULL);
 
   if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
     int tmp = fg->red;
@@ -322,7 +322,7 @@ WEED_SETUP_START(200, 200) {
   in_params[7] = NULL;
 
   pgui = weed_parameter_template_get_gui(in_params[0]);
-  weed_set_int_value(pgui, "maxchars", 65536);
+  weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
   filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls,
                                         in_params,
@@ -336,9 +336,9 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.); // set reasonable default fps
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

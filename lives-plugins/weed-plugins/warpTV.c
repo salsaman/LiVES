@@ -147,10 +147,10 @@ static weed_error_t warp_init(weed_plant_t *inst) {
   struct _sdata *sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  video_height = weed_get_int_value(in_channel, "height", NULL);
-  video_width = weed_get_int_value(in_channel, "width", NULL);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
 
   video_width = video_width / 2. + .5;
   video_width *= 2;
@@ -196,17 +196,17 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_plant_t *in_channel, *out_channel;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  width = weed_get_int_value(in_channel, "width", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4;
-  orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
 
   xw  = (int)(sin((sdata->tval + 100) * M_PI / 128) * 30);
   yw  = (int)(sin((sdata->tval) * M_PI / 256) * -35);
@@ -231,7 +231,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

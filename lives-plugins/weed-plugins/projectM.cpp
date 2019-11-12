@@ -399,15 +399,15 @@ static int projectM_init(weed_plant_t *inst) {
   if (!inited) {
     int rc = 0;
 
-    weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-    weed_plant_t *iparam = weed_get_plantptr_value(inst, "in_parameters", &error);
-    weed_plant_t *itmpl = weed_get_plantptr_value(iparam, "template", &error);
+    weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+    weed_plant_t *iparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
+    weed_plant_t *itmpl = weed_get_plantptr_value(iparam, WEED_LEAF_TEMPLATE, &error);
     weed_plant_t *iparamgui = weed_get_plantptr_value(itmpl, "gui", &error);
 
-    int width = weed_get_int_value(out_channel, "width", &error);
-    int height = weed_get_int_value(out_channel, "height", &error);
+    int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+    int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
-    //int palette=weed_get_int_value(out_channel,"current_palette",&error);
+    //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
 
     sd = (_sdata *)weed_malloc(sizeof(_sdata));
     if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -424,7 +424,7 @@ static int projectM_init(weed_plant_t *inst) {
     sd->pidx = sd->opidx = -1;
 
     sd->fps = TARGET_FPS;
-    if (weed_plant_has_leaf(inst, "fps")) sd->fps = weed_get_double_value(inst, "fps", &error);
+    if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, &error);
 
     sd->width = width;
     sd->height = height;
@@ -484,19 +484,19 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  weed_plant_t *inparam = weed_get_plantptr_value(inst, "in_parameters", &error);
-  unsigned char *dst = (unsigned char *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  weed_plant_t *inparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  unsigned char *dst = (unsigned char *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
   unsigned char *ptrd, *ptrs;
 
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
-  //int palette=weed_get_int_value(out_channel,"current_palette",&error);
+  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
 
-  int rowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int rowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   int widthx = width * 3;
 
@@ -518,7 +518,7 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // 0 - 10, we just subtract 1
   // else (val - 1) % nprs .e.g 11 - 1 = 10, 10 % 10 = 0
 
-  sd->pidx = weed_get_int_value(inparam, "value", &error);
+  sd->pidx = weed_get_int_value(inparam, WEED_LEAF_VALUE, &error);
 
   if (sd->pidx <= sd->nprs) sd->pidx--;
   else sd->pidx = (sd->pidx - 1) % sd->nprs;
@@ -536,14 +536,14 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     sd->globalPM->key_handler(evt, key, mod);
   }
 
-  if (weed_plant_has_leaf(inst, "fps")) sd->fps = weed_get_double_value(inst, "fps", &error);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, &error);
 
   if (in_channel != NULL) {
-    int adlen = weed_get_int_value(in_channel, "audio_data_length", &error);
-    float *adata = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error);
+    int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
+    float *adata = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error);
     if (adlen > 0 && adata != NULL) {
       float *aud_data;
-      int ainter = weed_get_boolean_value(in_channel, "audio_interleaf", &error);
+      int ainter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
       pthread_mutex_lock(&sd->pcm_mutex);
       aud_data = (float *)weed_malloc((adlen + sd->audio_frames) * sizeof(float));
       if (sd->audio != NULL) {
@@ -553,7 +553,7 @@ static int projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       if (ainter == WEED_FALSE) {
         weed_memcpy(aud_data + sd->audio_frames, adata, adlen * sizeof(float));
       } else {
-        int achans = weed_get_int_value(in_channel, "audio_channels", &error);
+        int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
         for (j = 0; j < adlen; j++) {
           weed_memcpy(aud_data + sd->audio_frames + j, adata, sizeof(float));
           adata += achans;
@@ -596,7 +596,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
 
-  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", 0), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
 
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
                                    WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE, palette_list), NULL
@@ -606,19 +606,18 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, &projectM_init,
                                         &projectM_process, &projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  //weed_set_int_value(in_params[0],"flags",WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  //weed_set_int_value(in_params[0],WEED_LEAF_FLAGS,WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   weed_set_int_value(in_params[0], "max", INT_MAX);
 
-  weed_set_int_value(in_chantmpls[0], "audio_channels", 1);
-  weed_set_boolean_value(in_chantmpls[0], "audio_interleaf", WEED_TRUE);
-  weed_set_boolean_value(in_chantmpls[0], "optional", WEED_TRUE);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_CHANNELS, 1);
+  weed_set_boolean_value(in_chantmpls[0], WEED_LEAF_AUDIO_INTERLEAF, WEED_TRUE);
 
-  weed_set_double_value(filter_class, "target_fps", TARGET_FPS); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
   statsd = NULL;
 }

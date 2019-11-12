@@ -97,7 +97,7 @@ static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
   // for VIDEO channels:  ///////////////////////////////////////////////////////////
 
   // get the palette (see weed-palettes.h) [if we have no in_channels, we can get this from out_channel instead]
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_WEED_LEAF_CURRENT_PALETTE, NULL);
   // palettes for each channel will match unless WEED_CHANNEL_PALETTE_CAN_VARY was set in channel_template flags
 
   // get the pixel_data ////////////////////////////////////
@@ -363,7 +363,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 
@@ -376,16 +376,16 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
 
   weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
-  weed_plant_t *out_params[] = {weed_out_param_float_init("value", 0., 0., 1.), NULL};
+  weed_plant_t *out_params[] = {weed_out_param_float_init(WEED_LEAF_VALUE, 0., 0., 1.), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL, &fftw_process,
                                NULL, in_chantmpls, NULL, in_params, out_params);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_string_value(filter_class, "description", "Fast Fourier Transform for audio");
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "Fast Fourier Transform for audio");
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

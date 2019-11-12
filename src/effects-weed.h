@@ -90,6 +90,11 @@ typedef enum {
 
 #define WEED_LEAF_AUTO_EASING "host_auto_easing"
 
+#define WEED_LEAF_RFX_STRINGS "layout_rfx_strings"
+#define WEED_LEAF_RFX_DELIM "layout_rfx_delim"
+
+#define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
+
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE "host_internal_connection_autoscale" // for chain plugins
@@ -137,6 +142,8 @@ boolean is_audio_channel_out(weed_plant_t *inst, int chnum);
 boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///< TRUE if audio in or out and no vid in/out
+
+boolean weed_chantmpl_is_optional(weed_plant_t *chantmpl);
 
 boolean has_video_filters(boolean analysers_only);
 

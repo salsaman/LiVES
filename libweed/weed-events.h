@@ -51,6 +51,8 @@ extern "C"
 #define WEED_AUDIO_BIG_ENDIAN 1
 #endif
 
+#define WEED_LEAF_IGNORE "ignore"
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

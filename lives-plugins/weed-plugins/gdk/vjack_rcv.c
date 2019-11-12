@@ -143,8 +143,8 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   int height = gdk_pixbuf_get_height(pixbuf);
   int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
   guchar *in_pixel_data = (guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride = weed_get_int_value(channel, "rowstrides", &error);
-  guchar *dst = weed_get_voidptr_value(channel, "pixel_data", &error);
+  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
+  guchar *dst = weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
 
   register int i;
 
@@ -224,17 +224,17 @@ int vjack_rcv_init(weed_plant_t *inst) {
   sd = weed_malloc(sizeof(sdata));
   if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  server_name = weed_get_string_value(in_params[0], "value", &error);
-  conffile = weed_get_string_value(in_params[1], "value", &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  server_name = weed_get_string_value(in_params[0], WEED_LEAF_VALUE, &error);
+  conffile = weed_get_string_value(in_params[1], WEED_LEAF_VALUE, &error);
   weed_free(in_params);
 
   instances++;
 
-  out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  out_height = weed_get_int_value(out_channel, "height", &error);
-  out_width = weed_get_int_value(out_channel, "width", &error);
+  out_height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+  out_width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
 
   out_frame_size = out_width * out_height * 4;
 
@@ -318,7 +318,7 @@ int vjack_rcv_init(weed_plant_t *inst) {
 
   jack_sample_rate = jack_get_sample_rate(sd->client);
 
-  weed_set_double_value(inst, "target_fps", jack_sample_rate); // set reasonable value
+  weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, jack_sample_rate); // set reasonable value
   return WEED_NO_ERROR;
 }
 
@@ -327,10 +327,10 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // TODO check for server shutdown
   int error;
   unsigned int frame_size;
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int out_width = weed_get_int_value(out_channel, "width", &error);
-  int out_height = weed_get_int_value(out_channel, "height", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int out_width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int out_height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
   int wrote = 0;
   sdata *sd = (sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -443,14 +443,14 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                  NULL, out_chantmpls, in_params, NULL);
 
     weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_int_value(gui, "maxchars", 32);
+    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 32);
 
     gui = weed_parameter_template_get_gui(in_params[1]);
-    weed_set_int_value(gui, "maxchars", 128);
+    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 128);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   }
   return plugin_info;
 }

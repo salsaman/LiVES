@@ -8283,8 +8283,8 @@ void alpha_unpremult(weed_plant_t *layer, boolean un) {
   if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
     flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
 
-  if (!un) flags |= WEED_CHANNEL_ALPHA_PREMULT;
-  else if (flags & WEED_CHANNEL_ALPHA_PREMULT) flags ^= WEED_CHANNEL_ALPHA_PREMULT;
+  if (!un) flags |= WEED_LAYER_ALPHA_PREMULT;
+  else if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
 
   if (flags == 0) weed_leaf_delete(layer, WEED_LEAF_FLAGS);
   else weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
@@ -8399,20 +8399,20 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
     flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
 
   if (prefs->alpha_post) {
-    if ((flags & WEED_CHANNEL_ALPHA_PREMULT) &&
+    if ((flags & WEED_LAYER_ALPHA_PREMULT) &&
         (weed_palette_has_alpha_channel(inpl) && !(weed_palette_has_alpha_channel(outpl)))) {
       // if we have pre-multiplied alpha, remove it when removing alpha channel
       alpha_unpremult(layer, TRUE);
     }
   } else {
     if (!weed_palette_has_alpha_channel(inpl) && weed_palette_has_alpha_channel(outpl)) {
-      flags |= WEED_CHANNEL_ALPHA_PREMULT;
+      flags |= WEED_LAYER_ALPHA_PREMULT;
       weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
     }
   }
 
-  if (weed_palette_has_alpha_channel(inpl) && !(weed_palette_has_alpha_channel(outpl)) && (flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-    flags ^= WEED_CHANNEL_ALPHA_PREMULT;
+  if (weed_palette_has_alpha_channel(inpl) && !(weed_palette_has_alpha_channel(outpl)) && (flags & WEED_LAYER_ALPHA_PREMULT)) {
+    flags ^= WEED_LAYER_ALPHA_PREMULT;
     if (flags == 0) weed_leaf_delete(layer, WEED_LEAF_FLAGS);
     else weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
   }
@@ -11396,10 +11396,10 @@ lives_painter_t *layer_to_lives_painter(weed_plant_t *layer) {
     if (weed_palette_has_alpha_channel(pal)) {
       int flags = 0;
       if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS)) flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
-      if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
+      if (!(flags & WEED_LAYER_ALPHA_PREMULT)) {
         // if we have post-multiplied alpha, pre multiply
         alpha_unpremult(layer, FALSE);
-        flags |= WEED_CHANNEL_ALPHA_PREMULT;
+        flags |= WEED_LAYER_ALPHA_PREMULT;
         weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
       }
     }
@@ -11477,7 +11477,7 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_plant_t *layer) {
       if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
         flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
 
-      flags |= WEED_CHANNEL_ALPHA_PREMULT;
+      flags |= WEED_LAYER_ALPHA_PREMULT;
       weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
     }
     break;

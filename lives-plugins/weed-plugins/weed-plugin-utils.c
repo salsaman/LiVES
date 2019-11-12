@@ -964,7 +964,7 @@ static INLINE void init_unal(void) {
   }
 }
 
-EXPORTS void alpha_unpremult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un) {
+EXPORTS void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un) {
   int aoffs = 3, coffs = 0, psizel = 3, alpha, psize = 4;
   register int i, j, p;
   switch (pal) {

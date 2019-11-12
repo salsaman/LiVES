@@ -135,14 +135,14 @@ int masko_init(weed_plant_t *inst) {
   GError *gerr = NULL;
   char *mfile;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
 
   sdata = weed_malloc(sizeof(struct _sdata));
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  video_height = weed_get_int_value(in_channel, "height", &error);
-  video_width = weed_get_int_value(in_channel, "width", &error);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
   video_area = video_width * video_height;
 
   sdata->xmap = (int *)weed_malloc(video_area * sizeof(int));
@@ -161,9 +161,9 @@ int masko_init(weed_plant_t *inst) {
   }
 
   // load image, then get luma values and scale
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  mfile = weed_get_string_value(in_params[0], "value", &error);
-  mode = weed_get_int_value(in_params[1], "value", &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  mfile = weed_get_string_value(in_params[0], WEED_LEAF_VALUE, &error);
+  mode = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
 
   pbuf = gdk_pixbuf_new_from_file(mfile, &gerr);
 
@@ -202,13 +202,13 @@ int masko_deinit(weed_plant_t *inst) {
 
 int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                               "out_channels",
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                               WEED_LEAF_OUT_CHANNELS,
                                &error);
 
-  int palette = weed_get_int_value(out_channel, "current_palette", &error);
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
+  int palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
   int offset = 0;
 
   register int i, j, pos;
@@ -226,18 +226,18 @@ int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (sdata->xmap == NULL || sdata->ymap == NULL) return WEED_NO_ERROR;
 
-  dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  src0 = weed_get_voidptr_value(in_channels[0], "pixel_data", &error);
-  src1 = weed_get_voidptr_value(in_channels[1], "pixel_data", &error);
+  dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  src0 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error);
+  src1 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error);
 
-  orow = weed_get_int_value(out_channel, "rowstrides", &error);
-  irow0 = weed_get_int_value(in_channels[0], "rowstrides", &error);
-  irow1 = weed_get_int_value(in_channels[1], "rowstrides", &error);
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  irow0 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, &error);
+  irow1 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, &error);
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
     height = offset + dheight;
     dst += offset * orow;
     src1 += offset * irow1;
@@ -288,19 +288,19 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     in_params[0] = weed_text_init("maskfile", "_Mask file (.png or .jpg)", defmaskfile);
     gui = weed_parameter_template_get_gui(in_params[0]);
-    weed_set_int_value(gui, "maxchars", 80); // for display only - fileread will override this
+    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
     flags = 0;
-    if (weed_plant_has_leaf(in_params[0], "flags"))
-      flags = weed_get_int_value(in_params[0], "flags", &error);
+    if (weed_plant_has_leaf(in_params[0], WEED_LEAF_FLAGS))
+      flags = weed_get_int_value(in_params[0], WEED_LEAF_FLAGS, &error);
     flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[0], "flags", flags);
+    weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, flags);
 
     in_params[1] = weed_string_list_init("mode", "Effect _mode", 0, modes);
     flags = 0;
-    if (weed_plant_has_leaf(in_params[1], "flags"))
-      flags = weed_get_int_value(in_params[1], "flags", &error);
+    if (weed_plant_has_leaf(in_params[1], WEED_LEAF_FLAGS))
+      flags = weed_get_int_value(in_params[1], WEED_LEAF_FLAGS, &error);
     flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[1], "flags", flags);
+    weed_set_int_value(in_params[1], WEED_LEAF_FLAGS, flags);
     in_params[2] = NULL;
 
     weed_free(defmaskfile);
@@ -310,13 +310,13 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           in_chantmpls, out_chantmpls, in_params, NULL);
 
     gui = weed_filter_class_get_gui(filter_class);
-    weed_set_string_value(gui, "layout_scheme", "RFX");
-    weed_set_string_value(gui, "rfx_delim", "|");
-    weed_set_string_array(gui, "rfx_strings", 1, rfx_strings);
+    weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+    weed_set_string_value(gui, "layout_rfx_delim", "|");
+    weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   }
   return plugin_info;
 }

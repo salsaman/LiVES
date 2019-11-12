@@ -206,18 +206,18 @@ static void proc_pt(unsigned char *dest, unsigned char *src, int x, int y, int o
 static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
-                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *pt;
 
-  int width = weed_get_int_value(in_channel, "width", NULL), width3 = width * 3;
-  int height = weed_get_int_value(in_channel, "height", NULL);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
-  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), width3 = width * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   int count;
   int luma, adj;
@@ -300,6 +300,6 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

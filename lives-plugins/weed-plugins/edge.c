@@ -45,9 +45,9 @@ static weed_error_t edge_init(weed_plant_t *inst) {
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
-  width = weed_get_int_value(in_channel, "width", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
 
   sdata->map = weed_calloc(width * height, PIXEL_SIZE * 2);
   if (sdata->map == NULL) {
@@ -82,20 +82,20 @@ static inline RGB32 copywalpha(RGB32 *dest, size_t doffs, RGB32 *src, size_t off
 
 int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              NULL);
 
-  RGB32 *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  RGB32 *dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL), *odest;
+  RGB32 *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  RGB32 *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL), *odest;
   RGB32 *map = sdata->map;
   RGB32 p, q;
   RGB32 v0, v1, v2, v3;
 
-  int video_width = weed_get_int_value(in_channel, "width", NULL);
-  int video_height = weed_get_int_value(in_channel, "height", NULL);
-  int irow = weed_get_int_value(in_channel, "rowstrides", NULL) / 4; // get val in pixels
-  int orow = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
+  int video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4; // get val in pixels
+  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
   int r, g, b;
 
   int map_width = video_width / 2;
@@ -188,7 +188,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

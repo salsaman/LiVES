@@ -26,20 +26,20 @@ static int package_version = 2; // version of this package
 
 static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), *osrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error), *osrc = src;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  int pal = weed_get_int_value(in_channel, "current_palette", &error);
+  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
 
-  int width = weed_get_int_value(in_channel, "width", &error), widthx;
-  int height = weed_get_int_value(in_channel, "height", &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error), widthx;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
 
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  //int palette=weed_get_int_value(out_channel,"current_palette",&error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
 
   weed_plant_t **in_params;
 
@@ -57,13 +57,13 @@ static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   if (pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  scale = weed_get_double_value(in_params[0], "value", &error);
+  scale = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error);
   if (scale < 1.) scale = 1.;
 
-  offsx = weed_get_double_value(in_params[1], "value", &error) - 0.5 / scale;
-  offsy = weed_get_double_value(in_params[2], "value", &error) - 0.5 / scale;
+  offsx = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error) - 0.5 / scale;
+  offsy = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, &error) - 0.5 / scale;
   weed_free(in_params);
 
   if (offsx < 0.) offsx = 0.;
@@ -75,9 +75,9 @@ static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   offsy *= height;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    offset = weed_get_int_value(out_channel, "offset", &error);
-    dheight = weed_get_int_value(out_channel, "height", &error) + offset;
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error) + offset;
     dst += offset * orowstride;
   }
 
@@ -118,16 +118,16 @@ WEED_SETUP_START(200, 200) {
   // define RFX layout
   char *rfx_strings[] = {"layout|p0|", "layout|p1|p2|", "special|framedraw|scaledpoint|1|2|"};
 
-  weed_set_string_value(gui, "layout_scheme", "RFX");
-  weed_set_string_value(gui, "rfx_delim", "|");
-  weed_set_string_array(gui, "rfx_strings", 3, rfx_strings);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 3, rfx_strings);
 
   pgui = weed_parameter_template_get_gui(in_params[0]);
-  weed_set_double_value(pgui, "step_size", 0.1);
+  weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, 0.1);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
 WEED_SETUP_END;

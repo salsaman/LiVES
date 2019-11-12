@@ -20512,7 +20512,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
                   ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
                   for (i = 0; i < num_ctmpls; i++) {
                     thisct = inct[i];
-                    if (thisct == 0 && !weed_plant_has_leaf(ctmpls[i], WEED_LEAF_OPTIONAL)) {
+                    if (thisct == 0 && !weed_chantmpl_is_optional(ctmpls[i])) {
                       ebuf = rec_error_add(ebuf, "Filter_init disables a non-optional in channel", i, tc);
                       delete_event(event_list, event);
                       was_deleted = TRUE;
@@ -20542,7 +20542,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
                       ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
                       for (i = 0; i < num_ctmpls; i++) {
                         thisct = outct[i];
-                        if (thisct == 0 && !weed_plant_has_leaf(ctmpls[i], WEED_LEAF_OPTIONAL)) {
+                        if (thisct == 0 && !weed_chantmpl_is_optional(ctmpls[i])) {
                           ebuf = rec_error_add(ebuf, "Filter_init disables a non-optional out channel", i, tc);
                           delete_event(event_list, event);
                           was_deleted = TRUE;

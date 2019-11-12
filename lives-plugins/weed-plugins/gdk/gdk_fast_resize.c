@@ -54,12 +54,12 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   int error;
   GdkPixbuf *pixbuf;
-  int palette = weed_get_int_value(channel, "current_palette", &error);
-  int width = weed_get_int_value(channel, "width", &error);
-  int height = weed_get_int_value(channel, "height", &error);
-  int irowstride = weed_get_int_value(channel, "rowstrides", &error);
+  int palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
   int rowstride, orowstride;
-  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error), *pixels, *end;
+  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error), *pixels, *end;
   gboolean cheat = FALSE;
   gint n_channels;
 
@@ -119,8 +119,8 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   int height = gdk_pixbuf_get_height(pixbuf);
   int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
   guchar *in_pixel_data = (guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride = weed_get_int_value(channel, "rowstrides", &error);
-  guchar *dst = weed_get_voidptr_value(channel, "pixel_data", &error);
+  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
+  guchar *dst = weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
 
   register int i;
 
@@ -141,15 +141,15 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
 
 
 static weed_error_t resize_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              NULL);
 
-  int inwidth = weed_get_int_value(in_channel, "width", NULL);
-  int inheight = weed_get_int_value(in_channel, "height", NULL);
+  int inwidth = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int inheight = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  int outwidth = weed_get_int_value(out_channel, "width", NULL);
-  int outheight = weed_get_int_value(out_channel, "height", NULL);
+  int outwidth = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
+  int outheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
   GdkPixbuf *in_pixbuf = pl_channel_to_pixbuf(in_channel);
   GdkPixbuf *out_pixbuf;
@@ -182,7 +182,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
 WEED_SETUP_END;

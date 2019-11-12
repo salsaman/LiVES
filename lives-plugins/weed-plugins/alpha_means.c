@@ -33,23 +33,23 @@ static int package_version = 1; // version of this package
 
 
 static weed_error_t alpham_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  weed_plant_t *out_param = weed_get_plantptr_value(inst, "out_parameters", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t *out_param = weed_get_plantptr_value(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
 
-  float *alpha = (float *)weed_get_voidptr_value(in_channel, "pixel_data", NULL);
+  float *alpha = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  int width = weed_get_int_value(in_channel, "width", NULL);
-  int height = weed_get_int_value(in_channel, "height", NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  int irow = weed_get_int_value(in_channel, "rowstrides", NULL) - width * sizeof(float);
+  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) - width * sizeof(float);
 
-  int n = weed_get_int_value(in_params[0], "value", NULL);
-  int m = weed_get_int_value(in_params[1], "value", NULL);
-  int xdiv = weed_get_boolean_value(in_params[2], "value", NULL);
-  int ydiv = weed_get_boolean_value(in_params[3], "value", NULL);
-  int abs = weed_get_boolean_value(in_params[4], "value", NULL);
-  double scale = weed_get_double_value(in_params[5], "value", NULL);
+  int n = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  int m = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  int xdiv = weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, NULL);
+  int ydiv = weed_get_boolean_value(in_params[3], WEED_LEAF_VALUE, NULL);
+  int abs = weed_get_boolean_value(in_params[4], WEED_LEAF_VALUE, NULL);
+  double scale = weed_get_double_value(in_params[5], WEED_LEAF_VALUE, NULL);
 
   int idx = 0, nidx;
 
@@ -106,7 +106,7 @@ static weed_error_t alpham_process(weed_plant_t *inst, weed_timecode_t timestamp
     vals[i] *= scale;
   }
 
-  weed_set_double_array(out_param, "value", n * m, vals);
+  weed_set_double_array(out_param, WEED_LEAF_VALUE, n * m, vals);
 
   weed_free(vals);
 
@@ -134,7 +134,7 @@ WEED_SETUP_START(200, 200) {
                                in_chantmpls, NULL,
                                in_params, out_params);
 
-  weed_set_string_value(filter_class, "description",
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION,
                         "Calculate n X m mean values for (float) alpha channel\n"
                         "values are output from left to right and top to bottom, eg. for 2 X 2 grid:\n\n"
                         "val 1 | val 2\n------+------\nval 3 | val 4");
@@ -142,9 +142,9 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   //number of output values depends on size of grid
-  weed_set_int_value(out_params[0], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+  weed_set_int_value(out_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
 }
 WEED_SETUP_END;

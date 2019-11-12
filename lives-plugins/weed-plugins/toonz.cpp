@@ -303,9 +303,9 @@ int phatch_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   int const type = retimg.type();
   Size const size = retimg.size();
 
-  float const angle = weed_get_int_value(in_params[PARAMa_ANGLE], "value", &error);
-  float const length = weed_get_double_value(in_params[PARAMa_LENGTH], "value", &error) * size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMa_ATTENUATION], "value", &error);
+  float const angle = weed_get_int_value(in_params[PARAMa_ANGLE], WEED_LEAF_VALUE, &error);
+  float const length = weed_get_double_value(in_params[PARAMa_LENGTH], WEED_LEAF_VALUE, &error) * size.height;
+  float const attenuation = weed_get_double_value(in_params[PARAMa_ATTENUATION], WEED_LEAF_VALUE, &error);
 
   // snp noise based on grayscale
   Mat noise(size, CV_MAKETYPE(CV_MAT_DEPTH(type), 1));
@@ -419,15 +419,15 @@ int lglare_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMb_GAMMA], "value", &error);
-  float const exposure = weed_get_double_value(in_params[PARAMb_EXPOSURE], "value", &error);
-  float const gain = weed_get_double_value(in_params[PARAMb_GAIN], "value", &error);
+  float const gamma = weed_get_double_value(in_params[PARAMb_GAMMA], WEED_LEAF_VALUE, &error);
+  float const exposure = weed_get_double_value(in_params[PARAMb_EXPOSURE], WEED_LEAF_VALUE, &error);
+  float const gain = weed_get_double_value(in_params[PARAMb_GAIN], WEED_LEAF_VALUE, &error);
 
-  float const radius = weed_get_double_value(in_params[PARAMb_RADIUS], "value", &error) * size.height;
-  float const attenuation = weed_get_double_value(in_params[PARAMb_ATTENUATION], "value", &error);
+  float const radius = weed_get_double_value(in_params[PARAMb_RADIUS], WEED_LEAF_VALUE, &error) * size.height;
+  float const attenuation = weed_get_double_value(in_params[PARAMb_ATTENUATION], WEED_LEAF_VALUE, &error);
 
-  int const number = weed_get_int_value(in_params[PARAMb_NUMBER], "value", &error);
-  int const angle = weed_get_int_value(in_params[PARAMb_ANGLE], "value", &error);
+  int const number = weed_get_int_value(in_params[PARAMb_NUMBER], WEED_LEAF_VALUE, &error);
+  int const angle = weed_get_int_value(in_params[PARAMb_ANGLE], WEED_LEAF_VALUE, &error);
 
   Mat src(size, CV_32FC3);
 
@@ -519,12 +519,12 @@ int lbloom_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params) {
   Size const size = retimg.size();
 
   // init parameters
-  float const gamma = weed_get_double_value(in_params[PARAMd_GAMMA], "value", &error);
-  float const exposure = weed_get_double_value(in_params[PARAMd_EXPOSURE], "value", &error);
-  float const gain = weed_get_double_value(in_params[PARAMd_GAIN], "value", &error);
+  float const gamma = weed_get_double_value(in_params[PARAMd_GAMMA], WEED_LEAF_VALUE, &error);
+  float const exposure = weed_get_double_value(in_params[PARAMd_EXPOSURE], WEED_LEAF_VALUE, &error);
+  float const gain = weed_get_double_value(in_params[PARAMd_GAIN], WEED_LEAF_VALUE, &error);
 
-  int const radius = weed_get_int_value(in_params[PARAMd_RADIUS], "value", &error);
-  int const level = weed_get_int_value(in_params[PARAMd_LEVEL], "value", &error);
+  int const radius = weed_get_int_value(in_params[PARAMd_RADIUS], WEED_LEAF_VALUE, &error);
+  int const level = weed_get_int_value(in_params[PARAMd_LEVEL], WEED_LEAF_VALUE, &error);
 
   Mat src(size, CV_32FC3);
 
@@ -598,12 +598,12 @@ int paraffin_kernel(Mat &in, Mat &retimg, int palette, weed_plant_t **in_params)
   // Params
   //
   // geometry
-  float const d = weed_get_double_value(in_params[PARAMe_DISTANCE], "value", &error) * size.height;
-  float const a = (float)(weed_get_int_value(in_params[PARAMe_THETA], "value", &error)) / 360.*TWO_PI;
+  float const d = weed_get_double_value(in_params[PARAMe_DISTANCE], WEED_LEAF_VALUE, &error) * size.height;
+  float const a = (float)(weed_get_int_value(in_params[PARAMe_THETA], WEED_LEAF_VALUE, &error)) / 360.*TWO_PI;
 
-  int const s = (int)(weed_get_double_value(in_params[PARAMe_RADIUS], "value", &error) * size.height * 0.5) * 2 + 1;
+  int const s = (int)(weed_get_double_value(in_params[PARAMe_RADIUS], WEED_LEAF_VALUE, &error) * size.height * 0.5) * 2 + 1;
 
-  double *cvals = weed_get_double_array(in_params[PARAMe_COLOR], "value", &error);
+  double *cvals = weed_get_double_array(in_params[PARAMe_COLOR], WEED_LEAF_VALUE, &error);
 
   float r, g = cvals[1], b;
 
@@ -688,20 +688,20 @@ static int common_process(weed_plant_t *inst, weed_timecode_t tc, int filter_typ
 
   Mat srcMat, mixMat, destMat;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  uint8_t *src = (uint8_t *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  uint8_t *dst = (uint8_t *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
 
-  int irow = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orow = weed_get_int_value(out_channel, "rowstrides", &error);
+  int irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   int psize = 4;
 
@@ -788,18 +788,18 @@ int cnoise_compute(Mat &retimg, weed_plant_t **in_params, double sec) {
   try {
     cv::Size const size = retimg.size();
 
-    int const time = weed_get_int_value(in_params[PARAMc_TIME], "value", &error);
-    int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT], "value", &error) - 1;
-    float const alpha = weed_get_double_value(in_params[PARAMc_ALPHA], "value", &error);
-    float const gain = weed_get_double_value(in_params[PARAMc_GAIN], "value", &error);
-    float const bias = weed_get_double_value(in_params[PARAMc_BIAS], "value", &error);
+    int const time = weed_get_int_value(in_params[PARAMc_TIME], WEED_LEAF_VALUE, &error);
+    int const time_limit = weed_get_int_value(in_params[PARAMc_TIME_LIMIT], WEED_LEAF_VALUE, &error) - 1;
+    float const alpha = weed_get_double_value(in_params[PARAMc_ALPHA], WEED_LEAF_VALUE, &error);
+    float const gain = weed_get_double_value(in_params[PARAMc_GAIN], WEED_LEAF_VALUE, &error);
+    float const bias = weed_get_double_value(in_params[PARAMc_BIAS], WEED_LEAF_VALUE, &error);
 
     std::array<float, 5> const amp = {
-      (float)weed_get_double_value(in_params[PARAMc_AMP0], "value", &error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP1], "value", &error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP2], "value", &error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP3], "value", &error),
-      (float)weed_get_double_value(in_params[PARAMc_AMP4], "value", &error)
+      (float)weed_get_double_value(in_params[PARAMc_AMP0], WEED_LEAF_VALUE, &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP1], WEED_LEAF_VALUE, &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP2], WEED_LEAF_VALUE, &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP3], WEED_LEAF_VALUE, &error),
+      (float)weed_get_double_value(in_params[PARAMc_AMP4], WEED_LEAF_VALUE, &error)
     };
 
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -843,16 +843,16 @@ int cnoise_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   Mat destMat;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  float *dst = (float *)weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  float *dst = (float *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
-  int orow = weed_get_int_value(out_channel, "rowstrides", &error);
+  int orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   destMat = Mat(height, width, CV_32FC1, dst, orow);
 
@@ -919,7 +919,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &cnoise_process, NULL,
                                           NULL, out_chantmplsx, in_paramsc, NULL);
 
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
     weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
     weed_set_string_value(filter_class, "license", "BSD 3-clause");
@@ -931,7 +931,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &lbloom_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramsd, NULL);
 
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
     weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
     weed_set_string_value(filter_class, "license", "BSD 3-clause");
@@ -943,7 +943,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &lglare_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramsb, NULL);
 
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
     weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
     weed_set_string_value(filter_class, "license", "BSD 3-clause");
@@ -955,7 +955,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &paraffin_process, NULL,
                                           in_chantmpls, out_chantmpls, in_paramse, NULL);
 
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
     weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
     weed_set_string_value(filter_class, "license", "BSD 3-clause");
@@ -967,16 +967,16 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &phatch_process, NULL,
                                           in_chantmpls4, out_chantmpls, in_paramsa, NULL);
 
-    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], "wrap", WEED_TRUE);
+    weed_set_boolean_value(in_paramsa[PARAMa_ANGLE], WEED_LEAF_WRAP, WEED_TRUE);
 
-    weed_set_string_value(filter_class, "extra_authors", "salsaman");
+    weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, "salsaman");
     weed_set_string_value(filter_class, "url", "http://dwango.co.jp");
     weed_set_string_value(filter_class, "copyright", "DWANGO 2016, salsaman 2016");
     weed_set_string_value(filter_class, "license", "BSD 3-clause");
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-    weed_set_int_value(plugin_info, "version", package_version);
+    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   }
   return plugin_info;
 }

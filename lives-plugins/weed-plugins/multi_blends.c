@@ -34,18 +34,18 @@ static int common_init(weed_plant_t *inst) {
 
 static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
   int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                               "out_channels",
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                               WEED_LEAF_OUT_CHANNELS,
                                &error);
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], "pixel_data", &error);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channels[0], "width", &error) * 3;
-  int height = weed_get_int_value(in_channels[0], "height", &error);
-  int palette = weed_get_int_value(in_channels[0], "current_palette", &error);
-  int irowstride1 = weed_get_int_value(in_channels[0], "rowstrides", &error);
-  int irowstride2 = weed_get_int_value(in_channels[1], "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, &error);
+  int palette = weed_get_int_value(in_channels[0], WEED_LEAF_CURRENT_PALETTE, &error);
+  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, &error);
+  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
   unsigned char *end = src1 + height * irowstride1;
   weed_plant_t *in_param;
   int intval;
@@ -58,8 +58,8 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   unsigned char pixel[3];
   unsigned char blend_factor, blend1, blend2, blendneg1, blendneg2;
 
-  in_param = weed_get_plantptr_value(inst, "in_parameters", &error);
-  bf = weed_get_int_value(in_param, "value", &error);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
   blend_factor = (unsigned char)bf;
 
   blend1 = blend_factor * 2;
@@ -69,9 +69,9 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   blendneg2 = (blend_factor - 128) * 2;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
     src2 += offset * irowstride2;
@@ -229,7 +229,7 @@ WEED_SETUP_START(200, 200) {
                                WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL, &mpy_process, NULL,
                                in_chantmpls, out_chantmpls, in_params1, NULL);
 
-  weed_set_boolean_value(in_params1[0], "transition", WEED_TRUE);
+  weed_set_boolean_value(in_params1[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -281,7 +281,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

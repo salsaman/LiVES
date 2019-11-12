@@ -3437,7 +3437,6 @@ boolean script_to_rfxbuilder(rfx_build_window_t *rfxbuilder, const char *script_
       rfxbuilder->params[i].desc = NULL;
       rfxbuilder->params[i].use_mnemonic = TRUE;
       rfxbuilder->params[i].step_size = 1.;
-      rfxbuilder->params[i].interp_func = rfxbuilder->params[i].display_func = NULL;
       rfxbuilder->params[i].hidden = FALSE;
       rfxbuilder->params[i].transition = FALSE;
       rfxbuilder->params[i].wrap = FALSE;

@@ -98,8 +98,8 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
 
 static weed_error_t RGBd_init(weed_plant_t *inst) {
   int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error), *gui, *ptmpl;
-  int maxcache = weed_get_int_value(in_params[0], "value", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error), *gui, *ptmpl;
+  int maxcache = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
   register int i;
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -122,9 +122,9 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
   maxcache *= 4;
 
   for (i = 0; i < 205; i++) {
-    ptmpl = weed_get_plantptr_value(in_params[i], "template", &error);
+    ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, &error);
     gui = weed_parameter_template_get_gui(ptmpl);
-    weed_set_boolean_value(gui, "hidden", i > maxcache ? WEED_TRUE : WEED_FALSE);
+    weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, i > maxcache ? WEED_TRUE : WEED_FALSE);
   }
 
   weed_free(in_params);
@@ -142,28 +142,28 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
 static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
   size_t x = 0;
 
   double tstr_red = 0., tstr_green = 0., tstr_blue = 0., cstr_red, cstr_green, cstr_blue, cstr;
   double yscale = 1., uvscale = 1.;
 
-  int width = weed_get_int_value(in_channel, "width", &error) * 3;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), *osrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error), *odst = dst;
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error), *osrc = src;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error), *odst = dst;
   unsigned char *end = src + height * irowstride;
   unsigned char *tmpcache = NULL;
 
-  int maxcache = weed_get_int_value(in_params[0], "value", &error);
+  int maxcache = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
   int inplace = (src == dst);
 
   int cross, red = 0, blue = 2;
@@ -183,9 +183,9 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   if (!is_easing) {
     for (i = 1; i < maxcache; i++) {
-      if (weed_get_boolean_value(in_params[RED_ON(i)], "value", &error) == WEED_TRUE ||
-          weed_get_boolean_value(in_params[GREEN_ON(i)], "value", &error) == WEED_TRUE ||
-          weed_get_boolean_value(in_params[BLUE_ON(i)], "value", &error) == WEED_TRUE) {
+      if (weed_get_boolean_value(in_params[RED_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE ||
+          weed_get_boolean_value(in_params[GREEN_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE ||
+          weed_get_boolean_value(in_params[BLUE_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE) {
         maxneeded = i + 1;
       }
     }
@@ -213,15 +213,15 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     // normalise the blend strength for each colour channel, so the total doesnt exceed 1.0
     // tstr_* hold the overall totals
-    if (weed_get_boolean_value(in_params[RED_ON(i)], "value", &error) == WEED_TRUE) {
-      tstr_red += weed_get_double_value(in_params[STRENGTH(i)], "value", &error);
+    if (weed_get_boolean_value(in_params[RED_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE) {
+      tstr_red += weed_get_double_value(in_params[STRENGTH(i)], WEED_LEAF_VALUE, &error);
     }
 
-    if (weed_get_boolean_value(in_params[GREEN_ON(i)], "value", &error) == WEED_TRUE)
-      tstr_green += weed_get_double_value(in_params[STRENGTH(i)], "value", &error);
+    if (weed_get_boolean_value(in_params[GREEN_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE)
+      tstr_green += weed_get_double_value(in_params[STRENGTH(i)], WEED_LEAF_VALUE, &error);
 
-    if (weed_get_boolean_value(in_params[BLUE_ON(i)], "value", &error) == WEED_TRUE) {
-      tstr_blue += weed_get_double_value(in_params[STRENGTH(i)], "value", &error);
+    if (weed_get_boolean_value(in_params[BLUE_ON(i)], WEED_LEAF_VALUE, &error) == WEED_TRUE) {
+      tstr_blue += weed_get_double_value(in_params[STRENGTH(i)], WEED_LEAF_VALUE, &error);
     }
   }
 
@@ -246,7 +246,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   if (palette == WEED_PALETTE_YUV888) {
     is_yuv = 1;
-    if (weed_get_int_value(in_channel, "YUV_clamping", &error) == WEED_YUV_CLAMPING_CLAMPED) {
+    if (weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, &error) == WEED_YUV_CLAMPING_CLAMPED) {
       // unclamp the values in the lut
       yuvmin = 16;
       uvmin = 16;
@@ -256,11 +256,11 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   }
 
   if (sdata->tcache == 0) {
-    b1 = (weed_get_boolean_value(in_params[RED_ON(0)], "value", &error) == WEED_TRUE);
-    b2 = (weed_get_boolean_value(in_params[GREEN_ON(0)], "value", &error) == WEED_TRUE);
-    b3 = (weed_get_boolean_value(in_params[BLUE_ON(0)], "value", &error) == WEED_TRUE);
+    b1 = (weed_get_boolean_value(in_params[RED_ON(0)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
+    b2 = (weed_get_boolean_value(in_params[GREEN_ON(0)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
+    b3 = (weed_get_boolean_value(in_params[BLUE_ON(0)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
 
-    cstr = weed_get_double_value(in_params[4], "value", &error);
+    cstr = weed_get_double_value(in_params[4], WEED_LEAF_VALUE, &error);
     cstr_red = cstr / tstr_red;
     cstr_green = cstr / tstr_green;
     cstr_blue = cstr / tstr_blue;
@@ -299,9 +299,9 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       if (j <= sdata->ccache) k = j;
       else k = sdata->ccache;
 
-      b1 = (weed_get_boolean_value(in_params[RED_ON(j)], "value", &error) == WEED_TRUE);
-      b2 = (weed_get_boolean_value(in_params[GREEN_ON(j)], "value", &error) == WEED_TRUE);
-      b3 = (weed_get_boolean_value(in_params[BLUE_ON(j)], "value", &error) == WEED_TRUE);
+      b1 = (weed_get_boolean_value(in_params[RED_ON(j)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
+      b2 = (weed_get_boolean_value(in_params[GREEN_ON(j)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
+      b3 = (weed_get_boolean_value(in_params[BLUE_ON(j)], WEED_LEAF_VALUE, &error) == WEED_TRUE);
 
       if (!b1 && !b2 && !b3 && j > 0) continue;
 
@@ -310,7 +310,7 @@ static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       else
         cross = 0;
 
-      cstr = weed_get_double_value(in_params[STRENGTH(j)], "value", &error);
+      cstr = weed_get_double_value(in_params[STRENGTH(j)], WEED_LEAF_VALUE, &error);
       cstr_red = cstr / tstr_red;
       cstr_green = cstr / tstr_green;
       cstr_blue = cstr / tstr_blue;
@@ -409,7 +409,7 @@ WEED_SETUP_START(200, 200) {
   int i, j;
 
   in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size (max)", 20, 0, 50);
-  weed_set_int_value(in_params[0], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   for (i = 1; i < 205; i += 4) {
     for (j = 0; j < 3; j++) {
@@ -421,13 +421,13 @@ WEED_SETUP_START(200, 200) {
 
     if (i >= 80) {
       gui = weed_parameter_template_get_gui(in_params[i]);
-      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
       gui = weed_parameter_template_get_gui(in_params[i + 1]);
-      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
       gui = weed_parameter_template_get_gui(in_params[i + 2]);
-      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
       gui = weed_parameter_template_get_gui(in_params[i + 3]);
-      weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+      weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
     }
   }
 
@@ -449,9 +449,9 @@ WEED_SETUP_START(200, 200) {
     snprintf(rfx_strings[i], 1024, "layout|p%d|p%d|p%d|p%d|", (i - 3) * 4 + 1, (i - 3) * 4 + 2, (i - 3) * 4 + 3, (i - 2) * 4);
   }
 
-  weed_set_string_value(gui, "layout_scheme", "RFX");
-  weed_set_string_value(gui, "rfx_delim", "|");
-  weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 54, rfx_strings);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -462,14 +462,14 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone);
 
   gui = weed_filter_class_get_gui(filter_class);
-  weed_set_string_value(gui, "layout_scheme", "RFX");
-  weed_set_string_value(gui, "rfx_delim", "|");
-  weed_set_string_array(gui, "rfx_strings", 54, rfx_strings);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 54, rfx_strings);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   for (i = 3; i < 54; i++) weed_free(rfx_strings[i]);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END

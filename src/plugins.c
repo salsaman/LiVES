@@ -2642,8 +2642,6 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
     cparam->label = lives_strdup(param_array[1]);
     cparam->desc = NULL;
     cparam->use_mnemonic = TRUE;
-    cparam->interp_func = NULL;
-    cparam->display_func = NULL;
     cparam->hidden = 0;
     cparam->wrap = FALSE;
     cparam->transition = FALSE;
@@ -3141,7 +3139,6 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].group = 0;
 
     rpar[i].use_mnemonic = FALSE;
-    rpar[i].interp_func = rpar[i].display_func = NULL;
     rpar[i].hidden = 0;
     rpar[i].step_size = 1.;
     if (enabled_in_channels(filter, FALSE) == 2 && get_transition_param(filter, FALSE) == i) rpar[i].transition = TRUE;
@@ -3156,10 +3153,10 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].value = NULL;
     rpar[i].def = NULL;
 
-    if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS && !(flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL)) {
+    if (flags & WEED_PARAMETER_VARIABLE_SIZE && !(flags & WEED_PARAMETER_VALUE_PER_CHANNEL)) {
       rpar[i].hidden |= HIDDEN_MULTI;
       rpar[i].multi = PVAL_MULTI_ANY;
-    } else if (flags & WEED_PARAMETER_ELEMENT_PER_CHANNEL) {
+    } else if (flags & WEED_PARAMETER_VALUE_PER_CHANNEL) {
       rpar[i].hidden |= HIDDEN_MULTI;
       rpar[i].multi = PVAL_MULTI_PER_CHANNEL;
     } else rpar[i].multi = PVAL_MULTI_NONE;
@@ -3417,13 +3414,8 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       }
       if (weed_plant_has_leaf(gui, WEED_LEAF_USE_MNEMONIC))
         rpar[i].use_mnemonic = weed_get_boolean_value(gui, WEED_LEAF_USE_MNEMONIC, &error);
-      if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN))
+      if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN)) {
         rpar[i].hidden |= ((weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error) == WEED_TRUE) * HIDDEN_GUI);
-      if (weed_plant_has_leaf(gui, WEED_LEAF_DISPLAY_FUNC)) {
-        rpar[i].display_func = weed_get_funcptr_value(gui, WEED_LEAF_DISPLAY_FUNC, NULL);
-      }
-      if (weed_plant_has_leaf(gui, WEED_LEAF_INTERPOLATE_FUNC)) {
-        rpar[i].interp_func = weed_get_funcptr_value(gui, WEED_LEAF_INTERPOLATE_FUNC, NULL);
       }
     }
 

@@ -113,7 +113,7 @@ static double getval(char *what, _sdata *sdata) {
       sdata->error = 3;
       return 0.;
     }
-    return weed_get_double_value(sdata->params[which], "value", &error);
+    return weed_get_double_value(sdata->params[which], WEED_LEAF_VALUE, &error);
   }
 
   if (!strncmp(what, "s[", 2)) {
@@ -695,8 +695,8 @@ static weed_error_t dataproc_init(weed_plant_t *inst) {
 
 
 static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   double res = 0.;
@@ -715,7 +715,7 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
 
   for (i = EQS; i < EQN; i++) {
     if (ip != NULL) weed_free(ip);
-    ip = weed_get_string_value(in_params[i], "value", NULL);
+    ip = weed_get_string_value(in_params[i], WEED_LEAF_VALUE, NULL);
 
     if (!strlen(ip)) continue;
 
@@ -817,7 +817,7 @@ static weed_error_t dataproc_process(weed_plant_t *inst, weed_timecode_t timesta
       if (!strncmp(ip, "s", 1)) {
         sdata->store[which] = res;
       } else {
-        weed_set_double_value(out_params[which], "value", res);
+        weed_set_double_value(out_params[which], WEED_LEAF_VALUE, res);
       }
     }
   }
@@ -859,7 +859,7 @@ WEED_SETUP_START(200, 200) {
     snprintf(name, 256, "input%03d", i);
     in_params[i] = weed_float_init(name, "", 0., -1000000000000., 1000000000000.);
     gui = weed_parameter_template_get_gui(in_params[i]);
-    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+    weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
   }
 
   for (i = EQS; i < EQN; i++) {
@@ -888,10 +888,10 @@ WEED_SETUP_START(200, 200) {
            "Equations are processed in sequence on each cycle; empty equation strings are ignored.\n"
            , EQS - 1);
 
-  weed_set_string_value(filter_class, "description", desc);
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

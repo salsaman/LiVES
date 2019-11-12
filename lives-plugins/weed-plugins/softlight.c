@@ -53,19 +53,19 @@ static void cp_chroma(unsigned char *dst, unsigned char *src, int irowstride, in
 
 
 static weed_error_t softlight_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
-                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-  uint8_t **srcp = (uint8_t **)weed_get_voidptr_array(in_channel, "pixel_data", NULL);
-  uint8_t **dstp = (uint8_t **)weed_get_voidptr_array(out_channel, "pixel_data", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  uint8_t **srcp = (uint8_t **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  uint8_t **dstp = (uint8_t **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
   uint8_t *src, *dst, *end;
 
-  int width = weed_get_int_value(in_channel, "width", NULL);
-  int height = weed_get_int_value(in_channel, "height", NULL);
-  int *irowstrides = weed_get_int_array(in_channel, "rowstrides", NULL);
-  int *orowstrides = weed_get_int_array(out_channel, "rowstrides", NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
 
-  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
-  int clamping = weed_get_int_value(in_channel, "YUV_clamping", NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int clamping = weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL);
 
   int irowstride, orowstride;
 
@@ -173,11 +173,11 @@ WEED_SETUP_START(200, 200) {
                                in_chantmpls, out_chantmpls, NULL, NULL);
 
   // set preference of unclamped
-  weed_set_int_value(in_chantmpls[0], "YUV_clamping", WEED_YUV_CLAMPING_UNCLAMPED);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

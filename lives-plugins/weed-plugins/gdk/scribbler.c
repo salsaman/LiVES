@@ -60,14 +60,13 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   // the channel shares pixel_data with cairo
   // so it should be copied before the cairo is destroyed
 
-  // "width","rowstrides" and "current_palette" of channel may all change
+  // WEED_LEAF_WIDTH,WEED_LEAF_ROWSTRIDES and WEED_LEAF_CURRENT_PALETTE of channel may all change
 
   int irowstride, orowstride;
   int width, widthx;
   int height;
   int pal;
   int error;
-  int flags = 0;
 
   register int i;
 
@@ -77,16 +76,16 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
   cairo_t *cairo;
   cairo_format_t cform = CAIRO_FORMAT_ARGB32;
 
-  width = weed_get_int_value(channel, "width", &error);
-  height = weed_get_int_value(channel, "height", &error);
-  pal = weed_get_int_value(channel, "current_palette", &error);
-  irowstride = weed_get_int_value(channel, "rowstrides", &error);
+  width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
+  height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
+  pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
 
   widthx = width * 4;
 
   orowstride = cairo_format_stride_for_width(cform, width);
 
-  src = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error);
+  src = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
 
   pixel_data = (guchar *)weed_malloc(height * orowstride);
 
@@ -104,11 +103,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     }
   }
 
-  if (weed_plant_has_leaf(channel, "flags")) flags = weed_get_int_value(channel, "flags", &error);
-  if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-    // if we have post-multiplied alpha, pre multiply
-    alpha_unpremult(pixel_data, widthx, height, orowstride, pal, FALSE);
-  }
+  alpha_premult(pixel_data, widthx, height, orowstride, pal, WEED_TRUE);
 
   surf = cairo_image_surface_create_for_data(pixel_data,
          cform,
@@ -136,13 +131,11 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
   int error;
 
-  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error);
+  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  int flags = 0;
-
-  int height = weed_get_int_value(channel, "height", &error);
-  int irowstride, orowstride = weed_get_int_value(channel, "rowstrides", &error);
-  int width = weed_get_int_value(channel, "width", &error), widthx = width * 4;
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error), widthx = width * 4;
 
   register int i;
 
@@ -164,14 +157,6 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
       src += irowstride;
     }
   }
-
-  if (weed_plant_has_leaf(channel, "flags")) flags = weed_get_int_value(channel, "flags", &error);
-  if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-    int pal = weed_get_int_value(channel, "current_palette", &error);
-
-    // un-premultiply the alpha
-    alpha_unpremult(pixel_data, widthx, height, orowstride, pal, TRUE);
-  }
 }
 
 
@@ -181,25 +166,25 @@ static int num_fonts_available = 0;
 int scribbler_init(weed_plant_t *inst) {
   int error;
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
   weed_plant_t *pgui;
-  int mode = weed_get_int_value(in_params[P_MODE], "value", &error);
+  int mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, &error);
 
   pgui = weed_parameter_get_gui(in_params[P_BGALPHA]);
-  if (mode == 0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
-  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+  if (mode == 0) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
+  else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
   pgui = weed_parameter_get_gui(in_params[P_BACKGROUND]);
-  if (mode == 0) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
-  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+  if (mode == 0) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
+  else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
   pgui = weed_parameter_get_gui(in_params[P_FGALPHA]);
-  if (mode == 2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
-  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+  if (mode == 2) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
+  else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
   pgui = weed_parameter_get_gui(in_params[P_FOREGROUND]);
-  if (mode == 2) weed_set_boolean_value(pgui, "hidden", WEED_TRUE);
-  else weed_set_boolean_value(pgui, "hidden", WEED_FALSE);
+  if (mode == 2) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
+  else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
   weed_free(in_params);
 
@@ -246,9 +231,9 @@ static void fill_bckg(cairo_t *cr, double x, double y, double dx, double dy) {
 int scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
   weed_plant_t *in_channel = NULL;
 
   rgb_t *fg, *bg;
@@ -266,27 +251,27 @@ int scribbler_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int fontnum;
   int mode;
 
-  int width = weed_get_int_value(out_channel, "width", &error);
-  int height = weed_get_int_value(out_channel, "height", &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
-  if (weed_plant_has_leaf(inst, "in_channels")) {
-    in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
+    in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
   }
 
-  text = weed_get_string_value(in_params[P_TEXT], "value", &error);
-  mode = weed_get_int_value(in_params[P_MODE], "value", &error);
-  fontnum = weed_get_int_value(in_params[P_FONT], "value", &error);
+  text = weed_get_string_value(in_params[P_TEXT], WEED_LEAF_VALUE, &error);
+  mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, &error);
+  fontnum = weed_get_int_value(in_params[P_FONT], WEED_LEAF_VALUE, &error);
 
-  fg = (rgb_t *)weed_get_int_array(in_params[P_FOREGROUND], "value", &error);
-  bg = (rgb_t *)weed_get_int_array(in_params[P_BACKGROUND], "value", &error);
+  fg = (rgb_t *)weed_get_int_array(in_params[P_FOREGROUND], WEED_LEAF_VALUE, &error);
+  bg = (rgb_t *)weed_get_int_array(in_params[P_BACKGROUND], WEED_LEAF_VALUE, &error);
 
-  f_alpha = weed_get_double_value(in_params[P_FGALPHA], "value", &error);
-  b_alpha = weed_get_double_value(in_params[P_BGALPHA], "value", &error);
-  font_size = weed_get_double_value(in_params[P_FONTSIZE], "value", &error);
+  f_alpha = weed_get_double_value(in_params[P_FGALPHA], WEED_LEAF_VALUE, &error);
+  b_alpha = weed_get_double_value(in_params[P_BGALPHA], WEED_LEAF_VALUE, &error);
+  font_size = weed_get_double_value(in_params[P_FONTSIZE], WEED_LEAF_VALUE, &error);
 
-  cent = weed_get_boolean_value(in_params[P_CENTER], "value", &error);
-  rise = weed_get_boolean_value(in_params[P_RISE], "value", &error);
-  top = weed_get_double_value(in_params[P_TOP], "value", &error);
+  cent = weed_get_boolean_value(in_params[P_CENTER], WEED_LEAF_VALUE, &error);
+  rise = weed_get_boolean_value(in_params[P_RISE], WEED_LEAF_VALUE, &error);
+  top = weed_get_double_value(in_params[P_TOP], WEED_LEAF_VALUE, &error);
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -438,10 +423,10 @@ WEED_SETUP_START(200, 200) {
 
   in_params[P_TEXT] = weed_text_init("text", "_Text", "");
   in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-  if (weed_plant_has_leaf(in_params[P_MODE], "flags"))
-    param_flags = weed_get_int_value(in_params[P_MODE], "flags", &error);
+  if (weed_plant_has_leaf(in_params[P_MODE], WEED_LEAF_FLAGS))
+    param_flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, &error);
   param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-  weed_set_int_value(in_params[P_MODE], "flags", param_flags);
+  weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, param_flags);
 
   if (fonts_available)
     in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, fonts_available);
@@ -458,10 +443,10 @@ WEED_SETUP_START(200, 200) {
   in_params[P_END] = NULL;
 
   pgui = weed_parameter_template_get_gui(in_params[P_TEXT]);
-  weed_set_int_value(pgui, "maxchars", 65536);
+  weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
   pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
-  weed_set_int_value(pgui, "copy_value_to", P_BGALPHA);
+  weed_set_int_value(pgui, WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
   filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, &scribbler_init, &scribbler_process, NULL,
                                         in_chantmpls,
@@ -479,9 +464,9 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_double_value(filter_class, "target_fps", 25.); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.); // set reasonable default fps
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

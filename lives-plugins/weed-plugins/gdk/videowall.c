@@ -59,12 +59,12 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   int error;
   GdkPixbuf *pixbuf;
-  int palette = weed_get_int_value(channel, "current_palette", &error);
-  int width = weed_get_int_value(channel, "width", &error);
-  int height = weed_get_int_value(channel, "height", &error);
-  int irowstride = weed_get_int_value(channel, "rowstrides", &error);
+  int palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
   int rowstride, orowstride;
-  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, "pixel_data", &error), *pixels, *end;
+  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error), *pixels, *end;
   gboolean cheat = FALSE;
   gint n_channels;
 
@@ -122,15 +122,15 @@ static weed_error_t videowall_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
   register int i, j;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
 
   sdata = weed_malloc(sizeof(struct _sdata));
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  palette = weed_get_int_value(in_channel, "current_palette", &error);
-  video_height = weed_get_int_value(in_channel, "height", &error);
-  video_width = weed_get_int_value(in_channel, "width", &error);
+  palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
   video_area = video_width * video_height;
 
   sdata->bgbuf = weed_malloc((psize = video_area * (palette == WEED_PALETTE_RGB24 ? 3 : 4)));
@@ -200,14 +200,14 @@ static weed_error_t videowall_deinit(weed_plant_t *inst) {
 
 static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
 
   GdkPixbuf *in_pixbuf = pl_channel_to_pixbuf(in_channel);
   GdkPixbuf *out_pixbuf;
@@ -229,11 +229,11 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
   int offs_x, offs_y;
   uint32_t fastrand_val = fastrand(0);
 
-  xwid = weed_get_int_value(in_params[0], "value", &error);
-  xht = weed_get_int_value(in_params[1], "value", &error);
-  mode = weed_get_int_value(in_params[2], "value", &error);
+  xwid = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
+  xht = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
+  mode = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, &error);
 
-  dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
@@ -355,7 +355,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
 
 
   if (++sdata->count == xwid * xht) sdata->count = 0;
-  orow = weed_get_int_value(out_channel, "rowstrides", &error);
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
 
   if (orow == width * psize) {
     weed_memcpy(dst, sdata->bgbuf, width * psize * height);

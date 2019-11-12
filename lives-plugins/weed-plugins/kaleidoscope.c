@@ -194,11 +194,11 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
 
 
 static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL),
-                *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
@@ -211,11 +211,11 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   float anglerot = 0.;
   double dtime, sfac, angleoffs;
 
-  int width = weed_get_int_value(in_channel, "width", NULL), hwidth = width >> 1;
-  int height = weed_get_int_value(in_channel, "height", NULL), hheight = height >> 1;
-  int palette = weed_get_int_value(in_channel, "current_palette", NULL);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), hwidth = width >> 1;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL), hheight = height >> 1;
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   int psize = 4;
 
   int sizerev;
@@ -229,20 +229,20 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   if (width < height) side = width / 2. / RT32;
   else side = height / 2.;
 
-  sfac = log(weed_get_double_value(in_params[0], "value", NULL)) / 2.;
+  sfac = log(weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL)) / 2.;
 
-  angleoffs = weed_get_double_value(in_params[1], "value", NULL);
+  angleoffs = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
 
   if (sdata->old_tc != 0 && timestamp > sdata->old_tc) {
-    anglerot = (float)weed_get_double_value(in_params[2], "value", NULL);
+    anglerot = (float)weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
     dtime = (double)(timestamp - sdata->old_tc) / 100000000.;
     anglerot *= (float)dtime;
     while (anglerot >= TWO_PI) anglerot -= TWO_PI;
   }
 
-  if (weed_get_boolean_value(in_params[4], "value", NULL) == WEED_TRUE) anglerot = -anglerot;
+  if (weed_get_boolean_value(in_params[4], WEED_LEAF_VALUE, NULL) == WEED_TRUE) anglerot = -anglerot;
 
-  sizerev = weed_get_boolean_value(in_params[5], "value", NULL);
+  sizerev = weed_get_boolean_value(in_params[5], WEED_LEAF_VALUE, NULL);
 
   weed_free(in_params);
 
@@ -267,9 +267,9 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   end = -hheight;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", NULL);
-    int dheight = weed_get_int_value(out_channel, "height", NULL);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
     if (offset > 0) upd = 0;
 
@@ -359,7 +359,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
   weed_plant_t *in_params[] = {weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
-                               weed_float_init("offset", "_Offset angle", 0., 0., 359.),
+                               weed_float_init(WEED_LEAF_OFFSET, "_Offset angle", 0., 0., 359.),
                                weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
                                weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),
                                weed_radio_init("cw", "_Clockwise", WEED_FALSE, 1),
@@ -372,17 +372,17 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);
 
-  weed_set_boolean_value(in_params[1], "wrap", WEED_TRUE);
+  weed_set_boolean_value(in_params[1], WEED_LEAF_WRAP, WEED_TRUE);
 
-  weed_set_double_value(gui, "step_size", .1);
+  weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
   gui = weed_parameter_template_get_gui(in_params[0]);
 
-  weed_set_double_value(gui, "step_size", .1);
+  weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END
 

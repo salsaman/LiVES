@@ -32,8 +32,8 @@ static int package_version = 1; // version of this package
 
 static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
   double *fvals, xval;
 
   int oidx = 0, nvals;
@@ -41,14 +41,14 @@ static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestam
   register int i, j;
 
   for (i = 0; i < N_ELEMS; i++) {
-    nvals = weed_leaf_num_elements(in_params[i], "value");
+    nvals = weed_leaf_num_elements(in_params[i], WEED_LEAF_VALUE);
     if (nvals > 0) {
-      fvals = weed_get_double_array(in_params[i], "value", &error);
+      fvals = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, &error);
       for (j = 0; j < nvals; j++) {
         xval = fvals[j];
         if (xval > 1.) xval = 1.;
         if (xval < -1.) xval = -1.;
-        weed_set_double_value(out_params[oidx++], "value", xval);
+        weed_set_double_value(out_params[oidx++], WEED_LEAF_VALUE, xval);
         if (oidx == N_ELEMS) break;
       }
       weed_free(fvals);
@@ -79,7 +79,7 @@ WEED_SETUP_START(200, 200) {
     snprintf(name, 256, "input%03d", i);
     snprintf(label, 256, "Input %03d", i);
     in_params[i] = weed_float_init(name, label, 0., 0., 1.);
-    weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_VARIABLE_ELEMENTS);
+    weed_set_int_value(in_params[i], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE);
 
     snprintf(name, 256, "Output %03d", i);
     out_params[i] = weed_out_param_float_init(name, 0., -1., 1.);
@@ -97,10 +97,10 @@ WEED_SETUP_START(200, 200) {
            "The outputs are suitable for passing into the inputs of the data_processing plugin\n"
            , N_ELEMS);
 
-  weed_set_string_value(filter_class, "description", "desc");
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "desc");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

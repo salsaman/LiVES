@@ -96,7 +96,7 @@ static weed_error_t rotozoom_init(weed_plant_t *inst) {
 static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   unsigned char *src, *dst;
   weed_plant_t *in_channel, *out_channel;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   int width, height, irowstride, orowstride, palette;
   int psize = 3;
@@ -107,31 +107,31 @@ static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t timesta
 
   int offset = 0, dheight;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  src = (unsigned char *)weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  dst = (unsigned char *)weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  src = (unsigned char *)weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dst = (unsigned char *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  width = weed_get_int_value(in_channel, "width", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
-  palette = weed_get_int_value(in_channel, "current_palette", NULL);
-  irowstride = weed_get_int_value(in_channel, "rowstrides", NULL);
-  orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
 
-  autozoom = weed_get_boolean_value(in_params[1], "value", NULL);
+  autozoom = weed_get_boolean_value(in_params[1], WEED_LEAF_VALUE, NULL);
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    offset = weed_get_int_value(out_channel, "offset", NULL);
-    dheight = weed_get_int_value(out_channel, "height", NULL);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
     dst += offset * orowstride;
   } else dheight = height;
 
   if (autozoom == WEED_TRUE) {
     weed_set_int_value(inst, "plugin_zpath", (zpath + 1) & 255);
   } else {
-    zpath = weed_get_int_value(in_params[0], "value", NULL);
+    zpath = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
     weed_set_int_value(inst, "plugin_zpath", zpath);
   }
   zoom = roto2[zpath];
@@ -166,7 +166,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
   // static data for all instances
   for (i = 0; i < 256; i++) {

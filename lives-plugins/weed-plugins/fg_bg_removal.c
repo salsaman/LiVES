@@ -42,9 +42,9 @@ static weed_error_t common_init(weed_plant_t *inst) {
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  height = weed_get_int_value(in_channel, "height", &error);
-  width = weed_get_int_value(in_channel, "width", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
 
   sdata->av_luma_data = (uint8_t *)weed_calloc(width * height * 3, 1);
   if (sdata->av_luma_data == NULL) {
@@ -88,16 +88,16 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   uint8_t *av_luma_data;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error), *in_param;
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dest = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error) * 3;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
   unsigned char *end = src + height * irowstride;
   int inplace = (src == dest);
   int red = 0, blue = 2;
@@ -111,17 +111,17 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   }
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
     src += offset * irowstride;
     dest += offset * orowstride;
     end = src + dheight * irowstride;
   }
 
-  in_param = weed_get_plantptr_value(inst, "in_parameters", &error);
-  bf = weed_get_int_value(in_param, "value", &error);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
   luma_threshold = (uint8_t)bf;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
@@ -219,7 +219,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

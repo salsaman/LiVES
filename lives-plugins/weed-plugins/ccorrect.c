@@ -78,27 +78,27 @@ static weed_error_t ccorrect_deinit(weed_plant_t *inst) {
 static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   _sdata *sdata;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
 
-  int width = weed_get_int_value(in_channel, "width", &error) * 3;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
   int psize = 4;
 
   unsigned char *end = src + height * irowstride;
   int inplace = (dst == src);
   int offs = 0;
-  int palette = weed_get_int_value(in_channel, "current_palette", &error);
-  weed_plant_t **params = weed_get_plantptr_array(inst, "in_parameters", &error);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  weed_plant_t **params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  double red = weed_get_double_value(params[0], "value", &error);
-  double green = weed_get_double_value(params[1], "value", &error);
-  double blue = weed_get_double_value(params[2], "value", &error);
+  double red = weed_get_double_value(params[0], WEED_LEAF_VALUE, &error);
+  double green = weed_get_double_value(params[1], WEED_LEAF_VALUE, &error);
+  double blue = weed_get_double_value(params[2], WEED_LEAF_VALUE, &error);
 
   register int i;
 
@@ -120,9 +120,9 @@ static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t timesta
   }
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
     src += offset * irowstride;
     dst += offset * orowstride;
@@ -168,7 +168,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

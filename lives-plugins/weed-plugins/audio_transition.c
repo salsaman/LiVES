@@ -27,7 +27,7 @@ static int package_version = 1; // version of this package
 
 static weed_error_t atrans_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   // this is a bit of a cheat - we simply rely on the fact that the host will automatically adjust volume levels
-  // depending on the value of the "transition" parameter for transition effects which have audio in / out
+  // depending on the value of the WEED_LEAF_IS_TRANSITION parameter for transition effects which have audio in / out
   // channels (normally they would also have video channels...)
 
   // since  we also hinted "inplace", out channel[0] data should be set to in_channel[0] data anyway
@@ -46,9 +46,9 @@ WEED_SETUP_START(200, 200) {
                                out_chantmpls,
                                in_params, NULL);
 
-  weed_set_boolean_value(in_params[0], "transition", WEED_TRUE);
+  weed_set_boolean_value(in_params[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

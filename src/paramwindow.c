@@ -1442,7 +1442,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   LiVESWidget *entry = NULL;
   LiVESWidget *hbox;
   LiVESWidget *combo;
-  LiVESWidget *dlabel = NULL;
+  //LiVESWidget *dlabel = NULL;
   LiVESWidget *textview = NULL;
   LiVESWidget *scrolledwindow;
   LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
@@ -1459,8 +1459,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
   lives_colRGBA64_t rgba;
 
   char *name;
-  char *txt, *tmp;
-  char *disp_string;
+  char *txt;//, *tmp;
+  //char *disp_string;
 
   int wcount = 0;
 
@@ -1495,14 +1495,14 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   switch (param->type) {
   case LIVES_PARAM_BOOL:
-    if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
-      dlabel = lives_standard_label_new((tmp = lives_strdup_printf("(%s)", _(disp_string))));
-      lives_free(tmp);
-      lives_free(disp_string);
-      if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel);
-      else lives_box_pack_end(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
-      param->widgets[1] = dlabel;
-    }
+    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
+    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("(%s)", _(disp_string)))); */
+    /*   lives_free(tmp); */
+    /*   lives_free(disp_string); */
+    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
+    /*   else lives_box_pack_end(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
+    /*   param->widgets[1] = dlabel; */
+    /* } */
 
     if (!param->group) {
       widget_opts.mnemonic_label = use_mnemonic;
@@ -1610,14 +1610,14 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 #endif
     }
 
-    if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
-      dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string))));
-      lives_free(tmp);
-      lives_free(disp_string);
-      if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel);
-      lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
-      param->widgets[++wcount] = dlabel;
-    }
+    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
+    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string)))); */
+    /*   lives_free(tmp); */
+    /*   lives_free(disp_string); */
+    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
+    /*   lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
+    /*   param->widgets[++wcount] = dlabel; */
+    /* } */
 
     if (add_scalers) {
       if (add_slider && !param->wrap) {
@@ -1693,26 +1693,27 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       lives_widget_set_sensitive(cbutton, FALSE);
     }
 
-    if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
-      dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string))));
-      lives_free(tmp);
-      lives_free(disp_string);
-      if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel);
-      else lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width);
-      param->widgets[5] = dlabel;
-    }
+    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
+    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string)))); */
+    /*   lives_free(tmp); */
+    /*   lives_free(disp_string); */
+    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
+    /*   else lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
+    /*   param->widgets[5] = dlabel; */
+    /* } */
 
     break;
 
   case LIVES_PARAM_STRING:
-    if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
-      if (param->max == 0.) txt = lives_strdup(disp_string);
-      else txt = lives_strndup(disp_string, (int)param->max);
-      lives_free(disp_string);
-    } else {
-      if (param->max == 0.) txt = lives_strdup((char *)param->value);
-      else txt = lives_strndup((char *)param->value, (int)param->max);
-    }
+    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
+    /*   if (param->max == 0.) txt = lives_strdup(disp_string); */
+    /*   else txt = lives_strndup(disp_string, (int)param->max); */
+    /*   lives_free(disp_string); */
+    /* } else { */
+
+    if (param->max == 0.) txt = lives_strdup((char *)param->value);
+    else txt = lives_strndup((char *)param->value, (int)param->max);
+    //}
 
     if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
         param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
@@ -1794,14 +1795,15 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     widget_opts.mnemonic_label = TRUE;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-    if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) {
-      lives_combo_set_active_string(LIVES_COMBO(combo), disp_string);
-      lives_free(disp_string);
-    } else if (param->list != NULL) {
+    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
+    /*   lives_combo_set_active_string(LIVES_COMBO(combo), disp_string); */
+    /*   lives_free(disp_string); */
+    //} else {
+    if (param->list != NULL) {
       lives_combo_set_active_string(LIVES_COMBO(combo),
                                     (char *)lives_list_nth_data(param->list, get_int_param(param->value)));
     }
-
+    //}
     lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_string_list_changed), (livespointer) rfx);
 
@@ -1901,7 +1903,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
     int error;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      char *disp_string;
+      //char *disp_string;
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       int index = 0, numvals;
       int key = -1;
@@ -1946,13 +1948,13 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
         if (copyto != -1) rec_param_change(inst, copyto);
       }
 
-      disp_string = get_weed_display_string(inst, param_number);
-      if (disp_string != NULL) {
-        widget_opts.mnemonic_label = FALSE;
-        lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string);
-        widget_opts.mnemonic_label = TRUE;
-        lives_free(disp_string);
-      }
+      /* disp_string = get_weed_display_string(inst, param_number); */
+      /* if (disp_string != NULL) { */
+      /*   widget_opts.mnemonic_label = FALSE; */
+      /*   lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string); */
+      /*   widget_opts.mnemonic_label = TRUE; */
+      /*   lives_free(disp_string); */
+      /* } */
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
@@ -2018,7 +2020,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     int error;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      char *disp_string;
+      //char *disp_string;
 
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
@@ -2093,13 +2095,13 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         if (copyto != -1) rec_param_change(inst, copyto);
       }
 
-      disp_string = get_weed_display_string(inst, param_number);
-      if (disp_string != NULL) {
-        widget_opts.mnemonic_label = FALSE;
-        lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string);
-        widget_opts.mnemonic_label = TRUE;
-        lives_free(disp_string);
-      }
+      /* disp_string = get_weed_display_string(inst, param_number); */
+      /* if (disp_string != NULL) { */
+      /*   widget_opts.mnemonic_label = FALSE; */
+      /*   lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string); */
+      /*   widget_opts.mnemonic_label = TRUE; */
+      /*   lives_free(disp_string); */
+      /* } */
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
@@ -2571,7 +2573,7 @@ boolean after_param_text_focus_changed(LiVESWidget *hbox, LiVESWidget *child, li
 
 
 void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
-  LiVESTextBuffer *textbuffer = NULL;
+  //LiVESTextBuffer *textbuffer = NULL;
 
   LiVESList *retvals = NULL;
 
@@ -2611,7 +2613,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     int error, i;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      char *disp_string = get_weed_display_string(inst, param_number);
+      //char *disp_string = get_weed_display_string(inst, param_number);
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       int index = 0, numvals;
       int key = -1;
@@ -2656,14 +2658,14 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
         if (copyto != -1) rec_param_change(inst, copyto);
       }
 
-      if (disp_string != NULL) {
-        if ((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) {
-          lives_text_buffer_set_text(LIVES_TEXT_BUFFER(textbuffer), (char *)param->value, -1);
-        } else {
-          lives_entry_set_text(LIVES_ENTRY(textwidget), disp_string);
-        }
-        lives_free(disp_string);
-      }
+      /* if (disp_string != NULL) { */
+      /*   if ((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) { */
+      /*     lives_text_buffer_set_text(LIVES_TEXT_BUFFER(textbuffer), (char *)param->value, -1); */
+      /*   } else { */
+      /*     lives_entry_set_text(LIVES_ENTRY(textwidget), disp_string); */
+      /*   } */
+      /*   lives_free(disp_string); */
+      /* } */
 
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
         weed_reinit_effect(inst, FALSE);
@@ -2725,7 +2727,7 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
     int error;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
     if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      char *disp_string = get_weed_display_string(inst, param_number);
+      //char *disp_string = get_weed_display_string(inst, param_number);
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       int index = 0, numvals;
       int key = -1;
@@ -2769,12 +2771,12 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
         if (copyto != -1) rec_param_change(inst, copyto);
       }
 
-      if (disp_string != NULL) {
-        lives_signal_handlers_block_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx);
-        lives_combo_set_active_string(LIVES_COMBO(combo), disp_string);
-        lives_signal_handlers_unblock_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx);
-        lives_free(disp_string);
-      }
+      /* if (disp_string != NULL) { */
+      /*   lives_signal_handlers_block_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx); */
+      /*   lives_combo_set_active_string(LIVES_COMBO(combo), disp_string); */
+      /*   lives_signal_handlers_unblock_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx); */
+      /*   lives_free(disp_string); */
+      /* } */
 
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
         weed_reinit_effect(inst, FALSE); // this will cause g_notify() to throw an error, because we destroy the combo in its own callback

@@ -95,21 +95,21 @@ static weed_error_t bumpmap_deinit(weed_plant_t *inst) {
 
 static weed_error_t bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error), *isrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error), *isrc = src;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
 
   int inplace = (src == dst);
 
   if (height == 0 || width == 0 || dst == NULL || src == NULL) return WEED_SUCCESS;
   else {
-    int palette = weed_get_int_value(in_channel, "current_palette", &error);
-    int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-    int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+    int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+    int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+    int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
     int yuv_clamping = weed_get_int_value(in_channel, "yuv_clamping", &error);
     int psize = weed_palette_get_bits_per_macropixel(palette) >> 3;
     int widthx = width * psize;
@@ -206,7 +206,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
   bumpmap_setup();
 }

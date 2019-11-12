@@ -27,12 +27,12 @@ static int package_version = 1; // version of this package
 
 static weed_error_t ptest_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error),
-                *out_channel = weed_get_plantptr_value(inst, "out_channels", &error);
-  void **src = weed_get_voidptr_array(in_channel, "pixel_data", &error);
-  void **dst = weed_get_voidptr_array(out_channel, "pixel_data", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  void **src = weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  void **dst = weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
 
   if (src[0] != dst[0]) weed_memcpy(dst[0], src[0], width * height * 4);
   /*
@@ -58,12 +58,12 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(in_chantmpls[0], "YUV_clamping", WEED_YUV_CLAMPING_CLAMPED);
-  weed_set_int_value(out_chantmpls[0], "YUV_clamping", WEED_YUV_CLAMPING_CLAMPED);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_CLAMPED);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_CLAMPED);
 
   gui = weed_filter_class_get_gui(filter_class);
-  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

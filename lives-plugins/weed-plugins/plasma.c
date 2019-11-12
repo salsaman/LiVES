@@ -93,13 +93,13 @@ static weed_error_t plasma_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
-  int width = weed_get_int_value(out_channel, "width", NULL);
-  int height = weed_get_int_value(out_channel, "height", NULL);
-  int palette = weed_get_int_value(out_channel, "current_palette", NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  int palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
   _sdata *sd = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  int rowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  int rowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   uint8_t index;
   int widthx = width * 3;
   int offs, x;
@@ -157,11 +157,11 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, &plasma_init, &plasma_process,
                                         &plasma_deinit, NULL,
                                         out_chantmpls, NULL, NULL);
-  weed_set_double_value(filter_class, "target_fps", 50.); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   plasma_prep();
 }
 WEED_SETUP_END;

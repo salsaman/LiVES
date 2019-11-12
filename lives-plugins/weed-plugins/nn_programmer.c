@@ -82,16 +82,16 @@ static weed_error_t nnprog_init(weed_plant_t *inst) {
 
 static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_error_t error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  double fit = (1. - weed_get_double_value(in_params[0], "value", &error)) / (double)NGAUSS;
+  double fit = (1. - weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error)) / (double)NGAUSS;
   double rval;
 
-  int innodes = weed_get_int_value(in_params[1], "value", &error);
-  int outnodes = weed_get_int_value(in_params[2], "value", &error);
-  int hnodes = weed_get_int_value(in_params[3], "value", &error);
+  int innodes = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
+  int outnodes = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, &error);
+  int hnodes = weed_get_int_value(in_params[3], WEED_LEAF_VALUE, &error);
 
   char *strings[256];
   char tmp[MAXSTRLEN];
@@ -164,7 +164,7 @@ static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp
   }
 
   for (i = 0; i < hnodes + outnodes; i++) {
-    weed_set_string_value(out_params[i], "value", strings[i]);
+    weed_set_string_value(out_params[i], WEED_LEAF_VALUE, strings[i]);
 #ifdef DEBUG
     if (strlen(strings[i])) printf("eqn %d: %s\n", i, strings[i]);
 #endif
@@ -216,10 +216,10 @@ WEED_SETUP_START(200, 200) {
                                         &nnprog_deinit, NULL, NULL, in_params, out_params);
 
   gui = weed_filter_class_get_gui(filter_class);
-  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   for (i = 1; i < 4; i++)
-    weed_set_int_value(in_params[i], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+    weed_set_int_value(in_params[i], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   snprintf(desc, 512, "%s", "Runs a neural net.\n"
            "On each cycle, generates string equations for the output nodes,\n"
@@ -232,7 +232,7 @@ WEED_SETUP_START(200, 200) {
            "A Gaussian randomiser is used to vary the random factors.\n");
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

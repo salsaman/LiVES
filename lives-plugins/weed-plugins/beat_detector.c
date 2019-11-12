@@ -159,18 +159,18 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
   int chans, nsamps, onsamps, base, inter, rate, k;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
-  float *src = (float *)weed_get_voidptr_value(in_channel, "audio_data", &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  float *src = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
 
-  int reset = weed_get_boolean_value(in_params[0], "value", &error);
-  double avlim = weed_get_double_value(in_params[1], "value", &error);
-  double varlim = weed_get_double_value(in_params[2], "value", &error);
-  int hamming = weed_get_boolean_value(in_params[3], "value", &error);
+  int reset = weed_get_boolean_value(in_params[0], WEED_LEAF_VALUE, &error);
+  double avlim = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error);
+  double varlim = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, &error);
+  int hamming = weed_get_boolean_value(in_params[3], WEED_LEAF_VALUE, &error);
 
-  int beat_pulse = WEED_FALSE, beat_hold = weed_get_boolean_value(out_params[1], "value", &error);
+  int beat_pulse = WEED_FALSE, beat_hold = weed_get_boolean_value(out_params[1], WEED_LEAF_VALUE, &error);
 
   int has_data = WEED_FALSE;
 
@@ -188,17 +188,17 @@ int beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (beat_hold == WEED_TRUE) beat_hold = !reset;
 
-  onsamps = weed_get_int_value(in_channel, "audio_data_length", &error);
+  onsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
 
   if (onsamps < 2) {
     beat_pulse = beat_hold = WEED_FALSE;
     goto done;
   }
 
-  rate = weed_get_int_value(in_channel, "audio_rate", &error);
+  rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, &error);
 
-  chans = weed_get_int_value(in_channel, "audio_channels", &error);
-  inter = weed_get_boolean_value(in_channel, "audio_interleaf", &error);
+  chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
+  inter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
 
   // have we buffered enough data ?
   if ((float)sdata->totsamps / (float)rate * 1000. >= STIME) {
@@ -377,10 +377,10 @@ done:
   //if (beat_hold) printf("BEAT %p !\n",out_params[1]);
   //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
 
-  weed_set_boolean_value(out_params[0], "value", beat_pulse);
-  weed_set_int64_value(out_params[0], "timecode", timestamp);
-  weed_set_boolean_value(out_params[1], "value", beat_hold);
-  weed_set_int64_value(out_params[1], "timecode", timestamp);
+  weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, beat_pulse);
+  weed_set_int64_value(out_params[0], WEED_LEAF_TIMECODE, timestamp);
+  weed_set_boolean_value(out_params[1], WEED_LEAF_VALUE, beat_hold);
+  weed_set_int64_value(out_params[1], WEED_LEAF_TIMECODE, timestamp);
 
   weed_free(out_params);
 
@@ -399,11 +399,11 @@ WEED_SETUP_START(200, 200) {
                                &beat_deinit, in_chantmpls, NULL, in_params, out_params);
 
   weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
-  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

@@ -43,8 +43,8 @@ static double getrand(double min, double max) {
 
 
 static weed_error_t randomiser_init(weed_plant_t *inst) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
 
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
 
@@ -55,12 +55,12 @@ static weed_error_t randomiser_init(weed_plant_t *inst) {
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   for (i = 0; i < NVALS; i++) {
-    sdata->vals[i] = weed_get_boolean_value(in_params[i], "value", NULL);
+    sdata->vals[i] = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
 
-    min = weed_get_double_value(in_params[NVALS + i * 4], "value", NULL);
-    max = weed_get_double_value(in_params[NVALS + i * 4 + 1], "value", NULL);
+    min = weed_get_double_value(in_params[NVALS + i * 4], WEED_LEAF_VALUE, NULL);
+    max = weed_get_double_value(in_params[NVALS + i * 4 + 1], WEED_LEAF_VALUE, NULL);
     nrand = min + (max - min) / 2.;
-    weed_set_double_value(out_params[i], "value", nrand);
+    weed_set_double_value(out_params[i], WEED_LEAF_VALUE, nrand);
   }
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
@@ -81,8 +81,8 @@ int randomiser_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t randomiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
 
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
@@ -93,16 +93,16 @@ static weed_error_t randomiser_process(weed_plant_t *inst, weed_timecode_t times
   register int i;
 
   for (i = 0; i < NVALS; i++) {
-    iv = weed_get_boolean_value(in_params[i], "value", NULL);
+    iv = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
 
     if (iv != sdata->vals[i]) {
-      trigt = weed_get_boolean_value(in_params[NVALS + i * 4 + 2], "value", NULL);
-      trigf = weed_get_boolean_value(in_params[NVALS + i * 4 + 3], "value", NULL);
+      trigt = weed_get_boolean_value(in_params[NVALS + i * 4 + 2], WEED_LEAF_VALUE, NULL);
+      trigf = weed_get_boolean_value(in_params[NVALS + i * 4 + 3], WEED_LEAF_VALUE, NULL);
       if ((iv == WEED_TRUE && trigt == WEED_TRUE) || (iv == WEED_FALSE && trigf == WEED_FALSE)) {
-        min = weed_get_double_value(in_params[NVALS + i * 4], "value", NULL);
-        max = weed_get_double_value(in_params[NVALS + i * 4 + 1], "value", NULL);
+        min = weed_get_double_value(in_params[NVALS + i * 4], WEED_LEAF_VALUE, NULL);
+        max = weed_get_double_value(in_params[NVALS + i * 4 + 1], WEED_LEAF_VALUE, NULL);
         nrand = getrand(min, max);
-        weed_set_double_value(out_params[i], "value", nrand);
+        weed_set_double_value(out_params[i], WEED_LEAF_VALUE, nrand);
       }
       sdata->vals[i] = iv;
     }
@@ -134,7 +134,7 @@ WEED_SETUP_START(200, 200) {
     snprintf(label, 256, "Trigger %03d", i);
     in_params[i] = weed_switch_init(name, label, WEED_FALSE);
     gui = weed_parameter_template_get_gui(in_params[i]);
-    weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+    weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
     snprintf(name, 256, "Output %03d", i);
     out_params[i] = weed_out_param_float_init_nominmax(name, 0.);
   }
@@ -168,11 +168,11 @@ WEED_SETUP_START(200, 200) {
 
   snprintf(desc, 256, "%s", "For each of the %d outputs,\n"
            "produce a random double when the corresponding input changes state");
-  weed_set_string_value(filter_class, "description", desc);
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

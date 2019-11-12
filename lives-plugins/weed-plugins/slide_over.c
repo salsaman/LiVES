@@ -32,12 +32,12 @@ static inline int pick_direction(uint32_t fastrand_val) {
 
 static weed_error_t sover_init(weed_plant_t *inst) {
   int dirpref;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  if (weed_get_boolean_value(in_params[1], "value", NULL) == WEED_TRUE) dirpref = 0;
-  else if (weed_get_boolean_value(in_params[2], "value", NULL) == WEED_TRUE) dirpref = 1; // left to right
-  else if (weed_get_boolean_value(in_params[3], "value", NULL) == WEED_TRUE) dirpref = 2; // right to left
-  else if (weed_get_boolean_value(in_params[4], "value", NULL) == WEED_TRUE) dirpref = 3; // top to bottom
+  if (weed_get_boolean_value(in_params[1], WEED_LEAF_VALUE, NULL) == WEED_TRUE) dirpref = 0;
+  else if (weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, NULL) == WEED_TRUE) dirpref = 1; // left to right
+  else if (weed_get_boolean_value(in_params[3], WEED_LEAF_VALUE, NULL) == WEED_TRUE) dirpref = 2; // right to left
+  else if (weed_get_boolean_value(in_params[4], WEED_LEAF_VALUE, NULL) == WEED_TRUE) dirpref = 3; // top to bottom
   else dirpref = 4; // bottom to top
 
   weed_set_int_value(inst, "plugin_direction", dirpref);
@@ -46,17 +46,17 @@ static weed_error_t sover_init(weed_plant_t *inst) {
 
 
 static weed_error_t sover_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", NULL), *out_channel = weed_get_plantptr_value(inst,
-                               "out_channels",
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
+                               WEED_LEAF_OUT_CHANNELS,
                                NULL);
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], "pixel_data", NULL);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], "pixel_data", NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
-  int width = weed_get_int_value(in_channels[0], "width", NULL);
-  int height = weed_get_int_value(in_channels[0], "height", NULL);
-  int irowstride1 = weed_get_int_value(in_channels[0], "rowstrides", NULL);
-  int irowstride2 = weed_get_int_value(in_channels[1], "rowstrides", NULL);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
+  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, NULL);
+  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
+  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   weed_plant_t **in_params;
 
   register int j;
@@ -66,11 +66,11 @@ static weed_error_t sover_process(weed_plant_t *inst, weed_timecode_t timecode) 
   int mvlower, mvupper;
   int bound;
 
-  in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-  transval = weed_get_int_value(in_params[0], "value", NULL);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  transval = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
   dirn = weed_get_int_value(inst, "plugin_direction", NULL);
-  mvlower = weed_get_boolean_value(in_params[6], "value", NULL);
-  mvupper = weed_get_boolean_value(in_params[7], "value", NULL);
+  mvlower = weed_get_boolean_value(in_params[6], WEED_LEAF_VALUE, NULL);
+  mvupper = weed_get_boolean_value(in_params[7], WEED_LEAF_VALUE, NULL);
 
   if (dirn == 0) {
     dirn = pick_direction(fastrand(0)); // random
@@ -171,21 +171,21 @@ WEED_SETUP_START(200, 200) {
                          "layout|p1|", "layout|p2|p3|", "layout|p4|p5|", "layout|hseparator|"
                         };
 
-  weed_set_string_value(gui, "layout_scheme", "RFX");
-  weed_set_string_value(gui, "rfx_delim", "|");
-  weed_set_string_array(gui, "rfx_strings", 7, rfx_strings);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 7, rfx_strings);
 
-  weed_set_boolean_value(in_params[0], "transition", WEED_TRUE);
+  weed_set_boolean_value(in_params[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
 
-  weed_set_int_value(in_params[1], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-  weed_set_int_value(in_params[2], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-  weed_set_int_value(in_params[3], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-  weed_set_int_value(in_params[4], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-  weed_set_int_value(in_params[5], "flags", WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[1], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[2], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[3], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[4], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+  weed_set_int_value(in_params[5], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

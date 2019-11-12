@@ -2162,7 +2162,7 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
           if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
           hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
           flags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, &error);
-          if (flags & WEED_PARAMETER_VARIABLE_ELEMENTS) flags ^= WEED_PARAMETER_VARIABLE_ELEMENTS;
+          if (flags & WEED_PARAMETER_VARIABLE_SIZE) flags ^= WEED_PARAMETER_VARIABLE_SIZE;
           if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && flags == 0 && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
             if (oval1 == 0) {
               if (hint == WEED_HINT_INTEGER) {

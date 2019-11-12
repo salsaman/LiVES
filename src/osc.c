@@ -266,10 +266,10 @@ static const char *get_omc_const(const char *cname) {
   // parameter flags
   if (!strcmp(cname, "LIVES_PARAM_FLAGS_REINIT_ON_VALUE_CHANGE"))
     return get_value_of((const int)WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-  if (!strcmp(cname, "LIVES_PARAM_FLAGS_VARIABLE_ELEMENTS"))
-    return get_value_of((const int)WEED_PARAMETER_VARIABLE_ELEMENTS);
-  if (!strcmp(cname, "LIVES_PARAM_FLAGS_ELEMENT_PER_CHANNEL"))
-    return get_value_of((const int)WEED_PARAMETER_ELEMENT_PER_CHANNEL);
+  if (!strcmp(cname, "LIVES_PARAM_FLAGS_VARIABLE_SIZE"))
+    return get_value_of((const int)WEED_PARAMETER_VARIABLE_SIZE);
+  if (!strcmp(cname, "LIVES_PARAM_FLAGS_VALUE_PER_CHANNEL"))
+    return get_value_of((const int)WEED_PARAMETER_VALUE_PER_CHANNEL);
 
   // notification types
   if (!strcmp(cname, "LIVES_OSC_NOTIFY_SUCCESS"))
@@ -6085,8 +6085,9 @@ boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *va
 
   ptmpl = weed_filter_in_paramtmpl(filter, pnum, TRUE);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_TRANSITION) &&
-      weed_get_boolean_value(ptmpl, WEED_LEAF_TRANSITION, &error) == WEED_TRUE) return lives_status_send(get_omc_const("LIVES_TRUE"));
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_IS_TRANSITION) &&
+      weed_get_boolean_value(ptmpl, WEED_LEAF_IS_TRANSITION, &error) == WEED_TRUE)
+    return lives_status_send(get_omc_const("LIVES_TRUE"));
   return lives_status_send(get_omc_const("LIVES_FALSE"));
 }
 

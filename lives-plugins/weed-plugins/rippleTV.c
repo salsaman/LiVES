@@ -158,10 +158,10 @@ static weed_error_t ripple_init(weed_plant_t *inst) {
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, "in_channels", &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
 
-  map_h = weed_get_int_value(in_channel, "height", &error);
-  map_w = weed_get_int_value(in_channel, "width", &error);
+  map_h = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  map_w = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
 
   sdata->map = (int *)weed_calloc(map_h * map_w * 3, sizeof(int));
   if (sdata->map == NULL) {
@@ -353,24 +353,24 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
   mode = 0;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  src = weed_get_voidptr_value(in_channel, "pixel_data", NULL);
-  dest = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  width = weed_get_int_value(in_channel, "width", NULL);
-  height = weed_get_int_value(in_channel, "height", NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  irowstride = weed_get_int_value(in_channel, "rowstrides", NULL) / 4;
-  orowstridex = orowstride = weed_get_int_value(out_channel, "rowstrides", NULL) / 4;
+  irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  orowstridex = orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
 
   //if (width%2!=0) orowstridex--;
 
   sdata->fastrand_val = fastrand(0);
 
-  in_param = weed_get_plantptr_value(inst, "in_parameters", NULL);
-  mode = weed_get_int_value(in_param, "value", NULL);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  mode = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
 
   /* impact from the motion or rain drop */
   if (mode) {
@@ -491,7 +491,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 
   setTable();
 }

@@ -34,16 +34,16 @@ static int package_version = 1; // version of this package
 
 static weed_error_t logsig_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_error_t error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, "out_parameters", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
   double fval;
 
   register int i;
 
   for (i = 0; i < 256; i++) {
-    if (weed_plant_has_leaf(in_params[i], "value")) {
-      fval = weed_get_double_value(in_params[i], "value", &error);
-      weed_set_double_value(out_params[i], "value", 1. / (1. + exp(-fval)));
+    if (weed_plant_has_leaf(in_params[i], WEED_LEAF_VALUE)) {
+      fval = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, &error);
+      weed_set_double_value(out_params[i], WEED_LEAF_VALUE, 1. / (1. + exp(-fval)));
     }
   }
 
@@ -79,7 +79,7 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("log_sig", "salsaman", 1, 0, NULL, &logsig_process,
                                         NULL, NULL, NULL, in_params, out_params);
 
-  weed_set_string_value(filter_class, "description",
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION,
                         "Scales float values between -1.0 and 1.0 using a log-sig function\n"
                         "Inputs may be fed from the outputs of the data_processor or data_unpacker plugins\n"
                         "for example.\n"
@@ -87,7 +87,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

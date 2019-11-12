@@ -63,13 +63,13 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
 static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int chans, nsamps, inter, rate, nrsamps;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-  float *dst = weed_get_voidptr_value(out_channel, "audio_data", NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  double freq = weed_get_double_value(in_params[0], "value", NULL);
-  double mult = weed_get_double_value(in_params[1], "value", NULL);
+  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  double mult = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
   double trate;
 
   float **buff;
@@ -78,10 +78,10 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
 
   weed_free(in_params);
 
-  chans = weed_get_int_value(out_channel, "audio_channels", NULL);
-  nsamps = weed_get_int_value(out_channel, "audio_data_length", NULL);
-  inter = weed_get_boolean_value(out_channel, "audio_interleaf", NULL);
-  rate = weed_get_int_value(out_channel, "audio_rate", NULL);
+  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
+  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
   // fill with audio at TRATE
   trate = freq * mult;
@@ -133,7 +133,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

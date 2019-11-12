@@ -25,17 +25,17 @@ static int package_version = 1; // version of this package
 
 int mirrorx_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
   int inplace = (src == dst);
-  int pal = weed_get_int_value(in_channel, "current_palette", &error);
-  int width = weed_get_int_value(in_channel, "width", &error), hwidth;
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error), hwidth;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
   int psize = 4;
   unsigned char *end = src + height * irowstride;
   register int i;
@@ -46,9 +46,9 @@ int mirrorx_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   hwidth = (width >> 2) << 1;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
 
     src += offset * irowstride;
     dst += offset * orowstride;
@@ -68,17 +68,17 @@ int mirrorx_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", &error), *out_channel = weed_get_plantptr_value(inst,
-                             "out_channels",
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+                             WEED_LEAF_OUT_CHANNELS,
                              &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, "pixel_data", &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
   int inplace = (src == dst);
-  int pal = weed_get_int_value(in_channel, "current_palette", &error);
-  int width = weed_get_int_value(in_channel, "width", &error);
-  int height = weed_get_int_value(in_channel, "height", &error);
-  int irowstride = weed_get_int_value(in_channel, "rowstrides", &error);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", &error);
+  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
   int psize = 4;
   unsigned char *end = dst + height * orowstride / 2, *oend = dst + (height - 1) * orowstride;
 
@@ -88,9 +88,9 @@ int mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   width *= psize;
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", &error);
-    int dheight = weed_get_int_value(out_channel, "height", &error);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
     src += offset * irowstride;
     oend = end = dst + (dheight + offset) * orowstride;
     if (end > dst + height * orowstride / 2) end = dst + height * orowstride / 2;
@@ -157,7 +157,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone1);
   weed_free(clone2);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

@@ -38,9 +38,9 @@ typedef struct {
 
 static weed_error_t dissolve_init(weed_plant_t *inst) {
   _sdata *sdata;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, "in_channels", NULL);
-  int width = weed_get_int_value(in_channel, "width", NULL);
-  int height = weed_get_int_value(in_channel, "height", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
   int end = width * height;
   register int i, j;
 
@@ -76,18 +76,18 @@ static weed_error_t dissolve_deinit(weed_plant_t *inst) {
 static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
   _sdata *sdata = NULL;
   weed_plant_t *in_param;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", NULL),
-                 *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], "pixel_data", NULL);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], "pixel_data", NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, "pixel_data", NULL);
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                 *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  int width = weed_get_int_value(in_channels[0], "width", NULL);
-  int height = weed_get_int_value(in_channels[0], "height", NULL);
-  int irowstride1 = weed_get_int_value(in_channels[0], "rowstrides", NULL);
-  int irowstride2 = weed_get_int_value(in_channels[1], "rowstrides", NULL);
-  int orowstride = weed_get_int_value(out_channel, "rowstrides", NULL);
-  int cpal = weed_get_int_value(out_channel, "current_palette", NULL);
+  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, NULL);
+  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
+  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int cpal = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   unsigned char *end = src1 + height * irowstride1;
 
@@ -113,8 +113,8 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   ihwidth = width >> 1;
 
-  in_param = weed_get_plantptr_value(inst, "in_parameters", NULL);
-  bf = weed_get_double_value(in_param, "value", NULL);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  bf = weed_get_double_value(in_param, WEED_LEAF_VALUE, NULL);
   bfneg = 1.f - bf;
 
   if (type == 3) sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
@@ -124,9 +124,9 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   }
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, "offset")) {
-    int offset = weed_get_int_value(out_channel, "offset", NULL);
-    int dheight = weed_get_int_value(out_channel, "height", NULL);
+  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
@@ -232,7 +232,7 @@ WEED_SETUP_START(200, 200) {
                                WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD,
                                NULL, irisr_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  weed_set_boolean_value(in_params[0], "transition", WEED_TRUE);
+  weed_set_boolean_value(in_params[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -249,7 +249,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(out_chantmpls[0], "flags", 0);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, 0);
 
   filter_class = weed_filter_class_init("4 way split", "salsaman", 1,
                                         WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, NULL, fourw_process, NULL,
@@ -263,7 +263,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(out_chantmpls[0], "flags", WEED_CHANNEL_CAN_DO_INPLACE | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, WEED_CHANNEL_CAN_DO_INPLACE | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
 
   filter_class = weed_filter_class_init("dissolve", "salsaman", 1,
                                         WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD,
@@ -278,7 +278,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(plugin_info, "version", package_version);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;
 

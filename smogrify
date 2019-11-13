@@ -240,7 +240,8 @@ if (defined($ARGV[0])) {
 			    &startup_error(5, "report", "remove_noversion0", "$rcfile:@:");
 			}
 
-			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newrcfile || -s $newrcfile == 0)) {
+			if ($old_version_hash eq "0" && (-s $recovery_file > 0 || $recovery_file eq $newrcfile
+							 || -s $newrcfile == 0)) {
 			    &startup_error(5, "report", "rc_recover_version0", "$rcfile:$recovery_file:$xsize:@:");
 			}
 			else {
@@ -278,11 +279,8 @@ if (defined($ARGV[0])) {
 					$old_version = "";
 					$old_version_hash = "0";
 					$has_rcfile = 0;
-				    }
-				}
-			    }
-			}
-		    }
+				    }}}}}
+
 		    else {
 			# rcfile has version
 			if ($old_version ne "") {
@@ -293,13 +291,7 @@ if (defined($ARGV[0])) {
 				    my $xworkdir = &rc_get("tempdir");
 				    if ($xworkdir ne "") {
 					$workdir = $xworkdir;
-				    }
-				}
-			    }
-			}
-		    }
-		}
-	    }
+				    }}}}}}}
 
 	    if ($has_rcfile && $recovery_file ne "") {
 		$panic = 0;

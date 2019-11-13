@@ -5323,6 +5323,7 @@ boolean reload_set(const char *set_name) {
       lives_free(cwd);
       if (mainw->multitrack != NULL)
         mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
+      sensitize();
       return TRUE;
     }
 
@@ -5390,16 +5391,19 @@ boolean reload_set(const char *set_name) {
     if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
       // CLIP_TYPE_FILE
       if (!reload_clip(mainw->current_file, maxframe)) continue;
+      if (cfile->img_type == IMG_TYPE_UNKNOWN) {
+        lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+        int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+        if (fvirt < cfile->frames) check_clip_integrity(mainw->current_file, cdata, cfile->frames);
+      }
     } else {
       // CLIP_TYPE_DISK
       if (!prefs->vj_mode) {
+        check_clip_integrity(mainw->current_file, NULL, cfile->frames);
+        // TODO: skip chk for last frame since we alrady checked
         if (!check_frame_count(mainw->current_file)) {
           get_frame_count(mainw->current_file);
           cfile->needs_update = TRUE;
-        }
-        if (cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
-          get_frames_sizes(mainw->current_file, 1);
-          if (cfile->hsize * cfile->vsize > 0) cfile->needs_update = TRUE;
         }
       }
     }

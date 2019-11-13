@@ -88,12 +88,15 @@ typedef enum {
 
 #define WEED_LEAF_HOST_IDENTIFIER "host_unique_id"
 
+#define WEED_LEAF_HOST_EASE_OUT "host_ease_out"
+#define WEED_LEAF_HOST_EASE_OUT_COUNT "host_ease_out_count"
 #define WEED_LEAF_AUTO_EASING "host_auto_easing"
 
 #define WEED_LEAF_RFX_STRINGS "layout_rfx_strings"
 #define WEED_LEAF_RFX_DELIM "layout_rfx_delim"
 
 #define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
+
 
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins

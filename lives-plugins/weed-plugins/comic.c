@@ -108,7 +108,7 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
   width--;
 
   // process each row
-  for (; src < end; src += irowstride - width) {
+  for (; src < end; src += irowstride - width - 1) {
     // skip leftmost pixel
     *(dst++) = *src;
     src++;

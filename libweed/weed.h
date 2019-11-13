@@ -77,14 +77,12 @@ typedef void (*weed_funcptr_t)();
 #define HAVE_WEED_DATA_T
 typedef struct _weed_data weed_data_t;
 #ifdef __LIBWEED__
-union _value {
-  void *voidptr;
-  weed_funcptr_t funcptr;
-};
-#define WEED_UNION_SIZE sizeof(_value);
 struct _weed_data {
   weed_size_t size;
-  union _value value;
+  union {
+    void *voidptr;
+    weed_funcptr_t funcptr;
+  } value;
 };
 #endif
 #endif

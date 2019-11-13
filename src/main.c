@@ -759,6 +759,8 @@ static boolean pre_init(void) {
 
   prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
 
+  prefs->allow_easing = get_boolean_prefd(PREF_ALLOW_EASING, TRUE);
+
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;
@@ -3345,7 +3347,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->configdir[0] = '\0';
-  prefs->vj_mode = FALSE; // testing
+  prefs->vj_mode = FALSE;
+  //prefs->vj_mode = TRUE; // testing
 
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;

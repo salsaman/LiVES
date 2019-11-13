@@ -36,6 +36,7 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 
 #include <math.h>
+#include <stdio.h>
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -54,6 +55,8 @@ struct _sdata {
   Sint32 ctable[1024];
   Sint32 sintable[1024 + 256];
   int tval;
+  float ease_every;
+  float easeval;
 };
 
 static void initSinTable(struct _sdata *sdata) {
@@ -168,6 +171,7 @@ static weed_error_t warp_init(weed_plant_t *inst) {
   initDistTable(sdata, video_width, video_height);
 
   sdata->tval = 0;
+  sdata->ease_every = 0.;
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
@@ -196,6 +200,17 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   weed_plant_t *in_channel, *out_channel;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+
+  if (sdata->ease_every == 0.) {
+    // easing (experimental) part 1
+    int host_ease = weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL);
+    if (host_ease > 0) {
+      // how many cycles to ease by 1
+      sdata->ease_every = (float)sdata->tval / (float)host_ease;
+      sdata->easeval = (float)sdata->tval;
+    }
+  }
+
   in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
   out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
@@ -214,8 +229,18 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   xw += (int)(sin((sdata->tval - 10) * M_PI / 512) * 40);
   yw += (int)(sin((sdata->tval + 30) * M_PI / 512) * 40);
 
+  if (sdata->ease_every != 0.) {
+    sdata->easeval -= sdata->ease_every;
+    sdata->tval = (int)sdata->easeval;
+    weed_set_int_value(inst, WEED_LEAF_PLUGIN_EASING, (int)(sdata->easeval / sdata->ease_every));
+  }
+
   doWarp(xw, yw, cw, src, dest, width, height, irow, orow, sdata);
-  sdata->tval = (sdata->tval + 1) & 511;
+
+  if (sdata->ease_every == 0.) {
+    sdata->tval = (sdata->tval + 1) & 511;
+    weed_set_int_value(inst, WEED_LEAF_PLUGIN_EASING, 1);
+  }
 
   return WEED_SUCCESS;
 }

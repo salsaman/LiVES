@@ -176,8 +176,6 @@ static gboolean cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   height = cairo_image_surface_get_height(surface);
   width = cairo_image_surface_get_width(surface);
   irowstride = cairo_image_surface_get_stride(surface);
-  cairo_surface_reference(surface);
-  cairo_destroy(cairo);
 
   orowstride = weed_get_int_value(channel, "rowstrides", NULL);
   pal = weed_get_int_value(channel, "current_palette", NULL);

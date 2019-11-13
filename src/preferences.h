@@ -406,6 +406,8 @@ typedef struct {
   double volume; ///< audio volume level (for jack and pulse)
 
   boolean vj_mode; // optimise for VJing (in progress, experimental)
+
+  boolean allow_easing;
 } _prefs;
 
 enum {
@@ -882,6 +884,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 #define PREF_SCFWD_AMOUNT "trickplay_scratch_fwd"
 #define PREF_SCBACK_AMOUNT "trickplay_scratch_back"
+#define PREF_LOADCHECK_TIME "machine_load_check_secs"
 
 ////////// boolean values
 #define PREF_SHOW_RECENT_FILES "show_recent_files"
@@ -918,7 +921,7 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_SHOW_TOOLTIPS "show_tooltips"
 #define PREF_SHOW_URGENCY "show_urgency_messages"
 #define PREF_UNSTABLE_FX "allow_unstable_effects"
-#define PREF_LOADCHECK_TIME "machine_load_check_secs"
+#define PREF_ALLOW_EASING "allow_easing"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

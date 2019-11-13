@@ -1205,7 +1205,20 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
-  if (key != -1) filter_mutex_lock(key);
+  if (key != -1) {
+    filter_mutex_lock(key);
+
+    if (weed_get_int_value(inst, WEED_LEAF_EASE_OUT, NULL) > 0) {
+      // plugin is easing, so we need to deinit it
+      uint64_t new_rte = GU641 << (key);
+      if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+      // WEED_LEAF_EASE_OUT exists, so it'll get deinited right away
+      weed_deinit_effect(key);
+      weed_instance_unref(inst);
+      filter_mutex_unlock(key);
+      return FILTER_ERROR_COULD_NOT_REINIT;
+    }
+  }
 
 reinit:
 
@@ -1280,6 +1293,7 @@ reinit:
 
 void weed_reinit_all(void) {
   // reinit all effects on playback start
+  lives_filter_error_t retval;
   weed_plant_t *instance, *last_inst, *next_inst;
   register int i;
 
@@ -1299,7 +1313,10 @@ void weed_reinit_all(void) {
           weed_instance_unref(instance);
           continue;
         }
-        weed_reinit_effect(instance, TRUE);
+        if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+          weed_instance_unref(instance);
+          continue;
+        }
         weed_instance_unref(instance);
       }
     }
@@ -3389,6 +3406,7 @@ audret1:
 static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_map, weed_timecode_t tc, void ***pchains) {
   weed_plant_t *instance, *orig_inst;
   weed_plant_t *init_event;
+  lives_filter_error_t retval;
 
   char *keystr;
 
@@ -3479,7 +3497,12 @@ apply_inst2:
             // chain any internal data pipelines for compound fx
             needs_reinit = pconx_chain_data_internal(instance);
             if (needs_reinit) {
-              weed_reinit_effect(instance, FALSE);
+              if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+                weed_instance_unref(orig_inst);
+                if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
+                    orig_inst == mainw->multitrack->solo_inst) break;
+                continue;
+              }
             }
           }
 
@@ -3487,7 +3510,12 @@ apply_inst2:
 
           if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
           if (filter_error == WEED_ERROR_REINIT_NEEDED) {
-            // TODO...
+            if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+              weed_instance_unref(orig_inst);
+              if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
+                  orig_inst == mainw->multitrack->solo_inst) break;
+              continue;
+            }
           }
           //if (filter_error!=FILTER_SUCCESS) lives_printerr("Render error was %d\n",filter_error);
           if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
@@ -3549,15 +3577,24 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
             continue;
           }
           if (weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL) > 0) {
-            if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) {
-              if ((easeval = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
+            // if the plugin is easing out, check if it finished
+            if (!weed_plant_has_leaf(instance, WEED_LEAF_AUTO_EASING)) { // if auto_Easing then we'll deinit it on the event_list
+              if (weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL) < 1) {
+                // easing finished, deinit it
                 uint64_t new_rte = GU641 << (i);
-                if (init_events[i] != NULL)
+                // record
+                if (init_events[i] != NULL) {
+                  // if we are recording, mark the number of frames to ease out
+                  // we'll need to repeat the same process during preview / rendering
+                  // - when we hit the init_event, we'll find the deinit, then work back x frames and mark easing start
                   weed_set_int_value(init_events[i], WEED_LEAF_EASE_OUT,
-                                     weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL));
+                                     weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL));
+                }
                 weed_instance_unref(instance);
+                filter_mutex_lock(i);
                 weed_deinit_effect(i);
                 if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+                filter_mutex_unlock(i);
                 continue;
               }
             }
@@ -3582,7 +3619,10 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
               weed_instance_unref(instance);
               instance = instance2;
               if (needs_reinit) {
-                weed_reinit_effect(instance, FALSE);
+                if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+                  weed_instance_unref(instance);
+                  continue;
+                }
               }
             }
           }
@@ -3595,21 +3635,32 @@ apply_inst3:
             // chain any internal data pipelines for compound fx
             needs_reinit = pconx_chain_data_internal(instance);
             if (needs_reinit) {
-              weed_reinit_effect(instance, FALSE);
+              if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+                weed_instance_unref(instance);
+                continue;
+              }
             }
           }
 
           filter_error = weed_apply_instance(instance, NULL, layers, opwidth, opheight, tc);
 
           if (easeval > 0 && !weed_plant_has_leaf(orig_inst, WEED_LEAF_AUTO_EASING)) {
+            // if the plugin is supposed to be easing out, make sure it is really
             int xeaseval = weed_get_int_value(orig_inst, WEED_LEAF_PLUGIN_EASING, NULL);
-            if (xeaseval >= easeval || xeaseval > weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL)) {
+            int myeaseval = weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT, NULL);
+            if (xeaseval >= myeaseval) {
               uint64_t new_rte = GU641 << (i);
+              filter_mutex_lock(i);
               weed_instance_unref(orig_inst);
               if (mainw->rte & new_rte) mainw->rte ^= new_rte;
               weed_deinit_effect(i);
+              filter_mutex_unlock(i);
               continue;
             }
+            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, xeaseval);
+            // count how many frames to ease out
+            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT,
+                               weed_get_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, NULL) + 1);
           }
 
           if (filter_error == FILTER_ERROR_NEEDS_REINIT) {
@@ -3785,7 +3836,10 @@ void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, doubl
           instance = new_inst;
 
           if (needs_reinit) {
-            weed_reinit_effect(instance, FALSE);
+            if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+              weed_instance_unref(instance);
+              continue;
+            }
           }
         }
 
@@ -3797,7 +3851,10 @@ apply_audio_inst2:
           // chain any internal data pipelines for compound fx
           needs_reinit = pconx_chain_data_internal(instance);
           if (needs_reinit) {
-            weed_reinit_effect(instance, FALSE);
+            if ((filter_error = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+              weed_instance_unref(instance);
+              continue;
+            }
           }
         }
 
@@ -4926,7 +4983,11 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 #endif
           }
           if (!pdup) idx++;
-
+          if (prefs->show_splash) {
+            msg = lives_strdup_printf(_("Loaded filter %s in plugin %s"), filter_name, plugin_name);
+            splash_msg(msg, SPLASH_LEVEL_LOAD_RTE);
+            lives_free(msg);
+          }
         }
 #ifdef DEBUG_WEED
         else lives_printerr("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n", filter_name, plugin_name, reason);
@@ -7161,11 +7222,22 @@ boolean weed_deinit_effect(int hotkey) {
   // adds a ref
   if ((instance = weed_instance_obtain(hotkey, key_modes[hotkey])) == NULL) return TRUE;
 
-  if ((easing = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
-    if (easing > 25) easing = 25;
-    weed_set_int_value(instance, WEED_LEAF_EASE_OUT, easing);
-    weed_instance_unref(instance);
-    return FALSE;
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+    if (prefs->allow_easing) {
+      // if it's a user key and the plugin supports easing out, we'll do that instead
+      if (!weed_plant_has_leaf(instance, WEED_LEAF_EASE_OUT)) {
+        if ((easing = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
+          int myease = cfile->pb_fps * 2.;
+          if (easing <= myease) {
+            weed_set_int_value(instance, WEED_LEAF_EASE_OUT, myease);
+            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, myease);
+            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, 0);
+            weed_instance_unref(instance);
+            return FALSE;
+          }
+        }
+      }
+    }
   }
 
   // disable param recording, in case the instance is still attached to a param window

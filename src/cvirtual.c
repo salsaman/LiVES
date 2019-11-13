@@ -15,6 +15,7 @@
 
 #include "resample.h"
 
+
 /** count virtual frames between start and end (inclusive) */
 int count_virtual_frames(int *findex, int start, int end) {
   register int i;
@@ -220,7 +221,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
 
   // check the image type
   for (i = sfile->frames - 1; i >= 0; i--) {
-    if (sfile->frame_index[i] == -1) {
+    if (sfile->frame_index == NULL || sfile->frame_index[i] == -1) {
       // this is a non-virtual frame
       fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
       if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
@@ -241,10 +242,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
     }
   }
 
-  // check frame count
-  if (maxframe > cdata->nframes || has_missing_frames) {
-    has_missing_frames = TRUE;
-    sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
+  if (cdata != NULL) {
+    // check frame count
+    if (maxframe > cdata->nframes || has_missing_frames) {
+      has_missing_frames = TRUE;
+      sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
+    }
   }
 
   if (sfile->frames > 0) {
@@ -255,12 +258,14 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
       sfile->img_type = empirical_img_type;
       get_frames_sizes(fileno, last_real_frame);
     } else {
-      if (!prefs->auto_nobord) {
-        sfile->hsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-        sfile->vsize = cdata->frame_height;
-      } else {
-        sfile->hsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
-        sfile->vsize = cdata->height;
+      if (cdata != NULL) {
+        if (!prefs->auto_nobord) {
+          sfile->hsize = cdata->frame_width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+          sfile->vsize = cdata->frame_height;
+        } else {
+          sfile->hsize = cdata->width * weed_palette_get_pixels_per_macropixel(cdata->current_palette);
+          sfile->vsize = cdata->height;
+        }
       }
     }
     if (sfile->hsize != hsize || sfile->vsize != vsize) goto mismatch;
@@ -268,7 +273,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
 
   if (has_missing_frames) goto mismatch;
 
-  if (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance) goto mismatch;
+  if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) goto mismatch;
 
   if (sfile->img_type != empirical_img_type) sfile->img_type = empirical_img_type;
 
@@ -283,7 +288,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
 
 mismatch:
   // something mismatched - trust the disk version
-  ((lives_clip_data_t *)cdata)->fps = sfile->pb_fps = sfile->fps;
+  if (cdata != NULL)((lives_clip_data_t *)cdata)->fps = sfile->pb_fps = sfile->fps;
 
   sfile->img_type = empirical_img_type;
 

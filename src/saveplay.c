@@ -3987,6 +3987,7 @@ boolean read_headers(const char *file_name) {
   int pieces;
   int header_fd;
   int retval2;
+  int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
 
   lives_clip_details_t detail;
 
@@ -3998,6 +3999,158 @@ boolean read_headers(const char *file_name) {
   struct stat mystat;
 
   cfile->checked_for_old_header = TRUE;
+  cfile->img_type = IMG_TYPE_UNKNOWN;
+
+  if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
+    do {
+      retval2 = LIVES_RESPONSE_OK;
+      if (!cache_file_contents(lives_header)) {
+        retval2 = do_read_failed_error_s_with_retry(lives_header, NULL, NULL);
+      }
+    } while (retval2 == LIVES_RESPONSE_RETRY);
+
+    if (retval2 == LIVES_RESPONSE_CANCEL) {
+      lives_free(old_hdrfile);
+      lives_free(lives_header);
+      return FALSE;
+    }
+
+    threaded_dialog_spin(0.);
+
+    do {
+      do {
+        detail = CLIP_DETAILS_HEADER_VERSION;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->header_version, 16);
+        if (retval) {
+          if (cfile->header_version < 100) goto old_check;
+        } else {
+          if (lives_file_test(old_hdrfile, LIVES_FILE_TEST_EXISTS)) {
+            goto old_check;
+          }
+          if (mainw->cached_list != NULL) {
+            retval2 = do_header_missing_detail_error(mainw->current_file, CLIP_DETAILS_HEADER_VERSION);
+          } else {
+            retval2 = do_header_read_error_with_retry(mainw->current_file);
+          }
+        }
+      } while (retval2 == LIVES_RESPONSE_RETRY);
+
+      if (retval2 == LIVES_RESPONSE_CANCEL) {
+        lives_free(old_hdrfile);
+        lives_free(lives_header);
+        return FALSE;
+      }
+
+      detail = CLIP_DETAILS_FRAMES;
+      retval = get_clip_value(mainw->current_file, detail, &cfile->frames, 0);
+
+      if (retval) {
+        detail = CLIP_DETAILS_BPP;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->bpp, 0);
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_FPS;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->fps, 0);
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_PB_FPS;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->pb_fps, 0);
+        if (!retval) {
+          retval = TRUE;
+          cfile->pb_fps = cfile->fps;
+        }
+      }
+      if (retval) {
+        retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno, 0);
+        if (!retval) {
+          retval = TRUE;
+          cfile->frameno = 1;
+        }
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_WIDTH;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->hsize, 0);
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_HEIGHT;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->vsize, 0);
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_CLIPNAME;
+        get_clip_value(mainw->current_file, detail, cfile->name, CLIP_NAME_MAXLEN);
+      }
+      if (retval) {
+        detail = CLIP_DETAILS_FILENAME;
+        get_clip_value(mainw->current_file, detail, cfile->file_name, PATH_MAX);
+      }
+
+      if (retval) {
+        detail = CLIP_DETAILS_ACHANS;
+        retvala = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
+        if (!retvala) cfile->achans = 0;
+      }
+
+      if (cfile->achans == 0) retvala = FALSE;
+      else retvala = TRUE;
+
+      if (retval && retvala) {
+        detail = CLIP_DETAILS_ARATE;
+        retvala = get_clip_value(mainw->current_file, detail, &cfile->arps, 0);
+      }
+
+      if (!retvala) cfile->arps = cfile->achans = cfile->arate = cfile->asampsize = 0;
+      if (cfile->arps == 0) retvala = FALSE;
+
+      if (retvala && retval) {
+        detail = CLIP_DETAILS_PB_ARATE;
+        retvala = get_clip_value(mainw->current_file, detail, &cfile->arate, 0);
+        if (!retvala) {
+          retvala = TRUE;
+          cfile->arate = cfile->arps;
+        }
+      }
+      if (retvala && retval) {
+        detail = CLIP_DETAILS_ASIGNED;
+        retval = get_clip_value(mainw->current_file, detail, &asigned, 0);
+      }
+      if (retvala && retval) {
+        detail = CLIP_DETAILS_AENDIAN;
+        retval = get_clip_value(mainw->current_file, detail, &aendian, 0);
+      }
+
+      cfile->signed_endian = asigned + aendian;
+
+      if (retvala && retval) {
+        detail = CLIP_DETAILS_ASAMPS;
+        retval = get_clip_value(mainw->current_file, detail, &cfile->asampsize, 0);
+      }
+      if (!retval) {
+        if (mainw->cached_list != NULL) {
+          retval2 = do_header_missing_detail_error(mainw->current_file, detail);
+        } else {
+          retval2 = do_header_read_error_with_retry(mainw->current_file);
+        }
+      } else {
+        get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 256);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 256);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 256);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_KEYWORDS, cfile->keywords, 1024);
+        get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
+        if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE; // user must have forced this
+        lives_free(old_hdrfile);
+        lives_free(lives_header);
+        if (!prefs->vj_mode) {
+          cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+        }
+        return TRUE;
+      }
+    } while (retval2 == LIVES_RESPONSE_RETRY);
+    lives_free(old_hdrfile);
+    lives_free(lives_header);
+    return FALSE;
+  }
+
+old_check:
 
   if (lives_file_test(old_hdrfile, LIVES_FILE_TEST_EXISTS)) {
     cfile->has_old_header = TRUE;
@@ -4005,178 +4158,54 @@ boolean read_headers(const char *file_name) {
     if (!stat(lives_header, &mystat)) new_time = mystat.st_mtime;
   }
 
+  lives_free(lives_header);
+
   ///////////////
 
-  if (old_time <= new_time) {
-    do {
-      retval2 = LIVES_RESPONSE_OK;
+  if (cfile->has_old_header && old_time <= new_time) {
+    retval2 = LIVES_RESPONSE_OK;
+    detail = CLIP_DETAILS_FRAMES;
 
-      detail = CLIP_DETAILS_FRAMES;
-      if (prefs->vj_mode || get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
-        int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
-        char *tmp;
+    if (get_clip_value(mainw->current_file, detail, &cfile->frames, 0)) {
+      char *tmp;
 
-        // use new style header (LiVES 0.9.6+)
+      // use new style header (LiVES 0.9.6+)
+
+      // clean up and get file sizes
+      com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
+                                (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
+
+      lives_popen(com, FALSE, buff, 1024);
+
+      lives_free(com);
+      lives_free(tmp);
+
+      if (mainw->com_failed) {
+        mainw->com_failed = FALSE;
         lives_free(old_hdrfile);
-
-        if (!prefs->vj_mode) {
-          // clean up and get file sizes
-          com = lives_strdup_printf("%s restore_details %s %s %d", prefs->backend_sync, cfile->handle,
-                                    (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), !strcmp(file_name, "."));
-
-          lives_popen(com, FALSE, buff, 1024);
-
-          lives_free(com);
-          lives_free(tmp);
-
-          if (mainw->com_failed) {
-            mainw->com_failed = FALSE;
-            return FALSE;
-          }
-
-          pieces = get_token_count(buff, '|');
-
-          if (pieces > 3) {
-            array = lives_strsplit(buff, "|", pieces);
-            cfile->f_size = strtol(array[1], NULL, 10);
-            cfile->afilesize = strtol(array[2], NULL, 10);
-            if (cfile->clip_type == CLIP_TYPE_DISK) {
-              if (!strcmp(array[3], LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
-              else cfile->img_type = IMG_TYPE_PNG;
-            }
-            lives_strfreev(array);
-          }
-          threaded_dialog_spin(0.);
-        }
-
-        do {
-          retval2 = LIVES_RESPONSE_OK;
-          if (!cache_file_contents(lives_header)) {
-            retval2 = do_read_failed_error_s_with_retry(lives_header, NULL, NULL);
-          }
-        } while (retval2 == LIVES_RESPONSE_RETRY);
-
-        lives_free(lives_header);
-
-        if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
-
-        threaded_dialog_spin(0.);
-        do {
-          if (prefs->vj_mode) {
-            detail = CLIP_DETAILS_FRAMES;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->frames, 0);
-          }
-          detail = CLIP_DETAILS_HEADER_VERSION;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->header_version, 16);
-          if (retval) {
-            detail = CLIP_DETAILS_BPP;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->bpp, 0);
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_FPS;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->fps, 0);
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_PB_FPS;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->pb_fps, 0);
-            if (!retval) {
-              retval = TRUE;
-              cfile->pb_fps = cfile->fps;
-            }
-          }
-          if (retval) {
-            retval = get_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno, 0);
-            if (!retval) {
-              retval = TRUE;
-              cfile->frameno = 1;
-            }
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_WIDTH;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->hsize, 0);
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_HEIGHT;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->vsize, 0);
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_CLIPNAME;
-            get_clip_value(mainw->current_file, detail, cfile->name, CLIP_NAME_MAXLEN);
-          }
-          if (retval) {
-            detail = CLIP_DETAILS_FILENAME;
-            get_clip_value(mainw->current_file, detail, cfile->file_name, PATH_MAX);
-          }
-
-          if (retval) {
-            detail = CLIP_DETAILS_ACHANS;
-            retvala = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
-            if (!retvala) cfile->achans = 0;
-          }
-
-          if (cfile->achans == 0) retvala = FALSE;
-          else retvala = TRUE;
-
-          if (retval && retvala) {
-            detail = CLIP_DETAILS_ARATE;
-            retvala = get_clip_value(mainw->current_file, detail, &cfile->arps, 0);
-          }
-
-          if (!retvala) cfile->arps = cfile->achans = cfile->arate = cfile->asampsize = 0;
-          if (cfile->arps == 0) retvala = FALSE;
-
-          if (retvala && retval) {
-            detail = CLIP_DETAILS_PB_ARATE;
-            retvala = get_clip_value(mainw->current_file, detail, &cfile->arate, 0);
-            if (!retvala) {
-              retvala = TRUE;
-              cfile->arate = cfile->arps;
-            }
-          }
-          if (retvala && retval) {
-            detail = CLIP_DETAILS_ASIGNED;
-            retval = get_clip_value(mainw->current_file, detail, &asigned, 0);
-          }
-          if (retvala && retval) {
-            detail = CLIP_DETAILS_AENDIAN;
-            retval = get_clip_value(mainw->current_file, detail, &aendian, 0);
-          }
-
-          cfile->signed_endian = asigned + aendian;
-
-          if (retvala && retval) {
-            detail = CLIP_DETAILS_ASAMPS;
-            retval = get_clip_value(mainw->current_file, detail, &cfile->asampsize, 0);
-          }
-          if (!retval) {
-            if (mainw->cached_list != NULL) {
-              retval2 = do_header_missing_detail_error(mainw->current_file, detail);
-            } else {
-              retval2 = do_header_read_error_with_retry(mainw->current_file);
-            }
-          } else {
-            get_clip_value(mainw->current_file, CLIP_DETAILS_TITLE, cfile->title, 256);
-            get_clip_value(mainw->current_file, CLIP_DETAILS_AUTHOR, cfile->author, 256);
-            get_clip_value(mainw->current_file, CLIP_DETAILS_COMMENT, cfile->comment, 256);
-            get_clip_value(mainw->current_file, CLIP_DETAILS_KEYWORDS, cfile->keywords, 1024);
-            get_clip_value(mainw->current_file, CLIP_DETAILS_INTERLACE, &cfile->interlace, 0);
-            if (cfile->interlace != LIVES_INTERLACE_NONE) cfile->deinterlace = TRUE; // user must have forced this
-            return TRUE;
-          }
-        } while (retval2 == LIVES_RESPONSE_RETRY);
-      } else {
-        if (mainw->cached_list != NULL) {
-          retval2 = do_header_missing_detail_error(mainw->current_file, CLIP_DETAILS_FRAMES);
-        } else {
-          retval2 = do_header_read_error_with_retry(mainw->current_file);
-        }
+        return FALSE;
       }
-    } while (retval2 == LIVES_RESPONSE_RETRY);
-    if (retval2 == LIVES_RESPONSE_CANCEL) return FALSE;
+
+      pieces = get_token_count(buff, '|');
+
+      if (pieces > 3) {
+        array = lives_strsplit(buff, "|", pieces);
+        cfile->f_size = strtol(array[1], NULL, 10);
+        cfile->afilesize = strtol(array[2], NULL, 10);
+        if (cfile->clip_type == CLIP_TYPE_DISK) {
+          if (!strcmp(array[3], LIVES_FILE_EXT_JPG)) cfile->img_type = IMG_TYPE_JPEG;
+          else cfile->img_type = IMG_TYPE_PNG;
+        }
+        lives_strfreev(array);
+      }
+      threaded_dialog_spin(0.);
+    } else {
+      lives_free(old_hdrfile);
+      return FALSE;
+    }
+    lives_free(old_hdrfile);
     return TRUE;
   }
-
-  lives_free(lives_header);
 
   do {
     // old style headers (pre 0.9.6)
@@ -5395,23 +5424,28 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         // CLIP_TYPE_FILE
         if (!strlen(cfile->file_name)) continue;
         if (!reload_clip(mainw->current_file, maxframe)) continue;
+        if (cfile->img_type == IMG_TYPE_UNKNOWN) {
+          lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+          int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+          if (fvirt < cfile->frames) check_clip_integrity(mainw->current_file, cdata, cfile->frames);
+        }
       }
       if (cfile->clip_type == CLIP_TYPE_DISK) {
         // CLIP_TYPE_DISK
-        if (!prefs->vj_mode) {
-          if (!check_frame_count(mainw->current_file)) {
-            get_frame_count(mainw->current_file);
-            cfile->needs_update = TRUE;
+        if (!is_scrap && !is_ascrap) {
+          check_clip_integrity(mainw->current_file, NULL, cfile->frames);
+          if (!prefs->vj_mode) {
+            if (!check_frame_count(mainw->current_file)) {
+              get_frame_count(mainw->current_file);
+              cfile->needs_update = TRUE;
+            }
           }
           if (!is_scrap && cfile->frames > 0 && (cfile->hsize * cfile->vsize == 0)) {
             get_frames_sizes(mainw->current_file, 1);
             cfile->needs_update = TRUE;
           }
           if (is_ascrap && cfile->afilesize == 0) {
-            int current_file = mainw->current_file;
-            mainw->current_file = -1; // prevent drawing of timeline bars for now
-            reget_afilesize(current_file);
-            mainw->current_file = current_file;
+            reget_afilesize_inner(mainw->current_file);
           }
         }
       }

@@ -9,5 +9,5 @@ Requires:
 Requires.private: 
 Version: 2.0.0
 Libs: -L${libdir} -lweed-utils
-Static: -L${libdir} -lweed-utils_static
+Static: -L${libdir} -lweed-utils_scripting
 Cflags: -I${includedir}

@@ -11,13 +11,13 @@ extern "C"
 {
 #endif /* __cplusplus */
 
-#include <inttypes.h>
-
-#ifndef NEED_SYSTEM_WEED
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed-palettes.h>
 #else
 #include "../../../../libweed/weed-palettes.h"
 #endif
+
+#include <inttypes.h>
 
 #ifndef PRId64
 
@@ -133,9 +133,6 @@ typedef boolean(*keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
 #define MOD_CONTROL_MASK 1<<2
 #define MOD_ALT_MASK 1<<3
 #define MOD_NEEDS_TRANSLATION 1<<15
-
-/// host calls this fn to send keycodes, plugin should call key function with a unicode keycode and modifier. If no more keys, return FALSE.
-boolean send_keycodes(keyfunc);
 
 //////////////////////////////////////////////////////////////////////////
 // optional functions for yuv palettes

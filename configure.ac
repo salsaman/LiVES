@@ -904,7 +904,7 @@ AC_SUBST(WEED_UTILS_LIBS)
 PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.10.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
 
 if test "$NEED_LOCAL_WEED_COMPAT" = "true"; then
-echo "...will user version from included sources"
+echo "...will use version from included sources"
 fi
 
 AC_SUBST(WEED_COMPAT_CFLAGS)
@@ -912,7 +912,7 @@ AC_SUBST(WEED_COMPAT_LIBS)
 
 PKG_CHECK_MODULES(WEED_PLUGIN, libweed-plugin >= 2.0.0, NEED_LOCAL_WEED_PLUGIN=false, NEED_LOCAL_WEED_PLUGIN=true)
 
-if test "$NEED_LOCAL_WEED_UTILS" = "true"; then
+if test "$NEED_LOCAL_WEED_PLUGIN" = "true"; then
 echo "...plugins will be compiled with included sources"
 fi
 

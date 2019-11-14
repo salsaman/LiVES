@@ -7,10 +7,8 @@
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
-#include <weed/weed-plugin-utils.h>
 #else
 #include "../../../libweed/weed-plugin.h"
-#include "../../../libweed/weed-plugin-utils.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////

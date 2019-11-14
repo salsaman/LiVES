@@ -39,6 +39,14 @@ extra_ldflags = -fPIC -DPIC
 extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function
 endif
 
+if NEED_LOCAL_WEED
+extra_cflags += -DNEED_LOCAL_WEED
+endif
+
+if NEED_LOCAL_WEED_PLUGIN
+extra_cflags += -DNEED_LOCAL_WEED_PLUGIN
+endif
+
 lib_LTLIBRARIES = libweed.la libweed_gslice.la libweed-utils.la libweed_gslice_scripting.la libweed-utils_scripting.la
 
 EXTRA_DIST = libweed.doxygen libweed.pc libweed-plugin.pc libweed_gslice.pc libweed-utils.pc libweed-compat.pc

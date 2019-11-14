@@ -23,6 +23,14 @@ shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 
+if NEED_LOCAL_WEED
+shared_cflags += -DNEED_LOCAL_WEED
+endif
+
+if NEED_LOCAL_WEED_PLUGIN
+shared_cflags += -DNEED_LOCAL_WEED_PLUGIN
+endif
+
 if HAVE_SDL2
 CFLAGS_SDL = @SDL2_CFLAGS@ -DHAVE_SDL2
 LDFLAGS_SDL = @SDL2_LIBS@
@@ -57,7 +65,7 @@ weed_CFLAGS += -DNEED_LOCAL_WEED
 endif
 
 if NEED_LOCAL_WEED_PLUGIN
-weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN_H
+weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
 endif
 
 if NEED_LOCAL_WEED_COMPAT

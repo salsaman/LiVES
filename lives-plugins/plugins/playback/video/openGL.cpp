@@ -13,24 +13,20 @@
 
 #include <iostream>
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
+#ifndef NEED_LOCAL_WEED
 #include <weed/weed-plugin.h>
-#include <weed/weed-plugin-utils.h>
+#include <weed/weed.h>
+#include <weed/weed-effects.h>
+#include <weed/weed-utils.h>
 #else
 #include "../../../../libweed/weed-plugin.h"
-#endif
-
-#ifdef NEEED_LOCAL_WEED
 #include "../../../../libweed/weed.h"
-#include "../../../../libweed/weed-palettes.h"
 #include "../../../../libweed/weed-effects.h"
 #include "../../../../libweed/weed-utils.h"
-#include "../../../../libweed/weed-plugin-utils.h"
 #endif
 
 #include "videoplugin.h"
 
-// TODO: replace with lib
 #include "../../../../lives-plugins/weed-plugins/weed-plugin-utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////////

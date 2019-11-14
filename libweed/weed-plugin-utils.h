@@ -56,10 +56,10 @@ extern "C"
 #include <weed/weed-effects.h>
 #include <weed/weed-utils.h>
 #else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#include "../../libweed/weed-utils.h"
+#include "weed.h"
+#include "weed-palettes.h"
+#include "weed-effects.h"
+#include "weed-utils.h"
 #endif
 #endif
 
@@ -91,6 +91,12 @@ extern "C"
 #endif
 
 #ifndef __LIBWEED_PLUGIN_UTILS__
+
+#ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
+#else
+#include "weed.h"
+#endif
 
 #define ALLOW_UNUSED
 #define FN_DECL static

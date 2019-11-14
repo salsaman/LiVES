@@ -14,12 +14,10 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef NEED_LOCAL_WEED_PLUGIN
+#ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
-#include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
-#include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 ///////////////////////////////////////////////////////////////////

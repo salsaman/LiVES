@@ -185,7 +185,11 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
 #include <libavutil/pixfmt.h>
 
 #ifndef __WEED_PALETTES_H__
+#ifdef NEED_LOCAL_WEED
+#include "weed-palettes.h"
+#else
 #include <weed/weed-palettes.h>
+#endif
 #endif
 
 typedef struct AVCodecTag {

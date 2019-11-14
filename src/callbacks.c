@@ -5294,7 +5294,7 @@ boolean reload_set(const char *set_name) {
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
                 clipnum, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
         lives_free(tmp);
-
+        lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
         lives_notify(LIVES_OSC_NOTIFY_CLIPSET_OPENED, mainw->set_name);
       }
 

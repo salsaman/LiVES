@@ -5126,10 +5126,10 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
 #if PNG_LIBPNG_VER >= 10504
   if (prefs->alpha_post) {
-    if (flags & WEED_CHANNEL_ALPHA_PREMULT) flags ^= WEED_CHANNEL_ALPHA_PREMULT;
+    if (flags & WEED_LAYER_ALPHA_PREMULT) flags ^= WEED_LAYER_ALPHA_PREMULT;
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);
   } else {
-    flags |= WEED_CHANNEL_ALPHA_PREMULT;
+    flags |= WEED_LAYER_ALPHA_PREMULT;
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
   }
 #endif
@@ -5307,7 +5307,7 @@ boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
   png_set_write_status_fn(png_ptr, png_row_callback);
 
 #if PNG_LIBPNG_VER >= 10504
-  if (flags & WEED_CHANNEL_ALPHA_PREMULT) {
+  if (flags & WEED_LAYER_ALPHA_PREMULT) {
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PREMULTIPLIED, PNG_DEFAULT_sRGB);
   } else {
     png_set_alpha_mode(png_ptr, PNG_ALPHA_PNG, PNG_DEFAULT_sRGB);

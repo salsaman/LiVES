@@ -5,129 +5,78 @@
 
 #########################################################
 
-if ($^O eq "MSWin32") {
-    use File::Path qw(mkpath);
-
-    $installdir="C:\\Program Files\\LiVES";
-
-    $login = getlogin;
-    $home="C:\\users\\$login\\Application Data\\LiVES";
-
-    $smogcmd="perl \"$installdir\\smogrify\"";
-    $home_dir_extra="\\Config\\Plugins\\effects\\";
-    $dir_extra="\\Plugins\\effects\\";
-    $builder="$installdir\\build-lives-rfx-plugin";
-}
-else {
-    $smogcmd="smogrify";
-    $home_dir_extra="/.lives-dir/plugins/effects/";
-    $dir_extra="/lives/plugins/effects/";
-    $builder="build-lives-rfx-plugin";
-}
+my $smogcmd = "smogrify";
+my $home_dir_extra = "/.lives-dir/plugins/effects/";
+my $dir_extra = "/lives/plugins/effects/";
+my $builder = "build-lives-rfx-plugin";
 
 my $type="builtin"; # default
 
 #########################################################
 
-my ($scripts_dir);
-my ($exec_dir);
-my ($builder_location);
+my $scripts_dir = "";
+my $exec_dir = "";
+my $build_bindir = "";
+my $builder_location;
 
 if (defined $ARGV[0]) {
-    $type=$ARGV[0];
+    $type = $ARGV[0];
 }
 
 if (defined $ARGV[1] && $ARGV[1] ne "") {
-    $scripts_dir=$ARGV[1];
+    $scripts_dir = $ARGV[1];
+}
+
+if ($scripts_dir eq "") {
+    print "Need scripts_dir. Exiting.\n";
+    exit 1;    # check we have all
 }
 
 if (defined $ARGV[2] && $ARGV[2] ne "") {
-    $exec_dir=$ARGV[2];
+    $exec_dir = $ARGV[2];
+}
+
+if ($exec_dir eq "") {
+    print "Need exec_dir. Exiting.\n";
+    exit 2;    # check we have all
 }
 
 if (defined $ARGV[3] && $ARGV[3] ne "") {
-    $build_bindir=$ARGV[3];
+    $build_bindir = $ARGV[3];
 }
 
-if (!defined($scripts_dir)) {
-    if ($^O ne "MSWin32") {
-
-#get <tempdir>
-    `\"$smogcmd\" get_workdir > /tmp/.smogrify.rfx_builder`;
-    open IN,"< /tmp/.smogrify.rfx_builder";
-    read IN,$workdir,512;
-    close IN;
-    unlink "/tmp/.smogrify.rfx_builder";
-    
-    if ($workdir eq "") {
-	$workdir="/tmp";
-    }
-    
-# check we have the plugin builder
-    `\"$smogcmd\" get_location $builder rfx builder`;
-    open IN,"< $workdir/.smogval.rfx.builder";
-    read IN,$builder_location,512;
-    close IN;
-    unlink "$workdir/.smogval.rfx.builder";
-    
-    if ($builder_location eq "") {
-	print "Unable to locate $builder. Exiting.\n";
-	exit 3;
-    }
-    
-    }
-
-    if ($type eq "builtin") {
-# get the prefix_dir from ~/.lives
-	`\"$smogcmd\" get_pref prefix_dir rfx builder`;
-	open IN,"< $workdir/.smogval.rfx.builder";
-	read IN,$dir,512;
-	close IN;
-	unlink "$workdir/.smogval.rfx.builder";
-	chomp($dir);
-	$scripts_dir="$dir/share";
-	$exec_dir="$dir/lib";  # guessing
-    }
-    else {
-	if ($^O eq "MSWin32") {
-	    $login = getlogin;
-	    $scripts_dir=$home;
-	}
-	else {
-	    $scripts_dir=$ENV{"HOME"};
-	}
-	chomp($scripts_dir);
-	$exec_dir=$scripts_dir;
-    }
+if ($build_bindir eq "") {
+    print "Need build_bindir. Exiting.\n";
+    exit 3;    # check we have all
 }
 
 if ($type eq "builtin") {
-    $scripts_dir.=$dir_extra;
-    $indir=$scripts_dir."RFXscripts/";
+    $scripts_dir .= $dir_extra;
+    $indir = "$scripts_dir/RFXscripts/";
     unlink glob "$indir/*~";
-    $exec_dir.=$dir_extra;
-    $outdir=$exec_dir."rendered/";
+    $exec_dir .= $dir_extra;
+    $outdir = "$exec_dir/rendered/";
 }
 
 elsif ($type eq "custom") {
-    $scripts_dir.=$home_dir_extra;
-    $indir=$scripts_dir."RFXscripts/custom/";
+    $scripts_dir .= $home_dir_extra;
+    $indir = "$scripts_dir/RFXscripts/custom/";
     unlink glob "$indir/*~";
-    $exec_dir.=$home_dir_extra;
-    $outdir=$exec_dir."rendered/custom/";
+    $exec_dir .= $home_dir_extra;
+    $outdir = "$exec_dir/rendered/custom/";
 }
 
 elsif ($type eq "test") {
-    $scripts_dir.=$home_dir_extra;
-    $indir=$scripts_dir."RFXscripts/test/";
+    $scripts_dir .= $home_dir_extra;
+    $indir = "$scripts_dir/RFXscripts/test/";
     unlink glob "$indir/*~";
-    $exec_dir.=$home_dir_extra;
-    $outdir=$exec_dir."rendered/test/";
+    $exec_dir .= $home_dir_extra;
+    $outdir = "$exec_dir/rendered/test/";
 }
 
 elsif ($type eq "builtinx") {
-    $indir=$scripts_dir;
-    $outdir=$exec_dir;
+    $indir = $scripts_dir;
+    $outdir = $exec_dir;
     unlink glob "$indir/*~";
 }
 
@@ -148,7 +97,7 @@ if ($^O eq "MSWin32") {
 }
 
 opendir DIR,$indir;
-while ($plugin=readdir(DIR)) {
+while ($plugin = readdir(DIR)) {
     unless ($plugin =~ /^\./) {
 	print "building $indir$plugin \n";
 	if (defined $build_bindir) {

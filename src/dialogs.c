@@ -207,7 +207,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   case LIVES_DIALOG_WARN_WITH_CANCEL:
     dialog = lives_message_dialog_new(transient, (LiVESDialogFlags)0, LIVES_MESSAGE_WARNING, LIVES_BUTTONS_NONE, NULL);
 
-    if (mainw->add_clear_ds_button) {
+    if (mainw != NULL && mainw->add_clear_ds_button) {
       mainw->add_clear_ds_button = FALSE;
       add_clear_ds_button(LIVES_DIALOG(dialog));
     }
@@ -272,24 +272,25 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   lives_window_set_default_size(LIVES_WINDOW(dialog), MIN_MSGBOX_WIDTH, -1);
   lives_widget_set_minimum_size(dialog, MIN_MSGBOX_WIDTH, -1);
-  if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
-
-  if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
-    lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
-    lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
-  }
 
   lives_window_set_deletable(LIVES_WINDOW(dialog), FALSE);
   lives_window_set_resizable(LIVES_WINDOW(dialog), FALSE);
 
-  if (widget_opts.apply_theme) {
-    funkify_dialog(dialog);
-  } else {
-    lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
+  if (mainw != NULL) {
+    if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(dialog), widget_opts.screen);
+
+    if (widget_opts.apply_theme && (palette->style & STYLE_1)) {
+      lives_dialog_set_has_separator(LIVES_DIALOG(dialog), FALSE);
+      lives_widget_set_bg_color(dialog, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+    }
+    if (widget_opts.apply_theme) {
+      funkify_dialog(dialog);
+    } else {
+      lives_container_set_border_width(LIVES_CONTAINER(dialog), widget_opts.border_width * 2);
+    }
   }
 
   textx = insert_newlines(mytext, MAX_MSG_WIDTH_CHARS);
-
   lives_free(mytext);
 
   pad = lives_strdup("");
@@ -315,26 +316,28 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_box_pack_start(LIVES_BOX(dialog_vbox), label, TRUE, TRUE, 0);
   lives_label_set_selectable(LIVES_LABEL(label), TRUE);
 
-  if (mainw->add_clear_ds_adv) {
-    mainw->add_clear_ds_adv = FALSE;
-    add_clear_ds_adv(LIVES_BOX(dialog_vbox));
-  }
+  if (mainw != NULL) {
+    if (mainw != NULL && mainw->add_clear_ds_adv) {
+      mainw->add_clear_ds_adv = FALSE;
+      add_clear_ds_adv(LIVES_BOX(dialog_vbox));
+    }
 
-  if (warn_mask_number > 0) {
-    add_warn_check(LIVES_BOX(dialog_vbox), warn_mask_number);
-  }
+    if (warn_mask_number > 0) {
+      add_warn_check(LIVES_BOX(dialog_vbox), warn_mask_number);
+    }
 
-  if (mainw->xlays != NULL) {
-    add_xlays_widget(LIVES_BOX(dialog_vbox));
-  }
+    if (mainw->xlays != NULL) {
+      add_xlays_widget(LIVES_BOX(dialog_vbox));
+    }
 
-  if (mainw->iochan != NULL && is_blocking) {
-    LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
-                                  LIVES_RESPONSE_SHOW_DETAILS);
+    if (mainw->iochan != NULL && is_blocking) {
+      LiVESWidget *details_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(dialog), NULL, _("Show _Details"),
+                                    LIVES_RESPONSE_SHOW_DETAILS);
 
-    lives_signal_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
-                         LIVES_GUI_CALLBACK(lives_general_button_clicked),
-                         NULL);
+      lives_signal_connect(LIVES_GUI_OBJECT(details_button), LIVES_WIDGET_CLICKED_SIGNAL,
+                           LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                           NULL);
+    }
   }
 
   if (okbutton != NULL || cancelbutton != NULL) {
@@ -347,7 +350,8 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                                  LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
   }
 
-  if (okbutton != NULL && mainw->iochan == NULL) {
+
+  if (okbutton != NULL && mainw != NULL && mainw->iochan == NULL) {
     lives_button_grab_default_special(okbutton);
     lives_widget_grab_focus(okbutton);
   }
@@ -359,7 +363,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   if (is_blocking)
     lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
-  if (prefs->present) {
+  if (prefs != NULL && prefs->present) {
     lives_window_present(LIVES_WINDOW(dialog));
     lives_xwindow_raise(lives_widget_get_xwindow(dialog));
   }
@@ -469,6 +473,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_num
 
 LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
+  if (prefs == NULL) return NULL;
   if (prefs->show_gui) {
     if (prefsw != NULL && prefsw->prefs_dialog != NULL) transient = LIVES_WINDOW(prefsw->prefs_dialog);
     else if (!rte_window_hidden()) transient = LIVES_WINDOW(rte_window);
@@ -537,14 +542,17 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
               lives_kill_subprocesses(cfile->handle, TRUE);
             }
           }
+          LIVES_FATAL("Aborted");
+          lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
+          exit(1);
         }
-        exit(1);
+      } else {
+        LIVES_FATAL("Aborted");
+        lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
+        exit(0);
       }
-      exit(0);
     }
   } while (response == LIVES_RESPONSE_ABORT);
-
-  lives_freep((void **)&mytext);
   return response;
 }
 
@@ -669,8 +677,9 @@ int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, 
 
   int ret = LIVES_RESPONSE_NONE;
 
-  if (prefs->warning_mask & warn_mask_number) return ret;
-  err_box = create_info_error_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR : LIVES_DIALOG_WARN, text, transient, warn_mask_number,
+  if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
+  err_box = create_info_error_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
+                                     LIVES_DIALOG_WARN, text, transient, warn_mask_number,
                                      is_blocking);
 
   if (is_blocking) {
@@ -740,6 +749,32 @@ char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t n
   lives_free(dscu);
   lives_free(dscn);
   return msgx;
+}
+
+
+LIVES_GLOBAL_INLINE void do_abortblank_error(const char *what) {
+  char *msg = lives_strdup_printf(_("%s may not be blank.\nClick Abort to exit LiVES immediately or Ok "
+                                    "to continue with the default value."), what);
+  do_abort_ok_dialog(msg, NULL);
+  lives_free(msg);
+}
+
+
+LIVES_GLOBAL_INLINE void do_optarg_blank_err(const char *what) {
+  char *msg = lives_strdup_printf(_("-%s requires an argument, ignoring it\n"), what);
+  LIVES_WARN(msg);
+  lives_free(msg);
+}
+
+
+LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
+  char *msg = lives_strdup_printf(_("Errors were encountered when reloading LiVES' copy of the clip %s\n"
+                                    "Please click Abort if you wish to exit from LiVES,\n"
+                                    "or OK to update the clip details in LiVES and continue anyway.\n"),
+                                  IS_VALID_CLIP(fileno) ? mainw->files[fileno]->name : "??????");
+  do_abort_ok_dialog(msg, NULL);
+  lives_free(msg);
+  check_storage_space(fileno, FALSE);
 }
 
 
@@ -908,10 +943,10 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 }
 
 
-boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
+boolean check_storage_space(int clipno, boolean is_processing) {
   // check storage space in prefs->workdir, and if sfile!=NULL, in sfile->op_dir
   uint64_t dsval;
-
+  lives_clip_t *sfile = NULL;
   int retval;
   boolean did_pause = FALSE;
 
@@ -919,6 +954,8 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
 
   char *msg, *tmp;
   char *pausstr = lives_strdup(_("Processing has been paused."));
+
+  if (IS_VALID_CLIP(clipno)) sfile = mainw->files[clipno];
 
   do {
     ds = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &dsval);
@@ -945,7 +982,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
         lives_free(pausstr);
         mainw->cancelled = CANCEL_USER;
         if (is_processing) {
-          sfile->nokeep = TRUE;
+          if (sfile != NULL) sfile->nokeep = TRUE;
           on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
         }
         return FALSE;
@@ -967,7 +1004,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
       lives_free(msg);
       if (retval == LIVES_RESPONSE_CANCEL) {
         if (is_processing) {
-          sfile->nokeep = TRUE;
+          if (sfile != NULL) sfile->nokeep = TRUE;
           on_cancel_keep_button_clicked(NULL, NULL); // press the cancel button
         }
         mainw->cancelled = CANCEL_ERROR;
@@ -977,7 +1014,7 @@ boolean check_storage_space(lives_clip_t *sfile, boolean is_processing) {
     }
   } while (ds == LIVES_STORAGE_STATUS_CRITICAL);
 
-  if (sfile != NULL && sfile->op_dir != NULL) {
+  if (sfile != NULL && sfile->op_dir != NULL && strcmp(sfile->op_dir, prefs->workdir)) {
     do {
       ds = get_storage_status(sfile->op_dir, sfile->op_ds_warn_level, &dsval);
       if (ds == LIVES_STORAGE_STATUS_WARNING) {
@@ -1478,7 +1515,7 @@ int process_one(boolean visible) {
         shown_paused_frames = mainw->effects_paused;
       } else {
         if (visible && cfile->proc_ptr->frames_done >= cfile->progress_start) {
-          if (progress_count == 0) check_storage_space(cfile, TRUE);
+          if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
           // display progress fraction or pulse bar
           progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
           sched_yield();
@@ -1585,7 +1622,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (visible) {
     // check we have sufficient storage space
-    if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) {
+    if (mainw->next_ds_warn_level != 0 &&
+        !check_storage_space(mainw->current_file, FALSE)) {
       lives_cancel_t cancelled = mainw->cancelled;
       on_cancel_keep_button_clicked(NULL, NULL);
       if (mainw->cancelled != CANCEL_NONE) mainw->cancelled = cancelled;
@@ -1896,7 +1934,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
       if (!mainw->effects_paused) {
         if (prog_fs_check-- <= 0) {
-          check_storage_space(cfile, TRUE);
+          check_storage_space(mainw->current_file, TRUE);
           prog_fs_check = PROG_LOOP_VAL;
         }
         progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
@@ -2053,7 +2091,7 @@ finish:
     handle_backend_errors(FALSE, NULL);
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
-    if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;
+    if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
   }
 
   if (got_err) return FALSE;
@@ -2185,7 +2223,7 @@ boolean do_auto_dialog(const char *text, int type) {
     if (mainw->cancelled || mainw->error) return FALSE;
   } else {
     if (mainw->current_file > -1 && cfile != NULL)
-      if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) return FALSE;
+      if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
   }
   return TRUE;
 }

@@ -257,9 +257,7 @@ if ($command eq "clear") {
 
 if ($command eq "finalise") {
     # do any finalising code
-
     # ...
-
     # end finalising code
     print "finalised\n";
     exit 0;

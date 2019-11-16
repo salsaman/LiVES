@@ -431,7 +431,7 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
       }
 
       if (progress % DS_SPACE_CHECK_FRAMES == 1) {
-        if (!check_storage_space((mainw->current_file > -1) ? cfile : NULL, FALSE)) {
+        if (!check_storage_space(sfileno, FALSE)) {
           retval = LIVES_RESPONSE_CANCEL;
         }
       }

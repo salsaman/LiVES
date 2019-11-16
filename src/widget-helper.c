@@ -2106,7 +2106,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_window_new(LiVESWindowType wintyp
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_window_set_title(LiVESWindow *window, const char *title) {
 #ifdef GUI_GTK
-  char *ntitle = lives_strdup_printf("%s%s", widget_opts.title_prefix, title);
+  char *ntitle;
+  if (strlen(widget_opts.title_prefix) > 0) {
+    ntitle = lives_strdup_printf("%s%s", widget_opts.title_prefix, title);
+  } else ntitle = lives_strdup(title);
   gtk_window_set_title(window, ntitle);
   lives_free(ntitle);
   return TRUE;

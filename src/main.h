@@ -846,6 +846,7 @@ typedef struct {
   int cb_src; ///< source clip for clipboard
 
   boolean needs_update; ///< loaded values were incorrect, update header
+  boolean needs_silent_update; ///< needs internal update, we shouldn't concern the user
 
   boolean checked_for_old_header;
   boolean has_old_header;
@@ -1058,6 +1059,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
                                    int warn_mask_number, boolean is_blocking);
 LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
 LiVESWindow *get_transient_full();
+void do_abortblank_error(const char *what);
+void do_optarg_blank_err(const char *what);
+void do_clip_divergence_error(int fileno);
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry, LiVESWindow *transient);
 int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
@@ -1073,7 +1077,7 @@ boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient);
 /** warn about disk space */
 char *ds_critical_msg(const char *dir, uint64_t dsval);
 char *ds_warning_msg(const char *dir, uint64_t dsval, uint64_t cwarn, uint64_t nwarn);
-boolean check_storage_space(lives_clip_t *sfile, boolean is_processing);
+boolean check_storage_space(int clipno, boolean is_processing);
 
 char *get_upd_msg(void);
 
@@ -1470,7 +1474,7 @@ char *repl_workdir(const char *entry, boolean fwd);
 char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
-boolean check_frame_count(int idx);
+boolean check_frame_count(int idx, boolean last_chkd);
 void count_opening_frames(void);
 void get_frame_count(int idx);
 void get_frames_sizes(int fileno, int frame_to_test);
@@ -1574,9 +1578,17 @@ void break_me(void);
 #endif // LIVES_NO_ERROR
 #endif // LIVES_ERROR
 
+#ifndef LIVES_CRITICAL
+#ifndef LIVES_NO_CRITICAL
+#define LIVES_CRITICAL(x)      {fprintf(stderr, "LiVES CRITICAL: %s\n", x); break_me(); raise (LIVES_SIGSEGV);}
+#else // LIVES_NO_CRITICAL
+#define LIVES_CRITICAL(x)      dummychar = x
+#endif // LIVES_NO_CRITICAL
+#endif // LIVES_CRITICAL
+
 #ifndef LIVES_FATAL
 #ifndef LIVES_NO_FATAL
-#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); break_me(); raise (LIVES_SIGSEGV);}
+#define LIVES_FATAL(x)      {fprintf(stderr, "LiVES FATAL: %s\n", x); lives_notify(LIVES_OSC_NOTIFY_QUIT, x), break_me(); _exit (1);}
 #else // LIVES_NO_FATAL
 #define LIVES_FATAL(x)      dummychar = x
 #endif // LIVES_NO_FATAL

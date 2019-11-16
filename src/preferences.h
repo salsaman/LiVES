@@ -665,6 +665,7 @@ typedef struct {
 /// startup overrides from commandline
 typedef struct {
   boolean ign_clipset;
+  boolean ign_layout;
   boolean ign_osc;
   boolean ign_jackopts;
   boolean ign_aplayer;

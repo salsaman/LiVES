@@ -67,9 +67,15 @@ static void pulse_success_cb(pa_stream *stream, int i, void *userdata) {
 
 
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
-  // TODO - increase tlen ?
-  //pa_stream_set_buffer_attr(s, battr, success_cb, NULL);
+  //pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
+  // we get isolated cases when the GUI is very busy, for example right after playback
+  // we should ignore these isolated cases, except in DEBUG mode.
+  // otherwise - increase tlen ?
+  // e.g. pa_stream_set_buffer_attr(s, battr, success_cb, NULL);
+#define DEBUG_UNDERFLOWS
+#ifdef DEBUG_UNDERFLOWS
   fprintf(stderr, "PA Stream underrun.\n");
+#endif
 }
 
 

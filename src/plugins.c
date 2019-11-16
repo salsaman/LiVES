@@ -16,7 +16,7 @@
 #include "rfx-builder.h"
 #include "paramwindow.h"
 
-const char *anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB", "raw", "wma2", ""};
+const char *anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB", "raw", "wma2", "opus", ""};
 
 static boolean list_plugins;
 
@@ -931,7 +931,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-    plugin_run_param_window(NULL, (*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
+    plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -3539,7 +3539,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 }
 
 
-char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
   // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
 
   // here we create an rfx script from some fixed values and values from the plugin;
@@ -3549,11 +3549,13 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
   // this is done like so to allow use of plugins written in any language;
   // they need only output an RFX scriptlet on stdout when called from the commandline
 
+  // actually, I think now we only need the script for running triggers (CHECK)
+
   // the param window is run, and the marshalled values are returned
 
   // if the user closes the window with Cancel, NULL is returned instead
 
-  // in parameters: get_com - command to be run to produce rfx output on stdout
+  // in parameters: scrap_text
   //              : vbox - a vbox where we will display the parameters
   // out parameters: ret_rfx - the value is set to point to an rfx_t effect
 
@@ -3562,8 +3564,6 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
   // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
   // in this case, vbox should be packed in its own dialog window, which should then be run
   // and we also return the name of the scrapfile, which should be removed after running the window
-
-  // NOTE: pass in either get_com (command to be run to get rfx text), or else scrap_text, setting the unused value to NULL.
 
   FILE *sfile;
 
@@ -3609,19 +3609,6 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
-
-  if (scrap_text == NULL) {
-    com = lives_strdup_printf("%s >> \"%s\"", get_com, rfxfile);
-    retval = lives_system(com, FALSE);
-    lives_free(com);
-
-    // command failed
-    if (retval) {
-      lives_rm(rfxfile);
-      lives_free(rfxfile);
-      return NULL;
-    }
-  }
 
   // OK, we should now have an RFX fragment in a file, we can compile it, then build a parameter window from it
 
@@ -3695,7 +3682,11 @@ char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVES
         // marshall our params for passing to the plugin
         res_string = param_marshall(rfx, FALSE);
       }
-      lives_freep((void **)&fx_dialog[1]);
+
+      if (fx_dialog[1] != NULL) {
+        lives_widget_destroy(fx_dialog[1]->dialog);
+        lives_freep((void **)&fx_dialog[1]);
+      }
     } else {
       make_param_box(vbox, rfx);
     }

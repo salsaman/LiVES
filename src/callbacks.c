@@ -5385,46 +5385,86 @@ boolean reload_set(const char *set_name) {
 
     threaded_dialog_spin(0.);
 
-    // if the clip has a frame_index file, then it is CLIP_TYPE_FILE
-    // and we must load the frame_index and locate a suitable decoder plugin
+    /** read_headers() will have read the clip metadata file, so we 'know' how many frames there ought to be.
+    however this could be wrong if the file was damaged for some reason. So the first step is to read the file_index if any.
+    - if present we assume we are dealing with CLIP_TYPE_FILE (original clip + decoded frames).
+    -- If it contains more frames then we will increase cfile->frames.
+    - If it is not present then we assume are dealing with CLIP_TYPE_DISK (all frames decoded to images).
+
+    we want to do as little checking here as possible, since it can slow down the startup, but if we detect a problem then we'll
+    do increasingly more checking.
+    */
 
     if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
       // CLIP_TYPE_FILE
+      /** here we attempt to reload the clip. First we load the frame_index if any, If it contains more frames than the metadata says, then
+      we trust the frame_index for now, since the metadata may have been corrupted.
+      If it contains fewer frames, then we will warn the user, but we cannot know whether the metadata is correct or not,
+      and in any case we cannot reconstruct the frame_index, so we have to use what it tells us.
+      If file_index is absent then we assume we are dealing with CLIP_TYPE_DISK (below).
+
+      Next we attempt to reload the original clip using the same decoder plugin as last time if possible.
+      The decoder may return fewer frames from the original clip than the size of frame_index,
+      This is OK provided the final frames are decoded frames.
+      We then check backwards from the end of file_index to find the final decoded frame.
+      If this is the frame we expected then we assume all is OK */
+
       if (!reload_clip(mainw->current_file, maxframe)) continue;
+
+      /** if the image type is still unkown it means either there were no decoded frames, or the final decoded frame was absent
+      so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
+      (or at least we recovered as many frames as we could using frame_index),
+      and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
+
       if (cfile->img_type == IMG_TYPE_UNKNOWN) {
         lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
         int fvirt = count_virtual_frames(cfile->frame_index, 1, cfile->frames);
+        /** if there are some decoded frames then we have a problem. Since the img type was not found it means that the final decoded
+            frame was missing. So we check backwards to find where the last actual decoded frame is and the frame count is set to
+            final decoded frame + any virtual frames immediately following, and warn the user.
+            If other frames are missing then the clip is corrupt, but we'll continue as best we can. */
         if (fvirt < cfile->frames) check_clip_integrity(mainw->current_file, cdata, cfile->frames);
       }
     } else {
-      // CLIP_TYPE_DISK
-      if (!prefs->vj_mode) {
-        check_clip_integrity(mainw->current_file, NULL, cfile->frames);
-        // TODO: skip chk for last frame since we alrady checked
-        if (!check_frame_count(mainw->current_file)) {
-          get_frame_count(mainw->current_file);
-          cfile->needs_update = TRUE;
-        }
+      /// CLIP_TYPE_DISK
+      /** in this case we find the last decoded frame and check the frame size and get the image_type.
+      If there is a discrepancy with the metadata then we trust the empirical evidence.
+      If the final frame is absent then we find the real final frame, warn the user, and adjust frame count.
+      */
+      boolean isok = check_clip_integrity(mainw->current_file, NULL, cfile->frames);
+      /** here we do a simple check: make sure the final frame is present and frame + 1 isn't
+      if either check fails then we count all the frames (since we don't have a frame_index to guide us),
+      - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
+      if (!check_frame_count(mainw->current_file, isok)) {
+        get_frame_count(mainw->current_file);
+        cfile->needs_update = TRUE;
+      }
+    }
+
+    if (!prefs->vj_mode) {
+      if (cfile->achans > 0 && cfile->afilesize == 0) {
+        reget_afilesize_inner(mainw->current_file);
       }
     }
 
     last_file = new_file;
 
     if (++clipnum == 1) {
-      // we need to set the set_name before calling add_to_clipmenu, so that the clip gets the name of the set in
-      // its menuentry, and also prior to loading any layouts
+      /** we need to set the set_name before calling add_to_clipmenu(), so that the clip gets the name of the set in
+      its menuentry, and also prior to loading any layouts since they specirfy the clipset they need */
       lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
     }
 
-    // read the playback fps, play frame, and name
-    open_set_file(clipnum); // must do before calling save_clip_values()
+    /// read the playback fps, play frame, and name
+    open_set_file(clipnum); ///< must do before calling save_clip_values()
 
     threaded_dialog_spin(0.);
     cfile->was_in_set = TRUE;
 
-    if (cfile->needs_update) {
+    if (cfile->needs_update || cfile->needs_silent_update) {
+      if (cfile->needs_update) do_clip_divergence_error(mainw->current_file);
       save_clip_values(mainw->current_file);
-      cfile->needs_update = FALSE;
+      cfile->needs_silent_update = cfile->needs_update = FALSE;
     }
 
     if (mainw->cached_list != NULL) {
@@ -5495,6 +5535,8 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
   int marker_fd;
   int retval = 0;
 
+  boolean needs_idlefunc = FALSE;
+
   register int i;
 
   mainw->next_ds_warn_level = 0; /// < avoid nested warnings
@@ -5527,6 +5569,7 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
     if (mainw->multitrack->idlefunc > 0) {
       lives_source_remove(mainw->multitrack->idlefunc);
       mainw->multitrack->idlefunc = 0;
+      needs_idlefunc = TRUE;
     }
     mt_desensitise(mainw->multitrack);
   }
@@ -5604,11 +5647,16 @@ void on_cleardisk_activate(LiVESWidget *widget, livespointer user_data) {
     }
   }
 
-  sensitize();
+  if (mainw->multitrack == NULL && !mainw->is_processing && !LIVES_IS_PLAYING) {
+    sensitize();
+  }
 
   if (mainw->multitrack != NULL) {
-    mt_sensitise(mainw->multitrack);
-    mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    if (!mainw->is_processing && !LIVES_IS_PLAYING) {
+      mt_sensitise(mainw->multitrack);
+    }
+    if (needs_idlefunc)
+      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
   if (bytes == 0) {

@@ -3,7 +3,7 @@
 
 Author: salsaman+lives@gmail.com
 Last edit date: 13/08/2019
-API Version: 1.8.1 GPL
+API Version: 1.8.2 GPL
 
 Changes
 1.0 First version salsaman@xs4all.nl

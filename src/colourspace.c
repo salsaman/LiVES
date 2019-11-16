@@ -11140,19 +11140,8 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
     if (nchannels == 4) weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
     else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
 #endif
-#ifdef GUI_QT
-    // TODO - need to check this, it may be endian dependent
-    if (nchannels == 4) {
-      int flags = 0, error;
-      weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_ARGB32);
-      if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS)) flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
-      flags |= WEED_CHANNEL_ALPHA_PREMULT;
-      weed_set_int_value(layer, WEED_LEAF_FLAGS, flags);
-    } else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
-#endif
   }
 
-#ifndef GUI_QT
   if (rowstride == get_last_rowstride_value(width, nchannels)) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels(pixbuf);
     weed_layer_pixel_data_free(layer);
@@ -11162,7 +11151,6 @@ boolean pixbuf_to_layer(weed_plant_t *layer, LiVESPixbuf *pixbuf) {
     if (weed_palette_is_rgb_palette(palette)) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
     return TRUE;
   }
-#endif
 
   framesize = ALIGN_CEIL(rowstride * height, 32);
 

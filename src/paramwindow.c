@@ -81,6 +81,7 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
   on_paramwindow_button_clicked(button, rfx);
+  lives_widget_destroy(fx_dialog[1]->dialog);
   lives_freep((void **)&fx_dialog[1]);
 }
 
@@ -632,7 +633,7 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
   uint32_t chk_mask;
   int resp;
 
-  if (!check_storage_space(CURRENT_CLIP_IS_VALID ? cfile : NULL, FALSE)) return;
+  if (!check_storage_space(mainw->current_file, FALSE)) return;
 
   if (rfx->num_in_channels > 0) {
     chk_mask = WARN_MASK_LAYOUT_ALTER_FRAMES;
@@ -684,7 +685,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     didx = 0;
     retvals = do_onchange_init(rfx);
   }
-
   if (rfx->min_frames < 0) no_process = TRUE;
 
   if (!no_process && rfx->num_in_channels == 0) {

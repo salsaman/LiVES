@@ -167,6 +167,7 @@ typedef struct {
 #define AUDIO_CODEC_AMR_NB 6
 #define AUDIO_CODEC_RAW 7       // reserved
 #define AUDIO_CODEC_WMA2 8
+#define AUDIO_CODEC_OPUS 9
 
 #define AUDIO_CODEC_MAX 31
   //
@@ -559,7 +560,7 @@ LiVESList *array_to_string_list(char **array, int offset, int len);
 lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
-char *plugin_run_param_window(const char *get_com, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
+char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /// video playback plugin window - fixed part

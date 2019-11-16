@@ -2131,8 +2131,8 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
     return FALSE;
   }
 
-  for (i = 0; i < slen - 1; i++) {
-    if (type_name[i] == '.' && (i == 0 || type_name[i + 1] == '.')) {
+  for (i = 0; i < slen; i++) {
+    if (type_name[i] == '.' && (i == 0 || type_name[i - 1] == '.')) {
       msg = lives_strdup_printf(_("\n%s names may not start with a '.' or contain '..'\n"), xtype);
       if (!mainw->osc_auto) do_blocking_error_dialog(msg);
       lives_free(msg);
@@ -2166,7 +2166,7 @@ boolean is_legal_set_name(const char *set_name, boolean allow_dupes) {
   if (!do_std_checks(set_name, _("Set"), MAX_SET_NAME_LEN, NULL)) return FALSE;
 
   // check if this is a set in use by another copy of LiVES
-  if (!check_for_lock_file(set_name, 1)) return FALSE;
+  if (mainw != NULL && mainw->is_ready && !check_for_lock_file(set_name, 1)) return FALSE;
 
   if (!allow_dupes) {
     // check for duplicate set names
@@ -2216,16 +2216,15 @@ LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, c
 }
 
 
-boolean check_frame_count(int idx) {
-  // check number of frames is correct
-  // for files of type CLIP_TYPE_DISK
-  // - check the image files (e.g. jpeg or png)
+/** @brief check number of frames is correct
+  for files of type CLIP_TYPE_DISK
+  - check the image files (e.g. jpeg or png)
 
-  // use a "goldilocks" algorithm (just the right frames, not too few and not too many)
+  use a "goldilocks" algorithm (just the right frames, not too few and not too many)
 
-  // ingores gaps
-
-  // make sure nth frame is there...
+  ignores gaps */
+boolean check_frame_count(int idx, boolean last_checked) {
+  /// make sure nth frame is there...
   char *frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames,
                                      get_image_ext_for_type(mainw->files[idx]->img_type));
 
@@ -2236,17 +2235,18 @@ boolean check_frame_count(int idx) {
   }
   lives_free(frame);
 
-  // ...make sure n + 1 th frame is not
-  frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames + 1, get_image_ext_for_type(mainw->files[idx]->img_type));
+  /// ...make sure n + 1 th frame is not
+  frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames + 1,
+                               get_image_ext_for_type(mainw->files[idx]->img_type));
 
   if (lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
-    // too many frames
+    /// too many frames
     lives_free(frame);
     return FALSE;
   }
   lives_free(frame);
 
-  // just right
+  /// just right
   return TRUE;
 }
 
@@ -2259,17 +2259,13 @@ void count_opening_frames(void) {
 }
 
 
+/** @brief sets mainw->files[idx]->frames with current framecount
+
+   calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
+   for CLIP_TYPE_DISK only
+   (CLIP_TYPE_FILE should use the decoder plugin frame count) */
 void get_frame_count(int idx) {
-  // sets mainw->files[idx]->frames with current framecount
-
-  // calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
-
-  // for CLIP_TYPE_DISK only
-
-  // (CLIP_TYPE_FILE should use the decoder plugin frame count)
-
   ssize_t bytes;
-
   char *com = lives_strdup_printf("%s count_frames \"%s\" %s", prefs->backend_sync, mainw->files[idx]->handle,
                                   get_image_ext_for_type(mainw->files[idx]->img_type));
 

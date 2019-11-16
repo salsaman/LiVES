@@ -9,85 +9,127 @@
 ########################################################
 # this will auto-generate a LiVES-Perl plugin from the info in $file
 
-$rfx_version="1.8.2";
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
+
+my $rfx_version = "1.8.2";
+my ($section, $file);
 
 if ($ARGV[0] eq "-get") {
-    $section=$ARGV[1];
-    $file=$ARGV[2];
-    my @result=&rc_read($section,$file);
+    $section = $ARGV[1];
+    $file = $ARGV[2];
+    my @result = &rc_read($section, $file);
     foreach (@result) {
 	print "$_\n";
     }
     exit 0;
 }
 
-$file=$ARGV[0];
+$file = $ARGV[0];
 
-my $define=(&rc_read("define",$file))[0];
+my $define = (&rc_read("define", $file))[0];
 if ($define eq "") {
-    print "  - <define> section missing from script file.\n";
+    print STDERR "  - <define> section missing from script file.\n";
     exit 5;
 }
 
-my $version=substr($define,1);
+my $version = substr($define, 1);
 
 unless (&make_ver_hash($version) <= &make_ver_hash($rfx_version)) {
-    print "\n\n  - Invalid script RFX version $version, this builder is for $rfx_version\n";
+    print STDERR "\n\n  - Invalid script RFX version $version, this builder is for $rfx_version\n";
     exit 4;
 }
 
-my $delim=substr($define,0,1);
-my $delimit=$delim;
-if ($delim =~ /[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]/) {
-    $delim="\\".$delim;
+my $delim = substr($define, 0, 1);
+my $delimit = $delim;
+if ($delim =~ /^[\^\$\.\*\+\?\|\(\)\[\]\{\}\\]+/) {
+    $delim = "\\" . $delim;
 }
 
-my $plugin_name=(&rc_read("name",$file))[0];
-my $author_name=(&rc_read("author",$file))[0];
-my $lang_code=(&rc_read("language_code",$file))[0];
+my $plugin_name = (&rc_read("name", $file))[0];
+my $is_scrap = 0;
 
-my $plugin_version=(&rc_read("version",$file))[0];
-my $description=(&rc_read("description",$file))[0];
-my @requires=&rc_read("requires",$file);
-my @params=&rc_read("params",$file);
-my @param_window=&rc_read("param_window",$file);
-my $properties=(&rc_read("properties",$file))[0];
-my @pre=&rc_read("pre",$file);
-my @loop=&rc_read("loop",$file);
-my @post=&rc_read("post",$file);
-my @onchange=&rc_read("onchange",$file);
+if ($plugin_name =~ /^rfx\.[0-9]{5,}$/) {
+    $is_scrap = 1;
+}
+
+my $author_name ="";
+
+if (!$is_scrap) {
+    $author_name = (&rc_read("author", $file))[0];
+}
+
+my $lang_code = (&rc_read("language_code", $file))[0];
+my $plugin_version ="";
+my $description = "";
+my @requires = ();
+
+if (!$is_scrap) {
+    $plugin_version = (&rc_read("version", $file))[0];
+    $description = (&rc_read("description", $file))[0];
+    @requires=&rc_read("requires", $file);
+}
+
+my @params = &rc_read("params", $file);
+my @param_window = &rc_read("param_window", $file);
+
+my $properties = "0";
+my @pre = ();
+my @loop = ();
+my @post = ();
+
+if (!$is_scrap) {
+    $properties = (&rc_read("properties", $file))[0];
+    @pre = &rc_read("pre", $file);
+    @loop = &rc_read("loop", $file);
+    @post = &rc_read("post", $file);
+}
+
+my @onchange = &rc_read("onchange", $file);
 
 if (@pre || @loop || @post || @onchange) {
-    unless ($lang_code eq "240"||hex($lang_code)==240) {
-	print "  - Invalid language code for this builder !\n";
+    unless ($lang_code eq "240" || hex($lang_code) == 240) {
+	print STDERR "  - Invalid language code for this builder !\n";
 	exit 3;
     }
 }
 
-$properties=hex($properties)|0x8000; # mark as built with build-plugin
+$properties = hex($properties) | 0x8000; # mark as built with build-plugin
 
-my $min_frames=(split(/$delim/,$description))[2];
-my $in_channels=(split(/$delim/,$description))[3];
+my $min_frames = 0;
+my $in_channels = 0;
 
-if ($min_frames==-1) {
-    $is_util=1;
+if (!$is_scrap) {
+    $min_frames = (split(/$delim/, $description))[2];
+    $in_channels = (split(/$delim/, $description))[3];
+
+    if ($min_frames == -1) {
+	$is_util = 1;
+    }
+    else {
+	$is_util = 0;
+    }
 }
-else {
-    $is_util=0;
-}
 
-$builder_version="3.0.3-pre";
+my $builder_version = "3.0.3-pre";
 
-if ($in_channels == 0 && ($properties & 0x0004)) {
+if (!$is_scrap && $in_channels == 0 && ($properties & 0x0004)) {
     #batch mode generator
-    $is_batch_gen=1;
+    $is_batch_gen = 1;
 }
 else {
-    $is_batch_gen=0;
+    $is_batch_gen = 0;
 }
 
-if ($in_channels>0) {
-    push(@requires,"convert");
+if ($in_channels > 0) {
+    push(@requires, "convert");
 }
 
 #########################################################
@@ -97,125 +139,135 @@ if ($in_channels>0) {
 
 if (!defined($ARGV[1])) {
     if ($^O eq "MSWin32") {
-	$prefix_dir="C:\\";
+	$prefix_dir = "C:\\";
     } else {
-	$prefix_dir="/tmp";
+	$prefix_dir = "/tmp";
     }
 }
 else {
-    $prefix_dir=$ARGV[1];
+    $prefix_dir = $ARGV[1];
 }
 
 if ($^O eq "MSWin32") {
-    $plugin_file="$prefix_dir\\$plugin_name";
+    $plugin_file = "$prefix_dir\\$plugin_name";
 }
 else {
-    $plugin_file="$prefix_dir/$plugin_name";
+    $plugin_file = "$prefix_dir/$plugin_name";
 }
 
 if (defined($DEBUG)) {
-    print "Creating plugin file $plugin_file\n";
+    print STDERR "Creating plugin file $plugin_file\n";
 }
 
 ########################################################
 
-open OUT,">","$plugin_file";
+open OUT, ">", "$plugin_file";
 
 print OUT "#!/usr/bin/perl\n\n";
-print OUT "#######################################################################\n";
-print OUT "# LiVES $plugin_name plugin, version $version\n";
-print OUT "# RFX version $rfx_version\n";
-print OUT "# autogenerated from script by $author_name\n\n";
-print OUT "# rendered plugins should accept:\n";
-print OUT "# <plugin_name> version (return <plugin_name> version <version>)\n";
-print OUT "# <plugin_name> get_define\n";
-print OUT "# <plugin_name> get_capabilities\n";
-print OUT "# <plugin_name> get_description (e.g. \"Edge detect|Edge detecting|1|1|\")\n";
-print OUT "# <plugin_name> clear (clean up any plugin generated temp files)\n";
-print OUT "# and optionally any of: \n";
-print OUT "# <plugin_name> get_parameters\n";
-print OUT "# <plugin_name> get_param_window\n";
-print OUT "# <plugin_name> get_onchange\n";
-print OUT "# <plugin_name> onchange_<when> (for any triggers, e.g. onchange_init)\n";
-print OUT "#\n";
-print OUT "# they must accept:\n";
-print OUT "# <plugin_name> process <parameters>\n\n";
-print OUT "# You should not skip any frames, if a frame is not changed you must do:\n";
-print OUT "# `cp \$in \$out`\n";
-print OUT "#\n";
-print OUT "# for *non-Perl* plugins, LiVES will call:\n";
-print OUT "# <plugin_name> process \"<dir>\" <in_ext> <out_ext> <start> <end>\n";
-print OUT "#  <width> <height> <parameters>\n";
-print OUT "# first you should chdir to <dir>\n";
-print OUT "# then you should create all output frames %8d\$out_ext in numerical \n";
-print OUT "# from start to end inclusive,\n";
-print OUT "# each time calling sig_progress (see smogrify) - writes current frame number to \n";
-print OUT "# <dir>/.status\n";
-print OUT "# and checking for pause\n";
-print OUT "#\n";
-print OUT "# Any errors should be transmitted as in sig_error - \n";
-print OUT "# write \"error|msg1|msg2|msg3|\" to <dir>/.status\n";
-print OUT "# msgn must not contain \"\\n\", but can be omitted\n\n";
-print OUT "# output frames should be named %8d\$out_ext in the same directory\n";
-print OUT "# after processing, you should leave no gaps in out frames, you should not resize\n";
-print OUT "# or change the palette from RGB24 (LiVES will check and autocorrect this soon)\n\n";
-print OUT "# Also you must implement your own: &sig_error and &sig_progress\n\n\n";
-print OUT "#######################################################################\n\n";
+if (!$is_scrap) {
+    print OUT "#######################################################################\n";
+    print OUT "# LiVES $plugin_name plugin, version $version\n";
+    print OUT "# RFX version $rfx_version\n";
+    print OUT "# autogenerated from script by $author_name\n\n";
+    print OUT "# rendered plugins should accept:\n";
+    print OUT "# <plugin_name> version (return <plugin_name> version <version>)\n";
+    print OUT "# <plugin_name> get_define\n";
+    print OUT "# <plugin_name> get_capabilities\n";
+    print OUT "# <plugin_name> get_description (e.g. \"Edge detect|Edge detecting|1|1|\")\n";
+    print OUT "# <plugin_name> clear (clean up any plugin generated temp files)\n";
+    print OUT "# and optionally any of: \n";
+    print OUT "# <plugin_name> get_parameters\n";
+    print OUT "# <plugin_name> get_param_window\n";
+    print OUT "# <plugin_name> get_onchange\n";
+    print OUT "# <plugin_name> onchange_<when> (for any triggers, e.g. onchange_init)\n";
+    print OUT "#\n";
+    print OUT "# they must accept:\n";
+    print OUT "# <plugin_name> process <parameters>\n\n";
+    print OUT "# You should not skip any frames, if a frame is not changed you must do:\n";
+    print OUT "# `cp \$in \$out`\n";
+    print OUT "#\n";
+    print OUT "# for *non-Perl* plugins, LiVES will call:\n";
+    print OUT "# <plugin_name> process \"<dir>\" <in_ext> <out_ext> <start> <end>\n";
+    print OUT "#  <width> <height> <parameters>\n";
+    print OUT "# first you should chdir to <dir>\n";
+    print OUT "# then you should create all output frames %8d\$out_ext in numerical \n";
+    print OUT "# from start to end inclusive,\n";
+    print OUT "# each time calling sig_progress (see smogrify) - writes current frame number to \n";
+    print OUT "# <dir>/.status\n";
+    print OUT "# and checking for pause\n";
+    print OUT "#\n";
+    print OUT "# Any errors should be transmitted as in sig_error - \n";
+    print OUT "# write \"error|msg1|msg2|msg3|\" to <dir>/.status\n";
+    print OUT "# msgn must not contain \"\\n\", but can be omitted\n\n";
+    print OUT "# output frames should be named %8d\$out_ext in the same directory\n";
+    print OUT "# after processing, you should leave no gaps in out frames, you should not resize\n";
+    print OUT "# or change the palette from RGB24 (LiVES will check and autocorrect this soon)\n\n";
+    print OUT "# Also you must implement your own: &sig_error and &sig_progress\n\n\n";
+    print OUT "#######################################################################\n\n";
+}
 
 print OUT "use POSIX;\n";
 print OUT "setlocale(LC_NUMERIC, \"C\");\n\n";
 
-print OUT "my \$command=\$ARGV[0];\n\n";
-print OUT "if (\$command eq \"get_capabilities\") {\n";
-print OUT "    # capabilities is a bitmap field\n";
-print OUT "    # 0x0001 == slow (hint to GUI)\n";
-print OUT "    # 0x0002 == may resize (all frames to $nwidth x $nheight)\n";
-print OUT "    # 0x0004 == block mode generator\n";
-print OUT "    # 0x8000 == reserved\n";
-print OUT "    print \"$properties\\n\";\n";
-print OUT "    exit 0;\n";
-print OUT "}\n\n";
+print OUT "my \$command = \$ARGV[0];\n\n";
+if (!$is_scrap) {
+    print OUT "if (\$command eq \"get_capabilities\") {\n";
+    print OUT "    # capabilities is a bitmap field\n";
+    print OUT "    # 0x0001 == slow (hint to GUI)\n";
+    print OUT "    # 0x0002 == may resize (all frames to $nwidth x $nheight)\n";
+    print OUT "    # 0x0004 == block mode generator\n";
+    print OUT "    # 0x8000 == reserved\n";
+    print OUT "    print \"$properties\\n\";\n";
+    print OUT "    exit 0;\n";
+    print OUT "}\n\n";
+}
+
 print OUT "if (\$command eq \"version\") {\n";
 print OUT "    print \"$plugin_name version $plugin_version : builder version $builder_version\\n\";\n";
 print OUT "    exit 0;\n";
 print OUT "}\n\n";
+
 print OUT "if (\$command eq \"get_define\") {\n";
 print OUT "    print \"$delimit$version\\n\";\n";
 print OUT "    exit 0;\n";
 print OUT "}\n\n";
-print OUT "if (\$command eq \"get_description\") {\n";
-print OUT "    #format here is \"Menu entry|Action description|min_frames|number_of_in_channels|\"\n";
-print OUT "    # min_frames==-1 indicates a special \"no processing\" effect. This allows more\n";
-print OUT "    #general parameter windows which are not really effects (e.g. frame_calculator)\n";
-print OUT "    print \"$description\\n\";\n";
-print OUT "    exit 0;\n";
-print OUT "}\n\n\n";
+
+if (!$is_scrap) {
+    print OUT "if (\$command eq \"get_description\") {\n";
+    print OUT "    #format here is \"Menu entry|Action description|min_frames|number_of_in_channels|\"\n";
+    print OUT "    # min_frames == -1 indicates a special \"no processing\" effect. This allows more\n";
+    print OUT "    #general parameter windows which are not really effects (e.g. frame_calculator)\n";
+    print OUT "    print \"$description\\n\";\n";
+    print OUT "    exit 0;\n";
+    print OUT "}\n\n\n";
+}
+
 print OUT "if (\$command eq \"get_parameters\") {\n";
 print OUT "    # \"name|label|type|other fields...\"\n";
-    print OUT "    # eg. print \"radius|_radius|num0|1|1|100|\";\n";
-    print OUT "    # types can be numx,colRGB24,bool,string or string_list\n";
+print OUT "    # eg. print \"radius|_radius|num0|1|1|100|\";\n";
+print OUT "    # types can be numx, colRGB24, bool, string or string_list\n";
 
-    foreach (@params) {
-	unless ($_ eq "") {
-	    @bits=split(/$delim/);
-	    # note: ARGV[0]=="process"
-	    if ($bits[2] eq "string") {
-		$bits[3]=&quotescape (&escape($bits[3]));
-	    }
-	    print OUT "    print \"".join($delimit,@bits)."$delimit\\n\";\n";
+foreach (@params) {
+    unless ($_ eq "") {
+	@bits = split(/$delim/);
+	# note: ARGV[0] == "process"
+	if ($bits[2] eq "string") {
+	    $bits[3] = &quotescape(&escape($bits[3]));
 	}
+	print OUT "    print \"" . join($delimit, @bits) . "$delimit\\n\";\n";
     }
+}
 
 print OUT "    exit 0;\n";
 print OUT "}\n\n";
 print OUT "if (\$command eq \"get_param_window\") {\n";
 
-    foreach (@param_window) {
-	unless ($_ eq "") {
-	    $_ =~ s/\"/\\\"/g;
-	    print OUT "    print \"$_$delimit\\n\";\n";
-	}
+foreach (@param_window) {
+    unless ($_ eq "") {
+	$_ =~ s/\"/\\\"/g;
+	print OUT "    print \"$_$delimit\\n\";\n";
     }
+}
 
 print OUT "    exit 0;\n";
 print OUT "}\n\n";
@@ -227,241 +279,244 @@ if (@onchange) {
 print OUT "    exit 0;\n";
 print OUT "}\n\n";
 
-print OUT "#######################################################\n\n";
-print OUT "if (\$command eq \"process\") {\n";
-print OUT "    # in case of error, you should do:\n";
-print OUT "    # &sig_error(\"msg1\",\"msg2\",\"msg3\",\"msg4\"); [ msg's are optional, but must not\n"; 
-print OUT "    # contain newlines (\\n) ]\n\n";
+if (!$is_scrap) {
+    print OUT "#######################################################\n\n";
+    print OUT "if (\$command eq \"process\") {\n";
+    print OUT "    # in case of error, you should do:\n";
+    print OUT "    # &sig_error(\"msg1\", \"msg2\", \"msg3\", \"msg4\"); [ msg's are optional, but must not\n";
+    print OUT "    # contain newlines (\\n) ]\n\n";
 
-if (@requires) {
-    &gen_requires(0);
-}
-
-if (@params) {
-    print OUT "\n###### handle parameters #############\n";
-    print OUT "# autogenerated from get_parameters\n\n";
-
-    &gen_get_params;
-    &gen_param_checks;
-}
-
-for ($i=0;$i<@params;$i++) {
-    unless ($params[$i] eq "") {
-	if (&param_get_type($i) eq "colRGB24") {
-	    $pname=&param_get_name($i);
-	    print OUT "    \$p$i=int(\$p$i);\n";
-	    print OUT "    if (\$p$i>0xFFFFFF||\$p$i<0) {\n";
-	    print OUT "        &sig_error(\"Invalid colour for $pname.\");\n";
-	    print OUT "        exit 1;\n";
-	    print OUT "    }\n";
-	    print OUT "    \$p$i"."_red=int(\$p$i/65536);\n";
-	    print OUT "    \$p$i"."-=\$p$i"."_red*65536;\n";
-	    print OUT "    \$p$i"."_green=int(\$p$i/256);\n";
-	    print OUT "    \$p$i"."-=\$p$i"."_green*256;\n";
-	    print OUT "    \$p$i"."_blue=\$p$i;\n";
-	}
+    if (@requires) {
+	&gen_requires(0);
     }
 }
 
-if ($in_channels==2) {
-    print OUT "    \$nwidth=\$width;\n\$nheight=\$height;\n\n";
-    print OUT "    if (\$img_ext2 eq \".png\") {\n";
-    print OUT "        \$img_prefix2=\"PNG32:\";\n";
-    print OUT "    } else {\n";
-    print OUT "        \$img_prefix2=\"\";\n";
-    print OUT "    }\n";
+if (!$is_scrap) {
+    if (@params) {
+	print OUT "\n###### handle parameters #############\n";
+	print OUT "# autogenerated from get_parameters\n\n";
 
-}
+	&gen_get_params;
+	if (!$is_scrap) {
+	    &gen_param_checks;
+	}
+    }
 
-print OUT "\n";
 
-if ($in_channels==0&&!$is_batch_gen) {
-    # script writer MUST set this themselves
-    print OUT "    \$end=0;\n\n";
-}
+    foreach my $param (@params) {
+	unless ($param eq "") {
+	    if (&param_get_type($i) eq "colRGB24") {
+		$pname=&param_get_name($i);
+		print OUT "    \$p$i = int(\$p$i);\n";
+		print OUT "    if (\$p$i > 0xFFFFFF || \$p$i < 0) {\n";
+		print OUT "        &sig_error(\"Invalid colour for $pname.\");\n";
+		print OUT "        exit 1;\n";
+		print OUT "    }\n";
+		print OUT "    \$p$i" . "_red = int(\$p$i / 65536);\n";
+		print OUT "    \$p$i" . "- = \$p$i" . "_red * 65536;\n";
+		print OUT "    \$p$i" . "_green = int(\$p$i / 256);\n";
+		print OUT "    \$p$i" . "- = \$p$i" . "_green * 256;\n";
+		print OUT "    \$p$i " ."_blue = \$p$i;\n";
+	    }
+	}
+    }
 
-print OUT "    if (\$img_ext eq \".png\") {\n";
-print OUT "        \$img_prefix=\"PNG32:\";\n";
-print OUT "    } else {\n";
-print OUT "        \$img_prefix=\"\";\n";
-print OUT "    }\n\n";
+    if ($in_channels == 2) {
+	print OUT "    \$nwidth = \$width;\n\$nheight = \$height;\n\n";
+	print OUT "    if (\$img_ext2 eq \".png\") {\n";
+	print OUT "        \$img_prefix2 = \"PNG32:\";\n";
+	print OUT "    } else {\n";
+	print OUT "        \$img_prefix2 = \"\";\n";
+	print OUT "    }\n";
 
-print OUT "    if (\$out_ext eq \".png\") {\n";
-print OUT "        \$out_prefix=\"PNG32:\";\n";
-print OUT "    } else {\n";
-print OUT "        \$out_prefix=\"\";\n";
-print OUT "    }\n\n";
+    }
 
-if (@pre) {
-    &gen_pre;
-}
+    print OUT "\n";
 
-print OUT "\n";
-print OUT "    if (\$start==0) {\$start = 1;}\n";
-print OUT "\n";
-
-unless ($is_batch_gen) {
-    print OUT "\n################# loop through frames #################\n";
+    if ($in_channels == 0 && !$is_batch_gen) {
+	# script writer MUST set this themselves
+	print OUT "    \$end = 0;\n\n";
+    }
 
     print OUT "    if (\$img_ext eq \".png\") {\n";
-    print OUT "        \$img_prefix=\"PNG32:\";\n";
+    print OUT "        \$img_prefix = \"PNG32:\";\n";
     print OUT "    } else {\n";
-    print OUT "        \$img_prefix=\"\";\n";
+    print OUT "        \$img_prefix = \"\";\n";
     print OUT "    }\n\n";
 
     print OUT "    if (\$out_ext eq \".png\") {\n";
-    print OUT "        \$out_prefix=\"PNG32:\";\n";
+    print OUT "        \$out_prefix = \"PNG32:\";\n";
     print OUT "    } else {\n";
     print OUT "        \$out_prefix=\"\";\n";
     print OUT "    }\n\n";
 
+    if (@pre) {
+	&gen_pre;
+    }
+
+    print OUT "\n";
+    print OUT "    if (\$start == 0) {\$start = 1;}\n";
+    print OUT "\n";
+
+    unless ($is_batch_gen) {
+	print OUT "\n################# loop through frames #################\n";
+
+	print OUT "    if (\$img_ext eq \".png\") {\n";
+	print OUT "        \$img_prefix = \"PNG32:\";\n";
+	print OUT "    } else {\n";
+	print OUT "        \$img_prefix = \"\";\n";
+	print OUT "    }\n\n";
+
+	print OUT "    if (\$out_ext eq \".png\") {\n";
+	print OUT "        \$out_prefix = \"PNG32:\";\n";
+	print OUT "    } else {\n";
+	print OUT "        \$out_prefix = \"\";\n";
+	print OUT "    }\n\n";
+
 	if ($in_channels==2) {
-	    print OUT "    \$frame2=\$start2;\n";
+	    print OUT "    \$frame2 = \$start2;\n";
 	    print OUT "    unless (defined(\$img_ext2)) {\n";
-	    print OUT "        \$img_ext2=\$img_ext;\n";
+	    print OUT "        \$img_ext2 = \$img_ext;\n";
 	    print OUT "    }\n\n";
 
 	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
-	    print OUT "        &sig_error(\"'convert' is required by this plugin.\",\"Please install imagemagick and try again.\");\n";
+	    print OUT "        &sig_error(\"'convert' is required by this plugin.\", \"Please install imagemagick and try again.\");\n";
 	    print OUT "        exit 1;\n";
 	    print OUT "    }\n\n";
 
 
 	    print OUT "    if (\$img_ext2 eq \".png\") {\n";
-	    print OUT "        \$img_prefix2=\"PNG32:\";\n";
+	    print OUT "        \$img_prefix2 = \"PNG32:\";\n";
 	    print OUT "    } else {\n";
-	    print OUT "        \$img_prefix2=\"\";\n";
+	    print OUT "        \$img_prefix2 = \"\";\n";
 	    print OUT "    }\n\n";
 	}
 
-    print OUT "    for (\$frame=\$start;\$frame<=\$end;\$frame++) {\n";
-    print OUT "        # sig progress will update the progress bar from \$start->\$end\n";
-    print OUT "        \$name=&mkname(\$frame);\n";
+	print OUT "    for (\$frame = \$start; \$frame <= \$end; \$frame++) {\n";
+	print OUT "        # sig progress will update the progress bar from \$start->\$end\n";
+	print OUT "        \$name = &mkname(\$frame);\n";
 
-    unless ($in_channels == 0) {
-	print OUT "        \$in=\"\$name\$img_ext\";\n\n";
-	print OUT "        if (!defined(\$end) || \$end==0) {\n";
-	print OUT "            print STDERR \"WARNING: generator plugin did not set \$end !\";\n";
-	print OUT "            &sig_error(\"Generator plugin did not set \$end.\");\n";
-	print OUT "        }\n";
-    }
-    
-    if ($in_channels == 2) {
-	print OUT "        \$name2=&mkname(\$frame2);\n";
+	unless ($in_channels == 0) {
+	    print OUT "        \$in = \"\$name\$img_ext\";\n\n";
+	    print OUT "        if (!defined(\$end) || \$end == 0) {\n";
+	    print OUT "            print STDERR \"WARNING: generator plugin did not set \$end !\";\n";
+	    print OUT "            &sig_error(\"Generator plugin did not set \$end.\");\n";
+	    print OUT "        }\n";
+	}
 
-	print OUT "        \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
+	if ($in_channels == 2) {
+	    print OUT "        \$name2 = &mkname(\$frame2);\n";
+	    print OUT "        \$in2 = \"\$clipboard/\$name2\$img_ext2\";\n";
+	    print OUT "        unless (-f \$in2) {\n";
+	    print OUT "            # end of clipboard reached, loop back to start\n";
+	    print OUT "            \$frame2 = \$start2;\n";
+	    print OUT "            \$name2 = &mkname(\$frame2);\n";
+	    print OUT "            \$in2 = \"\$clipboard/\$name2\$img_ext2\";\n";
+	    print OUT "        }\n";
 
-	print OUT "        unless (-f \$in2f) {\n";
-	print OUT "            # end of clipboard reached, loop back to start\n";
-	print OUT "            \$frame2=\$start2;\n";
-	print OUT "            \$name2=&mkname(\$frame2);\n";
-	print OUT "            \$in2=\"\$clipboard/\$name2\$img_ext2\";\n";
-	print OUT "        }\n";
+	    print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
+	    print OUT "            system(\"\$convert_command \$img_prefix2\\\"\$in2\\\" \$img_prefix\\\"\$clipboard/\$name2\$img_ext\\\"\");\n";
+	    print OUT "            \$img_prefix2 = \$img_prefix;\n";
+	    print OUT "        }\n";
+	}
 
-	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
-	print OUT "            system(\"\$convert_command \$img_prefix2\\\"\$in2\\\" \$img_prefix\\\"\$clipboard/\$name2\$img_ext\\\"\");\n";
-	print OUT "            \$img_prefix2=\$img_prefix;\n";
-	print OUT "        }\n";
-    }
+	print OUT "        \$out = \"\$name\$out_ext\";\n\n";
 
-    print OUT "        \$out=\"\$name\$out_ext\";\n\n";
+	if ($in_channels > 0) {
+	    print OUT "        # wait for front end to create $in\n";
+	    print OUT "        while (! -s \$in) {\n";
+	    print OUT "            sleep 1;\n";
+	    print OUT "        }\n\n";
+	    print OUT "        `flock \$in true`;\n";
 
-    if ($in_channels > 0) {
-	print OUT "        # wait for front end to create $in\n";
-	print OUT "        while (! -s \$in) {\n";
-	print OUT "            sleep 1;\n";
-	print OUT "        }\n\n";
-	print OUT "        `flock \$in true`;\n";
+	}
 
-    }
-
-    if ($in_channels > 1) {
-	print OUT "        # wait for front end to create $in2\n";
-	print OUT "        while (! -s \$in2) {\n";
-	print OUT "            sleep 1;\n";
-	print OUT "        }\n\n";
-	print OUT "        `flock \$in2 true`;\n";
-    }
-}
-
-print OUT "##################### the all-important bit #######################\n\n";
-    
-    &gen_loop;
-
-print OUT "\n###################################################################\n";
-
-unless ($is_batch_gen) {
-    if ($in_channels==2) {
-	print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
-	print OUT "            unlink \$in2;\n";
-	print OUT "        }\n";
-	print OUT "        \$frame2++;\n";
-    }
-    
-    print OUT "        for (my \$i = 0; \$i < 5; \$i++) {\n";
-    print OUT "            if (! -s \$out) {\n";
-    print OUT "                sleep 1;\n";
-    print OUT "            }\n";
-    print OUT "        }\n\n";
-    print OUT "        if (! -s \$out) {\n";
-    print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\\n\";\n";
-    print OUT "            return 1;\n";
-    print OUT "        }\n\n";
-
-    if ($in_channels==0) {
-	print OUT "        &sig_progress(\$frame, \$nwidth, \$nheight, \$fps, \$end);\n\n";
-    }
-    else {
-	print OUT "        &sig_progress(\$frame);\n\n";
-    }
-    
-    for ($i=0;$i<@params;$i++) {
-	unless ($params[$i] eq "") {
-	    if (&param_get_type($i) eq "colRGB24") {
-		# clamp RGB values
-		print OUT "        if (\$p$i"."_red>255) {\n";
-		print OUT "            \$p$i"."_red=255;\n";
-		print OUT "        }\n";
-		print OUT "        elsif (\$p$i"."_red<0) {\n";
-		print OUT "            \$p$i"."_red=0;\n";
-		print OUT "        }\n";
-		print OUT "        if (\$p$i"."_green>255) {\n";
-		print OUT "            \$p$i"."_green=255;\n";
-		print OUT "        }\n";
-		print OUT "        elsif (\$p$i"."_green<0) {\n";
-		print OUT "            \$p$i"."_green=0;\n";
-		print OUT "        }\n";
-		print OUT "        if (\$p$i"."_blue>255) {\n";
-		print OUT "            \$p$i"."_blue=255;\n";
-		print OUT "        }\n";
-		print OUT "        elsif (\$p$i"."_blue<0) {\n";
-		print OUT "            \$p$i"."_blue=0;\n";
-		print OUT "        }\n";
-	    }
+	if ($in_channels > 1) {
+	    print OUT "        # wait for front end to create $in2\n";
+	    print OUT "        while (! -s \$in2) {\n";
+	    print OUT "            sleep 1;\n";
+	    print OUT "        }\n\n";
+	    print OUT "        `flock \$in2 true`;\n";
 	}
     }
-    
-    print OUT "        }\n";
+
+    print OUT "##################### the all-important bit #######################\n\n";
+
+    &gen_loop;
+
+    print OUT "\n###################################################################\n";
+
+    unless ($is_batch_gen) {
+	if ($in_channels == 2) {
+	    print OUT "        unless (\$img_ext2 eq \$img_ext) {\n";
+	    print OUT "            unlink \$in2;\n";
+	    print OUT "        }\n";
+	    print OUT "        \$frame2++;\n";
+	}
+
+	print OUT "        for (my \$i = 0; \$i < 5; \$i++) {\n";
+	print OUT "            if (! -s \$out) {\n";
+	print OUT "                sleep 1;\n";
+	print OUT "            }\n";
+	print OUT "        }\n\n";
+	print OUT "        if (! -s \$out) {\n";
+	print OUT "            print STDERR \"Warning: effect plugin $plugin_name skipped frame \$frame !\\n\";\n";
+	print OUT "            return 1;\n";
+	print OUT "        }\n\n";
+
+	if ($in_channels==0) {
+	    print OUT "        &sig_progress(\$frame,  \$nwidth,  \$nheight,  \$fps,  \$end);\n\n";
+	}
+	else {
+	    print OUT "        &sig_progress(\$frame);\n\n";
+	}
+
+	for ($i = 0; $i < @params; $i++) {
+	    unless ($params[$i] eq "") {
+		if (&param_get_type($i) eq "colRGB24") {
+		    # clamp RGB values
+		    print OUT "        if (\$p$i" . "_red > 255) {\n";
+		    print OUT "            \$p$i" . "_red = 255;\n";
+		    print OUT "        }\n";
+		    print OUT "        elsif (\$p$i" . "_red < 0) {\n";
+		    print OUT "            \$p$i" . "_red = 0;\n";
+		    print OUT "        }\n";
+		    print OUT "        if (\$p$i" . "_green > 255) {\n";
+		    print OUT "            \$p$i" . "_green = 255;\n";
+		    print OUT "        }\n";
+		    print OUT "        elsif (\$p$i" . "_green < 0) {\n";
+		    print OUT "            \$p$i" . "_green = 0;\n";
+		    print OUT "        }\n";
+		    print OUT "        if (\$p$i" . "_blue > 255) {\n";
+		    print OUT "            \$p$i" . "_blue = 255;\n";
+		    print OUT "        }\n";
+		    print OUT "        elsif (\$p$i" . "_blue < 0) {\n";
+		    print OUT "            \$p$i" . "_blue = 0;\n";
+		    print OUT "        }\n";
+		}}}
+
+	print OUT "        }\n";
+    }
+
+    print OUT "    return 1;\n";
+    print OUT "}\n\n\n";
+
+    print OUT "\n########## Post loop code ############\n";
+
+    print OUT "if (\$command eq \"clear\") {\n";
+
+    print OUT "    \$start = \$ARGV[1];\n";
+    print OUT "    \$end = \$ARGV[2];\n";
+    print OUT "    \$img_ext = \$ARGV[3];\n";
+
+    print OUT "\n";
+
+    if (@post) {
+	&gen_post;
+    }
+    print OUT "    exit 0;\n";
+    print OUT "}\n";
 }
-
-print OUT "    return 1;\n";
-print OUT "}\n\n\n";
-
-print OUT "\n########## Post loop code ############\n";
-
-print OUT "if (\$command eq \"clear\") {\n";
-
-print OUT "    \$start=\$ARGV[1];\n";
-print OUT "    \$end=\$ARGV[2];\n";
-print OUT "    \$img_ext=\$ARGV[3];\n";
-
-print OUT "\n";
-
-if (@post) {
-    &gen_post;
-}
-print OUT "    exit 0;\n";
-print OUT "}\n";
 
 if (@onchange) {
     print OUT "\n########## Triggers ############\n";
@@ -476,13 +531,13 @@ system ("chmod 755 \"$plugin_file\"");
 
 
 sub gen_requires {
-    my ($type)=@_;
+    my $type = shift;
     print OUT "##### check requirements first #######\n";
 
     foreach (@requires) {
 	unless ($_ eq "") {
 	    print OUT "    if (&location(\"$_\") eq \"\") {\n";
-	    if ($type==0) {
+	    if ($type == 0) {
 		print OUT "      &sig_error(\"You must install '$_' before you can use this effect.\");\n";
 	    }
 	    else {
@@ -496,23 +551,21 @@ sub gen_requires {
 
 
 sub gen_get_params {
-    my $i=0;
-    my (@bits,$type);
+    my $i = 0;
+    my (@bits, $type);
     foreach (@params) {
 	unless ($_ eq "") {
-	    @bits=split (/$delim/,$_);
-	    # note: ARGV[0]=="process"
-	    $def=($bits[3]);
+	    @bits=split (/$delim/, $_);
+	    # note: ARGV[0] == "process"
+	    $def = ($bits[3]);
 	    if ($bits[2] eq "string") {
-		$def="\"".&quotescape($def)."\"";
+		$def = "\"" . &quotescape($def ). "\"";
 	    }
-	    print OUT "    unless (defined(\$ARGV[".($i+1)."])) {\n";
-	    print OUT "      \$p$i=$def;\n";
+	    print OUT "    unless (defined(\$ARGV[" . ($i+1 ) ."])) {\n";
+	    print OUT "      \$p$i = $def;\n";
 	    print OUT "    }\n";
 	    print OUT "    else {\n";
-
-	    print OUT "      \$p$i=\$ARGV[".($i+1)."];\n";
-
+	    print OUT "      \$p$i = \$ARGV[" . ($i+1) . "];\n";
 	    print OUT "    }\n";
 	    $i++;
 	}
@@ -524,45 +577,44 @@ sub gen_param_checks {
 # generate some errors if params are out of range
 # fix decimal places and booleans
 # TODO - check for valid colours
-    my ($pname,$min,$max,$type,$dp,@bits,$fix);
-    my $i=0;
+    my ($pname, $min, $max, $type, $dp, @bits, $fix);
+    my $i = 0;
     foreach (@params) {
 	unless ($_ eq "") {
-	    @bits=split(/$delim/);
-	    $type=$bits[2];
-	    if (substr($type,0,3) eq "num") {
-		$pname=$bits[0];
-		$min=$bits[4];
-		$max=$bits[5];
-		$dp=substr($type,3);
-		$fix=10**$dp;
-		if ($dp>0) {
-		    $fix.=".";
+	    @bits = split(/$delim/);
+	    $type = $bits[2];
+	    if (substr($type, 0, 3) eq "num") {
+		$pname = $bits[0];
+		$min = $bits[4];
+		$max = $bits[5];
+		$dp = substr($type, 3);
+		$fix = 10 ** $dp;
+		if ($dp > 0) {
+		    $fix .= ".";
 		}
-		print OUT "    \$!=0;\n";
+		print OUT "    \$! = 0;\n";
 
 #use POSIX::strtod to account for locales LC_NUMERIC
 
-		print OUT "    if (\$p$i>=0) {\n";
-		print OUT "        \$p$i=int(POSIX::strtod(\$p$i)*$fix+.5)/$fix;\n";
+		print OUT "    if (\$p$i >= 0) {\n";
+		print OUT "        \$p$i = int(POSIX::strtod(\$p$i) * $fix + .5) / $fix;\n";
 		print OUT "    } else {\n";
-		print OUT "        \$p$i=int(POSIX::strtod(\$p$i)*$fix-.5)/$fix;\n";
+		print OUT "        \$p$i = int(POSIX::strtod(\$p$i) * $fix - .5) / $fix;\n";
 		print OUT "    }\n";
-		print OUT "    if (\$p$i<$min) {\n";
+		print OUT "    if (\$p$i < $min) {\n";
 		print OUT "       &sig_error(\"$pname must be >= $min\");\n";
 		print OUT "       exit 1;\n";
 		print OUT "    }\n";
-		print OUT "    if (\$p$i>$max) {\n";
+		print OUT "    if (\$p$i > $max) {\n";
 		print OUT "       &sig_error(\"$pname must be <= $max\");\n";
 		print OUT "       exit 1;\n";
 		print OUT "    }\n";
 	    }
 	    if ($type eq "bool") {
-		print OUT "    \$p$i=~(~\$p$i);\n";
+		print OUT "    \$p$i =~ (~\$p$i);\n";
 	    }
 	    $i++;
-	}
-    }
+	}}
 }
 
 
@@ -589,109 +641,108 @@ sub gen_post {
 
 sub rc_read {
     # return an array value from our .rc file
-    my ($key,$rcfile)=@_;
-    my $string="";
-    my (@result,$part);
+    my ($key, $rcfile) = @_;
+    my $string = "";
+    my (@result, $part);
 
-    unless (defined(open IN,"$rcfile")) {
-	print "  - Unable to read values from script file, $rcfile\n";
+    unless (defined(open IN, "$rcfile")) {
+	print "  - Unable to read values from script file,  $rcfile\n";
 	exit 2;
     }
-    $part=0;
+    $part = 0;
     while (<IN>) {
-	if ($_=~ /(.*)(<\/$key>)/) {
+	if ($_ =~ /(.*)(<\/$key>)/) {
 	    return @result;
 	}
-	if ($part==1||$_=~ /(<$key>)(.*)/) {
-	    if ($part==1) {
+	if ($part == 1 || $_ =~ /(<$key>)(.*)/) {
+	    if ($part == 1) {
 		chomp($_);
-		$string=$_;
-		@result=(@result,$string);
+		$string = $_;
+		@result = (@result, $string);
 	    }
 	    else {
-		$part=1;
-	    }
-	}
-    }
+		$part = 1;
+	    }}}
+
     return @result;
 }
 
 
 sub gen_onchange {
     my ($pass)=@_;
-    my ($i,$acount,$which,$code,$type);
-    my (%hash)=();
+    my ($i, $acount, $which, $code, $type);
+    my (%hash) = ();
 
     foreach (@onchange) {
 	unless ($_ eq "") {
-	    $which=(split(/$delim/))[0];
-	    if ($which>@params||($which>0&&$params[$which-1] eq "")) {
+	    $which = (split(/$delim/))[0];
+	    if ($which > @params || ($which > 0 && $params[$which - 1] eq "")) {
 		print "  - onchange value $which > num parameters.\n";
 		exit 1;
 	    }
-	    if ($pass==0) {
+	    if ($pass == 0) {
 		if (!defined($hash{$which})) {
 		    print OUT "    print \"$which$delimit\\n\";\n";
-		    $hash{$which}=1;
+		    $hash{$which} = 1;
 		}
 	    }
 	    else {
-		$code=substr($_,length($which)+1);
-		push(@{ $hash{$which} }, $code);
-	    }
-	}
+		$code = substr($_, length($which) + 1);
+		push(@{$hash{$which}},  $code);
+	    }}
     }
 	
-    if ($pass==1) {
+    if ($pass == 1) {
 	foreach $which (sort keys %hash) {
 	    print OUT "\nif (\$command eq \"onchange_$which\") {\n";
 
-	    if (@requires&&$is_util&&$which eq "init") {
+	    if (@requires && $is_util && $which eq "init") {
 		# for utilities, we generate requires here, since there is no process
 		&gen_requires(1);
 	    }
 
-	    $acount=1;
-	    for ($i=0;$i<@params;$i++) {
+	    $acount = 1;
+	    for ($i = 0; $i < @params; $i++) {
 		unless ($params[$i] eq "") {
-		    $type=&param_get_type($i);
+		    $type = &param_get_type($i);
 		    if ($type eq "colRGB24") {
 			# with RGBA we would also have _alpha
-			print OUT "    \$p$i"."_red=\@ARGV[".$acount++."];\n";
-			print OUT "    \$p$i"."_green=\@ARGV[".$acount++."];\n";
-			print OUT "    \$p$i"."_blue=\@ARGV[".$acount++."];\n";
+			print OUT "    \$p$i"."_red = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i"."_green = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i"."_blue = \@ARGV[" . $acount++ . "];\n";
 		    }
 		    else {
-			print OUT "    \$p$i"."=\@ARGV[".$acount++."];\n";
+			print OUT "    \$p$i"." = \@ARGV[" . $acount++ . "];\n";
 			unless ($type eq "bool" || $type eq "string" || $type eq "string_list") {
-			    print OUT "    \$p$i"."_min=\@ARGV[".$acount++."];\n";
-			    print OUT "    \$p$i"."_max=\@ARGV[".$acount++."];\n";
-			}
-		    }
-		}
-	    }
-	    print OUT "    \$width=\@ARGV[".$acount++."];\n";
-	    print OUT "    \$height=\@ARGV[".$acount++."];\n";
-	    print OUT "    \$start=\@ARGV[".$acount++."];\n";
-	    print OUT "    \$end=\@ARGV[".$acount++."];\n";
-	    print OUT "    \$last=\@ARGV[".$acount++."];\n";
-	    print OUT "    \$length=\$end-\$start+1;\n";
-	    if ($in_channels==2) {
-		print OUT "    \$width2=\@ARGV[".$acount++."];\n";
-		print OUT "    \$height2=\@ARGV[".$acount++."];\n";
+			    print OUT "    \$p$i" . "_min = \@ARGV[" . $acount++ . "];\n";
+			    print OUT "    \$p$i" . "_max = \@ARGV[" . $acount++ . "];\n";
+			}}}}
+
+	    print OUT "    \$width = \@ARGV[" . $acount++ . "];\n";
+	    print OUT "    \$height = \@ARGV[" . $acount++ . "];\n";
+	    print OUT "    \$start = \@ARGV[" . $acount++ . "];\n";
+	    print OUT "    \$end = \@ARGV[" . $acount++ . "];\n";
+	    print OUT "    \$last = \@ARGV[" . $acount++ . "];\n";
+	    print OUT "    \$length = \$end - \$start + 1;\n";
+
+	    if ($in_channels == 2) {
+		print OUT "    \$width2 = \@ARGV[" . $acount++ . "];\n";
+		print OUT "    \$height2 = \@ARGV[" . $acount++ . "];\n";
 	    }
 	    print OUT "\n";
-	    foreach (@{$hash{$which}}) { 
+
+	    foreach (@{$hash{$which}}) {
 		print OUT "    $_\n";
 	    }
-	    my ($has_params)=0;
-	    for ($i=0;$i<@params;$i++) {
+
+	    my ($has_params) = 0;
+	    for ($i = 0; $i < @params; $i++) {
 		unless ($params[$i] eq "") {
-		    $type=&param_get_type($i);
+		    $type = &param_get_type($i);
 		    if (!$has_params) {
 			&escquotes(@params);
 			print OUT "\n    print \"";
-			$has_params=1;
+			$has_params = 1;
 		    }
 		    if ($type eq "colRGB24") {
 			print OUT "\$p$i"."_red ";
@@ -706,55 +757,53 @@ sub gen_onchange {
 			    print OUT "\$p$i ";
 			}
 			unless ($type eq "bool" || $type eq "string" || $type eq "string_list") {
-			    print OUT "\$p$i"."_min ";
-			    print OUT "\$p$i"."_max ";
-			}
-		    }
-		}
-	    }
+			    print OUT "\$p$i" . "_min ";
+			    print OUT "\$p$i" . "_max ";
+			}}}}
+
 	    if ($has_params) {
 		print OUT "\";\n";
 	    }
 	    print OUT "    exit 0;\n";
 	    print OUT "}\n";
-	}
-    }
+	}}
 }
 
 
 sub param_get_type {
-    (split(/$delim/,$params[$_[0]]))[2];
+    my $i = shift;
+    (split(/$delim/, @params[$i]))[2];
 }
 
 
 sub param_get_name {
-    (split(/$delim/,$params[$_[0]]))[0];
+    my $i = shift;
+    (split(/$delim/, @params[$i]))[0];
 }
 
 
 sub escape {
-    my ($string)=$_[0];
-    $string=~ s/\\/\\\\/g;
+    my $string = shift;
+    $string =~ s/\\/\\\\/g;
     return $string;
 }
 
 
 sub quotescape {
-    my ($string)=$_[0];
-    $string=~ s/([\"\$\@])/\\$1/g;
+    my $string = shift;
+    $string =~ s/([\"\$\@])/\\$1/g;
     return $string;
 }
 
 
 sub escquotes {
-    for ($i=0;$i<@params;$i++) {
-	unless ($params[$i] eq "") {
-	    $type=&param_get_type($i);
+    my @params = @_;
+    for ($i = 0; $i < @params; $i++) {
+	unless  ($params[$i] eq "") {
+	    my $type = &param_get_type($i);
 	    if ($type eq "string") {
-		print OUT "    \$p$i=~ s/\\\"/\\\\\\\"/g;\n";
-	    }
-	}
-    }
+		print OUT "    \$p$i =~ s/\\\"/\\\\\\\"/g;\n";
+	    }}}
 }
 
 
@@ -764,11 +813,11 @@ sub make_ver_hash {
     # a * 1,000,000 plus b * 1,000 plus c
     # eg. 1.4.6 becomes 10004006
 
-    my ($string)=shift;
+    my $string = shift;
     if ($string eq "") {
 	return 0;
     }
-    my ($ver_major,$ver_minor,$ver_micro)=split (/[.]/, $string,3);
-    my $version_hash=($ver_major*1000+$ver_minor)*1000;
+    my ($ver_major, $ver_minor, $ver_micro) = split (/\./,  $string, 3);
+    my $version_hash = ($ver_major * 1000 + $ver_minor) * 1000;
     $version_hash;
 }

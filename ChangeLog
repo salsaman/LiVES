@@ -22,6 +22,7 @@ Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
 Smooth out playback by interpolating between soundcard timing updates.
+Smooth out ctr-up, ctrl-down, ctrl-left and ctrl-right keys during playback.
 Ensure audio is always rendered when it should be after recording.
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
@@ -35,9 +36,12 @@ Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash)
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Master audio volume is now maintained between sessions.
+Volume level of previews in file open dialog is now set depending on master volume.
 Fix label layouts for RFX windows.
 Enable colour selection for 'blurzoom' effect, improve the effect appearance.
+Improved appearance for 'fireTV' effect.
 Change the 'RGBDelay' and 'YUVDelay' effects to use less memory.
+Video effect plugins can now "ease out" rather than switching off immediately
 Improve a/v sync when changing playback direction.
 Add preference to disable / enable tooltips in the interface windows.
 Add option to overlay the timecode when previewing in multitrack.

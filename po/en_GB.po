@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: lives\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-11-14 10:06-0300\n"
+"POT-Creation-Date: 2019-11-14 15:21-0300\n"
 "PO-Revision-Date: 2015-04-16 10:52+0000\n"
 "Last-Translator: Andi Chandler <Unknown>\n"
 "Language-Team: English (United Kingdom) <en_GB@li.org>\n"
@@ -11995,7 +11995,7 @@ msgstr ""
 "\n"
 "Connection to jack audio was reset.\n"
 
-#: src/pulse.c:128
+#: src/pulse.c:134
 #, fuzzy
 msgid ""
 "\n"
@@ -12008,7 +12008,7 @@ msgstr ""
 "Falling back to sox audio player.\n"
 "You can change this in Preferences/Playback.\n"
 
-#: src/pulse.c:133
+#: src/pulse.c:139
 #, fuzzy
 msgid ""
 "\n"
@@ -12021,7 +12021,7 @@ msgstr ""
 "Falling back to sox audio player.\n"
 "You can change this in Preferences/Playback.\n"
 
-#: src/pulse.c:137
+#: src/pulse.c:143
 #, fuzzy
 msgid ""
 "\n"
@@ -12030,16 +12030,16 @@ msgstr ""
 "\n"
 "Unable to connect to pulse audio server.\n"
 
-#: src/pulse.c:142
+#: src/pulse.c:148
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES will exit and you can choose another audio player.\n"
 
-#: src/pulse.c:1710
+#: src/pulse.c:1716
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "Starting pulse audio server..."
 
-#: src/pulse.c:1739
+#: src/pulse.c:1745
 #, fuzzy
 msgid ""
 "\n"
@@ -14036,29 +14036,7 @@ msgid "Your version of mplayer/ffmpeg may be broken"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid " "
-msgstr ""
-
-#: /usr/bin/smogrify:0
-#, fuzzy
-msgid ""
-"You can work around this by switching to jpeg output in Preferences/Decoding."
-msgstr ""
-"\n"
-"\n"
-"    Image decoding type has been switched to jpeg. You can revert this in "
-"Preferences/Decoding.    \n"
-
-#: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid "Check the terminal window for more details."
 msgstr ""
 
 #: /usr/bin/smogrify:0
@@ -14121,6 +14099,16 @@ msgstr ""
 #, fuzzy
 msgid "$error"
 msgstr "Clear _Errors"
+
+#, fuzzy
+#~ msgid ""
+#~ "You can work around this by switching to jpeg output in Preferences/"
+#~ "Decoding."
+#~ msgstr ""
+#~ "\n"
+#~ "\n"
+#~ "    Image decoding type has been switched to jpeg. You can revert this in "
+#~ "Preferences/Decoding.    \n"
 
 #~ msgid "integer"
 #~ msgstr "integer"

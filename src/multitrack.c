@@ -19775,7 +19775,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
     esave_dir = get_dir(esave_file);
   }
 
-  if (esave_file == NULL || !check_storage_space(NULL, FALSE)) {
+  if (esave_file == NULL || !check_storage_space(-1, FALSE)) {
     char *cdir;
     lives_rmdir(esave_dir, FALSE);
 

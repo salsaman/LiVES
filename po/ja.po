@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ja\n"
 "Report-Msgid-Bugs-To: https://github.com/salsaman/LiVES/issues\n"
-"POT-Creation-Date: 2019-11-14 10:06-0300\n"
+"POT-Creation-Date: 2019-11-14 15:21-0300\n"
 "PO-Revision-Date: 2013-03-14 12:31+0000\n"
 "Last-Translator: Launchpad Translations Administrators <Unknown>\n"
 "Language-Team: Japanese <ja@li.org>\n"
@@ -11977,7 +11977,7 @@ msgstr ""
 "\n"
 "JACK の音声機能への接続をリセットしました。\n"
 
-#: src/pulse.c:128
+#: src/pulse.c:134
 #, fuzzy
 msgid ""
 "\n"
@@ -11990,7 +11990,7 @@ msgstr ""
 "sox オーディオプレーヤーにフォールバックします。\n"
 "この設定は、設定/プレイバック で変更できます。\n"
 
-#: src/pulse.c:133
+#: src/pulse.c:139
 #, fuzzy
 msgid ""
 "\n"
@@ -12003,7 +12003,7 @@ msgstr ""
 "sox オーディオプレーヤーにフォールバックします。\n"
 "この設定は、設定/プレイバック で変更できます。\n"
 
-#: src/pulse.c:137
+#: src/pulse.c:143
 #, fuzzy
 msgid ""
 "\n"
@@ -12012,16 +12012,16 @@ msgstr ""
 "\n"
 "PulseAudio サーバーに接続できませんでした。\n"
 
-#: src/pulse.c:142
+#: src/pulse.c:148
 msgid "LiVES will exit and you can choose another audio player.\n"
 msgstr "LiVES が終了すると、他のオーディオプレーヤーを選択できます。\n"
 
-#: src/pulse.c:1710
+#: src/pulse.c:1716
 #, fuzzy
 msgid "Resetting pulseaudio connection..."
 msgstr "PulseAudioサーバーを開始しています..."
 
-#: src/pulse.c:1739
+#: src/pulse.c:1745
 #, fuzzy
 msgid ""
 "\n"
@@ -13807,25 +13807,8 @@ msgid "Your version of mplayer/ffmpeg may be broken"
 msgstr ""
 
 #: /usr/bin/smogrify:0
-msgid "See http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071"
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid " "
-msgstr ""
-
-#: /usr/bin/smogrify:0
-msgid ""
-"You can work around this by switching to jpeg output in Preferences/Decoding."
-msgstr ""
-
-#: /usr/bin/smogrify:0
 msgid "This does not appear to be a valid video or image file"
 msgstr "有効な映像ファイル、画像ファイルではありません"
-
-#: /usr/bin/smogrify:0
-msgid "Check the terminal window for more details."
-msgstr "詳細はターミナルウィンドウをチェックしてください。"
 
 #: /usr/bin/smogrify:0
 msgid "Error creating new backup."
@@ -13882,6 +13865,9 @@ msgstr "$plugin_name は失敗しました:"
 #, fuzzy
 msgid "$error"
 msgstr "$error"
+
+#~ msgid "Check the terminal window for more details."
+#~ msgstr "詳細はターミナルウィンドウをチェックしてください。"
 
 #, fuzzy
 #~ msgid ""

@@ -1657,10 +1657,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking) {
   LiVESWidget *dialog;
 
-  if (!prefs->show_gui) {
-    transient = NULL;
-  } else {
-    transient = LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET);
+  if (transient == NULL && prefs != NULL && !prefs->show_gui) {
+    transient = get_transient_full();
   }
 
   dialog = create_message_dialog(info_type, text, transient, mask, is_blocking);

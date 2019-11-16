@@ -164,8 +164,8 @@ boolean lives_status_send(const char *msg) {
 
 boolean lives_osc_notify(int msgnumber, const char *msgstring) {
   if (notify_socket == NULL) return FALSE;
-  if (!prefs->omc_events && (msgnumber != LIVES_OSC_NOTIFY_SUCCESS
-                             && msgnumber != LIVES_OSC_NOTIFY_FAILED)) return FALSE;
+  if (prefs == NULL || (!prefs->omc_events && (msgnumber != LIVES_OSC_NOTIFY_SUCCESS
+                        && msgnumber != LIVES_OSC_NOTIFY_FAILED))) return FALSE;
   else {
     char *msg;
     boolean retval;

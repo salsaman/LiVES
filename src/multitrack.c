@@ -11346,16 +11346,16 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
             if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
           }
           return NULL;
-        } else {
-          // is audio track, see if we are in an audio block
-          // or if one starts here
-          if ((tc == start_tc && get_audio_block_start(mt->event_list, new_track, tcnow, TRUE) != NULL) ||
-              (get_audio_block_start(mt->event_list, new_track, tcnow, FALSE) != NULL)) {
-            if (!did_backup) {
-              if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
-            }
-            return NULL;
+        }
+      } else {
+        // is audio track, see if we are in an audio block
+        // or if one starts here
+        if ((tc == start_tc && get_audio_block_start(mt->event_list, new_track, tcnow, TRUE) != NULL) ||
+            (get_audio_block_start(mt->event_list, new_track, tcnow, FALSE) != NULL)) {
+          if (!did_backup) {
+            if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
           }
+          return NULL;
         }
       }
     }
@@ -13661,6 +13661,7 @@ boolean on_track_release(LiVESWidget *eventbox, LiVESXEventButton *event, livesp
       }
     }
   }
+
   if (track != -1) {
     for (i = 0; i < lives_list_length(mt->video_draws); i++) {
       xeventbox = (LiVESWidget *)lives_list_nth_data(mt->video_draws, i);

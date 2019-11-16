@@ -260,12 +260,12 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-	    my $ncpus = &get_num_procs;
-	    my $maxthreads = 16;
-	    if ($ncpus > 16) {
-		$maxthreads = $ncpus;
-	    }
-	    print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
+	   # my $ncpus = &get_num_procs;
+	    #my $maxthreads = 16;
+	    #if ($ncpus > 16) {
+	#	$maxthreads = $ncpus;
+	  #  }
+	    #print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
 	    if ($otype eq "divx") {
 		print "quality|Video Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|3|31|\n";
 		print "quality|Audio Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|4|31|\n";
@@ -291,12 +291,13 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-	    my $ncpus = &get_num_procs;
-	    my $maxthreads = 16;
-	    if ($ncpus > 16) {
-		$maxthreads = $ncpus;
-	    }
-	    print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
+
+#	    my $ncpus = &get_num_procs;
+#	    my $maxthreads = 16;
+#	    if ($ncpus > 16) {
+#		$maxthreads = $ncpus;
+#	    }
+#	    print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
 	    if ($otype eq "divx") {
 		print "quality|Video Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|3|31|\n";
 		print "quality|Audio Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|4|31|\n";
@@ -321,12 +322,12 @@ if ($command eq "get_rfx") {
 	
 	# optional section
 	print "<params>\n";
-	my $ncpus = &get_num_procs;
-	my $maxthreads = 16;
-	if ($ncpus > 16) {
-	    $maxthreads = $ncpus;
-	}
-	print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
+#	my $ncpus = &get_num_procs;
+#	my $maxthreads = 16;
+#	if ($ncpus > 16) {
+#	    $maxthreads = $ncpus;
+#	}
+#	print "threads|Number of threads|num0|$ncpus|1|$maxthreads|\n";
 	if ($otype eq "x264" || $otype eq "qtrle") {
 	    print "quality||num0|1|0|31|\n";
 	}

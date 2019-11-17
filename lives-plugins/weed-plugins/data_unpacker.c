@@ -8,7 +8,6 @@
 // unpacks multivalued data into single valued outputs
 
 //#define DEBUG
-#include <stdio.h>
 
 ///////////////////////////////////////////////////////////////////
 
@@ -27,6 +26,8 @@ static int package_version = 1; // version of this package
 #include "weed-plugin-utils.c"
 
 /////////////////////////////////////////////////////////////
+
+#include <stdio.h>
 
 #define N_ELEMS 128
 
@@ -97,7 +98,7 @@ WEED_SETUP_START(200, 200) {
            "The outputs are suitable for passing into the inputs of the data_processing plugin\n"
            , N_ELEMS);
 
-  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "desc");
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

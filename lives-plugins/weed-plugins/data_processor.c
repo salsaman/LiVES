@@ -7,7 +7,6 @@
 
 // generically process out[x] from a combination of in[y], store[z] and arithmetic expressions
 //#define DEBUG
-#include <stdio.h>
 
 ///////////////////////////////////////////////////////////////////
 
@@ -32,7 +31,7 @@ static int package_version = 1; // version of this package
 #include <stdio.h>
 
 #define EQS 256
-#define EQN 512
+#define EQN 512 ///< must be > EQS
 
 #define NSTORE (EQN-EQS)
 
@@ -105,7 +104,7 @@ static void free_all(node *xnode) {
 
 
 static double getval(char *what, _sdata *sdata) {
-  int error, which;
+  int which;
 
   if (!strncmp(what, "i[", 2)) {
     which = atoi(what + 2);
@@ -113,7 +112,7 @@ static double getval(char *what, _sdata *sdata) {
       sdata->error = 3;
       return 0.;
     }
-    return weed_get_double_value(sdata->params[which], WEED_LEAF_VALUE, &error);
+    return weed_get_double_value(sdata->params[which], WEED_LEAF_VALUE, NULL);
   }
 
   if (!strncmp(what, "s[", 2)) {
@@ -127,7 +126,6 @@ static double getval(char *what, _sdata *sdata) {
 
   return strtod(what, NULL);
 }
-
 
 
 static char *simplify2(node *left, node *right, node *op, _sdata *sdata) {
@@ -507,7 +505,6 @@ static int exp_to_tree(const char *exp) {
 }
 
 
-
 #ifdef DEBUG
 static void print_tree(node *xnode, int visits) {
   //visit tree in infix order
@@ -838,6 +835,7 @@ static weed_error_t dataproc_deinit(weed_plant_t *inst) {
     if (sdata->store != NULL) weed_free(sdata->store);
     weed_free(sdata);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -853,7 +851,7 @@ WEED_SETUP_START(200, 200) {
   char name[256];
   char name2[256];
   char label[256];
-  char desc[512];
+  char desc[1024];
 
   for (i = 0; i < EQS; i++) {
     snprintf(name, 256, "input%03d", i);
@@ -876,22 +874,24 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("data_processor", "salsaman", 1, 0, &dataproc_init, &dataproc_process,
                                         &dataproc_deinit, NULL, NULL, in_params, out_params);
 
-  snprintf(desc, 512,
-           "Produce (double) output values o[] from a combination of\n"
-           "in values i[],"
-           "stored values s[], and arithmetic expressions.\nE.g:\n"
-           "o[0]=s[0]-0.5\ns[0]=i[0]*4.2\n\nWhitespace in equations is not permitted.\n"
-           "Array subscripts can be from 0 - %d\n"
-           "s values are initialized to 0., and retained between processing cycles\n"
-           "Valid operators are + - / * and ( )\n"
-           "Each equation must set either an o value or an s value. Setting i values in equations is not permitted.\n"
-           "Equations are processed in sequence on each cycle; empty equation strings are ignored.\n"
-           , EQS - 1);
+  snprintf(desc, 1024,
+           "Produce (double) output values o[] from a combination of in values i[], stored values s[],\n"
+           "and arithmetic expressions."
+           "The LHS of each equation must be either an o element or an s element.\n"
+           "The right hand side may be composed of s elements, i elements, o elements and "
+           "any valid combination of the symbols + - / * and ( )\n"
+           "E.g:\n\n"
+           "    o[0]=s[0]-0.5\n    s[0]=i[0]*4.2\n\n"
+           "Whitespace in equations is not permitted (PATCHME !).\n"
+           "Array subscripts range from 0 to %d\n"
+           "The values of the s array are initialized to 0., and retained between processing cycles\n"
+           "The values of the i array are updated each cycle from the values of plugin's %d (hidden) input parameters,\n"
+           "and the values of the o array after evaluating all the equations are replicated to the corresponding out parameters.\n"
+           "Equations are processed in sequence from 000 to %03d on each cycle; empty equation strings are ignored.\n"
+           , EQS - 1, EQS, EQN - EQS);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

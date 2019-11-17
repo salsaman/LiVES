@@ -28,7 +28,8 @@ if ($USE_WARNINGS) {
 }
 
 ##################################################################
-use POSIX;     # Needed for setlocale()
+use POSIX qw(locale_h);
+use locale;
 setlocale(LC_NUMERIC, "C");
 
 # these MUST match with the definition in the GUI
@@ -2244,17 +2245,6 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "save") {
 	    my $cmd = "";
-	    my $get_rfx = 0;
-
-	    if ($handle eq "get_rfx") {
-		$get_rfx = 1;
-		shift(@ARGV);
-		$handle = $ARGV[1];
-
-		$curworkdir = "$workdir/$handle";
-		$statusfile = "$curworkdir/.status";
-		$pidfile = "$curworkdir/.pid";
-	    }
 
 	    unlink "$curworkdir/pause";
 	    &smog_chdir($curworkdir);
@@ -2468,6 +2458,10 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
+	    ## TODO: pass  all as a single array, so it should work with any external encoder
+
+	    #ARGV[1] = 
+	    
 	    if (!$is_native) {
 		my $atype = &rc_get("encoder_acodec");
 		my $extra_opts = "";
@@ -2528,32 +2522,32 @@ if (defined($ARGV[0])) {
 	    unlink "$curworkdir/pause";
 	    smog_chdir("$curworkdir");
 
-	    $start=$ARGV[2];
-	    $end=$ARGV[3];
+	    $start = $ARGV[2];
+	    $end = $ARGV[3];
 
-	    $astart=$ARGV[4];
-	    $aend=$ARGV[5];
+	    $astart = $ARGV[4];
+	    $aend = $ARGV[5];
 
-	    $arate=$ARGV[6];
-	    $achans=$ARGV[7];
-	    $asamps=$ARGV[8];
-	    $asigned=$ARGV[9];
-	    $aendian=$ARGV[10];
+	    $arate = $ARGV[6];
+	    $achans = $ARGV[7];
+	    $asamps = $ARGV[8];
+	    $asigned = $ARGV[9];
+	    $aendian = $ARGV[10];
 
-	    $from_handle=$ARGV[11];
+	    $from_handle = $ARGV[11];
 
 	    my $i;
 	    my $audiofile = "audio";
 
 	    if ($from_handle eq "") {
-		$linksdir="$curworkdir/lives-symlinks/";
+		$linksdir = "$curworkdir/lives-symlinks/";
 
 		if (-d $linksdir) {
 		    smog_system("/bin/rm -rf \"$linksdir\"");
 		}
 
-		$com="/bin/mkdir -p \"$linksdir\"";
-		$smerr=smog_system($com);
+		$com = "/bin/mkdir -p \"$linksdir\"";
+		$smerr = smog_system($com);
 		if ($smerr) {
 		    sig_system_error("Creating directory \"$linksdir\"", $smerr);
 		    exit 1;
@@ -2561,16 +2555,16 @@ if (defined($ARGV[0])) {
 
 	    }
 	    else {
-		$linksdir=$curworkdir;
-		$handle=$from_handle;
-		$curworkdir="$workdir/$handle/";
+		$linksdir = $curworkdir;
+		$handle = $from_handle;
+		$curworkdir = "$workdir/$handle/";
 	    }
 
 	    # copy a slice of the audio file into our links dir
 	    # this allows us to resample it
 	    # and also aligns the start of audio with new frame 1
 
-	    unless ($aend==0.) {
+	    unless ($aend == 0.) {
 		my $ocurworkdir = $curworkdir;
 		my $ofrom_handle = $from_handle;
 		my $ostart = $start;
@@ -2582,47 +2576,44 @@ if (defined($ARGV[0])) {
 		$from_handle = $handle;
 		$curworkdir = $linksdir;
 
-		&insert_audio($asamps,$achans,$asigned,$aendian,0);
+		&insert_audio($asamps, $achans, $asigned, $aendian, 0);
 		if ($panic) {
 		    unlink $pidfile;
 		    exit 1;
 		}
 
-		$curworkdir=$ocurworkdir;
-		$from_handle=$ofrom_handle;
-		$start=$ostart;
-		$end=$oend;
+		$curworkdir = $ocurworkdir;
+		$from_handle = $ofrom_handle;
+		$start = $ostart;
+		$end = $oend;
 
 	    }
 
-	    $img_ext=&get_img_ext($curworkdir,$start);
-	    $fstype=&get_fs_type($curworkdir);
+	    $img_ext = &get_img_ext($curworkdir, $start);
+	    $fstype = &get_fs_type($curworkdir);
 
-	    for ($i=1;$i<=($end-$start+1);$i++) {
-		$name=&mkname($i);
-		$from=&mkname($i+$start-1);
+	    for ($i = 1; $i <= ($end - $start + 1); $i++) {
+		$name = &mkname($i);
+		$from = &mkname($i + $start - 1);
 		if (-f "$curworkdir/$from$img_ext") {
 		    if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-			$smerr=smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			$smerr = &smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
 			if ($smerr) {
-			    sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			    &sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"", $smerr);
 			    exit 1;
 			}
 		    }
 		    else {
-			$smerr=smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
+			$smerr =  &smog_system ("/bin/ln \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
 			if ($smerr) {
-			    sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"",$smerr);
+			    &sig_system_error("Linking \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"", $smerr);
 			    exit 1;
-			}
-		    }
-
-		}
+			}}}
 		&sig_progress($i);
 	    }
 
 	    unless ($from_handle eq "") {
-		$curworkdir=$linksdir;
+		$curworkdir = $linksdir;
 	    }
 
 	    &sig_complete;
@@ -2633,29 +2624,29 @@ if (defined($ARGV[0])) {
 	    smog_chdir($curworkdir);
 
 	    unlink "$curworkdir/pause";
-	    $end=$ARGV[2];
+	    $end = $ARGV[2];
 
 	    my $iwidth = $ARGV[3];
 	    my $iheight = $ARGV[4];
 
-	    $img_ext=".".$ARGV[5];
-	    $img_prefix=&get_img_prefix($img_ext);
+	    $img_ext = "." . $ARGV[5];
+	    $img_prefix = &get_img_prefix($img_ext);
 
-	    $resize_ext=".mgk";
+	    $resize_ext = ".mgk";
 
-	    $blankname="blank.jpg";
+	    $blankname = "blank.jpg";
 
 	    my $letterbox = 0;
 
 	    if (defined($ARGV[6]) && $ARGV[6]>0) {
 		# letterboxen - next values are image-in-frame size
-		$letterbox=1;
-		$owidth=$iwidth;
-		$oheight=$iheight;
-		$iwidth=$ARGV[6];
-		$iheight=$ARGV[7];
-		$in_ext=$resize_ext;
-		$out_ext=$img_ext;
+		$letterbox = 1;
+		$owidth = $iwidth;
+		$oheight = $iheight;
+		$iwidth = $ARGV[6];
+		$iheight = $ARGV[7];
+		$in_ext = $resize_ext;
+		$out_ext = $img_ext;
 	    }
 
 	    &clean_old;
@@ -2663,41 +2654,41 @@ if (defined($ARGV[0])) {
 	    if ($letterbox) {
 		# make a background frame
 		if (!defined($bgcolour)) {
-		    $bgcolour="#000000";
+		    $bgcolour = "#000000";
 		}
 
-		$com="$smog_convert_command -size $owidth"."x$oheight\\! xc:$bgcolour $blankname >$nulfile 2>&1";
-		$smerr=smog_system($com);
+		$com = "$smog_convert_command -size $owidth"."x$oheight\\! xc:$bgcolour $blankname >$nulfile 2>&1";
+		$smerr = &smog_system($com);
 		if ($smerr) {
-		    sig_system_error("$com",$smerr);
+		    &sig_system_error("$com", $smerr);
 		    unlink $blankname;
 		    exit 1;
 		}
 	    }
 
-	    for ($i=1;$i<=$end;$i++) {
-		$name=&mkname($i);
+	    for ($i = 1; $i <= $end; $i++) {
+		$name = &mkname($i);
 
-		smog_copy("$name$img_ext","$name.bak");
+		smog_copy("$name$img_ext", "$name.bak");
 		if ($panic) {
 		    if ($letterbox) {
-			try_to_recover($start,$i-1);
+			try_to_recover($start, $i - 1);
 			unlink $blankname;
 		    }
 		    if ($DEBUG_SMOGRIFY) {
 			print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
 		    }
-		    sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
+		    &sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
 		    exit 1;
 		}
 
-		if ($iwidth>0 && $iheight>0) {
-		    &resize_frame($name,$iwidth,$iheight);
+		if ($iwidth > 0 && $iheight > 0) {
+		    &resize_frame($name, $iwidth, $iheight);
 		}
 
 		if ($panic) {
 		    if ($letterbox) {
-			try_to_recover($start,$i);
+			try_to_recover($start, $i);
 			unlink $blankname;
 		    }
 		    unlink $pidfile;
@@ -2705,12 +2696,12 @@ if (defined($ARGV[0])) {
 		}
 
 		if ($letterbox) {
-		    &letterbox_frame($name,abs($iwidth),abs($iheight),$owidth,$oheight);
+		    &letterbox_frame($name, abs($iwidth), abs($iheight), $owidth, $oheight);
 		}
 
 		if ($panic) {
 		    if ($letterbox) {
-			try_to_recover($start,$i);
+			try_to_recover($start, $i);
 			unlink $blankname;
 		    }
 		    unlink $pidfile;
@@ -2739,18 +2730,18 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "backup") {
-	    $withaudio=$ARGV[2];
-	    $start=$ARGV[3];
-	    $end=$ARGV[4];
+	    $withaudio = $ARGV[2];
+	    $start = $ARGV[3];
+	    $end = $ARGV[4];
 
-	    if ($withaudio==0) {
-		$audio="";
+	    if ($withaudio == 0) {
+		$audio = "";
 	    }
 	    else {
-		$audio="audio";
+		$audio = "audio";
 	    }
 
-	    $nfile=$ARGV[5];
+	    $nfile = $ARGV[5];
 
 	    unlink "$curworkdir/pause";
 	    smog_chdir($curworkdir);
@@ -2762,66 +2753,67 @@ if (defined($ARGV[0])) {
 
 	    unlink glob "*.tar";
 	    $com="tar --ignore-failed-read -cf header.tar \"$audio\" header* extended* event.* subs.* file* 2>$nulfile";
-	    smog_system ($com);
+	    &smog_system ($com);
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error("$com", $smerr);
 		exit 1;
 	    }
 
 	    &sig_progress(0);
 
-	    $com="tar -cf temp.tar header.tar 2>.tar_err";
-	    $smerr=smog_system ($com);
+	    $com = "tar -cf temp.tar header.tar 2>.tar_err";
+	    $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 
-	    $com="tar --exclude=*.bak --exclude=*.tar --exclude=./.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -rf temp.tar * 2>>.tar_err";
-	    $smerr=smog_system ($com);
+	    $com="tar --exclude=*.bak --exclude=*.tar --exclude=./.* --exclude=*.mgk --exclude=*.tmp "
+		"--exclude=audioclip* -rf temp.tar * 2>>.tar_err";
+	    $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 
-	    $com="gzip -S .lv1 temp.tar";
+	    $com = "gzip -S .lv1 temp.tar";
 
-	    $smerr=smog_system ($com);
+	    $smerr = &smog_system ($com);
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 
 	    unlink "temp.tar";
 
-	    smog_rename("temp.tar.lv1","$nfile");
+	    &smog_rename("temp.tar.lv1", "$nfile");
 
 	    unlink <header.tar 0*.tar>;
 	    if (-f ".tar_err") {
-		open IN,"< .tar_err";
-		read IN,$tarerr,255;
+		open IN, "< .tar_err";
+		read IN, $tarerr, 255;
 		close IN;
 		unless ($tarerr eq "") {
-		    &sig_error("Error creating new backup.",$tarerr);
+		    &sig_error("Error creating new backup.", $tarerr);
 		    unlink glob "*.tar .tar_err";
 		    exit 1;
 		}
 	    }
-	    $size=-s "$nfile";
+	    $size = -s "$nfile";
 	    &sig_complete($size);
 	    exit 0;
 	}
 
 	if ($command eq "restore") {
-	    $nfile=$ARGV[2];
+	    $nfile = $ARGV[2];
 
-	    smog_chdir($curworkdir);
+	    &smog_chdir($curworkdir);
 
-	    $com="tar -zxf \"$nfile\" 2>$nulfile";
-	    smog_system ($com);
+	    $com = "tar -zxf \"$nfile\" 2>$nulfile";
+	    &smog_system ($com);
 
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error("$com", $smerr);
 		exit 1;
 	    }
 
@@ -2829,11 +2821,11 @@ if (defined($ARGV[0])) {
 		&sig_error("This does not appear to be a valid backup file","$GUI_NAME was unable to open it.");
 	    }
 
-	    opendir DIR, $curworkdir;
-	    while ($file=readdir(DIR)) {
+	    opendir DIR,  $curworkdir;
+	    while ($file = readdir(DIR)) {
 		if ($file =~ /.tar$/) {
-		    smog_system("tar -xf $file 2>$nulfile");
-		    unlink "$file";
+		    &smog_system("tar -xf $file 2>$nulfile");
+		    unlink $file;
 		}
 	    }
 	    close DIR;
@@ -2845,60 +2837,60 @@ if (defined($ARGV[0])) {
 	if ($command eq "reorder") {
 	    unlink "$curworkdir/pause";
 
-	    $img_ext=".".$ARGV[2];
-	    $img_prefix=&get_img_prefix($img_ext);
+	    $img_ext = "." . $ARGV[2];
+	    $img_prefix = &get_img_prefix($img_ext);
 
 	    if (!defined($ARGV[3])) {
-		$endian=&get_endian;
+		$endian = &get_endian;
 	    }
 	    else {
-		$endian=$ARGV[3];
+		$endian = $ARGV[3];
 	    }
 	    if (defined $ARGV[4]) {
-		$newwidth=$ARGV[4];
+		$newwidth = $ARGV[4];
 	    }
 	    if (defined $ARGV[5]) {
-		$newheight=$ARGV[5];
+		$newheight = $ARGV[5];
 	    }
 	    if (defined $ARGV[6]) {
-		if ($ARGV[6]==1) {
-		    $leave_bak=1;
+		if ($ARGV[6] == 1) {
+		    $leave_bak = 1;
 		}
 	    }
 	    if (defined $ARGV[7]) {
-		$old_end=$ARGV[7];
+		$old_end = $ARGV[7];
 	    }
 
 	    $letterbox=0;
 
-	    if (defined $ARGV[8] && $ARGV[8]!=0) {
+	    if (defined $ARGV[8] && $ARGV[8] != 0) {
 		#letterbox size
-		$letterbox=1;
-		$owidth=$newwidth;
-		$oheight=$newheight;
+		$letterbox = 1;
+		$owidth = $newwidth;
+		$oheight = $newheight;
 
-		$newwidth=$ARGV[8];
-		$newheight=$ARGV[9];
-		$in_ext=".mgk";
-		$out_ext=$img_ext;
+		$newwidth = $ARGV[8];
+		$newheight = $ARGV[9];
+		$in_ext = ".mgk";
+		$out_ext = $img_ext;
 	    }
 
-	    $newframe=-1;
-	    $event_file="$curworkdir/event.frames";
-	    $resize_ext=".tmp";
+	    $newframe = -1;
+	    $event_file = "$curworkdir/event.frames";
+	    $resize_ext = ".tmp";
 	    smog_chdir($curworkdir);
 
-	    unless ($leave_bak==1) {
+	    unless ($leave_bak == 1) {
 		&clean_old;
 	    }
 
-	    $blankname="blank.jpg";
+	    $blankname = "blank.jpg";
 
 	    if (defined(open IN,"< $event_file")) {
-		$fcount=1;
-		read IN,$val,4;
-		$pstart=&getint($val);
-		$count=$pstart;
+		$fcount = 1;
+		read IN, $val, 4;
+		$pstart = &getint($val);
+		$count = $pstart;
 
 		if ($letterbox && !$leave_bak) {
 		    # make a background frame
@@ -2907,18 +2899,18 @@ if (defined($ARGV[0])) {
 		    }
 
 		    $com = "$smog_convert_command -size $owidth"."x$oheight\\! xc:$bgcolour $blankname>$nulfile 2>&1";
-		    $smerr=smog_system($com);
+		    $smerr = &smog_system($com);
 		    if ($smerr) {
-			sig_system_error("$com", $smerr);
+			&sig_system_error($com,  $smerr);
 			exit 1;
 		    }
 		}
 
-		while ($newframe!=0) {
-		    read IN,$val,4;
-		    $newframe=&getint($val);
-		    if ($newframe>0) {
-			$from=&mkname($newframe);
+		while ($newframe != 0) {
+		    read IN, $val, 4;
+		    $newframe = &getint($val);
+		    if ($newframe > 0) {
+			$from = &mkname($newframe);
 			if (-f "$curworkdir/$from$img_ext") {
 			    $to=&mkname($count);
 

@@ -128,6 +128,8 @@ void suggest_feature_activate(LiVESMenuItem *, livespointer);
 
 void help_translate_activate(LiVESMenuItem *, livespointer);
 
+void vj_mode_toggled(LiVESCheckMenuItem *, livespointer);
+
 void on_ok_button1_clicked(LiVESButton *, livespointer);
 
 void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);

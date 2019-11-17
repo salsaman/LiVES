@@ -982,10 +982,11 @@ static boolean fmt_match(char *fmt_string) {
 }
 
 
-boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
-  // make a dynamic parameter window
+/** @brief make a dynamic parameter window
 
-  // returns TRUE if we added any parameters
+   if top_vbox is NULL: we just check for displayable params, returning FALSE there are none to be shown.
+   otherwise, adds widgets to top_vbox, returning FALSE if nothing was added */
+boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_param_t *param = NULL;
 
   LiVESWidget *param_vbox = NULL;

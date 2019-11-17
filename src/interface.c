@@ -3256,7 +3256,7 @@ _entryw *create_cds_dialog(int type) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "cdsw", (livespointer)cdsw);
 
     lives_signal_connect(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                         LIVES_GUI_CALLBACK(toggle_sets_pref),
                          (livespointer)PREF_AR_CLIPSET);
   }
 

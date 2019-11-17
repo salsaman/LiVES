@@ -19759,7 +19759,7 @@ boolean on_save_event_list_activate(LiVESMenuItem *menuitem, livespointer user_d
 
   ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
   lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                       LIVES_GUI_CALLBACK(toggle_sets_pref),
                        (livespointer)PREF_AR_LAYOUT);
 
   lives_widget_show_all(hbox);
@@ -21308,7 +21308,7 @@ char *get_eload_filename(lives_mt *mt, boolean allow_auto_reload) {
   if (allow_auto_reload) {
     ar_checkbutton = make_autoreload_check(LIVES_HBOX(hbox), prefs->ar_layout);
     lives_signal_connect(LIVES_GUI_OBJECT(ar_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                         LIVES_GUI_CALLBACK(toggle_button_sets_pref),
+                         LIVES_GUI_CALLBACK(toggle_sets_pref),
                          (livespointer)PREF_AR_LAYOUT);
   }
 

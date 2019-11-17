@@ -805,6 +805,7 @@ typedef struct {
   ulong sepwin_cb_func;
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong sw_func; ///< scrolledwindow expose func
+  ulong vj_mode_func;
 
   // for jack transport
   boolean jack_can_stop;
@@ -966,6 +967,8 @@ typedef struct {
   LiVESWidget *save_rte_defs;
   LiVESWidget *vj_reset;
   LiVESWidget *vj_realize;
+  LiVESWidget *vj_mode;
+  LiVESWidget *show_devopts;
   LiVESWidget *mt_menu;
   LiVESWidget *troubleshoot;
   LiVESWidget *export_custom_rfx;

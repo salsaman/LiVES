@@ -121,6 +121,8 @@ typedef struct {
 
 #define WARN_MASK_LAYOUT_GAMMA (1<<27)
 
+#define WARN_MASK_VJMODE_ENTER (1<<28)
+
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
   char video_open_command[PATH_MAX * 2];
@@ -408,6 +410,8 @@ typedef struct {
   boolean vj_mode; // optimise for VJing (in progress, experimental)
 
   boolean allow_easing;
+
+  boolean show_dev_opts;
 } _prefs;
 
 enum {
@@ -538,6 +542,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_no_pulse;
   LiVESWidget *checkbutton_warn_layout_wipe;
   LiVESWidget *checkbutton_warn_layout_gamma;
+  LiVESWidget *checkbutton_warn_vjmode_enter;
   LiVESWidget *checkbutton_show_stats;
   LiVESWidget *checkbutton_warn_fsize;
   LiVESWidget *checkbutton_warn_mt_achans;
@@ -708,6 +713,7 @@ typedef struct {
 
   short sepwin_type;
   volatile float volume; ///< audio volume level (for jack and pulse)
+  boolean vj_mode;
 } _future_prefs;
 
 _prefs *prefs;
@@ -923,6 +929,8 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 #define PREF_SHOW_URGENCY "show_urgency_messages"
 #define PREF_UNSTABLE_FX "allow_unstable_effects"
 #define PREF_ALLOW_EASING "allow_easing"
+#define PREF_SHOW_DEVOPTS "show_developer_options"
+#define PREF_VJMODE "vj_mode_startup"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"
@@ -987,7 +995,7 @@ void save_future_prefs(void);
 
 void set_palette_prefs(void);
 
-void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx);
+void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx);
 
 // permissions
 

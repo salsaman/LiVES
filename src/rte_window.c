@@ -1573,7 +1573,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *hbox;
   LiVESWidget *label;
   LiVESWidget *textview;
-
+  LiVESWidget *scrolledwindow;
   LiVESWidget *ok_button;
 
   char *filter_name;
@@ -1600,6 +1600,7 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   int modes = rte_getmodespk();
   int key = (int)(key_mode / modes);
   int mode = key_mode - key * modes;
+  int window_width = RFX_WINSIZE_H;
 
   ////////////////////////
 
@@ -1682,6 +1683,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   lives_box_pack_start(LIVES_BOX(vbox), label, TRUE, FALSE, widget_opts.packing_height);
 
   if (has_desc) {
+
+
     hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
@@ -1692,12 +1695,15 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
     textview = lives_standard_text_view_new(filter_description, NULL);
     widget_opts.justify = LIVES_JUSTIFY_CENTER;
 
+    widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+    scrolledwindow = lives_standard_scrolled_window_new(window_width * 2, RFX_WINSIZE_V / 2, textview);
+    lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
+    widget_opts.expand = LIVES_EXPAND_DEFAULT;
     if (palette->style & STYLE_1) {
       lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
       lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
+      lives_widget_set_bg_color(lives_bin_get_child(LIVES_BIN(scrolledwindow)), LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
     }
-
-    lives_box_pack_start(LIVES_BOX(hbox), textview, TRUE, TRUE, widget_opts.packing_height);
   }
 
   if (has_license) {

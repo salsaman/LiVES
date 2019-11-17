@@ -36,10 +36,17 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 #define ACTIVE(widget, signal) lives_signal_connect(LIVES_GUI_OBJECT(prefsw->widget), LIVES_WIDGET_ ##signal## _SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL)
 
 
-void toggle_button_sets_pref(LiVESToggleButton *button, livespointer prefidx) {
-  // callback to set to make a togglebutton directly control a boolean pref (non-permanent)
-  // pref must have entry in pref_factory_bool
-  pref_factory_bool((const char *)prefidx, lives_toggle_button_get_active(button), FALSE);
+/** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
+
+  widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
+  pref must have a corresponding stanza in pref_factory_bool() */
+void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
+  if (LIVES_IS_TOGGLE_BUTTON(widget))
+    pref_factory_bool((const char *)prefidx,
+                      lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)), FALSE);
+  else if (LIVES_IS_CHECK_MENU_ITEM(widget))
+    pref_factory_bool((const char *)prefidx,
+                      lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(widget)), FALSE);
 }
 
 
@@ -696,6 +703,20 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  if (!strcmp(prefidx, PREF_VJMODE)) {
+    if (future_prefs->vj_mode == newval) goto fail2;
+    if (mainw != NULL && mainw->vj_mode  != NULL)
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), newval);
+    goto success2;
+  }
+
+  if (!strcmp(prefidx, PREF_SHOW_DEVOPTS)) {
+    if (prefs->show_dev_opts == newval) goto fail2;
+    if (mainw != NULL && mainw->show_devopts !=  NULL)
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), newval);
+    goto success2;
+  }
+
   if (!strcmp(prefidx, PREF_REC_EXT_AUDIO)) {
     boolean success = FALSE;
     boolean rec_ext_audio = newval;
@@ -755,11 +776,13 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
           lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rintaudio), TRUE);
       }
       lives_signal_handler_block(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
-      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton),
+                                          prefs->audio_src == AUDIO_SRC_EXT);
       lives_signal_handler_unblock(mainw->ext_audio_checkbutton, mainw->ext_audio_func);
 
       lives_signal_handler_block(mainw->int_audio_checkbutton, mainw->int_audio_func);
-      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+      lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton),
+                                          prefs->audio_src == AUDIO_SRC_INT);
       lives_signal_handler_unblock(mainw->int_audio_checkbutton, mainw->int_audio_func);
       goto success2;
     }
@@ -1201,6 +1224,7 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_no_pulse = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
   boolean warn_layout_wipe = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
   boolean warn_layout_gamma = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_gamma));
+  boolean warn_vjmode_enter = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_vjmode_enter));
 
   boolean midisynch = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->check_midi));
   boolean instant_open = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open));
@@ -1515,7 +1539,7 @@ boolean apply_prefs(boolean skip_warn) {
               WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
               WARN_MASK_LAYOUT_POPUP + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M + !warn_mt_backup_space *
               WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
-              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA;
+              + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_vjmode_enter * WARN_MASK_VJMODE_ENTER;
 
   if (warn_mask != prefs->warning_mask) {
     prefs->warning_mask = warn_mask;
@@ -4265,6 +4289,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                           (_("Show a warning if a loaded layout has incompatible gamma settings."),
                                               !(prefs->warning_mask & WARN_MASK_LAYOUT_GAMMA), LIVES_BOX(hbox), NULL);
 
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->checkbutton_warn_vjmode_enter = lives_standard_check_button_new
+                                          (_("Show a warning when the menu option Restart in VJ Mode becomes activated."),
+                                              !(prefs->warning_mask & WARN_MASK_VJMODE_ENTER), LIVES_BOX(hbox), NULL);
+
   pixbuf_warnings = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_WARNING, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 
   prefs_add_to_list(prefsw->prefs_list, pixbuf_warnings, _("Warnings"), LIST_ENTRY_WARNINGS);
@@ -5268,16 +5297,13 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
 #endif
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_mt_backup_space), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_after_crash), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_no_pulse), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_wipe), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_warn_layout_gamma), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(checkbutton_warn_layout_gamma, TOGGLED);
+  ACTIVE(checkbutton_warn_layout_wipe, TOGGLED);
+  ACTIVE(checkbutton_warn_no_pulse, TOGGLED);
+  ACTIVE(checkbutton_warn_after_crash, TOGGLED);
+  ACTIVE(checkbutton_warn_mt_backup_space, TOGGLED);
+  ACTIVE(checkbutton_warn_vjmode_enter, TOGGLED);
+
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->check_midi), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->midichan_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);

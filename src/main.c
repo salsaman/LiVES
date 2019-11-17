@@ -594,6 +594,7 @@ static boolean pre_init(void) {
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
   // get some prefs we need to set menu options
+  future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   prefs->gui_monitor = -1;
 
   mainw->mgeom = NULL;
@@ -733,6 +734,7 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
   lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
+  g_print("theme was %s\n", prefs->theme);
 
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -742,6 +744,7 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
   } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
+  g_print("theme2 was %s\n", prefs->theme);
 
   if (!mainw->foreign && prefs->startup_phase == 0) {
     if (prefs->show_splash) splash_init();
@@ -819,7 +822,9 @@ static boolean pre_init(void) {
     mainw->ccpd_with_sound = TRUE;
 
   mainw->loop = TRUE;
-  mainw->loop_cont = FALSE;
+
+  if (prefs->vj_mode) mainw->loop_cont = TRUE;
+  else mainw->loop_cont = FALSE;
 
 #ifdef GUI_GTK
   mainw->target_table = target_table;
@@ -1407,12 +1412,14 @@ static void lives_init(_ign_opts *ign_opts) {
   else
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
-  prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
+  prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
 
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
     // set various prefs
+
+    prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, WEED_FALSE);
 
     prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
     if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
@@ -2882,14 +2889,14 @@ static boolean lives_startup(livespointer data) {
   }
 
   if (prefs->vj_mode) {
-    prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+    prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
     lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
     auto_recover = TRUE;
   } else {
     if (!ign_opts.ign_aplayer) {
       get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
       if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
-        prefs->audio_player = AUD_PLAYER_NONE;  // experimental
+        prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
         lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
       } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
         prefs->audio_player = AUD_PLAYER_SOX;
@@ -3370,8 +3377,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->workdir[0] = '\0';
   future_prefs->workdir[0] = '\0';
   prefs->configdir[0] = '\0';
-  prefs->vj_mode = FALSE;
-  //prefs->vj_mode = TRUE; // testing
 
   prefs->show_gui = TRUE;
   prefs->show_splash = FALSE;
@@ -4137,7 +4142,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->export_proj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->import_proj, TRUE);
 
-  if (is_realtime_aplayer(prefs->audio_player)) {
+  if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
   }

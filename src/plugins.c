@@ -931,7 +931,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-    plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
+    plugin_run_param_window(PLUGIN_VID_PLAYBACK, (*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx), NULL);
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -3539,46 +3539,55 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 }
 
 
-char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
-  // called from plugins.c (vpp opts) and saveplay.c (encoder opts)
 
-  // here we create an rfx script from some fixed values and values from the plugin;
-  // we will then compile the script to an rfx scrap and use the scrap to get info
-  // about additional parameters, and create the parameter window
 
-  // this is done like so to allow use of plugins written in any language;
-  // they need only output an RFX scriptlet on stdout when called from the commandline
+/** @brief create an rfx script from some fixed values and values from the plugin, compile the script and then run it
 
-  // actually, I think now we only need the script for running triggers (CHECK)
+    we will then compile the script to an rfx scrap and use the scrap to get info
+    about additional parameters, and create the parameter window
 
-  // the param window is run, and the marshalled values are returned
+    this is done like so to allow use of plugins written in any language;
+    they need only output an RFX scriptlet on stdout when called from the commandline
 
-  // if the user closes the window with Cancel, NULL is returned instead
+    actually, I think now we only need the script for running triggers (CHECK)
 
-  // in parameters: scrap_text
-  //              : vbox - a vbox where we will display the parameters
-  // out parameters: ret_rfx - the value is set to point to an rfx_t effect
+    the param window is run, and the marshalled values are returned
 
-  // the string which is returned is the marshalled values of the parameters
+    if the user closes the window with Cancel, NULL is returned instead
 
-  // NOTE: if vbox is not NULL, we create the window inside vbox, without running it
-  // in this case, vbox should be packed in its own dialog window, which should then be run
-  // and we also return the name of the scrapfile, which should be removed after running the window
+    in parameters: scrap_text
+    : vbox - a vbox where we will display the parameters
+    out parameters: ret_rfx - the value is set to point to an rfx_t effect
 
+    the string which is returned is the marshalled values of the parameters
+
+    NOTE: if vbox is not NULL, we create the window inside vbox, without running it
+    in this case, vbox should be packed in its own dialog window, which should then be run
+    and we also return the name of the scrapfile, which should be removed after running the window
+
+    if the user checks the "debug" checkbutton (only shown if prefs->show_dev_opts is TRUE), then if
+    debug_mode is not NULL, we set it to TRUE, otherwise to FALSE if it's not NULL
+
+    called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
+char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx,
+                              boolean *debug_mode) {
   FILE *sfile;
+  LiVESWidget *debug_check = NULL;
 
   lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
 
   char *string;
   char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
   char *rfxfile = lives_strdup_printf("%s/.%s.script", prefs->workdir, rfx_scrapname);
-  char *com;
+  char *com, *tmp, *tmp2;
   char *fnamex = NULL;
   char *res_string = NULL;
   char buff[32];
 
   int res;
   int retval;
+
+  if (debug_mode != NULL) *debug_mode = FALSE;
 
   rfx->name = NULL;
 
@@ -3674,6 +3683,19 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
       }
       lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
+      if (!strcmp(plugin_type, PLUGIN_ENCODERS)) {
+        if (prefs->show_dev_opts) {
+          debug_check = lives_standard_check_button_new((tmp = lives_strdup(_("Debug Mode"))), FALSE,
+                        LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog))),
+                        (tmp2 = lives_strdup(_("Output diagnostic information to STDERR "
+                                               "on the console rather than to the GUI."))));
+          lives_free(tmp);
+          lives_free(tmp2);
+        }
+      }
+      /// check if we actually have params to display
+      if (debug_check == NULL && !make_param_box(NULL, rfx)) goto prpw_done;
+
       do {
         res = lives_dialog_run(LIVES_DIALOG(dialog));
       } while (res == LIVES_RESPONSE_RETRY);
@@ -3681,6 +3703,10 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
       if (res == LIVES_RESPONSE_OK) {
         // marshall our params for passing to the plugin
         res_string = param_marshall(rfx, FALSE);
+        if (debug_mode != NULL && debug_check != NULL &&
+            lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(debug_check))) {
+          *debug_mode = TRUE;
+        }
       }
 
       if (fx_dialog[1] != NULL) {
@@ -3688,9 +3714,11 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
         lives_freep((void **)&fx_dialog[1]);
       }
     } else {
+      if (!make_param_box(NULL, rfx)) goto prpw_done; ///< no actual params to display
       make_param_box(vbox, rfx);
     }
 
+prpw_done:
     if (ret_rfx != NULL) {
       *ret_rfx = rfx;
     } else {

@@ -347,7 +347,6 @@ void lives_exit(int signum) {
               (i == mainw->ascrap_file && !mainw->leave_recovery) ||
               (mainw->multitrack != NULL && i == mainw->multitrack->render_file)) {
             // close all open clips, except for ones we want to retain
-
 #ifdef HAVE_YUV4MPEG
             if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
               lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
@@ -361,10 +360,7 @@ void lives_exit(int signum) {
             }
 #endif
             threaded_dialog_spin(0.);
-#ifdef IS_MINGW
-            // for other OS the backend does this
             lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-#endif
             com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
             lives_system(com, FALSE);
             lives_free(com);
@@ -373,10 +369,12 @@ void lives_exit(int signum) {
             threaded_dialog_spin(0.);
             // or just clean them up -
             // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
-            com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, mainw->files[i]->handle);
-            lives_system(com, FALSE);
-            threaded_dialog_spin(0.);
-            lives_free(com);
+            if (!prefs->vj_mode) {
+              com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, mainw->files[i]->handle);
+              lives_system(com, FALSE);
+              threaded_dialog_spin(0.);
+              lives_free(com);
+            }
             if (mainw->files[i]->frame_index != NULL) {
               save_frame_index(i);
             }
@@ -439,7 +437,6 @@ void lives_exit(int signum) {
       }
 
       // (B)
-
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack == NULL) resize(1);
       mainw->was_set = FALSE;
@@ -7289,7 +7286,7 @@ void on_showsubs_toggled(LiVESWidgetObject *obj, livespointer user_data) {
 
 void on_boolean_toggled(LiVESWidgetObject *obj, livespointer user_data) {
   boolean *ppref = (boolean *)user_data;
-  *ppref = !*ppref;
+  *ppref = !(*ppref);
 }
 
 
@@ -9444,6 +9441,36 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   }
 
   in_preview_func = FALSE;
+}
+
+
+void vj_mode_toggled(LiVESCheckMenuItem *menuitem, livespointer user_data) {
+  if (lives_check_menu_item_get_active(menuitem) && (prefs->warning_mask & WARN_MASK_VJMODE_ENTER) == 0) {
+    if (!(do_yesno_dialog_with_check(_("VJ Mode is specifically designed to make LiVES ready for realtime presentation.\n"
+                                       "WARNING - this is an experimental feature, use it at your own risk !\n\n"
+                                       "Enabling VJ restart will have the following effects:\n"
+                                       "\n\n - On startup, Internal audio will be completely disabled, (as well as external, - for now)\n"
+                                       "Clips willl reload without audio (althought the audio files will remain on the disk).\n"
+                                       "Additionally, on startup,  the audio player wiil be set to \"none\" (it can still be changed in Preferences)\n"
+                                       "Setting the audio player to this value  will in turn force LiVES to use the system clock for frame timings\n"
+                                       "(rather than the soundcard) which may allow for slighly smoother playback.\n"
+                                       "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected during the reload.)\n\n"
+                                       "Startup  will be almost instantaeneous, however in the rare occurance of corruption to\n"
+                                       "           a clip audio file, this will not be detected, as the file will not be loaded.\n"
+                                       "\n - Shutdown will be slightly more rapid as no cleanup of the working directory will be attempted\n"
+                                       "\n - Rendered effects will not be loaded, which willl further reduce the startup time.\n"
+                                       "(Realtime effects will still be loaded as usual)\n"
+                                       "\n - Any crash recovery files will be auto reloaded\n"
+                                       "      making it convenient to  terminate  LiVES using ctrl-c or simply shutting down the machine\n"
+                                       "\n - Continuous looping of video will be enabled automatically on startup\n"),
+                                     WARN_MASK_VJMODE_ENTER))) {
+      lives_signal_handler_block(mainw->vj_mode, mainw->vj_mode_func);
+      lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), FALSE);
+      lives_signal_handler_unblock(mainw->vj_mode, mainw->vj_mode_func);
+      return;
+    }
+  }
+  pref_factory_bool(PREF_VJMODE, !future_prefs->vj_mode, TRUE);
 }
 
 

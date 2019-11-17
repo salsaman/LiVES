@@ -1834,15 +1834,15 @@ Depending on the seed_type of "default", the host knows the seed type of "value"
 
 
 ==== Number of elements in the leaves ====
-For color paramters, the value size is 3 or 4, depending on the "colorspace". (3 for RGB, 4 for RGBA).
+For color parameters, the value size is 3 or 4, depending on the "colorspace". (3 for RGB, 4 for RGBA).
 
-The "default" leaf must contain at least one value UNLESS the plugin sets the parameter template flag
-WEED_PARAMETER_VARIABLE_SIZE; then the "default" may take any number of values or be absent;
-if the number of values in "default" is 0 or absent, then "new_default" MUST contain exactly one value. 
+The "default" leaf must contain at least one RGB(A) value UNLESS the plugin sets the parameter template flag
+WEED_PARAMETER_VARIABLE_SIZE; then the "default" may take any number of RGB(A) values or be absent;
+if the number of RGB(A) values in "default" is 0 or absent, then "new_default" MUST contain exactly one RGB(A) value.
 
-The number of values in "value" set by the host MUST match the number of values in
+The number of RGB(A) values in "value" set by the host MUST match the number of RGB(A) values in
 "default", UNLESS the plugin sets the parameter flag WEED_PARAMETER_VARIABLE_SIZE
-then the "value" may take any number (0 or more) of values.
+then the "value" may take any number (0 or more) of RGB(A) values.
 
 
 For color parameters:
@@ -2708,20 +2708,14 @@ When host wants to use the plugin,
 
 The list of directories to be searched can be set in the environment
 variable WEED_PLUGIN_PATH; directories in WEED_PLUGIN_PATH should be separated by
-colons (:) the indicated directory and one level of subdirectories
-should be searched for each entry. The directories should be searched
-in order, first to last, and any effects with duplicate Hashnames may
-be ignored. [See hashnames, below].
+colons (:) the indicated directory and ONE LEVEL OF SUDIRECTORIES
+should be searched for each entry.
 
-Icons for each filter may be placed in a /icons subdirectory.
+shared Icons may be placed in a /icons subdirectory., and at a plugin author's discretion, a package may install icons in icons/<packagename> 
 
-Redonly data files for each filter may be placed in a /data subdirectory.
-The host must run all plugin functions from within the directory above it, so that the plugin can easily 
-find its data files as data/file. In case the plugin needs to write to a file, it should either request a directory 
-location from the user (as a parameter), or else use (a subdirectory of) /tmp.
+Readonly data files  may be placed in a /data subdirectory for shared data, and during installation a package may choose to install
+readonly files in data/<packagename> directory, where <packagename> is the well known name of the package, usually, but not always equivalent to the .so name of the plugin supplying the filter class(es).
 
-Note: There is no need for API versioning of the weed directories themselves, as the
-weed_bootstrap system takes care of different Weed API versions.
 
 
 
@@ -2777,3 +2771,270 @@ Filter_class flag WEED_FILTER_HINT_MAY_THREAD
    e.g. if one thread returns plugin_invalid and another returns filter_invalid, the plugin_invalid takes precedence.
 
 
+
+Tips for the Weed host.
+
+Before setting the value of parameters from external sources it is best to check that the value match in both quantity and type.
+
+For example:
+
+
+SETTING PLUGIN PARAMETERS FROM EXTERNAL SOURCES
+
+#include <weed/weed-host.h>
+#include <weed.h>
+#include <weed-effects.h>
+
+#define MAX_PARAMS 256
+
+static int ext_set_param(ext_context *ctx, int index, int nvalues, void *values) {
+       // values should be a pointer to an array of correct size and type ; e.g  (void *)&(int[nvalues])
+
+       weed_plan weed_plant_t *inst = (weed_plant_t *)ctx->priv_data;
+       weed_plant_t *in_params[MAX_PARAMS];
+       weed_plant_t *param;
+       weed_size_t nparams, vsize;
+       int32_t flags;
+
+       if (index < 0 || index > MAX_PARAMS) return EINVAL;
+
+       if (!inst) return (int)WEED_ERROR_NOSUCH_LEAF;
+
+       nparams = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+
+        if (index >= nparams) {
+	   return (int)WEED_ERROR_NOSUCH_ELEMENT;
+	}
+
+	for (i = 0; i < nparams; i++) {
+	    weed_leaf_get(inst, WEED_LEAF_IN_PARAMETERS, i, &in_params[i]);
+	}
+  	if (in_params[index] == NULL) return FUBAR;
+
+	/* try to get the existing number of values from "value", and if that doesn't exist, then from "default" */
+  	vsize = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
+	if (!vsize) vsize = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT);
+      
+	if (vsize > 0) {
+    	   	  if (nvalues == vsize) {
+		     	      /* Ok, that's the correct number of values, but we still need to check the type and then set the "value" */ 
+      		     	      return validate_vals(param, 0, nvalues, value);
+	}
+
+  	flags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
+
+  	if (flags & WEED_PARAMETER_VARIABLE_SIZE) {
+	   	      		/* it's a list type value, the number of elements just has to an integer  multiple of the value size *\
+				/* (i.e n * 3 for RGB, n * 4 for RGBA, n * 1 for everything else, n cam evem be zero)
+      		     	      return validate_vals(param, vsize, nvalues, value);
+	}
+
+        // either the user tried to set an invalid number of elements or the plugin was misconfigured
+	return EINVAL;
+
+}
+
+
+
+
+
+
+
+
+static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues, void *value) {
+        int hint;
+	weed_size_t vsize - 1;
+	int i;
+
+	weed_leaf_get(param, WEED_LEAF_HINT, 0, &hint);
+
+         if (hint == WEED_HINT_COLOR) {
+	   	 int cspace;
+    	        weed_leaf_get(param, WEED_LEAF_COLORSPACE, 1 &cspace)
+		if (cspace == WEED_COLORSPACE_RGBA) vsize = 4; 
+    		else vsize = 3;
+	}
+
+	if (( !is_list && nvalues != vsize ) || ( is_list && (nvalues % vsize) != 0) ) return EINVAL;
+
+#ifndef CHECK_MIN_MAX
+	weed_leaf_set(param, WEED_LEAF_VALUE, nvalues, value);
+	return WEED_SUCCESS;
+}
+#endif
+
+	// check for min / max (optional)
+
+
+
+	if (hint == WEED_HINT_STRING || hint == WEED_HINT_SWITCH) {
+	   	 // these types don't have min or max
+	   	 weed_leaf_set(param, WEED_LEAF_VALUE, nvalues, valuie);
+		 return WEED_SUCCESS;
+	}
+
+	if ((seed_type = weed_leaf_seed_type(param, WEED_LEAF_VALUE)) == WEED_SEED_INVALID)
+	  	if ((seed_type = weed_leaf_seed_type(param, WEED_LEAF_DEFAULT))  == WEED_SEED_INVALID)
+			seed_type = weed_leaf_seed_type(param, WEED_LEAF_NEW_DEFAULT);
+		}
+	}
+	
+	if (seed_type == WEED_SEED_INVALID) {
+	   /* this is a spec error, plugin should at least set DEFAULT, (or NEW_DEAULT if it's an array) */
+	   return EINVAL;
+	}
+
+
+
+		weed_size_t nvalsmin = weed_leaf_num_elements(param, WEED_LEAF_MIN);
+		wed_size_t nvalsmax = weed_leaf_num_elements(param, WEED_LEAF_MIN);
+		if (!is_list && (nvalsmin <  nvalues || nvalsmax < nvalues) return EINVAL;
+		
+		weed_size_t max_minmax = MAX(nvalsmin, nvalsmax);
+		if (is_list) max_minmax = nvalues;
+
+		if (max_minmax > 0) {
+		   if (seed_type == WEED_SEED_INT) {
+		      /* may be WEED_HINT_INTEGER or WEED_HINT_COLOR */
+			      int **ivals = (int **)values; 
+		   	      if (hint == WEED_HINT_INTEGER) {
+			      	 int imin, imax;
+				 if (is_list) {
+				    if (nvalsmin) weed_leaf_get(param, WEED_LEAF_MIN, 0, &imin);
+				    if (nvalsmax) weed_leaf_get(param, WEED_LEAF_MAX, 0, &imax);
+				 }				    
+
+				 for (i = 0; (weed_size_t)i < max_minmax; i++) {
+				 	if (is_list || (weed_size_t)i < nvalsmin) {
+				 	   	if (!is_list) weed_leaf_get(param, WEED_LEAF_MIN, i, &imin));
+				      		if (*ivals[i] < imin) *ivals[i] = imin;
+				 	}
+				 	if (is_list || (weed_size_t)i < nvalsmax) {
+				     	      	if (!is_list) weed_leaf_get(param, WEED_LEAF_MAX, i, &imax))
+				      		if (*ivals[i] > imax) *ivals[i] = imax;
+				 	}
+				}
+				else {
+				     // WEED_HINT_COLOR
+				     int imin_r, imin_g, imin_b, imin_a;
+				     int imax_r, imax_g, imax_b, imax_a;
+				     for (i = 0; (weed_size_t)i < max_minmax; i += vsize) {
+				     
+				     	 /* check MIN vals */
+					 
+				     	 if ( (is_list && i == 0) || (!is_list &&  (weed_size_t)i < nvalsmin) ) {
+				     	    	 weed_leaf_get(param, WEED_LEAF_MIN, i, &imin_r); 
+				           	 if (nvalsmin == 1) imin_g = imin_b = imin_r;
+						 else {
+						 	 weed_leaf_get(param, WEED_LEAF_MIN, i + 1, &imin_g); 
+						 	 weed_leaf_get(param, WEED_LEAF_MIN, i + 2, &imin_b);
+							 if (vsize == 4) weed_leaf_get(param, WEED_LEAF_MIN, i + 3, &imin_a);
+						}
+					if (is_list || (weed_size_t)i < nvalsmin) {
+					   if (*ivals[i] < imin_r) *ivals[i] = imin_r;
+					   if (*ivals[i + 1] < imin_g) *ivals[i + 1] = imin_g;
+					   if (*ivals[i + 2] < imin_b) *ivals[i + 2] = imin_b;
+					   if (vsize == 4 && nvalsmin > 1 && *ivals[i + 3] < imin_a) *ivals[i + 3] = imin_a;
+					}
+
+				     	 /* check MAX vals */
+					 
+				     	 if ( (is_list && i == 0) || (!is_list &&  i < nvalsmax) ) {
+				     	    	 weed_leaf_get(param, WEED_LEAF_MAX i, &imax_r); 
+				           	 if (nvalsmax == 1) imax_g = imax_b = imax_r;
+						 else {
+						 	 weed_leaf_get(param, WEED_LEAF_MAX, i + 1, &imax_g); 
+						 	 weed_leaf_get(param, WEED_LEAF_MAX, i + 2, &imax_b);
+							 if (vsize == 4) weed_leaf_get(param, WEED_LEAF_MAX, i + 3, &imax_a);
+						}
+					if (is_list || i < nvalsmax) {
+					   if (*ivals[i] > imax_r) *ivals[i] = imax_r;
+					   if (*ivals[i + 1] > imax_g) *ivals[i + 1] = imax_g;
+					   if (*ivals[i + 2] > imax_b) *ivals[i + 2] = imax_b;
+					   if (vsize == 4 && nvalsmax > 1 && *ivals[i + 3] > imax_a) *ivals[i + 3] = imax_a;
+					}
+				}					
+		   }
+		   else {
+		   	/* must be WEED_SEED_DOUBLE */
+		            /* may be WEED_HINT_FLOAT or WEED_HINT_COLOR */
+			      double **dvals = (double **)values; 
+		   	      if (hint == WEED_HINT_FLOAT) {
+			      	 double fmin, fmax;
+				 if (is_list) {
+				    if (nvalsmin) weed_leaf_get(param, WEED_LEAF_MIN, 0, &fmin);
+				    if (nvalsmax) weed_leaf_get(param, WEED_LEAF_MAX, 0, &fmax);
+				 }				    
+
+				 for (i = 0; i < max_minmax; i++) {
+				 	if (is_list || (weed_size_t)i < nvalsmin) {
+				 	   	if (!is_list) weed_leaf_get(param, WEED_LEAF_MIN, i, &fmin));
+				      		if (*fvals[i] < fmin) *fvals[i] = fmin;
+				 	}
+				 	if (is_list || (weed_size_t)i < nvalsmax) {
+				     	      	if (!is_list) weed_leaf_get(param, WEED_LEAF_MAX, &dmax))
+				      		if (*dvals[i] > dmax) *dvals[i] = dmax;
+				 	}
+				}
+				else {
+				     // WEED_HINT_COLOR
+				     double dmin_r, dmin_g, dmin_b, dmin_a;
+				     double dmax_r, dmax_g, dmax_b, dmax_a;
+				     for (i = 0; i < max_minmax; i += vsize) {
+				     
+				     	 /* check MIN vals */
+					 
+				     	 if ( (is_list && i == 0) || (!is_list &&  i < nvalsmin) ) {
+				     	    	 weed_leaf_get(param, WEED_LEAF_MIN, i, &dmin_r); 
+				           	 if (nvalsmin == 1) dmin_g = dmin_b = dmin_r;
+						 else {
+						 	 weed_leaf_get(param, WEED_LEAF_MIN, i + 1, &dmin_g); 
+						 	 weed_leaf_get(param, WEED_LEAF_MIN, i + 1, &dmin_b);
+							 if (vsize == 4) weed_leaf_get(param, WEED_LEAF_MIN, i + 1, &dmin_a);
+						}
+					if (is_list || (weed_size_t)i < nvalsmin) {
+					   if (*dvals[i] < dmin_r) *dvals[i] = dmin_r;
+					   if (*dvals[i + 1] < dmin_g) *dvals[i + 1] = dmin_g;
+					   if (*dvals[i + 2] < dmin_b) *dvals[i + 2] = dmin_b;
+					   if (vsize == 4 && nvalsmin > 1 && *dvals[i + 3] < dmin_a) *dvals[i + 3] = dmin_a;
+					}
+
+				     	 /* check MAX vals */
+					 
+				     	 if ( (is_list && i == 0) || (!is_list &&  (weed_size_t)i < nvalsmax) ) {
+				     	    	 weed_leaf_get(param, WEED_LEAF_MAX, i, &dmax_r); 
+				           	 if (nvalsmax == 1) dmax_g = dmax_b = dmax_r;
+						 else {
+						 	 weed_leaf_get(param, WEED_LEAF_MAX, i + 1, &dmax_g); 
+						 	 weed_leaf_get(param, WEED_LEAF_MAX i + 2, &dmax_b);
+							 if (vsize == 4) weed_leaf_get(param, WEED_LEAF_MAX, i + 3, &dmax_a);
+						}
+					if (is_list || (weed_size_t)i < nvalsmax) {
+					   if (*dvals[i] > dmax_r) *dvals[i] = dmax_r;
+					   if (*dvals[i + 1] > dmax_g) *dvals[i + 1] = dmax_g;
+					   if (*dvals[i + 2] > dmax_b) *dvals[i + 2] = dmax_b;
+					   if (vsize == 4 && nvalsmax > 1 && *dvals[i + 3] > dmax_a) *dvals[i + 3] = dmax_a;
+					}
+				}					
+
+
+
+	weed_leaf_set(param
+
+
+
+
+
+
+
+
+  if (nvalues % vsize != 0) {
+    return EINVAL;
+  }
+
+  if (!validate_vals(param, nvalues, value)) {
+    return EINVAL;
+  }
+
+  return 0;
+}

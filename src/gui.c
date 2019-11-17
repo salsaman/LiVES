@@ -66,6 +66,7 @@ void load_theme_images(void) {
 
   if (error != NULL) {
     palette->style = STYLE_PLAIN;
+    g_print("writing error\n");
     lives_snprintf(prefs->theme, 64, "%%ERROR%%");
     lives_error_free(error);
   } else {
@@ -1031,7 +1032,7 @@ void create_LiVES(void) {
                                LIVES_KEY_l, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  mainw->loop_continue = lives_standard_check_menu_item_new_with_label(_("L_oop Continuously"), FALSE);
+  mainw->loop_continue = lives_standard_check_menu_item_new_with_label(_("L_oop Continuously"), mainw->loop_cont);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_continue);
   lives_widget_set_sensitive(mainw->loop_continue, FALSE);
 
@@ -1505,6 +1506,14 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
+  mainw->vj_mode = lives_standard_check_menu_item_new_with_label(_("Restart in _VJ Mode"), future_prefs->vj_mode);
+  lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_mode);
+  mainw->vj_mode_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->vj_mode), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                        LIVES_GUI_CALLBACK(vj_mode_toggled),
+                        NULL);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
+
   mainw->autolives = lives_standard_check_menu_item_new_with_label(_("_Automatic Mode (autolives)..."), FALSE);
 #ifdef ENABLE_OSC
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->autolives);
@@ -1551,6 +1560,14 @@ void create_LiVES(void) {
 
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), help_translate);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
+
+  mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
+  lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(toggle_sets_pref),
+                       &prefs->show_dev_opts);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
@@ -1698,7 +1715,7 @@ void create_LiVES(void) {
   lives_toolbar_insert_space(LIVES_TOOLBAR(mainw->btoolbar));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-  if (!is_realtime_aplayer(prefs->audio_player)) {
+  if (!is_realtime_aplayer(prefs->audio_player) || prefs->audio_player == AUD_PLAYER_NONE) {
     lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
     lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
   }
@@ -3127,8 +3144,11 @@ void set_interactive(boolean interactive) {
         list = list->next;
       }
     }
-    lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
-    lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+
+    if (is_realtime_aplayer(prefs->audio_player) && prefs->audio_player != AUD_PLAYER_NONE) {
+      lives_widget_set_sensitive(mainw->int_audio_checkbutton, TRUE);
+      lives_widget_set_sensitive(mainw->ext_audio_checkbutton, TRUE);
+    }
     lives_widget_set_sensitive(mainw->spinbutton_start, TRUE);
     lives_widget_set_sensitive(mainw->spinbutton_end, TRUE);
     lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));

@@ -1135,6 +1135,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   boolean output_exists = FALSE;
   boolean save_all = FALSE;
   boolean resb;
+  boolean debug_mode = FALSE;
 
   if (!check_storage_space(mainw->current_file, FALSE)) return;
 
@@ -1302,13 +1303,13 @@ void save_file(int clip, int start, int end, const char *filename) {
     /*   } */
     /* } */
 
-    com = lives_strdup_printf("\"%s\" get_rfx %s %d %d %d", enc_exec_name, prefs->encoder.of_name, prefs->encoder.audio_codec, cfile->hsize,
-                              cfile->vsize);
+    com = lives_strdup_printf("\"%s\" get_rfx %s %d %d %d", enc_exec_name, prefs->encoder.of_name,
+                              prefs->encoder.audio_codec, cfile->hsize, cfile->vsize);
     lives_popen(com, TRUE, buff, 65536);
     lives_free(com);
 
     if (!mainw->com_failed) {
-      extra_params = plugin_run_param_window(buff, NULL, NULL);
+      extra_params = plugin_run_param_window(PLUGIN_ENCODERS, buff, NULL, NULL, &debug_mode);
     }
     if (extra_params == NULL) {
       lives_free(fps_string);

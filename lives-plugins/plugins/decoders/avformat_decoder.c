@@ -55,7 +55,7 @@ static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define SEEK_SUCCESS_MIN_RATIO 0.5 // if real frames are l.t. suggested frames * this, then we assume the file is corrupted
 
-// tune this so small jumps forward are efficient
+// tune this so small jumps forward are efficient (this is done now !)
 #define JUMP_FRAMES_SLOW 64   /// if seek is slow, how many frames to read forward rather than seek
 #define JUMP_FRAMES_FAST 1 /// if seek is fast, how many frames to read forward rather than seek
 
@@ -134,7 +134,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
   while (1) {
     nseeks++;
-#define DEBUG_RLF
+    //#define DEBUG_RLF
 #ifdef DEBUG_RLF
     fprintf(stderr, "will check frame %ld of (allegedly) %ld...", lframe + 1, cdata->nframes);
 #endif
@@ -194,7 +194,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
         rev_tottime += timex;
         rev_nseeks++;
       } else if (lframe > olframe) {
-        if (lframe - olframe <= jumpframes) {
+        if (lframe - olframe <= cdata->jump_limit) {
           fwd_tottime += timex;
           fwd_nseeks++;
           ndecodes += (lframe - olframe);
@@ -205,7 +205,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       }
       if (timex > FAST_SEEK_LIMIT) {
         cdata->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
-        jumpframes = JUMP_FRAMES_SLOW;
+	cdata->jump_limit = JUMP_FRAMES_SLOW;
       }
 
       tottime += timex;
@@ -243,22 +243,28 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
     tottime /= nseeks;
     decode_time = fwd_tottime / ndecodes;
     cdata->max_decode_fps = 1000000. / (double)decode_time;
+    cdata->jump_limit = (int)((double)tottime / cdata->max_decode_fps);
 #ifdef DEBUG_RLF
     fwd_tottime /= fwd_nseeks;
-    fprintf(stderr, "av fwd seek was %ld\n", fwd_tottime);
+    fprintf(stderr, "av fwd seek was %ld\n", decode_time);
     fprintf(stderr, "max decode fps would be %f\n", cdata->max_decode_fps);
+    fprintf(stderr, "jump_limit was reset to %d\n", cdata->jump_limit);
 #endif
   }
 
-#ifdef DEBUG_RLF
   if (rev_nseeks > 0) {
     rev_tottime /= rev_nseeks;
   }
+#ifdef DEBUG_RLF
   fprintf(stderr, "av rev seek was %ld\n", rev_tottime);
+#endif
   if (jump_nseeks > 0) {
     jump_tottime /= jump_nseeks;
+    cdata->jump_limit = (int)((double)jump_tottime / cdata->max_decode_fps);
   }
+#ifdef DEBUG_RLF
   fprintf(stderr, "av jump seek was %ld\n", jump_tottime);
+  fprintf(stderr, "jump_limit was reset again to %d\n", cdata->jump_limit);
 #endif
 
   if (tottime > FAST_SEEK_LIMIT)
@@ -790,6 +796,7 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_VIDEO_PAD_END;
 
   cdata->video_start_time = 0.;
+  cdata->jump_limit = JUMP_FRAMES_FAST;
 
   memset(cdata->author, 0, 1);
   memset(cdata->title, 0, 1);
@@ -1115,13 +1122,18 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
   int ret;
 
-  int64_t jump_frames;
+  int64_t jump_limit = cdata->jump_limit;
   int rowstride;
 
   register int p, i;
 
   // if pixel_data is NULL, just check if the frame exists
   if (tframe < 0 || ((tframe >= cdata->nframes || cdata->fps == 0.) && pixel_data != NULL)) return FALSE;
+
+  if (jump_limit == 0) {
+    if (cdata->seek_flag & LIVES_SEEK_FAST) jump_limit = JUMP_FRAMES_FAST;
+    else jump_limit = JUMP_FRAMES_SLOW;
+  }
 
   cc = s->codec;
 
@@ -1201,10 +1213,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #endif
     priv->pFrame = NULL;
 
-    if (cdata->seek_flag & LIVES_SEEK_FAST) jump_frames = JUMP_FRAMES_FAST;
-    else jump_frames = JUMP_FRAMES_SLOW;
-
-    if (tframe < priv->last_frame || tframe - priv->last_frame > jump_frames) {
+    if (tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
       int64_t xtarget_pts;
       // seek to new frame
 

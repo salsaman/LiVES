@@ -214,6 +214,7 @@ typedef struct {
   realloc_f *ext_realloc;
   calloc_f  *ext_calloc;
 
+  // TODO use fix sized array so we can just memcpy
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
@@ -244,8 +245,11 @@ typedef struct {
   float video_start_time;
 
   float fps;
-  float max_decode_fps;
+  float max_decode_fps; ///< theoretical value with no memcpy
 
+  int64_t jump_limit; ///< for plugin internal use
+
+  // TODO use fix sized array
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 
   /// plugin should init this to palettes[0] if URI changes

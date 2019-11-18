@@ -691,8 +691,8 @@ if (defined($ARGV[0])) {
                 print OUT "$workdir";
                 close OUT;
             } else {
-                print $workdir
-            };
+                print $workdir;
+            }
             exit 0;
         }
 
@@ -935,7 +935,7 @@ if (defined($ARGV[0])) {
             if ($smerr) {
                 sig_system_error("$com", $smerr);
                 exit 1;
-            };
+            }
 
             exit 0;
         }
@@ -1044,12 +1044,8 @@ if (defined($ARGV[0])) {
                                         $plugname = (split(/\./, $plugname))[0];
                                     }
                                     $string .= "$plugname|";
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                }}}}}}
+
             else {
                 print "\n";
                 exit 1;
@@ -1066,10 +1062,10 @@ if (defined($ARGV[0])) {
 		exit 1;
             }
 
-            $type=$ARGV[1];
-            $script_dir=$ARGV[2];
-            $exec_dir=$ARGV[3];
-	    smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
+            $type = $ARGV[1];
+            $script_dir = $ARGV[2];
+            $exec_dir = $ARGV[3];
+	    &smog_system("$rfx_builder_multi \"$type\" \"$script_dir\" \"$exec_dir\"");
             exit 0;
         }
 
@@ -1443,32 +1439,34 @@ if (defined($ARGV[0])) {
 	if ($command eq "get_details") {
 	    #attempt to get file details
             $handle = $ARGV[1];
-	    $file=$ARGV[2];
-	    $only_first=1;
+	    my $file = $ARGV[2];
+	    my $scan_type = 0;
 
-	    $img_ext=".".$ARGV[3];
+	    $img_ext = "." . $ARGV[3];
+	    $only_first = 1;
 
 	    if (defined($ARGV[4])) {
-		$is_remote=$ARGV[4];
+		$scan_type = 3;
 	    }
 	    if (defined($ARGV[5])) {
-		$is_audio=$ARGV[5];
+		$scan_type = 2;
 	    }
-	    $curworkdir="$workdir/$handle";
+	    $curworkdir = "$workdir/$handle";
 
-	    &get_file_info;
+	    &get_file_info($file, $scan_type, 0);
 	    if ($panic) {
-		unlink "$pidfile";
+		unlink $pidfile;
 		exit 1;
 	    }
-	    if ($asamps==32) {
+	    if ($asamps == 32) {
 		# cant handle this yet, so we will resample on open
-		$asamps=16;
+		$asamps = 16;
 	    }
 
-	    smog_chdir("$curworkdir");
+	    &smog_chdir($curworkdir);
 
-	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, $endian, $af_size, $title, $author, $comment);
+	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, 
+				 $endian, $af_size, $title, $author, $comment);
 
 	    exit 0;
 	}
@@ -1642,7 +1640,7 @@ if (defined($ARGV[0])) {
                 }
             }
 
-            $showed_err = 0;
+            my $showed_err = 0;
 
             do {
                 if (! -d "$curworkdir" || -f "$curworkdir/.stoploop" || -f "$curworkdir/stoploop" || ! -f $audiofile) {
@@ -1683,10 +1681,10 @@ if (defined($ARGV[0])) {
 
             unlink "$curworkdir/pause";
 
-            $file = $ARGV[2];
-            $ss = "";
+            my $file = $ARGV[2];
+            my $ss = "";
 
-            $withsound = $ARGV[3]; # 0 : video only, 1 : video and audio, -1 : audio only
+            my $withsound = $ARGV[3]; # 0 : video only, 1 : video and audio, -1 : audio only
 
             if (defined($ARGV[4])) {
                 $img_ext = "." . (split(":", $ARGV[4]))[0];
@@ -1696,17 +1694,17 @@ if (defined($ARGV[0])) {
                 }
             }
 
-            smog_chdir("$curworkdir");
+            &smog_chdir($curworkdir);
 
             unless ($file =~ /^http/) {
-                if (! -f "$file" && ! -d "$file") {
+                if (! -f $file && ! -d $file) {
                     &sig_error("$file", "could not be found", "$GUI_NAME was unable to open it.", 
 			       "Please check the file name and try again.");
                 }
             }
 
 	    ## here we might set $mplay_command, $is_mpv
-            &get_file_info;
+            &get_file_info($file, 1, 1);
 
 	    if ($mplay_command eq "") {
 		my $mp_command = &rc_get("video_open_command");
@@ -2156,63 +2154,63 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "open_tv_card") {
-	    $chanstr=$ARGV[2];
-	    $devstr=$ARGV[3];
-	    $fifofile=$ARGV[4];
+	    $chanstr = $ARGV[2];
+	    $devstr = $ARGV[3];
+	    $fifofile = $ARGV[4];
 
 	    $inputstr = $sizestr = $fpsstr = $driverstr = $outfmt = "";
 
 	    if (defined($ARGV[5])) {
-		$inputstr=":input=$ARGV[5]";
+		$inputstr = ":input=$ARGV[5]";
 	    }
-	    if (defined($ARGV[6])&&defined($ARGV[7])) {
-		if ($ARGV[6]>0&&$ARGV[7]>0) {
-		    $sizestr=":width=$ARGV[6]:height=$ARGV[7]";
+	    if (defined($ARGV[6]) && defined($ARGV[7])) {
+		if ($ARGV[6] > 0 && $ARGV[7] > 0) {
+		    $sizestr = ":width=$ARGV[6]:height=$ARGV[7]";
 		}
 	    }
 
 	    if (defined($ARGV[8])) {
-		if ($ARGV[8]>0.) {
-		    $fpsstr=":fps=$ARGV[8]";
+		if ($ARGV[8] > 0.) {
+		    $fpsstr = ":fps=$ARGV[8]";
 		}
 	    }
 
 	    if (defined($ARGV[9])) {
 		if ($ARGV[9] ne "autodetect") {
-		    $driverstr=":driver=$ARGV[9]";
+		    $driverstr = ":driver=$ARGV[9]";
 		}
 	    }
 
 	    if (defined($ARGV[10])) {
 		if ($ARGV[10] ne "autodetect") {
-		    $outfmt=":outfmt=$ARGV[10]";
+		    $outfmt = ":outfmt=$ARGV[10]";
 		}
 	    }
 
 	    my $mp = "\"". &get_mplayer_location . "\"";
 
 	    ## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
-	    $com="$mp -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr " .
+	    my $com = "$mp -really-quiet tv://$chanstr -tv device=$devstr$inputstr$driverstr$sizestr$outfmt$fpsstr " .
 		"-vo yuv4mpeg:file=$fifofile >$nulfile 2>&1 <$nulfile";
-	    $smerr=smog_system($com);
+	    my $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("$com",$smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 	    exit 0;
 	}
 
 	if ($command eq "open_fw_card") {
-	    $cardno=$ARGV[2];
-	    #$cache=$ARGV[3];
-	    $fifofile=$ARGV[4];
+	    my $cardno = $ARGV[2];
+	    #$cache = $ARGV[3];
+	    my $fifofile = $ARGV[4];
 	    my $mp = "\"". &get_mplayer_location . "\"";
 	    ## note does not function with mpv since it cannot convert to yuv4mpeg (complains about missing pixel_fmt)
-	    $com="dvgrab -s 0 -noavc -card $cardno -o - 2>$nulfile | $mp - -really-quiet -demuxer lavf " .
+	    my $com = "dvgrab -s 0 -noavc -card $cardno -o - 2>$nulfile | $mp - -really-quiet -demuxer lavf " .
 		"-vo yuv4mpeg:file=$fifofile >$nulfile 2>&1";
-	    $smerr=smog_system("$com");
+	    my $smerr = &smog_system("$com");
 	    if ($smerr) {
-		sig_system_error($com, $smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 	    exit 0;
@@ -2226,11 +2224,11 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
-		smog_system("smogrify stopsubsub \"$handle\"");
+		&smog_system("smogrify stopsubsub \"$handle\"");
 	    }
 	    if (chdir($curworkdir)) {
 		unlink glob "* .* *.*";
-		smog_chdir($workdir);
+		&smog_chdir($workdir);
 		rmdir $curworkdir;
 	    }
 	    exit 0;
@@ -2402,7 +2400,7 @@ if (defined($ARGV[0])) {
 			if ($smerr) {
 			    &sig_system_error("Creating directory \"$linksdir\"", $smerr);
 			    exit 1;
-			};
+			}
 
 			my $fstype = &get_fs_type($curworkdir);
 
@@ -2922,7 +2920,7 @@ if (defined($ARGV[0])) {
 				$smerr=rename "$curworkdir/$from$resize_ext","$curworkdir/$to.mgk";
 				if (!$smerr) {
 				    if ($letterbox) {
-					try_to_recover($start,$i);
+					&try_to_recover($start,$i);
 					unlink $blankname;
 				    }
 				    sig_system_error("Renaming \"$curworkdir/$from$resize_ext\" to \"$curworkdir/$to.mgk\"", $!);
@@ -2931,7 +2929,7 @@ if (defined($ARGV[0])) {
 			    }
 			    else {
 				unless (($from eq $to) || $letterbox) {
-				    smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to.mgk");
+				    &smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to.mgk");
 				    if ($panic) {
 					unlink "$pidfile";
 					exit 1;
@@ -2944,34 +2942,34 @@ if (defined($ARGV[0])) {
 				if ($leave_bak) {
 				    #letterboxing was done with resize
 				    unless ($from eq $to) {
-					smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext.2");
+					&smog_copy("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext.2");
 					if ($panic) {
-					    try_to_recover($start,$i);
-					    unlink "$pidfile";
+					    &try_to_recover($start, $i);
+					    unlink $pidfile;
 					    exit 1;
 					}
-					smog_copy("$curworkdir/$from.mgk", "$curworkdir/$to.mgk.2");
+					&smog_copy("$curworkdir/$from.mgk", "$curworkdir/$to.mgk.2");
 					if ($panic) {
-					    try_to_recover($start,$i);
-					    unlink "$pidfile";
+					    &try_to_recover($start, $i);
+					    unlink $pidfile;
 					    exit 1;
 					}
 				    }
 				}
 				else {
-				    smog_copy("$curworkdir/$to$img_ext", "$curworkdir/$to.bak");
+				    &smog_copy("$curworkdir/$to$img_ext", "$curworkdir/$to.bak");
 				    if ($panic) {
-					try_to_recover($start,$i-1);
-					unlink "$pidfile";
+					&try_to_recover($start, $i-1);
+					unlink $pidfile;
 					unlink $blankname;
 					exit 1;
 				    }
 				    # make $to.mgk $to.img_ext
-				    &letterbox_frame($to,abs($newwidth),abs($newheight),$owidth,$oheight);
+				    &letterbox_frame($to, abs($newwidth), abs($newheight), $owidth, $oheight);
 
 				    if ($panic) {
-					try_to_recover($start,$i-1);
-					unlink "$pidfile";
+					&try_to_recover($start, $i - 1);
+					unlink $pidfile;
 					unlink $blankname;
 					exit 1;
 				    }
@@ -2993,15 +2991,15 @@ if (defined($ARGV[0])) {
 		&sig_error;
 	    }
 
-	    $start=$pstart;
-	    $new_count=--$count;
-	    $end=$count;
+	    $start = $pstart;
+	    $new_count = --$count;
+	    $end = $count;
 
 	    unless ($letterbox) {
 		# mv mgk -> $img_ext
 		&mv_mgk;
 		if ($panic) {
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
 	    }
@@ -3009,12 +3007,12 @@ if (defined($ARGV[0])) {
 	    if ($letterbox && $leave_bak) {
 		# because of potential ovewrite we made .mgk2 (resized/no letterbox) and $img_ext.2 (resized)
 		# now copy these
-		unless (!defined($pidfile)||$pidfile eq "") {
+		unless (!defined($pidfile) || $pidfile eq "") {
 		    # don't want to get killed in this stage...
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		}
 		if ($smerr) {
-		    sig_system_error("$com", $smerr);
+		    &sig_system_error($com, $smerr);
 		    exit 1;
 		}
 		for ($i = $start; $i <= $end; $i++) {
@@ -3022,28 +3020,25 @@ if (defined($ARGV[0])) {
 		    if (-f "$curworkdir/$name.mgk.2") {
 			if (-f "$curworkdir/$name$img_ext.2") {
 			    unlink "$curworkdir/$name$img_ext";
-			    $smerr = rename "$curworkdir/$name$img_ext.2", "$curworkdir/$name$img_ext";
+			    $smerr = &smog_rename("$curworkdir/$name$img_ext.2", "$curworkdir/$name$img_ext");
 			    if (!$smerr) {
 				if ($letterbox) {
-				    try_to_recover($start, $end);
+				    &try_to_recover($start, $end);
 				}
 				sig_system_error("Renaming \"$curworkdir/$name$img_ext.2\" to \"$curworkdir/$name$img_ext\"", $!);
 				exit 1;
 			    }
 			}
 			unlink "$curworkdir/$name.mgk";
-			$smerr = rename "$curworkdir/$name.mgk.2", "$curworkdir/$name.mgk";
+			$smerr = &smog_rename("$curworkdir/$name.mgk.2", "$curworkdir/$name.mgk");
 
 			if (!$smerr) {
 			    if ($letterbox) {
-				try_to_recover($start, $end);
+				&try_to_recover($start, $end);
 			    }
-			    sig_system_error("Renaming \"$curworkdir/$name.mgk.2\" to \"$curworkdir/$name.mgk\"", $!);
+			    &sig_system_error("Renaming \"$curworkdir/$name.mgk.2\" to \"$curworkdir/$name.mgk\"", $!);
 			    exit 1;
-			}
-		    }
-		}
-	    }
+			}}}}
 
 	    if ($end < $old_end) {
 		# remove excess frames
@@ -3051,7 +3046,7 @@ if (defined($ARGV[0])) {
 		    $name = &mkname($i);
 		    if (-f "$curworkdir/$name$img_ext") {
 			unlink "$curworkdir/$name.bak";
-			smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
+			&smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.bak");
 		    }
 		}
 		&sig_progress($i);
@@ -3074,7 +3069,7 @@ if (defined($ARGV[0])) {
 		$leave_bak = 0;
 	    }
 
-	    smog_chdir($curworkdir);
+	    &smog_chdir($curworkdir);
 
 	    $oend = $end;
 
@@ -3101,10 +3096,10 @@ if (defined($ARGV[0])) {
 		    $name = &mkname($i);
 		    if (!$leave_bak) {
 			if (-f  "$curworkdir/$name.bak") {
-			    smog_rename("$curworkdir/$name.bak", "$curworkdir/$name$img_ext");
+			    &smog_rename("$curworkdir/$name.bak", "$curworkdir/$name$img_ext");
 			}
 		    } else {
-			smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.mgk");
+			&smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.mgk");
 		    }
 		}
 	    }
@@ -3219,10 +3214,10 @@ if (defined($ARGV[0])) {
 	    $file = $ARGV[8];
 	    $extra_params = $ARGV[9];
 	    $mplayer_command = "\"". &get_mplayer_location . "\"";
-	    $threads=smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
-	    $threads=int($threads);
-	    if ($threads==0) {
-		$threads=1;
+	    $threads = &smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
+	    $threads = int($threads);
+	    if ($threads == 0) {
+		$threads = 1;
 	    }
 	    if ($preview_frames >= 0) {
 		if (!$is_mpv) {
@@ -3231,8 +3226,9 @@ if (defined($ARGV[0])) {
 		    } else {
 			$framestr = "";
 		    }
-		    $threadopts="-lavdopts o=threads=$threads";
-		    $com = "$mplayer_command -vo x11 -zoom -really-quiet -noconfig all -osdlevel 0 -wid $win $threadopts -vf dsize=$hsize:$vsize:0 -ss $start_time $framestr \"$file\" -volume $volume $extra_params >$nulfile 2>&1 <$nulfile";
+		    $threadopts = "-lavdopts o=threads=$threads";
+		    $com = "$mplayer_command -vo x11 -zoom -really-quiet -noconfig all -osdlevel 0 -wid $win $threadopts " .
+			"-vf dsize=$hsize:$vsize:0 -ss $start_time $framestr \"$file\" -volume $volume $extra_params >$nulfile 2>&1 <$nulfile";
 		} else {
 		    if ($preview_frames > 0) {
 			$framestr = "--frames=$preview_frames";
@@ -3240,18 +3236,21 @@ if (defined($ARGV[0])) {
 			$framestr = "";
 		    }
 		    $threadopts="--vd-lavc-threads=$threads";
-		    $com = "$mplayer_command --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win $threadopts --start=$start_time $framestr \"$file\" --volume=$volume $extra_params >$nulfile 2>&1";
+		    $com = "$mplayer_command --no-config --vo=x11 --really-quiet --osd-level=0 --wid=$win $threadopts " .
+			"--start=$start_time $framestr \"$file\" --volume=$volume $extra_params >$nulfile 2>&1";
 		}
 	    } else {
 		#audio only
 		if (!$is_mpv) {
-		    $com = "$mplayer_command -really-quiet -noconfig all -volume $volume -novideo -vo null \"$file\" $extra_params >$nulfile 2>&1 <$nulfile";
+		    $com = "$mplayer_command -really-quiet -noconfig all -volume $volume -novideo -vo null \"$file\" " .
+			"$extra_params >$nulfile 2>&1 <$nulfile";
 		} else {
-		    $com = "$mplayer_command --really-quiet --no-config --volume=$volume --no-video --vo=null \"$file\" $extra_params >$nulfile 2>&1";
+		    $com = "$mplayer_command --really-quiet --no-config --volume=$volume --no-video --vo=null \"$file\" " .
+			"$extra_params >$nulfile 2>&1";
 		}
 	    }
 	    #print "COM is $com\n";
-	    smog_system($com);
+	    &smog_system($com);
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3261,7 +3260,7 @@ if (defined($ARGV[0])) {
 	    unlink "$curworkdir/pause";
 	    $start = $ARGV[2];
 	    $end = $ARGV[3];
-	    $img_ext = ".".$ARGV[4];
+	    $img_ext = "." . $ARGV[4];
 	    if (defined($ARGV[5])) {
 		$leave_bak = $ARGV[5];
 	    }
@@ -3357,7 +3356,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    smog_system_sync();
+	    &smog_system_sync();
 
 	    unless(-f $audio_in) {
 		&sig_error("$GUI_NAME was not able to open the file", "$file");
@@ -3376,7 +3375,8 @@ if (defined($ARGV[0])) {
 	    $audio_bak = "audio.bak";
 
 	    # resample $audio_out (if required)
-	    unless ($arate == $nrate && $achans == $nchans && $asamps == $nsamps && $nsigned == $signed && $nendian == $endian) {
+	    unless ($arate == $nrate && $achans == $nchans && $asamps == $nsamps && $nsigned == $signed &&
+		    $nendian == $endian) {
 		$audio_in = $audio_out;
 		#audio.new
 		$audio_out = $audio_bak;
@@ -3384,27 +3384,27 @@ if (defined($ARGV[0])) {
 		&resample_audio;
 		# audio.new -> audio.bak
 		if ($panic) {
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
 
-		unlink "$audio_in";
+		unlink $audio_in;
 		#audio.new
-		smog_rename("$audio_out", "$audio_in");
+		&smog_rename($audio_out, $audio_in);
 		#audio.bak -> audio.new
 		$audio_out = $audio_in;
 		#audio.new
 	    }
 
 	    unless(&rc_get("conserve_space") eq "true") {
-		smog_rename("$audio_out", "keep_$audio_out");
+		&smog_rename($audio_out, "keep_$audio_out");
 		&backup_audio;
 		if ($panic) {
 		    unlink "keep_$audio_out";
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
-		smog_rename("keep_$audio_out", "$audio_out");
+		&smog_rename("keep_$audio_out", $audio_out);
 	    }
 
 	    # cat audio audio.new -> audiodump
@@ -3415,7 +3415,7 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 
-	    unlink "$audio_out";
+	    unlink $audio_out;
 	    #audio.new
 	    $fsize = -s "$curworkdir/audiodump";
 	    &sig_complete($fsize);
@@ -3697,15 +3697,14 @@ if (defined($ARGV[0])) {
 			}
 		    }
 		}
-		$is_audio = 1;
-		&get_file_info;
+		&get_file_info($file, 2, 0);
 		if ($panic) {
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
 		&convert_audio_to_raw;
 		if ($panic) {
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
 	    } else {
@@ -4438,13 +4437,14 @@ if (defined($ARGV[0])) {
 	if ($command eq "export_project") {
 	    my $set = $ARGV[2];
 	    my $proj_file = $ARGV[3];
-	    smog_chdir("$workdir");
-	    $com = "tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk --exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set";
-	    $smerr = smog_system($com);
+	    &smog_chdir($workdir);
+	    $com = "tar --exclude=*.bak --exclude=.pid* --exclude .status* --exclude=lock.* --exclude=*.mgk " .
+		"--exclude=*.tmp --exclude=audioclip* -czf \"$proj_file\" $set";
+	    my $smerr = &smog_system($com);
 	    if ($smerr) {
-		sig_system_error("$com", $smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
-	    };
+	    }
 
 	    &sig_complete;
 	    exit 0;
@@ -4469,7 +4469,7 @@ if (defined($ARGV[0])) {
     }
     print STDERR "smogrify for $GUI_NAME v$version: Error. Exiting with code 99.\n";
     print STDERR "smogrify for $GUI_NAME v$version: \@ARGV = " . join(" ", @ARGV) . "\n";
-    unlink "$pidfile";
+    unlink $pidfile;
     exit 99;
 
 ######################################################
@@ -4483,9 +4483,7 @@ sub usage {
 
 
 sub mkname {
-    my $num = shift;
-    $ret = sprintf("%08d", $num);
-    $ret;
+    sprintf("%08d", shift);
 }
 
 
@@ -4511,12 +4509,12 @@ sub check_for_stop {
 sub kill_child_pids {
     my ($target_pid, $sig) = @_;
     my $pid;
-    smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
+    &smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
 
     if ($sig eq "KILL") {
-        smog_system("kill -$sig $target_pid >/dev/null 2>&1");
+        &smog_system("kill -$sig $target_pid >/dev/null 2>&1");
     } else {
-        smog_system("pkill -$sig -P $target_pid");
+        &smog_system("pkill -$sig -P $target_pid");
 	# must not ! >/dev/null 2>&1
     }
 
@@ -4524,7 +4522,7 @@ sub kill_child_pids {
         while (<IN>) {
             $pid = $_;
             chomp($pid);
-            &kill_child_pids($pid,$sig);
+            &kill_child_pids($pid, $sig);
         }
         close IN;
     }
@@ -4537,26 +4535,28 @@ sub is_writeable {
     # see if is writable or creatable
     # but do not actually create the file
     my $file = shift;
-    if (! -s $nfile) {
-        unlink "$nfile";
-    };
+    my $ret;
 
-    $exists = (-f "$nfile");
+    if (! -s $nfile) {
+        unlink $nfile;
+    }
+
+    $exists = -f $nfile;
     if (!$exists) {
         umask 0;
 	$ret = smog_system("touch \"$nfile\"");
         if ($ret) {
             return !$ret;
         }
-	smog_system("/bin/chmod o+w \"$nfile\"");
+	&smog_system("/bin/chmod o+w \"$nfile\"");
         umask $umask;
     }
-    smog_system_sync();
-    $ret = (-w "$nfile");
+    &smog_system_sync();
+    $ret = -w $nfile;
     if (!$exists) {
-        unlink "$nfile";
+        unlink $nfile;
     }
-    return $ret;
+    $ret;
 }
 
 
@@ -4573,7 +4573,7 @@ sub get_img_ext {
         return ".png";
     }
 
-    unless(-f "$ckdir/$tfile.jpg") {
+    unless (-f "$ckdir/$tfile.jpg") {
         print STDERR "Warning ! command $command needs to set image type !! Please report this as a bug.\n";
         print STDERR "details: $ckdir/$tfile.jpg not found\n";
     }
@@ -5492,21 +5492,21 @@ sub get_mpv_info {
 
     if (! -f $file_ident) {
         return;
-    };
+    }
     $hsize = smog_system_direct("grep XDATA:width \"$file_ident\" 2>$nulfile");
     $hsize = (split("=", (split("\n", $hsize))[0]))[1];
     chomp($hsize);
 
     if (! -f $file_ident) {
         return;
-    };
+    }
     $vsize = smog_system_direct("grep XDATA:height \"$file_ident\" 2>$nulfile");
     $vsize = (split("=", (split("\n", $vsize))[0]))[1];
     chomp($vsize);
 
     if (! -f $file_ident) {
         return;
-    };
+    }
 
     $fps = smog_system_direct("grep XDATA:fps \"$file_ident\" 2>$nulfile");
     $fps = (split("=", (split("\n", $fps))[0]))[1];
@@ -5514,21 +5514,21 @@ sub get_mpv_info {
 
     if (! -f $file_ident) {
         return;
-    };
+    }
     $arate = smog_system_direct("grep XDATA:audio-samplerate \"$file_ident\" 2>$nulfile");
     $arate = (split("=", (split("\n", $arate))[0]))[1];
     chomp($arate);
 
     if (! -f $file_ident) {
         return;
-    };
+    }
     $achans = smog_system_direct("grep XDATA:audio-channels \"$file_ident\" 2>$nulfile");
     $achans = (split("=", (split("\n", $achans))[0]))[1];
     chomp($achans);
 
     if (! -f $file_ident) {
         return;
-    };
+    }
     $abitrate = smog_system_direct("grep XDATA:audio-bitrate \"$file_ident\" 2>$nulfile");
     $abitrate = (split("=", (split("\n", $abitrate))[0]))[1];
     chomp($abitrate);
@@ -5557,21 +5557,32 @@ sub get_ffprobe_info {
 
     ## asamps - depends on decoder, $signed, $endian also
 
-    ## TODO: TAG:DURATION=00:38:46.220000000; coded_width, height
+    ## TODO: TAG:DURATION=00:38:46.220000000;
 
     my ($file, $VERBOSE) = @_;
     ##my $com = "ffprobe -hide_banner -show_streams -count_frames \"$file\"";
-    my $com = "ffprobe -hide_banner -show_streams \"$file\"";
+    my $com = "ffprobe -loglevel 24 -show_format -hide_banner -show_streams -select_streams u \"$file\"";
     my $is_video = 0;
     my $is_audio = 0;
 
-    if ($VERBOSE) {
+    if ($VERBOSE > 1) {
 	print STDERR "Running: $com\n";
     }
 
     open (my $fh, "$com |");
     while (defined(my $line = <$fh>)) {
-	if ($line =~ /^r_frame_rate=(.*)/ && $is_video) {
+	if ($line =~ /^\[FORMAT\]$/) {
+	    $is_format = 1;
+	    $is_video = 0;
+	    $is_audio = 0;
+	    next;
+	}
+	if ($line =~ /^\[\/FORMAT\]$/) {
+	    $is_format = 0;
+	    next;
+	}
+	if ($line =~ /^avg_frame_rate=(.*)/ && $is_video) {
+	    next if ($fps);
 	    next if ($1 eq "N/A");
 	    $frate = $1;
 	    @rfps = (split /\//, $frate);
@@ -5581,15 +5592,16 @@ sub get_ffprobe_info {
 	    else {
 		$fps = $rfps[0];
 	    }
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got fps $fps\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^bitrate=(.*)/ && $is_audio) {
+	    next if ($bitrate);
 	    next if ($1 eq "N/A");
 	    $abitrate = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got abitrate $abitrate\n";
 	    }
 	    next;
@@ -5597,12 +5609,13 @@ sub get_ffprobe_info {
 	if ($line =~ /^title=(.*)/) {
 	    next if ($1 eq "N/A");
 	    $title = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got title $title\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^sample_fmt=(.*)/ && $is_audio) {
+	    next if ($asamps && $signed);
 	    next if ($1 eq "N/A");
 	    my $xasamps = $1;
             if ($xasamps =~ /^f/) {
@@ -5617,7 +5630,7 @@ sub get_ffprobe_info {
                 $asamps = substr($xasamps, 1, -1);
                 $signed = 0;
             }
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got fltp\n";
 	    }
 	    next;
@@ -5625,55 +5638,61 @@ sub get_ffprobe_info {
 	if ($line =~ /^author=(.*)/) {
 	    next if ($1 eq "N/A");
 	    $author = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got author $author\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^channels=(.*)/) {
+	    next if ($achans);
 	    next if ($1 eq "N/A");
 	    $achans = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got achans $achans\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^sample_rate=(.*)/) {
+	    next if ($arate);
 	    next if ($1 eq "N/A");
 	    $arate = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got arate $arate\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^nb_read_frames=(.*)/ && $is_video) {
+	    next if ($count);
 	    next if ($1 eq "N/A");
 	    $count = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got frames $count\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^width=(.*)/) {
+	    next if ($hsize);
 	    next if ($1 eq "N/A");
 	    $hsize = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got width $hsize\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^height=(.*)/) {
+	    next if ($vsize);
 	    next if ($1 eq "N/A");
 	    $vsize = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got height $vsize\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^duration=(.*)/) {
+	    next if ($length && !$is_format);
 	    next if ($1 eq "N/A");
 	    $length = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got length .$length.\n";
 	    }
 	    next;
@@ -5681,40 +5700,49 @@ sub get_ffprobe_info {
 	if ($line =~ /^codec_name=(.*)/) {
 	    next if ($1 eq "N/A");
 	    $codec = $1;
-	    if ($VERBOSE) {
-		print STDERR "ffprobe got length $length\n";
-	    }
 	    ## continue and get codec_type
 	}
 	if ($line =~ /^color_transfer=(.*)/) {
+	    next if ($gamma_type);
 	    next if ($1 eq "N/A");
 	    $gamma_type = $1;
-	    if ($VERBOSE) {
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got gamma_type $gamma_type\n";
 	    }
 	    next;
 	}
 	if ($line =~ /^codec_type=(.*)/) {
 	    next if ($1 eq "N/A");
+	    $is_video = $is_audio = $is_format = 0;
 	    if ($1 eq "video") {
-		$is_video = 1;
-		$is_audio = 0;
+		if ($id_vid_form) {
+		    print STDERR "Warning, found multiple video streams in container. Only the first will be imported.\n";
+		    next;
+		}
 		$id_vid_form = $codec;
-		if ($VERBOSE) {
+		$is_video = 1;
+		if ($VERBOSE > 1) {
 		    print STDERR "ffprobe got id_vid_form $id_vid_form\n";
 		}
 		next;
 	    }
 	    if ($1 eq "audio") {
-		$is_video = 0;
-		$is_audio = 1;
+		if ($id_aud_form) {
+		    print STDERR "Found multiple audio streams in container.\n" .
+			"aid select not yet implemented. Only the first will be imported. (FIXME)\n";
+		    next;
+		}
 		$id_aud_form = $codec;
-		if ($VERBOSE) {
+		$is_audio = 1;
+		if ($VERBOSE > 1) {
 		    print STDERR "ffprobe got id_aud_form $id_aud_form\n";
 		}
 		next;
 	    }
-	    if ($VERBOSE) {
+	    if ($1 eq "subtitle") {
+		$subs++;
+	    }
+	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got codec_type $1\n";
 	    }
 	    next;
@@ -5728,27 +5756,30 @@ sub get_ffprobe_info {
 	$count = 1000000;
 	#take a guess...
     }
-    if ($VERBOSE) {
+    if ($VERBOSE > 1) {
 	print STDERR "ffprobe got revised frames $count\n";
     }
     if ($asamps == 0 && $arate * $achans > 0) {
 	$asamps = $abitrate / $arate / $achans;
-	if ($VERBOSE) {
+	if ($VERBOSE > 1) {
 	    print STDERR "ffprobe got revised asamps $asamps\n";
 	}
     }
     if ($asamps == 0) {
 	$asamps = 16;
-	if ($VERBOSE) {
+	if ($VERBOSE > 1) {
 	    print STDERR "ffprobe forced asamps to $asamps\n";
 	}
     }
 
     if ($achans > 2) {
 	$achans = 2;
-	if ($VERBOSE) {
+	if ($VERBOSE > 1) {
 	    print STDERR "ffprobe forced achans to $achans\n";
 	}
+    }
+    if ($subs && $VERBOSE > 0 ) {
+	print STDERR "clip has $subs subtitles available, these will not be imported (FIXME).\n";
     }
 }
 
@@ -5869,14 +5900,14 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $bpp = smog_system_direct("grep VIDEO: \"$file_ident\" 2>$nulfile");
             $bpp = (split("bpp", (split("  ", $bpp))[3]))[0];
             chomp($bpp);
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             if ($bpp eq "") {
                 $bpp = smog_system_direct("grep \"Image size:\" \"$file_ident\" 2>$nulfile");
                 @tmp = split(" ", $bpp);
@@ -5885,21 +5916,21 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $hsize = smog_system_direct("grep ID_VIDEO_WIDTH \"$file_ident\" 2>$nulfile");
             $hsize = (split("=", (split("\n", $hsize))[0]))[1];
             chomp($hsize);
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $vsize = smog_system_direct("grep ID_VIDEO_HEIGHT \"$file_ident\" 2>$nulfile");
             $vsize = (split("=", (split("\n", $vsize))[0]))[1];
             chomp($vsize);
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $fps = smog_system_direct("grep ID_VIDEO_FPS \"$file_ident\" 2>$nulfile");
             $fps = (split("=", (split("\n", $fps))[0]))[1];
             $fps = trim($fps);
@@ -5909,7 +5940,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $arate = smog_system_direct("grep ID_AUDIO_RATE \"$file_ident\" 2>$nulfile");
             my @results = split("\n", $arate);
             foreach my $val(@results) {
@@ -5919,7 +5950,7 @@ sub get_mplayer_info {
 	    }
 	    if (! -f $file_ident) {
                 return;
-            };
+            }
             if ($arate == 0) {
                 $arate = smog_system_direct("grep Samplerate \"$file_ident\" 2>$nulfile");
                 $arate = (split(": ", (split("\n", $arate))[0]))[1];
@@ -5928,7 +5959,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $achans = smog_system_direct("grep ID_AUDIO_NCH \"$file_ident\" 2>$nulfile");
             chomp($achans);
             $achans = (split("\n", $achans))[-1];
@@ -5936,7 +5967,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $abitrate = smog_system_direct("grep ID_AUDIO_BITRATE \"$file_ident\" 2>$nulfile");
             chomp($abitrate);
             $abitrate = (split("\n", $abitrate))[-1];
@@ -5968,7 +5999,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $comment = smog_system_direct("grep Comments: \"$file_ident\" 2>$nulfile");
             @tmp = split(" ", $comment);
             shift(@tmp);
@@ -5977,7 +6008,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $title = smog_system_direct("grep Title: \"$file_ident\" 2>$nulfile");
             @tmp = split(" ", $title);
             shift(@tmp);
@@ -5986,7 +6017,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $title = smog_system_direct("grep Author: \"$file_ident\" 2>$nulfile");
             @tmp = split(" ", $author);
             shift(@tmp);
@@ -5995,7 +6026,7 @@ sub get_mplayer_info {
 
             if (! -f $file_ident) {
                 return;
-            };
+            }
             $count = smog_system_direct("grep \"frames  total\" \"$file_ident\" 2>$nulfile");
             @tmp = split(" ", $count);
             $count = $tmp[2];
@@ -6038,8 +6069,11 @@ sub get_file_info {
     # $comment, $title, $author
 
     # $type may be a video format ($id_vid_form) or "Audio" or an image format ("jpeg", "png", etc).
-    #my $VERBOSE = 1;
-    my $VERBOSE = 0;
+    my ($file, $scantype, $VERBOSE) = @_; ## 0 = scan_all, 1 = scan_for_open, 2 = scan_audio, 3 = scan_remote
+    my $is_remote = 0;
+    if ($scan_type == 3) {
+	$is_remote = 1;
+    }
     $count = 0;
     $bpp = 24;
     # default if none is found
@@ -6056,6 +6090,7 @@ sub get_file_info {
     $length = 0;
     $id_vid_form = "";
     $endian="";
+    $gamma_type = "";
 
     $is_mpv = 0;
 
@@ -6063,28 +6098,26 @@ sub get_file_info {
         $ximg_ext = $img_ext;
     }
 
-    if ($is_audio) {
+    if ($scan_type == 2) {
         $type = "Audio";
     }
 
     my $guess_type = "";
 
-    if (1) {
+    if ($scantype == 0) {
 	if (!defined($file_exec)) {
 	    $file_exec = &location("file");
 	}
 	if ($file_exec) {
 	    $guess_type = &file_examine($file);
-	    if ($VERBOSE) {
-		print STDERR "filetype is: $guess_type\n";
-	    }
-	}
-	my $ffprobe = &location("ffprobe");
-	if ($ffprobe ne "") {
-	    &get_ffprobe_info($file, $VERBOSE);
+	    print STDERR "filetype is: $guess_type\n";
 	}
     }
 
+    my $ffprobe = &location("ffprobe");
+    if ($ffprobe ne "") {
+	&get_ffprobe_info($file, $VERBOSE);
+    }
 
     if ($id_vid_form eq "") {
 	$file_ident = "file_info";
@@ -6136,13 +6169,13 @@ sub get_file_info {
 
     #print ("IMG FILT .$count. .$type. .$length. .$fps.\n");
 
-    if (($hsize * $vsize == 0 || $count eq "")
+    if (($hsize * $vsize == 0 || !$count)
 	## test for various image types...
 	|| (($type eq "ffpng" || $fwtype eq "PNG" || (($type eq "mjpeg" || $type=="png") && $length eq "" && int($fps)==1) || $type eq "gif")
-	   && $count eq "0")
+	   && !$count)
 	|| (($type eq "ffmjpeg" || $fwtype eq "MJPEG")
-	   && $count eq "1")
-	|| ($fps == 1. && $count eq "1" && $id_aud_form eq "" && (int($length)==1 || $length eq ""))
+	   && $count == 1)
+	|| ($fps == 1. && $count == 1 && $id_aud_form eq "" && (int($length) == 1 || !$length))
 	&& !$is_audio) {
         $origcount = $count;
 
@@ -7181,10 +7214,7 @@ sub mp3_open {
         return;
     }
 
-    $file = $audio_in;
-    $is_audio = 1;
-
-    &get_file_info;
+    &get_file_info($audio_in, 2, 0);
     return if $panic;
 
     $asigned = $signed;
@@ -7227,10 +7257,7 @@ sub ogg_open {
         return;
     }
 
-    $file = $audio_in;
-    $is_audio = 1;
-
-    &get_file_info;
+    &get_file_info($audio_in, 2, 0);
     return if $panic;
 
     $asigned = $signed;
@@ -7263,13 +7290,10 @@ sub wav_open {
         unlink "$audio_in";
     }
 
-    smog_copy("$file", "$audio_in");
+    &smog_copy($file, $audio_in);
     return if $panic;
 
-    $file = $audio_in;
-    $is_audio = 1;
-
-    &get_file_info;
+    &get_file_info($audio_in, 2, 0);
     return if $panic;
 
     $asigned = $signed;
@@ -7317,18 +7341,15 @@ sub othera_open {
     else {
 	$com = "$mplayer_command --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format --audio-channels=$achans";
     }
-    $smerr = &smog_system($com);
+    my $smerr = &smog_system($com);
 
     if ($smerr) {
-        &sig_system_error("$com", $smerr);
+        &sig_system_error($com, $smerr);
         $panic = 1;
         return;
     }
 
-    $file = $audio_in;
-    $is_audio = 1;
-
-    &get_file_info;
+    &get_file_info($audio_in, 2, 0);
     return if $panic;
 
     $asigned = $signed;
@@ -7389,7 +7410,7 @@ sub getint {
 
     # TODO - this needs checking !
 
-    if (!defined($endian)||$endian==1) {
+    if (!defined($endian) || $endian == 1) {
 	#little endian
         return ((($val[3] * 256 + $val[2]) * 256 + $val[1]) * 256) + $val[0];
     }

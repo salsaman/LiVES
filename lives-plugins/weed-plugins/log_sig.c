@@ -80,9 +80,9 @@ WEED_SETUP_START(200, 200) {
                                         NULL, NULL, NULL, in_params, out_params);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION,
-                        "Scales float values between -1.0 and 1.0 using a log-sig function\n"
-                        "Inputs may be fed from the outputs of the data_processor or data_unpacker plugins\n"
-                        "for example.\n"
+                        "Scales (double) values between -1.0 and 1.0 using a log-sig function\n"
+                        "Inputs may be fed from the outputs of the data_processor or data_unpacker plugins, "
+                        "for instance.\n"
                        );
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

@@ -219,11 +219,12 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
 #define AUDIO_FRAMES_TO_READ 100
 
 ulong open_file_sel(const char *file_name, double start, int frames) {
+  LiVESResponseType response;
   char msg[256], loc[PATH_MAX];
   char *tmp = NULL;
   char *isubfname = NULL;
   char *fname = lives_strdup(file_name), *msgstr;
-  char *com;
+  char *com, *what;
 
   int withsound = 1;
   int old_file = mainw->current_file;
@@ -320,7 +321,20 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         cfile->start = 1;
         cfile->end = cfile->frames;
-        create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1), frames == 0 ? cfile->frames : frames);
+
+        what = lives_strdup(_("creating the frame index for the clip"));
+
+        do {
+          response = LIVES_RESPONSE_OK;
+          create_frame_index(mainw->current_file, TRUE, cfile->fps * (start == 0 ? 0 : start - 1), frames == 0 ? cfile->frames : frames);
+          if (cfile->frame_index == NULL) {
+            response = do_memory_error_dialog(what, (frames == 0 ? cfile->frames : frames) * 4);
+          }
+        } while (response == LIVES_RESPONSE_RETRY);
+        lives_free(what);
+        if (response == LIVES_RESPONSE_CANCEL) {
+          return 0;
+        }
 
         cfile->arate = cfile->arps = cdata->arate;
         cfile->achans = cdata->achans;
@@ -414,7 +428,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
             msgstr = lives_strdup_printf(_("Opening audio"), file_name);
             if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
-              // user cancelled or switched to another clip
+              // error or user cancelled or switched to another clip
 
               lives_free(msgstr);
 
@@ -440,6 +454,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               lives_freep((void **)&mainw->file_open_params);
               close_current_file(old_file);
               lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+              if (mainw->error) {
+                do_blocking_error_dialog(mainw->msg);
+                mainw->error = 0;
+                clear_mainw_msg();
+              }
               sensitize();
               return 0;
             }
@@ -518,6 +537,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             }
           }
         }
+
         get_mime_type(cfile->type, 40, cdata);
         save_frame_index(mainw->current_file);
       }
@@ -1168,6 +1188,9 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   }
 
+  if (rdet->debug != NULL && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(rdet->debug)))
+    debug_mode = TRUE;
+
   // get file extension
   check_encoder_restrictions(TRUE, FALSE, save_all);
 
@@ -1228,22 +1251,24 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
     sfile->orig_file_name = FALSE;
   } else if (!mainw->osc_auto && sfile->orig_file_name) {
-    char *warn = lives_strdup(
-                   _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n"
-                     "\nDo you still wish to continue ?"));
-    if (!do_yesno_dialog_with_check(warn, WARN_MASK_SAVE_QUALITY)) {
-      lives_free(warn);
-      lives_free(full_file_name);
-      if (rdet != NULL) {
-        lives_widget_destroy(rdet->dialog);
-        lives_free(rdet->encoder_name);
-        lives_freep((void **)&rdet);
-        lives_freep((void **)&resaudw);
+    if (!debug_mode) {
+      char *warn = lives_strdup(
+                     _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n"
+                       "\nDo you still wish to continue ?"));
+      if (!do_yesno_dialog_with_check(warn, WARN_MASK_SAVE_QUALITY)) {
+        lives_free(warn);
+        lives_free(full_file_name);
+        if (rdet != NULL) {
+          lives_widget_destroy(rdet->dialog);
+          lives_free(rdet->encoder_name);
+          lives_freep((void **)&rdet);
+          lives_freep((void **)&resaudw);
+        }
+        lives_freep((void **)&mainw->subt_save_file);
+        return;
       }
-      lives_freep((void **)&mainw->subt_save_file);
-      return;
+      lives_free(warn);
     }
-    lives_free(warn);
   }
 
   if (!strlen(sfile->comment)) {
@@ -1305,11 +1330,14 @@ void save_file(int clip, int start, int end, const char *filename) {
 
     com = lives_strdup_printf("\"%s\" get_rfx %s %d %d %d", enc_exec_name, prefs->encoder.of_name,
                               prefs->encoder.audio_codec, cfile->hsize, cfile->vsize);
+    if (debug_mode) {
+      fprintf(stderr, "Running command: %s\n", com);
+    }
     lives_popen(com, TRUE, buff, 65536);
     lives_free(com);
 
     if (!mainw->com_failed) {
-      extra_params = plugin_run_param_window(PLUGIN_ENCODERS, buff, NULL, NULL, &debug_mode);
+      extra_params = plugin_run_param_window(buff, NULL, NULL);
     }
     if (extra_params == NULL) {
       lives_free(fps_string);
@@ -1561,7 +1589,7 @@ void save_file(int clip, int start, int end, const char *filename) {
   mainw->no_switch_dprint = FALSE;
   lives_free(mesg);
 
-  if (prefs->show_gui) {
+  if (prefs->show_gui && !debug_mode) {
     // open a file for stderr
     new_stderr_name = lives_build_filename(prefs->workdir, cfile->handle, LIVES_ENC_DEBUG_FILE_NAME, NULL);
     lives_free(redir);
@@ -1653,6 +1681,11 @@ void save_file(int clip, int start, int end, const char *filename) {
   save_file_comments(current_file);
 
   mainw->com_failed = FALSE;
+
+  if (debug_mode) {
+    fprintf(stderr, "Running command: %s\n", com);
+  }
+
   lives_system(com, FALSE);
   lives_free(com);
   mainw->error = FALSE;
@@ -1700,6 +1733,9 @@ void save_file(int clip, int start, int end, const char *filename) {
                               cfile->frames, pluginstr, PLUGIN_ENCODERS, prefs->encoder.name);
     lives_free(pluginstr);
 
+    if (debug_mode) {
+      fprintf(stderr, "Running command: %s\n", com);
+    }
     lives_system(com, FALSE);
     lives_free(com);
   } else {
@@ -4561,16 +4597,30 @@ int save_event_frames(void) {
   perf_start = (int)(cfile->fps * event_list_get_start_secs(cfile->event_list)) + 1;
   perf_end = perf_start + (nevents = count_events(cfile->event_list, FALSE, 0, 0)) - 1;
 
-  event_list_to_block(cfile->event_list, nevents);
+  if (!event_list_to_block(cfile->event_list, nevents)) return -1;
 
   if (cfile->frame_index != NULL) {
+    LiVESResponseType response;
     int xframes = cfile->frames;
+    char *what = lives_strdup(_("creating the frame index for resampling "));
 
     if (cfile->frame_index_back != NULL) lives_free(cfile->frame_index_back);
     cfile->frame_index_back = cfile->frame_index;
     cfile->frame_index = NULL;
 
-    create_frame_index(mainw->current_file, FALSE, 0, nevents);
+    do {
+      response = LIVES_RESPONSE_OK;
+      create_frame_index(mainw->current_file, FALSE, 0, nevents);
+      if (cfile->frame_index == NULL) {
+        response = do_memory_error_dialog(what, nevents * 4);
+      }
+    } while (response == LIVES_RESPONSE_RETRY);
+    lives_free(what);
+    if (response == LIVES_RESPONSE_CANCEL) {
+      cfile->frame_index = cfile->frame_index_back;
+      cfile->frame_index_back = NULL;
+      return -1;
+    }
 
     for (i = 0; i < nevents; i++) {
       cfile->frame_index[i] = cfile->frame_index_back[(cfile->resample_events + i)->value - 1];

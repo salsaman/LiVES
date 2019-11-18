@@ -211,7 +211,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     if (newtext == NULL) {
       if (msg == NULL) break;
       newtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
-      if (error != WEED_NO_ERROR) break;
+      if (error != WEED_SUCCESS) break;
       if (newtext == NULL) break;
       totlines += get_token_count(newtext, '\n');
 #ifdef DEBUG_MSGS

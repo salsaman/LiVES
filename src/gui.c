@@ -1567,7 +1567,7 @@ void create_LiVES(void) {
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       &prefs->show_dev_opts);
+                       (livespointer)PREF_SHOW_DEVOPTS);
 
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 

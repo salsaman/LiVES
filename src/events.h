@@ -188,6 +188,7 @@ typedef struct {
   LiVESWidget *backaudio_checkbutton;
   LiVESWidget *always_checkbutton;
   LiVESWidget *always_hbox;
+  LiVESWidget *debug;
   ulong encoder_name_fn;
   ulong encoder_ofmt_fn;
   boolean enc_changed;

@@ -429,7 +429,7 @@ typedef struct {
 typedef struct {
   int value;
   int64_t reltime;
-} event;
+} resample_event;
 
 typedef struct {
   // processing / busy dialog
@@ -756,7 +756,7 @@ typedef struct {
   // see resample.c for new events system
 
   // events
-  event *resample_events;  ///<for block resampler
+  resample_event *resample_events;  ///<for block resampler
 
   weed_plant_t *event_list;
   weed_plant_t *event_list_back;
@@ -1084,7 +1084,7 @@ char *get_upd_msg(void);
 boolean ask_permission_dialog(int what);
 boolean do_abort_check(void);
 void add_warn_check(LiVESBox *box, int warn_mask_number);
-void do_memory_error_dialog(void);
+LiVESResponseType do_memory_error_dialog(char *op, size_t bytes);
 void too_many_files(void);
 void workdir_warning(void);
 void do_audio_import_error(void);
@@ -1493,7 +1493,7 @@ void set_redoable(const char *what, boolean sensitive);
 void zero_spinbuttons(void);
 void set_sel_label(LiVESWidget *label);
 void clear_mainw_msg(void);
-int get_token_count(const char *string, int delim);
+size_t get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 const char *lives_strappend(const char *string, int len, const char *newbit);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);

@@ -195,7 +195,7 @@ if ($command eq "get_formats") {
     
     print "x264|h264/aac/mp4 $errx264$erraac|32|vstep=2,hstep=2|mp4|frame=|\n";
     print "theora|ogg/theora/vorbis $errtheora$errvorbis|8|none|ogg|frame=|\n";
-1
+
     print "webm|webm/vp9/opus $errwebm$erropus|512|none|webm|frame=|\n";
 
     print "qtrle|QuickTime animation$errqtrle|0|none|mov|frame=|\n";
@@ -593,14 +593,16 @@ if ($command eq "encode") {
 		$passf = "-pass $pass -passlogfile passfile";
 		$syscom = "$encoder_command  -y  -f image2 -i %8d$img_ext $audio_com -t $vid_length " .
 		    "$vcodec $metadata $passf -r $fps \"$nfile\" $err";
+		print STDERR "ffmpeg_encoder command is: $syscom\n";
+		system($syscom);
 	    }
 	}
 	else {
 	    $syscom = "$encoder_command -y -f image2 -i %8d$img_ext $audio_com -t $vid_length " .
 		"$vcodec $metadata -r $fps \"$nfile\" $err";
+	    print STDERR "ffmpeg_encoder command is: $syscom\n";
+	    system($syscom);
 	}
-	print STDERR "ffmpeg_encoder command is: $syscom\n";
-	system($syscom);
     }
 
     &sig_complete;

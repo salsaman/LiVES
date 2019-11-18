@@ -734,7 +734,6 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_GUI_THEME, prefs->theme, 64);
   lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
-  g_print("theme was %s\n", prefs->theme);
 
   if (!strlen(prefs->theme)) {
     lives_snprintf(prefs->theme, 64, "none");
@@ -744,7 +743,6 @@ static boolean pre_init(void) {
     lives_snprintf(prefs->theme, 64, "none");
     set_palette_colours(FALSE);
   } else if (palette->style & STYLE_1) widget_opts.apply_theme = TRUE;
-  g_print("theme2 was %s\n", prefs->theme);
 
   if (!mainw->foreign && prefs->startup_phase == 0) {
     if (prefs->show_splash) splash_init();
@@ -4776,7 +4774,7 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
-  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  // lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
 
   threaded_dialog_spin(0.);

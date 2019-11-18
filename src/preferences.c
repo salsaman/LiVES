@@ -46,7 +46,7 @@ void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
                       lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)), FALSE);
   else if (LIVES_IS_CHECK_MENU_ITEM(widget))
     pref_factory_bool((const char *)prefidx,
-                      lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(widget)), FALSE);
+                      lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(widget)), TRUE);
 }
 
 
@@ -707,6 +707,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (future_prefs->vj_mode == newval) goto fail2;
     if (mainw != NULL && mainw->vj_mode  != NULL)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), newval);
+    future_prefs->vj_mode = newval;
     goto success2;
   }
 
@@ -714,6 +715,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     if (prefs->show_dev_opts == newval) goto fail2;
     if (mainw != NULL && mainw->show_devopts !=  NULL)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), newval);
+    prefs->show_dev_opts = newval;
     goto success2;
   }
 

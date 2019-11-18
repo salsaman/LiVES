@@ -852,6 +852,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
   }
+
   // frame size
 
   if (!(tmpvpp->capabilities & VPP_LOCAL_DISPLAY)) {
@@ -931,7 +932,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
-    plugin_run_param_window(PLUGIN_VID_PLAYBACK, (*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx), NULL);
+    plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -3565,29 +3566,22 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
     in this case, vbox should be packed in its own dialog window, which should then be run
     and we also return the name of the scrapfile, which should be removed after running the window
 
-    if the user checks the "debug" checkbutton (only shown if prefs->show_dev_opts is TRUE), then if
-    debug_mode is not NULL, we set it to TRUE, otherwise to FALSE if it's not NULL
-
     called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
-char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx,
-                              boolean *debug_mode) {
+char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
   FILE *sfile;
-  LiVESWidget *debug_check = NULL;
 
   lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));
 
   char *string;
   char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
   char *rfxfile = lives_strdup_printf("%s/.%s.script", prefs->workdir, rfx_scrapname);
-  char *com, *tmp, *tmp2;
+  char *com;
   char *fnamex = NULL;
   char *res_string = NULL;
   char buff[32];
 
   int res;
   int retval;
-
-  if (debug_mode != NULL) *debug_mode = FALSE;
 
   rfx->name = NULL;
 
@@ -3674,6 +3668,12 @@ char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, L
 
     render_fx_get_params(rfx, rfx_scrapname, RFX_STATUS_SCRAP);
 
+    /// check if we actually have params to display
+    if (!make_param_box(NULL, rfx)) {
+      res_string = lives_strdup("");
+      goto prpw_done;
+    }
+
     // now we build our window and get param values
     if (vbox == NULL) {
       _fx_dialog *fxdialog = on_fx_pre_activate(rfx, TRUE, NULL);
@@ -3683,19 +3683,6 @@ char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, L
       }
       lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);
 
-      if (!strcmp(plugin_type, PLUGIN_ENCODERS)) {
-        if (prefs->show_dev_opts) {
-          debug_check = lives_standard_check_button_new((tmp = lives_strdup(_("Debug Mode"))), FALSE,
-                        LIVES_BOX(lives_dialog_get_action_area(LIVES_DIALOG(dialog))),
-                        (tmp2 = lives_strdup(_("Output diagnostic information to STDERR "
-                                               "on the console rather than to the GUI."))));
-          lives_free(tmp);
-          lives_free(tmp2);
-        }
-      }
-      /// check if we actually have params to display
-      if (debug_check == NULL && !make_param_box(NULL, rfx)) goto prpw_done;
-
       do {
         res = lives_dialog_run(LIVES_DIALOG(dialog));
       } while (res == LIVES_RESPONSE_RETRY);
@@ -3703,10 +3690,6 @@ char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, L
       if (res == LIVES_RESPONSE_OK) {
         // marshall our params for passing to the plugin
         res_string = param_marshall(rfx, FALSE);
-        if (debug_mode != NULL && debug_check != NULL &&
-            lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(debug_check))) {
-          *debug_mode = TRUE;
-        }
       }
 
       if (fx_dialog[1] != NULL) {
@@ -3714,7 +3697,6 @@ char *plugin_run_param_window(const char *plugin_type, const char *scrap_text, L
         lives_freep((void **)&fx_dialog[1]);
       }
     } else {
-      if (!make_param_box(NULL, rfx)) goto prpw_done; ///< no actual params to display
       make_param_box(vbox, rfx);
     }
 

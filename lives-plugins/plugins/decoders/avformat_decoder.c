@@ -49,11 +49,15 @@ const char *plugin_version = "LiVES avformat decoder version 1.1";
 
 static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-#define FAST_SEEK_LIMIT 50000 // microseconds (default 0.1 sec)
-#define NO_SEEK_LIMIT 2000000 // microseconds
-#define LNO_SEEK_LIMIT 10000000 // microseconds
+#define FAST_SEEK_LIMIT 50000 // microseconds (default 0.05 sec)
+#define NO_SEEK_LIMIT 2000000 // microseconds (default 2 seconds)
+#define LNO_SEEK_LIMIT 10000000 // microseconds (default 10 seconds)
 
-#define SEEK_SUCCESS_MIN_RATIO 0.5 // how many frames we can seek to vs. suggested duration
+#define SEEK_SUCCESS_MIN_RATIO 0.5 // if real frames are l.t. suggested frames * this, then we assume the file is corrupted
+
+// tune this so small jumps forward are efficient
+#define JUMP_FRAMES_SLOW 64   /// if seek is slow, how many frames to read forward rather than seek
+#define JUMP_FRAMES_FAST 1 /// if seek is fast, how many frames to read forward rather than seek
 
 static void lives_avcodec_lock(void) {
   pthread_mutex_lock(&avcodec_mutex);
@@ -104,12 +108,14 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
   // lframe is the frame we will check, olframe is the current seek base frame, maxframes is the largest found
   int64_t olframe = cdata->nframes - 1, lframe = olframe;
-  int64_t timex, tottime = 0;
+  int64_t timex, tottime = 0, rev_tottime = 0, fwd_tottime = 0, jump_tottime = 0, decode_time;
   long no_seek_limit = NO_SEEK_LIMIT;
 
-  int nseeks = 0;
+  int nseeks = 0, jump_nseeks = 0, fwd_nseeks = 0, rev_nseeks = 0;
+  int ndecodes = 0;
   boolean have_upper_bound = FALSE;
   boolean have_lower_bound = FALSE;
+  int64_t jumpframes = JUMP_FRAMES_FAST;
 
   if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT;
   cdata->seek_flag = LIVES_SEEK_FAST;
@@ -128,7 +134,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 
   while (1) {
     nseeks++;
-    //#define DEBUG_RLF
+#define DEBUG_RLF
 #ifdef DEBUG_RLF
     fprintf(stderr, "will check frame %ld of (allegedly) %ld...", lframe + 1, cdata->nframes);
 #endif
@@ -156,11 +162,8 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
 #endif
       if (diff == 1) {
         // this is the ideal situation, we got lframe - 1, but not lframe
-        tottime /= nseeks;
-#ifdef DEBUG_RLF
-        fprintf(stderr, "av seek was %ld\n", tottime);
-#endif
-        return lframe - 1;
+        lframe--;
+        break;
       }
       if (diff == 0) {
         diff = -1; // initial frame not found, start a backwards scan
@@ -186,10 +189,27 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
         return -1;
       }
 
-      if (timex > FAST_SEEK_LIMIT)
+      if (lframe < olframe) {
+        // this is not quite right, since seeks following seeks beyond the end will be counted as reverse, but anyway...
+        rev_tottime += timex;
+        rev_nseeks++;
+      } else if (lframe > olframe) {
+        if (lframe - olframe <= jumpframes) {
+          fwd_tottime += timex;
+          fwd_nseeks++;
+          ndecodes += (lframe - olframe);
+        } else {
+          jump_tottime += timex;
+          jump_nseeks++;
+        }
+      }
+      if (timex > FAST_SEEK_LIMIT) {
         cdata->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
+        jumpframes = JUMP_FRAMES_SLOW;
+      }
 
       tottime += timex;
+
 #ifdef DEBUG_RLF
       fprintf(stderr, "yes ! (%ld)\n", timex);
 #endif
@@ -197,23 +217,54 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       else {
         if (diff < 2 && diff > -2) {
           // this is the ideal situation, we got lframe, but not lframe + 1
-          tottime /= nseeks;
-#ifdef DEBUG_RLF
-          fprintf(stderr, "av seek was %ld\n", tottime);
-#endif
-          if (tottime > FAST_SEEK_LIMIT)
-            cdata->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
-          return lframe;
+          break;
         }
         if (have_upper_bound) diff = HALF_ROUND_UP(diff); // we found a null frame
         else diff *= 2;
         if (diff < 0) diff = -diff; // we were searching backwards, now we want to go forwards
       }
-
     }
     olframe = lframe;
     lframe += diff;
   }
+
+  // found it..
+
+  tottime /= nseeks;
+
+#ifdef DEBUG_RLF
+  fprintf(stderr, "av seek was %ld\n", tottime);
+#endif
+
+  if (fwd_nseeks > 0 && fwd_nseeks < nseeks) {
+    tottime *= nseeks;
+    tottime -= fwd_tottime;
+    nseeks -= fwd_nseeks;
+    tottime /= nseeks;
+    decode_time = fwd_tottime / ndecodes;
+    cdata->max_decode_fps = 1000000. / (double)decode_time;
+#ifdef DEBUG_RLF
+    fwd_tottime /= fwd_nseeks;
+    fprintf(stderr, "av fwd seek was %ld\n", fwd_tottime);
+    fprintf(stderr, "max decode fps would be %f\n", cdata->max_decode_fps);
+#endif
+  }
+
+#ifdef DEBUG_RLF
+  if (rev_nseeks > 0) {
+    rev_tottime /= rev_nseeks;
+  }
+  fprintf(stderr, "av rev seek was %ld\n", rev_tottime);
+  if (jump_nseeks > 0) {
+    jump_tottime /= jump_nseeks;
+  }
+  fprintf(stderr, "av jump seek was %ld\n", jump_tottime);
+#endif
+
+  if (tottime > FAST_SEEK_LIMIT)
+    cdata->seek_flag |= LIVES_SEEK_NEEDS_CALCULATION;
+
+  return lframe;
 }
 
 
@@ -736,7 +787,7 @@ static lives_clip_data_t *init_cdata(void) {
   priv->ctx = NULL;
   priv->pFrame = NULL;
 
-  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START;
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_VIDEO_PAD_END;
 
   cdata->video_start_time = 0.;
 
@@ -1036,10 +1087,6 @@ int begin_caching(const lives_clip_data_t *cdata, int maxframes) {
 }
 #endif
 
-// tune this so small jumps forward are efficient
-#define JUMP_FRAMES_SLOW 64
-#define JUMP_FRAMES_FAST 1
-
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 
@@ -1068,7 +1115,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
   int ret;
 
-  int jump_frames;
+  int64_t jump_frames;
   int rowstride;
 
   register int p, i;

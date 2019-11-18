@@ -1532,7 +1532,7 @@ weed_plant_t *get_nth_info_message(int n) {
 
   while (m != n) {
     msg = weed_get_plantptr_value(msg, leaf, &error);
-    if (error != WEED_NO_ERROR) return NULL;
+    if (error != WEED_SUCCESS) return NULL;
     if (m > n) m--;
     else m++;
   }
@@ -1551,7 +1551,7 @@ char *dump_messages(int start, int end) {
 
   while (msg != NULL) {
     msgtext = weed_get_string_value(msg, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
-    if (error != WEED_NO_ERROR) break;
+    if (error != WEED_SUCCESS) break;
     if (msgno >= start) {
 #ifdef SHOW_MSG_LINENOS
       tmp = lives_strdup_printf("%s%s(%d)%s", text, needs_newline ? "\n" : "", msgno, msgtext);
@@ -1565,7 +1565,7 @@ char *dump_messages(int start, int end) {
     lives_free(msgtext);
     if (++msgno > end) if (end > -1) break;
     msg = weed_get_plantptr_value(msg, WEED_LEAF_NEXT, &error);
-    if (error != WEED_NO_ERROR) break;
+    if (error != WEED_SUCCESS) break;
   }
   return text;
 }
@@ -1589,17 +1589,17 @@ int free_n_msgs(int frval) {
   int error;
   weed_plant_t *next, *end;
 
-  if (frval <= 0) return WEED_NO_ERROR;
+  if (frval <= 0) return WEED_SUCCESS;
   if (frval > mainw->n_messages || mainw->msg_list == NULL) frval = mainw->n_messages;
 
   end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error); // list end
-  if (error != WEED_NO_ERROR) {
+  if (error != WEED_SUCCESS) {
     return error;
   }
 
   while (frval-- && mainw->msg_list != NULL) {
     next = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_NEXT, &error); // becomes new head
-    if (error != WEED_NO_ERROR) {
+    if (error != WEED_SUCCESS) {
       return error;
     }
     weed_plant_free(mainw->msg_list);
@@ -1616,7 +1616,7 @@ int free_n_msgs(int frval) {
 
   if (mainw->msg_adj != NULL)
     lives_adjustment_set_value(mainw->msg_adj, lives_adjustment_get_value(mainw->msg_adj) - 1.);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -1628,8 +1628,8 @@ int add_messages_to_list(const char *text) {
   char **lines;
   int error, i, numlines;
 
-  if (prefs->max_messages == 0) return WEED_NO_ERROR;
-  if (text == NULL || strlen(text) == 0) return WEED_NO_ERROR;
+  if (prefs->max_messages == 0) return WEED_SUCCESS;
+  if (text == NULL || strlen(text) == 0) return WEED_SUCCESS;
 
   // split text into lines
   numlines = get_token_count(text, '\n');
@@ -1648,7 +1648,7 @@ int add_messages_to_list(const char *text) {
     }
 
     end = weed_get_plantptr_value(mainw->msg_list, WEED_LEAF_PREVIOUS, &error);
-    if (error != WEED_NO_ERROR) {
+    if (error != WEED_SUCCESS) {
       lives_strfreev(lines);
       return error;
     }
@@ -1657,7 +1657,7 @@ int add_messages_to_list(const char *text) {
     if (i == 0) {
       // append first line to text of last msg
       char *strg2, *strg = weed_get_string_value(end, WEED_LEAF_LIVES_MESSAGE_STRING, &error);
-      if (error != WEED_NO_ERROR) {
+      if (error != WEED_SUCCESS) {
         lives_strfreev(lines);
         return error;
       }
@@ -1671,7 +1671,7 @@ int add_messages_to_list(const char *text) {
     if (prefs->max_messages > 0 && mainw->n_messages + 1 > prefs->max_messages) {
       // retire the oldest if we reached the limit
       error = free_n_msgs(1);
-      if (error != WEED_NO_ERROR) {
+      if (error != WEED_SUCCESS) {
         lives_strfreev(lines);
         return error;
       }
@@ -1697,7 +1697,7 @@ int add_messages_to_list(const char *text) {
     weed_set_plantptr_value(end, WEED_LEAF_NEXT, msg);
   }
   lives_strfreev(lines);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -3444,7 +3444,7 @@ int lives_rmglob(const char *files) {
 
 
 int lives_cp(const char *from, const char *to) {
-  // may not fail
+  // may not fail - BUT seems to return -1 sometimes
   char *com = lives_strdup_printf("%s \"%s\" \"%s\" >\"%s\" 2>&1", capable->cp_cmd, from, to, prefs->cmd_log);
   int retval = lives_system(com, FALSE);
   lives_free(com);
@@ -3698,11 +3698,10 @@ boolean create_event_space(int length) {
   if (cfile->resample_events != NULL) {
     lives_free(cfile->resample_events);
   }
-  if ((cfile->resample_events = (event *)(lives_malloc(sizeof(event) * length))) == NULL) {
+  if ((cfile->resample_events = (resample_event *)(lives_calloc(length, sizeof(resample_event)))) == NULL) {
     // memory overflow
     return FALSE;
   }
-  lives_memset(cfile->resample_events, 0, length * sizeof(event));
   return TRUE;
 }
 
@@ -4504,8 +4503,8 @@ uint32_t get_signed_endian(boolean is_signed, boolean little_endian) {
 }
 
 
-int get_token_count(const char *string, int delim) {
-  int pieces = 1;
+size_t get_token_count(const char *string, int delim) {
+  size_t pieces = 1;
   if (string == NULL) return 0;
   if (delim <= 0 || delim > 255) return 1;
 

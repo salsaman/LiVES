@@ -529,7 +529,7 @@ static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transien
   do {
     warning = create_message_dialog(dtype, mytext, transient, 0, TRUE);
     lives_widget_show_all(warning);
-    response = lives_dialog_run(LIVES_DIALOG(warning));
+    response = lives_dialog_run(LIVES_DIALOG(warning)); // looping on retry
     lives_widget_destroy(warning);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
@@ -783,14 +783,26 @@ void do_aud_during_play_error(void) {
 }
 
 
-void do_memory_error_dialog(void) {
-  do_error_dialog(
-    _("\n\nLiVES was unable to perform this operation due to unsufficient memory.\nPlease try closing some other applications first.\n"));
+LiVESResponseType do_memory_error_dialog(char *op, size_t bytes) {
+  LiVESResponseType response;
+  char *sizestr, *msg;
+  if (bytes > 0) {
+    sizestr = lives_strdup_printf(_(" with size %ld bytes "), bytes);
+  } else {
+    sizestr = lives_strdup("");
+  }
+  msg = lives_strdup_printf(_("\n\nLiVES encountered a memory error when %s%s.\n"
+                              "Click Abort to exit from LiVES, Cancel to abandon the operation\n"
+                              "or Retry to try again. You may need to close some other applications first.\n"), op, sizestr);
+  lives_free(sizestr);
+  response = do_abort_cancel_retry_dialog(msg, NULL);
+  lives_free(msg);
+  return response;
 }
 
 
 LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient) {
-  // handle error conditions returned from the back end
+  /// handle error conditions returned from the back end
 
   char **array;
   char *addinfo;
@@ -799,14 +811,14 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
   int numtok;
   int i;
 
-  if (mainw->cancelled) return LIVES_RESPONSE_ACCEPT; // if the user/system cancelled we can expect errors !
+  if (mainw->cancelled != CANCEL_NONE) return LIVES_RESPONSE_ACCEPT; // if the user/system cancelled we can expect errors !
 
   numtok = get_token_count(mainw->msg, '|');
 
   array = lives_strsplit(mainw->msg, "|", numtok);
 
   if (numtok > 2 && !strcmp(array[1], "read")) {
-    // got read error from backend
+    /// got read error from backend
     if (numtok > 3 && strlen(array[3])) addinfo = array[3];
     else addinfo = NULL;
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_read_errors)
@@ -819,7 +831,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
   }
 
   else if (numtok > 2 && !strcmp(array[1], "write")) {
-    // got write error from backend
+    /// got write error from backend
     if (numtok > 3 && strlen(array[3])) addinfo = array[3];
     else addinfo = NULL;
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_write_errors)
@@ -832,7 +844,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
   }
 
   else if (numtok > 3 && !strcmp(array[1], "system")) {
-    // got (sub) system error from backend
+    /// got (sub) system error from backend
     if (numtok > 4 && strlen(array[4])) addinfo = array[4];
     else addinfo = NULL;
     if (!CURRENT_CLIP_IS_VALID || !cfile->no_proc_sys_errors) {
@@ -845,7 +857,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
   }
 
   // for other types of errors...more info....
-  // set mainw->error but not mainw->cancelled
+  /// set mainw->error but not mainw->cancelled
   lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n\n");
   for (i = pxstart; i < numtok; i++) {
     if (!strlen(array[i]) || !strcmp(array[i], "ERROR")) break;
@@ -2510,7 +2522,8 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
 
 void perf_mem_warning(void) {
   do_error_dialog(
-    _("\n\nLiVES was unable to record a performance. There is currently insufficient memory available.\nTry recording for just a selection of the file."));
+    _("\n\nLiVES was unable to record a performance. There is currently insufficient memory available.\n"
+      "Try recording for just a selection of the file."));
 }
 
 
@@ -2749,13 +2762,15 @@ boolean do_set_rename_old_layouts_warning(const char *new_set) {
 
 void do_mt_undo_mem_error(void) {
   do_error_dialog(
-    _("\nLiVES was unable to reserve enough memory for multitrack undo.\nEither close some other applications, or reduce the undo memory\n"
+    _("\nLiVES was unable to reserve enough memory for multitrack undo.\n"
+      "Either close some other applications, or reduce the undo memory\n"
       "using Preferences/Multitrack/Undo Memory\n"));
 }
 
 
 void do_mt_undo_buf_error(void) {
-  do_error_dialog(_("\nOut of memory for undo.\nYou may need to increase the undo memory\nusing Preferences/Multitrack/Undo Memory\n"));
+  do_error_dialog(_("\nOut of memory for undo.\nYou may need to increase the undo memory\n"
+                    "using Preferences/Multitrack/Undo Memory\n"));
 }
 
 

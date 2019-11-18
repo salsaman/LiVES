@@ -312,7 +312,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
 WEED_SETUP_START(200, 200) {
   int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
   int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-
+  char desc[1024];
   weed_plant_t *in_chantmpls[] = {
     weed_channel_template_init("video in", 0, vpalette_list),
     weed_channel_template_init("X-plane", 0, apalette_list),
@@ -337,6 +337,24 @@ WEED_SETUP_START(200, 200) {
     weed_set_int_value(in_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
     weed_set_int_value(out_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
   }
+
+  snprintf(desc, 1024,
+           "This plugin takes as input 1 video frame and two equally sized (width * height) float alpha frames.\n"
+           "The plugin treats each alpha frame as a 2 dimensional float array, with the first frame containing x values"
+           "and the second, corresponging y values\n\n"
+           "The plugin has two modes of operation, the choice of which is fixed at compile time (PATCHME !)"
+           "In 'grid' mode, the frames are divided into 20 X 20 equally sized rectangles\n"
+           "The centre of each rectangle forms the base of an arrow which vector_visualiser overlays on the video frame.\n"
+           "The x and y coordinates of the arrowhead are derived from the corresponding values\n"
+           "held at the rectangle centers in the x and y arrays\n\n"
+           "In 'max' mode, the plugin will first compile a list of the %d largest values in the alpha planes"
+           "where the value is defined as the Pythagorean product: sqrt (x * x + y * y).\n"
+           "Then for each entry in the list, vector_visualiser will overlay an  arrow with base coordinates "
+           "equal to the location (in real x and y coordinates) where the values lie in the alpha planes,\n"
+           "and with the arrowhead located at an offset dependant on the scalar values at that point.\n"
+           ,  MAX_ELEMS);
+
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_set_int_value(plugin_info, "version", package_version);
 }

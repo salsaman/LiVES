@@ -2227,15 +2227,22 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
   // by now we should have eliminated clip switches and param settings
 
   // first we count the frame events
-  int i = 0, error;
   weed_plant_t *event;
+  char *what;
+  LiVESResponseType response;
+  int i = 0;
 
   if (event_list == NULL) return TRUE;
-
+  what = lives_strdup(_("memory for the reordering operation"));
   // then we create event_frames
-
-  if (!create_event_space(num_events)) {
-    do_memory_error_dialog();
+  do {
+    response = LIVES_RESPONSE_OK;
+    if (!create_event_space(num_events)) {
+      response = do_memory_error_dialog(what, num_events * sizeof(resample_event));
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+  lives_free(what);
+  if (response == LIVES_RESPONSE_CANCEL) {
     return FALSE;
   }
 
@@ -2243,7 +2250,7 @@ boolean event_list_to_block(weed_plant_t *event_list, int num_events) {
 
   while (event != NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
-      (cfile->resample_events + i++)->value = weed_get_int_value(event, WEED_LEAF_FRAMES, &error);
+      (cfile->resample_events + i++)->value = weed_get_int_value(event, WEED_LEAF_FRAMES, NULL);
     }
     event = get_next_event(event);
   }
@@ -4433,31 +4440,58 @@ boolean render_to_clip(boolean new_clip) {
     }
 
     if (cfile->clip_type == CLIP_TYPE_FILE) {
-      lives_freep((void **)&cfile->frame_index_back);
-      cfile->frame_index_back = cfile->frame_index;
-      cfile->frame_index = NULL;
-
       if (cfile->undo_start == 1 && cfile->undo_end == cfile->frames) {
         cfile->clip_type = CLIP_TYPE_DISK;
+        lives_freep((void **)&cfile->frame_index_back);
+        cfile->frame_index_back = cfile->frame_index;  // save for undo :: TODO
         del_frame_index(cfile);
       } else {
+        char *what = lives_strdup(_("a new file index"));
+        LiVESResponseType response;
         register int i;
-        create_frame_index(mainw->current_file, FALSE, 0, cfile->frames);
-        for (i = 0; i < cfile->undo_start - 1; i++) {
-          cfile->frame_index[i] = cfile->frame_index_back[i];
+        lives_freep((void **)&cfile->frame_index_back);
+
+        do {
+          response = LIVES_RESPONSE_OK;
+          cfile->frame_index_back = cfile->frame_index;  // save for undo :: TODO
+          cfile->frame_index = NULL;
+          create_frame_index(mainw->current_file, FALSE, 0, cfile->frames);
+          if (cfile->frame_index == NULL) {
+            cfile->frame_index = cfile->frame_index_back;
+            cfile->frame_index_back = NULL;
+            response = do_memory_error_dialog(what, cfile->frames * 4);
+          }
+        } while (response == LIVES_RESPONSE_RETRY);
+        lives_free(what);
+
+        if (response == LIVES_RESPONSE_CANCEL) {
+          if (mainw->multitrack == NULL) {
+            if (new_clip) { // check
+              close_current_file(current_file);
+            } else {
+              cfile->frame_index = cfile->frame_index_back;
+              cfile->frame_index_back = NULL;
+            }
+          }
+          return FALSE; /// will reshow the dialog
         }
+
+        lives_memcpy(cfile->frame_index, cfile->frame_index_back, cfile->undo_start * 4);
+
         for (i = cfile->undo_start - 1; i < cfile->undo_end; i++) {
           cfile->frame_index[i] = -1;
         }
-        for (i = cfile->undo_end; i < cfile->frames; i++) {
-          cfile->frame_index[i] = cfile->frame_index_back[i];
-        }
+
+	lives_memcpy(&cfile->frame_index[cfile->undo_end], &cfile->frame_index_back[cfile->undo_end],
+		     (cfile->frames - cfile->undo_end) * 4);
+
         save_frame_index(mainw->current_file);
       }
     }
   } else {
     retval = FALSE; // cancelled or error, so show the dialog again
     if (new_clip && mainw->multitrack == NULL) {
+      // for mt we are rendering to the actual mt file, so we cant close it (CHECK: did we delete all images ?)
       close_current_file(current_file);
     }
   }
@@ -5762,8 +5796,25 @@ render_details *create_render_details(int type) {
   }
 
   add_fill_to_box(LIVES_BOX(vbox));
-
   //////////////// end expander section ///////////////////
+  rdet->debug = NULL;
+
+  if (type == 1 && prefs->show_dev_opts) {
+    hbox = lives_hbox_new(FALSE, 0);
+    //add_spring_to_box(LIVES_BOX(hbox), 0);
+
+
+    rdet->debug = lives_standard_check_button_new((tmp = lives_strdup(_("Debug Mode"))), FALSE,
+                  LIVES_BOX(hbox),
+                  (tmp2 = lives_strdup(_("Output diagnostic information to STDERR "
+                                         "instead of to the GUI."))));
+    lives_free(tmp);
+    lives_free(tmp2);
+
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
+    //lives_widget_set_halign(rdet->acodec_combo, LIVES_ALIGN_CENTER);
+    add_spring_to_box(LIVES_BOX(hbox), 0);
+  }
 
   if (LIVES_IS_BOX(daa)) {
     lives_box_pack_start(LIVES_BOX(daa), rdet->always_hbox, FALSE, FALSE, widget_opts.packing_width * 2);

@@ -31,6 +31,7 @@ void create_frame_index(int fileno, boolean init, int start_offset, int nframes)
   if (sfile == NULL || sfile->frame_index != NULL) return;
 
   sfile->frame_index = (int *)lives_malloc(nframes * sizint);
+  if (sfile->frame_index == NULL) return;
 
   if (init) {
     for (i = 0; i < sfile->frames; i++) {
@@ -135,7 +136,19 @@ int load_frame_index(int fileno) {
         return -1;
       }
     } else {
-      create_frame_index(fileno, FALSE, 0, sfile->frames);
+      LiVESResponseType response;
+      char *what = lives_strdup(_("creating the frame index for the clip"));
+      do {
+        response = LIVES_RESPONSE_OK;
+        create_frame_index(fileno, FALSE, 0, sfile->frames);
+        if (cfile->frame_index == NULL) {
+          response = do_memory_error_dialog(what, sfile->frames * 4);
+        }
+      } while (response == LIVES_RESPONSE_RETRY);
+      lives_free(what);
+      if (response == LIVES_RESPONSE_CANCEL) {
+        break;
+      }
 
       mainw->read_failed = FALSE;
       for (i = 0; i < sfile->frames; i++) {
@@ -268,6 +281,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
         }
       }
     }
+
     if (sfile->hsize != hsize || sfile->vsize != vsize) goto mismatch;
   }
 
@@ -502,6 +516,9 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
   // this is for clip type CLIP_TYPE_FILE only
 
   lives_clip_t *sfile = mainw->files[sfileno];
+  LiVESResponseType response;
+
+  char *what = lives_strdup(_("creating the new frame index for the clip"));
   int nframes = sfile->frames;
 
   register int i, j = start - 1;
@@ -511,21 +528,29 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
   sfile->frame_index_back = sfile->frame_index;
   sfile->frame_index = NULL;
 
-  create_frame_index(sfileno, FALSE, 0, nframes + frames);
-
-  for (i = 0; i < where; i++) {
-    sfile->frame_index[i] = sfile->frame_index_back[i];
+  do {
+    response = LIVES_RESPONSE_OK;
+    create_frame_index(sfileno, FALSE, 0, nframes + frames);
+    if (sfile->frame_index == NULL) {
+      response = do_memory_error_dialog(what, (nframes + frames) * 4);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+  lives_free(what);
+  if (response == LIVES_RESPONSE_CANCEL) {
+    sfile->frame_index = sfile->frame_index_back;
+    sfile->frame_index_back = NULL;
+    return;
   }
+
+  lives_memcpy(sfile->frame_index, sfile->frame_index_back, where * 4);
 
   for (i = where; i < where + frames; i++) {
     if (frame_index != NULL && frame_index[j] != -1) sfile->frame_index[i] = frame_index[j];
     else sfile->frame_index[i] = -1;
-    if (++j >= clipboard->frames) j = 0;
+    if (++j >= sfile->frames) j = 0;
   }
 
-  for (i = where + frames; i < nframes + frames; i++) {
-    sfile->frame_index[i] = sfile->frame_index_back[i - frames];
-  }
+  lives_memcpy(&sfile->frame_index[where + frames], &sfile->frame_index_back[where], (nframes - where) * 4);
 
   sfile->frames += frames;
   save_frame_index(sfileno);
@@ -541,8 +566,10 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
 
   // this is for clip type CLIP_TYPE_FILE only
 
-  register int i;
   lives_clip_t *sfile = mainw->files[sfileno];
+  LiVESResponseType response;
+
+  char *what = lives_strdup(_("creating the new frame index for the clip"));
   int nframes = sfile->frames, frames = end - start + 1;
 
   lives_freep((void **)&sfile->frame_index_back);
@@ -555,15 +582,23 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
     return;
   }
 
-  create_frame_index(sfileno, FALSE, 0, nframes - frames);
-
-  for (i = 0; i < start - 1; i++) {
-    sfile->frame_index[i] = sfile->frame_index_back[i];
+  do {
+    response = LIVES_RESPONSE_OK;
+    create_frame_index(sfileno, FALSE, 0, nframes + frames);
+    if (sfile->frame_index == NULL) {
+      response = do_memory_error_dialog(what, (nframes - frames) * 4);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+  lives_free(what);
+  if (response == LIVES_RESPONSE_CANCEL) {
+    sfile->frame_index = sfile->frame_index_back;
+    sfile->frame_index_back = NULL;
+    return;
   }
 
-  for (i = end; i < nframes; i++) {
-    sfile->frame_index[i - frames] = sfile->frame_index_back[i];
-  }
+  lives_memcpy(sfile->frame_index, sfile->frame_index_back, start * 4);
+  lives_memcpy(&sfile->frame_index[end - frames], &sfile->frame_index_back[end], (nframes - end) * 4);
+
   save_frame_index(sfileno);
 }
 
@@ -641,8 +676,7 @@ void clean_images_from_virtual(lives_clip_t *sfile, int oldsframe, int oldframes
 
 
 int *frame_index_copy(int *findex, int nframes, int offset) {
-  // like it says on the label
-  // copy first nframes from findex and return them
+  // copy first nframes from findex and return them, adding offset to each value
   // no checking is done to make sure nframes is in range
 
   // start at frame offset
@@ -714,7 +748,8 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
     if (blankp == NULL) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
     lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
     if (error != NULL) {
-      char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"), sfile->hsize, sfile->vsize, oname);
+      char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"),
+                                      sfile->hsize, sfile->vsize, oname);
       LIVES_ERROR(msg);
       lives_free(msg);
       lives_error_free(error);

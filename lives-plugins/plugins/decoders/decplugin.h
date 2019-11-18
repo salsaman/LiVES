@@ -108,6 +108,7 @@ typedef struct {
   float video_start_time;
 
   float fps;
+  float max_decode_fps;
 
   // TODO use fix sized array
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
@@ -213,6 +214,7 @@ static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip
   clone->par = cdata->par;
   clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
+  clone->max_decode_fps = cdata->max_decode_fps;
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;
   clone->YUV_sampling = cdata->YUV_sampling;

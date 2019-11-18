@@ -442,34 +442,66 @@ boolean auto_resample_resize(int width, int height, double fps, int fps_num, int
 
 //////////////////////////////////////////////////////////////////
 
+static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, char *what, size_t bytes) {
+  LiVESResponseType response;
+  do {
+    response = LIVES_RESPONSE_OK;
+    if (event_copy_and_insert(event, out_list) == NULL) {
+      response = do_memory_error_dialog(what, bytes);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+  if (response == LIVES_RESPONSE_CANCEL) return FALSE;
+  return TRUE;
+}
+
+
+
+
+
+/** @brief quantise from event_list_t *in_list to *out_list with period tl/TICKS_PER_SECOND_DBL
+
+  The timecode of the midpoint of our last frame event will match as near as possible the midpoint of the old last frame
+  but out_list will have regular fps of qfps.
+
+  For optimal resampling we compare the midpoints of each frame
+
+  Only FRAME events are moved, other event types retain the same timecodes */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
-  // new style event system, now we quantise from event_list_t *in_list to *out_list with period tl/TICKS_PER_SECOND_DBL
-
-  // the timecode of the midpoint of our last frame events will match as near as possible the old length
-  // but out_list will have regular period of tl microseconds
-
-  // for optimal resampling we compare the midpoints of each frame
-
-  // only FRAME events are moved, other event types retain the same timecodes
-
   weed_plant_t *out_list;
   weed_plant_t *last_audio_event = NULL;
   weed_plant_t *event, *last_frame_event, *penultimate_frame_event, *next_frame_event, *shortcut = NULL;
+  LiVESResponseType response;
   ticks_t out_tc = 0, in_tc = -1, nearest_tc = LONG_MAX;
-  boolean is_first = TRUE;
   ticks_t tc_end, tp;
-  int *out_clips = NULL, *out_frames = NULL;
-  int numframes = 0;
   ticks_t tl = q_dbl(1. / qfps, qfps);
-  int error;
-  boolean needs_audio = FALSE, add_audio = FALSE;
-  int *aclips = NULL;
   double *aseeks = NULL;
+  weed_error_t error;
+
+  int *out_clips = NULL, *out_frames = NULL;
+  int *aclips = NULL;
+  int numframes = 0;
   int num_aclips = 0;
+
+  boolean is_first = TRUE;
+  boolean needs_audio = FALSE, add_audio = FALSE;
+
+  char *what = lives_strdup(_("quantising the event list"));
 
   if (in_list == NULL) return NULL;
 
-  out_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
+  do {
+    response = LIVES_RESPONSE_OK;
+    out_list = weed_plant_new(WEED_PLANT_EVENT_LIST);
+    if (out_list == NULL) {
+      response = do_memory_error_dialog(what, 0);
+    }
+  } while (response == LIVES_RESPONSE_RETRY);
+  if (response == LIVES_RESPONSE_CANCEL) {
+    event_list_free(out_list);
+    lives_free(what);
+    return NULL;
+  }
+
   //weed_add_plant_flags(out_list, WEED_LEAF_READONLY_PLUGIN);
   weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, NULL);
   weed_set_voidptr_value(out_list, WEED_LEAF_LAST, NULL);
@@ -504,11 +536,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   while ((out_tc + tl) <= tc_end) {
     // walk list of in events
-
     while (event != NULL && !WEED_EVENT_IS_FRAME(event)) {
       // copy non-FRAME events
-      if (event_copy_and_insert(event, out_list) == NULL) {
-        do_memory_error_dialog();
+      if (!copy_with_check(event, out_list, what, 0)) {
+        lives_free(what);
         event_list_free(out_list);
         return NULL;
       }
@@ -545,17 +576,30 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
     if (in_tc <= (out_tc + tl) && event != NULL) {
       // event is before slot, note it and get next event
-      if (out_clips != NULL) lives_free(out_clips);
-      if (out_frames != NULL) lives_free(out_frames);
       numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
-      out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
-      out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
-      if (last_audio_event == event && needs_audio) add_audio = TRUE;
-      if (error == WEED_ERROR_MEMORY_ALLOCATION) {
-        do_memory_error_dialog();
+      do {
+        response = LIVES_RESPONSE_OK;
+        lives_freep((void **)&out_clips);
+        lives_freep((void **)&out_frames);
+        out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
+        out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
+        if (last_audio_event == event && needs_audio) add_audio = TRUE;
+        if (error == WEED_ERROR_MEMORY_ALLOCATION) {
+          response = do_memory_error_dialog(what, 0);
+        }
+      } while (response == LIVES_RESPONSE_RETRY);
+      if (response == LIVES_RESPONSE_CANCEL) {
         event_list_free(out_list);
+        lives_free(what);
         return NULL;
       }
+
+      // TODO: for smoother quantisation, we should find the frame numbers for the following in frame
+      // and then interpolate the frame numbers when inserting
+      // for audio we should interpolate the velocities
+      /* next_frame_event = get_next_frame_event(event); */
+      /* if (next_frame_event != NULL) { */
+      /* } */
 
       nearest_tc = (out_tc + tl) - in_tc;
       if (event != NULL) event = get_next_event(event);
@@ -568,23 +612,35 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         if (last_audio_event == event && needs_audio) add_audio = TRUE;
         if (in_tc - (out_tc + tl) < nearest_tc) {
           if (event != NULL) {
-            if (out_clips != NULL) lives_free(out_clips);
-            if (out_frames != NULL) lives_free(out_frames);
-
             numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
-            out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
-            out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
-            if (error == WEED_ERROR_MEMORY_ALLOCATION) {
-              do_memory_error_dialog();
+            do {
+              response = LIVES_RESPONSE_OK;
+              lives_freep((void **)&out_clips);
+              lives_freep((void **)&out_frames);
+              out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
+              out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
+              if (last_audio_event == event && needs_audio) add_audio = TRUE;
+              if (error == WEED_ERROR_MEMORY_ALLOCATION) {
+                response = do_memory_error_dialog(what, 0);
+              }
+            } while (response == LIVES_RESPONSE_RETRY);
+            if (response == LIVES_RESPONSE_CANCEL) {
               event_list_free(out_list);
+              lives_free(what);
               return NULL;
             }
           }
         }
         if (out_clips != NULL) {
-          if (insert_frame_event_at(out_list, out_tc, numframes, out_clips, out_frames, &shortcut) == NULL) {
-            do_memory_error_dialog();
+          do {
+            response = LIVES_RESPONSE_OK;
+            if (insert_frame_event_at(out_list, out_tc, numframes, out_clips, out_frames, &shortcut) == NULL) {
+              response = do_memory_error_dialog(what, 0);
+            }
+          } while (response == LIVES_RESPONSE_RETRY);
+          if (response == LIVES_RESPONSE_CANCEL) {
             event_list_free(out_list);
+            lives_free(what);
             return NULL;
           }
           if (weed_plant_has_leaf(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
@@ -615,8 +671,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   while (event != NULL && !WEED_EVENT_IS_FRAME(event)) {
     // copy remaining non-FRAME events
-    if (event_copy_and_insert(event, out_list) == NULL) {
-      do_memory_error_dialog();
+    if (!copy_with_check(event, out_list, what, 0)) {
+      lives_free(what);
       event_list_free(out_list);
       return NULL;
     }
@@ -626,16 +682,20 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (get_first_frame_event(out_list) == NULL) {
     // make sure we have at least one frame
     if ((event = get_last_frame_event(in_list)) != NULL) {
-      if (out_clips != NULL) lives_free(out_clips);
-      if (out_frames != NULL) lives_free(out_frames);
-
       numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
-      out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
-      out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
-
-      if (insert_frame_event_at(out_list, 0., numframes, out_clips, out_frames, NULL) == NULL) {
-        do_memory_error_dialog();
+      do {
+        response = LIVES_RESPONSE_OK;
+        lives_freep((void **)&out_clips);
+        lives_freep((void **)&out_frames);
+        out_clips = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
+        out_frames = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
+        if (insert_frame_event_at(out_list, 0., numframes, out_clips, out_frames, NULL) == NULL) {
+          response = do_memory_error_dialog(what, 0);
+        }
+      } while (response == LIVES_RESPONSE_RETRY);
+      if (response == LIVES_RESPONSE_CANCEL) {
         event_list_free(out_list);
+        lives_free(what);
         return NULL;
       }
       if (get_first_event(out_list) == NULL) weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, get_last_event(out_list));
@@ -646,11 +706,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     }
   }
 
-  if (out_clips != NULL) lives_free(out_clips);
-  if (out_frames != NULL) lives_free(out_frames);
+  lives_freep((void **)&out_clips);
+  lives_freep((void **)&out_frames);
 
-  if (aclips != NULL) lives_free(aclips);
-  if (aseeks != NULL) lives_free(aseeks);
+  lives_freep((void **)&aclips);
+  lives_freep((void **)aseeks);
+  lives_free(what);
 
   return out_list;
 }
@@ -948,18 +1009,20 @@ void on_resample_video_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
 
 void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
-  int i;
+  weed_plant_t *real_back_list = NULL;
+  weed_plant_t *new_event_list = NULL;
+  double oundo1_dbl = cfile->undo1_dbl;
+  LiVESResponseType response;
+  ticks_t in_time = 0;
+  double old_fps = cfile->fps;
+  char *msg;
+  char *what;
+  boolean ratio_fps;
+  boolean bad_header = FALSE;
   int old_frames;
   int ostart = cfile->start;
   int oend = cfile->end;
-  double oundo1_dbl = cfile->undo1_dbl;
-  char *msg;
-  ticks_t in_time = 0;
-  double old_fps = cfile->fps;
-  boolean ratio_fps;
-  boolean bad_header = FALSE;
-  weed_plant_t *real_back_list = NULL;
-  weed_plant_t *new_event_list = NULL;
+  int i;
 
   mainw->error = FALSE;
 
@@ -975,12 +1038,19 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
   if (mainw->fx1_val == cfile->fps && cfile->event_list == NULL) return;
 
   real_back_list = cfile->event_list;
+  what = lives_strdup(_("creating the event list for resampling"));
 
   if (cfile->event_list == NULL) {
     for (i = 1; i <= cfile->frames; i++) {
-      new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i);
-      if (new_event_list == NULL) {
-        do_memory_error_dialog();
+      do {
+        response = LIVES_RESPONSE_OK;
+        new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i);
+        if (new_event_list == NULL) {
+          response = do_memory_error_dialog(what, 0);
+        }
+      } while (response == LIVES_RESPONSE_RETRY);
+      if (response == LIVES_RESPONSE_CANCEL) {
+        lives_free(what);
         return;
       }
       in_time += (ticks_t)(1. / cfile->fps * TICKS_PER_SECOND_DBL + .5);
@@ -994,16 +1064,12 @@ void on_resample_vid_ok(LiVESButton *button, LiVESEntry *entry) {
 
   //QUANTISE
   new_event_list = quantise_events(cfile->event_list_back, mainw->fx1_val, real_back_list != NULL);
-  if (new_event_list == NULL) return; // memory error
   cfile->event_list = new_event_list;
 
   if (real_back_list == NULL) event_list_free(cfile->event_list_back);
   cfile->event_list_back = NULL;
 
-  // TODO - end_threaded_dialog
-
   if (cfile->event_list == NULL) {
-    do_memory_error_dialog();
     cfile->event_list = real_back_list;
     cfile->undo1_dbl = oundo1_dbl;
     mainw->error = TRUE;

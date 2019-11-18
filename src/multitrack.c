@@ -10875,10 +10875,10 @@ static void set_audio_mixer_vols(lives_mt *mt, weed_plant_t *elist) {
   navols = weed_leaf_num_elements(elist, WEED_LEAF_AUDIO_VOLUME_VALUES);
 
   atracks = weed_get_int_array(elist, WEED_LEAF_AUDIO_VOLUME_TRACKS, &error);
-  if (error != WEED_NO_ERROR) return;
+  if (error != WEED_SUCCESS) return;
 
   avols = weed_get_double_array(elist, WEED_LEAF_AUDIO_VOLUME_VALUES, &error);
-  if (error != WEED_NO_ERROR) {
+  if (error != WEED_SUCCESS) {
     lives_free(atracks);
     return;
   }

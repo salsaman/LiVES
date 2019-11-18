@@ -11502,9 +11502,9 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA) && weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error) != NULL) {
     pd_elements = weed_leaf_num_elements(layer, WEED_LEAF_PIXEL_DATA);
-    if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
-        weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) pd_elements = 1;
     if (pd_elements > 0) {
+      if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
+          weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) pd_elements = 1;
       pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
       if (pixel_data != NULL) {
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS)) {
@@ -11515,22 +11515,24 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
           LiVESPixbuf *pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
           if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
-        } else if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-          lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, &error);
-          if (surface != NULL) {
-            // this is where most surfaces die, as we convert from BGRA -> RGB
-            uint8_t *pdata = lives_painter_image_surface_get_data(surface);
-#ifdef DEBUG_CAIRO_SURFACE
-            g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
-#endif
-            // call twice to remove our ref.
-            lives_painter_surface_destroy(surface);
-            lives_painter_surface_destroy(surface);
-            lives_free(pdata);
-          }
         } else {
-          for (i = 0; i < pd_elements; i++) {
-            if (pixel_data[i] != NULL) lives_free(pixel_data[i]);
+          if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
+            lives_painter_surface_t *surface = (lives_painter_surface_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_SURFACE_SRC, &error);
+            if (surface != NULL) {
+              // this is where most surfaces die, as we convert from BGRA -> RGB
+              uint8_t *pdata = lives_painter_image_surface_get_data(surface);
+#ifdef DEBUG_CAIRO_SURFACE
+              g_print("VALaa23rrr = %d %p\n", cairo_surface_get_reference_count(surface), surface);
+#endif
+              // call twice to remove our extra ref.
+              lives_painter_surface_destroy(surface);
+              lives_painter_surface_destroy(surface);
+              lives_free(pdata);
+            }
+          } else {
+            for (i = 0; i < pd_elements; i++) {
+              if (pixel_data[i] != NULL) lives_free(pixel_data[i]);
+            }
           }
         }
         lives_free(pixel_data);
@@ -11539,15 +11541,9 @@ void weed_layer_pixel_data_free(weed_plant_t *layer) {
     }
   }
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS)) {
-    weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
-  }
-  if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
-    weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
-  } else if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_SURFACE_SRC)) {
-    weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
-  }
-
+  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+  weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+  weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
 }
 
 
@@ -11558,10 +11554,10 @@ void weed_layer_free(weed_plant_t *layer) {
 }
 
 
-int weed_layer_get_palette(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_palette(weed_plant_t *layer) {
   int error;
   int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
-  if (error == WEED_NO_ERROR) return pal;
+  if (error == WEED_SUCCESS) return pal;
   return WEED_PALETTE_END;
 }
 

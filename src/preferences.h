@@ -211,7 +211,7 @@ typedef struct {
   LiVESList *acodec_list;
   int acodec_list_to_format[AUDIO_CODEC_NONE];
 
-  uint32_t audio_opts;
+  volatile uint32_t audio_opts;
 #define AUDIO_OPTS_FOLLOW_CLIPS (1<<0)
 #define AUDIO_OPTS_FOLLOW_FPS (1<<1)
 
@@ -412,6 +412,8 @@ typedef struct {
   boolean allow_easing;
 
   boolean show_dev_opts;
+
+  boolean btgamma;
 } _prefs;
 
 enum {

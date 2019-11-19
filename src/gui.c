@@ -2247,10 +2247,12 @@ void create_LiVES(void) {
   }
 
   // accel keys
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Up, LIVES_CONTROL_MASK,
+			    (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(prevclip_callback), NULL, NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Page_Down, LIVES_CONTROL_MASK,
+			    (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(nextclip_callback), NULL, NULL));
 
   // Let the player handle this
@@ -2286,14 +2288,19 @@ void create_LiVES(void) {
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_forward_callback), NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
+					       LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
+			    (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback), LIVES_INT_TO_POINTER(TRUE), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return, (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_k, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(-1), NULL));
@@ -2350,18 +2357,7 @@ void create_LiVES(void) {
                           lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F12, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                                     lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(12), NULL));
                           // ad nauseum...
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                        }}}}}}}}}}}}
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_0, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(0), NULL));
@@ -2410,15 +2406,7 @@ void create_LiVES(void) {
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(9), NULL));
                     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK | LIVES_ALT_MASK, (LiVESAccelFlags)0,
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(8), NULL));
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+                  }}}}}}}}}
 
   if (new_lives) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,

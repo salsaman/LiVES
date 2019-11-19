@@ -2830,6 +2830,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   clipboard->hsize = cfile->hsize;
   clipboard->vsize = cfile->vsize;
   clipboard->bpp = cfile->bpp;
+  clipboard->gamma_type = cfile->gamma_type;
   clipboard->undo1_dbl = clipboard->fps = cfile->fps;
   clipboard->ratio_fps = cfile->ratio_fps;
   clipboard->is_loaded = TRUE;
@@ -2910,16 +2911,14 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   //set file details
-  cfile->frames = clipboard->frames;
   cfile->hsize = clipboard->hsize;
   cfile->vsize = clipboard->vsize;
   cfile->pb_fps = cfile->fps = clipboard->fps;
   cfile->ratio_fps = clipboard->ratio_fps;
-  cfile->progress_start = cfile->start = cfile->frames > 0 ? 1 : 0;
-  cfile->progress_end = cfile->end = cfile->frames;
   cfile->changed = TRUE;
   cfile->is_loaded = TRUE;
   cfile->img_type = clipboard->img_type;
+  cfile->gamma_type = clipboard->gamma_type;
 
   mainw->fx1_val = 1;
   mainw->fx1_bool = FALSE;
@@ -2932,6 +2931,10 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     sensitize();
     return;
   }
+
+  cfile->frames = clipboard->frames;
+  cfile->progress_start = cfile->start = cfile->frames > 0 ? 1 : 0;
+  cfile->progress_end = cfile->end = cfile->frames;
 
   lives_free(msg);
 
@@ -3114,10 +3117,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
           do_error_dialog(_("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
           mainw->error = TRUE;
           return;
-        }
-      }
-    }
-  }
+        }}}}
 
   if (mainw->insert_after) insert_start = cfile->end + 1;
   else insert_start = cfile->start;
@@ -3266,14 +3266,9 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
               mainw->error = TRUE;
               unbuffer_lmap_errors(FALSE);
               return;
-            }
-          }
-        }
-      }
-    }
-  }
+            }}}}}}
 
-  if (!virtual_ins && clipboard->frame_index != NULL) {
+  if (!virtual_ins) {
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
     if (!realize_all_frames(0, msg, FALSE)) {
       lives_free(msg);
@@ -3284,11 +3279,6 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     lives_free(msg);
   }
 
-  // if pref is set, resample clipboard video
-  if (prefs->ins_resample && cfile->fps != clipboard->fps && orig_frames > 0) {
-    cb_video_change = TRUE;
-  }
-
   d_print(""); // force switchtext
 
   // if pref is set, resample clipboard video
@@ -3297,6 +3287,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
       unbuffer_lmap_errors(FALSE);
       return;
     }
+    cb_video_change = TRUE;
   }
 
   if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans != 0)) {
@@ -4650,11 +4641,19 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 
 
 boolean fps_reset_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
-                           livespointer user_data) {
+                           livespointer area_enum) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
   // also resync the audio
-
+  int area;
   if (!LIVES_IS_PLAYING || mainw->multitrack != NULL) return TRUE;
+
+  area = LIVES_POINTER_TO_INT(area_enum);
+  if (area == SCREEN_AREA_BACKGROUND) {
+    if (IS_VALID_CLIP(mainw->blend_file)) mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
+    return TRUE;
+  }
+
+  mainw->rte_keys = -1;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(cfile->frameno);
@@ -7338,7 +7337,7 @@ void on_loop_cont_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_widget_show(loop_img);
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_loopbutton), loop_img);
 
-  lives_widget_set_sensitive(mainw->playclip, !(clipboard == NULL));
+  lives_widget_set_sensitive(mainw->playclip, clipboard != NULL);
   if (mainw->current_file > -1) find_when_to_stop();
   else mainw->whentostop = NEVER_STOP;
 
@@ -7352,10 +7351,6 @@ void on_loop_cont_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (mainw->pulsed != NULL && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-      else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-    } else if (mainw->pulsed != NULL) mainw->pulsed->loop = AUDIO_LOOP_NONE;
   }
 #endif
 }
@@ -9892,12 +9887,6 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  if (user_data != NULL) {
-    type = LIVES_POINTER_TO_INT(user_data);
-    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
-    change = 0.1;
-  }
-
   if (mainw->rte_keys != -1 && user_data == NULL) {
     mainw->blend_factor -= prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
     weed_set_blend_factor(mainw->rte_keys);
@@ -9905,6 +9894,12 @@ void on_slower_pressed(LiVESButton *button, livespointer user_data) {
   }
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
+
+  if (user_data != NULL) {
+    type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
+  }
+
   if (sfile->next_event != NULL) return;
 
   change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL * sfile->pb_fps;
@@ -9934,24 +9929,23 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
-  if (user_data != NULL) {
-    // change bg fps more slowly (I forget why)
-    type = LIVES_POINTER_TO_INT(user_data);
-    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
-    change = 0.1;
-  }
-
   if (mainw->rte_keys != -1 && user_data == NULL) {
     mainw->blend_factor += prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
     weed_set_blend_factor(mainw->rte_keys);
     return;
   }
 
+  if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
+
+  if (user_data != NULL) {
+      type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
+  }
+
   if (sfile->play_paused && sfile->freeze_fps < 0.) {
     sfile->pb_fps = -.00000001; // want to keep this as a negative value so when we unfreeze we still play in reverse
   }
 
-  if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
   if (sfile->next_event != NULL) return;
 
   change *= prefs->fpschange_amount / TICKS_PER_SECOND_DBL * (double)KEY_RPT_INTERVAL
@@ -9973,22 +9967,34 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
 
 
 void on_back_pressed(LiVESButton *button, livespointer user_data) {
+  int type = 0;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
+
+  if (user_data != NULL) {
+    type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_BACKGROUND) return; // TODO: implement scratch play for the blend file
+  }
 
   mainw->scratch = SCRATCH_BACK;
 }
 
 
 void on_forward_pressed(LiVESButton *button, livespointer user_data) {
+  int type = 0;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
+
+  if (user_data != NULL) {
+    type = LIVES_POINTER_TO_INT(user_data);
+    if (type == SCREEN_AREA_BACKGROUND) return; // TODO: implement scratch play for the blend file
+  }
 
   mainw->scratch = SCRATCH_FWD;
 }
@@ -10734,7 +10740,7 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+boolean on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // type 0 == trim selected
   // type 1 == trim to play pointer
 
@@ -10746,7 +10752,7 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   int type = LIVES_POINTER_TO_INT(user_data);
 
-  if (!CURRENT_CLIP_IS_VALID) return;
+  if (!CURRENT_CLIP_IS_VALID) return FALSE;
 
   if (type == 0) {
     start = calc_time_from_frame(mainw->current_file, cfile->start);
@@ -10760,7 +10766,7 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!check_for_layout_errors(tmp, mainw->current_file, calc_frame_from_time(mainw->current_file, start),
                                calc_frame_from_time(mainw->current_file, end), &chk_mask)) {
     lives_free(tmp);
-    return;
+    return FALSE;
   }
   lives_free(tmp);
 
@@ -10784,7 +10790,7 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->com_failed) {
     unbuffer_lmap_errors(FALSE);
     d_print_failed();
-    return;
+    return FALSE;
   }
 
   do_progress_dialog(TRUE, FALSE, _("Trimming/Padding audio"));
@@ -10792,7 +10798,7 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->error) {
     d_print_failed();
     unbuffer_lmap_errors(FALSE);
-    return;
+    return FALSE;
   }
 
   if (!prefs->conserve_space) {
@@ -10810,6 +10816,7 @@ void on_trim_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+  return TRUE;
 }
 
 

@@ -49,8 +49,7 @@ typedef enum {
 #define WEED_PLANT_LAYER WEED_PLANT_CHANNEL
 #endif
 
-#define WEED_GAMMA_BT709 1024
-#define WEED_GAMMA_MONITOR 1025
+#define WEED_GAMMA_MONITOR 1024
 
 // plugin specific values
 #define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host

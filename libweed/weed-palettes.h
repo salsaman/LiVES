@@ -95,7 +95,9 @@
 /* GAMMA Values */
 /* API version 200 */
 #define WEED_GAMMA_UNKNOWN 0
+#define WEED_GAMMA_LINEAR -1
 #define WEED_GAMMA_SRGB 1
-#define WEED_GAMMA_LINEAR 2
+
+#define WEED_GAMMA_BT709 512
 
 #endif

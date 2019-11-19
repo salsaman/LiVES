@@ -29,7 +29,6 @@
 //      - resizing of single plane (including bicubic) (maybe just triplicate the values and pretend it's RGB)
 //      - external plugins for palette conversion, resizing
 //      - convert yuv subspace and sampling type
-//      - gamma types other than linear and sRGB (bt709 is partway implemented)
 //      - RGB(A) float, YUV10, etc.
 
 #include <math.h>
@@ -144,7 +143,7 @@ static int Cr_Ru[256];
 static int Cr_Gu[256];
 static int Cr_Bu[256];
 
-// clamped BT.701
+// clamped BT.709
 static int HY_Rc[256];
 static int HY_Gc[256];
 static int HY_Bc[256];
@@ -155,7 +154,7 @@ static int HCr_Rc[256];
 static int HCr_Gc[256];
 static int HCr_Bc[256];
 
-// unclamped BT.701
+// unclamped BT.709
 static int HY_Ru[256];
 static int HY_Gu[256];
 static int HY_Bu[256];
@@ -189,14 +188,14 @@ static int G_Cru[256];
 static int G_Cbu[256];
 static int B_Cbu[256];
 
-// clamped BT.701
+// clamped BT.709
 static int HRGB_Yc[256];
 static int HR_Crc[256];
 static int HG_Crc[256];
 static int HG_Cbc[256];
 static int HB_Cbc[256];
 
-// unclamped BT.701
+// unclamped BT.709
 static int HRGB_Yu[256];
 static int HR_Cru[256];
 static int HG_Cru[256];
@@ -243,51 +242,70 @@ static boolean conv_YY_inited = FALSE;
 // gamma correction
 
 uint8_t gamma_lut[256];
-int current_gamma_type = WEED_GAMMA_UNKNOWN;
-boolean current_gamma_fwd = TRUE;
+int current_gamma_from = WEED_GAMMA_UNKNOWN;
+int current_gamma_to = WEED_GAMMA_UNKNOWN;
 
 /* Updates the gamma look-up-table. */
 
-static inline void update_gamma_lut(boolean fwd, int gamma_type) {
-  // fwd will convert linear to gamma type
-  // otherwise do the inverse
+static inline void update_gamma_lut(int gamma_from, int gamma_to) {
   register int i;
   float gamma = (float)prefs->screen_gamma, inv_gamma = 0.;
-  float a, x;
+  float a, x = 0.;
 
   gamma_lut[0] = 0;
 
-  if (gamma_type == WEED_GAMMA_MONITOR) {
+  if (gamma_to == WEED_GAMMA_MONITOR) {
     inv_gamma = 1. / gamma;
-  } else if (current_gamma_type == gamma_type && current_gamma_fwd == fwd) return;
+  } else if (current_gamma_from == gamma_from && current_gamma_to == gamma_to) return;
 
   for (i = 1; i < 256; ++i) {
     a = (float)i / 255.;
 
-    switch (gamma_type) {
+    switch (gamma_to) {
     // simple power law transformation
     case WEED_GAMMA_MONITOR:
-      if (fwd)
-        x = powf(a, inv_gamma);
-      else
-        x = powf(a, gamma);
+      //if (fwd)
+      x = powf(a, inv_gamma);
+      //else
+      //x = powf(a, gamma);
       break;
 
-    // rec 709 gamma (fwd is linear to gamma)
+    // rec 709 gamma
     case WEED_GAMMA_BT709:
-      if (fwd)
+      switch (gamma_from) {
+      case WEED_GAMMA_SRGB:
+        a = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+      case WEED_GAMMA_LINEAR:
         x = (a <= 0.018) ? 4.5 * a : 1.099 * powf(a, 0.45) - 0.099;
-      else
-        x = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.045);
+        break;
+      default:
+        x = a;
+        break;
+      }
       break;
 
-    // sRGB gamma (fwd is LINEAR to SRGB)
+    // sRGB gamma
     case WEED_GAMMA_SRGB:
-      if (fwd)
+      switch (gamma_from) {
+      case WEED_GAMMA_BT709:
+        a = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.45);
+      case WEED_GAMMA_LINEAR:
         x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, 1.0 / 2.4) - 0.055;
-      else
-        x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+        break;
+      default:
+        break;
+      }
       break;
+
+    case WEED_GAMMA_LINEAR:
+      if (gamma_from == WEED_GAMMA_BT709)
+        x = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.45);
+      else {
+        if (gamma_from == WEED_GAMMA_SRGB)
+          x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+      }
+      break;
+
     default:
       x = a;
       break;
@@ -295,8 +313,8 @@ static inline void update_gamma_lut(boolean fwd, int gamma_type) {
     gamma_lut[i] = CLAMP0255((int32_t)(255. * x + .5));
   }
 
-  current_gamma_type = gamma_type;
-  current_gamma_fwd = fwd;
+  current_gamma_from = gamma_from;
+  current_gamma_to = gamma_to;
 }
 
 
@@ -389,57 +407,57 @@ static void init_RGB_to_YUV_tables(void) {
   // converting from one subspace to another is not recommended.
 
   for (i = 0; i < 256; i++) {
-    HY_Rc[i] = myround(KR_BT701 * (double)i
+    HY_Rc[i] = myround(KR_BT709 * (double)i
                        * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kr
-    HY_Gc[i] = myround((1. - KR_BT701 - KB_BT701) * (double)i
+    HY_Gc[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i
                        * CLAMP_FACTOR_Y * SCALE_FACTOR);   // Kb
-    HY_Bc[i] = myround((KB_BT701 * (double)i
+    HY_Bc[i] = myround((KB_BT709 * (double)i
                         * CLAMP_FACTOR_Y + YUV_CLAMP_MIN) * SCALE_FACTOR);
 
-    fac = .5 / (1. - KB_BT701); // .5389
+    fac = .5 / (1. - KB_BT709); // .5389
 
-    HCb_Rc[i] = myround(-fac * KR_BT701 * (double)i
+    HCb_Rc[i] = myround(-fac * KR_BT709 * (double)i
                         * CLAMP_FACTOR_UV  * SCALE_FACTOR); // -.16736
-    HCb_Gc[i] = myround(-fac * (1. - KB_BT701 - KR_BT701)  * (double)i
+    HCb_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i
                         * CLAMP_FACTOR_UV * SCALE_FACTOR); // -.331264
     HCb_Bc[i] = myround((0.5 * (double)i
                          * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
 
-    fac = .5 / (1. - KR_BT701); // .635
+    fac = .5 / (1. - KR_BT709); // .635
 
     HCr_Rc[i] = myround((0.5 * (double)i
                          * CLAMP_FACTOR_UV + UV_BIAS) * SCALE_FACTOR);
-    HCr_Gc[i] = myround(-fac * (1. - KB_BT701 - KR_BT701) * (double)i
+    HCr_Gc[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i
                         * CLAMP_FACTOR_UV * SCALE_FACTOR);
-    HCr_Bc[i] = myround(-fac * KB_BT701 * (double)i
+    HCr_Bc[i] = myround(-fac * KB_BT709 * (double)i
                         * CLAMP_FACTOR_UV * SCALE_FACTOR);
 
   }
 
   for (i = 0; i < 256; i++) {
-    HY_Ru[i] = myround(KR_BT701 * (double)i
+    HY_Ru[i] = myround(KR_BT709 * (double)i
                        * SCALE_FACTOR);   // Kr
-    HY_Gu[i] = myround((1. - KR_BT701 - KB_BT701) * (double)i
+    HY_Gu[i] = myround((1. - KR_BT709 - KB_BT709) * (double)i
                        * SCALE_FACTOR);   // Kb
-    HY_Bu[i] = myround(KB_BT701 * (double)i
+    HY_Bu[i] = myround(KB_BT709 * (double)i
                        * SCALE_FACTOR);
 
-    fac = .5 / (1. - KB_BT701); // .5389
+    fac = .5 / (1. - KB_BT709); // .5389
 
-    HCb_Ru[i] = myround(-fac * KR_BT701 * (double)i
+    HCb_Ru[i] = myround(-fac * KR_BT709 * (double)i
                         * SCALE_FACTOR); // -.16736
-    HCb_Gu[i] = myround(-fac * (1. - KB_BT701 - KR_BT701)  * (double)i
+    HCb_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709)  * (double)i
                         * SCALE_FACTOR); // -.331264
     HCb_Bu[i] = myround((0.5 * (double)i
                          + UV_BIAS) * SCALE_FACTOR);
 
-    fac = .5 / (1. - KR_BT701); // .635
+    fac = .5 / (1. - KR_BT709); // .635
 
     HCr_Ru[i] = myround((0.5 * (double)i
                          + UV_BIAS) * SCALE_FACTOR);
-    HCr_Gu[i] = myround(-fac * (1. - KB_BT701 - KR_BT701) * (double)i
+    HCr_Gu[i] = myround(-fac * (1. - KB_BT709 - KR_BT709) * (double)i
                         * SCALE_FACTOR);
-    HCr_Bu[i] = myround(-fac * KB_BT701 * (double)i
+    HCr_Bu[i] = myround(-fac * KB_BT709 * (double)i
                         * SCALE_FACTOR);
   }
 
@@ -527,21 +545,21 @@ static void init_YUV_to_RGB_tables(void) {
     HB_Cbc[i] = 0;
   }
   for (; i < UV_CLAMP_MAX; i++) {
-    HR_Crc[i] = myround(2. * (1. - KR_BT701) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    HR_Crc[i] = myround(2. * (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                         SCALE_FACTOR); // 2*(1-Kr)
-    HG_Crc[i] = myround(-.5 / (1. - KR_BT701) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                         SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT701) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                         SCALE_FACTOR);
-    HB_Cbc[i] = myround(2. * (1. - KB_BT701) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((((double)i - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                         SCALE_FACTOR); // 2*(1-Kb)
   }
   /* clip Cb/Cr values above 240 */
   for (; i < 256; i++) {
-    HR_Crc[i] = myround(2. * (1. - KR_BT701) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
-    HG_Crc[i] = myround(-.5 / (1. - KR_BT701) * (255. - UV_BIAS) * SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT701) * (255. - UV_BIAS) * SCALE_FACTOR);
-    HB_Cbc[i] = myround(2. * (1. - KB_BT701) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+    HR_Crc[i] = myround(2. * (1. - KR_BT709) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+    HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
+    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR);
+    HB_Cbc[i] = myround(2. * (1. - KB_BT709) * (255. - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 
   // unclamped Y'CbCr
@@ -550,10 +568,10 @@ static void init_YUV_to_RGB_tables(void) {
   }
 
   for (i = 0; i <= 255; i++) {
-    HR_Crc[i] = myround(2. * (1. - KR_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
-    HG_Crc[i] = myround(-.5 / (1. - KR_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR);
-    HG_Cbc[i] = myround(-.5 / (1. - KB_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR);
-    HB_Cbc[i] = myround(2. * (1. - KB_BT701) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
+    HR_Crc[i] = myround(2. * (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kr)
+    HG_Crc[i] = myround(-.5 / (1. - KR_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
+    HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
+    HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
 }
 
@@ -8455,11 +8473,11 @@ boolean convert_layer_palette_full(weed_plant_t *layer, int outpl, int osamtype,
   if (weed_palette_is_rgb_palette(inpl) && !weed_palette_is_rgb_palette(outpl)) {
     if (prefs->apply_gamma) {
       // gamma correction
-      gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+      if (prefs->btgamma && osubspace == WEED_YUV_SUBSPACE_BT709) {
+        gamma_correct_layer(WEED_GAMMA_BT709, layer);
+      } else gamma_correct_layer(WEED_GAMMA_SRGB, layer);
     }
-    new_gamma_type = WEED_GAMMA_SRGB;
-  } else if (!weed_palette_is_rgb_palette(inpl) && weed_palette_is_rgb_palette(outpl)) {
-    new_gamma_type = WEED_GAMMA_SRGB;
+    new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
   }
 
   istrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
@@ -10071,8 +10089,8 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       }
 
       weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
-      /* weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) | */
-      /*                     WEED_LEAF_READONLY_PLUGIN)); */
+      weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) |
+                          WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE));
 
       // no change needed
       if (gamma_type == ogamma_type) continue;
@@ -10082,7 +10100,9 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       if (pcspace == WEED_COLORSPACE_RGBA) qvals = 4;
       ivals = weed_get_int_array(param, WEED_LEAF_VALUE, &error);
       pthread_mutex_lock(&mainw->gamma_lut_mutex);
-      if (current_gamma_type != WEED_GAMMA_SRGB || current_gamma_fwd != fwd) update_gamma_lut(fwd, WEED_GAMMA_SRGB);
+      if ((fwd && (current_gamma_from != WEED_GAMMA_LINEAR || current_gamma_to != WEED_GAMMA_SRGB)) ||
+          (!fwd && (current_gamma_from != WEED_GAMMA_SRGB || current_gamma_to != WEED_GAMMA_LINEAR)))
+        update_gamma_lut(fwd, WEED_GAMMA_SRGB);
       for (j = 0; j < nvals; j += qvals) {
         for (k = 0; k < 3; k++) {
           ivals[j + k] = gamma_lut[ivals[j + k]];
@@ -10092,8 +10112,8 @@ void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in) {
       weed_set_int_array(param, WEED_LEAF_VALUE, nvals, ivals);
       lives_free(ivals);
       weed_set_int_value(param, WEED_LEAF_GAMMA_TYPE, gamma_type);
-      /* weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) | */
-      /*                     WEED_LEAF_READONLY_PLUGIN)); */
+      weed_leaf_set_flags(param, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(param, WEED_LEAF_GAMMA_TYPE) |
+                          WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE));
     }
 
     lives_free(params);
@@ -10113,23 +10133,15 @@ boolean gamma_correct_layer(int gamma_type, weed_plant_t *layer) {
     int start = 0;
     int lgamma_type = get_layer_gamma(layer);
 
-    boolean fwd = TRUE;
-
     int orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
     int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error), nchannels;
     int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
     int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
-    if (!weed_palette_is_rgb_palette(pal)) return FALSE; // yuv is always gammad
+    if (!weed_palette_is_rgb_palette(pal)) return FALSE; //  dont know how to convert in yuv space
 
     if (gamma_type == lgamma_type) return TRUE;
 
-    if (gamma_type != WEED_GAMMA_LINEAR && lgamma_type != WEED_GAMMA_LINEAR) return FALSE; // not handled
-
-    if (gamma_type == WEED_GAMMA_LINEAR) {
-      fwd = FALSE;
-      gamma_type = lgamma_type;
-    }
     nchannels = weed_palette_get_bits_per_macropixel(pal) >> 3;
     widthx = width * nchannels;
 
@@ -10139,22 +10151,22 @@ boolean gamma_correct_layer(int gamma_type, weed_plant_t *layer) {
     if (pal == WEED_PALETTE_ARGB32) start = 1;
 
     pthread_mutex_lock(&mainw->gamma_lut_mutex);
-    if (current_gamma_type != gamma_type || current_gamma_fwd != fwd) update_gamma_lut(fwd, gamma_type);
+    if (current_gamma_from != lgamma_type || current_gamma_to != gamma_type)
+      update_gamma_lut(lgamma_type, gamma_type);
     for (; pixels < end; pixels += orowstride) {
       for (j = start; j < widthx; j += nchannels) {
         for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
       }
     }
     pthread_mutex_unlock(&mainw->gamma_lut_mutex);
-    if (fwd) weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
-    else weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
     return TRUE;
   }
 }
 
 
 LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
-  // create a weed layer from a pixbuf
+  // create a gdkpixbuf from a weed layer
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
 
   LiVESPixbuf *pixbuf;
@@ -10163,18 +10175,18 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
 
   boolean cheat = FALSE, done;
 
-  int error;
+  weed_error_t error;
   int palette;
   int width;
   int height;
   int irowstride;
   int rowstride, orowstride;
   int n_channels;
+  int gamma_type;
 
   if (layer == NULL) return NULL;
 
   palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
-  gamma_correct_layer(WEED_GAMMA_SRGB, layer);
 
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just free the layer and return the pixbuf
@@ -10182,6 +10194,11 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
     return pixbuf;
+  }
+
+  if (realpalette) {
+    // force conversion to RGB24 or RGBA32 (+ gamma)
+    palette = WEED_PALETTE_END;
   }
 
   // otherwise we need to steal or copy the pixel_data
@@ -10239,6 +10256,8 @@ LiVESPixbuf *layer_to_pixbuf(weed_plant_t *layer, boolean realpalette) {
         if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
         palette = WEED_PALETTE_RGB24;
       }
+      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
+      if (gamma_type != WEED_GAMMA_UNKNOWN) gamma_correct_layer(gamma_type, layer);
       done = FALSE;
     }
   } while (!done);
@@ -10426,9 +10445,9 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   int iwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   int iheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
   int iclamping = weed_get_int_value(layer, WEED_LEAF_YUV_CLAMPING, &error);
+  int new_gamma_type = get_layer_gamma(layer);
 
 #ifdef USE_SWSCALE
-  int new_gamma_type = get_layer_gamma(layer);
   boolean resolved = FALSE;
   int xpalette, xopal_hint;
 #endif
@@ -10636,14 +10655,13 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    if (weed_palette_is_rgb_palette(palette) && !weed_palette_is_rgb_palette(opal_hint)) {
+    if (weed_palette_is_rgb_palette(palette) && !weed_palette_is_rgb_palette(opal_hint) &&
+        weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_LINEAR) {
       // gamma correction
       if (prefs->apply_gamma) {
         gamma_correct_layer(WEED_GAMMA_SRGB, layer);
       }
-      new_gamma_type = WEED_GAMMA_SRGB;
-    } else if (!weed_palette_is_rgb_palette(palette) && weed_palette_is_rgb_palette(opal_hint)) {
-      new_gamma_type = WEED_GAMMA_SRGB;
+      new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
     }
 
     // set new values
@@ -10742,6 +10760,7 @@ boolean resize_layer(weed_plant_t *layer, int width, int height, LiVESInterpType
   case WEED_PALETTE_BGRA32:
 
     // create a new pixbuf
+    gamma_correct_layer(cfile->gamma_type, layer);
     pixbuf = layer_to_pixbuf(layer, FALSE);
 
     threaded_dialog_spin(0.);

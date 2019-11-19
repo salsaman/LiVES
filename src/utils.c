@@ -1472,36 +1472,47 @@ void init_clipboard(void) {
       mainw->error = TRUE;
       return;
     }
-  } else if (clipboard->frames > 0) {
-    // clear old clipboard
-    // need to set current file to 0 before monitoring progress
-    mainw->current_file = 0;
-    cfile->cb_src = current_file;
-
-    if (cfile->clip_type == CLIP_TYPE_FILE) {
-      lives_freep((void **)&cfile->frame_index);
-      close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
-      cfile->ext_src = NULL;
-      cfile->clip_type = CLIP_TYPE_DISK;
+  } else {
+    // experimental feature - we can have duplicate copies of the clipboard with different palettes / gamma
+    for (int i = 0; i < mainw->ncbstores; i++) {
+      if (mainw->cbstores[i] != clipboard) {
+        char *com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->cbstores[i]->handle);
+        lives_system(com, TRUE);
+        lives_free(com);
+      }
     }
+    mainw->ncbstores = 0;
 
-    mainw->com_failed = FALSE;
-    com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
-    lives_rm(clipboard->info_file);
-    lives_system(com, FALSE);
-    lives_free(com);
+    if (clipboard->frames > 0) {
+      // clear old clipboard
+      // need to set current file to 0 before monitoring progress
+      mainw->current_file = 0;
+      cfile->cb_src = current_file;
 
-    if (mainw->com_failed) {
-      mainw->current_file = current_file;
-      return;
+      if (cfile->clip_type == CLIP_TYPE_FILE) {
+        lives_freep((void **)&cfile->frame_index);
+        close_decoder_plugin((lives_decoder_t *)cfile->ext_src);
+        cfile->ext_src = NULL;
+        cfile->clip_type = CLIP_TYPE_DISK;
+      }
+
+      mainw->com_failed = FALSE;
+      com = lives_strdup_printf("%s clear_clipboard \"%s\"", prefs->backend, clipboard->handle);
+      lives_rm(clipboard->info_file);
+      lives_system(com, FALSE);
+      lives_free(com);
+
+      if (mainw->com_failed) {
+        mainw->current_file = current_file;
+        return;
+      }
+
+      cfile->progress_start = cfile->start;
+      cfile->progress_end = cfile->end;
+      // show a progress dialog, not cancellable
+      do_progress_dialog(TRUE, FALSE, _("Clearing the clipboard"));
     }
-
-    cfile->progress_start = cfile->start;
-    cfile->progress_end = cfile->end;
-    // show a progress dialog, not cancellable
-    do_progress_dialog(TRUE, FALSE, _("Clearing the clipboard"));
   }
-
   clipboard->img_type = IMG_TYPE_BEST; // override the pref
   clipboard->cb_src = current_file;
   mainw->current_file = current_file;
@@ -4106,6 +4117,10 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   case CLIP_DETAILS_DECODER_NAME:
     key = lives_strdup("decoder");
     break;
+  case CLIP_DETAILS_GAMMA_TYPE:
+    key = lives_strdup("gamma_type");
+    if (maxlenp != NULL) *maxlenp = 256;
+    break;
   default:
     break;
   }
@@ -4182,6 +4197,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
   case CLIP_DETAILS_ACHANS:
   case CLIP_DETAILS_ASAMPS:
   case CLIP_DETAILS_FRAMES:
+  case CLIP_DETAILS_GAMMA_TYPE:
   case CLIP_DETAILS_HEADER_VERSION:
     *(int *)retval = atoi(val);
     break;
@@ -4311,6 +4327,9 @@ boolean save_clip_value(int which, lives_clip_details_t what, void *val) {
     myval = lives_strdup_printf("%d", *(int *)val);
     break;
   case CLIP_DETAILS_FRAMES:
+    myval = lives_strdup_printf("%d", *(int *)val);
+    break;
+  case CLIP_DETAILS_GAMMA_TYPE:
     myval = lives_strdup_printf("%d", *(int *)val);
     break;
   case CLIP_DETAILS_INTERLACE:

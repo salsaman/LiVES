@@ -1298,6 +1298,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->preview_rendering = FALSE;
 
   mainw->new_lmap_errors = NULL;
+
+  mainw->ncbstores = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -1411,6 +1413,9 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
+
+  prefs->btgamma = FALSE;
+  //prefs->btgamma = TRUE;  // experimental
 
   //////////////////////////////////////////////////////////////////
 
@@ -4662,6 +4667,7 @@ void load_start_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+      gamma_correct_layer(cfile->gamma_type, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_layer_free(layer);
@@ -4719,6 +4725,7 @@ void load_start_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+      gamma_correct_layer(cfile->gamma_type, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4862,6 +4869,7 @@ void load_end_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+      gamma_correct_layer(cfile->gamma_type, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4919,6 +4927,7 @@ void load_end_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+      gamma_correct_layer(cfile->gamma_type, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
 
@@ -5069,6 +5078,7 @@ void load_preview_image(boolean update_always) {
       resize_layer(layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
+      gamma_correct_layer(cfile->gamma_type, layer);
       pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -5681,11 +5691,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
                 if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
                   dplug->cdata->current_palette = oldpal;
                   (*dplug->decoder->set_palette)(dplug->cdata);
-                }
-              }
-            }
-          }
-        }
+                }}}}}
+
         // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
 
         if (!prefs->auto_nobord) {
@@ -5712,7 +5719,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
         if (pixel_data == NULL || pixel_data[0] == NULL) {
           char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
-                                          weed_palette_get_name_full(dplug->cdata->current_palette, dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
+                                          weed_palette_get_name_full(dplug->cdata->current_palette,
+								     dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
           LIVES_WARN(msg);
           lives_free(msg);
           return FALSE;
@@ -5735,10 +5743,13 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         lives_free(rowstrides);
 
         if (res) {
-          if (prefs->apply_gamma) {
+          if (prefs->apply_gamma && prefs->btgamma) {
             if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
               weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, dplug->cdata->frame_gamma);
             }
+	    else if (dplug->cdata->YUV_subspace == YUV_SUBSPACE_BT709) {
+              weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
+	    }
           }
 
           // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
@@ -5746,7 +5757,11 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
             weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
             weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
-          }
+	    if (prefs->apply_gamma && prefs->btgamma
+		&& weed_get_int_value(layer, WEED_LEAF_GAMMA, NULL) == WEED_GAMMA_BT709) {
+	      weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
+	    }
+	  }
           // deinterlace
           if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
             if (!is_thread) {
@@ -5766,6 +5781,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           ret = weed_layer_create_from_file_progressive(layer, fname, width, height, image_ext);
         }
         lives_free(fname);
+
+	// yes, since we created the images oursselves they should actually be in the gamma of the clip
+	weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, sfile->gamma_type);
 
 #ifdef HAVE_POSIX_FADVISE
         // advise that we will read the next frame
@@ -5971,11 +5989,12 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
   if (!strcmp(image_ext, LIVES_FILE_EXT_PNG)) palette = WEED_PALETTE_RGBA32;
   else palette = WEED_PALETTE_RGB24;
 #else
-  palette = WEED_PALETTE_END;
+  if (strcmp(image_ext, LIVES_FILE_EXT_PNG)) palette = WEED_PALETTE_RGB24;
+  else palette = WEED_PALETTE_END;
 #endif
 
   if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
-    if (palette != WEED_PALETTE_END) convert_layer_palette(layer, palette, 0);
+    gamma_correct_layer(cfile->gamma_type, layer);
     pixbuf = layer_to_pixbuf(layer, TRUE);
   }
   weed_plant_free(layer);
@@ -6872,10 +6891,9 @@ void load_frame_image(int frame) {
         if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
-          else
-            gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
-        }
-      }
+          else {
+	      gamma_correct_layer(cfile->gamma_type, frame_layer);
+	  }}}
 
       if (return_layer != NULL) weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(frame_layer));
 
@@ -7084,7 +7102,7 @@ void load_frame_image(int frame) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
           else
-            gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
+            gamma_correct_layer(cfile->gamma_type, frame_layer);
         }
       }
 
@@ -7186,7 +7204,7 @@ void load_frame_image(int frame) {
     }
 
     convert_layer_palette(mainw->frame_layer, cpal, 0);
-
+    gamma_correct_layer(cfile->gamma_type, mainw->frame_layer);
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
@@ -7371,7 +7389,7 @@ void load_frame_image(int frame) {
         return;
       }
       if (cfile->clip_type != CLIP_TYPE_GENERATOR && mainw->current_file != mainw->scrap_file &&
-          mainw->current_file != mainw->ascrap_file &&
+          mainw->current_file != mainw->ascrap_file && mainw->current_file != 0 &&
           (mainw->multitrack == NULL || mainw->current_file != mainw->multitrack->render_file)) {
         d_print(_("Closed clip %s\n"), cfile->file_name);
         lives_notify(LIVES_OSC_NOTIFY_CLIP_CLOSED, "");

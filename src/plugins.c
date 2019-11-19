@@ -2163,6 +2163,9 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
   //LiVESList *last_decoder_plugin = NULL;
 
   set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
+  if (prefs->vj_mode) {
+    ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
+  }
 
   while (decoder_plugin != NULL) {
     lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;

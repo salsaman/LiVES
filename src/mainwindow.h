@@ -516,8 +516,8 @@ typedef struct {
   boolean sep_win;
   boolean fs;
   boolean loop;
-  boolean loop_cont;
-  boolean ping_pong;
+  volatile boolean loop_cont;
+  volatile boolean ping_pong;
   boolean mute;
   int audio_start;
   int audio_end;
@@ -569,7 +569,7 @@ typedef struct {
   int pwidth; ///< playback width in RGB pixels
   int pheight; ///< playback height
 
-  lives_whentostop_t whentostop;
+  volatile lives_whentostop_t whentostop;
 
   boolean noframedrop;
 
@@ -1513,6 +1513,10 @@ typedef struct {
   char *old_vhash;
 
   volatile uint32_t loadmeasure;
+
+#define MAX_CBSTORES 8
+  int ncbstores;
+  lives_clip_t *cbstores[8];
   ////////////////////
 } mainwindow;
 

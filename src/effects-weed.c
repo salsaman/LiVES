@@ -2344,12 +2344,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       // gamma correction
       if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
         gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
-      else
-        gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+      else {
+        gamma_correct_layer(cfile->gamma_type, layer);
+      }
     }
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(layer));
-    /* weed_leaf_set_flags(channel, WEED_LEAF_GAMMA_TYPE, (weed_leaf_get_flags(channel, WEED_LEAF_GAMMA_TYPE) | */
-    /*                     WEED_LEAF_READONLY_PLUGIN)); */
+    weed_leaf_set_flags(channel, WEED_LEAF_GAMMA_TYPE, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE);
   }
 
   // we may need to disable some channels for the plugin
@@ -2542,7 +2542,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
         weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
       else
-        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
 
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(channel));
 
@@ -4566,7 +4566,7 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_plant_free(plant);
   if (err == WEED_SUCCESS) return err;
-  weed_leaf_set_flags(plant, WEED_LEAF_TYPE, 0);
+  weed_clear_plant_flags(plant, WEED_FLAG_UNDELETABLE, NULL);
   return _weed_plant_free(plant);
 }
 
@@ -7622,7 +7622,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   else
-    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
 
   // align memory if requested
   if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
@@ -7680,7 +7680,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
         if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
           weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
         else
-          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
       }
     }
 
@@ -8242,21 +8242,16 @@ deinit4:
   inst = NULL;
 
   if (bg_gen_to_start != -1) {
-    break_me();
-
-    if (mainw->blend_file == -1) {
-      mainw->osc_block = FALSE;
-      return TRUE; // for example if transition was swapped for filter in mapper
-    }
-
     filter_mutex_lock(bg_gen_to_start);
 
     // check is still gen
-    if (enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]], FALSE) == 0) {
+    if (mainw->num_tr_applied > 0
+        && enabled_in_channels(weed_filters[key_to_fx[bg_gen_to_start][key_modes[bg_gen_to_start]]], FALSE) == 0) {
       if ((inst = weed_instance_obtain(bg_gen_to_start, key_modes[bg_gen_to_start])) == NULL) {
         // restart bg generator
         if (!weed_init_effect(bg_gen_to_start)) {
           mainw->osc_block = FALSE;
+          filter_mutex_unlock(bg_gen_to_start);
           return TRUE;
         }
         was_started = TRUE;
@@ -8295,6 +8290,7 @@ genstart2:
       inst = orig_inst;
 
       if (error != WEED_SUCCESS) {
+undoit:
         key_to_instance[bg_gen_to_start][key_modes[bg_gen_to_start]] = NULL;
         if (inst != NULL) {
           char *tmp;
@@ -8306,8 +8302,9 @@ genstart2:
 
 deinit5:
 
-          if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
-                &error);
+          if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
+            next_inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE,
+                                                &error);
           else next_inst = NULL;
 
           weed_call_deinit_func(inst);
@@ -8331,7 +8328,32 @@ deinit5:
         bg_gen_to_start = -1;
         return FALSE;
       }
-      mainw->files[mainw->blend_file]->ext_src = inst;
+
+      if (!IS_VALID_CLIP(mainw->blend_file)
+          || (mainw->files[mainw->blend_file]->frames > 0
+              && mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_GENERATOR)) {
+        int current_file = mainw->current_file;
+
+        filter = weed_instance_get_filter(inst, TRUE);
+        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
+        if (create_cfile(-1, filter_name, TRUE) == NULL) {
+          mainw->current_file = current_file;
+          goto undoit;
+        }
+
+        cfile->clip_type = CLIP_TYPE_GENERATOR;
+
+        lives_snprintf(cfile->type, 40, "generator:%s", filter_name);
+        lives_snprintf(cfile->file_name, PATH_MAX, "generator: %s", filter_name);
+        lives_snprintf(cfile->name, CLIP_NAME_MAXLEN, "generator: %s", filter_name);
+        lives_free(filter_name);
+
+        // open as a clip with 1 frame
+        cfile->start = cfile->end = cfile->frames = 1;
+        mainw->blend_file = mainw->current_file;
+        mainw->files[mainw->blend_file]->ext_src = inst;
+        mainw->current_file = current_file;
+      }
     }
     filter_mutex_unlock(bg_gen_to_start);
   }

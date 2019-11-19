@@ -33,7 +33,7 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
     if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
       gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
     else
-      gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+      gamma_correct_layer(cfile->gamma_type, layer);
   }
 
   // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
@@ -311,7 +311,7 @@ boolean transcode(int start, int end) {
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
 
-    gamma_correct_layer(WEED_GAMMA_SRGB, frame_layer);
+    gamma_correct_layer(cfile->gamma_type, frame_layer);
 
     error = send_layer(frame_layer, vpp, currticks);
 

@@ -5,16 +5,34 @@
 //
 // some code adapted from vlc (GPL v2 or higher)
 
+#ifdef HAVE_AV_CONFIG_H
+#undef HAVE_AV_CONFIG_H
+#endif
+
+#ifdef HAVE_AV_CONFIG_H
+#undef HAVE_AV_CONFIG_H
+#endif
+
+#ifndef HAVE_SYSTEM_WEED
+#include "../../../libweed/weed-palettes.h"
+#endif
+
 #define HAVE_AVCODEC
 #define HAVE_AVUTIL
 
-#include "decplugin.h"
-
-#ifdef NEED_LOCAL_WEED
+#ifdef NEED_LOCAL_WEED_COMPAT
 #include "../../../libweed/weed-compat.h"
 #else
 #include <weed/weed-compat.h>
 #endif
+
+#include <libavformat/avformat.h>
+#include <libavutil/avstring.h>
+#include <libavcodec/version.h>
+#include <libavutil/mem.h>
+
+#define NEED_CLONEFUNC
+#include "decplugin.h"
 
 ///////////////////////////////////////////////////////
 #include <stdio.h>
@@ -27,13 +45,6 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/time.h>
-
-/* ffmpeg header */
-//#if defined(HAVE_LIBAVFORMAT_AVFORMAT_H)
-//#   include <libavformat/avformat.h>
-//#elif defined(HAVE_FFMPEG_AVFORMAT_H)
-//#   include <ffmpeg/avformat.h>
-//#endif
 
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
@@ -115,7 +126,6 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
   int ndecodes = 0;
   boolean have_upper_bound = FALSE;
   boolean have_lower_bound = FALSE;
-  int64_t jumpframes = JUMP_FRAMES_FAST;
 
   if (allow_longer_seek) no_seek_limit = LNO_SEEK_LIMIT;
   cdata->seek_flag = LIVES_SEEK_FAST;
@@ -205,7 +215,7 @@ static int64_t get_real_last_frame(lives_clip_data_t *cdata, boolean allow_longe
       }
       if (timex > FAST_SEEK_LIMIT) {
         cdata->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
-	cdata->jump_limit = JUMP_FRAMES_SLOW;
+        cdata->jump_limit = JUMP_FRAMES_SLOW;
       }
 
       tottime += timex;
@@ -793,7 +803,7 @@ static lives_clip_data_t *init_cdata(void) {
   priv->ctx = NULL;
   priv->pFrame = NULL;
 
-  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_VIDEO_PAD_END;
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
 
   cdata->video_start_time = 0.;
   cdata->jump_limit = JUMP_FRAMES_FAST;
@@ -814,37 +824,7 @@ static lives_clip_data_t *avf_clone(lives_clip_data_t *cdata) {
   lives_av_priv_t *dpriv, *spriv;
 
   // copy from cdata to clone, with a new context for clone
-  clone->URI = strdup(cdata->URI);  // VALID for pclone
-  clone->nclips = cdata->nclips; // ???
-  snprintf(clone->container_name, 512, "%s", cdata->container_name);
-  clone->current_clip = cdata->current_clip;
-  clone->width = cdata->width;
-  clone->height = cdata->height;
-  clone->nframes = cdata->nframes;   // valid for pclone
-  clone->interlace = cdata->interlace;
-  clone->offs_x = cdata->offs_x;
-  clone->offs_y = cdata->offs_y;
-  clone->frame_width = cdata->frame_width;
-  clone->frame_height = cdata->frame_height;
-  clone->par = cdata->par;
-  clone->fps = cdata->fps;   // valid ? for pclone
-  if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
-  clone->current_palette = cdata->current_palette;
-  clone->YUV_sampling = cdata->YUV_sampling;
-  clone->YUV_clamping = cdata->YUV_clamping;
-  snprintf(clone->video_name, 512, "%s", cdata->video_name);
-  clone->arate = cdata->arate;
-  clone->achans = cdata->achans;
-  clone->asamps = cdata->asamps;
-  clone->asigned = cdata->asigned;
-  clone->ainterleaf = cdata->ainterleaf;
-  snprintf(clone->audio_name, 512, "%s", cdata->audio_name);
-  clone->seek_flag = cdata->seek_flag;
-  clone->sync_hint = cdata->sync_hint;
-
-  snprintf(clone->author, 256, "%s", cdata->author);
-  snprintf(clone->title, 256, "%s", cdata->title);
-  snprintf(clone->comment, 256, "%s", cdata->comment);
+  clone_cdata(clone, cdata);
 
   // create "priv" elements
   dpriv = clone->priv;
@@ -932,28 +912,30 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 rescan:
   priv = cdata->priv;
 
-  real_frames = get_real_last_frame(cdata, priv->longer_seek) + 1;
+  if (cdata->seek_flag == 0) {
+    real_frames = get_real_last_frame(cdata, priv->longer_seek) + 1;
 
-  if (real_frames <= 0) {
-    fprintf(stderr,
-            "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
-    detach_stream(cdata);
-    free(cdata->URI);
-    cdata->URI = NULL;
-    clip_data_free(cdata);
-    return NULL;
-  }
+    if (real_frames <= 0) {
+      fprintf(stderr,
+              "avformat_decoder: ERROR - could not find the last frame\navformat_decoder: I will pass on this file as it may be broken.\n");
+      detach_stream(cdata);
+      free(cdata->URI);
+      cdata->URI = NULL;
+      clip_data_free(cdata);
+      return NULL;
+    }
 
-  if (cdata->nframes > 100 && real_frames < cdata->nframes * SEEK_SUCCESS_MIN_RATIO) {
-    fprintf(stderr,
-            "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
-            real_frames, cdata->nframes);
-    detach_stream(cdata);
-    free(cdata->URI);
-    cdata->URI = NULL;
-    clip_data_free(cdata);
-    return NULL;
-  }
+    if (cdata->nframes > 100 && real_frames < cdata->nframes * SEEK_SUCCESS_MIN_RATIO) {
+      fprintf(stderr,
+              "avformat_decoder: ERROR - could only seek to %ld frames out of %ld\navformat_decoder: I will pass on this file as it may be broken.\n",
+              real_frames, cdata->nframes);
+      detach_stream(cdata);
+      free(cdata->URI);
+      cdata->URI = NULL;
+      clip_data_free(cdata);
+      return NULL;
+    }
+  } else real_frames = cdata->nframes;
 
   priv = cdata->priv;
 
@@ -1355,7 +1337,6 @@ framedone2:
     else
       ((lives_clip_data_t *)cdata)->YUV_subspace = WEED_YUV_SUBSPACE_YCBCR;
 
-
     if (priv->pFrame->color_range == AVCOL_RANGE_JPEG)
       ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
     else
@@ -1365,8 +1346,8 @@ framedone2:
     ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
     if (priv->pFrame->color_trc == AVCOL_TRC_LINEAR)
       ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_LINEAR;
-    /* if (priv->pFrame->color_trc == AVCOL_TRC_BT709) */
-    /*   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709; */
+    if (priv->pFrame->color_trc == AVCOL_TRC_BT709)
+      ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709;
   }
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];

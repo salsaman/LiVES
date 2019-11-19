@@ -22,8 +22,8 @@
 #define KR_YCBCR 0.299
 #define KB_YCBCR 0.114
 
-#define KR_BT701 0.2126
-#define KB_BT701 0.0722
+#define KR_BT709 0.2126
+#define KB_BT709 0.0722
 
 #define KR_BT2020 0.2627
 #define KB_BT2020 0.0593

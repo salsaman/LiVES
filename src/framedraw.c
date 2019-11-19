@@ -405,7 +405,6 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   }
 
   mainw->fd_layer = weed_layer_copy(NULL, layer);
-  gamma_correct_layer(WEED_GAMMA_SRGB, mainw->fd_layer);
 
   // resize to correct size
   resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
@@ -534,6 +533,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
     resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST,
                  palette, 0);
     convert_layer_palette(mainw->fd_layer, palette, 0);
+    gamma_correct_layer(cfile->gamma_type, mainw->fd_layer);
     pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE);
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;

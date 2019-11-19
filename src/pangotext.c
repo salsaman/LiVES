@@ -485,6 +485,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const
   if (prefs->apply_gamma) {
     // leave as linear gamma maybe
     if (get_layer_gamma(layer) == WEED_GAMMA_LINEAR) {
+      // stops it getting converted
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
       fake_gamma = TRUE;
     }

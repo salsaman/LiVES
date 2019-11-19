@@ -2165,6 +2165,8 @@ static lives_clip_data_t *init_cdata(void) {
   got_eof = FALSE;
   errval = 0;
 
+  cdata->sync_hint = SYNC_HINT_AUDIO_PAD_START | SYNC_HINT_AUDIO_TRIM_END;
+
   memset(cdata->author, 0, 1);
   memset(cdata->title, 0, 1);
   memset(cdata->comment, 0, 1);
@@ -2911,8 +2913,8 @@ framedone2:
   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
   if (priv->picture->color_trc == AVCOL_TRC_LINEAR)
     ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_LINEAR;
-  /* if (priv->picture->color_trc == AVCOL_TRC_BT709) */
-  /*   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709; */
+  if (priv->picture->color_trc == AVCOL_TRC_BT709)
+    ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_BT709;
 
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];

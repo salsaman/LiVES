@@ -111,7 +111,7 @@ typedef struct {
   float max_decode_fps; ///< theoretical value with no memcpy
 
   int64_t jump_limit; ///< for internal use
-  
+
   // TODO use fix sized array
   int *palettes; ///< list of palettes which the format supports, terminated with WEED_PALETTE_END
 

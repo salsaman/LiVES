@@ -109,6 +109,9 @@ void show_playbar_labels(int clipno) {
     if (sfile->opening_loc || (sfile->frames == 123456789 && sfile->opening)) {
       tmp = lives_strdup_printf(_("%s %s"), str_video, str_opening);
     } else {
+      if (sfile->fps > 0.) {
+	sfile->video_time = sfile->frames / sfile->fps;
+      }
       if (sfile->video_time > 0.) {
         tmp = lives_strdup_printf(_("%s [%.2f sec]"), str_video, sfile->video_time);
       } else {
@@ -3551,9 +3554,11 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-alt-up"), _("background clip play faster"));
   ADD_KEYDEF(_("ctrl-alt-down"), _("background clip play slower"));
   ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate"));
+  ADD_KEYDEF(_("ctrl-alt-enter"), _("reset frame rate (background clip)"));
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
   ADD_KEYDEF(_("ctrl-alt-space"), _("reverse direction (background clip)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
+  ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
   ADD_KEYDEF("n", _("nervous"));
   ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));
   ADD_KEYDEF(_("ctrl-page-down"), _("next clip"));

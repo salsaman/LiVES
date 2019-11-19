@@ -2536,9 +2536,11 @@ Palette numbers >=2048 are reserved for custom palettes.
 
  * WEED_GAMMA_UNKNOWN 0
 
+ * WEED_GAMMA_LINEAR -1
+
  * WEED_GAMMA_SRGB 1
 
- * WEED_GAMMA_LINEAR 2
+ * WEED_GAMMA_BT709 512
 
 Gamma types >=1024 are reserved for custom color gamma types.
 

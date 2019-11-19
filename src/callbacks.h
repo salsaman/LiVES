@@ -303,7 +303,7 @@ void on_resample_video_activate(LiVESMenuItem *, livespointer);
 
 void on_resample_vid_ok(LiVESButton *, LiVESEntry *entry);
 
-void on_trim_audio_activate(LiVESMenuItem *, livespointer);
+boolean on_trim_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resample_audio_activate(LiVESMenuItem *, livespointer);
 

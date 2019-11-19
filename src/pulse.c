@@ -454,6 +454,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           g_print("in bytes=%ld %ld %ld %ld %ld %ld\n", in_bytes, pulsed->in_arate, pulsed->out_arate, pulseFramesAvailable, pulsed->in_achans,
                   pulsed->in_asamps);
 #endif
+
+          if (mainw->loop_cont || mainw->whentostop == NEVER_STOP) {
+            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) pulsed->loop = AUDIO_LOOP_PINGPONG;
+            else pulsed->loop = AUDIO_LOOP_FORWARD;
+          } else pulsed->loop = AUDIO_LOOP_NONE;
+
           if ((shrink_factor = (float)in_frames / (float)pulseFramesAvailable) < 0.f) {
             // reverse playback
             if ((pulsed->seek_pos -= in_bytes) < 0) {
@@ -1771,7 +1777,7 @@ void pulse_aud_pb_ready(int fileno) {
   if (mainw->pulsed != NULL && mainw->aud_rec_fd == -1) {
     mainw->pulsed->is_paused = FALSE;
     mainw->pulsed->mute = mainw->mute;
-    if (mainw->loop_cont && !mainw->preview) {
+    if ((mainw->whentostop == NEVER_STOP) && !mainw->preview) {
       if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->multitrack == NULL)
         mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
       else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;

@@ -380,6 +380,39 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 
 #define DS_SPACE_CHECK_FRAMES 100
 
+
+static boolean save_decoded(int fileno, int i, LiVESPixbuf *pixbuf, boolean silent, int progress) {
+  lives_clip_t *sfile = mainw->files[fileno];
+  boolean retb;
+  int retval;
+  LiVESError *error = NULL;
+  char *oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
+
+  do {
+    retval = LIVES_RESPONSE_NONE;
+    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
+    if (error != NULL && !silent) {
+      retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
+      lives_error_free(error);
+      error = NULL;
+    } else if (!retb) {
+      retval = do_write_failed_error_s_with_retry(oname, NULL, NULL);
+    }
+  } while (retval == LIVES_RESPONSE_RETRY);
+
+  lives_freep((void **)&oname);
+
+  if (progress % DS_SPACE_CHECK_FRAMES == 1) {
+    if (!check_storage_space(fileno, FALSE)) {
+      retval = LIVES_RESPONSE_CANCEL;
+    }
+  }
+
+  if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
+  return TRUE;
+}
+
+
 boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr) {
   // pull frames from a clip to images
   // from sframe to eframe inclusive (first frame is 1)
@@ -395,10 +428,6 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
   register int i;
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESPixbuf *pixbuf = NULL;
-  LiVESError *error = NULL;
-  char *oname;
-  boolean retb;
-  int retval;
 
   int progress = 1;
 
@@ -414,8 +443,6 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
     }
 
     if (sfile->frame_index[i - 1] >= 0) {
-      oname = NULL;
-
       if (pbr != NULL && pixbuf != NULL) lives_widget_object_unref(pixbuf);
 
       pixbuf = pull_lives_pixbuf_at_size(sfileno, i, get_image_ext_for_type(sfile->img_type),
@@ -423,34 +450,12 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 
       if (pixbuf == NULL) return FALSE;
 
-      oname = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
-
-      do {
-        retval = LIVES_RESPONSE_NONE;
-        retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
-        if (error != NULL && pbr == NULL) {
-          retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
-          lives_error_free(error);
-          error = NULL;
-        } else if (!retb) {
-          retval = do_write_failed_error_s_with_retry(oname, NULL, NULL);
-        }
-      } while (retval == LIVES_RESPONSE_RETRY);
-
-      lives_freep((void **)&oname);
+      if (!save_decoded(sfileno, i, pixbuf, pbr != NULL, progress)) return FALSE;
 
       if (pbr == NULL) {
         if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
         pixbuf = NULL;
       }
-
-      if (progress % DS_SPACE_CHECK_FRAMES == 1) {
-        if (!check_storage_space(sfileno, FALSE)) {
-          retval = LIVES_RESPONSE_CANCEL;
-        }
-      }
-
-      if (retval == LIVES_RESPONSE_CANCEL) return FALSE;
 
       // another thread may have called check_if_non_virtual - TODO : use a mutex
       if (sfile->frame_index == NULL) break;
@@ -479,11 +484,67 @@ boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_pr
 }
 
 
+static void restore_gamma_cb(int gamma_type) {
+  // experimental, will move to another file
+  lives_clip_t *ocb = clipboard, *ncb;
+  LiVESPixbuf *pixbuf;
+  int cf = mainw->current_file;
+  int ogamma;
+  int i, found = -1, progress = 0;
+  boolean is_stored = FALSE;
+
+  for (i = 0; i < mainw->ncbstores; i++) {
+    if (mainw->cbstores[i] == clipboard) is_stored = TRUE;
+    if (mainw->cbstores[i]->gamma_type == cfile->gamma_type) found = i;
+    if (found > -1 && is_stored) break;
+  }
+  if (!is_stored) {
+    if (mainw->ncbstores >= MAX_CBSTORES) return;
+    mainw->cbstores[mainw->ncbstores++] = clipboard;
+  }
+  if (found > -1) {
+    clipboard = mainw->cbstores[found];
+    return;
+  }
+  // not found,
+  // we'll actually make a copy of the clipboard but with the new gamma_type
+  clipboard = NULL;
+  init_clipboard();
+  lives_memcpy(clipboard, ocb, sizeof(lives_clip_t));
+  lives_memcpy(clipboard->frame_index, ocb->frame_index, clipboard->frames * 4);
+  ncb = clipboard;
+  ogamma = ocb->gamma_type;
+  ocb->gamma_type = ncb->gamma_type = gamma_type; // force conversion
+  for (i = 0; i < clipboard->frames; i++) {
+    if (clipboard->frame_index[i] == -1) {
+      progress++;
+      clipboard = ocb;
+      pixbuf = pull_lives_pixbuf(0, i, get_image_ext_for_type(ocb->img_type), 0);
+      clipboard = ncb;
+      if (!save_decoded(0, i, pixbuf, FALSE, progress)) {
+        mainw->current_file = 0;
+        close_current_file(cf);
+        clipboard = ocb;
+        ocb->gamma_type = ogamma;
+        return;
+      }
+    }
+  }
+  ocb->gamma_type = ogamma;
+}
+
+
 boolean realize_all_frames(int clipno, const char *msg, boolean enough) {
   // if enough is set, we show Enough button instead of Cancel.
   int current_file = mainw->current_file;
   mainw->cancelled = CANCEL_NONE;
   if (!IS_VALID_CLIP(clipno)) return FALSE;
+
+  // if its the clipboard and we have exotic gamma types we need to do a special thing
+  // - fix the gamma_type of the clipboard existing frames before inserting in cfile
+  if (clipno == 0 && prefs->btgamma && CURRENT_CLIP_HAS_VIDEO && cfile->gamma_type != clipboard->gamma_type) {
+    restore_gamma_cb(cfile->gamma_type);
+  }
 
   if (!check_if_non_virtual(clipno, 1, mainw->files[clipno]->frames)) {
     boolean retb;

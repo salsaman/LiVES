@@ -210,7 +210,7 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   filter_class = weed_filter_class_init("luma overlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
+                                        WEED_FILTER_HINT_MAY_THREAD, NULL,
                                         lumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)), in_params2, NULL);
 
@@ -219,7 +219,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
 
   filter_class = weed_filter_class_init("luma underlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
+                                        WEED_FILTER_HINT_MAY_THREAD, NULL,
                                         lumu_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);
@@ -230,7 +230,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("negative luma overlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA,
+                                        WEED_FILTER_HINT_MAY_THREAD,
                                         NULL, nlumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);

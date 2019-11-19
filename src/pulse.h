@@ -87,7 +87,7 @@ typedef struct {
   boolean usigned;
   boolean reverse_endian;
 
-  lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
+  volatile lives_whentostop_t *whentostop; ///< pointer to mainw->whentostop
   volatile lives_cancel_t *cancelled; ///< pointer to mainw->cancelled
 
   boolean pulsed_died;

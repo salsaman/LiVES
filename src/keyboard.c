@@ -300,6 +300,9 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
       (keymod & LIVES_CONTROL_MASK)) {
     cached_key = unicode;
     cached_mod = LIVES_CONTROL_MASK;
+    if (keymod & LIVES_ALT_MASK) {
+      cached_mod |= LIVES_ALT_MASK;
+    }
   }
 
   if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK || keymod == LIVES_LOCK_MASK || keymod == 16)) {

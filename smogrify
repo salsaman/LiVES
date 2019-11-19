@@ -1466,7 +1466,7 @@ if (defined($ARGV[0])) {
 	    &smog_chdir($curworkdir);
 
 	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, 
-				 $endian, $af_size, $title, $author, $comment);
+				 $endian, $af_size, $gamma_type, $title, $author, $comment);
 
 	    exit 0;
 	}
@@ -2084,7 +2084,7 @@ if (defined($ARGV[0])) {
 		}
 		if ($af_size > 0 || $count > 0) {
 		    &sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps,
-				  $signed, $endian, $af_size, $title, $author, $comment);
+				  $signed, $endian, $af_size, $gamma_type, $title, $author, $comment);
 		    exit 0;
 		}
 		# should have audio then
@@ -2147,7 +2147,7 @@ if (defined($ARGV[0])) {
 	    $af_size = -s $audio_out;
 	    if (-d $curworkdir) {
 		&sig_complete($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans,
-			      $asamps, $unsigned, $endian, $af_size, $title, $author, $comment);
+			      $asamps, $unsigned, $endian, $af_size, $gamma_type, $title, $author, $comment);
 	    }
 	    exit 0;
 	}
@@ -5100,18 +5100,16 @@ sub insert {
 
 			    if ($hsize == $width && $vsize == $height) {
                                 $quick_copy = 1;
-                            }
-                        }
-                    }
-                }
+                            }}}}
 
                 if ($quick_copy == 1) {
                     smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");
                     return if $panic;
 		} else {
 		    if ($antialias eq "false") {
-                        $com = "$smog_convert_command +antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"
-			    ."x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
+                        $com = "$smog_convert_command +antialias -size $width" .
+			    "x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
+			    "x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr = smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com", $smerr);
@@ -5119,8 +5117,9 @@ sub insert {
                             return;
                         }
                     } else {
-                        $com = "$smog_convert_command -antialias -size $width"."x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width"
-			    ."x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
+                        $com = "$smog_convert_command -antialias -size $width" .
+			    "x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
+			    "x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
                         $smerr = smog_system($com);
                         if ($smerr) {
                             sig_system_error("$com", $smerr);
@@ -5555,10 +5554,6 @@ sub get_ffprobe_info {
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
 
-    ## asamps - depends on decoder, $signed, $endian also
-
-    ## TODO: TAG:DURATION=00:38:46.220000000;
-
     my ($file, $VERBOSE) = @_;
     ##my $com = "ffprobe -hide_banner -show_streams -count_frames \"$file\"";
     my $com = "ffprobe -loglevel 24 -show_format -hide_banner -show_streams -select_streams u \"$file\"";
@@ -5581,7 +5576,7 @@ sub get_ffprobe_info {
 	    $is_format = 0;
 	    next;
 	}
-	if ($line =~ /^avg_frame_rate=(.*)/ && $is_video) {
+	if ($is_video && $line =~ /^avg_frame_rate=(.*)/) {
 	    next if ($fps);
 	    next if ($1 eq "N/A");
 	    $frate = $1;
@@ -5597,7 +5592,7 @@ sub get_ffprobe_info {
 	    }
 	    next;
 	}
-	if ($line =~ /^bitrate=(.*)/ && $is_audio) {
+	if ($is_audio && $line =~ /^bitrate=(.*)/) {
 	    next if ($bitrate);
 	    next if ($1 eq "N/A");
 	    $abitrate = $1;
@@ -5614,7 +5609,7 @@ sub get_ffprobe_info {
 	    }
 	    next;
 	}
-	if ($line =~ /^sample_fmt=(.*)/ && $is_audio) {
+	if ($is_audio && $line =~ /^sample_fmt=(.*)/) {
 	    next if ($asamps && $signed);
 	    next if ($1 eq "N/A");
 	    my $xasamps = $1;
@@ -5661,7 +5656,7 @@ sub get_ffprobe_info {
 	    }
 	    next;
 	}
-	if ($line =~ /^nb_read_frames=(.*)/ && $is_video) {
+	if ($is_video && $line =~ /^nb_frames=(.*)/) {
 	    next if ($count);
 	    next if ($1 eq "N/A");
 	    $count = $1;
@@ -5685,6 +5680,15 @@ sub get_ffprobe_info {
 	    $vsize = $1;
 	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got height $vsize\n";
+	    }
+	    next;
+	}
+	if ($is_format && $line =~ /^size=(.*)/) {
+	    next if ($f_size);
+	    next if ($1 eq "N/A");
+	    $f_size = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "ffprobe got f_size $f_size\n";
 	    }
 	    next;
 	}
@@ -5749,23 +5753,23 @@ sub get_ffprobe_info {
 	}
     }
 
-    if ($count == 0 || $count eq "") {
+    if (!$count) {
 	$count = int($fps * $length + .5);
     }
-    if ($count eq "") {
+    if (!$count) {
 	$count = 1000000;
 	#take a guess...
     }
     if ($VERBOSE > 1) {
 	print STDERR "ffprobe got revised frames $count\n";
     }
-    if ($asamps == 0 && $arate * $achans > 0) {
+    if (!$asamps && $arate * $achans > 0) {
 	$asamps = $abitrate / $arate / $achans;
 	if ($VERBOSE > 1) {
 	    print STDERR "ffprobe got revised asamps $asamps\n";
 	}
     }
-    if ($asamps == 0) {
+    if (!$asamps) {
 	$asamps = 16;
 	if ($VERBOSE > 1) {
 	    print STDERR "ffprobe forced asamps to $asamps\n";

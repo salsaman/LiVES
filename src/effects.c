@@ -650,6 +650,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         layer_palette = WEED_PALETTE_RGBA32;
       }
 
+      gamma_correct_layer(cfile->gamma_type, layer);
       pixbuf = layer_to_pixbuf(layer, TRUE);
       weed_plant_free(layer);
 

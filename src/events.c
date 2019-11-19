@@ -3589,7 +3589,10 @@ lives_render_error_t render_events(boolean reset) {
                     } else {
                       // add new clone for nclip
                       mainw->track_decoders[i] = clone_decoder(nclip);
-                    }}}}
+                    }
+                  }
+                }
+              }
 
               mainw->old_active_track_list[i] = mainw->active_track_list[i];
 
@@ -3639,8 +3642,8 @@ lives_render_error_t render_events(boolean reset) {
                          weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                          cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
             convert_layer_palette(layer, layer_palette, 0);
-	    // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
-	    gamma_correct_layer(cfile->gamma_type, layer);
+            // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
+            gamma_correct_layer(cfile->gamma_type, layer);
             pixbuf = layer_to_pixbuf(layer, TRUE);
             weed_layer_free(layer);
           }
@@ -3704,7 +3707,7 @@ lives_render_error_t render_events(boolean reset) {
         }
         if (mainw->flush_audio_tc != 0) {
           deltatime = (double)(q_gint64(tc + (weed_timecode_t)((next_frame_event == NULL && !is_blank) ?
-							       TICKS_PER_SECOND_DBL / cfile->fps : 0),
+                                        TICKS_PER_SECOND_DBL / cfile->fps : 0),
                                         cfile->fps)) / TICKS_PER_SECOND_DBL - atime;
           for (i = 0; i < natracks; i++) {
             if (xaclips[i] > 0) {
@@ -3719,7 +3722,7 @@ lives_render_error_t render_events(boolean reset) {
 
       while (cfile->fps > 0.) {
         if ((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL
-								   && mainw->multitrack->opts.render_audp)) {
+            && mainw->multitrack->opts.render_audp)) {
           if (firstframe) {
             // see if audio needs appending
             if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
@@ -4485,8 +4488,8 @@ boolean render_to_clip(boolean new_clip) {
           cfile->frame_index[i] = -1;
         }
 
-	lives_memcpy(&cfile->frame_index[cfile->undo_end], &cfile->frame_index_back[cfile->undo_end],
-		     (cfile->frames - cfile->undo_end) * 4);
+        lives_memcpy(&cfile->frame_index[cfile->undo_end], &cfile->frame_index_back[cfile->undo_end],
+                     (cfile->frames - cfile->undo_end) * 4);
 
         save_frame_index(mainw->current_file);
       }

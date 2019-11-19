@@ -3117,7 +3117,10 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
           do_error_dialog(_("LiVES cannot insert because the audio rates do not match.\nPlease install 'sox', and try again."));
           mainw->error = TRUE;
           return;
-        }}}}
+        }
+      }
+    }
+  }
 
   if (mainw->insert_after) insert_start = cfile->end + 1;
   else insert_start = cfile->start;
@@ -3266,7 +3269,12 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
               mainw->error = TRUE;
               unbuffer_lmap_errors(FALSE);
               return;
-            }}}}}}
+            }
+          }
+        }
+      }
+    }
+  }
 
   if (!virtual_ins) {
     char *msg = lives_strdup(_("Pulling frames from clipboard..."));
@@ -9938,7 +9946,7 @@ void on_faster_pressed(LiVESButton *button, livespointer user_data) {
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
 
   if (user_data != NULL) {
-      type = LIVES_POINTER_TO_INT(user_data);
+    type = LIVES_POINTER_TO_INT(user_data);
     if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
   }
 

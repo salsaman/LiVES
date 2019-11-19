@@ -9,30 +9,45 @@
 # LiVES qtutils encoder plugin v0.3
 
 # 0.3 add (undocumented) -l $length to get it working
+# 0.31 update API
 
 #######################################################################
-my $oggfile="audiodump.ogg";
+
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
 
 use POSIX;     # Needed for setlocale()
 setlocale(LC_NUMERIC, "C");
 
-if (!defined($standalone)) {
-    my $smogrify;
-    if ($^O eq "MSWin32") {
-	$smogrify="smogrify";
-    }
-    else {
-	$smogrify=`which smogrify`;
-	chomp($smogrify);
-    }
-    if ($smogrify ne "") {
-	require $smogrify;
-    }
-}
-else {
-    $command=$ARGV[0];
+my $nulfile;
+my $exe;
+
+if ($^O eq "MSWin32") {
+    $nulfile = "NUL";
+    $exe = ".exe";
+} else {
+    $nulfile = "/dev/null";
+    $exe = "";
 }
 
+if (!caller) {
+    our $command;
+    #our $otype;
+    exit 0 if (!defined($ARGV[0]));
+}
+
+if (!defined($command)) {
+    $command  = $ARGV[0];
+}
+
+my $oggfile="audiodump.ogg";
 
 #######################################################################
 
@@ -91,6 +106,17 @@ if ($command eq "get_formats") {
 }
 
 
+if ($command eq "get_format_request") {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    print 7; # clipped pcm wav, all frames
+    exit 0;
+}
+
 
 if ($command eq "encode") {
     # encode 
@@ -118,8 +144,7 @@ if ($command eq "encode") {
 	}
 	system("qtsg -o \"$nfile\" -l $length -r $fps *.jpg $err");
     }
-    # required
-    &sig_complete;
+
     exit 0;
 }
 
@@ -131,7 +156,6 @@ if ($command eq "clear") {
     if (-f $oggfile) {
 	unlink $oggfile;
     }
-    &sig_complete;
     exit 0;
 }
 
@@ -150,15 +174,19 @@ if ($command eq "finalise") {
 ###### subroutines #######
 
 
+sub location {
+    # return the location of an executable
+   my ($command) = shift;
 
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
 
-sub get_format_request {
-    # return the code for how we would like audio and video delivered
-    # this is a bitmap field composed of:
-    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
-    # bit 1 - unset=all audio; set=clipped audio
-    # bit 2 - unset=all frames; set=frames for selection only
-
-    return 7; # clipped pcm wav, clipped frames
+    my ($location) = `which \"$command\" 2>$nulfile`;
+    chomp($location);
+    $location;
 }
 
+
+##### required
+1;

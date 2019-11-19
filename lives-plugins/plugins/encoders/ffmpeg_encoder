@@ -242,7 +242,6 @@ if ($command eq "get_rfx") {
     my $vsize = $ARGV[4];
 
     if ($otype eq "flv" || $otype eq "flv-youtube" || $otype eq "flv-youtubex" || $otype eq "divx") {
-	my $aq = &rc_get("encoder_acodec");
 	if ($aq == 0) {
 	    ## mp3 codec
 	    # mandatory section
@@ -279,12 +278,6 @@ if ($command eq "get_rfx") {
 	    
 	    # optional section
 	    print "<params>\n";
-#	    my $ncpus = &get_num_procs;
-#	    my $maxthreads = 4;
-#	    if ($ncpus > $maxthreads) {
-#		$maxthreads = $ncpus;
-#	    }
-#	    print "threads|Number of threads|num0|" . (($maxthreads + $ncpus) >> 2) * 2 . "|1|$maxthreads|\n";
 	    if ($otype eq "divx") {
 		print "quality|Video Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|3|31|\n";
 		print "quality|Audio Quality (1 = Best quality, largest file, 31 = Lowest quality, smallest file)|num0|1|4|31|\n";
@@ -340,6 +333,7 @@ if ($command eq "get_rfx") {
 	}
 	print "</param_window>\n";
     }
+    exit 0;
 }
 
 
@@ -422,7 +416,6 @@ if ($command eq "encode") {
 
     if ($otype eq "") {
 	$otype = "divx";
-	&rc_set("output_type", $otype);
     }
 
     my $bug1 = "";
@@ -504,8 +497,8 @@ if ($command eq "encode") {
 
     # video stream
     my $audio_com = "";
+
     unless ($audiofile eq "") {
-	my $aq = &rc_get("encoder_acodec");
 	$audio_com = "-i $audiofile";
 	if ($aq == 1) {
 	    # pcm
@@ -604,9 +597,6 @@ if ($command eq "encode") {
 	    system($syscom);
 	}
     }
-
-    &sig_complete;
-    exit 0;
 }
 
 
@@ -625,8 +615,6 @@ if ($command eq "finalise") {
     print "finalised\n";
     exit 0;
 }
-
-exit 0;
 
 
 ###### subroutines #######
@@ -653,3 +641,7 @@ sub location {
 
     $location;
 }
+
+
+##### required
+1;

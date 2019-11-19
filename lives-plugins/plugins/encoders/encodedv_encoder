@@ -17,38 +17,50 @@
 # version 2.1 increase quality settings, restrict audio rates.
 # version 2.11 add package name libdv-bin
 # version 2.12 allow png encoding; add check for "convert"
-# versiob 2.13 verbose mode
+# version 2.13 verbose mode
+# version 2.14 updates to plugin API
 
 #######################################################################
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
+
 use POSIX;     # Needed for setlocale()
 setlocale(LC_NUMERIC, "C");
 
-if (!defined($standalone)) {
-    my $smogrify;
-    if ($^O eq "MSWin32") {
-	$smogrify="smogrify";
-    }
-    else {
-	$smogrify=`which smogrify`;
-	chomp($smogrify);
-    }
-    if ($smogrify ne "") {
-	require $smogrify;
-    }
-}
-else {
-    $command=$ARGV[0];
+my $nulfile;
+my $exe;
+
+if ($^O eq "MSWin32") {
+    $nulfile = "NUL";
+    $exe = ".exe";
+} else {
+    $nulfile = "/dev/null";
+    $exe = "";
 }
 
+if (!caller) {
+    our $command;
+    #our $otype;
+    exit 0 if (!defined($ARGV[0]));
+}
+
+if (!defined($command)) {
+    $command  = $ARGV[0];
+}
 
 #######################################################################
 
-
 if ($command eq "version") {
-    print "encodedv encoder plugin v2.13\n";
+    print "encodedv encoder plugin v2.14\n";
     exit 0;
 }
-
 
 if ($command eq "init") {
     # perform any initialisation needed
@@ -71,7 +83,6 @@ if ($command eq "init") {
 }
 
 
-
 if ($command eq "get_capabilities") {
     # return capabilities - this is a bitmap field
     # bit 0 - takes extra parameters (using RFX request)
@@ -81,7 +92,6 @@ if ($command eq "get_capabilities") {
     print "4\n";
     exit 0;
 }
-
 
 
 if ($command eq "get_formats") {
@@ -102,6 +112,17 @@ if ($command eq "get_formats") {
 }
 
 
+if ($command eq "get_format_request") {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    print 7; # clipped wav, clipped frames
+    exit 0;
+}
+
 
 if ($command eq "encode") {
     # encode 
@@ -113,7 +134,6 @@ if ($command eq "encode") {
 
     $usemp3=$ARGV[13];
 
-
     if ($otype eq "dv_ntsc_medhi"||$otype eq "dv_pal_medhi") {
 	$passes=2;
     }
@@ -121,10 +141,9 @@ if ($command eq "encode") {
 	$passes=3;
     }
 
-
-    for ($i=$start;$i<=$end;$i++) {
-	$name=&mkname($i);
-	$name2=&mkname($i-1);
+    for ($i = $start; $i <= $end; $i++) {
+	$name = &mkname($i);
+	$name2 = &mkname($i - 1);
 	`convert $name$img_ext $name2$to_ext`;
     }
 
@@ -140,10 +159,6 @@ if ($command eq "encode") {
     }
 
     system($syscom);
-
-    # required
-    &sig_complete;
-    exit 0;
 }
 
 
@@ -153,13 +168,12 @@ if ($command eq "clear") {
 
     $to_ext=".ppm";
 
-    for ($i=$start;$i<=$end;$i++) {
+    for ($i = $start; $i <= $end; $i++) {
 	$name=&mkname($i-1);
 	if (-f "$name$to_ext") {
 	    unlink "$name$to_ext";
 	}
     }
-    &sig_complete;
     exit 0;
 }
 
@@ -174,19 +188,26 @@ if ($command eq "finalise") {
     exit 0;
 }
 
+##########################################################3
 
-###### subroutines #######
-
-
-
-
-sub get_format_request {
-    # return the code for how we would like audio and video delivered
-    # this is a bitmap field composed of:
-    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
-    # bit 1 - unset=all audio; set=clipped audio
-    # bit 2 - unset=all frames; set=frames for selection only
-
-    return 7; # clipped wav, clipped frames
+sub mkname {
+    sprintf("%08d", shift);
 }
 
+
+sub location {
+    # return the location of an executable
+    my ($command)=shift;
+
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
+
+    my ($location) = `which \"$command\" 2>$nulfile`;
+    chomp($location);
+
+    $location;
+}
+
+##### required
+1;

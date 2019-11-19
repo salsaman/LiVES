@@ -12,35 +12,48 @@
 # version 1.1 - add support for png, correct requires error text
 # version 1.2 - add support for Win32
 # version 1.3 - more verbose
+# version 1.4 api update and add skip param
 #######################################################################
+
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
 
 use POSIX;     # Needed for setlocale()
 setlocale(LC_NUMERIC, "C");
 
-if (!defined($standalone)) {
-    my $smogrify;
-    if ($^O eq "MSWin32") {
-	$smogrify="smogrify";
-    }
-    else {
-	$smogrify=`which smogrify`;
-	chomp($smogrify);
-    }
-    if ($smogrify ne "") {
-	require $smogrify;
-    }
+my $nulfile;
+my $exe;
+
+if ($^O eq "MSWin32") {
+    $nulfile = "NUL";
+    $exe = ".exe";
+} else {
+    $nulfile = "/dev/null";
+    $exe = "";
 }
 
-else {
-    $command=$ARGV[0];
+if (!caller) {
+    our $command;
+    #our $otype;
+    exit 0 if (!defined($ARGV[0]));
+}
+
+if (!defined($command)) {
+    $command  = $ARGV[0];
 }
 
 
 #######################################################################
 
-
 if ($command eq "version") {
-    print "pdf encoder plugin v1.3\n";
+    print "pdf encoder plugin v1.4\n";
     exit 0;
 }
 
@@ -65,17 +78,15 @@ if ($command eq "init") {
 }
 
 
-
 if ($command eq "get_capabilities") {
     # return capabilities - this is a bitmap field
     # bit 0 - takes extra parameters (using RFX request)
     # bit 1 - unused
     # bit 2 - can encode png
     # bit 3 - not pure perl
-    print "4\n";
+    print "5\n";
     exit 0;
 }
-
 
 
 if ($command eq "get_formats") {
@@ -90,10 +101,49 @@ if ($command eq "get_formats") {
 }
 
 
+if ($command eq "get_format_request") {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    print 0; # clipped wav, clipped frames
+    exit 0;
+}
+
+
+if ($command eq "get_rfx") {
+    # mandatory section
+    print "<define>\n";
+    print "|1.7\n";
+    print "</define>\n";
+
+    # mandatory section
+    print "<language_code>\n";
+    print "0xF0\n";
+    print "</language_code>\n";
+
+    # optional section
+    print "<params>\n";
+    print "skip|I will take a snapshot every  |num0|50|1|1000|\n";
+    print "</params>\n";
+
+    print "<param_window>\n";
+    print "layout|\"I can make a pdf from your video clip !\"|\n";
+    print "layout|p0|\" frames.\"|\n";
+    print "</param_window>\n";
+
+    exit 0;
+}
+
 
 if ($command eq "encode") {
-    # encode 
-    for ($i=$start;$i<=$end;$i++) {
+    # encode
+
+    my $skip = $ARGV[13];
+
+    for ($i = $start; $i <= $end; $i+= $skip) {
 	$name=&mkname($i);
 	`convert $name$img_ext $name.pdf`;
 	print STDERR "converted $i\n";
@@ -113,10 +163,6 @@ if ($command eq "encode") {
     }
 
     system($syscom);
-
-    # required
-    &sig_complete;
-    exit 0;
 }
 
 
@@ -124,13 +170,12 @@ if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
 
-    for ($i=$start;$i<=$end;$i++) {
+    for ($i=$start; $i <= $end; $i++) {
 	$name=&mkname($i);
 	if (-f "$name.pdf") {
 	    unlink "$name.pdf";
 	}
     }
-    &sig_complete;
     exit 0;
 }
 
@@ -148,16 +193,25 @@ if ($command eq "finalise") {
 
 ###### subroutines #######
 
+sub location {
+    # return the location of an executable
+    my ($command)=shift;
 
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
 
+    my ($location) = `which \"$command\" 2>$nulfile`;
+    chomp($location);
 
-sub get_format_request {
-    # return the code for how we would like audio and video delivered
-    # this is a bitmap field composed of:
-    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
-    # bit 1 - unset=all audio; set=clipped audio
-    # bit 2 - unset=all frames; set=frames for selection only
-
-    return 0; # clipped wav, clipped frames
+    $location;
 }
 
+
+sub mkname {
+    sprintf("%08d", shift);
+}
+
+
+##### required
+1;

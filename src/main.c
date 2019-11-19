@@ -5691,7 +5691,11 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
                 if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
                   dplug->cdata->current_palette = oldpal;
                   (*dplug->decoder->set_palette)(dplug->cdata);
-                }}}}}
+                }
+              }
+            }
+          }
+        }
 
         // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
 
@@ -5720,7 +5724,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         if (pixel_data == NULL || pixel_data[0] == NULL) {
           char *msg = lives_strdup_printf("NULL pixel data for layer size %d X %d, palette %s\n", width, height,
                                           weed_palette_get_name_full(dplug->cdata->current_palette,
-								     dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
+                                              dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
           LIVES_WARN(msg);
           lives_free(msg);
           return FALSE;
@@ -5746,10 +5750,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           if (prefs->apply_gamma && prefs->btgamma) {
             if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
               weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, dplug->cdata->frame_gamma);
-            }
-	    else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
+            } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
               weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
-	    }
+            }
           }
 
           // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
@@ -5757,11 +5760,11 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
             weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
             weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
-	    if (prefs->apply_gamma && prefs->btgamma
-		&& weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
-	      weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
-	    }
-	  }
+            if (prefs->apply_gamma && prefs->btgamma
+                && weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
+              weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
+            }
+          }
           // deinterlace
           if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
             if (!is_thread) {
@@ -5782,8 +5785,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         }
         lives_free(fname);
 
-	// yes, since we created the images oursselves they should actually be in the gamma of the clip
-	weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, sfile->gamma_type);
+        // yes, since we created the images oursselves they should actually be in the gamma of the clip
+        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, sfile->gamma_type);
 
 #ifdef HAVE_POSIX_FADVISE
         // advise that we will read the next frame
@@ -6892,8 +6895,10 @@ void load_frame_image(int frame) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
           else {
-	      gamma_correct_layer(cfile->gamma_type, frame_layer);
-	  }}}
+            gamma_correct_layer(cfile->gamma_type, frame_layer);
+          }
+        }
+      }
 
       if (return_layer != NULL) weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(frame_layer));
 

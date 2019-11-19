@@ -5,7 +5,6 @@
 encoderdir = $(libdir)/$(PACKAGE)/plugins/encoders
 encoder_DATA = encodedv_encoder \
 ffmpeg_encoder \
-mencoder_encoder \
 mjpegtools_encoder \
 multi_encoder \
 multi_encoder3 \

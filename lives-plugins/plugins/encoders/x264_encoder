@@ -6,43 +6,53 @@
 # see file COPYING or www.gnu.org for details
 
 
-
-
-
 #######################################################################
 # LiVES x264 plugin v0.5
+# LiVES x264 plugin v0.51 ### api updates
 
 $queuefile="264stream.y4m";
 
 #######################################################################
 
+my $USE_STRICT = 1;
+if ($USE_STRICT) {
+    use strict;
+}
+
+my $USE_WARNINGS = 1;
+if ($USE_WARNINGS) {
+    use warnings;
+}
+
 use POSIX;     # Needed for setlocale()
 setlocale(LC_NUMERIC, "C");
 
-if (!defined($standalone)) {
-    my $smogrify;
-    if ($^O eq "MSWin32") {
-	$smogrify="smogrify";
-    }
-    else {
-	$smogrify=`which smogrify`;
-	chomp($smogrify);
-    }
-    if ($smogrify ne "") {
-	require $smogrify;
-    }
-}
-else {
-    $command=$ARGV[0];
+my $nulfile;
+my $exe;
+
+if ($^O eq "MSWin32") {
+    $nulfile = "NUL";
+    $exe = ".exe";
+} else {
+    $nulfile = "/dev/null";
+    $exe = "";
 }
 
+if (!caller) {
+    our $command;
+    #our $otype;
+    exit 0 if (!defined($ARGV[0]));
+}
 
+if (!defined($command)) {
+    $command  = $ARGV[0];
+}
 
 #######################################################################
 
 
 if ($command eq "version") {
-    print "x264 encoder plugin v0.5\n";
+    print "x264 encoder plugin v0.51\n";
     exit 0;
 }
 
@@ -70,7 +80,6 @@ if ($command eq "init") {
 }
 
 
-
 if ($command eq "get_capabilities") {
     # return capabilities - this is a bitmap field
     # bit 0 - takes extra parameters (using RFX request)
@@ -80,7 +89,6 @@ if ($command eq "get_capabilities") {
     print "4\n";
     exit 0;
 }
-
 
 
 if ($command eq "get_formats") {
@@ -100,10 +108,20 @@ if ($command eq "get_formats") {
     print "x264_br_720px|x264 blu-ray 720p NTSC 30 fps high quality|32|size=1280x720,fps=30|mpg|\n"; # 720p
     print "x264_br_720ppx|x264 blu-ray 720p PAL 24 or 25 fps high quality|32|size=1280x720,fps=24;25|mpg|\n"; # 720p
 
-
     exit 0;
 }
 
+
+if ($command eq "get_format_request") {
+    # return the code for how we would like audio and video delivered
+    # this is a bitmap field composed of:
+    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
+    # bit 1 - unset=all audio; set=clipped audio
+    # bit 2 - unset=all frames; set=frames for selection only
+
+    print 7; # clipped pcm wav, all frames
+    exit 0;
+}
 
 
 if ($command eq "encode") {
@@ -111,24 +129,21 @@ if ($command eq "encode") {
 
     if (($otype eq "divx+" ||$otype eq "divxh+") && &location("mkvmerge") eq "") {
 	print STDERR "You must install mkvmerge in order to create this file.\nTry installing the mkvtoolnix package.\n";
-	&sig_complete;
 	exit 1;
     }
 
     if (&location("MP4Box") eq "") {
 	print STDERR "You must install MP4Box in order to create this file.\nTry installing the gpac package.\n";
-	&sig_complete;
 	exit 1;
     }
 
     if ($audiofile ne "" && &location("ffmpeg") eq "" && &location("avconv") eq "") {
 	print STDERR "You must install ffmpeg or avconv with libfaac support in order to encode with audio.\n";
-	&sig_complete;
 	exit 1;
     }
 
-    $err=">/dev/null 2>&1";
-    if (defined($DEBUG_ENCODERS)) {
+    $err= ">/dev/null 2>&1";
+    if (1 || defined($DEBUG_ENCODERS)) {
 	$err="1>&2";
     }
 
@@ -136,11 +151,7 @@ if ($command eq "encode") {
 
     $threads=$ncpus;
 
-
     unlink $queuefile;
-
-    $mf_ver=&rc_get("mplayer_mf_version");
-
 
     if ($mf_ver==1) {
 	if ($img_ext eq ".png") {
@@ -161,7 +172,6 @@ if ($command eq "encode") {
 	else {
 	    $syscom="$mplayer_com -frames $end -mf fps=$fps:type=jpg mf://*".$img_ext." -nosound -benchmark -fps $fps -ao null -vo yuv4mpeg:file=$queuefile </dev/null";
 	}
-
     }
 
     print STDERR "Running stream to queue with command:\n$syscom\n";
@@ -192,7 +202,6 @@ if ($command eq "encode") {
 
     system("$syscom $err");
 
-
     if ($audiofile ne "") {
 	$tool="ffmpeg";
 
@@ -207,50 +216,45 @@ if ($command eq "encode") {
 	system("$syscom $err");
 
 	if ($otype ne "divx+" && $otype ne "divxh+") {
-	    $syscom="MP4Box -fps $fps -tmp $curtmpdir -add $ofile -add temp.aac \"$nfile\"";
+	    $syscom = "MP4Box -fps $fps -tmp . -add $ofile -add temp.aac \"$nfile\"";
 	}
 	else {
-	    $syscom="mkvmerge --default-duration 0:$fps"."fps --title \"$title\" $ofile temp.aac -o \"$nfile\"";
+	    $syscom = "mkvmerge --default-duration 0:$fps"."fps --title \"$title\" $ofile temp.aac -o \"$nfile\"";
 	}
 
 	print STDERR "Muxing with:\n$syscom\n";
+	print STDERR "\n";
+	print STDERR "\n";
 	
 	system("$syscom $err");
-
+	print STDERR "\n";
     }
     else {
 	if ($otype ne "divx+" && $otype ne "divxh+") {
-	    $syscom="MP4Box -fps $fps -tmp $curtmpdir -add $ofile \"$nfile\"";
+	    $syscom="MP4Box -fps $fps -tmp . -add $ofile \"$nfile\"";
 	}
 	else {
-	    $syscom="mkvmerge --default-duration 0:$fps"."fps --title \"$title\" $ofile -o \"$nfile\"";
+	    $syscom="mkvmerge --default-duration 0:$fps" . "fps --title \"$title\" $ofile -o \"$nfile\"";
 	}
 
 	print STDERR "Muxing with:\n$syscom\n";
+	print STDERR "\n";
+	print STDERR "\n";
 	
 	system("$syscom $err");
     }
-
-
-    # required
-    &sig_complete;
-    exit 0;
+    print STDERR "plugin has finished\n";
 }
 
 
 if ($command eq "clear") {
     # this is called after "encode"
     # note that encoding could have been stopped at any time
-
     unlink $queuefile;
-
     unlink "output.264";
-
+    unlink "temp.264";
     unlink "temp.aac";
-
     unlink "nohup.out";
-
-    &sig_complete;
     exit 0;
 }
 
@@ -266,17 +270,17 @@ if ($command eq "finalise") {
 
 ###### subroutines #######
 
+sub location {
+    # return the location of an executable
+   my ($command) = shift;
 
+    if ($^O eq "MSWin32") {
+	return "$command.exe";
+    }
 
-
-sub get_format_request {
-    # return the code for how we would like audio and video delivered
-    # this is a bitmap field composed of:
-    # bit 0 - unset=raw pcm audio; set=pcm audio with wav header
-    # bit 1 - unset=all audio; set=clipped audio
-    # bit 2 - unset=all frames; set=frames for selection only
-
-    return 7; # clipped wav, clipped frames
+    my ($location) = `which \"$command\" 2>$nulfile`;
+    chomp($location);
+    $location;
 }
 
 
@@ -288,3 +292,6 @@ sub get_num_procs {
     }
     return $threads;
 }
+
+##### required
+1;

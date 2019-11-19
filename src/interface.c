@@ -110,7 +110,7 @@ void show_playbar_labels(int clipno) {
       tmp = lives_strdup_printf(_("%s %s"), str_video, str_opening);
     } else {
       if (sfile->fps > 0.) {
-	sfile->video_time = sfile->frames / sfile->fps;
+        sfile->video_time = sfile->frames / sfile->fps;
       }
       if (sfile->video_time > 0.) {
         tmp = lives_strdup_printf(_("%s [%.2f sec]"), str_video, sfile->video_time);

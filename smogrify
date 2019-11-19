@@ -2452,10 +2452,12 @@ if (defined($ARGV[0])) {
 
 	    ## TODO: pass  all as a single array, so it should work with any external encoder
 
-	    #ARGV[1] = 
+	    # plugins need: $atype ($aq), $nfile,
+	    # $exe ? $otype, %img_ext,end, start, fps
+	    my $atype = &rc_get("encoder_acodec");
+	    our $aq = $atype;
 	    
 	    if (!$is_native) {
-		my $atype = &rc_get("encoder_acodec");
 		my $extra_opts = "";
 		my $com;
 		my $fields = "$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
@@ -2482,7 +2484,7 @@ if (defined($ARGV[0])) {
 
 	    if (-f ".comment") {
 		open IN,"< .comment";
-		read IN,$string,1040;
+		read IN, $string, 1040;
 		close IN;
 		unlink ".comment";
 	    }
@@ -2494,18 +2496,15 @@ if (defined($ARGV[0])) {
 
 	    chomp($comment);
 
-	    if ($get_rfx==0) {
-		$command = "encode";
-	    }
-	    else {
-		$command = "get_rfx";
-	    }
+	    $command = "encode";
 
+	    print STDERR "requiring the plugin\n";
 	    require $plugin;
+	    print STDERR "requiring the plugin\n";
 
 	    unlink $pidfile;
 
-	    return 1;
+	    &sig_complete;
 	    exit 0; # just in case
 	}
 

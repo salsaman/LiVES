@@ -5747,7 +5747,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
               weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, dplug->cdata->frame_gamma);
             }
-	    else if (dplug->cdata->YUV_subspace == YUV_SUBSPACE_BT709) {
+	    else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
               weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
 	    }
           }
@@ -5758,7 +5758,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
             weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
 	    if (prefs->apply_gamma && prefs->btgamma
-		&& weed_get_int_value(layer, WEED_LEAF_GAMMA, NULL) == WEED_GAMMA_BT709) {
+		&& weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
 	      weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
 	    }
 	  }

@@ -44,7 +44,7 @@ extern "C"
 # define PRIu64		__PRI64_PREFIX "u"
 #endif // ifndef PRI64d
 
-typedef void *(func_ptr)(void *);
+typedef void (*func_ptr)(void *);
 
 #ifndef IS_MINGW
 typedef int boolean;
@@ -92,10 +92,17 @@ boolean set_palette(int palette);
 /// host will call this
 uint64_t get_capabilities(int palette);
 
-#define VPP_CAN_RESIZE    1<<0
-#define VPP_CAN_RETURN    1<<1
-#define VPP_LOCAL_DISPLAY 1<<2
-#define VPP_LINEAR_GAMMA  1<<3
+/// for future use
+#define LIVES_INTENTION_PLAY               1
+#define LIVES_INTENTION_STREAM          2
+#define LIVES_INTENTION_TRANSCODE    3
+
+//#define VPP_CAN                         (1<<0)   /// can resize the image to fit the play window
+#define VPP_CAN_RESIZE                         (1<<0)   /// can resize the image to fit the play window
+#define VPP_CAN_RETURN                       (1<<1)
+#define VPP_LOCAL_DISPLAY                    (1<<2)
+#define VPP_LINEAR_GAMMA                    (1<<3)
+#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
 
 /// ready the screen to play (optional)
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
@@ -104,11 +111,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// and resizing it to screen size if possible (VPP_CAN_RESIZE)
 ///
 /// if return_data is non-NULL, you should either fill it with the effected,
-/// unresized data (VPP_CAN_RETURN) or set it back to NULL if you can't
+/// unresized data (VPP_CAN_RETURN) or set it to NULL if you can't
 ///
 /// hsize and vsize are width and height of the pixel data (in macropixels)
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
+/// otherwise it can be ignored
 boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
 
@@ -125,16 +133,7 @@ const char *get_fps_list(int palette);
 boolean set_fps(double fps);
 
 ///////////////////////////////////////////////////////////////////////////
-// mandatory function for display plugins (VPP_LOCAL_DISPLAY)
 
-/// This is a host function - a pointer to it is passed in send_keycodes()
-typedef boolean(*keyfunc)(boolean down, uint16_t unicode, uint16_t keymod);
-
-#define MOD_CONTROL_MASK 1<<2
-#define MOD_ALT_MASK 1<<3
-#define MOD_NEEDS_TRANSLATION 1<<15
-
-//////////////////////////////////////////////////////////////////////////
 // optional functions for yuv palettes
 
 /// plugin send list of palette sampling types, in order of preference (optional); -1 terminates list
@@ -155,10 +154,7 @@ boolean set_yuv_palette_clamping(int clamping_type);
 /// host sets the palette subspace (optional)
 boolean set_yuv_palette_subspace(int subspace_type);
 
-// optional - supported audio streams :: defined in lives/src/plugins.h (deprecated)
-const int *get_audio_fmts(void);
-
-// newer style
+/// newer style
 boolean init_audio(int sample_rate, int nchans, int argc, char **argv);
 
 // only float handled for now

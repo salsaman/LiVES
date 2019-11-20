@@ -116,7 +116,7 @@ boolean transcode(int start, int end) {
   mainw->vpp = vpp;
 
   // create the param window for the plugin
-  vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(1));
+  vppa = on_vpp_advanced_clicked(NULL, LIVES_INT_TO_POINTER(LIVES_INTENTION_TRANSCODE));
 
   // keep this, stop it from being freed
   rfx = vppa->rfx;

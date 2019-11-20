@@ -157,14 +157,12 @@ const char *get_init_rfx(int intention) {
   intent = intention;
 
   switch (intent) {
-  case 0: // LiVES VPP (streaming output)
+  case LIVES_INTENTION_PLAY: // for now...
+  case LIVES_INTENTION_STREAM: // LiVES VPP (streaming output)
     return
       "<define>\\n\
 |1.7\\n\
 </define>\\n\
-<language_code>\\n\
-0xF0\\n\
-</language_code>\\n\
 <params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis||\\n\
 \
@@ -197,14 +195,11 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
 </onchange>\\n\
 ";
 
-  case 1: // LiVES transcoding (test)
+  case LIVES_INTENTION_TRANSCODE: // LiVES transcoding (test)
     return
       "<define>\\n\
 |1.8.1\\n\
 </define>\\n\
-<language_code>\\n\
-0xF0\\n\
-</language_code>\\n\
 <params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis|webm/vp9/opus||\\n\
 \

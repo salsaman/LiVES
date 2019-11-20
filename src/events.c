@@ -3486,9 +3486,6 @@ lives_render_error_t render_events(boolean reset) {
 
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
-  mainw->rowstride_alignment = mainw->rowstride_alignment_hint;
-  mainw->rowstride_alignment_hint = 1;
-
   if (mainw->flush_audio_tc != 0 || event != NULL) {
     if (mainw->flush_audio_tc == 0) {
       is_blank = FALSE;

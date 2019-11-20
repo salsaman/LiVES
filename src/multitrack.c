@@ -3216,7 +3216,8 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
             // interpolation is OFF here so we will see exactly the current values
             if (mt->current_rfx->source != NULL) {
               weed_in_parameters_free((weed_plant_t *)mt->current_rfx->source);
-              weed_leaf_copy((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS, vanilla_inst, WEED_LEAF_IN_PARAMETERS);
+              weed_leaf_copy((weed_plant_t *)mt->current_rfx->source, WEED_LEAF_IN_PARAMETERS,
+                             vanilla_inst, WEED_LEAF_IN_PARAMETERS);
               if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(mt->solo_check)))
                 mt->solo_inst = mt->current_rfx->source;
               else

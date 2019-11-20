@@ -714,7 +714,7 @@ typedef struct {
 
   /// set to TRUE during frame load/display operation. If TRUE we should not switch clips,
   /// close the current clip, or call load_frame_image()
-  boolean noswitch;
+  volatile boolean noswitch;
   int new_clip;
 
   int aud_file_to_kill; ///< # of audio file to kill on crash

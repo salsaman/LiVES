@@ -67,6 +67,7 @@ typedef PangoContext LingoContext;
 
 #define lingo_layout_set_text(a, b, c) pango_layout_set_text(a, b, c)
 #ifdef LIVES_PAINTER_IS_CAIRO
+#define LIVES_PAINTER_COLOR_PALETTE(endian) (endian == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 : WEED_PALETTE_BGRA32)
 #define lingo_painter_show_layout(a, b) pango_cairo_show_layout(a, b)
 #endif
 #ifdef GUI_GTK

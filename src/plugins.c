@@ -746,7 +746,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   int *pal_list;
 
-  int intention = 0;
+  int intention = LIVES_INTENTION_PLAY;
   int hsize, vsize;
 
   LiVESList *fps_list_strings = NULL;
@@ -764,7 +764,6 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   // TODO - set default values from tmpvpp
 
-  // intention 0 = video plugin, intention 1 = transcoder
   if (user_data != NULL) intention = LIVES_POINTER_TO_INT(user_data);
 
   if (strlen(future_prefs->vpp_name)) {
@@ -789,7 +788,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 
   pversion = (tmpvpp->version)();
 
-  if (intention == 0)
+  if (intention == LIVES_INTENTION_PLAY)
     title = lives_strdup_printf("%s", pversion);
   else
     title = lives_strdup(_("Quick Transcoding"));
@@ -803,14 +802,14 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(vppa->dialog));
 
   // the filling...
-  if (intention == 0 && tmpvpp->get_description != NULL) {
+  if (intention == LIVES_INTENTION_PLAY && tmpvpp->get_description != NULL) {
     desc = (tmpvpp->get_description)();
     if (desc != NULL) {
       label = lives_standard_label_new(desc);
       lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
     }
   }
-  if (intention == 1) {
+  if (intention == LIVES_INTENTION_TRANSCODE) {
     label = lives_standard_label_new(_("Quick transcode provides a rapid, high quality preview of the selected frames and audio.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
@@ -828,7 +827,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    if (intention == 0) {
+    if (intention == LIVES_INTENTION_PLAY) {
       // fps
       combo = lives_standard_combo_new((tmp = lives_strdup(_("_FPS"))), fps_list_strings,
                                        LIVES_BOX(dialog_vbox), (tmp2 = lives_strdup(_("Fixed framerate for plugin.\n"))));
@@ -875,7 +874,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
                         vsize,
                         4., MAX_FRAME_HEIGHT, 4., 16., 0, LIVES_BOX(hbox), NULL);
 
-    if (intention == 1) {
+    if (intention == LIVES_INTENTION_TRANSCODE) {
       // add aspect ratio butto
       lives_special_aspect_t *aspect = (lives_special_aspect_t *)add_aspect_ratio_button(LIVES_SPIN_BUTTON(vppa->spinbuttonw),
                                        LIVES_SPIN_BUTTON(vppa->spinbuttonh), LIVES_BOX(dialog_vbox));
@@ -885,7 +884,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     add_fill_to_box(LIVES_BOX(hbox));
   }
 
-  if (intention == 0) {
+  if (intention == LIVES_INTENTION_PLAY) {
     if (tmpvpp->get_palette_list != NULL && (pal_list = (*tmpvpp->get_palette_list)()) != NULL) {
       int i;
 
@@ -923,7 +922,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_list_free_all(&pal_list_strings);
     }
   }
-  if (intention == 1) {
+  if (intention == LIVES_INTENTION_TRANSCODE) {
     vppa->apply_fx = lives_standard_check_button_new(_("Apply current realtime effects"), FALSE, LIVES_BOX(dialog_vbox), NULL);
   }
 
@@ -948,7 +947,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
                                LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
 
-  if (intention == 0) {
+  if (intention == LIVES_INTENTION_PLAY) {
     savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(vppa->dialog), LIVES_STOCK_SAVE_AS, NULL,
                  LIVES_RESPONSE_BROWSE);
 
@@ -2162,9 +2161,11 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
   LiVESList *decoder_plugin = mainw->decoder_list;
   //LiVESList *last_decoder_plugin = NULL;
 
-  set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
-  if (prefs->vj_mode) {
-    ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
+  if (fake_cdata != NULL) {
+    set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
+    if (prefs->vj_mode) {
+      ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
+    }
   }
 
   while (decoder_plugin != NULL) {
@@ -3541,8 +3542,6 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 
   return hints;
 }
-
-
 
 
 /** @brief create an rfx script from some fixed values and values from the plugin, compile the script and then run it

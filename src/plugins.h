@@ -69,6 +69,11 @@ typedef struct {
   const char *(*get_fps_list)(int palette);
   boolean(*set_fps)(double fps);
 
+  /// for future use
+#define LIVES_INTENTION_PLAY               1
+#define LIVES_INTENTION_STREAM          2
+#define LIVES_INTENTION_TRANSCODE    3
+
   const char *(*get_init_rfx)(int intention);
 
 #ifdef __WEED_EFFECTS_H__
@@ -102,7 +107,7 @@ typedef struct {
 #define VPP_LOCAL_DISPLAY (1<<2)
 #define VPP_LINEAR_GAMMA  (1<<3)
 
-  int fwidth, fheight;
+  int fwidth, fheight; /// width in pixels, but converted to macropixels for the player
 
   int palette;
   int YUV_sampling;

@@ -3459,7 +3459,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(advbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_vpp_advanced_clicked),
-                       NULL);
+                       LIVES_INT_TO_POINTER(LIVES_INTENTION_PLAY));
 
   if (mainw->vpp != NULL) {
     lives_combo_set_active_string(LIVES_COMBO(pp_combo), mainw->vpp->name);

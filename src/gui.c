@@ -415,7 +415,7 @@ void create_LiVES(void) {
   lives_widget_show(mainw->start_image);  // needed to get size
   lives_widget_show(mainw->end_image);  // needed to get size
 
-  lives_widget_set_app_paintable(mainw->start_image, TRUE);
+  /* lives_widget_set_app_paintable(mainw->start_image, TRUE); */
   lives_widget_set_app_paintable(mainw->end_image, TRUE);
 
   if (palette->style & STYLE_1) {
@@ -1948,7 +1948,7 @@ void create_LiVES(void) {
                      (LiVESAttachOptions)(0),
                      (LiVESAttachOptions)(0), 0, 0);
   lives_widget_set_halign(mainw->eventbox3, LIVES_ALIGN_START);
-  lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
+  // lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
   lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
@@ -4377,6 +4377,58 @@ void kill_play_window(void) {
     lives_widget_show_all(mainw->playframe);
   }
   lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Show Play Window"));
+}
+
+
+/** brief calculate sizes for letterboxing
+
+    if the player can resize, then we only need to consider the aspect ratio.
+    we will embed the image in a black rectangle to give it the same aspect ratio
+    as the player; thus when it gets stretched to the player size the inner image wil not be distorted
+    so here we check: if we keep the same height, and then set the width to the player a.r, does it increase ?
+    if so then our outer rectangle will be wider, othewise it will be higher (or the same, in which case we dont do anything)
+    - if either dimension ends up larger, then our outer rectangle is the player size, and we scale the inner image down so both
+    width and height fit */
+void get_letterbox_sizes(weed_layer_t *frame_layer, int *pwidth, int *pheight, int *lb_width, int *lb_height) {
+  int layer_palette = weed_layer_get_palette(frame_layer);
+
+  *pwidth = *lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
+  *pheight = *lb_height = weed_layer_get_height(frame_layer);
+
+  if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+    double frame_aspect = (double) * lb_width / (double) * lb_height;
+    double player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
+    // *pwidth, *pheight are the outer dimensions, *lb_width, *lb_height are inner, widths are in pixels
+    if (frame_aspect > player_aspect) {
+      // width is relatively larger, so the height will need padding
+      if (*lb_width > mainw->vpp->fwidth) {
+        *lb_width = mainw->vpp->fwidth;
+        *lb_height = *lb_width / frame_aspect;
+        *lb_height = (*lb_height >> 2) << 2;
+      }
+      *pwidth = *lb_width;
+      *pheight = *pwidth / player_aspect;
+      *pheight = (*pheight >> 2) << 2;
+    } else {
+      // width needs padding
+      if (*lb_height > mainw->vpp->fheight) {
+        *lb_height = mainw->vpp->fheight;
+        *lb_width = *lb_height * frame_aspect;
+        *lb_width = (*lb_width >> 2) << 2;
+      }
+      *pheight = *lb_height;
+      *pwidth = *pheight * player_aspect;
+      *pwidth = (*pwidth >> 2) << 2;
+    }
+  } else {
+    // if the player cant resize then the outer rectangle is the player size, and the inner rectangle should touch
+    // either top/bottom or left/right, whilst keeping the frame aspect
+    *pwidth = mainw->pwidth;
+    *pheight = mainw->pheight;
+    calc_maxspect(mainw->pwidth, mainw->pheight, lb_width, lb_height);
+    *pwidth = (*pwidth >> 2) << 2;
+    *pheight = (*pheight >> 2) << 2;
+  }
 }
 
 

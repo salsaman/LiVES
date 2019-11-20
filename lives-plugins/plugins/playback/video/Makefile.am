@@ -16,19 +16,6 @@ if IS_IRIX
 shared_cflags +=-DIS_IRIX=1
 endif
 
-if HAVE_SDL1
-SDL_libs = SDL.la
-CFLAGS_SDL = @SDL_CFLAGS@ -DHAVE_SDL=1
-LDFLAGS_SDL = @SDL_LIBS@
-
-else
-if FORCE_SDL
-SDL_libs = SDL.la
-CFLAGS_SDL = -I $(SDL_PREFIX) -DHAVE_SDL=1
-LDFLAGS_SDL = -lSDL
-endif
-endif
-
 if NEED_LOCAL_WEED
 weed_cflags = -DNEED_LOCAL_WEED
 endif
@@ -79,9 +66,6 @@ oggstream_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
 
 icecast_output_la_CFLAGS = @MJPEGTOOLS_CFLAGS@ $(shared_cflags) $(weed_cflags)
 icecast_output_la_LDFLAGS = $(shared_ldflags) @MJPEGTOOLS_LIBS@
-
-SDL_la_CFLAGS = $(shared_cflags) $(CFLAGS_SDL) $(weed_cflags)
-SDL_la_LDFLAGS = $(shared_ldflags) $(LDFLAGS_SDL)
 
 if HAVE_LIBv4l1
 vloopback_libs = vloopback.la
@@ -164,7 +148,7 @@ endif
 endif
 endif
 
-videopluginslib_LTLIBRARIES = $(SDL_libs) $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
+videopluginslib_LTLIBRARIES = $(YUV4MPEG_libs) $(oggstream_libs) $(icecast_output_libs) \
 	$(vjack_output_libs) $(lives2lives_stream_libs) $(vloopback_libs) $(vloopback2_libs) \
 	$(openGL_libs) $(libav_stream_libs)
 

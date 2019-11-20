@@ -1675,17 +1675,15 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
           set_channel_size(channel, width, height, 1, NULL);
 
+          if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
+            int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, &error);
+            if (rowstride_alignment_hint  > ALIGN_DEF)
+              mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+          }
+
           // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
           // and update width and height if necessary
           create_empty_pixel_data(channel, FALSE, TRUE);
-
-          // align memory if necessary
-          chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, &error);
-          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
-            int alignment = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
-            align_pixel_data(channel, alignment);
-          }
-
         }
       }
 
@@ -1723,16 +1721,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_NO_IN_CHANNELS;
-  }
-
-  if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
-    int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, &error);
-    if ((rowstride_alignment_hint == 16 ||
-         rowstride_alignment_hint == 8 ||
-         rowstride_alignment_hint == 4 ||
-         rowstride_alignment_hint == 2)
-        && rowstride_alignment_hint > mainw->rowstride_alignment_hint)
-      mainw->rowstride_alignment_hint = rowstride_alignment_hint;
   }
 
   if (get_enabled_channel(inst, 0, TRUE) == NULL) {
@@ -2312,12 +2300,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     //weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
 
-    // align memory if necessary
-    if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
-      int alignment = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
-      align_pixel_data(layer, alignment);
-    }
-
     pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
     weed_set_voidptr_array(channel, WEED_LEAF_PIXEL_DATA, numplanes, pixel_data);
     lives_freep((void **)&pixel_data);
@@ -2393,16 +2375,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (def_channel != NULL) layer_rows = weed_get_int_array(def_channel, WEED_LEAF_ROWSTRIDES, &error);
     else layer_rows = weed_get_int_array(channel, WEED_LEAF_ROWSTRIDES, &error);
 
-    if (def_channel != NULL && i == 0 && (weed_palette_is_alpha_palette
-                                          (weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error) &&
-                                           weed_palette_is_alpha_palette
-                                           (weed_get_int_value(def_channel, WEED_LEAF_CURRENT_PALETTE, &error)
-                                           )) ||
-                                          (in_tracks != NULL && out_tracks != NULL && in_tracks[0] == out_tracks[0]))) {
+    if ((def_channel != NULL && i == 0 &&
+         ((weed_palette_is_alpha_palette(weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error)) &&
+           weed_palette_is_alpha_palette(weed_get_int_value(def_channel, WEED_LEAF_CURRENT_PALETTE, &error)))))
+        || (in_tracks != NULL && out_tracks != NULL && in_tracks[0] == out_tracks[0])) {
       if (channel_flags & WEED_CHANNEL_CAN_DO_INPLACE) {
-        if (!(weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i], WEED_LEAF_CURRENT_PALETTE, &error) &&
-                                            weed_plant_has_leaf(channel, WEED_LEAF_HOST_ORIG_PDATA) &&
-                                            weed_get_boolean_value(channel, WEED_LEAF_HOST_ORIG_PDATA, &error) == WEED_TRUE))) {
+        if (!(weed_palette_is_alpha_palette(weed_get_int_value(in_channels[i], WEED_LEAF_CURRENT_PALETTE, &error)) &&
+              weed_plant_has_leaf(channel, WEED_LEAF_HOST_ORIG_PDATA) &&
+              weed_get_boolean_value(channel, WEED_LEAF_HOST_ORIG_PDATA, &error) == WEED_TRUE)) {
           // ah, good, inplace
           int num_palettes = weed_leaf_num_elements(chantmpl, WEED_LEAF_PALETTE_LIST);
           int *palettes = weed_get_int_array(chantmpl, WEED_LEAF_PALETTE_LIST, &error);
@@ -2528,12 +2508,20 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
       pdata = weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
 
-      if (weed_palette_is_alpha_palette(palette) && outpalette == palette && outwidth == width && outheight == height && pdata != NULL) {
+      if (weed_palette_is_alpha_palette(palette) && outpalette == palette && outwidth == width
+          && outheight == height && pdata != NULL) {
         lives_freep((void **)&channel_rows);
         continue;
       }
 
       set_channel_size(channel, opwidth / weed_palette_get_pixels_per_macropixel(palette), opheight, 1, NULL);
+
+      if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
+        int rowstride_alignment_hint = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
+        if (rowstride_alignment_hint > ALIGN_DEF) {
+          mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+        }
+      }
 
       // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
       // and update width and height if necessary
@@ -2546,12 +2534,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
       weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(channel));
 
-      // align memory if requested
-      if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
-        int alignment = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
-        align_pixel_data(channel, alignment);
-
-      }
       weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
     }
 
@@ -4184,12 +4166,6 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (num_elements > 0) array = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
 
   for (i = 0; i < num_elements; i++) {
-#ifndef HAVE_POSIX_MEMALIGN
-    if (weed_plant_has_leaf(array[i], WEED_LEAF_ALIGNMENT)) {
-      lives_freep((void **)&array);
-      return 12;
-    }
-#endif
     if (weed_plant_has_leaf(array[i], WEED_LEAF_IS_AUDIO) && weed_get_boolean_value(array[i], WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
       if (weed_plant_has_leaf(array[i], WEED_LEAF_AUDIO_CHANNELS) &&
           (naudins = weed_get_int_value(array[i], WEED_LEAF_AUDIO_CHANNELS, &error)) > 2) {
@@ -4228,12 +4204,6 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (num_elements > 0) array = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
 
   for (i = 0; i < num_elements; i++) {
-#ifndef HAVE_POSIX_MEMALIGN
-    if (weed_plant_has_leaf(array[i], WEED_LEAF_ALIGNMENT)) {
-      lives_freep((void **)&array);
-      return 12;
-    }
-#endif
     if (weed_plant_has_leaf(array[i], WEED_LEAF_IS_AUDIO) && weed_get_boolean_value(array[i], WEED_LEAF_IS_AUDIO, &error) == WEED_TRUE) {
       if (weed_plant_has_leaf(array[i], WEED_LEAF_AUDIO_CHANNELS) &&
           (naudouts = weed_get_int_value(array[i], WEED_LEAF_AUDIO_CHANNELS, &error)) > 2) {
@@ -7617,18 +7587,19 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   palette = weed_get_int_value(chantmpl, WEED_LEAF_CURRENT_PALETTE, &error);
   weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
 
+  if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
+    int rowstride_alignment_hint = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
+    if (rowstride_alignment_hint > ALIGN_DEF) {
+      mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+    }
+  }
+
   create_empty_pixel_data(channel, FALSE, TRUE);
 
   if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   else
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
-
-  // align memory if requested
-  if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
-    int alignment = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
-    align_pixel_data(channel, alignment);
-  }
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
     int num_inc = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
@@ -7667,7 +7638,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
 
     for (i = 0; (channel = get_enabled_channel(inst, i, FALSE)) != NULL; i++) {
-      if (width != weed_get_int_value(channel, WEED_LEAF_WIDTH, &error) || height != weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error)) {
+      if (width != weed_get_int_value(channel, WEED_LEAF_WIDTH, &error) ||
+          height != weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error)) {
         weed_layer_pixel_data_free(channel);
         weed_set_int_value(channel, WEED_LEAF_WIDTH, width);
         weed_set_int_value(channel, WEED_LEAF_HEIGHT, height);
@@ -7675,6 +7647,12 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
           cfile->hsize = width;
           cfile->vsize = height;
           set_main_title(cfile->file_name, 0);
+        }
+        if (weed_plant_has_leaf(chantmpl, WEED_LEAF_ALIGNMENT_HINT)) {
+          int rowstride_alignment_hint = weed_get_int_value(chantmpl, WEED_LEAF_ALIGNMENT_HINT, &error);
+          if (rowstride_alignment_hint > ALIGN_DEF) {
+            mainw->rowstride_alignment_hint = rowstride_alignment_hint;
+          }
         }
         create_empty_pixel_data(channel, FALSE, TRUE);
         if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)

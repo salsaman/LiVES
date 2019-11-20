@@ -926,7 +926,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->insert_after = TRUE;
   mainw->mute = FALSE;
   mainw->faded = FALSE;
-  mainw->save_with_sound = TRUE;
+  if (!prefs->vj_mode) {
+  } else
+    mainw->save_with_sound = FALSE;
   mainw->preview = FALSE;
   mainw->selwidth_locked = FALSE;
   mainw->untitled_number = mainw->cap_number = 1;
@@ -1224,7 +1226,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->cursor_style = LIVES_CURSOR_NORMAL;
 
-  mainw->rowstride_alignment = mainw->rowstride_alignment_hint = 1;
+  mainw->rowstride_alignment = ALIGN_DEF;
+  mainw->rowstride_alignment_hint = 0;
 
   mainw->sepwin_minwidth = MIN_SEPWIN_WIDTH;
   mainw->sepwin_minheight = PREVIEW_BOX_HT;
@@ -1415,7 +1418,7 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
 
   prefs->btgamma = FALSE;
-  //prefs->btgamma = TRUE;  // experimental
+  //prefs->btgamma = TRUE;  // experimental - DANGEROUS !!
 
   //////////////////////////////////////////////////////////////////
 
@@ -5160,12 +5163,12 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 
   unsigned char ibuff[8];
 
-  unsigned char *mem, *ptr;
+  unsigned char *ptr;
   unsigned char **row_ptrs;
 
   double file_gamma;
 
-  size_t bsize = fread(ibuff, 1, 8, fp), framesize;
+  size_t bsize = fread(ibuff, 1, 8, fp);
   boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
 
   int width, height;
@@ -5279,6 +5282,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   width = png_get_image_width(png_ptr, info_ptr);
   height = png_get_image_height(png_ptr, info_ptr);
   *rowstrides = png_get_rowbytes(png_ptr, info_ptr);
+  *rowstrides = ALIGN_CEIL(*rowstrides, mainw->rowstride_alignment);
 
   weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
@@ -5289,15 +5293,10 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
   else
     weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
 
-  // here we allocate ourselves, instead of calling create_empty_pixel data - in case rowbytes is different
-
-  // some things, like swscale, expect all frames to be a multiple of 32 bytes
-  // so here we round up
-  framesize = CEIL(*rowstrides * height, 32);
-
-  ptr = mem = (unsigned char *)lives_malloc(framesize + 64);
   weed_layer_pixel_data_free(layer);
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, mem);
+  create_empty_pixel_data(layer, FALSE, TRUE);
+  *rowstrides = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
+  ptr = weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
 
   // libpng needs pointers to each row
   row_ptrs = (unsigned char **)lives_malloc(height * sizeof(unsigned char *));
@@ -6054,7 +6053,7 @@ static void get_player_size(int *opwidth, int *opheight) {
         *opheight = cfile->vsize;
       }
     }
-    return;
+    goto align;
   }
 
   if (mainw->play_window != NULL) {
@@ -6062,7 +6061,7 @@ static void get_player_size(int *opwidth, int *opheight) {
     // use values set in resize_play_window
     *opwidth = mainw->pwidth;
     *opheight = mainw->pheight;
-    return;
+    goto align;
   }
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -6075,7 +6074,7 @@ static void get_player_size(int *opwidth, int *opheight) {
       set_mt_play_sizes(mainw->multitrack, cfile->hsize, cfile->vsize);
       calc_maxspect(mainw->multitrack->play_width, mainw->multitrack->play_height, opwidth, opheight);
     }
-    return;
+    goto align;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -6083,7 +6082,7 @@ static void get_player_size(int *opwidth, int *opheight) {
   if (mainw->is_rendering && !mainw->preview) {
     *opwidth = cfile->hsize;
     *opheight = cfile->vsize;
-    return;
+    goto align;
   }
 
   if (!mainw->fs) {
@@ -6124,6 +6123,10 @@ static void get_player_size(int *opwidth, int *opheight) {
     //*opheight -= 2; // necessary, or screen expands too much (!?)
     *opheight -= lives_widget_get_allocation_height(mainw->btoolbar);
   }
+
+align:
+  *opwidth = (*opwidth >> 2) << 2;
+  *opheight = (*opheight >> 2) << 2;
 }
 
 
@@ -6213,6 +6216,7 @@ void load_frame_image(int frame) {
   boolean was_preview = FALSE;
   boolean rec_after_pb = FALSE;
   boolean noswitch = mainw->noswitch;
+  boolean resized = FALSE;
 
   int weed_error;
   int retval;
@@ -6250,9 +6254,6 @@ void load_frame_image(int frame) {
     get_play_times();
     return;
   }
-
-  mainw->rowstride_alignment = mainw->rowstride_alignment_hint;
-  mainw->rowstride_alignment_hint = 1;
 
   if (!mainw->foreign) {
     mainw->actual_frame = cfile->last_frameno = frame;
@@ -6941,41 +6942,15 @@ void load_frame_image(int frame) {
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
 
-    if (LIVES_IS_PLAYING && prefs->letterbox && mainw->fs &&
-        (mainw->multitrack == NULL || mainw->sep_win) &&
-        (!mainw->ext_playback || (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
-      // consider letterboxing
-      lb_width = cfile->hsize;
-      lb_height = cfile->vsize;
-
-      if (mainw->multitrack == NULL && mainw->is_rendering &&
-          !(cfile->proc_ptr != NULL && mainw->preview) && mainw->clip_index[0] > -1) {
-        if (mainw->clip_index[0] == mainw->scrap_file && mainw->num_tracks == 1) {
-          // scrap file playback - use original clip size
-          check_layer_ready(mainw->frame_layer);
-          lb_width = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error);
-          lb_height = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error);
-        } else {
-          // playing from event list, use original clip size
-          lb_width = mainw->files[mainw->clip_index[0]]->hsize;
-          lb_height = mainw->files[mainw->clip_index[0]]->vsize;
-        }
-      }
-
-      // calc inner frame size
-      calc_maxspect(mainw->pwidth, mainw->pheight, &lb_width, &lb_height);
-      if (lb_width == opwidth && lb_height == opheight) lb_width = lb_height = 0;
-    }
-
     if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox)) {
-      // here we are playing through an external video playback plugin which cannot resize
-      // we must resize to whatever width and height we set when we called init_screen() in the plugin
+      // here we are either: playing through an external video playback plugin which cannot resize
+      // - we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
 
-      // both dimensions are in RGB(A) pixels, so we must adjust here and send
-      // macropixel size in the plugin's render_frame()
+      // both dimensions are in RGB(A) pixels, so we must adjust here and send the correct
+      // macropixel size in the plugin's render_frame() (in case of exotic palettes)
 
-      // - this is also used if we are letterboxing to fullscreen with an external plugin
+      // - this is also used if we are letterboxing with an external plugin
 
       weed_plant_t *frame_layer = NULL;
       weed_plant_t *return_layer = NULL;
@@ -6986,11 +6961,13 @@ void load_frame_image(int frame) {
 
       interp = get_interp_value(prefs->pb_quality);
 
+      if (mainw->fs && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
+        mainw->vpp->fwidth = mainw->pwidth;
+        mainw->vpp->fheight = mainw->pheight;
+      }
+
       if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && !(mainw->vpp->capabilities & VPP_CAN_RESIZE) &&
-          ((mainw->vpp->fwidth / weed_palette_get_pixels_per_macropixel(layer_palette) <
-            mainw->pwidth) ||
-           (mainw->vpp->fheight / weed_palette_get_pixels_per_macropixel(layer_palette) <
-            mainw->pheight))) {
+          ((mainw->vpp->fwidth  < mainw->pwidth || mainw->vpp->fheight < mainw->pheight))) {
         // mainw->frame_layer will be downsized for the plugin but upsized for screen
         // so copy layer and convert, retaining original
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
@@ -7005,34 +6982,26 @@ void load_frame_image(int frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
-      if (!prefs->letterbox) {
+      if (prefs->letterbox) {
+        /// letterbox external
+        get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
+        if (pwidth != lb_width || pheight != lb_height) {
+          boolean orig_frame = (mainw->frame_layer == frame_layer);
+          if (orig_frame) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+          letterbox_layer(frame_layer, lb_width /
+                          weed_palette_get_pixels_per_macropixel(layer_palette),
+                          lb_height, pwidth /
+                          weed_palette_get_pixels_per_macropixel(layer_palette),
+                          pheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
+          if (frame_layer == NULL) {
+            if (orig_frame) frame_layer = mainw->frame_layer;
+            else frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
+          } else resized = TRUE;
+        }
+      }
+      if (!resized) {
         resize_layer(frame_layer, mainw->vpp->fwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                      mainw->vpp->fheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
-      } else {
-        pwidth = weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error) *
-                 weed_palette_get_pixels_per_macropixel(layer_palette);
-        pheight = weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error);
-
-        lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
-        lb_height = weed_layer_get_height(frame_layer);
-
-        if (mainw->vpp->capabilities & VPP_CAN_RESIZE) {
-          double player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
-          if ((double)lb_height * player_aspect > lb_width) pwidth = (double)lb_height * player_aspect;
-          if ((double)lb_width / player_aspect > lb_height) pheight = (double)lb_width / player_aspect;
-        } else {
-          calc_maxspect(mainw->vpp->fwidth, mainw->vpp->fheight, &lb_width, &lb_height);
-          pwidth = mainw->vpp->fwidth;
-          pheight = mainw->vpp->fwidth;
-        }
-        if (pwidth != lb_width || pheight != lb_height) {
-          if (frame_layer == mainw->frame_layer) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-          letterbox_layer(frame_layer, lb_width /
-                          weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-                          lb_height, pwidth /
-                          weed_palette_get_pixels_per_macropixel(mainw->vpp->palette),
-                          pheight);
-        }
       }
 
       // resize_layer can change palette
@@ -7051,11 +7020,6 @@ void load_frame_image(int frame) {
                weed_palette_get_pixels_per_macropixel(layer_palette);
       pheight = weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error);
 
-      if (mainw->fs && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-        mainw->vpp->fwidth = GUI_SCREEN_WIDTH;
-        mainw->vpp->fheight = GUI_SCREEN_HEIGHT;
-      }
-
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
         if (!prefs->show_urgency_msgs || !check_for_urgency_msg(frame_layer)) {
           if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
@@ -7073,8 +7037,8 @@ void load_frame_image(int frame) {
 
       if (rec_after_pb) {
         // record output from playback plugin
-        int retwidth = mainw->pwidth / weed_palette_get_pixels_per_macropixel(mainw->vpp->palette);
-        int retheight = mainw->pheight;
+        int retwidth = mainw->vpp->fwidth;
+        int retheight = mainw->vpp->fheight;
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
@@ -7084,10 +7048,8 @@ void load_frame_image(int frame) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SAMPLING, mainw->vpp->YUV_sampling);
         }
 
+        mainw->rowstride_alignment_hint = -1; /// special value to compact the rowstrides
         create_empty_pixel_data(return_layer, FALSE, TRUE);
-
-        // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-        compact_rowstrides(return_layer);
 
         retdata = weed_get_voidptr_array(return_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
       }
@@ -7176,31 +7138,28 @@ void load_frame_image(int frame) {
       get_player_size(&mainw->pwidth, &mainw->pheight);
     }
 
-    pwidth = weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error) *
-             weed_palette_get_pixels_per_macropixel(layer_palette);
-    pheight = weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error) *
-              weed_palette_get_pixels_per_macropixel(layer_palette);
+    interp = get_interp_value(prefs->pb_quality);
 
-    if (pwidth != mainw->pwidth || pheight != mainw->pheight || lb_width != 0) {
-      if (lb_width != 0) {
+    if (prefs->letterbox) {
+      /// letterbox internal
+      get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
+      if (pwidth != lb_width || pheight != lb_height) {
         convert_layer_palette(mainw->frame_layer, cpal, 0);
         letterbox_layer(mainw->frame_layer, lb_width /
                         weed_palette_get_pixels_per_macropixel(layer_palette),
                         lb_height, mainw->pwidth /
                         weed_palette_get_pixels_per_macropixel(layer_palette),
-                        mainw->pheight);
-      } else {
-        interp = get_interp_value(prefs->pb_quality);
-        resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
-                     mainw->pheight, interp, cpal, 0);
-      }
-    } else {
-      if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
-        interp = get_interp_value(prefs->pb_quality);
-        resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
-                     mainw->pheight, interp, cpal, 0);
+                        mainw->pheight,  interp, cpal, 0);
+        resized = TRUE;
       }
     }
+    if (!resized) {
+      resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
+                   mainw->pheight, interp, cpal, 0);
+    }
+
+    convert_layer_palette(mainw->frame_layer, cpal, 0);
+    gamma_correct_layer(cfile->gamma_type, mainw->frame_layer);
 
     if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
       if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
@@ -7208,8 +7167,6 @@ void load_frame_image(int frame) {
       }
     }
 
-    convert_layer_palette(mainw->frame_layer, cpal, 0);
-    gamma_correct_layer(cfile->gamma_type, mainw->frame_layer);
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
@@ -8149,10 +8106,8 @@ void load_frame_image(int frame) {
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
           lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 
-          if (mainw->play_window == NULL) {
-            if (mainw->double_size) {
-              frame_size_update();
-            } else resize(1);
+          if (mainw->play_window == NULL && mainw->double_size) {
+            frame_size_update();
           } else resize(1);
         }
       }

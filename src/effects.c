@@ -611,7 +611,6 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   // skip resizing virtual frames
   if (resize_instance != NULL && is_virtual_frame(mainw->current_file, i)) {
-    mainw->rowstride_alignment_hint = 1;
     if (++i > cfile->end) {
       mainw->internal_messaging = FALSE;
       lives_snprintf(mainw->msg, 9, "completed");
@@ -621,10 +620,8 @@ lives_render_error_t realfx_progress(boolean reset) {
   }
 
   if (has_video_filters(FALSE) || resize_instance != NULL) {
-    mainw->rowstride_alignment = mainw->rowstride_alignment_hint;
-
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
-
+    mainw->rowstride_alignment_hint = 4;
     layer = weed_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
@@ -701,12 +698,10 @@ lives_render_error_t realfx_progress(boolean reset) {
         if (cfile->clip_type == CLIP_TYPE_FILE) {
           if (!check_if_non_virtual(mainw->current_file, 1, cfile->frames)) save_frame_index(mainw->current_file);
         }
-        mainw->rowstride_alignment_hint = 1;
         return LIVES_RENDER_COMPLETE;
       }
     } else {
       sprintf(mainw->msg, "%s", "completed");
-      mainw->rowstride_alignment_hint = 1;
       return LIVES_RENDER_COMPLETE;
     }
   }
@@ -747,8 +742,6 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
   else resize_instance = NULL;
 
   mainw->internal_messaging = TRUE;
-
-  mainw->rowstride_alignment_hint = 1;
 
   mainw->progress_fn = &realfx_progress;
   mainw->progress_fn(TRUE);

@@ -264,9 +264,6 @@ For weed events there is weed-events.h
 
 
 
-
-
-
 == WEED PLANTS ==
 
 A ''plant'' in Weed is a collection of one or more ''leaves''.
@@ -765,10 +762,20 @@ Provided for convenience for use by any plant type
 
 
 
+
+
 == Weed library functions  ==
 
-There now follows a description of the Weed reference library (libweed). Currently this library is offered in two versions,
+There now follows a description of the Weed reference library (libweed).
+
+Currently this library is offered in two versions,
 one using the standard memory functions, and a second using glib's slice allocator for higher performance (libweed-gslice)
+
+Both libraries are written with performance in mind, for example a hash function is used to locate leaf keys.
+
+The libray and header are relatively compact - the stripped libweed.so is around 14K in size on an average linux system
+and the header contains around 240 lines (include whitespace and comments).
+
 
 
 
@@ -2776,6 +2783,23 @@ Filter_class flag WEED_FILTER_HINT_MAY_THREAD
 
 Tips for the Weed host.
 
+=== Layers ===
+
+Channel instances can be created with no link to a filter instance. These are know as "layers" in Weed terminology.
+
+A layer can have the same leaves as a channel instance, e.g "width", "height", "rowstrides", "current_palette", "pixel_data"
+and can be manipulated internally by the host.
+
+When calling the process_func() for a plugin, the relevant leaves can simply be copied to or from an in or out channel in the instance.
+
+
+
+
+
+
+
+
+
 Before setting the value of parameters from external sources it is best to check that the value match in both quantity and type.
 
 For example:
@@ -2833,7 +2857,6 @@ static int ext_set_param(ext_context *ctx, int index, int nvalues, void *values)
 
         // either the user tried to set an invalid number of elements or the plugin was misconfigured
 	return EINVAL;
-
 }
 
 
@@ -2866,8 +2889,6 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 #endif
 
 	// check for min / max (optional)
-
-
 
 	if (hint == WEED_HINT_STRING || hint == WEED_HINT_SWITCH) {
 	   	 // these types don't have min or max
@@ -3019,24 +3040,7 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 					}
 				}					
 
-
-
-	weed_leaf_set(param
-
-
-
-
-
-
-
-
-  if (nvalues % vsize != 0) {
-    return EINVAL;
-  }
-
-  if (!validate_vals(param, nvalues, value)) {
-    return EINVAL;
-  }
+	weed_leaf_set(param, WEED_LEAF_VALUE, nvals, values);
 
   return 0;
 }

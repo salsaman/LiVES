@@ -5,7 +5,11 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#include <stdio.h>
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -15,17 +19,12 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-#include <stdlib.h>
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
+
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef struct {
   int tcache;

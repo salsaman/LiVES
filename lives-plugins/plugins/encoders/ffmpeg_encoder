@@ -249,11 +249,6 @@ if ($command eq "get_rfx") {
 	    print "|1.7\n";
 	    print "</define>\n";
 	    
-	    # mandatory section
-	    print "<language_code>\n";
-	    print "0xF0\n";
-	    print "</language_code>\n";
-	    
 	    # optional section
 	    print "<params>\n";
 
@@ -270,11 +265,6 @@ if ($command eq "get_rfx") {
 	    print "<define>\n";
 	    print "|1.7\n";
 	    print "</define>\n";
-	    
-	    # mandatory section
-	    print "<language_code>\n";
-	    print "0xF0\n";
-	    print "</language_code>\n";
 	    
 	    # optional section
 	    print "<params>\n";
@@ -294,11 +284,6 @@ if ($command eq "get_rfx") {
 	print "<define>\n";
 	print "|1.7\n";
 	print "</define>\n";
-	
-	# mandatory section
-	print "<language_code>\n";
-	print "0xF0\n";
-	print "</language_code>\n";
 	
 	# optional section
 	print "<params>\n";

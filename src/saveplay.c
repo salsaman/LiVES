@@ -355,6 +355,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           return 0;
         }
         probed_achans = cfile->achans;
+        g_print("probed %d\n", probed_achans);
         cfile->arate = cfile->arps = cdata->arate;
         cfile->achans = cdata->achans;
         cfile->asampsize = cdata->asamps;

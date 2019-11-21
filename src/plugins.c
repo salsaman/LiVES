@@ -1263,6 +1263,34 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     prefsw_set_rec_after_settings(vpp, prefsw);
   }
 
+  // get the play parameters (and alpha channels) if any and convert to weed params
+  if (vpp->get_play_params != NULL) {
+    g_print("BOO\n");
+    weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100));
+    vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap);
+  }
+
+  // create vpp->play_params
+  if (vpp->play_paramtmpls != NULL) {
+    weed_plant_t *ptmpl;
+    for (i = 0; (ptmpl = (weed_plant_t *)vpp->play_paramtmpls[i]) != NULL; i++) {
+      vpp->play_params = (weed_plant_t **)lives_realloc(vpp->play_params, (i + 2) * sizeof(weed_plant_t *));
+      if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
+        // is param template, create a param
+        vpp->play_params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
+        weed_leaf_copy(vpp->play_params[i], WEED_LEAF_VALUE, ptmpl, WEED_LEAF_DEFAULT);
+        weed_set_plantptr_value(vpp->play_params[i], WEED_LEAF_TEMPLATE, ptmpl);
+        vpp->num_play_params++;
+      } else {
+        // must be an alpha channel
+        vpp->play_params[i] = weed_plant_new(WEED_PLANT_CHANNEL);
+        weed_set_plantptr_value(vpp->play_params[i], WEED_LEAF_TEMPLATE, ptmpl);
+        vpp->num_alpha_chans++;
+      }
+    }
+    vpp->play_params[i] = NULL;
+  }
+
   if (!in_use) return vpp;
 
   if (!mainw->is_ready) {
@@ -1293,32 +1321,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
       vpp->fixed_fpsd = -1.;
       vpp->fixed_fps_numer = 0;
     }
-  }
-
-  // get the play parameters (and alpha channels) if any and convert to weed params
-  if (vpp->get_play_params != NULL) {
-    vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap);
-  }
-
-  // create vpp->play_params
-  if (vpp->play_paramtmpls != NULL) {
-    weed_plant_t *ptmpl;
-    for (i = 0; (ptmpl = (weed_plant_t *)vpp->play_paramtmpls[i]) != NULL; i++) {
-      vpp->play_params = (weed_plant_t **)lives_realloc(vpp->play_params, (i + 2) * sizeof(weed_plant_t *));
-      if (WEED_PLANT_IS_PARAMETER_TEMPLATE(ptmpl)) {
-        // is param template, create a param
-        vpp->play_params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
-        weed_leaf_copy(vpp->play_params[i], WEED_LEAF_VALUE, ptmpl, WEED_LEAF_DEFAULT);
-        weed_set_plantptr_value(vpp->play_params[i], WEED_LEAF_TEMPLATE, ptmpl);
-        vpp->num_play_params++;
-      } else {
-        // must be an alpha channel
-        vpp->play_params[i] = weed_plant_new(WEED_PLANT_CHANNEL);
-        weed_set_plantptr_value(vpp->play_params[i], WEED_LEAF_TEMPLATE, ptmpl);
-        vpp->num_alpha_chans++;
-      }
-    }
-    vpp->play_params[i] = NULL;
   }
 
   cached_key = cached_mod = 0;

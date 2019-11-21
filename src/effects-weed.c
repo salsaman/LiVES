@@ -4594,13 +4594,20 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
 }
 
 
-static weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
+weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   // if the plugin called weed_boostrap during its weed_setup() as we requested, then we will end up here
   // from weed_bootstrap()
   int id = LIVES_POINTER_TO_INT(data);
 
   int lib_weed_version = 0;
   int lib_filter_version = 0;
+
+  if (id == 100) {
+    g_print("IS pp\n");
+    our_plugin_id = 100;
+  }
+
+
 
   suspect = TRUE;
 

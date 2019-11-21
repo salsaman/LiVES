@@ -926,8 +926,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->insert_after = TRUE;
   mainw->mute = FALSE;
   mainw->faded = FALSE;
-  if (!prefs->vj_mode) {
-  } else
+  if (!prefs->vj_mode)
+    mainw->save_with_sound = TRUE;   // also affects loading
+  else
     mainw->save_with_sound = FALSE;
   mainw->preview = FALSE;
   mainw->selwidth_locked = FALSE;

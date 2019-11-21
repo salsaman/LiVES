@@ -80,7 +80,7 @@ const char *get_init_rfx(int intention);   ///< optional
 
 #ifdef __WEED_EFFECTS_H__
 ///< optional (but should return a weed plantptr array of paramtmpl and chantmpl, NULL terminated)
-const weed_plant_t **get_play_params(weed_bootstrap_f *boot);
+const weed_plant_t **get_play_params(weed_bootstrap_f boot);
 #endif
 
 /// plugin send list of palettes, in order of preference

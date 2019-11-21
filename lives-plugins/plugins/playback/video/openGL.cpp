@@ -275,6 +275,22 @@ fsover|Over-ride _fullscreen setting (for debugging)|bool|0|0\\n\
 ";
 }
 
+#if 0
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_OPTIONAL, palette_list), NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("openGL player", "salsaman", 1, 0, init_screen,
+                               render_frame, exit_screen, in_chantmpls, out_chantmpls, in_params, NULL);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+}
+WEED_SETUP_END;
+#endif
+
 
 const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
   if (plugin_info == NULL) {
@@ -474,7 +490,7 @@ static int get_size_for_type(int type) {
 
 static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
   if (retbuf == NULL) return NULL;
-  free((void *)retbuf);
+  weed_free((void *)retbuf);
   return NULL;
 }
 
@@ -490,7 +506,7 @@ static uint8_t *render_to_mainmem(int type, int window_width, int window_height)
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if (1 || !use_pbo) {
-    xretbuf = (uint8_t *)malloc(window_width * window_height * get_size_for_type(type));
+    xretbuf = (uint8_t *)weed_malloc(window_width * window_height * get_size_for_type(type));
     if (!xretbuf) {
       glPopClientAttrib();
       glPopAttrib();
@@ -1909,15 +1925,15 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     uint8_t *dst, *src;
 
     if (texturebuf != NULL) {
-      free((void *)texturebuf);
+      weed_free((void *)texturebuf);
     }
 
     if (imgWidth == texWidth && imgHeight == texHeight) {
       texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     } else {
-      texturebuf = (uint8_t *)malloc(hsize * vsize * typesize);
+      texturebuf = (uint8_t *)weed_malloc(hsize * vsize * typesize);
       for (i = 0; i < imgHeight; i++) {
-        memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
       }
     }
 
@@ -1948,7 +1964,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
     // texture is upside-down compared to image
     for (i = 0; i < window_height; i++) {
-      memcpy(dst, src, twidth);
+      weed_memcpy(dst, src, twidth);
       dst += twidth;
       src -= twidth;
     }
@@ -1956,19 +1972,19 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
   } else {
     if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL) {
       if (texturebuf != NULL) {
-        free((void *)texturebuf);
+        weed_free((void *)texturebuf);
       }
-      texturebuf = (uint8_t *)malloc(hsize * vsize * typesize);
+      texturebuf = (uint8_t *)weed_malloc(hsize * vsize * typesize);
     }
 
     texWidth = hsize;
     texHeight = vsize;
 
     if (texWidth == imgWidth && texHeight == imgHeight) {
-      memcpy((void *)texturebuf, pixel_data[0], texWidth * texHeight * typesize);
+      weed_memcpy((void *)texturebuf, pixel_data[0], texWidth * texHeight * typesize);
     } else {
       for (i = 0; i < imgHeight; i++) {
-        memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
       }
     }
 
@@ -2041,7 +2057,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   pthread_join(rthread, NULL);
 
   if (texturebuf != NULL) {
-    free((void *)texturebuf);
+    weed_free((void *)texturebuf);
   }
 
   free(textures);

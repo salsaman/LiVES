@@ -1265,7 +1265,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   // get the play parameters (and alpha channels) if any and convert to weed params
   if (vpp->get_play_params != NULL) {
-    g_print("BOO\n");
     weed_set_host_info_callback(host_info_cb, LIVES_INT_TO_POINTER(100));
     vpp->play_paramtmpls = (*vpp->get_play_params)(weed_bootstrap);
   }

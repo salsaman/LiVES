@@ -4603,11 +4603,8 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   int lib_filter_version = 0;
 
   if (id == 100) {
-    g_print("IS pp\n");
     our_plugin_id = 100;
   }
-
-
 
   suspect = TRUE;
 

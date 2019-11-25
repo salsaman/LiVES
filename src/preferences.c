@@ -1608,9 +1608,11 @@ boolean apply_prefs(boolean skip_warn) {
   if (ce_maxspect != (prefs->ce_maxspect)) {
     prefs->ce_maxspect = ce_maxspect;
     set_boolean_pref(PREF_CE_MAXSPECT, ce_maxspect);
-    if (mainw->current_file > -1) {
-      int current_file = mainw->current_file;
-      switch_to_file((mainw->current_file = 0), current_file);
+    if (mainw->multitrack == NULL) {
+      if (mainw->current_file > -1) {
+        int current_file = mainw->current_file;
+        switch_to_file((mainw->current_file = 0), current_file);
+      }
     }
   }
 

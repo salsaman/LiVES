@@ -30,9 +30,23 @@ LIVES_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {
   return weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 }
 
+LIVES_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, weed_size_t *nvals) {
+  if (nvals) *nvals = 0;
+  if (filter == NULL || chantmpl == NULL) return WEED_PALETTE_END;
+  if ((weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL)
+       & WEED_FILTER_PALETTES_MAY_VARY) && weed_plant_has_leaf(chantmpl, WEED_LEAF_PALETTE_LIST))
+    filter = chantmpl;
+  return weed_get_int_array_counted(filter, WEED_LEAF_PALETTE_LIST, nvals);
+}
+
 LIVES_GLOBAL_INLINE int weed_channel_get_rowstride(weed_plant_t *channel) {
   if (channel == NULL) return 0;
   return weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
+}
+
+LIVES_GLOBAL_INLINE int *weed_channel_get_rowstrides(weed_plant_t *channel) {
+  if (channel == NULL) return 0;
+  return weed_get_int_array(channel, WEED_LEAF_ROWSTRIDES, NULL);
 }
 
 LIVES_GLOBAL_INLINE int weed_filter_get_flags(weed_plant_t *filter) {
@@ -51,13 +65,18 @@ LIVES_GLOBAL_INLINE int weed_chantmpl_is_optional(weed_plant_t *chantmpl) {
   return WEED_FALSE;
 }
 
+LIVES_GLOBAL_INLINE weed_plant_t *weed_channel_get_template(weed_plant_t *channel) {
+  if (channel == NULL) return NULL;
+  return weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
+}
+
 char *weed_error_to_text(weed_error_t error) {
   // return value should be freed after use
   switch (error) {
   case (WEED_ERROR_MEMORY_ALLOCATION):
     return strdup("Memory allocation error");
-  /* case (WEED_ERROR_CONCURRENCY): */
-  /*   return strdup("Thread concurrency error"); */
+    /* case (WEED_ERROR_CONCURRENCY): */
+    return strdup("Thread concurrency failure");
   case (WEED_ERROR_IMMUTABLE):
     return strdup("Read only property");
   case (WEED_ERROR_UNDELETABLE):

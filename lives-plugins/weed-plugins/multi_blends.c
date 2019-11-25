@@ -24,28 +24,26 @@ static int package_version = 1; // version of this package
 
 #include "weed-plugin-utils.c" // optional
 
-
 /////////////////////////////////////////////////////////////////////////
 
-static int common_init(weed_plant_t *inst) {
+static weed_error_t common_init(weed_plant_t *inst) {
   return WEED_SUCCESS;
 }
 
 
-static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
-  int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
+static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
                                WEED_LEAF_OUT_CHANNELS,
-                               &error);
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
-  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, &error) * 3;
-  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, &error);
-  int palette = weed_get_int_value(in_channels[0], WEED_LEAF_CURRENT_PALETTE, &error);
-  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, &error);
-  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+                               NULL);
+  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, NULL) * 3;
+  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, NULL);
+  int palette = weed_get_int_value(in_channels[0], WEED_LEAF_CURRENT_PALETTE, NULL);
+  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
+  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   unsigned char *end = src1 + height * irowstride1;
   weed_plant_t *in_param;
   int intval;
@@ -58,8 +56,8 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
   unsigned char pixel[3];
   unsigned char blend_factor, blend1, blend2, blendneg1, blendneg2;
 
-  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
   blend_factor = (unsigned char)bf;
 
   blend1 = blend_factor * 2;
@@ -70,8 +68,8 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
     src2 += offset * irowstride2;
@@ -177,42 +175,42 @@ static int common_process(int type, weed_plant_t *inst, weed_timecode_t timecode
 }
 
 
-static int common_deinit(weed_plant_t *filter_instance) {
+static weed_error_t common_deinit(weed_plant_t *filter_instance) {
   return WEED_SUCCESS;
 }
 
 
-static int mpy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t mpy_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(0, inst, timestamp);
 }
 
 
-static int screen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t screen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1, inst, timestamp);
 }
 
 
-static int darken_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t darken_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2, inst, timestamp);
 }
 
 
-static int lighten_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t lighten_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(3, inst, timestamp);
 }
 
 
-static int overlay_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t overlay_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(4, inst, timestamp);
 }
 
 
-static int dodge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t dodge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(5, inst, timestamp);
 }
 
 
-static int burn_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t burn_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(6, inst, timestamp);
 }
 
@@ -221,61 +219,85 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
 
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), weed_channel_template_init("in channel 1", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), weed_channel_template_init("in channel 1", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("blend_multiply", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL, &mpy_process, NULL,
-                               in_chantmpls, out_chantmpls, in_params1, NULL);
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list, NULL,
+                               mpy_process, NULL, in_chantmpls, out_chantmpls, in_params1, NULL);
 
   weed_set_boolean_value(in_params1[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  filter_class = weed_filter_class_init("blend_screen", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &screen_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_screen", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, screen_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("blend_darken", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &darken_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_darken", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, darken_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("blend_lighten", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &lighten_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_lighten", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, lighten_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("blend_overlay", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &overlay_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_overlay", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, overlay_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("blend_dodge", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &dodge_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_dodge", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, dodge_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("blend_burn", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &burn_process, NULL,
-                                        (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params1)), NULL);
+  filter_class = weed_filter_class_init("blend_burn", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, burn_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        (clone3 = weed_clone_plants(in_params1)), NULL);
+
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);

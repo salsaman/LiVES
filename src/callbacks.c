@@ -2021,6 +2021,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
   int asigned, aendian;
   int i;
 
+  if (mainw->multitrack != NULL) return;
+
   lives_widget_set_sensitive(mainw->undo, FALSE);
   lives_widget_set_sensitive(mainw->redo, TRUE);
   cfile->undoable = FALSE;
@@ -4176,6 +4178,8 @@ void on_playclip_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   boolean oloop = mainw->loop;
   boolean oloop_cont = mainw->loop_cont;
 
+  if (mainw->multitrack != NULL) return;
+
   // switch to the clipboard
   switch_to_file(current_file, 0);
   lives_widget_set_sensitive(mainw->loop_video, FALSE);
@@ -5279,10 +5283,12 @@ boolean reload_set(const char *set_name) {
 
       //mainw->current_file = current_file;
 
-      if (last_file > 0) {
-        threaded_dialog_spin(0.);
-        switch_to_file(current_file, last_file);
-        threaded_dialog_spin(0.);
+      if (mainw->multitrack == NULL) {
+        if (last_file > 0) {
+          threaded_dialog_spin(0.);
+          switch_to_file(current_file, last_file);
+          threaded_dialog_spin(0.);
+        }
       }
 
       if (clipnum == 0) {
@@ -7663,8 +7669,10 @@ void on_load_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   subtitles_init(cfile, subfname, subtype);
   lives_free(subfname);
 
-  // force update
-  switch_to_file(0, mainw->current_file);
+  if (mainw->multitrack == NULL) {
+    // force update
+    switch_to_file(0, mainw->current_file);
+  }
 
   d_print(_("Loaded subtitle file: %s\n"), isubfname);
 
@@ -7723,8 +7731,9 @@ void on_erase_subs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (menuitem != NULL) {
     // force update
-    switch_to_file(0, mainw->current_file);
-
+    if (mainw->multitrack == NULL) {
+      switch_to_file(0, mainw->current_file);
+    }
     d_print(_("Subtitles were erased.\n"));
   }
 }
@@ -8059,8 +8068,9 @@ void on_open_new_audio_clicked(LiVESFileChooser *chooser, livespointer user_data
 
   if (bad_header) do_header_write_error(mainw->current_file);
 
-  switch_to_file(mainw->current_file, mainw->current_file);
-
+  if (mainw->multitrack == NULL) {
+    switch_to_file(mainw->current_file, mainw->current_file);
+  }
   mainw->noswitch = FALSE;
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
@@ -8657,8 +8667,10 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       lives_system(com, FALSE);
       save_clip_values(current_file);
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-      switch_to_file((mainw->current_file = 0), current_file);
-      sensitize();
+      if (mainw->multitrack == NULL) {
+        switch_to_file((mainw->current_file = 0), current_file);
+        sensitize();
+      }
     }
     break;
   default:
@@ -9370,7 +9382,9 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
         mainw->files[current_file]->next_event = cfile->next_event;
         cfile->next_event = NULL;
         mainw->current_file = current_file;
-      } else switch_to_file((mainw->current_file = 0), current_file);
+      } else if (mainw->multitrack == NULL) {
+        switch_to_file((mainw->current_file = 0), current_file);
+      }
     }
 
     // restart effects processing (if necessary)
@@ -11370,8 +11384,11 @@ void on_recaudclip_ok_clicked(LiVESButton *button, livespointer user_data) {
   mainw->cancelled = CANCEL_NONE;
 
   new_file = mainw->current_file;
-  if (type == 0) switch_to_file((mainw->current_file = 0), new_file);
-  else {
+  if (type == 0) {
+    if (mainw->multitrack == NULL) {
+      switch_to_file((mainw->current_file = 0), new_file);
+    }
+  } else {
     if (!prefs->conserve_space) {
       set_undoable(_("Record new audio"), TRUE);
       cfile->undo_action = UNDO_REC_AUDIO;

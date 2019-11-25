@@ -7808,6 +7808,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   default:
     lives_printerr("Warning: asked to create empty pixel_data for palette %d !\n", palette);
+    break_me();
   }
   return TRUE;
 }

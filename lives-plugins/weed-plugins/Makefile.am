@@ -169,7 +169,10 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \
-	fireTV.la
+	fireTV.la \
+	simple_blend.la \
+	multi_blends.la \
+	multi_transitions.la
 
 
 EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c

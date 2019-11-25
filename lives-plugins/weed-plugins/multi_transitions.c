@@ -11,6 +11,7 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #define NEED_RANDOM
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -197,19 +198,19 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 }
 
 
-int irisr_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t irisr_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(0, inst, timestamp);
 }
 
-int irisc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t irisc_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(1, inst, timestamp);
 }
 
-int fourw_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t fourw_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(2, inst, timestamp);
 }
 
-int dissolve_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t dissolve_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   return common_process(3, inst, timestamp);
 }
 
@@ -217,19 +218,20 @@ int dissolve_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
 
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_PACKED_PALETTES;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list),
-                                  weed_channel_template_init("in channel 1", 0, palette_list), NULL
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0),
+                                  weed_channel_template_init("in channel 1", 0), NULL
                                  };
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
+                                   WEED_CHANNEL_CAN_DO_INPLACE), NULL
+                                  };
 
   weed_plant_t *in_params[] = {weed_float_init("amount", "_Transition", 0., 0., 1.), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("iris rectangle", "salsaman", 1,
-                               WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD,
+                               WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                NULL, irisr_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_set_boolean_value(in_params[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -237,7 +239,7 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   filter_class = weed_filter_class_init("iris circle", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD,
+                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         NULL, irisc_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -252,7 +254,8 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, 0);
 
   filter_class = weed_filter_class_init("4 way split", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, NULL, fourw_process, NULL,
+                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        NULL, fourw_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params)),
@@ -263,10 +266,11 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, WEED_CHANNEL_CAN_DO_INPLACE | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+  weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS,
+                     WEED_CHANNEL_CAN_DO_INPLACE | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
 
   filter_class = weed_filter_class_init("dissolve", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD,
+                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         dissolve_init, dissolve_process, dissolve_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),

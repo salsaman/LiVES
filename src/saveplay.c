@@ -625,10 +625,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     // force a resize
     current_file = mainw->current_file;
 
-    if (LIVES_IS_PLAYING) {
-      do_quick_switch(current_file);
-    } else {
-      switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);
+    if (mainw->multitrack == NULL) {
+      if (LIVES_IS_PLAYING) {
+        do_quick_switch(current_file);
+      } else {
+        switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);
+      }
     }
 
     cfile->opening = TRUE;
@@ -1352,7 +1354,9 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
     if (extra_params == NULL) {
       lives_free(fps_string);
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       lives_freep((void **)&mainw->subt_save_file);
       return;
     }
@@ -1425,8 +1429,9 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_freep((void **)&cfile);
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
-
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -1444,7 +1449,9 @@ void save_file(int clip, int start, int end, const char *filename) {
       if (mainw->first_free_file == ALL_USED || mainw->first_free_file > new_file)
         mainw->first_free_file = new_file;
 
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
@@ -1480,7 +1487,9 @@ void save_file(int clip, int start, int end, const char *filename) {
       mainw->files[new_file] = NULL;
       if (mainw->first_free_file == ALL_USED || new_file) mainw->first_free_file = new_file;
     }
-    switch_to_file(mainw->current_file, current_file);
+    if (mainw->multitrack == NULL) {
+      switch_to_file(mainw->current_file, current_file);
+    }
     d_print_cancelled();
     lives_freep((void **)&mainw->subt_save_file);
     return;
@@ -1530,7 +1539,9 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_system(com, TRUE);
       lives_free(com);
       cfile->nopreview = FALSE;
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
       return;
@@ -1542,7 +1553,9 @@ void save_file(int clip, int start, int end, const char *filename) {
       lives_system(com, TRUE);
       lives_free(com);
       cfile->nopreview = FALSE;
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       if (mainw->error) d_print_failed();
       else d_print_cancelled();
       lives_freep((void **)&mainw->subt_save_file);
@@ -1572,7 +1585,9 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(msg);
         lives_freep((void **)&mainw->subt_save_file);
         if (!resb) d_print_cancelled();
-        switch_to_file(mainw->current_file, current_file);
+        if (mainw->multitrack == NULL) {
+          switch_to_file(mainw->current_file, current_file);
+        }
         return;
       }
       lives_free(msg);
@@ -1830,7 +1845,9 @@ void save_file(int clip, int start, int end, const char *filename) {
         lives_free(com);
       }
 
-      switch_to_file(mainw->current_file, current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file(mainw->current_file, current_file);
+      }
       retval = do_blocking_error_dialog(_("\n\nEncoder error - output file was not created !\n"));
 
       if (retval == LIVES_RESPONSE_SHOW_DETAILS) {
@@ -1922,8 +1939,9 @@ void save_file(int clip, int start, int end, const char *filename) {
     }
   }
 
-  switch_to_file(mainw->current_file, current_file);
-
+  if (mainw->multitrack == NULL) {
+    switch_to_file(mainw->current_file, current_file);
+  }
   if (mainw->iochan != NULL) {
     save_log_file("encoder_log");
     lives_widget_object_unref(mainw->optextview);
@@ -3150,7 +3168,8 @@ int close_temp_handle(int new_clip) {
     mainw->current_file = new_clip;
     return new_clip;
   }
-  if (cfile->clip_type != CLIP_TYPE_TEMP) {
+  if (cfile->clip_type != CLIP_TYPE_TEMP
+      && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file) {
     close_current_file(new_clip);
   }
 
@@ -4491,8 +4510,10 @@ ulong restore_file(const char *file_name) {
   cfile->hsize = mainw->def_width;
   cfile->vsize = mainw->def_height;
 
-  switch_to_file((mainw->current_file = old_file), new_file);
-  set_main_title(cfile->file_name, 0);
+  if (mainw->multitrack == NULL) {
+    switch_to_file((mainw->current_file = old_file), new_file);
+    set_main_title(cfile->file_name, 0);
+  }
 
   com = lives_strdup_printf("%s restore %s %s", prefs->backend, cfile->handle,
                             (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)));
@@ -4603,8 +4624,9 @@ ulong restore_file(const char *file_name) {
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
-  switch_to_file((mainw->current_file = old_file), current_file);
-
+  if (mainw->multitrack == NULL) {
+    switch_to_file((mainw->current_file = old_file), current_file);
+  }
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
 
   return cfile->unique_id;
@@ -4963,7 +4985,8 @@ void close_scrap_file(boolean remove) {
   mainw->current_file = mainw->scrap_file;
   if (cfile->ext_src != NULL) lives_close_buffered(LIVES_POINTER_TO_INT(cfile->ext_src));
   cfile->ext_src = NULL;
-  if (remove) close_current_file(current_file);
+
+  if (remove) close_temp_handle(current_file);
   else mainw->current_file = current_file;
 
   pthread_mutex_lock(&mainw->clip_list_mutex);
@@ -4983,7 +5006,7 @@ void close_ascrap_file(boolean remove) {
 
   if (remove) {
     mainw->current_file = mainw->ascrap_file;
-    close_current_file(current_file);
+    close_temp_handle(current_file);
   }
 
   pthread_mutex_lock(&mainw->clip_list_mutex);

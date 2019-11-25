@@ -4431,7 +4431,9 @@ boolean render_to_clip(boolean new_clip) {
         return FALSE;
       }
       if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
-      switch_to_file((mainw->current_file = 0), current_file);
+      if (mainw->multitrack == NULL) {
+        switch_to_file((mainw->current_file = 0), current_file);
+      }
       d_print((tmp = lives_strdup_printf(_("rendered %d frames to new clip.\n"), cfile->frames)));
       lives_free(tmp);
       mainw->pre_src_file = mainw->current_file; // if a generator started playback, we will switch back to this file after

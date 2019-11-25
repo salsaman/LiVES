@@ -158,7 +158,6 @@ Add optional "copyright" leaf to PLUGIN_INFO.
 
 28/10/2019 salsaman
 Version 2.0. Spec changes:
-Added 2 new functions, weed_leaf_set_voidptr_sizes() and weed_leaf_get_all().
 Allow plugins access to weed_plant_free().
 Changed return value from weed_leaf_element_size() for WEED_SEED_VOIDPTR (now returns the data size rather than sizeof(void *)).
 Added WEED_VOIDPTR_SIZE.
@@ -611,31 +610,6 @@ The following functions are under consideration / testing to be included in the 
  * weed_error_t weed_leaf_get_private_data(weed_plant_t *plant, const char *key, void **data);
 
  get private data for a leaf (T.B.D)
-
-
-
-
-
- * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems,
-   weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
-
-Testing to guage the usefulness.
-
-
- Retrieves the num_elements, values, sizes and flags for the specified leaf.
- "values" should be cast to an array of the appropriate type (depending on the seed type) and freed after use, along with
- any string values retrieved. Any of the fields may be NULL (except for plant).
- Will return WEED_SUCCESS, WEED_ERROR_NOSUCH_LEAF or WEED_ERROR_MEMORY_ALLOCATION.
-
- If key is NULL, then values will be a NULL terminated array of the leaves (similar to weed_plant_list_leaves()),
- seed_type will be set to the plant type; num_elems to the length of the values array (minus the final NULL); sizes will hold
- the number of elements in each leaf, and flags will be set to the flags for the "type" leaf. All returned arrays should be freed
- after use, plus all the (string) values (except the final NULL).
-
- The standard malloc(), memcpy() amd free() functions will be used when creating the values array. 
-
- Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION.
- In case of memory allocation error both the sizes and values arrays will be freed and set to NULL.
 
 
 

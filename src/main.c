@@ -1417,9 +1417,11 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
+  prefs->btgamma = FALSE;
 
-  //prefs->btgamma = FALSE;
-  prefs->btgamma = TRUE;  // experimental - DANGEROUS !!
+  if (prefs->show_dev_opts) {
+    prefs->btgamma = get_boolean_prefd(PREF_BTGAMMA, FALSE);
+  }
 
   //////////////////////////////////////////////////////////////////
 
@@ -5846,7 +5848,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         sched_yield();
         lives_usleep(prefs->sleep_time);
       }
-      vlayer = weed_layer_create_from_generator(inst, tc);
+      vlayer = weed_layer_create_from_generator(inst, tc, clip);
       weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
       weed_set_voidptr_value(vlayer, WEED_LEAF_PIXEL_DATA, NULL);
       filter_mutex_unlock(key);
@@ -6600,7 +6602,7 @@ void load_frame_image(int frame) {
             }
           }
           layers[i] = NULL;
-          g_print("MWFL 222 NULL\n");
+
           mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
 
           for (i = 0; layers[i] != NULL; i++) if (layers[i] != mainw->frame_layer) {
@@ -7389,7 +7391,8 @@ void load_frame_image(int frame) {
           if ((list_index = lives_list_previous(list_index)) == NULL) list_index = lives_list_last(mainw->cliplist);
           index = LIVES_POINTER_TO_INT(lives_list_nth_data(list_index, 0));
         } while ((mainw->files[index] == NULL || mainw->files[index]->opening || mainw->files[index]->restoring ||
-                  (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1) || (mainw->files[index]->frames == 0 &&
+                  (index == mainw->scrap_file && index > -1) || (index == mainw->ascrap_file && index > -1)
+                  || (mainw->files[index]->frames == 0 &&
                       LIVES_IS_PLAYING)) &&
                  index != mainw->current_file);
         if (index == mainw->current_file) index = -1;
@@ -7465,12 +7468,12 @@ void load_frame_image(int frame) {
 
       if (!mainw->only_close) {
         if (IS_VALID_CLIP(file_to_switch_to) && file_to_switch_to > 0) {
-          if (!LIVES_IS_PLAYING) {
-            switch_to_file((mainw->current_file = 0), file_to_switch_to);
-            d_print("");
-          } else do_quick_switch(file_to_switch_to);
-
-          if (mainw->multitrack != NULL && old_file != mainw->multitrack->render_file) {
+          if (mainw->multitrack == NULL) {
+            if (!LIVES_IS_PLAYING) {
+              switch_to_file((mainw->current_file = 0), file_to_switch_to);
+              d_print("");
+            } else do_quick_switch(file_to_switch_to);
+          } else if (old_file != mainw->multitrack->render_file) {
             mt_clip_select(mainw->multitrack, TRUE);
           }
           return;
@@ -7486,13 +7489,13 @@ void load_frame_image(int frame) {
       if (!mainw->only_close) {
         // find another clip to switch to
         if (index > -1) {
-          if (!LIVES_IS_PLAYING) {
-            switch_to_file((mainw->current_file = 0), index);
-            d_print("");
-          } else do_quick_switch(index);
-          if (need_new_blend_file) mainw->blend_file = mainw->current_file;
-
-          if (mainw->multitrack != NULL) {
+          if (mainw->multitrack == NULL) {
+            if (!LIVES_IS_PLAYING) {
+              switch_to_file((mainw->current_file = 0), index);
+              d_print("");
+            } else do_quick_switch(index);
+            if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+          } else {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
             mt_clip_select(mainw->multitrack, TRUE);
           }
@@ -7501,13 +7504,13 @@ void load_frame_image(int frame) {
         if (mainw->clips_available > 0) {
           for (i = mainw->current_file - 1; i > 0; i--) {
             if (mainw->files[i] != NULL) {
-              if (!LIVES_IS_PLAYING) {
-                switch_to_file((mainw->current_file = 0), i);
-                d_print("");
-              } else do_quick_switch(index);
-              if (need_new_blend_file) mainw->blend_file = mainw->current_file;
-
-              if (mainw->multitrack != NULL) {
+              if (mainw->multitrack == NULL) {
+                if (!LIVES_IS_PLAYING) {
+                  switch_to_file((mainw->current_file = 0), i);
+                  d_print("");
+                } else do_quick_switch(index);
+                if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+              } else {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
               }
@@ -7516,13 +7519,13 @@ void load_frame_image(int frame) {
           }
           for (i = 1; i < MAX_FILES; i++) {
             if (mainw->files[i] != NULL) {
-              if (!LIVES_IS_PLAYING) {
-                switch_to_file((mainw->current_file = 0), i);
-                d_print("");
-              } else do_quick_switch(index);
-              if (need_new_blend_file) mainw->blend_file = mainw->current_file;
-
-              if (mainw->multitrack != NULL) {
+              if (mainw->multitrack == NULL) {
+                if (!LIVES_IS_PLAYING) {
+                  switch_to_file((mainw->current_file = 0), i);
+                  d_print("");
+                } else do_quick_switch(index);
+                if (need_new_blend_file) mainw->blend_file = mainw->current_file;
+              } else {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
                 mt_clip_select(mainw->multitrack, TRUE);
               }
@@ -8038,8 +8041,9 @@ void load_frame_image(int frame) {
 
     if (mainw->current_file < 1 || mainw->files[new_file] == NULL) return;
 
-    if (mainw->noswitch || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
-        mainw->foreign || (mainw->preview && !mainw->is_rendering && mainw->multitrack == NULL)) return;
+    if (mainw->noswitch || mainw->multitrack != NULL
+        || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
+        mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
 
     if (!LIVES_IS_PLAYING) {
       switch_to_file(mainw->current_file, new_file);

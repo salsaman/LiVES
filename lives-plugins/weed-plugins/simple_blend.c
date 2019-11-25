@@ -12,6 +12,7 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #define NEED_PALETTE_CONVERSIONS
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -62,9 +63,8 @@ static weed_error_t chroma_deinit(weed_plant_t *inst) {
 static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
   _sdata *sdata = NULL;
 
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                               WEED_LEAF_OUT_CHANNELS,
-                               NULL);
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                 *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t *in_param;
 
   unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
@@ -190,18 +190,16 @@ static weed_error_t avlumo_process(weed_plant_t *inst, weed_timecode_t timestamp
 
 WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_ARGB32, WEED_PALETTE_END
-                       };
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list),
-                                  weed_channel_template_init("in channel 1", 0, palette_list), NULL
+  int palette_list[] = ALL_RGB_PALETTES;
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0),
+                                  weed_channel_template_init("in channel 1", 0), NULL
                                  };
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
   weed_plant_t *in_params2[] = {weed_integer_init("threshold", "luma _threshold", 64, 0, 255), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("chroma blend", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, chroma_init,
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list, chroma_init,
                                chroma_process, chroma_deinit, in_chantmpls, out_chantmpls, in_params1, NULL);
 
   weed_set_boolean_value(in_params1[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -210,17 +208,20 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   filter_class = weed_filter_class_init("luma overlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD, NULL,
-                                        lumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
-                                        (clone2 = weed_clone_plants(out_chantmpls)), in_params2, NULL);
+                                        WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        NULL, lumo_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
+                                        (clone2 = weed_clone_plants(out_chantmpls)),
+                                        in_params2, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_free(clone1);
   weed_free(clone2);
 
   filter_class = weed_filter_class_init("luma underlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD, NULL,
-                                        lumu_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
+                                        WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        NULL, lumu_process, NULL,
+                                        (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);
 
@@ -230,7 +231,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("negative luma overlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD,
+                                        WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         NULL, nlumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);
@@ -240,7 +241,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA,
+  filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
                                         NULL, &avlumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);

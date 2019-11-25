@@ -247,7 +247,7 @@ void wge_inner(weed_plant_t *inst); ///< deinit and instance(s) for generator, r
 
 // layers
 weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer);
-weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, ticks_t tc);
+weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, ticks_t tc, int clipno);
 
 /// for multitrack
 void backup_weed_instances(void);

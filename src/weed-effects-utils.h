@@ -11,12 +11,15 @@ int weed_filter_get_flags(weed_plant_t *filter);
 
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
+int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, weed_size_t *nvals);
 
 void *weed_channel_get_pixel_data(weed_plant_t *channel);
 int weed_channel_get_width(weed_plant_t *channel);
 int weed_channel_get_height(weed_plant_t *channel);
 int weed_channel_get_palette(weed_plant_t *channel);
 int weed_channel_get_rowstride(weed_plant_t *channel);
+int *weed_channel_get_rowstrides(weed_plant_t *channel);
+weed_plant_t *weed_channel_get_template(weed_plant_t *channel);
 
 char *weed_seed_type_to_text(int32_t seed_type);
 char *weed_error_to_text(weed_error_t error);

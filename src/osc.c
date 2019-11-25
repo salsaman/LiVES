@@ -1086,7 +1086,7 @@ boolean lives_osc_cb_clip_undo(void *context, int arglen, const void *vargs, OSC
 
   if (LIVES_IS_PLAYING) return lives_osc_notify_failure();
 
-  if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->is_processing ||
+  if (mainw->current_file < 1 || mainw->preview || mainw->event_list != NULL || mainw->is_processing ||
       mainw->multitrack != NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {
@@ -1117,7 +1117,7 @@ boolean lives_osc_cb_clip_redo(void *context, int arglen, const void *vargs, OSC
 
   if (LIVES_IS_PLAYING) return lives_osc_notify_failure();
 
-  if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->is_processing ||
+  if (mainw->current_file < 1 || mainw->preview || mainw->event_list != NULL || mainw->is_processing ||
       mainw->multitrack != NULL) return lives_osc_notify_failure();
 
   if (lives_osc_check_arguments(arglen, vargs, "i", FALSE)) {

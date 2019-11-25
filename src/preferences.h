@@ -850,6 +850,8 @@ widget = lives_standard_widget_for_pref(const char *prefname, const char *label,
 
 #define PREF_NFX_THREADS "nfx_threads"
 
+#define PREF_BTGAMMA "experimental_bt709_gamma"
+
 #define PREF_CLEAR_DISK_OPTS "clear_disk_opts"
 
 #define PREF_MAX_DISP_VTRACKS "max_disp_vtracks"

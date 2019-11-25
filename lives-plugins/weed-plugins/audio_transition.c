@@ -41,7 +41,7 @@ WEED_SETUP_START(200, 200) {
                                  };
   weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params[] = {weed_float_init("transition", "_Rear track level", 0.0, 0.0, 1.0), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("audio transition", "salsaman", 1, 0, NULL,
+  weed_plant_t *filter_class = weed_filter_class_init("audio transition", "salsaman", 1, 0, NULL, NULL,
                                atrans_process, NULL, in_chantmpls,
                                out_chantmpls,
                                in_params, NULL);

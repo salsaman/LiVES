@@ -2697,7 +2697,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
   if (inst != NULL) {
     for (i = 0; i < e_ins; i++) {
       chan = get_enabled_channel(inst, i, TRUE);
-      if (weed_palette_is_alpha_palette(weed_layer_get_palette(chan))) e_in_channels--;
+      if (weed_palette_is_alpha(weed_layer_get_palette(chan))) e_in_channels--;
     }
 
     // handling for compound fx
@@ -2705,7 +2705,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
     for (i = 0; i < e_outs; i++) {
       chan = get_enabled_channel(inst, i, FALSE);
-      if (weed_palette_is_alpha_palette(weed_layer_get_palette(chan))) e_out_channels--;
+      if (weed_palette_is_alpha(weed_layer_get_palette(chan))) e_out_channels--;
     }
   }
 

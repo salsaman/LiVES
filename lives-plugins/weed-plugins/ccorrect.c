@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -33,7 +35,6 @@ typedef struct _sdata {
   unsigned char b[256];
 } _sdata;
 
-
 /////////////////////////////////////////////////////////////
 
 static void make_table(unsigned char *tab, double val) {
@@ -53,12 +54,10 @@ static weed_error_t ccorrect_init(weed_plant_t *inst) {
 
   sdata = weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
   for (i = 0; i < 256; i++) {
     sdata->r[i] = sdata->g[i] = sdata->b[i] = 0;
   }
   sdata->ored = sdata->ogreen = sdata->oblue = 0.;
-
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_SUCCESS;
@@ -66,43 +65,37 @@ static weed_error_t ccorrect_init(weed_plant_t *inst) {
 
 
 static weed_error_t ccorrect_deinit(weed_plant_t *inst) {
-  _sdata *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) weed_free(sdata);
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  _sdata *sdata;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_plant_t **params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int psize = 4;
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int psize = pixel_size(palette);
 
   unsigned char *end = src + height * irowstride;
   int inplace = (dst == src);
   int offs = 0;
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  weed_plant_t **params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
 
-  double red = weed_get_double_value(params[0], WEED_LEAF_VALUE, &error);
-  double green = weed_get_double_value(params[1], WEED_LEAF_VALUE, &error);
-  double blue = weed_get_double_value(params[2], WEED_LEAF_VALUE, &error);
+  double red = weed_get_double_value(params[0], WEED_LEAF_VALUE, NULL);
+  double green = weed_get_double_value(params[1], WEED_LEAF_VALUE, NULL);
+  double blue = weed_get_double_value(params[2], WEED_LEAF_VALUE, NULL);
 
   register int i;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
   if (red != sdata->ored) {
     make_table(sdata->r, red);
@@ -120,10 +113,9 @@ static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t timesta
   }
 
   // new threading arch
-  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
-
+  if (weed_is_threading(inst)) {
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
     src += offset * irowstride;
     dst += offset * orowstride;
     end = src + dheight * irowstride;
@@ -158,16 +150,20 @@ WEED_SETUP_START(200, 200) {
                         WEED_PALETTE_ARGB32, WEED_PALETTE_END
                        };
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
+                                   WEED_CHANNEL_CAN_DO_INPLACE), NULL
+                                  };
 
-  weed_plant_t *in_params[] = {weed_float_init("red", "_Red factor", 1.0, 0.0, 2.0), weed_float_init("green", "_Green factor", 1.0, 0.0, 2.0), weed_float_init("blue", "_Blue factor", 1.0, 0.0, 2.0), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("red", "_Red factor", 1.0, 0.0, 2.0),
+                               weed_float_init("green", "_Green factor", 1.0, 0.0, 2.0),
+                               weed_float_init("blue", "_Blue factor", 1.0, 0.0, 2.0), NULL
+                              };
 
-  weed_plant_t *filter_class = weed_filter_class_init("colour correction", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, &ccorrect_init,
-                               &ccorrect_process, &ccorrect_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("colour correction", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               ccorrect_init, ccorrect_process, ccorrect_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

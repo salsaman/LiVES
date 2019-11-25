@@ -36,15 +36,15 @@ typedef struct {
 
 static weed_error_t common_init(weed_plant_t *inst) {
   weed_plant_t *in_channel;
-  int error, height, width;
+  int height, width;
 
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
 
   sdata->av_luma_data = (uint8_t *)weed_calloc(width * height * 3, 1);
   if (sdata->av_luma_data == NULL) {
@@ -65,45 +65,39 @@ static weed_error_t common_init(weed_plant_t *inst) {
 
 
 static weed_error_t common_deinit(weed_plant_t *inst) {
-  static_data *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->av_luma_data);
     weed_free(sdata);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_error_t error;
   static_data *sdata;
-
-  uint8_t luma;
-  uint8_t av_luma;
-  int bf;
-  uint8_t luma_threshold = 128;
-
   uint8_t *av_luma_data;
-
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             &error), *in_param;
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL), *in_param;
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
   unsigned char *end = src + height * irowstride;
   int inplace = (src == dest);
   int red = 0, blue = 2;
   uint32_t fastrand_val;
 
   register int j;
+
+  uint8_t luma;
+  uint8_t av_luma;
+  int bf;
+  uint8_t luma_threshold = 128;
 
   if (palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
     red = 2;
@@ -112,19 +106,19 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
     src += offset * irowstride;
     dest += offset * orowstride;
     end = src + dheight * irowstride;
   }
 
-  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, &error);
+  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
   luma_threshold = (uint8_t)bf;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   av_luma_data = sdata->av_luma_data;
 
@@ -184,22 +178,20 @@ static weed_error_t t3_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
 
   weed_plant_t *in_params[] = {weed_integer_init("threshold", "_Threshold", 64, 0, 255), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("fg_bg_removal type 1", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA,
-                               &common_init,
-                               &t1_process,
-                               &common_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                               common_init, t1_process, common_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   // we must clone the arrays for the next filter
-  filter_class = weed_filter_class_init("fg_bg_removal type 2", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA,
-                                        &common_init, &t2_process,
-                                        &common_deinit,
+  filter_class = weed_filter_class_init("fg_bg_removal type 2", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        common_init, t2_process, common_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params)), NULL);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
@@ -207,11 +199,10 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-
   // we must clone the arrays for the next filter
-  filter_class = weed_filter_class_init("fg_bg_removal type 3", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA,
-                                        &common_init, &t3_process,
-                                        &common_deinit,
+  filter_class = weed_filter_class_init("fg_bg_removal type 3", "salsaman", 1,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        common_init, t3_process, common_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params)), NULL);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

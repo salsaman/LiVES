@@ -117,7 +117,7 @@ static weed_error_t alpham_process(weed_plant_t *inst, weed_timecode_t timestamp
 WEED_SETUP_START(200, 200) {
   int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("alpha float", 0, apalette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("alpha float", 0), NULL};
 
   weed_plant_t *in_params[] = {weed_integer_init("x divisions", "_X divisions", 1, 1, 256),
                                weed_integer_init("y divisions", "_Y divisions", 1, 1, 256),
@@ -129,8 +129,8 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *out_params[] = {weed_out_param_float_init_nominmax("mean values", 0.), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("alpha_means", "salsaman", 1, 0,
-                               NULL, &alpham_process, NULL,
+  weed_plant_t *filter_class = weed_filter_class_init("alpha_means", "salsaman", 1, 0, apalette_list,
+                               NULL, alpham_process, NULL,
                                in_chantmpls, NULL,
                                in_params, out_params);
 

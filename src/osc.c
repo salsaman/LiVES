@@ -4752,9 +4752,10 @@ boolean lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *varg
 
 
 boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int effect_key, mode, cnum, count, error;
-  weed_plant_t **ctmpls;
+  weed_plant_t **ctmpls, *template;
   weed_plant_t *filter, *inst, *ctmpl, *chan = NULL;
+  int filter_flags;
+  int effect_key, mode, cnum, count;
   char *msg;
 
   if (!lives_osc_check_arguments(arglen, vargs, "iii", FALSE)) {
@@ -4775,18 +4776,17 @@ boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, 
   //g_print("key %d pnum %d",effect_key,pnum);
 
   inst = rte_keymode_get_instance(effect_key, mode);
+  filter = rte_keymode_get_filter(effect_key, mode);
+  if (filter == NULL) return lives_osc_notify_failure();
 
   if (inst != NULL) {
     chan = get_enabled_channel(inst, cnum, TRUE);
-    ctmpl = weed_get_plantptr_value(chan, WEED_LEAF_TEMPLATE, &error);
+    ctmpl = weed_get_plantptr_value(chan, WEED_LEAF_TEMPLATE, NULL);
   } else {
-    filter = rte_keymode_get_filter(effect_key, mode);
-    if (filter == NULL) return lives_osc_notify_failure();
-
     if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) return lives_osc_notify_failure();
     count = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
     if (cnum >= count) return lives_osc_notify_failure();
-    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, NULL);
     ctmpl = ctmpls[cnum];
     lives_free(ctmpls);
   }
@@ -4801,13 +4801,17 @@ boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, 
 
   if (inst != NULL) {
     weed_instance_unref(inst);
-    msg = lives_strdup_printf("%d", weed_get_int_value(chan, WEED_LEAF_CURRENT_PALETTE, &error));
+    msg = lives_strdup_printf("%d", weed_get_int_value(chan, WEED_LEAF_CURRENT_PALETTE, NULL));
     lives_status_send(msg);
     lives_free(msg);
     return TRUE;
   }
 
-  msg = lives_osc_format_result(ctmpl, WEED_LEAF_PALETTE_LIST, 0, -1);
+  filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
+  if ((filter_flags & WEED_FILTER_PALETTES_MAY_VARY) && weed_plant_has_leaf(ctmpl, WEED_LEAF_PALETTE_LIST)) {
+    template = ctmpl;;
+  } else template = filter;
+  msg = lives_osc_format_result(template, WEED_LEAF_PALETTE_LIST, 0, -1);
   lives_status_send(msg);
   lives_free(msg);
   return TRUE;
@@ -4815,9 +4819,9 @@ boolean lives_osc_cb_rte_getinpal(void *context, int arglen, const void *vargs, 
 
 
 boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  int effect_key, mode, cnum, count, error;
-  weed_plant_t **ctmpls;
+  weed_plant_t **ctmpls, *template;
   weed_plant_t *filter, *inst, *ctmpl, *chan = NULL;
+  int effect_key, mode, cnum, count, filter_flags;
   char *msg;
 
   if (!lives_osc_check_arguments(arglen, vargs, "iii", FALSE)) {
@@ -4838,18 +4842,17 @@ boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs,
   //g_print("key %d pnum %d",effect_key,pnum);
 
   inst = rte_keymode_get_instance(effect_key, mode);
+  filter = rte_keymode_get_filter(effect_key, mode);
+  if (filter == NULL) return lives_osc_notify_failure();
 
   if (inst != NULL) {
     chan = get_enabled_channel(inst, cnum, FALSE);
-    ctmpl = weed_get_plantptr_value(chan, WEED_LEAF_TEMPLATE, &error);
+    ctmpl = weed_get_plantptr_value(chan, WEED_LEAF_TEMPLATE, NULL);
   } else {
-    filter = rte_keymode_get_filter(effect_key, mode);
-    if (filter == NULL) return lives_osc_notify_failure();
-
     if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) return lives_osc_notify_failure();
     count = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
     if (cnum >= count) return lives_osc_notify_failure();
-    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, NULL);
     ctmpl = ctmpls[cnum];
     lives_free(ctmpls);
   }
@@ -4864,13 +4867,17 @@ boolean lives_osc_cb_rte_getoutpal(void *context, int arglen, const void *vargs,
 
   if (inst != NULL) {
     weed_instance_unref(inst);
-    msg = lives_strdup_printf("%d", weed_get_int_value(chan, WEED_LEAF_CURRENT_PALETTE, &error));
+    msg = lives_strdup_printf("%d", weed_get_int_value(chan, WEED_LEAF_CURRENT_PALETTE, NULL));
     lives_status_send(msg);
     lives_free(msg);
     return TRUE;
   }
+  filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
 
-  msg = lives_osc_format_result(ctmpl, WEED_LEAF_PALETTE_LIST, 0, -1);
+  if ((filter_flags & WEED_FILTER_PALETTES_MAY_VARY) && weed_plant_has_leaf(ctmpl, WEED_LEAF_PALETTE_LIST)) {
+    template = ctmpl;;
+  } else template = filter;
+  msg = lives_osc_format_result(template, WEED_LEAF_PALETTE_LIST, 0, -1);
   lives_status_send(msg);
   lives_free(msg);
   return TRUE;
@@ -4968,7 +4975,6 @@ boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *va
                                        NetworkReturnAddressPtr ra) {
   int effect_key;
   int count;
-  int error;
 
   weed_plant_t *plant, *orig_plant;
 
@@ -4983,7 +4989,7 @@ boolean lives_osc_cb_rte_getnochannels(void *context, int arglen, const void *va
 
   // handle compound fx
   if (plant != NULL) while (weed_plant_has_leaf(plant, WEED_LEAF_HOST_NEXT_INSTANCE)) plant = weed_get_plantptr_value(plant,
-          WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+          WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
   else plant = rte_keymode_get_filter(effect_key, rte_key_getmode(effect_key));
   if (plant == NULL) return lives_osc_notify_failure();
 

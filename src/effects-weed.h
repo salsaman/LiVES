@@ -17,7 +17,6 @@ typedef enum {
   FILTER_ERROR_MISSING_FRAME,
   FILTER_ERROR_INVALID_PALETTE_CONVERSION,
   FILTER_ERROR_UNABLE_TO_RESIZE,
-  FILTER_ERROR_INVALID_PALETTE_SETTINGS,
   FILTER_ERROR_COULD_NOT_REINIT,
   FILTER_ERROR_INVALID_PLUGIN,
   FILTER_ERROR_NEEDS_REINIT,   // TODO
@@ -33,6 +32,7 @@ typedef enum {
   FILTER_ERROR_TEMPLATE_MISMATCH,
   FILTER_ERROR_MEMORY_ERROR,
   FILTER_ERROR_DONT_THREAD,
+  FILTER_ERROR_COPYING_FAILED,
   FILTER_ERROR_BUSY,
 
   /// values >= 512 are info
@@ -45,11 +45,15 @@ typedef enum {
   FX_LIST_HASHNAME, // hashnames - (packagefilterauthor) author and not extra_authors
 } lives_fx_list_t;
 
+// set some custom Weed values
+
 #ifndef WEED_PLANT_LAYER
 #define WEED_PLANT_LAYER WEED_PLANT_CHANNEL
 #endif
 
 #define WEED_GAMMA_MONITOR 1024
+
+#define WEED_FLAG_HOST_READONLY (1 << 16)
 
 // plugin specific values
 #define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
@@ -77,6 +81,7 @@ typedef enum {
 #define WEED_LEAF_HOST_HANDLE "host_handle" // dll handle
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
 #define WEED_LEAF_HOST_NORECORD "host_norecord" // do not record parameter changes for this instance
+#define WEED_LEAF_DUPLICATE "host_duplicate"
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
@@ -95,7 +100,6 @@ typedef enum {
 #define WEED_LEAF_RFX_DELIM "layout_rfx_delim"
 
 #define WEED_LEAF_HOST_PLUGIN_NAME "host_plugin_name"
-
 
 // compound plugins
 #define WEED_LEAF_HOST_INTERNAL_CONNECTION "host_internal_connection" // for chain plugins
@@ -134,8 +138,8 @@ weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_
 int num_compound_fx(weed_plant_t
                     *plant); ///< return number of filters in a compound fx (1 if it is not compound) - works for filter or inst
 
-boolean has_non_alpha_palette(weed_plant_t *ctmpl);
-boolean has_alpha_palette(weed_plant_t *ctmpl);
+boolean has_non_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter);
+boolean has_alpha_palette(weed_plant_t *ctmpl, weed_plant_t *filter);
 
 boolean is_audio_channel_in(weed_plant_t *inst, int chnum);
 boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt);
@@ -154,9 +158,6 @@ lives_fx_cat_t weed_filter_categorise(weed_plant_t *pl, int in_channels, int out
 lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t category, boolean count_opt);
 boolean has_audio_filters(lives_af_t af_type);
 #endif
-
-char *weed_seed_type_to_text(int32_t seed_type);
-char *weed_error_to_text(weed_error_t error);
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list(int *palette_list, int num_palettes, int palette);
@@ -245,14 +246,8 @@ void weed_bg_generator_end(weed_plant_t *inst);
 void wge_inner(weed_plant_t *inst); ///< deinit and instance(s) for generator, reset instance mapping
 
 // layers
+weed_error_t weed_leaf_copy_or_delete(weed_layer_t *dlayer, const char *key, weed_layer_t *slayer);
 weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, ticks_t tc);
-weed_plant_t *weed_layer_new();
-weed_plant_t *weed_layer_new_for_frame();
-void **weed_layer_get_pixel_data(weed_plant_t *layer);
-int *weed_layer_get_rowstrides(weed_plant_t *layer);
-int weed_layer_get_width(weed_plant_t *layer);
-int weed_layer_get_height(weed_plant_t *layer);
-int weed_layer_current_palette(weed_plant_t *layer);
 
 /// for multitrack
 void backup_weed_instances(void);

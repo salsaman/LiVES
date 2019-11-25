@@ -106,7 +106,7 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
   create_empty_pixel_data(layer, TRUE, TRUE);
 
   if (ldev->buffer_type == UNICAP_BUFFER_TYPE_USER) {
-    if (weed_palette_get_numplanes(ldev->current_palette) == 1 || ldev->is_really_grey) {
+    if (weed_palette_get_nplanes(ldev->current_palette) == 1 || ldev->is_really_grey) {
       ldev->buffer1.data = (unsigned char *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
     }
 
@@ -135,7 +135,7 @@ boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, doub
 
   pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
 
-  if (weed_palette_get_numplanes(ldev->current_palette) > 1 && !ldev->is_really_grey) {
+  if (weed_palette_get_nplanes(ldev->current_palette) > 1 && !ldev->is_really_grey) {
     boolean contig = FALSE;
     if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS) &&
         weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, &error) == WEED_TRUE) contig = TRUE;
@@ -199,7 +199,7 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
     // TODO - prefer non-interlaced, YCbCr for YUV
     cpal = fourccp_to_weedp(format->fourcc, format->bpp, NULL, NULL, NULL, NULL);
 
-    if (cpal == WEED_PALETTE_END || weed_palette_is_alpha_palette(cpal)) {
+    if (cpal == WEED_PALETTE_END || weed_palette_is_alpha(cpal)) {
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format(ldev->handle, format);
@@ -209,9 +209,9 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
       continue;
     }
 
-    if (bestp == WEED_PALETTE_END || cpal == palette || weed_palette_is_alpha_palette(bestp) ||
+    if (bestp == WEED_PALETTE_END || cpal == palette || weed_palette_is_alpha(bestp) ||
         weed_palette_is_lower_quality(bestp, cpal) ||
-        (weed_palette_is_yuv_palette(bestp) && weed_palette_is_rgb_palette(cpal))) {
+        (weed_palette_is_yuv(bestp) && weed_palette_is_rgb(cpal))) {
       // got better palette, or exact match
 
       // prefer exact match on target palette if we have it

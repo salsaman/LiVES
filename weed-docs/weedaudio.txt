@@ -3,7 +3,7 @@
 Weed Audio Extension 1.1 final version.
 
 
-(C) Gabriel "Salsaman" Finch 2005 - 2008
+(C) G. Finch 2005 - 2019
 
 Version 1.1 - added "is_volume_master" to assist with host automation
 of audio
@@ -20,58 +20,243 @@ WEED_PLANT_CHANNEL_TEMPLATE and WEED_PLANT_CHANNEL.
 
 
 
-Generally, the following rules should apply:
-- audio and video channels should not be mixed in a single filter: - the only time this should be done is 
-  for generators which are sources of both video and audio or for video generators which react to audio
+Generally, the following rules apply:
 
-- plugins which deal with audio MUST be able to process small chunks of audio extremely fast 
-  (ideally sub millisecond processing time - they may be called much more frequently than video effects, which is why mixing 
-  audio and video channels is not recommended)
-
-  [an exception is made for audio/video generators, which may generate audio more slowly - generally they will be called at the video frame rate 
-   and asked to return a frames-worth of audio each time]
+- an audio channel template is declared in the plugin's weed_setup() function by setting the filter_class leaf "is_audio"
+  to WEED_TRUE. That is all that needs to be done by the plugin, everything else is optional.
 
 
+- audio is passed as arrays of (signed) float, with values nominally between 1.0 and -1.0
+
+- the process_func() of purely audio filters is usually called much more frequently than for filters with video channels
+
+- if a filter has BOTH video and audio channels, then the host will likely run the plugin at the video rate and send and receive
+  much larger packets of audio data (usually one frame's worth) at a time
+
+- if an audio plugin has out parameters which are intended to be fed into a video plugin,
+  then be aware that due to the rate differences, for some processing cycles the value wil be ignored.
+  One suggested solution is to use a "latching" method:
+
+- the values are only updated when a boolean "refresh" input parameter changes state. In this way, the video plugin can
+    create an output parameter which changes state on each cycle, and this can be fed back into the audio plugin's "refresh" parameter
+    so that it can update values of out parameters for the video plugin's next cycle. However since the video and audio processing
+    cycles may be running at vary times, there is no guarantee that the video plugin will read the updated values on every cycle.
+
+    For example:
+    - a "beat detector" plugin creates two output parameters: a boolean (switch)"beat pulse"
+      and a boolean or integer "beat count", along with  an input switch "refresh"
+       The beat pulse output is updated on each audio cycle.
+       The other  output is either set to WEED_TRUE when a beat is detected, or the count may be incremented,
+       and can be reset when the "refresh" input changes state. Thus, other audio plugins can simply connect to the beat pulse output.
+       Video plugins can either connect to the beat pulse output and risk missing some beats, or connect to the beat count parameter
+       	and toggle an output parameter "refresher" each cycle. The "refresher" output can then be connected to the "refresh" input of the b	eat detector.
+
+
+- The plugin can choose whether all audio subchannels (e.g. left / right / center) are passed in one Weed channel,
+or whether each subchannel is passed separately, i.e one Weed channel maps to left, another to right, etc.
+
+
+It is recommended that plugins which deal with a single audio stream
+split the separate subchannels into separate Weed channels, eg. one Weed channel would be left / mono, the next (optional) right,
+(optional) center, etc. with each channel's audio data being an array of float * with exactly one element.
+
+This is done by setting "audio_channels" to 1 in the filter_class, and setting the filter_class flag
+WEED_FILTER_AUDIO_CHANNELS_MAY_VARY.
+This then allows the plugin to add "audio_channel_mapping" leaves to each audio channel_template.
+
+
+
+e.g.
+in_channel[0] -> audio_data : float *data[0]       ==  left / mono
+in_channel[1] -> audio_data : float *data[0]       ==  right      (optional)
+
+or using "max_repeats"
+in_channel[0] -> audio_data : float *data[0]       ==  subchannel[0] data
+
+....
+
+in_channel[n] -> audio_data : float *data[0]       ==  subchannel[n] data
+
+
+On the other hand, if the plugin deals with multiple audio streams, it is better to create one Weed channel for each stream,
+with the audio passed in an array of float * with multiplle elements containing the audio subchanels, eg:
+
+e.g.
+in_channel[0] -> audio_data : float *data[0]       ==  stream 0 left / mono
+in_channel[0] -> audio_data : float *data[1]       ==  stream 0 right
+in_channel[0] -> audio_data : float *data[2]       ==  stream 0 center
+etc.
+
+in_channel[1] -> audio_data : float *data[0]       ==  stream 1   	left / mono
+in_channel[1] -> audio_data : float *data[1]       ==  stream 1   	right
+in_channel[1] -> audio_data : float *data[1]       ==  stream 1    	center
+etc.
+
+
+or using "max_repeats"
+in_channel[0] -> audio_data : float *data[0]       ==  stream 0 left / mono
+in_channel[0] -> audio_data : float *data[1]       ==  stream 0 right
+in_channel[0] -> audio_data : float *data[2]       ==  stream 0 center
+etc.
+
+in_channel[n] -> audio_data : float *data[0]       ==  stream n   	left / mono
+in_channel[n] -> audio_data : float *data[1]       ==  stream n   	right
+in_channel[n] -> audio_data : float *data[1]       ==  stream n    	center
+etc.
+
+
+The plugin should create an equivalent number of output channels as input channels, except - 
+If it wishes to combine the inputs into a single output
+(e.g mix down to stereo) then it must also set the filter flag WEED_FILTER_IS_CONVERTER. This is explained in more detail below.
 
 
 
 
 
+== Filter_class ==
 
-
-== WEED_PLANT_CHANNEL_TEMPLATE ==
-
-For audio channels, the "palette_list" leaf should be
-omitted. The host should not set a "current_palette" or pass video
-data in such a channel.
-
-For example, this can be used to process a backing audio track.
+For filters with ONLY audio channels,  the "palette_list" leaf may be omitted or set to NULL.
 
 
 
-For channels which support audio, the following leaf must be defined
-in the template:
 
-Mandatory leaves:
-
-"is_audio" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, then this
-channel is audio.
 
 
 Optional leaves:
-the plugin may define these to try to force them for the host, or it may
-leave them undefined. It is highly recommended that the plugin leave these values undefined.
 
-"audio_data_length" : WEED_SEED_INT : maximum length of audio_data in
-samples
+the plugin may define these to hint them for the host, or it may leave them undefined.
 
-"audio_interleaf" : WEED_SEED_BOOLEAN : if WEED_TRUE, then audio
-channels should be interleaved
+The values in the channel should still be checked, since there is no guarantee that the host will always provide
+audio in the format requested.
 
-"audio_channels" : WEED_SEED_INT : number of audio channels in the
-audio_data : must be >=1 (mono), 2==stereo, etc.
+It is highly recommended that the plugin leave these values undefined whenever possible, since complying with them
+will possibly result in a performance hit for the host.
 
-"audio_rate" : WEED_SEED_INT : the audio sample rate in Hz. 
+
+
+"audio_channels" : WEED_SEED_INT : (>= 1) the desired number of audio channels in the audio_data : 1 = (mono), 2 = stereo, etc.									May have multiple values and then the host can select the value
+		   		       	      	      	     should be listed in DESCENDING order of magnitude.
+							     IF absent then the host may freely set the number of audio channels itself.
+							     The plugin should check the number of elements in "audio_data".
+
+
+T,B,D
+"audio_channel_mapping" :: the plugin may define the (audio) channel mapping for the Weed channels.
+			       	      	    The values in this leaf should align one for one with the values in "audio_channels",
+					    that leaf is MANDATORY if this one exists.
+					    It is envisaged that industry standard channel mapping names will be added to weed-compat.h
+
+					    If this leaf is absent, then a channel number of 1 in "audio_channels" is assumed to mean
+					    MONO and a value of 2 is assumed to mean STEREO.
+
+
+
+
+"audio_rate" : WEED_SEED_INT : the preferred audio sample rate in Hz. May have multiple values and the host may select between them.
+	       		       	   	     	   They should be listed in descending order of magnitude.
+						   If absent then the host may provide audio data at any sample rate of its choosing.
+
+
+
+
+Filter flags
+
+
+*  WEED_FILTER_AUDIO_RATES_MAY_VARY (alias for WEED_FILTER_CHANNEL_SIZES_MAY_VARY)
+   Allows overriding of the default rate for individual channel templates.
+
+
+*  WEED_FILTER_AUDIO_CHANNELS_MAY_VARY (alias for WEED_FILTER_PALETTES_MAY_VARY)
+   Allows overriding of the default number of (audio) channels in channel templates.
+
+
+* WEED_FILTER_HINT_PROCESS_LAST
+   This is a hint to the host that the filter should be run AFTER all other filters have performed their processing.
+   Examples would be a video filter that overlays subtitles on the finished frame,
+   or an audio filter that mixes the final output of several input audio channels. If there are several filters like this in
+   the processing chain, then the host should decide the order to run them in.
+
+experimental:
+*  WEED_FILTER_HINT_MAY_THREAD
+   If an audio  plugin operates in such a manner that its output may be subdivided into consecutive blocks of samples,
+   then it may set this hint. Ignored for filters which have no out_channels.
+   Similar to the method used for video filters, process_func() will be called several times with the same timecode,
+   and an extra "offset" leaf added to the out channel(s). This value gives the value in samples from the start of each
+   subchannel in "audio_data" that the thread should work on. "audio_data_length" will contain 2 values, the first is
+   the reduced data length for the thread - the thread should only write to output "audio_data" from
+   offs to offs + audio_data_lenght - 1. The second value in "audio_data_length" contains the true value.
+   AS with video threading, the thread with offset 0 is considered the "master thread" and should be the only one which
+   updates plugin internal values.
+
+
+
+=== Channel template ===
+
+Additional Mandatory leaves:
+
+"is_audio" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, then this channel is audio.
+
+=== Optional leaves ===
+If the filter set the filter class flag WEED_FILTER_AUDIO_CHANNELS_MAY_VARY,
+then the plugin may define these in channel templates to override the defaults for the filter. Otherwise they may be ignored.
+
+The values in the channel should still be checked, since there is no guanrantee that the host will always provide
+audio in the format requested.
+
+"audio_channels" : WEED_SEED_INT : the desired number of audio channels in the audio_data : 1 = (mono), 2 = stereo, etc.											May have multiple values and then the host can select the value
+		   		       	      	      	     should be listed in DESCENDING order of magnitude.
+							     A setting of zero means this particular channel has no preferred number,
+							     overriding any default setting in the filter class.
+
+
+
+T,B,D
+"audio_channel_mapping" :: the plugin may define the (audio) channel mapping for the Weed chanel.
+ 			       	      	  If set, then it must match one for one with the value(s) in "audio_channels" (either for the
+					  filter_class or the channel_template).
+
+					    It is envisaged that standard channel mapping names will be added to weed-compat.h
+					    
+
+
+If the filter set the flags  WEED_FILTER_AUDIO_RATES_MAY_VARY
+
+"audio_rate" : WEED_SEED_INT : the preferred audio sample rate in Hz. May have multiple values and the host may select between them.
+	       		       	   	     	   They should be listed in DECREASING order of magnitude.
+						   if set to zero then this channel has no restrictions (overriding the default set in the filter_class)
+
+
+
+
+
+Channel template flags:
+
+
+  * WEED_CHANNEL_OPTIONAL
+    channel that can be left out at initialization time.
+    the host decides not to use the channel, it must set "disabled" to
+    WEED_TRUE for the channel. The host must reinit
+    the instance if a channel is enabled or disabled after init_func().
+
+ *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
+    If this flag bit is set, the filter can do inplace operations (source and destination are the same)
+    Hosts can select this mode by setting "audio_data" of this out channel
+    equal to "audio_data"  of the corresponding (same number; not counting "disabled" channels) 
+    in channel. The values of "audio_data_length", "audio_channels", "audio_interleaf" and "audio_rate" must be equal
+    for both channels.
+    The flag bit is only valid for OUT channels. 
+
+
+
+If the plugin needs reiniting when the audio RATE changes, then it should set the flag bit
+WEED_CHANNEL_REINIT_ON_RATE_CHANGE (alias for WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE).
+
+If the plugin needs reiniting when the audio CHANNELS change, then it should set the flag bit
+WEED_CHANNEL_REINIT_ON_CHANNELS_CHANGE  (alias for WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
+
+If the plugin needs reiniting when the audio CHANNEL MAPPING change, then it should set the flag bit
+WEED_CHANNEL_REINIT_ON_CHANNEL_MAP_CHANGE  (alias for WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
+
 
 
 
@@ -82,37 +267,62 @@ audio_data : must be >=1 (mono), 2==stereo, etc.
 
 
 
-Mandatory leaves for CHANNELS with audio - these values are set by the host:
+Additional Mandatory leaves for CHANNELS with audio - these values are set by the host:
 
 "audio_data" : WEED_SEED_VOIDPTR : stores a pointer to 32 bit signed float data for
-	       audio buffer. Values within the buffer are in the range -1.0 <=
-	       value <= 1.0. [can be NULL if the host has no audio to pass].
+	       			      audio buffer. Values within the buffer are nominally in the range -1.0 <=
+	  			           value <= 1.0. [can be NULL if the host has no audio to pass].
 
 "audio_data_length" : WEED_SEED_INT : length of audio_data in samples
-                                      [can be 0 if the host has no audio to pass]
+                                      [can be 0 if the host has no audio to pass]. The length may vary on each cycle, but if the plugin set
+				      audio_data_length in
 
-"audio_interleaf" : WEED_SEED_BOOLEAN : if WEED_TRUE, then audio
-channels are interleaved
 
-"audio_channels" : WEED_SEED_INT : number of audio channels in the
-audio_data : must be >=1 (mono), 2==stereo, etc.
+
+
+"audio_interleaf" : WEED_SEED_BOOLEAN : if WEED_TRUE, then audio channels are interleaved (deprecated)
+
+"audio_channels" : WEED_SEED_INT : number of audio channels in the audio_data : must be >=1 (mono), 2==stereo, etc.
 
 "audio_rate" : WEED_SEED_INT : the audio sample rate in Hz. 
 
+
+T,B,D
+"audio_channel_mapping" :: the host may set this to define the channel mapping for the channel.
+			       	    	   If absent then it may be assumed 1 == MONO. 2 == STEREO
+
+					    It is envisaged that standard channel mapping names will be added to weed-compat.h
 
 
 
 Notes:
 
-In the case that the host has no audio at all for a channel, it should fill the array with (float) 0.0.
+Audio data should be passed to and from the host as an arrary of WEED_SEED_VOIDPTR
+(cast from float *), with each channel's data in a separate element.
 
-If the host sets the values "audio_channels", "audio_rate", or
-"audio_interleaf" itself, then the values for all channels MUST be
-set the same.
+In the case that the host has no audio for a Weed channel, it can pass NULL for the data and 0 for the size.
 
-"audio_channels", "audio_rate", and "audio_interleaf" MUST not be
-changed without a re-init of the plugin.
+In the case that the host has no audio for a subchannel (i.e within the same Weed channel)
+it should fill the subchannel data element with (float) 0.0. (i.e. silence).
 
+
+The values for "audio_channels", "audio_rate", and "audio_interleaf" MUST be set equal for all channels, in and out, unless:
+if the plugin sets WEED_FILTER_AUDIO_RATES_MAY_VARY in filter flags then
+the audio sample rate and hence the audio_data_length for each channel may vary. The plugin can override the filter defaults
+by setting individual values in channel templates. Plugins MUST NOT alter the sample rate between input and output UNLESS:
+
+if the filter flag WEED_FILTER_IS_CONVERTER is set then the plugin is a resampling plugin amd it MUST convert the sample rate
+between each input channel and the corresponding output channel.
+
+
+
+if the plugin sets WEED_FILTER_AUDIO_CHANNELS_MAY_VARY in filter flags then
+the audio channels for each Weed channel may vary. The plugin can override the filter defaults
+by setting individual values in channel templates.
+Plugins MUST NOT alter the number of audio channels between input and output UNLESS:
+
+if the filter flag WEED_FILTER_IS_CONVERTER is set then the plugin is a channel combining plugin and it MUST convert the number of
+audio channels between each input channel and the corresponding output channel.
 
 
 
@@ -121,31 +331,57 @@ changed without a re-init of the plugin.
 
 == WEED_PLANT_PARAMETER_TEMPLATE ==
 
-"is_volume_master" : WEED_SEED_BOOLEAN : for volume-only effects, there are a couple of things
-that must be done. First the filter template flag bit
-WEED_FILTER_IS_CONVERTER must be set. Second, exactly one of the
-parameter templates must be marked by setting the leaf "is_volume_master" to WEED_TRUE.
-This is to allow host automation.
-
-Such a parameter must be a float, and must *linearly* adjust the volume for all audio
-sub-channels (in the sense of "left" and "right" sub-channels) between 0.0 (no volume) and 1.0 (no amplification). The
-maximum may optionally go beyond 1.0 (for an amplifier/pre-amp). It
-could also be thought of as the "gain" control.
-
-This flag can be combined with the flag WEED_PARAMETER_ELEMENT_PER_CHANNEL
-in the case of repeating Weed audio channels (see "max_repeats" in the channel
-template description of the main Weed spec). This would create some
-kind of audio mixer in the host.
+"is_volume_master" : WEED_SEED_BOOLEAN :
 
 
-Summary
+for  effects which vary the volume (magnitude) of all the inputs as a whole,
+exactly one of the parameter templates must be marked by setting the leaf "is_volume_master" to WEED_TRUE.
+This is to allow for host automation.
 
-== HOST_INFO leaves ==
+Such a parameter must be a float, and must *linearly* adjust the volume for ALL audio input channels
+between 0.0 (silence) and 1.0 (no amplification).
 
-"host_audio_player" : WEED_SEED_STRING : name of the host audio
-player. Examples are "jack", "sox", "mplayer". In general most plugins can ignore this.
 
-NOTE: if the host changes its audio player, all plugins with audio channels should be reinited
+The maximum may optionally go beyond 1.0 (for amplifier/pre-amp) type plugins). A setting above 1.0 implies that the plugin
+is controlling some hardware device. The actual audio data should never be adjusted ABOVE its input value (to prevent clipping).
+
+"linearly" means that at value 0.5, an input with 1.0 would result in an output of 0.5, and input of 0.5 would result in .25 etc.
+In other words, values between 0.0 and 1.0 should be applied as a simple multiplier of the output channel(s)
+
+The plugin may optionally provide additional functionality (e.g pan, eq, filtering).
+
+
+This leaf can be combined with the flag WEED_PARAMETER_VALUE_PER_CHANNEL
+This implies that the parameter has multiple values and that each value maps directly to a Weed input channel.
+If the filter has repeating channels ("max_repeats"), then the flag WEED_PARAMETER_VARIABLE_SIZE should also be set to
+allow the number of values to increase or decrease according to the number of channels created from tha template.
+
+
+
+Setting the filter template flag bit WEED_FILTER_IS_CONVERTER in combination with the leaf implies that the purpose
+of the plugin is to alter the overall volume between input and output, ie.
+a volume control (for a single input / single output), a mixer (multiple inputs, single output),
+or a channel level controller (multi inputs, multi outputs). In this case the value controls the volume of all of the OUTPUT channel(s).
+IF WEED_PARAMETER_VALUE_PER_CHANNEL is set then multiple values may be used to set individual values per output channel.
+
+
+An audio filter may also set the flag WEED_FILTER_PROCESS_LAST, which would imply that it may be run as the final mixing
+filter before the resulting audio is sent to the audio player.
+
+
+To recap:
+the filter template flag bit WEED_FILTER_IS_CONVERTER has multiple meanings depending on other settings.
+
+- if "is_volume_master" is set for a parameter then the filter is an amplifier / volume control / volume mixer. etc/
+
+- if WEED_FILTER_AUDIO_CHANNELS_MAY_VARY is set, then the filter may change the number of channels (as in audio sub channels)
+  between each input and output. The "audio_channels" and "audio_channel_maping" leaves in each channel_template define the
+  set of possible transformations.
+
+- if WEED_FILTER_AUDIO_RATES_MAY_VARY is set, then the filter may change the audio rate (resample) between inputs and outputs.
+  between each input and output
+
+
 
 
 

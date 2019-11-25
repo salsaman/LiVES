@@ -904,7 +904,8 @@ WEED_SETUP_START(200, 200) {
 
         snprintf(weed_name, PATH_MAX, "%s", laddes->Name);
 
-        filter_class = weed_filter_class_init(weed_name, "LADSPA developers", 0, 0, &ladspa_init, &ladspa_process, &ladspa_deinit,
+        filter_class = weed_filter_class_init(weed_name, "LADSPA developers", 0, WEED_FILTER_AUDIO_CHANNELS_MAY_VARY,
+                                              NULL, ladspa_init, ladspa_process, ladspa_deinit,
                                               in_chantmpls, out_chantmpls, in_params, out_params);
 
         weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, laddes->Maker);
@@ -965,7 +966,8 @@ WEED_SETUP_START(200, 200) {
 #endif
 
   if (num_filters == 0) {
-    fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH environment variable to point to them.\n");
+    fprintf(stderr, "No LADSPA plugins found; if you have them installed please set the LADSPA_PATH"
+            "environment variable to point to them.\n");
     return NULL;
   }
 

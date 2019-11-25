@@ -987,6 +987,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
       // switch is ON
       // WARNING - if we start playing because a generator was started, we block here
       filter_mutex_lock(key);
+      //if (!LIVES_IS_PLAYING) {
       if (!(weed_init_effect(key))) {
         // ran out of instance slots, no effect assigned, or some other error
         // or gen started playback and then stopped
@@ -999,7 +1000,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
         filter_mutex_unlock(key);
         return TRUE;
       }
-
+      //}
       if (!mainw->gen_started_play) { // should always be the case
         pthread_mutex_lock(&mainw->event_list_mutex);
         if (!(mainw->rte & new_rte)) mainw->rte |= new_rte;

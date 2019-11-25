@@ -576,7 +576,29 @@ const AVCodecTag codec_bmp_tags[] = {
 
 #ifdef FF_API_PIX_FMT
 
-int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
+int avi_color_range_to_weed_clamping(enum AVColorRange range) {
+  switch (range) {
+  case AVCOL_RANGE_MPEG:
+    return WEED_YUV_CLAMPING_CLAMPED;
+  case AVCOL_RANGE_JPEG:
+    return WEED_YUV_CLAMPING_UNCLAMPED;
+  default:
+    break;
+  }
+  return WEED_YUV_CLAMPING_CLAMPED;
+}
+
+enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
+  switch (clamping) {
+  case WEED_YUV_CLAMPING_CLAMPED:
+        return AVCOL_RANGE_MPEG;
+    case WEED_YUV_CLAMPING_UNCLAMPED:
+      return AVCOL_RANGE_JPEG;
+    }
+    return AVCOL_RANGE_NB;
+  }
+
+  int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case PIX_FMT_RGB24:
@@ -748,6 +770,32 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
     default:
       return AV_PIX_FMT_NONE;
     }
+  }
+
+  int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
+  switch (trc) {
+  case AVCOL_TRC_BT709:
+    return WEED_GAMMA_BT809;
+  case  AVCOL_TRC_LINEAR:
+    return WEED_GAMMA_LINEAR;
+  case AVCOL_TRC_GAMMA22:
+    return WEED_GAMMA_SRGB;
+  default:
+  }
+  return WEED_GAMMA_UNKNOWN;
+}
+
+enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
+  switch (gamma_type) {
+  case WEED_GAMMA_BT809:
+        return AVCOL_TRC_BT709;
+    case  WEED_GAMMA_LINEAR:
+      return AVCOL_TRC_LINEAR;
+    case WEED_GAMMA_SRGB:
+      return AVCOL_TRC_GAMMA22;
+    default:
+    }
+    return AVCOL_TRC_UNSPECIFIED;
   }
 
 #endif

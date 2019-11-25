@@ -265,19 +265,19 @@ static weed_error_t compositor_process(weed_plant_t *inst, weed_timecode_t timec
   weed_free(alpha);
 
   if (num_in_channels > 0) weed_free(in_channels);
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
   weed_plant_t *in_params[] = {weed_float_init("xoffs", "_X offset", 0., 0., 1.), weed_float_init("yoffs", "_Y offset", 0., 0., 1.), weed_float_init("scalex", "Scale _width", 1., 0., 1.), weed_float_init("scaley", "Scale _height", 1., 0., 1.), weed_float_init("alpha", "_Alpha", 1.0, 0.0, 1.0), weed_colRGBi_init("bgcol", "_Background color", 0, 0, 0), weed_switch_init("revz", "Invert _Z Index", WEED_FALSE), NULL};
 
   weed_plant_t *filter_class, *gui;
-  int filter_flags = 0;
+  int filter_flags = WEED_FILTER_CHANNEL_SIZES_MAY_VARY;
 
   // define RFX layout
   char *rfx_strings[] = {"layout|p6|", "layout|p0|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|", "layout|p5|",
@@ -286,7 +286,8 @@ WEED_SETUP_START(200, 200) {
 
   //if (api_used >= 133) filter_flags |= WEED_FILTER_HINT_SRGB;
 
-  filter_class = weed_filter_class_init("compositor", "salsaman", 1, filter_flags, NULL, &compositor_process, NULL, in_chantmpls,
+  filter_class = weed_filter_class_init("compositor", "salsaman", 1, filter_flags, palette_list,
+                                        NULL, compositor_process, NULL, in_chantmpls,
                                         out_chantmpls,
                                         in_params, NULL);
 

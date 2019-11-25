@@ -376,24 +376,27 @@ typedef int lives_pgid_t;
 // clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
 #define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) <= 0 ? ROUND_I(b) : ROUND_I(a))
 
-// round a up to next (integer) multiple of b
+// round a up double / float a to  next multiple of int b
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
-// round a up to next (integer) multiple of b, unless a is already a multiple of b
-#define ALIGN_CEIL(a, b) ((int)((int)a / (int)b) * (int)b == (int)a ? (int)a : CEIL(a, b))
+// round int a up to next multiple of int b, unless a is already a multiple of b
+#define ALIGN_CEIL(a, b) ((int)((a + b - 1.) / b) * b)
 
-// round a down to nearest (integer) multiple of b
+// round float / double a down to nearest multiple of int b
 #define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)
 
-// floating point division, maintains the sign of the dividend
-#define SIGNED_DIVIDE(a, b) (a < 0. ? (a / b > 0. ? -a / b : a / b) : (a / b < 0. ? -a / b : a / b))
+// floating point division, maintains the sign of the dividend, regardless of the sign of the divisor
+#define SIGNED_DIVIDE(a, b) (a < 0. ? -fabs(a / b) : fabs(a / b))
+
+// using signed ints, the first part will be 1 iff -a < b, the second iff a > b, equivalent to abs(a) > b
+#define ABS_THRESH(a, b) (((a + b) >> 31) | ((b - a) >> 31))
 
 #define myround(n) (n >= 0. ? (int)(n + 0.5) : (int)(n - 0.5))
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
 static int32_t testint = 0x12345678;
-#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)
+#define IS_BIG_ENDIAN (((char *)&testint)[0] == 0x12)  // runtime test only !
 #endif
 
 // utils.c math functions
@@ -482,6 +485,8 @@ weed_leaf_get_flags_f _weed_leaf_get_flags;
 weed_plant_free_f _weed_plant_free;
 weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
+
+#include "weed-effects-utils.h"
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"
@@ -653,7 +658,9 @@ typedef enum {
 
 #define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
 
-#define LIVES_IS_PLAYING (mainw->playing_file > -1)
+#define LIVES_IS_PLAYING (mainw != NULL && mainw->playing_file > -1)
+
+#define LIVES_IS_RENDERING (mainw != NULL && ((mainw->multitrack == NULL && mainw->is_rendering) || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)))
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
 

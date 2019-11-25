@@ -4627,6 +4627,8 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   if (area == SCREEN_AREA_FOREGROUND || (area == SCREEN_AREA_BACKGROUND && mainw->blend_file == mainw->current_file)) {
     if (!CURRENT_CLIP_IS_NORMAL) return TRUE;
 
+    mainw->rte_keys = -1;
+
     // change play direction
     if (cfile->play_paused) {
       cfile->freeze_fps = -cfile->freeze_fps;

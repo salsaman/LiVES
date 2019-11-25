@@ -32,13 +32,12 @@ static weed_error_t myplugin_init(weed_plant_t *inst) {
   // EXAMPLE:
 
   // get any data needed from in_channels, out_channels, in_params, out_params (see below, myplugin_process() for examples)
-
-
+  weed_plant_t *in_channel = weed_get_in_channel(inst);
+  int palette = weed_channel_get_palette(in_channel);
+  size_t pixel_size = pixel_size(palette);
 
   // alloc somewhere to store static data for the instance
   // static_data should be a struct to hold static values for the instance
-
-  size_t pixel_size = 3; // varies depending on palette (see below)
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
@@ -49,7 +48,6 @@ static weed_error_t myplugin_init(weed_plant_t *inst) {
   }
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata); // we can use any leaf with a key starting "plugin_"
-
   return WEED_SUCCESS;
 }
 
@@ -75,9 +73,10 @@ static weed_error_t myplugin_deinit(weed_plant_t *inst) {
 static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   // get the in_channel (if applicable) /////////////////
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst);
 
   // OR: if we have multiple in_channels
+  weed_size_t num_ins = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
   weed_plant_t **pin_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
   weed_plant_t *in_channel = pin_channels[0];
   weed_plant_t *in_channel1 = pin_channels[1];
@@ -85,9 +84,10 @@ static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 
   // get the out_channel (if applicable) /////////////////////////
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *out_channel = weed_get_out_channel(inst);
 
   // OR: if we have multiple out_channels
+  weed_size_t num_outs = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
   weed_plant_t **pout_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t *out_channel = pout_channels[0];
   weed_plant_t *out_channel1 = pout_channels[1];
@@ -97,41 +97,41 @@ static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
   // for VIDEO channels:  ///////////////////////////////////////////////////////////
 
   // get the palette (see weed-palettes.h) [if we have no in_channels, we can get this from out_channel instead]
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_WEED_LEAF_CURRENT_PALETTE, NULL);
+  int palette = weed_channel_get_palette(in_channel);
   // palettes for each channel will match unless WEED_CHANNEL_PALETTE_CAN_VARY was set in channel_template flags
 
   // get the pixel_data ////////////////////////////////////
 
   // in_channel pixel_data (if we have one in_channel only):
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
   // OR: (if palette is planar, ie. the palette name ends with 'P')
   unsigned char **psrc = weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
 
   // out_channel pixel_data (if we have one out_channel only)
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+  unsigned char *dst = weed_channel_get_pixel_daya(out_channel);
   // OR: (if palette is planar, ie. the palette name ends with 'P')
   unsigned char **pdst = weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
 
   // if we have multiple VIDEO channels:
-  unsigned char *src1 = weed_get_voidptr_value(in_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
+  unsigned char *src1 = weed_channel_get_pixel_data(in_channel1);
   // OR: (if palette is planar, ie. the palette name ends with 'P')
   unsigned char **psrc1 = weed_get_voidptr_array(in_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have in_channels
   // out_channel pixel_data:
-  unsigned char *dst1 = weed_get_voidptr_value(out_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
+  unsigned char *dst1 = weed_channel_get_pixel_data(out_channel1);
   // OR: (if palette is planar, ie. the palette name ends with 'P')
   unsigned char **pdst1 = weed_get_voidptr_array(out_channel1, WEED_LEAF_PIXEL_DATA, NULL); // if we have out_channels
   // etc for all VIDEO channels....
 
   // frame sizes, width X height. If we have no in_channels we can get this out_channel instead
   // channel width in (macro)pixels  [for planar palettes, this is the width of the first plane]
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), widthx;
+  int width = weed_channel_get_width(in_channel);
   // channel height in rows          [for planar palettes, this is the height of the first plane]
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int height = weed_channel_get_height(in_channel);
   // (sizes for each channel will match unless WEED_CHANNEL_SIZE_CAN_VARY was set in channel_template flags)
 
   //  rowstrides
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have in_channels
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have out_channels
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
   // OR: (if palette is planar, ie. the palette name ends with 'P')
   int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have in_channels
   int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL); // if we have out_channels
@@ -175,23 +175,20 @@ static weed_error_t myplugin_process(weed_plant_t *inst, weed_timecode_t tc) {
   int real_height = height;
   int offset = 0;
 
-  if (weed_leaf_num_elements(out_channel, WEED_LEAF_HEIGHT) == 2) {
+  if (weed_lis_threading(inst)) {
     // we are threading...
 
-    // height of our destination slice:
-    int *heights = weed_get_int_array(out_channel, WEED_LEAF_HEIGHT, NULL);
-
     // get the height of our "slice"
-    height = heights[0];
+    height = weed_channel_get_height(out_channel);
 
     // real height of out_channel if we need it, this is also the src height unless we set WEED_CHANNEL_SIZE_MAY_VARY
-    src_height = heights[1];
+    real_height = weed_channel_get_real_height(out_channel);
 
     // get the offset. We must only write to destination rows between offs and (offs + height - 1)
-    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    offset = weed_channel_get_offset(out_channel);
 
     // only the master thread may update the plugin internal state
-    if (offset) is_master_thread = 0;
+    if (offset > 0) is_master_thread = 0;
 
     // adjust dst: ////////////////////////////////////////////////////////////////////////
     dst += orowstride * offs;
@@ -331,11 +328,10 @@ WEED_SETUP_START(200, 200) {
                          WEED_PALETTE_YUYV, WEED_PALETTE_END
                         };
 
-
   // set up channel templates
   int chan_flags = 0;
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", chan_flags, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", chan_flags, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", chan_flags), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", chan_flags), NULL};
 
   weed_plant_t *in_params[4];
   weed_plant_t **out_params = NULL;
@@ -357,9 +353,8 @@ WEED_SETUP_START(200, 200) {
 
 
   // add the filter class
-  filter_class = weed_filter_class_init("plugin name", "author", filter_version, filter_flags, myplugin_init,
-                                        myplugin_process, myplugin_deinit, in_chantmpls, out_chantmpls, in_params,
-                                        out_params);
+  filter_class = weed_filter_class_init("plugin name", "author", filter_version, filter_flags, palette_list, myplugin_init,
+                                        myplugin_process, myplugin_deinit, in_chantmpls, out_chantmpls, in_params, out_params);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -378,12 +373,12 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 2000., 0.0, 22000.0), NULL};
   weed_plant_t *out_params[] = {weed_out_param_float_init(WEED_LEAF_VALUE, 0., 0., 1.), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL, &fftw_process,
-                               NULL, in_chantmpls, NULL, in_params, out_params);
+  weed_plant_t *filter_class = weed_filter_class_init("audio fft analyser", "salsaman", 1, 0, NULL,
+                               NULL, audio_process, NULL, in_chantmpls, NULL, in_params, out_params);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "Fast Fourier Transform for audio");
+  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, "Audio example for Weed");
 
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }

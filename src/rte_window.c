@@ -871,7 +871,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           if (ocnum >= nochans) is_valid2 = FALSE;
           else {
             ochans = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-            if (!has_alpha_palette(ochans[ocnum])) is_valid2 = FALSE;
+            if (!has_alpha_palette(ochans[ocnum], filter)) is_valid2 = FALSE;
             lives_free(ochans);
           }
 
@@ -955,7 +955,7 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
             if (icnum >= nichans) is_valid2 = FALSE;
             else {
               ichans = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
-              if (!has_alpha_palette(ichans[icnum])) is_valid2 = FALSE;
+              if (!has_alpha_palette(ichans[icnum], filter)) is_valid2 = FALSE;
               lives_free(ichans);
             }
 

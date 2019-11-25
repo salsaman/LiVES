@@ -392,6 +392,7 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
           }
         }
       }
+
       //printf("\n");
     }
 
@@ -590,29 +591,28 @@ static void syna_deinit(_sdata *sdata) {
 /////////////////////////////////////////////
 
 static weed_error_t fourk_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     syna_deinit(sdata);
     weed_free(sdata);
-    weed_set_voidptr_value(inst, "plugin_internal", &error);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t fourk_init(weed_plant_t *inst) {
-  int error, retval;
+  int retval;
   int rate;
 
   _sdata *sdata;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   char tune[MAX_TUNELEN];
 
-  snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error)]);
+  snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL)]);
 
   weed_free(in_params);
 
@@ -622,7 +622,7 @@ static weed_error_t fourk_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, &error);
+  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
   if ((retval = syna_init(sdata, rate)) != WEED_SUCCESS) {
 #ifdef DEBUG
@@ -662,28 +662,26 @@ static weed_error_t fourk_init(weed_plant_t *inst) {
 
 
 static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_error_t error;
   int chans, nsamps, inter;
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
-  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, &error);
+  double tempo = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  double bfreq = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
 
-  double tempo = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error);
-  double bfreq = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, &error);
-
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   register int i;
 
   weed_free(in_params);
 
-  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
-  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
-  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
-  //rate=weed_get_int_value(out_channel,WEED_LEAF_AUDIO_RATE,&error);
+  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
+  //rate=weed_get_int_value(out_channel,WEED_LEAF_AUDIO_RATE,NULL);
 
   for (i = 0; i < NCHANNELS; i++) {
     set_live_row(sdata, i, (rand() % (sdata->maxtracks * 1000 - 1)) / 1000.f + 1.); // 2nd val can be 2 (?) to npat (?)
@@ -736,7 +734,6 @@ WEED_SETUP_START(200, 200) {
   in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
   in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
 
-
   for (i = 3; i < NCHANNELS + 3; i++) {
     // TODO - unique name
     in_params[i] = weed_float_init("cparam", "cparam", .5, 0., 1.);
@@ -747,16 +744,14 @@ WEED_SETUP_START(200, 200) {
   out_chantmpls[0] = weed_audio_channel_template_init("out channel 0", 0);
   out_chantmpls[1] = NULL;
 
-  filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, &fourk_init, &fourk_process,
-                                        &fourk_deinit, NULL, out_chantmpls, in_params, NULL);
+  filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, NULL,
+                                        fourk_init, fourk_process, fourk_deinit, NULL, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\n"
-           "text files\n");
+  snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\ntext files\n");
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

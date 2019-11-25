@@ -67,10 +67,13 @@ static weed_error_t tvpic_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
+    int *heights;
     offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
-    dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+    heights = weed_get_int_array(out_channel, WEED_LEAF_HEIGHT, NULL);
+    dheight = heights[0];
+    height = heights[1];
     dheight += offset;
-
+    weed_free(heights);
     src += offset * irowstride;
     dest += offset * orowstride;
     odd = offset % 2;
@@ -202,7 +205,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("tvpic", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+  weed_plant_t *filter_class = weed_filter_class_init("tvpic", "salsaman", 1, 0,
                                NULL, tvpic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

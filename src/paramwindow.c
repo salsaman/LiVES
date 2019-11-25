@@ -244,7 +244,7 @@ static void gen_width_changed(LiVESSpinButton *spin, livespointer user_data) {
   step = 1;
   if (weed_plant_has_leaf(ctmpl, WEED_LEAF_HSTEP)) step = weed_get_int_value(ctmpl, WEED_LEAF_HSTEP, &error);
 
-  val = step_val(val, step);
+  val = ALIGN_CEIL(val, step);
   weed_set_int_value(ctmpl, WEED_LEAF_HOST_WIDTH, val);
   lives_spin_button_set_value(spin, (double)val);
 }
@@ -262,7 +262,7 @@ static void gen_height_changed(LiVESSpinButton *spin, livespointer user_data) {
   step = 1;
   if (weed_plant_has_leaf(ctmpl, WEED_LEAF_HSTEP)) step = weed_get_int_value(ctmpl, WEED_LEAF_HSTEP, &error);
 
-  val = step_val(val, step);
+  val = ALIGN_CEIL(val, step);
   weed_set_int_value(ctmpl, WEED_LEAF_HOST_HEIGHT, val);
   lives_spin_button_set_value(spin, (double)val);
 }

@@ -296,7 +296,9 @@ Each leaf has at least:
 
  * a bitmap ''flags'' field (int32_t)
 
+(to be added in a future ABI version [ >= 200]:
 
+ * a void * "private_data"
 
 
 
@@ -593,11 +595,32 @@ A Weed host has access to an additional function which is not available to plugi
 
 
 
-As of API 200: (TODO):
+Future ABI functions:
+
+The following functions are under consideration / testing to be included in the API:
+
+
+
+ * weed_error_t weed_leaf_set_private_data(weed_plant_t *plant, const char *key, void *data);
+
+ set private data for a leaf (T.B.D)
+
+
+
+
+ * weed_error_t weed_leaf_get_private_data(weed_plant_t *plant, const char *key, void **data);
+
+ get private data for a leaf (T.B.D)
+
+
+
 
 
  * weed_error_t weed_leaf_get_all (weed_plant_t *plant, const char *key, int32_t *seed_type, weed_size_t *num_elems,
    weed_voidptr_t values, weed_size_t **sizes, int32_t *flags)
+
+Testing to guage the usefulness.
+
 
  Retrieves the num_elements, values, sizes and flags for the specified leaf.
  "values" should be cast to an array of the appropriate type (depending on the seed type) and freed after use, along with
@@ -611,11 +634,19 @@ As of API 200: (TODO):
 
  The standard malloc(), memcpy() amd free() functions will be used when creating the values array. 
 
- Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION. In case of memory allocation error both the sizes and values arrays will
- be freed and set to NULL.
+ Will return WEED_SUCCESS or WEED_ERROR_MEMORY_ALLOCATION.
+ In case of memory allocation error both the sizes and values arrays will be freed and set to NULL.
 
 
 
+
+weed_error_t weed_leaf_copy(weed_plant_t dplant, const char *key, weed_plant_t *splant, const char *key);
+
+ This is included in libweed-utils, but moving it into the core would improve performance, as the leaf values could
+ be copied directly, without constructing an intermediate array.
+
+T.B.D: should it take 1 key as parameter (i.e. copy to same leaf in dplant, or 2) ? 1 is the most likely use case,
+but 2 would allow duplicating of leaves within the same plant.
 
 
 
@@ -662,7 +693,6 @@ Defined in weed.h
 Errors are listed here in order of precedence from highest to lowest.
 
  *  WEED_SUCCESS[[BR]]
- *  WEED_NO_ERROR[[BR]]
     returned if no errors occured.
 
  *  WEED_ERROR_NOSUCH_LEAF[[BR]]
@@ -682,11 +712,15 @@ Errors are listed here in order of precedence from highest to lowest.
     returned if you try to delete a leaf which has the WEED_FLAG_UNDELETABLE bit set, or if weed_plant_free() finds any leaves
     with this flag bit set
 
-*   WEED_ERROR_BADVERSION [[BR]]
-    returned from weed_init() if the host specifies an api version that the library cannot support.
-
  *  WEED_ERROR_MEMORY_ALLOCATION[[BR]]
     memory allocation has failed
+
+ *  WEED_ERROR_CONCURRENCY
+    libweed will return this if it detects multiple threads attempting to either set the value of a leaf simultaneously
+    or delete a leaf simultaneously (see: thread concurremcy)
+
+ *   WEED_ERROR_BADVERSION
+    returned from weed_init() if the host specifies an api version that the library cannot support.
 
 
 
@@ -777,6 +811,53 @@ The libray and header are relatively compact - the stripped libweed.so is around
 and the header contains around 240 lines (include whitespace and comments).
 
 
+=== thread concurrency ====
+
+The for portabilty, the library does not implement any kind of mutex locking. A future version of the spec will add private data to the
+leaves, and this feature could be used to implement a private mutex locking scheme,
+wrapping the standard functions in a layer which stores a mutex pointer in the private data.
+
+
+In general the following rules should be observed:
+- two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
+  if one thread updates the leaf's num_elements between the other thread reading it and writing it - in this case num_elements
+  could mismatch the number of actual  elements in data
+  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
+
+  The majority of the time libweed sgould be able to detect this, and it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its value will be ignored.
+
+- if two threads attempt to add new leaves simultaneously to the same plant, there is a miniscule chance that only one will be added.
+ (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
+
+ The majority of the time libweed should be able to  detect this, and  it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its leaf will nor be added.
+
+- attempting to read a leaf's value whilst it is being set is OK;
+   however weed_leaf_set() will return WEED_ERROR_NOSUCH_ELEMENT for an existing leaf, until the value is fully updated.
+
+- getting the seed type is fine as this is constant
+
+- getting / setting flags is fine
+
+- reading the number of elements may temporarily return 0 whilst the value is being updated
+
+
+- two threads attempting to delete a leaf at the same time should be reasonably safe;
+  the only risk is if one thread updates the previous node's next pointer between the other thread reading it and writing it.
+  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe.)
+
+The majority of the time libweed will be able to detect this, and it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its value will be ignored.
+
+
+calling weed_leaf_delete() or weed_plant_free() simultaneously with any other function affecting the plant is still very bad idea.
+Don't do it !!
+
+
+
+
+
 
 
 == GETTING/SETTING LEAF VALUES ==
@@ -806,16 +887,24 @@ Some uses of Weed (e.g for effects plugins or events may require further headers
 
 == Weed_init() ==
 
-   Prior to calling any other weed functions, a program (host, but not a plugin) must call:
+   Prior to calling any other Weed functions in the reference libwee, a program (host, but not a plugin) must call:
 
  * weed_error_t weed_init(int32_t api_version)
 
-     The application passes in the API version it wants to use. The function will set function
+     The application passes in the API / ABI version it wants to use. The function will set function
      pointers to the correct API versions of the core functions. Usually the program would use WEED_API_VERSION defined in
-     weed.h
+     weed.h. All API versions >= 200 are guaranteed to be supported in every future version of the library.
 
      If the host selects an API version < 100 or > the highest version the library supports, WEED_ERROR_BADVERSION will
      be returned, otherwise WEED_SUCCESS is returned.
+
+     Defects discovered in libweed which cause a deviation from this spec. will be backwards ported to prior API versions,
+     provided they do not affect the behaviour of applications in a dettrimental manner.
+
+     If an error is discovered in the spec, the spec. will be corrected, and if necessary, the code amended.
+
+     If a code amendment is likely to affect the behaviour of existing programs, then a system will be devised for
+     applications wishing to use the old API with the fix applied to specify that.
 
 
 
@@ -839,9 +928,38 @@ In this way a host can provide its own defintion of a Weed plant, and
 provide its own implementation of the core functions, whilst still making
 use of the rest of the header file.
 
-HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
+Similarly, HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
 
 
+
+
+
+=== Compiling a program with Weed: ====
+
+If the program wishes to use Weed, it should include weed/weed.h
+
+
+=== Compiling a program with libweed ====
+
+If a program wishes to use a reference build of libweed, it should include weed/weed.h and link against libweed
+
+
+It may optionally include weed/weed-utils.h and link against libweed-utils.
+
+
+=== Compiling a Host with Weed: ====
+
+If the program wishes to use act as a Weed host, it should include weed/weed-host.h  and weed/weed.h in that order.
+
+It may optionally include weed/weed-utils.h and link against libweed-utils.
+
+
+=== Compiling a Plugin with Weed: ====
+
+If the program wishes to use act as a Weed plugin, it should include weed/weed-plugin.h  and weed/weed.h in that order.
+
+
+An exampe of Compiling plugins and hosts for different applications (in this case, video filters) is given below.
 
 
 
@@ -851,81 +969,19 @@ HAVE_WEED_LEAF_T and HAVE_WEED_DATA_T allow for finer levels of overloading.
 
 == WEED EFFECTS EXAMPLE ==
 
-Since the main purpose of Weed is for video effects, a description is
-included here, as an example of how Weed can be used.
+There now follows an example of using Weed for a specific role, in this case, video effects.
 
-There is also a Weed Audio Extension, and a Weed Events Extension,
-which are documented separately.
-
-
-== WEED_FILTER_API_VERSION  ==
-
-This preprocessor symbol is defined as 200 for this version of the specification. This
-number may be increased for future revisions of the spec.
-
-libweed-utils provides the following function:
-
-  int check_filter_api_compat(int32_t higher, int32_t lower)
-
-which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise.
+There is also a Weed Audio Extension, and a Weed Events Extension, which are documented separately.
+Other roles and extensions may be added in the future.
 
 
 
+== compiling a host for Weed Effects ===
 
-Weed Effects (and Event) plugins, the value of the plant leaf "type" MAY be one of:
+The host should include weed/weed-effects.h after weed/weed-host.h and weed/weed.h
 
-  * WEED_PLANT_HOST_INFO          : Information about host and core functions
-  * WEED_PLANT_PLUGIN_INFO        : Information about plugin and list of filter classes it includes
-  * WEED_PLANT_FILTER_CLASS       : Descriptive information about single filter class
-  * WEED_PLANT_CHANNEL_TEMPLATE   : Information about what kinds of channels filter accepts
-  * WEED_PLANT_PARAMETER_TEMPLATE : Information about what kinds of parameters filter has
-  * WEED_PLANT_FILTER_INSTANCE    : All data about an instance
-  * WEED_PLANT_CHANNEL            : Instantiation of a channel
-  * WEED_PLANT_PARAMETER          : Instantiation of a parameter
+If using video effects it may optionally include  weed/weed-palettes.h
 
-  * WEED_PLANT_GUI                : Used for GUI hints for the
-                                    filter_classes and parameter_templates.
-
-
-
-  * WEED_PLANT_EVENT              : plant used for events (described
-                                            in the Weed EVENTS extension
-  * WEED_PLANT_EVENT_LIST         : plant used for event lists (described
-                                            in the Weed EVENTS extension
-
-
-
-
-
-== WEED UTILITY FUNCTIONS ==
-
-To make life easier for host and plugin writers, there exists a Weed
-utility library, which wraps some of the core functions in simpler
-variants. This is documented in the Weed Utility Library spec. (TODO).
-
-== COMPILING A PLUGIN HOST WITH WEED ==
-
-A host (ie. the application which will dlopen() the plugins)
-wishing to use the reference build of Weed should #include the following headers:
-
-weed/weed-host.h // BEFORE weed.h
-weed/weed.h
-
-and link with libweed
-
-If the host wishes to use the Weed effects system:
-
-weed/weed-effects.h
-
-If using video effects:
-weed/weed-palettes.h // before or after any other headers
-
-If the host makes use of the Weed Utility Library, it may also be 
-linked (shared or static) with libweed-utils, and #include weed/weed-utils.h
-
-If the host wishes to use Weed events, it should #include weed/weed-events.h
-
-weed-compat.h is provided for compatibily with some external libraries (see below).
 
 
 
@@ -940,15 +996,24 @@ weed/weed-effects.h // AFTER weed.h
 and for a video effect:
 weed/weed-palettes.h // before or after any other headers
 
-TODO:
 If plugins wish to use weed-utils then they should #include weed/weed-utils AFTER weed-plugin.h.
 
-Plugins may optionally be link with libweed-plugin (TODO) and if they wish to use Weed utils they should simply
-#include weed/weed-utils.h
-
 Plugins should NOT be linked directly with libweed or libweed-utils, as they would be using the host version of the core
-functions.
+functions. weed-utils.h contains a small amount of C code, which replicates some of the functions of libweed-utils for plugins.
+The inclusion of this header is optional, but it provides typecast getters and setters for for single values and arrays.
 
+TODO: allow disabling of the code inclusion.
+
+
+Plugins may optionally include weed/weed-plugin-utils.h and weed/weed-plugin-utils.c
+The reason for including the code is due to the fact that if the pl;ugins dynamically linke with libweed-plugin-utils then they would
+be running the host versions of the core functions. In addition, dynamic libraries (i.e. plugins) cannot easily be linked with static
+libraries.
+
+weed-plugin-utils.c is crafted in such a way that it does not require any Weed headers or libriaries other than weed-plugin-utils.h
+
+In addition, #defines are used to enable / disbale specific groups of functions, so that the plugins are not bloated with unnecesary
+code. The typical size of a stripped plugin on compiled with gcc on Linux is 10 -30 kilobytes.
 
 
 == WEED-COMPAT.H ==
@@ -976,8 +1041,60 @@ The header also provides compatibility with other libraries, eg. libav. Check th
 
 
 
+
+
+
+
+== WEED_FILTER_API_VERSION  ==
+
+This preprocessor symbol is defined as 200 for this version of the specification. This
+number may be increased for future revisions of the spec.
+
+libweed-utils exports the following function:
+
+  int check_filter_api_compat(int32_t version_a, int32_t version_b)
+
+which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise.
+
+Compatible means that all of the functions in the lower version are available in the higher version.
+The higher version may add new features and definitions which are not available in the lower version.
+
+
+
+
+Weed Effects (and Event) plugins, the value of the plant leaf "type" MAY be one of:
+
+  * WEED_PLANT_HOST_INFO          : Information about host and core functions
+  * WEED_PLANT_PLUGIN_INFO        : Information about plugin and list of filter classes it includes
+  * WEED_PLANT_FILTER_CLASS       : Descriptive information about single filter class
+  * WEED_PLANT_CHANNEL_TEMPLATE   : Information about what kinds of channels filter accepts
+  * WEED_PLANT_PARAMETER_TEMPLATE : Information about what kinds of parameters filter has
+  * WEED_PLANT_FILTER_INSTANCE    : All data about an instance
+  * WEED_PLANT_CHANNEL            : Instantiation of a channel
+  * WEED_PLANT_PARAMETER          : Instantiation of a parameter
+
+  * WEED_PLANT_GUI                : Used for GUI hints for the
+                                    filter_classes and parameter_templates.
+
+
+
+
+
+
+== WEED UTILITY FUNCTIONS ==
+
+To make life easier for host and plugin writers, there exists a Weed
+utility library, which wraps some of the core functions in simpler
+variants. This is documented in the Weed Utility Library spec. (TODO).
+
+
+
+
+
+
+
 === functions ===
-The folowwing functions are defined in weed-effects.h:
+The following functions are defined in weed-effects.h:
 
 
 == PLUGIN FUNCTIONS ==
@@ -1378,25 +1495,46 @@ The plugin should not alter any values in the plant after weed_setup() but may a
    		    their order or type, adding or removing channel templates does require an update.
 		    Prior versions of the filter MUST be left in plugin, as hosts may be using them.
 
+Mandatory for filters with video channels
+
+ * "palette_list" : WEED_SEED_INT : the plugin sets this to an array of allowed palettes for channels created from channel templates
+   for the filter. It should contain as many palettes as possible that the filter may handle.
+   Palettes which can be processed FASTER should be listed first, in the case of palettes which may require intenal conversion.
+
+
+
+
 '''Optional leaves''': [[BR]]
 
  * "flags"        : WEED_SEED_INT : bitmap of filter flags (see below)
- * "process_func" : WEED_SEED_FUNCPTR : pointer to the process_func()
- * "init_func"    : WEED_SEED_FUNCPTR : pointer to the init_func()
+
+* "process_func" : WEED_SEED_FUNCPTR : pointer to the process_func()
+
+* "init_func"    : WEED_SEED_FUNCPTR : pointer to the init_func()
                     (can also be NULL)
- * "deinit_func"  : WEED_SEED_FUNCPTR : pointer to a the deinit_func()
+
+* "deinit_func"  : WEED_SEED_FUNCPTR : pointer to a the deinit_func()
                     (can also be NULL)
- * "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
- * "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
- * "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
- * "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
+
+* "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of inp channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
+
+* "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '''type''' of the referenced plant MUST be  WEED_PLANT_CHANNEL_TEMPLATE
+
+* "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE
+
+* "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '''type''' of the referenced plant MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
  * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without changing the plugin "version"
- * "description"  : WEED_SEED_STRING : filter description
- * "url"          : WEED_SEED_STRING : filter URL
- * "copyright"    : WEED_SEED_STRING : copyright details for filter
- * "license"      : WEED_SEED_STRING : license of filter
- * "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
+
+* "description"  : WEED_SEED_STRING : filter description
+
+* "url"          : WEED_SEED_STRING : filter URL
+
+* "copyright"    : WEED_SEED_STRING : copyright details for filter
+
+* "license"      : WEED_SEED_STRING : license of filter
+
+* "target_fps"   : WEED_SEED_DOUBLE : plugin can inform the host of the target fps rate(s) for the
                                        host to run the plugin. Host should set "fps" for the
 				       instance in this case.
 
@@ -1405,8 +1543,218 @@ The plugin should not alter any values in the plant after weed_setup() but may a
            leaves inside it. The plugin may create it and set leaves
            in it weed_setup().
 
+
+the following are optional for filters with video channels:
+
+* "width" : WEED_SEED_INT    :
+  For filters that require fixed frame sizes. The host MUST set channel pixel widths to this value in order to use the filter.
+
+  May contain more than one element, in which case the host is free to choose from among the choices provided.
+  If multiple values are defined, they should be listed in descending order of magnitude to assist the host selecting in the best match.
+
+  ONLY set this if it is absolutely necessary for the filter to function. If it is possible to use some combination of "maxwidth", "minwidth",
+  "hstep" and "alignment_hint" to achieve the same result, then those leaves should be used in preference.
+
+  The value is measured in pixels so the actual value of "width" in channels may vary depending on the palette chosen,
+  since there the width is measured in macropixels (i.e for WEED_PALETTE_UYVY and WEED_PALETTE_YUYV,
+  1 macropixel == 2 screen pixels, for WEED_PALETTE_YUV411, 1 macropixel = 4 screen pixels).
+
+  For planar palettes the value(s) define the allowed pixel width(s) of the first plane.
+
+  If "height" is also set, then that leaf MUST contain either one value or an equal number of values to this one,
+  and the combined set of values shall be understood to form sequential pairs.
+
+  If the value is too large, then the host may choose not to use the filter.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels.
+
+  Setting a value <= zero means that that particular channel / pair has no width limitations.
+
+
+
+ * "height" : WEED_SEED_INT   :
+  For filters that require fixed frame sizes. The host MUST set channel heights to the specified value in order to 
+  use the filter. May contain more than one element, in which case the host is free to choose from among the choices provided.
+
+  ONLY set this if it is absolutely necessary for the filter to function. If it is possible to use some combination of "maxheight", "minheight",
+  and "vstep" to achieve the same result, then those leaves should be used in preference.
+
+  For planar palettes the value(s) define the the allowed pixel height(s) of the first plane.
+
+  If "width" is also set, then that leaf MUST contain either one value or a number of values equal to the number of values of this leaf,
+  and the combined set of values shall be understood to form sequential pairs of values.
+
+  If this leaf contains multiple elements then height values matching the same width (or no width) MUST be listed in
+  ASCENDING ORDER OF MAGNITUDE (ie. smallest to largest) to assist the host in selecting the best match.
+
+  e.g: 	width values:		128,		256,   	480,		480,		480,		640,		640,		640
+       		height values:		128,       	256,		240,		320,		480,		320,		480,		640
+
+
+  If the value is too large, then the host may choose not to use the filter.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels.
+
+  Setting a value <= zero means that that particular channel / pair has no height limitations.
+
+Examples:
+	fixed size:
+	 	width value:		640
+       		height value:		480
+
+	width restricted, height unrestricted:
+	 	width value:		1280
+       		height value:		0  (or absent)
+or:		
+ 	 	width values:		128,		256,   	640,		1024,	2048
+       		height value:		0  (or absent)
+
+	width unrestricted, height unrestricted:
+	 	width value:		0  (or absent)
+       		height value:		1280
+or:
+	 	width value:		0  (or absent)
+	 	height values:		128,		256,   	640,		1024,	2048
+
+	pairs:
+	 	width values:		128,		256,   	480,		480,		480,		640,		640,		640
+       		height values:		128,       	256,		240,		320,		480,		320,		480,		640
+
+
+
+ * "hstep" : WEED_SEED_INT : If set, the host must set the widths of each channel to a multiple of this.
+   	     		     	     	      Should be avoided if possible for performance reasons.
+					      The value is ignored if "width" is set for the filter.
+
+  The value is measured in pixels; the macropixel size will be some multiple of this
+  (for WEED_PALETTE_UYVY and WEED_PALETTE_YUYV: 1 macropixel == 2 screen pixels, and 
+   for WEED_PALETTE_YUV411: 1 macropixel = 4 screen pixels;
+   for all other palettes, the pixel and macropixel sizes are the same.)
+
+   For planar palettes the widths of ALL planes must be an integer multiple of this value.
+
+   The value is fixed for the filter, it cannot be overriden for individual channels,
+   even If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set.
+
+   if not set then a value of 1 may be assumed by the host.
+
+
+
+ * "vstep" : WEED_SEED_INT : If set, the host must set the heights of each channel to a multiple of this.
+   	     		     	     	      Should be avoided if possible for performance reasons.
+					      The value is ignored if "height" is set for the filter.
+
+   For planar palettes the heights of ALL planes must be an integer multiple of this value.
+
+   The value is fixed for the filter, it cannot be overriden for individual channels,
+   even If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set.
+
+   if not set then a value of 1 may be assumed by the host.
+
+
+
+ * "alignment_hint" : WEED_SEED_INT :
+
+ If set, the host should attempt to align each plane in the "pixel_data" of each channel to this many bytes boundary.
+ In addition it ahould attempt to make the rowstrides in each plane be an integer multiple of this value.
+ If "hstep" is set then this value MUST be a multiple of "hstep".
+
+  The value is fixed for the filter, it cannot be overriden for individual channels,
+  even If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set.
+
+   if not set then a value of 1 may be assumed by the host.
+
+
+
+ * "maxwidth" : WEED_SEED_INT : If set, the host must set channel widths <= maxwidth (in pixels)
+
+  The value is measured in pixels so the maximum value in channels may be less depending on the palette chosen,
+  since there the width is measured in macropixels (i.e for WEED_PALETTE_UYVY and WEED_PALETTE_YUYV,
+  1 macropixel == 2 screen pixels, for WEED_PALETTE_YUV411, 1 macropixel = 4 screen pixels).
+
+  For planar palettes the value defines the maximum pixel width of the first plane.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels. Setting a value <= zero there means that that particular channel has no maximum width limitation.
+
+  In all other cases, "maxwith" MUST be >= "minwidth" + "hstep"
+
+
+
+
+* "maxheight" : WEED_SEED_INT : If set, the host must set the channel heights <= maxheight
+
+  For planar palettes, the value defines the maximum height of the first plane.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels. Setting a value <= zero there means that that particular channel has no maximum height limitation.
+
+  In all other cases, "maxheight" MUST be >= "minheight" + "vstep"
+
+
+
+ * "minwidth" : WEED_SEED_INT : If set, the host must set channel widths >= minwidth (in pixels)
+
+  The value is measured in pixels so the minimum value in channels may be less depending on the palette chosen,
+  since there the width is measured in macropixels (i.e for WEED_PALETTE_UYVY and WEED_PALETTE_YUYV,
+  1 macropixel == 2 screen pixels, for WEED_PALETTE_YUV411, 1 macropixel = 4 screen pixels).
+
+  For planar palettes the value defines the minimum pixel width of the first plane.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels. Setting a value <= zero there means that that particular channel has no minimum width limitation.
+
+  In all other cases, "minwidth" MUST be > 0 and <= "maxwidth" - "hstep"
+
+
+
+* "minheight" : WEED_SEED_INT : If set, the host must set the channel heights >= minheight
+
+  For planar palettes, the value defines the minimum height of the first plane.
+
+  If the flag WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set for the filter, then this value may be overriden for individual
+  channels. Setting a value <= zero there means that that particular channel has no maximum height limitation.
+
+  In all other cases, "minheight" MUST be > 0 and <= "maxheight" - "vstep"
+
+
+
+
+ * "YUV_sampling"     : WEED_SEED_INT : Preferred sampling type for YUV palettes, as defined below.
+   		      		      		      	       Be aware that some hosts may not be able to comply with this,
+							       so the actual value in the channels should be checked,
+							       and if necessary, WEED_ERROR_FILTER_INVALID may be returned.
+							       if the filter sets the flag WEED_FILTER_PALETTES_MAY_VARY this default
+							       value may be overriden for individual channel templates.
+							       Valid only for in_channels. For out channels, the plugin should just set
+							       the value in the channel.
+
+ * "YUV_clamping"     : WEED_SEED_INT : Preferred clamping type for YUV palettes, as defined below. 
+    		      		      		      	       Be aware that some hosts may not be able to comply with this,
+							       so the actual value in the channels should be checked,
+							       and if necessary, WEED_ERROR_FILTER_INVALID may be returned.
+							       if the filter sets the flag WEED_FILTER_PALETTES_MAY_VARY this default
+							       value may be overriden in individual channel templates. 
+							       Valid only for in_channels. For out channels, the plugin should just set
+							       the value in the channel.
+
+ * "YUV_subspace"     : WEED_SEED_INT : Preferred subspace for YUV palettes, as defined below.
+   		      		      		      	       Be aware that some hosts may not be able to comply with this,
+							       so the acutual value in the channels should be checked.
+							       and if necessary, WEED_ERROR_FILTER_INVALID may be returned.
+							       if the filter sets the flag WEED_FILTER_PALETTES_MAY_VARY this default
+							       value may be overriden in individual channel templates. 
+							       Valid only for in_channels. For out channels, the plugin should just set
+							       the value in the channel.
+
+
+
+
  * Every plugin can store internal data in leaves inside the
    filter_class  plant, and host MUST NOT change their values. Those internal leaves MUST have keys prefixed with "plugin_"
+
 
  * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
 
@@ -1478,10 +1826,7 @@ which the host must not alter.
 
 '''Mandatory leaves for channels with video''': [[BR]]
 
- * "palette_list" : WEED_SEED_INT   : the plugin sets this to an
- array of allowed palettes for the channel. Its order is plugin's
- preference for a palette. If this leaf is missing, the channel
- only supports audio.
+
 
 '''Mandatory leaves for channels with audio''': [[BR]]
 
@@ -1499,14 +1844,20 @@ which the host must not alter.
       If the channel_template is marked "optional", then the minimum number of this
       channel_template is 0, otherwise it is 1.
 
-      If "max_repeats" is present, the number of repeats may be changed
-      [reduced] by the host after init() and between processing calls without the need to re-initialise the
-      plugin. In all other cases, a change in the number of channels requires
-      the plugin to be re-initialised. 
-      The number of channels may only be altered [reduced] by setting
-      "disabled" to WEED_TRUE for one or more channels created from
-      this template. This is allowed even if the template is not marked "optional" - though in the latter case the number 
+      If "max_repeats" is present, then it must be possible for any of the channels created from this template
+      to be marked / umarked as "disabled" by the host between processing calls without the need to re-initialise the
+      plugin.
+
+      This is permitted even if the template is not marked "optional" - though in that case the number 
       of non-disabled repeats must always be at least 1.
+
+       Channels which are disabled in this way will still be present in the channel array for the instance,
+       but their "pixel_data" may be set to NULL.
+
+      Altering the number of repeats (i.e. removing or adding channels) still requires a reinit of the plugin.
+
+      The leaf is valid for both in and out channel templates.
+
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_"
@@ -1517,40 +1868,33 @@ which the host must not alter.
 
 '''Optional leaves for channels with video''': [[BR]]
 
- * "width" : WEED_SEED_INT    : If set, frame width in pixels that a
-   plugin can handle. If it is set, host is forbidden to set the width
-   in channel instance to anything else. For YUV packed type palettes, the
-   width is in macropixels (e.g for WEED_PALETTE_UYVY888, it is the
-   width in UYVY macropixels). For planar YUV palettes, it is measured
-   in the Y plane.
+  If the filter flags contain WEED_FILTER_CHANNEL_SIZES _MAY_VARY, then the following leaves may be set
+  at the plugin author's discretion in order to override the default values for individual channel templates.
+  For details, see the definitions in filter_class.
 
- * "height" : WEED_SEED_INT   : If set, frame height in pixels that a plugin can handle. If it is set, host is forbidden to set the height in channel instance to anything else 
+ * "width" : WEED_SEED_INT    :
 
- * "hstep" : WEED_SEED_INT : If set, the host must set the channel width to a multiple of this (in pixels). Should be avoided if possible for performance reasons.
+ * "height" : WEED_SEED_INT   :
 
- * "vstep" : WEED_SEED_INT : If set, the host must set the channel height to a multiple of this (in pixels). Should be avoided if possible for performance reasons.
+ * "maxwidth" : WEED_SEED_INT : If set, the host must set channel widths <= maxwidth (in pixels)
 
- * "maxwidth" : WEED_SEED_INT : If set, the host must set the channel width <= maxwidth (in pixels)
+ * "maxheight" : WEED_SEED_INT : If set, the host must set the channel heights <= maxheight
 
- * "maxheight" : WEED_SEED_INT : If set, the host must set the channel height <= maxheight (in pixels)
+ * "minwidth" : WEED_SEED_INT : If set, the host must set channel widths >= minwidth (in pixels)
 
- * "alignment_hint" : WEED_SEED_INT : If set, the host should attemp to align each plane in "pixel_data"
-   	       	 	       	 to this many bytes boundary. In addition the rowstrides in each plane should be a multiple
-				 of this value. If "hstep" is set then this value must be a multiple of "hstep".
+ * "minheight" : WEED_SEED_INT : If set, the host must set the channel heights >= minheight
 
- * "YUV_sampling"     : WEED_SEED_INT : Sampling type for YUV
-                                        palettes, defined
-                                        below. Default is mpeg if not set.
 
- * "YUV_clamping"     : WEED_SEED_INT : Clamping type for YUV
-                                        palettes, defined below -
-                                        Host should only use unclamped
-                                        if plugin prefers it. Default
-                                        is clamped, if not set.
+  If the filter flags contain WEED_FILTER_PALETTES _MAY_VARY, then the following leaves may be set
+  at the plugin author's discretion in order to override the default values for individual channel templates.
+  For details, see the definitions in filter_class.
 
- * "YUV_subspace"     : WEED_SEED_INT : Subspace (Y'CbCr digital, Y'UV
-                                        analog or BT.709) type for YUV
-					Effect plugins generally can ignore this.
+ * "YUV_sampling"     : WEED_SEED_INT :
+
+ * "YUV_clamping"     : WEED_SEED_INT :
+
+ * "YUV_subspace"     : WEED_SEED_INT :
+
 
 
 '''Optional leaves for channels with audio''': [[BR]]
@@ -1564,49 +1908,67 @@ which the host must not alter.
 
 == PLANT TYPE CHANNEL ==
 
-Plant type channel is used as a fixation of channel plants that the
-host sets and plugin reads to know what it is getting. All leaves
-SHOULD be set readonly for the plugin by the host.
+Channel plants may be created by the host using channel templates from the filter class as a guide.
+Channels MUST be added to a filter instance in the order defined in the channel_templates of the filter_class from which
+the instance was generated, with due consideration to the template leaves "optional" and "max_repeats".
 
 
-Channels MUST be added in the order of channel_templates, bearing in
-mind the template leaves "optional" and "max_repeats". After
-initialisation, channels MUST NOT be added or removed without reinitialising the plugin.
+
+After initialisation, channels MUST NOT be added or removed without reinitialising the plugin.
 
  * "type" == WEED_PLANT_CHANNEL
 
 '''Mandatory leaves for all channel plants''': [[BR]]
- * "template" : WEED_SEED_PLANTPTR : Pointer to a channel
- template plant this channel instance is based on.
 
-* "width" : WEED_SEED_INT    : The chosen frame width in pixels. For
-  YUV packed type palettes, the width is in macropixels (e.g for
-  WEED_PALETTE_UYVY888, it is the width in UYVY macropixels). For
-  planar YUV palettes, it is measured in the Y plane.
+* "template" : WEED_SEED_PLANTPTR : Pointer to a channel template plant used to create the channel.
 
-* "height" : WEED_SEED_INT   : The chosen height in pixels
 
-* "current_palette" : WEED_SEED_INT: The chosen palette, which must be one of the palettes contained in "palette_list" of a channel template
+* "width" : WEED_SEED_INT    : The frame width in macropixels. Must follow the rules for "width", "maxwidth", "minwidth" and
+  	    		       	   	       "hstep" defined for the filter_class, or if the filter_class has the flag
+					       WEED_FILTER_PALETTES_MAY_VARY set,
+					       then the equivalent rules from the channel_template if they are present.
 
-* "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to
- the image pixel data. Depending on the value of "current_palette",  there is 1 element for packed palettes, >1 elements for planar palettes
 
-* "rowstrides" : WEED_SEED_INT     : array carrying the row width of EACH PLANE in bytes (include padding). Number of elements
- must match with number of elements in "pixel_data".
+* "height" : WEED_SEED_INT   : The frame height in pixels. Must follow the rules for "height", "maxheight", "minheight" and
+  	    		       	   	       "vstep" defined for the filter_class, or if the filter_class has the flag
+					       WEED_FILTER_PALETTES_MAY_VARY set, then the equivalent rules from the channel_template
+					       if they are present.
+
+					       If the process_function() is run in threading mode, then for out channels, this leaf will contain
+					       two values, the first is the reduced height of the channel for the thread, the second the true height
+					       of the channel. (See threading)
+
+* "current_palette" : WEED_SEED_INT: The selected palette, which must be one of the palettes contained in "palette_list"
+  		      		     	 	  	   of the filter class used to create the instance to which the channel is attatched,
+							   or if the filer_class has the flag WEED_FILTER_PALETTES_MAY_VARY set,
+							   then one of the palettes from the channel_template's "palette_list", if that leaf is present.
+
+* "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to  the image pixel data. The number of elements depends on
+  	       	 		      	      	   	    	"current_palette". The size of each element depends on "rowstrides", "height",
+								"current_palette" and the plane number for planar palettes. Host should attempt
+								to align each plane according to the "alingment_hint" if that was set for the
+								corresponding filter_class.
+
+
+* "rowstrides" : WEED_SEED_INT     : array of row widths in bytes (include padding / alignment) in "pixel_data". Host should
+  	       	 		     	      	  	 attempt to set this to a multiple of "alignment_hint" for the filter_class, if that leaf is
+							 present.
+
 
 '''Mandatory leaves for channel plants with audio''': [[BR]]
 
  See the weed AUDIO extension.
 
 '''Optional leaves for all channel plants''': [[BR]]
- * "disabled"     : WEED_SEED_BOOLEAN : the host MAY set this to
-                    WEED_TRUE before calling init_func() if the corresponding channel template
-                    has "optional" leaf set to true. Host MUST NOT change this without
-                    reinitialising the instance. The one exception is if
-		    the channel is based on a template which has
-		    "max_repeats" set, in which case a channel from
-		    that template may be disabled at any time between
-		    processing calls.
+ * "disabled"     : WEED_SEED_BOOLEAN : the host may set this to WEED_TRUE before calling init_func()
+   		  if the corresponding channel template has the "optional" leaf set to WEED_TRUE, in order to mark non
+		  used channels.
+
+		  The Host MUST NOT change this value without reinitialising the instance,
+		  UNLESS "max_repeats" is also set for the template, in which case the host may mark any channels
+		  created from that template as "disabled" without needing to reinit the filter. However, varying the number
+		  (disabled + non-disabled) of channels created from the template still requires a reinit.
+		  
 
  * "flags"        : channel flags set by host.
 
@@ -1626,10 +1988,13 @@ initialisation, channels MUST NOT be added or removed without reinitialising the
 			      frame(s). Will only be used if the plugin sets the filter flag bit WEED_FILTER_HINT_MAY_THREAD.
 			      See below - threading.
 
- * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio
-                                               of the pixel of the image (pixel aspect ratio 
-                                               different than 1.0
-                                               means pixels are non-square) [set by host]
+ * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
+   			    		       the corresponding out_channel. Pixel aspect ratio 
+                                               other than 1.0 means pixels are non-square on whaever display device the host is using).
+					       For example, if a filter wants to draw an exact circle independant of the display device,
+					       then it should take this value into consideration and actually draw an elipse with
+					       horizontal radius == vertical_radius / pixel_aspect_ratio.
+					       
 
 
 If the plugin sets any of these in the channel_template, and the host is using a YUV
@@ -1638,16 +2003,17 @@ possible, and process video accordingly:
 
  * "YUV_sampling"     : WEED_SEED_INT : Preferred sampling type for YUV
                                         palettes, host should try to
-                                        match if plugin set it in template
+                                        match if plugin set it in filter_class or template.
 
  * "YUV_clamping"     : WEED_SEED_INT : Preferred clamping type for YUV
                                         palettes, host should try to
-                                        match if plugin set it in template
+                                        match if plugin set it in filter_class or template.
 
  * "YUV_subspace"     : WEED_SEED_INT : Preferred YUV Subspace (see below)
                                         type for YUV palettes, host should try to
-                                        match if plugin set it in template
-					Generally not needed.
+                                        match if plugin set it in filter_class or template
+
+
 
 
 For RGB type channels:
@@ -1658,7 +2024,8 @@ For RGB type channels:
    		  		  	     If not set, it can be assumed to be WEED_GAMMA_SRGB.
 
 					     * If the plugin set the filter flag bit WEED_FILTER_HINT_LINEAR_GAMMA,
-					     then the host may set this to WEED_GAMMA_LINEAR.
+					     then the host may set this to WEED_GAMMA_LINEAR to indicate the values are in linear gamma.
+					     
 
 
 
@@ -1841,30 +2208,34 @@ Depending on the seed_type of "default", the host knows the seed type of "value"
 
 
 ==== Number of elements in the leaves ====
-For color parameters, the value size is 3 or 4, depending on the "colorspace". (3 for RGB, 4 for RGBA).
-
-The "default" leaf must contain at least one RGB(A) value UNLESS the plugin sets the parameter template flag
-WEED_PARAMETER_VARIABLE_SIZE; then the "default" may take any number of RGB(A) values or be absent;
-if the number of RGB(A) values in "default" is 0 or absent, then "new_default" MUST contain exactly one RGB(A) value.
-
-The number of RGB(A) values in "value" set by the host MUST match the number of RGB(A) values in
-"default", UNLESS the plugin sets the parameter flag WEED_PARAMETER_VARIABLE_SIZE
-then the "value" may take any number (0 or more) of RGB(A) values.
-
 
 For color parameters:
-The number of elements in "default" MUST always be a multiple of 3 or 4 (depending on the "colorspace" - 
+-- WEED_LEAF_DEFAULT --
+The number of elements in "default" set by the plugin MUST always be a multiple of 3 or 4 (depending on the "colorspace") - 
+(3 for RGB, 4 for RGBA). Normally it must contain at least one RGB(A) value.
+
+If  the plugin sets the parameter template flag WEED_PARAMETER_VARIABLE_SIZE;
+then the "default" may have 0 values, or be absent; and "new_default" MUST contain exactly one RGB(A) value.
+
+
+
+-- WEED_LEAF_VALUE --
+The number of RGB(A) values in "value" set by the host MUST match the number of RGB(A) values in "default",
+
+- UNLESS the plugin sets the parameter flag WEED_PARAMETER_VARIABLE_SIZE; then the "value" may take any number
+of RGB(A) values, including 0.
+
+
 
 For min and max, if the number of elements may be:
 
 1: each R, G, B component uses the same min and/or max, and alpha may take any value
-n: (where n is 3 or 4 depending on colorspace) each RGB or RGBA value will use the same set of values.
+
+n: (where n is 3 or 4 depending on colorspace) - each RGB or RGBA value in "value" will use the same set.
+
 N: (where N is a multiple of 3 or 4, matching the number of elements in "default").
 
 - The last option is not valid if the parameter has the flag bit WEED_PARAMETER_VARIABLE_SIZE set.
-
-
-* It is recommended to use exactly one value for "default", unless WEED_PARAMETER_VARIABLE_SIZE is set.
 
 
 
@@ -2237,32 +2608,16 @@ Deprecated (do not use in newly written code):
 
 ==== Filter_class flags ====
 
- *  WEED_FILTER_NON_REALTIME  1  [[BR]]
+ *  WEED_FILTER_NON_REALTIME    [[BR]]
     non-realtime filter: the filter is too slow to use in realtime processing.
     The exact definition of what is realtime and what is not is left to the plugin author to decide.
 
-
- *  WEED_FILTER_IS_CONVERTER  2  [[BR]]
-    This flag bit should be set if the plugin does not alter the image
-    pixels except for resizing or palette conversion between in
-    channel and out channel(s). It should only be set for the
-    following types of plugins: plugins which only resize the in frame
-    to out frame(s); plugins which only convert the palette from in
-    frame to out frame(s), plugins which simply duplicate the in frame
-    to out frame(s), and for plugins which handle only audio, where the
-    plugin only alters the audio volume [see the Weed Audio
-    Extension].
-
-    It is used to assist with categorisation of the
-    plugin type. To be useful, such filters may also want to use the
-    *_CAN_VARY channel flags below.
-
- * WEED_FILTER_HINT_IS_STATELESS  4  [[BR]]
+ * WEED_FILTER_HINT_IS_STATELESS    [[BR]]
    This is optional, if the filter is stateless (i.e. not dependant on
    past calls to process_func() ) then this this flag
    bit can be set. Used mainly for compatibility with other plugin architectures.
 
- * WEED_FILTER_HINT_LINEAR_GAMMA  8  [BR]] (api 200 +)
+ * WEED_FILTER_HINT_LINEAR_GAMMA    [BR]] (api 200 +)
    This is a hint to the host that the plugin prefers to use R, G, B values in linear gamma space.
    (see note below about colour spaces)
 
@@ -2277,7 +2632,81 @@ Deprecated (do not use in newly written code):
    then it may set this hint. Ignored for filters which have no out_channels.
    See note below about threading.
 
-   
+ *  WEED_FILTER_IS_CONVERTER   [[BR]]
+    see below
+
+ *  WEED_FILTER_CHANNEL_SIZES_MAY_VARY    [[BR]]
+    see below (video filters only)
+
+ *  WEED_FILTER_CHANNEL_PALETTES_MAY_VARY    [[BR]]
+    see below (video filters only)
+
+
+
+Explanation of flag bits.
+
+    In Weed, all video channels are assumed to have the same (macro) pixel size (width and height - but not necessarily rowstrides)
+    as the first non-disabled in_channel (or first non-disabled out_channel for filters that have no in channels).
+    All video channels are also assumed to have the same "current_palette" as the first non-disabled in_channel
+    (or first non-disabled out_channel for filters that have no in channels).
+    The flag bits: WEED_FILTER_CHANNEL_SIZES_MAY_VARY and WEED_FILTER_CHANNEL_PALETTES_MAY_VARY override this
+    behaviour, in conjunction with the flag bit WEED_FILTER_IS_CONVERTER.
+
+    WEED_FILTER_IS_CONVERTER on its own has no meaning However it may be combined with either or both of the other flag bits.
+
+    If the flag bit WEED_FILTER_CHANNEL_SIZES_MAY_VARY is set, then each of the input channels may have a different input size
+    (and / or rowstrides value). The number of out video channels must be either 0, 1 or equal to the number of input video channels,
+    in the latter case, if an input channel is marked optional then the corresponding output channel is assumed to be optional,
+    and if an in channel has "max_repeats" then the corresponding out channel is assumed to have the same value
+    (though it is good practice to mark these options specifically.
+
+    If the plugin has 0 output video channels, then the plugin is assumed to be some kind of analyser.
+
+    If the plugin has exacly one output channel then it is assumed to be some kind of compositor, (the plugin may of course copy
+    and scale the inputs, but the resulting output size will always equal the size of the first in channel.)
+
+    Otherwise the sizes of each output channel must be set by the host equal to the corresponding input channel.
+    I.e the plugin need never resize between input and output, UNLESS:
+
+    If the flag bit WEED_FILTER_IS_CONVERTER is also set then the plugin is a resizer plugin. In this case its sole function
+    should be resize the input channels to the corresponding out channels, or in the case of a single input channel, to reproduce the
+    input at the selected out size(s), or in the case of multiple inputs and single output, to combine the inputs and produce output
+    at the selected size. 
+    The exact resizing method is left to the plugin to decide (for example it may offer
+    a border - or letterboxing, or scale at selectable quality values).
+
+
+    If the flag bit WEED_FILTER_PALETTES_MAY_VARY is set, then each of the input channels may have any of the palettes
+    declared in the corresponding channel_template's "palette_list"
+    The number of out video channels must be either 0, 1, or equal to the number of input video channels,
+    In the latter case, if an input channel is marked optional then the corresponding output channel is assumed to be optional.
+    and if an in channel has "max_repeats" then the corresponding out channel is assumed to have the same value (though it is good
+    practice to mark these options specifically.
+
+    If the plugin has 0 output video channels, then the plugin is assumed to be some kind of analyser.
+    If the plugin has multiple input channels and a single ouptut video channel, then it can be assumed that the plugin combines the
+    input channels in some way (for example a plugin which mixes using a separate alpha layer could define three in channels,
+    two with colour palettes and a third (possibly optional) with only alpha palettes in the "palette_list")
+
+    The palettes of each output channel are assumed to equal to that of the corresponding (by numeration) input channel.
+    I.e. the plugin need never change palettes between input and output, UNLESS:
+
+    If the flag bit WEED_FILTER_IS_CONVERTER is also set, then the plugin is a palette convertor and In this case its sole function
+    should be to convert from the palette of each input channel to the palette of the corresponding out channel, or in the
+    case of single input channel, to duplicate the input in each of the selected output channel palettes, or in the case of multiple
+    inputs and single output, to combine the inputs in some fashion (e.g adding an alpha layer).
+
+    The "palette_lists" of the input and output channels define the palettes that can be accepted / will be produced.
+
+    The flag bits WEED_FILTER_CHANNEL_SIZES_MAY_VARY and WEED_FILTER_PALETTES_MAY_VARY may be combined, with or without
+    WEED_FILTER_IS_CONVERTER.
+
+    These flags may also be combined with any of the other flags.
+
+    Note that for audio filters, the meaning of the flags WEED_FILTER_IS_CONVERTER and WEED_FILTER_CHANNEL_SIZES_MAY_VARY
+    is somewhat different than for video filters (see Weed Audio Extension).
+
+
 
 ==== Channel template flags ====
 
@@ -2292,49 +2721,35 @@ Deprecated (do not use in newly written code):
     channel size (height or width in (macro)pixels) is changed.
 
  *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE   [[BR]]
-    host must reinit the plugin before calling process_func() if the channel palette is changed
+    host must reinit the plugin before calling process_func() if the channel palette is changed. For YUV palettes,
+    the host must also reinit the plugin if the clamping, subspace or sampling changes.
 
  *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
-    If this flag bit is set, the filter can do inplace operations.
+    If this flag bit is set, the filter can do inplace operations (source and destination are the same)
     Hosts can select this mode by setting "pixel_data" of this out channel
-    equal to the "pixel_data" of the corresponding (same number; not counting "disabled" channels) 
-    in channel. The flag bit is only valid for OUT channels. 
-
- *  WEED_CHANNEL_SIZE_CAN_VARY    [[BR]]
-    All channels are assumed to have the same (macro) pixel size (width and height, but not necessarily rowstrides)
-    as the first non-disabled in_channel (or first non-disabled
-    out_channel for filters that have no in channels). If this flag
-    bit is set, then the host can set this channel to a different (macro) pixel size.
-    For fixed size channels, it is not necessary to set this.
-    Plugins should avoid resizing internally as much as possible, unless they have a "high-performance" resize routine.
-    Otherwise resizing should be left to the host.
-
- *  WEED_CHANNEL_PALETTE_CAN_VARY    [[BR]]
-    In Weed, all channels are assumed to have the same "current_palette"
-    as the first non-disabled in_channel (or first non-disabled
-    out_channel for filters that have no in channels). If this flag
-    bit is set, then the host can set this channel to a different
-    allowed palette. Plugins should not perform palette conversions
-    unless it is unavoidable, and they have a "high-performance" palette
-    conversion routine. Otherwise palette conversion should be left to
-    the host.
+    equal to the  "pixrl_data" of the corresponding (same number; not counting "disabled" channels) 
+    in channel. The values of "height", "width", "rowstrides" and "current_palette" for in and out channels must also be equal,
+    The flag bit is only valid for OUT channels. 
 
  *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    [[BR]]
     host must reinit the plugin before calling process_func() if the
     any of the rowstrides are changed. Note that	 
-    changing the palette can sometimes affect the rowstrides. [API 130 and higher].
+    changing the palette can sometimes affect the rowstrides.
 
-    This is useful; for example, if the input palette were to change from RGB to RGBA, then the
+    Explanation:
+    For example, if the input palette were to change from RGB to RGBA, then
     even though the width in pixels might be the same, the rowstrides value will change (e.g from
     3 * width to 4 * width. So if a plugin is sensitive to frame size changes it may want to set
-    WEED_CHANNEL_REININT_ON_SIZE_CHANGE | WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE.
+    WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE. rather than WEED_CHANNEL_REINIT_ON_SIZE_CHANGE.
 
-    In the above example, the plugin could set the hints REINIT_ON_SIZE_CHANGE | REINIT_ON_PALETTE_CHANGE instead.
-    However, if the palette were changed from RGB24 to BGR24 for example, it may be possible for the plugin to continue
-    processing, since in this case the frame size (rowstride * height) would remain the same.
+    On the other hand, some plugins may not care about the rowstrides value (e.g. they store 1 byte per actual pixel)
+    in which case they should set WEED_CHANNEL_REINIT_ON_SIZE_CHANGE.
+
+    The plugin should set the appropriate flag bits to minimise the number of reinits.
 
 
-Flag bits >=30 are reserved for custom flags.
+
+Flag bits >=30 are free to use for custom flags.
 
 
 
@@ -2364,17 +2779,22 @@ Flag bits >=30 are reserved for custom flags.
 
 
  * WEED_PARAMETER_VALUE_PER_CHANNEL  4  [[BR]] - 
-   This flag bit indicates that each value in the parameter "value" corresponds to one input channel.
-   The order of channels and values is the same.
+   This flag bit indicates that each element (or set of 3 or 4 elements in the case of color parameters)
+   in the parameter "value" corresponds to one input channel. This includes channels created from
+   repeating templates which may be temporarily disabled, but does not included optional, non repeating channels
+   which are disabled.
+
+The order of channels and values is the same.
 
    If a channel template has "max_repeats" set to other than 1, then WEED_PARAMETER_VARIABLE_SIZE
-   is ASSUMED to be set for the parameter, and thus the "new_default" leaf MUST also be set.
-   It is good practice to set the flag bit anyway.
+   is ASSUMED to be set for the parameter as it must shrink and grow depending on the number of channels created,
+   and thus the "new_default" leaf MUST also be set.
+   It is good practice to set the flag bit anyway for clarity.
 
    Valid for in parameters only.
 
 
-Flag bits >= 30 are reserved for custom flags.
+Flag bits >= 30 are free to use for custom flags.
 
 
 

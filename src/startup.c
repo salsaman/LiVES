@@ -29,7 +29,7 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
       return LIVES_RESPONSE_OK;
     }
   } else {
-    msg = lives_strdup_printf(_("A directory named\n%s\nalready exists.\nHowever, LiVES could not write to this directory"
+    msg = lives_strdup_printf(_("A directory named\n%s\nalready exists.\nHowever, LiVES could not write to this directory "
                                 "or read its free space.\nClick Abort to exit from LiVES, or Retry to select another "
                                 "location.\n"), dirname);
 
@@ -54,11 +54,12 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
 }
 
 
-void dir_toolong_error(char *dirname, const char *dirtype, size_t max) {
-  char *msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)"
+void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean retry) {
+  char *msg = lives_strdup_printf(_("The name of the %s provided\n(%s)\nis too long (maximum is %d characters)\n"
                                     "Please click Retry to select an alternative directory, or Abort to exit immediately"
                                     "from LiVES"), dirtype, dirname, max);
-  do_abort_retry_dialog(msg, NULL);
+  if (retry) do_abort_retry_dialog(msg, NULL);
+  else startup_message_fatal(msg);
   lives_free(msg);
 }
 

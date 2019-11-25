@@ -382,7 +382,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
   /* simulate surface wave */
 
   /* This function is called only a few times per second. To increase a speed
-   * of wave, iterate this loop several times. */
+  ss   * of wave, iterate this loop several times. */
   for (i = LOOPNUM; i > 0; i--) {
     /* wave simulation */
     p = sdata->map1 + width + 1;
@@ -442,7 +442,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   /* draw refracted image. The vector table is stretched. */
   for (y = 0; y < height - 2; y += 2) {
-    for (x = 0; x < width; x += 2) {
+    for (x = 0; x < width - 1; x += 2) {
       h = (int)vp[0];
       v = (int)vp[1];
       dx = x + h;

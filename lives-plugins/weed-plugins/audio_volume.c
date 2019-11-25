@@ -24,15 +24,14 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 
 
-int avol_init(weed_plant_t *inst) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  int chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+static weed_error_t  avol_init(weed_plant_t *inst) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  int chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  weed_plant_t *paramt = weed_get_plantptr_value(in_params[1], WEED_LEAF_TEMPLATE, &error);
+  weed_plant_t *paramt = weed_get_plantptr_value(in_params[1], WEED_LEAF_TEMPLATE, NULL);
   weed_plant_t *gui = weed_parameter_template_get_gui(paramt);
-  weed_plant_t *paramt2 = weed_get_plantptr_value(in_params[2], WEED_LEAF_TEMPLATE, &error);
+  weed_plant_t *paramt2 = weed_get_plantptr_value(in_params[2], WEED_LEAF_TEMPLATE, NULL);
   weed_plant_t *gui2 = weed_parameter_template_get_gui(paramt2);
 
   weed_free(in_params);
@@ -50,13 +49,11 @@ int avol_init(weed_plant_t *inst) {
 }
 
 
-int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                               WEED_LEAF_OUT_CHANNELS,
-                               &error);
+static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                 *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   float *src;
-  float *odst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, &error), *dst = odst;
+  float *odst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL), *dst = odst;
 
   register int nsamps;
 
@@ -64,15 +61,15 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int chans;
   int inter;
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   double voll, volr;
 
   // this is marked as WEED_LEAF_IS_VOLUME_MASTER in setup
   // therefore it must linearly adjust volume between 0.0 and 1.0 for all sub-channels
-  double *vol = weed_get_double_array(in_params[0], WEED_LEAF_VALUE, &error);
-  double *pan = weed_get_double_array(in_params[1], WEED_LEAF_VALUE, &error);
-  int swapchans = weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, &error);
+  double *vol = weed_get_double_array(in_params[0], WEED_LEAF_VALUE, NULL);
+  double *pan = weed_get_double_array(in_params[1], WEED_LEAF_VALUE, NULL);
+  int swapchans = weed_get_boolean_value(in_params[2], WEED_LEAF_VALUE, NULL);
 
   int ntracks = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
 
@@ -80,7 +77,7 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(in_params);
 
-  chans = weed_get_int_value(in_channels[0], WEED_LEAF_AUDIO_CHANNELS, &error);
+  chans = weed_get_int_value(in_channels[0], WEED_LEAF_AUDIO_CHANNELS, NULL);
 
   voll = volr = vol[0];
 
@@ -89,9 +86,9 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     else voll *= (1. - pan[0]);
   }
 
-  nsamps = orig_nsamps = weed_get_int_value(in_channels[0], WEED_LEAF_AUDIO_DATA_LENGTH, &error);
-  src = weed_get_voidptr_value(in_channels[0], WEED_LEAF_AUDIO_DATA, &error);
-  inter = weed_get_boolean_value(in_channels[0], WEED_LEAF_AUDIO_INTERLEAF, &error);
+  nsamps = orig_nsamps = weed_get_int_value(in_channels[0], WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  src = weed_get_voidptr_value(in_channels[0], WEED_LEAF_AUDIO_DATA, NULL);
+  inter = weed_get_boolean_value(in_channels[0], WEED_LEAF_AUDIO_INTERLEAF, NULL);
 
   if (chans == 2) {
     if (swapchans == WEED_FALSE) {
@@ -132,15 +129,15 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   for (i = 1; i < ntracks; i++) {
     if (weed_plant_has_leaf(in_channels[i], WEED_LEAF_DISABLED) &&
-        weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, &error) == WEED_TRUE) continue;
+        weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE) continue;
     if (vol[i] == 0.) continue;
     dst = odst;
-    nsamps = orig_nsamps = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_DATA_LENGTH, &error);
-    src = weed_get_voidptr_value(in_channels[i], WEED_LEAF_AUDIO_DATA, &error);
+    nsamps = orig_nsamps = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+    src = weed_get_voidptr_value(in_channels[i], WEED_LEAF_AUDIO_DATA, NULL);
 
-    inter = weed_get_boolean_value(in_channels[i], WEED_LEAF_AUDIO_INTERLEAF, &error);
+    inter = weed_get_boolean_value(in_channels[i], WEED_LEAF_AUDIO_INTERLEAF, NULL);
 
-    chans = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_CHANNELS, &error);
+    chans = weed_get_int_value(in_channels[i], WEED_LEAF_AUDIO_CHANNELS, NULL);
 
     voll = volr = vol[i];
 
@@ -178,10 +175,15 @@ int avol_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
-  weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.), weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 1, WEED_FILTER_IS_CONVERTER, &avol_init,
-                               &avol_process,
+  weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.),
+                               weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE), NULL
+                              };
+  weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 1,
+                               WEED_FILTER_IS_CONVERTER | WEED_FILTER_PROCESS_LAST, NULL,
+                               avol_init,
+                               avol_process,
                                NULL, in_chantmpls, out_chantmpls, in_params, NULL);
+
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_REPEATS, 0); // set optional repeats of this channel
 
   weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE | WEED_PARAMETER_VALUE_PER_CHANNEL);
@@ -193,8 +195,6 @@ WEED_SETUP_START(200, 200) {
 
   // set is_volume_master from weedaudio spec 110
   weed_set_boolean_value(in_params[0], WEED_LEAF_IS_VOLUME_MASTER, WEED_TRUE);
-
-  weed_set_int_value(filter_class, WEED_LEAF_FLAGS, WEED_FILTER_PROCESS_LAST | WEED_FILTER_IS_CONVERTER);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

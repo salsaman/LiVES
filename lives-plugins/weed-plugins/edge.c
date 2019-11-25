@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +18,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -59,16 +59,13 @@ static weed_error_t edge_init(weed_plant_t *inst) {
 }
 
 
-static int edge_deinit(weed_plant_t *inst) {
-  static_data *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+static weed_error_t edge_deinit(weed_plant_t *inst) {
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->map);
     weed_free(sdata);
   }
-
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -80,11 +77,10 @@ static inline RGB32 copywalpha(RGB32 *dest, size_t doffs, RGB32 *src, size_t off
 }
 
 
-int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+static weed_error_t  edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
   RGB32 *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
   RGB32 *dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL), *odest;
@@ -180,11 +176,10 @@ int edge_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("edge detect", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA,
-                               &edge_init, &edge_process, &edge_deinit, in_chantmpls,
-                               out_chantmpls, NULL, NULL);
+                               palette_list, edge_init, edge_process, edge_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

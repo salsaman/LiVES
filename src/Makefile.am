@@ -204,6 +204,7 @@ lives_exe_SOURCES = \
 	startup.c startup.h \
 	pangotext.c pangotext.h \
 	machinestate.c machinestate.h \
+	weed-effects-utils.c weed-effects-utils.h \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \

@@ -319,7 +319,7 @@ int vjack_rcv_init(weed_plant_t *inst) {
   jack_sample_rate = jack_get_sample_rate(sd->client);
 
   weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, jack_sample_rate); // set reasonable value
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -346,7 +346,7 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   frame_size = in_width * in_height * 4;
 
-  if (frame_size == 0) return WEED_NO_ERROR; // not connected to an output
+  if (frame_size == 0) return WEED_SUCCESS; // not connected to an output
 
   // communication structure between process and display thread
   if (sd->rb == NULL) sd->rb = jack_ringbuffer_create(2 * in_width * in_height * 4);
@@ -362,7 +362,7 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
     else weed_memcpy(sd->bgbuf, dst, frame_size);
 #endif
 
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   // resize needed
@@ -377,7 +377,7 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (!wrote) {
     weed_memcpy(dst, sd->bgbuf, frame_size);
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   in_pixbuf = pl_data_to_pixbuf(WEED_PALETTE_RGBA32, in_width, in_height, in_width * 4, (guchar *)tmpbuff);
@@ -400,7 +400,7 @@ int vjack_rcv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_memcpy(sd->bgbuf, dst, frame_size);
 #endif
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -422,7 +422,7 @@ int vjack_rcv_deinit(weed_plant_t *inst) {
 
   weed_free(sd);
 
-  return WEED_NO_ERROR; // success
+  return WEED_SUCCESS; // success
 }
 
 

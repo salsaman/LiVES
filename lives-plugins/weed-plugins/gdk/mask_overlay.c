@@ -182,7 +182,7 @@ int masko_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -196,7 +196,7 @@ int masko_deinit(weed_plant_t *inst) {
   if (sdata->ymap != NULL) weed_free(sdata->ymap);
   weed_free(sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -224,7 +224,7 @@ int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
 
-  if (sdata->xmap == NULL || sdata->ymap == NULL) return WEED_NO_ERROR;
+  if (sdata->xmap == NULL || sdata->ymap == NULL) return WEED_SUCCESS;
 
   dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
   src0 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error);
@@ -266,7 +266,7 @@ int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(in_channels);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 

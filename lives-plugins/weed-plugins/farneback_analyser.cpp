@@ -30,6 +30,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 // input is nextImg : this is cached in memory to provide prevImg for the next call
 // output is two channels of type ALPHA FLOAT (the flow(y,x)[0] in the first, and the flow(y,x)[1] in the second)
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #define NEED_PALETTE_CONVERSIONS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
@@ -39,12 +45,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSI
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -299,17 +299,21 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel",
                                   WEED_CHANNEL_REINIT_ON_SIZE_CHANGE |
                                   WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE |
-                                  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE,
-                                  ipalette_list), NULL
+                                  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE), NULL
                                  };
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("X values", WEED_CHANNEL_PALETTE_CAN_VARY, opalette_list),
-                                   weed_channel_template_init("Y values", WEED_CHANNEL_PALETTE_CAN_VARY, opalette_list), NULL
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("X values", 0),
+                                   weed_channel_template_init("Y values", 0), NULL
                                   };
-  weed_plant_t *filter_class = weed_filter_class_init("farneback_analyser", "salsaman", 1, 0, &farneback_init,
-                               &farneback_process, &farneback_deinit,
+  weed_plant_t *filter_class = weed_filter_class_init("farneback_analyser", "salsaman", 1,
+                               WEED_FILTER_PALETTES_MAY_VARY | WEED_FILTER_IS_CONVERTER, NULL,
+                               farneback_init, farneback_process, farneback_deinit,
                                in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(ipalette_list), ipalette_list);
+  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list), opalette_list);
+  weed_set_int_array(out_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list), opalette_list);
 
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
 

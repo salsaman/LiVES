@@ -12,7 +12,6 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
    Gabriel "Salsaman" Finch - http://lives-video.com
 
@@ -30,7 +29,7 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) Gabriel "Salsaman" Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2019 */
 
 #include <string.h>
 #include <stdlib.h>
@@ -891,6 +890,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *value,
       }
     }
   }
+
 #endif
 
   if (wpn != NULL) {

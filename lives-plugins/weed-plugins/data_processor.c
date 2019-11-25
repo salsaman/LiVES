@@ -84,11 +84,9 @@ static node *add_parent(node *xnode, char *value) {
 
 static node *add_right(node *xnode, char *value) {
   // add node as right child
-
   node *newnode = new_node(value);
   newnode->parent = xnode;
   xnode->right = newnode;
-
   return newnode;
 }
 
@@ -123,7 +121,6 @@ static double getval(char *what, _sdata *sdata) {
     }
     return sdata->store[which];
   }
-
   return strtod(what, NULL);
 }
 
@@ -673,7 +670,6 @@ static weed_error_t dataproc_init(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_malloc(sizeof(_sdata));
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
   sdata->store = weed_malloc(NSTORE * sizeof(double));
 
   if (sdata->store == NULL) {
@@ -871,8 +867,8 @@ WEED_SETUP_START(200, 200) {
   in_params[EQN] = NULL;
   out_params[EQN - EQS] = NULL;
 
-  filter_class = weed_filter_class_init("data_processor", "salsaman", 1, 0, &dataproc_init, &dataproc_process,
-                                        &dataproc_deinit, NULL, NULL, in_params, out_params);
+  filter_class = weed_filter_class_init("data_processor", "salsaman", 1, 0, NULL,
+                                        dataproc_init, dataproc_process, dataproc_deinit, NULL, NULL, in_params, out_params);
 
   snprintf(desc, 1024,
            "Produce (double) output values o[] from a combination of in values i[], stored values s[],\n"

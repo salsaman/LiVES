@@ -1280,6 +1280,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           }
         }
       }
+
       obuf->samples_filled += tsamples;
     }
 

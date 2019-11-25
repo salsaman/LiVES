@@ -7,8 +7,10 @@
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-plugin-utils.h" // optional
 #endif
 
 ///////////////////////////////////////////////////////////////////
@@ -166,16 +168,19 @@ static weed_error_t resize_process(weed_plant_t *inst, weed_timecode_t timestamp
   pl_pixbuf_to_channel(out_channel, out_pixbuf);
   g_object_unref(out_pixbuf);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
+                       };
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_SIZE_CAN_VARY, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1, WEED_FILTER_IS_CONVERTER, NULL, resize_process, NULL,
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("gdk_fast_resize", "salsaman", 1,
+                               WEED_FILTER_IS_CONVERTER | WEED_FILTER_CHANNEL_SIZES_MAY_VARY, palette_list, NULL, resize_process, NULL,
                                in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

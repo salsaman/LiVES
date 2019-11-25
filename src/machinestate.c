@@ -750,3 +750,11 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
   return CANCEL_NONE;
 }
 
+
+LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
+  char c;
+  uint32_t hash = 5381;
+  if (string == NULL) return 0;
+  while ((c = *(string++)) != 0) hash += (hash << 5) + c;
+  return hash;
+}

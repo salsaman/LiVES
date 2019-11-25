@@ -94,27 +94,27 @@ static weed_error_t bumpmap_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t bumpmap_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error), *isrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst,
+                               WEED_LEAF_OUT_CHANNELS,
+                               NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL), *isrc = src;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
   int inplace = (src == dst);
 
   if (height == 0 || width == 0 || dst == NULL || src == NULL) return WEED_SUCCESS;
   else {
-    int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
-    int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-    int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-    int yuv_clamping = weed_get_int_value(in_channel, "yuv_clamping", &error);
+    int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+    int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+    int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+    int yuv_clamping = weed_get_int_value(in_channel, "yuv_clamping", NULL);
     int psize = weed_palette_get_bits_per_macropixel(palette) >> 3;
     int widthx = width * psize;
     int offs = palette == WEED_PALETTE_ARGB32 ? 1 : 0;
-    _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+    _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
     uint16_t lightx, lighty, temp;
     short normalx, normaly, x, y, xx;
@@ -194,20 +194,16 @@ static weed_error_t bumpmap_process(weed_plant_t *inst, weed_timecode_t timestam
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_RGBA32,
-                        WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
-                       };
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("bumpmap", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &bumpmap_init,
-                               &bumpmap_process, &bumpmap_deinit,
+  int palette_list[] = ALL_PACKED_PALETTES;
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("bumpmap", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                               bumpmap_init, bumpmap_process, bumpmap_deinit,
                                in_chantmpls,
                                out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
-
   bumpmap_setup();
 }
 WEED_SETUP_END;

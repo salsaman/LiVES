@@ -90,21 +90,21 @@ static int getenv_piece(char *target, size_t tlen, char *envvar, int num) {
 
 static weed_error_t frei0r_init(weed_plant_t *inst) {
   weed_plant_t *out_channel, *filter;
-  int error, height, width, cpalette;
+  int height, width, cpalette;
   f0r_instance_t f0r_inst;
   f0r_construct_f f0r_construct;
 
-  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
+  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
 
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  width = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-  height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
-  cpalette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  width = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  cpalette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   if (cpalette == WEED_PALETTE_UYVY || cpalette == WEED_PALETTE_YUYV) width >>= 1;
   else width >>= 2;
 
-  f0r_construct = weed_get_voidptr_value(filter, "plugin_f0r_construct", &error);
+  f0r_construct = weed_get_voidptr_value(filter, "plugin_f0r_construct", NULL);
 
   if ((f0r_inst = (*f0r_construct)(width, height)) == NULL) return WEED_ERROR_FILTER_INVALID;
   weed_set_voidptr_value(inst, "plugin_f0r_inst", f0r_inst);
@@ -114,15 +114,14 @@ static weed_error_t frei0r_init(weed_plant_t *inst) {
 
 
 static weed_error_t frei0r_deinit(weed_plant_t *inst) {
-  int error;
   f0r_instance_t f0r_inst;
   f0r_destruct_f f0r_destruct;
   weed_plant_t *filter;
 
-  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
+  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
 
-  f0r_inst = weed_get_voidptr_value(inst, "plugin_f0r_inst", &error);
-  f0r_destruct = weed_get_voidptr_value(filter, "plugin_f0r_destruct", &error);
+  f0r_inst = weed_get_voidptr_value(inst, "plugin_f0r_inst", NULL);
+  f0r_destruct = weed_get_voidptr_value(filter, "plugin_f0r_destruct", NULL);
   (*f0r_destruct)(f0r_inst);
 
   return WEED_SUCCESS;
@@ -130,41 +129,41 @@ static weed_error_t frei0r_deinit(weed_plant_t *inst) {
 
 
 static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_params, int num_weed_params) {
-  int i, error, hint;
+  int i, hint;
   int pnum = 0;
   weed_plant_t *ptmpl;
   int vali;
   double vald, vald2;
   double *cols;
-  f0r_instance_t f0rinst = weed_get_voidptr_value(inst, "plugin_f0r_inst", &error);
-  weed_plant_t *filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
-  f0r_set_param_value_f f0r_set_param_value = weed_get_voidptr_value(filter, "plugin_f0r_set_param_value", &error);
+  f0r_instance_t f0rinst = weed_get_voidptr_value(inst, "plugin_f0r_inst", NULL);
+  weed_plant_t *filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
+  f0r_set_param_value_f f0r_set_param_value = weed_get_voidptr_value(filter, "plugin_f0r_set_param_value", NULL);
   f0r_param_position_t f0rpos;
   f0r_param_color_t f0rcol;
   char *string;
 
   for (i = 0; i < num_weed_params; i++) {
-    ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, &error);
-    hint = weed_get_int_value(ptmpl, "hint", &error);
+    ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, NULL);
+    hint = weed_get_int_value(ptmpl, "hint", NULL);
     switch (hint) {
     case WEED_HINT_SWITCH:
-      vali = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, &error);
+      vali = weed_get_boolean_value(in_params[i], WEED_LEAF_VALUE, NULL);
       vald = (double)vali;
       (*f0r_set_param_value)(f0rinst, (f0r_param_t)&vald, pnum);
       break;
     case WEED_HINT_FLOAT:
-      vald = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, &error);
+      vald = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, NULL);
       if (!weed_plant_has_leaf(ptmpl, "plugin_f0r_position"))(*f0r_set_param_value)(f0rinst, (f0r_param_t)&vald, pnum);
       else {
         i++;
-        vald2 = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, &error);
+        vald2 = weed_get_double_value(in_params[i], WEED_LEAF_VALUE, NULL);
         f0rpos.x = vald;
         f0rpos.y = vald2;
         (*f0r_set_param_value)(f0rinst, (f0r_param_t)&f0rpos, pnum);
       }
       break;
     case WEED_HINT_COLOR:
-      cols = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, &error);
+      cols = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, NULL);
       f0rcol.r = cols[0];
       f0rcol.g = cols[1];
       f0rcol.b = cols[2];
@@ -172,7 +171,7 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
       weed_free(cols);
       break;
     case WEED_HINT_TEXT:
-      string = weed_get_string_value(in_params[i], WEED_LEAF_VALUE, &error);
+      string = weed_get_string_value(in_params[i], WEED_LEAF_VALUE, NULL);
       (*f0r_set_param_value)(f0rinst, (f0r_param_t)&string, pnum);
       weed_free(string);
       break;
@@ -183,8 +182,6 @@ static void weed_params_to_frei0r_params(weed_plant_t *inst, weed_plant_t **in_p
 
 
 static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-
   f0r_instance_t f0r_inst;
   f0r_update_f f0r_update;
   f0r_update2_f f0r_update2;
@@ -194,50 +191,50 @@ static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   double time = timestamp / 100000000.;
 
-  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
-  f0r_inst = weed_get_voidptr_value(inst, "plugin_f0r_inst", &error);
-  f0r_plugin_type = weed_get_int_value(filter, "plugin_f0r_type", &error);
+  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
+  f0r_inst = weed_get_voidptr_value(inst, "plugin_f0r_inst", NULL);
+  f0r_plugin_type = weed_get_int_value(filter, "plugin_f0r_type", NULL);
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS) &&
-      (in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error)) != NULL) {
+      (in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL)) != NULL) {
     weed_params_to_frei0r_params(inst, in_params, weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS));
   }
 
   switch (f0r_plugin_type) {
   case F0R_PLUGIN_TYPE_SOURCE:
-    f0r_update = weed_get_voidptr_value(filter, "plugin_f0r_update", &error);
-    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-    (*f0r_update)(f0r_inst, time, NULL, weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, &error));
+    f0r_update = weed_get_voidptr_value(filter, "plugin_f0r_update", NULL);
+    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    (*f0r_update)(f0r_inst, time, NULL, weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, NULL));
     weed_free(out_channels);
     break;
   case F0R_PLUGIN_TYPE_FILTER:
-    f0r_update = weed_get_voidptr_value(filter, "plugin_f0r_update", &error);
-    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-    (*f0r_update)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error), weed_get_voidptr_value(out_channels[0],
+    f0r_update = weed_get_voidptr_value(filter, "plugin_f0r_update", NULL);
+    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
+    (*f0r_update)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL), weed_get_voidptr_value(out_channels[0],
                   WEED_LEAF_PIXEL_DATA,
-                  &error));
+                  NULL));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
   case F0R_PLUGIN_TYPE_MIXER2:
-    f0r_update2 = weed_get_voidptr_value(filter, "plugin_f0r_update2", &error);
-    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-    (*f0r_update2)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error),
-                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error), NULL, weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA,
-                       &error));
+    f0r_update2 = weed_get_voidptr_value(filter, "plugin_f0r_update2", NULL);
+    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
+    (*f0r_update2)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL),
+                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL), NULL, weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA,
+                       NULL));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
   case F0R_PLUGIN_TYPE_MIXER3:
-    f0r_update2 = weed_get_voidptr_value(filter, "plugin_f0r_update2", &error);
-    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-    (*f0r_update2)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, &error),
-                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, &error),
-                   weed_get_voidptr_value(in_channels[2], WEED_LEAF_PIXEL_DATA, &error),
-                   weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, &error));
+    f0r_update2 = weed_get_voidptr_value(filter, "plugin_f0r_update2", NULL);
+    out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
+    (*f0r_update2)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL),
+                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL),
+                   weed_get_voidptr_value(in_channels[2], WEED_LEAF_PIXEL_DATA, NULL),
+                   weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA, NULL));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -579,12 +576,7 @@ WEED_SETUP_START(200, 200) {
         }
 
         out_chantmpls = weed_malloc(2 * sizeof(weed_plant_t *));
-        out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-        weed_set_int_value(out_chantmpls[0], WEED_LEAF_HSTEP, 8);
-        weed_set_int_value(out_chantmpls[0], WEED_LEAF_VSTEP, 8);
-        weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXWIDTH, 2048);
-        weed_set_int_value(out_chantmpls[0], WEED_LEAF_MAXHEIGHT, 2048);
-        weed_set_int_value(out_chantmpls[0], WEED_LEAF_ALIGNMENT_HINT, 16);
+        out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
         out_chantmpls[1] = NULL;
 
         switch (f0rinfo.plugin_type) {
@@ -593,53 +585,20 @@ WEED_SETUP_START(200, 200) {
           break;
         case F0R_PLUGIN_TYPE_FILTER:
           in_chantmpls = weed_malloc(2 * sizeof(weed_plant_t *));
-          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_ALIGNMENT_HINT, 16);
+          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
           in_chantmpls[1] = NULL;
           break;
         case F0R_PLUGIN_TYPE_MIXER2:
           in_chantmpls = weed_malloc(3 * sizeof(weed_plant_t *));
-          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_ALIGNMENT_HINT, 16);
-
-          in_chantmpls[1] = weed_channel_template_init("in channel 1", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_ALIGNMENT_HINT, 16);
+          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+          in_chantmpls[1] = weed_channel_template_init("in channel 1", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
           in_chantmpls[2] = NULL;
           break;
         case F0R_PLUGIN_TYPE_MIXER3:
           in_chantmpls = weed_malloc(4 * sizeof(weed_plant_t *));
-          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[0], WEED_LEAF_ALIGNMENT_HINT, 16);
-
-          in_chantmpls[1] = weed_channel_template_init("in channel 1", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[1], WEED_LEAF_ALIGNMENT_HINT, 16);
-
-          in_chantmpls[2] = weed_channel_template_init("in channel 2", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, pal);
-          weed_set_int_value(in_chantmpls[2], WEED_LEAF_HSTEP, 8);
-          weed_set_int_value(in_chantmpls[2], WEED_LEAF_VSTEP, 8);
-          weed_set_int_value(in_chantmpls[2], WEED_LEAF_MAXWIDTH, 2048);
-          weed_set_int_value(in_chantmpls[2], WEED_LEAF_MAXHEIGHT, 2048);
-          weed_set_int_value(in_chantmpls[2], WEED_LEAF_ALIGNMENT_HINT, 16);
+          in_chantmpls[0] = weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+          in_chantmpls[1] = weed_channel_template_init("in channel 1", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
+          in_chantmpls[2] = weed_channel_template_init("in channel 2", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
           in_chantmpls[3] = NULL;
           break;
         default:
@@ -653,7 +612,6 @@ WEED_SETUP_START(200, 200) {
         }
 
         num_weed_params = 0;
-        weed_free(pal);
 
 #ifdef CAN_GET_DEF
         // try to get defaults
@@ -717,7 +675,8 @@ WEED_SETUP_START(200, 200) {
 #ifdef CAN_GET_DEF
               f0r_get_param_value(f0r_inst, (void **)&vald, pnum);
               if (vald != 0. && vald != 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for boolean parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) "
+                        "for boolean parameter %s.\nThis plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
               }
@@ -734,7 +693,8 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&vald, pnum);
 
               if (vald < 0. || vald > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (vald < 0.) vald = 0.;
@@ -755,7 +715,8 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&valcol, pnum);
 
               if (valcol.r < 0. || valcol.r > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.r < 0.) valcol.r = 0.;
@@ -763,7 +724,8 @@ WEED_SETUP_START(200, 200) {
               }
 
               if (valcol.g < 0. || valcol.g > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.g < 0.) valcol.g = 0.;
@@ -771,7 +733,8 @@ WEED_SETUP_START(200, 200) {
               }
 
               if (valcol.b < 0. || valcol.b > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.b < 0.) valcol.b = 0.;
@@ -788,7 +751,8 @@ WEED_SETUP_START(200, 200) {
 #ifdef CAN_GET_DEF
               f0r_get_param_value(f0r_inst, (void **)&valpos, pnum);
               if (valpos.x < 0. || valpos.x > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valpos.x < 0.) valpos.x = 0.;
@@ -796,7 +760,8 @@ WEED_SETUP_START(200, 200) {
               }
 
               if (valpos.y < 0. || valpos.y > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\nThis plugin may be unstable !\n",
+                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                        "This plugin may be unstable !\n",
                         f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valpos.y < 0.) valpos.y = 0.;
@@ -860,14 +825,21 @@ WEED_SETUP_START(200, 200) {
         snprintf(weed_name, PATH_MAX, "%s", f0rinfo.name);
         pversion = f0rinfo.major_version * 1000 + f0rinfo.minor_version;
 
-        filter_class = weed_filter_class_init(weed_name, "Frei0r developers", pversion, 0, &frei0r_init, &frei0r_process,
-                                              &frei0r_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+        filter_class = weed_filter_class_init(weed_name, "Frei0r developers", pversion, 0, pal, frei0r_init, frei0r_process,
+                                              frei0r_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+        weed_free(pal);
 
         weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, (char *)f0rinfo.author);
 
         if (is_unstable) {
           weed_set_boolean_value(filter_class, "plugin_unstable", WEED_TRUE);
         }
+
+        weed_set_int_value(filter_class, WEED_LEAF_HSTEP, 8);
+        weed_set_int_value(filter_class, WEED_LEAF_VSTEP, 8);
+        weed_set_int_value(filter_class, WEED_LEAF_MAXWIDTH, 2048);
+        weed_set_int_value(filter_class, WEED_LEAF_MAXHEIGHT, 2048);
+        weed_set_int_value(filter_class, WEED_LEAF_ALIGNMENT_HINT, 16);
 
         if (num_weed_params > f0rinfo.num_params) {
           gui = weed_filter_class_get_gui(filter_class);

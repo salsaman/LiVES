@@ -143,9 +143,8 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
 
 static weed_error_t RGBd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
   size_t x = 0;
@@ -406,10 +405,10 @@ WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
   int palette_list2[] = {WEED_PALETTE_YUV888, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-  weed_plant_t *in_chantmpls2[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list2), NULL};
-  weed_plant_t *out_chantmpls2[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list2), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+  weed_plant_t *in_chantmpls2[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls2[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *filter_class, *gui;
 
   weed_plant_t *in_params[206];
@@ -442,7 +441,8 @@ WEED_SETUP_START(200, 200) {
 
   in_params[205] = NULL;
 
-  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &RGBd_init, &RGBd_process, &RGBd_deinit,
+  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        RGBd_init, RGBd_process, RGBd_deinit,
                                         in_chantmpls, out_chantmpls,
                                         in_params,
                                         NULL);
@@ -466,7 +466,8 @@ WEED_SETUP_START(200, 200) {
 
   rfx_strings[2] = "layout|\"Y\"|\"U\"|\"V\"|fill|fill|\"Blend Strength\"|fill|";
 
-  filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, &RGBd_init, &RGBd_process, &RGBd_deinit, in_chantmpls2, out_chantmpls2,
+  filter_class = weed_filter_class_init("YUVdelay", "salsaman", 1, 0, palette_list2,
+                                        RGBd_init, RGBd_process, RGBd_deinit, in_chantmpls2, out_chantmpls2,
                                         (clone = weed_clone_plants(in_params)), NULL);
   weed_free(clone);
 

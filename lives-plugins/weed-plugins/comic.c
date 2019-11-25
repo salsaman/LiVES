@@ -13,6 +13,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -29,7 +31,6 @@ static int package_version = 1; // version of this package
 
 static uint32_t sqrti(uint32_t n) {
   register uint32_t root = 0, remainder = n, place = 0x40000000, tmp;
-
   while (place > remainder) place >>= 2;
   while (place) {
     if (remainder >= (tmp = (root + place))) {
@@ -161,26 +162,20 @@ static weed_error_t comic_process(weed_plant_t *inst, weed_timecode_t timestamp)
   weed_free(dstp);
   weed_free(irowstrides);
   weed_free(orowstrides);
-
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_YUV444P, WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV422P,
-                        WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_END
-                       };
-
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("comicbook", "salsaman", 1, 0, NULL, &comic_process,
-                               NULL, in_chantmpls, out_chantmpls, NULL, NULL);
+  int palette_list[] = ALL_PLANAR_PALETTES;
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("comicbook", "salsaman", 1, 0,
+                               palette_list, NULL, comic_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   // set preference of unclamped
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

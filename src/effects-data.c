@@ -2102,7 +2102,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
   register int i;
 
   ipal = weed_get_int_value(schan, WEED_LEAF_CURRENT_PALETTE, &error);
-  if (!weed_palette_is_alpha_palette(ipal)) return FALSE;
+  if (!weed_palette_is_alpha(ipal)) return FALSE;
 
   iwidth = weed_get_int_value(schan, WEED_LEAF_WIDTH, &error);
   iheight = weed_get_int_value(schan, WEED_LEAF_HEIGHT, &error);
@@ -2560,7 +2560,7 @@ static void acbutton_clicked(LiVESButton *button, livespointer user_data) {
     for (i = 0; i < nichans; i++) {
       j++;
       chan = ichans[i];
-      if (!has_alpha_palette(chan)) continue;
+      if (!has_alpha_palette(chan, filter)) continue;
       if (i == conxwp->idx[ours]) break;
     }
   }
@@ -2570,13 +2570,13 @@ static void acbutton_clicked(LiVESButton *button, livespointer user_data) {
 
     chan = ichans[i];
 
-    if (!has_alpha_palette(chan)) continue;
+    if (!has_alpha_palette(chan, filter)) continue;
 
     if (cconx_get_out_alpha(TRUE, key - 1, mode, i, NULL, NULL, NULL) != NULL) continue;
 
     ochan = ochans[k];
 
-    if (!has_alpha_palette(ochan)) {
+    if (!has_alpha_palette(ochan, filter)) {
       if (++k >= nochans) break;
       continue;
     }
@@ -3239,7 +3239,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
   for (i = 0; i < nichans; i++) {
     chan = ichans[j++];
 
-    if (!has_alpha_palette(chan)) continue;
+    if (!has_alpha_palette(chan, filter)) continue;
 
     channame = get_chan_name(chan, i, TRUE);
     clist = lives_list_append(clist, channame);
@@ -3702,7 +3702,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
   // find actual in channel number from list of alpha channels
   for (i = 0; i < nichans; i++) {
     ichan = ichans[i];
-    if (!has_alpha_palette(ichan)) continue;
+    if (!has_alpha_palette(ichan, filter)) continue;
     if (j == icnum) break;
     j++;
   }
@@ -4342,7 +4342,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
     for (i = 0; i < conxwp->num_alpha; i++) {
       chan = ochans[j++];
 
-      if (!has_alpha_palette(chan)) {
+      if (!has_alpha_palette(chan, conxwp->filter)) {
         i--;
         continue;
       }
@@ -4640,7 +4640,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
     // total out channel connections (display order) up to here
     for (k = 0; k < i; k++) {
       chan = ochans[j++];
-      if (!has_alpha_palette(chan)) {
+      if (!has_alpha_palette(chan, ofilter)) {
         k--;
         continue;
       }
@@ -4671,7 +4671,7 @@ static boolean show_existing(lives_conx_w *conxwp) {
       // find combo list index for ichan
       for (k = 0; k < nichans; k++) {
         chan = ichans[k];
-        if (!has_alpha_palette(chan)) continue;
+        if (!has_alpha_palette(chan, filter)) continue;
         if (k == icnum) break;
         cidx++;
       }

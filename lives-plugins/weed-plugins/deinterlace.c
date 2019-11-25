@@ -5,6 +5,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +18,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -29,7 +29,6 @@ static int package_version = 1; // version of this package
 static inline unsigned char *mix(unsigned char *a, unsigned char *b, int pcpy) {
   unsigned char *mixed = (unsigned char *)weed_malloc(pcpy);
   register int i;
-
   for (i = 0; i < pcpy; i++) {
     mixed[i] = (*(a + i) + * (b + i)) >> 1;
   }
@@ -37,25 +36,22 @@ static inline unsigned char *mix(unsigned char *a, unsigned char *b, int pcpy) {
 }
 
 
-int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  unsigned char **src_array = (unsigned char **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char **dst_array = (unsigned char **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, &error);
-
+  unsigned char **src_array = (unsigned char **)weed_get_voidptr_array(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char **dst_array = (unsigned char **)weed_get_voidptr_array(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   int inplace = (src == dst);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error), orowstride2 = orowstride * 2;
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL), orowstride2 = orowstride * 2;
 
   register int x;
 
@@ -100,7 +96,6 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
   psize3 = psize * 3;
 
   widthx = width * psize;
-
 
   src += irowstride;
   dst += orowstride;
@@ -152,7 +147,6 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
         res1_u = val2a_u;
         res3_u = val2b_u;
         res5_u = val2c_u;
-
 
         val3a_v = (src_array[2] + irowstride + x);
         val4a_v = (src_array[2] + irowstride2 + x);
@@ -215,7 +209,6 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
           res4_v = mix(val2b_v, val4b_v, pcpy);
           res6_v = mix(val2c_v, val4c_v, pcpy);
         }
-
       } else {
         val3b = (src + irowstride + x + psize);
 
@@ -236,7 +229,6 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
           res4_v = val3b_v;
           res6_v = val3c_v;
         }
-
       }
 
       weed_memcpy(dst + x - orowstride, res1, pcpy);
@@ -264,7 +256,8 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
         weed_memcpy(dst_array[2] + x + psize2, res6_v, pcpy);
       }
 
-      if (!inplace && (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 || palette == WEED_PALETTE_YUVA8888)) {
+      if (!inplace && (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32
+                       || palette == WEED_PALETTE_YUVA8888)) {
         // copy alpha packed
         dst[x + 3] = src[x + 3];
         dst[x + 7] = src[x + 7];
@@ -279,13 +272,13 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
           weed_free(res2_u);
           weed_free(res4_u);
           weed_free(res6_u);
-
           weed_free(res2_v);
           weed_free(res4_v);
           weed_free(res6_v);
         }
       }
     }
+
     dst += orowstride2;
   }
 
@@ -311,14 +304,12 @@ int deinterlace_process(weed_plant_t *inst, weed_timecode_t tc) {
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV444P, WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_YUV422P, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("deinterlace", "salsaman", 1, 0, NULL, &deinterlace_process, NULL, in_chantmpls,
-                               out_chantmpls,
-                               NULL, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("deinterlace", "salsaman", 1, 0, palette_list,
+                               NULL, deinterlace_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

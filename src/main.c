@@ -1418,8 +1418,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
 
-  prefs->btgamma = FALSE;
-  //prefs->btgamma = TRUE;  // experimental - DANGEROUS !!
+  //prefs->btgamma = FALSE;
+  prefs->btgamma = TRUE;  // experimental - DANGEROUS !!
 
   //////////////////////////////////////////////////////////////////
 
@@ -2593,7 +2593,7 @@ capability *get_capabilities(void) {
         ensure_isdir(array[1]);
 
         if (dirlen >= PATH_MAX - MAX_SET_NAME_LEN * 2) {
-          dir_toolong_error(array[1], (tmp = lives_strdup(_("working"))), PATH_MAX - MAX_SET_NAME_LEN * 2);
+          dir_toolong_error(array[1], (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
           lives_free(tmp);
           dir_valid = FALSE;
         }
@@ -3551,7 +3551,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             }
           }
           if (toolong) {
-            dir_toolong_error(optarg, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2);
+            dir_toolong_error(optarg, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
             lives_free(tmp);
             capable->can_write_to_workdir = FALSE;
             break;
@@ -3587,9 +3587,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             }
           }
           if (toolong) {
-            msg = lives_strdup_printf(_("The configuration directory name specified is too long.\n"
-                                        "The maximum allowed is %d characters\n"), PATH_MAX - 64);
-            startup_message_fatal(msg);
+            /// FALSE => exit via startup_msg_fatal()
+            dir_toolong_error(optarg, _("configuration directory"), PATH_MAX - 64, FALSE);
           }
 
           lives_snprintf(prefs->configdir, PATH_MAX, "%s", optarg);
@@ -5681,10 +5680,10 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             }
           } else {
             if (dplug->cdata->current_palette != dplug->cdata->palettes[0] &&
-                ((weed_palette_is_rgb_palette(target_palette) &&
-                  weed_palette_is_rgb_palette(dplug->cdata->palettes[0])) ||
-                 (weed_palette_is_yuv_palette(target_palette) &&
-                  weed_palette_is_yuv_palette(dplug->cdata->palettes[0])))) {
+                ((weed_palette_is_rgb(target_palette) &&
+                  weed_palette_is_rgb(dplug->cdata->palettes[0])) ||
+                 (weed_palette_is_yuv(target_palette) &&
+                  weed_palette_is_yuv(dplug->cdata->palettes[0])))) {
               int oldpal = dplug->cdata->current_palette;
               dplug->cdata->current_palette = dplug->cdata->palettes[0];
               if (dplug->decoder->set_palette != NULL) {
@@ -5711,7 +5710,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
         weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, dplug->cdata->current_palette);
 
-        if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
+        if (weed_palette_is_yuv(dplug->cdata->current_palette)) {
           weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
           weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
           weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
@@ -5756,7 +5755,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           }
 
           // get_frame may now update YUV_clamping, YUV_sampling, YUV_subspace
-          if (weed_palette_is_yuv_palette(dplug->cdata->current_palette)) {
+          if (weed_palette_is_yuv(dplug->cdata->current_palette)) {
             weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
             weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
             weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
@@ -6255,7 +6254,7 @@ void load_frame_image(int frame) {
     get_play_times();
     return;
   }
-
+  g_print("LFI\n");
   if (!mainw->foreign) {
     mainw->actual_frame = cfile->last_frameno = frame;
 
@@ -6526,6 +6525,7 @@ void load_frame_image(int frame) {
         check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         weed_layer_free(mainw->frame_layer);
         mainw->frame_layer = NULL;
+        g_print("MWFL NULL\n");
       }
 
       if (mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) {
@@ -6600,7 +6600,7 @@ void load_frame_image(int frame) {
             }
           }
           layers[i] = NULL;
-
+          g_print("MWFL 222 NULL\n");
           mainw->frame_layer = weed_apply_effects(layers, mainw->filter_map, tc, opwidth, opheight, mainw->pchains);
 
           for (i = 0; layers[i] != NULL; i++) if (layers[i] != mainw->frame_layer) {
@@ -6619,15 +6619,19 @@ void load_frame_image(int frame) {
       } else {
         // normal playback in the clip editor, or applying a non-realtime effect
         if (!mainw->preview || cfile->clip_type == CLIP_TYPE_FILE || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
+          g_print("LFI2\n");
           mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
+          g_print("pt a %d\n", weed_layer_get_width(mainw->frame_layer));
           if (img_ext == NULL) img_ext = get_image_ext_for_type(cfile->img_type);
 
           if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
+            g_print("pt abbb %d\n", weed_layer_get_width(mainw->frame_layer));
             if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                     cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
 
               if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
               mainw->frame_layer = NULL;
+              g_print("pt accccc %d\n", weed_layer_get_width(mainw->frame_layer));
 
               if (cfile->opening && cfile->img_type == IMG_TYPE_PNG && sget_file_size(fname_next) == 0) {
                 if (++bad_frame_count > BFC_LIMIT) {
@@ -6637,6 +6641,7 @@ void load_frame_image(int frame) {
               }
             }
           } else {
+            g_print("pt axxxxxx %d\n", weed_layer_get_width(mainw->frame_layer));
             pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
           }
         }
@@ -6772,7 +6777,9 @@ void load_frame_image(int frame) {
       if (size_ok) {
         if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file ||
             mainw->multitrack != NULL)) {
+          if (mainw->frame_layer != NULL)  g_print("pt a21133 %d\n", weed_layer_get_width(mainw->frame_layer));
           mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
+          g_print("pt a211444 %d\n", weed_layer_get_width(mainw->frame_layer));
         }
       } else {
         if (!mainw->resizing && !cfile->opening) {
@@ -6781,6 +6788,7 @@ void load_frame_image(int frame) {
         }
       }
     }
+    g_print("pt a211 %d\n", weed_layer_get_width(mainw->frame_layer));
 
     ////////////////////////
 #ifdef ENABLE_JACK
@@ -6820,7 +6828,7 @@ void load_frame_image(int frame) {
       get_player_size(&opwidth, &opheight);
     }
 
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox) {
+    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox && !mainw->multitrack) {
       // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
@@ -6835,8 +6843,8 @@ void load_frame_image(int frame) {
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
 
       if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
-          ((weed_palette_is_rgb_palette(layer_palette) &&
-            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+          ((weed_palette_is_rgb(layer_palette) &&
+            !(weed_palette_is_rgb(mainw->vpp->palette))) ||
            (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
@@ -6851,7 +6859,9 @@ void load_frame_image(int frame) {
         }
       }
 
+
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
+      g_print("pt a3 %d\n", weed_layer_get_width(mainw->frame_layer));
 
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
@@ -6868,7 +6878,7 @@ void load_frame_image(int frame) {
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
-        if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+        if (weed_palette_is_yuv(mainw->vpp->palette)) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_CLAMPING, mainw->vpp->YUV_clamping);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SUBSPACE, mainw->vpp->YUV_subspace);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SAMPLING, mainw->vpp->YUV_sampling);
@@ -6893,7 +6903,7 @@ void load_frame_image(int frame) {
 
       if (prefs->apply_gamma) {
         // gamma correction
-        if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+        if (weed_palette_is_rgb(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
           else {
@@ -6942,8 +6952,9 @@ void load_frame_image(int frame) {
     }
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
+    g_print("pt a24 %d\n", weed_layer_get_width(mainw->frame_layer));
 
-    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox)) {
+    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox || mainw->multitrack != NULL)) {
       // here we are either: playing through an external video playback plugin which cannot resize
       // - we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
@@ -6975,15 +6986,15 @@ void load_frame_image(int frame) {
       } else frame_layer = mainw->frame_layer;
 
       if (frame_layer == mainw->frame_layer && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
-          ((weed_palette_is_rgb_palette(layer_palette) &&
-            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+          ((weed_palette_is_rgb(layer_palette) &&
+            !(weed_palette_is_rgb(mainw->vpp->palette))) ||
            (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
-      if (prefs->letterbox) {
+      if (mainw->multitrack != NULL || prefs->letterbox) {
         /// letterbox external
         get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
         if (pwidth != lb_width || pheight != lb_height) {
@@ -7009,8 +7020,8 @@ void load_frame_image(int frame) {
       layer_palette = weed_get_int_value(frame_layer, WEED_LEAF_CURRENT_PALETTE, &weed_error);
 
       if (frame_layer == mainw->frame_layer && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
-          ((weed_palette_is_rgb_palette(layer_palette) &&
-            !(weed_palette_is_rgb_palette(mainw->vpp->palette))) ||
+          ((weed_palette_is_rgb(layer_palette) &&
+            !(weed_palette_is_rgb(mainw->vpp->palette))) ||
            (weed_palette_is_lower_quality(mainw->vpp->palette, layer_palette)))) {
         // mainw->frame_layer is RGB and so is our screen, but plugin is YUV
         // so copy layer and convert, retaining original
@@ -7043,7 +7054,7 @@ void load_frame_image(int frame) {
 
         return_layer = weed_layer_create(retwidth, retheight, NULL, mainw->vpp->palette);
 
-        if (weed_palette_is_yuv_palette(mainw->vpp->palette)) {
+        if (weed_palette_is_yuv(mainw->vpp->palette)) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_CLAMPING, mainw->vpp->YUV_clamping);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SUBSPACE, mainw->vpp->YUV_subspace);
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SAMPLING, mainw->vpp->YUV_sampling);
@@ -7066,7 +7077,7 @@ void load_frame_image(int frame) {
 
       if (prefs->apply_gamma) {
         // gamma correction
-        if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+        if (weed_palette_is_rgb(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
           else
@@ -7121,6 +7132,7 @@ void load_frame_image(int frame) {
     // local display of its own
 
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
+    g_print("pt a2999 %d\n", weed_layer_get_width(mainw->frame_layer));
 
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
       // no display to output, skip the rest
@@ -7141,7 +7153,7 @@ void load_frame_image(int frame) {
 
     interp = get_interp_value(prefs->pb_quality);
 
-    if (prefs->letterbox) {
+    if (mainw->multitrack != NULL || prefs->letterbox) {
       /// letterbox internal
       get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
       if (pwidth != lb_width || pheight != lb_height) {

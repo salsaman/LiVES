@@ -14,18 +14,19 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifndef NEED_LOCAL_WEED_PLUGIN
-#include <weed/weed-plugin.h>
-#else
-#include "../../libweed/weed-plugin.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed-plugin-utils.h" // optional
+#endif
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
@@ -229,25 +230,22 @@ static void makePalette(int pal) {
 }
 
 
-static int blurzoom_init(weed_plant_t *inst) {
+static weed_error_t blurzoom_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int video_height, video_width, video_area;
   int buf_area;
-  int error;
   weed_plant_t *in_channel;
 
   sdata = weed_malloc(sizeof(struct _sdata));
-
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
   video_area = video_width * video_height;
 
   sdata->buf_width_blocks = (video_width / 32);
-
   if (sdata->buf_width_blocks > 255) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->buf_width = sdata->buf_width_blocks * 32;
@@ -312,24 +310,19 @@ static int blurzoom_init(weed_plant_t *inst) {
   }
 
   setTable(sdata);
-  makePalette(weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error));
+  makePalette(weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL));
   palette = palettes;
 
   sdata->snapTime = 0;
   sdata->snapInterval = 3;
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
   return WEED_SUCCESS;
 }
 
 
-static int blurzoom_deinit(weed_plant_t *inst) {
-  struct _sdata *sdata;
-  int error;
-
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-
+static weed_error_t blurzoom_deinit(weed_plant_t *inst) {
+  struct _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->diff);
     weed_free(sdata->background);
@@ -339,46 +332,40 @@ static int blurzoom_deinit(weed_plant_t *inst) {
     weed_free(sdata->snapframe);
     weed_free(sdata);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
 
-static int blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  weed_plant_t *in_channel, *out_channel, **in_params;
-
-  register int x, y;
-  register RGB32 a, b;
-
-  register unsigned char *diff, *p;
-
-  RGB32 *src, *dest;
-
+static weed_error_t blurzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
   struct _sdata *sdata;
-
+  weed_plant_t *in_channel, *out_channel, **in_params;
+  RGB32 *src, *dest;
   size_t snap_offs = 0, src_offs = 0;
-
   int video_width, video_height, irow, orow;
   int mode = 0, pattern;
-  int error;
+  register int x, y;
+  register RGB32 a, b;
+  register unsigned char *diff, *p;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
-  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  video_width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  video_height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error) / 4;
-  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error) / 4;
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
 
   diff = sdata->diff;
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  mode = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
-  pattern = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  mode = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
+  pattern = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
   weed_free(in_params);
 
   if (mode != 2 || sdata->snapTime <= 0) {
@@ -447,16 +434,17 @@ WEED_SETUP_START(200, 200) {
 
   int palette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA, &blurzoom_init,
-                               &blurzoom_process, &blurzoom_deinit,
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), \
+                               weed_string_list_init("color", "_Color", 0, patterns), NULL
+                              };
+  weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                               blurzoom_init, blurzoom_process, &blurzoom_deinit,
                                in_chantmpls,
                                out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

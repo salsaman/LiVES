@@ -13,6 +13,11 @@
 */
 
 // WARNING ! Only "jack" and "host audio" inputs are multi threaded
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
 
 #define NEED_ALPHA_SORT
 
@@ -23,12 +28,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -67,22 +66,18 @@ static VisInput *old_visinput;
 static weed_error_t libvis_init(weed_plant_t *inst) {
   weed_libvis_t *libvis = NULL;
   weed_plant_t *out_channel, *filter;
-
-  int error;
+  weed_plant_t *param;
 
   char *filter_name;
   char *filtname;
-
-  weed_plant_t *param;
+  char *ainput = NULL;
 
   int palette, listener;
 
-  char *ainput = NULL;
+  param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  listener = weed_get_int_value(param, WEED_LEAF_VALUE, NULL);
 
-  param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  listener = weed_get_int_value(param, WEED_LEAF_VALUE, &error);
-
-  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, &error);
+  filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
 
   switch (listener) {
   case 1:
@@ -134,17 +129,17 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
   libvis->video = visual_video_new();
 
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
   if (palette == WEED_PALETTE_RGB24) visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_24BIT);
   else visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_32BIT);
 
-  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error), weed_get_int_value(out_channel,
+  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL), weed_get_int_value(out_channel,
                              WEED_LEAF_HEIGHT,
-                             &error));
+                             NULL));
 
-  filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+  filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
   if (!strncmp(filter_name, "libvisual: ", 11)) filtname = filter_name + 11;
   else filtname = filter_name;
   libvis->actor = visual_actor_new(filtname);
@@ -174,10 +169,9 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
 
 static weed_error_t libvis_deinit(weed_plant_t *inst) {
   weed_libvis_t *libvis;
-  int error;
 
   if (weed_plant_has_leaf(inst, "plugin_internal")) {
-    libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+    libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
     if (libvis->instance > 0) {
       visual_object_destroy(VISUAL_OBJECT(libvis->input));
     }
@@ -197,17 +191,15 @@ static weed_error_t libvis_deinit(weed_plant_t *inst) {
 static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
   // convert float audio to s16le, append to libvis->audio
 
-  int error;
-
-  int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
-  float *adata = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error), *oadata = adata;
+  int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  float *adata = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, NULL), *oadata = adata;
 
   register int i, j;
 
   if (adlen > 0 && adata != NULL) {
     short *aud_data;
-    int ainter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
-    int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
+    int ainter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
+    int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
 
     pthread_mutex_lock(&libvis->pcm_mutex);
     aud_data = (short *)weed_malloc((adlen + libvis->audio_frames) * 4);
@@ -241,11 +233,10 @@ static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
 
 
 static weed_error_t libvis_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_libvis_t *libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  void *pixel_data = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  weed_libvis_t *libvis = (weed_libvis_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  void *pixel_data = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   if (in_channel != NULL) store_audio(libvis, in_channel);
 
@@ -321,8 +312,8 @@ WEED_SETUP_START(200, 200) {
     snprintf(fullname, PATH_MAX, "%s", name);
     in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
     weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-    out_chantmpls[0] = weed_channel_template_init("out channel 0", 0, palette_list);
-    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, &libvis_init, &libvis_process, &libvis_deinit,
+    out_chantmpls[0] = weed_channel_template_init("out channel 0", 0);
+    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list, libvis_init, libvis_process, libvis_deinit,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
     weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
 

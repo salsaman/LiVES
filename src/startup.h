@@ -19,6 +19,6 @@ void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
 
 
 void do_bad_dir_perms_error(const char *dirname);
-void dir_toolong_error(char *dirname, const char *dirtype, size_t max);
+void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean allow_retry);
 
 #endif

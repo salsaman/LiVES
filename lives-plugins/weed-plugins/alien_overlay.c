@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -32,11 +34,10 @@ typedef struct {
 //////////////////////////////////////////////
 
 static weed_error_t alien_over_init(weed_plant_t *inst) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error) * 3;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
 
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
 
@@ -64,8 +65,7 @@ static weed_error_t alien_over_init(weed_plant_t *inst) {
 
 
 static weed_error_t alien_over_deinit(weed_plant_t *inst) {
-  int error;
-  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->inited);
     weed_free(sdata->old_pixel_data);
@@ -78,53 +78,56 @@ static weed_error_t alien_over_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst), *out_channel = weed_get_out_channel(inst);
+  unsigned char *src = weed_channel_get_pixel_data(in_channel);
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
+  int pal = weed_channel_get_palette(in_channel);
+  int psize = pixel_size(pal);
+  int width = weed_channel_get_width(in_channel) * psize;
+  int height = weed_channel_get_height(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
   int inplace = (src == dst);
+  int offs = rgb_offset(pal);
   unsigned char val;
-
   unsigned char *old_pixel_data;
-  unsigned char *end = src + height * irowstride;
-  static_data *sdata;
-  register int j, i = 0;
+  unsigned char *end = dst + height * orowstride;
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  register int j, i = 0, k;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   old_pixel_data = sdata->old_pixel_data;
 
-  // new threading arch
-  if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
-
+  // threading
+  if (weed_is_threading(inst)) {
+    int offset = weed_channel_get_offset(out_channel);
+    int dheight = weed_channel_get_height(out_channel);
     src += offset * irowstride;
     dst += offset * orowstride;
-    end = src + dheight * irowstride;
+    end = dst + dheight * orowstride;
     old_pixel_data += width * offset;
     i = offset;
   }
 
-  for (; src < end; src += irowstride) {
-    for (j = 0; j < width; j++) {
-      if (sdata->inited[i]) {
-        if (!inplace) {
-          dst[j] = ((char)(old_pixel_data[j]) + (char)(src[j])) >> 1;
-          old_pixel_data[j] = src[j];
-        } else {
-          val = ((char)(old_pixel_data[j]) + (char)(src[j])) >> 1;
-          old_pixel_data[j] = src[j];
-          dst[j] = val;
-        }
-      } else old_pixel_data[j] = dst[j] = src[j];
+  for (; dst < end; dst += orowstride) {
+    i = 0;
+    for (j = offs; j < width; j += psize) {
+      for (k = 0; k < 3; k++) {
+        if (sdata->inited[i]) {
+          if (!inplace) {
+            dst[j + k] = ((char)(old_pixel_data[i]) + (char)(src[j + k])) >> 1;
+            old_pixel_data[i] = src[j + k];
+          } else {
+            val = ((char)(old_pixel_data[i]) + (char)(src[j + k])) >> 1;
+            old_pixel_data[i] = src[j + k];
+            dst[j + k] = val;
+          }
+        } else old_pixel_data[i] = dst[j + k] = src[j + k];
+        i++;
+      }
     }
+
     sdata->inited[i++] = 1;
-    dst += orowstride;
+    src += irowstride;
     old_pixel_data += width;
   }
 
@@ -133,16 +136,15 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  int palette_list[] = ALL_RGB_PALETTES;
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("alien overlay", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD, alien_over_init,
+                               WEED_FILTER_HINT_MAY_THREAD, palette_list, alien_over_init,
                                alien_over_process, alien_over_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

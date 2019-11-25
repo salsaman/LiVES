@@ -891,7 +891,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
         int j = 0;
         string = weed_palette_get_name(pal_list[i]);
-        if (weed_palette_is_yuv_palette(pal_list[i]) && tmpvpp->get_yuv_palette_clamping != NULL) {
+        if (weed_palette_is_yuv(pal_list[i]) && tmpvpp->get_yuv_palette_clamping != NULL) {
           int *clampings = (*tmpvpp->get_yuv_palette_clamping)(pal_list[i]);
           while (clampings[j] != -1) {
             char *string2 = lives_strdup_printf("%s (%s)", string, weed_yuv_clamping_get_name(clampings[j]));
@@ -910,7 +910,7 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
       lives_free(tmp2);
       vppa->pal_entry = lives_combo_get_entry(LIVES_COMBO(combo));
 
-      if (tmpvpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv_palette(tmpvpp->palette)) {
+      if (tmpvpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv(tmpvpp->palette)) {
         int *clampings = tmpvpp->get_yuv_palette_clamping(tmpvpp->palette);
         if (clampings[0] != -1)
           ctext = lives_strdup_printf("%s (%s)", weed_palette_get_name(tmpvpp->palette),
@@ -1251,7 +1251,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (vpp->YUV_clamping == -1) {
     vpp->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
 
-    if (vpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv_palette(vpp->palette)) {
+    if (vpp->get_yuv_palette_clamping != NULL && weed_palette_is_yuv(vpp->palette)) {
       int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
       if (yuv_clamping_types[0] != -1) vpp->YUV_clamping = yuv_clamping_types[0];
     }

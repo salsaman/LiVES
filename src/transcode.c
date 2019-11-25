@@ -29,7 +29,7 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   // convert to the plugin's palette
   convert_layer_palette(layer, vpp->palette, vpp->YUV_clamping);
 
-  if (weed_palette_is_rgb_palette(mainw->vpp->palette)) {
+  if (weed_palette_is_rgb(mainw->vpp->palette)) {
     if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
       gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
     else
@@ -157,7 +157,7 @@ boolean transcode(int start, int end) {
   if (vpp->set_fps != NULL)(*vpp->set_fps)(cfile->fps);
 
   (*vpp->set_palette)(vpp->palette);
-  if (weed_palette_is_yuv_palette(vpp->palette)) {
+  if (weed_palette_is_yuv(vpp->palette)) {
     if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
   }
   //
@@ -259,7 +259,7 @@ boolean transcode(int start, int end) {
       int *pal_list = (*vpp->get_palette_list)();
       get_best_palette_match(weed_layer_get_palette(frame_layer), pal_list, &vpp->palette, &vpp->YUV_clamping);
       (*vpp->set_palette)(vpp->palette);
-      if (weed_palette_is_yuv_palette(vpp->palette)) {
+      if (weed_palette_is_yuv(vpp->palette)) {
         if (vpp->set_yuv_palette_clamping != NULL)(*vpp->set_yuv_palette_clamping)(vpp->YUV_clamping);
       }
       if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {

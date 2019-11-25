@@ -169,39 +169,8 @@ fxpluginslib_LTLIBRARIES = RGBdelay.la \
 	deinterlace.la \
 	edge.la \
 	fg_bg_removal.la \
-	fireTV.la \
-	fourKlives.la \
-	haip.la \
-	kaleidoscope.la \
-	layout_blends.la \
-	lifeTV.la \
-	livetext.la \
-	log_sig.la \
-	mirrors.la \
-	multi_blends.la \
-	multi_transitions.la \
-	negate.la \
-	nn_programmer.la \
-	noise.la \
-	onedTV.la \
-	palette_test.la\
-	plasma.la \
-	posterise.la \
-	randomiser.la \
-	revTV.la \
-	rippleTV.la \
-	rotozoom.la \
-	shift.la \
-	simple_blend.la \
-	slide_over.la \
-	softlight.la \
-	targeted_zoom.la \
-	textfun.la \
-	tone_gen.la \
-	tvpic.la \
-	vertigo.la \
-	warpTV.la \
-	xeffect.la
+	fireTV.la
+
 
 EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
 

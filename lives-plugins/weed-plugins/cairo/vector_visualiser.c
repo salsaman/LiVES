@@ -254,7 +254,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
   weed_free(in_params);
 
   if (enabled == WEED_FALSE) {
-    return WEED_NO_ERROR;
+    return WEED_SUCCESS;
   }
 
   cr = channel_to_cairo(in_channels[0]);
@@ -275,6 +275,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
       }
     }
   }
+
   break;
 
   case MD_LARGEST: {
@@ -305,7 +306,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
 
   weed_free(in_channels);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -314,17 +315,17 @@ WEED_SETUP_START(200, 200) {
   int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
   char desc[1024];
   weed_plant_t *in_chantmpls[] = {
-    weed_channel_template_init("video in", 0, vpalette_list),
-    weed_channel_template_init("X-plane", 0, apalette_list),
-    weed_channel_template_init("Y-plane", 0, apalette_list), NULL
+    weed_channel_template_init("video in", 0),
+    weed_channel_template_init("X-plane", 0),
+    weed_channel_template_init("Y-plane", 0), NULL
   };
 
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("video out", WEED_CHANNEL_CAN_DO_INPLACE, vpalette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("video out", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
 
   weed_plant_t *in_params[] = {weed_switch_init("enabled", "_Enabled", WEED_TRUE), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("cairo vector visualiser", "salsaman", 1, 0,
-                               NULL, &vector_visualiser_process, NULL,
+  weed_plant_t *filter_class = weed_filter_class_init("cairo vector visualiser", "salsaman", 1, WEED_FILTER_PALETTES_MAY_VARY,
+                               NULL, NULL, vector_visualiser_process, NULL,
                                in_chantmpls, out_chantmpls,
                                in_params, NULL);
 
@@ -333,9 +334,14 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
+  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list), vpalette_list);
+  weed_set_int_array(in_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list), apalette_list);
+  weed_set_int_array(in_chantmpls[2], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list), apalette_list);
+  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list), vpalette_list);
+
   if (is_big_endian()) {
-    weed_set_int_value(in_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
-    weed_set_int_value(out_chantmpls[0], "palette_list", WEED_PALETTE_ARGB32);
+    weed_set_int_value(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, WEED_PALETTE_ARGB32);
+    weed_set_int_value(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, WEED_PALETTE_ARGB32);
   }
 
   snprintf(desc, 1024,

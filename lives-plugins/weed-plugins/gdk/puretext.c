@@ -986,7 +986,7 @@ int puretext_init(weed_plant_t *inst) {
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -1002,7 +1002,7 @@ int puretext_deinit(weed_plant_t *inst) {
     weed_free(sdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
@@ -1200,7 +1200,7 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     weed_free(bgdata);
   }
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 /*

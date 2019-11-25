@@ -2057,7 +2057,8 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   pthread_join(rthread, NULL);
 
   if (texturebuf != NULL) {
-    weed_free((void *)texturebuf);
+    if (weed_free)
+      weed_free((void *)texturebuf);
   }
 
   free(textures);

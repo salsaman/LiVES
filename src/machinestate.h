@@ -91,5 +91,7 @@ uint64_t reget_afilesize_inner(int fileno);
 void lives_log(const char *what);
 #endif
 
+uint32_t string_hash(const char *string) GNU_PURE;
+
 lives_cancel_t check_for_bad_ffmpeg(void);
 

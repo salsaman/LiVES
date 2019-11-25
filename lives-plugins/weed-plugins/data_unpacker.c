@@ -32,9 +32,8 @@ static int package_version = 1; // version of this package
 #define N_ELEMS 128
 
 static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
   double *fvals, xval;
 
   int oidx = 0, nvals;
@@ -44,7 +43,7 @@ static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestam
   for (i = 0; i < N_ELEMS; i++) {
     nvals = weed_leaf_num_elements(in_params[i], WEED_LEAF_VALUE);
     if (nvals > 0) {
-      fvals = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, &error);
+      fvals = weed_get_double_array(in_params[i], WEED_LEAF_VALUE, NULL);
       for (j = 0; j < nvals; j++) {
         xval = fvals[j];
         if (xval > 1.) xval = 1.;
@@ -59,23 +58,20 @@ static weed_error_t dunpack_process(weed_plant_t *inst, weed_timecode_t timestam
 
   weed_free(in_params);
   weed_free(out_params);
-
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class;
-
   weed_plant_t *in_params[N_ELEMS + 1];
   weed_plant_t *out_params[N_ELEMS + 1];
-
-  register int i;
 
   char name[256];
   char label[256];
   char desc[256];
 
+  register int i;
   for (i = 0; i < N_ELEMS; i++) {
     snprintf(name, 256, "input%03d", i);
     snprintf(label, 256, "Input %03d", i);
@@ -89,8 +85,8 @@ WEED_SETUP_START(200, 200) {
   in_params[i] = NULL;
   out_params[i] = NULL;
 
-  filter_class = weed_filter_class_init("data_unpacker", "salsaman", 1, 0, NULL, &dunpack_process,
-                                        NULL, NULL, NULL, in_params, out_params);
+  filter_class = weed_filter_class_init("data_unpacker", "salsaman", 1, 0, NULL,
+                                        NULL, dunpack_process, NULL, NULL, NULL, in_params, out_params);
 
   snprintf(desc, 256, "Unpacks multivalued (array) data in the input parameters into single valued outputs\n"
            "Maximum number of values is %d\n"
@@ -99,9 +95,7 @@ WEED_SETUP_START(200, 200) {
            , N_ELEMS);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

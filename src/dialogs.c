@@ -358,6 +358,7 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
 
   lives_window_center(LIVES_WINDOW(dialog));
   lives_widget_show_all(dialog);
+  lives_widget_context_update();
   lives_window_center(LIVES_WINDOW(dialog));
 
   if (is_blocking)

@@ -762,6 +762,12 @@ static boolean pre_init(void) {
 
   prefs->allow_easing = get_boolean_prefd(PREF_ALLOW_EASING, TRUE);
 
+  prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, WEED_FALSE);
+
+  if (prefs->show_dev_opts) {
+    prefs->btgamma = get_boolean_prefd(PREF_BTGAMMA, FALSE);
+  }
+
   for (i = 0; i < MAX_FX_CANDIDATE_TYPES; i++) {
     mainw->fx_candidates[i].delegate = -1;
     mainw->fx_candidates[i].list = NULL;
@@ -1419,17 +1425,9 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
   prefs->btgamma = FALSE;
 
-  if (prefs->show_dev_opts) {
-    prefs->btgamma = get_boolean_prefd(PREF_BTGAMMA, FALSE);
-  }
-
   //////////////////////////////////////////////////////////////////
 
   if (!mainw->foreign) {
-    // set various prefs
-
-    prefs->show_dev_opts = get_boolean_prefd(PREF_SHOW_DEVOPTS, WEED_FALSE);
-
     prefs->midi_check_rate = get_int_pref(PREF_MIDI_CHECK_RATE);
     if (prefs->midi_check_rate == 0) prefs->midi_check_rate = DEF_MIDI_CHECK_RATE;
 
@@ -1483,7 +1481,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mt_enter_prompt = get_boolean_prefd(PREF_MT_ENTER_PROMPT, TRUE);
 
-    // default frame sizes (TODO)
+    // default frame sizes (TODO - allow pref)
     mainw->def_width = DEF_FRAME_HSIZE;
     mainw->def_height = DEF_FRAME_HSIZE;
 
@@ -4495,6 +4493,7 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
   int rwidth, rheight, width, height, owidth, oheight;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  LiVESWidget *widget = LIVES_WIDGET(image);
   lives_painter_t *cr;
   int cx, cy;
   if (cairo == NULL) cr = lives_painter_create_from_widget(LIVES_WIDGET(image));
@@ -4525,6 +4524,9 @@ void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_pain
   }
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  if (widget == mainw->start_image || widget == mainw->end_image) {
+    lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
+  }
   if (pixbuf != NULL) {
     cx = (rwidth - width) / 2;
     cy = (rheight - height) / 2;
@@ -6113,7 +6115,7 @@ static void get_player_size(int *opwidth, int *opheight) {
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
     /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
-    int rwidth = lives_widget_get_allocation_width(mainw->play_frame) - H_RESIZE_ADJUST;
+    int rwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
     int rheight = lives_widget_get_allocation_height(mainw->play_image) - V_RESIZE_ADJUST;
 #endif
     *opwidth = cfile->hsize;
@@ -8038,6 +8040,7 @@ void load_frame_image(int frame) {
 
     // calling this function directly is now deprecated in favour of switch_clip()
     boolean osc_block;
+    int old_file = mainw->current_file;
 
     if (mainw->current_file < 1 || mainw->files[new_file] == NULL) return;
 
@@ -8110,23 +8113,29 @@ void load_frame_image(int frame) {
     mainw->deltaticks = 0;
     mainw->startticks = mainw->currticks;
 
+#if GTK_CHECK_VERSION(3, 0, 0)
+    if (LIVES_IS_PLAYING && mainw->play_window == NULL && (!IS_VALID_CLIP(old_file)
+        || !CURRENT_CLIP_IS_VALID || cfile->hsize != mainw->files[old_file]->hsize
+        || cfile->vsize != mainw->files[old_file]->vsize)) {
+      clear_widget_bg(mainw->play_image);
+    }
+#endif
+
     if (CURRENT_CLIP_HAS_VIDEO) {
       if (!mainw->fs && !mainw->faded) {
-        if (CURRENT_CLIP_HAS_VIDEO) {
-          lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-          lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
+        lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_end), 1, cfile->frames);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
+        lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
 
-          lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
-          lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-          lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
+        lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
+        lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1, cfile->frames);
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
+        lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 
-          if (mainw->play_window == NULL && mainw->double_size) {
-            frame_size_update();
-          } else resize(1);
-        }
+        if (mainw->play_window == NULL && mainw->double_size) {
+          frame_size_update();
+        } else resize(1);
       }
     } else resize(1);
 

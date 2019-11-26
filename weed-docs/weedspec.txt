@@ -3117,7 +3117,73 @@ should be searched for each entry.
 shared Icons may be placed in a /icons subdirectory., and at a plugin author's discretion, a package may install icons in icons/<packagename> 
 
 Readonly data files  may be placed in a /data subdirectory for shared data, and during installation a package may choose to install
-readonly files in data/<packagename> directory, where <packagename> is the well known name of the package, usually, but not always equivalent to the .so name of the plugin supplying the filter class(es).
+readonly files in data/<packagename> directory, where <packagename> is the well known name of the package,
+usually, but not always equivalent to the .so name of the plugin supplying the filter class(es).
+
+
+
+== Weed hashnames ==
+
+For exchanging filter references between hosts, the following schema is suggested:
+
+let weed hashname be a concatenation of the following:
+
+<package_name>|<filter_name>|<author>
+
+
+where:
+<package_name> is the value of the "package_name" leaf set in the plugin_info of the plugin.
+
+if the package name is not defined the the plugin name (binary name minus directory minus file extension) may be used instead.
+
+<filter_name> : the string value defined in the "name" leaf of the filter_class.
+
+<author> : the string value defined in the "author" leaf of the filter_class.
+
+This combination should be constant for all versions of the filter.
+
+
+The version hashname takes the following form:
+
+<package_name>|<filter_name>|<extra_authors>|<veresion>
+
+where:
+
+<extra_authors> is the value set in the optional leaf "extra_authors" in the filter_class.
+This value may be added to between version updates. If absent then "author" should be used instead.
+
+<version> is the value of the "version" leaf in the filter_class (not the plugin_info leaf, ewhich defines the version of the plugin as
+	  whole - for plugins which export multiple filters this may not be updated when one particular filter is updated)
+
+(Rationale for using "extra_authors" leaf: in earlier versions of the spec, there was no "extra_authors" leaf in the filter class, and
+<package_name>|<filter_name>|<author>|<version> was suggested  as the version hashname, However, it occured that
+this author decided to attribute others in a plugin, which at the time necesitated changing the "author" leaf.
+This caused the version scheme
+to break, since the actual code had not been changed, but the version hashname was different. Thus the idea of the "extra_authors"
+leaf was arrived at. The "author" could remain constant, and additional contributors could added in the "extra_authors" leaf.
+Hence in the version hashname, the <author> was replaced by <extra_authors>
+which may be of use if a new author makes alterations to a filter and adds themselves to "extra_authors" but neglects to update
+the fiilter version number...
+
+
+
+Some package names are reserved and should not be used generally. Examples of reserved names are:
+
+"weed", "Weed" or any similar variation : reserved for reference filters.
+
+"frei0r" : reserved for the frei0r project (there is a reference Weed filter which wraps frei0r plugins for Weed)
+
+"ladspa" : reserved for the LADSPA project (there is a reference Weed filter which wraps frei0r plugins for Weed)
+
+"libvisual" : reserved for the libvisual project (there is a reference Weed filter which wraps frei0r plugins for Weed)
+
+
+"data", "icons" : reserved for general data directories and icon directories. Names such as "doc", "docs", "lib", "shared", "AppData"
+		  	       etc. which are names of commonly known subdirectories should also be avoided since creating package
+			       subdirectories with these names could cause confusion.
+
+
+
 
 
 

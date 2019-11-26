@@ -10,6 +10,11 @@
 #include "main.h"
 #include "support.h"
 
+int32_t weed_plant_get_type(weed_plant_t *plant) {
+  if (plant == NULL) return WEED_PLANT_UNKNOWN;
+  return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
+}
+
 LIVES_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_plant_t *channel) {
   if (channel == NULL) return NULL;
   return weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
@@ -238,5 +243,24 @@ double weed_palette_get_compression_ratio(int pal) {
   }
   if (weed_palette_has_alpha_channel(pal)) return tbits / 32.;
   return tbits / 24.;
+}
+
+
+LIVES_GLOBAL_INLINE int weed_filter_is_resizer(weed_plant_t *filter) {
+  if (weed_filter_get_flags(filter)
+      & (WEED_FILTER_IS_CONVERTER & WEED_FILTER_CHANNEL_SIZES_MAY_VARY)) return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+LIVES_GLOBAL_INLINE int weed_filter_is_palette_converter(weed_plant_t *filter) {
+  if (weed_filter_get_flags(filter)
+      & (WEED_FILTER_IS_CONVERTER & WEED_FILTER_PALETTES_MAY_VARY)) return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+LIVES_GLOBAL_INLINE int weed_audio_filter_is_resampler(weed_plant_t *filter) {
+  if (weed_filter_get_flags(filter)
+      & (WEED_FILTER_IS_CONVERTER & WEED_FILTER_PALETTES_MAY_VARY)) return WEED_TRUE;
+  return WEED_FALSE;
 }
 

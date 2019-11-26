@@ -332,6 +332,7 @@ struct _mt {
   LiVESWidget *add_vid_front;
   LiVESWidget *quit;
   LiVESWidget *troubleshoot;
+  LiVESWidget *show_devopts;
   LiVESWidget *fx_params_label;
   LiVESWidget *solo_check;
   LiVESWidget *amixer_button;

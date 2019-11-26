@@ -192,7 +192,8 @@ static boolean save_keymap2_file(char *kfname) {
             lives_write_le_buffered(kfd, &i, 4, TRUE);
             if (mainw->write_failed) break;
             // TODO: use newer version with separator
-            hashname = lives_strdup_printf("Weed%s", (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0)));
+            hashname = lives_strdup_printf("Weed%s",
+                                           (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0, FALSE)));
             lives_free(tmp);
             slen = strlen(hashname);
             lives_write_le_buffered(kfd, &slen, 4, TRUE);
@@ -202,6 +203,7 @@ static boolean save_keymap2_file(char *kfname) {
           }
         }
       }
+
       lives_close_buffered(kfd);
 
       if (mainw->write_failed) {
@@ -264,7 +266,7 @@ static boolean save_keymap3_file(char *kfname) {
           if (mainw->write_failed) goto write_failed1;
 
           // TODO: use newer version with separator
-          hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey + 1, cconx->omode), TRUE, FALSE, 0);
+          hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->okey + 1, cconx->omode), TRUE, FALSE, 0, FALSE);
           slen = strlen(hashname);
           lives_write_le_buffered(kfd, &slen, 4, TRUE);
           lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -292,7 +294,8 @@ static boolean save_keymap3_file(char *kfname) {
               if (mainw->write_failed) goto write_failed1;
 
               // TODO: use newer version with separator
-              hashname = make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j] + 1, cconx->imode[j]), TRUE, FALSE, 0);
+              hashname =
+                make_weed_hashname(rte_keymode_get_filter_idx(cconx->ikey[j] + 1, cconx->imode[j]), TRUE, FALSE, 0, FALSE);
               slen = strlen(hashname);
               lives_write_le_buffered(kfd, &slen, 4, TRUE);
               lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -339,7 +342,8 @@ static boolean save_keymap3_file(char *kfname) {
           if (mainw->write_failed) goto write_failed1;
 
           // TODO: use newer version with separator
-          hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey + 1, pconx->omode), TRUE, FALSE, 0);
+          hashname =
+            make_weed_hashname(rte_keymode_get_filter_idx(pconx->okey + 1, pconx->omode), TRUE, FALSE, 0, FALSE);
           slen = strlen(hashname);
           lives_write_le_buffered(kfd, &slen, 4, TRUE);
           lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -367,7 +371,8 @@ static boolean save_keymap3_file(char *kfname) {
               if (mainw->write_failed) goto write_failed1;
 
               // TODO: use newer version with separator
-              hashname = make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j] + 1, pconx->imode[j]), TRUE, FALSE, 0);
+              hashname =
+                make_weed_hashname(rte_keymode_get_filter_idx(pconx->ikey[j] + 1, pconx->imode[j]), TRUE, FALSE, 0, FALSE);
               slen = strlen(hashname);
               lives_write_le_buffered(kfd, &slen, 4, TRUE);
               lives_write_buffered(kfd, hashname, slen, TRUE);
@@ -464,7 +469,8 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
           for (j = 0; j < modes; j++) {
             if (rte_keymode_valid(i, j, TRUE)) {
               // TODO: use newer version with separator
-              lives_fputs(lives_strdup_printf("%d|Weed%s\n", i, (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0))), kfile);
+              lives_fputs(lives_strdup_printf("%d|Weed%s\n", i,
+                                              (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0, FALSE))), kfile);
               lives_free(tmp);
             }
           }
@@ -837,11 +843,11 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           if (fidx == -1) is_valid = FALSE;
           else {
             // TODO: use newer version with separator
-            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
+            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0, FALSE);
             if (strcmp(hashname, hashname2)) is_valid = FALSE;
             lives_free(hashname2);
             if (!is_valid) {
-              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
+              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0, FALSE);
               if (!strcmp(hashname, hashname2)) is_valid = TRUE;
               lives_free(hashname2);
             }
@@ -930,11 +936,11 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               if (fidx == -1) is_valid2 = FALSE;
               else {
                 // TODO: use newer version with separator
-                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
+                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0, FALSE);
                 if (strcmp(hashname, hashname2)) is_valid2 = FALSE;
                 lives_free(hashname2);
                 if (!is_valid2) {
-                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
+                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0, FALSE);
                   if (!strcmp(hashname, hashname2)) is_valid2 = TRUE;
                   lives_free(hashname2);
                 }
@@ -1032,11 +1038,11 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
           if (fidx == -1) is_valid = FALSE;
           else {
             // TODO: use newer version with separator
-            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
+            char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0, FALSE);
             if (strcmp(hashname, hashname2)) is_valid = FALSE;
             lives_free(hashname2);
             if (!is_valid) {
-              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
+              hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0, FALSE);
               if (!strcmp(hashname, hashname2)) is_valid = TRUE;
               lives_free(hashname2);
             }
@@ -1120,11 +1126,11 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
               if (fidx == -1) is_valid2 = FALSE;
               else {
                 // TODO: use newer version with separator
-                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0);
+                char *hashname2 = make_weed_hashname(fidx, TRUE, FALSE, 0, FALSE);
                 if (strcmp(hashname, hashname2)) is_valid2 = FALSE;
                 lives_free(hashname2);
                 if (!is_valid2) {
-                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0);
+                  hashname2 = make_weed_hashname(fidx, TRUE, TRUE, 0, FALSE);
                   if (!strcmp(hashname, hashname2)) is_valid2 = TRUE;
                   lives_free(hashname2);
                 }

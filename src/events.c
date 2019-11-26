@@ -2621,7 +2621,7 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
 
   weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
   weed_set_int_value(event, WEED_LEAF_HINT, WEED_EVENT_HINT_FILTER_INIT);
-  weed_set_string_value(event, WEED_LEAF_FILTER, (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0)));
+  weed_set_string_value(event, WEED_LEAF_FILTER, (tmp = make_weed_hashname(filter_idx, TRUE, FALSE, 0, FALSE)));
   lives_free(tmp);
 
   filter = get_weed_filter(filter_idx);

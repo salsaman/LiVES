@@ -81,9 +81,6 @@
 #define SCR_WIDTH_SAFETY ((int)(100. * widget_opts.scale))
 #define SCR_HEIGHT_SAFETY ((int)(200. * widget_opts.scale))
 
-// min screen height to show the message area
-#define MIN_MSG_AREA_SCRNHEIGHT 720
-
 /// height of preview widgets in sepwin
 #define PREVIEW_BOX_HT ((int)(100. * widget_opts.scale))
 
@@ -96,27 +93,37 @@
 #define GUI_SCREEN_X (mainw->mgeom[widget_opts.monitor].x)
 #define GUI_SCREEN_Y (mainw->mgeom[widget_opts.monitor].y)
 
+// scaling limits
 #define SCREEN_SCALE_DEF_WIDTH 1600
+#define SCREEN_169_MIN_WIDTH 1440
+#define SCREEN_43S_LIMIT_WIDTH 1024
+#define SCREEN_43S_LIMIT_HEIGHT 720
 
-/// default size for generators
+/// default size for frames
 #define DEF_FRAME_HSIZE_169_UNSCALED 1280
 #define DEF_FRAME_VSIZE_169_UNSCALED 720
 
 #define DEF_FRAME_HSIZE_43_UNSCALED 1024
 #define DEF_FRAME_VSIZE_43_UNSCALED 768
 
-#define DEF_FRAME_HSIZE_43S_UNSCALED 640
-#define DEF_FRAME_VSIZE_43S_UNSCALED 480
+#define DEF_FRAME_HSIZE_43S_UNSCALED 640.
+#define DEF_FRAME_VSIZE_43S_UNSCALED 480.
 
-#define DEF_FRAME_HSIZE_UNSCALED (GUI_SCREEN_WIDTH >= 1440 ? DEF_FRAME_HSIZE_169_UNSCALED : (GUI_SCREEN_WIDTH >= 1024 && GUI_SCREEN_HEIGHT > 720) ? DEF_FRAME_HSIZE_43_UNSCALED : DEF_FRAME_HSIZE_43S_UNSCALED)
+// min screen height to show the message area
+#define MIN_MSG_AREA_SCRNHEIGHT SCREEN_43S_LIMIT_HEIGHT
 
-#define DEF_FRAME_VSIZE_UNSCALED (GUI_SCREEN_WIDTH >= 1440 ? DEF_FRAME_VSIZE_169_UNSCALED : (GUI_SCREEN_WIDTH >= 1024 && GUI_SCREEN_HEIGHT > 720) ? DEF_FRAME_VSIZE_43_UNSCALED : DEF_FRAME_VSIZE_43S_UNSCALED)
+#define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale) >> 2) << 1)
+#define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
+
+#define DEF_FRAME_HSIZE_UNSCALED ((GUI_SCREEN_WIDTH >= SCREEN_169_MIN_WIDTH) ? DEF_FRAME_HSIZE_169_UNSCALED : (GUI_SCREEN_WIDTH >= SCREEN_43S_LIMIT_WIDTH && GUI_SCREEN_HEIGHT >= SCREEN_43S_LIMIT_HEIGHT) ? DEF_FRAME_HSIZE_43_UNSCALED : DEF_FRAME_HSIZE_43S_UNSCALED)
+
+#define DEF_FRAME_VSIZE_UNSCALED ((GUI_SCREEN_WIDTH >= SCREEN_169_MIN_WIDTH) ? DEF_FRAME_VSIZE_169_UNSCALED : (GUI_SCREEN_WIDTH >= SCREEN_43S_LIMIT_WIDTH && GUI_SCREEN_HEIGHT >= SCREEN_43S_LIMIT_HEIGHT) ? DEF_FRAME_VSIZE_43_UNSCALED : DEF_FRAME_VSIZE_43S_UNSCALED)
 
 #define DEF_GEN_WIDTH DEF_FRAME_HSIZE_UNSCALED
 #define DEF_GEN_HEIGHT DEF_FRAME_VSIZE_UNSCALED
 
-#define DEF_FRAME_HSIZE ((int)((double)DEF_FRAME_HSIZE_UNSCALED * widget_opts.scale))
-#define DEF_FRAME_VSIZE ((int)((double)DEF_FRAME_VSIZE_UNSCALED * widget_opts.scale))
+#define DEF_FRAME_HSIZE ((((int)((double)DEF_FRAME_HSIZE_UNSCALED * widget_opts.scale)) >> 2) << 2)
+#define DEF_FRAME_VSIZE ((((int)((double)DEF_FRAME_VSIZE_UNSCALED * widget_opts.scale)) >> 1) << 1)
 
 #define FRAMEBLANK_MIN_WIDTH ((int)(240. * widget_opts.scale))
 #define FRAMEBLANK_MAX_WIDTH ((int)(600. * widget_opts.scale))
@@ -129,15 +136,15 @@
 
 #define MAIN_SPIN_SPACER ((int)52. * widget_opts.scale) ///< pixel spacing for start/end spins for clip and multitrack editors
 
-#define ENC_DETAILS_WIN_H ((int)(640. * widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
-#define ENC_DETAILS_WIN_V ((int)(240. * widget_opts.scale)) ///< vertical size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_H ((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale)) ///< horizontal size in pixels of the encoder output window
+#define ENC_DETAILS_WIN_V (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale)) >> 1) ///< vertical size in pixels of the encoder output window
 
 #define MIN_MSG_WIDTH_CHARS ((int)(40. * widget_opts.scale)) ///< min width of text on warning/error labels
-#define MAX_MSG_WIDTH_CHARS ((int)(100. * widget_opts.scale)) ///< max width of text on warning/error labels
+#define MAX_MSG_WIDTH_CHARS ((int)(200. * widget_opts.scale)) ///< max width of text on warning/error labels
 
 /// size of the fx dialog windows scrollwindow
-#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? 210. + 210. * widget_opts.scale : 640))
-#define RFX_WINSIZE_V ((int)(480. * widget_opts.scale))
+#define RFX_WINSIZE_H ((int)(GUI_SCREEN_WIDTH >= SCREEN_SCALE_DEF_WIDTH ? 210. * (1. + widget_opts.scale) : DEF_FRAME_HSIZE_43S_UNSCALED))
+#define RFX_WINSIZE_V ((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale))
 
 #define DEF_BUTTON_WIDTH ((int)(80. * widget_opts.scale))
 

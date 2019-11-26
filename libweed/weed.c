@@ -385,11 +385,11 @@ static weed_error_t _weed_leaf_set_private_data(weed_plant_t *plant, const char 
 }
 
 
-#define WEED_LEAF_TYPE_HASH weed_hash(WEED_LEAF_TYPE)
+#define WEED_MAGIC_HASH 0x7C9EBD07  // the magic number
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) {
   weed_leaf_t *leaf;
-  if ((leaf = weed_leaf_new(WEED_LEAF_TYPE, WEED_SEED_INT, WEED_LEAF_TYPE_HASH)) == NULL) return NULL;
+  if ((leaf = weed_leaf_new(WEED_LEAF_TYPE, WEED_SEED_INT, WEED_MAGIC_HASH)) == NULL) return NULL;
   if ((leaf->data = (volatile weed_data_t **)weed_data_new(WEED_SEED_INT, 1, &plant_type)) == NULL) {
     weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
     weed_unmalloc_sizeof(weed_leaf_t, leaf);

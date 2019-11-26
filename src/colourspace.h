@@ -19,7 +19,7 @@
 
 /// rowstride alignment values
 #define ALIGN_MIN 4
-#define ALIGN_DEF 8 // anything higher than this and it seems to crash
+#define ALIGN_DEF 16
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits

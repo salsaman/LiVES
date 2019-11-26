@@ -1564,6 +1564,8 @@ void create_LiVES(void) {
   lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
 
   mainw->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts),  prefs->show_dev_opts);
+
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->show_devopts);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(toggle_sets_pref),
@@ -1951,7 +1953,7 @@ void create_LiVES(void) {
   // lives_widget_set_app_paintable(mainw->eventbox3, TRUE);
 
   // IMPORTANT: need to set a default size here (the actual size will be set later)
-  lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->eventbox3, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
 
   widget_opts.expand = LIVES_EXPAND_NONE;
   mainw->frame1 = lives_standard_frame_new(_("First Frame"), 0.25, TRUE);
@@ -1972,7 +1974,7 @@ void create_LiVES(void) {
   mainw->pl_eventbox = lives_event_box_new();
   lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
   lives_container_add(LIVES_CONTAINER(mainw->playframe), mainw->pl_eventbox);
-  lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->playframe, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
   lives_widget_set_hexpand(mainw->pl_eventbox, FALSE);
   lives_widget_set_vexpand(mainw->pl_eventbox, TRUE);
 
@@ -1985,7 +1987,7 @@ void create_LiVES(void) {
   lives_widget_set_halign(mainw->playframe, LIVES_ALIGN_CENTER);
 
   mainw->eventbox4 = lives_event_box_new();
-  lives_widget_set_size_request(mainw->eventbox4, DEF_FRAME_HSIZE / 2, DEF_FRAME_VSIZE);
+  lives_widget_set_size_request(mainw->eventbox4, DEF_FRAME_HSIZE_GUI, DEF_FRAME_VSIZE_GUI);
   lives_widget_set_app_paintable(mainw->eventbox4, TRUE);
 
   lives_table_attach(LIVES_TABLE(mainw->pf_grid), mainw->eventbox4, 2, 3, 0, 1,
@@ -3778,8 +3780,7 @@ void play_window_set_title(void) {
 
   if (mainw->play_window == NULL) return;
 
-  if (mainw->sepwin_scale != 100.) xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
-  else xtrabit = lives_strdup("");
+  xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
 
   if (LIVES_IS_PLAYING) {
     if (mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)

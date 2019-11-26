@@ -9541,7 +9541,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
     lives_widget_apply_theme(dialog, LIVES_WIDGET_STATE_NORMAL);
     funkify_dialog(dialog);
 #if GTK_CHECK_VERSION(2, 18, 0)
-    lives_signal_connect(LIVES_GUI_OBJECT(lives_dialog_get_content_area(LIVES_DIALOG(dialog))), LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL,
+    lives_signal_connect(LIVES_GUI_OBJECT(lives_dialog_get_content_area(LIVES_DIALOG(dialog))),
+                         LIVES_WIDGET_SET_FOCUS_CHILD_SIGNAL,
                          LIVES_GUI_CALLBACK(dlg_focus_changed),
                          NULL);
 #endif
@@ -10456,6 +10457,22 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidgetColor *lives_painter_set_source_rgb_from_
   widget_color_to_lives_rgba(&col, wcol);
   lives_painter_set_source_rgb_from_lives_rgba(cr, &col);
   return wcol;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean clear_widget_bg(LiVESWidget *widget) {
+  if (!LIVES_IS_WIDGET(widget)) return FALSE;
+  else {
+    lives_painter_t *cr = lives_painter_create_from_widget(widget);
+    if (cr == NULL) return FALSE;
+    else {
+      int rwidth = lives_widget_get_allocation_width(LIVES_WIDGET(widget));
+      int rheight = lives_widget_get_allocation_height(LIVES_WIDGET(widget));
+      lives_painter_render_background(widget, cr, 0., 0., rwidth, rheight);
+      lives_painter_destroy(cr);
+    }
+  }
+  return TRUE;
 }
 
 

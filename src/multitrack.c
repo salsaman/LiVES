@@ -5848,7 +5848,7 @@ void mt_set_autotrans(int idx) {
   prefs->atrans_fx = idx;
   if (idx == -1) set_string_pref(PREF_ACTIVE_AUTOTRANS, "none");
   else {
-    char *atrans_hash = make_weed_hashname(prefs->atrans_fx, TRUE, FALSE, '|');
+    char *atrans_hash = make_weed_hashname(prefs->atrans_fx, TRUE, FALSE, '|', FALSE);
     set_string_pref(PREF_ACTIVE_AUTOTRANS, atrans_hash);
     lives_free(atrans_hash);
   }
@@ -7738,6 +7738,16 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), help_translate);
+
+  separator = lives_menu_add_separator(LIVES_MENU(mt->help_menu));
+
+  mt->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
+  lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->show_devopts),  prefs->show_dev_opts);
+
+  lives_container_add(LIVES_CONTAINER(mt->help_menu), mt->show_devopts);
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->show_devopts), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(toggle_sets_pref),
+                       (livespointer)PREF_SHOW_DEVOPTS);
 
   separator = lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 

@@ -984,8 +984,8 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 
     if (preview_type != LIVES_PREVIEW_TYPE_RANGE) {
       lives_widget_set_size_request(mainw->fs_playframe,
-                                    (int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2,
-                                    (int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.) / 4.) * 2);
+                                    ((int)(DEF_FRAME_HSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.)) >> 2) << 1,
+                                    ((int)(DEF_FRAME_VSIZE_UNSCALED * (widget_opts.scale < 1. ? widget_opts.scale : 1.)) >> 2) << 1);
     } else {
       lives_widget_set_vexpand(mainw->fs_playframe, TRUE);
     }

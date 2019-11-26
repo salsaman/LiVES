@@ -2802,7 +2802,7 @@ boolean lives_osc_cb_fx_getname(void *context, int arglen, const void *vargs, OS
     lives_osc_parse_int_argument(vargs, &fidx);
   } else return lives_osc_notify_failure();
 
-  retval = make_weed_hashname(fidx, FALSE, FALSE, 0);
+  retval = make_weed_hashname(fidx, FALSE, FALSE, 0, FALSE);
 
   lives_status_send(retval);
 

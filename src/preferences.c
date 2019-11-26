@@ -39,7 +39,7 @@ static void select_pref_list_row(uint32_t selected_idx, _prefsw *prefsw);
 /** @brief callback to set to make a togglebutton or check_menu_item directly control a boolean pref
 
   widget is either a togge_button (sets temporary) or a check_menuitem (sets permanent)
-  pref must have a corresponding stanza in pref_factory_bool() */
+  pref must have a corresponding entry in pref_factory_bool() */
 void toggle_sets_pref(LiVESWidget *widget, livespointer prefidx) {
   if (LIVES_IS_TOGGLE_BUTTON(widget))
     pref_factory_bool((const char *)prefidx,

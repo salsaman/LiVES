@@ -777,7 +777,7 @@ static boolean call_quit_app(livespointer data) {
 static boolean call_map_effect(livespointer data) {
   fxmapdata *fxdata = (fxmapdata *)data;
   if (mainw != NULL && !mainw->go_away && !mainw->is_processing) {
-    char *hashname = make_weed_hashname(fxdata->idx, TRUE, FALSE, 0);
+    char *hashname = make_weed_hashname(fxdata->idx, TRUE, FALSE, 0, FALSE);
     int error = rte_switch_keymode(fxdata->key, fxdata->mode, hashname);
     ext_caller_return_int(fxdata->id, (error == 0));
     lives_free(hashname);

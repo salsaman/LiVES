@@ -7004,6 +7004,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     if (mainw->play_window != NULL) {
       resize_play_window();
+      if (!mainw->double_size) lives_window_center(LIVES_WINDOW(mainw->play_window));
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 

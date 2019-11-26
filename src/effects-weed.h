@@ -119,7 +119,7 @@ char *weed_get_package_name(weed_plant_t *filter_or_instance) WARN_UNUSED;
 char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes, boolean add_notes) WARN_UNUSED;
 char *weed_instance_get_filter_name(weed_plant_t *inst, boolean get_compound_parent) WARN_UNUSED;
 char *make_weed_hashname(int filter_idx, boolean fullname,
-                         boolean use_extra_authors, char sep) WARN_UNUSED;  ///< fullname includes author and version
+                         boolean use_extra_authors, char sep, boolean spc_to_underscore) WARN_UNUSED;  ///< fullname includes author and version
 int weed_get_idx_for_hashname(const char *hashname, boolean fullname) GNU_CONST;  ///< fullname includes author and version
 int *weed_get_indices_from_template(const char *package_name, const char *filter_name, const char *author, int version);
 int weed_filter_highest_version(const char *pkg, const char *fxname, const char *auth, int *return_version);
@@ -128,7 +128,6 @@ int enabled_out_channels(weed_plant_t *plant, boolean count_repeats);
 weed_plant_t *get_enabled_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
 weed_plant_t *get_enabled_audio_channel(weed_plant_t *inst, int which, boolean is_in);  ///< for FILTER_INST
 weed_plant_t *get_mandatory_channel(weed_plant_t *filter, int which, boolean is_in);  ///< for FILTER_CLASS
-boolean weed_filter_is_resizer(weed_plant_t *filt);
 boolean weed_instance_is_resizer(weed_plant_t *filt);
 weed_plant_t *weed_instance_get_filter(weed_plant_t *inst, boolean get_compound_parent);
 
@@ -339,15 +338,6 @@ void update_all_host_info(void);
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
 
 // some general utilities
-#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_PLUGIN_INFO ? 1 : 0)
-#define WEED_PLANT_IS_HOST_INFO(plant) (weed_get_plant_type(plant) == WEED_PLANT_HOST_INFO ? 1 : 0)
-#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_get_plant_type(plant) == WEED_PLANT_FILTER_CLASS ? 1 : 0)
-#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_get_plant_type(plant) == WEED_PLANT_FILTER_INSTANCE ? 1 : 0)
-#define WEED_PLANT_IS_CHANNEL(plant) (weed_get_plant_type(plant) == WEED_PLANT_CHANNEL ? 1 : 0)
-#define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_CHANNEL_TEMPLATE ? 1 : 0)
-#define WEED_PLANT_IS_PARAMETER(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER ? 1 : 0)
-#define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_get_plant_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? 1 : 0)
-#define WEED_PLANT_IS_GUI(plant) (weed_get_plant_type(plant) == WEED_PLANT_GUI ? 1 : 0)
 
 int weed_general_error;
 

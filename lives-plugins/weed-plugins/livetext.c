@@ -294,9 +294,11 @@ static weed_error_t livetext_process(weed_plant_t *inst, weed_timecode_t timesta
 WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2;
   const char *modes[] = {"foreground only", "foreground and background", "background only", NULL};
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_END
+                       };
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params[8], *pgui;
   weed_plant_t *filter_class;
 
@@ -324,13 +326,15 @@ WEED_SETUP_START(200, 200) {
   pgui = weed_parameter_template_get_gui(in_params[0]);
   weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
-  filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, NULL, &livetext_process, NULL, in_chantmpls, out_chantmpls,
+  filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, palette_list,
+                                        NULL, livetext_process, NULL, in_chantmpls, out_chantmpls,
                                         in_params,
                                         NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, NULL, &livetext_process, NULL, NULL,
+  filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, palette_list,
+                                        NULL, livetext_process, NULL, NULL,
                                         (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
   weed_free(clone1);
   weed_free(clone2);

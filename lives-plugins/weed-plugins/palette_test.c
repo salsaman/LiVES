@@ -50,10 +50,10 @@ static weed_error_t ptest_process(weed_plant_t *inst, weed_timecode_t timestamp)
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_YUYV, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("Palette testing plugin", "salsaman", 1, 0, NULL, ptest_process, NULL,
-                               in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("Palette testing plugin", "salsaman", 1, 0, palette_list,
+                               NULL, ptest_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
   weed_plant_t *gui;
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

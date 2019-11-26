@@ -167,10 +167,10 @@ WEED_SETUP_START(200, 200) {
                         WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_END
                        };
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("softlight", "salsaman", 1, 0, NULL, softlight_process, NULL,
-                               in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("softlight", "salsaman", 1, 0, palette_list,
+                               NULL, softlight_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   // set preference of unclamped
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);

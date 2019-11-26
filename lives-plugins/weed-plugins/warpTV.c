@@ -248,11 +248,11 @@ static weed_error_t warp_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("warpTV", "effectTV", 1, 0, &warp_init,
-                               warp_process, warp_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("warpTV", "effectTV", 1, 0, palette_list,
+                               warp_init, warp_process, warp_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

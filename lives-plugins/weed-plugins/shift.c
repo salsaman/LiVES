@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -114,7 +116,7 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   ypos = (offset - 1) * irowstride;
 
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) psize = 3;
+  psize = pixel_size(pal);
 
   if (pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
     clamping = weed_get_int_value(in_channel, WEED_LEAF_YUV_CLAMPING, NULL);
@@ -159,19 +161,17 @@ static weed_error_t shift_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32,
-                        WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_PACKED_PALETTES;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_float_init("xshift", "_X shift (ratio)", 0., -1., 1.),
                                weed_float_init("yshift", "_Y shift (ratio)", 0., -1., 1.),
                                weed_switch_init("transbg", "_Transparent edges", WEED_FALSE),
                                NULL
                               };
 
-  weed_plant_t *filter_class = weed_filter_class_init("shift", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+  weed_plant_t *filter_class = weed_filter_class_init("shift", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                NULL, shift_process, NULL,
                                in_chantmpls, out_chantmpls, in_params, NULL);
 

@@ -3240,6 +3240,56 @@ Filter_class flag WEED_FILTER_HINT_MAY_THREAD
    e.g. if one thread returns plugin_invalid and another returns filter_invalid, the plugin_invalid takes precedence.
 
 
+-- Tips for plugin writers --
+Plugins should support as many palettes as possible.
+
+If using weed-plugin-utils.c:
+
+IF a filter simply moves pixels around, without regard to color in the pixel, then before inclung weed-plugin-utils.h and
+weed-plugin-utils.cm put:
+
+#define NEED_PALETTE_UTILS
+
+in the setup function, put:
+
+int palette_list[] = ALL_PACKED_PALETTES_PLUS;
+
+and in the process function, obtain the pixel size with:
+
+int palette = weed_channel_get_palette(channel);
+int psize = pixel_size(palette);
+
+
+If the filter needs to get to the colors inside the pixel, put:
+
+int palette_list[] = ALL_RGB_PALETTES;
+
+to skip the alpha value:
+
+int offs = rgb_offset;
+
+then each row should look like:
+
+for (x = offs; x < width * psize; x += psize) {
+
+    // process 3 bytes color
+
+   //  - BGR and BGRA have the red / blue channels swapped.
+
+    // skip 1 byte alpha
+}
+
+
+when jumping to the next row, increment the width by:
+
+dst += orowstride - width * psize;
+src += irowstride - width * psize;
+
+
+
+
+
+
 
 Tips for the Weed host.
 

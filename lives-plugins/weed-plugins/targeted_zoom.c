@@ -5,6 +5,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 2; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -13,33 +21,26 @@
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 2; // version of this package
-
-//////////////////////////////////////////////////////////////////
-
 #include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
 
 
-static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+static weed_error_t tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error), *osrc = src;
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL), *osrc = src;
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
+  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error), widthx;
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), widthx;
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
-  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,&error);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,NULL);
 
   weed_plant_t **in_params;
 
@@ -49,21 +50,19 @@ static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   int offset = 0, dheight = height;
 
-  int psize = 4;
+  int psize;
 
   register int x, y;
 
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) psize = 3;
+  psize = pixel_size(pal);
 
-  if (pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
+  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-
-  scale = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error);
+  scale = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
   if (scale < 1.) scale = 1.;
 
-  offsx = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, &error) - 0.5 / scale;
-  offsy = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, &error) - 0.5 / scale;
+  offsx = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL) - 0.5 / scale;
+  offsy = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL) - 0.5 / scale;
   weed_free(in_params);
 
   if (offsx < 0.) offsx = 0.;
@@ -76,8 +75,8 @@ static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
-    dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error) + offset;
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL) + offset;
     dst += offset * orowstride;
   }
 
@@ -101,16 +100,18 @@ static int tzoom_process(weed_plant_t *inst, weed_timecode_t timecode) {
 }
 
 
-
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_RGBA32, WEED_PALETTE_ARGB32, WEED_PALETTE_BGRA32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_END};
+  int palette_list[] = ALL_PACKED_PALETTES_PLUS;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
-  weed_plant_t *in_params[] = {weed_float_init("scale", "_Scale", 1., 1., 16.), weed_float_init("xoffs", "_X center", 0.5, 0., 1.), weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL};
+  weed_plant_t *in_params[] = {weed_float_init("scale", "_Scale", 1., 1., 16.),
+                               weed_float_init("xoffs", "_X center", 0.5, 0., 1.), weed_float_init("yoffs", "_Y center", 0.5, 0., 1.), NULL
+                              };
 
-  weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &tzoom_process, NULL,
+  weed_plant_t *filter_class = weed_filter_class_init("targeted zoom", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               NULL, tzoom_process, NULL,
                                in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plant_t *gui = weed_filter_class_get_gui(filter_class), *pgui;

@@ -277,9 +277,11 @@ static weed_error_t textfun_process(weed_plant_t *inst, weed_timecode_t timestam
 
 WEED_SETUP_START(200, 200) {
   const char *modes[] = {"colour pixels", "monochrome", "greyscale", "solid colours", NULL};
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_END
+                       };
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *in_params[4];
   weed_plant_t *filter_class;
 
@@ -298,9 +300,8 @@ WEED_SETUP_START(200, 200) {
   in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
   in_params[3] = NULL;
 
-  filter_class = weed_filter_class_init("textfun", "salsaman", 2, WEED_FILTER_HINT_LINEAR_GAMMA, NULL,
-                                        &textfun_process, NULL, in_chantmpls, out_chantmpls, in_params,
-                                        NULL);
+  filter_class = weed_filter_class_init("textfun", "salsaman", 2, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        NULL, textfun_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

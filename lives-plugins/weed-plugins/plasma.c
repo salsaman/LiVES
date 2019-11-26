@@ -150,13 +150,13 @@ static weed_error_t plasma_process(weed_plant_t *inst, weed_timecode_t timestamp
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class;
   int filter_flags = 0;
 
-  filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, &plasma_init, &plasma_process,
-                                        &plasma_deinit, NULL,
-                                        out_chantmpls, NULL, NULL);
+  filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, palette_list,
+                                        plasma_init, plasma_process, plasma_deinit, NULL, out_chantmpls, NULL, NULL);
+
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

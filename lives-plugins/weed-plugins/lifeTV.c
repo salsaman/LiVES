@@ -15,6 +15,12 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -22,12 +28,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -113,19 +113,18 @@ static void clear_field(struct _sdata *sdata, int video_area) {
 
 /////////////////////////////////////////////////////////////
 
-int lifetv_init(weed_plant_t *inst) {
+static weed_error_t lifetv_init(weed_plant_t *inst) {
   struct _sdata *sdata;
   int height, width, video_area;
   weed_plant_t *in_channel;
-  int error;
 
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
 
   video_area = width * height;
 
@@ -186,7 +185,7 @@ int lifetv_deinit(weed_plant_t *inst) {
   struct _sdata *sdata;
   int error;
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->background);
     weed_free(sdata->diff);
@@ -212,22 +211,21 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   RGB32 pix;
 
   int width, height, video_area, irow, orow;
-  int error;
+
   register int x, y;
 
+  sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-  sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
+  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  dest = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
 
-  width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
-  height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-
-  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error) / 4;
-  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error) / 4 - width;
+  irow = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4;
+  orow = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL) / 4 - width;
 
   video_area = width * height;
 
@@ -278,10 +276,10 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("lifeTV", "effectTV", 1, 0, &lifetv_init, &lifetv_process, &lifetv_deinit, in_chantmpls,
-                               out_chantmpls, NULL, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *filter_class = weed_filter_class_init("lifeTV", "effectTV", 1, 0, palette_list,
+                               lifetv_init, lifetv_process, lifetv_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

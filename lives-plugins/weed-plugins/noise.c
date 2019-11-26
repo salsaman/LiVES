@@ -66,12 +66,12 @@ static weed_error_t noise_process(weed_plant_t *inst, weed_timecode_t timestamp)
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
 
-  weed_plant_t *filter_class  = weed_filter_class_init("noise", "salsaman", 1, filter_flags, NULL, noise_process, NULL,
-                                in_chantmpls, out_chantmpls, NULL, NULL);
+  weed_plant_t *filter_class  = weed_filter_class_init("noise", "salsaman", 1, filter_flags, palette_list,
+                                NULL, noise_process, NULL, in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);

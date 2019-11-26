@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -24,18 +26,16 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 
 static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             &error);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, &error);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, &error);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   int psize = 4, start = 0, alpha = 3;
 
   unsigned char *end = src + height * irowstride;
@@ -51,8 +51,8 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, &error);
-    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
+    int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
     src += offset * irowstride;
     dst += offset * orowstride;
@@ -73,12 +73,9 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32,
-                        WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_RGB_PALETTES;
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
-  weed_plant_t *filter_class;
   int filter_flags = WEED_FILTER_HINT_MAY_THREAD;
   weed_plant_t *filter_class = weed_filter_class_init("negate", "salsaman", 1, filter_flags, palette_list, NULL,
                                negate_process, NULL,

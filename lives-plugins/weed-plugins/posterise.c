@@ -24,9 +24,8 @@ static int package_version = 1; // version of this package
 /////////////////////////////////////////////////////////////
 
 static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                             WEED_LEAF_OUT_CHANNELS,
-                             NULL);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t *in_param;
   unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
@@ -69,12 +68,15 @@ static weed_error_t posterise_process(weed_plant_t *inst, weed_timecode_t timest
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
+                                   WEED_CHANNEL_CAN_DO_INPLACE), NULL
+                                  };
+
   weed_plant_t *in_params[] = {weed_integer_init("levels", "Colour _levels", 1, 1, 8), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("posterise", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, NULL, &posterise_process, NULL,
-                               in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("posterise", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               NULL, posterise_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

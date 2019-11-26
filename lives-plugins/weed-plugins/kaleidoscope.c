@@ -5,6 +5,14 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +20,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -40,6 +42,10 @@ static int package_version = 1; // version of this package
 #define RT32 0.86602540378f //sqrt(3)/2
 
 #define RT322 0.43301270189f
+
+#define calc_angle(y, x) (x > 0. ? y >= 0. ? atanf(y / x) : TWO_PI + atanf(y / x) : \
+			  x < -0. ? atanf(y / x) + M_PI :	y > 0. ? ONE_PI2 : THREE_PI2)
+#define calc_dist(x, y) (sqrtf((x * x + y * y)))
 
 typedef struct {
   float angle;
@@ -82,7 +88,6 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
   if (secx < 0.) secx += sidex;
 
   if (!(gridy & 1)) {
-
     // even row (inverted Y)
     if (secy > (sidey - (hsidex - secx)*RT322)) {
       *y += sidey;
@@ -103,24 +108,6 @@ static void calc_center(float side, float j, float i, float *x, float *y) {
       } else *y += sidey;
     }
   }
-}
-
-
-static float calc_angle(float y, float x) {
-  if (x > 0.) {
-    if (y >= 0.) return atanf(y / x);
-    return TWO_PI + atanf(y / x);
-  }
-  if (x < -0.) {
-    return atanf(y / x) + M_PI;
-  }
-  if (y > 0.) return ONE_PI2;
-  return THREE_PI2;
-}
-
-
-static float calc_dist(float x, float y) {
-  return sqrtf((x * x + y * y));
 }
 
 
@@ -354,10 +341,10 @@ static weed_error_t kal_deinit(weed_plant_t *inst) {
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_END};
+  int palette_list[] = ALL_RGB_PALETTES;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
                                weed_float_init(WEED_LEAF_OFFSET, "_Offset angle", 0., 0., 359.),
                                weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
@@ -367,7 +354,7 @@ WEED_SETUP_START(200, 200) {
                                NULL
                               };
 
-  weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+  weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                kal_init, kal_process, kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);

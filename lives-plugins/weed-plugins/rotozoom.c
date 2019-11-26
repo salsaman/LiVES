@@ -13,6 +13,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_PALETTE_UTILS
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -153,16 +155,15 @@ static weed_error_t rotozoom_process(weed_plant_t *inst, weed_timecode_t timesta
 
 WEED_SETUP_START(200, 200) {
   int i;
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_ARGB32, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888,
-                        WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_PACKED_PALETTES_PLUS;
 
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
-  weed_plant_t *in_params[] = {weed_integer_init("zoom", "_Zoom value", 128, 0, 255), weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("rotozoom", "effectTV", 1, WEED_FILTER_HINT_MAY_THREAD, rotozoom_init,
-                               rotozoom_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
+  weed_plant_t *in_params[] = {weed_integer_init("zoom", "_Zoom value", 128, 0, 255),
+                               weed_switch_init("autozoom", "_Auto zoom", WEED_TRUE), NULL
+                              };
+  weed_plant_t *filter_class = weed_filter_class_init("rotozoom", "effectTV", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               rotozoom_init, rotozoom_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

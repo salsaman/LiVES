@@ -81,17 +81,16 @@ static weed_error_t nnprog_init(weed_plant_t *inst) {
 
 
 static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_error_t error;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  double fit = (1. - weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error)) / (double)NGAUSS;
+  double fit = (1. - weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL)) / (double)NGAUSS;
   double rval;
 
-  int innodes = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, &error);
-  int outnodes = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, &error);
-  int hnodes = weed_get_int_value(in_params[3], WEED_LEAF_VALUE, &error);
+  int innodes = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  int outnodes = weed_get_int_value(in_params[2], WEED_LEAF_VALUE, NULL);
+  int hnodes = weed_get_int_value(in_params[3], WEED_LEAF_VALUE, NULL);
 
   char *strings[256];
   char tmp[MAXSTRLEN];
@@ -178,14 +177,14 @@ static weed_error_t nnprog_process(weed_plant_t *inst, weed_timecode_t timestamp
 
 
 static weed_error_t nnprog_deinit(weed_plant_t *inst) {
-  weed_error_t error;
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   if (sdata != NULL) {
     if (sdata->constvals != NULL) weed_free(sdata->constvals);
     if (sdata->vals != NULL) weed_free(sdata->vals);
     weed_free(sdata);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -201,6 +200,7 @@ WEED_SETUP_START(200, 200) {
                                weed_integer_init("hnodes", "Number of _Hidden Nodes", 1, 1, 128),
                                NULL
                               };
+
   weed_plant_t *out_params[MAXNODES * 2 + 1];
 
   register int i;
@@ -212,8 +212,8 @@ WEED_SETUP_START(200, 200) {
 
   out_params[i] = NULL;
 
-  filter_class = weed_filter_class_init("nn_programmer", "salsaman", 1, 0, &nnprog_init, &nnprog_process,
-                                        &nnprog_deinit, NULL, NULL, in_params, out_params);
+  filter_class = weed_filter_class_init("nn_programmer", "salsaman", 1, 0, NULL,
+                                        nnprog_init, nnprog_process, nnprog_deinit, NULL, NULL, in_params, out_params);
 
   gui = weed_filter_class_get_gui(filter_class);
   weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);

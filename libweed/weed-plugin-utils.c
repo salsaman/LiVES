@@ -845,27 +845,6 @@ EXPORTS INLINE int weed_palette_is_valid(int pal) {
   return WEED_TRUE;
 }
 
-EXPORTS INLINE int weed_palette_get_bits_per_macropixel(int pal) {
-  if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
-      pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) return 24;
-  if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
-      pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
-    return 32;
-  if (pal == WEED_PALETTE_YUV411) return 48;
-  if (pal == WEED_PALETTE_AFLOAT) return sizeof(float);
-  if (pal == WEED_PALETTE_A1) return 1;
-  if (pal == WEED_PALETTE_RGBFLOAT) return (3 * sizeof(float));
-  if (pal == WEED_PALETTE_RGBAFLOAT) return (4 * sizeof(float));
-  return 0; // unknown palette
-}
-
-EXPORTS INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
-  if (pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888) return 2;
-  if (pal == WEED_PALETTE_YUV411) return 4;
-  return 1;
-}
-
 EXPORTS INLINE int weed_palette_is_float_palette(int pal) {
   return (pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_RGBFLOAT) ? WEED_TRUE : WEED_FALSE;
 }

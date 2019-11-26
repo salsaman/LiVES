@@ -74,8 +74,8 @@ int randomiser_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata);
-    weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -163,13 +163,14 @@ WEED_SETUP_START(200, 200) {
 
   in_params[i] = NULL;
 
-  filter_class = weed_filter_class_init("randomiser", "salsaman", 1, 0, &randomiser_init, &randomiser_process,
-                                        &randomiser_deinit, NULL, NULL, in_params, out_params);
+  filter_class = weed_filter_class_init("randomiser", "salsaman", 1, 0, NULL,
+                                        randomiser_init, randomiser_process, randomiser_deinit, NULL, NULL, in_params, out_params);
 
   snprintf(desc, 256, "For each of the %d outputs,\n"
            "produce a random double when the corresponding boolean input changes state\n"
            "min and max may be set for each out parameter, as may the trigger direction(s) for each in parameter.\n"
            , NVALS);
+
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

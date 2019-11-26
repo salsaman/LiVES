@@ -153,15 +153,14 @@ static weed_error_t ripple_init(weed_plant_t *inst) {
   int map_w;
   //char *list[2]={"ripples","rain"};
   weed_plant_t *in_channel;
-  int error;
 
   sdata = weed_malloc(sizeof(struct _sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
+  in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
 
-  map_h = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, &error);
-  map_w = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, &error);
+  map_h = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
+  map_w = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
 
   sdata->map = (int *)weed_calloc(map_h * map_w * 3, sizeof(int));
   if (sdata->map == NULL) {
@@ -217,8 +216,8 @@ static weed_error_t ripple_deinit(weed_plant_t *inst) {
     if (sdata->vtable) weed_free(sdata->vtable);
     if (sdata->map) weed_free(sdata->map);
     weed_free(sdata);
-    weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 
@@ -440,6 +439,8 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
 
   vp = sdata->vtable;
 
+  orowstridex -= width;
+
   /* draw refracted image. The vector table is stretched. */
   for (y = 0; y < height - 2; y += 2) {
     for (x = 0; x < width - 1; x += 2) {
@@ -464,7 +465,6 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
       if (dy < 0) dy = 0;
       if (dy >= height) dy = height - 1;
       dest[orowstride] = src[dy * irowstride + i];
-
       dest[orowstride + 1] = src[dy * irowstride + dx];
       dest += 2;
       vp += 2;
@@ -481,13 +481,12 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
 WEED_SETUP_START(200, 200) {
   const char *modes[] = {"ripples", "rain", NULL};
   int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_END};
-  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE, palette_list), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0, palette_list), NULL};
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", WEED_CHANNEL_REINIT_ON_SIZE_CHANGE), NULL};
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("mode", "Ripple _mode", 0, modes), NULL};
 
-  weed_plant_t *filter_class = weed_filter_class_init("rippleTV", "effectTV", 1, 0, ripple_init, ripple_process, ripple_deinit,
-                               in_chantmpls,
-                               out_chantmpls, in_params, NULL);
+  weed_plant_t *filter_class = weed_filter_class_init("rippleTV", "effectTV", 1, 0, palette_list,
+                               ripple_init, ripple_process, ripple_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

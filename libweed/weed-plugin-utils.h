@@ -207,16 +207,21 @@ FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
 /*( omits WEED_PALETTE_YUV411, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_RGB_FLOAT
    and WEED_PALETTE_RGBA_FLOAT as well as the alpha palettes
 WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT */
+
 #define ALL_PACKED_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, \
       WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END}
+
+#define ALL_PACKED_PALETTES_PLUS {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, \
+      WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_UYVY, \
+      WEED_PALETTE_YUYV, WEED_PALETTE_END}
 
 #define ALL_PLANAR_PALETTES {WEED_PALETTE_YUV444P, WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV422P, \
                         WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_END}
 
-/* only for packed palettes */
+/* only for packed palettes (for uyvy, yuyv, it's actually the macropixel size, but we'll skip that subtlety here)*/
 #define pixel_size(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) ? 3 : \
 			 (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || \
-			  pal == WEED_PALETTE_YUVA8888) ? 32 : 0)
+			  pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 32 : 0)
 
 #define rgb_offset(pal) (pal == WEED_PALETTE_ARGB32 ? 1 : 0)
 
@@ -225,8 +230,6 @@ FN_DECL int weed_palette_is_rgb(int pal);
 FN_DECL int weed_palette_is_yuv(int pal);
 FN_DECL int weed_palette_get_numplanes(int pal);
 FN_DECL int weed_palette_is_valid(int pal);
-FN_DECL int weed_palette_get_bits_per_macropixel(int pal);
-FN_DECL int weed_palette_get_pixels_per_macropixel(int pal);
 FN_DECL int weed_palette_is_float_palette(int pal);
 FN_DECL int weed_palette_has_alpha_channel(int pal);
 FN_DECL double weed_palette_get_plane_ratio_horizontal(int pal, int plane);

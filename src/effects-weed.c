@@ -1451,9 +1451,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   boolean got_invalid = FALSE;
   boolean needs_reinit = FALSE;
 
-  int minh, xminh = SLICE_ALIGN;
+  int vstep = SLICE_ALIGN, minh;
   int slices, slices_per_thread, to_use;
-  int heights[2];
+  int heights[2], *xheights;
   int offset = 0;
   int dheight, height, xheight = 0;
   int nthreads = 0;
@@ -1463,76 +1463,72 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   filter = weed_instance_get_filter(inst, TRUE);
   if (weed_plant_has_leaf(filter, WEED_LEAF_VSTEP)) {
     minh = weed_get_int_value(filter, WEED_LEAF_VSTEP, &error);
-    if (minh > xminh) xminh = minh;
+    if (minh > vstep) vstep = minh;
   }
 
   for (i = 0; i < nchannels; i++) {
     /// min height for slices (in all planes) is SLICE_ALIGN, unless an out channel has a larger vstep set
     height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
-    if (xheight == 0 || height < xheight) xheight = height;
+
     pal = weed_get_int_value(out_channels[i], WEED_LEAF_CURRENT_PALETTE, &error);
 
     for (j = 0; j < weed_palette_get_nplanes(pal); j++) {
       vrt = weed_palette_get_plane_ratio_vertical(pal, j);
-      if (vrt != 0. && vrt <= 1. && (minh = ALIGN_CEIL((int)((float)xminh / vrt), SLICE_ALIGN)) > xminh)
-        xminh = minh;
+      height *= vrt;
+      if (xheight == 0 || height < xheight) xheight = height;
     }
   }
 
-  if (xheight % xminh != 0) return FILTER_ERROR_DONT_THREAD;
+  if (xheight % vstep != 0) return FILTER_ERROR_DONT_THREAD;
 
-  slices = xheight / xminh;
+  // slices = min height / step
+  slices = xheight / vstep;
   slices_per_thread = ALIGN_CEIL(slices, prefs->nfx_threads) / prefs->nfx_threads;
 
   to_use = ALIGN_CEIL(slices, slices_per_thread) / slices_per_thread;
   if (to_use < 2) return FILTER_ERROR_DONT_THREAD;
 
-  dheight = slices_per_thread * xminh;
-  heights[0] = dheight;
-
   procvals = (struct _procvals *)lives_malloc(sizeof(struct _procvals) * to_use);
   xinst = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *) * (to_use - 1));
   dthreads = (pthread_t *)lives_calloc(sizeof(pthread_t) * (to_use - 1), 1);
+
+  for (i = 0; i < nchannels; i++) {
+    heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
+    slices = height / vstep;
+    slices_per_thread = CEIL((double)slices / (double)to_use, 1.);
+    dheight = slices_per_thread * vstep;
+    heights[0] = dheight;
+    g_print("THR 0 got %d and %d\n", 0, dheight);
+    weed_set_int_value(out_channels[i], WEED_LEAF_OFFSET, 0);
+    weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
+  }
 
   for (j = 1; j < to_use; j++) {
     // each thread needs its own copy of the output channels, so it can have its own WEED_LEAF_OFFSET and WEED_LEAF_HEIGHT
     // therefore it also needs its own copy of inst
     // but note that WEED_LEAF_PIXEL_DATA always points to the same memory buffer(s)
+
     pthread_mutex_lock(&mainw->instance_ref_mutex);
     xinst[j - 1] = weed_plant_copy(inst);
     pthread_mutex_unlock(&mainw->instance_ref_mutex);
     xchannels = (weed_plant_t **)lives_malloc(nchannels * sizeof(weed_plant_t *));
 
     for (i = 0; i < nchannels; i++) {
-      heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
-      slices = height / xminh;
-      slices_per_thread = CEIL((double)slices / (double)to_use, 1.);
-      dheight = slices_per_thread * xminh;
-      if (slices_per_thread < 1 || dheight < xminh) {
-        while (j > 0) {
-          for (--i; i >= 0; i--) {
-            weed_plant_free(xchannels[i]);
-          }
-          lives_freep((void **)&xchannels);
-          weed_plant_free(xinst[j]);
-          if (--j > 0) {
-            xchannels = weed_get_plantptr_array(xinst[j - 1], WEED_LEAF_OUT_CHANNELS, &error);
-          }
-        }
-        return FILTER_ERROR_DONT_THREAD;
-      }
-
       xchannels[i] = weed_plant_copy(out_channels[i]);
+      xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
+      height = xheights[1];
+
+      dheight = xheights[0];
+
       offset = dheight * j;
 
-      if ((height - offset) < dheight) {
-        dheight = height - offset;
-      }
+      if ((height - offset) < dheight) dheight = height - offset;
+      xheights[0] = dheight;
 
-      heights[0] = dheight;
-
+      g_print("THR 0 got %d and %d\n", 0, dheight);
       weed_set_int_value(xchannels[i], WEED_LEAF_OFFSET, offset);
-      weed_set_int_array(xchannels[i], WEED_LEAF_HEIGHT, 2, heights);
+      weed_set_int_array(xchannels[i], WEED_LEAF_HEIGHT, 2, xheights);
+      lives_free(xheights);
     }
 
     weed_set_plantptr_array(xinst[j - 1], WEED_LEAF_OUT_CHANNELS, nchannels, xchannels);
@@ -1557,7 +1553,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
 
   for (i = 0; i < nchannels; i++) {
-    int *xheights = weed_get_int_array(out_channels[0], WEED_LEAF_HEIGHT, NULL);
+    xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
     weed_set_int_value(out_channels[i], WEED_LEAF_HEIGHT, xheights[1]);
     lives_free(xheights);
     weed_leaf_delete(out_channels[i], WEED_LEAF_OFFSET);
@@ -5639,6 +5635,7 @@ static void load_compound_plugin(char *plugin_name, char *plugin_path) {
 
     weed_filters = (weed_plant_t **)lives_realloc(weed_filters, num_weed_filters * sizeof(weed_plant_t *));
     weed_filters[idx] = filter;
+    hashnames = (lives_hashjoint *)lives_realloc(hashnames, num_weed_filters * sizeof(lives_hashjoint));
     gen_hashnames(idx, idx);
     lives_free(filter_name);
   }

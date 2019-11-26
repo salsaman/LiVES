@@ -43,8 +43,9 @@ static int package_version = 1; // version of this package
 
 #define RT322 0.43301270189f
 
-#define calc_angle(y, x) (x > 0. ? y >= 0. ? atanf(y / x) : TWO_PI + atanf(y / x) : \
-			  x < -0. ? atanf(y / x) + M_PI :	y > 0. ? ONE_PI2 : THREE_PI2)
+#define calc_angle(y, x) (x > 0. ? (y >= 0. ? atanf(y / x) : TWO_PI + atanf(y / x)) : \
+			  x < -0. ? atanf(y / x) + M_PI :	(y > 0. ? ONE_PI2 : THREE_PI2))
+
 #define calc_dist(x, y) (sqrtf((x * x + y * y)))
 
 typedef struct {

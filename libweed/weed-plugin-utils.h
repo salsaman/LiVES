@@ -221,7 +221,7 @@ WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT */
 /* only for packed palettes (for uyvy, yuyv, it's actually the macropixel size, but we'll skip that subtlety here)*/
 #define pixel_size(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) ? 3 : \
 			 (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || \
-			  pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 32 : 0)
+			  pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 4 : 0)
 
 #define rgb_offset(pal) (pal == WEED_PALETTE_ARGB32 ? 1 : 0)
 

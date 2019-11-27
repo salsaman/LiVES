@@ -1498,7 +1498,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     slices_per_thread = CEIL((double)slices / (double)to_use, 1.);
     dheight = slices_per_thread * vstep;
     heights[0] = dheight;
-    g_print("THR 0 got %d and %d\n", 0, dheight);
     weed_set_int_value(out_channels[i], WEED_LEAF_OFFSET, 0);
     weed_set_int_array(out_channels[i], WEED_LEAF_HEIGHT, 2, heights);
   }
@@ -1525,7 +1524,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
       if ((height - offset) < dheight) dheight = height - offset;
       xheights[0] = dheight;
 
-      g_print("THR 0 got %d and %d\n", 0, dheight);
       weed_set_int_value(xchannels[i], WEED_LEAF_OFFSET, offset);
       weed_set_int_array(xchannels[i], WEED_LEAF_HEIGHT, 2, xheights);
       lives_free(xheights);
@@ -2317,7 +2315,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_UNABLE_TO_RESIZE;
         goto done_video;
       }
-      g_print("pt fx 12 %d wanted %d\n", weed_layer_get_width(layer), width);
     }
 
     // check palette again in case it changed during resize
@@ -2330,7 +2327,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
     }
 
-    g_print("pt fx 1 %d\n", weed_layer_get_width(layer));
     /// check if the plugin needs reinit
     // at this stage we still haven't updated values in the channel, excpet for width and height
     nchr = weed_leaf_num_elements(channel, WEED_LEAF_ROWSTRIDES);
@@ -2479,7 +2475,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
 
       set_channel_size(filter, channel, opwidth / weed_palette_get_pixels_per_macropixel(palette), opheight);
-      g_print("pt fx 12666 %d want %d\n", weed_layer_get_width(layer), opwidth);
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
         int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);

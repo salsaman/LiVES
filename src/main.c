@@ -6258,7 +6258,7 @@ void load_frame_image(int frame) {
     get_play_times();
     return;
   }
-  g_print("LFI\n");
+
   if (!mainw->foreign) {
     mainw->actual_frame = cfile->last_frameno = frame;
 
@@ -6529,7 +6529,6 @@ void load_frame_image(int frame) {
         check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         weed_layer_free(mainw->frame_layer);
         mainw->frame_layer = NULL;
-        g_print("MWFL NULL\n");
       }
 
       if (mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) {
@@ -6623,19 +6622,15 @@ void load_frame_image(int frame) {
       } else {
         // normal playback in the clip editor, or applying a non-realtime effect
         if (!mainw->preview || cfile->clip_type == CLIP_TYPE_FILE || lives_file_test(fname_next, LIVES_FILE_TEST_EXISTS)) {
-          g_print("LFI2\n");
           mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, mainw->actual_frame);
-          g_print("pt a %d\n", weed_layer_get_width(mainw->frame_layer));
           if (img_ext == NULL) img_ext = get_image_ext_for_type(cfile->img_type);
 
           if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
-            g_print("pt abbb %d\n", weed_layer_get_width(mainw->frame_layer));
             if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                     cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
 
               if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
               mainw->frame_layer = NULL;
-              g_print("pt accccc %d\n", weed_layer_get_width(mainw->frame_layer));
 
               if (cfile->opening && cfile->img_type == IMG_TYPE_PNG && sget_file_size(fname_next) == 0) {
                 if (++bad_frame_count > BFC_LIMIT) {
@@ -6645,7 +6640,6 @@ void load_frame_image(int frame) {
               }
             }
           } else {
-            g_print("pt axxxxxx %d\n", weed_layer_get_width(mainw->frame_layer));
             pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
           }
         }
@@ -6781,9 +6775,7 @@ void load_frame_image(int frame) {
       if (size_ok) {
         if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file ||
             mainw->multitrack != NULL)) {
-          if (mainw->frame_layer != NULL)  g_print("pt a21133 %d\n", weed_layer_get_width(mainw->frame_layer));
           mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
-          g_print("pt a211444 %d\n", weed_layer_get_width(mainw->frame_layer));
         }
       } else {
         if (!mainw->resizing && !cfile->opening) {
@@ -6792,7 +6784,6 @@ void load_frame_image(int frame) {
         }
       }
     }
-    g_print("pt a211 %d\n", weed_layer_get_width(mainw->frame_layer));
 
     ////////////////////////
 #ifdef ENABLE_JACK
@@ -6865,7 +6856,6 @@ void load_frame_image(int frame) {
 
 
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
-      g_print("pt a3 %d\n", weed_layer_get_width(mainw->frame_layer));
 
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
@@ -6956,7 +6946,6 @@ void load_frame_image(int frame) {
     }
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
-    g_print("pt a24 %d\n", weed_layer_get_width(mainw->frame_layer));
 
     if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox || mainw->multitrack != NULL)) {
       // here we are either: playing through an external video playback plugin which cannot resize
@@ -7136,7 +7125,6 @@ void load_frame_image(int frame) {
     // local display of its own
 
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
-    g_print("pt a2999 %d\n", weed_layer_get_width(mainw->frame_layer));
 
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
       // no display to output, skip the rest

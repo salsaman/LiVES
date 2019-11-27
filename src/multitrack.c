@@ -15903,7 +15903,6 @@ static void mt_jumpto_mark(lives_mt *mt, lives_direction_t dir) {
 
   while (tl_marks != NULL) {
     time = q_dbl(strtod((char *)tl_marks->data, NULL), mt->fps) / TICKS_PER_SECOND_DBL;
-    g_print("CF %f and %f\n", time, ptr_time);
     if (time > ptr_time) break;
     marktime = time;
     tl_marks = tl_marks->next;

@@ -72,10 +72,10 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
   // we should ignore these isolated cases, except in DEBUG mode.
   // otherwise - increase tlen ?
   // e.g. pa_stream_set_buffer_attr(s, battr, success_cb, NULL);
-#define DEBUG_UNDERFLOWS
-#ifdef DEBUG_UNDERFLOWS
-  fprintf(stderr, "PA Stream underrun.\n");
-#endif
+
+  if (prefs->show_dev_opts) {
+    fprintf(stderr, "PA Stream underrun.\n");
+  }
 }
 
 

@@ -81,7 +81,6 @@ LiVESList *do_onchange_init(lives_rfx_t *rfx) {
 void on_paramwindow_button_clicked2(LiVESButton *button, lives_rfx_t *rfx) {
   // close from rte window
   on_paramwindow_button_clicked(button, rfx);
-  lives_widget_destroy(fx_dialog[1]->dialog);
   lives_freep((void **)&fx_dialog[1]);
 }
 
@@ -1548,11 +1547,11 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
         }
       } else LIVES_WARN("Button group was NULL");
 
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), get_bool_param(param->value));
+
       lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                                  LIVES_GUI_CALLBACK(after_boolean_param_toggled),
                                  (livespointer)rfx);
-
-      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), get_bool_param(param->value));
 
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), "param_number", LIVES_INT_TO_POINTER(pnum));

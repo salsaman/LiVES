@@ -9391,12 +9391,10 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuv420p_to_rgb_frame(gusrc_array, width, height, istrides, orowstride, gudest, FALSE, FALSE, isubspace, iclamped);
       break;
     case WEED_PALETTE_RGBA32:
-      g_print("b4 width = %d\n", weed_layer_get_width(layer));
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       convert_yuv420p_to_rgb_frame(gusrc_array, width, height, istrides, orowstride, gudest, TRUE, FALSE, isubspace, iclamped);
-      g_print("af width = %d\n", weed_layer_get_width(layer));
       break;
     case WEED_PALETTE_BGR24:
       create_empty_pixel_data(layer, FALSE, TRUE);

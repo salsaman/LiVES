@@ -171,7 +171,8 @@ typedef struct {
   boolean omc_noisy; ///< send success/fail
   boolean omc_events; ///< send other events
 
-  short startup_phase; ///< -1 = fresh install, 1 = workdir set, 2, pre-audio start, 3, pre-tests, 100 = all tests passed
+  /// 0 = normal , -1 or 1: fresh install, 2: workdir set, 3: startup tests passed, 4: aud pl chosen, 5: pre interface seln., 100 setup complete
+  short startup_phase;
   char *wm; ///<window manager name
   int ocp; ///< open_compression_percent : get/set in prefs
 

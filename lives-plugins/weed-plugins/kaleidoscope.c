@@ -43,10 +43,28 @@ static int package_version = 1; // version of this package
 
 #define RT322 0.43301270189f
 
-#define calc_angle(y, x) (x > 0. ? (y >= 0. ? atanf(y / x) : TWO_PI + atanf(y / x)) : \
-			  x < -0. ? atanf(y / x) + M_PI :	(y > 0. ? ONE_PI2 : THREE_PI2))
 
-#define calc_dist(x, y) (sqrtf((x * x + y * y)))
+static float calc_angle(float y, float x) {
+  if (x > 0.) {
+    if (y >= 0.) return atanf(y / x);
+    return TWO_PI + atanf(y / x);
+  }
+  if (x < -0.) {
+    return atanf(y / x) + M_PI;
+  }
+  if (y > 0.) return ONE_PI2;
+  return THREE_PI2;
+}
+
+
+static float calc_dist(float x, float y) {
+  return sqrtf((x * x + y * y));
+}
+
+/* #define calc_angle(y, x) (x > 0. ? (y >= 0. ? atanf(y / x) : TWO_PI + atanf(y / x)) : \ */
+/* 			  x < -0. ? atanf(y / x) + M_PI :	(y > 0. ? ONE_PI2 : THREE_PI2)) */
+
+/* #define calc_dist(x, y) (sqrtf((x * x + y * y))) */
 
 typedef struct {
   float angle;

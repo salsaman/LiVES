@@ -469,7 +469,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
       dest += 2;
       vp += 2;
     }
-    dest += orowstridex;
+    dest += orowstridex + orowstride;
     vp += 2;
   }
   return WEED_SUCCESS;

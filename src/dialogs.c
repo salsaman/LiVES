@@ -410,11 +410,7 @@ boolean do_warning_dialog_with_check(const char *text, int warn_mask_number) {
 
 
 boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number) {
-  if (!prefs->show_gui) {
-    return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
-  } else {
-    return do_yesno_dialog_with_check_transient(text, warn_mask_number, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-  }
+  return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
 }
 
 

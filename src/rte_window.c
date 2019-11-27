@@ -490,7 +490,7 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
   } while (retval == LIVES_RESPONSE_RETRY);
 
   // if we have default values, save them
-  if (has_key_defaults()) {
+  if (1 || has_key_defaults()) {
     if (!save_keymap2_file(keymap_file2)) {
       lives_rm(keymap_file2);
       retval = LIVES_RESPONSE_CANCEL;
@@ -683,14 +683,12 @@ void load_rte_defs(void) {
           if (read_generator_sizes(fd)) {
             d_print_done();
           } else {
-            g_print("err1\n");
             d_print_file_error_failed();
             retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
           }
         } else {
           d_print_file_error_failed();
           if (bytes < strlen(msg)) {
-            g_print("err2ef\n");
             retval = do_read_failed_error_s_with_retry(prefs->fxsizesfile, NULL, NULL);
           }
         }
@@ -972,7 +970,6 @@ static boolean load_datacons(const char *fname, uint8_t **badkeymap) {
         }
 
         if (eof) break;
-
       }
 
       if (eof) break;
@@ -1231,12 +1228,12 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   char *line = NULL;
   char *whashname;
 
-  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL);
-  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL);
-  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL);
+  char *keymap_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap", NULL); // keymap
+  char *keymap_file2 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap2", NULL); // perkey defs
+  char *keymap_file3 = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "default.keymap3", NULL); // data connections
 
-  int *def_modes;
-  uint8_t **badkeymap;
+  int *def_modes = NULL;
+  uint8_t **badkeymap = NULL;
 
   boolean notfound = FALSE;
   boolean has_error = FALSE;
@@ -1254,6 +1251,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
   register int i;
 
   if (lives_file_test(keymap_file2, LIVES_FILE_TEST_EXISTS)) {
+    // per key defaults ?
     lives_free(keymap_file);
     keymap_file = keymap_file2;
   } else {
@@ -1262,37 +1260,45 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
   d_print(_("Loading default keymap from %s..."), keymap_file);
 
-  do {
-    retval = 0;
-
-    if (keymap_file2 != NULL) {
-      if ((kfd = lives_open_buffered_rdonly(keymap_file)) < 0) has_error = TRUE;
-    } else {
-      if (!(kfile = fopen(keymap_file, "r"))) {
-        has_error = TRUE;
-      }
-    }
-
-    if (has_error) {
-      msg = lives_strdup_printf(_("\n\nUnable to read from keymap file\n%s\nError code %d\n"), keymap_file, errno);
-      retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
-      lives_free(msg);
-
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        lives_free(keymap_file);
-        d_print_file_error_failed();
-        return FALSE;
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  on_clear_all_clicked(NULL, user_data);
-
-  if (ca_canc) {
-    // user cancelled
-    mainw->error = FALSE;
-    d_print_cancelled();
+  if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
+    d_print(_("file not found, skipping.\n"));
+    lives_freep((void **)&keymap_file);
+    lives_freep((void **)&keymap_file2);
+    lives_freep((void **)&keymap_file3);
     return FALSE;
+  } else {
+    do {
+      retval = 0;
+
+      if (keymap_file2 != NULL) {
+        if ((kfd = lives_open_buffered_rdonly(keymap_file)) < 0) has_error = TRUE;
+      } else {
+        if (!(kfile = fopen(keymap_file, "r"))) {
+          has_error = TRUE;
+        }
+      }
+
+      if (has_error) {
+        msg = lives_strdup_printf(_("\n\nUnable to read from keymap file\n%s\nError code %d\n"), keymap_file, errno);
+        retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
+        lives_free(msg);
+
+        if (retval == LIVES_RESPONSE_CANCEL) {
+          lives_free(keymap_file);
+          d_print_file_error_failed();
+          return FALSE;
+        }
+      }
+    } while (retval == LIVES_RESPONSE_RETRY);
+
+    on_clear_all_clicked(NULL, user_data);
+
+    if (ca_canc) {
+      // user cancelled
+      mainw->error = FALSE;
+      d_print_cancelled();
+      return FALSE;
+    }
   }
 
   def_modes = (int *)lives_malloc(prefs->rte_keys_virtual * sizint);
@@ -1320,6 +1326,7 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
         }
       }
     }
+
     fclose(kfile);
 
     if (!strcmp((char *)lives_list_nth_data(list, 0), "LiVES keymap file version 2") ||
@@ -1332,7 +1339,6 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
     }
   } else {
     // newer style
-
     // read version
     bytes = lives_read_le_buffered(kfd, &version, 4, TRUE);
     if (bytes < sizint) {
@@ -1554,14 +1560,16 @@ boolean on_load_keymap_clicked(LiVESButton *button, livespointer user_data) {
 
 cleanup1:
 
-  for (i = 0; i < prefs->rte_keys_virtual; i++) {
-    lives_free(badkeymap[i]);
-  }
+  if (badkeymap != NULL) {
+    for (i = 0; i < prefs->rte_keys_virtual; i++) {
+      lives_free(badkeymap[i]);
+    }
 
-  lives_free(badkeymap);
-  lives_free(keymap_file); // frees keymap_file2 if applicable
-  lives_free(keymap_file3);
-  lives_free(def_modes);
+    lives_free(badkeymap);
+  }
+  lives_freep((void **)&keymap_file); // frees keymap_file2 if applicable
+  lives_freep((void **)&keymap_file3);
+  lives_freep((void **)&def_modes);
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
   if (rte_window != NULL) check_clear_all_button();
 
@@ -2792,35 +2800,36 @@ void load_default_keymap(void) {
 
   if (hash_list == NULL) hash_list = weed_get_all_names(FX_LIST_HASHNAME);
 
-  do {
-    retval = 0;
-    if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-      if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
-        lives_mkdir_with_parents(dir, S_IRWXU);
+  if (prefs->startup_phase != 0 && prefs->startup_phase < 4) {
+    do {
+      retval = 0;
+      if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
+        if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) {
+          lives_mkdir_with_parents(dir, S_IRWXU);
+        }
+        lives_cp(keymap_template, keymap_file);
       }
+      if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
+        // give up
+        d_print((tmp = lives_strdup_printf
+                       (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
+                        keymap_file)));
 
-      lives_cp(keymap_template, keymap_file);
-    }
-    if (!lives_file_test(keymap_file, LIVES_FILE_TEST_EXISTS)) {
-      // give up
-      d_print((tmp = lives_strdup_printf
-                     (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
-                      keymap_file)));
+        retval = do_abort_cancel_retry_dialog(tmp, NULL);
 
-      retval = do_abort_cancel_retry_dialog(tmp, NULL);
+        lives_free(tmp);
 
-      lives_free(tmp);
+        if (retval == LIVES_RESPONSE_CANCEL) {
+          lives_free(keymap_file);
+          lives_free(keymap_template);
+          lives_free(dir);
 
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        lives_free(keymap_file);
-        lives_free(keymap_template);
-        lives_free(dir);
-
-        threaded_dialog_spin(0.);
-        return;
+          threaded_dialog_spin(0.);
+          return;
+        }
       }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
+    } while (retval == LIVES_RESPONSE_RETRY);
+  }
 
   on_load_keymap_clicked(NULL, NULL);
 

@@ -52,7 +52,7 @@ int weed_filter_is_resizer(weed_plant_t *filter);
 /* CHANNEL_TEMPLATE functions */
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
-int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, weed_size_t *nvals) WARN_UNUSED;
+int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) WARN_UNUSED;
 
 /* CHANNEL functions */
 void *weed_channel_get_pixel_data(weed_plant_t *channel);

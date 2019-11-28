@@ -2619,6 +2619,9 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
   case RFX_STATUS_SCRAP:
     parameter_list = plugin_request_by_line(PLUGIN_RFX_SCRAP, plugin_name, "get_parameters");
     break;
+  case RFX_STATUS_INTERNAL:
+    parameter_list = plugin_request_by_line(PLUGIN_RFX_SCRAP, plugin_name, "get_parameters");
+    break;
   default:
     parameter_list = plugin_request_by_line(PLUGIN_RENDERED_EFFECTS_TEST, plugin_name, "get_parameters");
     break;
@@ -2852,7 +2855,8 @@ void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
   dest->num_params = src->num_params;
   dest->is_template = src->is_template;
   dest->menuitem = src->menuitem;
-  dest->extra = NULL;
+  dest->gui_strings = lives_list_copy(src->gui_strings);
+  dest->onchange_strings = lives_list_copy(src->onchange_strings);
   if (!full) return;
 
   // TODO
@@ -2887,9 +2891,10 @@ void rfx_free(lives_rfx_t *rfx) {
     rfx_params_free(rfx);
     lives_free(rfx->params);
   }
-  if (rfx->extra != NULL) {
-    free(rfx->extra);
-  }
+
+  if (rfx->gui_strings != NULL) lives_list_free_all(&rfx->gui_strings);
+  if (rfx->onchange_strings != NULL) lives_list_free_all(&rfx->onchange_strings);
+
   if (rfx->source_type == LIVES_RFX_SOURCE_WEED && rfx->source != NULL) {
     weed_instance_unref((weed_plant_t *)rfx->source); // remove the ref we held
   }
@@ -2898,7 +2903,8 @@ void rfx_free(lives_rfx_t *rfx) {
 
 void rfx_free_all(void) {
   register int i;
-  for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
+  for (i = 0; i <= mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom
+       + mainw->num_rendered_effects_test; i++) {
     rfx_free(&mainw->rendered_fx[i]);
   }
   lives_freep((void **)&mainw->rendered_fx);
@@ -3475,12 +3481,23 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   else rfx->params = NULL;
   rfx->source = (void *)inst;
   rfx->source_type = LIVES_RFX_SOURCE_WEED;
-  rfx->extra = NULL;
+  rfx->gui_strings = NULL;
+  rfx->onchange_strings = NULL;
   rfx->flags = 0;
   return rfx;
 }
 
+/** @brief get the interface hints set by a Weed filter in the filter_class.
 
+    for a compound effect we get the gui elements from each internal filter in sequence,
+    inserting internal|nextfilter after each filter
+
+    - the filter MUST have set LAYOUT_SCHEME to RFX in the filter class.
+    - it must have set the leaf RFX_DELIM with the string delimiter (and anything after the first character is ignored)
+    - the layout must be set in the RFX_STRINGS array, using the delimiter
+
+    returns a LiVESList of the results
+ */
 LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
   LiVESList *hints = NULL;
 
@@ -3545,29 +3562,35 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 }
 
 
-/** @brief create an rfx script from some fixed values and values from the plugin, compile the script and then run it
+/** @brief create an interface window for a plugin; possibly run it, and return the parameters
 
-    we will then compile the script to an rfx scrap and use the scrap to get info
-    about additional parameters, and create the parameter window
+    N.B. this is NOT for rendered effects, those have their own functions.
 
-    this is done like so to allow use of plugins written in any language;
-    they need only output an RFX scriptlet on stdout when called from the commandline
+    -- currently used for: encoder plugins and video playback plugins.
 
-    actually, I think now we only need the script for running triggers (CHECK)
+    Given an RFX script in scrap_text, (generally retrieved by some means from the plugin),
+    will create an rfx effect, building the parameters from the <params> section of scrap_text,
+    using the layout hints (optional) from <param_window>, and construct a parameter interface.
 
-    the param window is run, and the marshalled values are returned
+    The function has two modes of operation:
 
-    if the user closes the window with Cancel, NULL is returned instead
+    If vbox is not NULL it should point to a LiVESVBox into which the parameter box will be added.
+    The function will return NULL, and the rfx can be retrieved from ret_rfx.
 
-    in parameters: scrap_text
-    : vbox - a vbox where we will display the parameters
-    out parameters: ret_rfx - the value is set to point to an rfx_t effect
+    If vbox is NULL, the param window will be run, and if the user clicks "OK", the parameter values are returned in a marshalled list.
+    If the user closes the window with Cancel, NULL is returned instead.
 
-    the string which is returned is the marshalled values of the parameters
+    If the plugin has no user adjustable parameters, the an empty string is returned.
+
+    If <onchange> exists then the init | trigger will be run
+    to let the plugin update default values (for vpps only currently)
+
+    The onchange code is currently run by generating a perl scrap and runing that. In future the code could
+    be run in different languages or internally by using a simple parser like the one in the data_processor plugin.
+
 
     NOTE: if vbox is not NULL, we create the window inside vbox, without running it
     in this case, vbox should be packed in its own dialog window, which should then be run
-    and we also return the name of the scrapfile, which should be removed after running the window
 
     called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
@@ -3635,7 +3658,8 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
     rfx->name = lives_strdup(rfx_scrapname);
     rfx->menu_text = NULL;
     rfx->action_desc = NULL;
-    rfx->extra = NULL;
+    rfx->gui_strings = NULL;
+    rfx->onchange_strings = NULL;
     rfx->flags = 0;
     rfx->status = RFX_STATUS_SCRAP;
 
@@ -3669,7 +3693,11 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
     rfx->source = NULL;
     rfx->source_type = LIVES_RFX_SOURCE_RFX;
 
+#if 1
+    render_fx_get_params(rfx, scrap_text, RFX_STATUS_INTERNAL);
+#else
     render_fx_get_params(rfx, rfx_scrapname, RFX_STATUS_SCRAP);
+#endif
 
     /// check if we actually have params to display
     if (!make_param_box(NULL, rfx)) {

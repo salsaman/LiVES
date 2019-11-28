@@ -669,8 +669,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               // audio generated from plugin
               if (mainw->agen_needs_reinit) pl_error = TRUE;
               else {
-                fbuffer = (float *)lives_malloc(numFramesToWrite * jackd->num_output_channels * 4);
-                if (!get_audio_from_plugin(fbuffer, jackd->num_output_channels, jackd->sample_out_rate, numFramesToWrite)) {
+                if (!get_audio_from_plugin(out_buffer, jackd->num_output_channels, jackd->sample_out_rate, numFramesToWrite)) {
                   pl_error = TRUE;
                 }
               }
@@ -682,7 +681,6 @@ static int audio_process(nframes_t nframes, void *arg) {
               } else {
                 for (i = 0; i < jackd->num_output_channels; i++) {
                   // push non-interleaved audio in fbuffer to jack
-                  lives_memcpy(out_buffer[i], fbuffer + (i * numFramesToWrite), numFramesToWrite * sizeof(float));
                   pthread_mutex_lock(&mainw->abuf_frame_mutex);
                   if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
                     // we will push the pre-effected audio to any audio reactive generators

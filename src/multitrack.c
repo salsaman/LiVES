@@ -409,6 +409,8 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
   LiVESPixbuf *thumbnail = NULL, *pixbuf;
   LiVESError *error = NULL;
 
+  lives_clip_t *sfile = mainw->files[file];
+
   boolean tried_all = FALSE;
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
@@ -429,16 +431,16 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
   }
 
   do {
-    if (mainw->files[file]->frames > 0) {
-      weed_timecode_t tc = (frame - 1.) / mainw->files[file]->fps * TICKS_PER_SECOND;
-      if (mainw->files[file]->frames > 0 && mainw->files[file]->clip_type == CLIP_TYPE_FILE) {
-        lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[file]->ext_src)->cdata;
+    if (sfile->frames > 0) {
+      weed_timecode_t tc = (frame - 1.) / sfile->fps * TICKS_PER_SECOND;
+      if (sfile->frames > 0 && sfile->clip_type == CLIP_TYPE_FILE) {
+        lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
         if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
             is_virtual_frame(file, frame)) {
           virtual_to_images(file, frame, frame, FALSE, NULL);
         }
       }
-      thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(mainw->files[file]->img_type), tc,
+      thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(sfile->img_type), tc,
                                             width, height, LIVES_INTERP_BEST);
     } else {
       pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width, height);
@@ -461,9 +463,9 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
 
     if (noblanks && thumbnail != NULL && !lives_pixbuf_is_all_black(thumbnail)) noblanks = FALSE;
     if (noblanks) {
-      nframe = frame + mainw->files[file]->frames / 10.;
+      nframe = frame + sfile->frames / 10.;
       if (nframe == frame) nframe++;
-      if (nframe > mainw->files[file]->frames) {
+      if (nframe > sfile->frames) {
         nframe = oframe;
         tried_all = TRUE;
       }
@@ -3298,7 +3300,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
     if (mt->framedraw != NULL) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
       if (pixbuf == NULL) {
-        gamma_correct_layer(cfile->gamma_type, mainw->frame_layer);
+        gamma_convert_layer(cfile->gamma_type, mainw->frame_layer);
         pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
       }
 #if GTK_CHECK_VERSION(3, 0, 0)

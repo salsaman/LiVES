@@ -326,7 +326,7 @@ static void set_live_row(_sdata *sdata, int channel, int the_row) {
 }
 
 
-static void syna_play(_sdata *sdata, float *dest, int length, int channels, int interleave) {
+static void syna_play(_sdata *sdata, float **dest, int length, int channels, int interleave) {
   int note, li; // li is the "live i"
   int left, right, smp;
   int ceko, c1eko;
@@ -430,24 +430,19 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       left = -98301;
     if (left > 98301)
       left = 98301;
-    if (!interleave || channels == 1)
-      dest[n] = (float)left / 98301.;
-    else
-      dest[n * 2] = (float)left / 98301.;
+    dest[0][n] = (float)left / 98301.;
 
     if (channels == 2) {
       if (right < -98301)
         right = -98301;
       if (right > 98301)
         right = 98301;
-      if (interleave) dest[n * 2 + 1] = (float)right / 98301.;
-      else dest[n + length] = (float)right / 98301.;
+      dest[1][n] = (float)right / 98301.;
     }
 #else
     // sum the instruments
     left = right = 0;
     for (i = 1; sdata->trak[i][0] != END; i++) {
-
       smp = sdata->echo[i][c1eko];
 
       //fprintf(stderr,"ok %d\n",smp);
@@ -483,19 +478,15 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
       left = -98301;
     else if (left > 98301)
       left = 98301;
-    if (!interleave || channels == 1)
-      dest[n] = (float)(left * 21 >> 6) / 32767.;
-    else {
-      dest[n * 2] = (float)(left * 21 >> 6) / 32767.;
-    }
+    dest[0][n] = (float)(left * 21 >> 6) / 32767.;
+
 
     if (channels == 2) {
       if (right < -98301)
         right = -98301;
       else if (right > 98301)
         right = 98301;
-      if (interleave) dest[n * 2 + 1] = (float)(right * 21 >> 6) / 32767.;
-      else dest[n + length] = (float)(right * 21 >> 6) / 32767.;
+      dest[1][n] = (float)(right * 21 >> 6) / 32767.;
     }
 
     //fprintf(stderr,"vals %d and %d, %f and %f\n",left,right,(float)(left*21>>6)/32767.,(float)(right*21>>6)/32767.);
@@ -503,142 +494,134 @@ static void syna_play(_sdata *sdata, float *dest, int length, int channels, int 
     ceko++;
     if (ceko == sdata->ekolen)
       ceko = 0;
-
+  }
 #endif
   }
-}
 
 
-/* Make ADSR to instruments */
-static void adsr(_sdata *sdata, int a, int d, int s, int r, int mod, int swp, int ins, int wave, int wave_mod) {
-  int n, modulo = sdata->slen, id = 0;
-  float  i = 0, vol = 0.0, dv, oh = 0.0, op, ip = 1, sweep;
 
-  if (!a) a = 1;
-  if (!r) r = 1;
+  /* Make ADSR to instruments */
+  static void adsr(_sdata *sdata, int a, int d, int s, int r, int mod, int swp, int ins, int wave, int wave_mod) {
+    int n, modulo = sdata->slen, id = 0;
+    float  i = 0, vol = 0.0, dv, oh = 0.0, op, ip = 1, sweep;
 
-  if (wave == KOHINA)
-    modulo = sdata->global;
+    if (!a) a = 1;
+    if (!r) r = 1;
 
-  if (mod) /* We modulate! */
-    if (wave_mod == 1)
-      op = mod / 100.0 * 2.0 * M_PI / (float)sdata->slen;
+    if (wave == KOHINA)
+      modulo = sdata->global;
+
+    if (mod) /* We modulate! */
+      if (wave_mod == 1)
+        op = mod / 100.0 * 2.0 * M_PI / (float)sdata->slen;
+      else
+        op = (float)mod / 100.0;
     else
-      op = (float)mod / 100.0;
-  else
-    op = 0;
+      op = 0;
 
-  sweep = (float)swp / 1000.0 / (float)sdata->slen;
+    sweep = (float)swp / 1000.0 / (float)sdata->slen;
 
-  dv = 32767.0 / (float)a;
-  for (n = 0; n < a; n++, i += ip, ip += sweep, vol += dv, oh += op)
-    if (wave_mod != 1)
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
-    else
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
+    dv = 32767.0 / (float)a;
+    for (n = 0; n < a; n++, i += ip, ip += sweep, vol += dv, oh += op)
+      if (wave_mod != 1)
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+      else
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
-  for (n = 0; n < d; n++, i += ip, ip += sweep, vol -= dv, oh += op)
-    if (wave_mod != 1)
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
-    else
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
+    for (n = 0; n < d; n++, i += ip, ip += sweep, vol -= dv, oh += op)
+      if (wave_mod != 1)
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+      else
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
 
-  for (n = 0; n < s; n++, i += ip, ip += sweep, oh += op)
-    if (wave_mod != 1)
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
-    else
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
+    for (n = 0; n < s; n++, i += ip, ip += sweep, oh += op)
+      if (wave_mod != 1)
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+      else
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
-  dv = vol / (float)r;
+    dv = vol / (float)r;
 
-  for (n = 0; n < r; n++, i += ip, ip += sweep, vol -= dv, oh += op)
-    if (wave_mod != 1)
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
-    else
-      sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
-}
+    for (n = 0; n < r; n++, i += ip, ip += sweep, vol -= dv, oh += op)
+      if (wave_mod != 1)
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+      else
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
+  }
 
 
-/* Fix the fscking Windoze/DOS newlines */
+  /* Fix the fscking Windoze/DOS newlines */
 #ifndef TINY
-void cleanup(char *s) {
-  char    *d = strdup(s);
+  void cleanup(char *s) {
+    char    *d = strdup(s);
 
-  for (; *d; d++)
-    if (*d != '\r' && *d != ' ')
-      *s++ = *d;
-  *s = 0;
-}
+    for (; *d; d++)
+      if (*d != '\r' && *d != ' ')
+        *s++ = *d;
+    *s = 0;
+  }
 #endif
 
 
-static void syna_deinit(_sdata *sdata) {
-  register int n;
+  static void syna_deinit(_sdata *sdata) {
+    register int n;
 
-  if (sdata == NULL) return;
+    if (sdata == NULL) return;
 
-  for (n = 0; n < WAVES; n++) {
-    if (sdata->aalto[n] != NULL) weed_free(sdata->aalto[n]);
+    for (n = 0; n < WAVES; n++) {
+      if (sdata->aalto[n] != NULL) weed_free(sdata->aalto[n]);
+    }
+    for (n = 0; n < INSTR; n++) {
+      if (sdata->echo[n] != NULL) weed_free(sdata->echo[n]);
+    }
+    if (sdata->module != NULL) weed_free(sdata->module);
   }
-  for (n = 0; n < INSTR; n++) {
-    if (sdata->echo[n] != NULL) weed_free(sdata->echo[n]);
+
+
+  /////////////////////////////////////////////
+
+  static weed_error_t fourk_deinit(weed_plant_t *inst) {
+    _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+    if (sdata != NULL) {
+      syna_deinit(sdata);
+      weed_free(sdata);
+      weed_set_voidptr_value(inst, "plugin_internal", NULL);
+    }
+    return WEED_SUCCESS;
   }
-  if (sdata->module != NULL) weed_free(sdata->module);
-}
 
 
-/////////////////////////////////////////////
+  static weed_error_t fourk_init(weed_plant_t *inst) {
+    int retval;
+    int rate;
 
-static weed_error_t fourk_deinit(weed_plant_t *inst) {
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sdata != NULL) {
-    syna_deinit(sdata);
-    weed_free(sdata);
-    weed_set_voidptr_value(inst, "plugin_internal", NULL);
-  }
-  return WEED_SUCCESS;
-}
+    _sdata *sdata;
 
+    weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-static weed_error_t fourk_init(weed_plant_t *inst) {
-  int retval;
-  int rate;
+    char tune[MAX_TUNELEN];
 
-  _sdata *sdata;
+    snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL)]);
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+    weed_free(in_params);
 
-  char tune[MAX_TUNELEN];
+    sdata = (_sdata *)weed_malloc(sizeof(_sdata));
 
-  snprintf(tune, MAX_TUNELEN - 4, "%s%s", TUNE_DIR, tunes[weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL)]);
+    if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  weed_free(in_params);
+    weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  sdata = (_sdata *)weed_malloc(sizeof(_sdata));
+    rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
-  if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
-
-  weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
-  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
-
-  if ((retval = syna_init(sdata, rate)) != WEED_SUCCESS) {
+    if ((retval = syna_init(sdata, rate)) != WEED_SUCCESS) {
 #ifdef DEBUG
-    fprintf(stderr, "4k init failed\n");
+      fprintf(stderr, "4k init failed\n");
 #endif
-    fourk_deinit(inst);
-    return retval;
-  }
-
-#ifdef DEBUG
-  fprintf(stderr, "4k: loading tune %s\n", tune);
-#endif
-
-  if ((retval = syna_load(sdata, tune)) != WEED_SUCCESS) {
-
-    sprintf(tune + strlen(tune), "%s", ".txt");
+      fourk_deinit(inst);
+      return retval;
+    }
 
 #ifdef DEBUG
     fprintf(stderr, "4k: loading tune %s\n", tune);
@@ -646,119 +629,128 @@ static weed_error_t fourk_init(weed_plant_t *inst) {
 
     if ((retval = syna_load(sdata, tune)) != WEED_SUCCESS) {
 
-      fourk_deinit(inst);
+      sprintf(tune + strlen(tune), "%s", ".txt");
+
 #ifdef DEBUG
-      fprintf(stderr, "4k load failed\n");
+      fprintf(stderr, "4k: loading tune %s\n", tune);
 #endif
-      return retval;
+
+      if ((retval = syna_load(sdata, tune)) != WEED_SUCCESS) {
+
+        fourk_deinit(inst);
+#ifdef DEBUG
+        fprintf(stderr, "4k load failed\n");
+#endif
+        return retval;
+      }
     }
+
+    //set_tempo(sdata,136.); // bpm: maybe 8. to 263. ?
+    //set_base_freq(sdata,272.); // 145. to 400.
+
+    return WEED_SUCCESS;
   }
 
-  //set_tempo(sdata,136.); // bpm: maybe 8. to 263. ?
-  //set_base_freq(sdata,272.); // 145. to 400.
 
-  return WEED_SUCCESS;
-}
+  static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+    int chans, nsamps, inter;
 
+    weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+    weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
-static weed_error_t fourk_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int chans, nsamps, inter;
+    float **dst = (float **)weed_get_voidptr_array(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+    double tempo = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
+    double bfreq = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
 
-  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
+    _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
-  double tempo = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
-  double bfreq = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
+    register int i;
 
-  _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+    weed_free(in_params);
 
-  register int i;
+    if (!dst) return WEED_SUCCESS;
 
-  weed_free(in_params);
+    chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+    nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+    //rate=weed_get_int_value(out_channel,WEED_LEAF_AUDIO_RATE,NULL);
 
-  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
-  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
-  //rate=weed_get_int_value(out_channel,WEED_LEAF_AUDIO_RATE,NULL);
+    for (i = 0; i < NCHANNELS; i++) {
+      set_live_row(sdata, i, (rand() % (sdata->maxtracks * 1000 - 1)) / 1000.f + 1.); // 2nd val can be 2 (?) to npat (?)
+    }
 
-  for (i = 0; i < NCHANNELS; i++) {
-    set_live_row(sdata, i, (rand() % (sdata->maxtracks * 1000 - 1)) / 1000.f + 1.); // 2nd val can be 2 (?) to npat (?)
+    set_tempo(sdata, tempo * 255. + 8.); // bpm: maybe 8. to 263. ?
+    set_base_freq(sdata, bfreq * 255. - 128.); // 145. to 400.
+
+    syna_play(sdata, dst, nsamps, chans, inter); // dlen is number of samps....does interleaved
+    weed_free(dst);
+    return WEED_SUCCESS;
   }
 
-  set_tempo(sdata, tempo * 255. + 8.); // bpm: maybe 8. to 263. ?
-  set_base_freq(sdata, bfreq * 255. - 128.); // 145. to 400.
 
-  syna_play(sdata, dst, nsamps, chans, inter); // dlen is number of samps....does interleaved
+  WEED_SETUP_START(200, 200) {
+    DIR *dir = NULL;
+    struct dirent *dirent;
+    size_t dlen;
+    int tcount = 0;
+    char desc[512];
 
-  return WEED_SUCCESS;
-}
+    weed_plant_t *out_chantmpls[2];
+    weed_plant_t *in_params[NCHANNELS + 4]; // tune name + channel rows + tempo + base_freq + NULL
+    weed_plant_t *filter_class;
 
+    register int i;
 
-WEED_SETUP_START(200, 200) {
-  DIR *dir = NULL;
-  struct dirent *dirent;
-  size_t dlen;
-  int tcount = 0;
-  char desc[512];
+    // make list of tunes
+    // scan entries in the ./data/fourklives/songs directory
+    dir = opendir(TUNE_DIR);
+    if (dir == NULL) return NULL;
 
-  weed_plant_t *out_chantmpls[2];
-  weed_plant_t *in_params[NCHANNELS + 4]; // tune name + channel rows + tempo + base_freq + NULL
-  weed_plant_t *filter_class;
+    while (1) {
+      if (tcount == MAX_TUNES - 1) break;
+      dirent = readdir(dir);
+      if (dirent == NULL) break;
+      dlen = strlen(dirent->d_name);
+      if (!strncmp(dirent->d_name, "..", dlen)) continue;
+      if (dlen > 4 && !strcmp(dirent->d_name + dlen - 4, ".txt")) dlen -= 4;
+      tunes[tcount++] = strndup(dirent->d_name, dlen);
+    }
 
-  register int i;
+    closedir(dir);
 
-  // make list of tunes
-  // scan entries in the ./data/fourklives/songs directory
-  dir = opendir(TUNE_DIR);
-  if (dir == NULL) return NULL;
+    tunes[tcount] = NULL;
 
-  while (1) {
-    if (tcount == MAX_TUNES - 1) break;
-    dirent = readdir(dir);
-    if (dirent == NULL) break;
-    dlen = strlen(dirent->d_name);
-    if (!strncmp(dirent->d_name, "..", dlen)) continue;
-    if (dlen > 4 && !strcmp(dirent->d_name + dlen - 4, ".txt")) dlen -= 4;
-    tunes[tcount++] = strndup(dirent->d_name, dlen);
+    in_params[0] = weed_string_list_init("tune_name", "_Tune", 0, (const char **const)tunes);
+    weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
+
+    in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
+    in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
+
+    for (i = 3; i < NCHANNELS + 3; i++) {
+      // TODO - unique name
+      in_params[i] = weed_float_init("cparam", "cparam", .5, 0., 1.);
+    }
+
+    in_params[i] = NULL;
+
+    out_chantmpls[0] = weed_audio_channel_template_init("out channel 0", 0);
+    out_chantmpls[1] = NULL;
+
+    filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, NULL,
+                                          fourk_init, fourk_process, fourk_deinit, NULL, out_chantmpls, in_params, NULL);
+
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+    snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\ntext files\n");
+
+    weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
+    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   }
+  WEED_SETUP_END;
 
-  closedir(dir);
 
-  tunes[tcount] = NULL;
-
-  in_params[0] = weed_string_list_init("tune_name", "_Tune", 0, (const char **const)tunes);
-  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-
-  in_params[1] = weed_float_init("tempo", "_Tempo", .5, 0., 1.);
-  in_params[2] = weed_float_init("bfreq", "Base _Frequency", .5, 0., 1.);
-
-  for (i = 3; i < NCHANNELS + 3; i++) {
-    // TODO - unique name
-    in_params[i] = weed_float_init("cparam", "cparam", .5, 0., 1.);
+  WEED_DESETUP_START {
+    register int i;
+    for (i = 0; tunes[i] != NULL; i++) weed_free(tunes[i]);
   }
-
-  in_params[i] = NULL;
-
-  out_chantmpls[0] = weed_audio_channel_template_init("out channel 0", 0);
-  out_chantmpls[1] = NULL;
-
-  filter_class = weed_filter_class_init("fourKlives", "salsaman, anti and marq", 1, 0, NULL,
-                                        fourk_init, fourk_process, fourk_deinit, NULL, out_chantmpls, in_params, NULL);
-
-  weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-  snprintf(desc, 512, "fourK is a mini tracker player, which plays tunes from\ntext files\n");
-
-  weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
-}
-WEED_SETUP_END;
-
-
-WEED_DESETUP_START {
-  register int i;
-  for (i = 0; tunes[i] != NULL; i++) weed_free(tunes[i]);
-}
-WEED_DESETUP_END;
+  WEED_DESETUP_END;

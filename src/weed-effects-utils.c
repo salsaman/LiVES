@@ -35,7 +35,7 @@ LIVES_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {
   return weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 }
 
-LIVES_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, weed_size_t *nvals) {
+LIVES_GLOBAL_INLINE int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) {
   if (nvals) *nvals = 0;
   if (filter == NULL || chantmpl == NULL) return WEED_PALETTE_END;
   if ((weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL)

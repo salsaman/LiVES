@@ -2707,7 +2707,7 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 
 // plugin handling
 
-boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps) {
+boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps) {
   // get audio from an audio generator; fbuffer is filled with non-interleaved float
 
   weed_timecode_t tc;
@@ -2715,7 +2715,6 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
   int error;
 
   int xnchans;
-  int aint;
 
   weed_plant_t *inst = rte_keymode_get_instance(mainw->agen_key, rte_key_getmode(mainw->agen_key));
   weed_plant_t *filter;
@@ -2732,7 +2731,6 @@ boolean get_audio_from_plugin(float *fbuffer, int nchans, int arate, int nsamps)
 
 getaud1:
 
-  aint = WEED_FALSE;
   xnchans = nchans;
   filter = weed_instance_get_filter(inst, FALSE);
   channel = get_enabled_channel(inst, 0, FALSE);
@@ -2745,9 +2743,8 @@ getaud1:
       weed_instance_unref(inst);
       return FALSE;
     }
-
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_INTERLEAF)) aint = weed_get_boolean_value(ctmpl, WEED_LEAF_AUDIO_INTERLEAF, &error);
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS)) xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, &error);
+    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS))
+      xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, &error);
 
     // stop video thread from possibly interpolating/deiniting
     if (pthread_mutex_trylock(&mainw->interp_mutex)) {
@@ -2757,23 +2754,23 @@ getaud1:
 
     // make sure values match, else we need to reinit the plugin
     if (xnchans != weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, &error) ||
-        arate != weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, &error) ||
-        weed_get_boolean_value(channel, WEED_LEAF_AUDIO_INTERLEAF, &error) != aint) {
+        arate != weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, &error)) {
       // reinit plugin
       mainw->agen_needs_reinit = TRUE;
     }
 
     weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, xnchans);
     weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);
-    weed_set_boolean_value(channel, WEED_LEAF_AUDIO_INTERLEAF, aint);
     weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-    weed_set_voidptr_value(channel, WEED_LEAF_AUDIO_DATA, fbuffer);
+    weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, xnchans, (void **)fbuffer);
 
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
     if (mainw->agen_needs_reinit) {
       // allow main thread to complete the reinit so we do not delay; just return silence
-      lives_memset(fbuffer, 0, nsamps * nchans * sizeof(float));
+      for (int i = 0; i < nchans; i++) {
+        lives_memset(fbuffer[i], 0, nsamps * sizeof(float));
+      }
       pthread_mutex_unlock(&mainw->interp_mutex);
       weed_instance_unref(inst);
       return FALSE;
@@ -2808,16 +2805,9 @@ getaud1:
   }
   pthread_mutex_unlock(&mainw->interp_mutex);
 
-  if (channel != NULL && aint == WEED_TRUE) {
-    if (!float_deinterleave(fbuffer, nsamps, nchans)) {
-      weed_instance_unref(inst);
-      return FALSE;
-    }
-  }
-
   if (xnchans == 1 && nchans == 2) {
     // if we got mono but we wanted stereo, copy to right channel
-    lives_memcpy(&fbuffer[nsamps], fbuffer, nsamps * sizeof(float));
+    lives_memcpy(fbuffer[1], fbuffer[0], nsamps * sizeof(float));
   }
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
@@ -2994,18 +2984,7 @@ boolean apply_rte_audio(int nframes) {
 
   } else {
     // read from plugin. This should already be float.
-
-    fltbufni = (float *)lives_malloc(nframes * cfile->achans * sizeof(float));
-    if (fltbufni == NULL) {
-      lives_free(fltbuf);
-      if (shortbuf != (short *)in_buff) lives_free(shortbuf);
-      lives_free(in_buff);
-      return FALSE;
-    }
-    get_audio_from_plugin(fltbufni, cfile->achans, cfile->arate, nframes);
-    for (i = 0; i < cfile->achans; i++) {
-      fltbuf[i] = fltbufni + i * nframes;
-    }
+    get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nframes);
   }
 
   // apply any audio effects
@@ -3068,7 +3047,7 @@ boolean apply_rte_audio(int nframes) {
 }
 
 
-boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
+boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // push audio from abuf into an audio channel
   // audio will be formatted to the channel requested format
 
@@ -3077,18 +3056,17 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
   // this is currently only used to push audio to generators
 
-  float *dst, *src;
+  float **dst, *src;
 
   weed_plant_t *ctmpl;
 
   float scale;
 
-  size_t samps, offs;
+  size_t samps;
 
-  boolean tinter;
-  int trate, tlen, tchans;
+  boolean rvary = FALSE, lvary = FALSE;
+  int trate, tchans, flags;
   int alen;
-  int error;
 
   register int i;
   if (abuf->samples_filled == 0) {
@@ -3097,22 +3075,24 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
     return FALSE;
   }
 
-  ctmpl = weed_get_plantptr_value(achan, WEED_LEAF_TEMPLATE, &error);
+  ctmpl = weed_get_plantptr_value(achan, WEED_LEAF_TEMPLATE, NULL);
 
-  if (weed_plant_has_leaf(achan, WEED_LEAF_AUDIO_RATE)) trate = weed_get_int_value(achan, WEED_LEAF_AUDIO_RATE, &error);
-  else if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE)) trate = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, &error);
+  flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
+  if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
+  if (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY) lvary = TRUE;
+
+  // TODO: can be list
+  if (rvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE))
+    trate = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, NULL);
+  else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_RATE))
+    trate = weed_get_int_value(filter, WEED_LEAF_AUDIO_RATE, NULL);
   else trate = DEFAULT_AUDIO_RATE;
 
-  if (weed_plant_has_leaf(achan, WEED_LEAF_AUDIO_CHANNELS)) tchans = weed_get_int_value(achan, WEED_LEAF_AUDIO_CHANNELS, &error);
-  else if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS)) tchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, &error);
+  if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MIN_CHANNELS))
+    tchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_MIN_CHANNELS))
+    tchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MIN_CHANNELS, NULL);
   else tchans = DEFAULT_AUDIO_CHANS;
-
-  if (weed_plant_has_leaf(achan, WEED_LEAF_AUDIO_INTERLEAF)) tinter = weed_get_boolean_value(achan, WEED_LEAF_AUDIO_INTERLEAF, &error);
-  else if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_INTERLEAF)) tinter = weed_get_boolean_value(ctmpl, WEED_LEAF_AUDIO_INTERLEAF, &error);
-  else tinter = FALSE;
-
-  if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_DATA_LENGTH)) tlen = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
-  else tlen = 0;
 
 #ifdef DEBUG_AFB
   g_print("push from afb %d\n", abuf->samples_filled);
@@ -3137,12 +3117,14 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
 
     // try convert S16 -> float
     if (abuf->buffer16 != NULL) {
+      size_t offs = 0;
       abuf->bufferf = (float **)lives_malloc(abuf->out_achans * sizeof(float *));
       for (i = 0; i < abuf->out_achans; i++) {
         if (!abuf->in_interleaf) {
           abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float));
-          sample_move_d16_float(abuf->bufferf[i], abuf->buffer16[i], abuf->samples_filled, 1,
+          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], abuf->samples_filled, 1,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
+          offs += abuf->samples_filled;
         } else {
           abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float) / abuf->out_achans);
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], abuf->samples_filled / abuf->out_achans, abuf->out_achans,
@@ -3162,20 +3144,15 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // push to achan WEED_LEAF_AUDIO_DATA, taking into account WEED_LEAF_AUDIO_DATA_LENGTH, WEED_LEAF_AUDIO_INTERLEAF, WEED_LEAF_AUDIO_CHANNELS
 
   alen = samps;
-  if (alen > tlen && tlen > 0) alen = tlen;
-
-  offs = samps - alen;
 
   // abuf->arate can be zero ???
   scale = (float)trate / (float)abuf->arate;
   alen = (int)((float)alen * scale);
 
   // malloc audio_data
-  dst = (float *)lives_malloc(alen * tchans * sizeof(float));
+  dst = (float **)lives_malloc(tchans * sizeof(float *)); // memleak
 
   // set channel values
-  weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, (void *)dst);
-  weed_set_boolean_value(achan, WEED_LEAF_AUDIO_INTERLEAF, tinter);
   weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, alen);
   weed_set_int_value(achan, WEED_LEAF_AUDIO_CHANNELS, tchans);
   weed_set_int_value(achan, WEED_LEAF_AUDIO_RATE, trate);
@@ -3183,23 +3160,19 @@ boolean push_audio_to_channel(weed_plant_t *achan, lives_audio_buf_t *abuf) {
   // copy data from abuf->bufferf[] to WEED_LEAF_AUDIO_DATA
   for (i = 0; i < tchans; i++) {
     pthread_mutex_lock(&mainw->abuf_mutex);
-    src = abuf->bufferf[i % abuf->in_achans] + offs;
+    src = abuf->bufferf[i % abuf->out_achans];
     if (src != NULL) {
-      if (!tinter) {
-        if (abuf->arate == trate) {
-          lives_memcpy(dst, src, alen * sizeof(float));
-        } else {
-          // needs resample
-          sample_move_float_float(dst, src, alen, scale, 1);
-        }
-        dst += alen;
+      dst[i] = lives_calloc(alen, sizeof(float));
+      if (abuf->arate == trate) {
+        lives_memcpy(dst[i], src, alen * sizeof(float));
       } else {
-        sample_move_float_float(dst, src, alen, scale, tchans);
-        dst++;
+        // needs resample
+        sample_move_float_float(dst[i], src, alen, scale, 1);
       }
-    }
+    } else dst[i] = NULL;
     pthread_mutex_unlock(&mainw->abuf_mutex);
   }
+  weed_set_voidptr_array(achan, WEED_LEAF_AUDIO_DATA, tchans, (void **)dst);
   return TRUE;
 }
 

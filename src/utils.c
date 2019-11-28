@@ -3846,13 +3846,13 @@ int verhash(char *xv) {
   }
 
   s = strtok(version, ".");
-  if (!(s == NULL)) {
+  if (s) {
     major = atoi(s);
     s = strtok(NULL, ".");
-    if (!(s == NULL)) {
+    if (s) {
       minor = atoi(s);
       s = strtok(NULL, ".");
-      if (!(s == NULL)) {
+      if (s) {
         micro = atoi(s);
       }
     }

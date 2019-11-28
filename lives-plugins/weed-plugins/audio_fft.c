@@ -5,6 +5,13 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
+
+///////////////////////////////////////////////////////////////////
+
+static int package_version = 1; // version of this package
+
+//////////////////////////////////////////////////////////////////
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -12,12 +19,6 @@
 #include "../../libweed/weed-plugin.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
-
-///////////////////////////////////////////////////////////////////
-
-static int package_version = 1; // version of this package
-
-//////////////////////////////////////////////////////////////////
 
 #include "weed-plugin-utils.c" // optional
 
@@ -51,9 +52,7 @@ static int rndlog2(int i) {
 static int twopow(int i) {
   // return 2**(i+1)
   register int j, x = 2;
-
   for (j = 0; j < i; j++) x *= 2;
-
   return x;
 }
 
@@ -84,16 +83,15 @@ static int create_plans(void) {
 /////////////////////////////////////////////////////////////
 
 static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
-  int error;
-  int chans, nsamps, onsamps, base, inter, rate, k;
+  int chans, nsamps, onsamps, base, rate, k;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  float *src = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, &error);
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  float **src = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  weed_plant_t *out_param = weed_get_plantptr_value(inst, WEED_LEAF_OUT_PARAMETERS, &error);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t *out_param = weed_get_plantptr_value(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
 
-  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, &error);
+  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
 
   float tot = 0.;
 
@@ -101,7 +99,7 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   weed_free(in_params);
 
-  onsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, &error);
+  onsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 
   if (onsamps < 2) {
     weed_set_double_value(out_param, WEED_LEAF_VALUE, 0.);
@@ -112,7 +110,7 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   base = rndlog2(onsamps);
   nsamps = twopow(base);
 
-  rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, &error);
+  rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
   // which element do we want for output ?
   // out array goes from 0 to (nsamps/2 + 1) [div b y 2 rounded down]
@@ -129,24 +127,13 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
     return WEED_SUCCESS;
   }
 
-  chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, &error);
-  inter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, &error);
+  chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
 
   for (i = 0; i < chans; i++) {
     // do transform for each channel
 
     // copy in data to sdata->in
-    if (inter == WEED_FALSE) {
-      // non-interleaved
-      weed_memcpy(ins[base], src, nsamps * sizf);
-      src += onsamps;
-    } else {
-      // interleaved
-      for (j = 0; j < nsamps; j++) {
-        ins[base][j] = src[j * chans];
-      }
-      src++;
-    }
+    weed_memcpy(ins[base], src[i], nsamps * sizf);
 
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);
@@ -159,7 +146,7 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
   // average over all audio channels
   weed_set_double_value(out_param, WEED_LEAF_VALUE, (double)(tot / (float)chans));
   weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
-
+  weed_free(src);
   return WEED_SUCCESS;
 }
 

@@ -471,6 +471,7 @@ typedef enum {
   RFX_STATUS_ANY = 3, ///< indicates free choice of statuses
   RFX_STATUS_WEED = 4, ///< indicates an internal RFX, created from a weed instance
   RFX_STATUS_SCRAP = 5, ///< used for parsing RFX scraps from external apps
+  RFX_STATUS_INTERNAL = 6, ///< used for parsing RFX scraps generated internally (will possiblky replace SCRAP)
 
   // these are only used when prompting for a name
   RFX_STATUS_COPY = 128, ///< indicates a copy operation to test
@@ -503,8 +504,10 @@ typedef struct {
   lives_param_t *params;
   lives_rfx_source_t source_type;
   void *source;  ///< points to the source (e.g. a weed_plant_t)
-  void *extra;  ///< for future use
   char delim[2];
+  char rfx_version[64];
+  LiVESList *gui_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
+  LiVESList *onchange_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
   boolean is_template;
 } lives_rfx_t;
 

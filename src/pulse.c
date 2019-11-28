@@ -692,14 +692,15 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         } else {
           // audio generator
           // get float audio from gen, convert it to S16
-          float *fbuffer = NULL;
+          float **fbuffer = NULL;
           boolean pl_error = FALSE;
           xbytes = nbytes;
           numFramesToWrite = pulseFramesAvailable;
 
           if (mainw->agen_needs_reinit) pl_error = TRUE;
           else {
-            fbuffer = (float *)lives_malloc(numFramesToWrite * pulsed->out_achans * sizeof(float));
+            fbuffer = (float **)lives_malloc(pulsed->out_achans * sizeof(float *));
+            for (int i = 0; i < pulsed->out_achans; i++) fbuffer[i] = lives_calloc(numFramesToWrite, sizeof(float));
             if (!get_audio_from_plugin(fbuffer, pulsed->out_achans, pulsed->out_arate, numFramesToWrite)) {
               pl_error = TRUE;
             }
@@ -749,7 +750,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   }
                   break;
                 }
-                lives_memcpy(fp[i], &fbuffer[i * numFramesToWrite], numFramesToWrite * sizeof(float));
+                lives_memcpy(fp[i], &fbuffer[i], numFramesToWrite * sizeof(float));
               }
 
               if (memok) {
@@ -778,14 +779,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             if (!memok) {
               // no audio effects; or memory allocation error
               for (i = 0; i < pulsed->out_achans; i++) {
-                fp[i] = fbuffer + (i * numFramesToWrite);
+                fp[i] = fbuffer[i];
               }
               sample_move_float_int(buf, fp, numFramesToWrite, 1.0,
                                     pulsed->out_achans, PA_SAMPSIZE, 0, (capable->byte_order == LIVES_LITTLE_ENDIAN), FALSE, 1.0);
             }
 
-            lives_freep((void **)&fbuffer);
-            free(fp);
+            if (fbuffer != NULL) {
+              for (i = 0; i < pulsed->out_achans; i++) {
+                lives_freep((void **)&fbuffer);
+              }
+            }
+            lives_free(fp);
 
             if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
               // write generated audio to ascrap_file

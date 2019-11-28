@@ -71,6 +71,14 @@ boolean ext_triggers_poll(livespointer data) {
   boolean needs_check = FALSE;
   if (mainw->is_exiting) return FALSE;
 
+  /* if (!LIVES_IS_PLAYING && !mainw->is_processing && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_VIDEODEV) { */
+  /*   int pwidth = lives_widget_get_allocation_width(mainw->start_image) - H_RESIZE_ADJUST; */
+  /*   int pheight = lives_widget_get_allocation_height(mainw->start_image) - V_RESIZE_ADJUST; */
+  /*   mainw->camframe = pull_lives_pixbuf_at_size(mainw->current_file, 1, get_image_ext_for_type(cfile->img_type), */
+  /* 						cfile->fps, pwidth, pheight, LIVES_INTERP_BEST); */
+  /*   load_start_image(1); */
+  /* } */
+
   // check for external controller events
 #ifdef ENABLE_JACK
 #ifdef ENABLE_JACK_TRANSPORT

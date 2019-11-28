@@ -122,7 +122,7 @@ static int syna_load(_sdata *, const char *tune);
 static int syna_get(_sdata *);
 
 /* Plays a fragment to destination */
-static void syna_play(_sdata *sdata, float *dest, int length, int channels, int interleave);
+static void syna_play(_sdata *sdata, float **dest, int length, int channels, int interleave);
 
 /* Sets channel volume [0..1]. Channels start from 1 */
 //static void syna_setvol(_sdata *, int chn, float nvol);

@@ -8287,8 +8287,8 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
     if (prefs->apply_gamma) {
       // gamma correction
       if (prefs->btgamma && osubspace == WEED_YUV_SUBSPACE_BT709) {
-        gamma_correct_layer(WEED_GAMMA_BT709, layer);
-      } else gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+        gamma_convert_layer(WEED_GAMMA_BT709, layer);
+      } else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
     }
     new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
   }
@@ -8389,6 +8389,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_bgr_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, FALSE, oclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -8479,6 +8480,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_rgb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE, oclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -8571,6 +8573,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_rgb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, FALSE, oclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       return FALSE;
@@ -8660,6 +8663,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_bgr_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE, oclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -8750,6 +8754,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_argb_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, oclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -8847,6 +8852,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuvp_to_yuv411_frame(gusrc_array, width, height, irowstride, (yuv411_macropixel *)gudest, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       if (gusrc_array != NULL) lives_free(gusrc_array);
@@ -8959,6 +8965,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuvp_to_yuv411_frame(gusrc_array, width, height, irowstride, (yuv411_macropixel *)gudest, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       if (gusrc_array != NULL) lives_free(gusrc_array);
@@ -9075,6 +9082,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_uyvy_to_yuv411_frame((uyvy_macropixel *)gusrc, width, height, (yuv411_macropixel *)gudest, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -9173,6 +9181,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuyv_to_yuv411_frame((yuyv_macropixel *)gusrc, width, height, (yuv411_macropixel *)gudest, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -9271,6 +9280,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuv888_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, FALSE);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -9367,6 +9377,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuv888_to_yuv411_frame(gusrc, width, height, irowstride, (yuv411_macropixel *)gudest, TRUE);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -9495,6 +9506,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuv420_to_yuv411_frame(gusrc_array, width, height, (yuv411_macropixel *)gudest, FALSE, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       if (gusrc_array != NULL) lives_free(gusrc_array);
@@ -9616,6 +9628,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       convert_yuv420_to_yuv411_frame(gusrc_array, width, height, (yuv411_macropixel *)gudest, TRUE, iclamped);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       if (gusrc_array != NULL) lives_free(gusrc_array);
@@ -9735,6 +9748,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       lives_free(gudest_array);
       break;
     default:
+      lives_free(istrides);
       lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                      weed_palette_get_name(outpl));
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, inpl);
@@ -9742,6 +9756,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
     }
     break;
   default:
+    lives_free(istrides);
     lives_printerr("Invalid palette conversion: %s to %s not written yet !!\n", weed_palette_get_name(inpl),
                    weed_palette_get_name(outpl));
     return FALSE;
@@ -9785,7 +9800,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
     weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 3, (void **)pd_array);
     lives_free(pd_array);
   }
-
+  lives_free(istrides);
   weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, new_gamma_type); // after conversion
 
   return TRUE;
@@ -9938,7 +9953,10 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 }
 
 
-boolean gamma_correct_layer(int gamma_type, weed_layer_t *layer) {
+/** @brief alter the transfer function of a Weed layer, from current value to gamma_type
+
+ */
+boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
   if (!prefs->apply_gamma) return TRUE;
   else {
     // convert layer from current gamma to target
@@ -10074,7 +10092,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
         palette = WEED_PALETTE_RGB24;
       }
       gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
-      if (gamma_type != WEED_GAMMA_UNKNOWN) gamma_correct_layer(gamma_type, layer);
+      if (gamma_type != WEED_GAMMA_UNKNOWN) gamma_convert_layer(gamma_type, layer);
       done = FALSE;
     }
   } while (!done);
@@ -10478,7 +10496,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_LINEAR) {
       // gamma correction
       if (prefs->apply_gamma) {
-        gamma_correct_layer(WEED_GAMMA_SRGB, layer);
+        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
       new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
     }
@@ -10589,7 +10607,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   case WEED_PALETTE_BGRA32:
 
     // create a new pixbuf
-    gamma_correct_layer(cfile->gamma_type, layer);
+    gamma_convert_layer(cfile->gamma_type, layer);
     pixbuf = layer_to_pixbuf(layer, FALSE);
 
     threaded_dialog_spin(0.);

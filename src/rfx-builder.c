@@ -3632,6 +3632,18 @@ LiVESList *get_script_section(const char *section, const char *file, boolean str
 }
 
 
+/** @brief parse text and return non empty lines between <section> and </section>
+
+    similar to get_val_from_cached_list, except here we parse each line into a list.
+    rfx + params can be built from the <params> section
+*/
+/* LiVESList *get_script_section_from_text(const char *section, const char *text, boolean strip) { */
+/*   LiVESList *list; */
+/*   // TODO */
+/*   return list; */
+/* } */
+
+
 void on_rebuild_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   lives_rfx_status_t status = (lives_rfx_status_t)LIVES_POINTER_TO_INT(user_data);
@@ -4332,7 +4344,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
     rendered_fx[0].menuitem = NULL;
     rendered_fx[0].params = NULL;
     rendered_fx[0].flags = 0;
-    rendered_fx[0].extra = NULL;
+    rendered_fx[0].gui_strings = NULL;
+    rendered_fx[0].onchange_strings = NULL;
     rendered_fx[0].status = RFX_STATUS_WEED;
     rendered_fx[0].is_template = FALSE;
     rendered_fx[0].min_frames = 1;
@@ -4432,7 +4445,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
         rfx->source = NULL;
         rfx->source_type = LIVES_RFX_SOURCE_RFX;
         rfx->flags = 0;
-        rfx->extra = NULL;
+        rfx->gui_strings = NULL;
+        rfx->onchange_strings = NULL;
         rfx->is_template = FALSE;
         if (!check_rfx_for_lives(rfx)) rfx_slot_count--;
       }
@@ -4520,7 +4534,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
     threaded_dialog_spin(0.);
     rfx->source = NULL;
     rfx->flags = 0;
-    rfx->extra = NULL;
+    rfx->gui_strings = NULL;
+    rfx->onchange_strings = NULL;
     rfx->menuitem = NULL;
 
     switch (rfx->status) {

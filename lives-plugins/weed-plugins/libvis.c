@@ -51,7 +51,7 @@ typedef struct {
   VisVideo *video;
   VisActor *actor;
   VisInput *input;
-  void *audio;
+  short *audio;
   size_t audio_frames;
   pthread_mutex_t pcm_mutex;
   int instance;
@@ -135,9 +135,8 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
   if (palette == WEED_PALETTE_RGB24) visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_24BIT);
   else visual_video_set_depth(libvis->video, VISUAL_VIDEO_DEPTH_32BIT);
 
-  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL), weed_get_int_value(out_channel,
-                             WEED_LEAF_HEIGHT,
-                             NULL));
+  visual_video_set_dimension(libvis->video, weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL),
+                             weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL));
 
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
   if (!strncmp(filter_name, "libvisual: ", 11)) filtname = filter_name + 11;
@@ -150,7 +149,7 @@ static weed_error_t libvis_init(weed_plant_t *inst) {
   visual_actor_video_negotiate(libvis->actor, 0, FALSE, FALSE);
   visual_input_realize(libvis->input);
 
-  libvis->audio = NULL;
+  libvis->audio = (short *)weed_calloc(512, sizeof(short));
   libvis->audio_frames = 0;
   libvis->instance = instances;
 
@@ -190,44 +189,42 @@ static weed_error_t libvis_deinit(weed_plant_t *inst) {
 
 static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
   // convert float audio to s16le, append to libvis->audio
-
-  int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-  float *adata = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, NULL), *oadata = adata;
-
   register int i, j;
 
-  if (adlen > 0 && adata != NULL) {
-    short *aud_data;
-    int ainter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
-    int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  if (in_channel != NULL) {
+    int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+    float **adata = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
+    if (adlen > 0 && adata != NULL) {
+      size_t sdf, offset = 0, overflow;
+      int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+      pthread_mutex_lock(&libvis->pcm_mutex);
 
-    pthread_mutex_lock(&libvis->pcm_mutex);
-    aud_data = (short *)weed_malloc((adlen + libvis->audio_frames) * 4);
-
-    if (libvis->audio != NULL) {
-      weed_memcpy(aud_data, libvis->audio, libvis->audio_frames * 4);
-      weed_free(libvis->audio);
-    }
-
-    for (j = 0; j < adlen; j++) {
-      if (ainter == WEED_TRUE) {
-        // interlaced
-        for (i = 0; i < 2; i++) {
-          aud_data[libvis->audio_frames * 2 + i] = 32767.*adata[i];
-        }
-        adata += achans;
-      } else {
-        // non-interlaced
-        for (i = 0; i < 2; i++) {
-          aud_data[libvis->audio_frames * 2 + i] = 32767.*adata[j];
-          adata += adlen;
-        }
-        adata = oadata;
+      /// we want to send 256 samples of left, followed by 256 samples of right / monoe
+      /// so we use the buffer like two sliding windows
+      sdf = libvis->audio_frames;
+      overflow = sdf + adlen - 256;
+      if (overflow >= sdf) {
+        /// adlen >= 256, write the last 256 samples from buffer
+        libvis->audio_frames = 0;
+        offset = adlen - 256;
+        adlen = 256;
+      } else if (overflow > 0) {
+        /// make space by shifting the old audio
+        weed_memmove((void *)libvis->audio, (void *)libvis->audio + overflow  * sizeof(short), (sdf - overflow) * sizeof(short));
+        libvis->audio_frames -= overflow;
       }
-      libvis->audio_frames++;
+      for (i = 0; i < adlen; i ++) {
+        libvis->audio[libvis->audio_frames + i] = 32767. * adata[0][offset + i];
+        if (achans == 2)
+          libvis->audio[libvis->audio_frames + 256 + i] = 32767. * adata[1][offset + i];
+        else
+          libvis->audio[libvis->audio_frames + 256 + i] = 32767. * adata[0][offset + i];
+      }
+      libvis->audio_frames += adlen;;
+      libvis->audio_frames += adlen * achans;
+      pthread_mutex_unlock(&libvis->pcm_mutex);
+      weed_free(adata);
     }
-    libvis->audio = aud_data;
-    pthread_mutex_unlock(&libvis->pcm_mutex);
   }
 }
 
@@ -274,7 +271,6 @@ WEED_SETUP_START(200, 200) {
   // set hints for host
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_CHANNELS, 2);
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_RATE, 44100);
-  weed_set_boolean_value(in_chantmpls[0], WEED_LEAF_AUDIO_INTERLEAF, WEED_FALSE);
   weed_set_boolean_value(in_chantmpls[0], WEED_LEAF_AUDIO_DATA_LENGTH, 512);
 
   instances = 0;

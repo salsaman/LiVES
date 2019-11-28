@@ -23,13 +23,12 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int inter, int irate, int orate) {
+static int resample(float **inbuf, float **outbuf, int nsamps, int nchans, int irate, int orate) {
   // resample (time stretch) nsamps samples from inbuf at irate to outbuf at outrate
   // return how many samples in in were consumed
 
-  // we maintain the same number of channels and interleave if necessary
+  // we maintain the same number of channels
 
-  register size_t offs = 0;
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
   register int i, j;
@@ -39,21 +38,12 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
 
   for (i = 0; i < nsamps; i++) {
     // process each sample
-    if (inter) {
-      for (j = 0; j < nchans; j++) {
-        outbuf[offs] = inbuf[j][src_offset_i];
-        offs++;
-      }
-    } else {
-      for (j = 0; j < nchans; j++) {
-        outbuf[offs + (j * nsamps)] = inbuf[j][src_offset_i];
-      }
-      offs++;
+    for (j = 0; j < nchans; j++) {
+      outbuf[j][i] = inbuf[j][src_offset_i];
     }
     // resample on the fly
     src_offset_i = (int)(src_offset_f += scale);
   }
-
   return src_offset_i;
 }
 
@@ -61,10 +51,10 @@ static int resample(float **inbuf, float *outbuf, int nsamps, int nchans, int in
 /////////////////////////////////////////////////////////////
 
 static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int chans, nsamps, inter, rate, nrsamps;
+  int chans, nsamps, rate, nrsamps;
 
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  float *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
+  float **dst = (float **)weed_get_voidptr_array(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
   weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
@@ -80,7 +70,6 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
 
   chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
   nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-  inter = weed_get_boolean_value(out_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
   rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
   // fill with audio at TRATE
@@ -89,7 +78,7 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
   if (trate < 0.) trate = -trate;
 
   if (trate == 0.) {
-    memset(dst, 0, nsamps * chans * sizeof(float));
+    weed_memset(dst, 0, nsamps * chans * sizeof(float));
     return WEED_SUCCESS;
   }
 
@@ -111,14 +100,14 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
     }
   }
 
-  resample(buff, dst, nsamps, chans, inter, trate, rate);
+  resample(buff, dst, nsamps, chans, trate, rate);
 
   for (i = 0; i < chans; i++) {
-    weed_free(buff[i]);
+    if (buff[i] != NULL) weed_free(buff[i]);
   }
 
-  weed_free(buff);
-
+  if (buff) weed_free(buff);
+  if (dst) weed_free(dst);
   return WEED_SUCCESS;
 }
 

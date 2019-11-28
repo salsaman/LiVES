@@ -200,7 +200,7 @@ void sws_free_context(void);
 #endif
 
 // gamma correction
-boolean gamma_correct_layer(int gamma_type, weed_layer_t *);
+boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in);
 int get_layer_gamma(weed_layer_t *);
 

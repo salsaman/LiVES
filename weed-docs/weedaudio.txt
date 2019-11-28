@@ -74,25 +74,23 @@ For filters with ONLY audio channels,  the "palette_list" leaf may be omitted or
 
 Optional leaves:
 
-the plugin may define these to hint them for the host, or it may leave them undefined.
+the plugin may define these to inform the host, or it may leave them undefined.
 
 The values in the channel should still be checked, since there is no guarantee that the host will always provide
 audio in the format requested.
 
-It is highly recommended that the plugin leave these values undefined whenever possible, since complying with them
-will possibly result in a performance hit for the host.
 
 
 
-"audio_channels" : WEED_SEED_INT : (>= 1) the minimum number of audio subchannels. Eg, if set to 2 then the channel does not
+"min_audio_channels" : WEED_SEED_INT : (>= 1) the minimum number of audio subchannels. Eg, if set to 2 then the channel does not
 		   		       	      	      	     accept mono. If set > 2 then it is mandatory to set the audio_channel_layout leaf.
-							     If absent then a value of 1 is assumed.
+							     If absent then a value of 1 (mono) is assumed.
 
 T,B,D
-"audio_channel_layout" :: the plugin may define the set of (audio) channel mapping for the Weed channels.
-
-		       	      	     	 It is envisaged that industry standard channel mapping names will be added to weed-compat.h
-					    (channel_layout.h from the ffmpeg / libav project appears to be a good candidate).
+"audio_channel_layout" :: WEED_SEED_INT64  ::  the plugin may define the set of (audio) channel layout(s) all  Weed auido channels.
+		       
+							It is envisaged that industry standard channel mapping names will be added to weed-compat.h
+						 		    (channel_layout.h from the ffmpeg / libav project appears to be a good candidate).
 
 					    If absent then STEREO, MONO is assumed.
 
@@ -117,6 +115,32 @@ Filter flags
 *  WEED_FILTER_AUDIO_CHANNELS_MAY_VARY
    Allows overriding of the default "audio_channel_layout" for channels by setting it in channel templates.
    If the flag WEED_FILTER_IS_CONVERTER is set, allows rempping / mixing of channels between in and out.
+
+
+ * WEED_FILTER_IS_CONVERTER ::
+
+ has multiple meanings depending on other settings.
+
+ On its own it allows the plugin to remap audio subchannels with the audio layout (e.g swap left / right stereo).
+ It also allows the plugin to combine / split multiple input channels into various output channels (depending on the number
+ of in / out channels provided)
+ 
+ However the channel layout and sample rate of each in / out channel must be the same.
+
+
+- if "is_volume_master" is set for a parameter then the filter is an amplifier / volume control / volume mixer. etc/
+  and the filter may also alter the volume.
+
+
+
+- if WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY is set, then the filter may change the layout mapping
+  between input and output. The "audio_channels" and "audio_channel_maping" leaves in each channel_template define the
+  set of possible transformations. (e.g mix down stereo to mono).
+
+
+
+- if WEED_FILTER_AUDIO_RATES_MAY_VARY is set, then the filter may change the audio rate (resample) between inputs and outputs.
+
 
 
 * WEED_FILTER_HINT_PROCESS_LAST
@@ -201,15 +225,10 @@ Channel template flags:
 
 
 If the plugin needs reiniting when the audio RATE changes, then it should set the flag bit
-WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE (alias for WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE).
+WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE (alias for WEED_CHANNEL_REINIT_ON_SIZE_CHANGE).
 
-If the plugin needs reiniting when the audio CHANNEL LAYOUT change, then it should set the flag bit
-WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE  (alias for WEED_CHANNEL_REINIT_ON_SIZE_CHANGE)
-
-If the plugin needs reiniting when the audio CHANNEL MAPING changes, then it should set the flag bit
-WEED_CHANNEL_REINIT_ON_AUDIO_MAPPING_CHANGE  (alias for WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE)
-
-
+If the plugin needs reiniting when the audio CHANNEL LAYOUT changes, then it should set the flag bit
+WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE  (alias for WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)
 
 
 
@@ -325,31 +344,6 @@ will define the mix between the first in channel and the second provided at the 
 
 
 
-
-
-
-To recap:
-the filter template flag bit WEED_FILTER_IS_CONVERTER has multiple meanings depending on other settings.
-
- On its own it allows the plugin to remap audio subchannels with the audio layout (e.g swap left / right stereo).
- It also allows the plugin to combine / split multiple input channels into various output channels (depending on the number
- of in / out channels provided)
- 
- However the channel layout and sample rate of each in / out channel must be the same.
-
-
-- if "is_volume_master" is set for a parameter then the filter is an amplifier / volume control / volume mixer. etc/
-  and the filter may also alter the volume.
-
-
-
-- if WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY is set, then the filter may change the layout mapping
-  between input and output. The "audio_channels" and "audio_channel_maping" leaves in each channel_template define the
-  set of possible transformations. (e.g mix down stereo to mono).
-
-
-
-- if WEED_FILTER_AUDIO_RATES_MAY_VARY is set, then the filter may change the audio rate (resample) between inputs and outputs.
 
 
 

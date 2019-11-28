@@ -150,7 +150,7 @@ static weed_error_t beat_deinit(weed_plant_t *inst) {
 
 
 static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int chans, nsamps, onsamps, base, inter, rate, k;
+  int chans, nsamps, onsamps, base, rate, k;
 
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
   float *src = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
@@ -191,7 +191,6 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, NULL);
 
   chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
-  inter = weed_get_boolean_value(in_channel, WEED_LEAF_AUDIO_INTERLEAF, NULL);
 
   // have we buffered enough data ?
   if ((float)sdata->totsamps / (float)rate * 1000. >= STIME) {
@@ -235,27 +234,14 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     // do transform for each channel
 
     // copy in data to sdata->in
-    if (inter == WEED_FALSE) {
-      // non-interleaved
-      if (hamming == WEED_TRUE) {
-        for (j = 0; j < nsamps; j++) {
-          ins[base][j] = src[j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
-        }
-      } else {
-        weed_memcpy(ins[base], src, nsamps * sizf);
-      }
-      src += onsamps;
-    } else {
-      // interleaved
+    if (hamming == WEED_TRUE) {
       for (j = 0; j < nsamps; j++) {
-        if (hamming == WEED_TRUE) {
-          ins[base][j] = src[j * chans] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
-        } else {
-          ins[base][j] = src[j * chans];
-        }
+        ins[base][j] = src[j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
       }
-      src++;
+    } else {
+      weed_memcpy(ins[base], src, nsamps * sizf);
     }
+    src += onsamps;
 
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);

@@ -2048,7 +2048,7 @@ static void do_start_messages(void) {
     tmp = lives_strdup(_("default value"));
   }
   d_print(_("\nConfig directory is %s (%s)\n"), prefs->configdir, tmp);
-
+  lives_free(tmp);
 
   d_print(_("\nWorking directory is %s\n"), prefs->workdir);
   if (mainw->has_session_workdir) {
@@ -2461,7 +2461,8 @@ capability *get_capabilities(void) {
 
   capable->has_smogrify = FALSE;
 
-  lives_snprintf(capable->backend_path, PATH_MAX, "%s", lives_find_program_in_path(BACKEND_NAME));
+  lives_snprintf(capable->backend_path, PATH_MAX, "%s", (tmp = lives_find_program_in_path(BACKEND_NAME)));
+  lives_free(tmp);
   if (strlen(capable->backend_path) == 0) return capable;
   capable->has_smogrify = TRUE;
 
@@ -3323,7 +3324,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -4626,7 +4627,6 @@ void load_start_image(int frame) {
       lives_free(fname);
       lives_free(tmp);
     }
-
     set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->camframe, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
     lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -4674,7 +4674,7 @@ void load_start_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_correct_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(cfile->gamma_type, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_layer_free(layer);
@@ -4732,7 +4732,7 @@ void load_start_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_correct_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(cfile->gamma_type, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4876,7 +4876,7 @@ void load_end_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_correct_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(cfile->gamma_type, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4934,7 +4934,7 @@ void load_end_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_correct_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(cfile->gamma_type, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
 
@@ -5085,7 +5085,7 @@ void load_preview_image(boolean update_always) {
       resize_layer(layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_correct_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(cfile->gamma_type, layer);
       pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -5578,7 +5578,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 
   if (prefs->apply_gamma) {
     // make it look nicer by dimming relative to luma
-    gamma_correct_layer(WEED_GAMMA_LINEAR, layer);
+    gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
   }
 
   if (sfile->subt->text != NULL) {
@@ -6000,7 +6000,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
 #endif
 
   if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
-    gamma_correct_layer(cfile->gamma_type, layer);
+    gamma_convert_layer(cfile->gamma_type, layer);
     pixbuf = layer_to_pixbuf(layer, TRUE);
   }
   weed_plant_free(layer);
@@ -6899,9 +6899,9 @@ void load_frame_image(int frame) {
         // gamma correction
         if (weed_palette_is_rgb(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
-            gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+            gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
           else {
-            gamma_correct_layer(cfile->gamma_type, frame_layer);
+            gamma_convert_layer(cfile->gamma_type, frame_layer);
           }
         }
       }
@@ -7072,9 +7072,9 @@ void load_frame_image(int frame) {
         // gamma correction
         if (weed_palette_is_rgb(mainw->vpp->palette)) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
-            gamma_correct_layer(WEED_GAMMA_LINEAR, frame_layer);
+            gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
           else
-            gamma_correct_layer(cfile->gamma_type, frame_layer);
+            gamma_convert_layer(cfile->gamma_type, frame_layer);
         }
       }
 
@@ -7164,7 +7164,7 @@ void load_frame_image(int frame) {
     }
 
     convert_layer_palette(mainw->frame_layer, cpal, 0);
-    gamma_correct_layer(cfile->gamma_type, mainw->frame_layer);
+    gamma_convert_layer(cfile->gamma_type, mainw->frame_layer);
 
     if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
       if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {

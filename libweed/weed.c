@@ -459,11 +459,13 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
     /// here we read the value and swap it with 0 iff the current value is still the value we read earlier
     /// otherwise we'll get some other value back, in which case we exit with error
     if (__sync_val_compare_and_swap((weed_size_t *volatile)&leaf->num_elements, old_num_elems, 0) != old_num_elems) {
+      if (isnew) weed_leaf_free(leaf);
       return WEED_ERROR_CONCURRENCY;
     }
 #else
-    /// otherwise we'll do it the rnormal way
+    /// otherwise we'll do it the normal way
     if (old_num_elems != leaf->num_elements) {
+      if (isnew) weed_leaf_free(leaf);
       return WEED_ERROR_CONCURRENCY;
     }
     leaf->num_elements = 0;
@@ -504,6 +506,7 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
       }
 #endif
     }
+    if (isnew) weed_leaf_free(leaf);
     return WEED_ERROR_MEMORY_ALLOCATION;
   }
 

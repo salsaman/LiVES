@@ -613,7 +613,7 @@ void create_LiVES(void) {
 #endif
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Add Webcam/TV card..."));
-  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add _Unicap Device"));
+  mainw->unicap = lives_standard_menu_item_new_with_label(_("Add Webcam"));
   mainw->firewire = lives_standard_menu_item_new_with_label(_("Add Live _Firewire Device"));
   mainw->tvdev = lives_standard_menu_item_new_with_label(_("Add _TV Device"));
 

@@ -2050,7 +2050,7 @@ value for the parameter. The host should not change any other leaves.
    	   		      "gui" leaf. This leaf points to a plant of type
  			      	    GUI. Within the GUI plant can be additional leaves to assist the host
  				    to display this particular parameter. The plugin can create it, and
-				     set leaf values in it in weed_setup() and/or in init_func().
+				     set leaf values in it in weed_setup()
 				     
 
  * Every plugin can have internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
@@ -2096,6 +2096,9 @@ may have any number of elements.
 == optional ==
 
  * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should wrap when going below min or above max, OPTIONAL
+   	    		      I.e if any attempts to set the value n outside the range of min / max should be resolved by taking the modulus:
+			      n mod (max - min) + min,  rather then being clamped in the range min <= n <= max which is the default.
+
 
 * "is_transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this parameter is a transition,
   		    at min the effect is fully "off", showing ONLY the first in_channel as output,
@@ -2153,7 +2156,7 @@ Indicates a boolean type parameter. The "default" leaf can only be of seed type 
 
 			    Only one parameter per non-zero group may have a "default" of WEED_TRUE. 
 			    The host must ensure that only one parameter pernon-zero group has a "value" of WEED_TRUE. 
-
+			    I.e. this creates a group of "radio" buttons.
 
 
 
@@ -2239,10 +2242,6 @@ parameters, the host should create the parameters from their templates, but not 
 	      this leaf is set by the plugin, first in init_func() (where it MUST be set to its default),
 	      then optionally in process_func().
 
- * "timecode" : WEED_SEED_INT64 : for out_parameters, whenever the "value" is set by the plugin in process_func()
-                                  this leaf must also be set with the timecode which was passed as a parameter to
-				  the function.
-
 
 '''Optional leaves''':[[BR]]
 
@@ -2254,7 +2253,14 @@ parameters, the host should create the parameters from their templates, but not 
 				  colour space in which the parameter operates.
    		  		  If not set, it can be assumed to be WEED_GAMMA_SRGB.
 
- * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
+ * "gui" : WEED_SEED_PLANTPTR : each parameter (for in_parameters) can have a
+    	   		      	     "gui" leaf. This leaf points to a plant of type
+ 			      	    GUI. Within the GUI plant can be additional leaves to assist the host
+ 				    to display this particular parameter. The plugin can create it, and
+				     set leaf values in it in the init_func()
+
+
+* Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
  * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
@@ -2267,7 +2273,7 @@ parameters, the host should create the parameters from their templates, but not 
 == PLANT_TYPE_GUI ==
 
 This plant type has differing properties depending on whether it is
-referenced from (i.e. contained in) filter_instance or from a parameter_template.
+referenced from (i.e. contained in) filter_instance, a parameter_template.or a parameter
 
 ==== filter_class GUI ====
 Plugin may set any of these leaves in weed_setup(). After that the plugin must not alter any leaves, except for private leaves
@@ -2302,7 +2308,7 @@ with keys prefixed "plugin_".
 
 
 ==== parameter_template GUI ====
-Plugin may set and change these leaves in weed_setup() and/or in init_func(). At other times the plugin must not
+Plugin may set these leaves in weed_setup() At other times the plugin must not
 alter any of the leaves, excet for those with keys prefixed "plugin_"
 
 All of these leaves indicate optional functionality for the
@@ -2319,17 +2325,6 @@ rely on setting "copy_value_to" to force the host to set indentical
  * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates whether "label" uses
     underscore as mnemonic
 
- * "choices" : WEED_SEED_STRING : n values for a choice: only valid
-   for INT parameters, the "value" element(s) indicate the selected
-   element(s);
-   The actual value of "max" is ignored,
-   "max" is assumed to be equal to the number of elements in "choices".
-   "min" must be 0 or -1.
-   For the "value", 0 indicates first element in "choices". A value of -1 (if
-   allowed by "min") indicates "no selection". For non-INT parameters, this
-   leaf will be ignored. If "choices" is present, then "wrap" and
-   "step_size" may be ignored by the host.
-
  * "decimals" : WEED_SEED_INT : number of decimals for a FLOAT or
    COLOR (FLOAT) hint. For other hints this will be ignored.
 
@@ -2340,14 +2335,14 @@ rely on setting "copy_value_to" to force the host to set indentical
    STRING hint. For other hints, this will be ignored. A value < 1 should
    also be ignored.
 
- * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
-   may be hidden by the host.
 
- * "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
+/////////
+
+* "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
    means second, etc.)
    of another in_parameter : if the "value" of this parameter is changed, then the
-   "value" of the parameter pointed to may be
-   set to the same value. Both parameters MUST have the same HINT and
+   "value" of the parameter pointed to should be changed be
+   set to the same value by the host. Both parameters MUST have the same HINT and
    number of elements in "default", otherwise this will be ignored. Only
    valid for in_parameters. If more than one parameter points to the
    same in_parameter, the behaviour is undefined. NOTE: this is not
@@ -2355,10 +2350,72 @@ rely on setting "copy_value_to" to force the host to set indentical
    this ! This can be disabled by setting it to a value < 0, or by
    setting it to point to itself.
 
+
+
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
+   may be hidden by the host. The value here is only a default setting. The plugin may create a leaf with the same name within the
+   parameter gui plant and update the value there during its init_func().
+
+
+ * "choices" : WEED_SEED_STRING : n values for a choice:
+
+only valid for INT parameters, the "value" element(s) indicate the selected
+   element(s);
+
+   The actual value of "max" is ignored,
+   "max" is assumed to be equal to the number of elements in "choices".
+   "min" must be 0 or -1.
+   For the "value", 0 indicates first element in "choices". A value of -1 (if
+   allowed by "min") indicates "no selection". For non-INT parameters, this
+   leaf will be ignored. If "choices" is present, then "wrap" and
+   "step_size" may be ignored by the host.
+
+   Occasionally, the plugin may not know the valid set of choices until it is actually running,
+   or the list may need to be updated depending on other factors. In this case, the plugin should set a placeholder value here
+   and set the actual list in its init_func, in the parameter gui plant.
+   
+
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
  * The host may add any additional keys required, but it is recommended that the keys be prefixed with "host_"
+
+
+
+
+
+==== parameter GUI ====
+A Plugin may optionally create and update a gui plant for any input parameter during the init_func()
+At other times the plugin must not alter any of the leaves, except for any private leaves with keys prefixed "plugin_"
+
+
+* "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
+   means second, etc.)
+   of another in_parameter : if the "value" of this parameter is changed, then the
+   "value" of the parameter pointed to should be changed be
+   set to the same value by the host. Both parameters MUST have the same HINT and
+   number of elements in "default", otherwise this will be ignored. Only
+   valid for in_parameters. If more than one parameter points to the
+   same in_parameter, the behaviour is undefined. NOTE: this is not
+   strictly GUI functionality. Even GUI-less hosts might want to implement
+   this ! This can be disabled by setting it to a value < 0, or by
+   setting it to point to itself.
+
+
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter should be hidden by the host in any interfasce windows
+   	      			This is to allow the plugin to suggest to the host that it show / hide different parameters depending on
+				the values of other parameters, channel sizes and palettes, etc. If this leaf also exists int the parameter template
+				then this leaf overrides any default set there.
+
+
+ * "choices" : WEED_SEED_STRING : n values for a choice: only valid for INT parameters, the "value" element(s)
+   indicate the selected element(s); 
+
+   The plugin may set this in the parameter gui plant during init_func(), since sometimes it is not possible for the plugin to define
+   all the entries until it is actually running.
+
+   
+
 
 
 
@@ -2700,8 +2757,8 @@ Explanation of flag bits.
 
  *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
     If this flag bit is set, the filter can do inplace operations (source and destination are the same)
-    Hosts can select this mode by setting "pixel_data" of this out channel
-    equal to the  "pixrl_data" of the corresponding (same number; not counting "disabled" channels) 
+    Hosts can select this mode by setting all the "pixel_data" array elements of this out channel
+    equal to the  "pixel_data" array elemnts of the corresponding (same number; not counting "disabled" channels) 
     in channel. The values of "height", "width", "rowstrides" and "current_palette" for in and out channels must also be equal,
     The flag bit is only valid for OUT channels. 
 
@@ -2730,15 +2787,13 @@ Flag bits >=30 are free to use for custom flags.
 
 ==== Parameter template flags ====
 
- * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE  1  [[BR]]
+ * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE
    host must reinit the plugin if the parameter "value" is
-   changed. This is to allow the plugin to readjust its internal state as well as to alter the "gui" settings
-   for the parameters and for the instance.
-   The host must emsure the plugin has write access to the "gui" plants during the init_func().
-   Only valid for in parameters.
+   changed. This is to allow the plugin to readjust its internal state as well as to possibly alter the "gui" settings
+   for the parameters
+ 
 
-
- * WEED_PARAMETER_VARIABLE_SIZE  2  [[BR]]
+ * WEED_PARAMETER_VARIABLE_SIZE
    plugin can set this to inform the host that the number of values in the parameter "value" leaf can vary.
    If not set, then the number of values in "value" is fixed; it must always match the number of values in "default".
 
@@ -2752,7 +2807,7 @@ Flag bits >=30 are free to use for custom flags.
    This flag is ASSUMED for out parameters.
 
 
- * WEED_PARAMETER_VALUE_PER_CHANNEL  4  [[BR]] - 
+ * WEED_PARAMETER_VALUE_PER_CHANNEL
    This flag bit indicates that each element (or set of 3 or 4 elements in the case of color parameters)
    in the parameter "value" corresponds to one input channel. This includes channels created from
    repeating templates which may be temporarily disabled, but does not included optional, non repeating channels

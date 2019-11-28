@@ -447,7 +447,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
       h = (int)vp[0];
       v = (int)vp[1];
       dx = x + h;
-      dy = y + v;
+      dy = y + v / 2;
       if (dx < 0) dx = 0;
       if (dy < 0) dy = 0;
       if (dx >= width) dx = width - 1;
@@ -461,7 +461,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
       if (dx >= width) dx = width - 1;
       dest[1] = src[dy * irowstride + dx];
 
-      dy = y + 1 + (v + (int)vp[width * 2 + 1]) / 2;
+      dy = y + 1 + (v  + (int)vp[width * 2 + 1]) / 2;
       if (dy < 0) dy = 0;
       if (dy >= height) dy = height - 1;
       dest[orowstride] = src[dy * irowstride + i];
@@ -470,7 +470,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
       vp += 2;
     }
     dest += orowstridex + orowstride;
-    vp += 2;
+    vp++;
   }
   return WEED_SUCCESS;
 }

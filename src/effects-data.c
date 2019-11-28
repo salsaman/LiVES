@@ -2206,8 +2206,8 @@ boolean cconx_chain_data(int key, int mode) {
     if (mainw->vpp == NULL || mainw->vpp->num_alpha_chans == 0) return FALSE;
   }
 
-  while ((ichan = (key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_chan(mainw->vpp->play_params, i) : get_enabled_channel(inst, i,
-                   TRUE))) != NULL) {
+  while ((ichan = (key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_chan(mainw->vpp->play_params, i)
+                   : get_enabled_channel(inst, i, TRUE))) != NULL) {
     if ((ochan = cconx_get_out_alpha(FALSE, key, mode, i++, NULL, NULL, NULL)) != NULL) {
       filter_mutex_lock(key);
       if (cconx_convert_pixel_data(ichan, ochan)) needs_reinit = TRUE;

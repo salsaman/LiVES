@@ -35,7 +35,8 @@
 
 /* Palette types */
 /* RGB palettes */
-#define WEED_PALETTE_END 0
+#define WEED_PALETTE_NONE 0
+#define WEED_PALETTE_END WEED_PALETTE_NONE
 #define WEED_PALETTE_RGB888 1
 #define WEED_PALETTE_RGB24 1
 #define WEED_PALETTE_BGR888 2

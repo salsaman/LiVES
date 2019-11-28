@@ -215,8 +215,8 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *filter_class;
 
-  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list), apalette_list);
-  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(palette_list), palette_list);
+  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list) / 4, apalette_list);
+  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(palette_list) / 4, palette_list);
 
   filter_class = weed_filter_class_init("alpha_visualizer", "salsaman", 1, WEED_FILTER_PALETTES_MAY_VARY |
                                         WEED_FILTER_IS_CONVERTER,

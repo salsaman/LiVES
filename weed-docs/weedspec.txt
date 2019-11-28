@@ -1474,7 +1474,7 @@ Mandatory for filters with video channels
  * "palette_list" : WEED_SEED_INT : the plugin sets this to an array of allowed palettes for channels created from channel templates
    for the filter. It should contain as many palettes as possible that the filter may handle.
    Palettes which can be processed FASTER should be listed first, in the case of palettes which may require intenal conversion.
-
+   The list may optionally be terminated with WEED_PALETTE_END.
 
 
 
@@ -1862,6 +1862,8 @@ which the host must not alter.
   If the filter flags contain WEED_FILTER_PALETTES _MAY_VARY, then the following leaves may be set
   at the plugin author's discretion in order to override the default values for individual channel templates.
   For details, see the definitions in filter_class.
+
+ * "palette_list" : WEED_SEED_INT : 
 
  * "YUV_sampling"     : WEED_SEED_INT :
 
@@ -2895,10 +2897,9 @@ Some palettes have aliases; these are shown on the same line.
 
 '''Special Palettes'''
 Palette number 0
-{{{
-WEED_PALETTE_END
-may be used in setup_func() in an int *palettes, denotes the end of the palette list; "palette_list" property
-}}}
+WEED_PALETTE_NONE		WEED_PALETTE_END
+
+Special value used to indicate no palette, unknown / undefined palette, or to mark the end of a list of palettes.
 
 '''RGB Palettes'''
 Palette numbers >0 and <512

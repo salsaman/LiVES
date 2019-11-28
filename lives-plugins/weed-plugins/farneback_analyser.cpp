@@ -301,9 +301,11 @@ WEED_SETUP_START(200, 200) {
                                   WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE |
                                   WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE), NULL
                                  };
+
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("X values", 0),
                                    weed_channel_template_init("Y values", 0), NULL
                                   };
+
   weed_plant_t *filter_class = weed_filter_class_init("farneback_analyser", "salsaman", 1,
                                WEED_FILTER_PALETTES_MAY_VARY | WEED_FILTER_IS_CONVERTER, NULL,
                                farneback_init, farneback_process, farneback_deinit,
@@ -311,9 +313,9 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(ipalette_list), ipalette_list);
-  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list), opalette_list);
-  weed_set_int_array(out_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list), opalette_list);
+  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(ipalette_list) / 4, ipalette_list);
+  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list) / 4, opalette_list);
+  weed_set_int_array(out_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(opalette_list) / 4, opalette_list);
 
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_UNCLAMPED);
 

@@ -334,10 +334,10 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list), vpalette_list);
-  weed_set_int_array(in_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list), apalette_list);
-  weed_set_int_array(in_chantmpls[2], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list), apalette_list);
-  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list), vpalette_list);
+  weed_set_int_array(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list) / 4, vpalette_list);
+  weed_set_int_array(in_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list) / 4, apalette_list);
+  weed_set_int_array(in_chantmpls[2], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list) / 4, apalette_list);
+  weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(vpalette_list) / 4, vpalette_list);
 
   if (is_big_endian()) {
     weed_set_int_value(in_chantmpls[0], WEED_LEAF_PALETTE_LIST, WEED_PALETTE_ARGB32);

@@ -112,10 +112,12 @@ int check_weed_abi_compat(int32_t higher, int32_t lower);
 /* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
 int check_filter_api_compat(int32_t higher, int32_t lower);
 
+#ifdef __WEED_EFFECTS_H__
 /* plugin only function; host should pass a pointer to this to the plugin as the sole parameter when calling  weed_setup()
 in the plugin */
 weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
                              int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
+#endif
 
 /* host only functions */
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix

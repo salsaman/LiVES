@@ -233,7 +233,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int opwidth, int opheight, ticks_t tc);
 void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate,
                               ticks_t tc, double *vis);
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, ticks_t tc, boolean analysers_only);
+void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, ticks_t tc,
+                                 boolean analysers_only, boolean is_audio_thread);
 
 lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
     double arate, ticks_t tc, double *vis);

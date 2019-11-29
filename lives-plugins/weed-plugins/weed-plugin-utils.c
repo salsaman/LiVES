@@ -774,7 +774,7 @@ EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
   while (list != NULL) {
     dlink_list_t *listnext = list->next;
     weed_plugin_info_add_filter_class(plugin_info, list->filter);
-    weed_free(list->name);
+    weed_free((void *)list->name);
     weed_free(list);
     list = listnext;
     count++;

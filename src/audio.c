@@ -2707,7 +2707,7 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 
 // plugin handling
 
-boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps) {
+boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread) {
   // get audio from an audio generator; fbuffer is filled with non-interleaved float
 
   weed_timecode_t tc;
@@ -2738,7 +2738,8 @@ getaud1:
   if (channel != NULL) {
     ctmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, &error);
 
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE) && weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, &error) != arate) {
+    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE)
+        && weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, &error) != arate) {
       // TODO - resample if audio rate is wrong
       weed_instance_unref(inst);
       return FALSE;
@@ -2782,7 +2783,7 @@ getaud1:
   if (mainw->pconx != NULL && !(mainw->preview || mainw->is_rendering)) {
     // chain any data pipelines
     if (!pthread_mutex_trylock(&mainw->fx_mutex[mainw->agen_key - 1])) {
-      mainw->agen_needs_reinit = pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key));
+      mainw->agen_needs_reinit = pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
       filter_mutex_unlock(mainw->agen_key - 1);
 
       if (mainw->agen_needs_reinit) {
@@ -2984,7 +2985,7 @@ boolean apply_rte_audio(int nframes) {
 
   } else {
     // read from plugin. This should already be float.
-    get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nframes);
+    get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nframes, FALSE);
   }
 
   // apply any audio effects
@@ -2992,7 +2993,7 @@ boolean apply_rte_audio(int nframes) {
   aud_tc += (double)onframes / (double)cfile->arate * TICKS_PER_SECOND_DBL;
   // apply any audio effects with in_channels
 
-  weed_apply_audio_effects_rt(fltbuf, cfile->achans, onframes, cfile->arate, aud_tc, FALSE);
+  weed_apply_audio_effects_rt(fltbuf, cfile->achans, onframes, cfile->arate, aud_tc, FALSE, FALSE);
 
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
     // analysers only - no need to save (just render as normal)

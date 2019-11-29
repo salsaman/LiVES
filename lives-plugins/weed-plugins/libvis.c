@@ -189,7 +189,7 @@ static weed_error_t libvis_deinit(weed_plant_t *inst) {
 
 static void store_audio(weed_libvis_t *libvis, weed_plant_t *in_channel) {
   // convert float audio to s16le, append to libvis->audio
-  register int i, j;
+  register int i;
 
   if (in_channel != NULL) {
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);

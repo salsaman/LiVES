@@ -669,7 +669,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               // audio generated from plugin
               if (mainw->agen_needs_reinit) pl_error = TRUE;
               else {
-                if (!get_audio_from_plugin(out_buffer, jackd->num_output_channels, jackd->sample_out_rate, numFramesToWrite)) {
+                if (!get_audio_from_plugin(out_buffer, jackd->num_output_channels, jackd->sample_out_rate, numFramesToWrite, TRUE)) {
                   pl_error = TRUE;
                 }
               }
@@ -694,7 +694,8 @@ static int audio_process(nframes_t nframes, void *arg) {
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
                 ticks_t tc = mainw->currticks;
                 // apply inplace any effects with audio in_channels, result goes to jack
-                weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
+                weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels,
+                                            numFramesToWrite, jackd->sample_out_rate, tc, FALSE, TRUE);
               }
 
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -743,7 +744,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
                   ticks_t tc = mainw->currticks;
                   // apply inplace any effects with audio in_channels
-                  weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels, numFramesToWrite, jackd->sample_out_rate, tc, FALSE);
+                  weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels,
+                                              numFramesToWrite, jackd->sample_out_rate, tc, FALSE, TRUE);
                 }
 
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -1102,7 +1104,7 @@ static int audio_read(nframes_t nframes, void *arg) {
       }
 
       // apply any audio effects with in_channels and no out_channels
-      weed_apply_audio_effects_rt(in_buffer, jackd->num_input_channels, nframes, jackd->sample_in_rate, tc, TRUE);
+      weed_apply_audio_effects_rt(in_buffer, jackd->num_input_channels, nframes, jackd->sample_in_rate, tc, TRUE, TRUE);
     }
   }
 

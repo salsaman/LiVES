@@ -569,7 +569,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       sd->audio_frames += adlen * achans;
       pthread_mutex_unlock(&sd->pcm_mutex);
     }
-    weed_free(adata);
+    if (adata != NULL) weed_free(adata);
   }
 
   //if (palette==WEED_PALETTE_RGBA32) widthx=width*4;

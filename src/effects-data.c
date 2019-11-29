@@ -70,30 +70,11 @@ static char *get_chan_name(weed_plant_t *chan, int cnum, boolean is_in) {
 }
 
 
-static void switch_fx_state(int okey, int hotkey) {
+static void switch_fx_state(int hotkey) {
   // switch effect state when a connection to ACTIVATE is present
   uint32_t last_grabbable_effect = mainw->last_grabbable_effect;
-
-  boolean relock_hotkey = FALSE;
-  boolean relock_okey = FALSE;
-
-  if (filter_mutex_trylock(hotkey - 1)) {
-    relock_hotkey = TRUE;
-    filter_mutex_unlock(hotkey - 1);
-  }
-  if (okey > -1) {
-    if (filter_mutex_trylock(okey)) {
-      relock_okey = TRUE;
-      filter_mutex_unlock(okey);
-    }
-  }
-
   // use -hotkey to indicate auto
   rte_key_toggle(-hotkey);
-
-  if (relock_hotkey) filter_mutex_lock(hotkey - 1);
-  if (relock_okey) filter_mutex_lock(okey);
-
   mainw->last_grabbable_effect = last_grabbable_effect;
 }
 
@@ -127,6 +108,7 @@ void override_if_active_input(int hotkey) {
         }
       }
     }
+
     pconx = pconx->next;
   }
 }
@@ -296,7 +278,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons = 0, maxcons = 0;
 
-  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+      pthread_mutex_lock(&mainw->fx_mutex[i]);
 
   while (pconx != NULL) {
     pconx_next = pconx->next;
@@ -323,7 +306,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         lives_free(pconx);
         if (mainw->pconx == pconx) mainw->pconx = pconx_next;
         else pconx_prev->next = pconx_next;
-        if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
+        if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+            pthread_mutex_unlock(&mainw->fx_mutex[i]);
         return;
       }
 
@@ -402,10 +386,12 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
         }
       }
     }
+
     pconx_prev = pconx;
     pconx = pconx_next;
   }
-  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
+  if (okey >= 0 && okey != FX_DATA_WILDCARD)
+    for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_unlock(&mainw->fx_mutex[i]);
 }
 
 
@@ -815,7 +801,8 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 }
 
 
-boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, int okey, weed_plant_t *sparam, boolean autoscale) {
+static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dparam, int okey,
+                                        weed_plant_t *sparam, boolean autoscale, boolean is_audio_thread, int *toggle_fx) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
   weed_plant_t *dptmpl, *sptmpl;
 
@@ -838,6 +825,9 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   if (dparam == sparam && (dparam != active_dummy || active_dummy == NULL)) return FALSE;
 
   nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
+
+  if (nsvals == 0) return FALSE;
+
   sptmpl = weed_get_plantptr_value(sparam, WEED_LEAF_TEMPLATE, &error);
   stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
 
@@ -865,8 +855,9 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
   case WEED_SEED_STRING:
     switch (dtype) {
     case WEED_SEED_STRING: {
-      char **valsS = weed_get_string_array(sparam, WEED_LEAF_VALUE, &error);
-      char **valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error);
+      char **valsS, **valss;
+      if ((valsS = weed_get_string_array(sparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
+      if ((valss = weed_get_string_array(dparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
 
       if (ndvals > ondvals) valss = (char **)lives_realloc(valss, ndvals * sizeof(char *));
 
@@ -1131,13 +1122,13 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
     return retval;
 
     case WEED_SEED_INT: {
-      int *valsI = weed_get_int_array(sparam, WEED_LEAF_VALUE, &error);
-      int *valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, &error);
-
-      int *maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, &error);
-      int *mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, &error);
-
+      int *valsI, *valsi, *maxi, *mini;
       int *mins = NULL, *maxs = NULL;
+
+      if ((valsI = weed_get_int_array(sparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
+      if ((valsi = weed_get_int_array(dparam, WEED_LEAF_VALUE, &error)) == NULL) return retval;
+      if ((maxi = weed_get_int_array(dptmpl, WEED_LEAF_MAX, &error)) == NULL) return retval;
+      if ((mini = weed_get_int_array(dptmpl, WEED_LEAF_MIN, &error)) == NULL) return retval;
 
       if (autoscale) {
         mins = weed_get_int_array(sptmpl, WEED_LEAF_MIN, &error);
@@ -1193,15 +1184,27 @@ boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant_t *dpa
 
   case WEED_SEED_BOOLEAN: {
     int *valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, &error);
+    if (error != WEED_SUCCESS) g_print("ERR was %d\n", error);
+    if (valsb == NULL) return retval;
+
     if (dparam == active_dummy && !autoscale) {
       // ACTIVATE
       int key;
       pthread_mutex_lock(&mainw->fxd_active_mutex);
       key = weed_get_int_value(dparam, WEED_LEAF_HOST_KEY, &error);
+      if (is_audio_thread) {
+        // in the audio thread, don't activate / dectivate video fx. It could cause an underflow if it takes too long
+        // let the video thread handle it
+        weed_plant_t *filter = rte_keymode_get_filter(okey + 1, rte_key_getmode(okey + 1));
+        if (!is_pure_audio(filter, FALSE)) {
+          pthread_mutex_unlock(&mainw->fxd_active_mutex);
+          return retval;
+        }
+      }
       pthread_mutex_unlock(&mainw->fxd_active_mutex);
       if ((valsb[0] == WEED_TRUE && !(mainw->rte & (GU641 << (key)))) ||
           (valsb[0] == WEED_FALSE && (mainw->rte & (GU641 << (key))))) {
-        switch_fx_state(okey, key + 1);
+        if (toggle_fx) *toggle_fx = key + 1;
       }
       lives_free(valsb);
       return retval;
@@ -1445,13 +1448,14 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
         }
       }
     }
+
     pconx = pconx->next;
   }
   return actions;
 }
 
 
-boolean pconx_chain_data(int key, int mode) {
+boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
   weed_plant_t **inparams;
   weed_plant_t *oparam, *inparam;
   weed_plant_t *inst = NULL;
@@ -1463,7 +1467,7 @@ boolean pconx_chain_data(int key, int mode) {
   int autoscale;
   int pflags;
   int okey;
-
+  int toggle_fx = 0;
   int copyto = -1;
 
   register int i;
@@ -1478,7 +1482,8 @@ boolean pconx_chain_data(int key, int mode) {
     }
 
     if (inst != NULL) {
-      if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nparams = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
+        nparams = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
     } else if (rte_keymode_get_filter_idx(key + 1, mode) == -1) return FALSE;
   } else if (key == FX_DATA_KEY_PLAYBACK_PLUGIN) {
     // playback plugin
@@ -1514,11 +1519,14 @@ boolean pconx_chain_data(int key, int mode) {
       filter_mutex_lock(key);
       filter_mutex_lock(okey);
 
-      changed = pconx_convert_value_data(inst, i, key == FX_DATA_KEY_PLAYBACK_PLUGIN ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
-                                         : inparam, okey, oparam, autoscale);
+      changed = pconx_convert_value_data(inst, i, key == FX_DATA_KEY_PLAYBACK_PLUGIN
+                                         ? (weed_plant_t *)pp_get_param(mainw->vpp->play_params, i)
+                                         : inparam, okey, oparam, autoscale, is_audio_thread, &toggle_fx);
 
       filter_mutex_unlock(key);
       filter_mutex_unlock(okey);
+
+      if (toggle_fx != 0) switch_fx_state(toggle_fx);
 
       if (changed && inst != NULL && key > -1) {
         // only store value if it changed; for int, double or colour, store old value too
@@ -1551,6 +1559,7 @@ boolean pconx_chain_data(int key, int mode) {
       }
     }
   }
+
   if (key != FX_DATA_KEY_PLAYBACK_PLUGIN && inparams != NULL) lives_free(inparams);
   if (inst != NULL) weed_instance_unref(inst);
   return reinit_inst;
@@ -1576,10 +1585,10 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
     if (weed_plant_has_leaf(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION)) {
       autoscale = FALSE;
       if (weed_plant_has_leaf(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE) &&
-          weed_get_boolean_value(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, &error) == WEED_TRUE) autoscale = TRUE;
-      if (pconx_convert_value_data(inst, i, in_params[i], -1, weed_get_plantptr_value(in_params[i], WEED_LEAF_HOST_INTERNAL_CONNECTION, &error),
-                                   autoscale)) {
-
+          weed_get_boolean_value(in_params[i],
+                                 WEED_LEAF_HOST_INTERNAL_CONNECTION_AUTOSCALE, &error) == WEED_TRUE) autoscale = TRUE;
+      if (pconx_convert_value_data(inst, i, in_params[i], -1, weed_get_plantptr_value(in_params[i],
+                                   WEED_LEAF_HOST_INTERNAL_CONNECTION, &error), autoscale, FALSE, NULL)) {
         copyto = set_copy_to(inst, i, TRUE);
 
         pflags = weed_get_int_value(in_params[i], WEED_LEAF_FLAGS, &error);
@@ -1589,7 +1598,6 @@ boolean pconx_chain_data_internal(weed_plant_t *inst) {
           if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) reinit_inst = TRUE;
         }
       }
-
     }
   }
 

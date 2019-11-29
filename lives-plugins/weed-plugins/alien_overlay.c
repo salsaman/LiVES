@@ -89,6 +89,7 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
   int orowstride = weed_channel_get_stride(out_channel);
   int inplace = (src == dst);
   int offs = rgb_offset(pal);
+  int row = 0;
   unsigned char val;
   unsigned char *old_pixel_data;
   unsigned char *end = dst + height * orowstride;
@@ -105,14 +106,14 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
     dst += offset * orowstride;
     end = dst + dheight * orowstride;
     old_pixel_data += width * offset;
-    i = offset;
+    row = offset;
   }
 
   for (; dst < end; dst += orowstride) {
     i = 0;
     for (j = offs; j < width; j += psize) {
       for (k = 0; k < 3; k++) {
-        if (sdata->inited[i]) {
+        if (sdata->inited[row]) {
           if (!inplace) {
             dst[j + k] = ((char)(old_pixel_data[i]) + (char)(src[j + k])) >> 1;
             old_pixel_data[i] = src[j + k];
@@ -126,7 +127,7 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
       }
     }
 
-    sdata->inited[i++] = 1;
+    sdata->inited[row++] = 1;
     src += irowstride;
     old_pixel_data += width;
   }

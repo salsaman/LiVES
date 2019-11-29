@@ -6854,7 +6854,6 @@ void load_frame_image(int frame) {
         }
       }
 
-
       convert_layer_palette(frame_layer, mainw->vpp->palette, mainw->vpp->YUV_clamping);
 
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
@@ -6890,7 +6889,7 @@ void load_frame_image(int frame) {
       if (!(mainw->preview || mainw->is_rendering)) {
         // chain any data pipelines
         if (mainw->pconx != NULL) {
-          pconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
+          pconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0, FALSE);
         }
         if (mainw->cconx != NULL) cconx_chain_data(FX_DATA_KEY_PLAYBACK_PLUGIN, 0);
       }
@@ -7063,7 +7062,7 @@ void load_frame_image(int frame) {
       if (!(mainw->preview || mainw->is_rendering)) {
         // chain any data pipelines
         if (mainw->pconx != NULL) {
-          pconx_chain_data(-2, 0);
+          pconx_chain_data(-2, 0, FALSE);
         }
         if (mainw->cconx != NULL) cconx_chain_data(-2, 0);
       }

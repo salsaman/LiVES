@@ -153,7 +153,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int chans, nsamps, onsamps, base, rate, k;
 
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  float *src = (float *)weed_get_voidptr_value(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
+  float **src = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
 
   weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
   weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
@@ -236,12 +236,11 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     // copy in data to sdata->in
     if (hamming == WEED_TRUE) {
       for (j = 0; j < nsamps; j++) {
-        ins[base][j] = src[j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
+        ins[base][j] = src[i][j] * (0.54f - 0.46f * cosf(TWO_PI * (float)j / (float)(nsamps - 1.)));
       }
     } else {
-      weed_memcpy(ins[base], src, nsamps * sizf);
+      weed_memcpy(ins[base], src[i], nsamps * sizf);
     }
-    src += onsamps;
 
     //fprintf(stderr,"executing plan of size %d\n",sdata->size);
     fftwf_execute(plans[base]);
@@ -264,7 +263,6 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
         tot = -1.;
         sdata->buf[s][sdata->bufidx] = tot;
       } else {
-
         // use an overlap
         rkmin = kmin - ((kmin - okmin) >> 1);
         if (s < NSLICES - 1) {
@@ -298,6 +296,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     } // done for all slices
   } // done for all channels
 
+  weed_free(src);
 
   if (!has_data) {
     // need to buffer more data

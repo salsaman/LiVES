@@ -111,7 +111,7 @@ static weed_error_t bumpmap_process(weed_plant_t *inst, weed_timecode_t timestam
     int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
     int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
     int yuv_clamping = weed_get_int_value(in_channel, "yuv_clamping", NULL);
-    int psize = weed_palette_get_bits_per_macropixel(palette) >> 3;
+    int psize = pixel_size(palette);
     int widthx = width * psize;
     int offs = palette == WEED_PALETTE_ARGB32 ? 1 : 0;
     _sdata *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);

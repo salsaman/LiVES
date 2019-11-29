@@ -183,7 +183,6 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
 
 int lifetv_deinit(weed_plant_t *inst) {
   struct _sdata *sdata;
-  int error;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
@@ -193,7 +192,7 @@ int lifetv_deinit(weed_plant_t *inst) {
     weed_free(sdata->field);
     weed_free(sdata);
   }
-
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 

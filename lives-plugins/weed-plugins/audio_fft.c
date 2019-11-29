@@ -95,7 +95,7 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   float tot = 0.;
 
-  register int i, j;
+  register int i;
 
   weed_free(in_params);
 

@@ -669,7 +669,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               ticks_t tc = mainw->currticks;
               // apply any audio effects with in_channels
 
-              if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
+              if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf,
+                    pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE, TRUE);
 
               // new streaming API
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -701,7 +702,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           else {
             fbuffer = (float **)lives_malloc(pulsed->out_achans * sizeof(float *));
             for (int i = 0; i < pulsed->out_achans; i++) fbuffer[i] = lives_calloc(numFramesToWrite, sizeof(float));
-            if (!get_audio_from_plugin(fbuffer, pulsed->out_achans, pulsed->out_arate, numFramesToWrite)) {
+            if (!get_audio_from_plugin(fbuffer, pulsed->out_achans, pulsed->out_arate, numFramesToWrite, TRUE)) {
               pl_error = TRUE;
             }
           }
@@ -757,7 +758,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 ticks_t tc = mainw->currticks;
                 // apply any audio effects with in_channels
 
-                if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE);
+                if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans,
+                      numFramesToWrite, pulsed->out_arate, tc, FALSE, TRUE);
 
                 // new streaming API
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -1166,7 +1168,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
         ticks_t tc = mainw->currticks;
         // apply any audio effects with in channels but no out channels
 
-        if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans, xnsamples, pulsed->in_arate, tc, TRUE);
+        if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans,
+              xnsamples, pulsed->in_arate, tc, TRUE, TRUE);
 
         // new streaming API
         pthread_mutex_lock(&mainw->vpp_stream_mutex);

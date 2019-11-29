@@ -288,8 +288,8 @@ boolean transcode(int start, int end) {
         for (j = 0; j < cfile->achans; j++) {
           // convert to float
           if (cfile->asampsize == 16) {
-            sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps, cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian,
-                                  1.0);
+            sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps,
+                                  cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian, 1.0);
           } else {
             sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
                                1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
@@ -299,7 +299,8 @@ boolean transcode(int start, int end) {
 
         if (mainw->fx1_bool) {
           // apply any audio effects with in_channels
-          if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf, cfile->achans, nsamps, cfile->arate, currticks, FALSE);
+          if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf,
+                cfile->achans, nsamps, cfile->arate, currticks, FALSE, FALSE);
         }
         (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
       }

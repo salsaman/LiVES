@@ -62,7 +62,7 @@ void pconx_delete(int okey, int omode, int ocnum, int ikey, int imode, int icnum
 void pconx_remap_mode(int key, int omode, int nmode);
 
 // chain any output data into fx key/mode (pull)
-boolean pconx_chain_data(int key, int mode);
+boolean pconx_chain_data(int key, int mode, boolean is_audio_thread);
 
 // chain any output data into OMC Macros (push)
 int pconx_chain_data_omc(weed_plant_t *instance, int key, int mode);

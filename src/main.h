@@ -55,102 +55,34 @@ POSSIBILITY OF SUCH DAMAGES.
 #undef HAVE_UNICAP
 #endif
 
+#ifdef __GNUC__
+#  define WARN_UNUSED  __attribute__((warn_unused_result))
+#  define GNU_PURE  __attribute__((pure))
+#  define GNU_DEPRECATED(msg)  __attribute__((deprecated(msg)))
+#  define GNU_CONST  __attribute__((const))
+#  define GNU_MALLOC  __attribute__((malloc))
+#  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
+#  define GNU_NORETURN __attribute__((noreturn))
+#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
+#  define GNU_HOT  __attribute__((hot))
+#else
+#  define WARN_UNUSED
+#  define GNU_PURE
+#  define GNU_CONST
+#  define GNU_MALLOC
+#  define GNU_DEPRECATED(msg)
+#  define GNU_ALIGN(x)
+#  define GNU_NORETURN
+#  define GNU_FLATTEN
+#  define GNU_HOT
+#endif
+
 #include <sys/types.h>
 #include <string.h>
 
-typedef void *(*malloc_f)(size_t);
-typedef void (*free_f)(void *);
-typedef void *(*free_and_return_f)(void *); // like free() but returns NULL
-typedef void *(*memcpy_f)(void *, const void *, size_t);
-typedef void *(*memset_f)(void *, int, size_t);
-typedef void *(*memmove_f)(void *, const void *, size_t);
-typedef void *(*realloc_f)(void *, size_t);
-typedef void *(*calloc_f)(size_t, size_t);
-typedef void *(*malloc_and_copy_f)(size_t, const void *);
-typedef void (*unmalloc_and_copy_f)(size_t, void *);
+typedef int64_t ticks_t;
 
-#ifndef lives_malloc
-#define lives_malloc malloc
-#endif
-#ifndef lives_realloc
-#define lives_realloc realloc
-#endif
-#ifndef lives_free
-#define lives_free free
-#endif
-#ifndef lives_memcpy
-#define lives_memcpy memcpy
-#endif
-#ifndef lives_memset
-#define lives_memset memset
-#endif
-#ifndef lives_memmove
-#define lives_memmove memmove
-#endif
-#ifndef lives_calloc
-#define lives_calloc calloc
-#endif
-
-#ifdef _lives_malloc
-#undef _lives_malloc
-#endif
-#ifdef _lives_malloc_and_copy
-#undef _lives_malloc_and_copy
-#endif
-#ifdef _lives_realloc
-#undef _lives_realloc
-#endif
-#ifdef _lives_free
-#undef _lives_free
-#endif
-#ifdef _lives_memcpy
-#undef _lives_memcpy
-#endif
-#ifdef _lives_memset
-#undef _lives_memset
-#endif
-#ifdef _lives_memmove
-#undef _lives_memmove
-#endif
-#ifdef _lives_calloc
-#undef _lives_calloc
-#endif
-
-//#define USE_STD_MEMFUNCS
-#ifndef USE_STD_MEMFUNCS
-// here we can define optimised mem ory functions to used by setting the symbols _lives_malloc, _lives_free, etc.
-// at the end of the header we check if the values have been set and update lives_malloc from _lives_malloc, etc.
-// the same values are passed into realtime fx plugins via Weed function overloading
-#ifdef HAVE_OPENCV
-#ifndef NO_OPENCV_MEMFUNCS
-#define _lives_malloc  fastMalloc
-#define _lives_free    fastFree
-#define _lives_realloc proxy_realloc
-#endif
-#endif
-
-#ifndef __cplusplus
-
-#ifdef ENABLE_ORC
-#ifndef NO_ORC_MEMFUNCS
-#define _lives_memcpy lives_orc_memcpy
-#endif
-#endif
-
-#else
-
-#ifdef ENABLE_OIL
-#ifndef NO_OIL_MEMFUNCS
-#define _lives_memcpy(dest, src, n) {if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) { \
-      oil_memcpy((uint8_t *)dest, (const uint8_t *)src, n);		\
-      return dest;\							\
-    }
-#endif
-#endif
-
-#endif // __cplusplus
-#endif // USE_STD_MEMFUNCS
-
+#include "machinestate.h"
 
 #define ENABLE_OSC2
 
@@ -343,28 +275,6 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
-#ifdef __GNUC__
-#  define WARN_UNUSED  __attribute__((warn_unused_result))
-#  define GNU_PURE  __attribute__((pure))
-#  define GNU_DEPRECATED(msg)  __attribute__((deprecated(msg)))
-#  define GNU_CONST  __attribute__((const))
-#  define GNU_MALLOC  __attribute__((malloc))
-#  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
-#  define GNU_NORETURN __attribute__((noreturn))
-#  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
-#  define GNU_HOT  __attribute__((hot))
-#else
-#  define WARN_UNUSED
-#  define GNU_PURE
-#  define GNU_CONST
-#  define GNU_MALLOC
-#  define GNU_DEPRECATED(msg)
-#  define GNU_ALIGN(x)
-#  define GNU_NORETURN
-#  define GNU_FLATTEN
-#  define GNU_HOT
-#endif
-
 // math macros / functions
 
 // round to nearest integer
@@ -407,8 +317,6 @@ uint64_t lives_10pow(int pow) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
 int get_approx_ln(uint32_t val) GNU_CONST;
-
-typedef int64_t ticks_t;
 
 typedef struct {
   uint16_t red;
@@ -462,15 +370,23 @@ typedef struct {
 #include "../libweed/weed-events.h"
 #include "../libweed/weed-palettes.h"
 #include "../libweed/weed-effects.h"
-#include "../libweed/weed-utils.h"
-#include "../libweed/weed-compat.h"
 #else
 #include <weed/weed-host.h>
 #include <weed/weed.h>
 #include <weed/weed-events.h>
 #include <weed/weed-palettes.h>
 #include <weed/weed-effects.h>
+#endif
+
+#if NEED_LOCAL_WEED_UTILS
+#include "../libweed/weed-utils.h"
+#else
 #include <weed/weed-utils.h>
+#endif
+
+#if NEED_LOCAL_WEED_COMPAT
+#include "../libweed/weed-compat.h"
+#else
 #include <weed/weed-compat.h>
 #endif
 
@@ -957,34 +873,6 @@ capability *capable;
 #ifdef ENABLE_JACK
 #include "jack.h"
 #endif
-
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-
-#ifndef PRId64
-
-#ifndef __WORDSIZE
-#if defined __x86_64__
-# define __WORDSIZE	64
-#ifndef __WORDSIZE_COMPAT32
-# define __WORDSIZE_COMPAT32	1
-#endif
-#else
-# define __WORDSIZE	32
-#endif
-#endif // __WORDSIZE
-
-#ifndef __PRI64_PREFIX
-# if __WORDSIZE == 64
-#  define __PRI64_PREFIX	"l"
-# else
-#  define __PRI64_PREFIX	"ll"
-# endif
-#endif
-
-# define PRId64		__PRI64_PREFIX "d"
-# define PRIu64		__PRI64_PREFIX "u"
-#endif // ifndef PRI64d
 
 // common defs for mainwindow (retain this order)
 #include "plugins.h"
@@ -1495,7 +1383,6 @@ int calc_frame_from_time2(int filenum, double time);  ///< nearest frame [1, fra
 int calc_frame_from_time3(int filenum, double time);  ///< nearest frame rounded down, [1, frames+1]
 int calc_frame_from_time4(int filenum, double time);  ///<  nearest frame, no maximum
 
-
 boolean check_for_ratio_fps(double fps);
 double get_ratio_fps(const char *string);
 void calc_maxspect(int rwidth, int rheight, int *cwidth, int *cheight);
@@ -1560,8 +1447,8 @@ char *insert_newlines(const char *text, int maxwidth);
 int hextodec(char *string);
 int get_hex_digit(const char *c) GNU_CONST;
 
-uint32_t fastrand(void);
-void fastsrand(uint32_t seed);
+uint64_t fastrand(void);
+void fastsrand(uint64_t seed);
 
 int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
@@ -1664,16 +1551,10 @@ void break_me(void);
 #define lives_memmove _lives_memmove
 #endif
 #ifdef _lives_calloc
-#undef  lives_calplloc
+#undef  lives_calloc
 #define lives_calloc _lives_calloc
 #endif
 
-#endif
-
-char *autotmp;
-
-#ifdef _MAIN_C_
-char *autotmp = NULL;
 #endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H

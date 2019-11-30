@@ -103,7 +103,6 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   if (onsamps < 2) {
     weed_set_double_value(out_param, WEED_LEAF_VALUE, 0.);
-    weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
     return WEED_SUCCESS;
   }
 
@@ -123,7 +122,6 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   if (k > (nsamps >> 1)) {
     weed_set_double_value(out_param, WEED_LEAF_VALUE, 0.);
-    weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
     return WEED_SUCCESS;
   }
 
@@ -145,7 +143,6 @@ static weed_error_t fftw_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   // average over all audio channels
   weed_set_double_value(out_param, WEED_LEAF_VALUE, (double)(tot / (float)chans));
-  weed_set_int64_value(out_param, WEED_LEAF_TIMECODE, tc);
   weed_free(src);
   return WEED_SUCCESS;
 }

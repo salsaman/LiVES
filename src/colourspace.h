@@ -15,8 +15,6 @@
 
 #define DEF_SCREEN_GAMMA 2.2
 
-#define WEED_PLANT_IS_LAYER(lay) WEED_PLANT_IS_CHANNEL(lay)
-
 /// rowstride alignment values
 #define ALIGN_MIN 4
 #define ALIGN_DEF 16
@@ -141,70 +139,80 @@ void *convert_swapprepost_frame_thread(void *cc_params);
 
 void *convert_swab_frame_thread(void *cc_params);
 
-///////////////////////////////////////
+/////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 typedef weed_plant_t weed_layer_t;
 
-// these functions should be the defaults in future
+#define WEED_PLANT_LAYER 128
+
+#define WEED_LEAF_LAYER_TYPE "layer_type"
+#define WEED_LAYER_TYPE_NONE	0
+#define WEED_LAYER_TYPE_VIDEO	1
+#define WEED_LAYER_TYPE_AUDIO	2
+
+#define WEED_IS_LAYER(plant) (weed_plant_get_type(plant) == WEED_PLANT_LAYER)
+
+// create / destroy / copy layers
+weed_layer_t *weed_layer_new(int layer_type);
+weed_layer_t *weed_layer_new_for_frame(int clip, int frame);
+void create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
+weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
+weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
+                                     int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
+weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
+void *weed_layer_free(weed_layer_t *);
+
+// pixel_data
+boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
+void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
+void weed_layer_pixel_data_free(weed_layer_t *);
+
+#define WEED_GAMMA_MONITOR 1024
+#define WEED_LAYER_ALPHA_PREMULT 1
+
+weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
+
+// layer transformation functions
+void alpha_unpremult(weed_layer_t *, boolean un);
+boolean align_pixel_data(weed_layer_t *, size_t alignment);
+boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
+void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int osamtype, int oclamping, int osubspace);
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal, int tclamp);
 void compact_rowstrides(weed_layer_t *);
-void weed_layer_pixel_data_free(weed_layer_t *);
-boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
-void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
-LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette);
-boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
-weed_plant_t *weed_layer_new(void);
-weed_plant_t *weed_layer_new_for_frame(int clip, int frame);
-weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
-void *weed_layer_free(weed_layer_t *);
-weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
-weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
-                                     int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
+// palette information functions
+boolean weed_palette_is_lower_quality(int p1, int p2);
+boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array);
 
-int weed_layer_get_palette(weed_layer_t *);
-void **weed_layer_get_pixel_data(weed_plant_t *layer);
-int *weed_layer_get_rowstrides(weed_plant_t *layer);
-int weed_layer_get_width(weed_plant_t *layer);
-int weed_layer_get_height(weed_plant_t *layer);
-int weed_layer_get_palette(weed_plant_t *layer);
-
+// lives_painter (cairo) functions
+boolean weed_palette_is_painter_palette(int pal);
 lives_painter_t *layer_to_lives_painter(weed_layer_t *);
 boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 
-void create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
-
-void alpha_unpremult(weed_layer_t *, boolean un);
-
-boolean align_pixel_data(weed_layer_t *, size_t alignment);
-
-boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array);
-
-// palette information functions
+// pixbuf functions
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
-
-boolean weed_palette_is_lower_quality(int p1, int p2);
-
-boolean weed_palette_is_painter_palette(int pal);
-
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
-
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
+LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette);
+boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
-#ifdef USE_SWSCALE
-void sws_free_context(void);
-#endif
-
-// gamma correction
-boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
-void gamma_conv_params(int gamma_type, weed_plant_t *inst, boolean is_in);
+// layer info
+int weed_layer_is_video(weed_layer_t *);
+int weed_layer_is_audio(weed_layer_t *);
+int weed_layer_get_palette(weed_layer_t *);
+void **weed_layer_get_pixel_data(weed_layer_t *, int *nplanes);
+float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
+int weed_layer_get_audio_rate(weed_plant_t *layer);
+int weed_layer_get_naudchans(weed_plant_t *layer);
+int weed_layer_get_audio_length(weed_plant_t *layer);
+int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
+int weed_layer_get_width(weed_layer_t *);
+int weed_layer_get_height(weed_layer_t *);
+int weed_layer_get_palette(weed_layer_t *);
 int get_layer_gamma(weed_layer_t *);
-
-
-#define WEED_LAYER_ALPHA_PREMULT 1
 
 #endif

@@ -597,6 +597,31 @@ EXPORTS int weed_channel_get_stride(weed_plant_t *channel) {
   return *((int *)general_get(channel, WEED_LEAF_ROWSTRIDES, 0, (void *)&stride));
 }
 
+#ifdef NEED_AUDIO
+EXPORTS int weed_channel_get_audio_rate(weed_plant_t *channel) {
+  int arate;
+  return *((int *)general_get(channel, WEED_LEAF_AUDIO_RATE, 0, (void *)&arate));
+}
+
+EXPORTS int weed_channel_get_naudchans(weed_plant_t *channel) {
+  int achans;
+  return *((int *)general_get(channel, WEED_LEAF_AUDIO_CHANNELS 0, (void *)&achans));
+}
+
+EXPORTS int weed_channel_get_audio_length(weed_plant_t *channel) {
+  int alen;
+  return *((int *)general_get(channel, WEED_LEAF_AUDIO_DATA_LENGTH, 0, (void *)&alen));
+}
+
+#ifdef __WEED_UTILS_H__
+EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans) {
+  if (naudchans) *naudchans = 0;
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
+  return (float **)weed_get_voidptr_array_counted(channel, WEED_LEAF_AUDIO_DATA, naudchans);
+}
+#endif
+#endif
+
 EXPORTS int weed_is_threading(weed_plant_t *inst) {
   if (inst == NULL) return WEED_FALSE;
   else {
@@ -616,6 +641,24 @@ EXPORTS int weed_channel_get_true_height(weed_plant_t *channel) {
   return *((int *)(general_get(channel, WEED_LEAF_HEIGHT,
                                weed_leaf_num_elements(channel, WEED_LEAF_HEIGHT) - 1, &height)));
 }
+
+#ifdef __WEED_UTILS_H__
+EXPORTS weed_plant_t **weed_get_in_channels(weed_plant_t *instance, int *nchans) {
+  return weed_get_plantptr_array_counted(instance, WEED_LEAF_IN_CHANNELS, nchans);
+}
+
+EXPORTS weed_plant_t **weed_get_out_channels(weed_plant_t *instance, int *nchans) {
+  return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_CHANNELS, nchans);
+}
+
+EXPORTS weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams) {
+  return weed_get_plantptr_array_counted(instance, WEED_LEAF_IN_PARAMETERS, nparams);
+}
+
+EXPORTS weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams) {
+  return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_PARAMETERS, nparams);
+}
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 

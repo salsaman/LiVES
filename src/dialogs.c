@@ -1340,6 +1340,7 @@ int process_one(boolean visible) {
           }
         }
       }
+
       lives_widget_context_update(); // animate GUI, allow kb timer to run
 
       if (mainw->cancelled == CANCEL_NONE) return 0;

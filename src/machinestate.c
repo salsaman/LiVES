@@ -13,40 +13,30 @@
 
 void init_random() {
   ssize_t randres = -1;
-  uint32_t rseed;
+  uint64_t rseed;
   int randfd;
-  int i;
 
   // try to get randomness from /dev/urandom
   randfd = lives_open2("/dev/urandom", O_RDONLY);
 
   if (randfd > -1) {
-    randres = read(randfd, &rseed, sizint);
+    randres = read(randfd, &rseed, 8);
     close(randfd);
   }
 
   gettimeofday(&tv, NULL);
   rseed += tv.tv_sec + tv.tv_usec;
 
-  lives_srandom(rseed);
-
-  for (i = 0; i < 10000; i++) {
-    long int a, b;
-    a = lives_random();
-    b = a * lives_random();
-    a = b * lives_random();
-  }
-
-  randres = -1;
+  lives_srandom((uint32_t)(rseed & 0xFFFFFFFF));
 
   randfd = lives_open2("/dev/urandom", O_RDONLY);
 
   if (randfd > -1) {
-    randres = read(randfd, &rseed, sizint);
+    randres = read(randfd, &rseed, 8);
     close(randfd);
   }
 
-  if (randres != sizint) {
+  if (randres != 8) {
     gettimeofday(&tv, NULL);
     rseed = tv.tv_sec + tv.tv_usec;
   }
@@ -335,8 +325,7 @@ livespointer proxy_realloc(livespointer ptr, size_t new_size) {
 
 // functions with fixed pointers that we can pass to plugins ///
 void *_ext_malloc(size_t n) {
-  if (n == 0) return NULL;
-  return lives_malloc(n);
+  return (n == 0 ? NULL : lives_malloc(n));
 }
 void *_ext_malloc_and_copy(size_t bsize, const void *block) {
   if (!block || bsize == 0) return NULL;
@@ -350,14 +339,14 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 #ifdef lives_unmalloc_and_copy
   lives_unmalloc_and_copy(bsize, p);
 #else
-  lives_free(p);
+  _ext_free(p);
 #endif
 }
 void _ext_free(void *p) {
   if (p) lives_free(p);
 }
 void *_ext_free_and_return(void *p) {
-  if (p) lives_free(p);
+  _ext_free(p);
   return NULL;
 }
 void *_ext_memcpy(void *dest, const void *src, size_t n) {
@@ -719,12 +708,12 @@ void lives_log(const char *what) {
 #endif
 
 
-lives_cancel_t check_for_bad_ffmpeg(void) {
-  int i, fcount, ofcount;
+int check_for_bad_ffmpeg(void) {
+  int i, fcount;
   char *fname_next;
   boolean maybeok = FALSE;
+  int ofcount = cfile->frames;
 
-  ofcount = cfile->frames;
   get_frame_count(mainw->current_file);
   fcount = cfile->frames;
 
@@ -737,9 +726,7 @@ lives_cancel_t check_for_bad_ffmpeg(void) {
     }
     lives_free(fname_next);
   }
-
   cfile->frames = ofcount;
-
   if (!maybeok) {
     do_error_dialog(
       _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"

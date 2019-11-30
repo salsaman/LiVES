@@ -48,11 +48,22 @@ int32_t weed_plant_get_type(weed_plant_t *);
 /* FILTER functions */
 int weed_filter_get_flags(weed_plant_t *filter);
 int weed_filter_is_resizer(weed_plant_t *filter);
+weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
+
+/* FILTER_INSTANCE functions */
+weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans);
+weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans);
 
 /* CHANNEL_TEMPLATE functions */
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
 int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) WARN_UNUSED;
+
+/* a return value of zero means unlimited repeats */
+int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
 
 /* CHANNEL functions */
 void *weed_channel_get_pixel_data(weed_plant_t *channel);
@@ -64,11 +75,22 @@ int weed_channel_get_palette(weed_plant_t *channel);
 int weed_channel_get_palette_details(weed_plant_t *channel, int *clamping, int *sampling, int *subspace);
 int weed_channel_get_rowstride(weed_plant_t *channel);
 int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
+int weed_channel_is_disabled(weed_plant_t *channel);
 weed_plant_t *weed_channel_get_template(weed_plant_t *channel);
 
 /// width in pixels: only relevant when comparing widths of diferrent palettes
 int weed_channel_get_width_pixels(weed_plant_t *channel);
 
+// audio channels
+int weed_channel_get_audio_rate(weed_plant_t *channel);
+int weed_channel_get_naudchans(weed_plant_t *channel);
+int weed_channel_get_audio_length(weed_plant_t *channel);
+float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
+
+weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, int arate, int naudchans, weed_size_t nsamps);
+
+
+// utils
 char *weed_seed_type_to_text(int32_t seed_type) WARN_UNUSED;
 char *weed_error_to_text(weed_error_t error) WARN_UNUSED;
 char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;

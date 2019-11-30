@@ -11005,14 +11005,14 @@ boolean lives_widget_context_update(void) {
             ev->type != GDK_KEY_PRESS && ev->type != GDK_KEY_RELEASE)
           nulleventcount = 0;
       }
-      if (pthread_mutex_trylock(&mainw->gtk_mutex)) break;
+      //if (pthread_mutex_trylock(&mainw->gtk_mutex)) break;
       /* if (!mainw->loadmeasure_reset) { */
       /* 	lives_source_remove(mainw->loadmeasure); */
       /* 	mainw->loadmeasure = 0; */
       /* 	lm_needs_idlefunc = TRUE; */
       /* } */
       g_main_context_iteration(NULL, FALSE);
-      pthread_mutex_unlock(&mainw->gtk_mutex);
+      //pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif
   }

@@ -4707,17 +4707,17 @@ int get_hex_digit(const char *c) {
 }
 
 
-static uint32_t fastrand_val;
+static uint64_t fastrand_val;
 
-LIVES_GLOBAL_INLINE uint32_t fastrand(void) {
+LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
 #define rand_a 1073741789L
 #define rand_c 32749L
-
-  return (fastrand_val = rand_a * fastrand_val + rand_c);
+  fastrand_val = rand_a * fastrand_val + rand_c;
+  return fastrand_val;
 }
 
 
-void fastsrand(uint32_t seed) {
+void fastsrand(uint64_t seed) {
   fastrand_val = seed;
 }
 

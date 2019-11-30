@@ -40,7 +40,7 @@ extern "C"
 
 #include <string.h>
 
-#define WEED_COMPAT_VERSION 0.11.0
+#define WEED_COMPAT_VERSION 0.12.0
 
 #ifdef NEED_FOURCC_COMPAT
 

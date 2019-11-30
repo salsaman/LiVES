@@ -174,6 +174,7 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 
 #define LIVES_MAXINT G_MAXINT
 #define LIVES_MAXUINT32 G_MAXUINT32
+#define LIVES_MAXUINT64 G_MAXUINT64
 #define LIVES_MAXSIZE G_MAXSIZE
 #define LIVES_MAXFLOAT G_MAXFLOAT
 #define LIVES_MAXDOUBLE G_MAXDOUBLE

@@ -40,7 +40,7 @@ boolean send_layer(weed_plant_t *layer, _vid_playback_plugin *vpp, int64_t timec
   compact_rowstrides(layer);
 
   // get a void ** to the planar pixel_data
-  pd_array = weed_layer_get_pixel_data(layer);
+  pd_array = weed_layer_get_pixel_data(layer, NULL);
 
   if (pd_array != NULL) {
     // send pixel data to the video frame renderer
@@ -226,7 +226,7 @@ boolean transcode(int start, int end) {
   mainw->rowstride_alignment_hint = 16;
 
   // create a frame layer,
-  frame_layer = weed_layer_new();
+  frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
 
   // need img_ext for pulling the frame
@@ -299,8 +299,15 @@ boolean transcode(int start, int end) {
 
         if (mainw->fx1_bool) {
           // apply any audio effects with in_channels
-          if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf,
-                cfile->achans, nsamps, cfile->arate, currticks, FALSE, FALSE);
+          if (has_audio_filters(AF_TYPE_ANY)) {
+            weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+            weed_layer_set_audio_data(layer, fltbuf, cfile->arate, cfile->achans, nsamps);
+            weed_apply_audio_effects_rt(layer, currticks, FALSE, FALSE);
+            lives_free(fltbuf);
+            fltbuf = (float **)weed_layer_get_audio_data(layer, NULL);
+            weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+            weed_layer_free(layer);
+          }
         }
         (*mainw->vpp->render_audio_frame_float)(fltbuf, nsamps);
       }

@@ -448,7 +448,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
           pulsed->aPlayPtr->size = 0;
           in_bytes = ABS((in_frames = ((double)pulsed->in_arate / (double)pulsed->out_arate *
-                                       (double)pulseFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
+                                       (double)pulseFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64))))
                      * pulsed->in_achans * (pulsed->in_asamps >> 3);
 #ifdef DEBUG_PULSE
           g_print("in bytes=%ld %ld %ld %ld %ld %ld\n", in_bytes, pulsed->in_arate, pulsed->out_arate, pulseFramesAvailable, pulsed->in_achans,
@@ -574,6 +574,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   }
                 }
               }
+
             } while (loop_restart);
           }
           xin_bytes = in_bytes;
@@ -660,18 +661,29 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 }
                 break;
               }
-
-              pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i, numFramesToWrite, pulsed->out_achans, FALSE,
-                                         FALSE, 1.0);
+              /// convert to float, and take the opportunity to find the max volume
+              /// (currently this is used to trigger recording start optionally)
+              pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)pulsed->sound_buffer + i,
+                                         numFramesToWrite, pulsed->out_achans, FALSE, FALSE, 1.0);
             }
 
             if (memok) {
               ticks_t tc = mainw->currticks;
               // apply any audio effects with in_channels
 
-              if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fltbuf,
-                    pulsed->out_achans, numFramesToWrite, pulsed->out_arate, tc, FALSE, TRUE);
-
+              if (has_audio_filters(AF_TYPE_ANY)) {
+                /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
+                to the in channel of the filter and then from the out channel back to the layer. IF the filter supports inplace then
+                we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
+                and feed the result to the player as usual */
+                weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+                weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
+                weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+                lives_free(fltbuf);
+                fltbuf = weed_layer_get_audio_data(layer, NULL);
+                weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+                weed_layer_free(layer);
+              }
               // new streaming API
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
               if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
@@ -691,7 +703,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             lives_free(fltbuf);
           }
         } else {
-          // audio generator
+          // PULLING AUDIO FROM AN AUDIO GENERATOR
           // get float audio from gen, convert it to S16
           float **fbuffer = NULL;
           boolean pl_error = FALSE;
@@ -755,13 +767,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
 
               if (memok) {
-                ticks_t tc = mainw->currticks;
                 // apply any audio effects with in_channels
-
-                if (has_audio_filters(AF_TYPE_ANY)) weed_apply_audio_effects_rt(fp, pulsed->out_achans,
-                      numFramesToWrite, pulsed->out_arate, tc, FALSE, TRUE);
-
-                // new streaming API
+                ticks_t tc = mainw->currticks;
+                if (has_audio_filters(AF_TYPE_ANY)) {
+                  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+                  weed_layer_set_audio_data(layer, fp, pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
+                  weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+                  lives_free(fp);
+                  fp = weed_layer_get_audio_data(layer, NULL);
+                  weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+                  weed_layer_free(layer);
+                }
+                // new streaming API - we can push float audio to the playback plugin
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
                 if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
                   (*mainw->vpp->render_audio_frame_float)(fp, numFramesToWrite);
@@ -795,10 +812,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             lives_free(fp);
 
             if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
-              // write generated audio to ascrap_file
+              // if we are recording then write generated audio to ascrap_file
               size_t rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans *
                               mainw->files[mainw->ascrap_file]->asampsize >> 3;
-              pulse_flush_read_data(pulsed, mainw->ascrap_file, nbytes, mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN, buf);
+              pulse_flush_read_data(pulsed, mainw->ascrap_file,
+                                    nbytes, mainw->files[mainw->ascrap_file]->signed_endian & AFORM_BIG_ENDIAN, buf);
               mainw->files[mainw->ascrap_file]->aseek_pos += rbytes;
             }
           }
@@ -1153,7 +1171,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
           break;
         }
 
-        pulsed->abs_maxvol_heard = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnsamples, pulsed->in_achans, FALSE, FALSE, 1.0);
+        pulsed->abs_maxvol_heard
+          = sample_move_d16_float(fltbuf[i], (short *)(data) + i, xnsamples, pulsed->in_achans, FALSE, FALSE, 1.0);
 
         pthread_mutex_lock(&mainw->abuf_frame_mutex);
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
@@ -1166,12 +1185,17 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
 
       if (memok) {
         ticks_t tc = mainw->currticks;
-        // apply any audio effects with in channels but no out channels
+        // apply any audio effects with in channels but no out channels (analysers)
 
-        if (has_audio_filters(AF_TYPE_A)) weed_apply_audio_effects_rt(fltbuf, pulsed->in_achans,
-              xnsamples, pulsed->in_arate, tc, TRUE, TRUE);
-
-        // new streaming API
+        if (has_audio_filters(AF_TYPE_A)) {
+          weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+          weed_layer_set_audio_data(layer, fltbuf, pulsed->in_arate, pulsed->in_achans, xnsamples);
+          weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
+          lives_free(fltbuf);
+          fltbuf = weed_layer_get_audio_data(layer, NULL);
+          weed_layer_free(layer);
+        }
+        // stream audio to video playback plugin if appropriate (probably needs retesting...)
         pthread_mutex_lock(&mainw->vpp_stream_mutex);
         if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
           (*mainw->vpp->render_audio_frame_float)(fltbuf, xnsamples);
@@ -1430,7 +1454,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     }
     pa_operation_unref(pa_op);
   }
-  pa_mloop_unlock();
 
   if (pulse_server_rate == 0) {
     LIVES_WARN("Problem getting pulseaudio rate...expect more problems ahead.");
@@ -1440,6 +1463,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   pa_spec.rate = pdriver->out_arate = pdriver->in_arate = pulse_server_rate;
 
   pdriver->pstream = pa_stream_new_with_proplist(pdriver->con, pa_clientname, &pa_spec, &pa_map, pdriver->pa_props);
+  pa_mloop_unlock();
 
   if (pdriver->is_output) {
     pa_volume_t pavol;
@@ -1599,6 +1623,7 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
 
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
+
   while (pa_operation_get_state(pa_op) == PA_OPERATION_RUNNING) {
     pa_threaded_mainloop_wait(pa_mloop);
   }

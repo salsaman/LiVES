@@ -694,8 +694,11 @@ static int audio_process(nframes_t nframes, void *arg) {
               if (!pl_error && has_audio_filters(AF_TYPE_ANY)) {
                 ticks_t tc = mainw->currticks;
                 // apply inplace any effects with audio in_channels, result goes to jack
-                weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels,
-                                            numFramesToWrite, jackd->sample_out_rate, tc, FALSE, TRUE);
+                weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+                weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, jackd->num_output_channels, numFramesToWrite);
+                weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+                weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+                weed_layer_free(layer);
               }
 
               pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -744,8 +747,12 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (has_audio_filters(AF_TYPE_ANY) && jackd->playing_file != mainw->ascrap_file) {
                   ticks_t tc = mainw->currticks;
                   // apply inplace any effects with audio in_channels
-                  weed_apply_audio_effects_rt(out_buffer, jackd->num_output_channels,
-                                              numFramesToWrite, jackd->sample_out_rate, tc, FALSE, TRUE);
+                  weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+                  weed_set_voidptr_array(layer, WEED_LEAF_AUDIO_DATA, jackd->num_output_channels, (void **)out_buffer);
+                  weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, jackd->num_output_channels, numFramesToWrite);
+                  weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
+                  weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+                  weed_layer_free(layer);
                 }
 
                 pthread_mutex_lock(&mainw->vpp_stream_mutex);
@@ -1092,6 +1099,7 @@ static int audio_read(nframes_t nframes, void *arg) {
 
     if (has_audio_filters(AF_TYPE_A)) { // AF_TYPE_A are Analyser filters (audio in but no video channels out)
       ticks_t tc = mainw->currticks;
+      weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
 
       if (mainw->audio_frame_buffer != NULL && prefs->audio_src == AUDIO_SRC_EXT) {
         // if we have audio triggered gens., push audio to it
@@ -1104,7 +1112,10 @@ static int audio_read(nframes_t nframes, void *arg) {
       }
 
       // apply any audio effects with in_channels and no out_channels
-      weed_apply_audio_effects_rt(in_buffer, jackd->num_input_channels, nframes, jackd->sample_in_rate, tc, TRUE, TRUE);
+      weed_layer_set_audio_data(layer, in_buffer, jackd->sample_in_rate, jackd->num_output_channels, nframes);
+      weed_apply_audio_effects_rt(layer, tc, TRUE, TRUE);
+      weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+      weed_layer_free(layer);
     }
   }
 

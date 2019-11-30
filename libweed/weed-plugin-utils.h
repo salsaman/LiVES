@@ -170,9 +170,28 @@ FN_DECL int weed_channel_get_width(weed_plant_t *channel);
 FN_DECL int weed_channel_get_height(weed_plant_t *channel);
 FN_DECL int weed_channel_get_palette(weed_plant_t *channel);
 FN_DECL int weed_channel_get_stride(weed_plant_t *channel);
+
+#if defined(NEED_AUDIO) || defined(__LIBWEED_PLUGIN_UTILS__)
+FN_DECL int weed_channel_get_audio_rate(weed_plant_t *channel);
+FN_DECL int weed_channel_get_naudchans(weed_plant_t *channel);
+FN_DECL int weed_channel_get_audio_length(weed_plant_t *channel);
+#ifdef __WEED_UTILS_H__
+FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans;);
+#endif
+#endif
+
+#ifdef __WEED_UTILS_H__
+FN_DECL weed_plant_t **weed_get_in_channels(weed_plant_t *inst, int *nchans);
+FN_DECL weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
+#endif
+
+/* Threading */
 FN_DECL int weed_is_threading(weed_plant_t *inst);
 FN_DECL int weed_channel_get_offset(weed_plant_t *channel);
 FN_DECL int weed_channel_get_true_height(weed_plant_t *channel);
+
+#define IS_THREAD_MASTER(inst) (weed_is_threading(inst) && weed_channel_get_offset(weed_get_out_channel(inst)) == 0 \
+				? WEED_TRUE : WEED_FALSE)
 
 // general utils
 FN_DECL int is_big_endian(void);

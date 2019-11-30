@@ -119,17 +119,18 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_ap
                              int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 #endif
 
+/* typedef for host callback from weed_bootstrap; host MUST return a host_info, either the original one or a new one */
+typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
+
+/* set a host callback function to be called from within weed_bootstrap() */
+void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
+
 /* host only functions */
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
 // this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
 void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
 void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
 
-/* typedef for host callback from weed_bootstrap; host MUST return a host_info, either the original one or a new one */
-typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void *user_data);
-
-/* set a host callback function to be called from within weed_bootstrap() */
-void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 #endif
 
 #ifdef __WEED_PLUGIN__

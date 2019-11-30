@@ -901,7 +901,7 @@ fi
 AC_SUBST(WEED_UTILS_CFLAGS)
 AC_SUBST(WEED_UTILS_LIBS)
 
-PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.10.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
+PKG_CHECK_MODULES(WEED_COMPAT, libweed-compat >= 0.12.0, NEED_LOCAL_WEED_COMPAT=false, NEED_LOCAL_WEED_COMPAT=true)
 
 if test "$NEED_LOCAL_WEED_COMPAT" = "true"; then
 echo "...will use version from included sources"

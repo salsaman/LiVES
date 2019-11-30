@@ -131,6 +131,13 @@ static void cleanup_set_dir(const char *set_name) {
   }
 }
 
+//#define KEEP_VALGRIND_HAPPY
+#ifndef KEEP_VALGRIND_HAPPY
+#ifdef _lives_free
+#undef  lives_free
+#define lives_free(a) (mainw->is_exiting ? a : _lives_free(a))
+#endif
+#endif
 
 void lives_exit(int signum) {
   char *cwd, *tmp, *com;
@@ -189,6 +196,7 @@ void lives_exit(int signum) {
       autolives_toggle(NULL, NULL);
     }
 
+#ifdef KEEP_VALGRIND_HAPPY
     if (mainw->stored_event_list != NULL || mainw->sl_undo_mem != NULL) {
       stored_event_list_free_all(FALSE);
     }
@@ -200,7 +208,9 @@ void lives_exit(int signum) {
     if (mainw->multi_opts.set && !mainw->only_close && mainw->multi_opts.aparam_view_list != NULL) {
       lives_list_free(mainw->multi_opts.aparam_view_list);
     }
+#endif
 
+#ifdef KEEP_VALGRIND_HAPPY
     if (LIVES_IS_PLAYING) {
       lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
       if (mainw->ext_playback) {
@@ -222,7 +232,7 @@ void lives_exit(int signum) {
         lives_free(com);
       }
     }
-
+#endif
     // stop any background processing for the current clip
     if (CURRENT_CLIP_IS_VALID) {
       if (cfile->handle != NULL && CURRENT_CLIP_IS_NORMAL) {
@@ -236,14 +246,11 @@ void lives_exit(int signum) {
     if (!mainw->only_close) {
       // shut down audio players
 #ifdef HAVE_PULSE_AUDIO
-      pthread_mutex_lock(&mainw->abuf_mutex);
       if (mainw->pulsed != NULL) pulse_close_client(mainw->pulsed);
       if (mainw->pulsed_read != NULL) pulse_close_client(mainw->pulsed_read);
       pulse_shutdown();
-      pthread_mutex_unlock(&mainw->abuf_mutex);
 #endif
 #ifdef ENABLE_JACK
-      pthread_mutex_lock(&mainw->abuf_mutex);
       lives_jack_end();
       if (mainw->jackd != NULL) {
         jack_close_device(mainw->jackd);
@@ -251,7 +258,6 @@ void lives_exit(int signum) {
       if (mainw->jackd_read != NULL) {
         jack_close_device(mainw->jackd_read);
       }
-      pthread_mutex_unlock(&mainw->abuf_mutex);
 #endif
     }
 
@@ -474,18 +480,19 @@ void lives_exit(int signum) {
     unlock_set_file(mainw->set_name);
 
     // stop valgrind from complaining
-#ifdef VALG_COMPLAIN
+#ifdef KEEP_VALGRIND_HAPPY
     if (mainw->preview_image != NULL && LIVES_IS_IMAGE(mainw->preview_image))
       lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL);
 
     if (mainw->start_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL);
     if (mainw->end_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL);
-#endif
+
 
     if (mainw->frame_layer != NULL) {
       check_layer_ready(mainw->frame_layer);
       weed_layer_free(mainw->frame_layer);
     }
+#endif
 
     if (mainw->sep_win && (LIVES_IS_PLAYING || prefs->sepwin_type == SEPWIN_TYPE_STICKY)) {
       threaded_dialog_spin(0.);
@@ -494,6 +501,7 @@ void lives_exit(int signum) {
     }
   }
 
+#ifdef KEEP_VALGRIND_HAPPY
   lives_list_free_all(&mainw->current_layouts_map);
 
   if (capable->has_encoder_plugins) {
@@ -507,11 +515,13 @@ void lives_exit(int signum) {
 
   rfx_free_all();
   threaded_dialog_spin(0.);
+#endif
 
 #ifdef ENABLE_OSC
   if (prefs->osc_udp_started) lives_osc_end();
 #endif
 
+#ifdef KEEP_VALGRIND_HAPPY
   pconx_delete_all();
   cconx_delete_all();
 
@@ -569,12 +579,9 @@ void lives_exit(int signum) {
 
   if (mainw->fonts_array != NULL) lives_strfreev(mainw->fonts_array);
 
-#ifdef USE_SWSCALE
-  sws_free_context();
-#endif
-
 #ifdef ENABLE_NLS
   lives_freep((void **)&trString);
+#endif
 #endif
 
   tmp = lives_strdup_printf("signal: %d", signum);
@@ -584,6 +591,12 @@ void lives_exit(int signum) {
   exit(0);
 }
 
+#ifndef KEEP_VALGRIND_HAPPY
+#ifdef _lives_free
+#undef  lives_free
+#define lives_free _lives_free
+#endif
+#endif
 
 void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *tentry = LIVES_WIDGET(user_data);

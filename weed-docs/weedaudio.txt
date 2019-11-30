@@ -50,10 +50,54 @@ Generally, the following rules apply:
   discussion of this.
 
 
-  Channel mapping:
 
-mapping of subchannels -> channel layout (TBD)
 
+
+
+
+---   Channel mapping: ----
+
+For simple plugins, these are not required. However, for more advanced use, the following values are defined
+by default in weed-effevts.h:
+
+#define WEED_CHANNEL_LAYOUT_TYPE "default"
+
+#define WEED_CH_FRONT_LEFT 0x00000001
+#define WEED_CH_FRONT_RIGHT 0x00000002
+#define WEED_CH_FRONT_CENTER 0x00000004
+
+#define WEED_CH_LAYOUT_MONO (WEED_CH_FRONT_CENTER)
+#define WEED_CH_LAYOUT_STEREO (WEED_CH_FRONT_LEFT | WEED_CH_FRONT_RIGHT)
+
+#define WEED_CH_LAYOUTS_DEFAULT_MIN1 {WEED_CH_LAYOUT_MONO}
+#define WEED_CH_LAYOUTS_DEFAULT_MIN2 {WEED_CH_LAYOUT_STEREO, WEED_CH_LAYOUT_MONO}
+#define WEED_CH_LAYOUTS_DEFAULT WEED_CH_LAYOUTS_DEFAULT_MIN2
+
+
+If required, these values may be extended.
+
+weed/weed-compat.h is an optional include, provided for compatibility with some external libraries.
+
+as of WEED_COMPAT_VERSION 0.12.0, if USE_AVUTIL_CHANNEL_LAYOUTS is defined before including the header,
+and libavutils/channel_layouts.h is available, then it will be possible to use libavutil audio channel names and layouts in Weed filters.
+
+
+For example:
+WEED_CH_FRONT_LEFT will be defined as AV_CH_FRONT_LEFT
+WEED_CH_LOW_FREQUENCY 			AV_CH_LOW_FREQUENCY
+
+
+
+and
+WEED_CH_LAYOUT_STEREO will be an alias for AV_CH_LAYOUT_STEREO
+WEED_CH_LAYOUT_5POINT1 will be an alias for AV_CH_LAYOUT_5POINT1
+
+etc.
+
+in this case WEED_AVUTIL_CHANNEL_LAYOUTS will be defined, and WEED_CHANNEL_LAYOUT_TYPE will be set to "avutil"
+
+Otherwise,
+WEED_CHANNEL_LAYOUT_TYPE will be set to "default" in weed-effects.h
 
 
 

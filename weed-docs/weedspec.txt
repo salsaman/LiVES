@@ -278,6 +278,15 @@ This function returns a pointer to newly allocated plant with the "type" leaf va
 to the plant_type.
 
 
+Plant types 1 - 64 are reserved for the Weed Effects system.
+Plant types 128 - 255 are reserved for the Weed Layers system (in development)
+Plant types  256 - 511 are reserved for the Weed Events system (see Weed Event spec.)
+
+Plant types >= 1024 are free for custom use.
+
+
+
+
 
 
 == LEAVES ==
@@ -785,53 +794,6 @@ The libray and header are relatively compact - the stripped libweed.so is around
 and the header contains around 240 lines (include whitespace and comments).
 
 
-=== thread concurrency ====
-
-The for portabilty, the library does not implement any kind of mutex locking. A future version of the spec will add private data to the
-leaves, and this feature could be used to implement a private mutex locking scheme,
-wrapping the standard functions in a layer which stores a mutex pointer in the private data.
-
-
-In general the following rules should be observed:
-- two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
-  if one thread updates the leaf's num_elements between the other thread reading it and writing it - in this case num_elements
-  could mismatch the number of actual  elements in data
-  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
-
-  The majority of the time libweed sgould be able to detect this, and it will return WEED_ERROR_CONCURRENCY
-  to one thread, and its value will be ignored.
-
-- if two threads attempt to add new leaves simultaneously to the same plant, there is a miniscule chance that only one will be added.
- (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
-
- The majority of the time libweed should be able to  detect this, and  it will return WEED_ERROR_CONCURRENCY
-  to one thread, and its leaf will nor be added.
-
-- attempting to read a leaf's value whilst it is being set is OK;
-   however weed_leaf_set() will return WEED_ERROR_NOSUCH_ELEMENT for an existing leaf, until the value is fully updated.
-
-- getting the seed type is fine as this is constant
-
-- getting / setting flags is fine
-
-- reading the number of elements may temporarily return 0 whilst the value is being updated
-
-
-- two threads attempting to delete a leaf at the same time should be reasonably safe;
-  the only risk is if one thread updates the previous node's next pointer between the other thread reading it and writing it.
-  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe.)
-
-The majority of the time libweed will be able to detect this, and it will return WEED_ERROR_CONCURRENCY
-  to one thread, and its value will be ignored.
-
-
-calling weed_leaf_delete() or weed_plant_free() simultaneously with any other function affecting the plant is still very bad idea.
-Don't do it !!
-
-
-
-
-
 
 
 == GETTING/SETTING LEAF VALUES ==
@@ -938,6 +900,136 @@ An exampe of Compiling plugins and hosts for different applications (in this cas
 
 
 
+========== Library Implementation details  ====================
+
+The library uses a hash function for comparing keys, and then a strcmp on only on a match.
+Thus searching the list is usually quite rapid.
+
+The "type" leaf (i.e the plant) is always the first leaf. Newly added leaves are appended directly after this.
+Thus, when adding multiple leaves, more frequently accessed ones should be added last.
+
+---- Platform availability  ---
+Th library and plugins have been tested on Linux, and on Windows 10 using msys2 / mingw.
+Patches for other operating systems are welcome.
+
+The headers and libraries are usable with standard C and C++.
+
+The only system headers required are: stddef.h, inttypes.h, string.h, amd stdlo,h,
+For the gslice implementation, glib.h libglib is also required.
+
+
+SDK:
+
+and SDK is in development. The full release will consist of:
+
+For plugin writers:
+
+This spec.
+The Weed Audio spec.
+
+weed-plugin.h
+weed.h
+weed-utils.h
+weed-effects.h
+weed-plugin-utils.h
+weed-plugin-utils.c
+weed-palettes.h
+weed-compat.h
+
+a template plugin
+a set of reference plugins.
+
+
+For host writers:
+
+This spec.
+The Weed Audio spec.
+The Weed Events spec.
+The Weed Layers spec. (under consideration).
+
+weed-host.h
+weed.h
+weed-utils.h
+weed-effects.h
+weed-palettes.h
+weed-compat.h
+weed-events.h  (under consideration). [timeline handling integrated in the Weed system]
+
+libweed (3 versions: standard memory functions, gslice allocator, pthread mutex).
+
+libweed-utils
+
+libweed-host-utils and weed-host-utils.h  (under consideration).
+libweed-layers (under consideration) [used for manipulating channel data sent to and received from a plugin]
+
+
+
+Example host functions:
+
+e.g.
+
+- loading and setting up a plugin
+- retrieving the filter classes from a plugin
+- sanity checking a filter
+- creating an instance from a filter
+- setting in parameters
+- calling the init_func
+- calling process_func
+- calling deinit_func
+- threading
+- unloading the plugin
+
+
+
+=== thread concurrency ====
+
+The for portabilty, the library does not implement any kind of mutex locking. A future version of the spec will add private data to the
+leaves, and this feature could be used to implement a private mutex locking scheme,
+wrapping the standard functions in a layer which stores a mutex pointer in the private data.
+
+
+In general the following rules should be observed:
+- two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
+  if one thread updates the leaf's num_elements between the other thread reading it and writing it - in this case num_elements
+  could mismatch the number of actual  elements in data
+  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
+
+  The majority of the time libweed sgould be able to detect this, and it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its value will be ignored.
+
+- if two threads attempt to add new leaves simultaneously to the same plant, there is a miniscule chance that only one will be added.
+ (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe)
+
+ The majority of the time libweed should be able to  detect this, and  it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its leaf will nor be added.
+
+- attempting to read a leaf's value whilst it is being set is OK;
+   however weed_leaf_set() will return WEED_ERROR_NOSUCH_ELEMENT for an existing leaf, until the value is fully updated.
+
+- getting the seed type is fine as this is constant
+
+- getting / setting flags is fine
+
+- reading the number of elements may temporarily return 0 whilst the value is being updated
+
+
+- two threads attempting to delete a leaf at the same time should be reasonably safe;
+  the only risk is if one thread updates the previous node's next pointer between the other thread reading it and writing it.
+  (if libweed is compiled with gcc then atomic gets / sets are used if suppported, so it is almost guaranteed to  be safe.)
+
+The majority of the time libweed will be able to detect this, and it will return WEED_ERROR_CONCURRENCY
+  to one thread, and its value will be ignored.
+
+
+calling weed_leaf_delete() or weed_plant_free() simultaneously with any other function affecting the plant is still very bad idea.
+Don't do it !!
+
+
+
+
+
+
+
 
 
 
@@ -1008,6 +1100,23 @@ sspace will return the YUV subspace e.g. WEED_YUV_SUBSPACE_YCBCR, WEED_YUV_SUBSP
 clamping will return the YUV clamping type, WEED_YUV_CLAMPING_CLAMPED or WEED_YUV_CLAMPING_UNCLAMPED
 
 as of WEED_COMPAT_VERSION 0.11.0 it will also #define WEED_FOURCC_COMPAT in this case.
+
+for the Weed Audio extension:
+
+as of WEED_COMPAT_VERSION 0.12.0, if USE_AVUTIL_CHANNEL_LAYOUTS is defined before including the header,
+and libavutils/channel_layouts.h is available, then it will be possible to use libavutil audio channel names and layouts natively
+in Weed.
+For example:
+WEED_CH_FRONT_LEFT will be defined as AV_CH_FRONT_LEFT
+and
+WEED_CH_LAYOUT_STEREO will equal AV_CH_LAYOUT_STEREO
+
+etc.
+
+in this case WEED_AVUTIL_CHANNEL_LAYOUTS will be defined, and WEED_CHANNEL_LAYOUT_TYPE will be set to "avutil"
+
+Otherwise,
+WEED_CHANNEL_LAYOUT_TYPE will be set to "default" in weed-effects.h
 
 
 
@@ -2022,6 +2131,8 @@ parameter (input or output) filter can handle. All leaves SHOULD be set readonly
 weed_setup(). Host should only change the "default" value to a valid
 value for the parameter. The host should not change any other leaves.
 
+ * "type" == WEED_PLANT_PARAMETER_TEMPLATE
+
 '''Mandatory leaves''': [[BR]]
 
 * "name" : WEED_SEED_STRING  : name of the parameter, MUST be unique across the in_parameters/out_parameters
@@ -2229,7 +2340,7 @@ output parameter "value" only by the plugin. Parameters MUST match
 one to one with parameter templates (same order, same number). For output 
 parameters, the host should create the parameters from their templates, but not set the "value" leaf.
 
-
+ * "type" == WEED_PLANT_PARAMETER
 
 '''Mandatory leaves''': [[BR]]
  * "template" : WEED_SEED_PLANTPTR : pointer to the parameter_template used to create the parameter
@@ -2276,6 +2387,8 @@ parameters, the host should create the parameters from their templates, but not 
 
 This plant type has differing properties depending on whether it is
 referenced from (i.e. contained in) filter_instance, a parameter_template.or a parameter
+
+ * "type" == WEED_PLANT_GUI
 
 ==== filter_class GUI ====
 Plugin may set any of these leaves in weed_setup(). After that the plugin must not alter any leaves, except for private leaves
@@ -2404,10 +2517,13 @@ At other times the plugin must not alter any of the leaves, except for any priva
    setting it to point to itself.
 
 
- * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter should be hidden by the host in any interfasce windows
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter should be hidden by the host in any interface windows
    	      			This is to allow the plugin to suggest to the host that it show / hide different parameters depending on
-				the values of other parameters, channel sizes and palettes, etc. If this leaf also exists int the parameter template
-				then this leaf overrides any default set there.
+				the values of other parameters, channel sizes and palettes, etc. If this leaf also exists in the parameter template
+				then this leaf overrides any default set there. In this more detailed version of the leaf,
+
+				Needs testing:
+				if the flag WEED_PARAMETER_VALUE_PER_CHANNEL is set, then 1 value may be set per channel.
 
 
  * "choices" : WEED_SEED_STRING : n values for a choice: only valid for INT parameters, the "value" element(s)

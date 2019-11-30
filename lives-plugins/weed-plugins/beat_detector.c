@@ -164,17 +164,13 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int hamming = weed_get_boolean_value(in_params[3], WEED_LEAF_VALUE, NULL);
 
   int beat_pulse = WEED_FALSE, beat_hold = weed_get_boolean_value(out_params[1], WEED_LEAF_VALUE, NULL);
-
   int has_data = WEED_FALSE;
-
   int kmin, kmax, okmin, rkmin, rkmax;
 
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
 
   double var, av;
-
   float tot = 0., totx;
-
   register int i, j, s;
 
   weed_free(in_params);
@@ -199,13 +195,11 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
     for (i = 0; i < NSLICES; i++) {
       sdata->av[i] = 0.;
-
       for (j = 0; j < sdata->bufidx; j++) {
         sdata->buf[i][j] = sdata->buf[i][j + 1];
         if (sdata->buf[i][j] != -1.) sdata->av[i] += (double)sdata->buf[i][j];
       }
     }
-
     has_data = WEED_TRUE;
   } else {
     sdata->bufidx++;
@@ -344,7 +338,7 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     if (var >= varlim && sdata->buf[i][sdata->bufidx] >= (avlim * av)) {
       // got a beat !
       beat_pulse = beat_hold = WEED_TRUE;
-      //fprintf(stderr,"PULSE !\n");
+      fprintf(stderr, "PULSE !\n");
       break;
     }
   }
@@ -356,9 +350,7 @@ done:
   //else printf("NOBEAT %.2f\n",osrc!=NULL?osrc[0]:1.23);
 
   weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, beat_pulse);
-  weed_set_int64_value(out_params[0], WEED_LEAF_TIMECODE, timestamp);
   weed_set_boolean_value(out_params[1], WEED_LEAF_VALUE, beat_hold);
-  weed_set_int64_value(out_params[1], WEED_LEAF_TIMECODE, timestamp);
 
   weed_free(out_params);
 
@@ -369,10 +361,16 @@ done:
 WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_SUCCESS) return NULL;
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
-  weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE), weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
-                               weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.), weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
+  weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE),
+                               weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
+                               weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.),
+                               weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
                               };
-  weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE), weed_out_param_switch_init("beat hold", WEED_FALSE), NULL};
+
+  weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE),
+                                weed_out_param_switch_init("beat hold", WEED_FALSE), NULL
+                               };
+
   weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, NULL, beat_init, beat_process,
                                beat_deinit, in_chantmpls, NULL, in_params, out_params);
 

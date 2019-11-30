@@ -4761,16 +4761,16 @@ boolean deal_with_render_choice(boolean add_deinit) {
 }
 
 
+/**  @brief calculate the "visibility" of each track at timecode tc
+
+     that is to say, only the front track is visible, except if we have a transition and WEED_LEAF_HOST_AUDIO_TRANSITION is set
+     - in which case the track visibilty is proportional to the transition parameter
+
+     to do this, we need a filter map and a frame/clip stack
+
+     if bleedthru is TRUE, all values are set to 1.0 */
 double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nbtracks,
                                    weed_timecode_t tc, weed_plant_t **shortcut, boolean bleedthru) {
-  // calculate the "visibility" of each track at timecode tc
-  // that is to say, only the front track is visible, except if we have a transition and WEED_LEAF_HOST_AUDIO_TRANSITION is set
-  // - in which case the track visibilty is proportional to the transition parameter
-
-  // to do this, we need a filter map and a frame/clip stack
-
-  // if bleedthru is TRUE, all values are set to 1.0
-
   static weed_plant_t *stored_fmap;
 
   weed_plant_t *frame_event, *fmap;
@@ -4849,7 +4849,8 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
             weed_plant_t *ttmpl = weed_get_plantptr_value(in_params[tparam], WEED_LEAF_TEMPLATE, &error);
             double trans;
 
-            if (weed_plant_has_leaf(ievent, WEED_LEAF_IN_PARAMETERS) && tparam < weed_leaf_num_elements(ievent, WEED_LEAF_IN_PARAMETERS)) {
+            if (weed_plant_has_leaf(ievent, WEED_LEAF_IN_PARAMETERS)
+                && tparam < weed_leaf_num_elements(ievent, WEED_LEAF_IN_PARAMETERS)) {
               void **pchains = weed_get_voidptr_array(ievent, WEED_LEAF_IN_PARAMETERS, &error);
               interpolate_param(inst, tparam, pchains[tparam], tc);
               lives_free(pchains);

@@ -2265,6 +2265,7 @@ void play_file(void) {
       }
     }
 
+
     if (mainw->play_window != NULL) {
       hide_cursor(lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window, TRUE);
@@ -2583,8 +2584,8 @@ void play_file(void) {
             int i;
             mainw->write_abuf = 0;
 
-            // fill our audio buffers now
-            // this will also get our effects state
+            /// fill our audio buffers now
+            /// this will also get our effects state
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);

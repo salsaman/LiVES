@@ -9097,6 +9097,7 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
             }
           }
         }
+
         lives_free(aclip_index);
         lives_free(aseek_index);
       }
@@ -11429,7 +11430,8 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   else eventbox = (LiVESWidget *)mt->audio_draws->data;
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
-  if (block != NULL && (mt->opts.grav_mode == GRAV_MODE_LEFT || (mt->opts.grav_mode == GRAV_MODE_RIGHT && block->next != NULL)) &&
+  if (block != NULL && (mt->opts.grav_mode == GRAV_MODE_LEFT ||
+                        (mt->opts.grav_mode == GRAV_MODE_RIGHT && block->next != NULL)) &&
       !did_backup) {
     double oldr_start = mt->region_start;
     double oldr_end = mt->region_end;
@@ -11478,19 +11480,19 @@ track_rect *move_block(lives_mt *mt, track_rect *block, double timesecs, int old
   // get this again because it could have moved
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
+  if (!did_backup) {
+    if (mt->avol_fx != -1 && (block == NULL || block->next == NULL) && mt->audio_draws != NULL &&
+        mt->audio_draws->data != NULL && get_first_event(mt->event_list) != NULL) {
+      apply_avol_filter(mt);
+    }
+  }
+
   // apply autotransition
   if (prefs->atrans_fx != -1) {
     // add the insert and autotrans as 2 separate undo events
     mt->did_backup = did_backup;
     mt_do_autotransition(mt, block);
     mt->did_backup = TRUE;
-  }
-
-  if (!did_backup) {
-    if (mt->avol_fx != -1 && (block == NULL || block->next == NULL) && mt->audio_draws != NULL &&
-        mt->audio_draws->data != NULL && get_first_event(mt->event_list) != NULL) {
-      apply_avol_filter(mt);
-    }
   }
 
   if (!did_backup && mt->framedraw != NULL && mt->current_rfx != NULL && mt->init_event != NULL &&
@@ -17421,6 +17423,12 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
   // get this again because it could have moved
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
+  if (!did_backup) {
+    if (mt->avol_fx != -1 && block != NULL && block->next == NULL && get_first_event(mt->event_list) != NULL) {
+      apply_avol_filter(mt);
+    }
+  }
+
   if (!mt->moving_block && prefs->atrans_fx != -1) {
     // add the insert and autotrans as 2 separate undo events
     mt->did_backup = did_backup;
@@ -17433,12 +17441,6 @@ boolean multitrack_insert(LiVESMenuItem *menuitem, livespointer user_data) {
     if (bgimage != NULL) {
       draw_block(mt, NULL, bgimage, block, 0, lives_widget_get_allocation_width(eventbox));
       lives_widget_queue_draw(eventbox);
-    }
-  }
-
-  if (!did_backup) {
-    if (mt->avol_fx != -1 && block != NULL && block->next == NULL && get_first_event(mt->event_list) != NULL) {
-      apply_avol_filter(mt);
     }
   }
 

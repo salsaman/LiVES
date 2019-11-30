@@ -52,6 +52,7 @@ extern "C"
 #endif
 
 #define WEED_LEAF_IGNORE "ignore"
+#define WEED_LEAF_TIMECODE "timecode"
 
 #ifdef __cplusplus
 }

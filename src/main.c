@@ -612,7 +612,6 @@ static boolean pre_init(void) {
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
   // recursive locks
-  pthread_mutex_init(&mainw->gtk_mutex, &mattr);
   pthread_mutex_init(&mainw->interp_mutex, &mattr);
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
@@ -638,8 +637,6 @@ static boolean pre_init(void) {
 
   prefs->wm = NULL;
   prefs->sleep_time = 1000;
-
-  mainw->splash_window = NULL;
 
   prefs->present = FALSE;
 
@@ -927,7 +924,6 @@ static void lives_init(_ign_opts *ign_opts) {
   for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
   mainw->fs = FALSE;
   mainw->prefs_changed = FALSE;
-  mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
   mainw->first_free_file = 1;
   mainw->insert_after = TRUE;
   mainw->mute = FALSE;
@@ -1063,8 +1059,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->scrap_file = -1;
   mainw->ascrap_file = -1;
 
-  mainw->multitrack = NULL;
-
   mainw->jack_can_stop = FALSE;
   mainw->jack_can_start = TRUE;
 
@@ -1109,8 +1103,6 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->jackd = mainw->jackd_read = NULL;
 
   mainw->pulsed = mainw->pulsed_read = NULL;
-
-  mainw->suppress_dprint = FALSE;
 
   mainw->opening_frames = -1;
 
@@ -1210,8 +1202,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->render_error = LIVES_RENDER_ERROR_NONE;
 
-  mainw->is_exiting = FALSE;
-
   mainw->add_clear_ds_button = FALSE;
   mainw->add_clear_ds_adv = FALSE;
   mainw->tried_ds_recover = FALSE;
@@ -1241,8 +1231,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->signal_caught = 0;
   mainw->signals_deferred = FALSE;
-
-  mainw->ce_thumbs = FALSE;
 
   mainw->n_screen_areas = SCREEN_AREA_USER_DEFINED1;
   mainw->screen_areas = (lives_screen_area_t *)lives_malloc(mainw->n_screen_areas * sizeof(lives_screen_area_t));
@@ -1285,8 +1273,6 @@ static void lives_init(_ign_opts *ign_opts) {
 #endif
 
   mainw->stop_emmission = NULL;
-
-  mainw->no_context_update = FALSE;
 
   mainw->recovering_files = FALSE;
 
@@ -3258,6 +3244,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   char cdir[PATH_MAX];
   boolean toolong = FALSE;
   char *tmp, *dir, *msg;
+  pthread_mutexattr_t mattr;
 
 #ifdef GUI_QT
   qapp = new QApplication(argc, argv);
@@ -3279,10 +3266,12 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 
 
+#ifdef IS_LIBLIVES
 #ifdef GUI_GTK
   if (gtk_thread != NULL) {
     pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL);
   }
+#endif
 #endif
 
   zargc = argc;
@@ -3315,11 +3304,11 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #endif
 #endif
 
-#ifdef GUI_GTK
-  if (gtk_thread != NULL) {
-    pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL);
-  }
-#endif
+  /* #ifdef GUI_GTK */
+  /*   if (gtk_thread != NULL) { */
+  /*     pthread_create(gtk_thread, NULL, gtk_thread_wrapper, NULL); */
+  /*   } */
+  /* #endif */
 
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
@@ -3395,16 +3384,28 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   prefs->yuvin[0] = '\0';
 #endif
 
-  mainw = (mainwindow *)(lives_calloc(sizeof(mainwindow), 1));
+  mainw = (mainwindow *)(lives_calloc(1, sizeof(mainwindow)));
   mainw->version_hash = lives_strdup_printf("%d", verhash(LiVES_VERSION));
-  mainw->is_ready = mainw->fatal = FALSE;
-  mainw->go_away = TRUE;
   mainw->mgeom = NULL;
   mainw->cached_list = NULL;
   mainw->msg[0] = '\0';
   mainw->com_failed = FALSE;
   mainw->error = FALSE;
   mainw->loadmeasure = 0;
+  mainw->is_exiting = FALSE;
+  mainw->multitrack = NULL;
+  mainw->splash_window = NULL;
+  mainw->is_ready = mainw->fatal = FALSE;
+  mainw->go_away = TRUE;
+  mainw->last_dprint_file = mainw->current_file = mainw->playing_file = -1;
+  mainw->no_context_update = FALSE;
+  mainw->ce_thumbs = FALSE;
+  mainw->LiVES = NULL;
+  mainw->suppress_dprint = FALSE;
+
+  pthread_mutexattr_init(&mattr);
+  pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(&mainw->gtk_mutex, &mattr);
 
   init_random();
 
@@ -7124,6 +7125,7 @@ void load_frame_image(int frame) {
     // local display of its own
 
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
+    if (weed_layer_get_width(mainw->frame_layer) == 0) return;
 
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
       // no display to output, skip the rest

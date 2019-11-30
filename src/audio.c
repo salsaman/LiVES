@@ -15,6 +15,9 @@ static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 
+LIVES_LOCAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
+  return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
+}
 
 LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
   return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE);
@@ -103,7 +106,7 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
     abuf->out_achans = channum;
   }
   channum--;
-  abuf->bufferf[channum] = (float *)lives_realloc(abuf->bufferf[channum], nsampsize * sizeof(float));
+  abuf->bufferf[channum] = (float *)lives_realloc(abuf->bufferf[channum], nsampsize * sizeof(float) + EXTRA_BYTES);
   lives_memcpy(&abuf->bufferf[channum][abuf->samples_filled], src, nsamples * sizeof(float));
   pthread_mutex_unlock(&mainw->abuf_mutex);
 }
@@ -130,14 +133,14 @@ void append_to_audio_buffer16(void *src, uint64_t nsamples, int channum) {
   channum++;
   if (abuf->buffer16 == NULL || channum > abuf->out_achans) {
     register int i;
-    abuf->buffer16 = (int16_t **)lives_realloc(abuf->buffer16, channum * sizeof(int16_t *));
+    abuf->buffer16 = (int16_t **)lives_calloc(channum, sizeof(short *));
     for (i = abuf->out_achans; i < channum; i++) {
       abuf->buffer16[i] = NULL;
     }
     abuf->out_achans = channum;
   }
   channum--;
-  abuf->buffer16[channum] = (int16_t *)lives_realloc(abuf->buffer16[channum], nsampsize * 2);
+  abuf->buffer16[channum] = (short *)lives_realloc(abuf->buffer16[channum], nsampsize * sizeof(short) + EXTRA_BYTES);
   lives_memcpy(&abuf->buffer16[channum][abuf->samples_filled], src, nsamples * 2);
 #ifdef DEBUG_AFB
   g_print("append16 to afb\n");
@@ -153,11 +156,12 @@ void init_audio_frame_buffers(short aplayer) {
 
   for (i = 0; i < 2; i++) {
     lives_audio_buf_t *abuf;
-    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_calloc(sizeof(lives_audio_buf_t), 1);
+    mainw->afb[i] = abuf = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
 
     abuf->samples_filled = 0;
     abuf->swap_endian = FALSE;
     abuf->out_achans = 0;
+    abuf->start_sample = 0;
 
     switch (aplayer) {
 #ifdef HAVE_PULSE_AUDIO
@@ -234,6 +238,7 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
 
     abuf->samples_filled = 0;
     abuf->out_achans = 0;
+    abuf->start_sample = 0;
   }
 #ifdef DEBUG_AFB
   g_print("clear afb %p\n", abuf);
@@ -301,7 +306,7 @@ LIVES_GLOBAL_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
 
 
 void sample_silence_stream(int nchans, int nframes) {
-  float **fbuff = malloc(nchans * sizeof(float *));
+  float **fbuff = (float **)lives_calloc(nchans, sizeof(float *));
   boolean memok = TRUE;
   int i;
 
@@ -834,7 +839,6 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
 
     if (nsamps > 0) {
       // buffer was drained, move on to next buffer
-
       pthread_mutex_lock(&mainw->abuf_mutex);
       // request main thread to fill another buffer
       mainw->abufs_to_fill++;
@@ -846,11 +850,8 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
       }
 
       mainw->pulsed->read_abuf++;
-
       if (mainw->pulsed->read_abuf >= prefs->num_rtaudiobufs) mainw->pulsed->read_abuf = 0;
-
       abuf = mainw->pulsed->abufs[mainw->pulsed->read_abuf];
-
       pthread_mutex_unlock(&mainw->abuf_mutex);
     }
   }
@@ -879,7 +880,7 @@ boolean float_deinterleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i, j;
 
-  float *tmpfbuffer = (float *)lives_malloc(nsamps * nchans * sizeof(float));
+  float *tmpfbuffer = (float *)lives_calloc_safety(nsamps * nchans, sizeof(float));
   if (tmpfbuffer == NULL) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
@@ -897,7 +898,7 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
   // deinterleave a float buffer
   register int i, j;
 
-  float *tmpfbuffer = (float *)lives_malloc(nsamps * nchans * sizeof(float));
+  float *tmpfbuffer = (float *)lives_calloc_safety(nsamps * nchans, sizeof(float));
   if (tmpfbuffer == NULL) return FALSE;
 
   for (i = 0; i < nsamps; i++) {
@@ -952,11 +953,10 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
 #endif
   if (sbytes > 0) {
     lseek64(out_fd, oins_size, SEEK_SET);
-    if (!aunsigned) zero_buff = (uint8_t *)lives_calloc(SILENCE_BLOCK_SIZE, 1);
+    if (!aunsigned) zero_buff = (uint8_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
     else {
-      zero_buff = (uint8_t *)lives_malloc(SILENCE_BLOCK_SIZE);
-      if (asamps == 1) lives_memset(zero_buff, 0x80, SILENCE_BLOCK_SIZE);
-      else {
+      zero_buff = (uint8_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
+      if (asamps > 1) {
         for (i = 0; i < SILENCE_BLOCK_SIZE; i += 2) {
           if (big_endian) {
             lives_memset(zero_buff + i, 0x80, 1);
@@ -1036,31 +1036,33 @@ static void audio_process_events_to(weed_timecode_t tc) {
 }
 
 
+/** @brief render a chunk of audio, apply effects and mixing it
+
+    called during multitrack rendering to create the actual audio file
+    (or in-memory buffer for preview playback in multitrack)
+
+    also used for fade-in/fade-out in the clip editor (opvol_start, opvol_end)
+
+    in multitrack, chvol is taken from the audio mixer; opvol is always 1.
+
+    what we will do here:
+    calculate our target samples (= period * out_rate)
+
+    calculate how many in_samples for each track (= period * in_rate / ABS (vel) )
+
+    read in the relevant number of samples for each track and convert to float
+
+    write this into our float buffers (1 buffer per channel per track)
+
+    we then send small chunks at a time to any audio effects; this is to allow for parameter interpolation
+
+    the small chunks are processed and mixed, converted from float back to int, and then written to the outfile
+
+    if obuf != NULL we write to obuf instead */
 //#define DEBUG_ARENDER
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
                              double opvol_end, lives_audio_buf_t *obuf) {
-  // called during multitrack rendering to create the actual audio file
-  // (or in-memory buffer for preview playback in multitrack)
-
-  // also used for fade-in/fade-out in the clip editor (opvol_start, opvol_end)
-
-  // in multitrack, chvol is taken from the audio mixer; opvol is always 1.
-
-  // what we will do here:
-  // calculate our target samples (= period * out_rate)
-
-  // calculate how many in_samples for each track (= period * in_rate / ABS (vel) )
-
-  // read in the relevant number of samples for each track and convert to float
-
-  // write this into our float buffers (1 buffer per channel per track)
-
-  // we then send small chunks at a time to any audio effects; this is to allow for parameter interpolation
-
-  // the small chunks are processed and mixed, converted from float to int, and then written to the outfile
-
-  // if obuf != NULL we write to obuf instead
 
   // TODO - allow MAX_AUDIO_MEM to be configurable; currently this is fixed at 8 MB
   // 16 or 32 may be a more sensible default for realtime previewing
@@ -1069,10 +1071,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   weed_plant_t *shortcut = NULL;
   lives_clip_t *outfile = to_file > -1 ? mainw->files[to_file] : NULL;
   uint8_t *in_buff;
-  void *finish_buff;
+  void *finish_buff = NULL;  ///< only used if we are writing output to a file
   double *vis = NULL;
   short *holding_buff;
-
+  weed_layer_t **layers = NULL;
   char *infilename, *outfilename;
 
   off64_t seekstart[nfiles];
@@ -1114,7 +1116,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   int first_nonsilent = -1;
   int max_segments;
   int render_block_size = RENDER_BLOCK_SIZE;
-  int c, x;
+  int c, x, y;
   int out_fd = -1;
 
   register int i, j;
@@ -1287,13 +1289,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     return tsamples;
   }
 
-  // we don't want to use more than MAX_AUDIO_MEM bytes
-  // (numbers will be much larger than examples given)
-
+  /// we don't want to use more than MAX_AUDIO_MEM bytes
+  /// (numbers will be much larger than examples given)
   max_aud_mem = MAX_AUDIO_MEM / (1.5 + zavel_max); // allow for size of holding_buff and in_buff
-
   max_aud_mem = (max_aud_mem >> 7) << 7; // round to a multiple of 128
-
   max_aud_mem = max_aud_mem / out_achans / nfiles; // max mem per channel/track
 
   // we use float here because our audio effects use float
@@ -1310,13 +1309,14 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   xsamples = zsamples + (tsamples - (max_segments * zsamples)); // e.g 10 + 30 - 3 * 10 == 10
 
-  holding_buff = (short *)lives_malloc(xsamples * sizeof(short) * out_achans + 128);
+  holding_buff = (short *)lives_calloc_safety(xsamples * out_achans,  sizeof(short));
 
   for (i = 0; i < out_achans * nfiles; i++) {
-    float_buffer[i] = (float *)lives_malloc(xsamples * sizeof(float) + 128);
+    float_buffer[i] = (float *)lives_calloc_safety(xsamples, sizeof(float));
   }
 
-  finish_buff = lives_malloc(tsamples * out_achans * out_asamps);
+  if (to_file > -1)
+    finish_buff = lives_calloc_safety(tsamples, out_achans * out_asamps);
 
 #ifdef DEBUG_ARENDER
   g_print("  rendering %ld samples %f\n", tsamples, opvol);
@@ -1336,16 +1336,17 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         continue;
       }
 
-      // calculate tbytes for xsamples
-
+      /// calculate tbytes for xsamples
+      /// TODO: when previewing / rendering in the clip editor, we should interpolate the velocities between frames
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate;
 
-      // we add a small random factor here, so half the time we round up, half the time we round down
-      // otherwise we would be gradually losing or gaining samples
-      tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT32)) *
+      /// tbytes: how many bytes we want ot read in. This is xsamples * the track velocity.
+      /// we add a small random factor here, so half the time we round up, half the time we round down
+      /// otherwise we would be gradually losing or gaining samples
+      tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
                in_asamps[track] * in_achans[track];
 
-      in_buff = (uint8_t *)lives_malloc(tbytes); // valgrind
+      in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
 
       if (zavel < 0. && in_fd[track] > -1) lseek64(in_fd[track], seekstart[track] - tbytes, SEEK_SET);
 
@@ -1373,7 +1374,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       nframes = (tbytes / (in_asamps[track]) / in_achans[track] / ABS(zavel) + .001);
 
-      // convert to float
+      /// convert to float
+      /// - first we convert to 16 bit stereo (if it was 8 bit and / or mono) and we resample
+      /// input is tbytes bytes at rate * velocity, and we should get out nframes audio frames at out_arate. out_achans
+      /// result is in holding_buff
       if (in_asamps[track] == 1) {
         sample_move_d8_d16(holding_buff, (uint8_t *)in_buff, nframes, tbytes, zavel, out_achans, in_achans[track], 0);
       } else {
@@ -1384,14 +1388,15 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       lives_free(in_buff);
 
       for (c = 0; c < out_achans; c++) {
+        /// now we convert to holding_buff to float in float_buffer and adjust the track volume
         sample_move_d16_float(float_buffer[c + track * out_achans], holding_buff + c, nframes,
                               out_achans, in_unsigned[track], FALSE, chvol[track]);
       }
     }
 
-    // now we send small chunks at a time to the audio vol/pan effect
+    // next we send small chunks at a time to the audio vol/pan effect + any other audio effects
     shortcut = NULL;
-    blocksize = render_block_size;
+    blocksize = render_block_size; ///< this is our chunk size
 
     for (i = 0; i < xsamples; i += render_block_size) {
       if (i + render_block_size > xsamples) blocksize = xsamples - i;
@@ -1403,38 +1408,67 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (mainw->event_list != NULL && mainw->filter_map != NULL && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
+      if (mainw->event_list != NULL && mainw->filter_map != NULL
+          && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
         // we need to apply all audio effects with output here.
         // even in clipedit mode (for preview/rendering with an event list)
-        // also, we will need to keep updating the mainw->filter_map from mainw->event_list,
+        // also, we will need to keep updating mainw->filter_map from mainw->event_list,
         // as filters may switched on and off during the block
 
         int nbtracks = 0;
 
+        // process events up to current tc:
+        // filter inits and deinits, and filter maps will update the current fx state
+        audio_process_events_to(tc);
+
         // apply audio filter(s)
         if (mainw->multitrack != NULL) {
-          // we work out the "visibility" of each track at tc
-
+          /// here we work out the "visibility" of each track at tc (i.e we only get audio from the front track + backing audio)
+          /// any transitions will combine audio from 2 layers (if the pref is set)
+          /// backing audio tracks are always full visible
+          /// the array is used to set the values of the "is_volume_master" parameter of the effect (see the Weed Audio spec.)
           vis = get_track_visibility_at_tc(mainw->multitrack->event_list, nfiles,
                                            mainw->multitrack->opts.back_audio_tracks, tc, &shortcut,
                                            mainw->multitrack->opts.audio_bleedthru);
 
-          // first track is ascrap_file - flag that no effects should be applied to it, except for the audio mixer
+          /// first track is ascrap_file - flag that no effects should be applied to it, except for the audio mixer
+          /// since effects were already applied to the saved audio
           if (mainw->ascrap_file > -1 && from_files[0] == mainw->ascrap_file) vis[0] = -vis[0];
 
           nbtracks = mainw->multitrack->opts.back_audio_tracks;
         }
 
-        // process events up to current tc:
-        // filter inits and deinits, and filter maps
+        /// the audio is now packaged into audio layers, one for each track (file). This makes it easier to remap
+        /// the audio tracks from effect to effect, as layers are interchangeable with filter channels
+        layers = (weed_layer_t **)lives_calloc(nfiles, sizeof(weed_layer_t *));
+        for (x = 0; x < nfiles; x++) {
+          float **adata = (float **)lives_calloc(out_achans, sizeof(float *));
+          layers[x] = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+          for (y = 0; y < out_achans; y++) {
+            adata[y] = chunk_float_buffer[x * out_achans + y];
+          }
 
-        audio_process_events_to(tc);
+          weed_layer_set_audio_data(layers[x], adata, out_arate, out_achans, blocksize);
+          lives_free(adata);
+        }
 
-        // locate the master volume parameter, and multiply all values by vis[track]
-        weed_apply_audio_effects(mainw->afilter_map, chunk_float_buffer, nbtracks,
-                                 out_achans, blocksize, out_arate, tc, vis);
-
+        /// apply the audo effects
+        weed_apply_audio_effects(mainw->afilter_map, layers, nbtracks, out_achans, blocksize, out_arate, tc, vis);
         lives_freep((void **)&vis);
+
+        if (layers != NULL) {
+          /// after processing we get the audio data back from the layers
+          for (x = 0; x < nfiles; x++) {
+            float **adata = (weed_layer_get_audio_data(layers[x], NULL));
+            for (y = 0; y < out_achans; y++) {
+              chunk_float_buffer[x * out_achans + y] = adata[y];
+            }
+            lives_free(adata);
+            weed_layer_set_audio_data(layers[x], NULL, 0, 0, 0);
+            weed_layer_free(layers[x]);
+          }
+          lives_freep((void **)&layers);
+        }
       }
 
       if (mainw->multitrack == NULL && opvol_end != opvol_start) {
@@ -1459,8 +1493,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
     if (!is_fade) {
       if (to_file > -1) {
-        // output to file
-        // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
+        /// output to file:
+        /// convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
 
@@ -1470,7 +1504,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #endif
         tot_frames += frames_out;
       } else {
-        // output to memory buffer
+        /// output to memory buffer; for jack we retain the float audio, for pulse we use int16_t
         if (prefs->audio_player == AUD_PLAYER_JACK) {
           frames_out = chunk_to_float_abuf(obuf, float_buffer, xsamples);
         } else {
@@ -1480,7 +1514,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         tot_frames += frames_out;
       }
     }
-
     xsamples = zsamples;
   }
 
@@ -1868,7 +1901,8 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
   // increase the element size of the audstate array (ostate)
   // from nostate elements to nstate elements
 
-  lives_audio_track_state_t *audstate = (lives_audio_track_state_t *)lives_malloc(nstate * sizeof(lives_audio_track_state_t));
+  lives_audio_track_state_t *audstate
+    = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
   int i;
 
   for (i = 0; i < nstate; i++) {
@@ -2047,9 +2081,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
     else nfiles = 1;
 
-    from_files = (int *)lives_malloc(nfiles * sizint);
-    avels = (double *)lives_malloc(nfiles * sizdbl);
-    aseeks = (double *)lives_malloc(nfiles * sizdbl);
+    from_files = (int *)lives_calloc(nfiles, sizint);
+    avels = (double *)lives_calloc(nfiles, sizdbl);
+    aseeks = (double *)lives_calloc(nfiles, sizdbl);
 
     for (i = 0; i < nfiles; i++) {
       from_files[i] = 0;
@@ -2181,17 +2215,17 @@ void init_jack_audio_buffers(int achans, int arate, boolean exact) {
 
   int i, chan;
 
-  mainw->jackd->abufs = (lives_audio_buf_t **)lives_malloc(prefs->num_rtaudiobufs * sizeof(lives_audio_buf_t *));
+  mainw->jackd->abufs = (lives_audio_buf_t **)lives_calloc(prefs->num_rtaudiobufs, sizeof(lives_audio_buf_t *));
 
   for (i = 0; i < prefs->num_rtaudiobufs; i++) {
-    mainw->jackd->abufs[i] = (lives_audio_buf_t *)lives_malloc(sizeof(lives_audio_buf_t));
+    mainw->jackd->abufs[i] = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
 
     mainw->jackd->abufs[i]->out_achans = achans;
     mainw->jackd->abufs[i]->arate = arate;
     mainw->jackd->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs;
-    mainw->jackd->abufs[i]->bufferf = (float **)lives_malloc(achans * sizeof(float *));
+    mainw->jackd->abufs[i]->bufferf = (float **)lives_calloc(achans, sizeof(float *));
     for (chan = 0; chan < achans; chan++) {
-      mainw->jackd->abufs[i]->bufferf[chan] = (float *)lives_malloc(XSAMPLES / prefs->num_rtaudiobufs * sizeof(float));
+      mainw->jackd->abufs[i]->bufferf[chan] = (float *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs, sizeof(float));
     }
   }
 #endif
@@ -2203,16 +2237,17 @@ void init_pulse_audio_buffers(int achans, int arate, boolean exact) {
 
   int i;
 
-  mainw->pulsed->abufs = (lives_audio_buf_t **)lives_malloc(prefs->num_rtaudiobufs * sizeof(lives_audio_buf_t *));
+  mainw->pulsed->abufs = (lives_audio_buf_t **)lives_calloc(prefs->num_rtaudiobufs, sizeof(lives_audio_buf_t *));
 
   for (i = 0; i < prefs->num_rtaudiobufs; i++) {
-    mainw->pulsed->abufs[i] = (lives_audio_buf_t *)lives_malloc(sizeof(lives_audio_buf_t));
+    mainw->pulsed->abufs[i] = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
 
     mainw->pulsed->abufs[i]->out_achans = achans;
     mainw->pulsed->abufs[i]->arate = arate;
+    mainw->pulsed->abufs[i]->start_sample = 0;
     mainw->pulsed->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs; // samp_space here is in stereo samples
-    mainw->pulsed->abufs[i]->buffer16 = (short **)lives_malloc(sizeof(short *));
-    mainw->pulsed->abufs[i]->buffer16[0] = (short *)lives_malloc(XSAMPLES / prefs->num_rtaudiobufs * achans * sizeof(short));
+    mainw->pulsed->abufs[i]->buffer16 = (short **)lives_calloc(1, sizeof(short *));
+    mainw->pulsed->abufs[i]->buffer16[0] = (short *)lives_calloc_safety(XSAMPLES / prefs->num_rtaudiobufs , achans * sizeof(short));
   }
 #endif
 }
@@ -2426,7 +2461,7 @@ static void *cache_my_audio(void *arg) {
         for (i = 0; i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) {
           // realloc existing channels and add new ones
           cbuffer->buffer16[i] = (short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(short) *
-                                 (cbuffer->out_interleaf ? cbuffer->out_achans : 1));
+                                 (cbuffer->out_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES);
         }
 
         // free any excess channels
@@ -2465,7 +2500,7 @@ static void *cache_my_audio(void *arg) {
         for (i = 0; i < (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i++) {
           // realloc existing channels and add new ones
           cbuffer->buffer16[i] = (short *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(short) *
-                                 (cbuffer->in_interleaf ? cbuffer->out_achans : 1));
+                                 (cbuffer->in_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES);
         }
 
         // free any excess channels
@@ -2498,7 +2533,7 @@ static void *cache_my_audio(void *arg) {
         for (i = 0; i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) {
           // realloc existing channels and add new ones
           cbuffer->bufferf[i] = (float *)lives_realloc(cbuffer->bufferf[i], cbuffer->samp_space * sizeof(float) *
-                                (cbuffer->out_interleaf ? cbuffer->out_achans : 1));
+                                (cbuffer->out_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES);
         }
 
         // free any excess channels
@@ -2628,7 +2663,7 @@ void wake_audio_thread(void) {
 #endif
 
 lives_audio_buf_t *audio_cache_init(void) {
-  cache_buffer = (lives_audio_buf_t *)lives_calloc(sizeof(lives_audio_buf_t), 1);
+  cache_buffer = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
   cache_buffer->is_ready = FALSE;
   cache_buffer->in_achans = 0;
 
@@ -2760,10 +2795,7 @@ getaud1:
       mainw->agen_needs_reinit = TRUE;
     }
 
-    weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, xnchans);
-    weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);
-    weed_set_int_value(channel, WEED_LEAF_AUDIO_DATA_LENGTH, nsamps);
-    weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, xnchans, (void **)fbuffer);
+    weed_channel_set_audio_data(channel, fbuffer, arate, xnchans, nsamps);
 
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
@@ -2899,7 +2931,7 @@ boolean apply_rte_audio(int nframes) {
   // - send to rte audio effects
   // - convert back to s16 or s8
   // - save to audio_fd
-
+  weed_plant_t *layer;
   size_t tbytes;
   uint8_t *in_buff;
   float **fltbuf, *fltbufni = NULL;
@@ -2927,18 +2959,18 @@ boolean apply_rte_audio(int nframes) {
 
   onframes = nframes;
 
-  in_buff = (uint8_t *)lives_malloc(tbytes);
+  in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
   if (in_buff == NULL) return FALSE;
 
   if (cfile->asampsize == 8) {
-    shortbuf = (short *)lives_malloc(tbytes);
+    shortbuf = (short *)lives_calloc_safety(tbytes / sizeof(short), sizeof(short));
     if (shortbuf == NULL) {
       lives_free(in_buff);
       return FALSE;
     }
   }
 
-  fltbuf = (float **)lives_malloc(cfile->achans * sizeof(float *));
+  fltbuf = (float **)lives_calloc(cfile->achans, sizeof(float *));
 
   if (mainw->agen_key == 0) {
     // read from audio_fd
@@ -2967,7 +2999,7 @@ boolean apply_rte_audio(int nframes) {
 
     for (i = 0; i < cfile->achans; i++) {
       // convert s16 to non-interleaved float
-      fltbuf[i] = (float *)lives_malloc(nframes * sizeof(float));
+      fltbuf[i] = (float *)lives_calloc(nframes, sizeof(float));
       if (fltbuf[i] == NULL) {
         for (--i; i >= 0; i--) {
           lives_free(fltbuf[i]);
@@ -2993,7 +3025,13 @@ boolean apply_rte_audio(int nframes) {
   aud_tc += (double)onframes / (double)cfile->arate * TICKS_PER_SECOND_DBL;
   // apply any audio effects with in_channels
 
-  weed_apply_audio_effects_rt(fltbuf, cfile->achans, onframes, cfile->arate, aud_tc, FALSE, FALSE);
+  layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
+  weed_layer_set_audio_data(layer, fltbuf, cfile->arate, cfile->achans, onframes);
+  weed_apply_audio_effects_rt(layer, aud_tc, FALSE, FALSE);
+  lives_free(fltbuf);
+  fltbuf = weed_layer_get_audio_data(layer, NULL);
+  weed_layer_set_audio_data(layer, NULL, 0, 0, 0);
+  weed_layer_free(layer);
 
   if (!(has_audio_filters(AF_TYPE_NONA) || mainw->agen_key != 0)) {
     // analysers only - no need to save (just render as normal)
@@ -3048,15 +3086,25 @@ boolean apply_rte_audio(int nframes) {
 }
 
 
+/* @brief fill the audio channel(s) for effects with mixed audio / video
+
+  push audio from abuf into an audio channel
+  audio will be formatted to the channel requested format
+
+  when we have audio effects running, the buffer is constantly fiiled from the audio thread (we have two buffers so that
+  we dont hang the player during read). We keep track of how many audio clients (filters) require audio and
+  only when all reads have been satisfied we swap the read and write buffers (with a mutex lock / unlock)
+
+  if player is jack, we will have non-interleaved float, if player is pulse, we will have interleaved S16 so we have to convert to float and
+  then back again.
+
+  (this is currently only used to push audio to generators, since there are currently no filters which allow both video and audio input)
+
+  (Filters which are purely audio are run from the audio thread, since the need to return audio back to the player.
+  This is less than optimal, and likely in the future, a separate thread will be used  to run the audio filters).
+
+ */
 boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf) {
-  // push audio from abuf into an audio channel
-  // audio will be formatted to the channel requested format
-
-  // NB: if player is jack, we will have non-interleaved float
-  // if player is pulse, we will have interleaved S16
-
-  // this is currently only used to push audio to generators
-
   float **dst, *src;
 
   weed_plant_t *ctmpl;
@@ -3071,8 +3119,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   register int i;
   if (abuf->samples_filled == 0) {
-    weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
-    weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
+    weed_layer_set_audio_data(achan, NULL, 0, 0, 0);
     return FALSE;
   }
 
@@ -3089,10 +3136,10 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     trate = weed_get_int_value(filter, WEED_LEAF_AUDIO_RATE, NULL);
   else trate = DEFAULT_AUDIO_RATE;
 
-  if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MIN_CHANNELS))
+  if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
     tchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, NULL);
-  else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_MIN_CHANNELS))
-    tchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MIN_CHANNELS, NULL);
+  else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_MINCHANS))
+    tchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MINCHANS, NULL);
   else tchans = DEFAULT_AUDIO_CHANS;
 
 #ifdef DEBUG_AFB
@@ -3107,10 +3154,10 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
       int swap = 0;
       if (!abuf->s8_signed) swap = SWAP_U_TO_S;
       abuf->s16_signed = TRUE;
-      abuf->buffer16 = (int16_t **)lives_malloc(abuf->out_achans * sizeof(int16_t *));
+      abuf->buffer16 = (short **)lives_calloc(abuf->out_achans, sizeof(short *));
       for (i = 0; i < abuf->out_achans; i++) {
-        abuf->buffer16[i] = (short *)lives_malloc(abuf->samples_filled * 2);
-        sample_move_d8_d16(abuf->buffer16[i], abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled * 2,
+        abuf->buffer16[i] = (short *)lives_calloc_safety(abuf->samples_filled, sizeof(short));
+        sample_move_d8_d16(abuf->buffer16[i], abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled * sizeof(short),
                            1.0, abuf->out_achans, abuf->out_achans, swap);
 
       }
@@ -3119,15 +3166,15 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     // try convert S16 -> float
     if (abuf->buffer16 != NULL) {
       size_t offs = 0;
-      abuf->bufferf = (float **)lives_malloc(abuf->out_achans * sizeof(float *));
+      abuf->bufferf = (float **)lives_calloc(abuf->out_achans, sizeof(float *));
       for (i = 0; i < abuf->out_achans; i++) {
         if (!abuf->in_interleaf) {
-          abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float));
+          abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], abuf->samples_filled, 1,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
           offs += abuf->samples_filled;
         } else {
-          abuf->bufferf[i] = (float *)lives_malloc(abuf->samples_filled * sizeof(float) / abuf->out_achans);
+          abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled / abuf->out_achans, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], abuf->samples_filled / abuf->out_achans, abuf->out_achans,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
         }
@@ -3142,23 +3189,18 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   samps = abuf->samples_filled;
   if (abuf->in_interleaf) samps /= abuf->out_achans;
 
-  // push to achan WEED_LEAF_AUDIO_DATA, taking into account WEED_LEAF_AUDIO_DATA_LENGTH, WEED_LEAF_AUDIO_INTERLEAF, WEED_LEAF_AUDIO_CHANNELS
+  // push to achan "audio_data", taking into account "audio_data_length" and "audio_channels"
 
   alen = samps;
 
-  // abuf->arate can be zero ???
+  if (abuf->arate == 0) return FALSE;
   scale = (float)trate / (float)abuf->arate;
   alen = (int)((float)alen * scale);
 
   // malloc audio_data
-  dst = (float **)lives_malloc(tchans * sizeof(float *)); // memleak
+  dst = (float **)lives_calloc(tchans, sizeof(float *));
 
-  // set channel values
-  weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, alen);
-  weed_set_int_value(achan, WEED_LEAF_AUDIO_CHANNELS, tchans);
-  weed_set_int_value(achan, WEED_LEAF_AUDIO_RATE, trate);
-
-  // copy data from abuf->bufferf[] to WEED_LEAF_AUDIO_DATA
+  // copy data from abuf->bufferf[] to "audio_data"
   for (i = 0; i < tchans; i++) {
     pthread_mutex_lock(&mainw->abuf_mutex);
     src = abuf->bufferf[i % abuf->out_achans];
@@ -3173,7 +3215,10 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     } else dst[i] = NULL;
     pthread_mutex_unlock(&mainw->abuf_mutex);
   }
-  weed_set_voidptr_array(achan, WEED_LEAF_AUDIO_DATA, tchans, (void **)dst);
+
+  // set channel values
+  weed_channel_set_audio_data(achan, dst, trate, tchans, alen);
+  lives_free(dst);
   return TRUE;
 }
 

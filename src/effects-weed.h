@@ -47,12 +47,6 @@ typedef enum {
 
 // set some custom Weed values
 
-#ifndef WEED_PLANT_LAYER
-#define WEED_PLANT_LAYER WEED_PLANT_CHANNEL
-#endif
-
-#define WEED_GAMMA_MONITOR 1024
-
 #define WEED_FLAG_HOST_READONLY (1 << 16)
 
 // plugin specific values
@@ -231,12 +225,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                                  void ***pchains);
 lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_event, weed_plant_t **layers,
     int opwidth, int opheight, ticks_t tc);
-void weed_apply_audio_effects(weed_plant_t *filter_map, float **abuf, int nbtracks, int nchans, int64_t nsamps, double arate,
+void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbtracks, int nchans, int64_t nsamps, double arate,
                               ticks_t tc, double *vis);
-void weed_apply_audio_effects_rt(float **abuf, int nchans, int64_t nsamps, double arate, ticks_t tc,
-                                 boolean analysers_only, boolean is_audio_thread);
+void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
 
-lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, float **abuf, int nbtracks, int nchans, int64_t nsamps,
+lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_layer_t **layers, int nbtracks, int nchans, int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
 int weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
@@ -337,10 +330,6 @@ void update_all_host_info(void);
 
 /// add default filler values to a parameter or pchange.
 void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot);
-
-// some general utilities
-
-int weed_general_error;
 
 //#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES

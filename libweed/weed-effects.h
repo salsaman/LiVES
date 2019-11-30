@@ -53,7 +53,7 @@ extern "C"
 #define WEED_PLANT_CHANNEL                        	6
 #define WEED_PLANT_PARAMETER                    	7
 #define WEED_PLANT_GUI                                 	8
-#define WEED_PLANT_HOST_INFO                     	255
+#define WEED_PLANT_HOST_INFO                     	9
 
 /* Parameter hints */
 #define WEED_HINT_UNSPECIFIED  	0
@@ -209,13 +209,13 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_MINWIDTH "minwidth"
 #define WEED_LEAF_MINHEIGHT "minheight"
 #define WEED_LEAF_YUV_CLAMPING "YUV_clamping"
-#define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
 #define WEED_LEAF_YUV_SAMPLING "YUV_sampling"
+#define WEED_LEAF_YUV_SUBSPACE "YUV_subspace"
 
 ///
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
-#define WEED_LEAF_AUDIO_MIN_CHANNELS "audio_min_channels"
+#define WEED_LEAF_AUDIO_MINCHANS "audio_minchans"
 #define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// only if set in filter_class or channel_template
 
 /* audio channel layouts (default settings) */
@@ -288,8 +288,8 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 
 /// optional for VIDEO
 /// WEED_LEAF_YUV_CLAMPING
-/// WEED_LEAF_YUV_SUBSPACE
 /// WEED_LEAF_YUV_SAMPLING
+/// WEED_LEAF_YUV_SUBSPACE
 #define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
 
@@ -318,15 +318,14 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_LABEL "label"
 #define WEED_LEAF_DECIMALS "decimals"
 #define WEED_LEAF_STEP_SIZE "step_size"
-#define WEED_LEAF_CHOICES "choices"
 #define WEED_LEAF_USE_MNEMONIC "use_mnemonic"
+#define WEED_LEAF_CHOICES "choices"
 #define WEED_LEAF_HIDDEN "hidden"
 #define WEED_LEAF_COPY_VALUE_TO "copy_value_to"
 
 // PARAM
 // mandatory
 #define WEED_LEAF_VALUE "value"
-#define WEED_LEAF_TIMECODE "timecode" // for out params
 
 #endif
 

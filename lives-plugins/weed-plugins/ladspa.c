@@ -305,7 +305,6 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
         // control ports
         ladphint = laddes->PortRangeHints[i];
         ladphintdes = ladphint.HintDescriptor;
-        ptmpl = weed_get_plantptr_value(in_params[pinp], WEED_LEAF_TEMPLATE, NULL);
 
         if (ladpdes & LADSPA_PORT_INPUT) {
           // connect to next instance in param
@@ -316,6 +315,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
           } else {
             invals[pinp] = (float)weed_get_double_value(in_params[pinp], WEED_LEAF_VALUE, NULL);
           }
+          ptmpl = weed_get_plantptr_value(in_params[pinp], WEED_LEAF_TEMPLATE, NULL);
           if (weed_get_boolean_value(ptmpl, "plugin_sample_rate", NULL) == WEED_TRUE) invals[pinp] *= (float)rate;
           (*lad_connect_port_func)(handle, i, (LADSPA_Data *)&invals[pinp++]);
         } else {
@@ -357,12 +357,11 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
       // need to use second instance
       for (i = 0; i < laddes->PortCount; i++) {
         ladpdes = laddes->PortDescriptors[i];
-
+        fprintf(stderr, "ladpdes = %d\n", ladpdes);
         if (ladpdes & LADSPA_PORT_CONTROL) {
           // control ports
           ladphint = laddes->PortRangeHints[i];
           ladphintdes = ladphint.HintDescriptor;
-          ptmpl = weed_get_plantptr_value(in_params[pinp], WEED_LEAF_TEMPLATE, NULL);
 
           if (ladpdes & LADSPA_PORT_INPUT) {
             // connect to next instance in param
@@ -373,6 +372,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
             } else {
               invals[pinp] = (float)weed_get_double_value(in_params[pinp], WEED_LEAF_VALUE, NULL);
             }
+            ptmpl = weed_get_plantptr_value(in_params[pinp], WEED_LEAF_TEMPLATE, NULL);
             if (weed_get_boolean_value(ptmpl, "plugin_sample_rate", NULL) == WEED_TRUE) invals[pinp] *= (float)rate;
 
             (*lad_connect_port_func)(handle, i, (LADSPA_Data *)&invals[pinp++]);
@@ -385,6 +385,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
     }
   }
 
+
   if (dual)(*lad_run_func)(handle, nsamps);
 
   // copy out values to out_params
@@ -392,15 +393,12 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
     switch (weed_leaf_seed_type(out_params[i], WEED_LEAF_VALUE)) {
     case WEED_SEED_BOOLEAN:
       weed_set_boolean_value(out_params[i], WEED_LEAF_VALUE, (int)outvals[i]);
-      weed_set_int64_value(out_params[i], WEED_LEAF_TIMECODE, timestamp);
       break;
     case WEED_SEED_INT:
       weed_set_int_value(out_params[i], WEED_LEAF_VALUE, (int)outvals[i]);
-      weed_set_int64_value(out_params[i], WEED_LEAF_TIMECODE, timestamp);
       break;
     default:
       weed_set_double_value(out_params[i], WEED_LEAF_VALUE, (double)outvals[i]);
-      weed_set_int64_value(out_params[i], WEED_LEAF_TIMECODE, timestamp);
       break;
     }
   }

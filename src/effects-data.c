@@ -1195,7 +1195,7 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant
       if (is_audio_thread) {
         // in the audio thread, don't activate / dectivate video fx. It could cause an underflow if it takes too long
         // let the video thread handle it
-        weed_plant_t *filter = rte_keymode_get_filter(okey + 1, rte_key_getmode(okey + 1));
+        weed_plant_t *filter = rte_keymode_get_filter(key + 1, rte_key_getmode(key + 1));
         if (!is_pure_audio(filter, FALSE)) {
           pthread_mutex_unlock(&mainw->fxd_active_mutex);
           return retval;

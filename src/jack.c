@@ -526,13 +526,15 @@ static int audio_process(nframes_t nframes, void *arg) {
         jackFramesAvailable = 0;
       } else {
         if (LIVES_LIKELY(jackd->playing_file >= 0)) {
-          if (jackd->playing_file == mainw->ascrap_file && mainw->playing_file >= -1 && mainw->files[mainw->playing_file]->achans > 0) {
+          if (jackd->playing_file == mainw->ascrap_file && mainw->playing_file >= -1
+	      && mainw->files[mainw->playing_file]->achans > 0) {
             xfile = mainw->files[mainw->playing_file];
           }
 
           in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
                                        (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
                      * jackd->num_input_channels * jackd->bytes_per_channel;
+
           if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable) < 0.f) {
             // reverse playback
             if ((jackd->seek_pos -= in_bytes) < 0) {
@@ -572,7 +574,8 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
             }
 
-            if (cache_buffer != NULL && !wait_cache_buffer && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
+            if (cache_buffer != NULL && !wait_cache_buffer
+		&& ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
             }
 

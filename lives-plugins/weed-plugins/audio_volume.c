@@ -131,8 +131,8 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
       else voll *= (1. - pan[i]);
       if (swapchans[i] == WEED_FALSE) {
         while (nsamps--) {
-          *(dst[0]++) = voll * (*(src[0]++));
-          *(dst[1]++) = volr * (*(src[1]++));
+          *(dst[0]++) += voll * (*(src[0]++));
+          *(dst[1]++) += volr * (*(src[1]++));
         }
       } else {
         if (swappan[i]) {
@@ -142,13 +142,13 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
         }
         while (nsamps--) {
           tmp = volr * (*(src[0]++)); // in case inplace, src[0] will become dst[0]
-          *(dst[0]++) = voll * (*(src[1]++));
-          *(dst[1]++) = tmp;
+          *(dst[0]++) += voll * (*(src[1]++));
+          *(dst[1]++) += tmp;
         }
       }
     } else if (chans == 1) {
       while (nsamps--) {
-        *(dst[0]++) = vol[0] * (*(src[0]++));
+        *(dst[0]++) += vol[0] * (*(src[0]++));
       }
     }
   }

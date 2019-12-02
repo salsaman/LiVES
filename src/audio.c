@@ -2364,7 +2364,6 @@ static void *cache_my_audio(void *arg) {
 
   lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
   char *filename;
-  int rc = 0;
   register int i;
 
   if (mainw->multitrack == NULL)
@@ -2373,7 +2372,7 @@ static void *cache_my_audio(void *arg) {
   while (!cbuffer->die) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
     pthread_mutex_lock(&cond_mutex);
-    rc = pthread_cond_wait(&cond, &cond_mutex);
+    pthread_cond_wait(&cond, &cond_mutex);
     pthread_mutex_unlock(&cond_mutex);
 
     if (cbuffer->die) {
@@ -2755,11 +2754,10 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
   weed_plant_t *filter;
   weed_plant_t *channel;
   weed_plant_t *ctmpl;
-  weed_process_f process_func;
   weed_timecode_t tc;
   weed_error_t retval;
   int flags, cflags;
-  int xnchans = 0, xchans = 0, xrate = 0, xarate;
+  int xnchans = 0, xrate = 0;
   boolean rvary = FALSE, lvary = FALSE;
 
   if (mainw->agen_needs_reinit) {

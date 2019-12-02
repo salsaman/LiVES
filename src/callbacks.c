@@ -4632,7 +4632,6 @@ void on_insfitaudio_toggled(LiVESToggleButton *togglebutton, livespointer user_d
 
 /// stored values for loop locking
 static int loop_lock_frame = -1;
-static boolean loop_locked = FALSE;
 static boolean oloop;
 static boolean oloop_cont;
 static boolean oping_pong;

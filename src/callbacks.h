@@ -243,6 +243,9 @@ void on_forward_pressed(LiVESButton *, livespointer);
 
 boolean dirchange_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer area_enum);
 
+boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                                livespointer area_enum);
+
 void on_capture_activate(LiVESMenuItem *, livespointer);
 
 void on_capture2_activate(void);

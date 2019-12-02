@@ -4630,6 +4630,24 @@ void on_insfitaudio_toggled(LiVESToggleButton *togglebutton, livespointer user_d
   }
 }
 
+/// stored values for loop locking
+static int loop_lock_frame = -1;
+static boolean loop_locked = FALSE;
+static boolean oloop;
+static boolean oloop_cont;
+static boolean oping_pong;
+
+#define LOOP_LOCK_MIN_FRAMES (cfile->pb_fps + 1)
+
+void unlock_loop_lock(void) {
+  mainw->loop = oloop;
+  mainw->loop_cont = oloop_cont;
+  mainw->ping_pong = oping_pong;
+  mainw->loop_locked = FALSE;
+  loop_lock_frame = -1;
+  mainw->clip_switched = TRUE;
+}
+
 
 boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer area_enum) {
@@ -4639,6 +4657,11 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   if (cfile->next_event != NULL) return TRUE;
 
   area = LIVES_POINTER_TO_INT(area_enum);
+
+  if (!(mod & LIVES_SHIFT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
+    unlock_loop_lock();
+    return TRUE;
+  }
 
   if (area == SCREEN_AREA_FOREGROUND || (area == SCREEN_AREA_BACKGROUND && mainw->blend_file == mainw->current_file)) {
     if (!CURRENT_CLIP_IS_NORMAL) return TRUE;
@@ -4663,6 +4686,40 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
     mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->pb_fps;
   }
   return TRUE;
+}
+
+
+boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                                livespointer area_enum) {
+
+  if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return TRUE;
+  if (cfile->next_event != NULL) return TRUE;
+
+  if (!mainw->loop_locked && loop_lock_frame == -1) loop_lock_frame = mainw->actual_frame;
+  else {
+    // temporary loop_cont / ping-pong
+    mainw->clip_switched = FALSE;
+    if ((!mainw->loop_locked && mainw->actual_frame < loop_lock_frame) || (mainw->loop_locked && cfile->pb_fps < 0)) {
+      if (!mainw->loop_locked || mainw->play_end - mainw->actual_frame > LOOP_LOCK_MIN_FRAMES)
+        mainw->play_start = mainw->actual_frame;
+      if (!mainw->loop_locked) mainw->play_end = loop_lock_frame;
+    } else {
+      if (!mainw->loop_locked) mainw->play_start = loop_lock_frame;
+      if (!mainw->loop_locked || mainw->actual_frame - mainw->play_start > LOOP_LOCK_MIN_FRAMES)
+        mainw->play_end = mainw->actual_frame;
+    }
+    if (!mainw->loop_locked) {
+      oloop = mainw->loop;
+      oloop_cont = mainw->loop_cont;
+      oping_pong = mainw->ping_pong;
+    }
+    mainw->loop_cont = TRUE;
+    mainw->ping_pong = TRUE;
+    mainw->loop = FALSE;
+    mainw->loop_locked = TRUE;
+    loop_lock_frame = -1;
+  }
+  return dirchange_callback(group, obj, keyval, mod, area_enum);
 }
 
 

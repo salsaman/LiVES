@@ -6827,6 +6827,13 @@ boolean weed_deinit_effect(int hotkey) {
           if (mainw->pre_src_audio_file == -1) {
             // audio doesn't follow clip switches and we were playing this...
             mainw->cancelled = CANCEL_AUD_END;
+          } else {
+#ifdef HAVE_PULSE_AUDIO
+            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
+                && prefs->audio_player == AUD_PLAYER_PULSE) {
+              pulse_get_rec_avals(mainw->pulsed);
+            }
+#endif
           }
         }
       }

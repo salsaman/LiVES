@@ -2265,7 +2265,6 @@ void play_file(void) {
       }
     }
 
-
     if (mainw->play_window != NULL) {
       hide_cursor(lives_widget_get_xwindow(mainw->play_window));
       lives_widget_set_app_paintable(mainw->play_window, TRUE);
@@ -2279,20 +2278,6 @@ void play_file(void) {
     // pwidth and pheight are playback width and height
     if (!mainw->sep_win && !mainw->foreign) {
       resize(1);
-      /* do { */
-      /*   mainw->pwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST; */
-      /*   mainw->pheight = lives_widget_get_allocation_height(mainw->playframe) - V_RESIZE_ADJUST; */
-      /*   if (mainw->pwidth * mainw->pheight == 0) { */
-      /*     lives_widget_queue_draw(mainw->playframe); */
-      /*     mainw->noswitch = TRUE; */
-      /*     lives_widget_context_update(); */
-      /*     mainw->noswitch = FALSE; */
-      /*   } */
-      /* } while (mainw->pwidth * mainw->pheight == 0); */
-      /* // double size */
-      /* if (mainw->double_size) { */
-      /*   frame_size_update(); */
-      /* } */
     }
 
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
@@ -2680,6 +2665,8 @@ void play_file(void) {
 
   mainw->video_seek_ready = FALSE;
   mainw->osc_auto = 0;
+
+  if (mainw->loop_locked) unlock_loop_lock();
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
@@ -5701,7 +5688,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
       start_file--;
     }
-    if (!IS_VALID_CLIP(start_file) && mainw->files[1] != NULL) {
+    if ((!IS_VALID_CLIP(start_file) || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->achans == 0))
+        && mainw->files[1] != NULL && start_file != 1) {
       for (start_file = MAX_FILES; start_file > 0 && mainw->files[start_file] == NULL; start_file--) {
         if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file);
       }

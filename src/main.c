@@ -1295,6 +1295,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->new_lmap_errors = NULL;
 
   mainw->ncbstores = 0;
+
+  mainw->loop_locked = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -8056,6 +8059,10 @@ void load_frame_image(int frame) {
 
     osc_block = mainw->osc_block;
     mainw->osc_block = TRUE;
+
+    if (mainw->loop_locked) {
+      unlock_loop_lock();
+    }
 
     // switch audio clip
     if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)

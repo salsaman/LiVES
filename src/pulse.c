@@ -663,7 +663,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (mainw->agen_needs_reinit) pl_error = TRUE;
           else {
             fltbuf = (float **)lives_malloc(pulsed->out_achans * sizeof(float *));
-            for (int i = 0; i < pulsed->out_achans; i++) fltbuf[i] = lives_calloc_safety(numFramesToWrite, sizeof(float));
+            for (int i = 0; i < pulsed->out_achans; i++) fltbuf[i] = (float *)lives_calloc_safety(numFramesToWrite, sizeof(float));
             if (!get_audio_from_plugin(fltbuf, pulsed->out_achans, pulsed->out_arate, numFramesToWrite, TRUE)) {
               pl_error = TRUE;
             }

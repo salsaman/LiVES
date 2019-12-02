@@ -527,7 +527,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       } else {
         if (LIVES_LIKELY(jackd->playing_file >= 0)) {
           if (jackd->playing_file == mainw->ascrap_file && mainw->playing_file >= -1
-	      && mainw->files[mainw->playing_file]->achans > 0) {
+              && mainw->files[mainw->playing_file]->achans > 0) {
             xfile = mainw->files[mainw->playing_file];
           }
 
@@ -575,7 +575,7 @@ static int audio_process(nframes_t nframes, void *arg) {
             }
 
             if (cache_buffer != NULL && !wait_cache_buffer
-		&& ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
+                && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
             }
 

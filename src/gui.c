@@ -2289,21 +2289,32 @@ void create_LiVES(void) {
                             LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(skip_forward_callback), NULL, NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK),
+                            (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback), LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_k, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(-1), NULL));
@@ -3251,10 +3262,6 @@ void fade_background(void) {
       lives_widget_remove_accelerator(mainw->showfct, mainw->accel_group, LIVES_KEY_h, (LiVESXModifierType)0);
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_h, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                 (showfct_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(showfct_callback), NULL, NULL)));
-
-      lives_widget_remove_accelerator(mainw->showsubs, mainw->accel_group, LIVES_KEY_v, (LiVESXModifierType)0);
-      lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_v, (LiVESXModifierType)0, (LiVESAccelFlags)0,
-                                (showsubs_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(showsubs_callback), NULL, NULL)));
 
       lives_widget_remove_accelerator(mainw->sepwin, mainw->accel_group, LIVES_KEY_s, (LiVESXModifierType)0);
       lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_s, (LiVESXModifierType)0, (LiVESAccelFlags)0,

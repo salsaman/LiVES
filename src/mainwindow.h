@@ -529,6 +529,7 @@ typedef struct {
   boolean loop;
   volatile boolean loop_cont;
   volatile boolean ping_pong;
+  boolean loop_locked;
   boolean mute;
   int audio_start;
   int audio_end;

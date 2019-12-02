@@ -3487,7 +3487,8 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   return rfx;
 }
 
-/** @brief get the interface hints set by a Weed filter in the filter_class.
+/**
+   @brief get the interface hints set by a Weed filter in the filter_class.
 
     for a compound effect we get the gui elements from each internal filter in sequence,
     inserting internal|nextfilter after each filter
@@ -3562,7 +3563,8 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
 }
 
 
-/** @brief create an interface window for a plugin; possibly run it, and return the parameters
+/**
+   @brief create an interface window for a plugin; possibly run it, and return the parameters
 
     N.B. this is NOT for rendered effects, those have their own functions.
 

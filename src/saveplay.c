@@ -3155,11 +3155,12 @@ void play_file(void) {
 }
 
 
-/* @brief close cfile and switch to new clip (may be -1)
+/**
+   @brief close cfile and switch to new clip (may be -1)
 
-note this only closes the disk and basic resources, it does not affect the interface
-(c.f. close_current_file())
-returns new_clip */
+   note this only closes the disk and basic resources, it does not affect the interface
+   (c.f. close_current_file())
+   returns new_clip */
 int close_temp_handle(int new_clip) {
   char *com;
   int clipno = mainw->current_file;
@@ -3187,7 +3188,8 @@ int close_temp_handle(int new_clip) {
 }
 
 
-/** @brief get next free file slot, or -1 if we are full
+/**
+   @brief get next free file slot, or -1 if we are full
 
  can support MAX_FILES files (default 65536) */
 static void get_next_free_file(void) {
@@ -3199,7 +3201,8 @@ static void get_next_free_file(void) {
 }
 
 
-/** @brief get a temp "handle" from disk.
+/**
+    @brief get a temp "handle" from disk.
 
     Call this to get a temp handle for returning info from the backend
     (this is deprecated for simple data, use lives_popen() instead whenever possible)
@@ -4799,14 +4802,30 @@ boolean open_ascrap_file(void) {
   cfile->signed_endian = 0; // ???
 
 #ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed_read != NULL) {
-    cfile->arate = cfile->arps = mainw->pulsed_read->in_arate;
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    if (prefs->audio_src == AUDIO_SRC_EXT) {
+      if (mainw->pulsed_read != NULL) {
+        cfile->arate = cfile->arps = mainw->pulsed_read->in_arate;
+      }
+    } else {
+      if (mainw->pulsed != NULL) {
+        cfile->arate = cfile->arps = mainw->pulsed->out_arate;
+      }
+    }
   }
 #endif
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd_read != NULL) {
-    cfile->arate = cfile->arps = mainw->jackd_read->sample_in_rate;
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+    if (prefs->audio_src == AUDIO_SRC_EXT) {
+      if (mainw->jackd_read != NULL) {
+        cfile->arate = cfile->arps = mainw->jackd_read->sample_in_rate;
+      }
+    } else {
+      if (mainw->jackd != NULL) {
+        cfile->arate = cfile->arps = mainw->jackd->sample_out_rate;
+      }
+    }
   }
 #endif
 
@@ -5681,6 +5700,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
     if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
       start_file--;
+    }
+    if (!IS_VALID_CLIP(start_file) && mainw->files[1] != NULL) {
+      for (start_file = MAX_FILES; start_file > 0 && mainw->files[start_file] == NULL; start_file--) {
+        if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file);
+      }
     }
     if (start_file != mainw->current_file) {
       switch_to_file(mainw->current_file, start_file);

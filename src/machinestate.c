@@ -365,6 +365,9 @@ void *_ext_calloc(size_t nmemb, size_t msize) {
   return lives_calloc(nmemb, msize);
 }
 
+LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
+  return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
+}
 
 // slice allocator //// TODO
 

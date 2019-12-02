@@ -7315,9 +7315,10 @@ a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPL
   e.g.: memory may need aligning afterwards for particular plugins which set channel template flags:
   layer palette may need changing, layer may need resizing */
 
-/** @brief fills the plane pointed to by ptr with bpix
+/**
+   @brief fills the plane pointed to by ptr with bpix
 
-psize is sizeof(bpix), width, height and rowstride are the dimensions of the target plane
+   psize is sizeof(bpix), width, height and rowstride are the dimensions of the target plane
 */
 LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int rowstride, unsigned char *bpix) {
   int i, j;
@@ -7334,7 +7335,8 @@ LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int
 #define SHIFTVAL sbits
 #define ALIGN_SIZE (1 << SHIFTVAL)
 
-/** @brief creates pixel data for layer
+/**
+   @brief creates pixel data for layer
 
    @returns FALSE on memory error
 
@@ -7812,7 +7814,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 }
 
 
-/** @ brief fills layer with default values.
+/**
+   @brief fills layer with default values.
 
 If either width or height are zero, then dimensions will be taken from the layer or
   defaults used
@@ -8174,7 +8177,8 @@ void alpha_unpremult(weed_layer_t *layer, boolean un) {
 }
 
 
-/** @brief convert the palette of a layer
+/**
+   @brief convert the palette of a layer
 
     convert to/from the 5 non-float RGB palettes and 10 YUV palettes
     giving a total of 15*14=210 conversions
@@ -9982,7 +9986,8 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 }
 
 
-/** @brief alter the transfer function of a Weed layer, from current value to gamma_type
+/**
+   @brief alter the transfer function of a Weed layer, from current value to gamma_type
 
  */
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
@@ -10271,7 +10276,8 @@ void compact_rowstrides(weed_layer_t *layer) {
 }
 
 
-/** @brief resize a layer
+/**
+   @brief resize a layer
 
     width is in macropixels of the output palette
 
@@ -10951,7 +10957,8 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
 }
 
 
-/** @brief turn a (Gdk)Pixbuf into a Weed layer
+/**
+   @brief turn a (Gdk)Pixbuf into a Weed layer
 
   return TRUE if we can use the original pixbuf pixels; in this case the pixbuf pixels should only be freed via
   lives_layer_pixel_data_free() or lives_layer_free()
@@ -11039,7 +11046,8 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf *pixbuf) {
 
 #ifdef GUI_GTK
 
-/** @brief convert a weed layer to lives_painter (a.k.a cairo)
+/**
+   @brief convert a weed layer to lives_painter (a.k.a cairo)
 
     width, height and rowstrides of source layer may all change */
 lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
@@ -11121,7 +11129,8 @@ lives_painter_t *layer_to_lives_painter(weed_layer_t *layer) {
 }
 
 
-/** @brief convert a lives_painter_t (a.k.a) cairo_t to a weed layer */
+/**
+   @brief convert a lives_painter_t (a.k.a) cairo_t to a weed layer */
 boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
   // updates a weed_layer from a cr
   void *src;
@@ -11199,7 +11208,8 @@ boolean lives_painter_to_layer(lives_painter_t *cr, weed_layer_t *layer) {
 #endif
 
 
-/** @brief create a layer, setting the most important properties */
+/**
+   @brief create a layer, setting the most important properties */
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette) {
   weed_layer_t *layer = weed_plant_new(WEED_PLANT_LAYER);
 
@@ -11226,7 +11236,8 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
 }
 
 
-/** @brief copy source layer slayer to dest layer dlayer
+/**
+   @brief copy source layer slayer to dest layer dlayer
 
   if dlayer is NULL, we return a new layer, otherwise we return dlayer
   for a newly created layer, this is a deep copy, since the pixel_data array is also copied
@@ -11304,7 +11315,8 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
 }
 
 
-/** @brief free pixel_data from layer
+/**
+   @brief free pixel_data from layer
 
   we do not free if WEED_LEAF_HOST_ORIG_PDATA is set (data is an alpha in which "belongs" to another out param)
 
@@ -11372,7 +11384,8 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
 }
 
 
-/** @ brief frees pixel_data for a layer, then the layer itself
+/**
+   @brief frees pixel_data for a layer, then the layer itself
 
     returns (void *)NULL for convenience
  */

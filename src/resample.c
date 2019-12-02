@@ -460,7 +460,8 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, char
 
 
 
-/** @brief quantise from event_list_t *in_list to *out_list with period tl/TICKS_PER_SECOND_DBL
+/**
+   @brief quantise from event_list_t *in_list to *out_list with period tl/TICKS_PER_SECOND_DBL
 
   The timecode of the midpoint of our last frame event will match as near as possible the midpoint of the old last frame
   but out_list will have regular fps of qfps.

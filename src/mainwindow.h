@@ -1247,7 +1247,6 @@ typedef struct {
   LiVESMemVTable alt_vtable;
 
   pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - no longer used
-  pthread_mutex_t interp_mutex;  ///< interpolation mutex - parameter interpolation must be single threaded
 
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators

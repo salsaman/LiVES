@@ -45,6 +45,7 @@ struct _procvals {
 
 static int load_compound_fx(void);
 
+
 LIVES_LOCAL_INLINE int weed_inst_refs_count(weed_plant_t *inst) {
   int error;
   if (inst == NULL) return -1;
@@ -768,29 +769,30 @@ boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_pla
 }
 
 
-/** @brief create an effect (filter) map
+/**
+   @brief create an effect (filter) map
 
-    here we create an effect map which defines the order in which effects are applied to a frame stack
- * this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
- * keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
+   here we create an effect map which defines the order in which effects are applied to a frame stack
+   this is done during recording, the keymap is from mainw->rte which is a bitmap of effect keys
+   keys are applied here from smallest (ctrl-1) to largest (virtual key ctrl-FX_KEYS_MAX_VIRTUAL)
 
- * this is transformed into filter_map which holds init_events
- * these pointers are then stored in a filter_map event
+   this is transformed into filter_map which holds init_events
+   these pointers are then stored in a filter_map event
 
- * what we actually point to are the init_events for the effects. The init_events are stored when we
- * init an effect
+   what we actually point to are the init_events for the effects. The init_events are stored when we
+   init an effect
 
- * during rendering we read the filter_map event, and retrieve the new key, which is at that time
- * held in the
- * WEED_LEAF_HOST_TAG property of the init_event, and we apply our effects
- * (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
+   during rendering we read the filter_map event, and retrieve the new key, which is at that time
+   held in the
+   WEED_LEAF_HOST_TAG property of the init_event, and we apply our effects
+   (which are then bound to virtual keys >=FX_KEYS_MAX_VIRTUAL)
 
- * [note] that we can do cool things, like mapping the same instance multiple times (though it will always
- * apply itself to the same in/out tracks
+   [note] that we can do cool things, like mapping the same instance multiple times (though it will always
+   apply itself to the same in/out tracks
 
- * we don't need to worry about free()ing init_events, since they will be free'd
- * when the instance is deinited
- */
+   we don't need to worry about free()ing init_events, since they will be free'd
+   when the instance is deinited
+*/
 static void create_filter_map(uint64_t rteval) {
   int count = 0, i;
   weed_plant_t *inst;
@@ -807,7 +809,8 @@ static void create_filter_map(uint64_t rteval) {
 }
 
 
-/** @brief add effect_deinit events to an event_list
+/**
+   @brief add effect_deinit events to an event_list
 
     during rendering we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
     here we add effect_deinit events to an event_list */
@@ -840,7 +843,8 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
 }
 
 
-/** @ brief add init events for every effect which is switched on
+/**
+   @brief add init events for every effect which is switched on
 
     during rendering we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
     here we are about to start playback, and we add init events for every effect which is switched on
@@ -868,7 +872,8 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
 }
 
 
-/** @brief check palette vs. palette list
+/**
+    @brief check palette vs. palette list
 
     check if palette is in the palette_list
     if not, return next best palette to use, using a heuristic method
@@ -1083,7 +1088,8 @@ static boolean get_fixed_channel_size(weed_plant_t *template, int *width, int *h
 #define MAX_CHAN_WIDTH 16384
 #define MAX_CHAN_HEIGHT 16384
 
-/** @brief set the size of a video filter channel as near as possible to width (macropixels) * height
+/**
+    @brief set the size of a video filter channel as near as possible to width (macropixels) * height
 
     We will comply with any restrictions set up for the channel, ie.
     (fixed width(s), fixed height(s), hstep, vstep, maxwidth, maxheight, minwidth, minheight)
@@ -1602,13 +1608,14 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
       }
     }
   }
+
   lives_freep((void **)&in_channels);
   return FILTER_SUCCESS;
 }
 
 
 /**
-   @ brief process a single video filter instance
+   @brief process a single video filter instance
 
    get in_tracks and out_tracks from the init_event; these map filter_instance channels to layers
 
@@ -1761,31 +1768,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
       /// run it only if it outputs into effects which have video chans
       /// if (!feeds_to_video_filters(key,rte_key_getmode(key+1))) return FILTER_ERROR_NO_IN_CHANNELS;
+      retval = run_process_func(inst, tc, key);
 
-      /// see if we can multithread
-      if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
-          filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-        if (key == -1 || !filter_mutex_trylock(key)) {
-          /// data processing effect; just call the process_func
-          if (mainw->current_file > -1)
-            weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
-          retval = process_func_threaded(inst, out_channels, tc);
-          if (key != -1) filter_mutex_unlock(key);
-        } else retval = FILTER_ERROR_INVALID_PLUGIN;
-        if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
-      }
-      if (!did_thread) {
-        /// normal single threaded version
-        process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-        if (key == -1 || !filter_mutex_trylock(key)) {
-          weed_error_t ret;
-          if (mainw->current_file > -1)
-            weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
-          ret = (*process_func)(inst, tc);
-          if (key != -1) filter_mutex_unlock(key);
-          if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
-        } else retval = FILTER_ERROR_INVALID_PLUGIN;
-      }
       lives_freep((void **)&in_channels);
       return retval;
     }
@@ -2472,24 +2456,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   // TODO - better error handling
 
-  // see if we can multithread
-  if ((prefs->nfx_threads = future_prefs->nfx_threads) > 1 &&
-      filter_flags & WEED_FILTER_HINT_MAY_THREAD) {
-    if (key == -1 || !filter_mutex_trylock(key)) {
-      retval = process_func_threaded(inst, out_channels, tc);
-      if (key != -1) filter_mutex_unlock(key);
-    } else retval = FILTER_ERROR_INVALID_PLUGIN;
-    if (retval != FILTER_ERROR_DONT_THREAD) did_thread = TRUE;
-  }
-  if (!did_thread) {
-    // normal single threaded version
-    process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-    if (key == -1 || !filter_mutex_trylock(key)) {
-      weed_error_t ret = (*process_func)(inst, tc);
-      if (key != -1) filter_mutex_unlock(key);
-      if (ret == WEED_ERROR_PLUGIN_INVALID) retval = FILTER_ERROR_INVALID_PLUGIN;
-    } else retval = FILTER_ERROR_INVALID_PLUGIN;
-  }
+  //...finally we are ready to apply the filter
+  retval = run_process_func(inst, tc, key);
 
   /// do gamma correction of any integer RGB(A) parameters
   /// convert in and out parameters to SRGB
@@ -2641,7 +2609,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
 }
 
 
-static lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc, int key) {
+lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc, int key) {
   weed_plant_t **out_channels = weed_instance_get_out_channels(instance, NULL);
   weed_plant_t *filter = weed_instance_get_filter(instance, FALSE);
   weed_process_f process_func;
@@ -2790,16 +2758,7 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
     weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
 
   //...finally we are ready to apply the filter
-  pthread_mutex_lock(&mainw->interp_mutex); // stop video thread from possibly interpolating our audio effects
-  process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-  if (key == -1 || !filter_mutex_trylock(key)) {
-    if (process_func == NULL || (*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
-      retval = FILTER_ERROR_INVALID_PLUGIN;
-    }
-    if (key != -1) filter_mutex_unlock(key);
-  } else retval = FILTER_ERROR_INVALID_PLUGIN;
-
-  pthread_mutex_unlock(&mainw->interp_mutex);
+  retval = run_process_func(inst, tc, key);
 
   if (retval == FILTER_ERROR_INVALID_PLUGIN) {
     retval = FILTER_ERROR_INVALID_PLUGIN;
@@ -2841,7 +2800,8 @@ done_audio:
 }
 
 
-/** @brief apply an audio filter to a stack of audio tracks
+/**
+   @brief apply an audio filter to a stack of audio tracks
 
     init_event may contain a pointer to the init_event in the event_list (if any)
     this is used to map tracks to the in and out channels of the filter indtance
@@ -2947,17 +2907,13 @@ lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_la
       }
       if (mainw->pchains != NULL && mainw->pchains[key] != NULL) {
         /// interpolate the params, if we can get a mutex lock on the inst
-        if (!pthread_mutex_trylock(&mainw->interp_mutex)) { // try to minimise thread locking
-          pthread_mutex_unlock(&mainw->interp_mutex);
-          if (!interpolate_params(instance, mainw->pchains[key], tc)) {
-            weed_instance_unref(instance);
-            lives_freep((void **)&in_tracks);
-            lives_freep((void **)&out_tracks);
-            return FILTER_ERROR_INTERPOLATION_FAILED;
-          }
+        if (!interpolate_params(instance, mainw->pchains[key], tc)) {
+          weed_instance_unref(instance);
+          lives_freep((void **)&in_tracks);
+          lives_freep((void **)&out_tracks);
+          return FILTER_ERROR_INTERPOLATION_FAILED;
         }
       }
-
     } else {
       lives_freep((void **)&in_tracks);
       lives_freep((void **)&out_tracks);
@@ -2978,7 +2934,7 @@ audinst1:
   if (retval != FILTER_SUCCESS) goto audret1;
 
   filter = weed_instance_get_filter(instance, FALSE);
-  flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
+  flags = weed_filter_get_flags(filter);
 
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
   if (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY) lvary = TRUE;
@@ -3226,27 +3182,39 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
             if (pchains != NULL && pchains[key] != NULL) {
               interpolate_params(instance, pchains[key], tc); // interpolate parameters during playback
             }
-          }
 
-          /*
-          // might be needed for multitrack ???
-          if (mainw->pconx!=NULL) {
-          int key=i;
-          int mode=key_modes[i];
-          if (weed_plant_has_leaf(instance,WEED_LEAF_HOST_MODE)) {
-          key=weed_get_int_value(instance,WEED_LEAF_HOST_KEY,&error);
-          mode=weed_get_int_value(instance,WEED_LEAF_HOST_MODE,&error);
-          }
-          // chain any data pipelines
-          pconx_chain_data(key,mode);
-          }*/
+            /*
+            // might be needed for multitrack ???
+            if (mainw->pconx!=NULL) {
+            int key=i;
+            int mode=key_modes[i];
+            if (weed_plant_has_leaf(instance,WEED_LEAF_HOST_MODE)) {
+            key=weed_get_int_value(instance,WEED_LEAF_HOST_KEY,&error);
+            mode=weed_get_int_value(instance,WEED_LEAF_HOST_MODE,&error);
+            }
+            // chain any data pipelines
+            pconx_chain_data(key,mode);
+            }*/
 
 apply_inst2:
 
-          if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
-            // chain any internal data pipelines for compound fx
-            needs_reinit = pconx_chain_data_internal(instance);
-            if (needs_reinit) {
+            if (weed_plant_has_leaf(instance, WEED_LEAF_HOST_NEXT_INSTANCE)) {
+              // chain any internal data pipelines for compound fx
+              needs_reinit = pconx_chain_data_internal(instance);
+              if (needs_reinit) {
+                if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+                  weed_instance_unref(orig_inst);
+                  if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
+                      orig_inst == mainw->multitrack->solo_inst) break;
+                  continue;
+                }
+              }
+            }
+
+            filter_error = weed_apply_instance(instance, init_event, layers, 0, 0, tc);
+
+            if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
+            if (filter_error == WEED_ERROR_REINIT_NEEDED) {
               if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
                 weed_instance_unref(orig_inst);
                 if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
@@ -3254,26 +3222,14 @@ apply_inst2:
                 continue;
               }
             }
-          }
-
-          filter_error = weed_apply_instance(instance, init_event, layers, 0, 0, tc);
-
-          if (filter_error == WEED_SUCCESS && (instance = get_next_compound_inst(instance)) != NULL) goto apply_inst2;
-          if (filter_error == WEED_ERROR_REINIT_NEEDED) {
-            if ((retval = weed_reinit_effect(instance, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
+            //if (filter_error!=FILTER_SUCCESS) lives_printerr("Render error was %d\n",filter_error);
+            if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
+                orig_inst == mainw->multitrack->solo_inst) {
               weed_instance_unref(orig_inst);
-              if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
-                  orig_inst == mainw->multitrack->solo_inst) break;
-              continue;
+              break;
             }
-          }
-          //if (filter_error!=FILTER_SUCCESS) lives_printerr("Render error was %d\n",filter_error);
-          if (!LIVES_IS_PLAYING && mainw->multitrack != NULL && mainw->multitrack->solo_inst != NULL &&
-              orig_inst == mainw->multitrack->solo_inst) {
             weed_instance_unref(orig_inst);
-            break;
           }
-          weed_instance_unref(orig_inst);
         }
       }
     }
@@ -3352,9 +3308,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
           }
 
           if (mainw->pchains != NULL && mainw->pchains[i] != NULL) {
-            interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+            if (!filter_mutex_trylock(i)) {
+              interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+              filter_mutex_unlock(i);
+            }
           }
-
           filter = weed_instance_get_filter(instance, TRUE);
 
           // TODO *** enable this, and apply pconx to audio gens in audio.c
@@ -3575,9 +3533,11 @@ void weed_apply_audio_effects_rt(weed_layer_t *alayer, weed_timecode_t tc, boole
         }
 
         if (mainw->pchains != NULL && mainw->pchains[i] != NULL) {
-          interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+          if (!filter_mutex_trylock(i)) {
+            interpolate_params(instance, mainw->pchains[i], tc); // interpolate parameters during preview
+            filter_mutex_unlock(i);
+          }
         }
-
         if (mainw->pconx != NULL  && is_audio_thread) {
           // chain any data pipelines
 
@@ -3642,6 +3602,7 @@ apply_audio_inst2:
       }
     }
   }
+
 }
 
 
@@ -5866,7 +5827,8 @@ LIVES_GLOBAL_INLINE weed_plant_t *weed_instance_obtain(int key, int mode) {
 #endif
 
 
-/** @brief create channels for an instance, using the channel templates and filter class as a guide
+/**
+   @brief create channels for an instance, using the channel templates and filter class as a guide
 
     for repeating channels, the selected number should already have been set in WEED_LEAF_HOST_REPEATS
     for the template
@@ -6461,9 +6423,7 @@ start1:
         d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
         lives_free(tmp);
         lives_free(filter_name);
-        //filter_mutex_lock(hotkey);
         key_to_instance[hotkey][key_modes[hotkey]] = NULL;
-        //filter_mutex_unlock(hotkey);
 
 deinit2:
 
@@ -6550,9 +6510,6 @@ deinit2:
       if (fg_modeswitch) mainw->num_tr_applied = num_tr_applied;
       key_to_instance[hotkey][key_modes[hotkey]] = NULL;
 
-      // reduce refcount by 2
-      //weed_instance_unref(inst);
-      //weed_instance_unref(inst);
       filter_mutex_unlock(hotkey);
       if (mainw->multitrack == NULL) {
         if (!LIVES_IS_PLAYING) {
@@ -6816,9 +6773,7 @@ boolean weed_deinit_effect(int hotkey) {
   if (is_audio_gen) {
     // is audio generator
     // wait for current processing to finish
-    pthread_mutex_lock(&mainw->interp_mutex);
     mainw->agen_key = 0;
-    pthread_mutex_unlock(&mainw->interp_mutex);
     mainw->agen_samps_count = 0;
 
     // for external audio, switch back to reading
@@ -9691,7 +9646,8 @@ static char *get_default_element_string(weed_plant_t *param, int idx) {
 
 
 boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc) {
-  // return FALSE if param has no WEED_LEAF_VALUE - this can happen during realtime audio processing, if the effect is inited, but no WEED_LEAF_VALUE has been set yet
+  // return FALSE if param has no "value"
+  // - this can happen during realtime audio processing, if the effect is inited, but no "value" has been set yet
   int error, j;
   weed_plant_t *pchange = (weed_plant_t *)pchain, *last_pchange = NULL;
   weed_plant_t *wtmpl;
@@ -9731,7 +9687,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
   // we need to single thread here, because it's possible to have a conflict - if the audio and video threads are
   // both doing simultaneous interpolation of the same parameter
-  pthread_mutex_lock(&mainw->interp_mutex);
 
   wtmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
@@ -9779,7 +9734,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   /*       lives_free(in_params); */
   /*       for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]); */
   /*       lives_free(param_array); */
-  /*       pthread_mutex_unlock(&mainw->interp_mutex); */
   /*       return TRUE; */
   /*     } */
   /*     // try to pass more values */
@@ -9793,7 +9747,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   /*     lives_free(in_params); */
   /*     for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]); */
   /*     lives_free(param_array); */
-  /*     pthread_mutex_unlock(&mainw->interp_mutex); */
   /*     return TRUE; */
   /*   } */
   /* } */
@@ -10261,8 +10214,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
     lives_free(valis);
     break;
   }
-
-  pthread_mutex_unlock(&mainw->interp_mutex);
 
   lives_free(npc);
   lives_free(lpc);

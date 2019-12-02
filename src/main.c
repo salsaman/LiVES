@@ -612,7 +612,6 @@ static boolean pre_init(void) {
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
   // recursive locks
-  pthread_mutex_init(&mainw->interp_mutex, &mattr);
   pthread_mutex_init(&mainw->instance_ref_mutex, &mattr);
   pthread_mutex_init(&mainw->abuf_mutex, &mattr);
   pthread_mutex_init(&mainw->audio_resync_mutex, &mattr);

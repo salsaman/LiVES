@@ -153,7 +153,6 @@ void lives_exit(int signum) {
 
     // recursive
     while (!pthread_mutex_unlock(&mainw->gtk_mutex));
-    while (!pthread_mutex_unlock(&mainw->interp_mutex));
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
     while (!pthread_mutex_unlock(&mainw->audio_resync_mutex));

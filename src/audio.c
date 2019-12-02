@@ -15,10 +15,6 @@ static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 
-LIVES_LOCAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
-  return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
-}
-
 LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
   return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE);
 }
@@ -1036,7 +1032,8 @@ static void audio_process_events_to(weed_timecode_t tc) {
 }
 
 
-/** @brief render a chunk of audio, apply effects and mixing it
+/**
+   @brief render a chunk of audio, apply effects and mixing it
 
     called during multitrack rendering to create the actual audio file
     (or in-memory buffer for preview playback in multitrack)
@@ -2744,72 +2741,77 @@ lives_audio_buf_t *audio_cache_get_buffer(void) {
 
 boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread) {
   // get audio from an audio generator; fbuffer is filled with non-interleaved float
-
-  weed_timecode_t tc;
-
-  int error;
-
-  int xnchans;
-
   weed_plant_t *inst = rte_keymode_get_instance(mainw->agen_key, rte_key_getmode(mainw->agen_key));
+  weed_plant_t *orig_inst = inst;
   weed_plant_t *filter;
   weed_plant_t *channel;
   weed_plant_t *ctmpl;
-
   weed_process_f process_func;
+  weed_timecode_t tc;
+  weed_error_t retval;
+  int flags, cflags;
+  int xnchans, xchans = 0, xrate = 0, xarate;
+  boolean rvary = FALSE, lvary = FALSE;
 
   if (mainw->agen_needs_reinit) {
     weed_instance_unref(inst);
     return FALSE; // wait for other thread to reinit us
   }
-  tc = (double)mainw->agen_samps_count / (double)arate * TICKS_PER_SECOND_DBL; // we take our timing from the number of samples read
+  tc = (double)mainw->agen_samps_count / (double)arate * TICKS_PER_SECOND_DBL;
+
+  flags = weed_filter_get_flags(filter);
+
+  if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
+  if (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY) lvary = TRUE;
 
 getaud1:
 
-  xnchans = nchans;
-  filter = weed_instance_get_filter(inst, FALSE);
   channel = get_enabled_channel(inst, 0, FALSE);
-
   if (channel != NULL) {
-    ctmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, &error);
-
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE)
-        && weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, &error) != arate) {
-      // TODO - resample if audio rate is wrong
-      weed_instance_unref(inst);
+    xnchans = nchans; // preferred value
+    ctmpl = weed_channel_get_template(channel);
+    cflags = weed_chantmpl_get_flags(ctmpl);
+    if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
+      xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_MINCHANS, NULL);
+    else if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
+      xnchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MINCHANS, NULL);
+    if (xnchans > nchans) {
+      weed_instance_unref(orig_inst);
       return FALSE;
     }
-    if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS))
-      xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, &error);
-
-    // stop video thread from possibly interpolating/deiniting
-    if (pthread_mutex_trylock(&mainw->interp_mutex)) {
-      weed_instance_unref(inst);
-      return FALSE;
-    }
-
-    // make sure values match, else we need to reinit the plugin
-    if (xnchans != weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, &error) ||
-        arate != weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, &error)) {
-      // reinit plugin
+    if (weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, NULL) != nchans
+        && (cflags & WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE))
       mainw->agen_needs_reinit = TRUE;
+    else weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, nchans);
+
+    xrate = arate;
+    if (rvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE))
+      xrate = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_RATE, NULL);
+    else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_RATE))
+      xrate = weed_get_int_value(filter, WEED_LEAF_AUDIO_RATE, NULL);
+    if (arate != xrate) {
+      weed_instance_unref(orig_inst);
+      return FALSE;
     }
 
-    weed_channel_set_audio_data(channel, fbuffer, arate, xnchans, nsamps);
+    if (weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, NULL) != arate) {
+      if (cflags & WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE) {
+        mainw->agen_needs_reinit = TRUE;
+      }
+    }
 
-    weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
+    weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);
 
     if (mainw->agen_needs_reinit) {
       // allow main thread to complete the reinit so we do not delay; just return silence
-      for (int i = 0; i < nchans; i++) {
-        lives_memset(fbuffer[i], 0, nsamps * sizeof(float));
-      }
-      pthread_mutex_unlock(&mainw->interp_mutex);
-      weed_instance_unref(inst);
+      weed_instance_unref(orig_inst);
       return FALSE;
     }
 
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
+
+    weed_channel_set_audio_data(channel, fbuffer, arate, xnchans, nsamps);
+    weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
   }
 
   if (mainw->pconx != NULL && !(mainw->preview || mainw->is_rendering)) {
@@ -2820,39 +2822,34 @@ getaud1:
 
       if (mainw->agen_needs_reinit) {
         // allow main thread to complete the reinit so we do not delay; just return silence
-        lives_memset(fbuffer, 0, nsamps * nchans * sizeof(float));
-        pthread_mutex_unlock(&mainw->interp_mutex);
-        weed_instance_unref(inst);
+        weed_instance_unref(orig_inst);
         return FALSE;
       }
     }
   }
 
-  process_func = (weed_process_f)weed_get_funcptr_value(filter, WEED_LEAF_PROCESS_FUNC, NULL);
-  if (process_func != NULL) {
-    if ((*process_func)(inst, tc) == WEED_ERROR_PLUGIN_INVALID) {
-      pthread_mutex_unlock(&mainw->interp_mutex);
-      weed_instance_unref(inst);
-      return FALSE;
-    }
-  }
-  pthread_mutex_unlock(&mainw->interp_mutex);
+  retval = run_process_func(inst, tc, mainw->agen_key);
 
-  if (xnchans == 1 && nchans == 2) {
+  if (retval != WEED_SUCCESS) {
+    if (retval == WEED_ERROR_REINIT_NEEDED) mainw->agen_needs_reinit = TRUE;
+    weed_instance_unref(orig_inst);
+    return FALSE;
+  }
+
+  if (channel != NULL && xnchans == 1 && nchans == 2) {
     // if we got mono but we wanted stereo, copy to right channel
     lives_memcpy(fbuffer[1], fbuffer[0], nsamps * sizeof(float));
   }
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
     // handle compound fx
-    inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+    inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
     goto getaud1;
   }
 
   mainw->agen_samps_count += nsamps;
 
-  weed_instance_unref(inst);
-
+  weed_instance_unref(orig_inst);
   return TRUE;
 }
 
@@ -2936,7 +2933,6 @@ boolean apply_rte_audio(int nframes) {
   uint8_t *in_buff;
   float **fltbuf, *fltbufni = NULL;
   short *shortbuf = NULL;
-
   boolean rev_endian = FALSE;
 
   register int i;
@@ -3086,7 +3082,8 @@ boolean apply_rte_audio(int nframes) {
 }
 
 
-/* @brief fill the audio channel(s) for effects with mixed audio / video
+/**
+  @brief fill the audio channel(s) for effects with mixed audio / video
 
   push audio from abuf into an audio channel
   audio will be formatted to the channel requested format

@@ -155,8 +155,10 @@ boolean has_audio_filters(lives_af_t af_type);
 boolean has_usable_palette(weed_plant_t *chantmpl);
 int check_weed_palette_list(int *palette_list, int num_palettes, int palette);
 
+// instances
 weed_error_t weed_call_init_func(weed_plant_t *instance);
 weed_error_t weed_call_deinit_func(weed_plant_t *instance);
+lives_filter_error_t run_process_func(weed_plant_t *instance, weed_timecode_t tc, int key);
 
 char *cd_to_plugin_dir(weed_plant_t *filter);
 boolean weed_init_effect(int hotkey); ///< hotkey starts at 1

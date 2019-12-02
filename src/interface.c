@@ -3557,6 +3557,8 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-alt-enter"), _("reset frame rate (background clip)"));
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
   ADD_KEYDEF(_("ctrl-alt-space"), _("reverse direction (background clip)"));
+  ADD_KEYDEF(_("ctrl-shift-space"),
+             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\nctrl-space clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
   ADD_KEYDEF("n", _("nervous"));

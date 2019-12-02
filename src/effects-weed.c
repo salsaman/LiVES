@@ -1662,7 +1662,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
   weed_plant_t **in_ctmpls;
-  weed_process_f process_func;
   weed_plant_t *def_channel = NULL;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_plant_t *layer = NULL, *orig_layer = NULL;
@@ -1677,7 +1676,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   short pb_quality = prefs->pb_quality;
 
   boolean rowstrides_changed;
-  boolean did_thread = FALSE;
   boolean needs_reinit = FALSE, inplace = FALSE;
   boolean all_out_alpha = TRUE; //,all_in_alpha=FALSE;
   boolean is_converter = FALSE, pvary = FALSE, svary = FALSE;
@@ -2655,11 +2653,9 @@ static lives_filter_error_t weed_apply_audio_instance_inner(weed_plant_t *inst, 
 
   int *in_tracks = NULL, *out_tracks = NULL;
 
-  weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
   weed_plant_t *layer;
   weed_plant_t **in_channels = NULL, **out_channels = NULL, *channel, *chantmpl;
 
-  weed_process_f process_func;
   lives_filter_error_t retval = FILTER_SUCCESS;
 
   int channel_flags;

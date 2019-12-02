@@ -1456,7 +1456,7 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
 
 
 boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
-  weed_plant_t **inparams;
+  weed_plant_t **inparams = NULL;
   weed_plant_t *oparam, *inparam;
   weed_plant_t *inst = NULL;
 

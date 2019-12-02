@@ -4637,8 +4637,6 @@ static boolean oloop;
 static boolean oloop_cont;
 static boolean oping_pong;
 
-#define LOOP_LOCK_MIN_FRAMES (cfile->pb_fps + 1)
-
 void unlock_loop_lock(void) {
   mainw->loop = oloop;
   mainw->loop_cont = oloop_cont;

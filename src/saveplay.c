@@ -16,7 +16,6 @@
 #include "cvirtual.h"
 #include "interface.h"
 
-
 boolean save_clip_values(int which) {
   char *lives_header_new;
 
@@ -2588,6 +2587,10 @@ void play_file(void) {
         }
       }
 
+      if (mainw->multitrack != NULL) {
+        audio_cache_init();
+      }
+
       if (mainw->multitrack == NULL || mainw->multitrack->pb_start_event == NULL) {
         do_progress_dialog(FALSE, FALSE, NULL);
 
@@ -2661,12 +2664,21 @@ void play_file(void) {
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
 
+  if (mainw->ext_playback) {
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    vid_playback_plugin_exit();
+  }
+
   // play completed
 
   mainw->video_seek_ready = FALSE;
   mainw->osc_auto = 0;
 
   if (mainw->loop_locked) unlock_loop_lock();
+
+  if (mainw->multitrack != NULL) {
+    audio_cache_end();
+  }
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
@@ -2787,6 +2799,7 @@ void play_file(void) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);
 
   // PLAY FINISHED...
+
   // allow this to fail - not all sub-commands may be present
   if (prefs->stop_screensaver) {
 #ifdef GDK_WINDOWING_X11
@@ -2811,6 +2824,8 @@ void play_file(void) {
       com = lives_strdup("gconftool-2 --set --type bool /apps/gnome-screensaver/idle_activation_enabled true 2>/dev/null ;");
     } else com = lives_strdup("");
 #endif
+
+
     if (com != NULL) {
       lives_system(com, TRUE);
       lives_free(com);
@@ -2820,10 +2835,6 @@ void play_file(void) {
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
 
-  if (mainw->ext_playback) {
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-    vid_playback_plugin_exit();
-  }
   // we could have started by playing a generator, which could've been closed
   if (mainw->files[current_file] == NULL) current_file = mainw->current_file;
 

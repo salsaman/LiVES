@@ -1324,16 +1324,13 @@ int process_one(boolean visible) {
             else {
               // see if we need to fill an audio buffer
               // TODO - we should hand this off to another thread to do
-#ifdef ENABLE_JACK
               if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
-                mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
-                fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+                wake_audio_thread();
               }
 #endif
 #ifdef HAVE_PULSE_AUDIO
               if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
-                mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0;
-                fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
+                wake_audio_thread();
               }
 #endif
             }

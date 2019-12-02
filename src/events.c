@@ -4825,10 +4825,10 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
 
   if (fmap != NULL) {
     // here we look at all init_events in fmap. If any have WEED_LEAF_HOST_AUDIO_TRANSITION set, then
-    // we we look at the 2 in channels. We first multiply matrix[t0][...] by trans
-    // then we add matrix[t1][...]*(1.0 - trans) to matrix[t3][...]
+    // we we look at the 2 in channels. We first multiply matrix[t0][...] by trans - 1
+    // then we add matrix[t1][...] * (trans) to matrix[t3][...]
     // where trans is the normalised value of the transition parameter
-    // t3 is the output channel, this is usually the same track as t0
+    // t3 is the output channel, (this is usually the same track as t0)
     // thus each row in the matrix represents the contribution from each layer (track)
     if (weed_plant_has_leaf(fmap, WEED_LEAF_INIT_EVENTS)) {
       weed_plant_t **iev = (weed_plant_t **)weed_get_voidptr_array(fmap, WEED_LEAF_INIT_EVENTS, &error);

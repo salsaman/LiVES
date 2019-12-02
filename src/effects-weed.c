@@ -501,7 +501,7 @@ void update_all_host_info(void) {
 static weed_plant_t *get_enabled_channel_inner(weed_plant_t *inst, int which, boolean is_in, boolean audio_only) {
   // plant is a filter_instance
   // "which" starts at 0
-  weed_plant_t **channels;
+  weed_plant_t **channels = NULL;
   weed_plant_t *retval, *ctmpl = NULL;
 
   int error, nchans = 3;

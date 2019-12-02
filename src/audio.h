@@ -199,6 +199,9 @@ void pulse_rec_audio_end(boolean close_dev, boolean close_fd);
 #endif
 
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
+#ifdef TEST_COND
+void wake_audio_thread(void);
+#endif
 
 boolean resync_audio(int frameno);
 

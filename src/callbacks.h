@@ -246,6 +246,8 @@ boolean dirchange_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiV
 boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                                 livespointer area_enum);
 
+void unlock_loop_lock(void);
+
 void on_capture_activate(LiVESMenuItem *, livespointer);
 
 void on_capture2_activate(void);

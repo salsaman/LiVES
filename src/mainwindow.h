@@ -49,6 +49,8 @@
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
 #define DEF_BLENDCHANGE_AMOUNT 100
 
+#define LOOP_LOCK_MIN_FRAMES (cfile->pb_fps + 1)
+
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture

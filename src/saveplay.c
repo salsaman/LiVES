@@ -2672,10 +2672,6 @@ void play_file(void) {
 
   if (mainw->loop_locked) unlock_loop_lock();
 
-  if (mainw->event_list != NULL && !mainw->record && !(mainw->is_rendering && mainw->preview)) {
-    audio_cache_end();
-  }
-
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
 

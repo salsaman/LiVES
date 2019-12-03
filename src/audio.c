@@ -2710,6 +2710,10 @@ void audio_cache_end(void) {
   register int i;
 
   pthread_mutex_lock(&mainw->cache_buffer_mutex);
+  if (cache_buffer == NULL) {
+    pthread_mutex_unlock(&mainw->cache_buffer_mutex);
+    return;
+  }
   cache_buffer->die = TRUE; ///< tell cache thread to exit when possible
   wake_audio_thread();
   pthread_join(athread, NULL);

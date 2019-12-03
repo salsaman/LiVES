@@ -2539,7 +2539,10 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 ==== parameter GUI ====
 A Plugin may optionally create and update a gui plant for any input parameter during the init_func()
+
 At other times the plugin must not alter any of the leaves, except for any private leaves with keys prefixed "plugin_"
+
+* The corresponding parameter template MUST have WEED_PARAMETER_REINIT_ON_VALUE_CHANGE set.
 
 
 * "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1

@@ -318,8 +318,8 @@ void on_open_fw_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   /*  if (type==CAM_FORMAT_HDV) {
     cam->rec_handle=open_raw1394();
     if (cam->rec_handle==NULL) return;
-  }
-  else*/
+    }
+    else*/
   cam->rec_handle = NULL;
 
   if (mainw->multitrack != NULL) {

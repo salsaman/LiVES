@@ -1627,7 +1627,8 @@ void on_rte_info_clicked(LiVESButton *button, livespointer user_data) {
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
   package_name = weed_get_package_name(filter);
   filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &weed_error);
-  if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS,
+  if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) filter_extra_authors = weed_get_string_value(filter,
+        WEED_LEAF_EXTRA_AUTHORS,
         &weed_error);
   if (weed_plant_has_leaf(filter, WEED_LEAF_COPYRIGHT)) {
     filter_copyright = weed_get_string_value(filter, WEED_LEAF_COPYRIGHT, &weed_error);
@@ -2070,7 +2071,8 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   while (list != NULL) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
     int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
-    if ((weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) && weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) ==
+    if ((weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
+         weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) ==
          WEED_TRUE && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
              !has_video_chans_in(filter, FALSE)) ||
              (weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
@@ -2607,7 +2609,8 @@ void rte_set_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 void rte_set_key_defs(LiVESButton *button, lives_rfx_t *rfx) {
   int key, mode;
   if (mainw->textwidget_focus != NULL) {
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
+                              "textwidget");
     after_param_text_changed(textwidget, rfx);
   }
 
@@ -2627,7 +2630,8 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
   register int i;
 
   if (mainw->textwidget_focus != NULL) {
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
+                              "textwidget");
     after_param_text_changed(textwidget, rfx);
   }
 

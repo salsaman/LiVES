@@ -246,8 +246,9 @@ boolean transcode(int start, int end) {
     weed_set_int_value(frame_layer, WEED_LEAF_FRAME, i);
 
     // - pull next frame (thread)
-    pull_frame_threaded(frame_layer, img_ext, (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
-                        cfile->fps)));
+    pull_frame_threaded(frame_layer, img_ext,
+                        (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
+                                          cfile->fps)));
 
     if (mainw->fx1_bool) {
       frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);

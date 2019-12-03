@@ -1,11 +1,11 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001-2005 FUKUCHI Kentaro
- *
- * RippleTV - Water ripple effect.
- * Copyright (C) 2001-2002 FUKUCHI Kentaro
- *
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001-2005 FUKUCHI Kentaro
+
+   RippleTV - Water ripple effect.
+   Copyright (C) 2001-2002 FUKUCHI Kentaro
+
+*/
 
 /* modified for Weed by G. Finch (salsaman)
    modifications (c) G. Finch */
@@ -381,7 +381,7 @@ static weed_error_t ripple_process(weed_plant_t *inst, weed_timecode_t timestamp
   /* simulate surface wave */
 
   /* This function is called only a few times per second. To increase a speed
-  ss   * of wave, iterate this loop several times. */
+    ss   * of wave, iterate this loop several times. */
   for (i = LOOPNUM; i > 0; i--) {
     /* wave simulation */
     p = sdata->map1 + width + 1;

@@ -1,43 +1,43 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents).
-All Rights Reserved.
+  Copyright © 1998. The Regents of the University of California (Regents).
+  All Rights Reserved.
 
-Written by Matt Wright, The Center for New Music and Audio Technologies,
-University of California, Berkeley.
+  Written by Matt Wright, The Center for New Music and Audio Technologies,
+  University of California, Berkeley.
 
-Permission to use, copy, modify, distribute, and distribute modified versions
-of this software and its documentation without fee and without a signed
-licensing agreement, is hereby granted, provided that the above copyright
-notice, this paragraph and the following two paragraphs appear in all copies,
-modifications, and distributions.
+  Permission to use, copy, modify, distribute, and distribute modified versions
+  of this software and its documentation without fee and without a signed
+  licensing agreement, is hereby granted, provided that the above copyright
+  notice, this paragraph and the following two paragraphs appear in all copies,
+  modifications, and distributions.
 
-IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
-OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
-BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
+  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
+  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
-HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+  REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
+  HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
+  MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is
+  The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
 
 /*
- OSC_timeTag.h: library for manipulating OSC time tags
- Matt Wright, 5/29/97
+  OSC_timeTag.h: library for manipulating OSC time tags
+  Matt Wright, 5/29/97
 
- Time tags in OSC have the same format as in NTP: 64 bit fixed point, with the
- top 32 bits giving number of seconds sinve midnight 1/1/1900 and the bottom
- 32 bits giving fractional parts of a second.  We represent this by an 8-byte
- unsigned long if possible, or else a struct.
+  Time tags in OSC have the same format as in NTP: 64 bit fixed point, with the
+  top 32 bits giving number of seconds sinve midnight 1/1/1900 and the bottom
+  32 bits giving fractional parts of a second.  We represent this by an 8-byte
+  unsigned long if possible, or else a struct.
 
- NB: On many architectures with 8-byte ints, it's illegal (like maybe a bus error)
- to dereference a pointer to an 8 byte int that's not 8-byte aligned.
+  NB: On many architectures with 8-byte ints, it's illegal (like maybe a bus error)
+  to dereference a pointer to an 8 byte int that's not 8-byte aligned.
 */
 
 #ifndef OSC_TIMETAG

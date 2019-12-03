@@ -160,7 +160,8 @@ WEED_SETUP_START(200, 200) {
                                weed_float_init("blue", "_Blue factor", 1.0, 0.0, 2.0), NULL
                               };
 
-  weed_plant_t *filter_class = weed_filter_class_init("colour correction", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
+  weed_plant_t *filter_class = weed_filter_class_init("colour correction", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD,
+                               palette_list,
                                ccorrect_init, ccorrect_process, ccorrect_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

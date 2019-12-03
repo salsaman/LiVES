@@ -1,5 +1,5 @@
 /* giwled.c  -  GiwLed widget's source
-Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
+  Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -15,9 +15,9 @@ Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-Maintainers
-Alexandre Pereira Bueno - alpebu@yahoo.com.br
-James Scott Jr <skoona@users.sourceforge.net>
+  Maintainers
+  Alexandre Pereira Bueno - alpebu@yahoo.com.br
+  James Scott Jr <skoona@users.sourceforge.net>
 */
 
 // additional code G. Finch (salsaman@gmail.com) 2010 - 2013
@@ -78,7 +78,7 @@ static GtkWidgetClass *parent_class = NULL;
 
 
 /*********************
-* Widget's Functions *
+  Widget's Functions
 *********************/
 
 GType giw_led_get_type() {
@@ -238,7 +238,8 @@ giw_led_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes,
+                        attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
@@ -555,7 +556,7 @@ giw_led_button_press(GtkWidget      *widget,
 }
 
 /******************
-* Users Functions *
+  Users Functions
 ******************/
 
 void
@@ -627,7 +628,7 @@ giw_led_enable_mouse(GiwLed *led,
 }
 
 /******************
-* Local Functions *
+  Local Functions
 ******************/
 
 

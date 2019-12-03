@@ -130,7 +130,8 @@ static void after_framedraw_frame_spinbutton_changed(LiVESSpinButton *spinbutton
 void framedraw_connect_spinbutton(lives_special_framedraw_rect_t *framedraw, lives_rfx_t *rfx) {
   framedraw->rfx = rfx;
 
-  mainw->fd_spin_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+  mainw->fd_spin_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_spinbutton),
+                        LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                         LIVES_GUI_CALLBACK(after_framedraw_frame_spinbutton_changed),
                         framedraw);
   lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->framedraw_opscale), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
@@ -153,8 +154,10 @@ void framedraw_connect(lives_special_framedraw_rect_t *framedraw, int width, int
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_BUTTON_PRESS_EVENT,
                        LIVES_GUI_CALLBACK(on_framedraw_mouse_start),
                        framedraw);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_framedraw_enter), framedraw);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_LEAVE_NOTIFY_EVENT, LIVES_GUI_CALLBACK(on_framedraw_leave),
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_ENTER_EVENT, LIVES_GUI_CALLBACK(on_framedraw_enter),
+                       framedraw);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->framedraw), LIVES_WIDGET_LEAVE_NOTIFY_EVENT,
+                       LIVES_GUI_CALLBACK(on_framedraw_leave),
                        framedraw);
 
   framedraw_connect_spinbutton(framedraw, rfx);
@@ -191,7 +194,8 @@ void framedraw_add_reset(LiVESVBox *box, lives_special_framedraw_rect_t *framedr
   lives_box_pack_start(LIVES_BOX(hbox_rst), mainw->framedraw_reset, TRUE, FALSE, 0);
   lives_widget_set_sensitive(mainw->framedraw_reset, FALSE);
 
-  lives_signal_connect(mainw->framedraw_reset, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_framedraw_reset_clicked), framedraw);
+  lives_signal_connect(mainw->framedraw_reset, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_framedraw_reset_clicked),
+                       framedraw);
 }
 
 
@@ -202,7 +206,8 @@ static boolean expose_fd_event(LiVESWidget *widget, LiVESXEventExpose ev) {
 }
 
 
-void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_preview_button, int width, int height, lives_rfx_t *rfx) {
+void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_preview_button, int width, int height,
+                          lives_rfx_t *rfx) {
   // adds the frame draw widget to box
   // the redraw button should be connected to an appropriate redraw function
   // after calling this function
@@ -291,7 +296,8 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   mainw->framedraw_opscale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), mainw->framedraw_opscale, TRUE, TRUE, 0);
   opcol = lives_rgba_col_new(0, 0, 0, 65535);
-  cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"), FALSE, &opcol, NULL, NULL, NULL, NULL);
+  cbutton = lives_standard_color_button_new(LIVES_BOX(mainw->framedraw_maskbox), _("color"), FALSE, &opcol, NULL, NULL, NULL,
+            NULL);
   mainw->framedraw_cbutton = cbutton;
 
   hbox = lives_hbox_new(FALSE, 2);
@@ -530,7 +536,8 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
     } else {
       palette = WEED_PALETTE_RGB24;
     }
-    resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig), LIVES_INTERP_BEST,
+    resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig),
+                 LIVES_INTERP_BEST,
                  palette, 0);
     convert_layer_palette(mainw->fd_layer, palette, 0);
     gamma_convert_layer(cfile->gamma_type, mainw->fd_layer);
@@ -972,7 +979,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xcurrent);
       } else {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(-xscale * (double)cfile->hsize - .5));
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xcurrent * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                    (int)(xcurrent * (double)cfile->hsize + .5));
       }
     }
 
@@ -987,7 +995,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ycurrent);
       } else {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(-yscale * (double)cfile->vsize - .5));
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ycurrent * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                    (int)(ycurrent * (double)cfile->vsize + .5));
       }
     }
   }
@@ -1006,7 +1015,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xcurrent);
       } else {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (int)(xstart * (double)cfile->hsize + .5));
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)(xcurrent * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                    (int)(xcurrent * (double)cfile->hsize + .5));
       }
     }
 
@@ -1021,7 +1031,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), ycurrent);
       } else {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (int)(ystart * (double)cfile->vsize + .5));
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)(ycurrent * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                    (int)(ycurrent * (double)cfile->vsize + .5));
       }
     }
     break;
@@ -1035,14 +1046,16 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
     if (framedraw->xstart_param->dp > 0) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit - offs_x);
     } else {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xinit - offs_x) * (double)cfile->hsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                  (int)((xinit - offs_x) * (double)cfile->hsize + .5));
     }
 
     offs_y = (ycurrent - ystart) / scale;
     if (framedraw->xstart_param->dp > 0) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit - offs_y);
     } else {
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yinit - offs_y) * (double)cfile->vsize + .5));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                  (int)((yinit - offs_y) * (double)cfile->vsize + .5));
     }
     break;
   }
@@ -1099,7 +1112,8 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), xinit + offs_x);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (int)((xinit + offs_x) * (double)cfile->hsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                    (int)((xinit + offs_x) * (double)cfile->hsize + .5));
       }
     }
     if (ycurrent == ystart) {
@@ -1107,7 +1121,8 @@ boolean on_framedraw_mouse_reset(LiVESWidget *widget, LiVESXEventButton *event, 
       if (framedraw->xstart_param->dp > 0) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), yinit + offs_y);
       } else {
-        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (int)((yinit + offs_y) * (double)cfile->vsize + .5));
+        lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                    (int)((yinit + offs_y) * (double)cfile->vsize + .5));
       }
     }
     break;
@@ -1145,27 +1160,33 @@ void on_framedraw_reset_clicked(LiVESButton *button, lives_special_framedraw_rec
   noupdate = TRUE;
   if (framedraw->xend_param != NULL) {
     if (framedraw->xend_param->dp == 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), (double)get_int_param(framedraw->xend_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]),
+                                  (double)get_int_param(framedraw->xend_param->def));
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xend_param->widgets[0]), get_double_param(framedraw->xend_param->def));
   }
   if (framedraw->yend_param != NULL) {
     if (framedraw->yend_param->dp == 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), (double)get_int_param(framedraw->yend_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]),
+                                  (double)get_int_param(framedraw->yend_param->def));
     else
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->yend_param->widgets[0]), get_double_param(framedraw->yend_param->def));
   }
   if (framedraw->xstart_param != NULL) {
     if (framedraw->xstart_param->dp == 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), (double)get_int_param(framedraw->xstart_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                  (double)get_int_param(framedraw->xstart_param->def));
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]), get_double_param(framedraw->xstart_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->xstart_param->widgets[0]),
+                                  get_double_param(framedraw->xstart_param->def));
   }
   if (framedraw->ystart_param != NULL) {
     if (framedraw->ystart_param->dp == 0)
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), (double)get_int_param(framedraw->ystart_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                  (double)get_int_param(framedraw->ystart_param->def));
     else
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]), get_double_param(framedraw->ystart_param->def));
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(framedraw->ystart_param->widgets[0]),
+                                  get_double_param(framedraw->ystart_param->def));
   }
 
   if (mainw->framedraw_reset != NULL) {

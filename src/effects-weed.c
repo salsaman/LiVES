@@ -1391,7 +1391,8 @@ void weed_reinit_all(void) {
 
         // ignore video generators
         while ((next_inst = get_next_compound_inst(last_inst)) != NULL) last_inst = next_inst;
-        if (enabled_in_channels(instance, FALSE) == 0 && enabled_out_channels(last_inst, FALSE) > 0 && !is_pure_audio(last_inst, FALSE)) {
+        if (enabled_in_channels(instance, FALSE) == 0 && enabled_out_channels(last_inst, FALSE) > 0 &&
+            !is_pure_audio(last_inst, FALSE)) {
           weed_instance_unref(instance);
           continue;
         }
@@ -2534,7 +2535,8 @@ done_video:
 }
 
 
-static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean is_in, int *tracks, int num_tracks, int nbtracks,
+static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean is_in, int *tracks, int num_tracks,
+    int nbtracks,
     weed_plant_t **layers) {
   // handle case where in_channels > than num layers
   // either we temporarily disable the channel, or we can't apply the filter
@@ -3180,17 +3182,17 @@ static void weed_apply_filter_map(weed_plant_t **layers, weed_plant_t *filter_ma
             }
 
             /*
-            // might be needed for multitrack ???
-            if (mainw->pconx!=NULL) {
-            int key=i;
-            int mode=key_modes[i];
-            if (weed_plant_has_leaf(instance,WEED_LEAF_HOST_MODE)) {
-            key=weed_get_int_value(instance,WEED_LEAF_HOST_KEY,&error);
-            mode=weed_get_int_value(instance,WEED_LEAF_HOST_MODE,&error);
-            }
-            // chain any data pipelines
-            pconx_chain_data(key,mode);
-            }*/
+              // might be needed for multitrack ???
+              if (mainw->pconx!=NULL) {
+              int key=i;
+              int mode=key_modes[i];
+              if (weed_plant_has_leaf(instance,WEED_LEAF_HOST_MODE)) {
+              key=weed_get_int_value(instance,WEED_LEAF_HOST_KEY,&error);
+              mode=weed_get_int_value(instance,WEED_LEAF_HOST_MODE,&error);
+              }
+              // chain any data pipelines
+              pconx_chain_data(key,mode);
+              }*/
 
 apply_inst2:
 
@@ -6734,11 +6736,9 @@ boolean weed_deinit_effect(int hotkey) {
             weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, 0);
             weed_instance_unref(instance);
             return FALSE;
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+	    // *INDENT-ON*
 
   // disable param recording, in case the instance is still attached to a param window
   weed_set_boolean_value(instance, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
@@ -6830,11 +6830,9 @@ boolean weed_deinit_effect(int hotkey) {
               pulse_get_rec_avals(mainw->pulsed);
             }
 #endif
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 
   if (!filter_mutex_trylock(hotkey)) {
     // should fail, but just in case
@@ -9025,11 +9023,14 @@ int rte_fg_gen_mode(void) {
 }
 
 
-weed_plant_t *get_textparm(void) {
-  // for rte textmode, get first string parameter for current key/mode instance
-  // we will then forward all keystrokes to this parm WEED_LEAF_VALUE until the exit key (TAB)
-  // is pressed
+/**
+   @brief
 
+  for rte textmode, get first string parameter for current key/mode instance
+  we will then forward all keystrokes to this parm WEED_LEAF_VALUE until the exit key (TAB)
+  is pressed
+*/
+weed_plant_t *get_textparm(void) {
   weed_plant_t *inst, **in_params, *ptmpl, *ret;
 
   int key = mainw->rte_keys, mode, error, i, hint;
@@ -9071,12 +9072,15 @@ weed_plant_t *get_textparm(void) {
   return NULL;
 }
 
+/**
+   @brief
 
+  newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
+  key is 1 based, but may be 0 to use the current mainw->rte_keys
+  special handling ensures that if we switch transitions, any background generators survive the switchover
+  call with filter mutex unlocked
+*/
 boolean rte_key_setmode(int key, int newmode) {
-  // newmode has two special values, -1 = cycle forwards, -2 = cycle backwards
-  // key is 1 based, but may be 0 to use the current mainw->rte_keys
-  // special handling ensures that if we switch transitions, any background generators survive the switchover
-  // call with filter mutex unlocked
   weed_plant_t *inst, *last_inst;
   int oldmode;
   int blend_file;
@@ -9186,13 +9190,17 @@ boolean rte_key_setmode(int key, int newmode) {
 }
 
 
+/**
+   @brief
+
+ we will add a filter_class at the next free slot for key, and return the slot number
+  if idx is -1 (probably meaning the filter was not found), we return -1
+  if all slots are full, we return -3
+  currently, generators and non-generators cannot be mixed on the same key (causes problems if the mode is switched)
+  in this case a -2 is returned
+*/
 int weed_add_effectkey_by_idx(int key, int idx) {
-  // we will add a filter_class at the next free slot for key, and return the slot number
-  // if idx is -1 (probably meaning the filter was not found), we return -1
-  // if all slots are full, we return -3
-  // currently, generators and non-generators cannot be mixed on the same key (causes problems if the mode is switched)
-  // in this case a -2 is returned
-  boolean has_gen = FALSE;
+   boolean has_gen = FALSE;
   boolean has_non_gen = FALSE;
 
   int i;
@@ -9352,12 +9360,15 @@ int rte_get_numfilters(void) {
 ///////////////////
 // parameter interpolation
 
-void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index) {
-  // for a multi valued parameter or pchange, we will fill WEED_LEAF_VALUE up to element index with WEED_LEAF_NEW_DEFAULT
-  // we will also create the ignore array if there is not one. The values of this are set to WEED_TRUE if the user
-  // updates the values for that channel, so we know which values to set for interpolation later.
-  // paramtmpl must be supplied, since pchanges do not have one directly
+/**
+   @brief
 
+  for a multi valued parameter or pchange, we will fill WEED_LEAF_VALUE up to element index with WEED_LEAF_NEW_DEFAULT
+  we will also create the ignore array if there is not one. The values of this are set to WEED_TRUE if the user
+  updates the values for that channel, so we know which values to set for interpolation later.
+  paramtmpl must be supplied, since pchanges do not have one directly
+*/
+void fill_param_vals_to(weed_plant_t *param, weed_plant_t *paramtmpl, int index) {
   int i, error, hint;
   int num_vals = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
   int new_defi, *valis, *nvalis;
@@ -9532,7 +9543,8 @@ static int get_default_element_int(weed_plant_t *param, int idx, int mpy, int ad
   int error;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+      weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
     valsi = weed_get_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = valsi[idx * mpy + add];
     lives_free(valsi);
@@ -9559,7 +9571,8 @@ static double get_default_element_double(weed_plant_t *param, int idx, int mpy, 
   int error;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+      weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
     valsd = weed_get_double_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = valsd[idx * mpy + add];
     lives_free(valsd);
@@ -9608,7 +9621,8 @@ static char *get_default_element_string(weed_plant_t *param, int idx) {
   int numvals;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) && (numvals = weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT)) > idx) {
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+      (numvals = weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT)) > idx) {
     valss = weed_get_string_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = lives_strdup(valss[idx]);
     for (i = 0; i < numvals; i++) lives_free(valss[i]);
@@ -10202,10 +10216,13 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   return TRUE;
 }
 
+/**
+   @brief
 
+  interpolate all in_parameters for filter_instance inst, using void **pchain, which is an array of param_change events in temporal order
+  values are calculated for timecode tc. We skip WEED_LEAF_HIDDEN parameters
+*/
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
-  // interpolate all in_parameters for filter_instance inst, using void **pchain, which is an array of param_change events in temporal order
-  // values are calculated for timecode tc. We skip WEED_LEAF_HIDDEN parameters
   void *pchain;
   int num_params;
   int offset = 0, error;
@@ -10238,18 +10255,21 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
 ///////////////////////////////////////////////////////////
 ////// hashnames
 
+/**
+   @brief
+
+return value should be freed after use
+
+  make hashname from filter_idx: if use_extra_authors is set we use WEED_LEAF_EXTRA_AUTHORS instead of "authors"
+  (for reverse compatibility)
+
+  if fullname is FALSE, return filename, filtername concatenated
+  if fullname is TRUE, return filename, filtername, author, version concatenated
+
+  if sep is not 0, we ignore the booleans and return filename, sep, filtername, sep, author concatenated
+  (suitable to be fed into weed_filter_highest_version() later)
+*/
 char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_authors, char sep, boolean subs) {
-  // return value should be freed after use
-
-  // make hashname from filter_idx: if use_extra_authors is set we use WEED_LEAF_EXTRA_AUTHORS instead of "authors"
-  // (for reverse compatibility)
-
-  // if fullname is FALSE, return filename, filtername concatenated
-  // if fullname is TRUE, return filename, filtername, author, version concatenated
-
-  // if sep is not 0, we ignore the booleans and return filename, sep, filtername, sep, author concatenated
-  // (suitable to be fed into weed_filter_highest_version() later)
-
   weed_plant_t *filter, *plugin_info;
 
   char plugin_fname[PATH_MAX];
@@ -10383,10 +10403,9 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
         if (!lives_utf8_strcasecmp(xhashname, hashnames[i][type].string)) {
           lives_free(xhashname);
           return i;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (fullname) {
     type = 1;
@@ -10395,10 +10414,9 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
         if (!lives_utf8_strcasecmp(xhashname, hashnames[i][type].string)) {
           lives_free(xhashname);
           return i;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   lives_free(xhashname);
   return -1;
@@ -10477,14 +10495,17 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
 }
 
 
+/**
+   @brief
+
+  generate a list of filter indices from a given template. Char values may be NULL or "" to signify match-any.
+  version may be 0 to signify match-any
+  otherwise values must match those specified
+
+  returns: a list of int indices, with the last value == -1
+  return value should be freed after use
+*/
 int *weed_get_indices_from_template(const char *pkg, const char *fxname, const char *auth, int version) {
-  // generate a list of filter indices from a given template. Char values may be NULL or "" to signify match-any.
-  // version may be 0 to signify match-any
-  // otherwise values must match those specified
-
-  // returns: a list of int indices, with the last value == -1
-  // return value should be freed after use
-
   weed_plant_t *filter;
   int *rvals;
 
@@ -10545,21 +10566,24 @@ weed_plant_t *get_weed_filter(int idx) {
 }
 
 
+/**
+   @brief serialise a leaf
+
+   serialise a leaf with key "key" to memory or to file
+   for file, set fd >= 0 and mem to NULL
+   for memory, pass the address of a memory area (which must be large enough to accept the data)
+   if write_all is set then we first write the key name
+   
+   serialisation format is 4 bytes "size" (little-endian for file) followed by the data
+   - strings are not NULL terminated
+   - pointer types are converted to uint64_t before writing
+
+   returns bytesize of serialised leaf
+
+   format is [key_len (4 bytes) | key (key_len bytes)] seed_type (4 bytes) n_elements (4 bytes)
+   then for each element: value_size (4 bytes) value
+*/
 static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, boolean write_all, unsigned char **mem) {
-  // serialise a leaf with key "key" to memory or to file
-  // for file, set fd >= 0 and mem to NULL
-  // for memory, pass the address of a memory area (which must be large enough to accept the data)
-  // if write_all is set then we first write the key name
-  //
-  // serialisation format is 4 bytes "size" (little-endian for file) followed by the data
-  // - strings are not NULL terminated
-  // - pointer types are converted to uint64_t before writing
-
-  // returns bytesize of serialised leaf
-
-  // format is [key_len (4 bytes) | key (key_len bytes)] seed_type (4 bytes) n_elements (4 bytes)
-  // then for each element: value_size (4 bytes) value
-
   void *value = NULL, *valuer = NULL;
 
   size_t totsize = 0;
@@ -11022,11 +11046,9 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
             for (j = 0; j < ne; j++) voids[j] = values[j];
             weed_leaf_set(plant, key, st, ne, (void *)voids);
             lives_freep((void **)&voids);
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
 
 done:
 
@@ -11295,7 +11317,8 @@ boolean write_generator_sizes(int fd, int idx) {
       lives_write_le_buffered(fd, &i, 4, TRUE);
       if (weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_WIDTH)) weed_leaf_serialise(fd, ctmpls[i], WEED_LEAF_HOST_WIDTH, FALSE, NULL);
       else weed_leaf_serialise(fd, ctmpls[i], WEED_LEAF_WIDTH, FALSE, NULL);
-      if (weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_HEIGHT)) weed_leaf_serialise(fd, ctmpls[i], WEED_LEAF_HOST_HEIGHT, FALSE, NULL);
+      if (weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_HEIGHT)) weed_leaf_serialise(fd, ctmpls[i], WEED_LEAF_HOST_HEIGHT, FALSE,
+            NULL);
       else weed_leaf_serialise(fd, ctmpls[i], WEED_LEAF_HEIGHT, FALSE, NULL);
     }
   }
@@ -11544,10 +11567,9 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
           ret = weed_leaf_deserialise(fd, plant, WEED_LEAF_VALUE, NULL, FALSE);
           weed_plant_free(plant);
           if (ret < 0) goto err123;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
 
   if (key >= 0) key_defaults[key][mode] = key_defs;
 

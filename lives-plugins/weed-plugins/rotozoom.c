@@ -53,15 +53,15 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
   sy = xd * offset;
 
   /* Stepping across and down the screen, each screen row has a
-   * starting coordinate in the texture: (sx, sy).  As each screen
-   * row is traversed, the current texture coordinate (x, y) is
-   * modified by (xd, yd), which are (sin(rot), cos(rot)) multiplied
-   * by the current zoom factor.  For each vertical step, (xd, yd)
-   * is rotated 90 degrees, to become (-yd, xd).
-   *
-   * More fun can be had by playing around with x, y, xd, and yd as
-   * you move about the image.
-   */
+     starting coordinate in the texture: (sx, sy).  As each screen
+     row is traversed, the current texture coordinate (x, y) is
+     modified by (xd, yd), which are (sin(rot), cos(rot)) multiplied
+     by the current zoom factor.  For each vertical step, (xd, yd)
+     is rotated 90 degrees, to become (-yd, xd).
+
+     More fun can be had by playing around with x, y, xd, and yd as
+     you move about the image.
+  */
 
   for (j = 0; j < dheight; j++) {
     x = sx;

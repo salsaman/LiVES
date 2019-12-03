@@ -1241,7 +1241,8 @@ lives_endian_t clip::audioEndian() {
 livesString clip::name() {
   if (isValid()) {
     int cnum = cnum_for_uid(m_uid);
-    if (cnum > -1 && mainw->files[cnum] != NULL) return livesString(get_menu_name(mainw->files[cnum], FALSE), LIVES_CHAR_ENCODING_UTF8);
+    if (cnum > -1 &&
+        mainw->files[cnum] != NULL) return livesString(get_menu_name(mainw->files[cnum], FALSE), LIVES_CHAR_ENCODING_UTF8);
   }
   return livesString();
 }

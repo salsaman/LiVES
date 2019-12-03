@@ -640,7 +640,8 @@ boolean lives_tool_button_set_icon_widget(LiVESToolButton *, LiVESWidget *icon);
 boolean lives_tool_button_set_label_widget(LiVESToolButton *, LiVESWidget *label);
 boolean lives_tool_button_set_use_underline(LiVESToolButton *, boolean use_underline);
 
-LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type, LiVESButtonsType buttons,
+LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type,
+                                      LiVESButtonsType buttons,
                                       const char *msg_fmt, ...);
 
 double lives_ruler_get_value(LiVESRuler *);
@@ -930,7 +931,8 @@ LiVESWidget *lives_standard_entry_new(const char *labeltext, const char *txt, in
 LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars, LiVESBox *,
     const char *tooltip);
 
-LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth, int maxchars,
+LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth,
+    int maxchars,
     LiVESBox *box, const char *tooltip);
 
 LiVESToolItem *lives_menu_tool_button_new(LiVESWidget *icon, const char *label);

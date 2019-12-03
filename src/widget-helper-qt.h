@@ -408,7 +408,8 @@ next:
 
 
 
-LIVES_INLINE char *lives_filename_to_utf8(const char *ostr, ssize_t len, size_t *bytes_read, size_t *bytes_written, void *error) {
+LIVES_INLINE char *lives_filename_to_utf8(const char *ostr, ssize_t len, size_t *bytes_read, size_t *bytes_written,
+    void *error) {
 #ifndef IS_MINGW
   QString qs = QString::fromLocal8Bit(ostr);
   return strdup(qs.toUtf8().constData());
@@ -417,7 +418,8 @@ LIVES_INLINE char *lives_filename_to_utf8(const char *ostr, ssize_t len, size_t 
 }
 
 
-LIVES_INLINE char *lives_filename_from_utf8(const char *ostr, ssize_t len, size_t *bytes_read, size_t *bytes_written, void *error) {
+LIVES_INLINE char *lives_filename_from_utf8(const char *ostr, ssize_t len, size_t *bytes_read, size_t *bytes_written,
+    void *error) {
 #ifndef IS_MINGW
   QString qs = QString::fromUtf8(ostr);
   return strdup(qs.toLocal8Bit().constData());
@@ -2801,7 +2803,8 @@ public:
     set_type(LIVES_WIDGET_TYPE_MENU_ITEM);
   }
 
-  LiVESMenuItem(const QString &text, LiVESWidget *parent) : QAction(text, static_cast<QObject *>(static_cast<LiVESWidgetObject *>(parent))) {
+  LiVESMenuItem(const QString &text, LiVESWidget *parent) : QAction(text,
+        static_cast<QObject *>(static_cast<LiVESWidgetObject *>(parent))) {
     set_type(LIVES_WIDGET_TYPE_MENU_ITEM);
     this->setText(text);
   }
@@ -3751,12 +3754,14 @@ public:
     QAbstractSlider *sbar = static_cast<QAbstractSlider *>(horizontalScrollBar());
     hadj = new LiVESAdjustment(sbar->value(), sbar->minimum(), sbar->maximum(), sbar->singleStep(), sbar->pageStep(), -1.);
     hadj->set_owner(this);
-    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESWidgetObject *>(this)), SLOT(hvalue_changed(int)));
+    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESWidgetObject *>(this)),
+                  SLOT(hvalue_changed(int)));
 
     sbar = static_cast<QAbstractSlider *>(verticalScrollBar());
     vadj = new LiVESAdjustment(sbar->value(), sbar->minimum(), sbar->maximum(), sbar->singleStep(), sbar->pageStep(), -1.);
     vadj->set_owner(this);
-    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESWidgetObject *>(this)), SLOT(vvalue_changed(int)));
+    sbar->connect(sbar, SIGNAL(valueChanged(int)), static_cast<QObject *>(static_cast<LiVESWidgetObject *>(this)),
+                  SLOT(vvalue_changed(int)));
 
   }
 
@@ -3826,17 +3831,17 @@ public:
 
   /*  public slots:
 
-  void hvalue_changed(int newval) {
+    void hvalue_changed(int newval) {
     hadj->freeze();
     hadj->set_value(newval);
     hadj->thaw();
-  }
+    }
 
-  void vvalue_changed(int newval) {
+    void vvalue_changed(int newval) {
     vadj->freeze();
     vadj->set_value(newval);
     vadj->thaw();
-  }
+    }
   */
 
 private:
@@ -4314,9 +4319,9 @@ public:
 
 
   /* Q_SIGNALS:
-  void changed();
+    void changed();
 
-  private Q_SLOTS:
+    private Q_SLOTS:
 
     void onClicked() {
       QColor mycolour = colour;
@@ -4325,7 +4330,7 @@ public:
       dlg.setWindowTitle(title);
       dlg.setOption(QColorDialog::ShowAlphaChannel, use_alpha);
       if(dlg.exec() == QDialog::Accepted) {
-  set_colour(dlg.selectedColor());
+    set_colour(dlg.selectedColor());
       }
       if (!use_alpha) colour.setAlpha(255);
       }*/

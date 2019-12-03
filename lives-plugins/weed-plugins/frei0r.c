@@ -211,9 +211,10 @@ static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp
     f0r_update = weed_get_voidptr_value(filter, "plugin_f0r_update", NULL);
     out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
     in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
-    (*f0r_update)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL), weed_get_voidptr_value(out_channels[0],
-                  WEED_LEAF_PIXEL_DATA,
-                  NULL));
+    (*f0r_update)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL),
+                  weed_get_voidptr_value(out_channels[0],
+                                         WEED_LEAF_PIXEL_DATA,
+                                         NULL));
     weed_free(out_channels);
     weed_free(in_channels);
     break;
@@ -222,7 +223,8 @@ static weed_error_t frei0r_process(weed_plant_t *inst, weed_timecode_t timestamp
     out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
     in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL);
     (*f0r_update2)(f0r_inst, time, weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL),
-                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL), NULL, weed_get_voidptr_value(out_channels[0], WEED_LEAF_PIXEL_DATA,
+                   weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL), NULL, weed_get_voidptr_value(out_channels[0],
+                       WEED_LEAF_PIXEL_DATA,
                        NULL));
     weed_free(out_channels);
     weed_free(in_channels);
@@ -905,7 +907,8 @@ WEED_SETUP_START(200, 200) {
 #endif
 
   if (num_filters == 0) {
-    fprintf(stderr, "No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
+    fprintf(stderr,
+            "No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
     return NULL;
   }
 

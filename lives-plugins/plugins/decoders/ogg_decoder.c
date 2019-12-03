@@ -824,9 +824,9 @@ static int setup_tracks(lives_clip_data_t *cdata) {
   if (priv->vstream == NULL) return 0;
 
   /*
-   *  Now, read header pages until we are done, current_page still contains the
-   *  first page which has no bos marker set
-   */
+      Now, read header pages until we are done, current_page still contains the
+      first page which has no bos marker set
+  */
 
   done = 0;
   while (!done) {
@@ -1169,8 +1169,8 @@ static int64_t find_last_theora_frame(lives_clip_data_t *cdata, lives_in_stream 
 #ifdef HAVE_DIRAC
 
 /* find first sync frame in a given file region. Return file offset. -1 is returned if no sync frame found.
- * pos2 in not included in the search.
- * This is for dirac only. */
+   pos2 in not included in the search.
+   This is for dirac only. */
 
 static int64_t find_first_sync_frame(lives_clip_data_t *cdata, int64_t pos1, int64_t pos2, int64_t *frame) {
   lives_ogg_priv_t *priv = (lives_ogg_priv_t *)cdata->priv;
@@ -1438,7 +1438,7 @@ static int64_t find_first_sync_frame(lives_clip_data_t *cdata, int64_t pos1, int
 
 
 /* find last sync frame position in a given file region. Return file offset. -1 is returned if no sync frame found.
-This is for dirac only. */
+  This is for dirac only. */
 
 static int64_t find_last_sync_frame(lives_clip_data_t *cdata, lives_in_stream *vstream) {
   int64_t page_pos, last_page_pos = -1, start_pos;
@@ -1885,7 +1885,7 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     gpos = get_last_granulepos(cdata, priv->vstream->stream_id);
 
     /*  kframe=gpos >> priv->vstream->priv->keyframe_granule_shift;
-    priv->vstream->nframes = kframe + gpos-(kframe<<priv->vstream->priv->keyframe_granule_shift);*/
+      priv->vstream->nframes = kframe + gpos-(kframe<<priv->vstream->priv->keyframe_granule_shift);*/
 
     priv->vstream->nframes = gpos;
 
@@ -1901,7 +1901,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
   cdata->nframes = priv->vstream->nframes;
 
   if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)
-    fprintf(stderr, "ogg_decoder: info - frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height, cdata->width,
+    fprintf(stderr, "ogg_decoder: info - frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height,
+            cdata->width,
             cdata->height);
 
   return TRUE;
@@ -2790,7 +2791,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
           xkframe = granulepos >> priv->vstream->stpriv->keyframe_granule_shift;
 
-          priv->cframe = xkframe + granulepos - (xkframe << priv->vstream->stpriv->keyframe_granule_shift); // cframe will be the next frame we decode
+          priv->cframe = xkframe + granulepos - (xkframe <<
+                                                 priv->vstream->stpriv->keyframe_granule_shift); // cframe will be the next frame we decode
           //printf("xkframe is %ld %ld\n",xkframe,priv->cframe);
         } else {
           priv->cframe = kframe;

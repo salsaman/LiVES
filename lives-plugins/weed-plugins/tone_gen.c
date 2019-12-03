@@ -90,7 +90,8 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
   nrsamps = (((nrsamps + 63) >> 6) << 4);    /// divide by 64, mply by 16 gives the rounded size in sizeof(float)
   buff = (float **)weed_calloc(chans, sizeof(float *));
   for (i = 0; i < chans; i++) {
-    buff[i] = (float *)weed_calloc(nrsamps,  sizeof(float));    /// sizeof(float) == 4 so this is the original val rounded up to n * 64
+    buff[i] = (float *)weed_calloc(nrsamps,
+                                   sizeof(float));    /// sizeof(float) == 4 so this is the original val rounded up to n * 64
   }
 
   // set a square wave at freq MYRATE, then resample it to trate

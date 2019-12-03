@@ -100,7 +100,8 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (mainw->textwidget_focus != NULL) {
     // make sure text widgets are updated if they activate the default
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
+                              "textwidget");
     after_param_text_changed(textwidget, rfx);
   }
 
@@ -479,7 +480,8 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
       add_fill_to_box(LIVES_BOX(hbox));
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS)) def_fps = weed_get_double_value(filter, WEED_LEAF_HOST_FPS, &error);
-      else if (weed_plant_has_leaf(filter, WEED_LEAF_TARGET_FPS)) def_fps = weed_get_double_value(filter, WEED_LEAF_TARGET_FPS, &error);
+      else if (weed_plant_has_leaf(filter, WEED_LEAF_TARGET_FPS)) def_fps = weed_get_double_value(filter, WEED_LEAF_TARGET_FPS,
+            &error);
 
       if (def_fps == 0.) def_fps = prefs->default_fps;
 
@@ -799,7 +801,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
     if (!no_process || is_defaults || rfx->status == RFX_STATUS_SCRAP) {
       if (!is_defaults) {
-        fx_dialog[didx]->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_CANCEL, NULL,
+        fx_dialog[didx]->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_CANCEL,
+                                        NULL,
                                         LIVES_RESPONSE_CANCEL);
         fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_OK, NULL,
                                     LIVES_RESPONSE_OK);
@@ -811,7 +814,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     }
 
     if (add_reset_ok) {
-      fx_dialog[didx]->resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_REVERT_TO_SAVED,
+      fx_dialog[didx]->resetbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
+                                     LIVES_STOCK_REVERT_TO_SAVED,
                                      _("Reset"),
                                      LIVES_RESPONSE_RESET);
       fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_APPLY,
@@ -1755,7 +1759,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max, (int)param->max, LIVES_BOX(hbox), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
-        lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_param_text_changed),
+        lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                                   LIVES_GUI_CALLBACK(after_param_text_changed),
                                    (livespointer) rfx);
       }
     }
@@ -2771,7 +2776,8 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       /* } */
 
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE); // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
+        weed_reinit_effect(inst,
+                           FALSE); // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
         was_reinited = TRUE;
       }
     }

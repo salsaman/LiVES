@@ -15,10 +15,10 @@
     email                : nieder|at|mail.ru
     Time-stamp:            <05/01/30 19:58:56 rnc>
     ***************************************************************************
-    *    Wavelet algorithms, metric and query ideas based on the paper        *
-    *    Fast Multiresolution Image Querying                                  *
-    *    by Charles E. Jacobs, Adam Finkelstein and David H. Salesin.         *
-    *    <http://www.cs.washington.edu/homes/salesin/abstracts.html>          *
+         Wavelet algorithms, metric and query ideas based on the paper
+         Fast Multiresolution Image Querying
+         by Charles E. Jacobs, Adam Finkelstein and David H. Salesin.
+         <http://www.cs.washington.edu/homes/salesin/abstracts.html>
     ***************************************************************************
 
     Copyright (C) 2003 Ricardo Niederberger Cabral
@@ -105,7 +105,7 @@ static void haar2D(Unit a[]) {
 
   // scale by 1/sqrt(128) = 0.08838834764831843:
   /*
-  for (i = 0; i < NUM_PIXELS_SQUARED; i++)
+    for (i = 0; i < NUM_PIXELS_SQUARED; i++)
     a[i] *= 0.08838834764831843;
   */
 
@@ -134,7 +134,7 @@ static void haar2D(Unit a[]) {
 
   // scale by 1/sqrt(128) = 0.08838834764831843:
   /*
-  for (i = 0; i < NUM_PIXELS_SQUARED; i++)
+    for (i = 0; i < NUM_PIXELS_SQUARED; i++)
     a[i] *= 0.08838834764831843;
   */
 
@@ -279,7 +279,8 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
                                       guchar *buf) {
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
-  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer,
+                                  NULL);
 }
 
 

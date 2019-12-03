@@ -580,7 +580,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
         in_pchanges = (void **)lives_malloc((num_params + 1) * sizeof(void *));
         if (in_pchanges == NULL) return NULL;
         for (i = 0; i < num_params; i++) in_pchanges[i] = NULL;
-        error = weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params, in_pchanges); // set all to NULL, we will re-fill as we go along
+        error = weed_set_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, num_params,
+                                       in_pchanges); // set all to NULL, we will re-fill as we go along
         lives_free(in_pchanges);
         if (error == WEED_ERROR_MEMORY_ALLOCATION) {
           lives_free(filter_hash);
@@ -598,7 +599,8 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID);
     error = weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID,
                                    (void *)new_init_event);  // useful later for event_list_rectify
-    weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
+    weed_leaf_delete((weed_plant_t *)new_init_event,
+                     WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
     weed_set_plantptr_value((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT, event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     break;
@@ -614,9 +616,9 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_
     lives_free(init_events);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
     /*
-    // remove any prior FILTER_MAPs at the same timecode
-    event_before = get_prev_event(event);
-    while (event_before != NULL) {
+      // remove any prior FILTER_MAPs at the same timecode
+      event_before = get_prev_event(event);
+      while (event_before != NULL) {
       weed_plant_t *event_before_event_before = get_prev_event(event_before);
       weed_timecode_t tc = get_event_timecode(event_before);
       if (tc < in_tc) break;
@@ -1352,7 +1354,8 @@ weed_plant_t *insert_marker_event_at(weed_plant_t *event_list, weed_plant_t *at_
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc, weed_plant_t **shortcut) {
+LIVES_GLOBAL_INLINE weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc,
+    weed_plant_t **shortcut) {
   int clip = -1;
   int frame = 0;
 
@@ -1704,7 +1707,8 @@ void move_filter_init_event(weed_plant_t *event_list, weed_timecode_t new_tc, we
       event_next = get_next_event(event);
       if (WEED_EVENT_IS_FILTER_MAP(event)) {
         is_null_filter_map = !remove_event_from_filter_map(event, init_event);
-        if ((filter_map == NULL && is_null_filter_map) || (filter_map != NULL && compare_filter_maps(filter_map, event, LIVES_TRACK_ANY)))
+        if ((filter_map == NULL && is_null_filter_map) || (filter_map != NULL &&
+            compare_filter_maps(filter_map, event, LIVES_TRACK_ANY)))
           delete_event(event_list, event);
         else filter_map = event;
       }
@@ -1842,7 +1846,8 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
       if (WEED_EVENT_IS_FILTER_MAP(event)) {
         // found a filter map, so remove the event from it
         is_null_filter_map = !remove_event_from_filter_map(event, init_event);
-        if ((filter_map == NULL && is_null_filter_map) || (filter_map != NULL && compare_filter_maps(filter_map, event, LIVES_TRACK_ANY)))
+        if ((filter_map == NULL && is_null_filter_map) || (filter_map != NULL &&
+            compare_filter_maps(filter_map, event, LIVES_TRACK_ANY)))
           delete_event(event_list, event);
         else filter_map = event;
       }
@@ -2026,7 +2031,8 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 
   register int i;
 
-  if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
+  if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT,
+        &error);
   else return TRUE;
 
   if (weed_plant_has_leaf(init_event, WEED_LEAF_IN_TRACKS)) num_owners = weed_leaf_num_elements(init_event, WEED_LEAF_IN_TRACKS);
@@ -2152,7 +2158,8 @@ LiVESWidget *events_rec_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), &radiobutton_group, LIVES_BOX(hbox),
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _multitrack window (test)"), &radiobutton_group,
+                LIVES_BOX(hbox),
                 NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
@@ -2164,7 +2171,8 @@ LiVESWidget *events_rec_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), &radiobutton_group, LIVES_BOX(hbox), NULL);
+  radiobutton = lives_standard_radio_button_new(_("View/edit events in _event window"), &radiobutton_group, LIVES_BOX(hbox),
+                NULL);
 
   add_fill_to_box(LIVES_BOX(vbox));
 
@@ -2407,7 +2415,8 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
       lives_free(frames);
       break;
     case WEED_EVENT_HINT_FILTER_INIT:
-      if (weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) && (num_in_tracks = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) > 0) {
+      if (weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) &&
+          (num_in_tracks = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) > 0) {
         in_tracks = weed_get_int_array(event, WEED_LEAF_IN_TRACKS, &error);
         for (i = 0; i < num_in_tracks; i++) {
           if (in_tracks[i] >= layer) in_tracks[i]++;
@@ -2415,7 +2424,8 @@ void event_list_add_track(weed_plant_t *event_list, int layer) {
         weed_set_int_array(event, WEED_LEAF_IN_TRACKS, num_in_tracks, in_tracks);
         lives_free(in_tracks);
       }
-      if (weed_plant_has_leaf(event, WEED_LEAF_OUT_TRACKS) && (num_out_tracks = weed_leaf_num_elements(event, WEED_LEAF_OUT_TRACKS)) > 0) {
+      if (weed_plant_has_leaf(event, WEED_LEAF_OUT_TRACKS) &&
+          (num_out_tracks = weed_leaf_num_elements(event, WEED_LEAF_OUT_TRACKS)) > 0) {
         out_tracks = weed_get_int_array(event, WEED_LEAF_OUT_TRACKS, &error);
         for (i = 0; i < num_out_tracks; i++) {
           if (out_tracks[i] >= layer) out_tracks[i]++;
@@ -2502,7 +2512,8 @@ weed_plant_t *append_frame_event(weed_plant_t *event_list, weed_timecode_t tc, i
 }
 
 
-void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, weed_plant_t *init_event, int ntracks, int leave) {
+void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, weed_plant_t *init_event, int ntracks,
+                                int leave) {
   // add the initial values for all parameters when we insert a filter_init event
   weed_plant_t **in_params = NULL, **in_ptmpls;
 
@@ -2701,7 +2712,8 @@ weed_plant_t *append_filter_init_event(weed_plant_t *event_list, weed_timecode_t
     }
 
     // handling for compound fx
-    while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+    while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) inst = weed_get_plantptr_value(inst,
+          WEED_LEAF_HOST_NEXT_INSTANCE, &error);
 
     for (i = 0; i < e_outs; i++) {
       chan = get_enabled_channel(inst, i, FALSE);
@@ -3653,7 +3665,8 @@ lives_render_error_t render_events(boolean reset) {
       if (next_frame_event != NULL) next_tc = get_event_timecode(next_frame_event);
       else {
         // reached end of event_list
-        if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL && mainw->multitrack->opts.render_audp)) &&
+        if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL &&
+             mainw->multitrack->opts.render_audp)) &&
             (!WEED_EVENT_IS_AUDIO_FRAME(event) || mainw->flush_audio_tc != 0) &&
             tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) {
           boolean has_audio = FALSE;
@@ -3756,7 +3769,8 @@ lives_render_error_t render_events(boolean reset) {
                 set_proc_label(cfile->proc_ptr, blabel, FALSE);
                 lives_freep((void **)&blabel);
 
-                deltatime = (double)(q_gint64(tc + (weed_timecode_t)((next_frame_event == NULL && !is_blank) ? TICKS_PER_SECOND_DBL / cfile->fps : 0),
+                deltatime = (double)(q_gint64(tc + (weed_timecode_t)((next_frame_event == NULL &&
+                                              !is_blank) ? TICKS_PER_SECOND_DBL / cfile->fps : 0),
                                               cfile->fps)) / TICKS_PER_SECOND_DBL - atime;
                 for (i = 0; i < natracks; i++) {
                   if (xaclips[i] > 0) {
@@ -3785,7 +3799,8 @@ lives_render_error_t render_events(boolean reset) {
 
         if (pixbuf == NULL) break;
         if (next_frame_event == NULL && is_blank) break; // don't render final blank frame
-        next_out_tc = (weed_timecode_t)((out_frame - mainw->play_start) / cfile->fps * TICKS_PER_SECOND_DBL); // calculate tc of next out frame
+        next_out_tc = (weed_timecode_t)((out_frame - mainw->play_start) / cfile->fps *
+                                        TICKS_PER_SECOND_DBL); // calculate tc of next out frame
 
         if (next_frame_event != NULL) {
           if (next_tc < next_out_tc || next_tc - next_out_tc < next_out_tc - tc) break;
@@ -3894,7 +3909,8 @@ lives_render_error_t render_events(boolean reset) {
       if (num_in_channels > 0) {
         for (i = 0; i < num_in_channels; i++) {
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(bitmpl[i], WEED_LEAF_HOST_DISABLED, &weed_error));
+            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(bitmpl[i], WEED_LEAF_HOST_DISABLED,
+                                   &weed_error));
           else weed_leaf_delete(citmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(citmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(bitmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
@@ -3908,7 +3924,8 @@ lives_render_error_t render_events(boolean reset) {
       if (num_out_channels > 0) {
         for (i = 0; i < num_out_channels; i++) {
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(botmpl[i], WEED_LEAF_HOST_DISABLED, &weed_error));
+            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(botmpl[i], WEED_LEAF_HOST_DISABLED,
+                                   &weed_error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
@@ -4534,7 +4551,8 @@ static boolean backup_recording(char **esave_file, char **asave_file) {
     return FALSE;
   }
 
-  *asave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(), lives_getgid(),
+  *asave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, lives_getuid(),
+                                    lives_getgid(),
                                     capable->mainpid);
 
   fd = lives_creat_buffered(*asave_file, DEF_FILE_PERMS);
@@ -5034,7 +5052,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       propnames = weed_plant_list_leaves(event);
 
       for (i = 0; propnames[i] != NULL; i++) {
-        if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_HINT) || !strcmp(propnames[i], WEED_LEAF_TIMECODE)) {
+        if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_HINT) ||
+            !strcmp(propnames[i], WEED_LEAF_TIMECODE)) {
           lives_free(propnames[i]);
           continue;
         }
@@ -5307,7 +5326,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, widget_opts.packing_height);
 
-  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(event_dialog), LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
+  ok_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(event_dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+              LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(ok_button);
 
@@ -5589,7 +5609,8 @@ render_details *create_render_details(int type) {
 
   hbox = NULL;
 
-  frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps, rdet->fps,
+  frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
+                            rdet->fps,
                             TRUE, hbox);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
 
@@ -5848,7 +5869,8 @@ render_details *create_render_details(int type) {
   if (type != 1) {
     rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
   } else  {
-    rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"), LIVES_RESPONSE_OK);
+    rdet->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(rdet->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+                     LIVES_RESPONSE_OK);
   }
 
   lives_button_grab_default_special(rdet->okbutton);
@@ -5863,7 +5885,8 @@ render_details *create_render_details(int type) {
     do_encoder_img_fmt_error(rdet);
   }
 
-  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
+  lives_signal_connect_after(LIVES_COMBO(rdet->acodec_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(rdet_acodec_changed), rdet);
 
   mainw->no_context_update = FALSE;
 

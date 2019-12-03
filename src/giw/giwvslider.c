@@ -1,5 +1,5 @@
 /* giwvslider.c  -  GiwVSlider widget's source
-Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
+  Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -15,9 +15,9 @@ Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-Maintainers
-Alexandre Pereira Bueno - alpebu@yahoo.com.br
-James Scott Jr <skoona@users.sourceforge.net>
+  Maintainers
+  Alexandre Pereira Bueno - alpebu@yahoo.com.br
+  James Scott Jr <skoona@users.sourceforge.net>
 */
 
 // additional code G. Finch (salsaman@gmail.com) 2010 - 2014
@@ -288,7 +288,8 @@ giw_vslider_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes,
+                        attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
@@ -695,7 +696,8 @@ giw_vslider_motion_notify(GtkWidget        *widget,
   // If the mouse policy is to update automatically, change the value now if it's valid
   if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_AUTOMATIC) {
     new_value = lives_adjustment_get_lower(vslider->adjustment) + ((gdouble)(vslider->height - y)) /
-                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment));
+                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(
+                      vslider->adjustment));
 
     // If it's a valid value, update it!
     if ((new_value <= lives_adjustment_get_upper(vslider->adjustment)) &&
@@ -706,7 +708,8 @@ giw_vslider_motion_notify(GtkWidget        *widget,
   // If the mouse policy is to update delayed, calculate the false value
   if (vslider->button != 0 && vslider->mouse_policy == GIW_VSLIDER_MOUSE_DELAYED) {
     new_value = lives_adjustment_get_lower(vslider->adjustment) + ((gdouble)(vslider->height - y)) /
-                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(vslider->adjustment));
+                ((gdouble)vslider->height) * (lives_adjustment_get_upper(vslider->adjustment) - lives_adjustment_get_lower(
+                      vslider->adjustment));
 
     // If it's a valid value, update the false value
     if ((new_value <= lives_adjustment_get_upper(vslider->adjustment)) &&

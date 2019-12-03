@@ -231,7 +231,8 @@ void weed_apply_audio_effects(weed_plant_t *filter_map, weed_layer_t **, int nbt
                               ticks_t tc, double *vis);
 void weed_apply_audio_effects_rt(weed_layer_t *alayer, ticks_t tc, boolean analysers_only, boolean is_audio_thread);
 
-lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_layer_t **layers, int nbtracks, int nchans, int64_t nsamps,
+lives_filter_error_t weed_apply_audio_instance(weed_plant_t *init_event, weed_layer_t **layers, int nbtracks, int nchans,
+    int64_t nsamps,
     double arate, ticks_t tc, double *vis);
 
 int weed_generator_start(weed_plant_t *inst, int key);  // 0 based key
@@ -258,7 +259,8 @@ boolean rte_keymode_valid(int key, int mode,
 int rte_keymode_get_filter_idx(int key, int mode); ///< returns filter_class index of key/mode (or -1 if no filter bound)
 char *rte_keymode_get_filter_name(int key, int mode, boolean mark_dupes,
                                   boolean add_notes) WARN_UNUSED;  ///< returns name of filter_class bound to key/mode (or "")
-char *rte_keymode_get_plugin_name(int key, int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
+char *rte_keymode_get_plugin_name(int key,
+                                  int mode) WARN_UNUSED; ///< returns name of plugin package containing filter_class (or "")
 char *rte_keymode_get_type(int key, int mode) WARN_UNUSED;  ///< returns a string filter/instance type (or "")
 
 #ifdef HAS_LIVES_EFFECTS_H
@@ -269,7 +271,8 @@ weed_plant_t *rte_keymode_get_instance(int key, int mode); ///< returns refcount
 weed_plant_t *rte_keymode_get_filter(int key, int mode); ///< returns filter_class bound to key/mode (or NULL)
 
 boolean weed_delete_effectkey(int key, int mode);  ///< unbinds a filter_class from a key/mode
-int weed_add_effectkey(int key, const char *hashname, boolean fullname);  ///< bind a filter_class to key/mode using its hashname
+int weed_add_effectkey(int key, const char *hashname,
+                       boolean fullname);  ///< bind a filter_class to key/mode using its hashname
 
 int weed_add_effectkey_by_idx(int key, int idx);  ///< see description
 

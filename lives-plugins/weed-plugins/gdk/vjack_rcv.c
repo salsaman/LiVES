@@ -1,10 +1,10 @@
 /* videojack test plugin for Weed
    authors: Salsaman (G. Finch) <salsaman@xs4all.nl,salsaman@gmail.com>
 
-// released under the GNU GPL 3 or higher
-// see file COPYING or www.gnu.org for details
+  // released under the GNU GPL 3 or higher
+  // see file COPYING or www.gnu.org for details
 
- (c) 2005, project authors
+  (c) 2005, project authors
 */
 
 #ifdef HAVE_SYSTEM_WEED
@@ -72,12 +72,14 @@ static void plugin_free_buffer(guchar *pixels, gpointer data) {
 }
 
 
-static inline GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width, int height,
+static inline GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alpha, int bits_per_sample, int width,
+    int height,
     guchar *buf) {
   // we can cheat if our buffer is correctly sized
   int channels = has_alpha ? 4 : 3;
   int rowstride = pl_gdk_rowstride_value(width * channels);
-  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer, NULL);
+  return gdk_pixbuf_new_from_data(buf, colorspace, has_alpha, bits_per_sample, width, height, rowstride, plugin_free_buffer,
+                                  NULL);
 }
 
 

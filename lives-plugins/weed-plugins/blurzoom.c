@@ -1,12 +1,12 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001-2005 FUKUCHI Kentaro
- *
- * RadioacTV - motion-enlightment effect.
- * Copyright (C) 2001-2002 FUKUCHI Kentaro
- *
- * I referred to "DUNE!" by QuoVadis for this effect.
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001-2005 FUKUCHI Kentaro
+
+   RadioacTV - motion-enlightment effect.
+   Copyright (C) 2001-2002 FUKUCHI Kentaro
+
+   I referred to "DUNE!" by QuoVadis for this effect.
+*/
 
 /* modified for Weed by G. Finch (salsaman)
    modifications (c) G. Finch */

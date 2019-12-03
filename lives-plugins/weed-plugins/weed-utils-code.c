@@ -352,11 +352,13 @@ static weed_error_t weed_set_string_array(weed_plant_t *plant, const char *key, 
   return weed_leaf_set(plant, key, WEED_SEED_STRING, num_elems, (weed_voidptr_t)values);
 }
 
-static weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_voidptr_t *values) {
+static weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems,
+    weed_voidptr_t *values) {
   return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, num_elems, (weed_voidptr_t)values);
 }
 
-static weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_plant_t **values) {
+static weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems,
+    weed_plant_t **values) {
   return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, num_elems, (weed_voidptr_t)values);
 }
 

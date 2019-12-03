@@ -2,24 +2,24 @@
 // (c) G. Finch 2012 - 2016 <salsaman@gmail.com>
 
 /*
- * This file is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * LiVES is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with LiVES; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   LiVES is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with LiVES; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+*/
 
 /* based on code from libavformat
- * Copyright (c) 2002-2003 Fabrice Bellard
- */
+   Copyright (c) 2002-2003 Fabrice Bellard
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -71,8 +71,8 @@ static pthread_mutex_t indices_mutex;
 static void mpegts_save_index(lives_clip_data_t *);
 
 /**
- * Read 1-25 bits.
- */
+   Read 1-25 bits.
+*/
 static inline unsigned int get_bits(GetBitContext *s, int n) {
   register int tmp;
   OPEN_READER(re, s);
@@ -115,14 +115,14 @@ static inline void skip_bits(GetBitContext *s, int n) {
 
 
 /**
- * init GetBitContext.
- * @param buffer bitstream buffer, must be AV_INPUT_BUFFER_PADDING_SIZE bytes larger than the actual read bits
- * because some optimized bitstream readers read 32 or 64 bit at once and could read over the end
- * @param bit_size the size of the buffer in bits
- *
- * While GetBitContext stores the buffer size, for performance reasons you are
- * responsible for checking for the buffer end yourself (take advantage of the padding)!
- */
+   init GetBitContext.
+   @param buffer bitstream buffer, must be AV_INPUT_BUFFER_PADDING_SIZE bytes larger than the actual read bits
+   because some optimized bitstream readers read 32 or 64 bit at once and could read over the end
+   @param bit_size the size of the buffer in bits
+
+   While GetBitContext stores the buffer size, for performance reasons you are
+   responsible for checking for the buffer end yourself (take advantage of the padding)!
+*/
 static inline void init_get_bits(GetBitContext *s,
                                  const uint8_t *buffer, int bit_size) {
   int buffer_size = (bit_size + 7) >> 3;
@@ -324,13 +324,13 @@ struct MpegTSContext {
 };
 
 /*
-static const AVOption options[] = {
+  static const AVOption options[] = {
   {
     "compute_pcr", "Compute exact PCR for each transport stream packet.", offsetof(MpegTSContext, mpeg2ts_compute_pcr), AV_OPT_TYPE_INT,
     {.dbl = 0}, 0, 1, AV_OPT_FLAG_DECODING_PARAM
   },
   { NULL },
-};
+  };
 */
 
 /* TS stream handling */
@@ -478,8 +478,8 @@ static inline uint16_t lives_rl32(const char *x) {
 
 
 /**
- * Parse MPEG-PES five-byte timestamp
- */
+   Parse MPEG-PES five-byte timestamp
+*/
 static inline int64_t ff_parse_pes_pts(const uint8_t *buf) {
   return (int64_t)(*buf & 0x0e) << 29 |
          (lives_rb16(buf + 1) >> 1) << 15 |
@@ -575,13 +575,13 @@ static void set_pcr_pid(AVFormatContext *s, unsigned int programid, unsigned int
 
 
 /**
- * @brief discard_pid() decides if the pid is to be discarded according
- *                      to caller's programs selection
- * @param ts    : - TS context
- * @param pid   : - pid
- * @return 1 if the pid is only comprised in programs that have .discard=AVDISCARD_ALL
- *         0 otherwise
- */
+   @brief discard_pid() decides if the pid is to be discarded according
+                        to caller's programs selection
+   @param ts    : - TS context
+   @param pid   : - pid
+   @return 1 if the pid is only comprised in programs that have .discard=AVDISCARD_ALL
+           0 otherwise
+*/
 static int discard_pid(MpegTSContext *ts, unsigned int pid) {
   int i, j, k;
   int used = 0, discarded = 0;
@@ -608,9 +608,9 @@ static int discard_pid(MpegTSContext *ts, unsigned int pid) {
 
 
 /**
- *  Assemble PES packets out of TS packets, and then call the "section_cb"
- *  function when they are complete.
- */
+    Assemble PES packets out of TS packets, and then call the "section_cb"
+    function when they are complete.
+*/
 static void write_section_data(lives_clip_data_t *cdata, AVFormatContext *s, MpegTSFilter *tss1,
                                const uint8_t *buf, int buf_size, int is_start) {
   MpegTSSectionFilter *tss = &tss1->u.section_filter;
@@ -718,7 +718,7 @@ static void mpegts_close_filter(MpegTSContext *ts, MpegTSFilter *filter) {
     PESContext *pes = filter->u.pes_filter.opaque;
     av_freep(&pes->buffer);
     /* referenced private data will be freed later in
-     * av_close_input_stream */
+       av_close_input_stream */
     if (!((PESContext *)filter->u.pes_filter.opaque)->st) {
       av_freep(&filter->u.pes_filter.opaque);
     }
@@ -874,7 +874,7 @@ static const StreamType ISO_types[] = {
   { 0x0f, AVMEDIA_TYPE_AUDIO,        AV_CODEC_ID_AAC },
   { 0x10, AVMEDIA_TYPE_VIDEO,      AV_CODEC_ID_MPEG4 },
   /* Makito encoder sets stream type 0x11 for AAC,
-   * so auto-detect LOAS/LATM instead of hardcoding it. */
+     so auto-detect LOAS/LATM instead of hardcoding it. */
   //  { 0x11, AVMEDIA_TYPE_AUDIO,   AV_CODEC_ID_AAC_LATM }, /* LATM syntax */
   { 0x1b, AVMEDIA_TYPE_VIDEO,       AV_CODEC_ID_H264 },
   { 0xd1, AVMEDIA_TYPE_VIDEO,      AV_CODEC_ID_DIRAC },
@@ -1302,10 +1302,10 @@ skip:
       }
       buf_size = 0;
       /* emit complete packets with known packet size
-       * decreases demuxer delay for infrequent packets like subtitles from
-       * a couple of seconds to milliseconds for properly muxed files.
-       * total_size is the number of bytes following pes_packet_length
-       * in the pes header, i.e. not counting the first 6 bytes */
+         decreases demuxer delay for infrequent packets like subtitles from
+         a couple of seconds to milliseconds for properly muxed files.
+         total_size is the number of bytes following pes_packet_length
+         in the pes header, i.e. not counting the first 6 bytes */
       if (!ts->stop_parse && pes->total_size < MAX_PES_PAYLOAD &&
           pes->pes_header_size + pes->data_index == pes->total_size + 6) {
         ts->stop_parse = 1;
@@ -2471,8 +2471,8 @@ static int lives_mpegts_read_header(lives_clip_data_t *cdata) {
 
     /* first do a scanning to get all the services */
     /* NOTE: We attempt to seek on non-seekable files as well, as the
-     * probe buffer usually is big enough. Only warn if the seek failed
-     * on files where the seek should work. */
+       probe buffer usually is big enough. Only warn if the seek failed
+       on files where the seek should work. */
     if (lseek(pb, pos, SEEK_SET) < 0)
       fprintf(stderr, "mpegts_decoder: Unable to seek back to the start\n");
 

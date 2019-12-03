@@ -22,8 +22,9 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
         return LIVES_RESPONSE_CANCEL;
     } else {
       msg = lives_format_storage_space_string(freespace);
-      boolean res = do_yesno_dialogf(_("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),
-                                     dirname, msg);
+      boolean res = do_yesno_dialogf(
+                      _("A directory named\n%s\nalready exists. Do you wish to use this directory ?\n\n(Free space = %s)\n"),
+                      dirname, msg);
       lives_free(msg);
       if (!res) return LIVES_RESPONSE_CANCEL;
       return LIVES_RESPONSE_OK;
@@ -48,7 +49,8 @@ static boolean prompt_new_dir(char *dirname, uint64_t freespace, boolean wrtable
     res = do_warning_dialogf(_("\nCreate the directory\n%s\n?\n\n(Free space = %s)"), dirname, fspstr);
     lives_free(fspstr);
   } else {
-    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"), dirname);
+    res = do_error_dialogf(_("\nLiVES could not write to the directory\n%s\nPlease try again and choose a different location.\n"),
+                           dirname);
   }
   return res;
 }
@@ -196,7 +198,8 @@ boolean do_workdir_query(void) {
 
   mainw->has_session_workdir = FALSE;
 
-  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
+  lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
+                 capable->backend_path,
                  prefs->workdir, prefs->configdir);
   lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
@@ -255,7 +258,8 @@ boolean do_audio_choice_dialog(short startup_phase) {
     txt0 = lives_strdup("");
   }
 
-  txt1 = lives_strdup(_("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
+  txt1 = lives_strdup(
+           _("Before starting LiVES, you need to choose an audio player.\n\nPULSE AUDIO is recommended for most users"));
 
 #ifndef HAVE_PULSE_AUDIO
   txt2 = lives_strdup(_(", but this version of LiVES was not compiled with pulse audio support.\n\n"));
@@ -673,7 +677,8 @@ boolean do_startup_tests(boolean tshoot) {
   add_test(table, 2, _("Checking for \"mplayer\", \"mplayer2\" or \"mpv\" presence"), TRUE);
 
   if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv) {
-    success2 = fail_test(table, 2, _("You should install mplayer, mplayer2 or mpv to be able to use all the decoding features in LiVES"));
+    success2 = fail_test(table, 2,
+                         _("You should install mplayer, mplayer2 or mpv to be able to use all the decoding features in LiVES"));
   }
 
   if (!success && !capable->has_mplayer2 && !capable->has_mplayer) {
@@ -834,7 +839,8 @@ boolean do_startup_tests(boolean tshoot) {
 
   if (success2) {
 #ifndef IS_MINGW
-    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1", prefs->video_open_command, lookfor);
+    com = lives_strdup_printf("LANG=en LANGUAGE=en %s -vo help | grep -i \"%s\" >/dev/null 2>&1", prefs->video_open_command,
+                              lookfor);
     res = lives_system(com, TRUE);
     lives_free(com);
 #else
@@ -907,7 +913,8 @@ boolean do_startup_tests(boolean tshoot) {
     }
     lives_widget_show(label);
   } else {
-    label = lives_standard_label_new(_("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
+    label = lives_standard_label_new(
+              _("\n\n    Click Cancel to exit and install any missing components, or Next to continue    \n"));
     lives_container_add(LIVES_CONTAINER(dialog_vbox), label);
     lives_widget_show(label);
   }

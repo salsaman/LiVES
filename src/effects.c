@@ -719,7 +719,8 @@ boolean on_realfx_activate_inner(int type, lives_rfx_t *rfx) {
 
   apply_audio_fx = FALSE;
 
-  if (type == 0 && ((cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) || mainw->agen_key != 0)) {
+  if (type == 0 && ((cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
+                    mainw->agen_key != 0)) {
     if (mainw->agen_key != 0 && cfile->achans == 0) {
       // apply audio gen to clip with no audio - prompt for audio settings
       resaudw = create_resaudw(2, NULL, NULL);
@@ -1064,7 +1065,8 @@ boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_da
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
   if (fx != -1) {
@@ -1087,7 +1089,8 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
   return TRUE;
@@ -1101,7 +1104,8 @@ boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data
 }
 
 
-boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer user_data) {
   // "m" mode key
   if (mainw->rte_keys == -1) return TRUE;
   rte_key_setmode(0, -1);

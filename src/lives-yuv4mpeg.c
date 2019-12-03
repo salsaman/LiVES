@@ -246,7 +246,8 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
   if (yuv4mpeg->name != NULL) lives_free(yuv4mpeg->name);
 
   if (yuv4mpeg->type == YUV4_TYPE_FW) fw_cards = lives_list_remove(fw_cards, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
-  if (yuv4mpeg->type == YUV4_TYPE_TV) mainw->videodevs = lives_list_remove(mainw->videodevs, LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
+  if (yuv4mpeg->type == YUV4_TYPE_TV) mainw->videodevs = lives_list_remove(mainw->videodevs,
+        LIVES_INT_TO_POINTER(yuv4mpeg->cardno));
 }
 
 

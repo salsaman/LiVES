@@ -1,28 +1,28 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents).
-All Rights Reserved.
+  Copyright © 1998. The Regents of the University of California (Regents).
+  All Rights Reserved.
 
-Written by Matt Wright, The Center for New Music and Audio Technologies,
-University of California, Berkeley.
+  Written by Matt Wright, The Center for New Music and Audio Technologies,
+  University of California, Berkeley.
 
-Permission to use, copy, modify, distribute, and distribute modified versions
-of this software and its documentation without fee and without a signed
-licensing agreement, is hereby granted, provided that the above copyright
-notice, this paragraph and the following two paragraphs appear in all copies,
-modifications, and distributions.
+  Permission to use, copy, modify, distribute, and distribute modified versions
+  of this software and its documentation without fee and without a signed
+  licensing agreement, is hereby granted, provided that the above copyright
+  notice, this paragraph and the following two paragraphs appear in all copies,
+  modifications, and distributions.
 
-IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
-OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
-BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
+  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
+  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
-HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+  REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
+  HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
+  MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is
+  The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -57,11 +57,11 @@ The OpenSound Control WWW page is
   either a pointer to the new memory or 0 for failure.  This memory will never
   be freed.
 
-- The InitTimeMemoryAllocator will be called only at initialization time,
+  - The InitTimeMemoryAllocator will be called only at initialization time,
   i.e., before OSCInitAddressSpace() returns.  If it ever returns 0, that's
   a fatal error.
 
-- The RealTimeMemoryAllocator will be called if, while the application is
+  - The RealTimeMemoryAllocator will be called if, while the application is
   running, the address space grows larger than can fit in what was allocated
   at initialization time.  If the RealTimeMemoryAllocator() returns 0, the
   operation attempting to grow the address space will fail.  If your system
@@ -70,19 +70,19 @@ The OpenSound Control WWW page is
 
   The remaining fields say how much memory to allocate at initialization time:
 
-- receiveBufferSize is the maximum packet size that can be received.  Is the
+  - receiveBufferSize is the maximum packet size that can be received.  Is the
   maximum UDP packet size 4096?  OSC clients can send a query to this system
   asking for this maximum packet size.
 
-- numReceiveBuffers determines how many packets at a time can be sitting
+  - numReceiveBuffers determines how many packets at a time can be sitting
   on the scheduler with messages waiting to take effect.  If all the
   receive buffers are tied up like this, you won't be able to receive
   new packets.
 
-- numQueuedObjects is the number of messages and packets that can be sitting
+  - numQueuedObjects is the number of messages and packets that can be sitting
   on the scheduler waiting to take effect.
 
-- Because a message pattern may be dispatched before the message takes effect,
+  - Because a message pattern may be dispatched before the message takes effect,
   we need memory to store the callback pointers corresponding to a message.
   numCallbackListNodes is the number of callbacks that may be stored in this
   fashion.  It must be at least as large as the maximum number of methods that
@@ -226,7 +226,7 @@ Boolean NetworkPacketWaiting(OSCPacketBuffer packet);
 /* Here's a gross approximation of how your application will invoke the
    procedures in this module:
 
-while (1) {
+  while (1) {
     OSCTimeTag now = CurrentTime();
     do {
 	if (WeAreSoLateThatWeNeedToDelayOSCMessagesToAvoidACrisis()) break;
@@ -245,7 +245,7 @@ while (1) {
     while (TimeLeftBeforeWeHaveDoSomething()) {
 	if (!OSCBeProductiveWhileWaiting()) break;
     }
-}
+  }
 
 */
 

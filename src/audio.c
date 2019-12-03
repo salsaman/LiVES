@@ -513,7 +513,8 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 }
 
 
-float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian, float vol) {
+float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
+                            float vol) {
   // convert 16 bit audio to float audio
 
   // returns abs(maxvol heard)
@@ -931,7 +932,8 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned, boolean big_endian) {
+static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
+                                boolean big_endian) {
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   // oins_size is the current file length, ins_size is the point where we want append to (both in bytes)
   // if ins size < oins_size we just seek to ins_size
@@ -1768,7 +1770,7 @@ void pulse_rec_audio_to_clip(int fileno, int old_file, lives_rec_audio_type_t re
           if (rbytes > 0) pa_stream_drop(mainw->pulsed_read->pstream);
         } while (rbytes > 0);
         pa_mloop_unlock();
-      }*/
+        }*/
     }
   }
 
@@ -3114,7 +3116,7 @@ boolean apply_rte_audio(int nframes) {
   (Filters which are purely audio are run from the audio thread, since the need to return audio back to the player.
   This is less than optimal, and likely in the future, a separate thread will be used  to run the audio filters).
 
- */
+*/
 boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf) {
   float **dst, *src;
 
@@ -3283,7 +3285,8 @@ boolean start_audio_stream(void) {
   }
 
   astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, playername, NULL);
-  com = lives_strdup_printf("%s play %d \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out, arate);
+  com = lives_strdup_printf("%s play %d \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out,
+                            arate);
   lives_free(astreamer);
 
   astream_pgid = lives_fork(com);
@@ -3383,7 +3386,8 @@ LIVES_GLOBAL_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
 
 
 LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
-  char *msg2 = (prefs->audio_player == AUD_PLAYER_PULSE) ? lives_strdup(_("\nClick Retry to attempt to restart the audio server.\n")) :
+  char *msg2 = (prefs->audio_player == AUD_PLAYER_PULSE) ? lives_strdup(
+                 _("\nClick Retry to attempt to restart the audio server.\n")) :
                lives_strdup("");
 
   char *msg = lives_strdup_printf(

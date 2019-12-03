@@ -61,7 +61,8 @@ lives_render_error_t realfx_progress(boolean reset);
 
 // key callbacks
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data);
 
 boolean grabkeys_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType,
                           livespointer user_data);  ///< for accel groups

@@ -152,7 +152,8 @@ LiVESList *get_plugin_list(const char *plugin_type, boolean allow_nonex, const c
              !strcmp(plugin_type, PLUGIN_COMPOUND_EFFECTS_CUSTOM)
             ) {
     // look in home
-    com = lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"", prefs->backend_sync, allow_nonex, prefs->configdir,
+    com = lives_strdup_printf("%s list_plugins %d 0 \"%s"LIVES_DIR_SEP"%s%s\" \"%s\"", prefs->backend_sync, allow_nonex,
+                              prefs->configdir,
                               LIVES_CONFIG_DIR, plugin_type, ext);
   } else if (!strcmp(plugin_type, PLUGIN_THEMES_CUSTOM)) {
     com = lives_strdup_printf("%s list_plugins 0 1 \"%s"LIVES_DIR_SEP"%s%s\"", prefs->backend_sync, prefs->configdir,
@@ -458,7 +459,8 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   if (vppw->rfx != NULL && mainw->textwidget_focus != NULL) {
     // make sure text widgets are updated if they activate the default
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
+                              "textwidget");
     after_param_text_changed(textwidget, vppw->rfx);
   }
 
@@ -810,7 +812,8 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     }
   }
   if (intention == LIVES_INTENTION_TRANSCODE) {
-    label = lives_standard_label_new(_("Quick transcode provides a rapid, high quality preview of the selected frames and audio.\n"));
+    label = lives_standard_label_new(
+              _("Quick transcode provides a rapid, high quality preview of the selected frames and audio.\n"));
     lives_box_pack_start(LIVES_BOX(dialog_vbox), label, FALSE, FALSE, widget_opts.packing_height);
   }
 
@@ -1055,7 +1058,8 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
   // TODO - dirsep
 
-  char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_VID_PLAYBACK, name);
+  char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_VID_PLAYBACK,
+                                       name);
 
   void *handle = dlopen(plugname, RTLD_LAZY);
   boolean OK = TRUE;
@@ -1857,7 +1861,8 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 
   // if we have min or max size, make sure we fit within that
 
-  if (((width != owidth || height != oheight) && width * height > 0) || (best_fps_delta > 0.) || (best_arate_delta > 0 && best_arate > 0) ||
+  if (((width != owidth || height != oheight) && width * height > 0) || (best_fps_delta > 0.) || (best_arate_delta > 0 &&
+      best_arate > 0) ||
       best_arate < 0 || asigned != 0 || swap_endian) {
     boolean ofx1_bool = mainw->fx1_bool;
     mainw->fx1_bool = FALSE;
@@ -2510,7 +2515,8 @@ void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
     ltext = lives_strdup_printf("%s   (%s)", dpsys->name, (*dpsys->version)());
 
     widget_opts.mnemonic_label = FALSE;
-    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name, FALSE) == -1,
+    checkbutton = lives_standard_check_button_new(ltext, lives_list_strcmp_index(future_prefs->disabled_decoders, dpsys->name,
+                  FALSE) == -1,
                   LIVES_BOX(hbox), NULL);
     widget_opts.mnemonic_label = TRUE;
 
@@ -3512,7 +3518,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
     - the layout must be set in the RFX_STRINGS array, using the delimiter
 
     returns a LiVESList of the results
- */
+*/
 LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
   LiVESList *hints = NULL;
 

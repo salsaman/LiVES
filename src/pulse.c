@@ -558,7 +558,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
           inputFramesAvailable = pulsed->aPlayPtr->size / (pulsed->in_achans * (pulsed->in_asamps >> 3));
 #ifdef DEBUG_PULSE
-          lives_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size, inputFramesAvailable,
+          lives_printerr("%ld inputFramesAvailable == %ld, %ld, %ld %ld,pulseFramesAvailable == %ld\n", pulsed->aPlayPtr->size,
+                         inputFramesAvailable,
                          in_frames, pulsed->in_arate, pulsed->out_arate, pulseFramesAvailable);
 #endif
           buffer = (uint8_t *)pulsed->aPlayPtr->data;
@@ -567,7 +568,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
 #ifdef DEBUG_PULSE
           lives_printerr("inputFramesAvailable after conversion %ld\n", (uint64_t)((double)inputFramesAvailable / shrink_factor + .001));
-          lives_printerr("nsamples == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",  nsamples,
+          lives_printerr("nsamples == %ld, pulseFramesAvailable == %ld,\n\tpulsed->num_input_channels == %ld, pulsed->out_achans == %ld\n",
+                         nsamples,
                          pulseFramesAvailable, pulsed->in_achans, pulsed->out_achans);
 #endif
 
@@ -627,9 +629,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
               if (has_audio_filters(AF_TYPE_ANY)) {
                 /** we create an Audio Layer and then call weed_apply_audio_effects_rt. The layer data is copied by ref
-                to the in channel of the filter and then from the out channel back to the layer. IF the filter supports inplace then
-                we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
-                and feed the result to the player as usual */
+                  to the in channel of the filter and then from the out channel back to the layer. IF the filter supports inplace then
+                  we get the same buffers back, otherwise we will get newly allocated ones, we copy by ref back to our audio buf
+                  and feed the result to the player as usual */
                 weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
                 weed_layer_set_audio_data(layer, fltbuf, pulsed->out_arate, pulsed->out_achans, numFramesToWrite);
                 weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE);
@@ -974,7 +976,8 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     bytes = write(mainw->aud_rec_fd, holding_buff, target);
     if (bytes > 0) {
       mainw->aud_data_written += bytes;
-      if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL && mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
+      if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL &&
+          mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
         add_to_ascrap_mb(bytes);
       if (mainw->aud_data_written > AUD_WRITTEN_CHECK) {
         mainw->aud_data_written = 0;
@@ -1141,7 +1144,8 @@ static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *ar
       // This is NECESSARY to reduce / eliminate huge latencies.
 
       // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +)
-      pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL, NULL); // if not recording, flush the rest of audio (to reduce latency)
+      pa_operation *paop = pa_stream_flush(pulsed->pstream, NULL,
+                                           NULL); // if not recording, flush the rest of audio (to reduce latency)
       pa_operation_unref(paop);
     }
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
@@ -1340,7 +1344,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
 #ifdef GUI_QT
   QLocale ql;
-  pa_proplist_sets(pdriver->pa_props, PA_PROP_APPLICATION_LANGUAGE, (QLocale::languageToString(ql.language())).toLocal8Bit().constData());
+  pa_proplist_sets(pdriver->pa_props, PA_PROP_APPLICATION_LANGUAGE,
+                   (QLocale::languageToString(ql.language())).toLocal8Bit().constData());
 #endif
 
   pa_channel_map_init_stereo(&pa_map);
@@ -1450,7 +1455,8 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
-                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_AUTO_TIMING_UPDATE |
+                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING |
+                                 PA_STREAM_AUTO_TIMING_UPDATE |
                                  PA_STREAM_NOT_MONOTONIC));
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {

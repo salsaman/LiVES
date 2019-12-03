@@ -949,7 +949,8 @@ static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, lives
 }
 
 
-void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint, int preview_type) {
+void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint,
+                        int preview_type) {
   LiVESWidget *preview_button = NULL;
 
   if (preview_type == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || preview_type == LIVES_PREVIEW_TYPE_RANGE ||
@@ -1104,7 +1105,8 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   if (has_cancel) {
     if (CURRENT_CLIP_IS_VALID && mainw->cancel_type == CANCEL_SOFT) {
-      LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"), LIVES_RESPONSE_CANCEL);
+      LiVESWidget *enoughbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(procw->processing), NULL, _("_Enough"),
+                                  LIVES_RESPONSE_CANCEL);
       lives_widget_set_can_default(enoughbutton, TRUE);
 
       lives_signal_connect(LIVES_GUI_OBJECT(enoughbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1214,7 +1216,8 @@ xprocess *create_processing(const char *text) {
     boolean woat = widget_opts.apply_theme;
     widget_opts.apply_theme = FALSE;
     widget_opts.expand = LIVES_EXPAND_EXTRA;
-    procw->scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(mainw->optextview));
+    procw->scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V,
+                            LIVES_WIDGET(mainw->optextview));
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
     widget_opts.apply_theme = woat;
     lives_standard_expander_new(_("Show Details"), LIVES_BOX(vbox3), procw->scrolledwindow);
@@ -1545,7 +1548,8 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     }
   }
 
-  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(filew->dialog), LIVES_STOCK_CLOSE, _("_Close Window"), LIVES_RESPONSE_OK);
+  okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(filew->dialog), LIVES_STOCK_CLOSE, _("_Close Window"),
+             LIVES_RESPONSE_OK);
   lives_button_grab_default_special(okbutton);
 
   lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -1657,7 +1661,8 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 // the type of message box here is with a single OK button
 // if 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/RETRY/CANCEL) are needed, use create_message_dialog() in dialogs.c
 
-LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking) {
+LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,
+                                      boolean is_blocking) {
   LiVESWidget *dialog;
 
   if (transient == NULL && prefs != NULL && !prefs->show_gui) {
@@ -1716,7 +1721,8 @@ text_window *create_text_window(const char *title, const char *text, LiVESTextBu
 
   if (text != NULL || mainw->iochan != NULL || textwindow->table != NULL) {
     if (textwindow->table == NULL) {
-      LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_SAVE, _("_Save to file"),
+      LiVESWidget *savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_SAVE,
+                                _("_Save to file"),
                                 LIVES_RESPONSE_YES);
       lives_signal_connect(LIVES_GUI_OBJECT(savebutton), LIVES_WIDGET_CLICKED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_save_textview_clicked),
@@ -2269,7 +2275,8 @@ _entryw *create_rename_dialog(int type) {
   }
 
   if (type == 6) {
-    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"), LIVES_RESPONSE_OK);
+    okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
+               LIVES_RESPONSE_OK);
   } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
@@ -2374,7 +2381,8 @@ LiVESWidget *create_combo_dialog(int type, LiVESList *list) {
   combo = lives_standard_combo_new(NULL, list, LIVES_BOX(dialog_vbox), NULL);
   widget_opts.packing_height >>= 1;
 
-  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_dialog_combo_changed), list);
+  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(after_dialog_combo_changed), list);
 
   if (type == 1) {
     add_deinterlace_checkbox(LIVES_BOX(dialog_vbox));
@@ -3225,10 +3233,12 @@ _entryw *create_cds_dialog(int type) {
                                             _("You are about to exit LiVES.\nThe current clip set can be saved.\nWhat would you like to do ?\n"));
     else labeltext = lives_strdup(_("The current clip set has not been saved.\nWhat would you like to do ?\n"));
   } else if (type == 2 || type == 3) {
-    if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL && mainw->stored_event_list_changed)) {
+    if ((mainw->multitrack != NULL && mainw->multitrack->changed) || (mainw->stored_event_list != NULL &&
+        mainw->stored_event_list_changed)) {
       labeltext = lives_strdup(_("The current layout has not been saved.\nWhat would you like to do ?\n"));
     } else {
-      labeltext = lives_strdup(_("The current layout has *NOT BEEN CHANGED* since it was last saved.\nWhat would you like to do ?\n"));
+      labeltext = lives_strdup(
+                    _("The current layout has *NOT BEEN CHANGED* since it was last saved.\nWhat would you like to do ?\n"));
     }
   } else if (type == 4) {
     labeltext = lives_strdup(
@@ -3284,7 +3294,8 @@ _entryw *create_cds_dialog(int type) {
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(discardbutton), _("_Delete layout"));
 
-  if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL, 2 - (type == 2));
+  if (type != 4) savebutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(cdsw->dialog), LIVES_STOCK_SAVE, NULL,
+                                2 - (type == 2));
   if (type == 0 || type == 3) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save layout"));
   else if (type == 1) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Save clip set"));
   else if (type == 2) lives_button_set_label(LIVES_BUTTON(savebutton), _("_Wipe layout"));
@@ -3672,7 +3683,8 @@ autolives_window *autolives_pre_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  alwindow->atrigger_spin = lives_standard_spin_button_new(_("change time (seconds)"), 1., 1., 1800., 1., 10., 0, LIVES_BOX(hbox), NULL);
+  alwindow->atrigger_spin = lives_standard_spin_button_new(_("change time (seconds)"), 1., 1., 1800., 1., 10., 0, LIVES_BOX(hbox),
+                            NULL);
 
   hbox = lives_hbox_new(FALSE, widget_opts.packing_width);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
@@ -3935,9 +3947,11 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_widget_show_all(dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), align_horizontal_with(hbox, radiobutton_free), TRUE, FALSE,
+                       widget_opts.packing_height);
 
-  radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))), &radiobutton_group,
+  radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))),
+                        &radiobutton_group,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
   lives_free(tmp);
@@ -4005,7 +4019,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_width), width_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_width));
 
-  spinbutton_height = lives_standard_spin_button_new(_("X        _Height"), CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
+  spinbutton_height = lives_standard_spin_button_new(_("X        _Height"),
+                      CURRENT_CLIP_HAS_VIDEO ? cfile->vsize : DEF_GEN_HEIGHT,
                       height_step, 100000., height_step, height_step, 0, LIVES_BOX(hbox), NULL);
   lives_spin_button_set_snap_to_multiples(LIVES_SPIN_BUTTON(spinbutton_height), height_step);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton_height));
@@ -4567,7 +4582,8 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
     overflowx = ww - (scr_width - bx);
     overflowy = hh - (scr_height - by);
 #ifdef DEBUG_OVERFLOW
-    g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height, ABS(overflowy), vmin);
+    g_print("ADJ A %d = %d - (%d - %d) + (%d - %d) %d %d\n", overflowy, h, scr_height, by, hh, mainw->assumed_height,
+            ABS(overflowy), vmin);
 #endif
     if (overflowx >= 0 && mainw->assumed_width != -1) {
       xoverflowx = rect.width - w - bx;
@@ -4776,6 +4792,7 @@ boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livesp
   // mouse scroll callback
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
   if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);
-  if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) + 1.);
+  if (lives_get_scroll_direction(event) == LIVES_SCROLL_DOWN) lives_adjustment_set_value(adj,
+        lives_adjustment_get_value(adj) + 1.);
   return FALSE;
 }

@@ -1,28 +1,28 @@
 /*
-Copyright © 1998. The Regents of the University of California (Regents).
-All Rights Reserved.
+  Copyright © 1998. The Regents of the University of California (Regents).
+  All Rights Reserved.
 
-Written by Matt Wright, The Center for New Music and Audio Technologies,
-University of California, Berkeley.
+  Written by Matt Wright, The Center for New Music and Audio Technologies,
+  University of California, Berkeley.
 
-Permission to use, copy, modify, distribute, and distribute modified versions
-of this software and its documentation without fee and without a signed
-licensing agreement, is hereby granted, provided that the above copyright
-notice, this paragraph and the following two paragraphs appear in all copies,
-modifications, and distributions.
+  Permission to use, copy, modify, distribute, and distribute modified versions
+  of this software and its documentation without fee and without a signed
+  licensing agreement, is hereby granted, provided that the above copyright
+  notice, this paragraph and the following two paragraphs appear in all copies,
+  modifications, and distributions.
 
-IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
-OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
-BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
+  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
+  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
-HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+  REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
+  HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
+  MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-The OpenSound Control WWW page is
+  The OpenSound Control WWW page is
     http://www.cnmat.berkeley.edu/OpenSoundControl
 */
 
@@ -237,7 +237,7 @@ struct OSCMethodQueryResponseInfoStruct {
   char *description;
   ParamValQuerier pvq;
   /* For each argument of the method:
-  min, max, default, units */
+    min, max, default, units */
 };
 
 void OSCInitMethodQueryResponseInfo(struct OSCMethodQueryResponseInfoStruct *i);
@@ -271,18 +271,18 @@ void OSCPrintWholeAddressSpace(void);
    and gives each of them "play" and "shuddup" messages.
 
 
-#include "OSC-common.h"
-#include "OSC-timetag.h"
-#include "OSC-address-space.h"
+  #include "OSC-common.h"
+  #include "OSC-timetag.h"
+  #include "OSC-address-space.h"
 
 
-typedef struct {
+  typedef struct {
     int playing;
     int param;
     float otherParam;
-} Player;
+  } Player;
 
-void PlayCallback(void *context, int arglen, const void *vargs,
+  void PlayCallback(void *context, int arglen, const void *vargs,
 		  OSCTimeTag when, NetworkReturnAddressPtr ra) {
     Player *p = context;
     const int *args = vargs;
@@ -292,9 +292,9 @@ void PlayCallback(void *context, int arglen, const void *vargs,
     if (arglen >= 4) {
 	p->param = args[0];
     }
-}
+  }
 
-void ShuddupCallback(void *context, int arglen, const void *vargs,
+  void ShuddupCallback(void *context, int arglen, const void *vargs,
 		     OSCTimeTag when, NetworkReturnAddressPtr ra) {
     Player *p = context;
     const float *args = vargs;
@@ -304,17 +304,17 @@ void ShuddupCallback(void *context, int arglen, const void *vargs,
     if (arglen >= 4) {
 	p->otherParam = args[0];
     }
-}
+  }
 
-void *InitTimeMalloc(int numBytes) {
+  void *InitTimeMalloc(int numBytes) {
     return malloc(numBytes);
-}
+  }
 
-void *NoRealTimeMalloc(int numBytes) {
+  void *NoRealTimeMalloc(int numBytes) {
     return 0;
-}
+  }
 
-main() {
+  main() {
     struct OSCAddressSpaceMemoryTuner oasmt;
     OSCcontainer topLevelContainer, foo, foochild, bar;
     struct OSCContainerQueryResponseInfoStruct ocqris;
@@ -358,7 +358,7 @@ main() {
 
     OSCNewMethod("play", bar, PlayCallback, &(players[2]), &omqris);
     OSCNewMethod("shuddup", bar, ShuddupCallback, &(players[2]), &omqris);
-}
+  }
 
 */
 

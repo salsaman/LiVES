@@ -110,7 +110,8 @@ EXPORTS weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t 
   // we must use the default getter to bootstrap our actual API functions
 
   //////////// get weed api version /////////
-  if ((*weed_default_getp)(host_info, WEED_LEAF_WEED_API_VERSION, (weed_funcptr_t *)&weed_abi_version) != WEED_SUCCESS) return NULL;
+  if ((*weed_default_getp)(host_info, WEED_LEAF_WEED_API_VERSION,
+                           (weed_funcptr_t *)&weed_abi_version) != WEED_SUCCESS) return NULL;
 
   if ((*weed_default_getp)(host_info, WEED_LEAF_GET_FUNC, (weed_funcptr_t *)&weed_leaf_get) != WEED_SUCCESS) return NULL;
   if ((*weed_default_getp)(host_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t *)&weed_malloc) != WEED_SUCCESS) return NULL;

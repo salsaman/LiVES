@@ -2,31 +2,31 @@
 // (c) G. Finch 2011 - 2016 <salsaman@gmail.com>
 
 /*
- * This file is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * LiVES is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with LiVES; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   LiVES is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with LiVES; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+*/
 
 // based on code from libavformat
 
 /**
- * @file
- * Matroska file demuxer
- * by Ronald Bultje <rbultje@ronald.bitfreak.net>
- * with a little help from Moritz Bunkus <moritz@bunkus.org>
- * totally reworked by Aurelien Jacobs <aurel@gnuage.org>
- * Specs available on the Matroska project page: http://www.matroska.org/.
- */
+   @file
+   Matroska file demuxer
+   by Ronald Bultje <rbultje@ronald.bitfreak.net>
+   with a little help from Moritz Bunkus <moritz@bunkus.org>
+   totally reworked by Aurelien Jacobs <aurel@gnuage.org>
+   Specs available on the Matroska project page: http://www.matroska.org/.
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -167,8 +167,8 @@ static boolean check_eof(const lives_clip_data_t *cdata) {
 
 
 /*
- * Return: Whether we reached the end of a level in the hierarchy or not.
- */
+   Return: Whether we reached the end of a level in the hierarchy or not.
+*/
 static int ebml_level_end(const lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -186,13 +186,13 @@ static int ebml_level_end(const lives_clip_data_t *cdata) {
 
 
 /*
- * Read: an "EBML number", which is defined as a variable-length
- * array of bytes. The first byte indicates the length by giving a
- * number of 0-bits followed by a one. The position of the first
- * "one" bit inside the first byte indicates the length of this
- * number.
- * Returns: number of bytes read, < 0 on error
- */
+   Read: an "EBML number", which is defined as a variable-length
+   array of bytes. The first byte indicates the length by giving a
+   number of 0-bits followed by a one. The position of the first
+   "one" bit inside the first byte indicates the length of this
+   number.
+   Returns: number of bytes read, < 0 on error
+*/
 static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
                          int max_size, uint64_t *number) {
   lives_mkv_priv_t *priv = cdata->priv;
@@ -203,8 +203,8 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
   uint8_t val8;
 
   /* The first byte tells us the length in bytes - avio_r8() can normally
-   * return 0, but since that's not a valid first ebmlID byte, we can
-   * use it safely here to catch EOS. */
+     return 0, but since that's not a valid first ebmlID byte, we can
+     use it safely here to catch EOS. */
 
   if (data == NULL) {
     if (read(priv->fd, buffer, 1) < 1) {
@@ -259,10 +259,10 @@ static int ebml_read_num(const lives_clip_data_t *cdata, uint8_t *data,
 
 
 /**
- * Read a EBML length value.
- * This needs special handling for the "unknown length" case which has multiple
- * encodings.
- */
+   Read a EBML length value.
+   This needs special handling for the "unknown length" case which has multiple
+   encodings.
+*/
 static int ebml_read_length(const lives_clip_data_t *cdata,
                             uint64_t *number) {
   int res = ebml_read_num(cdata, NULL, 8, number);
@@ -273,9 +273,9 @@ static int ebml_read_length(const lives_clip_data_t *cdata,
 
 
 /*
- * Read the next element as an unsigned int.
- * 0 is success, < 0 is failure.
- */
+   Read the next element as an unsigned int.
+   0 is success, < 0 is failure.
+*/
 static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *num) {
   lives_mkv_priv_t *priv = cdata->priv;
   int n = 0;
@@ -309,9 +309,9 @@ static int ebml_read_uint(const lives_clip_data_t *cdata, int size, uint64_t *nu
 
 
 /*
- * Read the next element as a float.
- * 0 is success, < 0 is failure.
- */
+   Read the next element as a float.
+   0 is success, < 0 is failure.
+*/
 static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num) {
   lives_mkv_priv_t *priv = cdata->priv;
   uint8_t buffer[8];
@@ -356,16 +356,16 @@ static int ebml_read_float(const lives_clip_data_t *cdata, int size, double *num
 
 
 /*
- * Read the next element as an ASCII string.
- * 0 is success, < 0 is failure.
- */
+   Read the next element as an ASCII string.
+   0 is success, < 0 is failure.
+*/
 static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str) {
   int bread;
   lives_mkv_priv_t *priv = cdata->priv;
 
   free(*str);
   /* EBML strings are usually not 0-terminated, so we allocate one
-   * byte more, read the string and NULL-terminate it ourselves. */
+     byte more, read the string and NULL-terminate it ourselves. */
   if (!(*str = malloc(size + 1))) {
     errval = ERR_NOMEM;
     return -errval;
@@ -391,9 +391,9 @@ static int ebml_read_ascii(const lives_clip_data_t *cdata, int size, char **str)
 
 
 /*
- * Read the next element as binary data.
- * 0 is success, < 0 is failure.
- */
+   Read the next element as binary data.
+   0 is success, < 0 is failure.
+*/
 static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin *bin) {
   int bread;
   lives_mkv_priv_t *priv = cdata->priv;
@@ -422,10 +422,10 @@ static int ebml_read_binary(const lives_clip_data_t *cdata, int length, EbmlBin 
 
 
 /*
- * Read the next element, but only the header. The contents
- * are supposed to be sub-elements which can be read separately.
- * 0 is success, < 0 is failure.
- */
+   Read the next element, but only the header. The contents
+   are supposed to be sub-elements which can be read separately.
+   0 is success, < 0 is failure.
+*/
 static int ebml_read_master(const lives_clip_data_t *cdata, uint64_t length) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -448,9 +448,9 @@ static int ebml_read_master(const lives_clip_data_t *cdata, uint64_t length) {
 
 
 /*
- * Read signed/unsigned "EBML" numbers.
- * Return: number of bytes processed, < 0 on error
- */
+   Read signed/unsigned "EBML" numbers.
+   Return: number of bytes processed, < 0 on error
+*/
 static int matroska_ebmlnum_uint(const lives_clip_data_t *cdata,
                                  uint8_t *data, uint32_t size, uint64_t *num) {
   return ebml_read_num(cdata, data, FFMIN(size, 8), num);
@@ -458,8 +458,8 @@ static int matroska_ebmlnum_uint(const lives_clip_data_t *cdata,
 
 
 /*
- * Same as above, but signed.
- */
+   Same as above, but signed.
+*/
 static int matroska_ebmlnum_sint(const lives_clip_data_t *cdata,
                                  uint8_t *data, uint32_t size, int64_t *num) {
   uint64_t unum;
@@ -669,8 +669,8 @@ static void ebml_free(EbmlSyntax *syntax, void *data) {
 
 ////////////////////////////////////////////////////////////////////////////////
 /*
-void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
-{
+  void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
+  {
   int i;
 
   for(i = 0; i < s->nb_streams; i++) {
@@ -680,13 +680,13 @@ void ff_update_cur_dts(AVFormatContext *s, AVStream *ref_st, int64_t timestamp)
 			     st->time_base.den * (int64_t)ref_st->time_base.num,
 			     st->time_base.num * (int64_t)ref_st->time_base.den);
   }
-}
+  }
 */
 
 
 /*
- * Autodetecting...
- */
+   Autodetecting...
+*/
 static boolean lives_mkv_probe(const lives_clip_data_t *cdata, unsigned char *p) {
   lives_mkv_priv_t *priv = cdata->priv;
 
@@ -728,9 +728,9 @@ static boolean lives_mkv_probe(const lives_clip_data_t *cdata, unsigned char *p)
   priv->input_position += total;
 
   /* The header should contain a known document type. For now,
-   * we don't parse the whole header but simply check for the
-   * availability of that array of characters inside the header.
-   * Not fully fool-proof, but good enough. */
+     we don't parse the whole header but simply check for the
+     availability of that array of characters inside the header.
+     Not fully fool-proof, but good enough. */
 
   for (i = 0; i < 2; i++) {
     int probelen = strlen(matroska_doctypes[i]);
@@ -941,7 +941,7 @@ static int matroska_parse_seekhead_entry(const lives_clip_data_t *cdata, int idx
   lseek(priv->fd, priv->input_position, SEEK_SET);
 
   /* We don't want to lose our seekhead level, so we add
-   * a dummy. This is a crude hack. */
+     a dummy. This is a crude hack. */
   if (matroska->num_levels == EBML_MAX_DEPTH) {
     fprintf(stderr, "mkv_decoder: max ebml depth breached in clip\n");
     errval = -11;
@@ -1403,7 +1403,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       cdata->frame_height = track->video.display_height;
 
       if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)
-        fprintf(stderr, "mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height, cdata->width,
+        fprintf(stderr, "mkv_decoder: info frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height,
+                cdata->width,
                 cdata->height);
 
       if (track->video.flag_interlaced) cdata->interlace = LIVES_INTERLACE_BOTTOM_FIRST;
@@ -1524,8 +1525,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
     st->start_time = 0;
 
     /*    if (strcmp(track->language, "und"))
-    av_dict_set(&st->metadata, "language", track->language, 0);
-    av_dict_set(&st->metadata, "title", track->name, 0);
+      av_dict_set(&st->metadata, "language", track->language, 0);
+      av_dict_set(&st->metadata, "title", track->name, 0);
     */
 
     if (track->flag_default)
@@ -1578,8 +1579,8 @@ static int lives_mkv_read_header(lives_clip_data_t *cdata) {
       if (cdata->fps == 0.) cdata->fps = (float)st->avg_frame_rate.num / (float)st->avg_frame_rate.den;
 
       /*
-      if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
-      av_dict_set(&st->metadata, "stereo_mode", matroska_video_stereo_mode[track->video.stereo_mode], 0);
+        if (track->video.stereo_mode && track->video.stereo_mode < MATROSKA_VIDEO_STEREO_MODE_COUNT)
+        av_dict_set(&st->metadata, "stereo_mode", matroska_video_stereo_mode[track->video.stereo_mode], 0);
       */
 
       /* if we have virtual track, mark the real tracks */
@@ -2376,9 +2377,9 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 
 
 /*
- * Put one packet in an application-supplied AVPacket struct.
- * Returns 0 on success or -1 on failure.
- */
+   Put one packet in an application-supplied AVPacket struct.
+   Returns 0 on success or -1 on failure.
+*/
 static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -2406,8 +2407,8 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
 
 
 /*
- * Free all packets in our internal queue.
- */
+   Free all packets in our internal queue.
+*/
 static void matroska_clear_queue(MatroskaDemuxContext *matroska) {
   if (matroska->packets) {
     int n;

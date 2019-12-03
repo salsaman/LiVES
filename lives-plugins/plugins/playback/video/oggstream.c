@@ -321,7 +321,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (audio) {
     snprintf(cmd, PATH_MAX * 2, "oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &", workdir, mypid, workdir, mypid);
     dummyvar = system(cmd);
-    snprintf(cmd, PATH_MAX * 2, "oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &", outfile, workdir, mypid, workdir, mypid);
+    snprintf(cmd, PATH_MAX * 2, "oggJoin \"%s\" %s/video2-%d.ogv %s/livesaudio-%d.stream &", outfile, workdir, mypid, workdir,
+             mypid);
     dummyvar = system(cmd);
   } else {
     snprintf(cmd, PATH_MAX * 2, "oggTranscode %s/video-%d.ogv \"%s\" &", workdir, mypid, outfile);

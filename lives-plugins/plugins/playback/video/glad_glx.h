@@ -405,7 +405,8 @@ GLAPI PFNGLXDESTROYPBUFFERPROC glad_glXDestroyPbuffer;
 typedef void (APIENTRYP PFNGLXQUERYDRAWABLEPROC)(Display *dpy, GLXDrawable draw, int attribute, unsigned int *value);
 GLAPI PFNGLXQUERYDRAWABLEPROC glad_glXQueryDrawable;
 #define glXQueryDrawable glad_glXQueryDrawable
-typedef GLXContext(APIENTRYP PFNGLXCREATENEWCONTEXTPROC)(Display *dpy, GLXFBConfig config, int render_type, GLXContext share_list,
+typedef GLXContext(APIENTRYP PFNGLXCREATENEWCONTEXTPROC)(Display *dpy, GLXFBConfig config, int render_type,
+    GLXContext share_list,
     Bool direct);
 GLAPI PFNGLXCREATENEWCONTEXTPROC glad_glXCreateNewContext;
 #define glXCreateNewContext glad_glXCreateNewContext

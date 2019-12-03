@@ -629,7 +629,8 @@ void lives2lives_read_stream(const char *host, int port) {
   if (cfile->achans == 0) {
     d_print(_("none\n"));
   } else {
-    d_print(P_("%d Hz %d channel %d bps\n", "%d Hz %d channels %d bps\n", cfile->achans), cfile->arate, cfile->achans, cfile->asampsize);
+    d_print(P_("%d Hz %d channel %d bps\n", "%d Hz %d channels %d bps\n", cfile->achans), cfile->arate, cfile->achans,
+            cfile->asampsize);
   }
 
   d_print(_("Syncing to external framerate of %s frames per second.\n"), (tmp = remove_trailing_zeroes(mainw->fixed_fpsd)));
@@ -1096,7 +1097,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host"))), &radiobutton_group,
+  pandhw->rb_anyhost = lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams from _any host"))),
+                       &radiobutton_group,
                        LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("Accept incoming LiVES streams from any connected host."))));
 
@@ -1110,7 +1112,8 @@ lives_pandh_w *create_pandh_dialog(int type) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:"))), &radiobutton_group,
+  lives_standard_radio_button_new((tmp = lives_strdup(_("Accept LiVES streams only from the _specified host:"))),
+                                  &radiobutton_group,
                                   LIVES_BOX(hbox),
                                   (tmp2 = lives_strdup(_("Accept LiVES streams from the specified host only."))));
 

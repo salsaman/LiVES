@@ -235,7 +235,8 @@ lives_render_error_t render_events(boolean reset);
 
 // effect insertion/updating
 void insert_filter_init_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
-void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *filter, weed_plant_t *init_event, int ntracks, int leave);
+void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *filter, weed_plant_t *init_event, int ntracks,
+                                int leave);
 void insert_filter_deinit_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event);
 boolean insert_filter_map_event_at(weed_plant_t *event_list, weed_plant_t *at_event, weed_plant_t *event,
                                    boolean before_frames);

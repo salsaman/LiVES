@@ -308,7 +308,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   make_path("video3", mypid, "ogv");
   mkfifo(xfile, S_IRUSR | S_IWUSR); // feed to oggfwd
 
-  snprintf(cmd, PATH_MAX * 2, "ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&", workdir, mypid, workdir, mypid);
+  snprintf(cmd, PATH_MAX * 2, "ffmpeg2theora -f yuv4m -o %s/video-%d.ogv %s/stream-%d.fifo 2>/dev/null&", workdir, mypid, workdir,
+           mypid);
   dummyvar = system(cmd);
 
   make_path("livesaudio", mypid, "stream");
@@ -322,7 +323,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   if (audio) {
     snprintf(cmd, PATH_MAX * 2, "oggTranscode %s/video-%d.ogv %s/video2-%d.ogv &", workdir, mypid, workdir, mypid);
     dummyvar = system(cmd);
-    snprintf(cmd, PATH_MAX * 2, "oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &", workdir, mypid, workdir, mypid, workdir,
+    snprintf(cmd, PATH_MAX * 2, "oggJoin %s/video3-%d.ogv %s/video2-%d.ogv %s/livesaudio-%d.stream &", workdir, mypid, workdir,
+             mypid, workdir,
              mypid);
     dummyvar = system(cmd);
   } else {
@@ -330,7 +332,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     dummyvar = system(cmd);
   }
 
-  snprintf(cmd, PATH_MAX * 2, "oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &", ics, icp, icpw, icmp, workdir,
+  snprintf(cmd, PATH_MAX * 2, "oggfwd -d \"LiVES stream\" \"%s\" %d \"%s\" \"%s\" < %s/video3-%d.ogv &", ics, icp, icpw, icmp,
+           workdir,
            mypid);
   dummyvar = system(cmd);
 

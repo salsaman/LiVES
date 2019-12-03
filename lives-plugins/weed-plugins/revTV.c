@@ -1,8 +1,8 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001-2005 FUKUCHI Kentaro
- *
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001-2005 FUKUCHI Kentaro
+
+*/
 
 /* modified for Weed by G. Finch (salsaman)
    modifications (c) G. Finch */

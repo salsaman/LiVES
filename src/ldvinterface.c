@@ -47,14 +47,16 @@ struct _dvgrabw *create_camwindow(s_cam *cam, int type) {
                     LIVES_BOX(hbox), NULL);
   lives_free(tmp);
 
-  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked), (livespointer)dvgrabw->dirent);
+  lives_signal_connect(buttond, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(on_filesel_button_clicked),
+                       (livespointer)dvgrabw->dirent);
 
   //////////////////
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1, LIVES_BOX(hbox),
+  dvgrabw->filent = lives_standard_entry_new(_("File_name:"), type == CAM_FORMAT_DV ? "dvgrab-" : "hdvgrab-", -1, -1,
+                    LIVES_BOX(hbox),
                     NULL);
 
   if (type == CAM_FORMAT_DV) label = lives_standard_label_new("%d.dv");

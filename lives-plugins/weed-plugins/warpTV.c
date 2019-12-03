@@ -1,14 +1,14 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001-2005 FUKUCHI Kentaro
- *
- * From main.c of warp-1.1:
- *
- *      Simple DirectMedia Layer demo
- *      Realtime picture 'gooing'
- *      Released under GPL
- *      by sam lantinga slouken@devolution.com
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001-2005 FUKUCHI Kentaro
+
+   From main.c of warp-1.1:
+
+        Simple DirectMedia Layer demo
+        Realtime picture 'gooing'
+        Released under GPL
+        by sam lantinga slouken@devolution.com
+*/
 
 /* ported to Weed by G. Finch (salsaman@xs4all.nl,salsaman@gmail.com)
    modifications (c) salsaman 2005
@@ -100,7 +100,8 @@ static void initDistTable(struct _sdata *sdata, int width, int height) {
 }
 
 
-static void doWarp(int xw, int yw, int cw, RGB32 *src, RGB32 *dst, int width, int height, int irow, int orow, struct _sdata *sdata) {
+static void doWarp(int xw, int yw, int cw, RGB32 *src, RGB32 *dst, int width, int height, int irow, int orow,
+                   struct _sdata *sdata) {
   Sint32 c, i, x, y, dx, dy, maxx, maxy;
   Sint32 skip, *ctptr, *distptr;
   Uint32 *destptr;

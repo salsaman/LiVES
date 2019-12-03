@@ -730,7 +730,8 @@ static boolean call_set_current_time(livespointer data) {
 static boolean call_set_current_audio_time(livespointer data) {
   opfidata *idata = (opfidata *)data;
   if (mainw != NULL && !mainw->go_away && !mainw->is_processing && !mainw->preview && mainw->playing_file > 0 &&
-      is_realtime_aplayer(prefs->audio_player) && mainw->multitrack == NULL && !(mainw->record && prefs->audio_src == AUDIO_SRC_EXT) &&
+      is_realtime_aplayer(prefs->audio_player) && mainw->multitrack == NULL && !(mainw->record &&
+          prefs->audio_src == AUDIO_SRC_EXT) &&
       idata->stime >= 0. && idata->stime <= cfile->laudio_time) {
     resync_audio((int)(idata->stime * cfile->fps + .5) + 1);
     ext_caller_return_int(idata->id, TRUE);
@@ -1294,7 +1295,8 @@ boolean idle_set_current_audio_time(double time, ulong id) {
   opfidata *info;
 
   if (mainw != NULL && !mainw->go_away && !mainw->is_processing && !mainw->preview && mainw->playing_file > 0 &&
-      is_realtime_aplayer(prefs->audio_player) && mainw->multitrack == NULL && !(mainw->record && prefs->audio_src == AUDIO_SRC_EXT) &&
+      is_realtime_aplayer(prefs->audio_player) && mainw->multitrack == NULL && !(mainw->record &&
+          prefs->audio_src == AUDIO_SRC_EXT) &&
       time >= 0. && time <= cfile->laudio_time) {
     info = (opfidata *)lives_malloc(sizeof(opfidata));
     info->id = id;
@@ -1724,7 +1726,8 @@ boolean idle_move_block(ulong uid, int track, double time, ulong id) {
   tr = find_block_by_uid(mainw->multitrack, uid);
   if (tr == NULL) return FALSE;
 
-  if (track >= lives_list_length(mainw->multitrack->video_draws) || track < -mainw->multitrack->opts.back_audio_tracks) return FALSE;
+  if (track >= lives_list_length(mainw->multitrack->video_draws) ||
+      track < -mainw->multitrack->opts.back_audio_tracks) return FALSE;
 
   if (time < 0.) return FALSE;
 

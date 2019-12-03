@@ -6,9 +6,9 @@
    Released under the Lesser Gnu Public License (LGPL) 3 or later
    See www.gnu.org for details
 
- (c) 2004, project authors
+  (c) 2004, project authors
 
- (c) 2004 - 2019 salsaman
+  (c) 2004 - 2019 salsaman
 
 */
 
@@ -309,7 +309,8 @@ WEED_SETUP_START(200, 200) {
     in_params[0] = weed_string_list_init("listener", "Audio _listener", 5, listeners);
     weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
     out_chantmpls[0] = weed_channel_template_init("out channel 0", 0);
-    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list, libvis_init, libvis_process, libvis_deinit,
+    filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list, libvis_init, libvis_process,
+                                          libvis_deinit,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
     weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
 

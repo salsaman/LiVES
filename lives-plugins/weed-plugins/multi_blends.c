@@ -32,9 +32,10 @@ static weed_error_t common_init(weed_plant_t *inst) {
 
 
 static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL), *out_channel = weed_get_plantptr_value(inst,
-                               WEED_LEAF_OUT_CHANNELS,
-                               NULL);
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL),
+                 *out_channel = weed_get_plantptr_value(inst,
+                                WEED_LEAF_OUT_CHANNELS,
+                                NULL);
   unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);

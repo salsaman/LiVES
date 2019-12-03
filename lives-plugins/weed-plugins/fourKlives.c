@@ -524,20 +524,23 @@ static void syna_play(_sdata *sdata, float **dest, int length, int channels, int
     dv = 32767.0 / (float)a;
     for (n = 0; n < a; n++, i += ip, ip += sweep, vol += dv, oh += op)
       if (wave_mod != 1)
-        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((
+                                    int)oh) % modulo] : 1.0);
       else
         sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
     for (n = 0; n < d; n++, i += ip, ip += sweep, vol -= dv, oh += op)
       if (wave_mod != 1)
-        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((
+                                    int)oh) % modulo] : 1.0);
       else
         sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
 
     for (n = 0; n < s; n++, i += ip, ip += sweep, oh += op)
       if (wave_mod != 1)
-        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((
+                                    int)oh) % modulo] : 1.0);
       else
         sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
 
@@ -545,7 +548,8 @@ static void syna_play(_sdata *sdata, float **dest, int length, int channels, int
 
     for (n = 0; n < r; n++, i += ip, ip += sweep, vol -= dv, oh += op)
       if (wave_mod != 1)
-        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((int)oh) % modulo] : 1.0);
+        sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sdata->aalto[wave_mod][((
+                                    int)oh) % modulo] : 1.0);
       else
         sdata->instr[ins][id++] = vol * sdata->aalto[wave][((int)i) % modulo] * ((mod) ? sin(oh) : 1.0);
   }

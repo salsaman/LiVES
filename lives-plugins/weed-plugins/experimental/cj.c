@@ -67,9 +67,9 @@ static cjMethod_t booleanMethods[] = {
 };
 
 /*
- * Connect to JVM using arguments in pJVM.  If failure, clean up.
- * Returns CJ_ERR_SUCCESS if sucessful.
- */
+   Connect to JVM using arguments in pJVM.  If failure, clean up.
+   Returns CJ_ERR_SUCCESS if sucessful.
+*/
 int cjJVMConnect(cjJVM_t *pJVM) {
   long jret = 0;
   int rc = CJ_ERR_SUCCESS;
@@ -116,8 +116,8 @@ int cjJVMConnect(cjJVM_t *pJVM) {
 }
 
 /*
- * Destroys JVM.  Returns CJ_ERR_SUCCESS if sucessful
- */
+   Destroys JVM.  Returns CJ_ERR_SUCCESS if sucessful
+*/
 int cjJVMDisconnect(cjJVM_t *pJVM) {
   // Disconnect from JVM
   int rc = CJ_ERR_SUCCESS;
@@ -132,8 +132,8 @@ int cjJVMDisconnect(cjJVM_t *pJVM) {
 }
 
 /*
- * Load given class and get its methods
- */
+   Load given class and get its methods
+*/
 int cjClassCreate(cjClass_t *pClass) {
   int rc = CJ_ERR_SUCCESS;
   cjJVM_t *jvm = pClass->jvm;
@@ -181,9 +181,9 @@ int cjClassCreate(cjClass_t *pClass) {
 }
 
 /*
- * Destroy the given class.
- * Nothing to do -- don't have to cleanup methods or class?
- */
+   Destroy the given class.
+   Nothing to do -- don't have to cleanup methods or class?
+*/
 int cjClassDestroy(cjClass_t *pClass) {
   pClass->ok = JNI_FALSE;
   return CJ_ERR_SUCCESS;
@@ -192,8 +192,8 @@ int cjClassDestroy(cjClass_t *pClass) {
 }
 
 /**
- * Frees an object for which there is a global reference
- */
+   Frees an object for which there is a global reference
+*/
 int cjFreeObject(cjJVM_t *pJVM, jobject gloObj) {
   int rc = CJ_ERR_SUCCESS;
   JNIEnv *env = pJVM->jni;
@@ -212,9 +212,9 @@ int cjFreeObject(cjJVM_t *pJVM, jobject gloObj) {
 }
 
 /**
- * Creates a proxy class with the given class name.
- * The methods are given by the proxy spec above.
- */
+   Creates a proxy class with the given class name.
+   The methods are given by the proxy spec above.
+*/
 int cjProxyClassCreate(cjClass_t *pClass, char *className,
                        cjJVM_t *pJVM) {
   pClass->className = className;
@@ -225,8 +225,8 @@ int cjProxyClassCreate(cjClass_t *pClass, char *className,
 }
 
 /*
- * Instantiate a proxy
- */
+   Instantiate a proxy
+*/
 int cjProxyCreate(cjObject_t *pProxy) {
   int rc = CJ_ERR_SUCCESS;
   cjClass_t *pClass = pProxy->clazz;
@@ -648,9 +648,9 @@ int cjProxyResetModelString(cjObject_t *pProxy, char *inData, char *outData) {
 
 
 /**
- * Acquire global reference (pGloObj) based on local reference (loObj).
- * Release the local reference.
- */
+   Acquire global reference (pGloObj) based on local reference (loObj).
+   Release the local reference.
+*/
 int acquireGlobalReference(cjJVM_t *pJVM, jobject loObj, jobject *pGloObj) {
   int rc = CJ_ERR_SUCCESS;
   JNIEnv *env = pJVM->jni;
@@ -686,8 +686,8 @@ int acquireGlobalReference(cjJVM_t *pJVM, jobject loObj, jobject *pGloObj) {
 }
 
 /**
- * Convert jstring to c zero-terminated string
- */
+   Convert jstring to c zero-terminated string
+*/
 int jstring2cstring(cjJVM_t *pJVM, jstring js, char *cs) {
   int rc = CJ_ERR_SUCCESS;
   JNIEnv *env = pJVM->jni;
@@ -722,8 +722,8 @@ int jstring2cstring(cjJVM_t *pJVM, jstring js, char *cs) {
 }
 
 /**
- * Check for exception and clear it.  Return CJ_ERR_SUCCESS if no exception
- */
+   Check for exception and clear it.  Return CJ_ERR_SUCCESS if no exception
+*/
 jboolean checkException(cjJVM_t *pJVM) {
   JNIEnv *env = pJVM->jni;
   jboolean isException = (*env)->ExceptionCheck(env);

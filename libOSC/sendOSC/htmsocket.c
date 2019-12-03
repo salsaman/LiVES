@@ -1,32 +1,32 @@
 /*
-Written by Adrian Freed, The Center for New Music and Audio Technologies,
-University of California, Berkeley.  Copyright (c) 1992,93,94,95,96,97,98,99,2000,01,02,03,04
-The Regents of the University of California (Regents).
+  Written by Adrian Freed, The Center for New Music and Audio Technologies,
+  University of California, Berkeley.  Copyright (c) 1992,93,94,95,96,97,98,99,2000,01,02,03,04
+  The Regents of the University of California (Regents).
 
-Permission to use, copy, modify, distribute, and distribute modified versions
-of this software and its documentation without fee and without a signed
-licensing agreement, is hereby granted, provided that the above copyright
-notice, this paragraph and the following two paragraphs appear in all copies,
-modifications, and distributions.
+  Permission to use, copy, modify, distribute, and distribute modified versions
+  of this software and its documentation without fee and without a signed
+  licensing agreement, is hereby granted, provided that the above copyright
+  notice, this paragraph and the following two paragraphs appear in all copies,
+  modifications, and distributions.
 
-IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
-SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
-OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
-BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+  SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING
+  OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS
+  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
-HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+  REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
+  HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
+  MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
-The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
+  The OSC webpage is http://cnmat.cnmat.berkeley.edu/OpenSoundControl
 */
 
 /* htmsocket.c
 
-Adrian Freed
+  Adrian Freed
 	send parameters to htm servers by udp or UNIX protocol
 
    Modified 6/6/96 by Matt Wright to understand symbolic host names
@@ -119,9 +119,9 @@ void *OpenHTMSocket(char *host, int portnumber) {
     int clilen;
     o->len = sizeof(ucl_addr);
     /*
-     * Fill in the structure "userv_addr" with the address of the
-     * server that we want to send to.
-     */
+       Fill in the structure "userv_addr" with the address of the
+       server that we want to send to.
+    */
 
     memset((char *) &o->userv_addr, 0, sizeof(o->userv_addr));
     o->userv_addr.sun_family = AF_UNIX;
@@ -130,16 +130,16 @@ void *OpenHTMSocket(char *host, int portnumber) {
     o->uservlen = sizeof(o->userv_addr.sun_family) + strlen(o->userv_addr.sun_path);
     o->addr = &(o->userv_addr);
     /*
-     * Open a socket (a UNIX domain datagram socket).
-     */
+       Open a socket (a UNIX domain datagram socket).
+    */
 
     if ((sockfd = socket(AF_UNIX, SOCK_DGRAM, 0)) >= 0) {
       /*
-       * Bind a local address for us.
-       * In the UNIX domain we have to choose our own name (that
-       * should be unique).  We'll use mktemp() to create a unique
-       * pathname, based on our process id.
-       */
+         Bind a local address for us.
+         In the UNIX domain we have to choose our own name (that
+         should be unique).  We'll use mktemp() to create a unique
+         pathname, based on our process id.
+      */
       int dummy;
 
       memset((char *) &ucl_addr, 0, sizeof(ucl_addr));    /* zero out */
@@ -161,17 +161,17 @@ void *OpenHTMSocket(char *host, int portnumber) {
   } else {
 #endif
   /*
-   * Fill in the structure "serv_addr" with the address of the
-   * server that we want to send to.
-   */
+     Fill in the structure "serv_addr" with the address of the
+     server that we want to send to.
+  */
   o->len = sizeof(cl_addr);
   memset((char *)&o->serv_addr, 0, sizeof(o->serv_addr));
   o->serv_addr.sin_family = AF_INET;
 
   /* MW 6/6/96: Call gethostbyname() instead of inet_addr(),
-  so that host can be either an Internet host name (e.g.,
-  "les") or an Internet address in standard dot notation
-  (e.g., "128.32.122.13") */
+    so that host can be either an Internet host name (e.g.,
+    "les") or an Internet address in standard dot notation
+    (e.g., "128.32.122.13") */
   {
     struct hostent *hostsEntry;
     unsigned long address;
@@ -194,8 +194,8 @@ void *OpenHTMSocket(char *host, int portnumber) {
   o->serv_addr.sin_port = htons(portnumber);
   o->addr = &(o->serv_addr);
   /*
-   * Open a socket (a UDP domain datagram socket).
-   */
+     Open a socket (a UDP domain datagram socket).
+  */
   if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0) {
     memset((char *)&cl_addr, 0, sizeof(cl_addr));
     cl_addr.sin_family = AF_INET;

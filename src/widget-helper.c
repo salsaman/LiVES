@@ -251,7 +251,8 @@ static void lives_widget_object_unref_cb(livespointer obj) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_widget_object(LiVESWidgetObject *obj, const char *key, livespointer other) {
+WIDGET_HELPER_GLOBAL_INLINE void lives_widget_object_set_data_widget_object(LiVESWidgetObject *obj, const char *key,
+    livespointer other) {
 
   lives_widget_object_set_data_full(obj, key, other, lives_widget_object_unref_cb);
 }
@@ -292,7 +293,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_t *lives_painter_create_from_widget(Li
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const LiVESPixbuf *pixbuf, double pixbuf_x,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painter_t *cr, const LiVESPixbuf *pixbuf,
+    double pixbuf_x,
     double pixbuf_y) {
   // blit pixbuf to cairo at x,y
 #ifdef LIVES_PAINTER_IS_CAIRO
@@ -309,7 +311,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_pixbuf(lives_painte
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface, double x,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_set_source_surface(lives_painter_t *cr, lives_painter_surface_t *surface,
+    double x,
     double y) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_set_source_surface(cr, surface, x, y);
@@ -395,7 +398,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_destroy(lives_painter_t *cr) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x, double y,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_render_background(LiVESWidget *widget, lives_painter_t *cr, double x,
+    double y,
     double width,
     double height) {
 #ifdef LIVES_PAINTER_IS_CAIRO
@@ -516,7 +520,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_line_to(lives_painter_t *cr, d
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width, double height) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width,
+    double height) {
 #ifdef LIVES_PAINTER_IS_CAIRO
   cairo_rectangle(cr, x, y, width, height);
   return TRUE;
@@ -634,7 +639,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format, int width,
+WIDGET_HELPER_GLOBAL_INLINE lives_painter_surface_t *lives_painter_image_surface_create(lives_painter_format_t format,
+    int width,
     int height) {
   lives_painter_surface_t *surf = NULL;
 #ifdef LIVES_PAINTER_IS_CAIRO
@@ -814,7 +820,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handler_block(livespointer inst
 }
 
 #ifndef GUI_GTK
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func, livespointer data) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_block_by_func(livespointer instance, livespointer func,
+    livespointer data) {
 #ifdef GUI_QT
   LiVESWidgetObject *obj = static_cast<LiVESWidgetObject *>(instance);
   obj->block_signals((ulong)func, data);
@@ -839,7 +846,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handler_unblock(livespointer in
 
 
 #ifndef GUI_GTK
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_unblock_by_func(livespointer instance, livespointer func, livespointer data) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_signal_handlers_unblock_by_func(livespointer instance, livespointer func,
+    livespointer data) {
 #ifdef GUI_QT
   LiVESWidgetObject *obj = static_cast<LiVESWidgetObject *>(instance);
   obj->unblock_signals((ulong)func, data);
@@ -1282,7 +1290,8 @@ static char *make_random_string(const char *prefix) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 16, 0)
 
-static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector, const char *detail,
+static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetState state, const char *selector,
+    const char *detail,
     const char *value) {
   GtkCssProvider *provider;
   GtkStyleContext *ctx;
@@ -1436,7 +1445,8 @@ static boolean set_css_value_for_state_flag(LiVESWidget *widget, LiVESWidgetStat
 
   if (LIVES_SHOULD_EXPAND_WIDTH) {
     if (LIVES_IS_BUTTON(widget)) {
-      tmp = lives_strdup_printf("%s %s {\n padding-left: %dpx; padding-right: %dpx;\n }\n", css_string, wname, widget_opts.packing_width >> 1,
+      tmp = lives_strdup_printf("%s %s {\n padding-left: %dpx; padding-right: %dpx;\n }\n", css_string, wname,
+                                widget_opts.packing_width >> 1,
                                 widget_opts.packing_width >> 1);
       lives_free(css_string);
       css_string = tmp;
@@ -1487,7 +1497,8 @@ static boolean set_css_value_direct(LiVESWidget *widget, LiVESWidgetState state,
 #endif
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widget, LiVESWidgetState state,
+    const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -1513,7 +1524,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_bg_color(LiVESWidget *widge
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state, const LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_fg_color(LiVESWidget *widget, LiVESWidgetState state,
+    const LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(3, 16, 0)
@@ -1628,7 +1640,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_font_size(LiVESWidget *widg
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget *widget, LiVESWidgetState state,
+    LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
 #if GTK_CHECK_VERSION(4, 0, 0)
@@ -1649,7 +1662,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_fg_state_color(LiVESWidget 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state, LiVESWidgetColor *color) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_bg_state_color(LiVESWidget *widget, LiVESWidgetState state,
+    LiVESWidgetColor *color) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   G_GNUC_BEGIN_IGNORE_DEPRECATIONS
@@ -1894,7 +1908,8 @@ LiVESWidget *lives_image_new_from_stock_at_size(const char *stock_id, LiVESIconS
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_new_from_stock(const char *stock_id, LiVESIconSize size) {
-  return lives_image_new_from_stock_at_size(stock_id, size, get_real_size_from_icon_size(size), get_real_size_from_icon_size(size));
+  return lives_image_new_from_stock_at_size(stock_id, size, get_real_size_from_icon_size(size),
+         get_real_size_from_icon_size(size));
 }
 
 
@@ -1936,7 +1951,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_image_set_from_pixbuf(LiVESImage *imag
   return TRUE;
 #endif
 #ifdef GUI_QT
-  *(static_cast<QImage *>(image)) = pixbuf->copy(0, 0, (static_cast<QImage *>(pixbuf))->width(), (static_cast<QImage *>(pixbuf))->height());
+  *(static_cast<QImage *>(image)) = pixbuf->copy(0, 0, (static_cast<QImage *>(pixbuf))->width(),
+                                    (static_cast<QImage *>(pixbuf))->height());
   return TRUE;
 #endif
   return FALSE;
@@ -2619,7 +2635,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_menu_set_accel_group(LiVESMenu *menu, 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_groups_activate(LiVESWidgetObject *object, uint32_t key, LiVESXModifierType mod) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_accel_groups_activate(LiVESWidgetObject *object, uint32_t key,
+    LiVESXModifierType mod) {
 #ifdef GUI_GTK
   gtk_accel_groups_activate(object, key, mod);
   return TRUE;
@@ -2652,7 +2669,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_new(boolean has_alpha, int
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width, int height,
+WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_new_from_data(const unsigned char *buf, boolean has_alpha, int width,
+    int height,
     int rowstride, LiVESPixbufDestroyNotify lives_free_buffer_fn,
     livespointer destroy_fn_data) {
 #ifdef GUI_GTK
@@ -2832,7 +2850,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESPixbuf *lives_pixbuf_scale_simple(const LiVESPi
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest, float saturation,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_pixbuf_saturate_and_pixelate(const LiVESPixbuf *src, LiVESPixbuf *dest,
+    float saturation,
     boolean pixilate) {
 #ifdef GUI_GTK
   gdk_pixbuf_saturate_and_pixelate(src, dest, saturation, pixilate);
@@ -2986,7 +3005,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_start(LiVESBox *box, LiVESWid
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_end(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+    uint32_t padding) {
 #ifdef GUI_GTK
   gtk_box_pack_end(box, child, expand, fill, padding);
   return TRUE;
@@ -3317,7 +3337,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_alignment_new(float xalign, float
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_alignment_set(LiVESWidget *alignment, float xalign, float yalign, float xscale, float yscale) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_alignment_set(LiVESWidget *alignment, float xalign, float yalign, float xscale,
+    float yscale) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_aspect_frame_set(GTK_ASPECT_FRAME(alignment), xalign, yalign, xscale / yscale, TRUE);
@@ -3767,7 +3788,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTextBuffer *lives_text_buffer_new(void) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tbuff, LiVESTextIter *iter, const char *text, int len) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_insert(LiVESTextBuffer *tbuff, LiVESTextIter *iter, const char *text,
+    int len) {
 #ifdef GUI_GTK
   gtk_text_buffer_insert(tbuff, iter, text, len);
   return TRUE;
@@ -3905,7 +3927,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_delete(LiVESTextBuffer *tb
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *tbuff, LiVESTextIter *iter, LiVESTextMark *mark) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_text_buffer_get_iter_at_mark(LiVESTextBuffer *tbuff, LiVESTextIter *iter,
+    LiVESTextMark *mark) {
 #ifdef GUI_GTK
   gtk_text_buffer_get_iter_at_mark(tbuff, iter, mark);
   return TRUE;
@@ -4104,7 +4127,8 @@ LiVESWidget *lives_button_new_from_stock(const char *stock_id, const char *label
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, const char *label) {
-  char *labeltext = lives_strdup_printf("%s%s%s%s%s", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "", LIVES_SHOULD_EXPAND_WIDTH ? "    " : "",
+  char *labeltext = lives_strdup_printf("%s%s%s%s%s", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "",
+                                        LIVES_SHOULD_EXPAND_WIDTH ? "    " : "",
                                         label, LIVES_SHOULD_EXPAND_WIDTH ? "    " : "", LIVES_SHOULD_EXPAND_HEIGHT ? "\n" : "");
 
 #ifdef GUI_GTK
@@ -4243,7 +4267,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_paned_set_position(LiVESPaned *paned, 
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_paned_pack(int where, LiVESPaned *paned, LiVESWidget *child, boolean resize, boolean shrink) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_paned_pack(int where, LiVESPaned *paned, LiVESWidget *child, boolean resize,
+    boolean shrink) {
 #ifdef GUI_GTK
   if (where == 1) gtk_paned_pack1(paned, child, resize, shrink);
   else gtk_paned_pack2(paned, child, resize, shrink);
@@ -4855,7 +4880,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_set_border_width(LiVESContai
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCallback callback, livespointer cb_data) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_container_foreach(LiVESContainer *cont, LiVESWidgetCallback callback,
+    livespointer cb_data) {
   // excludes internal children
 #ifdef GUI_GTK
   gtk_container_foreach(cont, callback, cb_data);
@@ -5222,7 +5248,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_tool_button_set_use_underline(LiVESToo
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position, double max_size) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_ruler_set_range(LiVESRuler *ruler, double lower, double upper, double position,
+    double max_size) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_range_set_range(GTK_RANGE(ruler), lower, upper);
@@ -5242,7 +5269,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_ruler_set_range(LiVESRuler *ruler, dou
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags, LiVESMessageType type,
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_message_dialog_new(LiVESWindow *parent, LiVESDialogFlags flags,
+    LiVESMessageType type,
     LiVESButtonsType buttons, const char *msg_fmt, ...) {
   LiVESWidget *mdial = NULL;
 #ifdef GUI_GTK
@@ -5872,7 +5900,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_model_get(LiVESTreeModel *tmod, L
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIter *titer, LiVESTreePath *tpath) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_model_get_iter(LiVESTreeModel *tmod, LiVESTreeIter *titer,
+    LiVESTreePath *tpath) {
 #ifdef GUI_GTK
   return gtk_tree_model_get_iter(tmod, titer, tpath);
 #endif
@@ -5934,7 +5963,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreePath *lives_tree_model_get_path(LiVESTreeMo
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_model_iter_children(LiVESTreeModel *tmod, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_model_iter_children(LiVESTreeModel *tmod, LiVESTreeIter *titer,
+    LiVESTreeIter *parent) {
 #ifdef GUI_GTK
   return gtk_tree_model_iter_children(tmod, titer, parent);
 #endif
@@ -6076,7 +6106,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...)
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_append(LiVESTreeStore *tstore, LiVESTreeIter *titer,
+    LiVESTreeIter *parent) {
 #ifdef GUI_GTK
   gtk_tree_store_append(tstore, titer, parent);
   return TRUE;
@@ -6102,7 +6133,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_append(LiVESTreeStore *tsto
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_prepend(LiVESTreeStore *tstore, LiVESTreeIter *titer, LiVESTreeIter *parent) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_store_prepend(LiVESTreeStore *tstore, LiVESTreeIter *titer,
+    LiVESTreeIter *parent) {
 #ifdef GUI_GTK
   gtk_tree_store_prepend(tstore, titer, parent);
   return TRUE;
@@ -6254,7 +6286,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_tree_view_get_hadjustment(LiV
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title, LiVESCellRenderer *crend,
+WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with_attributes(const char *title,
+    LiVESCellRenderer *crend,
     ...) {
   LiVESTreeViewColumn *tvcol = NULL;
   va_list args;
@@ -6292,7 +6325,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeViewColumn *lives_tree_view_column_new_with
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvcol, LiVESTreeViewColumnSizing type) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_tree_view_column_set_sizing(LiVESTreeViewColumn *tvcol,
+    LiVESTreeViewColumnSizing type) {
 #ifdef GUI_GTK
   gtk_tree_view_column_set_sizing(tvcol, type);
   return TRUE;
@@ -6754,7 +6788,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_scrolled_window_get_vadjustme
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow, LiVESPolicyType hpolicy,
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_policy(LiVESScrolledWindow *scrolledwindow,
+    LiVESPolicyType hpolicy,
     LiVESPolicyType vpolicy) {
 #ifdef GUI_GTK
   gtk_scrolled_window_set_policy(scrolledwindow, hpolicy, vpolicy);
@@ -6769,7 +6804,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_policy(LiVESScroll
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow, LiVESWidget *child) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_add_with_viewport(LiVESScrolledWindow *scrolledwindow,
+    LiVESWidget *child) {
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 8, 0)
   gtk_scrolled_window_add_with_viewport(scrolledwindow, child);
@@ -6787,7 +6823,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_add_with_viewport(LiVE
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_min_content_height(LiVESScrolledWindow *scrolledwindow, int height) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_min_content_height(LiVESScrolledWindow *scrolledwindow,
+    int height) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_scrolled_window_set_min_content_height(scrolledwindow, height);
@@ -6798,7 +6835,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_min_content_height
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_min_content_width(LiVESScrolledWindow *scrolledwindow, int width) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_scrolled_window_set_min_content_width(LiVESScrolledWindow *scrolledwindow,
+    int width) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 0, 0)
   gtk_scrolled_window_set_min_content_width(scrolledwindow, width);
@@ -7032,7 +7070,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_check_menu_item_set_draw_as_radio(LiVE
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id, LiVESAccelGroup *accel_group) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_image_menu_item_new_from_stock(const char *stock_id,
+    LiVESAccelGroup *accel_group) {
   LiVESWidget *menuitem = NULL;
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(3, 10, 0)
@@ -7615,7 +7654,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_notebook_set_current_page(LiVESNoteboo
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_notebook_set_tab_label(LiVESNotebook *nbook, LiVESWidget *child, LiVESWidget *tablabel) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_notebook_set_tab_label(LiVESNotebook *nbook, LiVESWidget *child,
+    LiVESWidget *tablabel) {
 #ifdef GUI_GTK
   gtk_notebook_set_tab_label(nbook, child, tablabel);
   return TRUE;
@@ -7952,7 +7992,8 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_pointer(LiVESXDevice *devic
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_modmask(LiVESXDevice *device, LiVESWidget *widget, LiVESXModifierType *modmask) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_get_modmask(LiVESXDevice *device, LiVESWidget *widget,
+    LiVESXModifierType *modmask) {
   return lives_widget_get_mods(device, widget, NULL, NULL, modmask);
 }
 
@@ -8451,7 +8492,8 @@ static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
     LiVESWidget *widget = (LiVESWidget *)xwidgets->data;
     int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_row"));
     int expansion = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "expansion"));
-    LiVESJustification justification = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "justification"));
+    LiVESJustification justification = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
+                                       "justification"));
     int woe = widget_opts.expand;
     LiVESJustification woj = widget_opts.justify;
     lives_widget_object_ref(widget);
@@ -8512,7 +8554,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout *layo
 #if GTK_CHECK_VERSION(3, 0, 0)
   LiVESWidget *widget = hbox;
 #else
-  LiVESWidget *alignment = lives_alignment_new(widget_opts.justify == LIVES_JUSTIFY_CENTER ? 0.5 : widget_opts.justify == LIVES_JUSTIFY_RIGHT
+  LiVESWidget *alignment = lives_alignment_new(widget_opts.justify == LIVES_JUSTIFY_CENTER ? 0.5 : widget_opts.justify ==
+                           LIVES_JUSTIFY_RIGHT
                            ? 1. : 0. , .5, 0., 0.);
   LiVESWidget *widget = alignment;
   lives_container_add(LIVES_CONTAINER(alignment), hbox);
@@ -9454,7 +9497,8 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dialog), "first_button", (livespointer)button);
       lives_button_center(button);
     } else {
-      lives_button_uncenter(first_button, LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(first_button), "normal_width")));
+      lives_button_uncenter(first_button, LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(first_button),
+                            "normal_width")));
     }
   }
   return button;
@@ -9601,7 +9645,8 @@ LiVESWidget *lives_standard_dialog_new(const char *title, boolean add_std_button
 
 extern void on_filesel_button_clicked(LiVESButton *, livespointer);
 
-static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth, int maxchars,
+static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char *txt, const char *defdir, int dispwidth,
+    int maxchars,
     LiVESBox *box, const char *tooltip, boolean isdir) {
   LiVESWidget *direntry = NULL;
   LiVESWidget *buttond;
@@ -9624,13 +9669,15 @@ static LiVESWidget *lives_standard_dfentry_new(const char *labeltext, const char
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth, int maxchars,
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_direntry_new(const char *labeltext, const char *txt, int dispwidth,
+    int maxchars,
     LiVESBox *box, const char *tooltip) {
   return lives_standard_dfentry_new(labeltext, txt, txt, dispwidth, maxchars, box, tooltip, TRUE);
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt, const char *defdir,
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_fileentry_new(const char *labeltext, const char *txt,
+    const char *defdir,
     int dispwidth, int maxchars, LiVESBox *box, const char *tooltip) {
   return lives_standard_dfentry_new(labeltext, txt, defdir, dispwidth, maxchars, box, tooltip, FALSE);
 }
@@ -9896,7 +9943,8 @@ static void _on_lock_button_clicked(LiVESButton *button, livespointer user_data)
   lives_container_foreach(LIVES_CONTAINER(button), (LiVESWidgetCallback)lives_widget_destroy_if_image, NULL);
   if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH,
                         LOCK_BUTTON_HEIGHT);
-  else image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH, LOCK_BUTTON_HEIGHT);
+  else image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH,
+                 LOCK_BUTTON_HEIGHT);
   if (!LIVES_IS_IMAGE(image)) return;
   lives_image_scale(LIVES_IMAGE(image), width, height, LIVES_INTERP_BEST);
   lives_container_add(LIVES_CONTAINER(button), image);
@@ -9918,7 +9966,8 @@ boolean label_act_lockbutton(LiVESWidget *widget, LiVESXEventButton *event, LiVE
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height, const char *tooltip) {
+WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean is_locked, int width, int height,
+    const char *tooltip) {
   LiVESWidget *lockbutton;
   lockbutton = lives_button_new();
   prettify_button(lockbutton);
@@ -10103,7 +10152,8 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
 
   if (box != NULL) {
     parent = lives_widget_get_parent(LIVES_WIDGET(box));
-    if (parent != NULL && LIVES_IS_TABLE(parent) && lives_widget_object_get_data(LIVES_WIDGET_OBJECT(parent), "widgets_added") != NULL) {
+    if (parent != NULL && LIVES_IS_TABLE(parent) &&
+        lives_widget_object_get_data(LIVES_WIDGET_OBJECT(parent), "widgets_added") != NULL) {
       parent_is_layout = TRUE;
       lives_table_set_column_homogeneous(LIVES_TABLE(parent), FALSE);
       hbox = LIVES_WIDGET(box);
@@ -10410,7 +10460,8 @@ LiVESList *add_sorted_list_to_menu(LiVESMenu *menu, LiVESList *menu_list) {
       lives_container_add(LIVES_CONTAINER(menu), (LiVESWidget *)menu_list->data);
     }
     if ((seclist = (LiVESList **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list")) != NULL)
-      * seclist = lives_list_prepend(*seclist, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list_value"));
+      * seclist = lives_list_prepend(*seclist, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data),
+                                     "secondary_list_value"));
     menu_list = menu_list->next;
   }
   return xmenu_list;
@@ -10431,7 +10482,8 @@ boolean lives_has_icon(const char *stock_id, LiVESIconSize size)  {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr, lives_colRGB48_t *col) {
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGB48_t *lives_painter_set_source_rgb_from_lives_rgb(lives_painter_t *cr,
+    lives_colRGB48_t *col) {
   lives_painter_set_source_rgb(cr,
                                (double)col->red / 65535.,
                                (double)col->green / 65535.,
@@ -10441,7 +10493,8 @@ WIDGET_HELPER_GLOBAL_INLINE lives_colRGB48_t *lives_painter_set_source_rgb_from_
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr, lives_colRGBA64_t *col) {
+WIDGET_HELPER_GLOBAL_INLINE lives_colRGBA64_t *lives_painter_set_source_rgb_from_lives_rgba(lives_painter_t *cr,
+    lives_colRGBA64_t *col) {
   lives_painter_set_source_rgb(cr,
                                (double)col->red / 65535.,
                                (double)col->green / 65535.,
@@ -10856,7 +10909,8 @@ int get_box_child_index(LiVESBox *box, LiVESWidget *tchild) {
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_top(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_top(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+    uint32_t padding) {
   lives_box_pack_start(box, child, expand, fill, padding);
   lives_box_reorder_child(box, child, 0);
   return TRUE;
@@ -10929,7 +10983,8 @@ boolean lives_spin_button_configure(LiVESSpinButton *spinbutton,
 }
 
 
-boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *val, LiVESTreeIter *titer1, LiVESTreeIter *titer2) {
+boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *val, LiVESTreeIter *titer1,
+                                   LiVESTreeIter *titer2) {
 #ifdef GUI_GTK
   if (gtk_tree_model_iter_children(LIVES_TREE_MODEL(tstore), titer2, titer1)) {
     char *ret;
@@ -11456,8 +11511,8 @@ boolean get_border_size(LiVESWidget *win, int *bx, int *by) {
 
 
 /*
- * Set active string to the combo box
- */
+   Set active string to the combo box
+*/
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_set_active_string(LiVESCombo *combo, const char *active_str) {
   return lives_entry_set_text(LIVES_ENTRY(lives_bin_get_child(LIVES_BIN(combo))), active_str);
 }
@@ -11572,7 +11627,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_toolbar_insert_label(LiVESToolbar
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiVESWidget *button, int min_width) {
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_box_set_button_width(LiVESButtonBox *bbox, LiVESWidget *button,
+    int min_width) {
   lives_button_box_set_layout(bbox, LIVES_BUTTONBOX_SPREAD);
 #ifdef GUI_GTK
 #if !GTK_CHECK_VERSION(3, 0, 0)
@@ -11629,7 +11685,8 @@ boolean lives_tool_button_set_border_colour(LiVESWidget *button, LiVESWidgetStat
 }
 
 
-LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_widget, const char *label, const char *tooltips) {
+LiVESWidget *lives_standard_tool_button_new(LiVESToolbar *bar, GtkWidget *icon_widget, const char *label,
+    const char *tooltips) {
   LiVESToolItem *tbutton;
   widget_opts.last_label = NULL;
   if (label != NULL) {

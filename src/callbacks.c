@@ -222,7 +222,8 @@ void lives_exit(int signum) {
       }
 
       // tell non-realtime audio players (sox or mplayer) to stop
-      if (!is_realtime_aplayer(prefs->audio_player) && mainw->aud_file_to_kill > -1 && mainw->files[mainw->aud_file_to_kill] != NULL) {
+      if (!is_realtime_aplayer(prefs->audio_player) && mainw->aud_file_to_kill > -1 &&
+          mainw->files[mainw->aud_file_to_kill] != NULL) {
         char *lsname = lives_build_filename(prefs->workdir, mainw->files[mainw->aud_file_to_kill]->handle, NULL);
         lives_touch(lsname);
         lives_free(lsname);
@@ -645,7 +646,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
     if (filesel_type == LIVES_DIR_SELECTION_WORKDIR) {
       if (strcmp(dirname, fname)) {
-        if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), FALSE) == LIVES_RESPONSE_RETRY) {
+        if (check_workdir_valid(&dirname, LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))),
+                                FALSE) == LIVES_RESPONSE_RETRY) {
           lives_free(dirname);
           dirname = lives_strdup(fname);
         }
@@ -700,7 +702,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   lives_free(dirname);
 
   if (button != NULL) {
-    if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry), (tmp = lives_filename_to_utf8(file_name, -1, NULL, NULL, NULL)));
+    if (LIVES_IS_ENTRY(tentry)) lives_entry_set_text(LIVES_ENTRY(tentry), (tmp = lives_filename_to_utf8(file_name, -1, NULL, NULL,
+          NULL)));
     else lives_text_view_set_text(LIVES_TEXT_VIEW(tentry), (tmp = lives_filename_to_utf8(file_name, -1, NULL, NULL, NULL)), -1);
     lives_free(tmp);
   }
@@ -746,7 +749,8 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   while (1) {
-    chooser = choose_file_with_preview(strlen(mainw->vid_load_dir) ? mainw->vid_load_dir : NULL, NULL, NULL, LIVES_FILE_SELECTION_VIDEO_AUDIO);
+    chooser = choose_file_with_preview(strlen(mainw->vid_load_dir) ? mainw->vid_load_dir : NULL, NULL, NULL,
+                                       LIVES_FILE_SELECTION_VIDEO_AUDIO);
     resp = lives_dialog_run(LIVES_DIALOG(chooser));
 
     end_fs_preview();
@@ -996,7 +1000,8 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   while (1) {
     lives_rm(cfile->info_file);
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d", prefs->backend, cfile->handle,
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d", prefs->backend,
+                              cfile->handle,
                               req->URI,
                               dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps, req->vidchoice, req->audchoice,
                               req->do_update);
@@ -2351,7 +2356,8 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
     mainw->fx5_val = cfile->arps;
   }
 
-  if (cfile->undo_action == UNDO_AUDIO_RESAMPLE || cfile->undo_action == UNDO_REC_AUDIO || cfile->undo_action == UNDO_FADE_AUDIO ||
+  if (cfile->undo_action == UNDO_AUDIO_RESAMPLE || cfile->undo_action == UNDO_REC_AUDIO ||
+      cfile->undo_action == UNDO_FADE_AUDIO ||
       cfile->undo_action == UNDO_TRIM_AUDIO || cfile->undo_action == UNDO_APPEND_AUDIO ||
       (cfile->undo_action == UNDO_ATOMIC_RESAMPLE_RESIZE && cfile->arate != cfile->undo1_int)) {
     lives_rm(cfile->info_file);
@@ -2885,7 +2891,8 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (menuitem != NULL) {
     char *tmp = lives_strdup(_("Cutting"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
-    if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
+    if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO |
+                                              WARN_MASK_LAYOUT_ALTER_AUDIO;
     if (!check_for_layout_errors(tmp, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
       lives_free(tmp);
       return;
@@ -3151,7 +3158,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   }
 
   if (button != NULL) {
-    if ((cfile->fps != clipboard->fps && orig_frames > 0) || (cfile->arps != clipboard->arps && clipboard->achans > 0 && with_sound)) {
+    if ((cfile->fps != clipboard->fps && orig_frames > 0) || (cfile->arps != clipboard->arps && clipboard->achans > 0 &&
+        with_sound)) {
       if (!do_clipboard_fps_warning()) {
         unbuffer_lmap_errors(FALSE);
         mainw->error = TRUE;
@@ -3391,7 +3399,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     }
 
     if (cfile->clip_type == CLIP_TYPE_FILE || virtual_ins) {
-      insert_images_in_virtual(mainw->current_file, where, remainder_frames, clipboard->frame_index, clipboard->frames - remainder_frames + 1);
+      insert_images_in_virtual(mainw->current_file, where, remainder_frames, clipboard->frame_index,
+                               clipboard->frames - remainder_frames + 1);
     }
 
     cfile->frames += remainder_frames;
@@ -3858,7 +3867,8 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (menuitem != NULL) {
     char *tmp = lives_strdup(_("Deletion"));
     chk_mask = WARN_MASK_LAYOUT_DELETE_FRAMES | WARN_MASK_LAYOUT_SHIFT_FRAMES | WARN_MASK_LAYOUT_ALTER_FRAMES;
-    if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO | WARN_MASK_LAYOUT_ALTER_AUDIO;
+    if (mainw->ccpd_with_sound) chk_mask |= WARN_MASK_LAYOUT_DELETE_AUDIO | WARN_MASK_LAYOUT_SHIFT_AUDIO |
+                                              WARN_MASK_LAYOUT_ALTER_AUDIO;
     if (!check_for_layout_errors(tmp, mainw->current_file, cfile->start, cfile->end, &chk_mask)) {
       lives_free(tmp);
       return;
@@ -3984,7 +3994,8 @@ void on_delete_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   cfile->undo_action = UNDO_DELETE;
   d_print_done();
 
-  if (mainw->sl_undo_mem != NULL && (cfile->stored_layout_frame != 0 || (mainw->ccpd_with_sound && cfile->stored_layout_audio != 0.))) {
+  if (mainw->sl_undo_mem != NULL && (cfile->stored_layout_frame != 0 || (mainw->ccpd_with_sound &&
+                                     cfile->stored_layout_audio != 0.))) {
     // need to invalidate undo/redo stack, in case file was used in some layout undo
     stored_event_list_free_undos();
   }
@@ -4761,7 +4772,8 @@ boolean fps_reset_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 }
 
 
-boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data) {
   LiVESList *list_index;
   int i = 0;
   int num_tried = 0, num_clips;
@@ -4774,7 +4786,8 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 
   if (!mainw->interactive) return TRUE;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return TRUE;
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
+      mainw->cliplist == NULL) return TRUE;
 
   if (user_data != NULL) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -4783,7 +4796,8 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
+    list_index = lives_list_find(mainw->cliplist,
+                                 LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
 
   mainw->swapped_clip = -1;
@@ -4805,7 +4819,8 @@ boolean prevclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data) {
   LiVESList *list_index;
   int i;
   int num_tried = 0, num_clips;
@@ -4816,7 +4831,8 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 
   // next clip
   // if the effect is a transition, this will change the background clip
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return TRUE;
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
+      mainw->cliplist == NULL) return TRUE;
 
   if (user_data != NULL) type = LIVES_POINTER_TO_INT(user_data);
 
@@ -4825,7 +4841,8 @@ boolean nextclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
-    list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
+    list_index = lives_list_find(mainw->cliplist,
+                                 LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
   mainw->swapped_clip = -1;
 
@@ -5467,35 +5484,35 @@ boolean reload_set(const char *set_name) {
     threaded_dialog_spin(0.);
 
     /** read_headers() will have read the clip metadata file, so we 'know' how many frames there ought to be.
-    however this could be wrong if the file was damaged for some reason. So the first step is to read the file_index if any.
-    - if present we assume we are dealing with CLIP_TYPE_FILE (original clip + decoded frames).
-    -- If it contains more frames then we will increase cfile->frames.
-    - If it is not present then we assume are dealing with CLIP_TYPE_DISK (all frames decoded to images).
+      however this could be wrong if the file was damaged for some reason. So the first step is to read the file_index if any.
+      - if present we assume we are dealing with CLIP_TYPE_FILE (original clip + decoded frames).
+      -- If it contains more frames then we will increase cfile->frames.
+      - If it is not present then we assume are dealing with CLIP_TYPE_DISK (all frames decoded to images).
 
-    we want to do as little checking here as possible, since it can slow down the startup, but if we detect a problem then we'll
-    do increasingly more checking.
+      we want to do as little checking here as possible, since it can slow down the startup, but if we detect a problem then we'll
+      do increasingly more checking.
     */
 
     if ((maxframe = load_frame_index(mainw->current_file)) > 0) {
       // CLIP_TYPE_FILE
       /** here we attempt to reload the clip. First we load the frame_index if any, If it contains more frames than the metadata says, then
-      we trust the frame_index for now, since the metadata may have been corrupted.
-      If it contains fewer frames, then we will warn the user, but we cannot know whether the metadata is correct or not,
-      and in any case we cannot reconstruct the frame_index, so we have to use what it tells us.
-      If file_index is absent then we assume we are dealing with CLIP_TYPE_DISK (below).
+        we trust the frame_index for now, since the metadata may have been corrupted.
+        If it contains fewer frames, then we will warn the user, but we cannot know whether the metadata is correct or not,
+        and in any case we cannot reconstruct the frame_index, so we have to use what it tells us.
+        If file_index is absent then we assume we are dealing with CLIP_TYPE_DISK (below).
 
-      Next we attempt to reload the original clip using the same decoder plugin as last time if possible.
-      The decoder may return fewer frames from the original clip than the size of frame_index,
-      This is OK provided the final frames are decoded frames.
-      We then check backwards from the end of file_index to find the final decoded frame.
-      If this is the frame we expected then we assume all is OK */
+        Next we attempt to reload the original clip using the same decoder plugin as last time if possible.
+        The decoder may return fewer frames from the original clip than the size of frame_index,
+        This is OK provided the final frames are decoded frames.
+        We then check backwards from the end of file_index to find the final decoded frame.
+        If this is the frame we expected then we assume all is OK */
 
       if (!reload_clip(mainw->current_file, maxframe)) continue;
 
       /** if the image type is still unkown it means either there were no decoded frames, or the final decoded frame was absent
-      so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
-      (or at least we recovered as many frames as we could using frame_index),
-      and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
+        so we count the virtual frames. If all are virtual then we set img_type to prefs->img_type and assume all is OK
+        (or at least we recovered as many frames as we could using frame_index),
+        and we'll accept whatever the decoder returns if there is a divergence with the clip metadata */
 
       if (cfile->img_type == IMG_TYPE_UNKNOWN) {
         lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
@@ -5509,13 +5526,13 @@ boolean reload_set(const char *set_name) {
     } else {
       /// CLIP_TYPE_DISK
       /** in this case we find the last decoded frame and check the frame size and get the image_type.
-      If there is a discrepancy with the metadata then we trust the empirical evidence.
-      If the final frame is absent then we find the real final frame, warn the user, and adjust frame count.
+        If there is a discrepancy with the metadata then we trust the empirical evidence.
+        If the final frame is absent then we find the real final frame, warn the user, and adjust frame count.
       */
       boolean isok = check_clip_integrity(mainw->current_file, NULL, cfile->frames);
       /** here we do a simple check: make sure the final frame is present and frame + 1 isn't
-      if either check fails then we count all the frames (since we don't have a frame_index to guide us),
-      - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
+        if either check fails then we count all the frames (since we don't have a frame_index to guide us),
+        - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
       if (!check_frame_count(mainw->current_file, isok)) {
         get_frame_count(mainw->current_file);
         cfile->needs_update = TRUE;
@@ -5532,7 +5549,7 @@ boolean reload_set(const char *set_name) {
 
     if (++clipnum == 1) {
       /** we need to set the set_name before calling add_to_clipmenu(), so that the clip gets the name of the set in
-      its menuentry, and also prior to loading any layouts since they specirfy the clipset they need */
+        its menuentry, and also prior to loading any layouts since they specirfy the clipset they need */
       lives_snprintf(mainw->set_name, MAX_SET_NAME_LEN, "%s", set_name);
     }
 
@@ -7175,11 +7192,13 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // switch to separate window during pb
         if (mainw->multitrack == NULL) {
-          if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) || (CURRENT_CLIP_IS_VALID &&
-              cfile->opening))) {
+          if (!prefs->hide_framebar && !mainw->faded && ((!mainw->preview && (CURRENT_CLIP_HAS_VIDEO || mainw->foreign)) ||
+              (CURRENT_CLIP_IS_VALID &&
+               cfile->opening))) {
             lives_widget_show(mainw->framebar);
           }
-          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0 && capable->nmonitors > 1))) ||
+          if ((!mainw->faded && mainw->fs && ((prefs->play_monitor != prefs->gui_monitor && prefs->play_monitor > 0 &&
+                                               capable->nmonitors > 1))) ||
               (mainw->fs && mainw->vpp != NULL &&
                !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
             unfade_background();
@@ -7488,8 +7507,10 @@ void on_mute_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->mute = !mainw->mute;
 
   // change the mute icon
-  mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  if (mainw->preview_box != NULL) mute_img2 = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE, LIVES_ICON_SIZE_CUSTOM, 24,
+  mute_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_VOLUME_MUTE,
+                                        lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  if (mainw->preview_box != NULL) mute_img2 = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE,
+        LIVES_ICON_SIZE_CUSTOM, 24,
         24);
   if (mainw->mute) {
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
@@ -8489,7 +8510,8 @@ void popup_lmap_errors(LiVESMenuItem *menuitem, livespointer user_data) {
 
   lives_container_set_border_width(LIVES_CONTAINER(button), widget_opts.border_width);
 
-  textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR, _("Clear _Errors"),
+  textwindow->clear_button = lives_dialog_add_button_from_stock(LIVES_DIALOG(textwindow->dialog), LIVES_STOCK_CLEAR,
+                             _("Clear _Errors"),
                              LIVES_RESPONSE_CANCEL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(textwindow->clear_button), LIVES_WIDGET_CLICKED_SIGNAL,
@@ -8617,7 +8639,8 @@ void autolives_toggle(LiVESMenuItem *menuitem, livespointer user_data) {
   // store the current key/mode state
   rte_keymodes_backup(prefs->rte_keys_virtual);
 
-  com = lives_strdup_printf("/usr/bin/%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port, prefs->osc_udp_port - 1, apb,
+  com = lives_strdup_printf("/usr/bin/%s localhost %d %d%s%s%s%s", EXEC_AUTOLIVES_PL, prefs->osc_udp_port,
+                            prefs->osc_udp_port - 1, apb,
                             trigopt, mute,
                             debug);
 
@@ -9484,10 +9507,10 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
       lives_widget_set_sensitive(mainw->showfct, TRUE);
     } else {
       /*      for (i=1;i<MAX_FILES;i++) {
-      if (mainw->files[i]!=NULL) {
-      if (mainw->files[i]->menuentry!=NULL) {
-      lives_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
-      }}}*/
+        if (mainw->files[i]!=NULL) {
+        if (mainw->files[i]->menuentry!=NULL) {
+        lives_widget_set_sensitive (mainw->files[i]->menuentry, TRUE);
+        }}}*/
       if (mainw->play_window != NULL) {
         resize_play_window();
       }
@@ -10096,7 +10119,8 @@ void on_forward_pressed(LiVESButton *button, livespointer user_data) {
 }
 
 
-boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                        livespointer user_data) {
   if (mainw->multitrack != NULL && (LIVES_IS_PLAYING || mainw->multitrack->is_paused)) {
     on_playall_activate(NULL, NULL);
     return TRUE;
@@ -10134,7 +10158,8 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
   if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK && (prefs->jack_opts & JACK_OPTS_NOPLAY_WHEN_PAUSED ||
       prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
     mainw->jackd->is_paused = cfile->play_paused;
-    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
+    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+        !mainw->agen_needs_reinit &&
         prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
@@ -10150,7 +10175,8 @@ boolean freeze_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
     mainw->pulsed->is_paused = cfile->play_paused;
-    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
+    if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 &&
+        !mainw->agen_needs_reinit &&
         prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
@@ -10225,7 +10251,8 @@ boolean storeclip_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 
   if (!mainw->interactive) return TRUE;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) || mainw->cliplist == NULL) return TRUE;
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
+      mainw->cliplist == NULL) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all
@@ -10261,7 +10288,8 @@ void on_capture_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
 #ifndef GDK_WINDOWING_X11
-  do_blocking_error_dialog(_("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
+  do_blocking_error_dialog(
+    _("\n\nThis function will only work with X11.\nPlease send a patch to get it working on other platforms.\n\n"));
   return;
 #endif
 #endif
@@ -10705,9 +10733,10 @@ void on_append_audio_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     return;
   }
 
-  lives_snprintf(file_name, PATH_MAX, "%s", (tmp = lives_filename_to_utf8((tmp2 = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(
-                   chooser))),
-                 -1, NULL, NULL, NULL)));
+  lives_snprintf(file_name, PATH_MAX, "%s",
+                 (tmp = lives_filename_to_utf8((tmp2 = lives_file_chooser_get_filename(LIVES_FILE_CHOOSER(
+                          chooser))),
+                        -1, NULL, NULL, NULL)));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -11683,7 +11712,8 @@ void on_lerrors_clear_clicked(LiVESButton *button, livespointer user_data) {
 
 void on_lerrors_delete_clicked(LiVESButton *button, livespointer user_data) {
   int num_maps = lives_list_length(mainw->affected_layouts_map);
-  char *msg = lives_strdup_printf(P_("\nDelete %d layout...are you sure ?\n", "\nDelete %d layouts...are you sure ?\n", num_maps), num_maps);
+  char *msg = lives_strdup_printf(P_("\nDelete %d layout...are you sure ?\n", "\nDelete %d layouts...are you sure ?\n", num_maps),
+                                  num_maps);
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {

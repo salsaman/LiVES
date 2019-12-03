@@ -23,8 +23,8 @@ void reverse_frame_index(int sfileno);
 boolean realize_all_frames(int clipno, const char *msg, boolean enough);
 
 /*
- * @brief remove rendered (real) frames from region oldsframe -> oldframes, when they are virtual in current frame_index
- */
+   @brief remove rendered (real) frames from region oldsframe -> oldframes, when they are virtual in current frame_index
+*/
 void clean_images_from_virtual(lives_clip_t *, int oldsframe, int oldframes);
 int *frame_index_copy(int *findex, int nframes, int offset);
 boolean check_if_all_virtual(int fileno, int start, int end);

@@ -16,8 +16,8 @@
 #endif
 
 /*
- * Standard gettext macros.
- */
+   Standard gettext macros.
+*/
 #ifdef ENABLE_NLS
 
 char *trString;

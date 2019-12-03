@@ -1,20 +1,20 @@
 /* LIBGIMP - The GIMP Library
- * Copyright (C) 1995-1997 Peter Mattis and Spencer Kimball
- *
- * This library is free software: you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 3 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library.  If not, see
- * <http://www.gnu.org/licenses/>.
- */
+   Copyright (C) 1995-1997 Peter Mattis and Spencer Kimball
+
+   This library is free software: you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 3 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library.  If not, see
+   <http://www.gnu.org/licenses/>.
+*/
 
 // giwtimeline.c (c) 2013 - 2019 G. Finch salsaman+lives@gmail.com
 
@@ -40,11 +40,11 @@
 #include "giwtimeline.h"
 
 /**
- * SECTION: giwtimeline
- * @title: GiwTimeline
- * @short_description: A timeline widget with configurable unit and orientation.
- *
- * A timeline widget with configurable unit and orientation.
+   SECTION: giwtimeline
+   @title: GiwTimeline
+   @short_description: A timeline widget with configurable unit and orientation.
+
+   A timeline widget with configurable unit and orientation.
  **/
 
 #define DEFAULT_TIMELINE_FONT_SCALE  PANGO_SCALE_SMALL
@@ -59,8 +59,8 @@ enum {
 };
 
 /* All distances below are in 1/72nd's of an inch. (According to
- * Adobe that's a point, but points are really 1/72.27 in.)
- */
+   Adobe that's a point, but points are really 1/72.27 in.)
+*/
 
 static const struct {
   const gdouble  timeline_scale[16];
@@ -247,13 +247,13 @@ static void giw_timeline_get_property(GObject *object, guint prop_id, GValue *va
 
 
 /**
- * giw_timeline_new:
- * @orientation: the timeline's orientation.
- *
- * Creates a new timeline.
- *
- * Return value: a new #GiwTimeline widget.
- *
+   giw_timeline_new:
+   @orientation: the timeline's orientation.
+
+   Creates a new timeline.
+
+   Return value: a new #GiwTimeline widget.
+
  **/
 GtkWidget *giw_timeline_new(GtkOrientation orientation, GtkAdjustment *adjustment) {
   GiwTimeline *timeline;
@@ -267,7 +267,8 @@ GtkWidget *giw_timeline_new(GtkOrientation orientation, GtkAdjustment *adjustmen
 }
 
 
-GtkWidget *giw_timeline_new_with_adjustment(GtkOrientation orientation, gdouble value, gdouble lower, gdouble upper, gdouble max_size) {
+GtkWidget *giw_timeline_new_with_adjustment(GtkOrientation orientation, gdouble value, gdouble lower, gdouble upper,
+    gdouble max_size) {
   GiwTimeline *timeline;
 
   timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE,
@@ -324,17 +325,17 @@ void giw_timeline_set_mouse_policy(GiwTimeline *timeline, GiwTimelineMousePolicy
 
 
 /**
- * giw_timeline_add_track_widget:
- * @timeline: a #GiwTimeline
- * @widget: the track widget to add
- *
- * Adds a "track widget" to the timeline. The timeline will connect to
- * GtkWidget:motion-notify-event: on the track widget and update its
- * position marker accordingly. The marker is correctly updated also
- * for the track widget's children, regardless of whether they are
- * ordinary children of off-screen children.
- *
- */
+   giw_timeline_add_track_widget:
+   @timeline: a #GiwTimeline
+   @widget: the track widget to add
+
+   Adds a "track widget" to the timeline. The timeline will connect to
+   GtkWidget:motion-notify-event: on the track widget and update its
+   position marker accordingly. The marker is correctly updated also
+   for the track widget's children, regardless of whether they are
+   ordinary children of off-screen children.
+
+*/
 void giw_timeline_add_track_widget(GiwTimeline *timeline, GtkWidget *widget) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
@@ -350,14 +351,14 @@ void giw_timeline_add_track_widget(GiwTimeline *timeline, GtkWidget *widget) {
 }
 
 /**
- * giw_timeline_remove_track_widget:
- * @timeline: a #GiwTimeline
- * @widget: the track widget to remove
- *
- * Removes a previously added track widget from the timeline. See
- * giw_timeline_add_track_widget().
- *
- */
+   giw_timeline_remove_track_widget:
+   @timeline: a #GiwTimeline
+   @widget: the track widget to remove
+
+   Removes a previously added track widget from the timeline. See
+   giw_timeline_add_track_widget().
+
+*/
 void giw_timeline_remove_track_widget(GiwTimeline *timeline, GtkWidget *widget) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
@@ -373,13 +374,13 @@ void giw_timeline_remove_track_widget(GiwTimeline *timeline, GtkWidget *widget) 
 }
 
 /**
- * giw_timeline_set_unit:
- * @timeline: a #GiwTimeline
- * @unit:  the #GiwTimeUnit to set the timeline to
- *
- * This sets the unit of the timeline.
- *
- */
+   giw_timeline_set_unit:
+   @timeline: a #GiwTimeline
+   @unit:  the #GiwTimeUnit to set the timeline to
+
+   This sets the unit of the timeline.
+
+*/
 
 
 void giw_timeline_set_unit(GiwTimeline *timeline, GiwTimeUnit unit) {
@@ -396,11 +397,11 @@ void giw_timeline_set_unit(GiwTimeline *timeline, GiwTimeUnit unit) {
 
 
 /**
- * giw_timeline_get_unit:
- * @timeline: a #GiwTimeline
- *
- * Return value: the unit currently used in the @timeline widget.
- *
+   giw_timeline_get_unit:
+   @timeline: a #GiwTimeline
+
+   Return value: the unit currently used in the @timeline widget.
+
  **/
 GiwTimeUnit giw_timeline_get_unit(GiwTimeline *timeline) {
   g_return_val_if_fail(GIW_IS_TIMELINE(timeline), (GiwTimeUnit)0);
@@ -410,12 +411,12 @@ GiwTimeUnit giw_timeline_get_unit(GiwTimeline *timeline) {
 
 
 /**
- * giw_timeline_get_position:
- * @timeline: a #GiwTimeline
- *
- * Return value: the current position of the @timeline widget.
- *
- * Since: GIW 2.8
+   giw_timeline_get_position:
+   @timeline: a #GiwTimeline
+
+   Return value: the current position of the @timeline widget.
+
+   Since: GIW 2.8
  **/
 static gdouble giw_timeline_get_position(GiwTimeline *timeline) {
   GtkWidget *widget;
@@ -429,14 +430,14 @@ static gdouble giw_timeline_get_position(GiwTimeline *timeline) {
 }
 
 /**
- * giw_timeline_set_max_size:
- * @timeline: a #GiwTimeline
- * @max_size: the maximum size of the timeline used when calculating the space to
- * leave for the text
- *
- * This sets the max_size of the timeline.
- *
- */
+   giw_timeline_set_max_size:
+   @timeline: a #GiwTimeline
+   @max_size: the maximum size of the timeline used when calculating the space to
+   leave for the text
+
+   This sets the max_size of the timeline.
+
+*/
 void giw_timeline_set_max_size(GiwTimeline *timeline,  gdouble max_size) {
 
   g_return_if_fail(GIW_IS_TIMELINE(timeline));
@@ -461,16 +462,16 @@ gdouble giw_timeline_get_max_size(GiwTimeline *timeline) {
 
 
 /**
- * giw_timeline_get_range:
- * @timeline: a #GiwTimeline
- * @lower: location to store lower limit of the timeline, or %NULL
- * @upper: location to store upper limit of the timeline, or %NULL
- * @max_size: location to store the maximum size of the timeline used when
- *            calculating the space to leave for the text, or %NULL.
- *
- * Retrieves values indicating the range and current position of a #GiwTimeline.
- * See giw_timeline_set_range().
- *
+   giw_timeline_get_range:
+   @timeline: a #GiwTimeline
+   @lower: location to store lower limit of the timeline, or %NULL
+   @upper: location to store upper limit of the timeline, or %NULL
+   @max_size: location to store the maximum size of the timeline used when
+              calculating the space to leave for the text, or %NULL.
+
+   Retrieves values indicating the range and current position of a #GiwTimeline.
+   See giw_timeline_set_range().
+
  **/
 static void giw_timeline_get_range(GiwTimeline *timeline, gdouble *lower, gdouble *upper, gdouble *max_size) {
   GtkAdjustment *adj;
@@ -522,7 +523,8 @@ static void giw_timeline_realize(GtkWidget *widget) {
 
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
-  gtk_widget_set_window(widget, (gdk_window_new(gtk_widget_get_window(gtk_widget_get_parent(widget)), &attributes, attributes_mask)));
+  gtk_widget_set_window(widget, (gdk_window_new(gtk_widget_get_window(gtk_widget_get_parent(widget)), &attributes,
+                                 attributes_mask)));
 
   stylecon = gtk_style_context_new();
   gtk_style_context_set_path(stylecon, gtk_widget_get_path(widget));
@@ -759,11 +761,11 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
   increment = (gdouble) width / (upper - lower);
 
   /* determine the scale
-   *   use the maximum extents of the timeline to determine the largest
-   *   possible number to be displayed.  Calculate the width in pixels
-   *   of this displayed text. Use this width to find a scale which
-   *   leaves sufficient room for drawing the timeline.
-   */
+       use the maximum extents of the timeline to determine the largest
+       possible number to be displayed.  Calculate the width in pixels
+       of this displayed text. Use this width to find a scale which
+       leaves sufficient room for drawing the timeline.
+  */
   scale = ceil(max_size);
 
   if (timeline->unit == GIW_TIME_UNIT_SECONDS) {
@@ -816,8 +818,8 @@ static void giw_timeline_draw_ticks(GiwTimeline *timeline) {
       continue;
 
     /* Calculate the length of the tickmarks. Make sure that
-     * this length increases for each set of ticks
-     */
+       this length increases for each set of ticks
+    */
     ideal_length = height / (i + 1) - 1;
     if (ideal_length > ++length)
       length = ideal_length;

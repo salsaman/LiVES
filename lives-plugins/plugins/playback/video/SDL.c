@@ -395,7 +395,8 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
 
   SDL_LockTexture(texture, NULL, &pixels, &pitch);
 
-  if (mypalette == WEED_PALETTE_UYVY || mypalette == WEED_PALETTE_YUYV) SDL_UpdateTexture(texture, NULL, pixel_data[0], hsize * 2);
+  if (mypalette == WEED_PALETTE_UYVY ||
+      mypalette == WEED_PALETTE_YUYV) SDL_UpdateTexture(texture, NULL, pixel_data[0], hsize * 2);
   else {
     SDL_UpdateYUVTexture(texture, NULL, pixel_data[0], hsize, pixel_data[1], hsize >> 2, pixel_data[2], hsize >> 2);
   }
@@ -431,7 +432,8 @@ boolean render_frame_yuv(int hsize, int vsize, void **pixel_data) {
 
   SDL_LockYUVOverlay(overlay);
 
-  if (mypalette == WEED_PALETTE_UYVY || mypalette == WEED_PALETTE_YUYV) memcpy(overlay->pixels[0], pixel_data[0], hsize * vsize * 2);
+  if (mypalette == WEED_PALETTE_UYVY ||
+      mypalette == WEED_PALETTE_YUYV) memcpy(overlay->pixels[0], pixel_data[0], hsize * vsize * 2);
   else {
     memcpy(overlay->pixels[0], pixel_data[0], hsize * vsize);
     memcpy(overlay->pixels[1], pixel_data[1], hsize * vsize >> 2);

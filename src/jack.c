@@ -280,7 +280,7 @@ static jack_driver_t indev[JACK_MAX_INDEVICES];
 
 /* not used yet */
 /*
-static float set_pulse(float *buf, size_t bufsz, int step) {
+  static float set_pulse(float *buf, size_t bufsz, int step) {
   float *ptr=buf;
   float *end=buf+bufsz;
 
@@ -910,10 +910,10 @@ static int audio_process(nframes_t nframes, void *arg) {
     }
 
     /*    jackd->jack_pulse[0]=set_pulse(out_buffer[0],jack->buffer_size,8);
-    if (jackd->num_output_channels>1) {
-    jackd->jack_pulse[1]=set_pulse(out_buffer[1],jackd->buffer_size,8);
-    }
-    else jackd->jack_pulse[1]=jackd->jack_pulse[0];
+      if (jackd->num_output_channels>1) {
+      jackd->jack_pulse[1]=set_pulse(out_buffer[1],jackd->buffer_size,8);
+      }
+      else jackd->jack_pulse[1]=jackd->jack_pulse[0];
     */
 
     if (jackFramesAvailable > 0) {
@@ -1003,7 +1003,8 @@ size_t jack_flush_read_data(size_t rbytes, void *data) {
     bytes = write(mainw->aud_rec_fd, data, rbytes);
     if (bytes > 0) {
       mainw->aud_data_written += bytes;
-      if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL && mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
+      if (mainw->ascrap_file != -1 && mainw->files[mainw->ascrap_file] != NULL &&
+          mainw->aud_rec_fd == mainw->files[mainw->ascrap_file]->cb_src)
         add_to_ascrap_mb(bytes);
       if (mainw->aud_data_written > AUD_WRITTEN_CHECK) {
         mainw->aud_data_written = 0;
@@ -1633,8 +1634,9 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 
 void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
-  jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) * (jack_get_sample_rate(
-                           jackd->client) / 1000000.));
+  jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) *
+                         (jack_get_sample_rate(
+                            jackd->client) / 1000000.));
   jackd->frames_written = 0;
   mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;

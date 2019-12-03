@@ -1,13 +1,13 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001 FUKUCHI Kentarou
- *
- * LifeTV - Play John Horton Conway's `Life' game with video input.
- * Copyright (C) 2001 FUKUCHI Kentarou
- *
- * This idea is stolen from Nobuyuki Matsushita's installation program of
- * ``HoloWall''. (See http://www.csl.sony.co.jp/person/matsu/index.html)
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001 FUKUCHI Kentarou
+
+   LifeTV - Play John Horton Conway's `Life' game with video input.
+   Copyright (C) 2001 FUKUCHI Kentarou
+
+   This idea is stolen from Nobuyuki Matsushita's installation program of
+   ``HoloWall''. (See http://www.csl.sony.co.jp/person/matsu/index.html)
+*/
 
 /* modified for Weed by G. Finch (salsaman)
    modifications (c) G. Finch */
@@ -243,7 +243,7 @@ int lifetv_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   dest += width + 1;
   src += width + 1;
   /* each value of cell is 0 or 0xff. 0xff can be treated as -1, so
-   * following equations treat each value as negative number. */
+     following equations treat each value as negative number. */
   for (y = 1; y < height - 1; y++) {
     sum1 = 0;
     sum2 = p[0] + p[width] + p[width * 2];

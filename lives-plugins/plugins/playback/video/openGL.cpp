@@ -194,24 +194,24 @@ static int get_texture_texID(int tnum) {
 
 
 /*
-static int get_texture_width(int tnum) {
+  static int get_texture_width(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].width;
-}
+  }
 
 
-static int get_texture_height(int tnum) {
+  static int get_texture_height(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].height;
-}
+  }
 
 
-static int get_texture_type(int tnum) {
+  static int get_texture_type(int tnum) {
   tnum = get_real_tnum(tnum, TRUE);
   return textures[tnum].type;
-}
+  }
 
-static int get_texture_typesize(int tnum) {
+  static int get_texture_typesize(int tnum) {
   tnum=get_real_tnum(tnum,TRUE);
   return textures[tnum].type;
   }
@@ -985,12 +985,12 @@ static int Upload(void) {
     glLoadIdentity();
 
     /*	glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-    glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
-    glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);*/
+      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);*/
 
     glBindTexture(m_TexTarget, texID);
     glColor4d(1.0, 1.0, 1.0, 1.0);
@@ -1288,7 +1288,8 @@ static int Upload(void) {
         glTexCoord2f((tx + TX_PLUS) * scalex, ty * scaley);
         glVertex3f(vx + VX_PLUS, vy, vz);
 
-        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 + (j + 1) * YSPD2) * A22;
+        vz = sin(ticks * TSPD1 + (i + 1) * XSPD1 + (j + 1) * YSPD1) * A12 + cos(ticks * TSPD2 + (i + 1) * XSPD2 +
+             (j + 1) * YSPD2) * A22;
         col = 1.0 - sin((i + 1) * 0.05 + (j + 1) * 0.06) * 1.0;
         glColor3f(col, col, col);
 
@@ -1933,7 +1934,8 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     } else {
       texturebuf = (uint8_t *)weed_malloc(hsize * vsize * typesize);
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize,
+                    imgWidth * typesize);
       }
     }
 
@@ -1984,7 +1986,8 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       weed_memcpy((void *)texturebuf, pixel_data[0], texWidth * texHeight * typesize);
     } else {
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize, imgWidth * typesize);
+        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize,
+                    imgWidth * typesize);
       }
     }
 

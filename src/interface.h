@@ -35,7 +35,8 @@ boolean on_msg_area_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer user
 EXPOSE_FN_PROTOTYPE(expose_msg_area);
 boolean get_screen_usable_size(int *w, int *h);
 
-LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask, boolean is_blocking);
+LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,
+                                      boolean is_blocking);
 LiVESWidget *create_opensel_dialog(int frames, double fps);
 
 LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, boolean opt_resize);
@@ -176,11 +177,13 @@ typedef struct {
 autolives_window *autolives_pre_dialog(void);
 
 LiVESTextView *create_output_textview(void);
-char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title, LiVESWidget *extra);
+char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act, const char *title,
+                  LiVESWidget *extra);
 LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char **const filt, int preview_type);
 void add_suffix_check(LiVESBox *box, const char *ext);
 
-const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *container);
+const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height,
+    LiVESBox *container);
 
 _commentsw *commentsw;
 _entryw *renamew;

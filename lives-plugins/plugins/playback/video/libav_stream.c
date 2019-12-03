@@ -636,8 +636,8 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   }
   if (vcodec_id == AV_CODEC_ID_MPEG1VIDEO) {
     /* Needed to avoid using macroblocks in which some coeffs overflow.
-     * This does not happen with normal video, it just happens here as
-     * the motion of the chroma plane does not match the luma plane. */
+       This does not happen with normal video, it just happens here as
+       the motion of the chroma plane does not match the luma plane. */
     vStream->codec->mb_decision = 2;
   }
 
@@ -750,14 +750,14 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 }
 
 /*
-static void log_packet(const AVPacket *pkt) {
+  static void log_packet(const AVPacket *pkt) {
   AVRational *time_base = &fmtctx->streams[pkt->stream_index]->time_base;
   printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
          av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
          av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
          av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
          pkt->stream_index);
-}
+  }
 */
 
 
@@ -781,9 +781,9 @@ static void copy_yuv_image(AVFrame *pict, int width, int height, const uint8_t *
   int hheight = height >> 1;
 
   /* when we pass a frame to the encoder, it may keep a reference to it
-   * internally;
-   * make sure we do not overwrite it here
-   */
+     internally;
+     make sure we do not overwrite it here
+  */
   ret = av_frame_make_writable(pict);
   if (ret < 0) return;
 
@@ -1059,9 +1059,9 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
     if (!(fmtctx->oformat->flags & AVFMT_NOFILE))
       /* Write the trailer, if any. The trailer must be written before you
-       * close the CodecContexts open when you wrote the header; otherwise
-       * av_write_trailer() may try to use memory that was freed on
-       * av_codec_close(). */
+         close the CodecContexts open when you wrote the header; otherwise
+         av_write_trailer() may try to use memory that was freed on
+         av_codec_close(). */
       av_write_trailer(fmtctx);
 
     /* Close the output file. */

@@ -6,7 +6,7 @@
 
 /** \file liblives.hpp
     Header file for liblives.
- */
+*/
 
 #ifndef HAS_LIBLIVES_H
 #define HAS_LIBLIVES_H
@@ -300,10 +300,12 @@ typedef list<livesString> livesStringList;
 class livesString : public std::string {
 public:
   livesString(const string &str = "", lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(str), m_encoding(e) {}
-  livesString(const string &str, size_t pos, size_t len = npos, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(str, pos,
-        len), m_encoding(e) {}
+  livesString(const string &str, size_t pos, size_t len = npos,
+              lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(str, pos,
+                    len), m_encoding(e) {}
   livesString(const char *s, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(s), m_encoding(e) {}
-  livesString(const char *s, size_t n, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(s, n), m_encoding(e) {}
+  livesString(const char *s, size_t n, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(s, n),
+    m_encoding(e) {}
   livesString(size_t n, char c, lives_char_encoding_t e = LIVES_CHAR_ENCODING_DEFAULT) : std::string(n, c), m_encoding(e) {}
   template <class InputIterator>
   livesString(InputIterator first, InputIterator last,
@@ -531,7 +533,7 @@ public:
       @param title title of window to display, or NULL to use a default title.
       @return the name of the file selected.
       @see openFile().
-   */
+  */
   livesString chooseFileWithPreview(livesString dirname, lives_filechooser_t chooser_type, livesString title = livesString(""));
 
   /**
@@ -547,7 +549,7 @@ public:
      @return a clip.
      @see chooseFileWithPreview().
      @see deinterlaceOption().
-   */
+  */
   clip openFile(livesString fname, bool with_audio = true, double stime = 0., int frames = 0, bool deinterlace = false);
 
   /**
@@ -569,7 +571,7 @@ public:
       @return the name of the set selected.
       @see reloadSet().
       @see availableSets().
-   */
+  */
   livesString chooseSet();
 
   /**
@@ -581,7 +583,7 @@ public:
      @param setname the name of the set to reload.
      @see chooseSet().
      @see availableSets().
-   */
+  */
   bool reloadSet(livesString setname);
 
   /**
@@ -1234,7 +1236,7 @@ public:
      @param fps the framerate to set
      @return the new framerate
      @see currentFPS().
-   */
+  */
   double setCurrentFPS(double fps) const;
 
   /**
@@ -1473,51 +1475,51 @@ class effectKeyMap {
   friend livesApp;
 public:
   /**
-  Returns whether the effectKeyMap is valid or not.
-  A valid effectKeyMap is owned by a valid livesApp, the livesApp::status() is not LIVES_STATUS_NOTREADY,
-  and the index is 1 <= i <= prefs::rteKeysVirtual().
-  @return true if the effectKeyMap is valid.
+    Returns whether the effectKeyMap is valid or not.
+    A valid effectKeyMap is owned by a valid livesApp, the livesApp::status() is not LIVES_STATUS_NOTREADY,
+    and the index is 1 <= i <= prefs::rteKeysVirtual().
+    @return true if the effectKeyMap is valid.
   */
   bool isValid() const;
 
   /**
-  Unmap all effects from effectKey mappings, leaving an empty map.
-  Only has an effect when livesApp::status() is LIVES_STATUS_READY.
-  @return true if all effects were unmapped
+    Unmap all effects from effectKey mappings, leaving an empty map.
+    Only has an effect when livesApp::status() is LIVES_STATUS_READY.
+    @return true if all effects were unmapped
   */
   bool clear() const;
 
   /**
-  Returns the ith effect key for this key map.
-  Valid range for i is 1 <= i <= prefs::rteKeysVirtual().
-  For values of i outside this range, an invalid effectKey is returned.
-  @param i the index value
-  @return an effectKey with index i.
-  @see effectKey::operator[]
+    Returns the ith effect key for this key map.
+    Valid range for i is 1 <= i <= prefs::rteKeysVirtual().
+    For values of i outside this range, an invalid effectKey is returned.
+    @param i the index value
+    @return an effectKey with index i.
+    @see effectKey::operator[]
   */
   effectKey at(int i) const;
 
   /**
-  Returns the number of key slots (indices) in the effectKeyMap.
-  The valid range of keys is 1 <= key <= size().
-  Equivalent to prefs::rteKeysVirtual(), except that if the effectKeyMap is invalid, returns 0.
-  @return the number of key slots.
-  @see prefs::rteKeysVirtual()
+    Returns the number of key slots (indices) in the effectKeyMap.
+    The valid range of keys is 1 <= key <= size().
+    Equivalent to prefs::rteKeysVirtual(), except that if the effectKeyMap is invalid, returns 0.
+    @return the number of key slots.
+    @see prefs::rteKeysVirtual()
   */
   size_t size() const;
 
   /**
-  @return true if the two effectKeyMaps have the same livesApp
+    @return true if the two effectKeyMaps have the same livesApp
   */
   inline bool operator==(const effectKeyMap &other) const {
     return other.m_lives == m_lives;
   }
 
   /**
-  Returns an effect key with index i for this key map. The value of i may be chosen freely, but if it is outside the range
-  1 <= i <= size() then the effectKey will be considered invalid.
-  @return an effectKey with index i for this key map.
-  @see at()
+    Returns an effect key with index i for this key map. The value of i may be chosen freely, but if it is outside the range
+    1 <= i <= size() then the effectKey will be considered invalid.
+    @return an effectKey with index i for this key map.
+    @see at()
   */
   inline effectKey operator [](int i) const {
     return effectKey(m_lives, i);
@@ -2036,7 +2038,7 @@ livesString currentVideoLoadDir(const livesApp &lives);
 /**
    @param lives a reference to a valid const livesApp &instance
    @return the currently preferred directory for loading and saving audio.
-   */
+*/
 livesString currentAudioDir(const livesApp &lives);
 
 /**
@@ -2059,7 +2061,7 @@ livesString tmpDir(const livesApp &lives);
    @param lives a reference to a valid livesApp instance
    @return the current audio source
    @see setAudioSource().
- */
+*/
 lives_audio_source_t audioSource(const livesApp &lives);
 
 /**

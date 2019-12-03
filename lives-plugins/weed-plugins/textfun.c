@@ -165,7 +165,8 @@ static inline void fill_line(int fontwidth, unsigned char *src, unsigned char *d
 }
 
 
-static inline void fill_block(int fontnum, unsigned char *src, unsigned char *dst, int psize, int drow, int irow, int glyph, int type) {
+static inline void fill_block(int fontnum, unsigned char *src, unsigned char *dst, int psize, int drow, int irow, int glyph,
+                              int type) {
   // we will fill a 8x16 block of pixels in dst with a map of a character
   register int i;
   unsigned char fillval[4];

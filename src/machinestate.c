@@ -376,9 +376,9 @@ static memheader_t *freep = &base; /* Points to first free block of memory. */
 static memheader_t *usedp;         /* Points to first used block of memory. */
 
 /*
- * Scan the free list and look for a place to put the block. Basically, we're
- * looking for any block the to be freed block might have been partitioned from.
- */
+   Scan the free list and look for a place to put the block. Basically, we're
+   looking for any block the to be freed block might have been partitioned from.
+*/
 void quick_free(memheader_t *bp) {
   memheader_t *p;
 
@@ -405,8 +405,8 @@ void quick_free(memheader_t *bp) {
 #define MIN_ALLOC_SIZE 4096     /* We allocate blocks in page sized chunks. */
 
 /*
- * Request more memory from the kernel.
- */
+   Request more memory from the kernel.
+*/
 static memheader_t *morecore(size_t num_units) {
   void *vp;
   memheader_t *up;
@@ -425,8 +425,8 @@ static memheader_t *morecore(size_t num_units) {
 
 
 /*
- * Find a chunk from the free list and put it in the used list.
- */
+   Find a chunk from the free list and put it in the used list.
+*/
 LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
   size_t num_units;
   memheader_t *p, *prevp;

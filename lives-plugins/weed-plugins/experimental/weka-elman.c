@@ -67,8 +67,8 @@ static pmode_t mode;
 static char floatdata[8192];
 
 /**
- * Calls CJWeka proxy via CJ facade
- */
+   Calls CJWeka proxy via CJ facade
+*/
 
 
 #define NCLASSES 8 // number of distinct classes - this is currently hardcoded in CJWeka
@@ -224,7 +224,8 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
 
     weed_plant_t *out_params[] = {weed_out_param_integer_init("class", 0, 0, NCLASSES - 1), NULL};
 
-    weed_plant_t *filter_class = weed_filter_class_init("weka-elman", "salsaman", 1, 0, &weka_init, &weka_process, &weka_deinit, NULL, NULL,
+    weed_plant_t *filter_class = weed_filter_class_init("weka-elman", "salsaman", 1, 0, &weka_init, &weka_process, &weka_deinit,
+                                 NULL, NULL,
                                  in_params,
                                  out_params);
 

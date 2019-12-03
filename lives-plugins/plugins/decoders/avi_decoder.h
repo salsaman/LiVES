@@ -283,26 +283,26 @@ typedef struct {
 
 typedef struct {
   uint64_t file_size;         /**< in bytes
-			       *   invalid if broadcasting */
+			          invalid if broadcasting */
   uint64_t create_time;       /**< time of creation, in 100-nanosecond units since 1.1.1601
-			       *   invalid if broadcasting */
+			          invalid if broadcasting */
   uint64_t play_time;         /**< play time, in 100-nanosecond units
-			       * invalid if broadcasting */
+			        invalid if broadcasting */
   uint64_t send_time;         /**< time to send file, in 100-nanosecond units
-			       *   invalid if broadcasting (could be ignored) */
+			          invalid if broadcasting (could be ignored) */
   uint32_t preroll;           /**< timestamp of the first packet, in milliseconds
-			       *   if nonzero - subtract from time */
+			          if nonzero - subtract from time */
   uint32_t ignore;            ///< preroll is 64bit - but let's just ignore it
   uint32_t flags;             /**< 0x01 - broadcast
-			       *   0x02 - seekable
-			       *   rest is reserved should be 0 */
+			          0x02 - seekable
+			          rest is reserved should be 0 */
   uint32_t min_pktsize;       /**< size of a data packet
-			       *   invalid if broadcasting */
+			          invalid if broadcasting */
   uint32_t max_pktsize;       /**< shall be the same as for min_pktsize
-			       *   invalid if broadcasting */
+			          invalid if broadcasting */
   uint32_t max_bitrate;       /**< bandwidth of stream in bps
-			       *   should be the sum of bitrates of the
-			       *   individual media streams */
+			          should be the sum of bitrates of the
+			          individual media streams */
 } AVIMainHeader;
 
 

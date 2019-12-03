@@ -114,7 +114,7 @@ int check_filter_api_compat(int32_t higher, int32_t lower);
 
 #ifdef __WEED_EFFECTS_H__
 /* plugin only function; host should pass a pointer to this to the plugin as the sole parameter when calling  weed_setup()
-in the plugin */
+  in the plugin */
 weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
                              int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
 #endif
@@ -445,15 +445,18 @@ static weed_error_t weed_set_string_array(weed_plant_t *plant, const char *key, 
   return weed_leaf_set(plant, key, WEED_SEED_STRING, num_elems, (weed_voidptr_t)values);
 }
 
-static weed_error_t weed_set_funcptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_funcptr_t *values) {
+static weed_error_t weed_set_funcptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems,
+    weed_funcptr_t *values) {
   return weed_leaf_set(plant, key, WEED_SEED_FUNCPTR, num_elems, (weed_voidptr_t)values);
 }
 
-static weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_voidptr_t *values) {
+static weed_error_t weed_set_voidptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems,
+    weed_voidptr_t *values) {
   return weed_leaf_set(plant, key, WEED_SEED_VOIDPTR, num_elems, (weed_voidptr_t)values);
 }
 
-static weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems, weed_plant_t **values) {
+static weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_size_t num_elems,
+    weed_plant_t **values) {
   return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, num_elems, (weed_voidptr_t)values);
 }
 

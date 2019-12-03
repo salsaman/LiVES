@@ -1609,7 +1609,8 @@ static void load_GL_VERSION_3_0(GLADloadproc load) {
   glad_glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)load("glFramebufferTexture2D");
   glad_glFramebufferTexture3D = (PFNGLFRAMEBUFFERTEXTURE3DPROC)load("glFramebufferTexture3D");
   glad_glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)load("glFramebufferRenderbuffer");
-  glad_glGetFramebufferAttachmentParameteriv = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)load("glGetFramebufferAttachmentParameteriv");
+  glad_glGetFramebufferAttachmentParameteriv = (PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC)
+      load("glGetFramebufferAttachmentParameteriv");
   glad_glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)load("glGenerateMipmap");
   glad_glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)load("glBlitFramebuffer");
   glad_glRenderbufferStorageMultisample = (PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)load("glRenderbufferStorageMultisample");
@@ -1732,9 +1733,9 @@ static int find_extensionsGL(void) {
 
 static void find_coreGL(void) {
   /* Thank you @elmindreda
-   * https://github.com/elmindreda/greg/blob/master/templates/greg.c.in#L176
-   * https://github.com/glfw/glfw/blob/master/src/context.c#L36
-   */
+     https://github.com/elmindreda/greg/blob/master/templates/greg.c.in#L176
+     https://github.com/glfw/glfw/blob/master/src/context.c#L36
+  */
   int i, major, minor;
 
   const char *version;

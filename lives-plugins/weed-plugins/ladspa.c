@@ -815,7 +815,8 @@ WEED_SETUP_START(200, 200) {
 
                 if (ladphintdes & LADSPA_HINT_INTEGER) {
                   out_params[cnoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5, ubound + .5);
-                  if (dual) out_params[cnoutps + onoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5, ubound + .5);
+                  if (dual) out_params[cnoutps + onoutps] = weed_out_param_integer_init(laddes->PortNames[i], defval + .5, lbound + .5,
+                        ubound + .5);
                 } else {
                   out_params[cnoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);
                   if (dual) out_params[cnoutps + onoutps] = weed_out_param_float_init(laddes->PortNames[i], defval, lbound, ubound);

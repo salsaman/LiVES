@@ -202,9 +202,10 @@ int masko_deinit(weed_plant_t *inst) {
 
 int masko_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int error;
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error), *out_channel = weed_get_plantptr_value(inst,
-                               WEED_LEAF_OUT_CHANNELS,
-                               &error);
+  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error),
+                 *out_channel = weed_get_plantptr_value(inst,
+                                WEED_LEAF_OUT_CHANNELS,
+                                &error);
 
   int palette = weed_get_int_value(out_channel, WEED_LEAF_CURRENT_PALETTE, &error);
   int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);

@@ -36,8 +36,8 @@ static weed_error_t ptest_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
   if (src[0] != dst[0]) weed_memcpy(dst[0], src[0], width * height * 4);
   /*
-  if (src[1]!=dst[1]) weed_memcpy(dst[1],src[1],width*height);
-  if (src[2]!=dst[2]) weed_memcpy(dst[2],src[2],width*height);
+    if (src[1]!=dst[1]) weed_memcpy(dst[1],src[1],width*height);
+    if (src[2]!=dst[2]) weed_memcpy(dst[2],src[2],width*height);
   */
 
   weed_free(src);

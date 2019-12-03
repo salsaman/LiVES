@@ -21,7 +21,7 @@
 #define HAS_LIVES_OSC_NOTIFY_H
 
 /** \file osc_notify.h
- */
+*/
 
 
 #ifdef __cplusplus

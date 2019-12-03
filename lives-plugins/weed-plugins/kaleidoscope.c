@@ -134,7 +134,8 @@ static void rotate(float r, float theta, float angle, float *x, float *y) {
 }
 
 
-static int put_pixel(void *src, void *dst, int psize, float angle, float theta, float r, int irowstride, int hheight, int hwidth) {
+static int put_pixel(void *src, void *dst, int psize, float angle, float theta, float r, int irowstride, int hheight,
+                     int hwidth) {
   // dest point is at i,j; r tells us which point to copy, and theta related to angle gives us the transform
 
   // return 0 if src is oob

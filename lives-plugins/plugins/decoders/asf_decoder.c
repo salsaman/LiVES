@@ -2,28 +2,28 @@
 // (c) G. Finch 2011 - 2014 <salsaman@gmail.com>
 
 /*
- * This file is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * LiVES is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with LiVES; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   LiVES is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with LiVES; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
 // based on code from libavformat
 
 /*
- * ASF compatible demuxer
- * Copyright (c) 2000, 2001 Fabrice Bellard
- *
- */
+   ASF compatible demuxer
+   Copyright (c) 2000, 2001 Fabrice Bellard
+
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -161,7 +161,8 @@ static boolean guidcmp(const void *v1, const void *v2) {
   uint8_t *g1 = (uint8_t *)v1;
   uint8_t *g2 = (uint8_t *)v2;
   if (res == 0) {
-    printf("check %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X\n", (uint8_t)g1[0], (uint8_t)g1[1], (uint8_t)g1[2],
+    printf("check %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X %0X\n", (uint8_t)g1[0], (uint8_t)g1[1],
+           (uint8_t)g1[2],
            (uint8_t)g1[3], (uint8_t)g1[4], (uint8_t)g1[5], (uint8_t)g1[6], (uint8_t)g1[7], (uint8_t)g1[8], (uint8_t)g1[9], (uint8_t)g1[10],
            (uint8_t)g1[11],
            (uint8_t)g1[12], (uint8_t)g1[13], (uint8_t)g1[14], (uint8_t)g1[15]);
@@ -629,7 +630,8 @@ static int get_next_video_packet(const lives_clip_data_t *cdata, int tfrag, int6
           // multi fragments
           DO_2BITS(asf->packet_segsizetype >> 6, asf->packet_frag_size, 0); // 0 is illegal
           if (asf->packet_frag_size > asf->packet_size_left - rsize) {
-            fprintf(stderr, "asf_decoder: packet_frag_size is invalid (%d > %d) %d %d\n", asf->packet_frag_size, asf->packet_size_left - rsize,
+            fprintf(stderr, "asf_decoder: packet_frag_size is invalid (%d > %d) %d %d\n", asf->packet_frag_size,
+                    asf->packet_size_left - rsize,
                     asf->packet_padsize, rsize);
 
 #ifdef DEBUG
@@ -1520,9 +1522,9 @@ seek_skip:
       len5 = get_le16int(buffer);
 
       /*    get_tag(s, "title"    , 0, len1);
-      get_tag(s, "author"   , 0, len2);
-      get_tag(s, "copyright", 0, len3);
-      get_tag(s, "comment"  , 0, len4); */
+        get_tag(s, "author"   , 0, len2);
+        get_tag(s, "copyright", 0, len3);
+        get_tag(s, "comment"  , 0, len4); */
 
       lseek(priv->fd, len1 + len2 + len3 + len4 + len5, SEEK_CUR);
       priv->input_position += len1 + len2 + len3 + len4 + len5;
@@ -2343,7 +2345,8 @@ seek_skip:
   }
 
   if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)
-    fprintf(stderr, "asf_decoder: info frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height, cdata->width,
+    fprintf(stderr, "asf_decoder: info frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height,
+            cdata->width,
             cdata->height);
 
 

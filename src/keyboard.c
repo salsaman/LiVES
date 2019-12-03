@@ -350,7 +350,8 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
 // key callback functions - ones which have keys and need wrappers
 
-boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                        livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_slower_pressed(NULL, user_data);
@@ -358,7 +359,8 @@ boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
 }
 
 
-boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                        livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_faster_pressed(NULL, user_data);
@@ -384,7 +386,8 @@ boolean skip_forward_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, ui
 }
 
 
-boolean stop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean stop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
   on_stop_activate(NULL, NULL);
   return TRUE;
 }
@@ -397,7 +400,8 @@ boolean fullscreen_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 }
 
 
-boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean sepwin_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                        livespointer user_data) {
   on_sepwin_pressed(NULL, NULL);
   return TRUE;
 }
@@ -417,37 +421,43 @@ boolean ping_pong_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 }
 
 
-boolean fade_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean fade_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
   on_fade_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean showfct_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean showfct_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showfct), prefs->hide_framebar);
   return TRUE;
 }
 
 
-boolean showsubs_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean showsubs_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                          livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->showsubs), !prefs->show_subtitles);
   return TRUE;
 }
 
 
-boolean loop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean loop_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->loop_video), !mainw->loop);
   return TRUE;
 }
 
 
-boolean dblsize_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean dblsize_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer user_data) {
   on_double_size_pressed(NULL, NULL);
   return TRUE;
 }
 
 
-boolean rec_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data) {
+boolean rec_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                     livespointer user_data) {
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf),
                                    !lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf)));
   return TRUE;

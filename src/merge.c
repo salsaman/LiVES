@@ -55,7 +55,8 @@ void create_merge_dialog(void) {
 
   merge_opts->spinbutton_loops = NULL;
 
-  for (i = 0; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test; i++) {
+  for (i = 0; i < mainw->num_rendered_effects_builtin + mainw->num_rendered_effects_custom + mainw->num_rendered_effects_test;
+       i++) {
     if ((rfx = &mainw->rendered_fx[i])->num_in_channels == 2) {
       if (i == mainw->last_transition_idx) defstart = idx;
       merge_opts->list_to_rfx_index[idx++] = i;
@@ -133,7 +134,8 @@ void create_merge_dialog(void) {
     merge_opts->ins_frame_function = lives_signal_connect(LIVES_GUI_OBJECT(merge_opts->ins_frame_button),
                                      LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(on_ins_frames_toggled), NULL);
 
-    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox), NULL);
+    merge_opts->drop_frame_button = lives_standard_radio_button_new(_("_Drop Frames"), &radiobutton_insdrop_group, LIVES_BOX(hbox),
+                                    NULL);
 
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(merge_opts->drop_frame_button), !mainw->last_transition_ins_frames);
   } else if ((cfile->end - cfile->start + 1) > cb_frames) {
@@ -209,7 +211,8 @@ void create_merge_dialog(void) {
                        LIVES_GUI_CALLBACK(on_merge_ok_clicked),
                        rfx);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(transition_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_trans_method_changed), NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(align_start_button), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_align_start_end_toggled),
@@ -318,7 +321,8 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   if (rfx != NULL && mainw->textwidget_focus != NULL) {
     // make sure text widgets are updated if they activate the default
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
+    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
+                              "textwidget");
     after_param_text_changed(textwidget, rfx);
   }
 
@@ -395,7 +399,8 @@ void on_merge_ok_clicked(LiVESButton *button, livespointer user_data) {
   // insert pre-frames
   if (!mainw->last_transition_align_start && excess_frames > 0 && mainw->last_transition_ins_frames) {
     mainw->insert_after = FALSE;
-    d_print(P_("inserting %d extra frame before merge\n", "inserting %d extra frames before merge\n", excess_frames), excess_frames);
+    d_print(P_("inserting %d extra frame before merge\n", "inserting %d extra frames before merge\n", excess_frames),
+            excess_frames);
 
     // fx1_start and fx2_start indicate the clipboard start/end values, fx2_bool is insert_with_audio
     // TODO - allow this to be cancelled

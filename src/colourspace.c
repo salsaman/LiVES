@@ -7,21 +7,21 @@
 // code for palette conversions
 
 /*
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation; either version 2
- *  of the License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.
- *
- */
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA.
+
+*/
 
 // *
 // TODO -
@@ -497,9 +497,11 @@ static void init_YUV_to_RGB_tables(void) {
   for (; i < 256; i++) {
     R_Crc[i] = myround(2. * (1. - KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR); // 2*(1-Kr)
-    G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS)
+                       *
                        SCALE_FACTOR);
-    G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
+    G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS)
+                       *
                        SCALE_FACTOR);
     B_Cbc[i] = myround(2. * (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) / (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR); // 2*(1-Kb)
@@ -812,8 +814,10 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 
 static uint8_t avg_chroma(size_t x, size_t y) GNU_HOT;
 static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
-static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
-static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) GNU_FLATTEN GNU_HOT;
+static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
+                     uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
+static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
+                     yuyv_macropixel *yuyv) GNU_FLATTEN GNU_HOT;
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) GNU_HOT;
 static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
@@ -890,10 +894,12 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   else yuv->y3 = a < min_Y ? min_Y : a;
 
   if ((a = ((((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS) + ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS) +
-             ((Cr_R[r2] + Cr_G[g2] + Cr_B[b2]) >> FP_BITS) + ((Cr_R[r3] + Cr_G[g3] + Cr_B[b3]) >> FP_BITS)) >> 2)) > max_UV) yuv->v2 = max_UV;
+             ((Cr_R[r2] + Cr_G[g2] + Cr_B[b2]) >> FP_BITS) + ((Cr_R[r3] + Cr_G[g3] + Cr_B[b3]) >> FP_BITS)) >> 2)) > max_UV) yuv->v2 =
+                 max_UV;
   else yuv->v2 = a < min_UV ? min_UV : a;
   if ((a = ((((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS) + ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS) +
-             ((Cb_R[r2] + Cb_G[g2] + Cb_B[b2]) >> FP_BITS) + ((Cb_R[r3] + Cb_G[g3] + Cb_B[b3]) >> FP_BITS)) >> 2)) > max_UV) yuv->u2 = max_UV;
+             ((Cb_R[r2] + Cb_G[g2] + Cb_B[b2]) >> FP_BITS) + ((Cb_R[r3] + Cb_G[g3] + Cb_B[b3]) >> FP_BITS)) >> 2)) > max_UV) yuv->u2 =
+                 max_UV;
   else yuv->u2 = a < min_UV ? min_UV : a;
 }
 
@@ -1051,20 +1057,20 @@ LIVES_GLOBAL_INLINE boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf) {
   for (j = 0; j < height; j++) {
     for (i = offs; i < width; i += psize) {
       /** return FALSE if r >= 32, b >= 32 and g >= 24
-      here we use a, b, and c for the first 3 bytes of the pixel. Since a and c are symmetric and we ignore byte 4,
-      this will work for RGB, BGR, RGBA and BGRA (we could also check ARGB by setting offs to 1).
+        here we use a, b, and c for the first 3 bytes of the pixel. Since a and c are symmetric and we ignore byte 4,
+        this will work for RGB, BGR, RGBA and BGRA (we could also check ARGB by setting offs to 1).
 
-      Algorithm:
-      (a & 0x1F) ^ a - nonzero iff a >= 32
-      (c & 0x1F) ^ c - nonzero iff c >= 32
+        Algorithm:
+        (a & 0x1F) ^ a - nonzero iff a >= 32
+        (c & 0x1F) ^ c - nonzero iff c >= 32
 
-      ((a & c) & 0x1F) ^ (a & c) - nonzero only if both are true
+        ((a & c) & 0x1F) ^ (a & c) - nonzero only if both are true
 
-      (b & 0x1F) ^ b  - nonzero iff b >= 32
-      ((b << 1) & 0x1F) ^ (b << 1)  - nonzero iff b >= 16
-      ((b << 2) & 0x1F) ^ (b << 2)  - nonzero iff b >= 8
-      b & 0x0F - masks any values >= 32
-       */
+        (b & 0x1F) ^ b  - nonzero iff b >= 32
+        ((b << 1) & 0x1F) ^ (b << 1)  - nonzero iff b >= 16
+        ((b << 2) & 0x1F) ^ (b << 2)  - nonzero iff b >= 8
+        b & 0x0F - masks any values >= 32
+      */
       a = pdata[i];
       b = pdata[i + 1];
       c = pdata[i + 2];
@@ -3131,7 +3137,8 @@ static void convert_rgb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipstep) {
       // convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
-      rgb2_411(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], rgbdata[i + a], rgbdata[i + b],
+      rgb2_411(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], rgbdata[i + a],
+               rgbdata[i + b],
                rgbdata[i + c], rgbdata[i + d],
                rgbdata[i + e], rgbdata[i + f], u++);
     }
@@ -3173,7 +3180,8 @@ static void convert_bgr_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize, 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipstep) {
       // convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
-      rgb2_411(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], rgbdata[i + c], rgbdata[i + b],
+      rgb2_411(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], rgbdata[i + c],
+               rgbdata[i + b],
                rgbdata[i + a], rgbdata[i + f],
                rgbdata[i + e], rgbdata[i + d], u++);
     }
@@ -3203,7 +3211,8 @@ static void convert_argb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize,
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipstep) {
       // convert 12 RGBRGBRGBRGB bytes to 6 UYYVYY bytes
-      rgb2_411(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], rgbdata[i + 9], rgbdata[i + 10],
+      rgb2_411(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], rgbdata[i + 9],
+               rgbdata[i + 10],
                rgbdata[i + 11],
                rgbdata[i + 13], rgbdata[i + 14], rgbdata[i + 15], u++);
     }
@@ -3961,7 +3970,8 @@ void *convert_yuv_planar_to_bgr_frame_thread(void *data) {
 }
 
 
-static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int height, int irowstride, int orowstride, uint8_t *dest,
+static void convert_yuv_planar_to_argb_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
+    uint8_t *dest,
     boolean in_alpha, boolean clamped, int thread_id) {
   uint8_t *y = src[0];
   uint8_t *u = src[1];
@@ -4229,7 +4239,8 @@ static void convert_yuvp_to_yuvap_frame(uint8_t **src, int width, int height, in
 }
 
 
-static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, int *irows, int *orows, uint8_t **dest, boolean clamped) {
+static void convert_yuvp_to_yuv420_frame(uint8_t **src, int width, int height, int *irows, int *orows, uint8_t **dest,
+    boolean clamped) {
   // halve the chroma samples vertically and horizontally, with sub-sampling
 
   // convert 444p to 420p
@@ -4325,7 +4336,8 @@ static void convert_yuvp_to_yuv411_frame(uint8_t **src, int width, int height, i
 }
 
 
-static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int height, int orow, uint8_t **dest, boolean add_alpha) {
+static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int height, int orow, uint8_t **dest,
+                                       boolean add_alpha) {
   // TODO - avg_chroma
 
   int size = width * height;
@@ -7038,7 +7050,8 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
 }
 
 
-static void convert_double_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t *dest, boolean add_alpha,
+static void convert_double_chroma_packed(uint8_t **src, int width, int height, int *istrides, int ostride, uint8_t *dest,
+    boolean add_alpha,
     boolean clamped) {
   // width and height here are width and height of dest chroma planes, in bytes
   // double the chroma samples horizontally, with interpolation
@@ -7308,7 +7321,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
 // TODO - move into layers.c
 
 /**
-a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPLATE.
+  a "layer" is CHANNEL type plant which is not created from a plugin CHANNEL_TEMPLATE.
   When we pass this to a plugin, we need to adjust it depending
   on the plugin's CHANNEL_TEMPLATE to which we will assign it.
 
@@ -7817,7 +7830,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 /**
    @brief fills layer with default values.
 
-If either width or height are zero, then dimensions will be taken from the layer or
+  If either width or height are zero, then dimensions will be taken from the layer or
   defaults used
   if layer has a palette set, that will be maintained, else it will be set to target_palette
   if targette palette is WEED_PALETTE_END then default will be set depending on image_ext
@@ -8812,25 +8825,29 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, FALSE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, FALSE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, TRUE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, TRUE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, FALSE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, FALSE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, TRUE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, FALSE, TRUE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
       create_empty_pixel_data(layer, FALSE, TRUE);
@@ -8925,7 +8942,8 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, FALSE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_rgb_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, FALSE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
       create_empty_pixel_data(layer, FALSE, TRUE);
@@ -8937,7 +8955,8 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       create_empty_pixel_data(layer, FALSE, TRUE);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, FALSE, iclamped, -USE_THREADS);
+      convert_yuv_planar_to_bgr_frame(gusrc_array, width, height, irowstride, orowstride, gudest, TRUE, FALSE, iclamped,
+                                      -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
       create_empty_pixel_data(layer, FALSE, TRUE);
@@ -9989,7 +10008,7 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 /**
    @brief alter the transfer function of a Weed layer, from current value to gamma_type
 
- */
+*/
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
   if (!prefs->apply_gamma) return TRUE;
   else {
@@ -10321,8 +10340,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   }
   //     #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
-  g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight, weed_palette_get_name_full(palette,
-          iclamping, 0), width, height, weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
+  g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
+          weed_palette_get_name_full(palette,
+                                     iclamping, 0), width, height, weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
 #endif
 
   if (width < 4) width = 4;
@@ -10582,7 +10602,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
 #ifdef DEBUG_RESIZE
       g_print("before resize with swscale: layer size %d X %d with palette %s to %d X %d, hinted %s,\nmasquerading as %s (avpixfmt %d to avpixfmt %d)\n",
-              iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height, weed_palette_get_name_full(opal_hint, oclamp_hint, 0),
+              iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height, weed_palette_get_name_full(opal_hint,
+                  oclamp_hint, 0),
               weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
 
@@ -10977,7 +10998,7 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
   or
   weed_layer_free(layer); also unrefs the pixbuf
 
-  */
+*/
 boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf *pixbuf) {
   size_t framesize;
   void *pixel_data;
@@ -11243,7 +11264,7 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
   for a newly created layer, this is a deep copy, since the pixel_data array is also copied
   for an existing dlayer, we copy pixel_data by reference.
   all the other relevant attributes are also copied
- */
+*/
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
   weed_layer_t *layer;
   void **pd_array = NULL;
@@ -11280,7 +11301,8 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
         pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, NULL);
         if (pixel_data != NULL) {
           for (int i = 0; i < pd_elements; i++) {
-            size_t size = (size_t)((((int)(((float)height * weed_palette_get_plane_ratio_vertical(palette, i))) >> 1) << 1) * rowstrides[i]);
+            size_t size = (size_t)((((int)(((float)height * weed_palette_get_plane_ratio_vertical(palette,
+                                            i))) >> 1) << 1) * rowstrides[i]);
             lives_memcpy(pixel_data[i], pd_array[i], size);
           }
           lives_free(pixel_data);
@@ -11388,7 +11410,7 @@ void weed_layer_pixel_data_free(weed_layer_t *layer) {
    @brief frees pixel_data for a layer, then the layer itself
 
     returns (void *)NULL for convenience
- */
+*/
 void *weed_layer_free(weed_layer_t *layer) {
   if (layer == NULL) return NULL;
   weed_layer_pixel_data_free(layer);

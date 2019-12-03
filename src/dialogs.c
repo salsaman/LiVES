@@ -911,7 +911,8 @@ void pump_io_chan(LiVESIOChannel *iochan) {
 
   if (retlen > 0 && cfile->proc_ptr != NULL) {
     double max;
-    LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(cfile->proc_ptr))->scrolledwindow));
+    LiVESAdjustment *adj = lives_scrolled_window_get_vadjustment(LIVES_SCROLLED_WINDOW(((xprocess *)(
+                             cfile->proc_ptr))->scrolledwindow));
     lives_text_buffer_insert_at_end(optextbuf, str_return);
     max = lives_adjustment_get_upper(adj);
     lives_adjustment_set_value(adj, max);
@@ -1103,7 +1104,8 @@ static void cancel_process(boolean visible) {
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
       lives_widget_remove_accelerator(cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
+      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
+                                   (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
     }
     if (cfile->proc_ptr != NULL) {
@@ -1316,7 +1318,8 @@ int process_one(boolean visible) {
         if (mainw->multitrack != NULL) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
         if (mainw->currticks >= event_start) {
           // see if we are playing a selection and reached the end
-          if (mainw->multitrack != NULL && mainw->multitrack->playing_sel && get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
+          if (mainw->multitrack != NULL && mainw->multitrack->playing_sel &&
+              get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
             cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
@@ -1801,7 +1804,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // set initial audio seek position for current file
   if (cfile->achans) {
-    mainw->aframeno = calc_frame_from_time4(mainw->current_file, cfile->aseek_pos / cfile->arate / cfile->achans / (cfile->asampsize >> 3));
+    mainw->aframeno = calc_frame_from_time4(mainw->current_file,
+                                            cfile->aseek_pos / cfile->arate / cfile->achans / (cfile->asampsize >> 3));
   }
   frames = cfile->frames;
   cfile->frames = 0; // allow seek beyond video length
@@ -2060,7 +2064,8 @@ finish:
     if (accelerators_swapped) {
       if (!mainw->preview) lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play all"));
       lives_widget_remove_accelerator(cfile->proc_ptr->preview_button, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0,
+      lives_widget_add_accelerator(mainw->playall, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group, LIVES_KEY_p,
+                                   (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
       accelerators_swapped = FALSE;
     }
@@ -2261,7 +2266,8 @@ boolean do_save_clipset_warn(void) {
 
 
 void too_many_files(void) {
-  char *warn = lives_strdup_printf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."), MAX_FILES);
+  char *warn = lives_strdup_printf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),
+                                   MAX_FILES);
   do_error_dialog(warn);
   lives_free(warn);
 }
@@ -2316,12 +2322,14 @@ void do_encoder_acodec_error(void) {
 
 
 void do_layout_scrap_file_error(void) {
-  do_blocking_error_dialog(_("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"));
+  do_blocking_error_dialog(
+    _("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
 
 void do_layout_ascrap_file_error(void) {
-  do_blocking_error_dialog(_("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
+  do_blocking_error_dialog(
+    _("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
 
@@ -2495,7 +2503,8 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
   }
   msg_a = lives_strconcat(msg1, msg2, msg3, msg4, msg5, msg6, msg7, NULL);
   if (save_all) {
-    msg_b = lives_strdup(_("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
+    msg_b = lives_strdup(
+              _("\nYou will be able to undo these changes afterwards.\n\nClick `OK` to proceed, `Cancel` to abort.\n\n"));
   } else {
     msg_b = lives_strdup(_("\nChanges applied to the selection will not be permanent.\n\n"));
   }
@@ -2614,8 +2623,9 @@ void do_messages_window(void) {
 
 void do_upgrade_error_dialog(void) {
   char *tmp;
-  char *msg = lives_strdup_printf(_("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
-                                  (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+  char *msg = lives_strdup_printf(
+                _("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
+                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
   startup_message_info(msg);
   lives_free(msg);
   lives_free(tmp);
@@ -2626,7 +2636,8 @@ void do_rendered_fx_dialog(void) {
   char *tmp;
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),
-                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL, NULL)));
+                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
+                    NULL)));
   do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
@@ -2677,12 +2688,14 @@ boolean do_set_duplicate_warning(const char *new_set) {
 
 
 boolean do_layout_alter_frames_warning(void) {
-  return do_warning_dialog(_("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
+  return do_warning_dialog(
+           _("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
 
 boolean do_layout_alter_audio_warning(void) {
-  return do_warning_dialog(_("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
+  return do_warning_dialog(
+           _("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
 
@@ -2691,7 +2704,8 @@ int do_original_lost_warning(const char *fname) {
                 _("\nThe original file\n%s\ncould not be found.\nClick Retry to try again, or Browse to browse to the new location.\n"
                   "Otherwise click Cancel to skip loading this file.\n"),
                 fname);
-  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
+  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0,
+                         TRUE);
   int response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();
@@ -2701,7 +2715,8 @@ int do_original_lost_warning(const char *fname) {
 
 
 void do_no_decoder_error(const char *fname) {
-  do_blocking_error_dialogf(_("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"), fname);
+  do_blocking_error_dialogf(
+    _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"), fname);
 }
 
 
@@ -2713,7 +2728,8 @@ void do_no_loadfile_error(const char *fname) {
 #ifdef ENABLE_JACK
 void do_jack_noopen_warn(void) {
   do_blocking_error_dialogf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
-                              "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"), JACK_DRIVER_NAME);
+                              "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"),
+                            JACK_DRIVER_NAME);
 }
 
 
@@ -2728,7 +2744,8 @@ void do_jack_noopen_warn4(void) {
 #else
   const char *otherbit = "\"lives -aplayer sox\"";
 #endif
-  char *msg = lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
+  char *msg = lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),
+                                  otherbit);
   do_blocking_info_dialog(msg);
   lives_free(msg);
 }
@@ -2751,7 +2768,8 @@ void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
 
 boolean do_set_rename_old_layouts_warning(const char *new_set) {
   return do_yesno_dialogf(
-           _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"), new_set);
+           _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),
+           new_set);
 }
 
 
@@ -2817,7 +2835,8 @@ void do_bad_layout_error(void) {
 
 
 void do_program_not_found_error(const char *progname) {
-  char *msg = lives_strdup_printf(_("The program %s is required to use this feature.\nPlease install it and try again."), progname);
+  char *msg = lives_strdup_printf(_("The program %s is required to use this feature.\nPlease install it and try again."),
+                                  progname);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
@@ -2847,7 +2866,8 @@ void do_audrate_error_dialog(void) {
 
 
 boolean do_event_list_warning(void) {
-  return do_yesno_dialog(_("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
+  return do_yesno_dialog(
+           _("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
 
 
@@ -3015,7 +3035,8 @@ void response_ok(LiVESButton *button, livespointer user_data) {
 }
 
 
-LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry, LiVESWindow *transient) {
+LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
+    LiVESWindow *transient) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   char *msg, *tmp, *emsg, *msgx;
   char *bit;
@@ -3304,8 +3325,9 @@ void do_chdir_failed_error(const char *dir) {
 
 
 void do_file_perm_error(const char *file_name) {
-  char *msg = lives_strdup_printf(_("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),
-                                  file_name);
+  char *msg = lives_strdup_printf(
+                _("\nLiVES was unable to write to the file:\n%s\nPlease check the file permissions and try again."),
+                file_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
@@ -3313,7 +3335,8 @@ void do_file_perm_error(const char *file_name) {
 
 void do_dir_perm_error(const char *dir_name) {
   char *msg = lives_strdup_printf(
-                _("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."), dir_name);
+                _("\nLiVES was unable to either create or write to the directory:\n%s\nPlease check the directory permissions and try again."),
+                dir_name);
   do_blocking_error_dialog(msg);
   lives_free(msg);
 }
@@ -3332,8 +3355,9 @@ boolean do_abort_check(void) {
 
 
 void do_encoder_img_fmt_error(render_details *rdet) {
-  char *msg = lives_strdup_printf(_("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
-                                  prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
+  char *msg = lives_strdup_printf(
+                _("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
+                prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
 
   do_error_dialog_with_check_transient(msg, TRUE, 0, LIVES_WINDOW(rdet->dialog));
 
@@ -3438,8 +3462,9 @@ void do_bad_theme_error(const char *themefile) {
 
 
 void do_set_noclips_error(const char *setname) {
-  char *msg = lives_strdup_printf(_("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),
-                                  setname);
+  char *msg = lives_strdup_printf(
+                _("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),
+                setname);
   d_print(msg);
   lives_free(msg);
 }
@@ -3471,7 +3496,8 @@ void do_jack_lost_conn_error(void) {
 
 
 void do_pulse_lost_conn_error(void) {
-  do_error_dialog(_("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
+  do_error_dialog(
+    _("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
 
 
@@ -3507,7 +3533,8 @@ boolean ask_permission_dialog(int what) {
 
 
 boolean do_layout_recover_dialog(void) {
-  if (!do_yesno_dialog(_("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
+  if (!do_yesno_dialog(
+        _("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
     recover_layout_cancelled(TRUE);
     return FALSE;
   } else return recover_layout();

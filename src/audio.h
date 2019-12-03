@@ -162,7 +162,8 @@ void sample_move_d16_d8(uint8_t *dst, short *src,
 float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) GNU_HOT;
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps, int usigned,
+int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
+                              int usigned,
                               boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns frames output
 
 int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
@@ -189,12 +190,14 @@ typedef enum {
 } lives_rec_audio_type_t;
 
 #ifdef ENABLE_JACK
-void jack_rec_audio_to_clip(int fileno, int oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
+void jack_rec_audio_to_clip(int fileno, int oldfileno,
+                            lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void jack_rec_audio_end(boolean close_dev, boolean close_fd);
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-void pulse_rec_audio_to_clip(int fileno, int oldfileno, lives_rec_audio_type_t rec_type);  ///< record from external source to clip
+void pulse_rec_audio_to_clip(int fileno, int oldfileno,
+                             lives_rec_audio_type_t rec_type);  ///< record from external source to clip
 void pulse_rec_audio_end(boolean close_dev, boolean close_fd);
 #endif
 
@@ -203,7 +206,8 @@ void wake_audio_thread(void);
 
 boolean resync_audio(int frameno);
 
-lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event, boolean get_audstate,
+lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
+    boolean get_audstate,
     boolean exact);
 
 boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread);

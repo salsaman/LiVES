@@ -2,28 +2,28 @@
 // (c) G. Finch 2011 <salsaman@xs4all.nl,salsaman@gmail.com>
 
 /*
- * This file is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * LiVES is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with LiVES; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+   This file is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   LiVES is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with LiVES; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
 // based on code
 
 /*
- * FLV demuxer
- * Copyright (c) 2003 The FFmpeg Project
- *
- */
+   FLV demuxer
+   Copyright (c) 2003 The FFmpeg Project
+
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -73,7 +73,7 @@ static pthread_mutex_t indices_mutex;
 
 /* can enable this later to handle pix_fmt (35) - YUVA4204P */
 /*
-static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
+  static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest) {
   // width and height here are width and height of dest chroma planes, in bytes
 
   // double the chroma samples vertically and horizontally, with interpolation, eg. 420p to 444p
@@ -113,7 +113,7 @@ static void convert_quad_chroma(guchar *src, int width, int height, guchar *dest
     chroma=!chroma;
     d_u+=width2;
   }
-}
+  }
 
 */
 
@@ -131,9 +131,11 @@ static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
 
 
 static double getfloat64(unsigned char *data) {
-  int64_t v = (((int64_t)(data[0] & 0xFF) << 56) + ((int64_t)(data[1] & 0xFF) << 48) + ((int64_t)(data[2] & 0xFF) << 40) + ((int64_t)(
+  int64_t v = (((int64_t)(data[0] & 0xFF) << 56) + ((int64_t)(data[1] & 0xFF) << 48) + ((int64_t)(data[2] & 0xFF) << 40) + ((
+                 int64_t)(
                  data[3] & 0xFF) << 32) + ((
-                       int64_t)(data[4] & 0xFF) << 24) + ((int64_t)(data[5] & 0xFF) << 16) + ((int64_t)(data[6] & 0XFF) << 8) + (int64_t)(data[7] & 0xFF));
+                       int64_t)(data[4] & 0xFF) << 24) + ((int64_t)(data[5] & 0xFF) << 16) + ((int64_t)(data[6] & 0XFF) << 8) + (int64_t)(
+                 data[7] & 0xFF));
   return ldexp(((v & ((1LL << 52) - 1)) + (1LL << 52)) * (v >> 63 | 1), (v >> 52 & 0x7FF) - 1075);
 }
 
@@ -672,7 +674,8 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
 
   hasaudio = flags & FLV_HEADER_FLAG_HASAUDIO;
 
-  priv->input_position = 4 + ((header[5] & 0xFF) << 24) + ((header[6] & 0xFF) << 16) + ((header[7] & 0xFF) << 8) + ((header[8] & 0xFF));
+  priv->input_position = 4 + ((header[5] & 0xFF) << 24) + ((header[6] & 0xFF) << 16) + ((header[7] & 0xFF) << 8) + ((
+                           header[8] & 0xFF));
 
   if (!is_partial_clone) cdata->fps = 0.;
   cdata->width = cdata->frame_width = cdata->height = cdata->frame_height = 0;
@@ -842,10 +845,10 @@ static boolean attach_stream(lives_clip_data_t *cdata, boolean isclone) {
     }
 
     /*  if (!haskeyframes) {
-    fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
-    close(priv->fd);
-    return FALSE;
-    } */
+      fprintf(stderr, "flv_decoder: non-seekable file %s\n",cdata->URI);
+      close(priv->fd);
+      return FALSE;
+      } */
 
   } else priv->input_position -= 11;
 
@@ -1502,7 +1505,8 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
   priv->picture = NULL;
 
   if (cdata->width != cdata->frame_width || cdata->height != cdata->frame_height)
-    fprintf(stderr, "flv_decoder: info - frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height, cdata->width,
+    fprintf(stderr, "flv_decoder: info - frame size=%d x %d, pixel size=%d x %d\n", cdata->frame_width, cdata->frame_height,
+            cdata->width,
             cdata->height);
 
   return cdata;

@@ -1,12 +1,12 @@
 /*
- * EffecTV - Realtime Digital Video Effector
- * Copyright (C) 2001 FUKUCHI Kentarou
- *
- * FireTV - clips incoming objects and burn them.
- * Copyright (C) 2001 FUKUCHI Kentarou
- *
- * Fire routine is taken from Frank Jan Sorensen's demo program.
- */
+   EffecTV - Realtime Digital Video Effector
+   Copyright (C) 2001 FUKUCHI Kentarou
+
+   FireTV - clips incoming objects and burn them.
+   Copyright (C) 2001 FUKUCHI Kentarou
+
+   Fire routine is taken from Frank Jan Sorensen's demo program.
+*/
 
 /* modified for Weed by G. Finch (salsaman)
    modifications (c) G. Finch */
@@ -126,16 +126,16 @@ static void image_bgsubtract_y(RGB32 *src, int width, int height, int rowstride,
 
 
   /* The origin of subtraction function is;
-   * diff(src, dest) = (abs(src - dest) > threshold) ? 0xff : 0;
-   *
-   * This functions is transformed to;
-   * (threshold > (src - dest) > -threshold) ? 0 : 0xff;
-   *
-   * (v + threshold)>>24 is 0xff when v is less than -threshold.
-   * (v - threshold)>>24 is 0xff when v is less than threshold.
-   * So, ((v + threshold)>>24) | ((threshold - v)>>24) will become 0xff when
-   * abs(src - dest) > threshold.
-   */
+     diff(src, dest) = (abs(src - dest) > threshold) ? 0xff : 0;
+
+     This functions is transformed to;
+     (threshold > (src - dest) > -threshold) ? 0 : 0xff;
+
+     (v + threshold)>>24 is 0xff when v is less than -threshold.
+     (v - threshold)>>24 is 0xff when v is less than threshold.
+     So, ((v + threshold)>>24) | ((threshold - v)>>24) will become 0xff when
+     abs(src - dest) > threshold.
+  */
 }
 
 

@@ -515,7 +515,8 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->offset = 0;
     fbuff->pathname = lives_strdup(pathname);
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
-      char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd, xbuff->pathname,
+      char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
+                                      xbuff->pathname,
                                       fbuff->pathname);
       LIVES_ERROR(msg);
       lives_free(msg);
@@ -950,10 +951,10 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
 
 /** set alarm for now + delta ticks (10 nanosec)
- * param ticks (10 nanoseconds) is the offset when we want our alarm to trigger
- * returns int handle or -1
- * call lives_get_alarm(handle) to test if time arrived
- */
+   param ticks (10 nanoseconds) is the offset when we want our alarm to trigger
+   returns int handle or -1
+   call lives_get_alarm(handle) to test if time arrived
+*/
 
 lives_alarm_t lives_alarm_set(ticks_t ticks) {
   int i;
@@ -993,8 +994,8 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
 
 
 /*** check if alarm time passed yet, if so clear that alarm and return TRUE
- * else return FALSE
- */
+   else return FALSE
+*/
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   ticks_t cticks;
 
@@ -1367,7 +1368,8 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
         nframe += last_frame; // normal
         if (nframe > last_frame) {
           nframe = last_frame - (nframe - last_frame);
-          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           else sfile->pb_fps = -sfile->pb_fps;
         }
       }
@@ -1376,7 +1378,8 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       nframe = ABS(nframe) + first_frame;
       if (mainw->ping_pong) {
         // bounce
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps = -sfile->pb_fps;
       }
     }
@@ -1388,7 +1391,8 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       if (mainw->ping_pong) {
         // bounce
         nframe = last_frame - (nframe - (first_frame - 1));
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps = -sfile->pb_fps;
       }
     } else if (mainw->playing_sel && !mainw->ping_pong && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont &&
@@ -1403,7 +1407,8 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       // scratch or transport backwards
       if (mainw->ping_pong) {
         nframe = first_frame;
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps = -sfile->pb_fps;
 
       } else nframe = last_frame - nframe;
@@ -1761,7 +1766,8 @@ void d_print(const char *fmt, ...) {
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
       (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
-      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile, TRUE));
+      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile,
+                                         TRUE));
       lives_free(tmp);
       add_messages_to_list(swtext);
       lives_free(swtext);
@@ -1958,7 +1964,8 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+                                    mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                      (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
@@ -1983,7 +1990,8 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+                                    mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                      (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
@@ -2011,7 +2019,8 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
       text = lives_strdup_printf("%s\n", mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       lives_text_buffer_insert(LIVES_TEXT_BUFFER(mainw->layout_textbuffer), &end_iter, text, -1);
       lives_free(text);
-      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map, mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
+      mainw->affected_layouts_map = lives_list_append_unique(mainw->affected_layouts_map,
+                                    mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
 
       mainw->affected_layout_marks = lives_list_append(mainw->affected_layout_marks,
                                      (livespointer)lives_text_buffer_create_mark(LIVES_TEXT_BUFFER(mainw->layout_textbuffer),
@@ -2806,7 +2815,8 @@ void minimise_aspect_delta(double aspect, int hblock, int vblock, int hsize, int
     real_height = (int)(real_width / aspect / vblock + .5) * vblock;
     delta = (hsize - real_width) * (hsize - real_width) + (vsize - real_height) * (vsize - real_height);
 
-    if (real_width % hblock != 0 || real_height % vblock != 0 || ABS((double)real_width / (double)real_height - aspect) > ASPECT_ALLOWANCE) {
+    if (real_width % hblock != 0 || real_height % vblock != 0 ||
+        ABS((double)real_width / (double)real_height - aspect) > ASPECT_ALLOWANCE) {
       // encoders can be fussy, so we need to fit both aspect ratio and blocksize
       while (1) {
         real_width = ((int)(real_width / hblock) + 1) * hblock;
@@ -2983,8 +2993,8 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
 
   if (mainw->is_ready) {
     /* //ubuntu / Unity has a hissy fit if you hide things in the menu !
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+      lives_widget_hide(mainw->vol_toolitem);
+      if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     lives_widget_hide(mainw->recaudio_submenu);
@@ -3036,8 +3046,8 @@ void switch_aud_to_none(boolean set_in_prefs) {
 
   if (mainw->is_ready) {
     /* //ubuntu has a hissy fit if you hide things in the menu
-    lives_widget_hide(mainw->vol_toolitem);
-    if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
+      lives_widget_hide(mainw->vol_toolitem);
+      if (mainw->vol_label != NULL) lives_widget_hide(mainw->vol_label);
     */
     lives_widget_set_sensitive(mainw->vol_toolitem, FALSE);
     // lives_widget_hide(mainw->recaudio_submenu);

@@ -468,7 +468,8 @@ char *midi_mangle(void) {
           if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 176;
           if (prefs->midi_rcv_channel == -1)
-            string = lives_strdup_printf("%d %d %u %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.param,
+            string = lives_strdup_printf("%d %d %u %d", typeNumber + ev->data.control.channel, ev->data.control.channel,
+                                         ev->data.control.param,
                                          ev->data.control.value);
           else
             string = lives_strdup_printf("%d %u %d", typeNumber, ev->data.control.param,
@@ -479,7 +480,8 @@ char *midi_mangle(void) {
           if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 224;
           if (prefs->midi_rcv_channel == -1)
-            string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.control.channel, ev->data.control.channel, ev->data.control.value);
+            string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.control.channel, ev->data.control.channel,
+                                         ev->data.control.value);
           else
             string = lives_strdup_printf("%d %d", typeNumber, ev->data.control.value);
           break;
@@ -625,7 +627,8 @@ static int omc_learn_get_pvalue(int type, int idx, const char *string) {
 }
 
 
-static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
+static void cell1_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text,
+                                  livespointer user_data) {
   lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)user_data;
 
   lives_omc_macro_t omacro = omc_macros[mnode->macro];
@@ -909,7 +912,8 @@ static void cell_toggled_callback(LiVESCellRenderer *toggle, const char *path_st
 }
 
 
-static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text, livespointer user_data) {
+static void cell_edited_callback(LiVESCellRenderer *spinbutton, const char *path_string, const char *new_text,
+                                 livespointer user_data) {
   lives_omc_match_node_t *mnode = (lives_omc_match_node_t *)user_data;
 
   int col = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "colnum"));
@@ -972,7 +976,8 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
     lives_combo_set_active_index(LIVES_COMBO(combo), mnode->macro);
   }
 
-  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_omc_combo_entry_changed), mnode);
+  lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_omc_combo_entry_changed), mnode);
 
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "row", LIVES_INT_TO_POINTER(row));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "omclw", (livespointer)omclw);
@@ -1262,7 +1267,8 @@ static void show_existing(omclearn_w *omclw) {
       char *tmp;
 
       type = midi_msg_type(array[1]);
-      if (get_token_count(srch, ' ') > (prefs->midi_rcv_channel == -1 ? 3 : 2)) idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 : 2]);
+      if (get_token_count(srch, ' ') > (prefs->midi_rcv_channel == -1 ? 3 : 2)) idx = atoi(array[prefs->midi_rcv_channel == -1 ? 3 :
+            2]);
       else idx = -1;
       srch = lives_strdup(mnode->srch);
       if (prefs->midi_rcv_channel == -1) {
@@ -1494,7 +1500,8 @@ static void init_omc_macros(void) {
 
   omc_macros[RETRIGGER_CLIP].msg = lives_strdup("/clip/foreground/retrigger");
   omc_macros[RETRIGGER_CLIP].macro_text = lives_strdup(_("Retrigger clip <clipnum>"));
-  omc_macros[RETRIGGER_CLIP].info_text = lives_strdup(_("Switch foreground clip to the nth valid clip, and reset the frame number"));
+  omc_macros[RETRIGGER_CLIP].info_text = lives_strdup(
+      _("Switch foreground clip to the nth valid clip, and reset the frame number"));
   omc_macros[RETRIGGER_CLIP].nparams = 1;
 
   omc_macros[NEXT_MODE_CYCLE].msg = lives_strdup("/effect_key/mode/next");
@@ -1512,7 +1519,8 @@ static void init_omc_macros(void) {
 
   omc_macros[OSC_NOTIFY].msg = lives_strdup("internal"); // handled internally
   omc_macros[OSC_NOTIFY].macro_text = lives_strdup(_("Send OSC notification message"));
-  omc_macros[OSC_NOTIFY].info_text = lives_strdup(_("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
+  omc_macros[OSC_NOTIFY].info_text = lives_strdup(
+                                       _("Send LIVES_OSC_NOTIFY_USER1 notification to all listeners, with variable <value>."));
   omc_macros[OSC_NOTIFY].nparams = 2;
 
   for (i = 0; i < N_OMC_MACROS; i++) {
@@ -1731,7 +1739,7 @@ static lives_omc_match_node_t *omc_match_sig(int type, int index, const char *si
   }*/
 
 /*
-LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
+  LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *string2) {
   // count how many (non-space) elements match
   // e.g "a b c" and "a b d" returns 2
 
@@ -1748,7 +1756,7 @@ LIVES_INLINE int omclearn_get_fixed_elems(const char *string1, const char *strin
   }
 
   return match + 1;
-}
+  }
 */
 
 LIVES_INLINE int get_nth_elem(const char *string, int idx) {
@@ -1767,7 +1775,8 @@ static lives_omc_match_node_t *lives_omc_match_node_new(int str_type, int index,
 
   if (str_type == OMC_MIDI) {
     mainw->midi_channel_lock = TRUE;
-    if (index > -1) srch_str = lives_strdup_printf("%d %d %s", str_type, index, (tmp = cut_string_elems(string, nfixed < 0 ? -1 : nfixed)));
+    if (index > -1) srch_str = lives_strdup_printf("%d %d %s", str_type, index, (tmp = cut_string_elems(string,
+                                 nfixed < 0 ? -1 : nfixed)));
     else srch_str = lives_strdup_printf("%d %s", str_type, (tmp = cut_string_elems(string, nfixed < 0 ? -1 : nfixed)));
     lives_free(tmp);
   } else {
@@ -1848,7 +1857,8 @@ static int *omclearn_get_values(const char *string, int nfixed) {
 }
 
 
-void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed, omclearn_w *omclw) {
+void omclearn_match_control(lives_omc_match_node_t *mnode, int str_type, int index, const char *string, int nfixed,
+                            omclearn_w *omclw) {
   if (nfixed == -1) {
     // already there : allow user to update
     return;
@@ -2130,7 +2140,8 @@ void on_midi_learn_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro, char *typetags) {
+static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t *mnode, lives_omc_macro_t *omacro,
+                         char *typetags) {
   // get typetag for a filter parameter
 
   int i, j, k;
@@ -2163,7 +2174,8 @@ static void write_fx_tag(const char *string, int nfixed, lives_omc_match_node_t 
           hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
           flags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, &error);
           if (flags & WEED_PARAMETER_VARIABLE_SIZE) flags ^= WEED_PARAMETER_VARIABLE_SIZE;
-          if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && flags == 0 && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
+          if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && flags == 0 &&
+              weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
             if (oval1 == 0) {
               if (hint == WEED_HINT_INTEGER) {
                 // **int
@@ -2259,7 +2271,8 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
             oval0 < mainw->vpp->num_play_params) {
           // auto scale for playback plugin params
 
-          weed_plant_t *ptmpl = weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params, oval0), WEED_LEAF_TEMPLATE, &error);
+          weed_plant_t *ptmpl = weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params, oval0), WEED_LEAF_TEMPLATE,
+                                &error);
           hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
           if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
             if (hint == WEED_HINT_INTEGER) {
@@ -2299,7 +2312,8 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
               if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
               hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
               flags = weed_get_int_value(ptmpl, WEED_LEAF_FLAGS, &error);
-              if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && flags == 0 && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
+              if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && flags == 0 &&
+                  weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
                 if (oval1 == 0) {
                   if (hint == WEED_HINT_INTEGER) {
                     int omin = mnode->min[j];
@@ -2377,7 +2391,7 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 /////////////////////////////////////
 
 /** Save device mapping to an external file
- */
+*/
 
 void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESSList *slist = omc_node_list;

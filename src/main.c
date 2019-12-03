@@ -1713,7 +1713,8 @@ static void lives_init(_ign_opts *ign_opts) {
     weed_plugin_path = getenv("WEED_PLUGIN_PATH");
     if (weed_plugin_path == NULL) {
       get_string_pref(PREF_WEED_PLUGIN_PATH, prefs->weed_plugin_path, PATH_MAX);
-      if (strlen(prefs->weed_plugin_path) == 0) weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_WEED_FX_BUILTIN,
+      if (strlen(prefs->weed_plugin_path) == 0) weed_plugin_path = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR,
+            PLUGIN_WEED_FX_BUILTIN,
             NULL);
       else weed_plugin_path = lives_strdup(prefs->weed_plugin_path);
       lives_setenv("WEED_PLUGIN_PATH", weed_plugin_path);
@@ -2148,7 +2149,8 @@ boolean set_palette_colours(boolean force_reload) {
   palette->style = STYLE_PLAIN;
 
   // defaults
-  palette->frame_surround.red = palette->frame_surround.green = palette->frame_surround.blue = palette->frame_surround.alpha = 65535;
+  palette->frame_surround.red = palette->frame_surround.green = palette->frame_surround.blue = palette->frame_surround.alpha =
+                                  65535;
 
   palette->audcol.blue = palette->audcol.red = 16384;
   palette->audcol.green = palette->audcol.alpha = 65535;
@@ -2456,11 +2458,13 @@ capability *get_capabilities(void) {
   capable->has_smogrify = TRUE;
 
   if (!mainw->has_session_workdir) {
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path, prefs->configdir);
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
+                   prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   } else {
     // if the user passed a -workdir option, we will use that, and the backend won't attempt to find an existing value
-    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
+    lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
+                   capable->backend_path,
                    prefs->workdir, prefs->configdir);
     lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
   }
@@ -2597,7 +2601,8 @@ capability *get_capabilities(void) {
       if (dir_valid) {
         lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
 
-        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL, capable->backend_path,
+        lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
+                       capable->backend_path,
                        prefs->workdir, prefs->configdir);
         lives_snprintf(prefs->backend_sync, PATH_MAX * 4, "%s", prefs->backend);
 
@@ -2706,23 +2711,28 @@ void print_opthelp(void) {
   fprintf(stderr, "%s", _("-layout <layout_name>       : autoload multitrack layout <layout_name>; may override -startup-ce\n"));
   fprintf(stderr, "%s", _("-nolayout                   : do not reload any multitrack layout on startup\n"));
   fprintf(stderr, "%s", _("-norecover                  : force non-loading of crash recovery files\n"));
-  fprintf(stderr, "%s", _("-recover OR -autorecover    : force reloading of any crash recovery files; may override -noset and -nolayout\n"));
+  fprintf(stderr, "%s",
+          _("-recover OR -autorecover    : force reloading of any crash recovery files; may override -noset and -nolayout\n"));
   fprintf(stderr, "%s", _("-nogui                      : do not show the gui [still shows the play window when active]\n"));
   fprintf(stderr, "%s", _("-nosplash                   : do not show the splash window\n"));
   fprintf(stderr, "%s",
           _("-noplaywin                  : do not show the play window [still shows the internal player; intended for remote streaming]\n"));
-  fprintf(stderr, "%s", _("-noninteractive             : disable menu interactivity [intended for scripting applications, e.g liblives]\n"));
+  fprintf(stderr, "%s",
+          _("-noninteractive             : disable menu interactivity [intended for scripting applications, e.g liblives]\n"));
   fprintf(stderr, "%s", _("-startup-ce                 : start in clip editor mode\n"));
   fprintf(stderr, "%s", _("-startup-mt                 : start in multitrack mode\n"));
   fprintf(stderr, "%s",
           _("-fxmodesmax <n>             : allow <n> modes per effect key; overrides any value set in preferences [minimum is 1, default is "
             DEF_FX_KEYMODES "]\n"));
 #ifdef ENABLE_OSC
-  fprintf(stderr,  _("-oscstart <port>            : start OSC listener on UDP port <port> [default is %d]\n"), DEF_OSC_LISTEN_PORT);
-  fprintf(stderr, "%s", _("-nooscstart                 : do not start the OSC listener [the default, unless set in preferences]\n"));
+  fprintf(stderr,  _("-oscstart <port>            : start OSC listener on UDP port <port> [default is %d]\n"),
+          DEF_OSC_LISTEN_PORT);
+  fprintf(stderr, "%s",
+          _("-nooscstart                 : do not start the OSC listener [the default, unless set in preferences]\n"));
 #endif
-  fprintf(stderr, "%s", _("-asource <source>           : set the initial audio source; <source> can be 'internal' or 'external' \n"
-                          "                                    "));
+  fprintf(stderr, "%s",
+          _("-asource <source>           : set the initial audio source; <source> can be 'internal' or 'external' \n"
+            "                                    "));
   fprintf(stderr, _("[only valid for %s and %s players]\n"), AUDIO_PLAYER_JACK, AUDIO_PLAYER_PULSE_AUDIO);
   fprintf(stderr, "%s", _("-aplayer <ap>               : start with selected audio player. <ap> can be "));
 #ifdef HAVE_PULSE_AUDIO
@@ -3000,8 +3010,9 @@ static boolean lives_startup(livespointer data) {
           WARN_MASK_NO_MPLAYER);
       }
       if (!capable->has_sox_sox) {
-        startup_message_nonfatal_dismissable(_("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
-                                             WARN_MASK_NO_MPLAYER);
+        startup_message_nonfatal_dismissable(
+          _("\nLiVES was unable to locate 'sox'. Some audio features may not work. You should install 'sox'.\n"),
+          WARN_MASK_NO_MPLAYER);
       }
       if (!capable->has_encoder_plugins) {
         msg = lives_strdup_printf(
@@ -4118,7 +4129,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
   lives_widget_set_sensitive(mainw->backup, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO && capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->save_selection, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO &&
+                             capable->has_encoder_plugins);
   lives_widget_set_sensitive(mainw->clear_ds, TRUE);
   lives_widget_set_sensitive(mainw->load_cdtrack, TRUE);
   lives_widget_set_sensitive(mainw->playsel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -4133,13 +4145,15 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->playall, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->m_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->m_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
+  lives_widget_set_sensitive(mainw->m_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID &&
+                             cfile->pointer_time > 0.);
   lives_widget_set_sensitive(mainw->m_loopbutton, TRUE);
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
   if (mainw->preview_box != NULL) {
     lives_widget_set_sensitive(mainw->p_playbutton, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
     lives_widget_set_sensitive(mainw->p_playselbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-    lives_widget_set_sensitive(mainw->p_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
+    lives_widget_set_sensitive(mainw->p_rewindbutton, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID &&
+                               cfile->pointer_time > 0.);
     lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
     lives_widget_set_sensitive(mainw->p_mutebutton, TRUE);
   }
@@ -4203,10 +4217,12 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
-  lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
+  lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
+                             cfile->pointer_time > 0.));
   lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
+  lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
+                             capable->has_sox_sox));
   lives_widget_set_sensitive(mainw->dsize, !(mainw->fs));
   lives_widget_set_sensitive(mainw->fade, !(mainw->fs));
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
@@ -4221,7 +4237,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->close, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
-  lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked &&
+                             CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->select_all, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->select_start_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->select_end_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
@@ -4241,7 +4258,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->vj_save_set, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
   lives_widget_set_sensitive(mainw->vj_load_set, !mainw->was_set);
   lives_widget_set_sensitive(mainw->vj_reset, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID);
-  lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->frame_index != NULL);
+  lives_widget_set_sensitive(mainw->vj_realize, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID &&
+                             cfile->frame_index != NULL);
   lives_widget_set_sensitive(mainw->midi_learn, TRUE);
   lives_widget_set_sensitive(mainw->midi_save, has_devicemap(-1));
   lives_widget_set_sensitive(mainw->toy_tv, TRUE);
@@ -4251,8 +4269,9 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->gens_submenu, TRUE);
   lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
 
-  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 &&
-      cfile->end == cfile->frames)) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->start == 1 || cfile->end == cfile->frames) &&
+      !(cfile->start == 1 &&
+        cfile->end == cfile->frames)) {
     lives_widget_set_sensitive(mainw->select_invert, TRUE);
   } else {
     lives_widget_set_sensitive(mainw->select_invert, FALSE);
@@ -4586,7 +4605,8 @@ void load_start_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
+                                        capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
@@ -4789,7 +4809,8 @@ void load_end_image(int frame) {
 
   if (mainw->multitrack != NULL) return;
 
-  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor || capable->nmonitors == 1) &&
+  if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
+                                        capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
@@ -4963,7 +4984,8 @@ void load_end_image(int frame) {
     lives_widget_queue_resize(mainw->end_image);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     threaded_dialog_spin(0.);
-  } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) || rheight != lives_widget_get_allocation_height(mainw->end_image));
+  } while (rwidth != lives_widget_get_allocation_width(mainw->end_image) ||
+           rheight != lives_widget_get_allocation_height(mainw->end_image));
 #else
   }
   while (FALSE);
@@ -5034,7 +5056,8 @@ void load_preview_image(boolean update_always) {
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->preview_spinbutton), 0);
     lives_signal_handler_unblock(mainw->preview_spinbutton, mainw->preview_spin_func);
     if (mainw->imframe != NULL) {
-      lives_widget_set_size_request(mainw->preview_image, lives_pixbuf_get_width(mainw->imframe), lives_pixbuf_get_height(mainw->imframe));
+      lives_widget_set_size_request(mainw->preview_image, lives_pixbuf_get_width(mainw->imframe),
+                                    lives_pixbuf_get_height(mainw->imframe));
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), mainw->imframe, NULL);
     } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), NULL, NULL);
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -6187,7 +6210,8 @@ static void load_frame_cleanup(boolean noswitch) {
   mainw->frame_layer = NULL;
   mainw->noswitch = noswitch;
 
-  if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1)) &&
+  if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
+                                       capable->nmonitors > 1)) &&
       mainw->current_file != mainw->scrap_file) get_play_times();
   if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
 
@@ -6248,7 +6272,8 @@ void load_frame_image(int frame) {
     if (mainw->record && !mainw->record_paused) {
       // add blank frame
       weed_plant_t *event = get_last_event(mainw->event_list);
-      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs, mainw->origusecs),
+      weed_plant_t *event_list = insert_blank_frame_event_at(mainw->event_list, lives_get_relative_ticks(mainw->origsecs,
+                                 mainw->origusecs),
                                  &event);
       if (mainw->event_list == NULL) mainw->event_list = event_list;
       if (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO) && !mainw->record_starting) {

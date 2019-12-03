@@ -862,7 +862,8 @@ void tc_to_re(LiVESMenuItem *, livespointer mt);
 void rs_to_tc(LiVESMenuItem *, livespointer mt);
 void re_to_tc(LiVESMenuItem *, livespointer mt);
 
-boolean mt_mark_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean mt_mark_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer user_data);
 
 void multitrack_clear_marks(LiVESMenuItem *, livespointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
@@ -889,7 +890,8 @@ void unpaint_lines(lives_mt *);
 void mt_prepare_for_playback(lives_mt *);
 void mt_post_playback(lives_mt *);
 
-boolean mt_tcoverlay_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod, livespointer user_data);
+boolean mt_tcoverlay_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t keyval, LiVESXModifierType mod,
+                              livespointer user_data);
 
 // effect node controls
 void on_next_node_clicked(LiVESWidget *, livespointer mt);
@@ -913,7 +915,8 @@ void on_fx_insb_clicked(LiVESWidget *button, livespointer mt);
 void on_fx_insa_clicked(LiVESWidget *button, livespointer mt);
 
 // utils
-uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list, int *num_events);  ///< returns bytes and sets num_events
+uint32_t event_list_get_byte_size(lives_mt *, weed_plant_t *event_list,
+                                  int *num_events);  ///< returns bytes and sets num_events
 boolean event_list_rectify(lives_mt *, weed_plant_t *event_listy);
 void reset_renumbering(void);
 boolean make_backup_space(lives_mt *, size_t space_needed);

@@ -1,20 +1,20 @@
 /*
- * MPEG2 transport stream defines
- * Copyright (c) 2003 Fabrice Bellard
- * FFmpeg is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * FFmpeg is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with FFmpeg; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
+   MPEG2 transport stream defines
+   Copyright (c) 2003 Fabrice Bellard
+   FFmpeg is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public
+   License as published by the Free Software Foundation; either
+   version 2.1 of the License, or (at your option) any later version.
+
+   FFmpeg is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with FFmpeg; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+*/
 
 // additional defines for LiVES by G.Finch <salsaman+lives@gmail.com>
 
@@ -88,18 +88,18 @@ typedef struct {
 } Mp4Descr;
 
 /**
- * Parse an MPEG-2 descriptor
- * @param[in] fc                    Format context (used for logging only)
- * @param st                        Stream
- * @param stream_type               STREAM_TYPE_xxx
- * @param pp                        Descriptor buffer pointer
- * @param desc_list_end             End of buffer
- * @param mp4_dec_config_descr_len  Length of 'mp4_dec_config_descr', or zero if not present
- * @param mp4_es_id
- * @param pid
- * @param mp4_dec_config_descr
- * @return <0 to stop processing
- */
+   Parse an MPEG-2 descriptor
+   @param[in] fc                    Format context (used for logging only)
+   @param st                        Stream
+   @param stream_type               STREAM_TYPE_xxx
+   @param pp                        Descriptor buffer pointer
+   @param desc_list_end             End of buffer
+   @param mp4_dec_config_descr_len  Length of 'mp4_dec_config_descr', or zero if not present
+   @param mp4_es_id
+   @param pid
+   @param mp4_dec_config_descr
+   @return <0 to stop processing
+*/
 int ff_parse_mpeg2_descriptor(lives_clip_data_t *cdata, AVFormatContext *fc, AVStream *st, int stream_type,
                               const uint8_t **pp, const uint8_t *desc_list_end,
                               Mp4Descr *mp4_descr, int mp4_descr_count, int pid,

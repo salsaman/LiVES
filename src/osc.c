@@ -598,7 +598,8 @@ boolean lives_osc_cb_bgplay_reset(void *context, int arglen, const void *vargs, 
     mainw->files[mainw->blend_file]->play_paused = FALSE;
   }
 
-  if (mainw->files[mainw->blend_file]->pb_fps >= 0.) mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
+  if (mainw->files[mainw->blend_file]->pb_fps >= 0.) mainw->files[mainw->blend_file]->pb_fps =
+      mainw->files[mainw->blend_file]->fps;
   else mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->fps;
   return lives_osc_notify_success(NULL);
 }
@@ -743,7 +744,8 @@ boolean lives_osc_cb_set_fps_ratio(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgset_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   int fpsi;
   float fps;
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
@@ -1014,7 +1016,8 @@ boolean lives_osc_cb_clip_resample(void *context, int arglen, const void *vargs,
 
   if (LIVES_IS_PLAYING) return lives_osc_notify_failure();
 
-  if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) || mainw->is_processing ||
+  if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL)) ||
+      mainw->is_processing ||
       mainw->multitrack != NULL) return lives_osc_notify_failure();
 
   if (!lives_osc_check_arguments(arglen, vargs, "f", FALSE)) {
@@ -1203,7 +1206,8 @@ boolean lives_osc_cb_fgclip_copy(void *context, int arglen, const void *vargs, O
 }
 
 
-boolean lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_rteapply(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   int clipno = mainw->current_file;
   int current_file = clipno;
 
@@ -1340,7 +1344,8 @@ boolean lives_osc_cb_fgclipsel_cut(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclipsel_delete(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   int noaudio = 0;
   int clipno = mainw->current_file;
   int current_file = clipno;
@@ -1567,7 +1572,8 @@ boolean lives_osc_cb_clipbd_inserta(void *context, int arglen, const void *vargs
 }
 
 
-boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   // switch fg clip and reset framenumber
 
   if (mainw->playing_file < 1 || (mainw->preview || (mainw->event_list != NULL && !mainw->record)) ||
@@ -1589,7 +1595,8 @@ boolean lives_osc_cb_fgclip_retrigger(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_bgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_retrigger(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   // switch bg clip and reset framenumber
 
   if (mainw->playing_file < 1 || (mainw->preview || (mainw->event_list != NULL && !mainw->record)) ||
@@ -1605,12 +1612,14 @@ boolean lives_osc_cb_bgclip_retrigger(void *context, int arglen, const void *var
   if (mainw->files[mainw->blend_file]->pb_fps > 0. || (mainw->files[mainw->blend_file]->play_paused &&
       mainw->files[mainw->blend_file]->freeze_fps > 0.))
     mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->last_frameno = 1;
-  else mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->last_frameno = mainw->files[mainw->blend_file]->frames;
+  else mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->last_frameno =
+          mainw->files[mainw->blend_file]->frames;
   return lives_osc_notify_success(NULL);
 }
 
 
-boolean lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list != NULL && (!mainw->record || !LIVES_IS_PLAYING))) ||
@@ -1629,7 +1638,8 @@ boolean lives_osc_cb_fgclip_select_next(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list != NULL && (!mainw->record || !LIVES_IS_PLAYING))) ||
@@ -1649,7 +1659,8 @@ boolean lives_osc_cb_bgclip_select_next(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   // switch fg clip
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list != NULL && (!mainw->record || !LIVES_IS_PLAYING))) ||
@@ -1668,7 +1679,8 @@ boolean lives_osc_cb_fgclip_select_previous(void *context, int arglen, const voi
 }
 
 
-boolean lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_select_previous(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   // switch bg clip
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->event_list != NULL && (!mainw->record || !LIVES_IS_PLAYING))) ||
@@ -1732,7 +1744,8 @@ boolean lives_osc_cb_getconst(void *context, int arglen, const void *vargs, OSCT
 }
 
 
-boolean lives_osc_cb_open_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_open_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   char host[OSC_STRING_SIZE];
   int port;
 
@@ -1759,7 +1772,8 @@ boolean lives_osc_cb_open_status_socket(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_open_notify_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_open_notify_socket(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   char host[OSC_STRING_SIZE];
   int port;
 
@@ -1786,7 +1800,8 @@ boolean lives_osc_cb_open_notify_socket(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_close_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_close_status_socket(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   lives_osc_close_status_socket();
   return lives_osc_notify_success(NULL);
 }
@@ -1927,7 +1942,8 @@ boolean lives_osc_cb_get_fps_ratio(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file < 1) return lives_osc_notify_failure();
@@ -1943,7 +1959,8 @@ boolean lives_osc_cb_bgget_fps_ratio(void *context, int arglen, const void *varg
 }
 
 
-boolean lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_getframe(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL && !mainw->record)) ||
@@ -1962,7 +1979,8 @@ boolean lives_osc_cb_bgclip_getfps(void *context, int arglen, const void *vargs,
   char *tmp;
 
   if (mainw->current_file < 1) return lives_osc_notify_failure();
-  if (mainw->blend_file < 0 || mainw->files[mainw->blend_file] == NULL) lives_status_send((tmp = lives_strdup_printf("%.3f", 0.)));
+  if (mainw->blend_file < 0 ||
+      mainw->files[mainw->blend_file] == NULL) lives_status_send((tmp = lives_strdup_printf("%.3f", 0.)));
   else if ((mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL && !mainw->record)) ||
            mainw->playing_file < 1) lives_status_send((tmp = lives_strdup_printf("%.3f", mainw->files[mainw->blend_file]->fps)));
   else lives_status_send((tmp = lives_strdup_printf("%.3f", mainw->files[mainw->blend_file]->pb_fps)));
@@ -2140,7 +2158,8 @@ boolean lives_osc_cb_blockinsert(void *context, int arglen, const void *vargs, O
     lives_osc_parse_int_argument(vargs, &clip);
   } else return lives_osc_notify_failure();
 
-  if (clip < 1 || mainw->files[clip] == NULL || clip == mainw->current_file || clip == mainw->scrap_file || clip == mainw->ascrap_file)
+  if (clip < 1 || mainw->files[clip] == NULL || clip == mainw->current_file || clip == mainw->scrap_file ||
+      clip == mainw->ascrap_file)
     return lives_osc_notify_failure();
 
   boolstr = lives_strdup_printf("%d", ins_audio);
@@ -2340,7 +2359,8 @@ boolean lives_osc_cb_bgclip_goto(void *context, int arglen, const void *vargs, O
 }
 
 
-boolean lives_osc_cb_clip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   char *tmp;
   lives_status_send((tmp = lives_strdup_printf("%d", mainw->current_file < 0 ? 0 : mainw->current_file)));
   lives_free(tmp);
@@ -2348,7 +2368,8 @@ boolean lives_osc_cb_clip_get_current(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_bgclip_get_current(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   char *tmp;
 
   if (mainw->multitrack != NULL) return lives_osc_notify_failure();
@@ -2573,7 +2594,8 @@ boolean lives_osc_cb_clip_set_name(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_get_frames(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   int current_file = mainw->current_file;
   int clip = current_file;
   char *tmp;
@@ -2597,7 +2619,8 @@ boolean lives_osc_cb_clip_get_frames(void *context, int arglen, const void *varg
 }
 
 
-boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   int current_file = mainw->current_file;
   int clip = current_file;
   int frame, width = -1, height = -1;
@@ -2654,7 +2677,8 @@ boolean lives_osc_cb_clip_save_frame(void *context, int arglen, const void *varg
 }
 
 
-boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_clip_select_all(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   boolean selwidth_locked = mainw->selwidth_locked;
 
   if (mainw->current_file < 1 || (mainw->preview || (mainw->multitrack == NULL && mainw->event_list != NULL && (!mainw->record ||
@@ -2676,7 +2700,8 @@ boolean lives_osc_cb_clip_isvalid(void *context, int arglen, const void *vargs, 
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &clip);
 
-  if (clip > 0 && clip < MAX_FILES && mainw->files[clip] != NULL && !(mainw->multitrack != NULL && clip == mainw->multitrack->render_file) &&
+  if (clip > 0 && clip < MAX_FILES && mainw->files[clip] != NULL && !(mainw->multitrack != NULL &&
+      clip == mainw->multitrack->render_file) &&
       clip != mainw->scrap_file)
     return lives_status_send(get_omc_const("LIVES_TRUE"));
   else return lives_status_send(get_omc_const("LIVES_FALSE"));
@@ -2701,7 +2726,8 @@ boolean lives_osc_cb_rteuser_count(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   if (!mainw->sep_win) {
     on_sepwin_pressed(NULL, NULL);
   }
@@ -2713,7 +2739,8 @@ boolean lives_osc_cb_fssepwin_enable(void *context, int arglen, const void *varg
 }
 
 
-boolean lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_fssepwin_disable(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   if (mainw->fs) {
     on_full_screen_pressed(NULL, NULL);
   }
@@ -2754,7 +2781,8 @@ boolean lives_osc_cb_op_fps_set(void *context, int arglen, const void *vargs, OS
 }
 
 
-boolean lives_osc_cb_pref_set_audio_source(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_pref_set_audio_source(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   int val;
 
   if (!lives_osc_check_arguments(arglen, vargs, "i", TRUE)) return lives_osc_notify_failure();
@@ -2765,7 +2793,8 @@ boolean lives_osc_cb_pref_set_audio_source(void *context, int arglen, const void
 }
 
 
-boolean lives_osc_cb_pref_get_audio_source(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_pref_get_audio_source(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   if (prefs->audio_src == AUDIO_SRC_EXT) return lives_status_send(get_omc_const("LIVES_AUDIO_SOURCE_EXTERNAL"));
   return lives_status_send(get_omc_const("LIVES_AUDIO_SOURCE_INTERNAL"));
 }
@@ -2869,7 +2898,8 @@ boolean lives_osc_cb_rte_setmode(void *context, int arglen, const void *vargs, O
   if (!lives_osc_check_arguments(arglen, vargs, "ii", TRUE)) return lives_osc_notify_failure();
   lives_osc_parse_int_argument(vargs, &effect_key);
   lives_osc_parse_int_argument(vargs, &mode);
-  if (effect_key < 1 || effect_key >= FX_KEYS_MAX_VIRTUAL || mode < 1 || mode > rte_getmodespk()) return lives_osc_notify_failure();
+  if (effect_key < 1 || effect_key >= FX_KEYS_MAX_VIRTUAL || mode < 1 ||
+      mode > rte_getmodespk()) return lives_osc_notify_failure();
   if (!mainw->osc_block) rte_key_setmode(effect_key, mode - 1);
 
   return lives_osc_notify_success(NULL);
@@ -2938,8 +2968,9 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
 
   if (!(weed_parameter_has_variable_elements_strict(inst, ptmpl))) {
     if (nargs > (defargs = weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT))) {
-      if (!(hint == WEED_HINT_COLOR && defargs == 1 && ((cspace == WEED_COLORSPACE_RGB && (nargs % 3 == 0)) || (cspace == WEED_COLORSPACE_RGBA &&
-            !(nargs & 3)))))
+      if (!(hint == WEED_HINT_COLOR && defargs == 1 && ((cspace == WEED_COLORSPACE_RGB && (nargs % 3 == 0)) ||
+            (cspace == WEED_COLORSPACE_RGBA &&
+             !(nargs & 3)))))
         // error: parameter does not have variable elements, and the user sent too many values
         return FALSE;
     }
@@ -4718,7 +4749,8 @@ boolean lives_osc_cb_rte_paramcount(void *context, int arglen, const void *vargs
 }
 
 
-boolean lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_oparamcount(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   int effect_key, mode;
   int count = 0;
   weed_plant_t *filter;
@@ -5189,7 +5221,8 @@ boolean lives_osc_cb_rte_getpparammin(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getparammax(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                     NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
   int pnum;
@@ -5238,7 +5271,8 @@ boolean lives_osc_cb_rte_getparammax(void *context, int arglen, const void *varg
 }
 
 
-boolean lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
   int pnum;
@@ -5292,7 +5326,8 @@ boolean lives_osc_cb_rte_getoparammax(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getohasparammax(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
   int pnum;
@@ -5869,7 +5904,8 @@ boolean lives_osc_cb_rte_getnparam(void *context, int arglen, const void *vargs,
 }
 
 
-boolean lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   int effect_key;
   int pnum, i;
 
@@ -5922,7 +5958,8 @@ boolean lives_osc_cb_rte_getnparammin(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   int effect_key;
   int pnum, i;
 
@@ -5974,7 +6011,8 @@ boolean lives_osc_cb_rte_getnparammax(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                      NetworkReturnAddressPtr ra) {
   int effect_key;
   int pnum, i;
 
@@ -6029,7 +6067,8 @@ boolean lives_osc_cb_rte_getnparamdef(void *context, int arglen, const void *var
 }
 
 
-boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   // check if nparam is the transition parameter
   weed_plant_t *filter;
 
@@ -6056,7 +6095,8 @@ boolean lives_osc_cb_rte_getnparamtrans(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_getparamtrans(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                       NetworkReturnAddressPtr ra) {
   // check if param is the transition parameter
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
@@ -6135,7 +6175,8 @@ boolean lives_osc_cb_rte_getstate(void *context, int arglen, const void *vargs, 
 }
 
 
-boolean lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_get_keyfxname(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                       NetworkReturnAddressPtr ra) {
   int effect_key;
   int mode;
   char *tmp;
@@ -6177,7 +6218,8 @@ boolean lives_osc_cb_rte_getmodespk(void *context, int arglen, const void *vargs
 }
 
 
-boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   weed_plant_t *ofilter, *ifilter;
 
   int key0, mode0, pnum0;
@@ -6226,7 +6268,8 @@ boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *v
 
   if (pnum0 < -EXTRA_PARAMS_OUT || pnum1 < -EXTRA_PARAMS_IN) return lives_osc_notify_failure();
 
-  if (pconx_check_connection(ofilter, pnum0, key1, mode1, pnum1, FALSE, NULL, NULL, NULL, NULL, NULL)) return lives_osc_notify_failure();
+  if (pconx_check_connection(ofilter, pnum0, key1, mode1, pnum1, FALSE, NULL, NULL, NULL, NULL,
+                             NULL)) return lives_osc_notify_failure();
 
   key0--;
   key1--;
@@ -6236,7 +6279,8 @@ boolean lives_osc_cb_rte_addpconnection(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   int key0, mode0, pnum0;
   int key1, mode1, pnum1;
 
@@ -6258,7 +6302,8 @@ boolean lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   int okey, omode, opnum;
   char *msg;
 
@@ -6282,7 +6327,8 @@ boolean lives_osc_cb_rte_listpconnection(void *context, int arglen, const void *
 }
 
 
-boolean lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   int key0, mode0, cnum0;
   int key1, mode1, cnum1;
   weed_plant_t *filter;
@@ -6296,7 +6342,8 @@ boolean lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *v
   lives_osc_parse_int_argument(vargs, &cnum1);
 
   if (key0 < 1 || key0 >= FX_KEYS_MAX_VIRTUAL || mode0 < 1 || mode0 > rte_getmodespk()) return lives_osc_notify_failure();
-  if (key1 < -1 || key1 == 0 || key1 >= FX_KEYS_MAX_VIRTUAL || mode1 < 1 || mode1 > rte_getmodespk()) return lives_osc_notify_failure();
+  if (key1 < -1 || key1 == 0 || key1 >= FX_KEYS_MAX_VIRTUAL || mode1 < 1 ||
+      mode1 > rte_getmodespk()) return lives_osc_notify_failure();
 
   if (key0 == key1) return lives_osc_notify_failure();
 
@@ -6328,7 +6375,8 @@ boolean lives_osc_cb_rte_addcconnection(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+                                        NetworkReturnAddressPtr ra) {
   int key0, mode0, cnum0;
   int key1, mode1, cnum1;
 
@@ -6349,7 +6397,8 @@ boolean lives_osc_cb_rte_delcconnection(void *context, int arglen, const void *v
 }
 
 
-boolean lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
+boolean lives_osc_cb_rte_listcconnection(void *context, int arglen, const void *vargs, OSCTimeTag when,
+    NetworkReturnAddressPtr ra) {
   int okey, omode, ocnum;
   char *msg;
 
@@ -7151,9 +7200,9 @@ void lives_osc_free(lives_osc *c) {
 boolean lives_osc_init(uint32_t udp_port) {
   if (livesOSC != NULL && udp_port != 0) {
     /*  OSCPacketBuffer packet=livesOSC->packet;
-    if (shutdown (packet->returnAddr->sockfd,SHUT_RDWR)) {
-    d_print( lives_strdup_printf (_("Cannot shut down OSC/UDP server\n"));
-    }
+      if (shutdown (packet->returnAddr->sockfd,SHUT_RDWR)) {
+      d_print( lives_strdup_printf (_("Cannot shut down OSC/UDP server\n"));
+      }
     */
     if (NetworkStartUDPServer(livesOSC->packet, udp_port) != TRUE) {
       d_print(_("Cannot start OSC/UDP server at port %d \n"), udp_port);

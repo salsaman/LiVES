@@ -877,7 +877,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
   lives_freep((void **)&mainw->file_open_params);
 
-  if (!strcmp(cfile->type, "Frames") || !strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG) ||
+  if (!strcmp(cfile->type, "Frames") || !strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) ||
+      !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG) ||
       !strcmp(cfile->type, "Audio")) {
     cfile->is_untitled = TRUE;
   }
@@ -1051,7 +1052,8 @@ void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
 
   defname = lives_strdup_printf("frame%08d.%s", frame, get_image_ext_for_type(cfile->img_type));
 
-  filename = choose_file(strlen(mainw->image_dir) ? mainw->image_dir : NULL, defname, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl, NULL);
+  filename = choose_file(strlen(mainw->image_dir) ? mainw->image_dir : NULL, defname, filt, LIVES_FILE_CHOOSER_ACTION_SAVE, ttl,
+                         NULL);
 
   lives_free(defname);
 
@@ -2095,7 +2097,8 @@ void play_file(void) {
     }
 
     if (mainw->audio_end == 0) {
-      mainw->audio_start = calc_time_from_frame(mainw->current_file, mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
+      mainw->audio_start = calc_time_from_frame(mainw->current_file,
+                           mainw->play_start) * cfile->fps + 1. * cfile->arate / cfile->arps;
       mainw->audio_end = calc_time_from_frame(mainw->current_file, mainw->play_end) * cfile->fps + 1. * cfile->arate / cfile->arps;
       if (!mainw->playing_sel) {
         mainw->audio_end = 0;
@@ -2105,7 +2108,7 @@ void play_file(void) {
 
   if (!cfile->opening_audio && !mainw->loop) {
     /** if we are opening audio or looping we just play to the end of audio,
-    otherwise...*/
+      otherwise...*/
     audio_end = mainw->audio_end;
   }
 
@@ -2132,7 +2135,8 @@ void play_file(void) {
       fade_background();
     }
 
-    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 || mainw->foreign)) {
+    if ((!mainw->sep_win || (!mainw->faded && (prefs->sepwin_type != SEPWIN_TYPE_STICKY))) && (cfile->frames > 0 ||
+        mainw->foreign)) {
       /// show the frame in the main window
       lives_widget_show_all(mainw->playframe);
       //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -2352,7 +2356,8 @@ void play_file(void) {
 
   // show the framebar
   if (mainw->multitrack == NULL && !mainw->faded && (!prefs->hide_framebar &&
-      (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 && mainw->sep_win) ||
+      (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 && capable->nmonitors > 1 &&
+                      mainw->sep_win) ||
        (mainw->vpp != NULL && mainw->sep_win && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
       ((!mainw->preview && (cfile->frames > 0 || mainw->foreign)) || cfile->opening))) {
     lives_widget_show(mainw->framebar);
@@ -2370,7 +2375,8 @@ void play_file(void) {
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
     if (mainw->playing_sel) {
-      cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+      cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                         (cfile->asampsize / 8);
     } else {
       if (cfile->real_pointer_time > cfile->pointer_time)
         cfile->aseek_pos = (long)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
@@ -3184,7 +3190,7 @@ int close_temp_handle(int new_clip) {
 /**
    @brief get next free file slot, or -1 if we are full
 
- can support MAX_FILES files (default 65536) */
+  can support MAX_FILES files (default 65536) */
 static void get_next_free_file(void) {
   mainw->first_free_file++;
   while ((mainw->first_free_file != ALL_USED) && mainw->files[mainw->first_free_file] != NULL) {
@@ -4964,7 +4970,8 @@ int save_to_scrap_file(weed_plant_t *layer) {
     lives_free(dir);
   }
 
-  if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1)) && !prefs->hide_framebar && !mainw->faded) {
+  if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1)) && !prefs->hide_framebar &&
+      !mainw->faded) {
     double scrap_mb = (double)scrapfile->f_size / 1000000.;
     if ((scrap_mb + ascrap_mb) < (double)free_mb * .75) {
       // TRANSLATORS: rec(ord) %.2f M(ega)B(ytes)
@@ -5441,8 +5448,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (resp == LIVES_RESPONSE_CANCEL) continue;
 
       /** dont write an entry yet, in case of the unklikely chance we were assigned the same pid as the recovery file,
-      otherwise we will end up in am endless loop of reloading the same set and appending it to the recovery file
-      in any case, the old file is still there and we will create a fresh recovery file after a succesful reload */
+        otherwise we will end up in am endless loop of reloading the same set and appending it to the recovery file
+        in any case, the old file is still there and we will create a fresh recovery file after a succesful reload */
       prefs->crash_recovery = FALSE;
 
       if (!reload_set(buff)) {
@@ -5612,7 +5619,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       threaded_dialog_spin(0.);
 
       /** not really from a set, but let's pretend to get the details
-      read the playback fps, play frame, and name */
+        read the playback fps, play frame, and name */
       open_set_file(++clipnum);
 
       threaded_dialog_spin(0.);
@@ -5874,7 +5881,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recovery_file);
 
   if (!retval) {
-    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname, capable->mainpid);
+    com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,
+                              capable->mainpid);
     lives_system(com, FALSE);
     lives_free(com);
     return FALSE;
@@ -5893,13 +5901,15 @@ boolean check_for_recovery_files(boolean auto_recover) {
   mainw->com_failed = FALSE;
 
   // check for layout recovery file
-  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid, LIVES_FILE_EXT_LAYOUT);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
+                                      LIVES_FILE_EXT_LAYOUT);
   recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
 
   recording_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
                                        LIVES_FILE_EXT_LAYOUT);
 
-  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, recpid);
+  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid,
+                             recpid);
 
   if (!lives_file_test(recovery_file, LIVES_FILE_TEST_EXISTS)) {
     lives_free(recovery_file);
@@ -5955,11 +5965,13 @@ boolean check_for_recovery_files(boolean auto_recover) {
     return FALSE;
   }
 
-  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname, capable->mainpid);
+  com = lives_strdup_printf("%s clean_recovery_files %d %d \"%s\" %d", prefs->backend_sync, luid, lgid, capable->myname,
+                            capable->mainpid);
   lives_system(com, FALSE);
   lives_free(com);
 
-  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid, LIVES_FILE_EXT_LAYOUT);
+  recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid,
+                                      LIVES_FILE_EXT_LAYOUT);
   recovery_numbering_file = lives_strdup_printf("%s/%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
 
   if (mainw->recoverable_layout) {
@@ -5974,7 +5986,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   recording_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, lpid,
                                        LIVES_FILE_EXT_LAYOUT);
-  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid, lpid);
+  recording_numbering_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d", prefs->workdir, LAYOUT_NUMBERING_FILENAME, luid, lgid,
+                             lpid);
 
   if (mainw->recording_recovered) {
     xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);

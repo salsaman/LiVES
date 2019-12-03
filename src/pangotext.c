@@ -458,8 +458,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   if (!center) x_pos += offs_x;
 
   /*  lives_painter_new_path(cr);
-  lives_painter_rectangle(cr,offs_x,0,width,height);
-  lives_painter_clip(cr);*/
+    lives_painter_rectangle(cr,offs_x,0,width,height);
+    lives_painter_clip(cr);*/
 
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);

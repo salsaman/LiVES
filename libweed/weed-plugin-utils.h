@@ -143,7 +143,8 @@ FN_DECL weed_plant_t *weed_text_init(const char *name, const char *label, const 
 FN_DECL weed_plant_t *weed_float_init(const char *name, const char *label, double def, double min, double max) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_switch_init(const char *name, const char *label, int def) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_integer_init(const char *name, const char *label, int def, int min, int max) ALLOW_UNUSED;
-FN_DECL weed_plant_t *weed_colRGBd_init(const char *name, const char *label, double red, double green, double blue) ALLOW_UNUSED;
+FN_DECL weed_plant_t *weed_colRGBd_init(const char *name, const char *label, double red, double green,
+                                        double blue) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_colRGBi_init(const char *name, const char *label, int red, int green, int blue) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_radio_init(const char *name, const char *label, int def, int group) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_string_list_init(const char *name, const char *label, int def, const char **const list) ALLOW_UNUSED;
@@ -246,7 +247,7 @@ FN_DECL int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
 
 /*( omits WEED_PALETTE_YUV411, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_RGB_FLOAT
    and WEED_PALETTE_RGBA_FLOAT as well as the alpha palettes
-WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT */
+  WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT */
 
 #define ALL_PACKED_PALETTES {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, \
       WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUV888, WEED_PALETTE_YUVA8888, WEED_PALETTE_END}

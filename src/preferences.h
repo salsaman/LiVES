@@ -751,15 +751,15 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 /*typedef struct {
   const char *pref_name;
   int type;
-} lives_preference;
+  } lives_preference;
 
-const lives_preference [] = {
+  const lives_preference [] = {
   {PREF_REC_EXT_AUDIO, WEED_SEED_BOOL},
-};
+  };
 
-then:
+  then:
 
-widget = lives_standard_widget_for_pref(const char *prefname, const char *label, val, min, max, step, page, dp, box, rb_group_or_combo_list, tooltip);
+  widget = lives_standard_widget_for_pref(const char *prefname, const char *label, val, min, max, step, page, dp, box, rb_group_or_combo_list, tooltip);
 */
 
 // NOTE: the following definitions must match with equivalent keys in smogrify

@@ -647,7 +647,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             return NULL;
           }
           if (weed_plant_has_leaf(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
-            weed_set_int64_value(shortcut, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &error));
+            weed_set_int64_value(shortcut, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET,
+                                 &error));
           }
           if (add_audio) {
             weed_set_int_array(shortcut, WEED_LEAF_AUDIO_CLIPS, num_aclips, aclips);
@@ -1490,8 +1491,10 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
     }
 
     if (type == 4) {
-      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_signed), LIVES_WIDGET_TOGGLED_SIGNAL,
+                           LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+      lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_unsigned), LIVES_WIDGET_TOGGLED_SIGNAL,
+                           LIVES_GUI_CALLBACK(apply_button_set_enabled),
                            NULL);
     }
 
@@ -1532,9 +1535,11 @@ _resaudw *create_resaudw(short type, render_details *rdet, LiVESWidget *top_vbox
   }
 
   if (type == 4) {
-    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_littleend), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(apply_button_set_enabled),
                          NULL);
-    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_bigend), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+    lives_signal_connect(LIVES_GUI_OBJECT(resaudw->rb_bigend), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   }
 
   if (type > 7 && type != 11) {
@@ -1860,7 +1865,8 @@ void on_change_speed_ok_clicked(LiVESButton *button, livespointer user_data) {
 
   if (mainw->fx1_bool) {
     cfile->arate = (int)(arate * cfile->fps + .5);
-    msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"), cfile->fps, cfile->arate);
+    msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second and audio to %d Hz.\n"), cfile->fps,
+                              cfile->arate);
   } else {
     msg = lives_strdup_printf(_("Changed playback speed to %.3f frames per second.\n"), cfile->fps);
   }

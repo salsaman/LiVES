@@ -203,7 +203,8 @@ static unicap_format_t *lvdev_get_best_format(const unicap_format_t *formats,
 #ifdef DEBUG_UNICAP
       // set format to try and get more data
       unicap_set_format(ldev->handle, format);
-      lives_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n", format->fourcc, format->bpp, format->size.width,
+      lives_printerr("Unusable palette with fourcc 0x%x  bpp=%d, size=%dx%d buf=%d\n", format->fourcc, format->bpp,
+                     format->size.width,
                      format->size.height, (int)format->buffer_size);
 #endif
       continue;
@@ -357,7 +358,8 @@ static boolean open_vdev_inner(unicap_device_t *device) {
     return FALSE;
   }
 
-  if (format->buffer_size != format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(ldev->current_palette) /
+  if (format->buffer_size != format->size.width * format->size.height * weed_palette_get_bits_per_macropixel(
+        ldev->current_palette) /
       weed_palette_get_pixels_per_macropixel(ldev->current_palette) / 8) {
     int wwidth = format->size.width, awidth;
     int wheight = format->size.height, aheight;

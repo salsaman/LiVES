@@ -617,7 +617,8 @@ void ce_thumbs_check_for_rte(lives_rfx_t *rfx, lives_rfx_t *rte_rfx, int key) {
   // param change in ce_thumbs, update rte_window
   register int i;
   for (i = 0; i < rte_keys_virtual; i++) {
-    if (pscrolls[i] != NULL && i == key && rfx == (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx")) {
+    if (pscrolls[i] != NULL && i == key &&
+        rfx == (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(pscrolls[key]), "rfx")) {
       update_visual_params(rte_rfx, FALSE);
       break;
     }

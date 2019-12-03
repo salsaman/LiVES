@@ -1,5 +1,5 @@
 /* giwknob.c  -  GiwKnob widget's source    Version 0.1
-Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
+  Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -15,9 +15,9 @@ Copyright (C) 2006  Alexandre Pereira Bueno, Eduardo Parente Ribeiro
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
-Maintainers
-Alexandre Pereira Bueno - alpebu@yahoo.com.br
-James Scott Jr <skoona@users.sourceforge.net>
+  Maintainers
+  Alexandre Pereira Bueno - alpebu@yahoo.com.br
+  James Scott Jr <skoona@users.sourceforge.net>
 */
 
 // additional code G. Finch (salsaman@gmail.com) 2010 - 2016
@@ -117,7 +117,7 @@ static GtkWidgetClass *parent_class = NULL;
 
 
 /*********************
-* Widget's Functions *
+  Widget's Functions
 *********************/
 GType
 giw_knob_get_type() {
@@ -317,7 +317,8 @@ giw_knob_realize(GtkWidget *widget) {
 #endif
 
 #if GTK_CHECK_VERSION(2,18,0)
-  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes, attributes_mask));
+  gtk_widget_set_window(widget, gdk_window_new(lives_widget_get_xwindow(lives_widget_get_parent(widget)), &attributes,
+                        attributes_mask));
 #else
   widget->window = gdk_window_new(widget->parent->window, &attributes, attributes_mask);
 #endif
@@ -464,10 +465,10 @@ giw_knob_expose(GtkWidget      *widget,
 
   // not working
   /*
-  gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
-  cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
+    gtk_style_context_get_color (gtk_widget_get_style_context (widget), gtk_widget_get_state(widget), &color);
+    cairo_set_source_rgba (cairo, color.red, color.green, color.blue, color.alpha);
 
-  cairo_arc(cairo,
+    cairo_arc(cairo,
       knob->x+((knob->size/2)),
       knob->y+((knob->size/2)),
       knob->radius/4.*3.,
@@ -517,7 +518,8 @@ giw_knob_expose(GtkWidget      *widget,
   // Now, draw the ticks
   // The major ticks (and legends)
   if (knob->major_ticks != 0)
-    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001; loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001;
+         loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
       s = sin(loop1 - M_PI / 4.0);
       c = cos(loop1 - M_PI / 4.0);
       dx1 = c * knob->radius;
@@ -640,7 +642,8 @@ giw_knob_expose(GtkWidget      *widget,
   // Now, draw the ticks
   // The major ticks (and legends)
   if (knob->major_ticks != 0)
-    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001; loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
+    for (loop1 = (3.0 * M_PI / 2.0); loop1 >= -0.0001;
+         loop1 -= knob->d_major_ticks) { // -0.0001 (and not 0) to avoid rounding errors
       s = sin(loop1 - M_PI / 4.0);
       c = cos(loop1 - M_PI / 4.0);
       dx1 = c * knob->radius;
@@ -719,7 +722,7 @@ giw_knob_button_press(GtkWidget      *widget,
   if (knob->button) return TRUE; // Some button is already pressed
 
   /* To verify if the pointer is in the knob, the distance between the pointer and the center
-  of the circle is calculated, if it's less the the radius of the circle , it's in!!*/
+    of the circle is calculated, if it's less the the radius of the circle , it's in!!*/
 
   xc = lives_widget_get_allocation_width(widget) / 2;
   yc = lives_widget_get_allocation_height(widget) / 2;
@@ -857,7 +860,7 @@ giw_knob_style_updated(GtkWidget *widget) {
 #endif
 
 /******************
-* Users Functions *
+  Users Functions
 ******************/
 
 gdouble
@@ -1036,7 +1039,7 @@ giw_knob_set_title(GiwKnob *knob, gchar *str) {
 }
 
 /******************
-* Local Functions *
+  Local Functions
 ******************/
 
 void
@@ -1114,7 +1117,8 @@ knob_calculate_sizes(GiwKnob *knob) {
   // The distance between the radius and the widget limits is the bigger dimension of the legends plus the major_ticks_size,
   // so it's the half of size, less the bigger dimension of the legends less the major_ticks size (wich depends of the radius),
   // then, with some algebra, it results in this equation:
-  knob->radius = 8 * ((knob->size / 2) - sqrt(knob->legend_width * knob->legend_width + knob->legend_height * knob->legend_height)) / 9;
+  knob->radius = 8 * ((knob->size / 2) - sqrt(knob->legend_width * knob->legend_width + knob->legend_height *
+                      knob->legend_height)) / 9;
 
   if (!knob->wrap)
     knob->d_major_ticks = (3.0 * M_PI / 2.0) / (knob->major_ticks - 1);
@@ -1151,7 +1155,8 @@ knob_calculate_value_with_angle(GiwKnob *knob, gdouble angle) {
     if (angle >= (7.0 * M_PI / 4.0)) d_angle = (13.0 * M_PI / 4.0) - angle;
 
     return (lives_adjustment_get_lower(knob->adjustment) +
-            fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment)) * d_angle / (3.0 * M_PI / 2.0));
+            fabs(lives_adjustment_get_upper(knob->adjustment) - lives_adjustment_get_lower(knob->adjustment)) * d_angle /
+            (3.0 * M_PI / 2.0));
   }
 
   if (angle < 3 * M_PI / 2.) d_angle = (3.*M_PI / 2.) - angle;

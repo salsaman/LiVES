@@ -146,7 +146,8 @@ void tr_msg(void) {
 
 
 void break_me(void) {
-  g_print("BANG !\n");
+  if (prefs->show_dev_opts)
+    g_print("BANG !\n");
   // breakpoint for gdb
 }
 
@@ -3170,11 +3171,10 @@ static boolean lives_startup(livespointer data) {
   }
 #endif
 
-  mainw->go_away = FALSE;
-
   mainw->no_switch_dprint = TRUE;
   if (mainw->current_file > -1 && mainw->multitrack == NULL) {
     switch_clip(1, mainw->current_file, TRUE);
+    sensitize();
   }
 
   // anything that d_prints messages should go here:
@@ -3207,6 +3207,10 @@ static boolean lives_startup(livespointer data) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
+  }
+  mainw->go_away = FALSE;
+  if (mainw->current_file > -1 && mainw->multitrack == NULL) {
+    sensitize();
   }
   return FALSE;
 } // end lives_startup()
@@ -3315,7 +3319,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -4412,6 +4416,7 @@ void desensitize(void) {
       }
     }
   }
+
 }
 
 

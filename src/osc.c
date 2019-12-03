@@ -4205,6 +4205,7 @@ boolean lives_osc_cb_rte_getparamname(void *context, int arglen, const void *var
 
 boolean lives_osc_cb_pgui_countchoices(void *context, int arglen, const void *vargs, OSCTimeTag when,
                                        NetworkReturnAddressPtr ra) {
+  // TODO: for a running instance, the value may differ from the filter_class
   weed_plant_t *filter;
   weed_plant_t *ptmpl;
 
@@ -4242,7 +4243,8 @@ boolean lives_osc_cb_pgui_countchoices(void *context, int arglen, const void *va
 
   ptmpl = weed_filter_in_paramtmpl(filter, pnum, TRUE);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_CHOICES)) val = weed_leaf_num_elements(ptmpl, WEED_LEAF_CHOICES);
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_CHOICES))
+    val = weed_leaf_num_elements(ptmpl, WEED_LEAF_CHOICES);
 
   retval = lives_strdup_printf("%d", val);
 

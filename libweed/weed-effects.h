@@ -63,6 +63,23 @@ extern "C"
 #define WEED_HINT_SWITCH          	4
 #define WEED_HINT_COLOR           	5
 
+typedef struct {
+  int32_t red, green, blue;
+} weed_rgb_int_t;
+
+typedef struct {
+  int32_t red, green, blue, alpha;
+} weed_rgba_int_t;
+
+typedef struct {
+  double red, green, blue;
+} weed_rgb_double_t;
+
+typedef struct {
+  double red, green, blue, alpha;
+} weed_rgba_double_t;
+
+
 /* Colorspaces for Color parameters */
 #define WEED_COLORSPACE_RGB   	1
 #define WEED_COLORSPACE_RGBA  	2
@@ -93,7 +110,7 @@ extern "C"
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1<<4)
 
 /* audio */
-#define WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE
+#define WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
 #define WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE	WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE
 
 /* Parameter template flags */
@@ -311,6 +328,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_COLORSPACE "colorspace"
 #define WEED_LEAF_IS_TRANSITION "is_transition"
 #define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
+#define WEED_LEAF_RANGE_MAX "range_max"
 
 // PARAM_TEMPLATE GUI
 #define WEED_LEAF_WRAP "wrap"

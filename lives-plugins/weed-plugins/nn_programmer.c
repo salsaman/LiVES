@@ -215,7 +215,7 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("nn_programmer", "salsaman", 1, 0, NULL,
                                         nnprog_init, nnprog_process, nnprog_deinit, NULL, NULL, in_params, out_params);
 
-  gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_get_gui(filter_class);
   weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   for (i = 1; i < 4; i++)

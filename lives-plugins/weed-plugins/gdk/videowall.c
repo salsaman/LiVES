@@ -215,7 +215,7 @@ static weed_error_t videowall_process(weed_plant_t *inst, weed_timecode_t timest
   int xwid, xht, mode;
   int row, col, idxno, bdstoffs, rpixoffs;
   int offs_x, offs_y;
-  uint32_t fastrand_val = fastrand(0);
+  uint64_t fastrand_val = fastrand(0);
 
   xwid = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
   xht = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);

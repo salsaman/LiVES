@@ -152,7 +152,7 @@ WEED_SETUP_START(200, 200) {
                                WEED_FILTER_HINT_MAY_THREAD, palette_list, NULL, tsplit_process, NULL,
                                in_chantmpls, out_chantmpls, in_params1, NULL);
 
-  weed_plant_t *gui = weed_filter_class_get_gui(filter_class);
+  weed_plant_t *gui = weed_filter_get_gui(filter_class);
   char *rfx_strings[] = {"layout|p0|", "layout|p1|", "layout|p2|p3|", "layout|p4|", "layout|hseparator|"};
 
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");

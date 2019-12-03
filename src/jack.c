@@ -345,9 +345,8 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
 
   cache_buffer->operation = LIVES_READ_OPERATION;
   cache_buffer->is_ready = FALSE;
-#ifdef TEST_COND
+
   wake_audio_thread();
-#endif
 }
 
 
@@ -453,7 +452,8 @@ static int audio_process(nframes_t nframes, void *arg) {
   for (i = 0; i < jackd->num_output_channels; i++)
     out_buffer[i] = (float *) jack_port_get_buffer(jackd->output_port[i],
                     nframes);
-  if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use && jackd->playing_file > -1) {
+  if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL || mainw->preview)
+      && jackd->in_use && jackd->playing_file > -1) {
     //if ((mainw->agen_key == 0 || mainw->agen_needs_reinit || mainw->multitrack != NULL) && jackd->in_use) {
     // if a plugin is generating audio we do not use cache_buffers, otherwise:
     if (jackd->read_abuf == -1) {
@@ -496,7 +496,8 @@ static int audio_process(nframes_t nframes, void *arg) {
     jackd->num_calls++;
 
     if (!jackd->in_use || ((jackd->playing_file < 0 || jackd->seek_pos < 0.) && jackd->read_abuf < 0
-                           && (mainw->agen_key == 0 || mainw->multitrack != NULL))
+                           && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+                               || mainw->multitrack != NULL || mainw->preview))
         || jackd->is_paused) {
       /* output silence if nothing is being outputted */
       if (!jackd->is_silent) {
@@ -575,7 +576,8 @@ static int audio_process(nframes_t nframes, void *arg) {
             }
 
             if (cache_buffer != NULL && !wait_cache_buffer
-                && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL)) {
+                && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL
+                    || mainw->preview)) {
               push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
             }
 
@@ -587,7 +589,7 @@ static int audio_process(nframes_t nframes, void *arg) {
               if (!(*jackd->cancelled)) {
                 boolean eof = FALSE;
 
-                if (mainw->agen_key == 0) eof = cache_buffer->eof;
+                if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->preview) eof = cache_buffer->eof;
                 else if (jackd->playing_file > -1 && xfile != NULL && xfile->afilesize <= jackd->seek_pos) eof = TRUE;
 
                 if (eof) {
@@ -613,9 +615,10 @@ static int audio_process(nframes_t nframes, void *arg) {
               }
             }
           }
+
           xin_bytes = in_bytes;
         }
-        if (mainw->agen_key != 0 && mainw->multitrack == NULL) {
+        if (mainw->agen_key != 0 && mainw->multitrack == NULL && !mainw->preview) {
           // how much audio do we want to pull from any generator ?
           in_bytes = jackFramesAvailable * jackd->num_output_channels * 4;
           if (xin_bytes == 0) xin_bytes = in_bytes;
@@ -633,7 +636,7 @@ static int audio_process(nframes_t nframes, void *arg) {
           return 0;
         }
 
-        if (mainw->multitrack != NULL || (mainw->agen_key == 0 && !mainw->agen_needs_reinit))
+        if (mainw->multitrack != NULL || mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit))
           inputFramesAvailable = cache_buffer->samp_space;
         else inputFramesAvailable = jackFramesAvailable;
 
@@ -664,11 +667,11 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (numFramesToWrite > 0) {
         if (!from_memory) {
           //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n");
-          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) &&
+          if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf != NULL) && !mainw->preview &&
               !jackd->mute) { // TODO - try buffer16 instead of bufferf
             float *fbuffer = NULL;
 
-            if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
+            if (!mainw->preview && mainw->multitrack == NULL && (mainw->agen_key != 0 || mainw->agen_needs_reinit)) {
               // audio generated from plugin
               if (mainw->agen_needs_reinit) pl_error = TRUE;
               else {
@@ -782,7 +785,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 check_zero_buff(rbytes);
                 audio_stream(zero_buff, rbytes, jackd->astream_fd);
               } else {
-                if (mainw->agen_key == 0)
+                if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) && mainw->multitrack == NULL && !mainw->preview)
                   xbuf = (unsigned char *)cache_buffer->buffer16[0];
                 else {
                   // plugin is generating and we are streaming: convert fbuffer to s16
@@ -799,7 +802,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                   size_t bysize = 4, tsize = 0;
                   unsigned char *inbuf, *oinbuf = NULL;
 
-                  if (mainw->agen_key != 0) inbuf = (unsigned char *)cache_buffer->buffer16[0];
+                  if ((mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->multitrack == NULL && !mainw->preview)
+                    inbuf = (unsigned char *)cache_buffer->buffer16[0];
                   else oinbuf = inbuf = xbuf;
 
                   xbuf = (unsigned char *)lives_malloc(nbytes);
@@ -833,7 +837,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                 // push to stream
                 rbytes = numFramesToWrite * jackd->num_output_channels * 2;
                 audio_stream(xbuf, rbytes, jackd->astream_fd);
-                if (mainw->agen_key != 0 || xbuf != (unsigned char *)cache_buffer->buffer16[0]) lives_free(xbuf);
+                if (((mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->multitrack == NULL
+                     && !mainw->preview) || xbuf != (unsigned char *)cache_buffer->buffer16[0]) lives_free(xbuf);
               }
             } // end audio stream
             lives_freep((void **)&fbuffer);
@@ -897,7 +902,8 @@ static int audio_process(nframes_t nframes, void *arg) {
 
     if (!from_memory) {
       // push the cache_buffer to be filled
-      if (!wait_cache_buffer && mainw->agen_key == 0) {
+      if (!wait_cache_buffer && ((mainw->agen_key == 0 && ! mainw->agen_needs_reinit)
+                                 || mainw->multitrack != NULL || mainw->preview)) {
         push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
       }
       if (shrink_factor > 0.) jackd->seek_pos += xin_bytes;
@@ -1825,7 +1831,8 @@ void jack_aud_pb_ready(int fileno) {
         mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));
       }
     }
-    if (mainw->agen_key != 0 && mainw->multitrack == NULL) mainw->jackd->in_use = TRUE; // audio generator is active
+    if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
+        && mainw->multitrack == NULL && !mainw->preview) mainw->jackd->in_use = TRUE; // audio generator is active
   }
 }
 

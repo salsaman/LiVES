@@ -852,7 +852,7 @@ WEED_SETUP_START(200, 200) {
   for (i = 0; i < EQS; i++) {
     snprintf(name, 256, "input%03d", i);
     in_params[i] = weed_float_init(name, "", 0., -1000000000000., 1000000000000.);
-    gui = weed_parameter_template_get_gui(in_params[i]);
+    gui = weed_paramtmpl_get_gui(in_params[i]);
     weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
   }
 

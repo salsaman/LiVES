@@ -31,6 +31,7 @@ static int package_version = 1; // version of this package
 typedef struct {
   uint8_t *av_luma_data;
   unsigned int av_count;
+  uint64_t fv;
 } static_data;
 
 
@@ -59,6 +60,7 @@ static weed_error_t common_init(weed_plant_t *inst) {
   //inst->in_parameters[0]=weed_plugin_info_integer_init("Threshold",64,0,255);
   //
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
+  sdata->fv = fastrand(0);
 
   return WEED_SUCCESS;
 }
@@ -90,7 +92,6 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   unsigned char *end = src + height * irowstride;
   int inplace = (src == dest);
   int red = 0, blue = 2;
-  uint32_t fastrand_val;
 
   register int j;
 
@@ -122,11 +123,9 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   av_luma_data = sdata->av_luma_data;
 
-  fastrand_val = (((uint32_t)(timestamp & 0xFFFF)) ^ ((uint32_t)(timestamp >> 16)));
-
   for (; src < end; src += irowstride) {
     for (j = 0; j < width - 2; j += 3) {
-      fastrand_val = fastrand(fastrand_val);
+      sdata->fv = fastrand(sdata->fv);
       luma = calc_luma(&src[j], palette, 0);
       av_luma = (uint8_t)((double)luma / (double)sdata->av_count + (double)(av_luma_data[j / 3] * sdata->av_count) / (double)(
                             sdata->av_count + 1));
@@ -136,14 +135,14 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
         switch (type) {
         case 1:
           // fire-ish effect
-          dest[j + red] = (uint8_t)((uint8_t)((fastrand_val & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(
-                                      fastrand_val) & 0x7f00) >> 8))); //R & G
+          dest[j + red] = (uint8_t)((uint8_t)((sdata->fv & 0x7f00) >> 8) + (dest[j + 1] = (uint8_t)((fastrand(
+                                      sdata->fv) & 0x7f00) >> 8))); //R & G
           dest[j + blue] = (uint8_t)0;                   //B
           break;
         //
         case 2:
           // blue glow
-          dest[j + red] = dest[j + 1] = (uint8_t)((fastrand_val & 0xff00) >> 8);                                       //R&G
+          dest[j + red] = dest[j + 1] = (uint8_t)((sdata->fv & 0xff00) >> 8);                                       //R&G
           dest[j + blue] = (uint8_t)255; //B
           break;
         case 0:

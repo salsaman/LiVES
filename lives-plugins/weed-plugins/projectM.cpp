@@ -395,8 +395,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
     weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
     weed_plant_t *iparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-    weed_plant_t *itmpl = weed_get_plantptr_value(iparam, WEED_LEAF_TEMPLATE, NULL);
-    weed_plant_t *iparamgui = weed_get_plantptr_value(itmpl, "gui", NULL);
+    weed_plant_t *iparamgui = weed_param_get_gui(iparam);
 
     int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
     int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
@@ -459,7 +458,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     }
 
     inited = 1;
-    weed_set_string_array(iparamgui, "choices", sd->nprs, (char **)sd->prnames);
+    weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
   } else sd = statsd;
 
   sd->nprs--;

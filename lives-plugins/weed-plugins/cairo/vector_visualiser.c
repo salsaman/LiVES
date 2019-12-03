@@ -329,7 +329,7 @@ WEED_SETUP_START(200, 200) {
                                in_chantmpls, out_chantmpls,
                                in_params, NULL);
 
-  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_boolean_value(gui, "hidden", WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

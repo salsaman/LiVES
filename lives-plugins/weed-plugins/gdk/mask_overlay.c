@@ -287,7 +287,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     int flags, error;
 
     in_params[0] = weed_text_init("maskfile", "_Mask file (.png or .jpg)", defmaskfile);
-    gui = weed_parameter_template_get_gui(in_params[0]);
+    gui = weed_paramtmpl_get_gui(in_params[0]);
     weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
     flags = 0;
     if (weed_plant_has_leaf(in_params[0], WEED_LEAF_FLAGS))
@@ -309,7 +309,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                           &masko_deinit,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
 
-    gui = weed_filter_class_get_gui(filter_class);
+    gui = weed_filter_get_gui(filter_class);
     weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
     weed_set_string_value(gui, "layout_rfx_delim", "|");
     weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);

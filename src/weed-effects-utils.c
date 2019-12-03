@@ -36,9 +36,40 @@
 #define WEED_LOCAL_INLINE static inline
 #endif
 
-int32_t weed_plant_get_type(weed_plant_t *plant) {
+WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
   if (plant == NULL) return WEED_PLANT_UNKNOWN;
   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
+}
+
+WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant) {
+  weed_plant_t *gui = NULL;
+  int type = weed_plant_get_type(plant);
+  if (type != WEED_PLANT_FILTER_CLASS && type != WEED_PLANT_PARAMETER_TEMPLATE
+      && type != WEED_PLANT_PARAMETER) return NULL;
+  gui = weed_get_plantptr_value(plant, WEED_LEAF_GUI, NULL);
+  if (gui == NULL) {
+    gui = weed_plant_new(WEED_PLANT_GUI);
+    weed_leaf_set(plant, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &gui);
+  }
+  return gui;
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) {
+  return _weed_get_gui(filter);
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt) {
+  return _weed_get_gui(paramt);
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_param_get_gui(weed_plant_t *param) {
+  return _weed_get_gui(param);
+}
+
+WEED_GLOBAL_INLINE int weed_param_is_hidden(weed_plant_t *param) {
+  weed_plant_t *gui = weed_param_get_gui(param);
+  if (!gui) return weed_paramtmpl_hints_hidden(weed_param_get_template(param));
+  return weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL);
 }
 
 WEED_GLOBAL_INLINE int weed_filter_get_flags(weed_plant_t *filter) {
@@ -69,6 +100,61 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *f
 WEED_GLOBAL_INLINE int weed_chantmpl_get_flags(weed_plant_t *chantmpl) {
   if (!WEED_PLANT_IS_CHANNEL_TEMPLATE(chantmpl)) return 0;
   return weed_get_int_value(chantmpl, WEED_LEAF_FLAGS, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl) {
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return 0;
+  return weed_get_int_value(paramtmpl, WEED_LEAF_FLAGS, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_value_type(weed_plant_t *paramtmpl) {
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return WEED_SEED_INVALID;
+  if (weed_paramtmpl_has_variable_size(paramtmpl) && weed_plant_has_leaf(paramtmpl, WEED_LEAF_NEW_DEFAULT))
+    return weed_leaf_seed_type(paramtmpl, WEED_LEAF_NEW_DEFAULT);
+  return weed_leaf_seed_type(paramtmpl, WEED_LEAF_DEFAULT);
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl) {
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return 0;
+  return weed_get_int_value(paramtmpl, WEED_LEAF_HINT, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl) {
+  if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
+      && (weed_paramtmpl_get_flags(paramtmpl) & WEED_PARAMETER_VARIABLE_SIZE)) return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_default_size(weed_plant_t *paramtmpl) {
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return -1;
+  if (weed_paramtmpl_has_variable_size(paramtmpl)) return 0;
+  return weed_leaf_num_elements(paramtmpl, WEED_LEAF_DEFAULT);
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl) {
+  weed_plant_t *gui;
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return -1;
+  if ((gui = weed_paramtmpl_get_gui(paramtmpl)) != NULL
+      && weed_get_boolean_value(gui, WEED_LEAF_WRAP, NULL) == WEED_TRUE) return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl) {
+  weed_plant_t *gui;
+  if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
+      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl))) != NULL
+      && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
+    return WEED_TRUE;
+  return WEED_FALSE;
+}
+
+WEED_GLOBAL_INLINE int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl) {
+  weed_plant_t *gui;
+  if (WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)
+      && (gui = weed_paramtmpl_get_gui(weed_param_get_template(paramtmpl))) != NULL
+      && weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL) == WEED_TRUE)
+    return WEED_TRUE;
+  return WEED_FALSE;
 }
 
 WEED_GLOBAL_INLINE int weed_chantmpl_is_optional(weed_plant_t *chantmpl) {
@@ -130,13 +216,16 @@ WEED_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_palette_details(weed_plant_t *channel, int *clamping, int *sampling, int *subspace) {
-  int palette = weed_channel_get_palette(channel);
-  if (weed_palette_is_yuv(palette)) {
-    if (clamping) *clamping = weed_get_int_value(channel, WEED_LEAF_YUV_CLAMPING, NULL);
-    if (sampling) *sampling = weed_get_int_value(channel, WEED_LEAF_YUV_SAMPLING, NULL);
-    if (subspace) *subspace = weed_get_int_value(channel, WEED_LEAF_YUV_SUBSPACE, NULL);
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_PALETTE_NONE;
+  else {
+    int palette = weed_channel_get_palette(channel);
+    if (weed_palette_is_yuv(palette)) {
+      if (clamping) *clamping = weed_get_int_value(channel, WEED_LEAF_YUV_CLAMPING, NULL);
+      if (sampling) *sampling = weed_get_int_value(channel, WEED_LEAF_YUV_SAMPLING, NULL);
+      if (subspace) *subspace = weed_get_int_value(channel, WEED_LEAF_YUV_SUBSPACE, NULL);
+    }
+    return palette;
   }
-  return palette;
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_rowstride(weed_plant_t *channel) {
@@ -175,6 +264,47 @@ WEED_GLOBAL_INLINE weed_plant_t *weed_channel_get_template(weed_plant_t *channel
   return weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
 }
 
+WEED_GLOBAL_INLINE weed_plant_t *weed_param_get_template(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return NULL;
+  return weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_hint(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_HINT_UNSPECIFIED;
+  return weed_paramtmpl_get_hint(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_value_type(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_SEED_INVALID;
+  return weed_paramtmpl_value_type(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_has_variable_size(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_FALSE;
+  return weed_paramtmpl_has_variable_size(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_default_size(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return -1;
+  return weed_paramtmpl_default_size(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_does_wrap(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_FALSE;
+  return weed_paramtmpl_does_wrap(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_nchoices(weed_plant_t *param) {
+  weed_plant_t *gui;
+  if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
+  if ((gui = weed_param_get_gui(param)) != NULL && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
+    return weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
+  if ((gui = weed_paramtmpl_get_gui(weed_param_get_template(param))) != NULL
+      && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES))
+    return weed_leaf_num_elements(gui, WEED_LEAF_CHOICES);
+  return 0;
+}
+
 WEED_GLOBAL_INLINE float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans) {
   if (naudchans) *naudchans = 0;
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
@@ -209,6 +339,32 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_in_params(weed_plant_t *inst
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams) {
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_PARAMETERS, nparams);
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_value_int(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
+  return weed_get_int_value(param, WEED_LEAF_VALUE, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_param_get_value_boolean(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_FALSE;
+  return weed_get_boolean_value(param, WEED_LEAF_VALUE, NULL);
+}
+
+WEED_GLOBAL_INLINE double weed_param_get_value_double(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return 0.;
+  return weed_get_double_value(param, WEED_LEAF_VALUE, NULL);
+}
+
+WEED_GLOBAL_INLINE int64_t weed_param_get_value_int64(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return 0;
+  return weed_get_int64_value(param, WEED_LEAF_VALUE, NULL);
+}
+
+WEED_GLOBAL_INLINE char *weed_param_get_value_string(weed_plant_t *param) {
+  if (!WEED_PLANT_IS_PARAMETER(param)) return NULL;
+  if (weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) return NULL;
+  return weed_get_string_value(param, WEED_LEAF_VALUE, NULL);
 }
 
 //////////////////////////////////////////// utilities ///////////////////////

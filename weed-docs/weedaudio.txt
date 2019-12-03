@@ -165,7 +165,7 @@ Filter flags
 
  has multiple meanings depending on other settings.
 
- On its own it allows the plugin to remap audio subchannels with the audio layout (e.g swap left / right stereo).
+ On its own it allows the plugin to remap audio subchannels within the audio layout (e.g swap left / right stereo).
  It also allows the plugin to combine / split multiple input channels into various output channels (depending on the number
  of in / out channels provided)
  

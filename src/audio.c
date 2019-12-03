@@ -1197,7 +1197,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     }
 
     is_silent[track] = FALSE;
-
     infile = mainw->files[from_files[track]];
 
     in_asamps[track] = infile->asampsize / 8;
@@ -2376,7 +2375,11 @@ static void *cache_my_audio(void *arg) {
     pthread_mutex_unlock(&cond_mutex);
 
     if (cbuffer->die) {
-      if (mainw->multitrack != NULL && cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
+      if (mainw->event_list == NULL
+          || (mainw->record || (mainw->is_rendering && mainw->preview && !mainw->preview_rendering))) {
+        if (cbuffer->_fd != -1)
+          lives_close_buffered(cbuffer->_fd);
+      }
       return cbuffer;
     }
 

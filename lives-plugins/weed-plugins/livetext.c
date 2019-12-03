@@ -323,7 +323,7 @@ WEED_SETUP_START(200, 200) {
   in_params[6] = weed_switch_init("rising", "_Rising text", WEED_TRUE);
   in_params[7] = NULL;
 
-  pgui = weed_parameter_template_get_gui(in_params[0]);
+  pgui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
   filter_class = weed_filter_class_init("livetext", "salsaman", 1, filter_flags, palette_list,

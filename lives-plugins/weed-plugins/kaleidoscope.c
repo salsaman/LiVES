@@ -370,13 +370,13 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class = weed_filter_class_init("kaleidoscope", "salsaman", 1, WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                kal_init, kal_process, kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[2]);
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[2]);
 
   weed_set_boolean_value(in_params[1], WEED_LEAF_WRAP, WEED_TRUE);
 
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
-  gui = weed_parameter_template_get_gui(in_params[0]);
+  gui = weed_paramtmpl_get_gui(in_params[0]);
 
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 

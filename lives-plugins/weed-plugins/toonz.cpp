@@ -38,38 +38,17 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <array>
-#include <random>
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../libweed/weed.h"
-#include "../../libweed/weed-palettes.h"
-#include "../../libweed/weed-effects.h"
-#endif
-
-///////////////////////////////////////////////////////////////////
-
-static int num_versions = 1; // number of different weed api versions supported
-static int api_versions[] = {131}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
+//////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "weed-utils-code.c" // optional
-#include "weed-plugin-utils.c" // optional
 
 /////////////////////////////////////////////////////////////
+
+#include <array>
+#include <random>
 
 #define TWO_PI (M_PI * 2.)
 enum {

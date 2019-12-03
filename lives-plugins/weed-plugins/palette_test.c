@@ -61,7 +61,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_CLAMPED);
   weed_set_int_value(out_chantmpls[0], WEED_LEAF_YUV_CLAMPING, WEED_YUV_CLAMPING_CLAMPED);
 
-  gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_get_gui(filter_class);
   weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);

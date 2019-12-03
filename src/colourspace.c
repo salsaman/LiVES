@@ -11403,11 +11403,13 @@ LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data(weed_plant_t *layer, int *n
   return weed_get_voidptr_array_counted(layer, WEED_LEAF_PIXEL_DATA, nplanes);
 }
 
+
 LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_plant_t *layer, int *naudchans) {
   if (naudchans) *naudchans = 0;
   if (layer == NULL)  return NULL;
   return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
 }
+
 
 LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_plant_t *layer, int *nplanes) {
   if (nplanes) *nplanes = 0;

@@ -4108,6 +4108,8 @@ void on_lock_selwidth_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 void on_playall_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
 
+  if (menuitem != NULL && mainw->go_away) return;
+
   if (mainw->multitrack != NULL) {
     if (!LIVES_IS_PLAYING) {
       if (!mainw->multitrack->playing_sel) multitrack_playall(mainw->multitrack);
@@ -4316,7 +4318,8 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       pthread_mutex_lock(&mainw->event_list_mutex);
 
 #ifdef RT_AUDIO
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
+      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
+          && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
           prefs->audio_src == AUDIO_SRC_INT) {
         weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
         insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
@@ -9597,7 +9600,8 @@ void changed_fps_during_pb(LiVESSpinButton *spinbutton, livespointer user_data) 
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
       if (mainw->jackd->playing_file == mainw->current_file) {
         mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps;
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
+            && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
           jack_get_rec_avals(mainw->jackd);
         }
       }
@@ -9608,7 +9612,8 @@ void changed_fps_during_pb(LiVESSpinButton *spinbutton, livespointer user_data) 
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
       if (mainw->pulsed->playing_file == mainw->current_file) {
         mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
-        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO) && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
+            && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
           pulse_get_rec_avals(mainw->pulsed);
         }
       }

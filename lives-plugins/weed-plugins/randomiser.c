@@ -135,7 +135,7 @@ WEED_SETUP_START(200, 200) {
     snprintf(name, 256, "input%03d", i);
     snprintf(label, 256, "Trigger %03d", i);
     in_params[i] = weed_switch_init(name, label, WEED_FALSE);
-    gui = weed_parameter_template_get_gui(in_params[i]);
+    gui = weed_paramtmpl_get_gui(in_params[i]);
     weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
     snprintf(name, 256, "Output %03d", i);
     out_params[i] = weed_out_param_float_init_nominmax(name, 0.);

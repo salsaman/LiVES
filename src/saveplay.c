@@ -2027,7 +2027,6 @@ void play_file(void) {
 #endif
 
   mainw->ext_playback = FALSE;
-  mainw->deltaticks = 0;
 
   mainw->rec_aclip = -1;
 
@@ -2054,6 +2053,9 @@ void play_file(void) {
     exact_preview = mainw->multitrack->exact_preview;
 #endif
   }
+
+  // reinit all active effects
+  if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
   if (mainw->record) {
     if (mainw->preview) {
@@ -2163,8 +2165,8 @@ void play_file(void) {
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if (audio_player == AUD_PLAYER_JACK
-      //|| audio_player == AUD_PLAYER_PULSE
-     ) audio_cache_init();
+      || (mainw->event_list != NULL && (!mainw->is_rendering || !mainw->preview || mainw->preview_rendering)))
+    audio_cache_init();
 
   if (mainw->blend_file != -1 && mainw->files[mainw->blend_file] == NULL) mainw->blend_file = -1;
 
@@ -2367,8 +2369,6 @@ void play_file(void) {
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-
-
     if (mainw->playing_sel) {
       cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
     } else {
@@ -2475,7 +2475,7 @@ void play_file(void) {
     }
     if (audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed != NULL) {
+      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0) && mainw->pulsed != NULL) {
         if (mainw->agen_key != 0) {
           mainw->pulsed->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
@@ -2587,10 +2587,6 @@ void play_file(void) {
         }
       }
 
-      if (mainw->multitrack != NULL) {
-        audio_cache_init();
-      }
-
       if (mainw->multitrack == NULL || mainw->multitrack->pb_start_event == NULL) {
         do_progress_dialog(FALSE, FALSE, NULL);
 
@@ -2676,7 +2672,7 @@ void play_file(void) {
 
   if (mainw->loop_locked) unlock_loop_lock();
 
-  if (mainw->multitrack != NULL) {
+  if (mainw->event_list != NULL && !mainw->record && !(mainw->is_rendering && mainw->preview)) {
     audio_cache_end();
   }
 
@@ -2777,7 +2773,10 @@ void play_file(void) {
   lives_freep((void **)&mainw->urgency_msg);
   mainw->actual_frame = 0;
 
-  if (audio_player == AUD_PLAYER_JACK) audio_cache_end();
+  if (audio_player == AUD_PLAYER_JACK
+      || (mainw->event_list != NULL && !mainw->record && (!mainw->is_rendering
+          || !mainw->preview || mainw->preview_rendering)))
+    audio_cache_end();
 
   lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
 
@@ -5515,6 +5514,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       if (is_scrap) {
         mainw->scrap_file = mainw->current_file;
         cfile->opening = FALSE;
+        lives_snprintf(cfile->type, 40, "scrap");
         cfile->frames = 1;
         cfile->hsize = 640;
         cfile->vsize = 480;
@@ -5527,10 +5527,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       } else {
         lives_clip_details_t detail;
         int asigned = 0, aendian = LIVES_LITTLE_ENDIAN;
+        cfile->opening = FALSE;
+        lives_snprintf(cfile->type, 40, "ascrap");
         detail = CLIP_DETAILS_ACHANS;
         retval = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
         if (!retval) cfile->achans = 0;
-
         if (cfile->achans == 0) retval = FALSE;
         else retval = TRUE;
 
@@ -5572,8 +5573,9 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           mainw->first_free_file = mainw->current_file;
           continue;
         }
-      }
-      if (is_ascrap) {
+        if (!prefs->vj_mode) {
+          cfile->afilesize = reget_afilesize_inner(mainw->current_file);
+        }
         mainw->ascrap_file = mainw->current_file;
         continue;
       }
@@ -5701,9 +5703,13 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
     if ((!IS_VALID_CLIP(start_file) || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->achans == 0))
         && mainw->files[1] != NULL && start_file != 1) {
-      for (start_file = MAX_FILES; start_file > 0 && mainw->files[start_file] == NULL; start_file--) {
-        if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file);
+      for (start_file = MAX_FILES;
+           start_file > 0 && (mainw->files[start_file] == NULL
+                              || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->achans == 0));
+           start_file--) {
+        if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file) break;
       }
+      if (start_file > 0) close_current_file(start_file);
     }
     if (start_file != mainw->current_file) {
       switch_to_file(mainw->current_file, start_file);

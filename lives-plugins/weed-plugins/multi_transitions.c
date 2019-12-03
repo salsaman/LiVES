@@ -33,7 +33,7 @@ static int package_version = 1; // version of this package
 
 typedef struct {
   float *mask;
-  uint32_t fastrand_val;
+  uint64_t fastrand_val;
 } _sdata;
 
 
@@ -55,7 +55,7 @@ static weed_error_t dissolve_init(weed_plant_t *inst) {
 
   for (i = 0; i < end; i += width) {
     for (j = 0; j < width; j++) {
-      sdata->mask[i + j] = (float)((double)(sdata->fastrand_val = fastrand(sdata->fastrand_val)) / (double)UINT32_MAX);
+      sdata->mask[i + j] = (float)((double)(sdata->fastrand_val = fastrand(sdata->fastrand_val)) / (double)UINT64_MAX);
     }
   }
 

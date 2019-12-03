@@ -16,9 +16,13 @@ static int package_version = 1; // version of this package
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
+#include <weed/weed.h>
+#include <weed/weed-utils.h>
 #include <weed/weed-plugin-utils.h> // optional
 #else
 #include "../../libweed/weed-plugin.h"
+#include "../../libweed/weed.h"
+#include "../../libweed/weed-utils.h"
 #include "../../libweed/weed-plugin-utils.h" // optional
 #endif
 
@@ -26,15 +30,13 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-#define NUM_WRMS 100
-
 typedef struct {
   int x;
   int y;
   int *px;
   int *py;
   int *wt;
-  uint32_t fastrand_val;
+  uint64_t fastrand_val;
   int old_width;
   int old_height;
 } _sdata;
@@ -44,21 +46,27 @@ static int ress[8];
 static weed_error_t haip_init(weed_plant_t *inst) {
   _sdata *sdata = weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+  else {
+    weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+    int num_wurms = weed_param_get_value_int(in_params[0]);
+    weed_free(in_params);
 
-  sdata->x = sdata->y = -1;
+    sdata->x = sdata->y = -1;
 
-  weed_set_voidptr_value(inst, "plugin_internal", sdata);
+    weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  sdata->px = weed_malloc(NUM_WRMS * sizeof(int));
-  sdata->py = weed_malloc(NUM_WRMS * sizeof(int));
-  sdata->wt = weed_malloc(NUM_WRMS * sizeof(int));
+    sdata->px = weed_malloc(num_wurms * sizeof(int));
+    sdata->py = weed_malloc(num_wurms * sizeof(int));
+    sdata->wt = weed_malloc(num_wurms * sizeof(int));
 
-  for (int i = 0; i < NUM_WRMS; i++) {
-    sdata->px[i] = sdata->py[i] = -1;
+    for (int i = 0; i < num_wurms; i++) {
+      sdata->px[i] = sdata->py[i] = -1;
+    }
+
+    sdata->old_width = sdata->old_height = -1;
+    sdata->fastrand_val = fastrand(0);
+    return WEED_SUCCESS;
   }
-
-  sdata->old_width = sdata->old_height = -1;
-  return WEED_SUCCESS;
 }
 
 
@@ -119,44 +127,45 @@ static int select_dir(_sdata *sdata) {
   int num_choices = 1;
   int i;
   int mychoice;
+  float fval;
 
   for (i = 0; i < 8; i++) {
     if (ress[i] != -1) num_choices++;
   }
 
   if (num_choices == 0) return 1;
-
   sdata->fastrand_val = fastrand(sdata->fastrand_val);
-  mychoice = (int)((float)((unsigned char)(sdata->fastrand_val & 0XFF)) / 255. * num_choices);
+  fval = (float)((sdata->fastrand_val >> 16) & 0XFFFF) / 65535.;
+  mychoice = (int)(fval * (float)(num_choices));
 
   switch (ress[mychoice]) {
   case 0:
-    sdata->x = sdata->x - 1;
-    sdata->y = sdata->y - 1;
+    sdata->x--;
+    sdata->y--;
     break;
   case 1:
-    sdata->y = sdata->y - 1;
+    sdata->y--;
     break;
   case 2:
-    sdata->x = sdata->x + 1;
-    sdata->y = sdata->y - 1;
+    sdata->x++;
+    sdata->y--;
     break;
   case 3:
-    sdata->x = sdata->x - 1;
+    sdata->x--;
     break;
   case 4:
-    sdata->x = sdata->x + 1;
+    sdata->x++;
     break;
   case 5:
-    sdata->x = sdata->x - 1;
-    sdata->y = sdata->y + 1;
+    sdata->x--;
+    sdata->y++;
     break;
   case 6:
-    sdata->y = sdata->y + 1;
+    sdata->y++;
     break;
   case 7:
-    sdata->x = sdata->x + 1;
-    sdata->y = sdata->y + 1;
+    sdata->x++;
+    sdata->y++;
     break;
   }
   return 0;
@@ -211,6 +220,8 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
   unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  int num_wurms = weed_param_get_value_int(in_params[0]);
   unsigned char *pt;
 
   int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL), width3 = width * 3;
@@ -222,10 +233,12 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int count;
   int luma, adj;
 
-  uint32_t fastrand_val;
+  uint64_t fastrand_val;
   float scalex, scaley;
 
   register int i;
+
+  weed_free(in_params);
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   sdata->fastrand_val = fastrand_val = fastrand(0);
@@ -242,15 +255,15 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   scalex = (float)width / (float)sdata->old_width;
   scaley = (float)height / (float)sdata->old_height;
 
-  for (i = 0; i < NUM_WRMS; i++) {
+  for (i = 0; i < num_wurms; i++) {
     count = 1000;
     if (sdata->px[i] == -1) {
-      fastrand_val = fastrand(fastrand_val);
-      sdata->px[i] = (int)(((fastrand_val >> 24) / 255.*(width - 2))) + 1;
-      fastrand_val = fastrand(fastrand_val);
-      sdata->py[i] = (int)(((fastrand_val >> 24) / 255.*(height - 2))) + 1;
-      fastrand_val = fastrand(fastrand_val);
-      sdata->wt[i] = (int)(((fastrand_val >> 24) / 255.*2));
+      sdata->fastrand_val = fastrand(sdata->fastrand_val);
+      sdata->px[i] = (int)(((sdata->fastrand_val & 0xFF) / 255.*(width - 2))) + 1;
+      sdata->fastrand_val = fastrand(sdata->fastrand_val);
+      sdata->py[i] = (int)(((sdata->fastrand_val & 0xFF) / 255.*(height - 2))) + 1;
+      sdata->fastrand_val = fastrand(sdata->fastrand_val);
+      sdata->wt[i] = (int)(((sdata->fastrand_val & 0xFF) / 255.*2));
     }
 
     sdata->x = (float)sdata->px[i] * scalex;
@@ -290,12 +303,13 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
-
+  weed_plant_t *in_params[] = {weed_integer_init("nwurms", "Number of Wurms", 200, 1, 4092), NULL};
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("haip", "salsaman", 1, 0, palette_list,
-                               haip_init, haip_process, haip_deinit, in_chantmpls, out_chantmpls, NULL, NULL);
+                               haip_init, haip_process, haip_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
+  weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);

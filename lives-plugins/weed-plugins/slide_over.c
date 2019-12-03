@@ -26,7 +26,7 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-static inline int pick_direction(uint32_t fastrand_val) {
+static inline int pick_direction(uint64_t fastrand_val) {
   return ((fastrand_val >> 24) & 0x03) + 1;
 }
 
@@ -168,7 +168,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class = weed_filter_class_init("slide over", "salsaman", 1, 0, palette_list,
                                sover_init, sover_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
-  weed_plant_t *gui = weed_filter_class_get_gui(filter_class);
+  weed_plant_t *gui = weed_filter_get_gui(filter_class);
 
   char *rfx_strings[] = {"layout|p0|", "layout|hseparator|", "layout|fill|\"Slide direction\"|fill|",
                          "layout|p1|", "layout|p2|p3|", "layout|p4|p5|", "layout|hseparator|"

@@ -978,7 +978,7 @@ e.g.
 - calling deinit_func
 - threading
 - unloading the plugin
-
+- creating a user interface for the filter
 
 
 === thread concurrency ====
@@ -1300,8 +1300,7 @@ The function returns a weed error code (see below).
 The init_func() function allows the plugin to create any internal
 memory structures it needs; the plugin can store internal data as
 leaves that have keys prefixed with "plugin_" in the filter_instance 
-(see the definition of filter instance plant). The plugin can also (re)set
-the "gui" settings for parameter_templates (see below).
+(see the definition of filter instance plant). The plugin can also (re)set the "gui" settings for parameters (see below).
 
 The function returns WEED_SUCCESS or another error code (see below). 
 
@@ -2046,7 +2045,7 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
 
 '''Optional leaves for all channel plants''': [[BR]]
  * "disabled"     : WEED_SEED_BOOLEAN : the host may set this to WEED_TRUE before calling init_func()
-   		  if the corresponding channel template has the "optional" leaf set to WEED_TRUE, in order to mark non
+   		  ptovided the corresponding channel template has the "optional" leaf set to WEED_TRUE, in order to mark non
 		  used channels.
 
 		  The Host MUST NOT change this value without reinitialising the instance,
@@ -2140,10 +2139,11 @@ value for the parameter. The host should not change any other leaves.
 
 * "default" :                default value(s) of the parameter : must contain at least one value of the correct seed_type
   	    		     unless the template has the WEED_PARAMETER_VARIABLE_SIZE flag set.
-			     For out parameters, only the seed_type need be set, setting an actual value is optional.
+			     For out parameters, only the seed_type need be set, setting an actual value is optional and probably
+			     meaningless
 
 
- * "new_default" : 	     mmandatory only for in parameters which have the flag WEED_PARAMETER_VARIABLE_SIZE set. 
+ * "new_default" : 	     mandatory only for in parameters which have the flag WEED_PARAMETER_VARIABLE_SIZE set. 
    		 	     Specifes the default value to be used by the host when adding new values to the parameter.
 
 
@@ -2153,7 +2153,7 @@ value for the parameter. The host should not change any other leaves.
 
 
 '''Optional leaves''':[[BR]]
- * "flags"            : WEED_SEED_INT : bitmap of parameter flags
+ * "flags"            : WEED_SEED_INT : bitmap of parameter template flags
 
  * "description"      : WEED_SEED_STRING : parameter description
 
@@ -2197,20 +2197,24 @@ Plugins should not create parameters with this hint.
 
 "value" and "default" are constrained by min and max: min <= value <= max
 The "default" leaf can only be of seed type WEED_SEED_INT. "default"
-may have any number of elements.
+may have any number of elements  > 0.
+0 elements in the default is only allowed for variable sized values, and "new_default" must be defined then.
 
  == mandatory ==
+
+* "default"
 
  * "min" : WEED_SEED_INT : minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
 
  * "max" : WEED_SEED_INT : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
 
+   Note that although these are mandatory they are still only hints. The host may ignore them and the
+   plugin must not assume that data supplied to it is meaningful. If
+   the plugin receives invalid input data it is expected to continue
+   to run without failure and, where possible, produce a sensible output.
+
 
 == optional ==
-
- * "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should wrap when going below min or above max, OPTIONAL
-   	    		      I.e if any attempts to set the value n outside the range of min / max should be resolved by taking the modulus:
-			      n mod (max - min) + min,  rather then being clamped in the range min <= n <= max which is the default.
 
 
 * "is_transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this parameter is a transition,
@@ -2229,17 +2233,21 @@ may have any number of elements.
 
 "value" and "default" are constrained by min and max: min <= value <= max
 
-The "default" leaf can only be of seed type WEED_SEED_DOUBLE. "default" may have any number of elements.
+The "default" leaf can only be of seed type WEED_SEED_DOUBLE. "default" may have any number of elements > 0.
+0 elements in the default is only allowed for variable sized values, and "new_default" must be defined then.
 
 == mandatory ==
-
+ 
  * "min" : WEED_SEED_DOUBLE : minimal value of the parameter, MANDATORY for in parameters (optional for out parameters)
 
  * "max" : WEED_SEED_DOUBLE : maximal value of the parameter, MANDATORY for in parameters (optional for out parameters)
 
-== optional ==
+   Note that although these are mandatory they are still only hints. The host may ignore them and the
+   plugin must not assume that data supplied to it is meaningful. If
+   the plugin receives invalid input data it is expected to continue
+   to run without failure and, where possible, produce a sensible output.
 
-* "wrap" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that the "value" should be wrapped when going below min or above max
+== optional ==
 
 * "is_transition" : WEED_SEED_BOOLEAN : WEED_TRUE Indicates that this parameter is a transition,
   		    at min the effect is fully "off", showing ONLY the first in_channel as output,
@@ -2287,24 +2295,45 @@ Depending on the seed_type of "default", the host knows the seed type of "value"
 * "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter,
   	  		      		     (optional for out parameters)
 
+   Note that these are only hints. The host may ignore them and the
+   plugin must not assume that data supplied to it is meaningful. If
+   the plugin receives invalid input data it is expected to continue
+   to run without failure and, where possible, produce a sensible output.
+
 * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
 
 
 == optional ==
 
+* "range_max" : The maximum theoretical value for the R, G, B A components. I.e a "value" of {0, 0, 0, 0}
+  	      	    	    represents transparent black, whilst a value of {"range_max", "range_max", "range_max", "range_max"}
+			    would indicate opaque white. If not present, the value of "range_max" is assumed to be 255 for
+			    integer color types, and 1.0 for double color types. A plugin may override this for a parameter,
+			    for example, the value could be set to 65535 to use 16 bit color values.
+			    Affects the scaling of values in "value", "min", "max" and "new_default".
+			    Valid for in and out parameters.
+
+   Note that this is only a hint to allow the host to sensibly scale GUI values.
+   The host may ignore this and the
+   plugin must not assume that data supplied to it is meaningful. If
+   the plugin receives invalid input data it is expected to continue
+   to run without failure and, where possible, produce a sensible output.
+
+
  * "gamma_type" : WEED_SEED_INT : (optional) If the plugin set the flag WEED_FLAG_LINEAR_GAMMA, 
-					     then this leaf can be set to WEED_GAMMA_SRGB to indicate the parameter values are in
+					     then this leaf can be set to WEED_GAMMA_SRGB to indicate the parameter values are measured in
 					     the SRGB colourspace. Otherwise it is ignored by the host.
 
 
 ==== Number of elements in the leaves ====
+
 
 For color parameters:
 -- WEED_LEAF_DEFAULT --
 The number of elements in "default" set by the plugin MUST always be a multiple of 3 or 4 (depending on the "colorspace") - 
 (3 for RGB, 4 for RGBA). Normally it must contain at least one RGB(A) value.
 
-If  the plugin sets the parameter template flag WEED_PARAMETER_VARIABLE_SIZE;
+If the plugin sets the parameter template flag WEED_PARAMETER_VARIABLE_SIZE;
 then the "default" may have 0 values, or be absent; and "new_default" MUST contain exactly one RGB(A) value.
 
 
@@ -2343,7 +2372,8 @@ parameters, the host should create the parameters from their templates, but not 
  * "type" == WEED_PLANT_PARAMETER
 
 '''Mandatory leaves''': [[BR]]
- * "template" : WEED_SEED_PLANTPTR : pointer to the parameter_template used to create the parameter
+ * "template" : WEED_SEED_PLANTPTR : pointer to the parameter_template used to create the parameter. The host should set this
+   	      			   so that the plugin can locate any values set in the corresponding template.
 
  * "value" : seed type of the value MUST match the type of "default"
 	     leaf of the parent_template. Lists/arrays can be implemented by
@@ -2441,30 +2471,37 @@ rely on setting "copy_value_to" to force the host to set indentical
     underscore as mnemonic
 
  * "decimals" : WEED_SEED_INT : number of decimals for a FLOAT or
-   COLOR (FLOAT) hint. For other hints this will be ignored.
+   COLOR (FLOAT) hint. For other hints this will be ignored. This is only a hint, the actual value may contain more digits after
+   the decimal point.
 
  * "step_size" : seed type matches type of "default" : step value for
-   INTEGER, FLOAT and COLOR type parameters : used for spin buttons, etc.
+   INTEGER, FLOAT and COLOR type parameters : used for spin buttons, etc. This is only a hint, there is no guarantee that
+   the actual value will be an integer multiple of step_size.
 
  * "maxchars" : WEED_SEED_INT : max display length in (utf-8) chars for a
    STRING hint. For other hints, this will be ignored. A value < 1 should
-   also be ignored.
+   also be ignored. This is only a hint, there is no guarantee that the actual value will not be greater in length.
+
+ * "wrap" : WEED_SEED_BOOLEAN : only valid for INT and FLOAT types
+
+   	  WEED_TRUE hints to the host that the "value" should wrap when going below min or above max,
+   	   I.e attempts to set the value n outside the range of min / max should be resolved by taking the modulus:
+	   n mod (max - min) + min,  rather then being clamped in the range min <= n <= max which is the default.
 
 
-/////////
+///////// the following may also be set / amended by the plugin in a parameter gui during init_func()
 
 * "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
    means second, etc.)
    of another in_parameter : if the "value" of this parameter is changed, then the
    "value" of the parameter pointed to should be changed be
    set to the same value by the host. Both parameters MUST have the same HINT and
-   number of elements in "default", otherwise this will be ignored. Only
-   valid for in_parameters. If more than one parameter points to the
+   number of elements in "default", or both must have WEED_PARAMETER_VARIABLE_SIZE set, otherwise this will be ignored.
+   Only valid for in_parameters. If more than one parameter points to the
    same in_parameter, the behaviour is undefined. NOTE: this is not
-   strictly GUI functionality. Even GUI-less hosts might want to implement
+   _STRICTLY_ GUI functionality. Even GUI-less hosts might want to implement
    this ! This can be disabled by setting it to a value < 0, or by
    setting it to point to itself.
-
 
 
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
@@ -2474,7 +2511,7 @@ rely on setting "copy_value_to" to force the host to set indentical
 
  * "choices" : WEED_SEED_STRING : n values for a choice:
 
-only valid for INT parameters, the "value" element(s) indicate the selected
+   only valid for INT parameters, the "value" element(s) indicate the selected
    element(s);
 
    The actual value of "max" is ignored,
@@ -2485,9 +2522,10 @@ only valid for INT parameters, the "value" element(s) indicate the selected
    leaf will be ignored. If "choices" is present, then "wrap" and
    "step_size" may be ignored by the host.
 
-   Occasionally, the plugin may not know the valid set of choices until it is actually running,
-   or the list may need to be updated depending on other factors. In this case, the plugin should set a placeholder value here
-   and set the actual list in its init_func, in the parameter gui plant.
+   Occasionally, the plugin may not know the valid set of choices until it is actually initialised,
+   or the list may need to be updated depending on other factors.
+   In this case, the plugin MUST set a placeholder value here
+   and may set the actual list in its init_func, in the parameter GUI plant.
    
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
@@ -2522,15 +2560,15 @@ At other times the plugin must not alter any of the leaves, except for any priva
 				the values of other parameters, channel sizes and palettes, etc. If this leaf also exists in the parameter template
 				then this leaf overrides any default set there. In this more detailed version of the leaf,
 
-				Needs testing:
+				[Needs testing for practicality]
 				if the flag WEED_PARAMETER_VALUE_PER_CHANNEL is set, then 1 value may be set per channel.
 
 
  * "choices" : WEED_SEED_STRING : n values for a choice: only valid for INT parameters, the "value" element(s)
-   indicate the selected element(s); 
+   indicate the selected element(s); (see the leaf in parameter_template)
 
    The plugin may set this in the parameter gui plant during init_func(), since sometimes it is not possible for the plugin to define
-   all the entries until it is actually running.
+   all the entries until it is actually initialised with channels and parameters.
 
    
 
@@ -2860,18 +2898,14 @@ Explanation of flag bits.
 ==== Channel template flags ====
 
   * WEED_CHANNEL_OPTIONAL
-    channel that can be left out at initialization time.
-    the host decides not to use the channel, it must set "disabled" to
-    WEED_TRUE for the channel. The host must reinit
-    the instance if a channel is enabled or disabled after init_func().
-
- *  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE   [[BR]]
-    host must reinit the plugin before calling process_func() if the
-    channel size (height or width in (macro)pixels) is changed.
-
- *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE   [[BR]]
-    host must reinit the plugin before calling process_func() if the channel palette is changed. For YUV palettes,
-    the host must also reinit the plugin if the clamping, subspace or sampling changes.
+    channel that can be disabled during processing.
+    The host MUST still create the channel, however if the "disabled" lef is set to WEED_TRUE for the channel, all the other
+    leaves in it should be ignored.
+    The host must reinit the instance if a channel is enabled or disabled after init_func().
+    The exception to this rule is for channel templates which have "max_repeats" set. In that case the host may create up to
+    n copies of the channel from the template (if n is 0, then a limitless number). If such a channel is also set optional, then
+    the host may choose to make zero copies of it. In addition, the host may enable / disable channels created from such
+    a template without the need for a reinit, provided the number of copies rmains the same.
 
  *  WEED_CHANNEL_CAN_DO_INPLACE    [[BR]]
     If this flag bit is set, the filter can do inplace operations (source and destination are the same)
@@ -2879,6 +2913,14 @@ Explanation of flag bits.
     equal to the  "pixel_data" array elemnts of the corresponding (same number; not counting "disabled" channels) 
     in channel. The values of "height", "width", "rowstrides" and "current_palette" for in and out channels must also be equal,
     The flag bit is only valid for OUT channels. 
+
+*  WEED_CHANNEL_REINIT_ON_SIZE_CHANGE   [[BR]]
+    host must reinit the plugin before calling process_func() if the
+    channel size (height or width in (macro)pixels) is changed.
+
+ *  WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE   [[BR]]
+    host must reinit the plugin before calling process_func() if the channel palette is changed. For YUV palettes,
+    the host must also reinit the plugin if the clamping, subspace or sampling changes.
 
  *  WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    [[BR]]
     host must reinit the plugin before calling process_func() if the
@@ -2950,23 +2992,23 @@ Flag bits >= 30 are free to use for custom flags.
 
 ==== Plant types ====
 
-  * WEED_PLANT_HOST_INFO          255
+  * WEED_PLANT_HOST_INFO
 
-  * WEED_PLANT_PLUGIN_INFO        1
+  * WEED_PLANT_PLUGIN_INFO
 
-  * WEED_PLANT_FILTER_CLASS       2
+  * WEED_PLANT_FILTER_CLASS
 
-  * WEED_PLANT_FILTER_INSTANCE    3
+  * WEED_PLANT_FILTER_INSTANCE
 
-  * WEED_PLANT_CHANNEL_TEMPLATE   4
+  * WEED_PLANT_CHANNEL_TEMPLATE
 
-  * WEED_PLANT_PARAMETER_TEMPLATE 5
+  * WEED_PLANT_PARAMETER_TEMPLATE
 
-  * WEED_PLANT_CHANNEL            6
+  * WEED_PLANT_CHANNEL
 
-  * WEED_PLANT_PARAMETER          7
+  * WEED_PLANT_PARAMETER
 
-  * WEED_PLANT_GUI                8
+  * WEED_PLANT_GUI
 
 
 
@@ -2974,9 +3016,9 @@ Flag bits >= 30 are free to use for custom flags.
 
  * WEED_HINT_UNSPECIFIED  0
    Parameter is of an unknown type. Plugins should never use this
-   directly, it is intended only for wrapper plugins which may need to
-   convert unknown parameter types. These parameter types may or may not
-   have "min" and "max". They will have at least "name" and "default" leaves.
+   deliberatetly, it is intended for wrapper plugins which may need to
+   enumerate out of scope parameter types. These parameter types may or may not
+   have "min" and "max". They should have at least "name", and if possible "default" leaves.
 
  * WEED_HINT_INTEGER  1
 
@@ -3726,3 +3768,405 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 
   return 0;
 }
+
+
+
+
+
+Appendix A. Weed Utlity functions:
+
+For the HOST:
+
+/* check if leaf exists and has a value */
+int weed_plant_has_leaf(weed_plant_t *, const char *key);
+
+/* check if leaf exists; may have a seed_type but no value set */
+int weed_leaf_exists(weed_plant_t *, const char *key);
+
+weed_error_t weed_set_int_value(weed_plant_t *, const char *key, int32_t value);
+weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double value);
+weed_error_t weed_set_boolean_value(weed_plant_t *, const char *key, int32_t value);
+weed_error_t weed_set_int64_value(weed_plant_t *, const char *key, int64_t value);
+weed_error_t weed_set_string_value(weed_plant_t *, const char *key, const char *value);
+weed_error_t weed_set_funcptr_value(weed_plant_t *, const char *key, void *value);
+weed_error_t weed_set_voidptr_value(weed_plant_t *, const char *key, void *value);
+weed_error_t weed_set_plantptr_value(weed_plant_t *, const char *key, weed_plant_t *value);
+weed_error_t weed_set_custom_value(weed_plant_t *, const char *key, int32_t seed_type, void *value);
+
+int32_t weed_get_int_value(weed_plant_t *, const char *key, weed_error_t *error);
+double weed_get_double_value(weed_plant_t *, const char *key, weed_error_t *error);
+int32_t weed_get_boolean_value(weed_plant_t *, const char *key, weed_error_t *error);
+int64_t weed_get_int64_value(weed_plant_t *, const char *key, weed_error_t *error);
+char *weed_get_string_value(weed_plant_t *, const char *key, weed_error_t *error);
+weed_funcptr_t weed_get_funcptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+void *weed_get_voidptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+weed_plant_t *weed_get_plantptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+void *weed_get_custom_value(weed_plant_t *, const char *key, int32_t seed_type, weed_error_t *error);
+
+weed_error_t weed_set_int_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *values);
+weed_error_t weed_set_double_array(weed_plant_t *, const char *key, weed_size_t num_elems, double *values);
+weed_error_t weed_set_boolean_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *values);
+weed_error_t weed_set_int64_array(weed_plant_t *, const char *key, weed_size_t num_elems, int64_t *values);
+weed_error_t weed_set_string_array(weed_plant_t *, const char *key, weed_size_t num_elems, char **values);
+weed_error_t weed_set_funcptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_funcptr_t *values);
+weed_error_t weed_set_voidptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, void **values);
+weed_error_t weed_set_plantptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_plant_t **values);
+weed_error_t weed_set_custom_array(weed_plant_t *, const char *key, int32_t seed_type, weed_size_t num_elems, void **values);
+
+int32_t *weed_get_int_array(weed_plant_t *, const char *key, weed_error_t *error);
+double *weed_get_double_array(weed_plant_t *, const char *key, weed_error_t *error);
+int32_t *weed_get_boolean_array(weed_plant_t *, const char *key, weed_error_t *error);
+int64_t *weed_get_int64_array(weed_plant_t *, const char *key, weed_error_t *error);
+char **weed_get_string_array(weed_plant_t *, const char *key, weed_error_t *error);
+weed_funcptr_t *weed_get_funcptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+void **weed_get_voidptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+weed_plant_t **weed_get_plantptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+void **weed_get_custom_array(weed_plant_t *, const char *key, int32_t seed_type, weed_error_t *error);
+
+int32_t *weed_get_int_array_counted(weed_plant_t *, const char *key, int *count);
+double *weed_get_double_array_counted(weed_plant_t *, const char *key, int *count);
+int32_t *weed_get_boolean_array_counted(weed_plant_t *, const char *key, int *count);
+int64_t *weed_get_int64_array_counted(weed_plant_t *, const char *key, int *count);
+char **weed_get_string_array_counted(weed_plant_t *, const char *key, int *count);
+weed_funcptr_t *weed_get_funcptr_array_counted(weed_plant_t *, const char *key, int *count);
+weed_voidptr_t *weed_get_voidptr_array_counted(weed_plant_t *, const char *key, int *count);
+weed_plant_t **weed_get_plantptr_array_counted(weed_plant_t *, const char *key, int *count);
+weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *, const char *key, int32_t seed_type, int *count);
+
+/* make a copy dest leaf from src leaf. Pointers are copied by reference only, but strings are allocated */
+weed_error_t weed_leaf_copy(weed_plant_t *dest, const char *keyt, weed_plant_t *src, const char *keyf);
+
+/* copy all leaves in src to dst using weed_leaf_copy */
+weed_plant_t *weed_plant_copy(weed_plant_t *src);
+
+/* returns the value of the "type" leaf; returns WEED_PLANT_UNKNOWN if plant is NULL */
+int32_t weed_get_plant_type(weed_plant_t *);
+
+/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
+int check_weed_abi_compat(int32_t higher, int32_t lower);
+
+/* returns WEED_TRUE if higher and lower versions are compatible, WEED_FALSE if not */
+int check_filter_api_compat(int32_t higher, int32_t lower);
+
+/* set a host callback function to be called from within weed_bootstrap() */
+void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
+
+/* host only functions */
+// set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
+// this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
+void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
+void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
+
+
+
+For the PLUGIN:
+
+weed_plant_t *weed_bootstrap(weed_default_getter_f *, int32_t plugin_weed_min_api_version, int32_t plugin_weed_max_api_version,
+                             int32_t plugin_filter_min_api_version, int32_t plugin_filter_max_api_version);
+
+/* check if leaf exists and has a value */
+int weed_plant_has_leaf(weed_plant_t *, const char *key);
+
+weed_error_t weed_set_int_value(weed_plant_t *, const char *key, int32_t value);
+weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double value);
+weed_error_t weed_set_boolean_value(weed_plant_t *, const char *key, int32_t value);
+weed_error_t weed_set_int64_value(weed_plant_t *, const char *key, int64_t value);
+weed_error_t weed_set_string_value(weed_plant_t *, const char *key, const char *value);
+weed_error_t weed_set_funcptr_value(weed_plant_t *, const char *key, void *value);
+weed_error_t weed_set_voidptr_value(weed_plant_t *, const char *key, void *value);
+weed_error_t weed_set_plantptr_value(weed_plant_t *, const char *key, weed_plant_t *value);
+
+int32_t weed_get_int_value(weed_plant_t *, const char *key, weed_error_t *error);
+double weed_get_double_value(weed_plant_t *, const char *key, weed_error_t *error);
+int32_t weed_get_boolean_value(weed_plant_t *, const char *key, weed_error_t *error);
+int64_t weed_get_int64_value(weed_plant_t *, const char *key, weed_error_t *error);
+char *weed_get_string_value(weed_plant_t *, const char *key, weed_error_t *error);
+weed_funcptr_t weed_get_funcptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+void *weed_get_voidptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+weed_plant_t *weed_get_plantptr_value(weed_plant_t *, const char *key, weed_error_t *error);
+
+weed_error_t weed_set_int_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *values);
+weed_error_t weed_set_double_array(weed_plant_t *, const char *key, weed_size_t num_elems, double *values);
+weed_error_t weed_set_boolean_array(weed_plant_t *, const char *key, weed_size_t num_elems, int32_t *values);
+weed_error_t weed_set_int64_array(weed_plant_t *, const char *key, weed_size_t num_elems, int64_t *values);
+weed_error_t weed_set_string_array(weed_plant_t *, const char *key, weed_size_t num_elems, char **values);
+weed_error_t weed_set_funcptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_funcptr_t *values);
+weed_error_t weed_set_voidptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, void **values);
+weed_error_t weed_set_plantptr_array(weed_plant_t *, const char *key, weed_size_t num_elems, weed_plant_t **values);
+
+int32_t *weed_get_int_array(weed_plant_t *, const char *key, weed_error_t *error);
+double *weed_get_double_array(weed_plant_t *, const char *key, weed_error_t *error);
+int32_t *weed_get_boolean_array(weed_plant_t *, const char *key, weed_error_t *error);
+int64_t *weed_get_int64_array(weed_plant_t *, const char *key, weed_error_t *error);
+char **weed_get_string_array(weed_plant_t *, const char *key, weed_error_t *error);
+weed_funcptr_t *weed_get_funcptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+void **weed_get_voidptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+weed_plant_t **weed_get_plantptr_array(weed_plant_t *, const char *key, weed_error_t *error);
+
+int32_t *weed_get_int_array_counted(weed_plant_t *, const char *key, int *count);
+double *weed_get_double_array_counted(weed_plant_t *, const char *key, int *count);
+int32_t *weed_get_boolean_array_counted(weed_plant_t *, const char *key, int *count);
+int64_t *weed_get_int64_array_counted(weed_plant_t *, const char *key, int *count);
+char **weed_get_string_array_counted(weed_plant_t *, const char *key, int *count);
+weed_funcptr_t *weed_get_funcptr_array_counted(weed_plant_t *, const char *key, int *count);
+weed_voidptr_t *weed_get_voidptr_array_counted(weed_plant_t *, const char *key, int *count);
+weed_plant_t **weed_get_plantptr_array_counted(weed_plant_t *, const char *key, int *count);
+
+
+
+For the HOST:
+Weed Host Utils (in development)
+
+/* general Weed functions and definitions */
+int32_t weed_plant_get_type(weed_plant_t *);
+
+int WEED_PLANT_IS_PLUGIN_INFO(weed_plant_t *);
+int WEED_PLANT_IS_HOST_INFO(weed_plant_t *);
+int WEED_PLANT_IS_FILTER_CLASS(weed_plant_t *);
+int WEED_PLANT_IS_FILTER_INSTANCE(weed_plant_t *);
+int WEED_PLANT_IS_CHANNEL_TEMPLATE(weed_plant_t *);
+int WEED_PLANT_IS_CHANNEL(weed_plant_t *);
+int WEED_PLANT_IS_PARAMETER_TEMPLATE(weed_plant_t *);
+int WEED_PLANT_IS_PARAMETER(weed_plant_t *);
+int WEED_PLANT_IS_GUI(weed_plant_t *);
+
+/* FILTER functions */
+int weed_filter_get_flags(weed_plant_t *filter);
+int weed_filter_is_resizer(weed_plant_t *filter);
+weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
+weed_plant_t *weed_filter_get_gui(weed_plant_t *filter);
+
+/* FILTER_INSTANCE functions */
+weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans);
+weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans);
+weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams);
+weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams);
+
+/* CHANNEL_TEMPLATE functions */
+int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
+int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
+int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) WARN_UNUSED;
+
+/* a return value of zero means unlimited repeats */
+int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
+
+/* CHANNEL functions */
+void *weed_channel_get_pixel_data(weed_plant_t *channel);
+
+/// width in macropixels, normal value for channels etc.
+int weed_channel_get_width(weed_plant_t *channel);
+int weed_channel_get_height(weed_plant_t *channel);
+int weed_channel_get_palette(weed_plant_t *channel);
+int weed_channel_get_palette_details(weed_plant_t *channel, int *YUV_clamping, int *YUV_sampling, int *YUV_subspace);
+int weed_channel_get_rowstride(weed_plant_t *channel);
+int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
+int weed_channel_is_disabled(weed_plant_t *channel);
+weed_plant_t *weed_channel_get_template(weed_plant_t *channel);
+
+/// width in pixels: only relevant when comparing widths of diferrent palettes
+int weed_channel_get_width_pixels(weed_plant_t *channel);
+
+// audio channels
+int weed_channel_get_audio_rate(weed_plant_t *channel);
+int weed_channel_get_naudchans(weed_plant_t *channel);
+int weed_channel_get_audio_length(weed_plant_t *channel);
+float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
+
+weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, int arate, int naudchans, weed_size_t nsamps);
+
+// paramtmpls
+weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl);
+int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
+int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl);
+int weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
+int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
+int weed_paramtmpl_default_size(weed_plant_t *paramtmpl);
+int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl);
+int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl);
+int weed_paramtmpl_hints_hidden(weed_plant_t *param);
+
+// params
+int weed_param_is_hidden(weed_plant_t *param);
+weed_plant_t *weed_param_get_gui(weed_plant_t *param);
+weed_plant_t *weed_param_get_template(weed_plant_t *param);
+int weed_param_get_hint(weed_plant_t *paraml);
+int weed_param_has_variable_size(weed_plant_t *param);
+int weed_param_get_default_size(weed_plant_t *param);
+int weed_param_does_wrap(weed_plant_t *paramtmpl);
+int weed_param_get_value_type(weed_plant_t *param);
+
+// utils
+char *weed_seed_type_to_text(int32_t seed_type) WARN_UNUSED;
+char *weed_error_to_text(weed_error_t error) WARN_UNUSED;
+char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;
+
+const char *weed_palette_get_name(int pal);
+const char *weed_yuv_clamping_get_name(int clamping);
+const char *weed_yuv_subspace_get_name(int subspace);
+
+int weed_palette_get_bits_per_macropixel(int pal);
+double weed_palette_get_compression_ratio(int pal);
+int weed_palette_is_alpha(int pal);
+int weed_palette_is_rgb(int pal);
+int weed_palette_is_yuv(int pal);
+int weed_palette_is_float(int pal);
+int weed_palette_has_alpha_channel(int pal);
+double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
+double weed_palette_get_plane_ratio_vertical(int pal, int plane);
+int weed_palette_get_nplanes(int pal);
+int weed_palette_is_valid(int pal);
+int weed_palette_get_pixels_per_macropixel(int pal);
+
+For the PLUGIN:
+
+weed-plugin-utils:
+
+#define WEED_SETUP_START(weed_api_version, filter_api_version)
+#define WEED_SETUP_START_MINMAX(weed_api_min_version, weed_api_max_version, filter_api_min_version, filter_api_max_version)
+#define WEED_SETUP_END
+
+#define WEED_DESETUP_START
+#define WEED_DESETUP_END
+
+weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot,
+    int32_t weed_abi_min_version, int32_t weed_abi_max_version,
+    int32_t filter_api_min_version, int32_t weed_filter_api_max_version);
+
+int weed_get_api_version(weed_plant_t *plugin_info);
+
+weed_plant_t *weed_channel_template_init(const char *name, int flags);
+weed_plant_t *weed_audio_channel_template_init(const char *name, int flags);
+
+weed_plant_t **weed_clone_plants(weed_plant_t **plants);
+
+weed_plant_t *weed_filter_class_init(const char *name, const char *author, int version, int flags,
+    int *palette_list, weed_init_f init_func,
+    weed_process_f process_func, weed_deinit_f deinit_func,
+    weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
+    weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls);
+
+weed_plant_t *weed_filter_get_gui(weed_plant_t *filter);
+weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt);
+
+void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class);
+
+// in params
+weed_plant_t *weed_text_init(const char *name, const char *label, const char *def);
+weed_plant_t *weed_float_init(const char *name, const char *label, double def, double min, double max);
+weed_plant_t *weed_switch_init(const char *name, const char *label, int def);
+weed_plant_t *weed_integer_init(const char *name, const char *label, int def, int min, int max);
+weed_plant_t *weed_colRGBd_init(const char *name, const char *label, double red, double green, double blue);
+weed_plant_t *weed_colRGBi_init(const char *name, const char *label, int red, int green, int blue);
+weed_plant_t *weed_radio_init(const char *name, const char *label, int def, int group);
+weed_plant_t *weed_string_list_init(const char *name, const char *label, int def, const char **const list);
+weed_plant_t *weed_param_get_gui(weed_plant_t *param);
+
+// out params
+weed_plant_t *weed_out_param_colRGBd_init(const char *name, double red, double green, double blue);
+weed_plant_t *weed_out_param_colRGBi_init(const char *name, int red, int green, int blue);
+weed_plant_t *weed_out_param_text_init(const char *name, const char *def);
+weed_plant_t *weed_out_param_float_init_nominmax(const char *name, double def);
+weed_plant_t *weed_out_param_float_init(const char *name, double def, double min, double max);
+weed_plant_t *weed_out_param_switch_init(const char *name, int def);
+weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int def);
+weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max);
+
+// value setters
+void weed_filter_set_flags(weed_plant_t *filter, int flags);
+void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
+void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
+
+// value getters
+int weed_filter_get_flags(weed_plant_t *filter);
+int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
+int weed_parammpl_get_flags(weed_plant_t *paramtmpl);
+weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);
+weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx);
+void *weed_channel_get_pixel_data(weed_plant_t *channel);
+void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes);
+int weed_channel_get_width(weed_plant_t *channel);
+int weed_channel_get_height(weed_plant_t *channel);
+int weed_channel_get_palette(weed_plant_t *channel);
+int weed_channel_get_stride(weed_plant_t *channel);
+int weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
+
+//if defined(NEED_AUDIO)
+int weed_channel_get_audio_rate(weed_plant_t *channel);
+int weed_channel_get_naudchans(weed_plant_t *channel);
+int weed_channel_get_audio_length(weed_plant_t *channel);
+//if defined __WEED_UTILS_H__
+float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans;);
+
+int weed_channel_is_disabled(weed_plant_t *channel);
+  
+// param values
+int weed_param_get_value_int(weed_plant_t *param);
+int weed_param_get_value_boolean(weed_plant_t *param);
+double weed_param_get_value_double(weed_plant_t *param);
+int64_t weed_param_get_value_int64(weed_plant_t *param);
+char *weed_param_get_value_string(weed_plant_t *param);
+
+//if defined __WEED_UTILS_H__
+int *weed_param_get_array_int(weed_plant_t *param, int *nvalues);
+int *weed_param_get_array_boolean(weed_plant_t *param, int *nvalues);
+double *weed_param_get_array_double(weed_plant_t *param, int *nvalues);
+int64_t *weed_param_get_array_int64(weed_plant_t *param, int *nvalues);
+char **weed_param_get_array_string(weed_plant_t *param, int *mvalues);
+weed_plant_t **weed_get_in_channels(weed_plant_t *inst, int *nchans);
+weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
+weed_plant_t **weed_get_in_params(weed_plant_t *inst, int *nparams);
+weed_plant_t **weed_get_out_params(weed_plant_t *inst, int *nparams);
+
+/* Threading */
+int weed_is_threading(weed_plant_t *inst);
+int weed_channel_get_offset(weed_plant_t *channel);
+int weed_channel_get_true_height(weed_plant_t *channel);
+
+int IS_THREAD_MASTER(weed_plant_t *inst);
+int is_big_endian(void);
+
+ABS(a)
+
+//if defined(NEED_RANDOM)
+uint64_t fastrand(uint64_t oldval);
+
+//if defined (NEED_ALPHA_SORT)
+typedef struct dlink_list dlink_list_t;
+dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name);
+int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list);
+
+//if defined(NEED_PALETTE_UTILS)
+#define ALL_RGB_PALETTES
+#define ALL_24BIT_PALETTES
+#define ALL_32BIT_PALETTES
+#define ALL_ALPHA_PALETTES
+#define ALL_PACKED_PALETTES
+#define ALL_PACKED_PALETTES_PLUS
+#define ALL_PLANAR_PALETTES
+#define pixel_size(pal)
+#define rgb_offset(pal)
+
+int weed_palette_is_alpha(int pal);
+int weed_palette_is_rgb(int pal);
+int weed_palette_is_yuv(int pal);
+int weed_palette_is_float(int pal);
+int weed_palette_has_alpha_channel(int pal);
+double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
+double weed_palette_get_plane_ratio_vertical(int pal, int plane);
+int weed_palette_get_nplanes(int pal);
+int weed_palette_is_valid(int pal);
+
+size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src);
+void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int uvcopy, uint8_t **psrc);
+
+//if defined(NEED_PALETTE_CONVERSIONS)
+uint8_t calc_luma(uint8_t *pixel, int palette, int yuv_clamping);
+uint8_t y_unclamped_to_clamped(uint8_t y);
+uint8_t y_clamped_to_unclamped(uint8_t y);
+uint8_t uv_clamped_to_unclamped(uint8_t uv);
+/* pre multiply or un-pre-multiply alpha for a frame: if un is set to WEED_TRUE we un-pre-multiply, othewise pre-multiply */
+void alpha_premult(unsigned char *ptr, int width, int height, int rowstride, int pal, int un);
+

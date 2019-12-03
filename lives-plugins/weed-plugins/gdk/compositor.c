@@ -291,7 +291,7 @@ WEED_SETUP_START(200, 200) {
                                         out_chantmpls,
                                         in_params, NULL);
 
-  gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_get_gui(filter_class);
 
   // set to 0 to allow infinite repeats
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_REPEATS, 0);

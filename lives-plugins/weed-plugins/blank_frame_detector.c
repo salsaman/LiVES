@@ -11,6 +11,7 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 #define NEED_PALETTE_CONVERSIONS
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -66,8 +67,8 @@ static weed_error_t bfd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
   int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
   int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int threshold = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
-  int fcount = weed_get_int_value(in_params[1], WEED_LEAF_VALUE, NULL);
+  int threshold = weed_param_get_value_int(in_params[0]);
+  int fcount = weed_param_get_value_int(in_params[1]);
   int psize = 4;
   int luma;
   int start = 0;
@@ -100,12 +101,7 @@ static weed_error_t bfd_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888, WEED_PALETTE_YUV444P,
-                        WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV422P, WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P,
-                        WEED_PALETTE_UYVY, WEED_PALETTE_YUYV,
-                        WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_PACKED_PALETTES_PLUS;
   weed_plant_t *out_params[] = {weed_out_param_switch_init("blank", WEED_FALSE), NULL};
   weed_plant_t *in_params[] = {weed_integer_init("threshold", "Luma _threshold", 0, 0, 255),
                                weed_integer_init("fcount", "Frame _count", 1, 1, 1000), NULL

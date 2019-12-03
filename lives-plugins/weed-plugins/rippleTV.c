@@ -65,7 +65,7 @@ struct _sdata {
   short *background;
   unsigned char *diff;
   int threshold;
-  uint32_t fastrand_val;
+  uint64_t fastrand_val;
 };
 
 
@@ -278,11 +278,11 @@ static void raindrop(int width, int height, struct _sdata *sdata) {
   if (sdata->period == 0) {
     switch (sdata->rain_stat) {
     case 0:
-      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 23) + 100;
+      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 55) + 100;
       sdata->drop_prob = 0;
       sdata->drop_prob_increment = 0x00ffffff / sdata->period;
-      sdata->drop_power = (-((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 28) - 2) << POINT;
-      sdata->drops_per_frame_max = 2 << ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 30); // 2,4,8 or 16
+      sdata->drop_power = (-((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 60) - 2) << POINT;
+      sdata->drops_per_frame_max = 2 << ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 62); // 2,4,8 or 16
       sdata->rain_stat = 1;
       break;
     case 1:
@@ -293,7 +293,7 @@ static void raindrop(int width, int height, struct _sdata *sdata) {
       sdata->rain_stat = 2;
       break;
     case 2:
-      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 22) + 1000;
+      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 54) + 1000;
       sdata->drop_prob_increment = 0;
       sdata->rain_stat = 3;
       break;
@@ -303,13 +303,13 @@ static void raindrop(int width, int height, struct _sdata *sdata) {
       sdata->rain_stat = 4;
       break;
     case 4:
-      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 24) + 60;
+      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 56) + 60;
       sdata->drop_prob_increment = -(sdata->drop_prob / sdata->period);
       sdata->rain_stat = 5;
       break;
     case 5:
     default:
-      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 23) + 500;
+      sdata->period = ((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 55) + 500;
       sdata->drop_prob = 0;
       sdata->rain_stat = 0;
       break;
@@ -321,7 +321,7 @@ static void raindrop(int width, int height, struct _sdata *sdata) {
     break;
   case 1:
   case 5:
-    if (((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 8) < sdata->drop_prob) {
+    if (((sdata->fastrand_val = fastrand(sdata->fastrand_val)) >> 40) < sdata->drop_prob) {
       drop(sdata->drop_power, width, height, sdata);
     }
     sdata->drop_prob += sdata->drop_prob_increment;

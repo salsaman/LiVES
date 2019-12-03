@@ -705,7 +705,7 @@ WEED_SETUP_START(200, 200) {
               in_params[wnum] = weed_float_init((char *)pinfo.name, label, vald, 0., 1.);
               weed_set_string_value(in_params[wnum], WEED_LEAF_DESCRIPTION, (char *)pinfo.explanation);
               if (num_weed_params > f0rinfo.num_params) sprintf(rfx_strings[pnum], "layout|p%d|", wnum);
-              pgui = weed_parameter_template_get_gui(in_params[wnum]);
+              pgui = weed_paramtmpl_get_gui(in_params[wnum]);
               weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, .01);
               weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
               break;
@@ -771,14 +771,14 @@ WEED_SETUP_START(200, 200) {
               in_params[wnum] = weed_float_init((char *)pinfo.name, label, valpos.x, 0., 1.);
               weed_set_string_value(in_params[wnum], WEED_LEAF_DESCRIPTION, (char *)pinfo.explanation);
               weed_set_boolean_value(in_params[wnum], "plugin_is_position", WEED_TRUE);
-              pgui = weed_parameter_template_get_gui(in_params[wnum]);
+              pgui = weed_paramtmpl_get_gui(in_params[wnum]);
               weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, .01);
               weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
               wnum++;
               in_params[wnum] = weed_float_init((char *)pinfo.name, "", valpos.y, 0., 1.);
               weed_set_string_value(in_params[wnum], WEED_LEAF_DESCRIPTION, (char *)pinfo.explanation);
               sprintf(rfx_strings[pnum], "layout|p%d|\"X\"|fill|p%d|\"Y\"|fill|", wnum - 1, wnum);
-              pgui = weed_parameter_template_get_gui(in_params[wnum]);
+              pgui = weed_paramtmpl_get_gui(in_params[wnum]);
               weed_set_double_value(pgui, WEED_LEAF_STEP_SIZE, .01);
               weed_set_int_value(pgui, WEED_LEAF_DECIMALS, 2);
               break;
@@ -842,7 +842,7 @@ WEED_SETUP_START(200, 200) {
         weed_set_int_value(filter_class, WEED_LEAF_ALIGNMENT_HINT, 16);
 
         if (num_weed_params > f0rinfo.num_params) {
-          gui = weed_filter_class_get_gui(filter_class);
+          gui = weed_filter_get_gui(filter_class);
           weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
           weed_set_string_value(gui, "layout_rfx_delim", "|");
           weed_set_string_array(gui, "layout_rfx_strings", f0rinfo.num_params, rfx_strings);

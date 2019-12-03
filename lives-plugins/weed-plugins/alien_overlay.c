@@ -35,10 +35,8 @@ typedef struct {
 
 static weed_error_t alien_over_init(weed_plant_t *inst) {
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL) * 3;
-
+  int width = weed_channel_get_width(in_channel) * 3;
+  int height = weed_channel_get_height(in_channel);
   static_data *sdata = (static_data *)weed_malloc(sizeof(static_data));
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
@@ -57,9 +55,7 @@ static weed_error_t alien_over_init(weed_plant_t *inst) {
   }
 
   weed_memset(sdata->inited, 0, height);
-
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
-
   return WEED_SUCCESS;
 }
 
@@ -72,28 +68,27 @@ static weed_error_t alien_over_deinit(weed_plant_t *inst) {
     weed_free(sdata);
     weed_set_voidptr_value(inst, "plugin_internal", NULL);
   }
-
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_in_channel(inst), *out_channel = weed_get_out_channel(inst);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0), *out_channel = weed_get_out_channel(inst, 0);
   unsigned char *src = weed_channel_get_pixel_data(in_channel);
   unsigned char *dst = weed_channel_get_pixel_data(out_channel);
+  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  unsigned char *old_pixel_data;
+  unsigned char val;
   int pal = weed_channel_get_palette(in_channel);
   int psize = pixel_size(pal);
   int width = weed_channel_get_width(in_channel) * psize;
   int height = weed_channel_get_height(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
+  unsigned char *end = dst + height * orowstride;
   int inplace = (src == dst);
   int offs = rgb_offset(pal);
   int row = 0;
-  unsigned char val;
-  unsigned char *old_pixel_data;
-  unsigned char *end = dst + height * orowstride;
-  static_data *sdata = weed_get_voidptr_value(inst, "plugin_internal", NULL);
   register int j, i = 0, k;
 
   old_pixel_data = sdata->old_pixel_data;

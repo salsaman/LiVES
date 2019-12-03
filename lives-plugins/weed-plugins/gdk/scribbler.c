@@ -168,19 +168,19 @@ static weed_error_t scribbler_init(weed_plant_t *inst) {
   weed_plant_t *pgui;
   int mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, NULL);
 
-  pgui = weed_parameter_get_gui(in_params[P_BGALPHA]);
+  pgui = weed_param_get_gui(in_params[P_BGALPHA]);
   if (mode == 0) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
   else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
-  pgui = weed_parameter_get_gui(in_params[P_BACKGROUND]);
+  pgui = weed_param_get_gui(in_params[P_BACKGROUND]);
   if (mode == 0) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
   else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
-  pgui = weed_parameter_get_gui(in_params[P_FGALPHA]);
+  pgui = weed_param_get_gui(in_params[P_FGALPHA]);
   if (mode == 2) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
   else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
-  pgui = weed_parameter_get_gui(in_params[P_FOREGROUND]);
+  pgui = weed_param_get_gui(in_params[P_FOREGROUND]);
   if (mode == 2) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
   else weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_FALSE);
 
@@ -437,10 +437,10 @@ WEED_SETUP_START(200, 200) {
   in_params[P_TOP] = weed_float_init("top", "_Top", 0.0, 0.0, 1.0);
   in_params[P_END] = NULL;
 
-  pgui = weed_parameter_template_get_gui(in_params[P_TEXT]);
+  pgui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
   weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
-  pgui = weed_parameter_template_get_gui(in_params[P_FGALPHA]);
+  pgui = weed_paramtmpl_get_gui(in_params[P_FGALPHA]);
   weed_set_int_value(pgui, WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
   filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, palette_list,

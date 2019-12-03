@@ -919,10 +919,9 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
 
 static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
-  int error;
-  weed_plant_t *wtmpl, *gui;
+  weed_plant_t *wtmpl;
 
-  if (param->reinit && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, &error) == 2 ||
+  if (param->reinit && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) == 2 ||
                         (mainw->multitrack != NULL && mainw->multitrack->fx_box != NULL &&
                          mt_get_effect_time(mainw->multitrack) > 0.))) {
     // effect is running and user is editing the params (or in multitrack at not at fx time 0.)
@@ -931,23 +930,15 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
 
   if ((wtmpl = (weed_plant_t *)param->source) == NULL) return;
 
-  if (!weed_plant_has_leaf(wtmpl, WEED_LEAF_GUI)) return;
-
-  gui = weed_get_plantptr_value(wtmpl, WEED_LEAF_GUI, &error);
-
-  if (weed_plant_has_leaf(gui, WEED_LEAF_HIDDEN)) {
-    int hidden = weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, &error);
-    if (hidden == WEED_TRUE) param->hidden |= HIDDEN_GUI;
-    else if (param->hidden & HIDDEN_GUI) param->hidden ^= HIDDEN_GUI;
-  }
+  if (weed_paramtmpl_hints_hidden(wtmpl))
+    param->hidden |= HIDDEN_GUI;
+  else if (param->hidden & HIDDEN_GUI) param->hidden ^= HIDDEN_GUI;
 }
 
 
 static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
   // get number of params for nth instance in a compound effect - gives an offset for param number within the compound
-
-  int error;
-  while (--idx > 0) inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
+  while (--idx > 0) inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
   return weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
 }
 
@@ -1226,7 +1217,8 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           break; // ignore anything after hseparator
         }
 
-        if (!strncmp(array[j], "p", 1) && (pnum = atoi((char *)(array[j] + 1))) >= 0 && (pnum = pnum + poffset) < rfx->num_params && !used[pnum]) {
+        if (!strncmp(array[j], "p", 1) && (pnum = atoi((char *)(array[j] + 1))) >= 0
+            && (pnum = pnum + poffset) < rfx->num_params && !used[pnum]) {
           // parameter, eg. p1 ////////////////////////////
           param = &rfx->params[pnum];
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param);

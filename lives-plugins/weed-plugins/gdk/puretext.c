@@ -1282,7 +1282,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     deftextfile = g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
 
     in_params[P_TEXT] = weed_text_init("textfile", "_Text file", deftextfile);
-    gui = weed_parameter_template_get_gui(in_params[P_TEXT]);
+    gui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
     weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
     flags = 0;
     if (weed_plant_has_leaf(in_params[P_TEXT], WEED_LEAF_FLAGS))
@@ -1305,7 +1305,7 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
     filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1, 0, &puretext_init, &puretext_process, NULL,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
 
-    gui = weed_filter_class_get_gui(filter_class);
+    gui = weed_filter_get_gui(filter_class);
     weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
     weed_set_string_value(gui, "layout_rfx_delim", "|");
     weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);

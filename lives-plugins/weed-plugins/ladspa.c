@@ -89,8 +89,8 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
   weed_plant_t *channel = NULL;
   weed_plant_t *filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
 
-  lad_instantiate_f lad_instantiate_func = (lad_instantiate_f)weed_get_voidptr_value(filter, "plugin_lad_instantiate_func", NULL);
-  LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
+  lad_instantiate_f lad_instantiate_func = (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
+  LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_funcptr_value(filter, "plugin_lad_descriptor", NULL);
 
   _sdata *sdata;
 
@@ -120,7 +120,7 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 
   sdata->handle_l = (*lad_instantiate_func)(laddes, rate);
 
-  if (pinc == 1 || poutc == 1) sdata->handle_r = (lad_instantiate_func)(laddes, rate);
+  if (pinc == 1 || poutc == 1) sdata->handle_r = (*lad_instantiate_func)(laddes, rate);
   else sdata->handle_r = NULL;
 
   weed_set_voidptr_value(inst, "plugin_data", sdata);
@@ -132,16 +132,16 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
       int link = weed_get_boolean_value(in_params[ninps * 2], WEED_LEAF_VALUE, NULL);
       for (i = 0; i < ninps; i++) {
         weed_plant_t *ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, NULL);
-        weed_plant_t *gui = weed_parameter_template_get_gui(ptmpl);
+        weed_plant_t *gui = weed_param_get_gui(in_params[i]);
         if (link == WEED_TRUE) {
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i + ninps);
           ptmpl = weed_get_plantptr_value(in_params[i + ninps], WEED_LEAF_TEMPLATE, NULL);
-          gui = weed_parameter_template_get_gui(ptmpl);
+          gui = weed_paramtmpl_get_gui(ptmpl);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i);
         } else {
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
           ptmpl = weed_get_plantptr_value(in_params[i + ninps], WEED_LEAF_TEMPLATE, NULL);
-          gui = weed_parameter_template_get_gui(ptmpl);
+          gui = weed_paramtmpl_get_gui(ptmpl);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
         }
       }
@@ -155,8 +155,8 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 static weed_error_t ladspa_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
   weed_plant_t *filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
-  lad_deactivate_f lad_deactivate_func = (lad_activate_f)weed_get_voidptr_value(filter, "plugin_lad_deactivate_func", NULL);
-  lad_cleanup_f lad_cleanup_func = (lad_cleanup_f)weed_get_voidptr_value(filter, "plugin_lad_cleanup_func", NULL);
+  lad_deactivate_f lad_deactivate_func = (lad_activate_f)weed_get_funcptr_value(filter, "plugin_lad_deactivate_func", NULL);
+  lad_cleanup_f lad_cleanup_func = (lad_cleanup_f)weed_get_funcptr_value(filter, "plugin_lad_cleanup_func", NULL);
 
   if (sdata->activated_l == WEED_TRUE) {
     if (lad_deactivate_func != NULL)(*lad_deactivate_func)(sdata->handle_l);
@@ -184,6 +184,8 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
   int iinp = 0, ioutp = 0, pinp = 0, poutp = 0;
   int dual = WEED_FALSE;
   int rate = DEF_ARATE;
+  int srccnt = 0;
+  int dstcnt = 0;
 
   weed_plant_t *in_channel = NULL, *out_channel = NULL;
   weed_plant_t *filter = weed_get_plantptr_value(inst, WEED_LEAF_FILTER_CLASS, NULL);
@@ -239,27 +241,27 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
   if (pinc == 2 && iinc == 1) return WEED_SUCCESS;
   if (poutc == 2 && ioutc == 1) return WEED_SUCCESS;
 
-  /// if the filter is mono and we want to send stereo then we actually run  two filter instances,
+  /// if the filter is mono and we want to send stereo then we actually run two filter instances,
   /// one for each stereo channel, and set "dual" to WEED_TRUE
   if (pinc == 1 && iinc == 2) dual = WEED_TRUE;
   if (poutc == 1 && ioutc == 2) dual = WEED_TRUE;
 
   if (sdata->activated_l == WEED_FALSE) {
-    lad_activate_f lad_activate_func = (lad_activate_f)weed_get_voidptr_value(filter, "plugin_lad_activate_func", NULL);
+    lad_activate_f lad_activate_func = (lad_activate_f)weed_get_funcptr_value(filter, "plugin_lad_activate_func", NULL);
     if (lad_activate_func != NULL)(*lad_activate_func)(sdata->handle_l);
     sdata->activated_l = WEED_TRUE;
   }
 
   if (dual && sdata->activated_r == WEED_FALSE) {
-    lad_activate_f lad_activate_func = (lad_activate_f)weed_get_voidptr_value(filter, "plugin_lad_activate_func", NULL);
+    lad_activate_f lad_activate_func = (lad_activate_f)weed_get_funcptr_value(filter, "plugin_lad_activate_func", NULL);
     if (lad_activate_func != NULL)(*lad_activate_func)(sdata->handle_r);
     sdata->activated_r = WEED_TRUE;
   }
 
   laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
-  lad_connect_port_func = (lad_connect_port_f)weed_get_voidptr_value(filter, "plugin_lad_connect_port_func", NULL);
+  lad_connect_port_func = (lad_connect_port_f)weed_get_funcptr_value(filter, "plugin_lad_connect_port_func", NULL);
 
-  lad_run_func = (lad_run_f)weed_get_voidptr_value(filter, "plugin_lad_run_func", NULL);
+  lad_run_func = (lad_run_f)weed_get_funcptr_value(filter, "plugin_lad_run_func", NULL);
 
   handle = sdata->handle_l;
 
@@ -272,11 +274,11 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
         // channel
         if (ladpdes & LADSPA_PORT_INPUT) {
           // connect to next instance audio in
-          (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[i]);
+          (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[srccnt++]);
           iinc--;
         } else {
           // connect to next instance audio out
-          (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[i]);
+          (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[dstcnt++]);
           ioutc--;
         }
       }
@@ -329,6 +331,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
   (*lad_run_func)(handle, nsamps);
 
   handle = sdata->handle_r;
+  if (srccnt > pinc) srccnt = 0;
 
   if (pinc > 0 || poutc > 0) {
     if (ioutc > 0 || iinc > 0) {
@@ -342,10 +345,10 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
           // channel
           if (ladpdes & LADSPA_PORT_INPUT) {
             // connect to next instance audio in
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[iinc + i]);
+            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)src[srccnt++]);
           } else {
             // connect to next instance audio out
-            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[ioutc + i]);
+            (*lad_connect_port_func)(handle, i, (LADSPA_Data *)dst[dstcnt++]);
           }
         }
       }
@@ -357,7 +360,6 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
       // need to use second instance
       for (i = 0; i < laddes->PortCount; i++) {
         ladpdes = laddes->PortDescriptors[i];
-        fprintf(stderr, "ladpdes = %d\n", ladpdes);
         if (ladpdes & LADSPA_PORT_CONTROL) {
           // control ports
           ladphint = laddes->PortRangeHints[i];
@@ -384,7 +386,6 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
       }
     }
   }
-
 
   if (dual)(*lad_run_func)(handle, nsamps);
 
@@ -462,6 +463,7 @@ WEED_SETUP_START(200, 200) {
 
   void *handle = NULL;
 
+  int cflags;
   int ninps, noutps, ninchs, noutchs;
   int oninps, onoutps, oninchs, onoutchs;
   int cninps, cnoutps;
@@ -524,13 +526,11 @@ WEED_SETUP_START(200, 200) {
       num_plugins = 0;
 
       while ((laddes = ((*lad_descriptor_func)(num_plugins))) != NULL) {
-
         if ((lad_instantiate_func = laddes->instantiate) == NULL) {
           continue;
         }
 
         lad_activate_func = laddes->activate;
-
         lad_deactivate_func = laddes->deactivate;
 
         if ((lad_connect_port_func = laddes->connect_port) == NULL) {
@@ -544,7 +544,6 @@ WEED_SETUP_START(200, 200) {
 
         //fprintf(stderr,"2checking %s : %ld\n",plug1,num_plugins);
         ladprop = laddes->Properties;
-
         ninps = noutps = ninchs = noutchs = 0;
 
         // create the in_parameters, out_parameters, in_channels, out_channels
@@ -621,7 +620,7 @@ WEED_SETUP_START(200, 200) {
           in_params[ninps + stcount - 1] = NULL;
           if (dual == WEED_TRUE) {
             in_params[ninps - 1] = weed_switch_init("link", "_Link left and right parameters", WEED_TRUE);
-            gui = weed_parameter_template_get_gui(in_params[ninps - 1]);
+            gui = weed_paramtmpl_get_gui(in_params[ninps - 1]);
             weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, ninps);
             sprintf(rfx_strings[0], "layout|p%d|", ninps - 1);
             sprintf(rfx_strings[1], "layout|hseparator|");
@@ -629,9 +628,10 @@ WEED_SETUP_START(200, 200) {
             // link it to a dummy param which is hidden and reinit -
             // this allows the value to be updated and the plugin to be reinited at any time
             // (I don't recall why now, but there was some reason it couldnt be done directly in the real parameter...)
+            // (probably some GUI issue with destroying the focused widget)
             in_params[ninps] = weed_switch_init("link dummy", "linkdummy", WEED_TRUE);
             weed_set_int_value(in_params[ninps], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
-            gui = weed_parameter_template_get_gui(in_params[ninps]);
+            gui = weed_paramtmpl_get_gui(in_params[ninps]);
             weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
           }
         } else in_params = NULL;
@@ -649,6 +649,8 @@ WEED_SETUP_START(200, 200) {
           else if (ninchs == 2) sprintf(cname, "Stereo channel");
           else sprintf(cname, "Multi channel");
           in_chantmpls[0] = weed_audio_channel_template_init(cname, 0);
+          cflags =  WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE | WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE;
+          weed_chantmpl_set_flags(in_chantmpls[0], cflags);
           in_chantmpls[1] = NULL;
           if (!dual || oninchs != 1) weed_set_int_value(in_chantmpls[0], WEED_LEAF_AUDIO_CHANNELS, ninchs);
         } else in_chantmpls = NULL;
@@ -661,8 +663,12 @@ WEED_SETUP_START(200, 200) {
           out_chantmpls[0] = weed_audio_channel_template_init(cname, 0);
           out_chantmpls[1] = NULL;
           if (!dual || onoutchs != 1) weed_set_int_value(out_chantmpls[0], WEED_LEAF_AUDIO_CHANNELS, noutchs);
+          cflags =  WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE | WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE;
           if (oninchs == onoutchs &&
-              !(ladprop & LADSPA_PROPERTY_INPLACE_BROKEN)) weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, WEED_CHANNEL_CAN_DO_INPLACE);
+              !(ladprop & LADSPA_PROPERTY_INPLACE_BROKEN))
+            cflags |= WEED_CHANNEL_CAN_DO_INPLACE;
+          weed_chantmpl_set_flags(out_chantmpls[0], cflags);
+
         } else out_chantmpls = NULL;
 
         cnoutps = cninps = 0;
@@ -840,17 +846,17 @@ WEED_SETUP_START(200, 200) {
         if (num_plugins == 0) weed_set_voidptr_value(filter_class, "plugin_handle", handle);
 
         weed_set_voidptr_value(filter_class, "plugin_lad_descriptor", laddes);
-        weed_set_voidptr_value(filter_class, "plugin_lad_instantiate_func", (void *)lad_instantiate_func);
-        weed_set_voidptr_value(filter_class, "plugin_lad_activate_func", (void *)lad_activate_func);
-        weed_set_voidptr_value(filter_class, "plugin_lad_deactivate_func", (void *)lad_deactivate_func);
-        weed_set_voidptr_value(filter_class, "plugin_lad_connect_port_func", (void *)lad_connect_port_func);
-        weed_set_voidptr_value(filter_class, "plugin_lad_run_func", (void *)lad_run_func);
-        weed_set_voidptr_value(filter_class, "plugin_lad_cleanup_func", (void *)lad_cleanup_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_instantiate_func", (weed_funcptr_t)lad_instantiate_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_activate_func", (weed_funcptr_t)lad_activate_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_deactivate_func", (weed_funcptr_t)lad_deactivate_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_connect_port_func", (weed_funcptr_t)lad_connect_port_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_run_func", (weed_funcptr_t)lad_run_func);
+        weed_set_funcptr_value(filter_class, "plugin_lad_cleanup_func", (weed_funcptr_t)lad_cleanup_func);
 
         if (dual == WEED_TRUE) {
           weed_set_boolean_value(filter_class, "plugin_dual", WEED_TRUE);
           if (ninps > 0) {
-            gui = weed_filter_class_get_gui(filter_class);
+            gui = weed_filter_get_gui(filter_class);
             weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
             weed_set_string_value(gui, "layout_rfx_delim", "|");
 
@@ -861,9 +867,9 @@ WEED_SETUP_START(200, 200) {
             rfx_strings = NULL;
 
             for (j = 0; j < oninps; j++) {
-              gui = weed_parameter_template_get_gui(in_params[j]);
+              gui = weed_paramtmpl_get_gui(in_params[j]);
               weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, j + oninps);
-              gui = weed_parameter_template_get_gui(in_params[j + oninps]);
+              gui = weed_paramtmpl_get_gui(in_params[j + oninps]);
               weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, j);
             }
           }

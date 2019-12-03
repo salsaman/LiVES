@@ -39,7 +39,7 @@ static weed_error_t noise_process(weed_plant_t *inst, weed_timecode_t timestamp)
   int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   unsigned char *end = src + height * irowstride;
 
-  uint32_t fastrand_val = fastrand(0);
+  uint64_t fastrand_val = fastrand(0);
 
   register int j;
 

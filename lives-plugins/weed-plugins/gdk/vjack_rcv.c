@@ -442,10 +442,10 @@ weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
                                  &vjack_rcv_deinit,
                                  NULL, out_chantmpls, in_params, NULL);
 
-    weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
+    weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
     weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 32);
 
-    gui = weed_parameter_template_get_gui(in_params[1]);
+    gui = weed_paramtmpl_get_gui(in_params[1]);
     weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 128);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);

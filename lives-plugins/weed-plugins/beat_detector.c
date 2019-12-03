@@ -374,7 +374,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, NULL, beat_init, beat_process,
                                beat_deinit, in_chantmpls, NULL, in_params, out_params);
 
-  weed_plant_t *gui = weed_parameter_template_get_gui(in_params[0]);
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

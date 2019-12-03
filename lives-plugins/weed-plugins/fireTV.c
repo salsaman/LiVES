@@ -55,6 +55,7 @@ struct _sdata {
   short *background;
   unsigned char *diff;
   int threshold;
+  uint64_t fv, fv2;
 };
 
 
@@ -174,6 +175,9 @@ static weed_error_t fire_init(weed_plant_t *inst) {
   }
   sdata->threshold = MAGIC_THRESHOLD * 7;
 
+  sdata->fv = fastrand(0);
+  sdata->fv2 = fastrand(0);
+
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
   return WEED_SUCCESS;
 }
@@ -206,7 +210,6 @@ static weed_error_t fire_process(weed_plant_t *inst, weed_timecode_t timestamp) 
   int width, height, irow, orow;
   int video_area;
   int error;
-  uint32_t fastrand_val, fastrand_val2;
   register int i, x, y;
 
   sdata = weed_get_voidptr_value(inst, "plugin_internal", &error);
@@ -224,8 +227,8 @@ static weed_error_t fire_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   video_area = width * height;
 
-  fastrand_val = fastrand(0);
-  fastrand_val2 = fastrand(0);
+  sdata->fv = fastrand(sdata->fv2);
+  sdata->fv2 = fastrand(sdata->fv);
 
   image_bgsubtract_y(src, width, height, irow, sdata);
 
@@ -239,9 +242,9 @@ static weed_error_t fire_process(weed_plant_t *inst, weed_timecode_t timestamp) 
       if (v < Decay)
         sdata->buffer[i - width] = 0;
       else {
-        fastrand_val = fastrand(fastrand_val);
-        fastrand_val2 = fastrand(fastrand_val2);
-        sdata->buffer[i - width + (fastrand_val & 0xFFFF) % 3 - 1] = v - ((fastrand_val2 & 0xFFFF) & Decay);
+        sdata->fv = fastrand(sdata->fv);
+        sdata->fv2 = fastrand(sdata->fv2);
+        sdata->buffer[i - width + (sdata->fv & 0xFFFF) % 3 - 1] = v - ((sdata->fv2 & 0xFFFF) & Decay);
       }
       i += width;
     }

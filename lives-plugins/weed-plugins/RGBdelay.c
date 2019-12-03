@@ -122,8 +122,7 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
   maxcache *= 4;
 
   for (i = 0; i < 205; i++) {
-    ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, NULL);
-    gui = weed_parameter_template_get_gui(ptmpl);
+    gui = weed_param_get_gui(ptmpl);
     weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, i > maxcache ? WEED_TRUE : WEED_FALSE);
   }
 
@@ -428,13 +427,13 @@ WEED_SETUP_START(200, 200) {
     in_params[i + j] = weed_float_init("", "", 1., 0., 1.);
 
     if (i >= 80) {
-      gui = weed_parameter_template_get_gui(in_params[i]);
+      gui = weed_paramtmpl_get_gui(in_params[i]);
       weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
-      gui = weed_parameter_template_get_gui(in_params[i + 1]);
+      gui = weed_paramtmpl_get_gui(in_params[i + 1]);
       weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
-      gui = weed_parameter_template_get_gui(in_params[i + 2]);
+      gui = weed_paramtmpl_get_gui(in_params[i + 2]);
       weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
-      gui = weed_parameter_template_get_gui(in_params[i + 3]);
+      gui = weed_paramtmpl_get_gui(in_params[i + 3]);
       weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
     }
   }
@@ -447,7 +446,7 @@ WEED_SETUP_START(200, 200) {
                                         in_params,
                                         NULL);
 
-  gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_get_gui(filter_class);
   rfx_strings[0] = "layout|p0|";
   rfx_strings[1] = "layout|hseparator|";
   rfx_strings[2] = "layout|\"R\"|\"G\"|\"B\"|fill|fill|\"Blend Strength\"|fill|";
@@ -471,7 +470,7 @@ WEED_SETUP_START(200, 200) {
                                         (clone = weed_clone_plants(in_params)), NULL);
   weed_free(clone);
 
-  gui = weed_filter_class_get_gui(filter_class);
+  gui = weed_filter_get_gui(filter_class);
   weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
   weed_set_string_value(gui, "layout_rfx_delim", "|");
   weed_set_string_array(gui, "layout_rfx_strings", 54, rfx_strings);

@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_AUDIO
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -23,16 +25,20 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
-static int resample(float **inbuf, float **outbuf, int nsamps, int nchans, int irate, int orate) {
+#include <stdio.h>
+
+static int resample(weed_plant_t *inst, float **inbuf, float **outbuf, int nsamps, int nchans, int irate, int orate) {
   // resample (time stretch) nsamps samples from inbuf at irate to outbuf at outrate
   // return how many samples in in were consumed
 
   // we maintain the same number of channels
 
-  register float src_offset_f = 0.f;
+  register float src_offset_f = weed_get_double_value(inst, "plugin_remainder", NULL);
   register int src_offset_i = 0;
   register int i, j;
   register double scale;
+
+  double rem , endv;
 
   scale = (double)irate / (double)orate;
 
@@ -42,65 +48,62 @@ static int resample(float **inbuf, float **outbuf, int nsamps, int nchans, int i
       outbuf[j][i] = inbuf[j][src_offset_i];
     }
     // resample on the fly
-    src_offset_i = (int)(src_offset_f += scale);
+    src_offset_i = (int)((src_offset_f += scale));
   }
+
+  endv = outbuf[0][nsamps - 1];
+  rem = src_offset_f - (double)src_offset_i;
+  if (rem < scale) {
+    endv = -endv;
+  }
+  weed_set_double_value(inst, "plugin_stval", endv);
+  weed_set_double_value(inst, "plugin_remainder", rem);
   return src_offset_i;
 }
-
 
 /////////////////////////////////////////////////////////////
 
 static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int chans, nsamps, rate, nrsamps;
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  float **dst = weed_channel_get_audio_data(out_channel, NULL), **buff;
 
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  float **dst = (float **)weed_get_voidptr_array(out_channel, WEED_LEAF_AUDIO_DATA, NULL);
+  double freq = weed_param_get_value_double(in_params[0]);
+  double mult = weed_param_get_value_double(in_params[1]);
+  double trate = freq * mult;
+  double stval = weed_get_double_value(inst, "plugin_stval", NULL);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  int chans = weed_channel_get_naudchans(out_channel);
+  int nsamps = weed_channel_get_audio_length(out_channel);
+  int rate = weed_channel_get_audio_rate(out_channel);
 
-  double freq = weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL);
-  double mult = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
-  double trate;
+  int nrsamps, i, j;
 
-  float **buff;
-
-  register int i, j;
-
-  weed_free(in_params);
-
-  chans = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
-  nsamps = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-  rate = weed_get_int_value(out_channel, WEED_LEAF_AUDIO_RATE, NULL);
-
-  // fill with audio at TRATE
-  trate = freq * mult;
+  weed_free(in_params); /// because we got an array
 
   if (trate < 0.) trate = -trate;
+  if (trate < 50.) trate = 50.;
 
-  if (trate == 0.) {
-    weed_memset(dst, 0, nsamps * chans * sizeof(float));
-    return WEED_SUCCESS;
-  }
+  if (stval != -1.) stval = 1.;
 
-  nrsamps = ((double)nsamps / (double)rate * trate + .5);
-  buff = weed_malloc(chans * sizeof(float *));
+  nrsamps = ((double)nsamps * (double)rate / (double)trate);
+  nrsamps = (((nrsamps + 63) >> 6) << 4);    /// divide by 64, mply by 16 gives the rounded size in sizeof(float)
+  buff = (float **)weed_calloc(chans, sizeof(float *));
   for (i = 0; i < chans; i++) {
-    buff[i] = weed_malloc(nrsamps * sizeof(float));
+    buff[i] = (float *)weed_calloc(nrsamps,  sizeof(float));    /// sizeof(float) == 4 so this is the original val rounded up to n * 64
   }
 
-  for (i = 0; i < nrsamps; i++) {
+  // set a square wave at freq MYRATE, then resample it to trate
+  for (i = 0; i < nrsamps; i += 2) {
     for (j = 0; j < chans; j++) {
-      buff[j][i] = 1.;
-    }
-    i++;
-    if (i < nrsamps) {
-      for (j = 0; j < chans; j++) {
-        buff[j][i] = -1.;
+      buff[j][i] = stval;
+      if (i < nrsamps - 1) {
+        buff[j][i + 1] = -stval;
       }
     }
   }
 
-  resample(buff, dst, nsamps, chans, trate, rate);
+  resample(inst, buff, dst, nsamps, chans, trate, rate);
 
   for (i = 0; i < chans; i++) {
     if (buff[i] != NULL) weed_free(buff[i]);
@@ -114,14 +117,13 @@ static weed_error_t tonegen_process(weed_plant_t *inst, weed_timecode_t timestam
 
 WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", 0), NULL};
-  weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 7500., 0.0, 48000.0),
-                               weed_float_init("multiplier", "Frequency _Multiplier", 1., .01, 1000.), NULL
+  weed_plant_t *in_params[] = {weed_float_init("freq", "_Frequency", 75., 50., 2000.0),
+                               weed_float_init("multiplier", "Frequency _Multiplier", 10., 1., 10.), NULL
                               };
   weed_plant_t *filter_class = weed_filter_class_init("tone generator", "salsaman", 1, 0, NULL,
                                NULL, tonegen_process, NULL, NULL, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

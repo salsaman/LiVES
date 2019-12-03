@@ -133,13 +133,12 @@ FN_DECL weed_plant_t *weed_filter_class_init(const char *name, const char *autho
     weed_plant_t **in_chantmpls, weed_plant_t **out_chantmpls,
     weed_plant_t **in_paramtmpls, weed_plant_t **out_paramtmpls) ALLOW_UNUSED;
 
-FN_DECL weed_plant_t *weed_filter_class_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
-FN_DECL weed_plant_t *weed_parameter_template_get_gui(weed_plant_t *paramt) ALLOW_UNUSED;
+FN_DECL weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
+FN_DECL weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt) ALLOW_UNUSED;
 
 FN_DECL void weed_plugin_info_add_filter_class(weed_plant_t *plugin_info, weed_plant_t *filter_class) ALLOW_UNUSED;
 
 // in params
-
 FN_DECL weed_plant_t *weed_text_init(const char *name, const char *label, const char *def) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_float_init(const char *name, const char *label, double def, double min, double max) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_switch_init(const char *name, const char *label, int def) ALLOW_UNUSED;
@@ -148,11 +147,9 @@ FN_DECL weed_plant_t *weed_colRGBd_init(const char *name, const char *label, dou
 FN_DECL weed_plant_t *weed_colRGBi_init(const char *name, const char *label, int red, int green, int blue) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_radio_init(const char *name, const char *label, int def, int group) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_string_list_init(const char *name, const char *label, int def, const char **const list) ALLOW_UNUSED;
-
-FN_DECL weed_plant_t *weed_parameter_get_gui(weed_plant_t *param) ALLOW_UNUSED;
+FN_DECL weed_plant_t *weed_param_get_gui(weed_plant_t *param) ALLOW_UNUSED;
 
 // out params
-
 FN_DECL weed_plant_t *weed_out_param_colRGBd_init(const char *name, double red, double green, double blue) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_out_param_colRGBi_init(const char *name, int red, int green, int blue) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_out_param_text_init(const char *name, const char *def) ALLOW_UNUSED;
@@ -162,9 +159,17 @@ FN_DECL weed_plant_t *weed_out_param_switch_init(const char *name, int def) ALLO
 FN_DECL weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int def) ALLOW_UNUSED;
 FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max) ALLOW_UNUSED;
 
+// value setters
+FN_DECL void weed_filter_set_flags(weed_plant_t *filter, int flags);
+FN_DECL void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
+FN_DECL void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
+
 // value getters
-FN_DECL weed_plant_t *weed_get_in_channel(weed_plant_t *inst);
-FN_DECL weed_plant_t *weed_get_out_channel(weed_plant_t *inst);
+FN_DECL int weed_filter_get_flags(weed_plant_t *filter);
+FN_DECL int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
+FN_DECL int weed_parammpl_get_flags(weed_plant_t *paramtmpl);
+FN_DECL weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);
+FN_DECL weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx);
 FN_DECL void *weed_channel_get_pixel_data(weed_plant_t *channel);
 FN_DECL int weed_channel_get_width(weed_plant_t *channel);
 FN_DECL int weed_channel_get_height(weed_plant_t *channel);
@@ -180,9 +185,25 @@ FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchan
 #endif
 #endif
 
+FN_DECL int weed_channel_is_disabled(weed_plant_t *channel);
+
+// param values
+FN_DECL int weed_param_get_value_int(weed_plant_t *param);
+FN_DECL int weed_param_get_value_boolean(weed_plant_t *param);
+FN_DECL double weed_param_get_value_double(weed_plant_t *param);
+FN_DECL int64_t weed_param_get_value_int64(weed_plant_t *param);
+FN_DECL char *weed_param_get_value_string(weed_plant_t *param);
+
 #ifdef __WEED_UTILS_H__
+FN_DECL int *weed_param_get_array_int(weed_plant_t *param, int *nvalues);
+FN_DECL int *weed_param_get_array_boolean(weed_plant_t *param, int *nvalues);
+FN_DECL double *weed_param_get_array_double(weed_plant_t *param, int *nvalues);
+FN_DECL int64_t *weed_param_get_array_int64(weed_plant_t *param, int *nvalues);
+FN_DECL char **weed_param_get_array_string(weed_plant_t *param, int *mvalues);
 FN_DECL weed_plant_t **weed_get_in_channels(weed_plant_t *inst, int *nchans);
 FN_DECL weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
+FN_DECL weed_plant_t **weed_get_in_params(weed_plant_t *inst, int *nparams);
+FN_DECL weed_plant_t **weed_get_out_params(weed_plant_t *inst, int *nparams);
 #endif
 
 /* Threading */
@@ -203,7 +224,7 @@ FN_DECL int is_big_endian(void);
 // functions for process_func()
 
 #if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
-FN_DECL uint32_t fastrand(uint32_t oldval);
+FN_DECL uint64_t fastrand(uint64_t oldval);
 #endif
 
 #if defined (NEED_ALPHA_SORT) || defined(__LIBWEED_PLUGIN_UTILS__) // for wrappers, use this to sort filters alphabetically
@@ -247,9 +268,9 @@ WEED_PALETTE_A1, WEED_PALETTE_A8 and WEED_PALETTE_AFLOAT */
 FN_DECL int weed_palette_is_alpha(int pal);
 FN_DECL int weed_palette_is_rgb(int pal);
 FN_DECL int weed_palette_is_yuv(int pal);
-FN_DECL int weed_palette_get_numplanes(int pal);
+FN_DECL int weed_palette_get_nplanes(int pal);
 FN_DECL int weed_palette_is_valid(int pal);
-FN_DECL int weed_palette_is_float_palette(int pal);
+FN_DECL int weed_palette_is_float(int pal);
 FN_DECL int weed_palette_has_alpha_channel(int pal);
 FN_DECL double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 FN_DECL double weed_palette_get_plane_ratio_vertical(int pal, int plane);

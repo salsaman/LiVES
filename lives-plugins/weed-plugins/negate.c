@@ -38,6 +38,7 @@ static weed_error_t negate_process(weed_plant_t *inst, weed_timecode_t timestamp
   int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
   int psize = 4, start = 0, alpha = 3;
 
+
   unsigned char *end = src + height * irowstride;
 
   register int i;

@@ -665,6 +665,9 @@ struct _mt {
 
   boolean is_atrans; /// < force some visual changes when applying autotrans
 
+  boolean no_frame_update;
+  boolean no_expose_frame;
+
   char *force_load_name; ///< pointer to a string which contains a filename to be force loaded when load_event_list_activate() is called.
   ///< Normally NULL except when called from language bindings.
 };  // lives_mt
@@ -904,6 +907,7 @@ void on_frame_preview_clicked(LiVESButton *, livespointer mt);
 void show_preview(lives_mt *, ticks_t tc);
 
 boolean add_mt_param_box(lives_mt *);
+void redraw_mt_param_box(lives_mt *);
 
 // filter list controls
 weed_plant_t *get_prev_fm(lives_mt *, int current_track, weed_plant_t *frame);

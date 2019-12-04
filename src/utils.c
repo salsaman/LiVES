@@ -2161,6 +2161,7 @@ boolean do_std_checks(const char *type_name, const char *type, size_t maxlen, co
     }
   }
 
+  lives_free(xtype);
   return TRUE;
 }
 

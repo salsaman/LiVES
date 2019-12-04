@@ -1839,6 +1839,19 @@ static void on_datacon_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
+void check_string_choice_params(weed_plant_t *inst) {
+  int nparams;
+  weed_plant_t **in_params = weed_instance_get_in_params(inst, &nparams);
+  weed_plant_t *gui, *tgui;
+  for (int i = 0; i < nparams; i++) {
+    if ((gui = weed_param_get_gui(in_params[i], FALSE)) != NULL && weed_plant_has_leaf(gui, WEED_LEAF_CHOICES)) {
+      tgui = weed_paramtmpl_get_gui(weed_param_get_template(in_params[i]), TRUE);
+      weed_leaf_copy(tgui, WEED_LEAF_CHOICES, gui, WEED_LEAF_CHOICES);
+    }
+  }
+}
+
+
 static void on_params_clicked(LiVESButton *button, livespointer user_data) {
   int idx = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
@@ -1863,6 +1876,7 @@ static void on_params_clicked(LiVESButton *button, livespointer user_data) {
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);
     filter_mutex_lock(key);
+    check_string_choice_params(inst);
     apply_key_defaults(inst, key, mode);
     filter_mutex_unlock(key);
     weed_reinit_effect(inst, TRUE);

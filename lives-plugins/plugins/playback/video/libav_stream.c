@@ -91,16 +91,16 @@ typedef struct OutputStream {
 static OutputStream ostv; // video
 static OutputStream osta; // audio
 
+static int inited = 0;
+
 //////////////////////////////////////////////
 
 #define STR_EXPAND(tok) #tok
 #define STR(tok) STR_EXPAND(tok)
 
-
 const char *get_fps_list(int palette) {
   return STR(DEFAULT_FRAME_RATE);
 }
-
 
 ////////////////////////////////////////////////
 
@@ -121,6 +121,7 @@ const char *module_check_init(void) {
   intent = 0;
 
   pthread_mutex_init(&write_mutex, NULL);
+  inited = 1;
 
   return NULL;
 }
@@ -200,6 +201,9 @@ layout|p5|\\\".\\\"|p6|\\\".\\\"|p7|\\\".\\\"|p8|fill|fill|fill|fill|\\n\
       "<define>\\n\
 |1.8.1\\n\
 </define>\\n\
+<language_code>\\n\
+0xF0\\n\
+</language_code>\\n\
 <params>\\n\
 form|_Format|string_list|0|mp4/h264/aac|ogm/theora/vorbis|webm/vp9/opus||\\n\
 \
@@ -1106,6 +1110,9 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
 
 void module_unload(void) {
-  avformat_network_deinit();
+  if (inited)
+    avformat_network_deinit();
+  pthread_mutex_destroy(&write_mutex);
+  inited = 0;
 }
 

@@ -3551,7 +3551,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_combo_prepend_text(LiVESCombo *combo, 
 }
 
 
-WIDGET_HELPER_LOCAL_INLINE boolean lives_combo_remove_all_text(LiVESCombo *combo) {
+boolean lives_combo_remove_all_text(LiVESCombo *combo) {
   /* // for tstore, need lives_tree_store_find_iter(), gtk_tree_model_iter_has_child () */
   /* // or maybe just free the treestore and add a new list store */
   /* //LiVESTreeStore *tstore = lives_tree_store_new(1, LIVES_COL_TYPE_STRING); */

@@ -14,6 +14,8 @@
 
 void rte_window_set_interactive(boolean interactive);
 
+void check_string_choice_params(weed_plant_t *inst);
+
 void on_assign_rte_keys_activate(LiVESMenuItem *, livespointer);
 void on_rte_info_clicked(LiVESButton *, livespointer data);
 void load_default_keymap(void);

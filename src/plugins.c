@@ -3126,8 +3126,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
   weed_plant_t *chann, *ctmpl;
   weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-  if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  wpars = weed_instance_get_in_params(inst, &nwpars);
 
   for (i = 0; i < npar; i++) {
     if (i - poffset >= nwpars) {
@@ -3135,14 +3134,15 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
       poffset += nwpars;
       if (wpars != NULL) lives_free(wpars);
       inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-      if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) nwpars = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-      else nwpars = 0;
-      if (nwpars > 0) wpars = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-      else wpars = NULL;
+      wpars = weed_instance_get_in_params(inst, &nwpars);
       i--;
       continue;
     }
 
+    if (wpars == NULL) {
+      lives_free(rpar);
+      return NULL;
+    }
     wpar = wpars[i - poffset];
     wtmpl = weed_get_plantptr_value(wpar, WEED_LEAF_TEMPLATE, &error);
 
@@ -3504,6 +3504,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   rfx->gui_strings = NULL;
   rfx->onchange_strings = NULL;
   rfx->flags = 0;
+  rfx->needs_reinit = FALSE;
   return rfx;
 }
 

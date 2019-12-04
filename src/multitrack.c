@@ -1619,6 +1619,33 @@ LIVES_GLOBAL_INLINE double mt_get_effect_time(lives_mt *mt) {
 }
 
 
+void redraw_mt_param_box(lives_mt *mt) {
+  boolean res = FALSE;
+  int dph = widget_opts.packing_height;
+  int dbw = widget_opts.border_width;
+
+  LiVESList *child_list = lives_container_get_children(LIVES_CONTAINER(mt->fx_box));
+  for (int i = 0; i < lives_list_length(child_list); i++) {
+    LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
+    lives_widget_unparent(widget);
+  }
+  if (child_list != NULL) lives_list_free(child_list);
+
+  widget_opts.packing_height = 2. * widget_opts.scale;
+  widget_opts.border_width = 2. * widget_opts.scale;
+  res = make_param_box(LIVES_VBOX(mt->fx_box), mt->current_rfx);
+  widget_opts.packing_height = dph;
+  widget_opts.border_width = dbw;
+  lives_widget_show_all(mt->fx_box);
+  if (!res) {
+    lives_widget_hide(mt->apply_fx_button);
+    lives_widget_hide(mt->del_node_button);
+    lives_widget_hide(mt->prev_node_button);
+    lives_widget_hide(mt->next_node_button);
+  }
+}
+
+
 boolean add_mt_param_box(lives_mt *mt) {
   // here we add a GUI box which will hold effect parameters
 
@@ -1637,14 +1664,11 @@ boolean add_mt_param_box(lives_mt *mt) {
   char *ltext;
 
   boolean res = FALSE;
-
-  int error;
-
   int dph = widget_opts.packing_height;
   int dbw = widget_opts.border_width;
 
   tc = get_event_timecode((weed_plant_t *)mt->init_event);
-  deinit_event = weed_get_plantptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, &error);
+  deinit_event = weed_get_plantptr_value(mt->init_event, WEED_LEAF_DEINIT_EVENT, NULL);
 
   fx_start_time = tc / TICKS_PER_SECOND_DBL;
   fx_end_time = get_event_timecode(deinit_event) / TICKS_PER_SECOND_DBL;
@@ -2034,8 +2058,13 @@ void track_select(lives_mt *mt) {
         boolean aprev = mt->opts.fx_auto_preview;
         mt->opts.fx_auto_preview = FALSE;
         mainw->block_param_updates = TRUE;
+        mt->current_rfx->needs_reinit = FALSE;
         update_visual_params(mt->current_rfx, FALSE);
         mainw->block_param_updates = FALSE;
+        if (mt->current_rfx->needs_reinit) {
+          redraw_mt_param_box(mt);
+          mt->current_rfx->needs_reinit = FALSE;
+        }
         mt->opts.fx_auto_preview = aprev;
       }
       if (interp && mt->current_track >= 0) {
@@ -3116,6 +3145,7 @@ void mt_show_current_frame(lives_mt *mt, boolean return_layer) {
   boolean did_backup = mt->did_backup;
 
   if (mt->play_width == 0 || mt->play_height == 0) return;
+  if (mt->no_frame_update) return;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
@@ -5272,14 +5302,16 @@ static void set_audio_filter_channel_values(lives_mt *mt) {
   if (mt->current_rfx == NULL || mt->current_fx == -1 || mt->current_fx != mt->avol_fx) return;
 
   inst = (weed_plant_t *)mt->current_rfx->source;
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS) && (num_in = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS))) {
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)
+      && (num_in = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS))) {
     in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
     for (i = 0; i < num_in; i++) {
       weed_set_int_value(in_channels[i], WEED_LEAF_AUDIO_CHANNELS, cfile->achans);
       weed_set_int_value(in_channels[i], WEED_LEAF_AUDIO_RATE, cfile->arate);
     }
   }
-  if (weed_plant_has_leaf(inst, WEED_LEAF_OUT_CHANNELS) && (num_out = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS))) {
+  if (weed_plant_has_leaf(inst, WEED_LEAF_OUT_CHANNELS)
+      && (num_out = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS))) {
     out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
     for (i = 0; i < num_out; i++) {
       weed_set_int_value(out_channels[i], WEED_LEAF_AUDIO_CHANNELS, cfile->achans);
@@ -5907,7 +5939,7 @@ static void after_timecode_changed(LiVESWidget *entry, LiVESXEventFocus *dir, li
 #if GTK_CHECK_VERSION(3, 0, 0)
 static boolean expose_pb(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   lives_mt *mt = (lives_mt *)user_data;
-  if (mt->no_expose) return TRUE;
+  if (mt->no_expose || mt->no_expose_frame) return TRUE;
   if (LIVES_IS_PLAYING) return TRUE;
   //lives_widget_set_size_request(mainw->play_image, GUI_SCREEN_WIDTH / 3., GUI_SCREEN_HEIGHT / 3.);
   set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), mt->frame_pixbuf, cr);
@@ -6028,7 +6060,7 @@ void set_mt_colours(lives_mt *mt) {
   if (mainw->vol_label != NULL) lives_widget_apply_theme2(mainw->vol_label, LIVES_WIDGET_STATE_NORMAL, FALSE);
   lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
-  lives_widget_apply_theme2(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL, FALSE);
+  lives_widget_apply_theme(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL);
   set_child_alt_colour(mt->in_out_box, FALSE);
 
   if (palette->style & STYLE_4) {
@@ -6448,7 +6480,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->context_time = -1.;
   mt->use_context = FALSE;
 
-  mt->no_expose = TRUE;
+  mt->no_expose = mt->no_expose_frame = TRUE;
 
   mt->is_paused = FALSE;
 
@@ -6466,6 +6498,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->top_track = 0;
 
   mt->cb_list = NULL;
+
+  mt->no_frame_update = FALSE;
 
   if (mainw->fx_candidates[FX_CANDIDATE_AUDIO_VOL].delegate != -1) {
     // user (or system) has delegated an audio volume filter from the candidates
@@ -9250,7 +9284,7 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
 
   if (mt->amixer != NULL) on_amixer_close_clicked(NULL, mt);
 
-  mt->no_expose = TRUE;
+  mt->no_expose = mt->no_expose_frame = TRUE;
   mt->is_ready = FALSE;
 
   lives_memcpy(&mainw->multi_opts, &mt->opts, sizeof(mainw->multi_opts));
@@ -9362,6 +9396,8 @@ boolean multitrack_delete(lives_mt *mt, boolean save_layout) {
     mainw->playarea = lives_hbox_new(FALSE, 0);
 
     lives_container_add(LIVES_CONTAINER(mainw->pl_eventbox), mainw->playarea);
+    lives_widget_set_app_paintable(mainw->playarea, TRUE);
+    lives_widget_set_app_paintable(mainw->pl_eventbox, TRUE);
 
     if (palette->style & STYLE_1) {
       lives_widget_set_bg_color(mainw->playframe, LIVES_WIDGET_STATE_NORMAL, &palette->normal_back);
@@ -11263,7 +11299,7 @@ boolean on_multitrack_activate(LiVESMenuItem *menuitem, weed_plant_t *event_list
 
   lives_paned_set_position(LIVES_PANED(multi->vpaned), (float)lives_widget_get_allocation_height(multi->vpaned) * .0); // 0 == top
 
-  multi->no_expose = FALSE;
+  multi->no_expose = multi->no_expose_frame = FALSE;
 
   lives_container_child_set_shrinkable(LIVES_CONTAINER(multi->hpaned), multi->context_frame, TRUE);
 
@@ -12687,7 +12723,7 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
   weed_timecode_t offset_end = 0;
   weed_timecode_t tc;
 
-  weed_plant_t *filter;
+  weed_plant_t *filter, *inst;
   weed_plant_t *frame_event, *filter_map = NULL;
   weed_plant_t *init_event;
   weed_plant_t *prev_fm_event, *next_fm_event, *shortcut;
@@ -13036,6 +13072,13 @@ void polymorph(lives_mt *mt, lives_mt_poly_state_t poly) {
       rfx_free(mt->current_rfx);
       lives_free(mt->current_rfx);
     }
+
+    // init an inst, in case the plugin needs to set anything
+    inst = weed_instance_from_filter(filter);
+    weed_reinit_effect(inst, TRUE);
+    check_string_choice_params(inst);
+    weed_instance_unref(inst);
+    weed_instance_unref(inst);
 
     mt->current_rfx = weed_to_rfx(filter, FALSE);
 
@@ -17212,15 +17255,14 @@ void mt_prepare_for_playback(lives_mt *mt) {
 
 void mt_post_playback(lives_mt *mt) {
   // called from on_preview_clicked
-
   unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
 
   lives_widget_show(mainw->playarea);
 
   if (mainw->cancelled != CANCEL_USER_PAUSED && !((mainw->cancelled == CANCEL_NONE ||
-      mainw->cancelled == CANCEL_NO_MORE_PREVIEW) &&
-      mt->is_paused)) {
+      mainw->cancelled == CANCEL_NO_MORE_PREVIEW) && mt->is_paused)) {
     lives_widget_set_sensitive(mt->stop, FALSE);
+    mt->no_frame_update = FALSE;
 
     mt_tl_move(mt, mt->pb_unpaused_start_time);
 
@@ -17238,6 +17280,7 @@ void mt_post_playback(lives_mt *mt) {
       lives_widget_set_sensitive(mainw->m_rewindbutton, TRUE);
     }
     paint_lines(mt, curtime, TRUE);
+    mt->no_frame_update = FALSE;
     mt_show_current_frame(mt, FALSE);
   }
 
@@ -17275,6 +17318,8 @@ void multitrack_playall(lives_mt *mt) {
   boolean needs_idlefunc = FALSE;
 
   if (!CURRENT_CLIP_IS_VALID) return;
+  mt->no_expose_frame = TRUE;
+  mt->no_frame_update = TRUE;
 
   if (mt->idlefunc > 0) {
     lives_source_remove(mt->idlefunc);
@@ -17354,6 +17399,7 @@ void multitrack_playall(lives_mt *mt) {
   }
 
   if (!pb_audio_needs_prerender) lives_widget_set_sensitive(mt->prerender_aud, FALSE);
+  mt->no_expose_frame = FALSE;
 }
 
 
@@ -18939,12 +18985,15 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
   if (!mt->block_tl_move) {
     timesecs = otc / TICKS_PER_SECOND_DBL;
     mt->block_node_spin = TRUE;
+    if (mt->current_track >= 0 && (mt->opts.fx_auto_preview || mainw->play_window != NULL))
+      mt->no_frame_update = TRUE; // we will preview anyway later, so don't do it twice
     mt_tl_move(mt, timesecs);
+    mt->no_frame_update = FALSE;
     mt->block_node_spin = FALSE;
   }
 
   if (mt->prev_fx_time == 0. || tc == init_tc) {
-    add_mt_param_box(mt); // sensitise/desensitise reinit params
+    //add_mt_param_box(mt); // sensitise/desensitise reinit params
   } else mt->prev_fx_time = mt_get_effect_time(mt);
 
   interpolate_params((weed_plant_t *)mt->current_rfx->source, pchain, tc);
@@ -18954,10 +19003,14 @@ void on_node_spin_value_changed(LiVESSpinButton *spinbutton, livespointer user_d
   get_track_index(mt, tc);
 
   mt->opts.fx_auto_preview = FALSE; // we will preview anyway later, so don't do it twice
-
+  mt->current_rfx->needs_reinit = FALSE;
   mainw->block_param_updates = TRUE;
-  update_visual_params(mt->current_rfx, TRUE);
+  update_visual_params(mt->current_rfx, FALSE);
   mainw->block_param_updates = FALSE;
+  if (mt->current_rfx->needs_reinit) {
+    weed_reinit_effect(mt->current_rfx->source, TRUE);
+    mt->current_rfx->needs_reinit = FALSE;
+  }
 
   mt->opts.fx_auto_preview = auto_prev;
 
@@ -19178,6 +19231,10 @@ static void add_to_pchain(weed_plant_t *event_list, weed_plant_t *init_event, we
 
 void activate_mt_preview(lives_mt *mt) {
   // called from paramwindow.c when a parameter changes - show effect with currently unapplied values
+  static boolean norecurse = FALSE;
+  if (norecurse) return;
+  norecurse = TRUE;
+
   if (mt->poly_state == POLY_PARAMS) {
     if (mt->opts.fx_auto_preview) {
       mainw->no_interp = TRUE; // no interpolation - parameter is in an uncommited state
@@ -19189,6 +19246,7 @@ void activate_mt_preview(lives_mt *mt) {
       lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
     }
   } else mt_show_current_frame(mt, FALSE);
+  norecurse = FALSE;
 }
 
 
@@ -20941,7 +20999,7 @@ boolean event_list_rectify(lives_mt *mt, weed_plant_t *event_list) {
                       was_deleted = TRUE;
                     } else {
                       pflags = weed_get_int_value(ptmpls[pnum], WEED_LEAF_FLAGS, &error);
-                      if (pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE && !
+                      if (0 && pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE && !
                           is_init_pchange((weed_plant_t *)init_event, event)) {
                         // check we are not changing a reinit param, unless we immediately follow the filter_init event
                         ebuf = rec_error_add(ebuf, "Param_change sets a reinit parameter", pnum, tc);

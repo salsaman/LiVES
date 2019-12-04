@@ -372,17 +372,15 @@ WEED_SETUP_START(200, 200) {
                                kal_init, kal_process, kal_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[2]);
-
-  weed_set_boolean_value(in_params[1], WEED_LEAF_WRAP, WEED_TRUE);
-
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
-  gui = weed_paramtmpl_get_gui(in_params[0]);
+  gui = weed_paramtmpl_get_gui(in_params[1]);
+  weed_set_boolean_value(gui, WEED_LEAF_WRAP, WEED_TRUE);
 
+  gui = weed_paramtmpl_get_gui(in_params[0]);
   weed_set_double_value(gui, WEED_LEAF_STEP_SIZE, .1);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END

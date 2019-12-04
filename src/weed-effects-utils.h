@@ -52,7 +52,7 @@ weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
-weed_plant_t *weed_filter_get_gui(weed_plant_t *filter);
+weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists);
 
 /* FILTER_INSTANCE functions */
 weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans);
@@ -63,7 +63,7 @@ weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams
 /* CHANNEL_TEMPLATE functions */
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
-int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals) WARN_UNUSED;
+int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals);
 
 /* a return value of zero means unlimited repeats */
 int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
@@ -93,7 +93,7 @@ float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
 weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, int arate, int naudchans, weed_size_t nsamps);
 
 // paramtmpls
-weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl);
+weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl, int create_if_not_exists);
 int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
 int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
@@ -105,7 +105,7 @@ int weed_paramtmpl_hints_hidden(weed_plant_t *param);
 
 // params
 int weed_param_is_hidden(weed_plant_t *param);
-weed_plant_t *weed_param_get_gui(weed_plant_t *param);
+weed_plant_t *weed_param_get_gui(weed_plant_t *param, int create_if_not_exists);
 weed_plant_t *weed_param_get_template(weed_plant_t *param);
 int weed_param_get_hint(weed_plant_t *paraml);
 int weed_param_has_variable_size(weed_plant_t *param);

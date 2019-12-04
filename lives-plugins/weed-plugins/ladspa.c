@@ -135,13 +135,11 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
         weed_plant_t *gui = weed_param_get_gui(in_params[i]);
         if (link == WEED_TRUE) {
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i + ninps);
-          ptmpl = weed_get_plantptr_value(in_params[i + ninps], WEED_LEAF_TEMPLATE, NULL);
-          gui = weed_paramtmpl_get_gui(ptmpl);
+          gui = weed_param_get_gui(in_params[i + ninps]);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i);
         } else {
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
-          ptmpl = weed_get_plantptr_value(in_params[i + ninps], WEED_LEAF_TEMPLATE, NULL);
-          gui = weed_paramtmpl_get_gui(ptmpl);
+          gui = weed_param_get_gui(in_params[i + ninps]);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
         }
       }

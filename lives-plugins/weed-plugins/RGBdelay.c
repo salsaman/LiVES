@@ -98,7 +98,7 @@ static int realloc_cache(_sdata *sdata, int newsize, int width, int height) {
 
 
 static weed_error_t RGBd_init(weed_plant_t *inst) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL), *gui, *ptmpl;
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL), *gui;
   int maxcache = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
   register int i;
 
@@ -121,8 +121,8 @@ static weed_error_t RGBd_init(weed_plant_t *inst) {
 
   maxcache *= 4;
 
-  for (i = 0; i < 205; i++) {
-    gui = weed_param_get_gui(ptmpl);
+  for (i = 1; i < 205; i++) {
+    gui = weed_param_get_gui(in_params[i]);
     weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, i > maxcache ? WEED_TRUE : WEED_FALSE);
   }
 
@@ -426,6 +426,7 @@ WEED_SETUP_START(200, 200) {
     }
     in_params[i + j] = weed_float_init("", "", 1., 0., 1.);
 
+    // TODO: set in init_func
     if (i >= 80) {
       gui = weed_paramtmpl_get_gui(in_params[i]);
       weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);

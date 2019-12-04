@@ -36,7 +36,8 @@ typedef enum {
   FILTER_ERROR_BUSY,
 
   /// values >= 512 are info
-  FILTER_INFO_REINITED = 512
+  FILTER_INFO_REINITED = 512,
+  FILTER_INFO_REDRAWN
 } lives_filter_error_t;
 
 typedef enum {
@@ -76,6 +77,7 @@ typedef enum {
 #define WEED_LEAF_HOST_FILTER_LIST "host_filter_list" // host usable filters
 #define WEED_LEAF_HOST_NORECORD "host_norecord" // do not record parameter changes for this instance
 #define WEED_LEAF_DUPLICATE "host_duplicate"
+#define WEED_LEAF_HOST_REINITING "host_reiniting"
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets
@@ -326,10 +328,8 @@ boolean read_filter_defaults(int fd);
 boolean write_generator_sizes(int fd, int idx);
 boolean read_generator_sizes(int fd);
 
-int step_val(int val, int step);
-
-void set_param_gui_readwrite(weed_plant_t *inst);
-void set_param_gui_readonly(weed_plant_t *inst);
+//void set_param_gui_readwrite(weed_plant_t *inst);
+//void set_param_gui_readonly(weed_plant_t *inst);
 
 void update_all_host_info(void);
 

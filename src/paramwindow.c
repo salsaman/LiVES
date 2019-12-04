@@ -98,10 +98,10 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
     }
   }
 
-  if (mainw->textwidget_focus != NULL) {
+  if (mainw->textwidget_focus != NULL && LIVES_IS_WIDGET_OBJECT(mainw->textwidget_focus)) {
     // make sure text widgets are updated if they activate the default
-    LiVESWidget *textwidget = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus),
-                              "textwidget");
+    LiVESWidget *textwidget =
+      (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mainw->textwidget_focus), "textwidget");
     after_param_text_changed(textwidget, rfx);
   }
 
@@ -922,9 +922,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 }
 
 
-static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
-  weed_plant_t *wtmpl;
-
+static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) {
+  weed_plant_t *wparam;
   if (param->reinit && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) == 2 ||
                         (mainw->multitrack != NULL && mainw->multitrack->fx_box != NULL &&
                          mt_get_effect_time(mainw->multitrack) > 0.))) {
@@ -932,9 +931,8 @@ static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param) {
     param->hidden |= HIDDEN_NEEDS_REINIT;
   } else if (param->hidden & HIDDEN_NEEDS_REINIT) param->hidden ^= HIDDEN_NEEDS_REINIT;
 
-  if ((wtmpl = (weed_plant_t *)param->source) == NULL) return;
-
-  if (weed_paramtmpl_hints_hidden(wtmpl))
+  wparam = weed_inst_in_param(inst, idx, FALSE, FALSE);
+  if (wparam != NULL && weed_param_is_hidden(wparam) == WEED_TRUE)
     param->hidden |= HIDDEN_GUI;
   else if (param->hidden & HIDDEN_GUI) param->hidden ^= HIDDEN_GUI;
 }
@@ -1225,7 +1223,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             && (pnum = pnum + poffset) < rfx->num_params && !used[pnum]) {
           // parameter, eg. p1 ////////////////////////////
           param = &rfx->params[pnum];
-          if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param);
+          if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
           if ((param->hidden && param->hidden != HIDDEN_NEEDS_REINIT) ||
               param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
 
@@ -1377,7 +1375,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
         }
       } else if (pass == 0) break;
 
-      if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i]);
+      if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i], i);
       if ((rfx->params[i].hidden && rfx->params[i].hidden != HIDDEN_NEEDS_REINIT) ||
           rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
 
@@ -1747,7 +1745,11 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       widget_opts.expand = LIVES_EXPAND_DEFAULT;
       widget_opts.apply_theme = woat;
 
-      lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
+      if (mainw->multitrack == NULL)
+        lives_widget_apply_theme3(textview, LIVES_WIDGET_STATE_NORMAL);
+      else
+        lives_widget_apply_theme2(textview, LIVES_WIDGET_STATE_NORMAL, TRUE);
+
       lives_box_pack_start(LIVES_BOX(hbox), scrolledwindow, TRUE, TRUE, 0);
 
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(textbuffer), "textview", textview);
@@ -1807,7 +1809,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "param_number", LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = combo;
-    if (param->hidden) lives_widget_set_sensitive(combo, FALSE);
+    //if (param->hidden) lives_widget_set_sensitive(combo, FALSE);
     break;
 
   default:
@@ -1887,10 +1889,13 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
 
   int copyto = -1;
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
   new_bool = lives_toggle_button_get_active(togglebutton);
-
   if (old_bool == new_bool) return;
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   set_bool_param(param->value, new_bool);
 
@@ -1986,9 +1991,22 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int new_int = 0, old_int = 0;
   int copyto = -1;
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
-
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
+
+  if (param->dp > 0) {
+    old_double = get_double_param(param->value);
+    new_double = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
+    if (old_double == new_double) return;
+  } else {
+    old_int = get_int_param(param->value);
+    new_int = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+    if (old_int == new_int) return;
+  }
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 
@@ -2002,14 +2020,8 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   }
 
   if (param->dp > 0) {
-    old_double = get_double_param(param->value);
-    new_double = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
-    if (old_double == new_double) return;
     set_double_param(param->value, new_double);
   } else {
-    old_int = get_int_param(param->value);
-    new_int = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-    if (old_int == new_int) return;
     set_int_param(param->value, new_int);
   }
 
@@ -2298,11 +2310,14 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   lives_param_t *param = &rfx->params[param_number];
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
-
   get_colRGB24_param(param->value, &old_value);
   new_red = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.red == new_red) return;
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2367,11 +2382,14 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   lives_param_t *param = &rfx->params[param_number];
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
-
   get_colRGB24_param(param->value, &old_value);
   new_green = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.green == new_green) return;
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2435,11 +2453,14 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   lives_param_t *param = &rfx->params[param_number];
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
-
   get_colRGB24_param(param->value, &old_value);
   new_blue = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   if (old_value.blue == new_blue) return;
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2503,7 +2524,10 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   int copyto = -1;
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2579,7 +2603,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   char *old_text;
   const char *new_text;
 
-  boolean was_reinited = FALSE;
+  boolean was_reinited = FALSE, is_reiniting = FALSE;
 
   int copyto = -1;
   int param_number;
@@ -2587,22 +2611,24 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   if (rfx == NULL || rfx->params == NULL || textwidget == NULL) return;
 
   param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textwidget), "param_number"));
-
   param = &rfx->params[param_number];
-
   old_text = (char *)param->value;
-
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
 
   if (LIVES_IS_TEXT_VIEW(textwidget)) {
     new_text = lives_text_view_get_text(LIVES_TEXT_VIEW(textwidget));
     if (!strcmp(new_text, old_text)) return;
-    param->value = lives_strdup(new_text);
   } else {
     new_text = lives_entry_get_text(LIVES_ENTRY(textwidget));
     if (!strcmp(new_text, old_text)) return;
-    param->value = lives_strdup(new_text);
   }
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
+
+  if (param->value != NULL) lives_free(param->value);
+  param->value = lives_strdup(new_text);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 
@@ -2615,7 +2641,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
       int index = 0, numvals;
       int key = -1;
       char **valss;
-
+      is_reiniting = weed_get_boolean_value(inst, WEED_LEAF_HOST_REINITING, NULL);
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
@@ -2664,7 +2690,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
       /*   lives_free(disp_string); */
       /* } */
 
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
+      if (!is_reiniting && (param->reinit || (copyto != -1 && rfx->params[copyto].reinit))) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
       }
@@ -2675,13 +2701,15 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(textwidget), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    if (!is_reiniting) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     param->change_blocked = FALSE;
   }
   lives_free(old_text);
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
+  if (!is_reiniting) {
+    if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
+    if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
+      activate_mt_preview(mainw->multitrack);
+    }
   }
   param->changed = param->edited = TRUE;
 }
@@ -2694,27 +2722,25 @@ static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_r
 
 
 void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "param_number"));
-
   LiVESList *retvals = NULL;
-
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "param_number"));
   lives_param_t *param = &rfx->params[param_number];
-
   char *txt = lives_combo_get_active_text(combo);
-
+  lives_filter_error_t retval;
   boolean was_reinited = FALSE;
-
   int old_index = get_int_param(param->value);
   int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
   int copyto = -1;
 
   lives_free(txt);
 
-  if (mainw->block_param_updates) return; // updates are blocked until all params are ready
-
   if (new_index == -1) return;
-
   if (new_index == old_index) return;
+
+  if (mainw->block_param_updates) {
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    return; // updates are blocked until all params are ready
+  }
 
   set_int_param(param->value, new_index);
 
@@ -2776,8 +2802,16 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       /* } */
 
       if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst,
-                           FALSE); // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
+        // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
+        // and it tries to notify its popup menu. So we will remove the text and leak it.
+        lives_widget_object_ref(combo);
+        retval = weed_reinit_effect(inst, FALSE);
+        if (retval == FILTER_INFO_REDRAWN) {
+          GtkCellArea *celly;
+          lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
+          if (GTK_IS_CELL_LAYOUT(celly)) gtk_cell_layout_clear(GTK_CELL_LAYOUT(celly));
+          lives_combo_set_model(combo, NULL);
+        } else lives_widget_object_unref(combo);
         was_reinited = TRUE;
       }
     }
@@ -3063,8 +3097,8 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
 
   // for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
   // (other types dont have a min/max anyway)
-  char *tmp; // work around some weirdness in glib
-
+  char *tmp;
+  char *strval;
   int red, green, blue;
   int offs = 0;
   int maxlen = lives_list_length(plist) - 1;
@@ -3078,12 +3112,12 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
       break;
     }
     tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
-    set_bool_param(param->value, (atoi(tmp)));
     if (upd) {
       if (param->widgets[0] && LIVES_IS_TOGGLE_BUTTON(param->widgets[0])) {
-        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[0]), get_bool_param(param->value));
+        lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[0]), atoi(tmp));
       }
     } else set_bool_param(param->def, (atoi(tmp)));
+    set_bool_param(param->value, (atoi(tmp)));
     lives_free(tmp);
     break;
   case LIVES_PARAM_NUM:
@@ -3109,7 +3143,6 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         if (double_val < param->min) double_val = param->min;
         if (double_val > param->max) double_val = param->max;
       }
-      set_double_param(param->value, double_val);
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx");
@@ -3117,10 +3150,11 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), get_double_param(param->value));
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), double_val);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
         }
       } else set_double_param(param->def, double_val);
+      set_double_param(param->value, double_val);
     } else {
       int int_value;
       tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
@@ -3141,8 +3175,6 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         param->min = (double)int_min;
         param->max = (double)int_max;
       }
-      set_int_param(param->value, int_value);
-
       if (upd) {
         if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
           lives_rfx_t *rfx = (lives_rfx_t *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx");
@@ -3150,10 +3182,11 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
           lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
-          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)get_int_param(param->value));
+          lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)int_value);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
         }
       } else set_int_param(param->def, int_value);
+      set_int_param(param->value, int_value);
     }
     break;
   case LIVES_PARAM_COLRGB24:
@@ -3169,8 +3202,6 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
     blue = atoi(tmp);
     lives_free(tmp);
     if (param->change_blocked) break;
-    set_colRGB24_param(param->value, red, green, blue);
-
     if (upd) {
       if (param->widgets[0] && LIVES_IS_SPIN_BUTTON(param->widgets[0])) {
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)red);
@@ -3182,10 +3213,15 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[2]), (double)blue);
       }
     } else set_colRGB24_param(param->def, red, green, blue);
+    set_colRGB24_param(param->value, red, green, blue);
     break;
   case LIVES_PARAM_STRING:
-    if (param->value != NULL) lives_free(param->value);
-    param->value = reconstruct_string(plist, pnum, &offs);
+    strval = reconstruct_string(plist, pnum, &offs);
+    pnum += offs;
+    if (param->change_blocked) {
+      lives_free(strval);
+      break;
+    }
     if (upd) {
       if (param->widgets[0] != NULL) {
         if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
@@ -3193,11 +3229,15 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_text_view_set_text(LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
           lives_free(string);
         } else {
-          lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), (char *)param->value);
+          lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), strval);
         }
       }
-    } else param->def = (void *)lives_strdup((char *)param->value);
-    pnum += offs;
+    } else {
+      if (param->def != NULL) lives_free(param->def);
+      param->def = (void *)lives_strdup(strval);
+    }
+    if (param->value != NULL) lives_free(param->value);
+    param->value = strval;
     break;
   case LIVES_PARAM_STRING_LIST: {
     int int_value;
@@ -3205,11 +3245,10 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
     int_value = atoi(tmp);
     lives_free(tmp);
     if (param->change_blocked) break;
-    set_int_param(param->value, int_value);
     if (upd && param->widgets[0] != NULL && LIVES_IS_COMBO(param->widgets[0]) && int_value < lives_list_length(param->list))
       lives_combo_set_active_string(LIVES_COMBO(param->widgets[0]), (char *)lives_list_nth_data(param->list, int_value));
     if (!upd) set_int_param(param->def, int_value);
-
+    set_int_param(param->value, int_value);
     break;
   }
   default:

@@ -1858,7 +1858,8 @@ init_func() [if the plugin has one] to prepare to use it.
 '''Mandatory leaves''':[[BR]]
  * "filter_class"   : WEED_SEED_PLANTPTR : Pointer to a filter_class plant
  that this filter instance is based on. MUST be one of the filters
- returned in the plugin's plugin_info plant.
+ returned in the plugin's plugin_info plant. The host MUST set this when creating the instance, so that the plugin
+ can locate the filter that the instance was created for.
 
 
 The following are mandatory only if there are corresponding templates
@@ -2004,18 +2005,21 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
 
 '''Mandatory leaves for all channel plants''': [[BR]]
 
-* "template" : WEED_SEED_PLANTPTR : Pointer to a channel template plant used to create the channel.
+* "template" : WEED_SEED_PLANTPTR : Pointer to a channel template plant used to create the channel. The host MUST set this
+  	       			  when creating the channel, so that the plugin can locate the channel_template which was used to create
+				  this channel. In the case of repeatable channels ("max_repeats" <> 0) there may be several channels
+				  pointing to the same channel template.
 
 
 * "width" : WEED_SEED_INT    : The frame width in macropixels. Must follow the rules for "width", "maxwidth", "minwidth" and
   	    		       	   	       "hstep" defined for the filter_class, or if the filter_class has the flag
-					       WEED_FILTER_PALETTES_MAY_VARY set,
+					       WEED_FILTER_CHANNEL_SIZES_MAY_VARY set,
 					       then the equivalent rules from the channel_template if they are present.
 
 
 * "height" : WEED_SEED_INT   : The frame height in pixels. Must follow the rules for "height", "maxheight", "minheight" and
   	    		       	   	       "vstep" defined for the filter_class, or if the filter_class has the flag
-					       WEED_FILTER_PALETTES_MAY_VARY set, then the equivalent rules from the channel_template
+					       WEED_FILTER_CHANNEL_SIZES_MAY_VARY set, then the equivalent rules from the channel_template
 					       if they are present.
 
 					       If the process_function() is run in threading mode, then for out channels, this leaf will contain
@@ -2024,8 +2028,15 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
 
 * "current_palette" : WEED_SEED_INT: The selected palette, which must be one of the palettes contained in "palette_list"
   		      		     	 	  	   of the filter class used to create the instance to which the channel is attatched,
-							   or if the filer_class has the flag WEED_FILTER_PALETTES_MAY_VARY set,
-							   then one of the palettes from the channel_template's "palette_list", if that leaf is present.
+							   and all channels must have the same value.
+
+							   If the filter_class has the flag WEED_FILTER_PALETTES_MAY_VARY set,
+							   then it may be any of the palettes from the channel_template's "palette_list",
+							   if that leaf is present, otherwise from the "palette_list" in the filter class.
+							   In this case each channel may be set to a different, however each out channel must
+							   match the corresponding in_channel, unless the flag WEED_FILTER_IS_CONVERTER is
+							   also set.
+							   
 
 * "pixel_data" : WEED_SEED_VOIDPTR    : array of n pointers to  the image pixel data. The number of elements depends on
   	       	 		      	      	   	    	"current_palette". The size of each element depends on "rowstrides", "height",
@@ -2057,6 +2068,8 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
  * "flags"        : channel flags set by host.
 
 
+
+
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
  READONLY for the plugin. Those internal leaves MUST have keys prefixed with "plugin_".
 
@@ -2066,15 +2079,20 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
 
 '''Optional leaves for channel plants with video''': [[BR]]
 
- * "offset" : WEED_SEED_INT : host can achieve multithreading by splitting destination frames into slices, calling the 
-   	      		      process_func several times with different "offset"s and reduced height in the 
-			      destination channel. Offset is the number of rows offset of "pixel_data" in the destination 
-			      frame(s). Will only be used if the plugin sets the filter flag bit WEED_FILTER_HINT_MAY_THREAD.
+ * "offset" : WEED_SEED_INT : Will only be used if the plugin sets the filter flag bit WEED_FILTER_HINT_MAY_THREAD.
 			      See below - threading.
 
+			      host can achieve multithreading by splitting destination frames into slices, calling the 
+   	      		      process_func several times with different "offset"s and reduced height in the 
+			      destination channel. Offset is the number of rows offset of "pixel_data" in the destination 
+			      frame(s). 
+
+
  * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
-   			    		       the corresponding out_channel. Pixel aspect ratio 
-                                               other than 1.0 means pixels are non-square on whaever display device the host is using).
+   			    		       the corresponding out_channel. par = pixel_width / pixel_height.
+
+					       Pixel aspect ratio 
+                                               other than 1.0 means pixels are non-square on whatever display device the host is using).
 					       For example, if a filter wants to draw an exact circle independant of the display device,
 					       then it should take this value into consideration and actually draw an elipse with
 					       horizontal radius == vertical_radius / pixel_aspect_ratio.
@@ -2286,13 +2304,18 @@ Indicates a boolean type parameter. The "default" leaf can only be of seed type 
 Indicates a colour type parameter. Colors are represented as a list of elements of type WEED_SEED_DOUBLE or WEED_SEED_INT.
 Depending on the seed_type of "default", the host knows the seed type of "value".
 
+A value of  0, 0, 0, 0 indicates black / transparent.
+
+White / opaque is assumed to be 255, 255, 255, 255 for INT and 1.0, 1.0, 1.0, 1.0 for DOUBLE unless otherwise
+specified,
+
 
 == Mandatory ==
 
-* "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: minimal value of the parameter,
+* "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; the lower bound for each element, usually 0.
   	  		      		     (optional for out parameters)
 
-* "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; array of N elements: maximal value of the parameter,
+* "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; the upper bound for each element.
   	  		      		     (optional for out parameters)
 
    Note that these are only hints. The host may ignore them and the
@@ -2305,19 +2328,8 @@ Depending on the seed_type of "default", the host knows the seed type of "value"
 
 == optional ==
 
-* "range_max" : The maximum theoretical value for the R, G, B A components. I.e a "value" of {0, 0, 0, 0}
-  	      	    	    represents transparent black, whilst a value of {"range_max", "range_max", "range_max", "range_max"}
-			    would indicate opaque white. If not present, the value of "range_max" is assumed to be 255 for
-			    integer color types, and 1.0 for double color types. A plugin may override this for a parameter,
-			    for example, the value could be set to 65535 to use 16 bit color values.
-			    Affects the scaling of values in "value", "min", "max" and "new_default".
-			    Valid for in and out parameters.
-
-   Note that this is only a hint to allow the host to sensibly scale GUI values.
-   The host may ignore this and the
-   plugin must not assume that data supplied to it is meaningful. If
-   the plugin receives invalid input data it is expected to continue
-   to run without failure and, where possible, produce a sensible output.
+ * "white_point" : the values of 'white' for RGB or 'white / opaque' for RGBA. Allows overriding of the assumed value for
+   		       	      a parameter. Must be the same seed type as "default"/ "new_default" and contain 3 for RGB or 4 for RGBA values. 
 
 
  * "gamma_type" : WEED_SEED_INT : (optional) If the plugin set the flag WEED_FLAG_LINEAR_GAMMA, 
@@ -2346,15 +2358,9 @@ of RGB(A) values, including 0.
 
 
 
-For min and max, if the number of elements may be:
-
-1: each R, G, B component uses the same min and/or max, and alpha may take any value
-
-n: (where n is 3 or 4 depending on colorspace) - each RGB or RGBA value in "value" will use the same set.
-
-N: (where N is a multiple of 3 or 4, matching the number of elements in "default").
-
-- The last option is not valid if the parameter has the flag bit WEED_PARAMETER_VARIABLE_SIZE set.
+For min and max, the number of elements must either be 1; (the same bound is applied to all RGB(A) elements),
+or may be 3  for RGB, 4 for RGBA; one value for each of R, G, B, (and alpha).
+Setting a single value for "min" and 3 or 4 values for "max" or vice-versa is permitted.
 
 
 
@@ -2440,6 +2446,9 @@ with keys prefixed "plugin_".
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the filter  may be hidden from user menus by the host.
                                     (Intended for internal type filters.)
 
+ Example: a plugin creates a special "test" filter which is designed to test some specific feature of a host. The plugin sets
+ the leaf "hidden" in the filter_class GUI to indicate that the filter should not be included in user menus, etc.
+
 
  * other optional leaves depend on the "layout_scheme" used by the plugin (if any).
 
@@ -2470,62 +2479,86 @@ rely on setting "copy_value_to" to force the host to set indentical
  * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates whether "label" uses
     underscore as mnemonic
 
- * "decimals" : WEED_SEED_INT : number of decimals for a FLOAT or
-   COLOR (FLOAT) hint. For other hints this will be ignored. This is only a hint, the actual value may contain more digits after
-   the decimal point.
+ * "decimals" : WEED_SEED_INT : number of decimals to be displayed for a FLOAT or
+   COLOR (FLOAT) hint. For other types this will be ignored.
+   This is only a suggestion for display, the actual value may contain more digits after the decimal point.
 
  * "step_size" : seed type matches type of "default" : step value for
    INTEGER, FLOAT and COLOR type parameters : used for spin buttons, etc. This is only a hint, there is no guarantee that
-   the actual value will be an integer multiple of step_size.
+   the actual value will be an integer multiple of step_size. The interface should "encourage" users to select a value which
+   is an integer multiple of "step_size".
 
  * "maxchars" : WEED_SEED_INT : max display length in (utf-8) chars for a
    STRING hint. For other hints, this will be ignored. A value < 1 should
-   also be ignored. This is only a hint, there is no guarantee that the actual value will not be greater in length.
+   also be ignored. This is only a hint for display, there is no guarantee that the actual value will not be greater in length.
 
  * "wrap" : WEED_SEED_BOOLEAN : only valid for INT and FLOAT types
 
    	  WEED_TRUE hints to the host that the "value" should wrap when going below min or above max,
    	   I.e attempts to set the value n outside the range of min / max should be resolved by taking the modulus:
-	   n mod (max - min) + min,  rather then being clamped in the range min <= n <= max which is the default.
+	   n mod (max - min + 1) + min,  rather then being clamped in the range min <= n <= max which is the default
+	   suggestion.
 
 
 ///////// the following may also be set / amended by the plugin in a parameter gui during init_func()
 
-* "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
-   means second, etc.)
+* "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1 means second, etc.)
    of another in_parameter : if the "value" of this parameter is changed, then the
    "value" of the parameter pointed to should be changed be
-   set to the same value by the host. Both parameters MUST have the same HINT and
-   number of elements in "default", or both must have WEED_PARAMETER_VARIABLE_SIZE set, otherwise this will be ignored.
+   set to the same value by the host.
+
+   Both parameters MUST have the same HINT and
+   number of elements in "default", OR the target parameter must have WEED_PARAMETER_VARIABLE_SIZE set,
+   otherwise this leaf may be ignored.
    Only valid for in_parameters. If more than one parameter points to the
    same in_parameter, the behaviour is undefined. NOTE: this is not
    _STRICTLY_ GUI functionality. Even GUI-less hosts might want to implement
    this ! This can be disabled by setting it to a value < 0, or by
-   setting it to point to itself.
+   setting it to point to itself. Note that since the parameter pointed to can also set "copy_value_to" (either back to the
+   original paramter or to another), the host must be careful to avoid getting stuck in loops.
+
+   The value here (if any) is considered a permanent setting.
+   If the plugin wants to set hints to show hide various parameters duting processing,
+   The plugin may create a leaf with the same name within the parameter GUI plant and update the value
+   there during its init_func().
+
+   Example: a plugin creates a filter which overlays text on a frame, and it has two color values, text color and outline color.
+   The outline color should default to being equal to the text color. The plugin achieves this by setting "copy_value_to"
+   in the GUI plant of the "text_color" parameter template to point to the index of the "outline_color" parameter template.
 
 
- * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter
-   may be hidden by the host. The value here is only a default setting. The plugin may create a leaf with the same name within the
-   parameter gui plant and update the value there during its init_func().
+
+ * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter should be 
+   hidden by the host when presenting a filter interface to the user (for example it may be a data input for the plugin).
+
+   The value here (if any) is considered a permanent setting.
+   If the plugin wants to set hints to show / hide various parameters during processing,
+   it may set a leaf with the same name within the parameter GUI plant and update the value
+   there during its init_func().
+
+   Example: in addition to the normal user interface, a filter has a special "reset" parameter which is intented to be connected when
+   running in a data processing mode. The plugin sets the value of "hidden" to WEED_TRUE in the parameter template GUI plant,
+   to hint to the host that the parameter is not intended for display.
 
 
  * "choices" : WEED_SEED_STRING : n values for a choice:
 
-   only valid for INT parameters, the "value" element(s) indicate the selected
-   element(s);
+   only valid for INT parameters; the "value" element(s) indicate the selected element(s);
 
-   The actual value of "max" is ignored,
-   "max" is assumed to be equal to the number of elements in "choices".
-   "min" must be 0 or -1.
-   For the "value", 0 indicates first element in "choices". A value of -1 (if
-   allowed by "min") indicates "no selection". For non-INT parameters, this
-   leaf will be ignored. If "choices" is present, then "wrap" and
-   "step_size" may be ignored by the host.
+   The value set in the "max" leaf is ignored, "max" is assumed to be equal to the number of elements in "choices" - 1.
+   "min" must be 0 or -1. For the "value", 0 indicates first element in "choices". A value of -1 (if allowed by "min")
+   indicates "no selection".
+
+   If the flag WEED_PARAMETER_VARIABLE_SIZE is set in the parameter template, then multiple entries may be selected.
+   Otherwise the default should contain only one value, and only a single entry may be selected. The default may be -1 if the
+   "min" is set to -1, to indicate a default of no value selected.
+
+   For non-INT parameters, this leaf should be ignored. If "choices" is present, then "wrap" and "step_size" may be ignored by the host.
 
    Occasionally, the plugin may not know the valid set of choices until it is actually initialised,
-   or the list may need to be updated depending on other factors.
-   In this case, the plugin MUST set a placeholder value here
-   and may set the actual list in its init_func, in the parameter GUI plant.
+   In this case, the plugin MUST set a placeholder value here and may set the actual list in its init_func, placing the values
+   in the parameter GUI plant. This action may ONLY be perfomed once, the first time the instance is initialized.
+   See the leaf description below for more details.
    
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them
@@ -2542,8 +2575,6 @@ A Plugin may optionally create and update a gui plant for any input parameter du
 
 At other times the plugin must not alter any of the leaves, except for any private leaves with keys prefixed "plugin_"
 
-* The corresponding parameter template MUST have WEED_PARAMETER_REINIT_ON_VALUE_CHANGE set.
-
 
 * "copy_value_to" : WEED_SEED_INT : index (0 means first parameter, 1
    means second, etc.)
@@ -2557,23 +2588,45 @@ At other times the plugin must not alter any of the leaves, except for any priva
    this ! This can be disabled by setting it to a value < 0, or by
    setting it to point to itself.
 
+Example: an audio plugin (see Weed Audio Extension) operates on two channels, left stereo and right stereo.
+The plugin creates two sets of each parameter, one for each channel, and creates a switch parameter "link" to allow the user to link
+the parameter values for both audio channels.  The plugin achieves this
+by setting the flag WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in the paramter template for "link". During the init_func(),
+the plugin reads the value of "link" and if set, then it creates or updates
+a GUI leaf for each in parameter with the "copy_value_to" pointing to the corresponding parameter for the other audio channel.
+If "link" is not set then "copy_value_to" is set to -1 to indicate no copying.
+
+
+
 
  * "hidden" : WEED_SEED_BOOLEAN : if set to WEED_TRUE, the parameter should be hidden by the host in any interface windows
    	      			This is to allow the plugin to suggest to the host that it show / hide different parameters depending on
 				the values of other parameters, channel sizes and palettes, etc. If this leaf also exists in the parameter template
 				then this leaf overrides any default set there. In this more detailed version of the leaf,
 
-				[Needs testing for practicality]
-				if the flag WEED_PARAMETER_VALUE_PER_CHANNEL is set, then 1 value may be set per channel.
+
+ If the plugin wants to update these leaves depending on the value of a specific parameter, then it may set the flag
+ WEED_PARAMETER_REINIT_ON_VALUE_CHANGE for that parameter's template.
+
+Example: the filter has a "mode" parameter which defines different operating modes for the filter. Depending on the value of
+"mode", the plugin may want to hint to the host to show or hide some of the other parameters. The plugin achieves this
+by setting the flag WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in the paramter template for "mode". During the init_func(),
+the plugin reads the value of "mode" and sets "hidden" to WEED_TRUE or WEED_FALSE for several of the other in parameters.
+
 
 
  * "choices" : WEED_SEED_STRING : n values for a choice: only valid for INT parameters, the "value" element(s)
    indicate the selected element(s); (see the leaf in parameter_template)
 
-   The plugin may set this in the parameter gui plant during init_func(), since sometimes it is not possible for the plugin to define
-   all the entries until it is actually initialised with channels and parameters.
+   The plugin may set this in the parameter gui plant during the first call to init_func(),
+   since sometimes it is not possible for the plugin to define all the entries until it is actually initialised.
 
-   
+    This action may only be perfomed once, the first time the instance is initialized.
+    The plugin MUST set the same list for all instances created from the filter_class during the same session (i.e between being
+    loaded and unloaded by the host). For parameters of type STRING, with a "choices" leaf in the parameter template,
+    the host should check for a corresponding leaf in the parameter GUI plant, after the first call to init_func() for an instance.
+    The host may optionally copy the contents of the leaf into the parameter template GUI. Overwriting the "placeholder" value
+    originally set by the plugin.
 
 
 
@@ -2953,7 +3006,8 @@ Flag bits >=30 are free to use for custom flags.
  * WEED_PARAMETER_REINIT_ON_VALUE_CHANGE
    host must reinit the plugin if the parameter "value" is
    changed. This is to allow the plugin to readjust its internal state as well as to possibly alter the "gui" settings
-   for the parameters
+   for the parameters. It is strongly recommended to set this flag bit only for parameters of type SWITCH, or INT  with
+   "choices" set (i.e string lists).
  
 
  * WEED_PARAMETER_VARIABLE_SIZE
@@ -3544,29 +3598,23 @@ static int ext_set_param(ext_context *ctx, int index, int nvalues, void *values)
        // values should be a pointer to an array of correct size and type ; e.g  (void *)&(int[nvalues])
 
        weed_plan weed_plant_t *inst = (weed_plant_t *)ctx->priv_data;
-       weed_plant_t *in_params[MAX_PARAMS];
+       weed_plant_t **in_params;
        weed_plant_t *param;
-       weed_size_t nparams, vsize;
+       int nparams, vsize;
        int32_t flags;
-
-       if (index < 0 || index > MAX_PARAMS) return EINVAL;
 
        if (!inst) return (int)WEED_ERROR_NOSUCH_LEAF;
 
-       nparams = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+       in_params = weed_get_in_params(inst, &nparams);
 
         if (index >= nparams) {
-	   return (int)WEED_ERROR_NOSUCH_ELEMENT;
+	  weed_free(in_params);
+	  return (int)WEED_ERROR_NOSUCH_ELEMENT;
 	}
-
-	for (i = 0; i < nparams; i++) {
-	    weed_leaf_get(inst, WEED_LEAF_IN_PARAMETERS, i, &in_params[i]);
-	}
-  	if (in_params[index] == NULL) return FUBAR;
 
 	/* try to get the existing number of values from "value", and if that doesn't exist, then from "default" */
-  	vsize = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
-	if (!vsize) vsize = weed_leaf_num_elements(param, WEED_LEAF_DEFAULT);
+  	vsize = weed_param_get_value_size(param);
+	if (!vsize) vsize = weed_param_get_default_size(param);
       
 	if (vsize > 0) {
     	   	  if (nvalues == vsize) {
@@ -3574,7 +3622,7 @@ static int ext_set_param(ext_context *ctx, int index, int nvalues, void *values)
       		     	      return validate_vals(param, 0, nvalues, value);
 	}
 
-  	flags = weed_get_int_value(param, WEED_LEAF_FLAGS, NULL);
+  	flags = weed_paramtmpl_get_flags(paramtmpl);
 
   	if (flags & WEED_PARAMETER_VARIABLE_SIZE) {
 	   	      		/* it's a list type value, the number of elements just has to an integer  multiple of the value size *\
@@ -3598,11 +3646,11 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 	weed_size_t vsize - 1;
 	int i;
 
-	weed_leaf_get(param, WEED_LEAF_HINT, 0, &hint);
+	hint = weed_param_get_hint(param);
 
          if (hint == WEED_HINT_COLOR) {
 	   	 int cspace;
-    	        weed_leaf_get(param, WEED_LEAF_COLORSPACE, 1 &cspace)
+    	        cspace = weed_param_get_cspace(param);
 		if (cspace == WEED_COLORSPACE_RGBA) vsize = 4; 
     		else vsize = 3;
 	}

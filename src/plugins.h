@@ -509,6 +509,7 @@ typedef struct {
   LiVESList *gui_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
   LiVESList *onchange_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
   boolean is_template;
+  boolean needs_reinit;
 } lives_rfx_t;
 
 boolean check_rfx_for_lives(lives_rfx_t *);

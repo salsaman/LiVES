@@ -3277,9 +3277,7 @@ filterinit1:
           weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
-            set_param_gui_readwrite(inst);
             (*init_func)(inst);
-            set_param_gui_readonly(inst);
             lives_chdir(cwd, FALSE);
             lives_free(cwd);
           }
@@ -3971,9 +3969,7 @@ filterinit2:
           weed_init_f init_func = (weed_init_f)weed_get_funcptr_value(filter, WEED_LEAF_INIT_FUNC, NULL);
           if (init_func != NULL) {
             char *cwd = cd_to_plugin_dir(filter);
-            set_param_gui_readwrite(inst);
             (*init_func)(inst);
-            set_param_gui_readonly(inst);
             lives_chdir(cwd, FALSE);
             lives_free(cwd);
           }

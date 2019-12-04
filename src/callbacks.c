@@ -9521,7 +9521,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
 
   // redraw our bars for the clip
-  if (!mainw->merge) {
+  if (!mainw->merge && mainw->multitrack == NULL) {
     get_play_times();
   }
   if (ointernal_messaging) {

@@ -126,16 +126,11 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // updates a weed_channel from a cairo_t
   cairo_surface_t *surface = cairo_get_target(cairo);
+  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 
-  cairo_format_t cform = CAIRO_FORMAT_ARGB32;
-
-  int error;
-
-  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
-
-  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
-  int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
-  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error), widthx = width * 4;
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL), cheight;
+  int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL), widthx = width * 4;
 
   register int i;
 
@@ -144,7 +139,10 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
 
   src = cairo_image_surface_get_data(surface);
 
-  irowstride = cairo_format_stride_for_width(cform, width);
+  irowstride = cairo_image_surface_get_stride(surface);
+  cheight = cairo_image_surface_get_height(surface);
+
+  if (cheight < height) height = cheight;
 
   if (irowstride == orowstride) {
     weed_memcpy((void *)pixel_data, (void *)src, irowstride * height);
@@ -157,6 +155,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
       src += irowstride;
     }
   }
+  cairo_surface_finish(surface);
 }
 
 

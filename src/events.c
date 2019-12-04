@@ -4631,7 +4631,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // need to retain play_start for rendering to same clip
   oplay_start = mainw->play_start;
 
-  if (prefs->gui_monitor == 0 && mainw->sep_win) {
+  if (prefs->gui_monitor == 0) {
     // avoid an annoyance
     pref_factory_int(PREF_SEPWIN_TYPE, SEPWIN_TYPE_NON_STICKY, FALSE);
   }

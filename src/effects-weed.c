@@ -3045,8 +3045,8 @@ audinst1:
     int vmaster = get_master_vol_param(filter, FALSE);
     if (vmaster != -1) {
       int nvals;
-      weed_plant_t **in_params = weed_instance_get_in_params(instance, &nvals);
-      double *fvols = weed_get_double_array(in_params[vmaster], WEED_LEAF_VALUE, NULL);
+      weed_plant_t **in_params = weed_instance_get_in_params(instance, NULL);
+      double *fvols = weed_get_double_array_counted(in_params[vmaster], WEED_LEAF_VALUE, &nvals);
       for (i = 0; i < nvals; i++) {
         fvols[i] = fvols[i] * vis[in_tracks[i] + nbtracks];
         if (vis[in_tracks[i] + nbtracks] < 0.) fvols[i] = -fvols[i];

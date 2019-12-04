@@ -1075,7 +1075,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   short *holding_buff;
   weed_layer_t **layers = NULL;
   char *infilename, *outfilename;
-
   off64_t seekstart[nfiles];
 
   int in_fd[nfiles];
@@ -1103,6 +1102,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   boolean out_reverse_endian = FALSE;
   boolean is_fade = FALSE;
+  boolean use_live_chvols = FALSE;
 
   int out_asamps = to_file > -1 ? outfile->asampsize / 8 : 0;
   int out_achans = to_file > -1 ? outfile->achans : obuf->out_achans;
@@ -1320,6 +1320,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   g_print("  rendering %ld samples %f\n", tsamples, opvol);
 #endif
 
+  // TODO - need to check amixer != NULL and get vals from sliders
+  /* if (mainw->multitrack != NULL && mainw->multitrack->audio_vols != NULL && obuf != NULL) { */
+  /*   use_live_chvols = TRUE; */
+  /*   audio_vols = mainw->multitrack->audio_vols; */
+  /* } */
+
   while (tsamples > 0) {
     tsamples -= xsamples;
 
@@ -1388,7 +1394,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       for (c = 0; c < out_achans; c++) {
         /// now we convert to holding_buff to float in float_buffer and adjust the track volume
         sample_move_d16_float(float_buffer[c + track * out_achans], holding_buff + c, nframes,
-                              out_achans, in_unsigned[track], FALSE, chvol[track]);
+                              out_achans, in_unsigned[track], FALSE, use_live_chvols ? 1. : chvol[track]);
       }
     }
 
@@ -1400,9 +1406,15 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (i + render_block_size > xsamples) blocksize = xsamples - i;
 
       for (track = 0; track < nfiles; track++) {
+        /* if (use_live_chvols) { */
+        /*   chvol[track] = giw_vslider_get_value(GIW_VSLIDER(amixer->ch_sliders[track])); */
+        /* } */
         for (c = 0; c < out_achans; c++) {
           //g_print("xvals %.4f\n",*(float_buffer[track*out_achans+c]+i));
           chunk_float_buffer[track * out_achans + c] = float_buffer[track * out_achans + c] + i;
+          /* if (use_live_chvols) { */
+          /*   for (smp = 0; smp < blocksize; smp++) chunk_float_buffer[track * out_achans + c][smp] *= chvol[track]; */
+          /* } */
         }
       }
 

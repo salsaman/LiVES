@@ -6061,7 +6061,7 @@ void set_mt_colours(lives_mt *mt) {
   lives_widget_apply_theme2(mainw->volume_scale, LIVES_WIDGET_STATE_NORMAL, FALSE);
 
   lives_widget_apply_theme(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL);
-  set_child_alt_colour(mt->in_out_box, FALSE);
+  set_child_colour(mt->in_out_box, TRUE);
 
   if (palette->style & STYLE_4) {
     lives_widget_show(mt->hseparator);
@@ -8639,6 +8639,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   // poly in_out_box
   mt->in_out_box = lives_hbox_new(TRUE, 0);
+  lives_container_set_border_width(LIVES_CONTAINER(mt->in_out_box), 2);
   lives_widget_object_ref(mt->in_out_box);
   lives_widget_apply_theme(mt->in_out_box, LIVES_WIDGET_STATE_NORMAL);
 

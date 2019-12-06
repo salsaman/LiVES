@@ -30,7 +30,8 @@ static double audio_start;
 static boolean accelerators_swapped;
 static int frames_done;
 static double disp_fraction_done;
-
+static double est_time;
+static ticks_t proc_start_ticks;
 static ticks_t last_open_check_ticks;
 
 static ticks_t last_kbd_ticks;
@@ -38,8 +39,6 @@ static ticks_t last_kbd_ticks;
 static boolean shown_paused_frames;
 static boolean force_show;
 static boolean td_had_focus;
-
-static double est_time;
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (TICKS_PER_SECOND/10l)
@@ -1161,11 +1160,8 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
   if ((progress_count++ * progress_speed) >= PROG_LOOP_VAL) {
     if (frames_done <= sfile->progress_end && sfile->progress_end > 0 && !mainw->effects_paused &&
         frames_done > 0) {
-      mainw->currticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-      timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
-
+      timesofar = (lives_get_current_ticks() - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
       fraction_done = (double)(frames_done - sfile->progress_start) / (double)(sfile->progress_end - sfile->progress_start + 1.);
-
       disp_fraction(fraction_done, timesofar, sfile->proc_ptr);
       progress_count = 0;
       progress_speed = 4.;
@@ -1185,19 +1181,19 @@ void update_progress(boolean visible) {
   if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
       (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
     uint32_t apxl;
-    mainw->currticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-    if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
-        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 50 ? apxl : 50) ||
+    ticks_t currticks = lives_get_current_ticks();
+    if ((currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
+        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 100 ? apxl : 100) ||
         (mainw->effects_paused && !shown_paused_frames)) {
       cfile->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file,
-                                     cfile->opening > 1 ? cfile->opening_frames : 1);
-      last_open_check_ticks = mainw->currticks;
+                                     cfile->opening_frames > 1 ? cfile->opening_frames : 1);
+      last_open_check_ticks = currticks;
       if (cfile->opening_frames > 1) {
         if (cfile->frames > 0 && cfile->frames != 123456789) {
           fraction_done = (double)(cfile->opening_frames - 1.) / (double)cfile->frames;
           if (fraction_done > 1.) fraction_done = 1.;
           if (!mainw->effects_paused) {
-            timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
+            timesofar = (currticks - proc_start_ticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
             est_time = timesofar / fraction_done - timesofar;
           }
           lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), fraction_done);
@@ -1532,9 +1528,6 @@ int process_one(boolean visible) {
       // fixes a problem with opening preview with bg generator
       if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_NO_PROPOGATE;
     } else {
-      double fraction_done, timesofar;
-      char *prog_label;
-
       if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1, cfile->proc_ptr->frames_done);
       // set the progress bar %
@@ -1656,7 +1649,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   disp_fraction_done = 0.;
   mainw->last_display_ticks = 0;
   shown_paused_frames = FALSE;
-  est_time = -1.;
   force_show = TRUE;
 
   mainw->cevent_tc = 0;
@@ -1774,7 +1766,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   reset_timebase();
   //////////////////////////
 
-  if (!visible) {
+  if (visible) {
+    est_time = -1.;
+    proc_start_ticks = lives_get_current_ticks();
+  } else {
     // video playback
 
 #ifdef ENABLE_JACK_TRANSPORT

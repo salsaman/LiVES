@@ -71,23 +71,21 @@
 #include <stdio.h>
 
 ///////////////////////////////////////////////////////////
+static int wtrue = WEED_TRUE;
+
 // check if leaf exists and has a value
 #define _leaf_has_value(plant, key) ((weed_leaf_num_elements(plant, key) > 0) ? 1 : 0)
+
 #define general_get(plant, what, idx, val) (plant ? (weed_leaf_get(plant, what, idx, val) == WEED_SUCCESS) ? val : NULL : NULL)
-#define general_get_intx(plant, what, val) (plant ? (int)(*((int32_t *)general_get(plant, what, 0, val))) : 0)
-#define general_get_dblx(plant, what, val) (plant ? *((double *)general_get(plant, what, 0, val)) : 0.)
-#define general_get_i64x(plant, what, val) (plant ? *((int64_t *)general_get(plant, what, 0, val)) : 0)
+
 NOT_EXPORTED int general_get_int(weed_plant_t *plant, const char *what) {
-  int v;
-  return general_get_intx(plant, what, &v);
+  int v, *vp = (int *)general_get(plant, what, 0, &v); return vp ? v : 0;
 }
 NOT_EXPORTED int64_t general_get_i64(weed_plant_t *plant, const char *what) {
-  int64_t v;
-  return general_get_i64x(plant, what, &v);
+  int64_t v, *vp = (int64_t *)general_get(plant, what, 0, &v); return vp ? v : 0;
 }
 NOT_EXPORTED double general_get_dbl(weed_plant_t *plant, const char *what) {
-  double v;
-  return general_get_dblx(plant, what, &v);
+  double v, *vp = (double *)general_get(plant, what, 0, &v); return vp ? v : 0;
 }
 
 EXPORTS int weed_plant_get_type(weed_plant_t *plant) {
@@ -242,7 +240,6 @@ EXPORTS weed_plant_t *weed_channel_template_init(const char *name, int flags) {
 }
 
 EXPORTS weed_plant_t *weed_audio_channel_template_init(const char *name, int flags) {
-  int wtrue = WEED_TRUE;
   weed_plant_t *chantmpl = weed_channel_template_init(name, flags);
   if (chantmpl) weed_leaf_set(chantmpl, WEED_LEAF_IS_AUDIO, WEED_SEED_BOOLEAN, 1, &wtrue);
   return chantmpl;
@@ -343,7 +340,6 @@ EXPORTS weed_plant_t *weed_integer_init(const char *name, const char *label, int
   weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
   int hint = WEED_HINT_INTEGER;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_INT, 1, &def);
@@ -372,7 +368,6 @@ EXPORTS weed_plant_t *weed_switch_init(const char *name, const char *label, int 
   weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
   int hint = WEED_HINT_SWITCH;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_BOOLEAN, 1, &def);
@@ -392,7 +387,6 @@ EXPORTS weed_plant_t *weed_float_init(const char *name, const char *label, doubl
   weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
   int hint = WEED_HINT_FLOAT;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_DOUBLE, 1, &def);
@@ -408,7 +402,6 @@ EXPORTS weed_plant_t *weed_text_init(const char *name, const char *label, const 
   weed_plant_t *paramt = weed_plant_new(WEED_PLANT_PARAMETER_TEMPLATE);
   int hint = WEED_HINT_TEXT;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_DEFAULT, WEED_SEED_STRING, 1, &def);
@@ -426,7 +419,6 @@ EXPORTS weed_plant_t *weed_colRGBi_init(const char *name, const char *label, int
   int min = 0;
   int max = 255;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_COLORSPACE, WEED_SEED_INT, 1, &cspace);
@@ -447,7 +439,6 @@ EXPORTS weed_plant_t *weed_colRGBd_init(const char *name, const char *label, dou
   double min = 0.;
   double max = 1.;
   weed_plant_t *gui;
-  int wtrue = WEED_TRUE;
   weed_paramtmpl_set_name(paramt, name);
   weed_leaf_set(paramt, WEED_LEAF_HINT, WEED_SEED_INT, 1, &hint);
   weed_leaf_set(paramt, WEED_LEAF_COLORSPACE, WEED_SEED_INT, 1, &cspace);
@@ -727,10 +718,11 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
   if (num == 0) weed_leaf_set(to, key, seed_type, 0, NULL);
   else {
     switch (seed_type) {
+    case WEED_SEED_BOOLEAN:
     case WEED_SEED_INT:
       datai = (int *)weed_malloc(num * sizeof(int));
       for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datai[i]);
-      weed_leaf_set(to, key, WEED_SEED_INT, num, datai);
+      weed_leaf_set(to, key, seed_type, num, datai);
       weed_free(datai);
       break;
     case WEED_SEED_INT64:
@@ -738,12 +730,6 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
       for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datai6[i]);
       weed_leaf_set(to, key, WEED_SEED_INT64, num, datai6);
       weed_free(datai6);
-      break;
-    case WEED_SEED_BOOLEAN:
-      datai = (int *)weed_malloc(num * sizeof(int));
-      for (i = 0; (weed_size_t)i < num; i++) weed_leaf_get(from, key, i, &datai[i]);
-      weed_leaf_set(to, key, WEED_SEED_BOOLEAN, num, datai);
-      weed_free(datai);
       break;
     case WEED_SEED_DOUBLE:
       datad = (double *)weed_malloc(num * sizeof(double));

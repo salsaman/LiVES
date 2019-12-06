@@ -815,29 +815,23 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant
 
   int dtype, stype, nsvals, ndvals, error;
   int copyto, ondvals;
-
   int nsmin = 0, nsmax = 0;
-
   int minct = 0, maxct = 0;
   int sminct = 0, smaxct = 0;
-
   int nmax = 0, nmin = 0;
-
   boolean retval = FALSE;
 
   register int i;
 
   if (dparam == sparam && (dparam != active_dummy || active_dummy == NULL)) return FALSE;
-
   nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
-
   if (nsvals == 0) return FALSE;
 
-  sptmpl = weed_get_plantptr_value(sparam, WEED_LEAF_TEMPLATE, &error);
+  sptmpl = weed_param_get_template(sparam);
   stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
 
   ondvals = ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
-  dptmpl = weed_get_plantptr_value(dparam, WEED_LEAF_TEMPLATE, &error);
+  dptmpl = weed_param_get_template(dparam);
   dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
 
   if (!params_compatible(sparam, dparam)) return FALSE;
@@ -1188,13 +1182,10 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant
     break;
 
   case WEED_SEED_BOOLEAN: {
-    int *valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, &error);
-    if (error != WEED_SUCCESS) g_print("ERR was %d\n", error);
-    if (valsb == NULL) return retval;
-
+    int *valsb;
     if (dparam == active_dummy && !autoscale) {
       // ACTIVATE
-      int key;
+      int key, valb;
       pthread_mutex_lock(&mainw->fxd_active_mutex);
       key = weed_get_int_value(dparam, WEED_LEAF_HOST_KEY, &error);
       if (is_audio_thread) {
@@ -1206,19 +1197,20 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant
           return retval;
         }
       }
+      valb = weed_get_boolean_value(sparam, WEED_LEAF_VALUE, &error);
       pthread_mutex_unlock(&mainw->fxd_active_mutex);
-      if ((valsb[0] == WEED_TRUE && !(mainw->rte & (GU641 << (key)))) ||
-          (valsb[0] == WEED_FALSE && (mainw->rte & (GU641 << (key))))) {
+      if (error != WEED_SUCCESS) return retval;
+      if ((valb == WEED_TRUE && !(mainw->rte & (GU641 << (key)))) ||
+          (valb == WEED_FALSE && (mainw->rte & (GU641 << (key))))) {
         if (toggle_fx) *toggle_fx = key + 1;
       }
       lives_free(valsb);
       return retval;
     }
-
+    valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, &error);
     switch (dtype) {
     case WEED_SEED_STRING: {
       char *opstring, *tmp, *bit;
-
       char **valss, *vals;
 
       if (ndvals == 1) {
@@ -1521,6 +1513,7 @@ boolean pconx_chain_data(int key, int mode, boolean is_audio_thread) {
         pthread_mutex_unlock(&mainw->fxd_active_mutex);
       } else inparam = inparams[i];
 
+      /// wee need to keep these locked for as little time as possible so as not to hang up the video / audio thread
       filter_mutex_lock(key);
       filter_mutex_lock(okey);
 

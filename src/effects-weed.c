@@ -86,11 +86,12 @@ LIVES_GLOBAL_INLINE int filter_mutex_trylock(int key) {
 #ifndef DEBUG_FILTER_MUTEXES
 LIVES_GLOBAL_INLINE int filter_mutex_lock(int key) {
   int ret = filter_mutex_trylock(key);
-  if (ret != 0 && !mainw->is_exiting) {
-    char *msg = lives_strdup_printf("attempted double lock of fx key %d, err was %d", key, ret);
-    LIVES_ERROR(msg);
-    lives_free(msg);
-  }
+  /// attempted double locking is actually normal behaviour when we have both video and audio effects running
+  /* if (ret != 0 && !mainw->is_exiting) { */
+  /*   /\* char *msg = lives_strdup_printf("attempted double lock of fx key %d, err was %d", key, ret); *\/ */
+  /*   /\* LIVES_ERROR(msg); *\/ */
+  /*   /\* lives_free(msg); *\/ */
+  /* } */
   return ret;
 }
 
@@ -3244,6 +3245,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
   else {
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
       if (rte_key_valid(i + 1, TRUE)) {
+
         if (!(rte_key_is_enabled(1 + i))) {
           // if anything is connected to ACTIVATE, the fx may be activated
           pconx_chain_data(i, key_modes[i], FALSE);
@@ -3252,6 +3254,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
           mainw->osc_block = TRUE;
           if ((instance = weed_instance_obtain(i, key_modes[i])) == NULL) {
             mainw->osc_block = FALSE;
+            continue;
+          }
+          filter = weed_instance_get_filter(instance, TRUE);
+          if (is_pure_audio(filter, TRUE)) {
+            weed_instance_unref(instance);
             continue;
           }
           if (weed_get_int_value(instance, WEED_LEAF_EASE_OUT, NULL) > 0) {
@@ -3284,7 +3291,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
               filter_mutex_unlock(i);
             }
           }
-          filter = weed_instance_get_filter(instance, TRUE);
+          //filter = weed_instance_get_filter(instance, TRUE);
 
           // TODO *** enable this, and apply pconx to audio gens in audio.c
           if (!is_pure_audio(filter, TRUE)) {
@@ -3575,7 +3582,6 @@ apply_audio_inst2:
       }
     }
   }
-
 }
 
 
@@ -4222,6 +4228,8 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_VERSION, LiVES_VERSION);
 
   weed_set_string_value(xhost_info, WEED_LEAF_LAYOUT_SCHEMES_SUPPORTED, "rfx");
+
+  weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_WARN);
 
   update_host_info(xhost_info);
   return xhost_info;

@@ -123,12 +123,12 @@ typedef struct {
 #define WEED_ERROR_TOO_MANY_INSTANCES	66
 #define WEED_ERROR_REINIT_NEEDED               	67
 
-#define WEED_VERBOSITY_SILENT		0 ///< no output
-#define WEED_VERBOSITY_CRITICAL	1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
-#define WEED_VERBOSITY_ERROR		2 ///< default choice (errors which prevent normal operation)
-#define WEED_VERBOSITY_WARN		3 ///< default choice (errors which adversly affect operation)
-#define WEED_VERBOSITY_INFO		4 ///< info (any non-debug info)
-#define WEED_VERBOSITY_DEBUG		5 ///< output to assist with debugging the plugin / filter
+#define WEED_VERBOSITY_SILENT	 	-2 ///< no output
+#define WEED_VERBOSITY_CRITICAL	-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
+#define WEED_VERBOSITY_ERROR	      	 0 ///< default choice (errors which prevent normal operation)
+#define WEED_VERBOSITY_WARN	      	 1 ///< default choice (errors which adversly affect operation)
+#define WEED_VERBOSITY_INFO		 2 ///< info (any non-debug info)
+#define WEED_VERBOSITY_DEBUG		 3 ///< output to assist with debugging the plugin / filter
 
 typedef int64_t weed_timecode_t;
 

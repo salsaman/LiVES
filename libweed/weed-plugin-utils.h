@@ -163,10 +163,10 @@ FN_DECL weed_plant_t *weed_out_param_integer_init(const char *name, int def, int
 // host info
 FN_DECL weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info);
 FN_DECL int weed_get_host_verbosity(weed_plant_t *host_info);
-  //FN_DECL char *weed_get_host_name(weed_plant_t *host_info);
-  //FN_DECL char *weed_get_host_version(weed_plant_t *host_info);
+//FN_DECL char *weed_get_host_name(weed_plant_t *host_info);
+//FN_DECL char *weed_get_host_version(weed_plant_t *host_info);
 FN_DECL int weed_get_host_flags(weed_plant_t *host_info);
-  //FN_DECL char **weed_get_host_layout_schemes(weed_plant_t *host_info);
+//FN_DECL char **weed_get_host_layout_schemes(weed_plant_t *host_info);
 
 // value setters
 FN_DECL void weed_filter_set_flags(weed_plant_t *filter, int flags);

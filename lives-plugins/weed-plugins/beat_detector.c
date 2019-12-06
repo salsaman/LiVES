@@ -12,6 +12,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_AUDIO
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -21,6 +23,8 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-plugin-utils.c" // optional
+
+static int verbosity = WEED_VERBOSITY_ERROR;
 
 /////////////////////////////////////////////////////////////////////////////////////
 
@@ -111,7 +115,6 @@ static int create_plans(void) {
 
 static weed_error_t beat_init(weed_plant_t *inst) {
   _sdata *sdata;
-
   register int i, j;
 
   sdata = (_sdata *)weed_malloc(sizeof(_sdata));
@@ -143,8 +146,8 @@ static weed_error_t beat_deinit(weed_plant_t *inst) {
   _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
   if (sdata != NULL) {
     weed_free(sdata);
-    weed_get_voidptr_value(inst, "plugin_data", NULL);
   }
+  weed_set_voidptr_value(inst, "plugin_data", NULL);
   return WEED_SUCCESS;
 }
 
@@ -152,18 +155,18 @@ static weed_error_t beat_deinit(weed_plant_t *inst) {
 static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   int chans, nsamps, onsamps, base, rate, k;
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  float **src = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  float **src = (float **)weed_channel_get_audio_data(in_channel, &chans);
 
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  weed_plant_t **out_params = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  weed_plant_t **out_params = weed_get_out_params(inst, NULL);
 
-  int reset = weed_get_boolean_value(in_params[0], WEED_LEAF_VALUE, NULL);
-  double avlim = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
-  double varlim = weed_get_double_value(in_params[2], WEED_LEAF_VALUE, NULL);
-  int hamming = weed_get_boolean_value(in_params[3], WEED_LEAF_VALUE, NULL);
+  int reset = weed_param_get_value_boolean(in_params[0]);
+  double avlim = weed_param_get_value_double(in_params[1]);
+  double varlim = weed_param_get_value_double(in_params[2]);
+  int hamming = weed_param_get_value_boolean(in_params[3]);
 
-  int beat_pulse = WEED_FALSE, beat_hold = weed_get_boolean_value(out_params[1], WEED_LEAF_VALUE, NULL);
+  int beat_pulse = WEED_FALSE, beat_hold = weed_param_get_value_boolean(out_params[1]);
   int has_data = WEED_FALSE;
   int kmin, kmax, okmin, rkmin, rkmax;
 
@@ -177,16 +180,14 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
   if (beat_hold == WEED_TRUE) beat_hold = !reset;
 
-  onsamps = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
+  onsamps = weed_channel_get_audio_length(in_channel);
 
   if (onsamps < 2) {
     beat_pulse = beat_hold = WEED_FALSE;
     goto done;
   }
 
-  rate = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_RATE, NULL);
-
-  chans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
+  rate = weed_channel_get_audio_rate(in_channel);
 
   // have we buffered enough data ?
   if ((float)sdata->totsamps / (float)rate * 1000. >= STIME) {
@@ -338,7 +339,8 @@ static weed_error_t beat_process(weed_plant_t *inst, weed_timecode_t timestamp) 
     if (var >= varlim && sdata->buf[i][sdata->bufidx] >= (avlim * av)) {
       // got a beat !
       beat_pulse = beat_hold = WEED_TRUE;
-      fprintf(stderr, "PULSE !\n");
+      if (verbosity > WEED_VERBOSITY_WARN)
+        fprintf(stderr, "PULSE !\n");
       break;
     }
   }
@@ -351,35 +353,36 @@ done:
 
   weed_set_boolean_value(out_params[0], WEED_LEAF_VALUE, beat_pulse);
   weed_set_boolean_value(out_params[1], WEED_LEAF_VALUE, beat_hold);
-
   weed_free(out_params);
-
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_SUCCESS) return NULL;
-  weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
-  weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE),
-                               weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
-                               weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.),
-                               weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
-                              };
+  else {
+    weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
+    weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE),
+                                 weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
+                                 weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.),
+                                 weed_switch_init("hamming", "Use _Hamming", WEED_TRUE), NULL
+                                };
 
-  weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE),
-                                weed_out_param_switch_init("beat hold", WEED_FALSE), NULL
-                               };
+    weed_plant_t *out_params[] = {weed_out_param_switch_init("beat pulse", WEED_FALSE),
+                                  weed_out_param_switch_init("beat hold", WEED_FALSE), NULL
+                                 };
 
-  weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, NULL, beat_init, beat_process,
-                               beat_deinit, in_chantmpls, NULL, in_params, out_params);
+    weed_plant_t *filter_class = weed_filter_class_init("beat detector", "salsaman", 1, 0, NULL,
+                                 beat_init, beat_process, beat_deinit, in_chantmpls, NULL, in_params, out_params);
 
-  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
-  weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
+    weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
+    weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
-  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+    weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
-  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+    verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
+    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  }
 }
 WEED_SETUP_END;
 

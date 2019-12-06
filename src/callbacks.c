@@ -9361,7 +9361,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
   in_preview_func = TRUE;
 
   old_rte = mainw->rte;
-  xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+  xticks = lives_get_current_ticks();
   mainw->timeout_ticks -= xticks;
 
   if (mainw->internal_messaging) {
@@ -9547,7 +9547,7 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
     unblock_expose();
 
   }
-  xticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+  xticks = lives_get_current_ticks();
   mainw->timeout_ticks += xticks;
   mainw->filter_map = filter_map;
   mainw->afilter_map = afilter_map;

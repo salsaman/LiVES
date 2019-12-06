@@ -2487,7 +2487,7 @@ void play_file(void) {
     }
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd != NULL) {
+      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0 || mainw->agen_needs_reinit) && mainw->jackd != NULL) {
         if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->jackd->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
@@ -2508,8 +2508,8 @@ void play_file(void) {
     }
     if (audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0) && mainw->pulsed != NULL) {
-        if (mainw->agen_key != 0) {
+      if ((prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0  || mainw->agen_needs_reinit) && mainw->pulsed != NULL) {
+        if (mainw->agen_key != 0 || mainw->agen_needs_reinit) {
           mainw->pulsed->playing_file = mainw->current_file;
           if (mainw->ascrap_file != -1 || !prefs->perm_audio_reader)
             pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);

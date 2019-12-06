@@ -402,9 +402,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     pulsed->num_calls++;
 
     /// not in use, just send silence
-    if (!pulsed->in_use || (((pulsed->fd < 0 || pulsed->seek_pos < 0.) && pulsed->read_abuf < 0) &&
-                            ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL))
-        || pulsed->is_paused || (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file != -1)) {
+    if (!pulsed->in_use || (pulsed->read_abuf > -1 && !LIVES_IS_PLAYING) || ((((pulsed->fd < 0 || pulsed->seek_pos < 0.) &&
+        pulsed->read_abuf < 0) &&
+        ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL))
+        || pulsed->is_paused || (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file != -1))) {
       sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
 
       if (!pulsed->is_paused) pulsed->frames_written += nsamples;
@@ -481,7 +482,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           if (shrink_factor  > 0.) {
-            pulsed->aPlayPtr->size = read(pulsed->fd, pulsed->aPlayPtr->data, in_bytes);
+            if ((mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
+              pulsed->aPlayPtr->size = read(pulsed->fd, pulsed->aPlayPtr->data, in_bytes);
+            } else pulsed->aPlayPtr->size = in_bytes;
             pulsed->sound_buffer = pulsed->aPlayPtr->data;
             pulsed->seek_pos += in_bytes;
             if (pulsed->seek_pos >= pulsed->seek_end && pulsed->playing_file != mainw->ascrap_file && !afile->opening) {
@@ -553,7 +556,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (xin_bytes == 0) xin_bytes = in_bytes;
         }
 
-        if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL || mainw->preview) {
+        if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL || (mainw->preview &&
+            !mainw->preview_rendering)) {
           /// read from file
           swap_sign = afile->signed_endian & AFORM_UNSIGNED;
 
@@ -935,7 +939,11 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
     ofile = mainw->files[fileno];
   }
 
-  out_scale = (float)pulsed->in_arate / (float)ofile->arate;
+
+  if (mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
+    out_scale = (float)pulsed->in_arate / (float)ofile->arate;
+  } else out_scale = 1.;
+
   swap_sign = ofile->signed_endian & AFORM_UNSIGNED;
 
   frames_out = (size_t)((double)((prb / (ofile->asampsize >> 3) / ofile->achans)) / out_scale);

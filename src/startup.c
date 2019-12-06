@@ -797,9 +797,9 @@ boolean do_startup_tests(boolean tshoot) {
       lives_sync(1);
 
       cfile->img_type = IMG_TYPE_PNG;
-      get_frame_count(mainw->current_file);
+      cfile->frames = get_frame_count(mainw->current_file, 1);
 
-      if (cfile->frames == 0) {
+      if (cfile->frames <= 0) {
         msg = lives_strdup_printf(_("You may wish to upgrade %s to a newer version"), mp_cmd);
         fail_test(table, 4, msg);
         lives_free(msg);

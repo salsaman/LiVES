@@ -368,7 +368,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           int64_t stframe = cfile->fps * start + .5;
           int64_t maxframe = (stframe + (frames == 0)) ? cfile->frames : frames;
           int64_t nframes = AUDIO_FRAMES_TO_READ;
-          char *afile = lives_strdup_printf("%s/%s/audiodump.pcm", prefs->workdir, cfile->handle);
+          char *afile = get_audio_file_name(mainw->current_file, TRUE);
 
           msgstr = lives_strdup_printf(_("Opening audio for %s"), file_name);
 
@@ -400,7 +400,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               return 0;
             }
           }
-
           end_threaded_dialog();
           lives_free(msgstr);
           lives_free(afile);
@@ -442,7 +441,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
             lives_free(msgstr);
 
-            mainw->opening_frames = -1;
+            cfile->opening_frames = -1;
 
             if (mainw->multitrack != NULL) {
               mainw->multitrack->pb_start_event = mt_pb_start_event;
@@ -705,7 +704,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
         lives_free(msgstr);
 
-        mainw->opening_frames = -1;
+        cfile->opening_frames = -1;
         mainw->effects_paused = FALSE;
 
         if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
@@ -734,15 +733,15 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   if (cfile->ext_src != NULL && cfile->achans > 0) {
-    char *afile = lives_strdup_printf("%s/%s/audiodump.pcm", prefs->workdir, cfile->handle);
-    char *ofile = lives_strdup_printf("%s/%s/audio", prefs->workdir, cfile->handle);
+    char *afile = get_audio_file_name(mainw->current_file, TRUE);
+    char *ofile = get_audio_file_name(mainw->current_file, FALSE);
     rename(afile, ofile);
     lives_free(afile);
     lives_free(ofile);
   }
 
   cfile->opening = cfile->opening_audio = cfile->opening_only_audio = FALSE;
-  mainw->opening_frames = -1;
+  cfile->opening_frames = -1;
   mainw->effects_paused = FALSE;
 
 #if defined DEBUG
@@ -840,7 +839,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   if (cfile->ext_src == NULL) {
+    extra_frames = cfile->frames;
     add_file_info(cfile->handle, FALSE);
+    extra_frames -= cfile->frames;
+    cfile->end = cfile->frames;
+    cfile->video_time = cfile->frames / cfile->fps;
   } else {
     add_file_info(NULL, FALSE);
     if (cfile->f_size == 0) cfile->f_size = sget_file_size((char *)file_name);
@@ -848,12 +851,36 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
   if (cfile->ext_src == NULL) {
     reget_afilesize(mainw->current_file);
-    if (start != 0. && cfile->laudio_time > cfile->video_time) {
-      cfile->end = cfile->frames;
-      d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
-      if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
-      else d_print("\n");
-      cfile->changed = FALSE;
+    if (prefs->auto_trim_audio || prefs->keep_all_audio) {
+      if (cfile->laudio_time > cfile->video_time) {
+        if (!prefs->keep_all_audio || start != 0. || extra_frames <= 0) {
+          d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+          if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
+          else d_print("\n");
+          cfile->changed = FALSE;
+        } else {
+          if (prefs->keep_all_audio && (cfile->laudio_time - cfile->video_time) * cfile->fps > extra_frames)
+            extra_frames = (cfile->laudio_time - cfile->video_time) * cfile->fps;
+          insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
+          cfile->video_time += extra_frames / cfile->fps;
+          cfile->end = cfile->frames;
+          load_start_image(cfile->start);
+          load_end_image(cfile->end);
+        }
+      }
+      if (cfile->laudio_time < cfile->video_time) {
+        cfile->undo1_dbl = cfile->laudio_time;
+        cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
+        cfile->undo_arate = cfile->arate;
+        cfile->undo_signed_endian = cfile->signed_endian;
+        cfile->undo_achans = cfile->achans;
+        cfile->undo_asampsize = cfile->asampsize;
+        cfile->undo_arps = cfile->arps;
+        d_print(_("Auto padding with %.2f seconds of silence at end..."), cfile->undo2_dbl);
+        if (on_ins_silence_activate(NULL, NULL)) d_print_done();
+        else d_print("\n");
+        cfile->changed = FALSE;
+      }
     }
   }
 
@@ -3342,7 +3369,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   // any cfile (clip) initialisation goes in here
   cfile->menuentry = NULL;
   cfile->start = cfile->end = 0;
-  cfile->old_frames = cfile->frames = 0;
+  cfile->old_frames = cfile->opening_frames = cfile->frames = 0;
   lives_snprintf(cfile->type, 40, "%s", _("Unknown"));
   cfile->f_size = 0l;
   cfile->achans = 0;
@@ -3510,10 +3537,19 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
   if (!strcmp(mainw->msg, "killed")) {
     char *com;
-
+    // user pressed "enough"
+    // just in case last frame is damaged, we delete it (physically, otherwise it will get dragged in when the file is opened)
     if (cfile->ext_src == NULL) {
-      get_frame_count(mainw->current_file);
-      cfile->frames--; // just in case last frame is damaged
+      cfile->frames = get_frame_count(mainw->current_file, cfile->opening_frames);
+      if (cfile->frames > 1) {
+        com = lives_strdup_printf("%s cut \"%s\" %d %d %d %d \"%s\" %.3f %d %d %d",
+                                  prefs->backend, cfile->handle, cfile->frames, cfile->frames,
+                                  FALSE, cfile->frames, get_image_ext_for_type(cfile->img_type),
+                                  0., 0, 0, 0);
+        lives_system(com, FALSE);
+        lives_free(com);
+        cfile->frames--;
+      }
     }
 
     // commit audio
@@ -3528,6 +3564,15 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     reget_afilesize(mainw->current_file);
     d_print_enough(cfile->frames);
+
+    if (prefs->auto_trim_audio) {
+      if (cfile->laudio_time > cfile->video_time) {
+        d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+        if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
+        else d_print("\n");
+        cfile->changed = FALSE;
+      }
+    }
   } else {
     if (check_handle != NULL) {
       int npieces = get_token_count(mainw->msg, '|');
@@ -4548,7 +4593,7 @@ ulong restore_file(const char *file_name) {
   }
 
   // call function to return rest of file details
-  //fsize, afilesize and frames
+  // fsize, afilesize and frames
   is_OK = read_headers(file_name);
 
   lives_list_free_all(&mainw->cached_list);
@@ -4562,7 +4607,8 @@ ulong restore_file(const char *file_name) {
     close_current_file(old_file);
     return 0;
   }
-  if (!check_frame_count(mainw->current_file, FALSE)) get_frame_count(mainw->current_file);
+
+  if (!check_frame_count(mainw->current_file, FALSE)) cfile->frames = get_frame_count(mainw->current_file, 1);
 
   // add entry to window menu
   // TODO - do this earlier and allow switching during restore
@@ -5610,7 +5656,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
             reget_afilesize_inner(mainw->current_file);
           }
           if (!check_frame_count(mainw->current_file, is_ok)) {
-            get_frame_count(mainw->current_file);
+            cfile->frames = get_frame_count(mainw->current_file, 1);
             cfile->needs_update = TRUE;
           }
         }

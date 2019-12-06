@@ -579,11 +579,14 @@ void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_ind
   lives_clip_t *sfile = mainw->files[sfileno];
   LiVESResponseType response;
 
-  char *what = lives_strdup(_("creating the new frame index for the clip"));
+  char *what;
   int nframes = sfile->frames;
 
   register int i, j = start - 1;
 
+  if (sfile->frame_index == NULL) return;
+
+  what = lives_strdup(_("creating the new frame index for the clip"));
   lives_freep((void **)&sfile->frame_index_back);
 
   sfile->frame_index_back = sfile->frame_index;
@@ -820,7 +823,8 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
 
   nframes = i - after; // in case we bailed
 
-  insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
+  if (sfile->clip_type == CLIP_TYPE_FILE)
+    insert_images_in_virtual(sfileno, after, nframes, NULL, 0);
 
   sfile->frames += nframes;
 

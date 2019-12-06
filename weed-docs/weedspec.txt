@@ -214,50 +214,64 @@ which returns WEED_TRUE if the two versions are compatible, WEED_FALSE otherwise
 
 === General overview ===
 
-Weed can be utilsed at different levels depending on the needs of the programmer.
+Weed can be employed at different levels depending on the needs of the programmer.
 
-Level 0: -a program would simply #include weed.h and may set the symbols #HAVE_WEED_PLANT, #HAVE_WEED_LEAF and #HAVE_WEED_DATA
-At this level there is no definition of these items, however the core function types (listed below) are defined.
+Level 0: -
+
+a program would simply #include weed.h and may set the symbols
+#HAVE_WEED_PLANT, #HAVE_WEED_LEAF and #HAVE_WEED_DATA
+At this level there is no definition of these types, however the core function types (listed below) are defined.
 The fundament types are defined along with some error numbers and so on.
 
 
 
-Level 1: an application #includes weed.h and uses the built-in type definitions weed_data_t, weed_leaf_T, weed_plant_t.
+Level 1: an application #includes weed.h and uses the built-in type definitions weed_data_t, weed_leaf_t, weed_plant_t.
+
 The application may now use the a reference implementation of libweed for all of the core functions. An application wishing to use
 libweed just needs to call weed_init(int32_t api_level) to get the correct version of the functions for that api version.
-In most cases you would just call weed_init(WEED_API_VERSION) and check that the returned value is not WEED_ERROR_BADVERSION.
+In most cases it suffices to just call weed_init(WEED_API_VERSION) and check that the returned value is not WEED_ERROR_BADVERSION.
 
 
 
-Level 2: at this level we distinguish between plugins and hosts. The host program is normally the one which will dlopen()
-or link with the plugins.
+Level 2:
 
-Hosts should #incldue weed-host.h before weed.h, amd plugins should instead #include weed-plugin.h
+at this level there is a distinction between plugins and hosts.
+The host program is normally the one which will dlopen() or link with the plugins, pass data to them for processing, etc.
 
-The main difference is that the plugin gets staticly scoped versions of the core functions,
-whereas the host gets global ones.
+Hosts should #include weed-host.h before weed.h, and plugins should instead #include weed-plugin.h
 
-Plugins also relinquish access to the weed_leaf_set_flags() function.
+The principle difference at this level is that the plugin links staticly scoped versions of the core functions,
+whereas the host links global ones.
+
+Plugins also relinquish access to the weed_leaf_set_flags(),
+weed_leaf_set_private_data(), and weed_leaf_get_private_data() functions.
 
 
 
-Level 3: at his level host and plugin may choose to use a utilities library such as weed-utils.
+Level 3:
+
+at his level host and plugin may choose to use a utilities library such as weed-utils.
 Only hosts should link with this library. Plugins simply need to include the weed-utils.h header.
-
-
-There also a library (in development) which effects plugins may use, weed-plugin-utils.c
+The reference implementations provide typed getters and setters for single and array values.
 
 
 
-Level 4: host and pugins would be tailored to a particular role (multiple roles may be selected provide their symbols do not
-conflict.)
-For example for video plugins, host and plugins would #include weed-effects.h
+Level 4:
 
+host and pugins would be tailored to a particular role (multiple roles may be selected provided their symbols
+do not conflict.)
 
-Depending on the apllication type there may be other optional or mandatory headers.
-For example, for video effects plugins, Weed offers the optional headers weed-palettes.h amd weed-compat.h
+For example for video and audio plugins, host and plugins would #include weed-effects.h
 
-For weed events there is weed-events.h
+Depending on the application type there may be other optional or mandatory headers.
+In the video effects example, Weed offers the optional headers weed-palettes.h and weed-compat.h
+
+There also a C / C++ code library which effects plugins may use, weed-plugin-utils.c. This is designed to complement
+weed-utils.h, but it does not rely on it. This provides convenient versions of most of the functions that a plugin will need to use
+to interface with the Weed Effects system.
+
+For hosts there is libweed-host-utils (under development / testing) which provides many convenience functions for the host
+to interface with the Weed Effects system.
 
 
 
@@ -335,7 +349,7 @@ Weed provides the following 'fundamental' types:
 
 '''Pointer''' types (number > 64) Size = WEED_VOIDPTR_SIZE.
 
- * WEED_SEED_VOIDPTR    [65]  : corresponds to a C void * type.
+ * WEED_SEED_VOIDPTR    [65]  : corresponds to a C void * type. (size is dependent on the operating system)
 
 
  * WEED_SEED_PLANTPTR   [66]  : a pointer to another weed plant.
@@ -376,8 +390,8 @@ Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
     for WEED_SEED_INT64, values should be (void *)(int64_t[num_elems])
     for WEED_SEED_STRING, it should be (void *)(char *[num_elems]),
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t[num_elems])
-    for WEED_SEED_VOIDPTR, (void *)(weed_voidptr64_t[num_elems])
-    for WEED_SEED_PLANTPTR, (void *)(((weed_voidptr64_t)(weed_plant_t *))[num_elems])
+    for WEED_SEED_VOIDPTR, (void *)(weed_voidptr_t[num_elems])
+    for WEED_SEED_PLANTPTR, (void *)(((weed_voidptr_t)(weed_plant_t *))[num_elems])
     custom types (seed_type >= 65536) would be similar to WEED_SEED_PLANTPTR, but with a different seed_type.
 
     The values array is assumed to be of the correct size and type.
@@ -421,8 +435,8 @@ Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
     For WEED_SEED_STRING, a (void *)(char **),
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t *),
 
-    for WEED_SEED_VOIDPTR (void *)(weed_voidptr64_t *),
-    for WEED_SEED_PLANTPTR (void *)(*((weed_voidptr64_t)(weed_plant_t *)))
+    for WEED_SEED_VOIDPTR (void *)(weed_voidptr_t *),
+    for WEED_SEED_PLANTPTR (void *)(*((weed_voidptr_t)(weed_plant_t *)))
 
     custom types (>= 65536) would be similar to WEED_SEED_PLANTPTR but with a different seed_type.
 
@@ -565,21 +579,23 @@ Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
 
 
 
- * char **weed_plant_list_leaves (weed_plant_t *plant)
-   returns a (char *)[] array of leaf keys, with the final element set to NULL.
+ * char **weed_plant_list_leaves (weed_plant_t *plant, weed_size_t *nleaves)
+   returns a (char *)[] array of leaf keys, with the final element set to NULL. If nleaves is not NULL, its value is set to
+   the number of leaves (i.e number of strings returned EXCLUDING the final NULL element).
 
-   In case of memory error, NULL is returned and the array is not created.
+   In case of memory error, NULL is returned, nleaves is set to zero and the array is not created.
 
-   The caller should free any non-NULL elements when no longer required.
+   The caller should free any non-NULL elements + the array itself when no longer required.
 
-   If plant is NULL, the function returns a char ** array of size one, with the single elemnt set to (char *)NULL.
+   If plant is NULL, the function returns a char ** array of size one, with the single element set to NULL,
+   and nleaves will be set to zero.
 
-   The standard malloc(), memcpy() and free() functions will be used when creating the array and all the strings.
+   The standard malloc(), and memcpy() functions will be used when creating the array and all the strings.
 
 
 
 
-A Weed host has access to an additional function which is not available to plugins:
+A Weed host has access to additional functions which are not defined for plugins:
 
  * weed_error_t weed_leaf_set_flags(weed_plant_t *plant, const char *key, int32_t flags)
 
@@ -593,43 +609,24 @@ A Weed host has access to an additional function which is not available to plugi
    Setting the WEED_FLAG_UNDELETABLE bit for any other leaf prevents the "type" leaf and that leaf from being freed
    using weed_plant_free().
 
-   Setting the WEED_FLAG_UNDELETABLE bit for any leaf prevents that leaf from being deleted
+   Setting the WEED_FLAG_UNDELETABLE bit for any leaf also prevents that leaf from being deleted
    using weed_leaf_delete().
 
-   Will return WEED_ERROR_NOSUCH_LEAF if the plant is NULL or leaf does not exist.
-
-
-
-
-
-
-Future ABI functions:
-
-The following functions are under consideration / testing to be included in the API:
-
+   The function will return WEED_ERROR_NOSUCH_LEAF if plant is NULL or leaf does not exist.
 
 
  * weed_error_t weed_leaf_set_private_data(weed_plant_t *plant, const char *key, void *data);
 
- set private data for a leaf (T.B.D)
-
-
+   		 set "private data" for a leaf. Host only function. The value of data will be copied.
+		 Will return WEED_ERROR_NOSUCH_LEAF if the plant is NULL or leaf does not exist, otherwise WEED_SUCCESS.
+		 Can be set even if WEED_FLAG_IMMUTABLE bit is set.
 
 
  * weed_error_t weed_leaf_get_private_data(weed_plant_t *plant, const char *key, void **data);
 
- get private data for a leaf (T.B.D)
-
-
-
-
-weed_error_t weed_leaf_copy(weed_plant_t dplant, const char *key, weed_plant_t *splant, const char *key);
-
- This is included in libweed-utils, but moving it into the core would improve performance, as the leaf values could
- be copied directly, without constructing an intermediate array.
-
-T.B.D: should it take 1 key as parameter (i.e. copy to same leaf in dplant, or 2) ? 1 is the most likely use case,
-but 2 would allow duplicating of leaves within the same plant.
+   		 get "private data" from a leaf. Host only function. data should be a pointer to void * in which to receive the value.
+		 Will return WEED_ERROR_NOSUCH_LEAF if the plant is NULL or leaf does not exist, otherwise WEED_SUCCESS.
+		 The default value is NULL if not set.
 
 
 
@@ -895,7 +892,7 @@ It may optionally include weed/weed-utils.h and link against libweed-utils.
 If the program wishes to use act as a Weed plugin, it should include weed/weed-plugin.h  and weed/weed.h in that order.
 
 
-An exampe of Compiling plugins and hosts for different applications (in this case, video filters) is given below.
+An example of Compiling plugins and hosts for different applications (in this case, video filters) is given below.
 
 
 
@@ -959,7 +956,7 @@ libweed (3 versions: standard memory functions, gslice allocator, pthread mutex)
 
 libweed-utils
 
-libweed-host-utils and weed-host-utils.h  (under consideration).
+libweed-host-utils and weed-host-utils.h  (under final development / testing).
 libweed-layers (under consideration) [used for manipulating channel data sent to and received from a plugin]
 
 
@@ -1123,6 +1120,25 @@ WEED_CHANNEL_LAYOUT_TYPE will be set to "default" in weed-effects.h
 The header also provides compatibility with other libraries, eg. libav. Check the header for details.
 
 
+== The Ethos of the Weed Effects System ==
+
+Everything in the Weed effects system is designed to make creating a plugin / filter
+as simple as possible, whilst allowing the maximum of flexibility for plugin authors.
+
+Any necessary or optional complexity is shifted into the host application which will use the plugins.
+
+The reasons for this are:
+- there are expected to be many times more plugins than host applications
+- plugins should be kept as small as possible so that less system memory is consumed when opening multiple plugins
+- plugin writing should not require too much advanced technical knowledge
+- plugins are often abandoned, thus maintaining them when necessary should be kept reasonably simple
+
+on the other hand:
+- host applications generally have less rigorous memory requirements
+- functionality to handle complex situations can be written once and then applied generically to all plugins
+- as much of the functionality as possible is optional. Thus a host can start with the basics and add optional functionality
+  as and when needed.
+
 
 
 
@@ -1187,6 +1203,7 @@ The only fixed function name the plugin MUST implement is weed_setup(), with pro
     weed_plant_t *weed_setup(weed_bootstrap_f weed_bootstrap)
 
 The host calls this first in a plugin, and passes in a pointer to a function of type weed_bootstrap_f.
+(libweed-utils provides a default version of weed_bootstrap which it is recommended to use).
 
 
 The prototype of weed_bootstrap_f is:
@@ -1194,17 +1211,19 @@ The prototype of weed_bootstrap_f is:
     weed_plant_t *weed_bootstrap(default_getter_f *, int32_t weed_api_min_version, int32_t weed_api_max_version,
      int32_t weed_filter_api_min_version, weed_filter_api_max_version);
 
+The plugin should call the bootstrap function which will check if its versions are compatible with the host, and if so,
+create a HOST_INFO plant, which is returned to the plugin, as well as setting a pointer to the default getter function.
+
+On return, the plugin should use the default getter to bootstrap its core Weed functions.
+It may then create a PLUGIN_INFO plant and return that to the host.
 
 
-The plugin should call the bootstrap function which should check the versions are compatible with the host, set up the plugin
-versions of the core Weed functions using default getter, and return either a PLUGIN_INFO plant or NULL.
-
-
-The precise details of this are described below. weed-plugin-utils.h provides macros to assist with this. A plugin need only do:
+The precise details of this are described below. weed-plugin-utils.h provides macros to automate handling of all of this.
+- a plugin need only call:
 
 WEED_SETUP_START(int weed_api_version, int filter_api_version)
 
-e.g.
+Example:
 
 WEED_SETUP_START(200, 200) { // either sets weed_plant_t *plugin_info, or returns NULL to the host
 // set up plugin_info
@@ -1218,30 +1237,22 @@ WEED_SETUP_START(200, 200) { // either sets weed_plant_t *plugin_info, or return
 WEED_SETP_END;  // returns plugin_info to the host. may be positioned before or after the closing brace. The semi-colon is optional
 
 
-WEED_SETUP_START also ensures that the weed_setup() function is exported from the plugin on any platform.
+WEED_SETUP_START also ensures that the weed_setup() function is exported from the plugin on any compatable platform.
 
 
 
 
-If the plugin supports earlier versions than the current version, e.g. when being updated, it may instead use:
+If the plugin supports earlier versions than the current version, for example, if the code is updated to take advantage
+of newer features which may be added, it may instead use:
 
 
-WEED_SETUP_START_MINMAX(int min_weed_api_version, int max_weed_api_version, int min_filter_api_version, int max_filter_api_version)
+WEED_SETUP_START_MINMAX(int min_weed_api_version, int max_weed_api_version, int min_filter_api_version,
+int max_filter_api_version)
 
-The original values (or higher) should then be used as the minimum versions, and the maximum versions set to the current versions
-at the time of the update.
+The original values (or higher) should then be used as the minimum versions,
+and the maximum versions set to the current versions at the time of the update.
 
-In this case the plugin should then check the versions returned from the host to discover which features are available at run time.
-
-
-
-
-
-
-
-( NB: prior to API version 200, the bootstrap function had a slightly different prototype:
-   weed_plant_t *weed_bootstrap_func (default_getter_f *value, int32_t num_versions, int32_t *plugin_versions) )
-
+In this case the plugin should check the actual versions returned from the host to discover which features are available at run time.
 
 
 
@@ -1253,8 +1264,8 @@ This is an optional function in for plugins.
 
 
 
-If the plugin has this function, the host should call it before
-unloading the plugin. This is to allow the plugin to reset any hardware, free allocated memory, etc.
+If the plugin exports this function, the host MUST call it exactly once before
+unloading the plugin. This is to allow the plugin to reset any hardware, free statically allocated memory, etc.
 
 The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
 parameter_templates, gui), that job is left to the host to perform.
@@ -1289,8 +1300,7 @@ This is an optional function in the plugin.
 
 
 If this function is included in the filter_class (see below),
-the host MUST call this function exactly once before it can start to use process_func().
-passing in the filter_instance to be used there.
+the host MUST call this function exactly once before it can start to use process_func() passing in the filter_instance to be used there.
 
 The filter plant instance passed to the init_func MUST have been
 correctly setup to match the filter class it relates to, 
@@ -1298,9 +1308,11 @@ this means that all the mandatory leaves of input and output channels and of inp
 The function returns a weed error code (see below).
 
 The init_func() function allows the plugin to create any internal
-memory structures it needs; the plugin can store internal data as
+memory structures it needs; the plugin can store internal data in inst as
 leaves that have keys prefixed with "plugin_" in the filter_instance 
-(see the definition of filter instance plant). The plugin can also (re)set the "gui" settings for parameters (see below).
+(see the definition of filter instance plant). The plugin can also (re)set the "gui" settings for parameters (see below),
+optionally setting HIDDEN and COPY_VALUE_TO.
+In addition, the FIRST time this function is run, the plugin may fully define the "choices" for a string list type parameter (see below).
 
 The function returns WEED_SUCCESS or another error code (see below). 
 
@@ -1331,12 +1343,10 @@ the processing run.
 
     weed_error_t deinit_func(weed_plant_t *filter_instance)
 
-
-The host will call this once after it has finished running the process_func()
-to allow the plugin to free() any internal memory and reset its internal values.
-
-Following this the host may call the init_func() again if it wishes to continue using the plugin,
-otherwise it may call the desetup function and then free the host_info, plugin_info and any filter_instance plants.
+Following this the host may call the init_func() again if it wishes to continue using any filters from the plugin.
+Otherwise it may call the desetup function, and free the following if no longer required:
+host_info, plugin_info, any filter_classes and their component  channel_templates, parameter_templates
+and associated GUI plants.
 
 The plugin MUST NOT free any of the standard plants (host_info, plugin_info, filter_classes, channel_templates,
 parameter_templates, gui), that job is left to the host to perform.
@@ -1350,10 +1360,6 @@ Less commonly used functions:
 
 ==== interpolate_func ====
 T.B.D
-
-==== display_func ====
-(deprecated)
-
 
 
 
@@ -1483,15 +1489,30 @@ WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
 
 '''Optional leaves''': [[BR]]
 
- * "plugin_info" : WEED_SEED_PLANTPTR : array of pointers to PLUGIN_INFO plants created from this template
+ * "plugin_info" : WEED_SEED_PLANTPTR : the host may opt to create the plugin_info for the plugin in the bootstrap function.
+   		   		      	    	     	    	   Thus the plugin should check the value of this leaf after calling the bootstrap
+								   function and use the plant provided rather than creating a new one.
+								   (Most likely the plugin will use a utility function which will call the bootstrap function
+								   and retrieve this leaf before returning it to the plugin)
+
 
  * "host_name"    : WEED_SEED_STRING : host name
 
+
  * "host_version" : WEED_SEED_STRING : host version
+
 
  * "flags"        : WEED_SEED_INT    : bitmap of host_info flags (see below)
 
+
  * "layout_schemes_supported" : WEED_SEED_STRING : an array of layout schemes that the host supports (see below, "layout_scheme")
+
+
+* "verbosity" : WEED_SEED_INT : plugins should check the value of this leaf and produce debug / error / info messages accordingly.
+  	      		      		       	     (preferably on STDERR / cerr). See below for the defined values and interpretations.
+						     If the leaf does not exist, then the plugin may assume a value of either
+						     WEED_VERBOSITY_ERROR or WEED_VERBOSITY_WARN (author's discretion).
+
 
 
 The host may add any number of additional leaves, but it is recommended that it use keys prefixed "host_" to avoid
@@ -1531,8 +1552,10 @@ The plugin may add any nuber of additional private leaves with keys prefixed "pl
 
  * "version"	  : WEED_SEED_INT : plugin package version
 
- * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO plant created in weed_bootstrap() which contains information
-                                         about the host.
+ * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO plant returned by weed_bootstrap() which contains information
+                                         about the host. The plugin should set this when creating the plugin_info, (or more likely, the host may
+					 opt to use a standard bootstrap function which creates the plugin_info for the plugin
+					 and sets this automatically.)
 
 '''Optional leaves''':[[BR]]
 
@@ -2042,7 +2065,7 @@ After initialisation, channels MUST NOT be added or removed without reinitialisi
   	       	 		      	      	   	    	"current_palette". The size of each element depends on "rowstrides", "height",
 								"current_palette" and the plane number for planar palettes. Host should attempt
 								to align each plane according to the "alingment_hint" if that was set for the
-								corresponding filter_class.
+								corresponding filter_class. May be cast to / from (uint8_t **).
 
 
 * "rowstrides" : WEED_SEED_INT     : array of row widths in bytes (include padding / alignment) in "pixel_data". Host should
@@ -2515,7 +2538,7 @@ rely on setting "copy_value_to" to force the host to set indentical
    _STRICTLY_ GUI functionality. Even GUI-less hosts might want to implement
    this ! This can be disabled by setting it to a value < 0, or by
    setting it to point to itself. Note that since the parameter pointed to can also set "copy_value_to" (either back to the
-   original paramter or to another), the host must be careful to avoid getting stuck in loops.
+   original parameter or to another), the host must be careful to avoid getting stuck in loops.
 
    The value here (if any) is considered a permanent setting.
    If the plugin wants to set hints to show hide various parameters duting processing,
@@ -2846,6 +2869,27 @@ Deprecated (do not use in newly written code):
 
  * WEED_HOST_SUPPORTS_LINEAR_GAMMA  1  [BR]] (api 200 and above)
    Denotes that the host will pay attention to the WEED_FILTER_HINT_LINEAR_GAMMA filter flag.
+
+
+
+== Verbosity levels =====
+
+The host may optionally set this in the host_info plant, using one of the defined values below.
+
+WEED_VERBOSITY_SILENT (0) : no info / error / debug output whatsoever.
+
+WEED_VERBOSITY_CRITICAL (1) : show only errors which prevent a filter / plugin from operating at all 
+
+WEED_VERBOSITY_ERROR (2) : WEED_VERBOSITY_CRITICAL + errors which prevent the plugin from operating "normally"
+
+WEED_VERBOSITY_WARN (3) : WEED_VERBOSITY_ERROR + errors which the plugin may compensate for, but may
+		       	 		      	adversly affect its operation.
+
+WEED_VERBOSITY_INFO (4) : WEED_VERBOSITY_WARN + any general informational messges
+
+WEED_VERBOSITY_DEBUG (5) : WEED_VERBOSITY_INFO + debugging messages
+
+
 
 
 
@@ -4125,10 +4169,21 @@ weed_plant_t *weed_out_param_switch_init(const char *name, int def);
 weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int def);
 weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max);
 
+// host info
+weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info);
+int weed_get_host_verbosity(weed_plant_t *host_info);
+char *weed_get_host_name(weed_plant_t *host_info);
+char *weed_get_host_version(weed_plant_t *host_info);
+int weed_get_host_flags(weed_plant_t *host_info);
+char **weed_get_host_layout_schemes(weed_plant_t *host_info, int *nvals);
+
 // value setters
 void weed_filter_set_flags(weed_plant_t *filter, int flags);
 void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
 void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
+void weed_filter_set_name(weed_plant_t *filter, const char *name);
+void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name);
+void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name);
 
 // value getters
 int weed_filter_get_flags(weed_plant_t *filter);

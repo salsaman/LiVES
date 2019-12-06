@@ -19,7 +19,6 @@
 #define SWAP_X_TO_L 1  ///< other to local
 #define SWAP_L_TO_X 2 ///< local to other
 
-
 /// defaults for when not specifed
 # define DEFAULT_AUDIO_RATE 44100
 # define DEFAULT_AUDIO_CHANS 2
@@ -49,7 +48,6 @@
 
 /////////////////////////////////////
 /// asynch msging
-
 
 #define ASERVER_CMD_PROCESSED 0
 #define ASERVER_CMD_FILE_OPEN 1
@@ -145,6 +143,7 @@ typedef enum lives_audio_loop {
 } lives_audio_loop_t;
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans);
+boolean audiofile_is_silent(int fnum, double start, double end);
 
 void sample_silence_dS(float *dst, uint64_t nsamples);
 
@@ -243,6 +242,7 @@ void clear_audio_stream(void);
 void audio_stream(void *buff, size_t nbytes, int fd);
 
 char *lives_get_audio_file_name(int fnum);
+char *get_audio_file_name(int fnum, boolean opening);
 
 char *get_achannel_name(int totchans, int idx) WARN_UNUSED;
 const char *audio_player_get_display_name(const char *aplayer);

@@ -423,9 +423,9 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     // "prefs->workdir/audiodump.pcm" we will try to play it
 
     // real is workdir/audiodump.pcm
-    audio_real = lives_build_filename(prefs->workdir, "audiodump.pcm", NULL);
+    audio_real = get_audio_file_name(-1, TRUE);
     // fake is workdir/handle/audiodump.pcm
-    audio_fake = lives_build_filename(prefs->workdir, cfile->handle, "audiodump.pcm", NULL);
+    audio_fake = get_audio_file_name(mainw->current_file, TRUE);
 
     // fake file will go away when we close the current clip
     lives_ln(audio_real, audio_fake);
@@ -516,29 +516,29 @@ void lives_yuv_stream_stop_write(lives_yuv4m_t *yuv4mpeg) {
 
 //////////////////////////////////////////////////////////////
 
-// add live input peripherals
+/**
+   @brief add live input peripherals
 
-// some time in the future it would be nice to implement these via videojack
+   some time in the future it would be nice to implement these via videojack
 
-// advantages would be: - no longer necessary to have mjpegtools
-// - multiple copies of LiVES could share the same input at (almost) zero cost
+   advantages would be: - no longer necessary to have mjpegtools
+   - multiple copies of LiVES could share the same input at (almost) zero cost
 
-// for each of these functions:
-// - prompt user for name of device, etc.
+   for each of these functions:
+   - prompt user for name of device, etc.
 
-// check if device already opened, if so exit
+   check if device already opened, if so exit
 
-// create clip with default values; clip type is YUV4MPEG
+   create clip with default values; clip type is YUV4MPEG
 
-// create a fifo file
-// set mplayer reading from device and writing yuv4mpeg
+   create a fifo file
+   set mplayer reading from device and writing yuv4mpeg
 
-// start reading - update clip values
+   start reading - update clip values
 
-// note: we add the clip to the menu and to mainw->cliplist
-// beware when handling mainw->cliplist
-
-
+   note: we add the clip to the menu and to mainw->cliplist
+   beware when handling mainw->cliplist
+*/
 void on_live_tvcard_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   int cardno = 0;
 

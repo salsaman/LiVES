@@ -4180,7 +4180,6 @@ void on_playsel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   mainw->playing_sel = TRUE;
-  lives_rm(cfile->info_file);
 
   play_file();
 
@@ -5534,7 +5533,11 @@ boolean reload_set(const char *set_name) {
         if either check fails then we count all the frames (since we don't have a frame_index to guide us),
         - this can be pretty slow so we wan't to avoid it unless  we detected a problem. */
       if (!check_frame_count(mainw->current_file, isok)) {
-        get_frame_count(mainw->current_file);
+        cfile->frames = get_frame_count(mainw->current_file, 1);
+        if (cfile->frames == -1) {
+          close_current_file(0);
+          continue;
+        }
         cfile->needs_update = TRUE;
       }
     }
@@ -5913,7 +5916,7 @@ void on_show_file_info_activate(LiVESMenuItem *menuitem, livespointer user_data)
     }
     lives_text_view_set_text(LIVES_TEXT_VIEW(filew->textview_vtime), buff, -1);
     // file size
-    if (cfile->f_size >= 0l) {
+    if (cfile->f_size > 0l) {
       char *file_ds = lives_format_storage_space_string((uint64_t)cfile->f_size);
       lives_snprintf(buff, 512, "\n\n  %s", file_ds);
       lives_free(file_ds);
@@ -8752,7 +8755,7 @@ void on_toy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       int current_file = mainw->current_file;
       char *com = lives_strdup_printf("%s commit_audio \"%s\"", prefs->backend, cfile->handle);
       cfile->start = 1;
-      get_frame_count(mainw->current_file);
+      cfile->frames = get_frame_count(mainw->current_file, 1);
       cfile->end = cfile->frames;
       cfile->opening = cfile->opening_loc = cfile->opening_audio = cfile->opening_only_audio = FALSE;
       cfile->is_loaded = TRUE;
@@ -9429,11 +9432,14 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    // stop effects processing (if preferred)
-    if (prefs->pause_effect_during_preview) {
-      if (!(mainw->effects_paused)) {
-        on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
-        resume_after = TRUE;
+    if (cfile->opening) mainw->effects_paused = TRUE;
+    else {
+      // stop effects processing (if preferred)
+      if (prefs->pause_effect_during_preview) {
+        if (!(mainw->effects_paused)) {
+          on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
+          resume_after = TRUE;
+        }
       }
     }
 
@@ -9480,9 +9486,11 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
       }
     }
 
-    // restart effects processing (if necessary)
-    if (resume_after) on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
-
+    if (cfile->opening) mainw->effects_paused = FALSE;
+    else {
+      // restart effects processing (if necessary)
+      if (resume_after) on_effects_paused(LIVES_BUTTON(cfile->proc_ptr->pause_button), NULL);
+    }
     // user_data is non-NULL if called from multitrack. We want to preserve the value of cancelled.
     if (user_data == NULL) mainw->cancelled = CANCEL_NONE;
 

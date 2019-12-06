@@ -278,7 +278,8 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 
   int totcons = 0, maxcons = 0;
 
-  if (okey >= 0 && okey != FX_DATA_WILDCARD) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
+  if (okey >= 0 && okey != FX_DATA_WILDCARD)
+    for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++)
       pthread_mutex_lock(&mainw->fx_mutex[i]);
 
   while (pconx != NULL) {
@@ -287,12 +288,13 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 #ifdef DEBUG_PCONX
     g_print("Deletion check, want %d / %d, found %d / %d\n", okey, omode, pconx->okey, pconx->omode);
 #endif
-    if (okey == FX_DATA_WILDCARD || (pconx->okey == okey && pconx->omode == omode)) {
+    if ((okey == FX_DATA_WILDCARD || pconx->okey == okey) && (omode == FX_DATA_WILDCARD || pconx->omode == omode)) {
 
 #ifdef DEBUG_PCONX
       g_print("GOT MATCH\n");
 #endif
-      if (ikey == FX_DATA_WILDCARD) {
+      if (opnum == FX_DATA_WILDCARD && ikey == FX_DATA_WILDCARD && imode == FX_DATA_WILDCARD
+          && ipnum == FX_DATA_WILDCARD) {
         //g_print("rem all cons from %d %d to any param\n",okey,omode);
 
         // delete entire node
@@ -325,7 +327,7 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
 #endif
         totcons += pconx->nconns[i];
 
-        if (okey != FX_DATA_WILDCARD && pconx->params[i] != opnum) {
+        if (opnum != FX_DATA_WILDCARD && pconx->params[i] != opnum) {
           j = totcons;
           continue;
         }
@@ -335,7 +337,11 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
           g_print("For inputs, want %d / %d (%d), found %d / %d (%d)\n", ikey, imode, ipnum, pconx->ikey[j], pconx->imode[j],
                   pconx->ipnum[j]);
 #endif
-          if (pconx->ikey[j] == ikey && pconx->imode[j] == imode && (ipnum == FX_DATA_WILDCARD || pconx->ipnum[j] == ipnum)) {
+          if ((ikey == FX_DATA_WILDCARD || pconx->ikey[j] == ikey)
+              && (imode == FX_DATA_WILDCARD || pconx->imode[j] == imode)
+              && (ipnum == FX_DATA_WILDCARD
+                  || (ipnum == FX_DATA_WILDCARD_KEEP_ACTIVATED && pconx->ipnum[j] != FX_DATA_PARAM_ACTIVE)
+                  || pconx->ipnum[j] == ipnum)) {
 #ifdef DEBUG_PCONX
             g_print("removing connection to %d / %d param (%d)\n", ikey, imode, ipnum);
 #endif
@@ -381,12 +387,9 @@ void pconx_delete(int okey, int omode, int opnum, int ikey, int imode, int ipnum
                 }
               } else {
                 pconx->nconns = (int *)lives_realloc(pconx->nconns, pconx->nparams * sizint);
-              }
-            }
-          }
-        }
-      }
-    }
+		// *INDENT-OFF*
+	      }}}}}}
+      // *INDENT-ON*
 
     pconx_prev = pconx;
     pconx = pconx_next;
@@ -447,7 +450,7 @@ static lives_pconnect_t *pconx_find(int okey, int omode) {
 }
 
 
-static int pconx_get_numcons(lives_conx_w *conxwp, int pnum) {
+static int pconx_get_numcons(lives_conx_w * conxwp, int pnum) {
   // get displayed number
   int totcons = 0;
 
@@ -486,7 +489,7 @@ static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int 
   register int i, j;
 
   // delete any existing connection to the input param
-  pconx_delete(FX_DATA_WILDCARD, 0, 0, ikey, imode, ipnum);
+  pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, ikey, imode, ipnum);
 
   if (ikey >= 0) for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) pthread_mutex_lock(&mainw->fx_mutex[i]);
 
@@ -1855,7 +1858,7 @@ static lives_cconnect_t *cconx_find(int okey, int omode) {
 }
 
 
-static int cconx_get_numcons(lives_conx_w *conxwp, int cnum) {
+static int cconx_get_numcons(lives_conx_w * conxwp, int cnum) {
   // get displayed number
   int totcons = 0;
 
@@ -2366,7 +2369,7 @@ enum {
 };
 
 
-static void disconbutton_clicked(LiVESButton *button, livespointer user_data) {
+static void disconbutton_clicked(LiVESButton * button, livespointer user_data) {
   // disconnect all channels/params
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -2402,7 +2405,7 @@ static void disconbutton_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void apbutton_clicked(LiVESButton *button, livespointer user_data) {
+static void apbutton_clicked(LiVESButton * button, livespointer user_data) {
   // autoconnect each param with a compatible one in the target
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -2515,7 +2518,7 @@ static void apbutton_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void acbutton_clicked(LiVESButton *button, livespointer user_data) {
+static void acbutton_clicked(LiVESButton * button, livespointer user_data) {
   // autoconnect each channel with a compatible one in the target
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -2625,7 +2628,7 @@ static void acbutton_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void padd_clicked(LiVESWidget *button, livespointer user_data) {
+static void padd_clicked(LiVESWidget * button, livespointer user_data) {
   // add another param row below the add button
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -2756,7 +2759,7 @@ static void padd_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
+static void pdel_clicked(LiVESWidget * button, livespointer user_data) {
   //  remove the param row at the del button
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -2927,7 +2930,7 @@ static void pdel_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
+static void cadd_clicked(LiVESWidget * button, livespointer user_data) {
   // add another channel row below the add button
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -3048,7 +3051,7 @@ static void cadd_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
+static void cdel_clicked(LiVESWidget * button, livespointer user_data) {
   //  remove the channel  row at the del button
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
@@ -3197,7 +3200,7 @@ static void cdel_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
+static void dfxc_changed(LiVESWidget * combo, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
   LiVESTreeIter iter;
@@ -3271,7 +3274,7 @@ static void dfxc_changed(LiVESWidget *combo, livespointer user_data) {
 }
 
 
-static void dfxp_changed(LiVESWidget *combo, livespointer user_data) {
+static void dfxp_changed(LiVESWidget * combo, livespointer user_data) {
   // filter was changed
 
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
@@ -3527,7 +3530,7 @@ int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode
 }
 
 
-static void dpp_changed(LiVESWidget *combo, livespointer user_data) {
+static void dpp_changed(LiVESWidget * combo, livespointer user_data) {
   // receiver param was set
 
   // 1) check if compatible
@@ -3741,7 +3744,7 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
 }
 
 
-static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
+static void dpc_changed(LiVESWidget * combo, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
   weed_plant_t *ichan;
@@ -3857,7 +3860,7 @@ static void dpc_changed(LiVESWidget *combo, livespointer user_data) {
 }
 
 
-static void on_allcheck_toggled(LiVESToggleButton *button, livespointer user_data) {
+static void on_allcheck_toggled(LiVESToggleButton * button, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
   boolean on = lives_toggle_button_get_active(button);
@@ -3871,7 +3874,7 @@ static void on_allcheck_toggled(LiVESToggleButton *button, livespointer user_dat
 }
 
 
-static void on_acheck_toggled(LiVESToggleButton *acheck, livespointer user_data) {
+static void on_acheck_toggled(LiVESToggleButton * acheck, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
   weed_plant_t **iparams;
@@ -4047,7 +4050,7 @@ static LiVESTreeModel *inparam_fx_model(boolean is_chans, int key) {
 }
 
 
-static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int row, int pidx) {
+static void ptable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int row, int pidx) {
   weed_plant_t **oparams, *param;
 
   LiVESWidget *hbox, *hbox2;
@@ -4142,7 +4145,7 @@ static void ptable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 }
 
 
-static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int row, int cidx) {
+static void ctable_row_add_variable_widgets(lives_conx_w * conxwp, int idx, int row, int cidx) {
   LiVESWidget *hbox, *hbox2;
   LiVESWidget *fx_entry;
 
@@ -4192,7 +4195,7 @@ static void ctable_row_add_variable_widgets(lives_conx_w *conxwp, int idx, int r
 }
 
 
-static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
+static void ptable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   LiVESWidget *hbox;
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4234,7 +4237,7 @@ static void ptable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 }
 
 
-static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
+static void ctable_row_add_standard_widgets(lives_conx_w * conxwp, int idx) {
   LiVESWidget *hbox;
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4276,7 +4279,7 @@ static void ctable_row_add_standard_widgets(lives_conx_w *conxwp, int idx) {
 }
 
 
-static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
+static LiVESWidget *conx_scroll_new(lives_conx_w * conxwp) {
   weed_plant_t *chan, *param;
 
   LiVESWidget *label;
@@ -4547,7 +4550,7 @@ static LiVESWidget *conx_scroll_new(lives_conx_w *conxwp) {
 }
 
 
-static void conxw_cancel_clicked(LiVESWidget *button, livespointer user_data) {
+static void conxw_cancel_clicked(LiVESWidget * button, livespointer user_data) {
   lives_conx_w *conxwp = (lives_conx_w *)user_data;
 
   if (conxwp->pclabel != NULL) lives_free(conxwp->pclabel);
@@ -4585,7 +4588,7 @@ static void conxw_cancel_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void conxw_ok_clicked(LiVESWidget *button, livespointer user_data) {
+static void conxw_ok_clicked(LiVESWidget * button, livespointer user_data) {
   lives_cconnect_t *cconx_bak = mainw->cconx;
   lives_pconnect_t *pconx_bak = mainw->pconx;
 
@@ -4602,7 +4605,7 @@ static void conxw_ok_clicked(LiVESWidget *button, livespointer user_data) {
 }
 
 
-static void set_to_keymode_vals(LiVESCombo *combo, int xkey, int xmode) {
+static void set_to_keymode_vals(LiVESCombo * combo, int xkey, int xmode) {
   LiVESTreeIter iter, piter;
   LiVESTreeModel *model;
 
@@ -4626,7 +4629,7 @@ iter_found:
 }
 
 
-static boolean show_existing(lives_conx_w *conxwp) {
+static boolean show_existing(lives_conx_w * conxwp) {
   lives_cconnect_t *cconx = conxwp->cconx;
   lives_pconnect_t *pconx = conxwp->pconx;
 
@@ -4949,7 +4952,7 @@ LiVESWidget *make_datacon_window(int key, int mode) {
 }
 
 
-static void do_chan_connected_error(lives_conx_w *conxwp, int key, int mode, int cnum) {
+static void do_chan_connected_error(lives_conx_w * conxwp, int key, int mode, int cnum) {
   weed_plant_t *filter, *ctmpl, **ochans;
   char *msg, *cname;
   int error;
@@ -4965,7 +4968,7 @@ static void do_chan_connected_error(lives_conx_w *conxwp, int key, int mode, int
 }
 
 
-static void do_param_connected_error(lives_conx_w *conxwp, int key, int mode, int pnum) {
+static void do_param_connected_error(lives_conx_w * conxwp, int key, int mode, int pnum) {
   weed_plant_t *filter, *ptmpl;
   char *msg, *pname;
   filter = rte_keymode_get_filter(key + 1, mode);
@@ -4980,7 +4983,7 @@ static void do_param_connected_error(lives_conx_w *conxwp, int key, int mode, in
 }
 
 
-static void do_param_incompatible_error(lives_conx_w *conxwp) {
+static void do_param_incompatible_error(lives_conx_w * conxwp) {
   do_error_dialog_with_check_transient(_("Input and output parameters are not compatible"), TRUE, 0,
                                        LIVES_WINDOW(conxwp->conx_dialog));
 }

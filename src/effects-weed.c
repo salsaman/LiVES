@@ -3880,17 +3880,15 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   if (!weed_plant_has_leaf(filter, WEED_LEAF_VERSION)) return 3;
   if (!weed_plant_has_leaf(filter, WEED_LEAF_PROCESS_FUNC)) return 4;
 
-  flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
+  flags = weed_filter_get_flags(filter);
 
   // for now we will only load realtime effects
   if (flags & WEED_FILTER_NON_REALTIME) return 5;
-
-  // count number of mandatory and optional in_channels
-  num_elements = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
-
-  if (num_elements > 0) array = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
   cvary = (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY);
   pvary = (flags & WEED_FILTER_PALETTES_MAY_VARY);
+
+  // count number of mandatory and optional in_channels
+  array = weed_filter_get_in_chantmpls(filter, &num_elements);
 
   for (i = 0; i < num_elements; i++) {
     if (!weed_plant_has_leaf(array[i], WEED_LEAF_NAME)) {
@@ -4498,27 +4496,27 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     } else {
 #ifdef DEBUG_WEED
       lives_printerr("Unsuitable filter \"%s\" in plugin \"%s\", reason code %d\n", filter_name, plugin_name, reason);
-    }
 #endif
+    }
     if (!valid && plugin_info != NULL) {
       host_info = weed_get_plantptr_value(plugin_info, WEED_LEAF_HOST_INFO, NULL);
       if (host_info != NULL) weed_plant_free(host_info);
       weed_plant_free(plugin_info);
+      plugin_info = NULL;
     }
+    lives_freep((void **)&filter_name);
   }
-  lives_freep((void **)&filter_name);
-}
-lives_freep((void **)&filters);
-lives_free(package_name);
-if (mainw->chdir_failed) {
-  char *dirs = lives_strdup(_("Some plugin directories"));
-  do_chdir_failed_error(dirs);
-  lives_free(dirs);
-}
+  lives_freep((void **)&filters);
+  lives_free(package_name);
+  if (mainw->chdir_failed) {
+    char *dirs = lives_strdup(_("Some plugin directories"));
+    do_chdir_failed_error(dirs);
+    lives_free(dirs);
+  }
 
-lives_chdir(pwd, FALSE);
+  lives_chdir(pwd, FALSE);
 
-// TODO - add any rendered effects to fx submenu
+  // TODO - add any rendered effects to fx submenu
 }
 
 
@@ -6469,9 +6467,14 @@ deinit2:
       int weed_error;
       char *filter_name;
       filter_mutex_lock(hotkey);
-      filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
-      d_print(_("Unable to start generator %s (error code: %d)\n"), filter_name, error);
-      lives_free(filter_name);
+      weed_call_deinit_func(inst);
+      weed_instance_unref(inst);
+      weed_instance_unref(inst);
+      if (error != 2) {
+        filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &weed_error);
+        d_print(_("Unable to start generator %s (error code: %d)\n"), filter_name, error);
+        lives_free(filter_name);
+      } else mainw->error = TRUE;
       if (mainw->num_tr_applied && mainw->current_file > -1) {
         bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
       } else {
@@ -6479,7 +6482,6 @@ deinit2:
       }
       if (fg_modeswitch) mainw->num_tr_applied = num_tr_applied;
       key_to_instance[hotkey][key_modes[hotkey]] = NULL;
-
       filter_mutex_unlock(hotkey);
       if (mainw->multitrack == NULL) {
         if (!LIVES_IS_PLAYING) {
@@ -6487,8 +6489,6 @@ deinit2:
           switch_to_file(mainw->current_file = 0, current_file);
         }
       }
-
-      mainw->error = TRUE;
       return FALSE;
     }
 
@@ -10371,7 +10371,7 @@ int weed_get_idx_for_hashname(const char *hashname, boolean fullname) {
 
   type += 4;
 
-  if (hashnames[0][type].string != NULL) {
+  if (hashnames != NULL && hashnames[0][type].string != NULL) {
     for (i = 0; i < num_weed_filters; i++) {
       if (numhash == hashnames[i][type].hash) {
         if (!lives_utf8_strcasecmp(xhashname, hashnames[i][type].string)) {
@@ -10688,10 +10688,10 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   // returns the bytesize of the serialised plant
 
   size_t totsize = 0;
-  int i = 0;
-  char **proplist = weed_plant_list_leaves(plant);
+  weed_size_t nleaves;
+  char **proplist = weed_plant_list_leaves(plant, &nleaves);
   char *prop;
-  for (prop = proplist[0]; (prop = proplist[i]) != NULL; i++);
+  int i = (int)nleaves;
 
   if (mem == NULL) lives_write_le_buffered(fd, &i, 4, TRUE); // write number of leaves
   else {

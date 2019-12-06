@@ -6297,7 +6297,9 @@ boolean lives_osc_cb_rte_delpconnection(void *context, int arglen, const void *v
 
   if (pnum0 < -EXTRA_PARAMS_OUT || pnum1 < -EXTRA_PARAMS_IN) return lives_osc_notify_failure();
 
-  pconx_delete(key0 == 0 ? FX_DATA_WILDCARD : --key0, --mode0, pnum0, key1 == 0 ? FX_DATA_WILDCARD : --key1, --mode1, pnum1);
+  pconx_delete(key0 == 0 ? FX_DATA_WILDCARD : key0 - 1, key0 == 0 ? FX_DATA_WILDCARD : --mode0,
+               key0 == 0 ? FX_DATA_WILDCARD : pnum0, key1 == 0 ? FX_DATA_WILDCARD : key1 - 1,
+               key1 == 0 ? FX_DATA_WILDCARD : --mode1, key1 == 0 ? FX_DATA_WILDCARD : pnum1);
   return lives_osc_notify_success(NULL);
 }
 

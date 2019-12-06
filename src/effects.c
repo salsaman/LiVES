@@ -481,13 +481,13 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       char *tfile = make_image_file_name(cfile, cfile->frames, get_image_ext_for_type(cfile->img_type));
 
       if (!lives_file_test(tfile, LIVES_FILE_TEST_EXISTS)) {
-        get_frame_count(mainw->current_file);
+        cfile->frames = get_frame_count(mainw->current_file, 1);
         cfile->end = cfile->frames;
       }
       lives_free(tfile);
     }
 
-    if (got_no_frames || cfile->frames == 0) {
+    if (got_no_frames || cfile->frames <= 0) {
       mainw->is_generating = FALSE;
       if (!mainw->cancelled) {
         do_info_dialog(_("\nNo frames were generated.\n"));

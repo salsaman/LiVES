@@ -298,13 +298,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     return;
   }
 
-  if (cfile->audio_waveform == NULL) {
-    cfile->audio_waveform = (float **)lives_malloc(cfile->achans * sizeof(float *));
-    cfile->aw_sizes = (int *)lives_malloc(cfile->achans * sizint);
-    for (i = 0; i < cfile->achans; i++) {
-      cfile->audio_waveform[i] = NULL;
-      cfile->aw_sizes[i] = 0;
-    }
+  if (cfile->audio_waveform == NULL && cfile->achans > 0) {
+    cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
+    cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
   }
 
   if (!LIVES_IS_PLAYING) {
@@ -420,6 +416,11 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     offset_left = ROUND_I((double)(cfile->start - 1.) / cfile->fps * scalex);
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
     offset_end = ROUND_I(cfile->laudio_time * scalex);
+
+    if (cfile->audio_waveform == NULL) {
+      cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
+      cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
+    }
 
     if (cfile->audio_waveform[0] == NULL) {
       // re-read the audio
@@ -1473,33 +1474,33 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
     lives_container_add(LIVES_CONTAINER(laudframe), table);
 
     if (!is_mt) {
-      label = lives_standard_label_new(_("Total time"));
+      label = lives_standard_label_new(_("Rate/size"));
       if (palette->style & STYLE_3) {
         lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
       }
+      lives_label_set_hpadding(LIVES_LABEL(label), 4);
       lives_table_attach(LIVES_TABLE(table), label, 0, 1, 0, 1,
                          (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
 
+      filew->textview_lrate = aud_text_view_new();
+      lives_table_attach(LIVES_TABLE(table), filew->textview_lrate, 1, 2, 0, 1,
+                         (LiVESAttachOptions)(0),
+                         (LiVESAttachOptions)(0), 0, 0);
+
+      label = lives_standard_label_new(_("Total time"));
+      if (palette->style & STYLE_3) {
+        lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+      }
+      lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
+                         (LiVESAttachOptions)(0),
+                         (LiVESAttachOptions)(0), 0, 0);
+
       filew->textview_ltime = aud_text_view_new();
-      lives_table_attach(LIVES_TABLE(table), filew->textview_ltime, 1, 2, 0, 1,
+      lives_table_attach(LIVES_TABLE(table), filew->textview_ltime, 3, 4, 0, 1,
                          (LiVESAttachOptions)(0),
                          (LiVESAttachOptions)(0), 0, 0);
     }
-
-    label = lives_standard_label_new(_("Rate/size"));
-    if (palette->style & STYLE_3) {
-      lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-    }
-    lives_label_set_hpadding(LIVES_LABEL(label), 4);
-    lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
-                       (LiVESAttachOptions)(0),
-                       (LiVESAttachOptions)(0), 0, 0);
-
-    filew->textview_lrate = aud_text_view_new();
-    lives_table_attach(LIVES_TABLE(table), filew->textview_lrate, 3, 4, 0, 1,
-                       (LiVESAttachOptions)(0),
-                       (LiVESAttachOptions)(0), 0, 0);
 
     if (audio_channels > 1) {
       tmp = get_achannel_name(2, 1);
@@ -1517,7 +1518,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
       lives_container_add(LIVES_CONTAINER(raudframe), table);
 
       if (!is_mt) {
-        label = lives_standard_label_new(_("Total time"));
+        label = lives_standard_label_new(_("Rate/size"));
         if (palette->style & STYLE_3) {
           lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
         }
@@ -1526,25 +1527,25 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
                            (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
 
+        filew->textview_rrate = aud_text_view_new();
+        lives_table_attach(LIVES_TABLE(table), filew->textview_rrate, 1, 2, 0, 1,
+                           (LiVESAttachOptions)(0),
+                           (LiVESAttachOptions)(0), 0, 0);
+
+        label = lives_standard_label_new(_("Total time"));
+        if (palette->style & STYLE_3) {
+          lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
+        }
+        lives_label_set_hpadding(LIVES_LABEL(label), 4);
+        lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
+                           (LiVESAttachOptions)(0),
+                           (LiVESAttachOptions)(0), 0, 0);
+
         filew->textview_rtime = aud_text_view_new();
-        lives_table_attach(LIVES_TABLE(table), filew->textview_rtime, 1, 2, 0, 1,
+        lives_table_attach(LIVES_TABLE(table), filew->textview_rtime, 3, 4, 0, 1,
                            (LiVESAttachOptions)(0),
                            (LiVESAttachOptions)(0), 0, 0);
       }
-
-      label = lives_standard_label_new(_("Rate/size"));
-      if (palette->style & STYLE_3) {
-        lives_widget_set_bg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->menu_and_bars);
-      }
-      lives_label_set_hpadding(LIVES_LABEL(label), 4);
-      lives_table_attach(LIVES_TABLE(table), label, 2, 3, 0, 1,
-                         (LiVESAttachOptions)(0),
-                         (LiVESAttachOptions)(0), 0, 0);
-
-      filew->textview_rrate = aud_text_view_new();
-      lives_table_attach(LIVES_TABLE(table), filew->textview_rrate, 3, 4, 0, 1,
-                         (LiVESAttachOptions)(0),
-                         (LiVESAttachOptions)(0), 0, 0);
     }
   }
 

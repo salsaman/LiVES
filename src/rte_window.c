@@ -1776,11 +1776,11 @@ void on_clear_clicked(LiVESButton *button, livespointer user_data) {
 
   weed_delete_effectkey(key + 1, mode);
 
-  pconx_delete(FX_DATA_WILDCARD, 0, 0, key, mode, FX_DATA_WILDCARD);
-  pconx_delete(key, mode, FX_DATA_WILDCARD, -1, 0, 0);
+  pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, key, mode, FX_DATA_WILDCARD);
+  pconx_delete(key, mode, FX_DATA_WILDCARD, -1, FX_DATA_WILDCARD, FX_DATA_WILDCARD);
 
-  cconx_delete(FX_DATA_WILDCARD, 0, 0, key, mode, FX_DATA_WILDCARD);
-  cconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, 0, 0);
+  cconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, key, mode, FX_DATA_WILDCARD);
+  cconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD);
 
   newmode = rte_key_getmode(key + 1);
 
@@ -2048,11 +2048,11 @@ void fx_changed(LiVESCombo *combo, livespointer user_data) {
 
   check_clear_all_button();
 
-  pconx_delete(FX_DATA_WILDCARD, 0, 0, key, mode, FX_DATA_WILDCARD);
-  pconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, 0, 0);
+  pconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, key, mode, FX_DATA_WILDCARD_KEEP_ACTIVATED);
+  pconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD);
 
-  cconx_delete(FX_DATA_WILDCARD, 0, 0, key, mode, FX_DATA_WILDCARD);
-  cconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, 0, 0);
+  cconx_delete(FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, key, mode, FX_DATA_WILDCARD);
+  cconx_delete(key, mode, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD, FX_DATA_WILDCARD);
 
   if (mainw->ce_thumbs) ce_thumbs_reset_combos();
 }

@@ -151,7 +151,6 @@ typedef struct {
   boolean loop_recording;
   boolean discard_tv;
   boolean save_directories;
-  boolean safer_preview;
   int rec_opts;
 #define REC_FRAMES (1<<0)
 #define REC_FPS (1<<1)
@@ -331,6 +330,7 @@ typedef struct {
   boolean force64bit;
 
   boolean auto_trim_audio;
+  boolean keep_all_audio;
 
   /** default 0; 1==use old (bad) behaviour on bigendian machines (r/w bigend ints/doubles); 2==bad reads, good writes */
   int bigendbug;
@@ -911,6 +911,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_CE_MAXSPECT "ce_maxspect"
 #define PREF_OPEN_MAXIMISED "open_maximised"
 #define PREF_AUTO_TRIM_PAD_AUDIO "auto_trim_pad_audio"
+#define PREF_KEEP_ALL_AUDIO "never_trim_audio"
 #define PREF_MOUSE_SCROLL_CLIPS "mouse_scroll_clips"
 #define PREF_SHOW_BUTTON_ICONS "show_button_icons"
 #define PREF_STREAM_AUDIO_OUT "stream_audio_out"

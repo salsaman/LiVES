@@ -539,7 +539,7 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
   plant = weed_plant_new(weed_get_int_value(src, WEED_LEAF_TYPE, &err));
   if (plant == NULL) return NULL;
 
-  proplist = weed_plant_list_leaves(src);
+  proplist = weed_plant_list_leaves(src, NULL);
   for (prop = proplist[0]; (prop = proplist[i]) != NULL && err == WEED_SUCCESS; i++) {
     if (err == WEED_SUCCESS) {
       if (strcmp(prop, WEED_LEAF_TYPE)) {
@@ -558,35 +558,6 @@ weed_plant_t *weed_plant_copy(weed_plant_t *src) {
 
   return plant;
 }
-
-
-void weed_add_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
-  size_t ign_prefix_len = 0;
-  char **leaves = weed_plant_list_leaves(plant);
-  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
-  for (int i = 0; leaves[i] != NULL; i++) {
-    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
-    }
-    free(leaves[i]);
-  }
-  if (leaves != NULL) free(leaves);
-}
-
-
-void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
-  size_t ign_prefix_len = 0;
-  char **leaves = weed_plant_list_leaves(plant);
-  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
-  for (int i = 0; leaves[i] != NULL; i++) {
-    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
-    }
-    free(leaves[i]);
-  }
-  if (leaves != NULL) free(leaves);
-}
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 

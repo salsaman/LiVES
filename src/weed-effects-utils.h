@@ -45,6 +45,11 @@ int32_t weed_plant_get_type(weed_plant_t *);
 
 #define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
 
+// set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
+// this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
+void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
+void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
+
 /* FILTER functions */
 int weed_filter_get_flags(weed_plant_t *filter);
 int weed_filter_is_resizer(weed_plant_t *filter);

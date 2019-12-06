@@ -715,10 +715,8 @@ int check_for_bad_ffmpeg(void) {
   int i, fcount;
   char *fname_next;
   boolean maybeok = FALSE;
-  int ofcount = cfile->frames;
 
-  get_frame_count(mainw->current_file);
-  fcount = cfile->frames;
+  fcount = get_frame_count(mainw->current_file, 1);
 
   for (i = 1; i <= fcount; i++) {
     fname_next = make_image_file_name(cfile, i, get_image_ext_for_type(cfile->img_type));
@@ -729,7 +727,7 @@ int check_for_bad_ffmpeg(void) {
     }
     lives_free(fname_next);
   }
-  cfile->frames = ofcount;
+
   if (!maybeok) {
     do_error_dialog(
       _("Your version of mplayer/ffmpeg may be broken !\nSee http://bugzilla.mplayerhq.hu/show_bug.cgi?id=2071\n\n"

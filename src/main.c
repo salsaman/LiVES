@@ -1104,8 +1104,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->pulsed = mainw->pulsed_read = NULL;
 
-  mainw->opening_frames = -1;
-
   mainw->show_procd = TRUE;
 
   mainw->framedraw_preview = mainw->framedraw_reset = NULL;
@@ -1382,7 +1380,8 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->alpha_post = FALSE; ///< allow pre-multiplied alpha internally
 
-  prefs->auto_trim_audio = get_boolean_pref(PREF_AUTO_TRIM_PAD_AUDIO);
+  prefs->auto_trim_audio = get_boolean_prefd(PREF_AUTO_TRIM_PAD_AUDIO, TRUE);
+  prefs->keep_all_audio = get_boolean_prefd(PREF_KEEP_ALL_AUDIO, FALSE);
 
   prefs->force64bit = FALSE;
 
@@ -1703,8 +1702,6 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->antialias = get_boolean_pref(PREF_ANTIALIAS);
 
     prefs->concat_images = get_boolean_pref(PREF_CONCAT_IMAGES);
-
-    prefs->safer_preview = TRUE;
 
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
@@ -6486,9 +6483,14 @@ void load_frame_image(int frame) {
     }
 
     if (was_preview) {
-      info_file = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
       // preview
-      if (prefs->safer_preview && cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
+      if (cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
+          frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
+        if (cfile->opening) {
+          cfile->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file, cfile->opening_frames);
+        }
+      }
+      if (cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
           frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
         mainw->cancelled = CANCEL_PREVIEW_FINISHED;
         mainw->noswitch = noswitch;
@@ -6555,6 +6557,10 @@ void load_frame_image(int frame) {
 
     ////////////////////////////////////////////////////////////
     // load a frame from disk buffer
+
+    if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
+      info_file = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
+    }
 
     do {
       if (mainw->frame_layer != NULL) {
@@ -6650,6 +6656,7 @@ void load_frame_image(int frame) {
           // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
           mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
+          lives_freep((void **)&info_file);
           return;
         }
       } else {
@@ -6684,9 +6691,10 @@ void load_frame_image(int frame) {
           if (!cfile->opening) mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
           if (mainw->cancelled) {
             lives_free(fname_next);
-            lives_free(info_file);
+            lives_freep((void **)&info_file);
             mainw->noswitch = noswitch;
             lives_freep((void **)&framecount);
+            lives_freep((void **)&info_file);
             check_layer_ready(mainw->frame_layer);
             return;
           }
@@ -6699,12 +6707,14 @@ void load_frame_image(int frame) {
           // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
           mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
+          lives_freep((void **)&info_file);
           check_layer_ready(mainw->frame_layer);
           return;
         }
 
         if (mainw->frame_layer == NULL && (!mainw->preview || (mainw->multitrack != NULL && !cfile->opening))) {
           mainw->noswitch = noswitch;
+          lives_freep((void **)&info_file);
           lives_freep((void **)&framecount);
           return;
         }
@@ -6746,7 +6756,6 @@ void load_frame_image(int frame) {
               // force a loop (set mainw->cancelled to CANCEL_KEEP_LOOPING to play selection again)
               mainw->cancelled = CANCEL_KEEP_LOOPING;
             } else mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
-            lives_free(info_file);
             lives_free(fname_next);
             check_layer_ready(mainw->frame_layer);
 
@@ -6756,11 +6765,14 @@ void load_frame_image(int frame) {
 
             mainw->noswitch = noswitch;
             lives_freep((void **)&framecount);
+            lives_freep((void **)&info_file);
             return;
           } else if (mainw->preview || cfile->opening) lives_widget_context_update();
         }
       }
     } while (mainw->frame_layer == NULL && mainw->cancelled == CANCEL_NONE && cfile->clip_type == CLIP_TYPE_DISK);
+
+    lives_freep((void **)&info_file);
 
     if (LIVES_UNLIKELY((mainw->frame_layer == NULL) || mainw->cancelled > 0)) {
       // NULL frame or user cancelled
@@ -6776,7 +6788,6 @@ void load_frame_image(int frame) {
 
     if (was_preview) {
       lives_free(fname_next);
-      lives_free(info_file);
     }
 
     if (prefs->show_player_stats) {

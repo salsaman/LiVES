@@ -4,27 +4,26 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
-
 #define FX_DATA_WILDCARD -1000000
+#define FX_DATA_WILDCARD_KEEP_ACTIVATED -1000001
 
+// special input keys
 #define FX_DATA_KEY_SUBTITLES -1
 #define FX_DATA_KEY_PLAYBACK_PLUGIN -2
 #define FX_DATA_KEY_OMC_MACRO -3
 
-#define EXTRA_PARAMS_OUT 1 // Activate
-#define EXTRA_PARAMS_IN 1 // Activated
+#define EXTRA_PARAMS_OUT 1 ///< Activate
+#define EXTRA_PARAMS_IN 1 ///< Activated
 
-#define FX_DATA_PARAM_ACTIVE -1
+#define FX_DATA_PARAM_ACTIVE -1 ///< activate || activated
 
 // struct for connecting out params to in params
 
 typedef struct _lives_pconnect_t lives_pconnect_t;
 
-
 // when an out parameter is mapped/updated, we add it to here
 
 // when unmapped we delete it
-
 
 struct _lives_pconnect_t {
   int okey; ///< okey is 0 based
@@ -50,7 +49,6 @@ struct _lives_pconnect_t {
   lives_pconnect_t *next;
 };
 
-
 /// add a new connection from out_param okey/omode/opnum to in_param ikey/imode/ipnum
 void pconx_add_connection(int okey, int omode, int opnum, int ikey, int imode, int ipnum, boolean autoscale);
 
@@ -73,20 +71,15 @@ char *pconx_list(int okey, int omode, int opnum);
 // special version for compound fx internal connections
 boolean pconx_chain_data_internal(weed_plant_t *inst);
 
-
 // alpha channels
-
 
 // struct for connecting out alphas to in alphas
 
 typedef struct _lives_cconnect_t lives_cconnect_t;
 
-
 // when an out alpha is mapped/updated, we add it to here
 
 // when unmapped we delete it
-
-
 
 struct _lives_cconnect_t {
   int okey; ///< okey is 0 based
@@ -108,7 +101,6 @@ struct _lives_cconnect_t {
   lives_cconnect_t *next;
 };
 
-
 /// add a new connection from out_chan okey/omode/ocnum to in_chan ikey/imode/icnum
 void cconx_add_connection(int okey, int omode, int ocnum, int ikey, int imode, int icnum);
 
@@ -126,7 +118,6 @@ boolean cconx_chain_data(int key, int mode);
 char *cconx_list(int okey, int omode, int ocnum);
 
 boolean cconx_chain_data_internal(weed_plant_t *ichan);
-
 
 //////////////////////////////////////////////////////////
 
@@ -184,9 +175,6 @@ typedef struct {
   ulong *acheck_func;
 } lives_conx_w;
 
-
-
-
 LiVESWidget *make_datacon_window(int key, int mode);
 
 int pconx_check_connection(weed_plant_t *ofilter, int opnum, int ikey, int imode, int ipnum, boolean setup,
@@ -198,7 +186,6 @@ int cconx_check_connection(int ikey, int imode, int icnum, boolean setup, weed_p
                            int *omode,
                            int *ocnum);
 
-
-
 boolean feeds_to_video_filters(int okey, int omode);
 boolean feeds_to_audio_filters(int okey, int omode);
+

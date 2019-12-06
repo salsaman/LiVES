@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "main.h" // TODO
 
@@ -39,6 +40,32 @@
 WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
   if (plant == NULL) return WEED_PLANT_UNKNOWN;
   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
+}
+
+void weed_add_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
+  size_t ign_prefix_len = 0;
+  char **leaves = weed_plant_list_leaves(plant, NULL);
+  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
+  for (int i = 0; leaves[i] != NULL; i++) {
+    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
+    }
+    free(leaves[i]);
+  }
+  if (leaves != NULL) free(leaves);
+}
+
+void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
+  size_t ign_prefix_len = 0;
+  char **leaves = weed_plant_list_leaves(plant, NULL);
+  if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
+  for (int i = 0; leaves[i] != NULL; i++) {
+    if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
+      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
+    }
+    free(leaves[i]);
+  }
+  if (leaves != NULL) free(leaves);
 }
 
 WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_if_not_exists) {

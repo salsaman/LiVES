@@ -5045,7 +5045,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
       lives_tree_store_set(treestore, &iter1, TITLE_COLUMN, "Properties", -1);
 
       // get list of keys (property) names for this event
-      propnames = weed_plant_list_leaves(event);
+      propnames = weed_plant_list_leaves(event, NULL);
 
       for (i = 0; propnames[i] != NULL; i++) {
         if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_HINT) ||

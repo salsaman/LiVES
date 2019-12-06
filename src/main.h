@@ -655,6 +655,7 @@ typedef struct {
   boolean opening_loc;
   boolean restoring;
   boolean is_loaded;  ///< should we continue loading if we come back to this clip
+  int opening_frames;
 
   /// don't show preview/pause buttons on processing
   boolean nopreview;
@@ -1104,6 +1105,7 @@ boolean do_theme_exists_warn(const char *themename);
 boolean do_layout_recover_dialog(void);
 
 int process_one(boolean visible);
+void update_progress(boolean visible);
 void do_threaded_dialog(const char *translated_text, boolean has_cancel);
 void end_threaded_dialog(void);
 void threaded_dialog_spin(double fraction);
@@ -1274,20 +1276,25 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
 lives_pid_t lives_fork(const char *com);
 int lives_open3(const char *pathname, int flags, mode_t mode);
 int lives_open2(const char *pathname, int flags);
+ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
+ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
+ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
+ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
+
+// buffered io
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_creat_buffered(const char *pathname, int mode);
 int lives_close_buffered(int fd);
 void lives_close_all_file_buffers(void);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
-ssize_t lives_write(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
-ssize_t lives_write_le(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
-ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
-ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
+boolean lives_read_buffered_eof(int fd);
+
+
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
 char *lives_fgets(char *s, int size, FILE *stream);
@@ -1407,8 +1414,7 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp);
 boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t maxlen);
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx, boolean last_chkd);
-void count_opening_frames(void);
-void get_frame_count(int idx);
+int get_frame_count(int idx, int xsize);
 void get_frames_sizes(int fileno, int frame_to_test);
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);

@@ -412,6 +412,7 @@ enum {
 
 // file names
 #define CLIP_AUDIO_FILENAME "audio"
+#define CLIP_TEMP_AUDIO_FILENAME "audiodump." LIVES_FILE_EXT_PCM
 
 #define WORKDIR_LITERAL "workdir"
 #define WORKDIR_LITERAL_LEN (strlen(WORKDIR_LITERAL))

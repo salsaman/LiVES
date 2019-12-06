@@ -131,7 +131,6 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
       int ninps = (weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS) - 2) / 2;
       int link = weed_get_boolean_value(in_params[ninps * 2], WEED_LEAF_VALUE, NULL);
       for (i = 0; i < ninps; i++) {
-        weed_plant_t *ptmpl = weed_get_plantptr_value(in_params[i], WEED_LEAF_TEMPLATE, NULL);
         weed_plant_t *gui = weed_param_get_gui(in_params[i]);
         if (link == WEED_TRUE) {
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i + ninps);

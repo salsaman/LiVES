@@ -945,7 +945,6 @@ void pump_io_chan(LiVESIOChannel *iochan) {
         }
         cptr++;
       }
-
     }
   }
 
@@ -1120,8 +1119,8 @@ static void cancel_process(boolean visible) {
   } else {
     mainw->is_processing = TRUE;
   }
-  if (mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW &&
-      mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
+  if (mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW
+      && mainw->cancelled != CANCEL_PREVIEW_FINISHED && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
     lives_rm(cfile->info_file);
   }
 }
@@ -1174,6 +1173,53 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
       progress_count = 0;
       if (!mainw->is_rendering)  progress_speed = 1.;
+    }
+  }
+}
+
+
+void update_progress(boolean visible) {
+  double fraction_done, timesofar;
+  char *prog_label;
+
+  if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
+      (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
+    uint32_t apxl;
+    mainw->currticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
+        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 50 ? apxl : 50) ||
+        (mainw->effects_paused && !shown_paused_frames)) {
+      cfile->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file,
+                                     cfile->opening > 1 ? cfile->opening_frames : 1);
+      last_open_check_ticks = mainw->currticks;
+      if (cfile->opening_frames > 1) {
+        if (cfile->frames > 0 && cfile->frames != 123456789) {
+          fraction_done = (double)(cfile->opening_frames - 1.) / (double)cfile->frames;
+          if (fraction_done > 1.) fraction_done = 1.;
+          if (!mainw->effects_paused) {
+            timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
+            est_time = timesofar / fraction_done - timesofar;
+          }
+          lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), fraction_done);
+          if (est_time != -1.) prog_label = lives_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
+                                              cfile->opening_frames - 1, cfile->frames, (uint32_t)(est_time + .5));
+          else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), cfile->opening_frames - 1, cfile->frames);
+        } else {
+          lives_progress_bar_pulse(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar));
+          prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), cfile->opening_frames - 1);
+        }
+        lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3), prog_label);
+        lives_free(prog_label);
+      }
+    }
+    shown_paused_frames = mainw->effects_paused;
+  } else {
+    if (visible && cfile->proc_ptr->frames_done >= cfile->progress_start) {
+      if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
+      // display progress fraction or pulse bar
+      progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
+      sched_yield();
+      lives_usleep(prefs->sleep_time);
     }
   }
 }
@@ -1492,46 +1538,7 @@ int process_one(boolean visible) {
       if (LIVES_IS_SPIN_BUTTON(mainw->framedraw_spinbutton))
         lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1, cfile->proc_ptr->frames_done);
       // set the progress bar %
-
-      if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
-          (cfile->hsize > 0 || cfile->vsize > 0 || cfile->frames > 0) && (!mainw->effects_paused || !shown_paused_frames)) {
-        uint32_t apxl;
-        mainw->currticks = lives_get_current_ticks();
-        if ((mainw->currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
-            ((apxl = get_approx_ln((uint32_t)mainw->opening_frames)) < 200 ? apxl : 200) ||
-            (mainw->effects_paused && !shown_paused_frames)) {
-          count_opening_frames();
-          last_open_check_ticks = mainw->currticks;
-          if (mainw->opening_frames > 1) {
-            if (cfile->frames > 0 && cfile->frames != 123456789) {
-              fraction_done = (double)(mainw->opening_frames - 1) / (double)cfile->frames;
-              if (fraction_done > 1.) fraction_done = 1.;
-              if (!mainw->effects_paused) {
-                timesofar = (mainw->currticks - mainw->timeout_ticks) / TICKS_PER_SECOND_DBL;
-                est_time = timesofar / fraction_done - timesofar;
-              }
-              lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar), fraction_done);
-              if (est_time != -1.) prog_label = lives_strdup_printf(_("\n%d/%d frames opened. Time remaining %u sec.\n"),
-                                                  mainw->opening_frames - 1, cfile->frames, (uint32_t)(est_time + .5));
-              else prog_label = lives_strdup_printf(_("\n%d/%d frames opened.\n"), mainw->opening_frames - 1, cfile->frames);
-            } else {
-              lives_progress_bar_pulse(LIVES_PROGRESS_BAR(cfile->proc_ptr->progressbar));
-              prog_label = lives_strdup_printf(_("\n%d frames opened.\n"), mainw->opening_frames - 1);
-            }
-            lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3), prog_label);
-            lives_free(prog_label);
-          }
-        }
-        shown_paused_frames = mainw->effects_paused;
-      } else {
-        if (visible && cfile->proc_ptr->frames_done >= cfile->progress_start) {
-          if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
-          // display progress fraction or pulse bar
-          progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
-          sched_yield();
-          lives_usleep(prefs->sleep_time);
-        }
-      }
+      update_progress(visible);
     }
 
     frames_done = cfile->proc_ptr->frames_done;

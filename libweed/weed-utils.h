@@ -125,12 +125,6 @@ typedef weed_plant_t *(*weed_host_info_callback_f)(weed_plant_t *host_info, void
 /* set a host callback function to be called from within weed_bootstrap() */
 void weed_set_host_info_callback(weed_host_info_callback_f, void *user_data);
 
-/* host only functions */
-// set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
-// this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
-void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
-void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
-
 #endif
 
 #ifdef __WEED_PLUGIN__

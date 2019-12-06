@@ -741,6 +741,21 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
 }
 
 
+boolean lives_read_buffered_eof(int fd) {
+  lives_file_buffer_t *fbuff;
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_read_buffered: no file buffer found");
+    return TRUE;
+  }
+
+  if (!fbuff->read) {
+    LIVES_ERROR("lives_read_buffered: wrong buffer type");
+    return FALSE;
+  }
+  return fbuff->eof;
+}
+
+
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
@@ -2272,33 +2287,24 @@ boolean check_frame_count(int idx, boolean last_checked) {
 }
 
 
-void count_opening_frames(void) {
-  int cframes = cfile->frames;
-  get_frame_count(mainw->current_file);
-  mainw->opening_frames = cfile->frames;
-  cfile->frames = cframes;
-}
-
-
 /** @brief sets mainw->files[idx]->frames with current framecount
 
    calls smogrify which physically finds the last frame using a (fast) O(log n) binary search method
    for CLIP_TYPE_DISK only
    (CLIP_TYPE_FILE should use the decoder plugin frame count) */
-void get_frame_count(int idx) {
+int get_frame_count(int idx, int start) {
   ssize_t bytes;
-  char *com = lives_strdup_printf("%s count_frames \"%s\" %s", prefs->backend_sync, mainw->files[idx]->handle,
-                                  get_image_ext_for_type(mainw->files[idx]->img_type));
+  char *com = lives_strdup_printf("%s count_frames \"%s\" %s %d", prefs->backend_sync, mainw->files[idx]->handle,
+                                  get_image_ext_for_type(mainw->files[idx]->img_type), start);
 
   mainw->com_failed = FALSE;
   bytes = lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
 
-  if (mainw->com_failed) return;
+  if (mainw->com_failed) return 0;
 
-  if (bytes > 0) {
-    mainw->files[idx]->frames = atoi(mainw->msg);
-  }
+  if (bytes > 0) return atoi(mainw->msg);
+  return 0;
 }
 
 

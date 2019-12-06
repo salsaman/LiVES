@@ -40,12 +40,28 @@ LIVES_GLOBAL_INLINE char *get_achannel_name(int totchans, int idx) {
 }
 
 
+LIVES_GLOBAL_INLINE char *get_audio_file_name(int fnum, boolean opening) {
+  char *fname;
+  if (!opening) {
+    if (IS_VALID_CLIP(fnum))
+      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
+    else
+      fname = lives_build_filename(prefs->workdir, CLIP_AUDIO_FILENAME, NULL);
+  } else {
+    if (IS_VALID_CLIP(fnum))
+      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_TEMP_AUDIO_FILENAME, NULL);
+    else
+      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_TEMP_AUDIO_FILENAME, NULL);
+  }
+  return fname;
+}
+
+
 LIVES_GLOBAL_INLINE char *lives_get_audio_file_name(int fnum) {
-  char *fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_AUDIO_FILENAME, NULL);
+  char *fname = get_audio_file_name(fnum, FALSE);
   if (mainw->files[fnum]->opening && !lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
-    char *tmp = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_PCM);
     lives_free(fname);
-    return tmp;
+    fname = get_audio_file_name(fnum, TRUE);
   }
   return fname;
 }
@@ -59,12 +75,8 @@ LIVES_GLOBAL_INLINE const char *audio_player_get_display_name(const char *aplaye
 
 void audio_free_fnames(void) {
   // cleanup stored filehandles after playback/fade/render
-
-  int i;
-
   if (!storedfdsset) return;
-
-  for (i = 0; i < NSTOREDFDS; i++) {
+  for (int i = 0; i < NSTOREDFDS; i++) {
     lives_freep((void **)&storedfnames[i]);
     if (storedfds[i] > -1) close(storedfds[i]);
     storedfds[i] = -1;
@@ -242,6 +254,28 @@ void free_audio_frame_buffer(lives_audio_buf_t *abuf) {
 }
 
 
+boolean audiofile_is_silent(int fnum, double start, double end) {
+  double atime = start;
+  lives_clip_t *afile = mainw->files[fnum];
+  char *filename = lives_get_audio_file_name(mainw->current_file);
+  int afd = lives_open_buffered_rdonly(filename);
+  float xx;
+  int c;
+  lives_free(filename);
+  while (atime <= end) {
+    for (c = 0; c < afile->achans; c++) {
+      if ((xx = get_float_audio_val_at_time(fnum, afd, atime, c, afile->achans)) != 0.) {
+        lives_close_buffered(afd);
+        return FALSE;
+      }
+    }
+    atime += 1. / afile->arate;
+  }
+  lives_close_buffered(afd);
+  return TRUE;
+}
+
+
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) {
   // return audio level between -1.0 and +1.0
 
@@ -275,14 +309,13 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 
   if (afile->asampsize == 8) {
     // 8 bit sample size
-    lives_read_buffered(afd, &val8, 1, FALSE);
+    if (!lives_read_buffered(afd, &val8, 1, TRUE)) return 0.;
     if (!(afile->signed_endian & AFORM_UNSIGNED)) val = val8 >= 128 ? val8 - 256 : val8;
     else val = val8 - 127;
     val /= 127.;
   } else {
     // 16 bit sample size
-    lives_read_buffered(afd, &val8, 1, TRUE);
-    lives_read_buffered(afd, &val8b, 1, TRUE);
+    if (!lives_read_buffered(afd, &val8, 1, TRUE) || !lives_read_buffered(afd, &val8b, 1, TRUE)) return 0.;
     if (afile->signed_endian & AFORM_BIG_ENDIAN) val16 = (uint16_t)(val8 << 8) + val8b;
     else val16 = (uint16_t)(val8b << 8) + val8;
     if (!(afile->signed_endian & AFORM_UNSIGNED)) val = val16 >= 32768 ? val16 - 65536 : val16;

@@ -22303,7 +22303,7 @@ uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list, int *n
       weed_set_int64_value(event, WEED_LEAF_EVENT_ID, (uint64_t)((void *)event));
     }
     tot_events++;
-    leaves = weed_plant_list_leaves(event);
+    leaves = weed_plant_list_leaves(event, NULL);
     tot += sizint; //number of leaves
     for (i = 0; leaves[i] != NULL; i++) {
       tot += sizint * 3 + strlen(leaves[i]); // key_length, seed_type, num_elements
@@ -22317,7 +22317,7 @@ uint32_t event_list_get_byte_size(lives_mt *mt, weed_plant_t *event_list, int *n
   }
 
   event = event_list;
-  leaves = weed_plant_list_leaves(event);
+  leaves = weed_plant_list_leaves(event, NULL);
   tot += sizint;
   for (i = 0; leaves[i] != NULL; i++) {
     tot += sizint * 3 + strlen(leaves[i]);

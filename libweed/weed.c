@@ -12,7 +12,6 @@
    License along with this source code; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 
-
    Weed is developed by:
    Gabriel "Salsaman" Finch - http://lives-video.com
 
@@ -91,7 +90,7 @@ EXPORTED weed_error_t weed_init(int32_t abi);
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) GNU_FLATTEN;
 static weed_error_t _weed_plant_free(weed_plant_t *) GNU_FLATTEN;
-static char **_weed_plant_list_leaves(weed_plant_t *) GNU_FLATTEN;
+static char **_weed_plant_list_leaves(weed_plant_t *, weed_size_t *nleaves) GNU_FLATTEN;
 static weed_error_t _weed_leaf_get(weed_plant_t *, const char *key, int32_t idx, weed_voidptr_t value) GNU_HOT;
 static weed_error_t _weed_leaf_set(weed_plant_t *, const char *key, int32_t seed_type, weed_size_t num_elems,
                                    weed_voidptr_t values) GNU_FLATTEN;
@@ -218,13 +217,11 @@ static inline uint32_t weed_hash(const char *string) {
 					      seed_type == WEED_SEED_STRING ? size : 0)
 
 
-static inline void *weed_data_free(weed_data_t **data, weed_size_t num_elems, int32_t seed_type) {
+static inline void *weed_data_free(weed_data_t **data, weed_size_t num_valid_elems, weed_size_t num_elems, int32_t seed_type) {
   register int i;
   int is_nonptr = !weed_seed_is_ptr(seed_type);
-  for (i = 0; i < num_elems; i++) {
-    if (is_nonptr || (data[i]->value.voidptr != NULL && seed_type == WEED_SEED_STRING)) {
-      weed_unmalloc_and_copy(data[i]->size, (weed_voidptr_t)data[i]->value.voidptr);
-    }
+  for (i = 0; i < num_valid_elems; i++) {
+    if (is_nonptr && data[i]->value.voidptr) weed_unmalloc_and_copy(data[i]->size, data[i]->value.voidptr);
     weed_unmalloc_sizeof(weed_data_t, data[i]);
   }
   weed_unmalloc_and_copy(num_elems * sizeof(weed_data_t *), data);
@@ -244,26 +241,24 @@ static inline weed_data_t **weed_data_new(int32_t seed_type, weed_size_t num_ele
   if ((data = (weed_data_t **)weed_malloc(num_elems * sizeof(weed_data_t *))) == NULL) return (weed_data_t **)NULL;
   is_ptr = (weed_seed_is_ptr(seed_type));
   for (i = 0; i < num_elems; i++) {
-    if ((data[i] = weed_malloc_sizeof(weed_data_t)) == NULL) return weed_data_free(data, --i, seed_type);
-    if (seed_type == WEED_SEED_FUNCPTR) {
-      if ((data[i]->value.funcptr = (weed_funcptr_t)valuef[i]) == NULL) data[i]->size = 0;
-      else data[i]->size = WEED_FUNCPTR_SIZE;
+    if ((data[i] = weed_malloc_sizeof(weed_data_t)) == NULL) return weed_data_free(data, --i, num_elems, seed_type);
+    if (seed_type == WEED_SEED_STRING) {
+      data[i]->value.voidptr = (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > 0) ?
+                               (weed_voidptr_t)weed_malloc_and_copy(data[i]->size, valuec[i]) : NULL);
     } else {
-      if (is_ptr) {
-        if ((data[i]->value.voidptr = (weed_voidptr_t)valuep[i]) == NULL) data[i]->size = 0;
-        else data[i]->size = WEED_VOIDPTR_SIZE;
+      data[i]->size = weed_seed_get_size(seed_type, 0);
+      if (seed_type == WEED_SEED_FUNCPTR) {
+        data[i]->value.funcptr = (weed_funcptr_t)valuef[i];
       } else {
-        if (seed_type == WEED_SEED_STRING) {
-          data[i]->value.voidptr = (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > 0) ?
-                                   (weed_voidptr_t)weed_malloc_and_copy(data[i]->size, valuec[i]) : NULL);
+        if (is_ptr) {
+          data[i]->value.voidptr = (weed_voidptr_t)valuep[i];
         } else {
-          data[i]->size = weed_seed_get_size(seed_type, 0);
           data[i]->value.voidptr = (weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + i * data[i]->size));
         }
-        if (data[i]->size > 0 && data[i]->value.voidptr == NULL) // memory error
-          return weed_data_free(data, --i, seed_type);
       }
     }
+    if (!is_ptr && data[i]->value.voidptr == NULL && data[i]->size > 0) // memory error
+      return weed_data_free(data, --i, num_elems, seed_type);
   }
   return data;
 }
@@ -288,7 +283,7 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, u
 
 
 static inline void weed_leaf_free(weed_leaf_t *leaf) {
-  weed_data_free((void *)leaf->data, leaf->num_elements, leaf->seed_type);
+  weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
   weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
   weed_unmalloc_sizeof(weed_leaf_t, leaf);
 }
@@ -401,11 +396,12 @@ static weed_plant_t *_weed_plant_new(int32_t plant_type) {
 }
 
 
-static char **_weed_plant_list_leaves(weed_plant_t *plant) {
+static char **_weed_plant_list_leaves(weed_plant_t *plant, weed_size_t *nleaves) {
   // must use normal malloc, strdup here since the caller will free the strings
   weed_leaf_t *leaf = plant;
   char **leaflist;
   register int i = 1, j = 0;
+  if (nleaves) *nleaves = 0;
   for (; leaf != NULL; i++) leaf = (weed_leaf_t *)leaf->next;
   if ((leaflist = (char **)malloc(i * sizeof(char *))) == NULL) return NULL;
   for (leaf = plant; leaf != NULL; leaf = (weed_leaf_t *)leaf->next) {
@@ -416,6 +412,7 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant) {
     }
   }
   leaflist[j] = NULL;
+  if (nleaves) *nleaves = j;
   return leaflist;
 }
 
@@ -526,7 +523,7 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
           return WEED_ERROR_CONCURRENCY;
         }
       }
-      if (old_data != NULL) weed_data_free(old_data, old_num_elems, seed_type);
+      if (old_data != NULL) weed_data_free(old_data, old_num_elems, old_num_elems, seed_type);
     } else {
       weed_leaf_free(leaf);
       return WEED_ERROR_CONCURRENCY;
@@ -558,7 +555,7 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t
       char **valuecharptrptr = (char **)value;
       if (size > 0) memcpy(*valuecharptrptr, leaf->data[idx]->value.voidptr, size);
       (*valuecharptrptr)[size] = '\0';
-    } else memcpy(value, leaf->data[idx]->value.voidptr, weed_seed_get_size(leaf->seed_type, leaf->data[idx]->size));
+    } else memcpy(value, leaf->data[idx]->value.voidptr, leaf->data[idx]->size);
   }
   return WEED_SUCCESS;
 }

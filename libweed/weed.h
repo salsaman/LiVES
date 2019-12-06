@@ -120,7 +120,7 @@ typedef void *(*weed_calloc_f)(size_t, size_t);
 typedef void *(*weed_memmove_f)(void *, const void *, size_t);
 
 typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
-typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *);
+typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
 typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, int32_t seed_type, weed_size_t num_elems,
                                         weed_voidptr_t values);
 typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, int32_t idx, weed_voidptr_t value);

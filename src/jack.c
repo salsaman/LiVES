@@ -610,11 +610,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                     }
                     jackd->real_seek_pos = jackd->seek_pos;
                     jack_set_rec_avals(jackd);
-                  }
-                }
-              }
-            }
-          }
+		    // *INDENT-OFF*
+                  }}}}}
+	  // *INDENT-ON*
 
           xin_bytes = in_bytes;
         }

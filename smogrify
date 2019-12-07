@@ -551,27 +551,6 @@ if (defined($ARGV[0])) {
         }
 
 
-        if ($command eq "get_pid_for_handle") {
-            my $handle = $ARGV[1];
-            $curworkdir = "$workdir/$handle";
-            my $target_pid = " ";
-
-	    my $pidfile = "$curworkdir/.pid";
-
-            if (defined(open IN, "< $pidfile")) {
-                read IN, $target_pid, 8;
-                close IN;
-
-                if ($target_pid eq NULL) {
-                    print " ";
-                    exit 1;
-                }
-            }
-            print $target_pid;
-            exit 0;
-        }
-
-
         if ($command eq "stopsubsub" || $command eq "stopsubsubs" || $command eq "stop_audio") {
             my $handle = $ARGV[1];
 	    ## TODO
@@ -1085,7 +1064,7 @@ if (defined($ARGV[0])) {
             $antialias = &rc_get("antialias");
 
             $imresact = "bound";
-            &get_image_size("$file");
+            &get_image_size($file);
             if ($panic) {
                 exit 1;
             }
@@ -1456,13 +1435,13 @@ if (defined($ARGV[0])) {
 		unlink $pidfile;
 		exit 1;
 	    }
+
 	    if ($asamps == 32) {
 		# cant handle this yet, so we will resample on open
 		$asamps = 16;
 	    }
 
 	    &smog_chdir($curworkdir);
-
 	    &sig_complete_stdout($handle, $count, $type, $hsize, $vsize, $bpp, $fps, $f_size, $arate, $achans, $asamps, $signed, 
 				 $endian, $af_size, $gamma_type, $title, $author, $comment);
 
@@ -1494,7 +1473,7 @@ if (defined($ARGV[0])) {
 	    $pidfile = "$curworkdir/.pid";
         }
 
-        unless ($command eq "keep" || $command eq "close" || $command eq "play_opening_preview") {
+        unless ($command eq "close" || $command eq "play_opening_preview") {
 	    # tell the world our pid
             my $handle = $ARGV[1];
             my $curworkdir = "$workdir/$handle";
@@ -2056,7 +2035,9 @@ if (defined($ARGV[0])) {
 		    &get_image_size("$name$img_ext");
 		    if ($panic || $hsize==-1) {
 			unlink $pidfile;
-			&sig_error;
+			&sig_error("This does not appear to be a valid video or image file\n",
+				   "The file may be damaged or broken, or in an unrecognised format.\n",
+				   "$GUI_NAME was unable to open it.");
 		    }
 		}
 	    }
@@ -2496,9 +2477,9 @@ if (defined($ARGV[0])) {
 
 	    $command = "encode";
 
-	    print STDERR "requiring the plugin\n";
+	    #print STDERR "requiring the plugin\n";
 	    require $plugin;
-	    print STDERR "requiring the plugin\n";
+	    #print STDERR "requiring the plugin\n";
 
 	    unlink $pidfile;
 
@@ -5005,14 +4986,12 @@ sub smog_chdir {
     # CAUTION: return value of 0 is error here
 
     my $smdir = shift;
-
-    $smcomret = chdir "$smdir";
+    $smcomret = chdir $smdir;
 
     if (!$smcomret) {
         if ($DEBUG_SMOGRIFY) {
             print STDERR "smogrify debug - chdir failed ($!): $smdir\n";
         }
-
         sig_system_error("Changing to directory \"$smdir\"", $!);
         exit 1;
     }
@@ -5396,6 +5375,7 @@ sub get_mpv_info {
     # $count, $bpp, $type, $hsize, $vsize, $signed, $f_size, $arate, $achans, $asamps, $endian, $abitrate
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
+    my ($file, $VERBOSE) = @_;
 
     my @allprops = split("\n",
 			 "filename
@@ -5407,15 +5387,20 @@ sub get_mpv_info {
     demuxer
 
     length
+    duration
     chapters
     editions
     titles
+    metadata
 
     audio
     audio-bitrate
     audio-codec
+    audio-codec-name
     audio-format
+    audio-params/channel-count
     audio-channels
+    audio-params/samplerate
     audio-samplerate
 
     video
@@ -5429,6 +5414,8 @@ sub get_mpv_info {
     height
     dwidth
     dheight
+    gamma
+    seekable
 
     sub");
 
@@ -5441,107 +5428,250 @@ sub get_mpv_info {
     }
 
     if (defined($is_remote) && ($is_remote > 0)) {
-        $com = $mplay_command . ' --term-playing-msg="' . $propstr . '" --vo=null --ao=null --frames=1 --quiet --cache=32 --no-config "'
-	    . $file . '">' . $file_ident.' 2>' . $nulfile;
+        $com = "$mplay_command --term-playing-msg=\"$propstr\" --vo=null --ao=null --frames=1 --quiet --cache=32 --no-config \"$file\" 2>$nulfile";
     } else {
-        $com = $mplay_command . ' --term-playing-msg="' . $propstr . '" --vo=null --ao=null --frames=1 --quiet --no-cache --no-config "'
-	    .$file . '">'.$file_ident.' 2>' . $nulfile;
+        $com = "$mplay_command --term-playing-msg=\"$propstr\" --vo=null --ao=null --frames=1 --quiet --no-cache --no-config \"$file\"  2>$nulfile";
     }
 
-    $smerr = smog_system($com);
-
-    if ($smerr) {
-        sig_system_error("$com", $smerr);
-        $panic = 1;
-        return;
+    if ($VERBOSE > 1) {
+	print STDERR "EXECUTING: $com\n";
     }
 
-    if (-f $file_ident) {
-        $length = smog_system_direct("grep XDATA:length \"$file_ident\" 2>$nulfile");
-        $length = (split("=", (split("\n", $length))[0]))[1];
-        chomp($length);
+    open (my $fh, "$com |");
+    while (defined(my $line = <$fh>)) {
+	if ($line =~ /^XDATA:duration=(.*)/ || $line =~ /^XDATA:length=(.*)/) {
+	    next if ($lenght);
+	    next if ($1 eq "");
+	    $length = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got length $length\n";
+	    }
+
+	    if ($length eq "0" && !(defined($is_remote) && ($is_remote > 0)) && !$retried) {
+		close $fh;
+		$com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
+		    "<$nulfile";
+		open ($fh, "$com |");
+		$retried = 1;
+		if ($VERBOSE > 1) {
+		    print STDERR "retrying with demuxer lavf\n";
+		}
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:video-format=(.*)/) {
+	    next if ($id_vid_form);
+	    next if ($1 eq "");
+	    $id_vid_form = $1;
+	    $type = $id_vid_form;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got id_vid_form $id_vid_form\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:audio-format=(.*)/ || $line =~ /^XDATA:audio-codec-name=(.*)/) {
+	    next if ($id_aud_form);
+	    next if ($1 eq "");
+	    $id_aud_form = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got id_aud_form $id_aud_form\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:audio-samplerate=(.*)/ || $line =~ /^XDATA:audio-params\/samplerate=(.*)/) {
+	    next if ($arate);
+	    next if ($1 eq "");
+	    $arate = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got arate $arate\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:audio-channels=(.*)/ || $line =~ /^XDATA:audio-params\/channel-count=(.*)/) {
+	    next if ($achans);
+	    next if ($1 eq "");
+	    $achans = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got achans $achans\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:audio-bitrate=(.*)/) {
+	    next if ($abitrate);
+	    next if ($1 eq "");
+	    $abitrate = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got abitrate $abitrate\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^AO: \[null\] (.*)/) {
+	    next if ($audio);
+	    next if ($1 eq "");
+	    $audio = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got audio $audio\n";
+	    }
+
+            $samps = (split(/ /, $audio))[3];
+            chomp($samps);
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got asamps $asamps\n";
+	    }
+            if ($samps =~ /^f/) {
+                $asamps = 32;
+                $signed = 1;
+            }
+            elsif ($samps =~ /^s/) {
+                $asamps = substr($asamps, 1, -1);
+                $signed = 1;
+            }
+            elsif($samps =~ /^u/) {
+                $asamps = substr($asamps, 1, -1);
+                $signed = 0;
+            }
+            $audend = substr($samps, -2, 2);
+            if ($audend eq "le") {
+		# le
+                $endian = 1;
+            }
+            elsif ($audend eq "be") {
+                $endian = 0;
+            }
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got asamps $asamps, signed $signed, endian $endian\n";
+		if ($asamps == 32) {
+		    print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		}
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:width=(.*)/) {
+	    next if ($hsize);
+	    next if ($1 eq "");
+	    $hsize = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got hsize $hsize\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:height=(.*)/) {
+	    next if ($vsize);
+	    next if ($1 eq "");
+	    $vsize = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got vsize $vsize\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^XDATA:fps=(.*)/) {
+	    next if ($fps);
+	    next if ($1 eq "");
+	    $fps = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got fps $fps\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^frames total (.*)/) {
+	    next if ($count);
+	    next if ($1 eq "");
+	    $count = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got frames $count\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^ Comment: (.*)/) {
+	    next if ($1 eq "");
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got comment $1\n";
+	    }
+	    $comment .= $1;
+	    next;
+	}
+
+	if ($line =~ /^Title: (.*)/) {
+	    next if ($title);
+	    next if ($1 eq "");
+	    $title = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got title $title\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^Author: (.*)/) {
+	    next if ($author);
+	    next if ($1 eq "");
+	    $author = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mpv got author $author\n";
+	    }
+	    next;
+	}
+	if ($VERBOSE > 1) {
+	    print STDERR "mpv: unmatched line $line\n";
+	}
     }
 
-    if (-f $file_ident) {
-        $id_vid_form = smog_system_direct("grep XDATA:video-format \"$file_ident\" 2>$nulfile");
-        $id_vid_form = (split("=", (split("\n", $id_vid_form))[0]))[1];
-        chomp($id_vid_form);
+    if (!$id_vid_form) {
+	if ($id_aud_form) {
+	    $id_vid_form = "Audio";
+	}
+	if ($VERBOSE > 1) {
+	    print STDERR "Video id not found, assuming Audio\n";
+	}
     }
 
-    if (-f $file_ident) {
-        $id_aud_form = smog_system_direct("grep XDATA:audio-format \"$file_ident\" 2>$nulfile");
-        $id_aud_form = (split("=", (split("\n", $id_aud_form))[0]))[1];
-        chomp($id_aud_form);
+    if (!$count) {
+	$count = int($fps * $length + .5);
+	if ($VERBOSE > 1) {
+	    print STDERR "Frames not found, calculating from length and fps ($count)\n";
+	}
+    }
+    if (!$count) {
+	$count = 1000000;
+	#take a guess...
+	if ($VERBOSE > 1) {
+	    print STDERR "Frames could not be calculated, guessing ($count)\n";
+	}
     }
 
-    if (! -f $file_ident) {
-        return;
+    if (!$asamps && $arate * $achans > 0) {
+	$asamps = $abitrate / $arate / $achans;
+	if ($VERBOSE > 1) {
+	    print STDERR "Audio sample size not found, calculating from abitrate, arate and achans ($asamps)\n";
+	}
     }
-
-    if ($id_vid_form eq "") {
-        if (!($id_aud_form eq "")) {
-            $id_vid_form = "Audio";
-        }
+    if (!$asamps) {
+	$asamps = 16;
+	if ($VERBOSE > 1) {
+	    print STDERR "forced asamps to $asamps\n";
+	}
     }
-
-    $type = $id_vid_form;
-
-    if (! -f $file_ident) {
-        return;
-    }
-    $hsize = smog_system_direct("grep XDATA:width \"$file_ident\" 2>$nulfile");
-    $hsize = (split("=", (split("\n", $hsize))[0]))[1];
-    chomp($hsize);
-
-    if (! -f $file_ident) {
-        return;
-    }
-    $vsize = smog_system_direct("grep XDATA:height \"$file_ident\" 2>$nulfile");
-    $vsize = (split("=", (split("\n", $vsize))[0]))[1];
-    chomp($vsize);
-
-    if (! -f $file_ident) {
-        return;
-    }
-
-    $fps = smog_system_direct("grep XDATA:fps \"$file_ident\" 2>$nulfile");
-    $fps = (split("=", (split("\n", $fps))[0]))[1];
-    chomp($fps);
-
-    if (! -f $file_ident) {
-        return;
-    }
-    $arate = smog_system_direct("grep XDATA:audio-samplerate \"$file_ident\" 2>$nulfile");
-    $arate = (split("=", (split("\n", $arate))[0]))[1];
-    chomp($arate);
-
-    if (! -f $file_ident) {
-        return;
-    }
-    $achans = smog_system_direct("grep XDATA:audio-channels \"$file_ident\" 2>$nulfile");
-    $achans = (split("=", (split("\n", $achans))[0]))[1];
-    chomp($achans);
-
-    if (! -f $file_ident) {
-        return;
-    }
-    $abitrate = smog_system_direct("grep XDATA:audio-bitrate \"$file_ident\" 2>$nulfile");
-    $abitrate = (split("=", (split("\n", $abitrate))[0]))[1];
-    chomp($abitrate);
-
-    ## as of 0.9.2 cannot get asamps, endian, frames, author, title, comment
-    $count = int($fps * $length);
-
-    $asamps = 16;   ## TODO - check for fltp
-    ## cannot get this from mpv (guess)
-    $endian = &get_endian;
-    ## (guess)
-
     if ($achans > 2) {
+	if ($VERBOSE > 1) {
+	    print STDERR "$achans audio chans not yet supported, will downmix to 2\n";
+	}
 	$achans = 2;
     }
 
-    $author = $title = $comment = "";
+    $f_size = -s $file;
+    if ($VERBOSE > 1) {
+	print STDERR "file size is $f_size\n";
+    }
 }
 
 
@@ -5609,18 +5739,25 @@ sub get_ffprobe_info {
 	if ($is_audio && $line =~ /^sample_fmt=(.*)/) {
 	    next if ($asamps && $signed);
 	    next if ($1 eq "N/A");
-	    my $xasamps = $1;
-            if ($xasamps =~ /^f/) {
+	    my $samps = $1;
+            if ($samps =~ /^f/) {
                 $asamps = 32;
                 $signed = 1;
             }
-            elsif($xasamps =~ /^s/) {
-                $asamps = substr($xasamps, 1, -1);
+            elsif ($samps =~ /^s/) {
+                $asamps = substr($asamps, 1, -1);
                 $signed = 1;
             }
-            elsif($xasamps =~ /^u/) {
-                $asamps = substr($xasamps, 1, -1);
+            elsif($samps =~ /^u/) {
+                $asamps = substr($asamps, 1, -1);
                 $signed = 0;
+            }
+            $audend = substr($samps, -2, 2);
+            if ($audend eq "le") {
+                $endian = 1;
+            }
+            elsif ($audend eq "be") {
+                $endian = 0;
             }
 	    if ($VERBOSE > 1) {
 		print STDERR "ffprobe got fltp\n";
@@ -5763,7 +5900,7 @@ sub get_ffprobe_info {
     if (!$asamps && $arate * $achans > 0) {
 	$asamps = $abitrate / $arate / $achans;
 	if ($VERBOSE > 1) {
-	    print STDERR "ffprobe got revised asamps $asamps\n";
+	    print STDERR "ffprobe guessed asamps $asamps\n";
 	}
     }
     if (!$asamps) {
@@ -5780,7 +5917,7 @@ sub get_ffprobe_info {
 	}
     }
     if ($subs && $VERBOSE > 0 ) {
-	print STDERR "clip has $subs subtitles available, these will not be imported (FIXME).\n";
+	print STDERR "clip has $subs subtitles available, these will not be imported (PATCHME).\n";
     }
 }
 
@@ -5791,106 +5928,121 @@ sub get_mplayer_info {
     # $length, $id_vid_form, $id_aud_form
     # $comment, $title, $author
 
+    my ($file, $VERBOSE) = @_;
     my $com;
+    my $retried = 0;
 
     if (defined($is_remote) && ($is_remote > 0)) {
 	# remote files might be streams, so we need to cache a bit before we can identify them
-        $com = "$mplay_command -noconfig all -identify -vo null -ao null -frames 0 -cache 32 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+        $com = "$mplay_command -noconfig all -identify -vo null -ao null -frames 0 -cache 32 \"$file\" <$nulfile";
     } else {
-        $com = "$mplay_command -noconfig all -identify -vo null -ao null -frames 0 -nocache \"$file\" > $file_ident 2>$nulfile <$nulfile";
+        $com = "$mplay_command -noconfig all -identify -vo null -ao null -frames 0 -nocache \"$file\" <$nulfile";
     }
 
-    my $smerr = smog_system($com);
-    if ($smerr) {
-        sig_system_error("$com", $smerr);
-        $panic = 1;
-        return;
+    if ($VERBOSE > 1) {
+	print STDERR "EXECUTING: $com\n";
     }
 
-    if (-f $file_ident) {
-        $length = smog_system_direct("grep ID_LENGTH \"$file_ident\" 2>$nulfile");
-        $length = (split("=", (split("\n", $length))[0]))[1];
-        chomp($length);
+    open (my $fh, "$com |");
+    while (defined(my $line = <$fh>)) {
+	if ($line =~ /^ID_LENGTH=(.*)/) {
+	    next if ($lenght);
+	    next if ($1 eq "");
+	    $length = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got length $length\n";
+	    }
 
-        if ($length eq "0" && !(defined($is_remote) && ($is_remote > 0))) {
-            $com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" > $file_ident 2>$nulfile <$nulfile";
+	    if ($length eq "0" && !(defined($is_remote) && ($is_remote > 0)) && !$retried) {
+		close $fh;
+		$com = "$mplay_command -noconfig all -nocache -demuxer lavf -identify -vo null -ao null -frames 0 \"$file\" " .
+		    "<$nulfile";
+		open ($fh, "$com |");
+		$retried = 1;
+		if ($VERBOSE > 1) {
+		    print STDERR "retrying with demuxer lavf\n";
+		}
+	    }
+	    next;
+	}
 
-            $smerr = smog_system($com);
+	if ($line =~ /^ID_VIDEO_FORMAT=(.*)/) {
+	    next if ($id_vid_form);
+	    next if ($1 eq "");
+	    $id_vid_form = $1;
+	    $type = $id_vid_form;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got id_vid_form $id_vid_form\n";
+	    }
+	    next;
+	}
 
-            if ($smerr) {
-                sig_system_error("$com", $smerr);
-                $panic = 1;
-                return;
-            }
-        }
-    }
+	if ($line =~ /^ID_AUDIO_FORMAT=(.*)/) {
+	    next if ($id_aud_form);
+	    next if ($1 eq "");
+	    $id_aud_form = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got id_aud_form $id_aud_form\n";
+	    }
+	    next;
+	}
 
-    if (-f $file_ident) {
-        $id_vid_form = smog_system_direct("grep ID_VIDEO_CODEC \"$file_ident\" 2>$nulfile");
-        $id_vid_form = (split("=", (split("\n", $id_vid_form))[0]))[1];
-        chomp($id_vid_form);
+	if ($line =~ /^ID_AUDIO_RATE=(.*)/) {
+	    next if ($arate);
+	    next if ($1 eq "");
+	    $arate = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got arate $arate\n";
+	    }
+	    next;
+	}
 
-        if ($id_vid_form eq "") {
-            $id_vid_form = smog_system_direct("grep ID_VIDEO_FORMAT \"$file_ident\" 2>$nulfile");
-            $id_vid_form = (split("=", (split("\n", $id_vid_form))[0]))[1];
-            chomp($id_vid_form);
-        }
+	if ($line =~ /^ID_AUDIO_NCH=(.*)/) {
+	    next if ($achans);
+	    next if ($1 eq "");
+	    $achans = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got achans $achans\n";
+	    }
+	    next;
+	}
 
-        if ($id_vid_form eq "") {
-            $id_vid_form = smog_system_direct("grep VIDEO: \"$file_ident\" 2>$nulfile");
-            $id_vid_form = (split("  ", (split("\n", $id_vid_form))[0]))[1];
-            chomp($id_vid_form);
-        }
+	if ($line =~ /^ID_AUDIO_BITRATE=(.*)/) {
+	    next if ($abitrate);
+	    next if ($1 eq "");
+	    $abitrate = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got abitrate $abitrate\n";
+	    }
+	    next;
+	}
 
-        if (! -f $file_ident) {
-            return;
-        }
+	if ($line =~ /^AUDIO: (.*)/) {
+	    next if ($audio);
+	    next if ($1 eq "");
+	    $audio = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got audio $audio\n";
+	    }
 
-        $id_aud_form = smog_system_direct("grep ID_AUDIO_FORMAT \"$file_ident\" 2>$nulfile");
-        $id_aud_form = (split("=", (split("\n", $id_aud_form))[0]))[1];
-        chomp($id_aud_form);
-
-        if ($id_aud_form eq "") {
-            $id_aud_form = smog_system_direct("grep AUDIO: \"$file_ident\" 2>$nulfile");
-            $id_aud_form = (split("  ", (split("\n", $id_aud_form))[0]))[1];
-            chomp($id_aud_form);
-        }
-
-        if (! -f $file_ident) {
-            return;
-        }
-
-        if ($id_vid_form eq "") {
-            if (!($id_aud_form eq "")) {
-                $id_vid_form = "Audio";
-            }
-        }
-
-        unless ($id_vid_form eq "") {
-	    # this could probably be done better using regexp...
-            $type = $id_vid_form;
-            if (! -f $file_ident) {
-                return;
-            }
-            $asamps = smog_system_direct("grep AUDIO: \"$file_ident\" 2>$nulfile");
-            $asamps = (split(" ", $asamps))[5];
-            chomp($asamps);
-
-            if ($asamps =~ /^f/) {
+            $samps = (split(/\, /, $audio))[2];
+            chomp($samps);
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got asamps $asamps\n";
+	    }
+            if ($samps =~ /^f/) {
                 $asamps = 32;
                 $signed = 1;
             }
-            elsif($asamps =~ /^s/) {
+            elsif ($samps =~ /^s/) {
                 $asamps = substr($asamps, 1, -1);
                 $signed = 1;
             }
-            elsif($asamps =~ /^u/) {
+            elsif($samps =~ /^u/) {
                 $asamps = substr($asamps, 1, -1);
                 $signed = 0;
             }
-
-            $audend = substr($asamps, -2, 2);
-
+            $audend = substr($samps, -2, 2);
             if ($audend eq "le") {
 		# le
                 $endian = 1;
@@ -5898,155 +6050,130 @@ sub get_mplayer_info {
             elsif ($audend eq "be") {
                 $endian = 0;
             }
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $bpp = smog_system_direct("grep VIDEO: \"$file_ident\" 2>$nulfile");
-            $bpp = (split("bpp", (split("  ", $bpp))[3]))[0];
-            chomp($bpp);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            if ($bpp eq "") {
-                $bpp = smog_system_direct("grep \"Image size:\" \"$file_ident\" 2>$nulfile");
-                @tmp = split(" ", $bpp);
-                $bpp = substr($tmp[5], 1, 2);
-            }
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $hsize = smog_system_direct("grep ID_VIDEO_WIDTH \"$file_ident\" 2>$nulfile");
-            $hsize = (split("=", (split("\n", $hsize))[0]))[1];
-            chomp($hsize);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $vsize = smog_system_direct("grep ID_VIDEO_HEIGHT \"$file_ident\" 2>$nulfile");
-            $vsize = (split("=", (split("\n", $vsize))[0]))[1];
-            chomp($vsize);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $fps = smog_system_direct("grep ID_VIDEO_FPS \"$file_ident\" 2>$nulfile");
-            $fps = (split("=", (split("\n", $fps))[0]))[1];
-            $fps = trim($fps);
-            if ($fps eq "nan" or $fps eq "-nan") {
-                $fps = 0.;
-            }
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $arate = smog_system_direct("grep ID_AUDIO_RATE \"$file_ident\" 2>$nulfile");
-            my @results = split("\n", $arate);
-            foreach my $val(@results) {
-                $arate = (split("=", $val))[1];
-                chomp($arate);
-                last if $arate > 0;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got asamps $asamps, signed $signed, endian $endian\n";
+		if ($asamps == 32) {
+		    print STDERR "32 bit audio input not yet supported, will downsample to 16 bit (patchme)\n";
+		}
 	    }
-	    if (! -f $file_ident) {
-                return;
-            }
-            if ($arate == 0) {
-                $arate = smog_system_direct("grep Samplerate \"$file_ident\" 2>$nulfile");
-                $arate = (split(": ", (split("\n", $arate))[0]))[1];
-                chomp($arate);
-            }
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $achans = smog_system_direct("grep ID_AUDIO_NCH \"$file_ident\" 2>$nulfile");
-            chomp($achans);
-            $achans = (split("\n", $achans))[-1];
-            $achans = (split("=", (split("\n", $achans))[0]))[1];
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $abitrate = smog_system_direct("grep ID_AUDIO_BITRATE \"$file_ident\" 2>$nulfile");
-            chomp($abitrate);
-            $abitrate = (split("\n", $abitrate))[-1];
-            $abitrate = (split("=", (split("\n", $abitrate))[0]))[1];
-
-            unless($id_aud_form eq "" || $achans > 0) {
-		# need to look deeper for $achans
-                $adets = smog_system_direct("grep AO: \"$file_ident\" 2>$nulfile");
-
-                $adets = (split("AO: ", $adets))[1];
-                chomp($adets);
-
-                $arate = (split(" ", $adets))[1];
-                if ($arate eq "[oss]") {
-                    $arate = (split(" ", $adets))[2];
-                    $achans = (split(" ", $adets))[3];
-
-                } else {
-                    $achans = (split(" ", $adets))[2];
-                }
-                chomp($arate);
-                chomp($achans);
-
-                $arate = $arate * 1;
-                $achans = $achans * 1;
-            }
-
-	    # grep may fail with error 256
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $comment = smog_system_direct("grep Comments: \"$file_ident\" 2>$nulfile");
-            @tmp = split(" ", $comment);
-            shift(@tmp);
-            $comment = join(" ", @tmp);
-            chomp($comment);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $title = smog_system_direct("grep Title: \"$file_ident\" 2>$nulfile");
-            @tmp = split(" ", $title);
-            shift(@tmp);
-            $title = join(" ", @tmp);
-            chomp($title);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $title = smog_system_direct("grep Author: \"$file_ident\" 2>$nulfile");
-            @tmp = split(" ", $author);
-            shift(@tmp);
-            $author = join(" ", @tmp);
-            chomp($author);
-
-            if (! -f $file_ident) {
-                return;
-            }
-            $count = smog_system_direct("grep \"frames  total\" \"$file_ident\" 2>$nulfile");
-            @tmp = split(" ", $count);
-            $count = $tmp[2];
-            chomp($count);
-
-            if ($count eq "") {
-                $count = int($fps * $length + .5);
-            }
-            if ($count eq "") {
-                $count = 1000000;
-		#take a guess...
-            }
-        }
-        if ($asamps == 0 && $arate * $achans > 0) {
-            $asamps = $abitrate / $arate / $achans;
-        }
-	if ($achans > 2) {
-	    $achans = 2;
+	    next;
 	}
+
+	if ($line =~ /^ID_VIDEO_WIDTH=(.*)/) {
+	    next if ($hsize);
+	    next if ($1 eq "");
+	    $hsize = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got hsize $hsize\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^ID_VIDEO_HEIGHT=(.*)/) {
+	    next if ($vsize);
+	    next if ($1 eq "");
+	    $vsize = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got vsize $vsize\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^ID_VIDEO_FPS=(.*)/) {
+	    next if ($fps);
+	    next if ($1 eq "");
+	    $fps = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got fps $fps\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^frames total (.*)/) {
+	    next if ($count);
+	    next if ($1 eq "");
+	    $count = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got frames $count\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^Comments: (.*)/) {
+	    next if ($1 eq "");
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got comment $1\n";
+	    }
+	    $comment .= $1;
+	    next;
+	}
+
+	if ($line =~ /^Title: (.*)/) {
+	    next if ($title);
+	    next if ($1 eq "");
+	    $title = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got title $title\n";
+	    }
+	    next;
+	}
+
+	if ($line =~ /^Author: (.*)/) {
+	    next if ($author);
+	    next if ($1 eq "");
+	    $author = $1;
+	    if ($VERBOSE > 1) {
+		print STDERR "mplayer got author $author\n";
+	    }
+	    next;
+	}
+    }
+
+    if (!$id_vid_form) {
+	if ($id_aud_form) {
+	    $id_vid_form = "Audio";
+	}
+	if ($VERBOSE > 1) {
+	    print STDERR "Video id not found, assuming Audio\n";
+	}
+    }
+
+    if (!$count) {
+	$count = int($fps * $length + .5);
+	if ($VERBOSE > 1) {
+	    print STDERR "Frames not found, calculating from length and fps ($count)\n";
+	}
+    }
+    if (!$count) {
+	$count = 1000000;
+	#take a guess...
+	if ($VERBOSE > 1) {
+	    print STDERR "Frames could not be calculated, guessing ($count)\n";
+	}
+    }
+
+    if (!$asamps && $arate * $achans > 0) {
+	$asamps = $abitrate / $arate / $achans;
+	if ($VERBOSE > 1) {
+	    print STDERR "Audio sample size not found, calculating from abitrate, arate and achans ($asamps)\n";
+	}
+    }
+    if (!$asamps) {
+	$asamps = 16;
+	if ($VERBOSE > 1) {
+	    print STDERR "forced asamps to $asamps\n";
+	}
+    }
+    if ($achans > 2) {
+	if ($VERBOSE > 1) {
+	    print STDERR "$achans audio chans not yet supported, will downmix to 2\n";
+	}
+	$achans = 2;
+    }
+
+    $f_size = -s $file;
+    if ($VERBOSE > 1) {
+	print STDERR "file size is $f_size\n";
     }
 }
 
@@ -6092,6 +6219,9 @@ sub get_file_info {
     $id_vid_form = "";
     $endian="";
     $gamma_type = "";
+    $author = "";
+    $title = "";
+    $comment = "";
 
     $is_mpv = 0;
 
@@ -6111,7 +6241,6 @@ sub get_file_info {
 	}
 	if ($file_exec) {
 	    $guess_type = &file_examine($file);
-	    print STDERR "filetype is: $guess_type\n";
 	}
     }
 
@@ -6121,8 +6250,6 @@ sub get_file_info {
     }
 
     if ($id_vid_form eq "") {
-	$file_ident = "file_info";
-
 	if ($mplay_command eq "") {
 	    my $mp_command = &rc_get("video_open_command");
 	    if ($mp_command ne "") {
@@ -6140,7 +6267,6 @@ sub get_file_info {
 		$panic = 1;
 		return;
 	    }
-
 	    # try to force language to English
 	    $mplay_command = "LANGUAGE=en LANG=en $mp_command";
 	}
@@ -6152,25 +6278,19 @@ sub get_file_info {
 
 	unless ($mplay_command eq "") {
 	    if ($is_mpv) {
-		&get_mpv_info;
+		&get_mpv_info($file, $VERBOSE);
 	    }
 	    else {
-		&get_mplayer_info;
+		&get_mplayer_info($file, $VERBOSE);
 	    }
 	}
-
-	if (! -f $file_ident) {
-	    return;
-	}
-
-	unlink "$file_ident";
     }
 
     $fwtype = (split(" ", $type))[0];
 
     #print ("IMG FILT .$count. .$type. .$length. .$fps.\n");
 
-    if (($hsize * $vsize == 0 || !$count)
+    if (!$hsize || !$vsize || !$count
 	## test for various image types...
 	|| (($type eq "ffpng" || $fwtype eq "PNG" || (($type eq "mjpeg" || $type=="png") && $length eq "" && int($fps)==1) || $type eq "gif")
 	   && !$count)
@@ -6184,7 +6304,7 @@ sub get_file_info {
 
         unless (-f "$curworkdir/$name") {
 	    # see if it is image(s)
-            &open_images(1);
+            &open_images(1, $file);
             if ($hsize == -1) {
                 $hsize = $vsize = 0;
             }
@@ -6205,7 +6325,7 @@ sub get_file_info {
                 }
                 else {
                     unless ($file2 eq $audio_in) {
-                        unlink "$file2";
+                        unlink $file2;
                     }
                 }
             }
@@ -6266,8 +6386,9 @@ sub convert_audio_to_raw {
 
 	$smcom = "sox $nodither -t .wav  \"$audio_in\" -t .raw -r $arate " .
 	    "-c $achans $asigned -$asamps \"$audio_out\" >$nulfile 2>&1";
-
-	print STDERR "COM is $smcom\n";
+	if ($DEBUG_SMOGRIFY) {
+	    print STDERR "COM is $smcom\n";
+	}
     }
     else {
 	my $threads = smog_system_direct("/bin/grep processor /proc/cpuinfo | wc -l");
@@ -6860,12 +6981,11 @@ sub append_silence {
 
 
 sub open_images {
-    # set $file before calling this function
     # set $only_first to 1 to just open the first image in a directory
     # set $height $width to force a particular size, otherwise $height=$width=0 to open all to the first image size
     # if first image size cannot be obtained $dwidth and $dheight are used
 
-    my $i  = shift;
+    my ($i, $file) = @_;
     my $orig = $i;
 
     if (-d $file) {
@@ -6887,7 +7007,7 @@ sub open_images {
         foreach (@files) {
             $file = "$dir/$_";
             unless($_ =~ /^\./ || (! -f $file) || (-z $file)) {
-                $nframes = &open_single_image($i);
+                $nframes = &open_single_image($i, $file);
                 return if $panic;
 		if (-s "$curworkdir/$name$img_ext") {
                     if ($only_first) {
@@ -6900,7 +7020,7 @@ sub open_images {
                     unlink "$curworkdir/$name$img_ext";
                 }}}
     } else {
-        &open_single_image($i);
+        &open_single_image($i, $file);
         return if $panic;
 	unless (-s "$curworkdir/$name$img_ext") {
             unlink "$curworkdir/$name$img_ext";
@@ -6936,10 +7056,11 @@ sub open_single_image {
     # set $hsize and $vsize to force the image size, set to 0 to autoresize
     #identify hangs if the file extension is ".avit" or ".mp4" or ".mpg"
 
-    my $i = shift;
+    my ($i, $file) = @_;
     my $j;
 
     $name = &mkname($i);
+
     my $nframes = 0;
 
     if ($file =~ /:\/\//) {
@@ -6949,24 +7070,24 @@ sub open_single_image {
     if (!defined($file_exec)) {
 	$file_exec = &location("file");
     }
+
     if ($file_exec) {
 	if (&file_examine($file) eq "video") {
 	    $height = $width = $bpp = 0;
 	    return;
 	}
     }
-    else {
-	if (!defined($file_ext)) {
-	    $file_ext = &get_ext("$file");
-	}
 
-	if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".ogg" || $file_ext eq ".mov" ||
-	    $file_ext eq ".ogv" ||
-	    $file_ext eq ".webm" || $file_ext eq ".mkv" || $file_ext eq ".asf" || $file_ext eq ".wmv" || $file_ext eq ".flv" || $file_ext eq ".mng" ||
-	    $file_ext eq ".dv" || $file_ext eq ".mp3" || $file_ext eq ".mpeg") {
-	    # need to set $name before we return
-	    return 0;
-	}
+    if (!defined($file_ext)) {
+	$file_ext = &get_ext($file);
+    }
+
+    if ($file_ext eq ".avi" || $file_ext eq ".mp4" || $file_ext eq ".mpg" || $file_ext eq ".ogg" || $file_ext eq ".mov" ||
+	$file_ext eq ".ogv" ||
+	$file_ext eq ".webm" || $file_ext eq ".mkv" || $file_ext eq ".asf" || $file_ext eq ".wmv" || $file_ext eq ".flv" || $file_ext eq ".mng" ||
+	$file_ext eq ".dv" || $file_ext eq ".mp3" || $file_ext eq ".mpeg") {
+	# need to set $name before we return
+	return 0;
     }
 
     if ($hsize * $vsize == 0) {
@@ -7503,32 +7624,26 @@ sub sig_complete {
     return if (! -d $curworkdir);
 
     if (defined($statusfile)) {
-	my $status = "completed";
-	foreach (@_) {
-	    $status .= "|" . $_;
-	}
-	
-	smog_system_sync();
-
 	if (-d $curworkdir) {
+	    my $status = "completed|" . join("|", @_);
 	    open OUT, ">", $statusfile;
+	    select((select(OUT), $| = 1)[0]);
 	    print OUT $status;
 	    close OUT;
 	}
     }
     if (defined($pidfile)) {
-	unlink "$pidfile";
+	unlink $pidfile;
     }
 }
 
 
 sub sig_complete_stdout {
-    my $status = "completed";
-    foreach (@_) {
-        $status .= "|" . $_;
+    my $status = "completed|" . join("|", @_);
+    print $status;
+    if (defined($pidfile)) {
+	unlink $pidfile;
     }
-    print "$status";
-    unlink "$pidfile";
 }
 
 
@@ -7537,19 +7652,19 @@ sub sig_killed {
     return if (-f $statusfile);
     my $status = "killed";
 
-    open OUT,"> $statusfile";
+    open OUT, "> $statusfile";
+    select((select(OUT), $| = 1)[0]);
     print OUT $status;
     close OUT;
-    unlink $pidfile;
+    if (defined($pidfile)) {
+	unlink $pidfile;
+    }
 }
 
 
 sub sig_complete_audio {
     return if (! -d "$curworkdir");
-    my $status = "audio_ended|";
-    foreach (@_) {
-        $status .= "|" . $_;
-    }
+    my $status = "audio_ended|" . join("|", @_);
 
     open OUT, "> $statusfile.play";
     # autoflush output
@@ -7558,7 +7673,9 @@ sub sig_complete_audio {
     close OUT;
 
     unless ($opening_preview == 1) {
-        unlink $pidfile;
+	if (defined($pidfile)) {
+	    unlink $pidfile;
+	}
     }
 }
 
@@ -7581,10 +7698,13 @@ sub sig_error {
     }
 
     open OUT, "> $statusfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $status;
     close OUT;
-    smog_system_sync();
-    unlink $pidfile;
+    if (defined($pidfile)) {
+	unlink $pidfile;
+    }
     exit 1;
 }
 
@@ -7606,9 +7726,13 @@ sub sig_write_error {
     }
 
     open OUT, "> $statusfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $smstatus;
     close OUT;
-    unlink $pidfile;
+    if (defined($pidfile)) {
+	unlink $pidfile;
+    }
     return 1;
 }
 
@@ -7629,9 +7753,13 @@ sub sig_read_error {
     }
 
     open OUT, "> $statusfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $smstatus;
     close OUT;
-    unlink $pidfile;
+    if (defined($pidfile)) {
+	unlink $pidfile;
+    }
     return 1;
 }
 
@@ -7651,17 +7779,21 @@ sub sig_system_error {
 
     return 1 if (! -d $curworkdir);
 
-    my ($smcom,$smerrno,$smaddinfo) = @_;
+    my ($smcom, $smerrno, $smaddinfo) = @_;
     my $smstatus = "error|system|$smcom|$smerrno";
 
     if ($smaddinfo ne "") {
         $smstatus .= "|$smaddinfo";
     }
 
-    open OUT,"> $statusfile";
+    open OUT, "> $statusfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $smstatus;
     close OUT;
-    unlink $pidfile;
+    if (defined($pidfile)) {
+	unlink $pidfile;
+    }
     return 1;
 }
 
@@ -7669,6 +7801,8 @@ sub sig_system_error {
 sub sig_pid {
     # write our pid in case we need to be cancelled
     open OUT, "> $pidfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $$;   # process ID
     close OUT;
 }
@@ -7689,7 +7823,9 @@ sub sig_progress {
         }
     }
     &check_for_pause;
-    open OUT,"> $statusfile";
+    open OUT, "> $statusfile";
+    # autoflush output
+    select((select(OUT), $| = 1)[0]);
     print OUT $status;
     close OUT;
 }
@@ -7697,7 +7833,9 @@ sub sig_progress {
 
 sub sig_clear {
     &check_for_pause;
-    unlink "$statusfile";
+    if (defined($statusfile)) {
+	unlink $statusfile;
+    }
 }
 
 
@@ -7706,7 +7844,6 @@ sub location {
     my $command = shift;
     my $location = smog_system_direct("which \"$command\" 2>$nulfile");
     chomp($location);
-
     $location;
 }
 
@@ -7719,11 +7856,9 @@ sub get_mplayer_location {
         $mpc = &location("mplayer2");
     }
     if ($mpc eq "") {
-	## experimental
         $is_mpv = 1;
         $mpc = &location("mpv");
     }
-
     return $mpc;
 }
 
@@ -8661,13 +8796,13 @@ sub weed {
 
     my $file;
 
-    smog_chdir($workdir);
+    &smog_chdir($workdir);
 
     # get initial diskspace
     if ($USE_WARNINGS) {
 	no warnings 'numeric';
     }
-    my $start_total = int((split / /, (smog_system_direct("du -sb . 2>$nulfile")))[0]);
+    my $start_total = int((split / /, (&smog_system_direct("du -sb . 2>$nulfile")))[0]);
     if ($USE_WARNINGS) {
 	use warnings 'numeric';
     }
@@ -8692,19 +8827,19 @@ sub weed {
 			# we are to move this set
                         if (-d "$new_work/$file") {
 			    print STDERR "smogrify: backing up $new_work/$file to $new_work/$file.bak first\n";
-                            smog_rename( "$new_work/$file","$new_work/$file.bak");
+                            &smog_rename( "$new_work/$file","$new_work/$file.bak");
                         }
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
 				print STDERR "smogrify: removing unnecessary files from $workdir/$file\n";
-                                smog_chdir("$workdir/$file");
+                                &smog_chdir("$workdir/$file");
 				&prune;
 				print STDERR "smogrify: removing lock.* files from $workdir/$file\n";
 				unlink glob "$workdir/$file/lock.*";
-                                smog_chdir("$workdir");
+                                &smog_chdir($workdir);
                             }
                         }
-                        smog_rename( "$workdir/$file","$new_work/$file");
+                        &smog_rename("$workdir/$file", "$new_work/$file");
 			print STDERR "smogrify: moved $workdir/$file to $new_work/$file\n";
                     }
 		    else {
@@ -8713,7 +8848,7 @@ sub weed {
                 }
                 else {
                     $in_set = 0;
-                    find (\&fndset, "$workdir/$file/");
+                    find(\&fndset, "$workdir/$file/");
 		    print STDERR "smogrify: checking $workdir/$file\n";
                     if (!$in_set) {
 			print STDERR "smogrify: file does not contain set.* file, assuming it is not in a set\n";
@@ -8722,7 +8857,7 @@ sub weed {
 			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
 				|| $file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
 				print STDERR "removing it\n";
-				smog_system("/bin/rm -rf \"$workdir/$file\"");
+				&smog_system("/bin/rm -rf \"$workdir/$file\"");
 			    }
 			    else {
 				print STDERR "leaving it because: \n";
@@ -8756,9 +8891,9 @@ sub weed {
 			    print STDERR "smogrify: file contain set.* file, assuming it is in a set\n";
                             unless (-f "$workdir/$file/noprune") {
 				print STDERR "smogrify: removing unnecessary files from directory\n";
-                                smog_chdir("$workdir/$file");
+                                &smog_chdir("$workdir/$file");
 				&prune;
-				smog_chdir("$workdir");
+				&smog_chdir($workdir);
                             }
                         }
                         unless (!defined($new_work) || $new_work eq "") {
@@ -8775,10 +8910,12 @@ sub weed {
                             }}}}
 
                 unless ($opts & 0x08) {
-		    print STDERR "smogrify: removing temporary marker files set. and noprune from $workdir/$file\n";
-                    unlink "$workdir/$file/set.";
-                    unlink "$workdir/$file/noprune";
-                }
+		    if (-d "$workdir/$file") {
+			print STDERR "smogrify: removing temporary marker files set. and noprune from $workdir/$file\n";
+			unlink "$workdir/$file/set.";
+			unlink "$workdir/$file/noprune";
+		    }
+		}
             }
             else {
 		# move crash recovery files

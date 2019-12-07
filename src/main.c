@@ -3327,7 +3327,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  //g_log_set_always_fatal((GLogLevelFlags)0);
+  g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -6903,8 +6903,6 @@ void load_frame_image(int frame) {
       // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
       compact_rowstrides(frame_layer);
 
-      pd_array = weed_get_voidptr_array(frame_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
-
       if (mainw->stream_ticks == -1) mainw->stream_ticks = mainw->currticks;
 
       if (rec_after_pb) {
@@ -6921,12 +6919,10 @@ void load_frame_image(int frame) {
           weed_set_int_value(return_layer, WEED_LEAF_YUV_SAMPLING, mainw->vpp->YUV_sampling);
         }
 
-        create_empty_pixel_data(return_layer, FALSE, TRUE);
-
         // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
-        compact_rowstrides(return_layer);
-
-        retdata = weed_get_voidptr_array(return_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
+        mainw->rowstride_alignment_hint = -1;
+        create_empty_pixel_data(return_layer, FALSE, TRUE);
+        retdata = weed_layer_get_pixel_data(return_layer, NULL);
       }
 
       // chain any data to the playback plugin
@@ -6949,10 +6945,10 @@ void load_frame_image(int frame) {
         }
       }
 
-      if (return_layer != NULL) weed_set_int_value(return_layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(frame_layer));
-
-      if (!(*mainw->vpp->render_frame)(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
-                                       weed_get_int_value(frame_layer, WEED_LEAF_HEIGHT, &weed_error),
+      if (return_layer != NULL) weed_leaf_copy(return_layer, WEED_LEAF_GAMMA_TYPE, frame_layer, WEED_LEAF_GAMMA_TYPE);
+      pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
+      if (!(*mainw->vpp->render_frame)(weed_layer_get_width(frame_layer),
+                                       weed_layer_get_height(frame_layer),
                                        mainw->currticks - mainw->stream_ticks, pd_array, retdata, mainw->vpp->play_params)) {
         vid_playback_plugin_exit();
         if (return_layer != NULL) {
@@ -6968,10 +6964,8 @@ void load_frame_image(int frame) {
       }
 
       if (return_layer != NULL) {
-        int width = MIN(weed_get_int_value(frame_layer, WEED_LEAF_WIDTH, &weed_error),
-                        weed_get_int_value(return_layer, WEED_LEAF_WIDTH, &weed_error));
-        int height = MIN(weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error),
-                         weed_get_int_value(return_layer, WEED_LEAF_HEIGHT, &weed_error));
+        int width = MIN(weed_layer_get_width(frame_layer), weed_layer_get_width(return_layer));
+        int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
         resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
                      height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
 
@@ -7098,7 +7092,6 @@ void load_frame_image(int frame) {
 
         mainw->rowstride_alignment_hint = -1; /// special value to compact the rowstrides
         create_empty_pixel_data(return_layer, FALSE, TRUE);
-
         retdata = weed_get_voidptr_array(return_layer, WEED_LEAF_PIXEL_DATA, &weed_error);
       }
 
@@ -7564,11 +7557,9 @@ void load_frame_image(int frame) {
                 mt_clip_select(mainw->multitrack, TRUE);
               }
               return;
-            }
-          }
-        }
-      }
-    }
+	      // *INDENT-OFF*
+            }}}}}
+    // *INDENT-ON*
 
     // no other clips
     mainw->current_file = mainw->blend_file = -1;

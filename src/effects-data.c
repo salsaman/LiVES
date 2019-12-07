@@ -1204,7 +1204,6 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, weed_plant
           (valb == WEED_FALSE && (mainw->rte & (GU641 << (key))))) {
         if (toggle_fx) *toggle_fx = key + 1;
       }
-      lives_free(valsb);
       return retval;
     }
     valsb = weed_get_boolean_array(sparam, WEED_LEAF_VALUE, &error);
@@ -1399,6 +1398,8 @@ int pconx_chain_data_omc(weed_plant_t *inst, int okey, int omode) {
   register int i, j;
 
   if (inst == NULL) return 0;
+
+  if (mainw->event_list != NULL && !mainw->record && !mainw->record_paused) return 0;
 
   // check for any inkeys == FX_DATA_KEY_OMC_MACRO and matching okey, omode
   // for each match we construct a string and send it to the OMC learner

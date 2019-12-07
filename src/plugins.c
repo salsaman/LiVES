@@ -3716,7 +3716,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
     rfx->source = NULL;
     rfx->source_type = LIVES_RFX_SOURCE_RFX;
 
-#if 1
+#if 0
     render_fx_get_params(rfx, scrap_text, RFX_STATUS_INTERNAL);
 #else
     render_fx_get_params(rfx, rfx_scrapname, RFX_STATUS_SCRAP);

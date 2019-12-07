@@ -90,10 +90,10 @@ typedef uint8_t                           boolean;
 
 #include "support.h"
 
-#if GTK_CHECK_VERSION(2, 28, 0)
-#define USE_MONOTONIC_TIME
-#define lives_get_monotonic_time() g_get_monotonic_time()
-#endif
+/* #if GTK_CHECK_VERSION(2, 28, 0) */
+/* #define USE_MONOTONIC_TIME */
+/* #define lives_get_monotonic_time() g_get_monotonic_time() */
+/* #endif */
 
 //#if GTK_CHECK_VERSION(3, 8, 0)
 //#define USE_GDK_FRAME_CLOCK

@@ -2339,23 +2339,46 @@ void free_pulse_audio_buffers(void) {
 #endif
 }
 
+/**
+   @brief resync audio playback to the current video frame
 
+   if we are using a realtime audio player, resync to frameno
+   and return TRUE
+
+   otherwise return FALSE
+
+   this is called internally - for example when the play position jumps, either due
+   to external transport changes, (e.g. jack transport, osc retrigger / goto)
+   or if we are looping a video selection, or it may be triggered from the keyboard
+
+   this is only active if "audio follows video rate/fps changes" is set
+   and various other conditions are met.
+*/
 boolean resync_audio(int frameno) {
-  // if we are using a realtime audio player, resync to frameno
-  // and return TRUE
-
-  // otherwise return FALSE
-
-  // this is called for example when the play position jumps, either due
-  // to external transport changes, (jack transport, osc retrigger or goto)
-  // or if we are looping a video selection
-
-  // this is only active if "audio follows video rate/fps changes" is set
-
   if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
+
+  // if we are playing an audio generator or an event_list, then resync is meaningless
+  if ((mainw->event_list != NULL && mainw->multitrack == NULL && !mainw->record && !mainw->record_paused)
+      || mainw->agen_key != 0 || mainw->agen_needs_reinit) return FALSE;
+
+  // also can't resync if the playing file has no audio, or prefs dont allow it
+  if (cfile->achans == 0
+      || (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) && (0
+#ifdef HAVE_PULSE_AUDIO
+          || (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL
+              && mainw->current_file != mainw->pulsed->playing_file)
+#endif
+          ||
+#ifdef ENABLE_JACK
+          (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL
+           && mainw->current_file != mainw->jackd->playing_file) ||
+#endif
+          0)))
+    return FALSE;
+
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -2396,18 +2419,21 @@ static pthread_t athread;
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+   @brief audio caching worker thread function
+
+   run as a thread (from audio_cache_init())
+
+   read audio from file into cache
+   must be done in real time since other threads may be waiting on the cache
+
+   during free playback, this is only used by jack (this far it has proven too complex to implement for pulse, since it uses
+   variable sized buffers.
+
+   This function is also used to cache audio when playing from an event_list. Effects may be applied and the mixer volumes
+   adjusted.
+*/
 static void *cache_my_audio(void *arg) {
-  // run as a thread (from audio_cache_init())
-  //
-  // read audio from file into cache
-  // must be done in real time since other threads may be waiting on the cache
-
-  // currently only jack audio player uses this during playback
-
-  // currently the output is always in the s16 buffer, resampling is done
-
-  // TODO: should also serve requests from fill_abuffer_from
-
   lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)arg;
   char *filename;
   register int i;
@@ -2535,7 +2561,7 @@ static void *cache_my_audio(void *arg) {
     case -32:
       // we need 16 bit buffer(s) and float buffer(s)
 
-      // 16 bit buffers follow in out_achans but in_interleaf...
+      // 16 bit buffers follow in out_achans but in_interleaf
 
       if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) != (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)
           || (cbuffer->samp_space / (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) !=

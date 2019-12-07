@@ -6716,7 +6716,7 @@ boolean weed_deinit_effect(int hotkey) {
             return FALSE;
 	    // *INDENT-OFF*
           }}}}}
-	    // *INDENT-ON*
+  // *INDENT-ON*
 
   // disable param recording, in case the instance is still attached to a param window
   weed_set_boolean_value(instance, WEED_LEAF_HOST_NORECORD, WEED_TRUE);

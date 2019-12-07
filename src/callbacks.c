@@ -4654,6 +4654,10 @@ void unlock_loop_lock(void) {
   mainw->loop_cont = oloop_cont;
   mainw->ping_pong = oping_pong;
   mainw->loop_locked = FALSE;
+  if (CURRENT_CLIP_IS_NORMAL) {
+    mainw->play_start = cfile->start;
+    mainw->play_end = cfile->end;
+  }
   loop_lock_frame = -1;
   mainw->clip_switched = TRUE;
 }
@@ -4670,7 +4674,7 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
 
   if (!(mod & LIVES_SHIFT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
     unlock_loop_lock();
-    return TRUE;
+    if (cfile->pb_fps > 0.) return TRUE;
   }
 
   if (area == SCREEN_AREA_FOREGROUND || (area == SCREEN_AREA_BACKGROUND && mainw->blend_file == mainw->current_file)) {

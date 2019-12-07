@@ -364,12 +364,14 @@ The plugin may optionally provide additional functionality (e.g pan, eq, filteri
 
 This leaf can be combined with the flag WEED_PARAMETER_VALUE_PER_CHANNEL
 This implies that the parameter has multiple values and that each value maps directly to a Weed input channel.
+I.E one value per stream, NOT one value per audio channel within the streams.)
 
 If the filter has repeating channels ("max_repeats"), then the flag WEED_PARAMETER_VARIABLE_SIZE should also be set to
 allow the number of values to increase or decrease according to the number of channels created from tha template.
 
-An audio filter may also set the flag WEED_FILTER_PROCESS_LAST, which would imply that it may be run as the final mixing
-filter before the resulting audio is sent to the audio player.
+An audio filter may also set the flag WEED_FILTER_PROCESS_LAST, which would imply that it may be run (for example) as the final
+mixing filter before the resulting audio is sent to the audio player, or perhaps to overlay a commentary which ought not to
+have other effects applied to it.
 
 
 "is_transition" :

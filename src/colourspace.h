@@ -170,13 +170,10 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 #define WEED_GAMMA_MONITOR 1024
 #define WEED_LAYER_ALPHA_PREMULT 1
 
-weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
-
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);
 boolean align_pixel_data(weed_layer_t *, size_t alignment);
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
-void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int osamtype, int oclamping, int osubspace);
@@ -184,6 +181,8 @@ boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType inte
 void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
                      int tclamp);
 void compact_rowstrides(weed_layer_t *);
+
+void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in);
 
 // palette information functions
 boolean weed_palette_is_lower_quality(int p1, int p2);
@@ -198,6 +197,7 @@ boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
+
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette);
 boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
@@ -214,6 +214,14 @@ int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_width(weed_layer_t *);
 int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
-int get_layer_gamma(weed_layer_t *);
+int get_layer_gamma(weed_layer_t *); // weed_layer_get_gamma
 
+// weed_layer_get_rowstride
+// weed_layer_get_clamping
+// weed_layer_get_sampling
+// weed_layer_get_subspace
+
+weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
+// weed_layer_set_pixel_data
+// etc.
 #endif

@@ -1410,8 +1410,8 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
               LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps = -sfile->pb_fps;
       }
-    } else if (mainw->playing_sel && !mainw->ping_pong && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont &&
-               !mainw->loop) {
+    } else if (mainw->playing_sel && !mainw->ping_pong
+               && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont && !mainw->loop) {
       // resync audio at start of loop selection
       if (nframe < first_frame) {
         nframe = last_frame - (first_frame - nframe) + 1;
@@ -1438,9 +1438,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       boolean is_jump = FALSE;
       if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
       mainw->scratch = SCRATCH_NONE;
-      if (sfile->achans > 0) {
-        resync_audio(nframe);
-      }
+      resync_audio(nframe);
       if (is_jump) mainw->video_seek_ready = TRUE;
       if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
         // we check for audio stop here, but the seek may not have happened yet
@@ -2756,7 +2754,7 @@ void get_total_time(lives_clip_t *file) {
     file->video_time = file->frames / file->fps;
   }
 
-  if (file->asampsize > 0 && file->arate > 0 && file->achans > 0) {
+  if (file->asampsize >= 8 && file->arate > 0 && file->achans > 0) {
     file->laudio_time = (double)(file->afilesize / (file->asampsize >> 3) / file->achans) / (double)file->arate;
     if (file->achans > 1) {
       file->raudio_time = file->laudio_time;

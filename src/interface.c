@@ -1045,7 +1045,7 @@ static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static int64_t last_t;
+static ticks_t last_t;
 
 xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus) {
   LiVESWidget *dialog_vbox;
@@ -1056,7 +1056,7 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
 
   LiVESAccelGroup *accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
 
-  last_t = g_get_monotonic_time();
+  last_t = lives_get_current_ticks();
 
   procw = (xprocess *)(lives_calloc(sizeof(xprocess), 1));
 

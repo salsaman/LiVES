@@ -354,7 +354,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           return 0;
         }
         probed_achans = cfile->achans;
-        g_print("probed %d\n", probed_achans);
         cfile->arate = cfile->arps = cdata->arate;
         cfile->achans = cdata->achans;
         cfile->asampsize = cdata->asamps;
@@ -438,7 +437,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           msgstr = lives_strdup_printf(_("Opening audio"), file_name);
           if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
             // error or user cancelled or switched to another clip
-
             lives_free(msgstr);
 
             cfile->opening_frames = -1;
@@ -505,7 +503,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               cfile->video_time += extra_frames / cfile->fps;
               load_end_image(cfile->end);
             }
-            if (cfile->laudio_time > cfile->video_time) {
+            if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
@@ -515,7 +513,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->changed = FALSE;
               }
             }
-            if (cfile->laudio_time > cfile->video_time) {
+            if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                 cfile->end = cfile->frames;
                 d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
@@ -524,7 +522,8 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->changed = FALSE;
               }
             }
-            if (!mainw->effects_paused && cfile->afilesize > 0 && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time) {
+            if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
+                && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
@@ -662,6 +661,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"", prefs->backend, cfile->handle,
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), withsound,
                                 prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, mainw->file_open_params);
+
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
       lives_free(com);
@@ -726,6 +726,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         }
         mainw->noswitch = FALSE;
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+
+        // mainw->error is TRUE if we could not open the file
+        if (mainw->error) {
+          d_print_failed();
+          do_blocking_error_dialog(mainw->msg);
+        }
         return 0;
       }
     }
@@ -852,13 +858,14 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   if (cfile->ext_src == NULL) {
     reget_afilesize(mainw->current_file);
     if (prefs->auto_trim_audio || prefs->keep_all_audio) {
-      if (cfile->laudio_time > cfile->video_time) {
+      if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
         if (!prefs->keep_all_audio || start != 0. || extra_frames <= 0) {
           d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
           if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
           else d_print("\n");
           cfile->changed = FALSE;
         } else {
+          /// insert blank frames
           if (prefs->keep_all_audio && (cfile->laudio_time - cfile->video_time) * cfile->fps > extra_frames)
             extra_frames = (cfile->laudio_time - cfile->video_time) * cfile->fps;
           insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
@@ -868,7 +875,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           load_end_image(cfile->end);
         }
       }
-      if (cfile->laudio_time < cfile->video_time) {
+      if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
         cfile->undo1_dbl = cfile->laudio_time;
         cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
         cfile->undo_arate = cfile->arate;
@@ -3593,7 +3600,6 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
       // sanity check handle against status file
       // (this should never happen...)
-
       if (strcmp(check_handle, array[1])) {
         LIVES_ERROR("Handle!=statusfile !");
         mesg = lives_strdup_printf(_("\nError getting file info for clip %s.\nBad things may happen with this clip.\n"),

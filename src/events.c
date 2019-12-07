@@ -1927,10 +1927,10 @@ void move_filter_deinit_event(weed_plant_t *event_list, weed_timecode_t new_tc, 
             break;
           }
           event = get_next_event(event);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
 }
 
 
@@ -2089,12 +2089,12 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 //////////////////////////////////////////////////////
 // rendering
 
-void set_render_choice(LiVESToggleButton *togglebutton, livespointer choice) {
+void set_render_choice(LiVESToggleButton * togglebutton, livespointer choice) {
   if (lives_toggle_button_get_active(togglebutton)) render_choice = LIVES_POINTER_TO_INT(choice);
 }
 
 
-void set_render_choice_button(LiVESButton *button, livespointer choice) {
+void set_render_choice_button(LiVESButton * button, livespointer choice) {
   render_choice = LIVES_POINTER_TO_INT(choice);
 }
 
@@ -3366,7 +3366,7 @@ filterinit1:
 }
 
 
-static char *set_proc_label(xprocess *proc, const char *label, boolean copy_old) {
+static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old) {
   char *blabel = NULL;
   if (proc == NULL) return NULL;
   if (copy_old) blabel = lives_strdup(lives_label_get_text(LIVES_LABEL(proc->label)));
@@ -4943,7 +4943,7 @@ enum {
 
 
 #if GTK_CHECK_VERSION(3, 0, 0)
-static void rowexpand(LiVESWidget *tv, LiVESTreeIter *iter, LiVESTreePath *path, livespointer ud) {
+static void rowexpand(LiVESWidget * tv, LiVESTreeIter * iter, LiVESTreePath * path, livespointer ud) {
   lives_widget_queue_resize(tv);
 }
 #endif
@@ -5349,26 +5349,26 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 }
 
 
-void rdetw_spinh_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+void rdetw_spinh_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   rdet->height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 }
 
 
-void rdetw_spinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+void rdetw_spinw_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   rdet->width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
 }
 
 
-void rdetw_spinf_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+void rdetw_spinf_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   rdet->fps = lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton));
 }
 
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
-                               LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget *extra) {
+                               LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget * extra) {
   // add video options to multitrack enter, etc
   LiVESWidget *vbox, *hbox, *layout;
   LiVESWidget *frame = lives_standard_frame_new(_("Video"), 0., FALSE);
@@ -5424,7 +5424,7 @@ LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertra
 }
 
 
-static void rdet_use_current(LiVESButton *button, livespointer user_data) {
+static void rdet_use_current(LiVESButton * button, livespointer user_data) {
   render_details *rdet = (render_details *)user_data;
   const lives_special_aspect_t *aspect = NULL;
   char *arate, *achans, *asamps;

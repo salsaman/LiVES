@@ -278,9 +278,32 @@ LIVES_INLINE lives_audio_buf_t *pop_cache_buffer(void) {
 
 static short *shortbuffer = NULL;
 
+/**
+   @brief write audio to pulse
+
+   PULSE AUDIO calls this periodically to get the next audio buffer
+   note the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
+
+   there are three main modes of operation (plus silence)
+   - playing back from a file; in this case we keep track of the seek position so we know when we hit a boundary
+   -- would probably better to have another thread cache the audio like the jack player does, currently we just read from
+   the audio file (using buffered reads would be not really help since we also play in reverse) and in addition the buffer size
+   is not constant
+
+   - playing from a memory buffer; this mode is used in multitrack or when reproducing a recording (event_list);
+   since the audio composition is known in advance it is possible to prepare audio blocks, apply effects and volume mixer levels
+   in advance
+
+   - playing from an audio generator; we just run the plugin and request the correct number of samples.
+
+   we also resample / change formats as needed.
+
+   currently we don't support end to end float, but that is planned for the very near future.
+
+   During playback we always send audio, even if it is silence, since the video timings may be derived from the
+   audio sample count.
+*/
 static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
-  // PULSE AUDIO calls this periodically to get the next audio buffer
-  // note the buffer size can, and does, change on each call, making it inefficient to use ringbuffers
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
 
   uint64_t nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
@@ -316,7 +339,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     return;
   }
 
-  /// handle control commands from the main thread
+  /// handle control commands from the main (video) thread
   if ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
     got_cmd = TRUE;
     switch (msg->command) {
@@ -344,7 +367,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     case ASERVER_CMD_FILE_CLOSE:
-      //if (!LIVES_IS_PLAYING) pulse_driver_cork(pulsed);
       if (pulsed->fd >= 0) close(pulsed->fd);
       if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
       lives_freep((void **) & (pulsed->aPlayPtr->data));
@@ -473,8 +495,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           // update looping mode
-          if (mainw->loop_cont || mainw->whentostop == NEVER_STOP) {
-            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) pulsed->loop = AUDIO_LOOP_PINGPONG;
+          if (mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) {
+            if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+                && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == pulsed->playing_file)
+                && (mainw->event_list == NULL || mainw->record || mainw->record_paused)
+                && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+              pulsed->loop = AUDIO_LOOP_PINGPONG;
             else pulsed->loop = AUDIO_LOOP_FORWARD;
           } else {
             pulsed->loop = AUDIO_LOOP_NONE;
@@ -482,6 +508,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           if (shrink_factor  > 0.) {
+            // forward playback
             if ((mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
               pulsed->aPlayPtr->size = read(pulsed->fd, pulsed->aPlayPtr->data, in_bytes);
             } else pulsed->aPlayPtr->size = in_bytes;
@@ -498,17 +525,17 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
                   pulsed->in_arate = -pulsed->in_arate;
                   pulsed->seek_pos -= in_bytes;
-                } //else pulsed->seek_pos += pulsed->seek_end;
-                else {
+                } else {
                   pulsed->seek_pos = pulsed->real_seek_pos = 0;
-                  pulse_set_rec_avals(pulsed);
                 }
-              }
-            }
-          }
+                if (mainw->record && !mainw->record_paused)
+                  pulse_set_rec_avals(pulsed);
+		// *INDENT-OFF*
+              }}}
+	  // *INDENT-ON*
 
-          /// calc new position and check for looping
           else if (pulsed->playing_file != mainw->ascrap_file && shrink_factor  < 0.f) {
+            /// reversed playback
             if ((pulsed->seek_pos -= in_bytes) < 0) {
               if (pulsed->loop == AUDIO_LOOP_NONE) {
                 if (*pulsed->whentostop == STOP_ON_AUD_END) {
@@ -611,7 +638,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             float **fltbuf = (float **)lives_calloc(pulsed->out_achans, sizeof(float *));
             register int i;
 
-            // we have audio filters; convert to float, pass through any audio filters, then back to s16
+            /// we have audio filters... convert to float, pass through any audio filters, then back to s16
             for (i = 0; i < pulsed->out_achans; i++) {
               // convert s16 to non-interleaved float
               fltbuf[i] = (float *)lives_calloc_safety(numFramesToWrite, sizeof(float));
@@ -719,7 +746,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               }
             }
 
-            // new streaming API - we can push float audio to the playback plugin
+            // streaming - we can push float audio to the playback plugin
             pthread_mutex_lock(&mainw->vpp_stream_mutex);
             if (mainw->ext_audio && mainw->vpp != NULL && mainw->vpp->render_audio_frame_float != NULL) {
               (*mainw->vpp->render_audio_frame_float)(fltbuf, numFramesToWrite);
@@ -743,7 +770,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           if (mainw->record && !mainw->record_paused && mainw->ascrap_file != -1 && mainw->playing_file > 0) {
-            // if we are recording then write generated audio to ascrap_file
+            /// if we are recording then write generated audio to ascrap_file
+            /// we may need to resample again to the file rate.
+            /// TODO: use markers to indicate when the rate changes, eliminating the necessity
             size_t rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans *
                             mainw->files[mainw->ascrap_file]->asampsize >> 3;
             pulse_flush_read_data(pulsed, mainw->ascrap_file,
@@ -763,7 +792,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         // playback from memory or file
 
         if (future_prefs->volume != pulsed->volume_linear) {
-          // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +)
+          // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
           pa_operation *paop;
           pavol = pa_sw_volume_from_linear(future_prefs->volume);
           pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
@@ -814,6 +843,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           offs += xbytes;
           needs_free = TRUE;
         }
+
+        /// we may also stream to a fifo, as well as possibly caching the audio for any video filters to utilize
         if (pulsed->astream_fd != -1) audio_stream(buffer, xbytes, pulsed->astream_fd);
         pthread_mutex_lock(&mainw->abuf_frame_mutex);
         if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {
@@ -821,6 +852,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           mainw->audio_frame_buffer->samples_filled += xbytes / 2;
         }
         pthread_mutex_unlock(&mainw->abuf_frame_mutex);
+
+        /// Finally... we actually write to pulse buffers
 #if !HAVE_PA_STREAM_BEGIN_WRITE
         pa_stream_write(pulsed->pstream, buffer, xbytes, buffer == pulsed->aPlayPtr->data ? NULL :
                         pulse_buff_free, 0, PA_SEEK_RELATIVE);
@@ -832,7 +865,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         pa_stream_write(pulsed->pstream, buffer, xbytes, NULL, 0, PA_SEEK_RELATIVE);
 #endif
       } else {
-        // from memory (ie multitrack)
+        // from memory (e,g multitrack)
         if (pulsed->read_abuf > -1 && !pulsed->mute) {
           int ret = 0;
 #if HAVE_PA_STREAM_BEGIN_WRITE
@@ -1002,7 +1035,7 @@ size_t pulse_flush_read_data(pulse_driver_t *pulsed, int fileno, size_t rbytes, 
 }
 
 
-static void pulse_audio_read_process(pa_stream *pstream, size_t nbytes, void *arg) {
+static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *arg) {
   // read nsamples from pulse buffer, and then possibly write to mainw->aud_rec_fd
 
   // this is the callback from pulse when we are recording or playing external audio
@@ -1296,7 +1329,7 @@ int pulse_audio_read_init(void) {
 
 
 #if PA_SW_CONNECTION
-static void info_cb(pa_context *c, const pa_sink_input_info *i, int eol, void *userdata) {
+static void info_cb(pa_context * c, const pa_sink_input_info * i, int eol, void *userdata) {
   // would be great if this worked, but apparently it always returns NULL in i
   // for a hardware connection
 
@@ -1480,7 +1513,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
 
 //#define DEBUG_PULSE_CORK
-static void uncorked_cb(pa_stream *s, int success, void *userdata) {
+static void uncorked_cb(pa_stream * s, int success, void *userdata) {
   pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
 #ifdef DEBUG_PULSE_CORK
   g_print("uncorked %p\n", pdriver);
@@ -1490,7 +1523,7 @@ static void uncorked_cb(pa_stream *s, int success, void *userdata) {
 }
 
 
-static void corked_cb(pa_stream *s, int success, void *userdata) {
+static void corked_cb(pa_stream * s, int success, void *userdata) {
   pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
 #ifdef DEBUG_PULSE_CORK
   g_print("corked %p\n", pdriver);
@@ -1753,7 +1786,7 @@ void pulse_aud_pb_ready(int fileno) {
     mainw->pulsed->is_paused = FALSE;
     mainw->pulsed->mute = mainw->mute;
     if ((mainw->whentostop == NEVER_STOP) && !mainw->preview) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->multitrack == NULL)
+      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && mainw->event_list == NULL)
         mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
       else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
     } else mainw->pulsed->loop = AUDIO_LOOP_NONE;

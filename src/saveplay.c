@@ -2809,11 +2809,6 @@ void play_file(void) {
   lives_freep((void **)&mainw->urgency_msg);
   mainw->actual_frame = 0;
 
-  if (audio_player == AUD_PLAYER_JACK
-      || (mainw->event_list != NULL && !mainw->record && (!mainw->is_rendering
-          || !mainw->preview || mainw->preview_rendering)))
-    audio_cache_end();
-
   lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
 
   mainw->video_seek_ready = FALSE;
@@ -2829,6 +2824,12 @@ void play_file(void) {
     mainw->pulsed->in_use = FALSE;
   }
 #endif
+
+  /// stop the players before the cache thread, else the players may try to play from a non-existent file
+  if (audio_player == AUD_PLAYER_JACK
+      || (mainw->event_list != NULL && !mainw->record && (!mainw->is_rendering
+          || !mainw->preview || mainw->preview_rendering)))
+    audio_cache_end();
 
   // terminate autolives if running
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->autolives), FALSE);

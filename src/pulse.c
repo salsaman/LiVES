@@ -424,10 +424,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     pulsed->num_calls++;
 
     /// not in use, just send silence
-    if (!pulsed->in_use || (pulsed->read_abuf > -1 && !LIVES_IS_PLAYING) || ((((pulsed->fd < 0 || pulsed->seek_pos < 0.) &&
-        pulsed->read_abuf < 0) &&
-        ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL))
-        || pulsed->is_paused || (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file != -1))) {
+    if (!pulsed->in_use || (pulsed->read_abuf > -1 && !LIVES_IS_PLAYING)
+        || ((((pulsed->fd < 0 || pulsed->seek_pos < 0.) &&
+              pulsed->read_abuf < 0) &&
+             ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL))
+            || pulsed->is_paused || (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file != -1))) {
       sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
 
       if (!pulsed->is_paused) pulsed->frames_written += nsamples;

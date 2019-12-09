@@ -278,6 +278,7 @@ struct _mt {
   LiVESWidget *next_node_button;
   LiVESWidget *prev_node_button;
   LiVESWidget *del_node_button;
+  LiVESWidget *resetp_button;
   LiVESWidget *node_spinbutton;
   LiVESWidget *node_scale;
   LiVESWidget *sel_label;
@@ -753,7 +754,7 @@ void set_poly_tab(lives_mt *mt, uint32_t tab);
 // gui related
 void mt_desensitise(lives_mt *);
 void mt_sensitise(lives_mt *);
-void set_mt_play_sizes(lives_mt *mt, int width, int height);
+void set_mt_play_sizes(lives_mt *mt, int width, int height, boolean reset);
 boolean mt_idle_show_current_frame(livespointer mt);
 
 void add_aparam_menuitems(lives_mt *);
@@ -900,6 +901,7 @@ boolean mt_tcoverlay_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t k
 void on_next_node_clicked(LiVESWidget *, livespointer mt);
 void on_prev_node_clicked(LiVESWidget *, livespointer mt);
 void on_del_node_clicked(LiVESWidget *, livespointer mt);
+void on_resetp_clicked(LiVESWidget *, livespointer mt);
 void on_node_spin_value_changed(LiVESSpinButton *, livespointer mt);
 double mt_get_effect_time(lives_mt *);
 

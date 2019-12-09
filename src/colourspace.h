@@ -154,13 +154,15 @@ typedef weed_plant_t weed_layer_t;
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
-weed_layer_t *weed_layer_new_for_frame(int clip, int frame);
 void create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 void *weed_layer_free(weed_layer_t *);
+
+/// move to weed events ?
+weed_layer_t *weed_layer_new_for_frame(int clip, int frame);
 
 // pixel_data
 boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
@@ -205,6 +207,10 @@ boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 int weed_layer_is_video(weed_layer_t *);
 int weed_layer_is_audio(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
+int weed_layer_get_palette_yuv(weed_layer_t *, int *clamping, int *sampling, int *subspace);
+int weed_layer_get_yuv_clamping(weed_layer_t *);
+int weed_layer_get_yuv_sampling(weed_layer_t *);
+int weed_layer_get_yuv_subspace(weed_layer_t *);
 void **weed_layer_get_pixel_data(weed_layer_t *, int *nplanes);
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
 int weed_layer_get_audio_rate(weed_plant_t *layer);
@@ -214,14 +220,32 @@ int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_width(weed_layer_t *);
 int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
-int get_layer_gamma(weed_layer_t *); // weed_layer_get_gamma
+int weed_layer_get_gamma(weed_layer_t *);
+int weed_layer_get_flags(weed_layer_t *);
 
 // weed_layer_get_rowstride
-// weed_layer_get_clamping
-// weed_layer_get_sampling
-// weed_layer_get_subspace
 
+/// functions all return the input layer for convenience; no checking for valid values is done
+/// if layer is NULL or not weed_layer then NULL is returned
+weed_layer_t *weed_layer_set_palette(weed_layer_t *, int palette);
+weed_layer_t *weed_layer_set_palette_yuv(weed_layer_t *, int palette, int clamping, int sampling, int subspace);
+weed_layer_t *weed_layer_set_yuv_clamping(weed_layer_t *, int clamping);
+weed_layer_t *weed_layer_set_yuv_sampling(weed_layer_t *, int sampling);
+weed_layer_t *weed_layer_set_yuv_subspace(weed_layer_t *, int subspace);
+weed_layer_t *weed_layer_set_gamma(weed_layer_t *, int gamma_type);
+
+/// width in macropixels of the layer palette
+weed_layer_t *weed_layer_set_width(weed_layer_t *, int width);
+weed_layer_t *weed_layer_set_height(weed_layer_t *, int height);
+weed_layer_t *weed_layer_set_size(weed_layer_t *, int width, int height);
+weed_layer_t *weed_layer_set_rowstrides(weed_layer_t *, int *rowstrides, int nplanes);
+weed_layer_t *weed_layer_set_rowstride(weed_layer_t *, int rowstride);
+
+weed_layer_t *weed_layer_set_flags(weed_layer_t *, int flags);
+
+weed_layer_t *weed_layer_set_pixel_data(weed_layer_t *, void **pixel_data, int nplanes);
+weed_layer_t *weed_layer_set_pixel_data_packed(weed_layer_t *, void *pixel_data);
+weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *);
 weed_layer_t *weed_layer_set_audio_data(weed_layer_t *, float **data, int arate, int naudchans, weed_size_t nsamps);
-// weed_layer_set_pixel_data
-// etc.
+
 #endif

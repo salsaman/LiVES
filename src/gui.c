@@ -3821,7 +3821,10 @@ void play_window_set_title(void) {
 
   if (mainw->play_window == NULL) return;
 
-  xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
+  if (!LIVES_IS_PLAYING)
+    xtrabit = lives_strdup_printf(_(" (%d %% scale)"), (int)mainw->sepwin_scale);
+  else
+    xtrabit = lives_strdup("");
 
   if (LIVES_IS_PLAYING) {
     if (mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) && mainw->fs)
@@ -4107,7 +4110,7 @@ void resize_play_window(void) {
     }
   }
 
-  if (mainw->double_size && (!mainw->fs || !LIVES_IS_PLAYING)) {
+  if ((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING)) {
     // double size: maxspect to the screen size
     mainw->pwidth = cfile->hsize;
     mainw->pheight = cfile->vsize;
@@ -4118,13 +4121,14 @@ void resize_play_window(void) {
   }
 
   if (pmonitor == 0) {
-    if (((mainw->double_size && (!mainw->fs || !LIVES_IS_PLAYING))) || (mainw->pwidth > scr_width - scr_width_safety ||
-        mainw->pheight > scr_height - scr_height_safety)) {
+    if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+        (mainw->pwidth > scr_width - scr_width_safety ||
+         mainw->pheight > scr_height - scr_height_safety)) {
       calc_maxspect(scr_width - scr_width_safety, scr_height - scr_height_safety, &mainw->pwidth, &mainw->pheight);
       mainw->sepwin_scale = (float)mainw->pwidth / (float)cfile->hsize * 100.;
     }
   } else {
-    if (((mainw->double_size && (!mainw->fs || !LIVES_IS_PLAYING))) ||
+    if ((((mainw->double_size || mainw->multitrack != NULL) && (!mainw->fs || !LIVES_IS_PLAYING))) ||
         (mainw->pwidth > mainw->mgeom[pmonitor - 1].width - scr_width_safety ||
          mainw->pheight > mainw->mgeom[pmonitor - 1].height - scr_height_safety)) {
       calc_maxspect(mainw->mgeom[pmonitor - 1].width - scr_width_safety, mainw->mgeom[pmonitor - 1].height - scr_height_safety,

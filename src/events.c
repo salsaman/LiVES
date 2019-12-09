@@ -2573,7 +2573,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
       fill_param_vals_to(in_param, in_ptmpls[i], ntracks - 1);
     }
 
-    weed_leaf_copy((weed_plant_t *)pchain[i], WEED_LEAF_VALUE, in_param, WEED_LEAF_VALUE);
+    weed_leaf_dup((weed_plant_t *)pchain[i], in_param, WEED_LEAF_VALUE);
 
     weed_set_int_value((weed_plant_t *)pchain[i], WEED_LEAF_INDEX, i);
     weed_set_voidptr_value((weed_plant_t *)pchain[i], WEED_LEAF_INIT_EVENT, init_event);
@@ -2589,6 +2589,7 @@ void **filter_init_add_pchanges(weed_plant_t *event_list, weed_plant_t *plant, w
 
   if (!is_inst) {
     weed_in_params_free(in_params, num_params);
+    lives_free(in_params);
   } else {
     lives_free(in_params);
   }
@@ -4856,19 +4857,17 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
           char *filter_hash = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
           int idx;
           if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
+            int npch;
             weed_plant_t *filter = get_weed_filter(idx);
             int tparam = get_transition_param(filter, FALSE);
             weed_plant_t *inst = weed_instance_from_filter(filter);
-            weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-            weed_plant_t *ttmpl = weed_get_plantptr_value(in_params[tparam], WEED_LEAF_TEMPLATE, &error);
+            weed_plant_t **in_params = weed_instance_get_in_params(inst, NULL);
+            weed_plant_t *ttmpl = weed_param_get_template(in_params[tparam]);
+            void **pchains = weed_get_voidptr_array_counted(ievent, WEED_LEAF_IN_PARAMETERS, &npch);
             double trans;
 
-            if (weed_plant_has_leaf(ievent, WEED_LEAF_IN_PARAMETERS)
-                && tparam < weed_leaf_num_elements(ievent, WEED_LEAF_IN_PARAMETERS)) {
-              void **pchains = weed_get_voidptr_array(ievent, WEED_LEAF_IN_PARAMETERS, &error);
-              interpolate_param(inst, tparam, pchains[tparam], tc);
-              lives_free(pchains);
-            }
+            if (tparam < npch) interpolate_param(in_params[tparam], pchains[tparam], tc);
+            lives_free(pchains);
 
             if (weed_leaf_seed_type(in_params[tparam], WEED_LEAF_VALUE) == WEED_SEED_DOUBLE) {
               double transd = weed_get_double_value(in_params[tparam], WEED_LEAF_VALUE, &error);

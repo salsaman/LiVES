@@ -104,6 +104,11 @@ WEED_GLOBAL_INLINE int weed_filter_get_flags(weed_plant_t *filter) {
   return weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
 }
 
+WEED_GLOBAL_INLINE char *weed_filter_get_name(weed_plant_t *filter) {
+  if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
+  return weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
+}
+
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls) {
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, ntmpls);
@@ -122,6 +127,11 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *fi
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls) {
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, ntmpls);
+}
+
+WEED_GLOBAL_INLINE char *weed_chantmpl_get_name(weed_plant_t *chantmpl) {
+  if (!WEED_PLANT_IS_CHANNEL_TEMPLATE(chantmpl)) return NULL;
+  return weed_get_string_value(chantmpl, WEED_LEAF_NAME, NULL);
 }
 
 WEED_GLOBAL_INLINE int weed_chantmpl_get_flags(weed_plant_t *chantmpl) {
@@ -144,6 +154,11 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_value_type(weed_plant_t *paramtmpl) {
 WEED_GLOBAL_INLINE int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl) {
   if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return 0;
   return weed_get_int_value(paramtmpl, WEED_LEAF_HINT, NULL);
+}
+
+WEED_GLOBAL_INLINE char *weed_paramtmpl_get_name(weed_plant_t *paramtmpl) {
+  if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return NULL;
+  return weed_get_string_value(paramtmpl, WEED_LEAF_NAME, NULL);
 }
 
 WEED_GLOBAL_INLINE int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl) {
@@ -242,7 +257,18 @@ WEED_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {
   return weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
 }
 
-WEED_GLOBAL_INLINE int weed_channel_get_palette_details(weed_plant_t *channel, int *clamping, int *sampling, int *subspace) {
+WEED_GLOBAL_INLINE int weed_channel_get_gamma_type(weed_plant_t *channel) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_PALETTE_NONE;
+  return weed_get_int_value(channel, WEED_LEAF_GAMMA_TYPE, NULL);
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_channel_set_gamma_type(weed_plant_t *channel, int gamma_type) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
+  weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, gamma_type);
+  return channel;
+}
+
+WEED_GLOBAL_INLINE int weed_channel_get_palette_yuv(weed_plant_t *channel, int *clamping, int *sampling, int *subspace) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_PALETTE_NONE;
   else {
     int palette = weed_channel_get_palette(channel);
@@ -339,7 +365,7 @@ WEED_GLOBAL_INLINE float **weed_channel_get_audio_data(weed_plant_t *channel, in
 }
 
 WEED_GLOBAL_INLINE weed_layer_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data,
-    int arate, int naudchans, weed_size_t nsamps) {
+    int arate, int naudchans, int nsamps) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
   weed_set_voidptr_array(channel, WEED_LEAF_AUDIO_DATA, naudchans, (void **)data);
   weed_set_int_value(channel, WEED_LEAF_AUDIO_RATE, arate);

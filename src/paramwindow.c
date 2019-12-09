@@ -1351,7 +1351,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
     // add any unused parameters
     for (i = 0; i < rfx->num_params; i++) {
-      if (!chk_params) {
+      if (!chk_params && !rfx->needs_reinit) {
         rfx->params[i].changed = FALSE;
         if (used[i]) continue;
       }
@@ -2115,7 +2115,6 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         weed_reinit_effect(inst, FALSE);
         was_reinited = TRUE;
       }
-
     }
   }
 
@@ -2627,7 +2626,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     return; // updates are blocked until all params are ready
   }
 
-  if (param->value != NULL) lives_free(param->value);
+  //if (param->value != NULL) lives_free(param->value); old_text !!!
   param->value = lives_strdup(new_text);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
@@ -3225,9 +3224,7 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
     if (upd) {
       if (param->widgets[0] != NULL) {
         if (LIVES_IS_TEXT_VIEW(param->widgets[0])) {
-          char *string = lives_strdup((char *)param->value); // work around bug in glib ???
-          lives_text_view_set_text(LIVES_TEXT_VIEW(param->widgets[0]), string, -1);
-          lives_free(string);
+          lives_text_view_set_text(LIVES_TEXT_VIEW(param->widgets[0]), strval, -1);
         } else {
           lives_entry_set_text(LIVES_ENTRY(param->widgets[0]), strval);
         }
@@ -3391,7 +3388,8 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
   register int i, j;
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) num_params = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
+    num_params = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
   if (num_params == 0) return;
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
@@ -3481,7 +3479,6 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
       case WEED_HINT_TEXT:
         valss = weed_get_string_array(in_param, WEED_LEAF_VALUE, &error);
         vals = valss[index];
-
         list = lives_list_append(list, lives_strdup_printf("\"%s\"", (tmp = U82L(tmp2 = subst(vals, "\"", "\\\"")))));
         lives_free(tmp);
         lives_free(tmp2);

@@ -613,7 +613,6 @@ static int audio_process(nframes_t nframes, void *arg) {
 		    // *INDENT-OFF*
                   }}}}}
 	  // *INDENT-ON*
-
           xin_bytes = in_bytes;
         }
         if (mainw->agen_key != 0 && mainw->multitrack == NULL && !mainw->preview) {

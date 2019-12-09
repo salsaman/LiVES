@@ -2024,16 +2024,17 @@ void decode_pparams(weed_plant_t **pparams) {
     if (type == WEED_PLANT_PARAMETER) {
       ptmpl = weed_get_plantptr_value(pparams[i], "template", &error);
       pname = weed_get_string_value(ptmpl, "name", &error);
+      if (pname) {
+        if (!strcmp(pname, "mode")) {
+          zmode = weed_get_int_value(pparams[i], "value", &error);
+        } else if (!strcmp(pname, "fft0")) {
+          zfft0 = (float)weed_get_double_value(pparams[i], "value", &error);
+        } else if (!strcmp(pname, "subtitles")) {
+          zsubtitles = weed_get_string_value(pparams[i], "value", &error);
+        }
 
-      if (!strcmp(pname, "mode")) {
-        zmode = weed_get_int_value(pparams[i], "value", &error);
-      } else if (!strcmp(pname, "fft0")) {
-        zfft0 = (float)weed_get_double_value(pparams[i], "value", &error);
-      } else if (!strcmp(pname, "subtitles")) {
-        zsubtitles = weed_get_string_value(pparams[i], "value", &error);
+        weed_free(pname);
       }
-
-      weed_free(pname);
     } else {
       // must be an alpha channel
     }

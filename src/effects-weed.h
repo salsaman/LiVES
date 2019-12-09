@@ -196,7 +196,7 @@ boolean has_perchannel_multiw(weed_plant_t *filter);
 boolean weed_parameter_has_variable_elements_strict(weed_plant_t *inst, weed_plant_t *ptmpl);
 
 /// parameter interpolation
-boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, ticks_t tc);
+boolean interpolate_param(weed_plant_t *param, void *pchain, ticks_t tc);
 boolean interpolate_params(weed_plant_t *inst, void **pchains, ticks_t tc);
 
 int filter_mutex_lock(int key);  // 0 based key

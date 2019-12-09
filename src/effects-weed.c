@@ -2115,10 +2115,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (weed_palette_is_yuv(opalette)) {
       /// set up clamping, sampling and subspace for YUV palettes
-      weed_channel_get_palette_details(channel, &iclamping, &isampling, &isubspace);
+      weed_channel_get_palette_yuv(channel, &iclamping, &isampling, &isubspace);
 
       if (i > 0 &&  !pvary) {
-        weed_channel_get_palette_details(def_channel, &oclamping, &osampling, &osubspace);
+        weed_channel_get_palette_yuv(def_channel, &oclamping, &osampling, &osubspace);
       } else {
         // cpalette is layer palette here
         if (pvary && weed_palette_is_yuv(cpalette)) {
@@ -2289,7 +2289,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     rowstrides = weed_channel_get_rowstrides(channel, &numplanes);
     outwidth = weed_channel_get_width(channel);
     outheight = weed_channel_get_height(channel);
-    outpalette = weed_channel_get_palette_details(channel, &oclamping, &osampling, &osubspace);
+    outpalette = weed_channel_get_palette_yuv(channel, &oclamping, &osampling, &osubspace);
 
     /// set the timecode for the channel (this is optional, but its good to do to timestamp the output)
     weed_set_int64_value(channel, WEED_LEAF_TIMECODE, tc);
@@ -2376,12 +2376,12 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       }
 
       if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
-        weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+        weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
       else {
         if (CURRENT_CLIP_IS_VALID)
-          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
+          weed_channel_set_gamma_type(channel, cfile->gamma_type);
       }
-      weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, get_layer_gamma(channel));
+      weed_layer_set_gamma(layer, weed_channel_get_gamma_type(channel));
       weed_set_boolean_value(channel, WEED_LEAF_HOST_INPLACE, WEED_FALSE);
 
       // end of (!inplace)
@@ -2390,7 +2390,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// check whether the filter needs a reinit
 
     channel_rows = weed_channel_get_rowstrides(channel, &nchr);
-    palette = weed_channel_get_palette_details(channel, &iclamping, &isampling, &isubspace);
+    palette = weed_channel_get_palette_yuv(channel, &iclamping, &isampling, &isubspace);
 
     rowstrides_changed = rowstrides_differ(nchr, channel_rows, numplanes, rowstrides);
 
@@ -3578,10 +3578,9 @@ apply_audio_inst2:
                                      || filter_error == FILTER_INFO_REDRAWN)) {
           pconx_chain_data_omc((instance = weed_instance_obtain(i, key_modes[i])), i, key_modes[i]);
           weed_instance_unref(instance);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 }
 
 
@@ -5609,18 +5608,14 @@ void weed_unload_all(void) {
 
 
 static void weed_in_channels_free(weed_plant_t *inst) {
-  weed_plant_t **channels;
-  int i, error;
   int num_channels;
-
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) return;
-
-  num_channels = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);
-  channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, &error);
-  for (i = 0; i < num_channels; i++) {
-    if (channels[i] != NULL) {
-      if (weed_palette_is_alpha(weed_layer_get_palette(channels[i]))) weed_layer_free(channels[i]);
-      else weed_plant_free(channels[i]);
+  weed_plant_t **channels = weed_instance_get_in_channels(inst, &num_channels);
+  if (num_channels > 0) {
+    for (int i = 0; i < num_channels; i++) {
+      if (channels[i] != NULL) {
+        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_free((weed_layer_t *)channels[i]);
+        else weed_plant_free(channels[i]);
+      }
     }
   }
   lives_free(channels);
@@ -5628,18 +5623,14 @@ static void weed_in_channels_free(weed_plant_t *inst) {
 
 
 static void weed_out_channels_free(weed_plant_t *inst) {
-  weed_plant_t **channels;
-  int i, error;
   int num_channels;
-
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_OUT_CHANNELS)) return;
-
-  num_channels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS);
-  channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  for (i = 0; i < num_channels; i++) {
-    if (channels[i] != NULL) {
-      if (weed_palette_is_alpha(weed_layer_get_palette(channels[i]))) weed_layer_free(channels[i]);
-      else weed_plant_free(channels[i]);
+  weed_plant_t **channels = weed_instance_get_out_channels(inst, &num_channels);
+  if (num_channels > 0) {
+    for (int i = 0; i < num_channels; i++) {
+      if (channels[i] != NULL) {
+        if (weed_palette_is_alpha(weed_channel_get_palette(channels[i]))) weed_layer_free((weed_layer_t *)channels[i]);
+        else weed_plant_free(channels[i]);
+      }
     }
   }
   lives_free(channels);
@@ -5653,57 +5644,41 @@ static void weed_channels_free(weed_plant_t *inst) {
 
 
 static void weed_gui_free(weed_plant_t *plant) {
-  weed_plant_t *gui;
-  int error;
-
-  if (weed_plant_has_leaf(plant, WEED_LEAF_GUI)) {
-    gui = weed_get_plantptr_value(plant, WEED_LEAF_GUI, &error);
-    weed_plant_free(gui);
-  }
+  weed_plant_t *gui = weed_get_plantptr_value(plant, WEED_LEAF_GUI, NULL);
+  if (gui != NULL) weed_plant_free(gui);
 }
 
 
 void weed_in_params_free(weed_plant_t **parameters, int num_parameters) {
-  register int i;
-  for (i = 0; i < num_parameters; i++) {
+  for (int i = 0; i < num_parameters; i++) {
     if (parameters[i] != NULL) {
       if (parameters[i] == mainw->rte_textparm) mainw->rte_textparm = NULL;
       weed_gui_free(parameters[i]);
       weed_plant_free(parameters[i]);
     }
   }
-  lives_free(parameters);
 }
 
 
 void weed_in_parameters_free(weed_plant_t *inst) {
-  weed_plant_t **parameters;
-  int error;
   int num_parameters;
-
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS)) return;
-
-  num_parameters = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-  parameters = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  weed_in_params_free(parameters, num_parameters);
-  weed_leaf_delete(inst, WEED_LEAF_IN_PARAMETERS);
+  weed_plant_t **parameters = weed_instance_get_in_params(inst, &num_parameters);
+  if (num_parameters > 0) {
+    weed_in_params_free(parameters, num_parameters);
+    weed_leaf_delete(inst, WEED_LEAF_IN_PARAMETERS);
+  }
+  lives_free(parameters);
 }
 
 
 static void weed_out_parameters_free(weed_plant_t *inst) {
-  weed_plant_t **parameters;
-  int error;
   int num_parameters;
-  register int i;
-
-  if (!weed_plant_has_leaf(inst, WEED_LEAF_OUT_PARAMETERS)) return;
-
-  num_parameters = weed_leaf_num_elements(inst, WEED_LEAF_OUT_PARAMETERS);
-  parameters = weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
-  for (i = 0; i < num_parameters; i++) {
-    if (parameters[i] != NULL) {
-      weed_plant_free(parameters[i]);
+  weed_plant_t **parameters = weed_instance_get_out_params(inst, &num_parameters);
+  if (num_parameters > 0) {
+    for (int i = 0; i < num_parameters; i++) {
+      if (parameters[i] != NULL) weed_plant_free(parameters[i]);
     }
+    weed_leaf_delete(inst, WEED_LEAF_OUT_PARAMETERS);
   }
   lives_free(parameters);
 }
@@ -5720,6 +5695,7 @@ static void lives_free_instance(weed_plant_t *inst) {
   weed_parameters_free(inst);
   weed_plant_free(inst);
 }
+
 
 LIVES_GLOBAL_INLINE int _weed_instance_unref(weed_plant_t *inst) {
   // return new refcount
@@ -5773,7 +5749,7 @@ int _weed_instance_ref(weed_plant_t *inst) {
 
 
 weed_plant_t *_weed_instance_obtain(int line, char *file, int key, int mode) {
-  // return instance with refcount of 1
+  // does not create the instance, but adds a ref to an existing one
   // caller MUST call weed_instance_unref() when instance is no longer needed
   weed_plant_t *instance;
 
@@ -5892,18 +5868,14 @@ weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in) {
 
   weed_plant_t **params, **paramtmpls;
   int num_params;
-  int i, error;
 
-  if (in) num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-  else num_params = weed_leaf_num_elements(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES);
-
+  if (in) paramtmpls = weed_filter_get_in_paramtmpls(filter, &num_params);
+  else paramtmpls = weed_filter_get_out_paramtmpls(filter, &num_params);
   if (num_params == 0) return NULL;
-  if (in) paramtmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-  else paramtmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
 
   params = (weed_plant_t **)lives_malloc((num_params + 1) * sizeof(weed_plant_t *));
 
-  for (i = 0; i < num_params; i++) {
+  for (int i = 0; i < num_params; i++) {
     params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
     weed_set_plantptr_value(params[i], WEED_LEAF_TEMPLATE, paramtmpls[i]);
     if (in) {
@@ -6093,7 +6065,6 @@ weed_plant_t *weed_instance_from_filter(weed_plant_t *filter) {
     if (nfilters == 1) xinp = inp;
     else {
       // for a compound filter, assign only the params which belong to the instance
-      ninpar = num_in_params(filter, FALSE, FALSE);
       if (ninpar == 0) xinp = NULL;
       else {
         xinp = (weed_plant_t **)lives_malloc((ninpar + 1) * sizeof(weed_plant_t *));
@@ -9625,117 +9596,42 @@ static char *get_default_element_string(weed_plant_t *param, int idx) {
 }
 
 
-boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode_t tc) {
+boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc) {
   // return FALSE if param has no "value"
   // - this can happen during realtime audio processing, if the effect is inited, but no "value" has been set yet
-  int error, j;
+  // filter_mutex should be locked for the key during realtime processing
+
   weed_plant_t *pchange = (weed_plant_t *)pchain, *last_pchange = NULL;
   weed_plant_t *wtmpl;
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
   weed_timecode_t tc_diff = 0, tc_diff2;
-  int hint, cspace = 0;
-  weed_plant_t *param = in_params[i];
-  double *last_valuesd, *next_valuesd;
-  int *last_valuesi, *next_valuesi;
   void **lpc, **npc;
-  int *ign;
-  int got_npc;
-  double *valds = NULL, *nvalds, last_valued;
-  int *valis = NULL, *nvalis, last_valuei;
-  int num_values, xnum, num_pvals;
-  int k;
-  int last_valueir, last_valueig, last_valueib, last_valueia;
-  double last_valuedr, last_valuedg, last_valuedb, last_valueda;
   char **valss, **nvalss;
-  int num_ign = 0;
+  double *last_valuesd, *next_valuesd;
+  double *valds = NULL, *nvalds, last_valued;
+  double last_valuedr, last_valuedg, last_valuedb, last_valueda;
+  int *last_valuesi, *next_valuesi;
+  int *valis = NULL, *nvalis, last_valuei;
+  int last_valueir, last_valueig, last_valueib, last_valueia;
+  int *ign, num_ign = 0;
+  int hint, cspace = 0;
+  int got_npc, num_values, xnum, num_pvals, k, j;
 
-  if (pchange == NULL) {
-    lives_free(in_params);
-    return TRUE;
-  }
-
-  if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE) || weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) {
-    lives_free(in_params);
-    return FALSE;  // do not apply effect
-  }
+  if (pchange == NULL) return TRUE;
+  if (weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) return FALSE;  // do not apply effect
 
   while (pchange != NULL && get_event_timecode(pchange) <= tc) {
     last_pchange = pchange;
-    pchange = (weed_plant_t *)weed_get_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, &error);
+    pchange = (weed_plant_t *)weed_get_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, NULL);
   }
 
-  // we need to single thread here, because it's possible to have a conflict - if the audio and video threads are
-  // both doing simultaneous interpolation of the same parameter
-
-  wtmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
-
-  // TODO: needs rethinking
-  // if plugin wants to do its own interpolation, we let it
-  /* if (weed_plant_has_leaf(wtmpl, WEED_LEAF_INTERPOLATE_FUNC)) { */
-  /*   boolean needs_more; */
-  /*   boolean more_available; */
-  /*   weed_interpolate_f interpolate_func; */
-  /*   weed_plant_t *calc_param = weed_plant_new(WEED_PLANT_PARAMETER), *filter; */
-  /*   char *cwd; */
-
-  /*   // setup our calc_param (return result) */
-  /*   weed_set_plantptr_value(calc_param, WEED_LEAF_TEMPLATE, wtmpl); */
-  /*   weed_set_int64_value(calc_param, WEED_LEAF_TIMECODE, tc); */
-
-  /*   // try first with just the two surrounding values */
-  /*   if (pchange == last_pchange && pchange == NULL) { */
-  /*     param_array = void_ptrs_to_plant_array(wtmpl, pchange, 0); */
-  /*     more_available = FALSE; */
-  /*   } else if (last_pchange == NULL) { */
-  /*     param_array = void_ptrs_to_plant_array(wtmpl, pchange, 1); */
-  /*     more_available = FALSE; */
-  /*   } else if (pchange == NULL) { */
-  /*     param_array = void_ptrs_to_plant_array(wtmpl, last_pchange, 1); */
-  /*     more_available = FALSE; */
-  /*   } else { */
-  /*     param_array = void_ptrs_to_plant_array(wtmpl, last_pchange, 2); */
-  /*     more_available = TRUE; // maybe... */
-  /*   } */
-
-  /*   weed_add_plant_flags(calc_param, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_"); */
-  /*   interpolate_func = (weed_interpolate_f)weed_get_funcptr_value(wtmpl, WEED_LEAF_INTERPOLATE_FUNC, NULL); */
-  /*   if (interpolate_func != NULL) { */
-  /*     filter = weed_instance_get_filter(inst, FALSE); */
-  /*     cwd = cd_to_plugin_dir(filter); */
-  /*     needs_more = (*interpolate_func)(param_array, calc_param); */
-  /*     lives_chdir(cwd, FALSE); */
-  /*     lives_free(cwd); */
-
-  /*     if (needs_more == WEED_FALSE || !more_available) { */
-  /*       // got an accurate result from 2 points */
-  /*       weed_leaf_copy(param, WEED_LEAF_VALUE, calc_param, WEED_LEAF_VALUE); */
-  /*       weed_plant_free(calc_param); */
-  /*       lives_free(in_params); */
-  /*       for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]); */
-  /*       lives_free(param_array); */
-  /*       return TRUE; */
-  /*     } */
-  /*     // try to pass more values */
-  /*     lives_free(param_array); */
-  /*     param_array = void_ptrs_to_plant_array(wtmpl, pchain, -1); */
-
-  /*     (*interpolate_func)(param_array, calc_param); */
-
-  /*     weed_leaf_copy(param, WEED_LEAF_VALUE, calc_param, WEED_LEAF_VALUE); */
-  /*     weed_plant_free(calc_param); */
-  /*     lives_free(in_params); */
-  /*     for (i = 0; param_array[i] != NULL; i++) weed_plant_free(param_array[i]); */
-  /*     lives_free(param_array); */
-  /*     return TRUE; */
-  /*   } */
-  /* } */
+  wtmpl = weed_param_get_template(param);
   num_values = weed_leaf_num_elements(param, WEED_LEAF_VALUE);
 
   if ((num_pvals = weed_leaf_num_elements((weed_plant_t *)pchain, WEED_LEAF_VALUE)) > num_values)
     num_values = num_pvals; // init a multivalued param
 
-  lpc = (void **)lives_malloc(num_values * sizeof(void *));
-  npc = (void **)lives_malloc(num_values * sizeof(void *));
+  lpc = (void **)lives_calloc(num_values, sizeof(void *));
+  npc = (void **)lives_calloc(num_values, sizeof(void *));
 
   if (num_values == 1) {
     lpc[0] = last_pchange;
@@ -9743,14 +9639,12 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   } else {
     pchange = (weed_plant_t *)pchain;
 
-    for (j = 0; j < num_values; j++) npc[j] = lpc[j] = NULL;
-
     while (pchange != NULL) {
       num_pvals = weed_leaf_num_elements(pchange, WEED_LEAF_VALUE);
       if (num_pvals > num_values) num_pvals = num_values;
       if (weed_plant_has_leaf(pchange, WEED_LEAF_IGNORE)) {
         num_ign = weed_leaf_num_elements(pchange, WEED_LEAF_IGNORE);
-        ign = weed_get_boolean_array(pchange, WEED_LEAF_IGNORE, &error);
+        ign = weed_get_boolean_array(pchange, WEED_LEAF_IGNORE, NULL);
       } else ign = NULL;
       if (get_event_timecode(pchange) <= tc) {
         for (j = 0; j < num_pvals; j++) if (ign == NULL || j >= num_ign || ign[j] == WEED_FALSE) lpc[j] = pchange;
@@ -9767,18 +9661,18 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           break;
         }
       }
-      pchange = (weed_plant_t *)weed_get_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, &error);
+      pchange = (weed_plant_t *)weed_get_voidptr_value(pchange, WEED_LEAF_NEXT_CHANGE, NULL);
       lives_freep((void **)&ign);
     }
   }
 
-  hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, &error);
+  hint = weed_get_int_value(wtmpl, WEED_LEAF_HINT, NULL);
   switch (hint) {
   case WEED_HINT_FLOAT:
     valds = (double *)lives_malloc(num_values * (sizeof(double)));
     break;
   case WEED_HINT_COLOR:
-    cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, &error);
+    cspace = weed_get_int_value(wtmpl, WEED_LEAF_COLORSPACE, NULL);
     switch (cspace) {
     case WEED_COLORSPACE_RGB:
       if (!(num_values & 3)) return TRUE;
@@ -9807,8 +9701,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   for (j = 0; j < num_values; j++) {
     // must interpolate - we use linear interpolation
     if (lpc[j] == NULL && npc[j] == NULL) continue;
-    if (lpc[j] != NULL && npc[j] != NULL) tc_diff = weed_get_int64_value((weed_plant_t *)npc[j], WEED_LEAF_TIMECODE, &error) -
-          weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error);
+    if (lpc[j] != NULL && npc[j] != NULL) tc_diff = weed_get_int64_value((weed_plant_t *)npc[j], WEED_LEAF_TIMECODE, NULL) -
+          weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL);
     switch (hint) {
     case WEED_HINT_FLOAT:
       if (lpc[j] == NULL) {
@@ -9820,21 +9714,21 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
         // after last change
         xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
         if (xnum > j) {
-          nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           valds[j] = nvalds[j];
           lives_free(nvalds);
         } else valds[j] = get_default_element_double(param, j, 1, 0);
         continue;
       }
 
-      next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-      last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+      next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+      last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
       xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
       if (xnum > j) last_valued = last_valuesd[j];
       else last_valued = get_default_element_double(param, j, 1, 0);
 
       valds[j] = last_valued + (double)(next_valuesd[j] - last_valued) / (double)(tc_diff / TICKS_PER_SECOND_DBL) *
-                 (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL);
+                 (double)((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL)) / TICKS_PER_SECOND_DBL);
 
       lives_free(last_valuesd);
       lives_free(next_valuesd);
@@ -9858,7 +9752,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             // after last change
             xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
             if (xnum > k) {
-              nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
               valis[k] = nvalis[k];
               valis[k + 1] = nvalis[k + 1];
               valis[k + 2] = nvalis[k + 2];
@@ -9872,8 +9766,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             continue;
           }
 
-          next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-          last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+          last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > k) {
             last_valueir = last_valuesi[k];
@@ -9888,7 +9782,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           if (next_valuesi == NULL) continue; // can happen if we recorded a param change
 
           valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / TICKS_PER_SECOND_DBL) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL) + .5;
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL))) / TICKS_PER_SECOND_DBL) + .5;
           valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) *
                          (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
           valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) *
@@ -9909,7 +9803,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             // after last change
             xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
             if (xnum > k) {
-              nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
               valds[k] = nvalds[k];
               valds[k + 1] = nvalds[k + 1];
               valds[k + 2] = nvalds[k + 2];
@@ -9923,8 +9817,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             continue;
           }
 
-          next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-          last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+          last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > k) {
             last_valuedr = last_valuesd[k];
@@ -9936,7 +9830,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             last_valuedb = get_default_element_double(param, j, 3, 2);
           }
           valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / TICKS_PER_SECOND_DBL) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL);
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL))) / TICKS_PER_SECOND_DBL);
           valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) *
                          (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
           valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) *
@@ -9963,7 +9857,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             // after last change
             xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
             if (xnum > k) {
-              nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
               valis[k] = nvalis[k];
               valis[k + 1] = nvalis[k + 1];
               valis[k + 2] = nvalis[k + 2];
@@ -9979,8 +9873,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             continue;
           }
 
-          next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-          last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+          last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > k) {
             last_valueir = last_valuesi[k];
@@ -9997,7 +9891,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           if (next_valuesi == NULL) continue; // can happen if we recorded a param change
 
           valis[k] = last_valueir + (next_valuesi[k] - last_valueir) / (tc_diff / TICKS_PER_SECOND_DBL) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL) + .5;
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL))) / TICKS_PER_SECOND_DBL) + .5;
           valis[k + 1] = last_valueig + (next_valuesi[k + 1] - last_valueig) / (tc_diff / TICKS_PER_SECOND_DBL) *
                          (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
           valis[k + 2] = last_valueib + (next_valuesi[k + 2] - last_valueib) / (tc_diff / TICKS_PER_SECOND_DBL) *
@@ -10021,7 +9915,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             // after last change
             xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
             if (xnum > k) {
-              nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+              nvalds = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
               valds[k] = nvalds[k];
               valds[k + 1] = nvalds[k + 1];
               valds[k + 2] = nvalds[k + 2];
@@ -10037,8 +9931,8 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             continue;
           }
 
-          next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-          last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          next_valuesd = weed_get_double_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+          last_valuesd = weed_get_double_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > k) {
             last_valuedr = last_valuesd[k];
@@ -10052,7 +9946,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
             last_valueda = get_default_element_double(param, j, 4, 3);
           }
           valds[k] = last_valuedr + (next_valuesd[k] - last_valuedr) / (tc_diff / TICKS_PER_SECOND_DBL) *
-                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error))) / TICKS_PER_SECOND_DBL);
+                     ((tc_diff2 = (tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL))) / TICKS_PER_SECOND_DBL);
           valds[k + 1] = last_valuedg + (next_valuesd[k + 1] - last_valuedg) / (tc_diff / TICKS_PER_SECOND_DBL) *
                          (tc_diff2 / TICKS_PER_SECOND_DBL) + .5;
           valds[k + 2] = last_valuedb + (next_valuesd[k + 2] - last_valuedb) / (tc_diff / TICKS_PER_SECOND_DBL) *
@@ -10071,7 +9965,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       if (weed_param_get_nchoices(param) > 0) {
         // no interpolation
         if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
-          nvalis = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
+          nvalis = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
           valis[j] = nvalis[j];
           lives_free(nvalis);
           continue;
@@ -10079,7 +9973,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           // use last_pchange value
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > j) {
-            nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+            nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
             valis[j] = nvalis[j];
             lives_free(nvalis);
           } else valis[j] = get_default_element_int(param, j, 1, 0);
@@ -10095,21 +9989,21 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
           // after last change
           xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
           if (xnum > j) {
-            nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+            nvalis = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
             valis[j] = nvalis[j];
             lives_free(nvalis);
           } else valis[j] = get_default_element_int(param, j, 1, 0);
           continue;
         }
 
-        next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
-        last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+        next_valuesi = weed_get_int_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
+        last_valuesi = weed_get_int_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
         xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
         if (xnum > j) last_valuei = last_valuesi[j];
         else last_valuei = get_default_element_int(param, j, 1, 0);
 
         valis[j] = last_valuei + (next_valuesi[j] - last_valuei) / (tc_diff / TICKS_PER_SECOND_DBL) *
-                   ((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, &error)) / TICKS_PER_SECOND_DBL) + .5;
+                   ((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL)) / TICKS_PER_SECOND_DBL) + .5;
 
         lives_free(last_valuesi);
         lives_free(next_valuesi);
@@ -10118,7 +10012,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
     case WEED_HINT_SWITCH:
       // no interpolation
       if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
-        nvalis = weed_get_boolean_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
+        nvalis = weed_get_boolean_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
         valis[j] = nvalis[j];
         lives_free(nvalis);
         continue;
@@ -10126,7 +10020,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
         // use last_pchange value
         xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
         if (xnum > j) {
-          nvalis = weed_get_boolean_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          nvalis = weed_get_boolean_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           valis[j] = nvalis[j];
           lives_free(nvalis);
         } else valis[j] = get_default_element_bool(param, j);
@@ -10135,10 +10029,9 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
       break;
     case WEED_HINT_TEXT:
       // no interpolation
-      valss = weed_get_string_array(param, WEED_LEAF_VALUE, &error);
-
+      valss = weed_get_string_array(param, WEED_LEAF_VALUE, NULL);
       if (npc[j] != NULL && get_event_timecode((weed_plant_t *)npc[j]) == tc) {
-        nvalss = weed_get_string_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, &error);
+        nvalss = weed_get_string_array((weed_plant_t *)npc[j], WEED_LEAF_VALUE, NULL);
         valss[j] = lives_strdup(nvalss[j]);
         for (k = 0; k < num_values; k++) lives_free(nvalss[k]);
         lives_free(nvalss);
@@ -10150,7 +10043,7 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
         // use last_pchange value
         xnum = weed_leaf_num_elements((weed_plant_t *)lpc[j], WEED_LEAF_VALUE);
         if (xnum > j) {
-          nvalss = weed_get_string_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, &error);
+          nvalss = weed_get_string_array((weed_plant_t *)lpc[j], WEED_LEAF_VALUE, NULL);
           valss[j] = lives_strdup(nvalss[j]);
           for (k = 0; k < xnum; k++) lives_free(nvalss[k]);
           lives_free(nvalss);
@@ -10194,7 +10087,6 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
 
   lives_free(npc);
   lives_free(lpc);
-  lives_free(in_params);
   return TRUE;
 }
 
@@ -10205,30 +10097,26 @@ boolean interpolate_param(weed_plant_t *inst, int i, void *pchain, weed_timecode
   values are calculated for timecode tc. We skip WEED_LEAF_HIDDEN parameters
 */
 boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t tc) {
+  weed_plant_t **in_params;
   void *pchain;
-  int num_params;
-  int offset = 0, error;
-
-  register int i;
+  int num_params, offset = 0;
 
   do {
-    if (!weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS) || pchains == NULL) continue;
-
-    num_params = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
-
-    if (num_params == 0) continue; // no in_parameters ==> do nothing
-
-    for (i = offset; i < offset + num_params; i++) {
+    if (pchains == NULL || (in_params = weed_instance_get_in_params(inst, &num_params)) == NULL) continue;
+    for (int i = offset; i < offset + num_params; i++) {
       if (!is_hidden_param(inst, i - offset)) {
         pchain = pchains[i];
-        if (pchain != NULL && WEED_PLANT_IS_EVENT((weed_plant_t *)pchain) && WEED_EVENT_IS_PARAM_CHANGE((weed_plant_t *)pchain))
-          if (!interpolate_param(inst, i - offset, pchain, tc)) return FALSE; // FALSE if param is not ready
-      }
-    }
-
+        if (pchain != NULL && WEED_PLANT_IS_EVENT((weed_plant_t *)pchain)
+            && WEED_EVENT_IS_PARAM_CHANGE((weed_plant_t *)pchain)) {
+          if (!interpolate_param(in_params[i - offset], pchain, tc)) {
+            lives_free(in_params);
+            return FALSE; // FALSE if param is not ready
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
     offset += num_params;
-  } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-           (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+    lives_free(in_params);
+  } while ((inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)) != NULL);
 
   return TRUE;
 }

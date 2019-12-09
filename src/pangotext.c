@@ -180,7 +180,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
   char *readytext, *testtext = NULL, *newtext = NULL, *tmp, *xx;
   int w = 0, h = 0, pw;
-  int error;
+  weed_error_t error;
   int totlines = 0;
   int whint = 0;
   int slen;
@@ -223,6 +223,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
+    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+    layout = lingo_layout_new(ctx);
     lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h);
 
@@ -254,6 +256,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
         g_print("Testing with:%s:\n", testtext);
 #endif
+        if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+        layout = lingo_layout_new(ctx);
         lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h);
@@ -294,6 +298,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #endif
         if (tmp == NULL) break;
         // check width again, just looking at new part
+        if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+        layout = lingo_layout_new(ctx);
         lingo_layout_set_text(layout, tmp, -1);
         lingo_layout_get_size(layout, &pw, NULL);
         w = pw / LINGO_SCALE;
@@ -479,14 +485,14 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const char *text) {
   lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
   lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
-  int error, size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
+  int size = weed_layer_get_width(layer) / 32;
   const char *font = "Sans";
   boolean fake_gamma = FALSE;
   if (prefs->apply_gamma) {
     // leave as linear gamma maybe
-    if (get_layer_gamma(layer) == WEED_GAMMA_LINEAR) {
+    if (weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
       // stops it getting converted
-      weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
       fake_gamma = TRUE;
     }
   }
@@ -509,10 +515,8 @@ weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const 
 
   LingoLayout *layout;
 
-  int width, height, error;
-
-  width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
-  height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+  int width = weed_layer_get_width(layer);
+  int height = weed_layer_get_height(layer);
 
   // do cairo and pango things
 

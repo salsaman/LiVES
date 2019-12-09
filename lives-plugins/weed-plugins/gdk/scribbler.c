@@ -27,6 +27,7 @@ static int package_version = 2; // version of this package
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <pango/pangocairo.h>
 #include <gdk/gdk.h>
@@ -255,7 +256,6 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
   text = weed_get_string_value(in_params[P_TEXT], WEED_LEAF_VALUE, NULL);
   mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, NULL);
   fontnum = weed_get_int_value(in_params[P_FONT], WEED_LEAF_VALUE, NULL);
-
   fg = (rgb_t *)weed_get_int_array(in_params[P_FOREGROUND], WEED_LEAF_VALUE, NULL);
   bg = (rgb_t *)weed_get_int_array(in_params[P_BACKGROUND], WEED_LEAF_VALUE, NULL);
 
@@ -276,58 +276,60 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
     cairo = channel_to_cairo(in_channel);
 
   if (cairo) {
-    // do cairo and pango things
-    PangoLayout *layout = pango_cairo_create_layout(cairo);
-    if (layout) {
-      PangoFontDescription *font;
-      double x_pos, y_pos;
-      double x_text, y_text;
+    if (text && strlen(text)) {
+      // do cairo and pango things
+      PangoLayout *layout = pango_cairo_create_layout(cairo);
+      if (layout) {
+        PangoFontDescription *font;
+        double x_pos, y_pos;
+        double x_text, y_text;
 
-      font = pango_font_description_new();
-      if ((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
-        pango_font_description_set_family(font, fonts_available[fontnum]);
+        font = pango_font_description_new();
+        if ((num_fonts_available) && (fontnum >= 0) && (fontnum < num_fonts_available) && (fonts_available[fontnum]))
+          pango_font_description_set_family(font, fonts_available[fontnum]);
 
-      pango_font_description_set_size(font, font_size * PANGO_SCALE);
+        pango_font_description_set_size(font, font_size * PANGO_SCALE);
 
-      pango_layout_set_font_description(layout, font);
-      pango_layout_set_text(layout, text, -1);
-      getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
-
-      if (!rise)
-        y_pos = y_text = height * top;
-
-      x_text = x_pos;
-      y_text = y_pos;
-      if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
-      else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
-
-      cairo_move_to(cairo, x_text, y_text);
-
-      switch (mode) {
-      case 1:
-        cairo_set_source_rgba(cairo, (double)bg->red / 255.0, (double)bg->green / 255.0, (double)bg->blue / 255.0, b_alpha);
-        fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-        cairo_move_to(cairo, x_text, y_text);
-        cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
+        pango_layout_set_font_description(layout, font);
         pango_layout_set_text(layout, text, -1);
-        break;
-      case 2:
-        cairo_set_source_rgba(cairo, (double)bg->red / 255.0, (double)bg->green / 255.0, (double)bg->blue / 255.0, b_alpha);
-        fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
-        cairo_move_to(cairo, x_pos, y_pos);
-        cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
-        pango_layout_set_text(layout, "", -1);
-        break;
-      case 0:
-      default:
-        cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
-        break;
+        getxypos(layout, &x_pos, &y_pos, width, height, cent, &dwidth, &dheight);
+
+        if (!rise)
+          y_pos = y_text = height * top;
+
+        x_text = x_pos;
+        y_text = y_pos;
+        if (cent) pango_layout_set_alignment(layout, PANGO_ALIGN_CENTER);
+        else pango_layout_set_alignment(layout, PANGO_ALIGN_LEFT);
+
+        cairo_move_to(cairo, x_text, y_text);
+
+        switch (mode) {
+        case 1:
+          cairo_set_source_rgba(cairo, (double)bg->red / 255.0, (double)bg->green / 255.0, (double)bg->blue / 255.0, b_alpha);
+          fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+          cairo_move_to(cairo, x_text, y_text);
+          cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
+          pango_layout_set_text(layout, text, -1);
+          break;
+        case 2:
+          cairo_set_source_rgba(cairo, (double)bg->red / 255.0, (double)bg->green / 255.0, (double)bg->blue / 255.0, b_alpha);
+          fill_bckg(cairo, x_pos, y_pos, dwidth, dheight);
+          cairo_move_to(cairo, x_pos, y_pos);
+          cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
+          pango_layout_set_text(layout, "", -1);
+          break;
+        case 0:
+        default:
+          cairo_set_source_rgba(cairo, (double)fg->red / 255.0, (double)fg->green / 255.0, (double)fg->blue / 255.0, f_alpha);
+          break;
+        }
+
+        pango_cairo_show_layout(cairo, layout);
+
+        g_object_unref(layout);
+        pango_font_description_free(font);
       }
-
-      pango_cairo_show_layout(cairo, layout);
-
-      g_object_unref(layout);
-      pango_font_description_free(font);
     }
     cairo_to_channel(cairo, out_channel);
     cairo_destroy(cairo);

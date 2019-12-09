@@ -554,7 +554,7 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t
       size_t size = (size_t)leaf->data[idx]->size;
       char **valuecharptrptr = (char **)value;
       if (size > 0) memcpy(*valuecharptrptr, leaf->data[idx]->value.voidptr, size);
-      (*valuecharptrptr)[size] = '\0';
+      (*valuecharptrptr)[size] = 0;
     } else memcpy(value, leaf->data[idx]->value.voidptr, leaf->data[idx]->size);
   }
   return WEED_SUCCESS;

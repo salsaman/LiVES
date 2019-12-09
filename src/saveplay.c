@@ -2298,11 +2298,9 @@ void play_file(void) {
             if (prefs->show_playwin) {
               lives_window_present(LIVES_WINDOW(mainw->play_window));
               lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-            }
-          }
-        }
-      }
-    }
+	      // *INDENT-OFF*
+	    }}}}}
+    // *INDENT-ON*
 
     if (mainw->play_window != NULL) {
       hide_cursor(lives_widget_get_xwindow(mainw->play_window));
@@ -2314,9 +2312,9 @@ void play_file(void) {
       hide_cursor(lives_widget_get_xwindow(mainw->playarea));
     }
 
-    // pwidth and pheight are playback width and height
     if (!mainw->sep_win && !mainw->foreign) {
-      resize(1);
+      if (mainw->double_size) resize(2.);
+      else resize(1);
     }
 
     if (mainw->vpp != NULL && mainw->vpp->fheight > -1 && mainw->vpp->fwidth > -1) {
@@ -3021,7 +3019,8 @@ void play_file(void) {
   if (mainw->size_warn) {
     if (mainw->size_warn > 0 && mainw->files[mainw->size_warn] != NULL) {
       char *smsg = lives_strdup_printf(
-                     _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should click on Tools--->Resize All\nand resize all frames to the current size.\n"),
+                     _("\n\nSome frames in the clip\n%s\nare wrongly sized.\nYou should click on Tools--->Resize All\n"
+                       "and resize all frames to the current size.\n"),
                      mainw->files[mainw->size_warn]->name);
       do_error_dialog(smsg);
       lives_free(smsg);

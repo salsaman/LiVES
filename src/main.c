@@ -598,6 +598,11 @@ static boolean pre_init(void) {
   future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   prefs->gui_monitor = -1;
 
+  if (prefs->vj_mode)
+    capable->has_wmctrl = has_executable(EXEC_WMCTRL);
+  else
+    capable->has_wmctrl = FALSE;
+
   mainw->mgeom = NULL;
 
   prefs->force_single_monitor = get_boolean_pref(PREF_FORCE_SINGLE_MONITOR);
@@ -824,8 +829,10 @@ static boolean pre_init(void) {
 
   mainw->loop = TRUE;
 
-  if (prefs->vj_mode) mainw->loop_cont = TRUE;
-  else mainw->loop_cont = FALSE;
+  if (prefs->vj_mode) {
+    auto_recover = TRUE;
+    mainw->loop_cont = TRUE;
+  } else mainw->loop_cont = FALSE;
 
 #ifdef GUI_GTK
   mainw->target_table = target_table;
@@ -2630,11 +2637,9 @@ capability *get_capabilities(void) {
           lives_free(msg);
           if (numtok > 4 && strlen(array[4])) {
             lives_strappend(capable->startup_msg, 1024, array[4]);
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 
   lives_strfreev(array);
 
@@ -2892,29 +2897,23 @@ static boolean lives_startup(livespointer data) {
     }
   }
 
-  if (prefs->vj_mode) {
-    prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
-    lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
-    auto_recover = TRUE;
-  } else {
-    if (!ign_opts.ign_aplayer) {
-      get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
-      if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
-        prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
-      } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
-        prefs->audio_player = AUD_PLAYER_SOX;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-      } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
-        prefs->audio_player = AUD_PLAYER_JACK;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
-      } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
-        prefs->audio_player = AUD_PLAYER_PULSE;
-        lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
-      }
-    } else {
-      set_string_pref(PREF_AUDIO_PLAYER, prefs->aplayer);
+  if (!ign_opts.ign_aplayer) {
+    get_string_pref(PREF_AUDIO_PLAYER, buff, 256);
+    if (!strcmp(buff, AUDIO_PLAYER_NONE)) {
+      prefs->audio_player = AUD_PLAYER_NONE;  ///< experimental
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_NONE);
+    } else if (!strcmp(buff, AUDIO_PLAYER_SOX)) {
+      prefs->audio_player = AUD_PLAYER_SOX;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
+    } else if (!strcmp(buff, AUDIO_PLAYER_JACK)) {
+      prefs->audio_player = AUD_PLAYER_JACK;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_JACK);
+    } else if (!strcmp(buff, AUDIO_PLAYER_PULSE) || !strcmp(buff, AUDIO_PLAYER_PULSE_AUDIO)) {
+      prefs->audio_player = AUD_PLAYER_PULSE;
+      lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_PULSE);
     }
+  } else {
+    set_string_pref(PREF_AUDIO_PLAYER, prefs->aplayer);
   }
 
 #ifdef HAVE_PULSE_AUDIO
@@ -2935,7 +2934,12 @@ static boolean lives_startup(livespointer data) {
   }
 #endif
 
-  if (!ign_opts.ign_asource) prefs->audio_src = get_int_prefd(PREF_AUDIO_SRC, AUDIO_SRC_INT);
+  if (!ign_opts.ign_asource) {
+    if (prefs->vj_mode)
+      prefs->audio_src = AUDIO_SRC_EXT;
+    else
+      prefs->audio_src = get_int_prefd(PREF_AUDIO_SRC, AUDIO_SRC_INT);
+  }
 
   if (!((prefs->audio_player == AUD_PLAYER_JACK && capable->has_jackd) || (prefs->audio_player == AUD_PLAYER_PULSE &&
         capable->has_pulse_audio)) && prefs->audio_src == AUDIO_SRC_EXT) {
@@ -3219,6 +3223,12 @@ static boolean lives_startup(livespointer data) {
   mainw->go_away = FALSE;
   if (mainw->current_file > -1 && mainw->multitrack == NULL) {
     sensitize();
+  }
+  if (prefs->vj_mode && capable->has_wmctrl) {
+    tmp = lives_strdup_printf("%s -Fa '%s'", EXEC_WMCTRL,
+                              lives_window_get_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)));
+    lives_system(tmp, TRUE);
+    lives_free(tmp);
   }
   return FALSE;
 } // end lives_startup()
@@ -4427,12 +4437,9 @@ void desensitize(void) {
         if (!(mainw->files[i]->menuentry == NULL)) {
           if (!(i == mainw->current_file)) {
             lives_widget_set_sensitive(mainw->files[i]->menuentry, FALSE);
-          }
-        }
-      }
-    }
-  }
-
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 }
 
 
@@ -4514,7 +4521,7 @@ void procw_desensitize(void) {
 }
 
 
-void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *cairo) {
+void set_ce_frame_from_pixbuf(LiVESImage * image, LiVESPixbuf * pixbuf, lives_painter_t *cairo) {
   int rwidth, rheight, width, height, owidth, oheight;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -4734,13 +4741,15 @@ void load_start_image(int frame) {
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
     /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
-    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
+    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->start_image);
     rheight = lives_widget_get_allocation_height(mainw->start_image);
 #endif
     calc_maxspect(rwidth, rheight, &width, &height);
+    width = (width >> 2) << 2;
+    height = (height >> 2) << 2;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
@@ -4936,14 +4945,15 @@ void load_end_image(int frame) {
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
     /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
-    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 3;
+    rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
     rwidth = lives_widget_get_allocation_width(mainw->end_image);
     rheight = lives_widget_get_allocation_height(mainw->end_image);
 #endif
-
     calc_maxspect(rwidth, rheight, &width, &height);
+    width = (width >> 2) << 2;
+    height = (height >> 2) << 2;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
@@ -5181,7 +5191,7 @@ static void png_row_callback(png_structp png_ptr,
 #ifndef NO_PROG_LOAD
 
 #ifdef GUI_GTK
-static void pbsize_set(GdkPixbufLoader *pbload, int width, int height, livespointer ptr) {
+static void pbsize_set(GdkPixbufLoader * pbload, int width, int height, livespointer ptr) {
   if (xxwidth * xxheight > 0) gdk_pixbuf_loader_set_size(pbload, xxwidth, xxheight);
 }
 #endif
@@ -5189,7 +5199,7 @@ static void pbsize_set(GdkPixbufLoader *pbload, int width, int height, livespoin
 #endif
 
 #ifdef USE_LIBPNG
-boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
+boolean layer_from_png(FILE * fp, weed_plant_t *layer, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
 
@@ -5352,7 +5362,7 @@ boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog) {
 }
 
 
-boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp) {
+boolean save_to_png(FILE * fp, weed_plant_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)
   png_structp png_ptr;
   png_infop info_ptr;
@@ -6122,13 +6132,6 @@ static void get_player_size(int *opwidth, int *opheight) {
     /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
     int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
-    if (mainw->double_size) {
-      // NB:
-      /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
-      /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
-      /* rwidth = mainw->ce_frame_width * 4 - H_RESIZE_ADJUST * 2; */
-      /* rheight = mainw->ce_frame_height * 4 - V_RESIZE_ADJUST * 8; */
-    }
 
     if (mainw->double_size && !mainw->fs) {
       // ce_frame_* was set to half for the first / last frames
@@ -6801,7 +6804,7 @@ void load_frame_image(int frame) {
 
     if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL) &&
         !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) && !(mainw->multitrack != NULL && cfile->opening)) {
-      boolean size_ok = TRUE;//FALSE;  -- TODO
+      boolean size_ok = FALSE;//  -- TODO
       if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) {
         size_ok = TRUE;
       } else {

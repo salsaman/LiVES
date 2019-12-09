@@ -1684,7 +1684,8 @@ void create_LiVES(void) {
 #endif
 
   if (mainw->int_audio_checkbutton == NULL) mainw->int_audio_checkbutton = lives_toggle_tool_button_new();
-  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton), prefs->audio_src == AUDIO_SRC_INT);
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->int_audio_checkbutton),
+                                      prefs->audio_src == AUDIO_SRC_INT);
 
   mainw->int_audio_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->int_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_audio_toggled),
@@ -1717,7 +1718,8 @@ void create_LiVES(void) {
   }
 #endif
 
-  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton), prefs->audio_src == AUDIO_SRC_EXT);
+  lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_checkbutton),
+                                      prefs->audio_src == AUDIO_SRC_EXT);
 
   mainw->ext_audio_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->ext_audio_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
                           LIVES_GUI_CALLBACK(on_audio_toggled),
@@ -4702,7 +4704,6 @@ void splash_init(void) {
     if (widget_opts.screen != NULL) lives_window_set_screen(LIVES_WINDOW(mainw->splash_window), widget_opts.screen);
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
-
     lives_window_present(LIVES_WINDOW(mainw->splash_window));
 
     lives_widget_context_update();

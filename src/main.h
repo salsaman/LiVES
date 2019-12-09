@@ -813,6 +813,7 @@ typedef struct {
   boolean has_gdb;
   boolean has_gconftool_2;
   boolean has_xdg_screensaver;
+  boolean has_wmctrl;
   boolean has_ssh_askpass;
   boolean has_youtube_dl;
 

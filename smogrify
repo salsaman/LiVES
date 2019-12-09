@@ -1582,6 +1582,10 @@ if (defined($ARGV[0])) {
                         $trimcom .= " 10000000";
                     }
 
+		    ## get_sox_format -
+		    ## call get_sox_signed with guessed format (u for 8, s for 16)
+		    ## returns signed e.g -e signed
+
 		    $xsigned = &get_sox_signed($signed);
 
                     if ($aendian == $endian) {
@@ -1611,6 +1615,14 @@ if (defined($ARGV[0])) {
 
                     $sox_version = &get_sox_version;
 		    $stype = &get_sox_samps($asamps);
+
+		    ## TODO0
+		    if ($sox_version < 13000000) {
+			$nodither = "";
+		    }
+		    else {
+			$nodither = "-D";
+		    }
 
 		    $syscom2 = "$audio_play_command $mute -c $achans -r $arate -$xsigned $aendian -t $aformat -$stype " .
 			"$audiofile $trimcom $audio_effect";
@@ -3316,6 +3328,8 @@ if (defined($ARGV[0])) {
 
 	    $audiofile = "audio";
 
+	    ## mp3 / ogg try specific openers, if fail, call othera open. which tries with mplayer
+	    ## all create pcm wav @ $audio_in. wav_open just copies
 	    if ($type eq "mp3") {
 		&mp3_open;
 	    }
@@ -3323,6 +3337,9 @@ if (defined($ARGV[0])) {
 		&ogg_open;
 	    }
 	    elsif($type eq "wav") {
+		## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian if ! signed, endian, copies $file to $audio_in
+		## does no actual conv.
+		## sets f_size
 		&wav_open;
 	    }
 	    else {
@@ -4045,6 +4062,9 @@ if (defined($ARGV[0])) {
 		&ogg_open;
 	    }
 	    elsif($ext eq ".wav") {
+		## sets $arate, $achans, $asamps to defaults ifndef, sets asigned, aendian if ! signed, endian, copies $file to $audio_in
+		## does no actual conv.
+		## sets f_size
 		&wav_open;
 	    }
 	    else {
@@ -4674,9 +4694,9 @@ sub get_sox_signed {
 sub get_sox_format {
     my $asamps = shift;
     if ($asamps == 8) {
-	return get_sox_signed(0);
+	return &get_sox_signed(0);
     } else {
-	return get_sox_signed(1);
+	return &get_sox_signed(1);
     }
 }
 
@@ -6376,16 +6396,36 @@ sub get_file_info {
 
 sub convert_audio_to_raw {
     #convert .wav to raw pcm using sox or mplayer
+    ## NEEDS $arate, $asamps, $achans, $audio_in, $audio_out ($nodither, $signed, $endian)
+    ## for sox needs sox_version
+
     #TODO: my ($arate, ...) = @_;
     my $smcom;
 
     if (&location("sox") ne "") {
-        if (!defined($asigned)) {
-	    $asigned = &get_sox_format($asamps);
+        if (!defined($sox_version)) {
+            $sox_version = &get_sox_version;
         }
+        if (!defined($axsigned)) {
+	    ## call get_sox_signed with guessed format (u for 8, s for 16)
+	    ## returns signed e.g -e signed
+	    $axsigned = &get_sox_format($asamps);
+        }
+	if (!$axsamps) {
+	    ## returns eg -b 16
+	    $axsamps = &get_sox_samps($asamps);
+	}
+
+	## only needed for resampling I think
+	if ($sox_version < 13000000) {
+	    $nodither = "";
+	}
+	else {
+	    $nodither = "-D";
+	}
 
 	$smcom = "sox $nodither -t .wav  \"$audio_in\" -t .raw -r $arate " .
-	    "-c $achans $asigned -$asamps \"$audio_out\" >$nulfile 2>&1";
+	    "-c $achans $axsigned $axsamps \"$audio_out\" >$nulfile 2>&1";
 	if ($DEBUG_SMOGRIFY) {
 	    print STDERR "COM is $smcom\n";
 	}
@@ -6475,14 +6515,26 @@ sub convert_audio_to_wav {
         }
 
         if (!defined($asigned)) {
+	    ## call get_sox_signed with guessed format (u for 8, s for 16)
+	    ## returns signed e.g -e signed
 	    $asigned = &get_sox_format($asamps);
         }
 
         if (!defined($nsigned)) {
+	    ## call get_sox_signed with guessed format (u for 8, s for 16)
+	    ## returns signed e.g -e signed
 	    $nsigned = &get_sox_format($nasamps);
         }
 
 	$nnasamps = &get_sox_samps($nasamps);
+
+	## only needed for resampling I think
+	if ($sox_version < 13000000) {
+	    $nodither = "";
+	}
+	else {
+	    $nodither = "-D";
+	}
 
 	$smcom="sox $nodither -t .raw -r $arate $asigned -$sasamps -c $achans \"$audio_in\" -t .wav -r $nrate " .
 	    "-c $nchans $nsigned -$nnasamps \"$curworkdir/audiodump.wav\" >$nulfile 2>&1";

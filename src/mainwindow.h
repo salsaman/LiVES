@@ -375,6 +375,7 @@ enum {
 #define EXEC_MIDISTOP "midistop"
 #define EXEC_AUTOLIVES_PL "autolives.pl"
 #define EXEC_MD5SUM "md5sum"
+#define EXEC_WMCTRL "wmctrl"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"

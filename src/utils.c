@@ -902,7 +902,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   if (time_source != NULL && *time_source == LIVES_TIME_SOURCE_EXTERNAL) *time_source = LIVES_TIME_SOURCE_NONE;
 
-  if (mainw->foreign || prefs->force_system_clock) {
+  if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
     if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
     return lives_get_relative_ticks(origsecs, origusecs);
   }

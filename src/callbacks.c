@@ -6979,6 +6979,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           mainw->opwy = -1;
         } else {
           if (mainw->play_window != NULL) {
+            lives_window_center(LIVES_WINDOW(mainw->play_window));
             hide_cursor(lives_widget_get_xwindow(mainw->play_window));
             lives_widget_set_app_paintable(mainw->play_window, TRUE);
           }
@@ -7085,7 +7086,9 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->t_double), sngl_img);
   }
 
-  if (!LIVES_IS_PLAYING || !mainw->fs) {
+  mainw->opwx = mainw->opwy = -1;
+
+  if ((LIVES_IS_PLAYING && !mainw->fs) || (!LIVES_IS_PLAYING && mainw->play_window != NULL)) {
     // needed
     block_expose();
     do {
@@ -9571,16 +9574,15 @@ void on_preview_clicked(LiVESButton *button, livespointer user_data) {
 void vj_mode_toggled(LiVESCheckMenuItem *menuitem, livespointer user_data) {
   if (lives_check_menu_item_get_active(menuitem) && (prefs->warning_mask & WARN_MASK_VJMODE_ENTER) == 0) {
     if (!(do_yesno_dialog_with_check(_("VJ Mode is specifically designed to make LiVES ready for realtime presentation.\n"
-                                       "WARNING - this is an experimental feature, use it at your own risk !\n\n"
                                        "Enabling VJ restart will have the following effects:\n"
-                                       "\n\n - On startup, Internal audio will be completely disabled, (as well as external, - for now)\n"
-                                       "Clips willl reload without audio (althought the audio files will remain on the disk).\n"
-                                       "Additionally, on startup,  the audio player wiil be set to \"none\" (it can still be changed in Preferences)\n"
-                                       "Setting the audio player to this value  will in turn force LiVES to use the system clock for frame timings\n"
+                                       "\n\n - On startup, audio source will be set to external (BUG: it may not appear so in the gui)\n"
+                                       "Clips willl reload without audio (although the audio files will remain on the disk).\n"
+                                       "Additionally, when playing external audio, iVES to use the system clock for frame timings\n"
                                        "(rather than the soundcard) which may allow for slighly smoother playback.\n"
                                        "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected during the reload.)\n\n"
-                                       "Startup  will be almost instantaeneous, however in the rare occurance of corruption to\n"
+                                       "Startup  will be almost instantaneous, however in the rare occurance of corruption to\n"
                                        "           a clip audio file, this will not be detected, as the file will not be loaded.\n"
+                                       "\nOn startup, LiVES will grab the keyboard and screen focus if it can,\n"
                                        "\n - Shutdown will be slightly more rapid as no cleanup of the working directory will be attempted\n"
                                        "\n - Rendered effects will not be loaded, which willl further reduce the startup time.\n"
                                        "(Realtime effects will still be loaded as usual)\n"

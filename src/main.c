@@ -8156,7 +8156,8 @@ void load_frame_image(int frame) {
         lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
 
         if (mainw->play_window == NULL && mainw->double_size) {
-          frame_size_update();
+          //frame_size_update();
+          resize(2.);
         } else resize(1);
       }
     } else resize(1);
@@ -8228,22 +8229,6 @@ void load_frame_image(int frame) {
       vsize = (scr_height - V_RESIZE_ADJUST - by) / scale;
     }
 
-    /* if (!CURRENT_CLIP_IS_VALID || cfile->hsize == 0) { */
-    /*   hsize = mainw->def_width - H_RESIZE_ADJUST; */
-    /* } else { */
-    /*   if (cfile->hsize < hsize) { */
-    /*     hsize = cfile->hsize; */
-    /*   } */
-    /* } */
-
-    /* if (!CURRENT_CLIP_IS_VALID || cfile->vsize == 0) { */
-    /*   vsize = mainw->def_height - V_RESIZE_ADJUST; */
-    /* } else { */
-    /*   if (cfile->hsize > 0 && (cfile->vsize * hsize / cfile->hsize < vsize)) { */
-    /*     vsize = cfile->vsize * hsize / cfile->hsize; */
-    /*   } */
-    /* } */
-
     mainw->ce_frame_width = hsize;
     mainw->ce_frame_height = vsize;
 
@@ -8297,6 +8282,10 @@ void load_frame_image(int frame) {
       lives_widget_set_size_request(mainw->end_image, mainw->ce_frame_width, mainw->ce_frame_height);
 
       // use unscaled size in dblsize
+      if (scale > 1.) {
+        hsize *= scale;
+        vsize *= scale;
+      }
       lives_widget_set_size_request(mainw->playframe, hsize, vsize);
       lives_widget_set_size_request(mainw->pl_eventbox, hsize, vsize);
       lives_widget_set_size_request(mainw->playarea, hsize, vsize);
@@ -8327,13 +8316,6 @@ void load_frame_image(int frame) {
     }
 
     if (!mainw->foreign && mainw->current_file == -1) {
-      /* // mostly needs overriding in load_start/end_image() */
-      /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
-      /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 2.; */
-      /* lives_widget_set_size_request(mainw->frame1, vsize, hsize); */
-      /* lives_widget_set_size_request(mainw->eventbox3, vsize, hsize); */
-      /* lives_widget_set_size_request(mainw->frame2, vsize, hsize); */
-      /* lives_widget_set_size_request(mainw->eventbox4, vsize, hsize); */
       lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), TRUE);
       load_start_image(0);
       load_end_image(0);

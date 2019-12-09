@@ -6001,7 +6001,7 @@ void switch_clip(int type, int newclip, boolean force) {
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
     // switch bg clip
     if (newclip != mainw->blend_file) {
-      if (mainw->blend_file != -1 && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
+      if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
           mainw->blend_file != mainw->current_file) {
         weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
         if (inst != NULL) {

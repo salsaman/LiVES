@@ -6252,69 +6252,72 @@ boolean weed_init_effect(int hotkey) {
   // TODO - block template channel changes
   // we must stop any old generators
 
-  if (!all_out_alpha && is_gen && outc_count > 0 && hotkey != fg_generator_key && mainw->num_tr_applied > 0 &&
-      mainw->blend_file != -1 &&
-      mainw->blend_file != mainw->current_file &&
-      mainw->files[mainw->blend_file] != NULL &&
-      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
-      !is_audio_gen) {
-    /////////////////////////////////////// if blend_file is a generator we should finish it
-    if (bg_gen_to_start == -1) {
-      weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+    if (!all_out_alpha && is_gen && outc_count > 0 && hotkey != fg_generator_key && mainw->num_tr_applied > 0 &&
+        mainw->blend_file != -1 &&
+        mainw->blend_file != mainw->current_file &&
+        mainw->files[mainw->blend_file] != NULL &&
+        mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
+        !is_audio_gen) {
+      /////////////////////////////////////// if blend_file is a generator we should finish it
+      if (bg_gen_to_start == -1) {
+        weed_generator_end((weed_plant_t *)mainw->files[mainw->blend_file]->ext_src);
+      }
+
+      bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
+      mainw->blend_file = -1;
     }
 
-    bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
-    mainw->blend_file = -1;
-  }
-
-  if (mainw->current_file > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR &&
-      (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
-    if (mainw->noswitch || mainw->is_processing || mainw->preview) {
-      mainw->error = TRUE;
-      filter_mutex_unlock(hotkey);
-      return FALSE; // stopping fg gen will cause clip to switch
-    }
-    if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && !is_gen) {
-      // stop on vid end, and the playing generator stopped
-      mainw->cancelled = CANCEL_GENERATOR_END;
-    } else {
-      if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
-      //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
-      weed_generator_end((weed_plant_t *)cfile->ext_src);
-      fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
-      if (mainw->current_file > -1 && (cfile->achans == 0 || cfile->frames > 0)) {
-        // in case we switched to bg clip, and bg clip was gen
-        // otherwise we will get killed in generator_start
-        mainw->current_file = -1;
+    if (mainw->current_file > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR &&
+        (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
+      if (mainw->noswitch || mainw->is_processing || mainw->preview) {
+        mainw->error = TRUE;
+        filter_mutex_unlock(hotkey);
+        return FALSE; // stopping fg gen will cause clip to switch
+      }
+      if (LIVES_IS_PLAYING && mainw->whentostop == STOP_ON_VID_END && !is_gen) {
+        // stop on vid end, and the playing generator stopped
+        mainw->cancelled = CANCEL_GENERATOR_END;
+      } else {
+        if (is_gen && mainw->whentostop == STOP_ON_VID_END) mainw->whentostop = NEVER_STOP;
+        //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
+        weed_generator_end((weed_plant_t *)cfile->ext_src);
+        fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
+        if (mainw->current_file > -1 && (cfile->achans == 0 || cfile->frames > 0)) {
+          // in case we switched to bg clip, and bg clip was gen
+          // otherwise we will get killed in generator_start
+          mainw->current_file = -1;
+        }
       }
     }
   }
 
-  if (inc_count == 2) {
-    mainw->num_tr_applied++; // increase trans count
-    if (mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) {
-      mainw->active_sa_clips = SCREEN_AREA_BACKGROUND;
-    }
-    if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
-    if (mainw->num_tr_applied == 1 && !is_modeswitch) {
-      mainw->blend_file = mainw->current_file;
-    }
-  } else if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
-    // aha - a generator
-    if (!LIVES_IS_PLAYING) {
-      // if we are not playing, we will postpone creating the instance
-      // this is a workaround for a problem in libvisual
-      fg_gen_to_start = hotkey;
-      fg_generator_key = hotkey;
-      fg_generator_mode = key_modes[hotkey];
-      gen_start = TRUE;
-    } else if (!fg_modeswitch && mainw->num_tr_applied == 0 && (mainw->noswitch || mainw->is_processing || mainw->preview))  {
-      mainw->error = TRUE;
-      filter_mutex_unlock(hotkey);
-      return FALSE;
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+    if (inc_count == 2) {
+      mainw->num_tr_applied++; // increase trans count
+      if (mainw->active_sa_clips == SCREEN_AREA_FOREGROUND) {
+        mainw->active_sa_clips = SCREEN_AREA_BACKGROUND;
+      }
+      if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_BACKGROUND);
+      if (mainw->num_tr_applied == 1 && !is_modeswitch) {
+        mainw->blend_file = mainw->current_file;
+      }
+    } else if (is_gen && outc_count > 0 && !is_audio_gen && !all_out_alpha) {
+      // aha - a generator
+      if (!LIVES_IS_PLAYING) {
+        // if we are not playing, we will postpone creating the instance
+        // this is a workaround for a problem in libvisual
+        fg_gen_to_start = hotkey;
+        fg_generator_key = hotkey;
+        fg_generator_mode = key_modes[hotkey];
+        gen_start = TRUE;
+      } else if (!fg_modeswitch && mainw->num_tr_applied == 0 && (mainw->noswitch || mainw->is_processing || mainw->preview))  {
+        mainw->error = TRUE;
+        filter_mutex_unlock(hotkey);
+        return FALSE;
+      }
     }
   }
-
   // TODO - unblock template channel changes
 
   // if the param window is already open, use instance from there
@@ -6390,17 +6393,18 @@ deinit2:
 
         inst = new_instance;
 
-        if (is_trans) {
-          // TODO: - do we need this ? is_trans is always FALSE !
-          mainw->num_tr_applied--;
-          if (mainw->num_tr_applied == 0) {
-            if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
-            if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-              mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
+        if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+          if (is_trans) {
+            // TODO: - do we need this ? is_trans is always FALSE !
+            mainw->num_tr_applied--;
+            if (mainw->num_tr_applied == 0) {
+              if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
+              if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+                mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
+              }
             }
           }
         }
-
         weed_instance_unref(inst);
         lives_chdir(cwd, FALSE);
         lives_free(cwd);
@@ -6774,9 +6778,19 @@ boolean weed_deinit_effect(int hotkey) {
             mainw->cancelled = CANCEL_AUD_END;
           } else {
 #ifdef HAVE_PULSE_AUDIO
-            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
-                && prefs->audio_player == AUD_PLAYER_PULSE) {
-              pulse_get_rec_avals(mainw->pulsed);
+            if (prefs->audio_player == AUD_PLAYER_PULSE) {
+              if (mainw->pulsed != NULL) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
+              if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+                pulse_get_rec_avals(mainw->pulsed);
+              }
+            }
+#endif
+#ifdef ENABLE_JACK
+            if (prefs->audio_player == AUD_PLAYER_JACK) {
+              if (mainw->jackd != NULL) mainw->jackd->playing_file = mainw->pre_src_audio_file;
+              if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+                jack_get_rec_avals(mainw->jackd);
+              }
             }
 #endif
 	    // *INDENT-OFF*
@@ -6793,21 +6807,22 @@ boolean weed_deinit_effect(int hotkey) {
     needs_unlock = -1;
   }
 
-  if (mainw->whentostop == STOP_ON_VID_END && mainw->current_file > -1 &&
-      (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
-                              < MAX(cfile->laudio_time, cfile->raudio_time)))) mainw->whentostop = STOP_ON_AUD_END;
+  if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+    if (mainw->whentostop == STOP_ON_VID_END && mainw->current_file > -1 &&
+        (cfile->frames == 0 || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
+                                < MAX(cfile->laudio_time, cfile->raudio_time)))) mainw->whentostop = STOP_ON_AUD_END;
 
-  if (num_in_chans == 2) {
-    was_transition = TRUE;
-    mainw->num_tr_applied--;
-    if (mainw->num_tr_applied == 0) {
-      if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
-      if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-        mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
+    if (num_in_chans == 2) {
+      was_transition = TRUE;
+      mainw->num_tr_applied--;
+      if (mainw->num_tr_applied == 0) {
+        if (mainw->ce_thumbs) ce_thumbs_liberate_clip_area_register(SCREEN_AREA_FOREGROUND);
+        if (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+          mainw->active_sa_clips = SCREEN_AREA_FOREGROUND;
+        }
       }
     }
   }
-
   inst = instance;
 
 deinit3:

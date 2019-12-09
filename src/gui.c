@@ -4439,13 +4439,13 @@ void kill_play_window(void) {
     width and height fit */
 void get_letterbox_sizes(weed_layer_t *frame_layer, int *pwidth, int *pheight, int *lb_width, int *lb_height) {
   int layer_palette = weed_layer_get_palette(frame_layer);
-
-  *pwidth = *lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
-  *pheight = *lb_height = weed_layer_get_height(frame_layer);
+  double frame_aspect, player_aspect;
 
   if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-    double frame_aspect = (double) * lb_width / (double) * lb_height;
-    double player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
+    *pwidth = *lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
+    *pheight = *lb_height = weed_layer_get_height(frame_layer);
+    frame_aspect = (double) * lb_width / (double) * lb_height;
+    player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
     // *pwidth, *pheight are the outer dimensions, *lb_width, *lb_height are inner, widths are in pixels
     if (frame_aspect > player_aspect) {
       // width is relatively larger, so the height will need padding
@@ -4476,6 +4476,10 @@ void get_letterbox_sizes(weed_layer_t *frame_layer, int *pwidth, int *pheight, i
     calc_maxspect(mainw->pwidth, mainw->pheight, lb_width, lb_height);
     *pwidth = (*pwidth >> 2) << 2;
     *pheight = (*pheight >> 2) << 2;
+    *lb_width = ((*lb_width + 3) >> 2) << 2;
+    if (lb_width > pwidth) lb_width = pwidth;
+    *lb_height = ((*lb_height + 3) >> 2) << 2;
+    if (lb_height > pheight) lb_height = pheight;
   }
 }
 

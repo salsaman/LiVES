@@ -3332,21 +3332,14 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
   if (mainw->frame_layer != NULL) {
     LiVESPixbuf *pixbuf = NULL;
+    int pwidth, pheight, lb_width, lb_height;
 
-    /* if ((mt->play_width != (weed_layer_get_width(mainw->frame_layer)) || */
-    /*      mt->play_height != weed_layer_get_height(mainw->frame_layer))) */
-    /*   resize_layer(mainw->frame_layer, */
-    /*                mt->play_width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)), */
-    /*                mt->play_height, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0); */
+    pwidth = cfile->hsize;
+    pheight = cfile->vsize;
+    calc_maxspect(mt->play_width, mt->play_height, &pwidth, &pheight);
+    lb_width = pwidth;
+    lb_height = pheight;
 
-    set_mt_play_sizes(mt, cfile->hsize, cfile->vsize, FALSE);
-
-    int pwidth = mt->play_width;
-    int pheight = mt->play_height;
-    int lb_width = weed_layer_get_width(mainw->frame_layer);
-    int lb_height = weed_layer_get_height(mainw->frame_layer);
-
-    get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
     letterbox_layer(mainw->frame_layer, lb_width, lb_height, pwidth, pheight, LIVES_INTERP_BEST,
                     WEED_PALETTE_RGB24, 0);
 
@@ -8121,7 +8114,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   widget_opts.expand = LIVES_EXPAND_DEFAULT_HEIGHT;
 
   mt->insa_checkbutton = lives_glowing_check_button_new((tmp = lives_strdup(_("  Insert with _Audio  "))), LIVES_BOX(hbox),
-                         (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))), &mt->opts.insert_audio);
+                         (tmp2 = lives_strdup(_("Select whether video clips are inserted and moved with their audio or not"))),
+                         &mt->opts.insert_audio);
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -8178,7 +8172,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->grav_menuitem = LIVES_WIDGET(lives_standard_menu_tool_button_new(NULL, NULL));
   lives_tool_button_set_use_underline(LIVES_TOOL_BUTTON(mt->grav_menuitem), TRUE);
 
-  mt->grav_normal = lives_standard_check_menu_item_new_with_label(_("Gravity: _Normal"), mt->opts.grav_mode == GRAV_MODE_NORMAL);
+  mt->grav_normal = lives_standard_check_menu_item_new_with_label(_("Gravity: _Normal"),
+                    mt->opts.grav_mode == GRAV_MODE_NORMAL);
   mtext = lives_menu_item_get_text(mt->grav_normal);
 
   mt->grav_label = lives_label_new(mtext);

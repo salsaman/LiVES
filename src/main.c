@@ -5722,11 +5722,9 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
                 if (!(*dplug->decoder->set_palette)(dplug->cdata)) {
                   dplug->cdata->current_palette = oldpal;
                   (*dplug->decoder->set_palette)(dplug->cdata);
-                }
-              }
-            }
-          }
-        }
+		  // *INDENT-OFF*
+                }}}}}
+	// *INDENT-ON*
 
         // TODO *** - check for auto-border : we might use width,height instead of frame_width,frame_height, and handle this in the plugin
 
@@ -5776,7 +5774,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 
         lives_free(pixel_data);
         lives_free(rowstrides);
-
         if (res) {
           if (prefs->apply_gamma && prefs->btgamma) {
             if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
@@ -5791,10 +5788,10 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
             weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, dplug->cdata->YUV_sampling);
             weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, dplug->cdata->YUV_clamping);
             weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
-            if (prefs->apply_gamma && prefs->btgamma
-                && weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
-              weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
-            }
+            /* if (prefs->apply_gamma && prefs->btgamma */
+            /*     && weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) { */
+            /*   weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709); */
+            /* } */
           }
           // deinterlace
           if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
@@ -5816,7 +5813,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         }
         lives_free(fname);
 
-        // yes, since we created the images oursselves they should actually be in the gamma of the clip
+        // yes, since we created the images ourselves they should actually be in the gamma of the clip
         weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, sfile->gamma_type);
 
 #ifdef HAVE_POSIX_FADVISE
@@ -7181,6 +7178,8 @@ void load_frame_image(int frame) {
 
     if (mainw->multitrack != NULL || prefs->letterbox) {
       /// letterbox internal
+      lb_width = cfile->hsize;
+      lb_height = cfile->vsize;
       get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
       if (pwidth != lb_width || pheight != lb_height) {
         convert_layer_palette(mainw->frame_layer, cpal, 0);
@@ -7196,7 +7195,6 @@ void load_frame_image(int frame) {
       resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                    mainw->pheight, interp, cpal, 0);
     }
-
     convert_layer_palette(mainw->frame_layer, cpal, 0);
     gamma_convert_layer(cfile->gamma_type, mainw->frame_layer);
 

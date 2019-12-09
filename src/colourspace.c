@@ -7993,6 +7993,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new_for_frame(int clip, int frame) 
   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
   weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
+  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
   return layer;
 }
 
@@ -10145,13 +10146,12 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
   boolean cheat = FALSE, done;
 
   weed_error_t error;
-  int palette;
+  int palette, xpalette;
   int width;
   int height;
   int irowstride;
   int rowstride, orowstride;
   int n_channels;
-  int gamma_type;
 
   if (layer == NULL) return NULL;
 
@@ -10165,21 +10165,24 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
     return pixbuf;
   }
 
-  if (realpalette) {
-    // force conversion to RGB24 or RGBA32 (+ gamma)
-    palette = WEED_PALETTE_END;
-  }
-
   // otherwise we need to steal or copy the pixel_data
 
   do {
     width = weed_layer_get_width(layer);
     height = weed_layer_get_height(layer);
     irowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-
     pixel_data = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
     done = TRUE;
-    switch (palette) {
+    xpalette = palette;
+    if (realpalette) {
+      if (!weed_palette_is_pixbuf_palette(palette)) {
+        // force conversion to RGB24 or RGBA32
+        xpalette = WEED_PALETTE_END;
+      } else {
+        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+      }
+    }
+    switch (xpalette) {
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
     case WEED_PALETTE_YUV888:
@@ -10225,8 +10228,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
         if (!convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) return NULL;
         palette = WEED_PALETTE_RGB24;
       }
-      gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
-      if (gamma_type != WEED_GAMMA_UNKNOWN) gamma_convert_layer(gamma_type, layer);
       done = FALSE;
     }
   } while (!done);

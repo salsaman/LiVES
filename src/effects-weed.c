@@ -2499,7 +2499,7 @@ done_video:
 
   for (i = 0; i < num_in_tracks; i++) {
     weed_plant_t *dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
-    if (dupe != NULL) weed_set_voidptr_value(dupe, WEED_LEAF_PIXEL_DATA, NULL);
+    if (dupe != NULL) weed_layer_nullify_pixel_data(dupe);
     weed_layer_free(dupe);
   }
 

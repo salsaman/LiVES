@@ -5887,7 +5887,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       }
       vlayer = weed_layer_create_from_generator(inst, tc, clip);
       weed_layer_copy(layer, vlayer); // layer is non-NULL, so copy by reference
-      weed_set_voidptr_value(vlayer, WEED_LEAF_PIXEL_DATA, NULL);
+      weed_layer_nullify_pixel_data(vlayer);
       filter_mutex_unlock(key);
     } else {
       mainw->osc_block = FALSE;

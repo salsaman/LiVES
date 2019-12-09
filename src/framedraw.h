@@ -18,6 +18,8 @@
 
 #define CROSSHAIR_SIZE 8 ///< pixel size for crosshair "arms"
 
+#define DEF_MASK_OPACITY .5
+
 /// call this to add framedraw widget to an hbox
 void widget_add_framedraw(LiVESVBox *, int start, int end, boolean add_preview_button, int width, int height, lives_rfx_t *);
 

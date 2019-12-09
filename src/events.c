@@ -3569,7 +3569,7 @@ lives_render_error_t render_events(boolean reset) {
             for (i = 0; i < num_tracks; i++) {
               if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack != NULL) is_blank = FALSE;
               layers[i] = weed_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
-              weed_set_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL);
+              weed_layer_nullify_pixel_data(layers[i]);
 
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {
                 // now using threading, we want to start pulling all pixel_data for all active layers here

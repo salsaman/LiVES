@@ -292,7 +292,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
   lives_box_pack_start(LIVES_BOX(vbox), mainw->framedraw_maskbox, FALSE, FALSE, widget_opts.packing_height);
   label = lives_standard_label_new(_("Mask: opacity"));
   lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), label, FALSE, FALSE, widget_opts.packing_width);
-  spinbutton_adj = lives_adjustment_new(0.25, 0.0, 1.0, 0.1, 0.1, 0);
+  spinbutton_adj = lives_adjustment_new(DEF_MASK_OPACITY, 0.0, 1.0, 0.1, 0.1, 0);
   mainw->framedraw_opscale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
   lives_box_pack_start(LIVES_BOX(mainw->framedraw_maskbox), mainw->framedraw_opscale, TRUE, TRUE, 0);
   opcol = lives_rgba_col_new(0, 0, 0, 65535);
@@ -362,13 +362,9 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   if (framedraw->rfx->source_type == LIVES_RFX_SOURCE_RFX)
     if (noupdate) return NULL; // static volatile
 
-  if (mainw->multitrack == NULL) {
-    fd_width = lives_widget_get_allocation_width(mainw->framedraw);
-    fd_height = lives_widget_get_allocation_height(mainw->framedraw);
-  } else {
-    fd_width = lives_widget_get_allocation_width(mainw->play_image);
-    fd_height = lives_widget_get_allocation_height(mainw->play_image);
-  }
+  fd_width = lives_widget_get_allocation_width(mainw->framedraw);
+  fd_height = lives_widget_get_allocation_height(mainw->framedraw);
+
   if (fd_width < 4 || fd_height < 4) return NULL;
 
   width = cfile->hsize;
@@ -413,7 +409,8 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   mainw->fd_layer = weed_layer_copy(NULL, layer);
 
   // resize to correct size
-  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST, capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
+  resize_layer(mainw->fd_layer, width, height, LIVES_INTERP_BEST,
+               capable->byte_order == LIVES_BIG_ENDIAN ? WEED_PALETTE_ARGB32 :
                WEED_PALETTE_BGRA32, 0);
 
   cr = layer_to_lives_painter(mainw->fd_layer);
@@ -542,20 +539,22 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
     convert_layer_palette(mainw->fd_layer, palette, 0);
     gamma_convert_layer(cfile->gamma_type, mainw->fd_layer);
     pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE);
+    weed_layer_nullify_pixel_data(mainw->fd_layer);
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;
+    if (pixbuf != NULL) {
 #if GTK_CHECK_VERSION(3, 0, 0)
-    if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
-      if (mainw->multitrack->frame_pixbuf != NULL) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
-    }
-    // set frame_pixbuf, this gets painted in in expose_event
-    mainw->multitrack->frame_pixbuf = pixbuf;
+      if (mainw->multitrack->frame_pixbuf != mainw->imframe) {
+        if (mainw->multitrack->frame_pixbuf != NULL) lives_widget_object_unref(mainw->multitrack->frame_pixbuf);
+      }
+      // set frame_pixbuf, this gets painted in in expose_event
+      mainw->multitrack->frame_pixbuf = pixbuf;
 #else
-    set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
+      set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
 #endif
-    lives_widget_queue_draw(mainw->multitrack->play_box);
+      lives_widget_queue_draw(mainw->multitrack->play_box);
+    }
   }
-
   // update the widget
   return mainw->fd_layer;
 }

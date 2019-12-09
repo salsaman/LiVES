@@ -688,7 +688,7 @@ int weed_leaf_elements_equate(weed_plant_t *p0, const char *k0, weed_plant_t *p1
   st = weed_leaf_seed_type(p0, k0);
   if (st == WEED_SEED_INVALID || st != weed_leaf_seed_type(p1, k1)) return WEED_FALSE;
   if (st != WEED_SEED_STRING) {
-    char **m0 = NULL, **m1 = NULL;
+    char *m0 = NULL, *m1 = NULL;
     weed_size_t sz = weed_leaf_element_size(p0, k0, 0);
     m0 = weed_get_array(p0, k0, st, sz, (void *)m0, &err, &c0);
     if (err == WEED_SUCCESS) {

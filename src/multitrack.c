@@ -1837,8 +1837,8 @@ static boolean get_track_index(lives_mt *mt, weed_timecode_t tc) {
     return retval;
   }
 
-  if ((num_in_tracks = weed_leaf_num_elements(mt->init_event, WEED_LEAF_IN_TRACKS)) > 0) {
-    in_tracks = weed_get_int_array(mt->init_event, WEED_LEAF_IN_TRACKS, &error);
+  in_tracks = weed_get_int_array_counted(mt->init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
+  if (num_in_tracks > 0) {
     for (i = 0; i < num_in_tracks; i++) {
       if (in_tracks[i] == mt->current_track) {
         mt->track_index = i;
@@ -2060,29 +2060,21 @@ void track_select(lives_mt *mt) {
       if (!xx) {
         // the param box was redrawn
         boolean aprev = mt->opts.fx_auto_preview;
-        mt->opts.fx_auto_preview = FALSE;
+        //mt->opts.fx_auto_preview = FALSE;
         mainw->block_param_updates = TRUE;
         mt->current_rfx->needs_reinit = FALSE;
+        mt->current_rfx->flags |= RFX_FLAGS_NO_RESET;
         update_visual_params(mt->current_rfx, FALSE);
         mainw->block_param_updates = FALSE;
         if (mt->current_rfx->needs_reinit) {
           weed_reinit_effect(mt->current_rfx->source, TRUE);
           mt->current_rfx->needs_reinit = FALSE;
         }
+        mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
         mt->opts.fx_auto_preview = aprev;
-      }
-      if (interp && mt->current_track >= 0) {
+        activate_mt_preview(mt);
+      } else
         mt_show_current_frame(mt, FALSE);
-      }
-      if (mt->fx_params_label != NULL) {
-        char *ltext = mt_params_label(mt);
-        widget_opts.mnemonic_label = FALSE;
-        widget_opts.justify = LIVES_JUSTIFY_CENTER;
-        lives_label_set_text(LIVES_LABEL(mt->fx_params_label), ltext);
-        widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
-        widget_opts.mnemonic_label = TRUE;
-        lives_free(ltext);
-      }
     } else polymorph(mt, POLY_FX_STACK);
   }
 }
@@ -3688,7 +3680,10 @@ static void fubar(lives_mt * mt) {
     in_tracks = weed_get_int_array(mt->init_event, WEED_LEAF_IN_TRACKS, &error);
     // set track_index (for special widgets)
     for (i = 0; i < num_in_tracks; i++) {
-      if (mt->current_track == in_tracks[i]) mt->track_index = i;
+      if (mt->current_track == in_tracks[i]) {
+        mt->track_index = i;
+        break;
+      }
     }
     lives_free(in_tracks);
   }
@@ -15589,7 +15584,10 @@ static void add_effect_inner(lives_mt * mt, int num_in_tracks, int *in_tracks, i
   // set track_index (for special widgets)
   mt->track_index = -1;
   for (i = 0; i < num_in_tracks; i++) {
-    if (mt->current_track == in_tracks[i]) mt->track_index = i;
+    if (mt->current_track == in_tracks[i]) {
+      mt->track_index = i;
+      break;
+    }
   }
 
   // add effect_init event
@@ -15831,7 +15829,8 @@ void mt_add_block_effect(LiVESMenuItem * menuitem, livespointer user_data) {
     mt->idlefunc = 0;
   }
 
-  if (menuitem != NULL) mt->current_fx = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), "idx"));
+  if (menuitem != NULL) mt->current_fx
+      = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menuitem), "idx"));
 
   mt->last_fx_type = MT_LAST_FX_BLOCK;
   add_effect_inner(mt, 1, &selected_track, 1, &selected_track, start_event, end_event);
@@ -19071,6 +19070,18 @@ static boolean check_can_resetp(lives_mt * mt) {
   weed_plant_t **in_params = weed_instance_get_in_params(mt->current_rfx->source, &nparams);
   int ninpar, i;
 
+  if (mt->init_event != NULL) {
+    int num_in_tracks;
+    int *in_tracks = weed_get_int_array_counted(mt->init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
+    if (num_in_tracks > 0) {
+      for (i = 0; i < num_in_tracks; i++) {
+        if (in_tracks[i] == mt->current_track) {
+          mt->track_index = i;
+          break;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
   /// check for variance
   for (i = 0; i < nparams; i++) {
     if (weed_param_is_hidden(in_params[i])) continue;
@@ -19109,6 +19120,18 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
   weed_plant_t **in_params = weed_instance_get_in_params(mt->current_rfx->source, &nparams);
   int i;
 
+  if (mt->init_event != NULL) {
+    int num_in_tracks;
+    int *in_tracks = weed_get_int_array_counted(mt->init_event, WEED_LEAF_IN_TRACKS, &num_in_tracks);
+    if (num_in_tracks > 0) {
+      for (i = 0; i < num_in_tracks; i++) {
+        if (in_tracks[i] == mt->current_track) {
+          mt->track_index = i;
+          break;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
   /// set params to the default value,
   /// and if any change we'll sensitize the "Apply Button"
   for (i = 0; i < nparams; i++) {
@@ -19136,15 +19159,17 @@ void on_resetp_clicked(LiVESWidget * button, livespointer user_data) {
   mt->opts.fx_auto_preview = FALSE;
   mainw->block_param_updates = TRUE;
   mt->current_rfx->needs_reinit = FALSE;
+  mt->current_rfx->flags |= RFX_FLAGS_NO_RESET;
   update_visual_params(mt->current_rfx, TRUE);
   mainw->block_param_updates = FALSE;
   if (mt->current_rfx->needs_reinit) {
     weed_reinit_effect(mt->current_rfx->source, TRUE);
     mt->current_rfx->needs_reinit = FALSE;
   }
+  mt->current_rfx->flags ^= RFX_FLAGS_NO_RESET;
   mt->opts.fx_auto_preview = aprev;
   lives_widget_set_sensitive(mt->apply_fx_button, can_apply);
-  lives_widget_set_sensitive(mt->resetp_button, FALSE);
+  lives_widget_set_sensitive(mt->resetp_button, check_can_resetp(mt));
   activate_mt_preview(mt);
 }
 

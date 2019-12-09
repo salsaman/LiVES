@@ -7924,7 +7924,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_pixel_data_packed(weed_layer_t 
 
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_nullify_pixel_data(weed_layer_t *layer) {
   if (layer == NULL || !WEED_IS_LAYER(layer)) return NULL;
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, 0, NULL);
   return layer;
 }
 
@@ -10160,7 +10160,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC) && (!realpalette || weed_palette_is_pixbuf_palette(palette))) {
     // our layer pixel_data originally came from a pixbuf, so just free the layer and return the pixbuf
     pixbuf = (LiVESPixbuf *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PIXBUF_SRC, &error);
-    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+    weed_layer_nullify_pixel_data(layer);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
     return pixbuf;
   }
@@ -10190,7 +10190,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
       if (irowstride == get_pixbuf_rowstride_value(width * 3)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(FALSE, width, height, pixel_data);
-        weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+        weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else
 #endif
@@ -10212,7 +10212,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
       if (irowstride == get_pixbuf_rowstride_value(width * 4)) {
         // rowstrides are OK, we can just steal the pixel_data
         pixbuf = lives_pixbuf_cheat(TRUE, width, height, pixel_data);
-        weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+        weed_layer_nullify_pixel_data(layer);
         cheat = TRUE;
       } else
 #endif
@@ -10642,7 +10642,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
       weed_layer_copy(layer, old_layer);
-      weed_plant_free(old_layer);
+      weed_layer_nullify_pixel_data(old_layer);
+      weed_layer_free(old_layer);
       return FALSE;
     }
 
@@ -10808,7 +10809,7 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
   /// create the outer rectangle in layer
   weed_set_int_value(layer, WEED_LEAF_WIDTH, nwidth);
   weed_set_int_value(layer, WEED_LEAF_HEIGHT, nheight);
-  weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
+  weed_layer_nullify_pixel_data(layer);
   create_empty_pixel_data(layer, TRUE, TRUE);
   new_pixel_data = weed_layer_get_pixel_data(layer, NULL);
 
@@ -10820,7 +10821,7 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
     /// this shouldnt happen, but if  the outer rectangle is smaller than the inner we have to abort
     weed_layer_pixel_data_free(layer);
     weed_layer_copy(layer, old_layer);
-    weed_set_voidptr_value(old_layer, WEED_LEAF_PIXEL_DATA, NULL);
+    weed_layer_nullify_pixel_data(old_layer);
     weed_layer_free(old_layer);
     lives_free(pixel_data);
     lives_free(irowstrides);
@@ -11043,6 +11044,7 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
     }
     break;
   }
+  /// do not nullify, as we want to free old pixel_data
   weed_layer_free(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);

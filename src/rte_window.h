@@ -25,8 +25,6 @@ void rtew_set_key_check_state(void);
 void rtew_set_keygr(int key);
 void rtew_set_mode_radio(int key, int mode);
 void rtew_set_grab_button(boolean on);
-void redraw_pwindow(int key, int mode);
-void restore_pwindow(lives_rfx_t *);
 void update_pwindow(int key, int i, LiVESList *list);
 boolean on_rtew_delete_event(LiVESWidget *widget, LiVESXEventDelete *event, livespointer user_data);
 

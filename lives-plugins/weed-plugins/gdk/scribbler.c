@@ -164,9 +164,9 @@ static const char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
 static weed_error_t scribbler_init(weed_plant_t *inst) {
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   weed_plant_t *pgui;
-  int mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, NULL);
+  int mode = weed_param_get_value_int(in_params[P_MODE]);
 
   pgui = weed_param_get_gui(in_params[P_BGALPHA]);
   if (mode == 0) weed_set_boolean_value(pgui, WEED_LEAF_HIDDEN, WEED_TRUE);
@@ -365,7 +365,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[2];
   weed_plant_t *out_chantmpls[2];
   weed_plant_t *in_params[P_END + 1], *pgui;
-  weed_plant_t *filter_class;
+  weed_plant_t *filter_class, *gui;
   PangoContext *ctx;
 
   int filter_flags = 0, param_flags = 0;
@@ -419,10 +419,11 @@ WEED_SETUP_START(200, 200) {
 
   in_params[P_TEXT] = weed_text_init("text", "_Text", "");
   in_params[P_MODE] = weed_string_list_init("mode", "Colour _mode", 0, modes);
-  if (weed_plant_has_leaf(in_params[P_MODE], WEED_LEAF_FLAGS))
-    param_flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, NULL);
+  param_flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, NULL);
   param_flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
   weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, param_flags);
+  gui = weed_paramtmpl_get_gui(in_params[P_MODE]);
+  weed_gui_set_flags(gui, WEED_GUI_REINIT_ON_VALUE_CHANGE);
 
   if (fonts_available)
     in_params[P_FONT] = weed_string_list_init("font", "_Font", 0, fonts_available);
@@ -441,8 +442,7 @@ WEED_SETUP_START(200, 200) {
   pgui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
   weed_set_int_value(pgui, WEED_LEAF_MAXCHARS, 65536);
 
-  pgui = weed_paramtmpl_get_gui(in_params[P_FGALPHA]);
-  weed_set_int_value(pgui, WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
+  weed_set_int_value(in_params[P_FGALPHA], WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
   filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, palette_list,
                                         scribbler_init, scribbler_process, NULL,
@@ -462,7 +462,6 @@ WEED_SETUP_START(200, 200) {
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.); // set reasonable default fps
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

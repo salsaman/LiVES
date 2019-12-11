@@ -320,7 +320,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     else if (unicode > 0 && unicode < 256) {
       if (down) {
         weed_plant_t *inst;
-        int param_number, copyto;
+        int param_number;
         int error;
         char *nval;
         char *cval = weed_get_string_value(mainw->rte_textparm, WEED_LEAF_VALUE, &error);
@@ -332,11 +332,11 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
         weed_set_string_value(mainw->rte_textparm, WEED_LEAF_VALUE, nval);
         inst = weed_get_plantptr_value(mainw->rte_textparm, WEED_LEAF_HOST_INSTANCE, &error);
         param_number = weed_get_int_value(mainw->rte_textparm, WEED_LEAF_HOST_IDX, &error);
-        copyto = set_copy_to(inst, param_number, TRUE);
+        //copyto = set_copy_to(inst, param_number, TRUE);
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, param_number);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         lives_free(nval);
       }

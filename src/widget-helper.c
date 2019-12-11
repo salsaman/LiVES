@@ -8004,10 +8004,24 @@ static boolean lives_widget_destroyed(LiVESWidget *widget, void **ptr) {
 }
 
 
+static boolean lives_widget_timetodie(LiVESWidget *widget, LiVESWidget *getoverhere) {
+  if (LIVES_IS_WIDGET(getoverhere)) lives_widget_destroy(getoverhere);
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_nullify_with(LiVESWidget *widget, void **ptr) {
   lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_widget_destroyed),
                        ptr);
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease) {
+  lives_signal_connect(LIVES_GUI_OBJECT(widget), LIVES_WIDGET_DESTROY_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_widget_timetodie),
+                       dieplease);
   return TRUE;
 }
 

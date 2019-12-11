@@ -703,6 +703,13 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  if (!strcmp(prefidx, PREF_MSG_PBDIS)) {
+    if (prefs->msgs_pbdis == newval) goto fail2;
+    prefs->msgs_pbdis = newval;
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis), newval);
+    goto success2;
+  }
+
   if (!strcmp(prefidx, PREF_VJMODE)) {
     if (future_prefs->vj_mode == newval) goto fail2;
     if (mainw != NULL && mainw->vj_mode  != NULL)
@@ -1185,6 +1192,7 @@ boolean apply_prefs(boolean skip_warn) {
   int max_msgs = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->nmessages_spin));
   char *msgtextsize = lives_combo_get_active_text(LIVES_COMBO(prefsw->msg_textsize_combo));
   boolean msgs_unlimited = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited));
+  boolean msgs_pbdis = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis));
 
   uint64_t ds_warn_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds)) * 1000000;
   uint64_t ds_crit_level = (uint64_t)lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_crit_ds)) * 1000000;
@@ -1557,6 +1565,8 @@ boolean apply_prefs(boolean skip_warn) {
   } else {
     pref_factory_int(PREF_MAX_MSGS, max_msgs, TRUE);
   }
+
+  pref_factory_bool(PREF_MSG_PBDIS, msgs_pbdis, TRUE);
 
   ulist = get_textsizes_list();
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
@@ -3114,12 +3124,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->nmessages_spin = lives_standard_spin_button_new(_("Number of _Info Messages to Buffer"),
                            ABS(prefs->max_messages), 0., 100000., 1., 1., 0,
                            LIVES_BOX(hbox), NULL);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(nmessages_spin, VALUE_CHANGED);
 
   hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
   prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
@@ -3128,11 +3133,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   toggle_sets_insensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
-
-
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->msgs_unlimited), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-
+  ACTIVE(msgs_unlimited, TOGGLED);
 
   textsizes_list = get_textsizes_list();
 
@@ -3144,8 +3145,12 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   lives_list_free_all(&textsizes_list);
 
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->msg_textsize_combo), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  ACTIVE(msg_textsize_combo, CHANGED);
+
+  hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+  prefsw->msgs_pbdis = lives_standard_check_button_new(_("_Disable message output during playback"),
+                       prefs->msgs_pbdis, LIVES_BOX(hbox), NULL);
+  ACTIVE(msgs_pbdis, TOGGLED);
 
   pixbuf_gui = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_PREF_GUI, LIVES_ICON_SIZE_CUSTOM, -1, -1);
 

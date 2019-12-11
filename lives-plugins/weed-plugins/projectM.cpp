@@ -130,6 +130,7 @@ static int resize_display(int width, int height) {
 }
 #endif
 
+
 static int change_size(_sdata *sdata) {
   int ret = 0;
   sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
@@ -270,15 +271,9 @@ static void do_exit(void) {
 
 static void *worker(void *data) {
   std::string prname;
-
   projectM::Settings settings;
-
   bool rerand = true;
-
   _sdata *sd = (_sdata *)data;
-
-  register int i = 0;
-
   float hwratio = (float)sd->height / (float)sd->width;
 
   if (init_display(sd)) {
@@ -314,17 +309,13 @@ static void *worker(void *data) {
 
   // can fail here
   sd->globalPM = new projectM(settings, 0);
-
   sd->textureHandle = sd->globalPM->initRenderToTexture();
-
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
 
   sd->prnames = (char **volatile)weed_malloc(sd->nprs * sizeof(char *));
   sd->prnames[0] = strdup("- Random -");
 
-  for (i = 1; i < sd->nprs; i++) {
-    sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
-  };
+  for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
 
   // tell main thread we are ready
   pthread_mutex_lock(&cond_mutex);
@@ -378,104 +369,99 @@ static void *worker(void *data) {
 
 static weed_error_t projectM_deinit(weed_plant_t *inst) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
+  if (sd) sd->rendering = false;
   copies--;
-  if (sd != NULL) sd->rendering = false;
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t projectM_init(weed_plant_t *inst) {
-  _sdata *sd;
-
   if (copies == 1) return WEED_ERROR_TOO_MANY_INSTANCES;
-  copies++;
+  else {
+    _sdata *sd;
+    weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+    weed_plant_t **iparams = weed_get_in_params(inst, NULL);
 
-  if (!inited) {
-    int rc = 0;
+    copies++;
 
-    weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-    weed_plant_t *iparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-    weed_plant_t *iparamgui = weed_param_get_gui(iparam);
+    if (!inited) {
+      int rc = 0;
+      int width = weed_channel_get_width(out_channel);
+      int height = weed_channel_get_height(out_channel);
 
-    int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
-    int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+      sd = (_sdata *)weed_malloc(sizeof(_sdata));
+      if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
-    //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,NULL);
+      sd->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * width * height * 3);
 
-    sd = (_sdata *)weed_malloc(sizeof(_sdata));
-    if (sd == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
+      if (!sd->fbuffer) {
+        weed_free(sd);
+        return WEED_ERROR_MEMORY_ALLOCATION;
+      }
 
-    sd->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * width * height * 3);
+      weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-    if (sd->fbuffer == NULL) {
-      weed_free(sd);
-      return WEED_ERROR_MEMORY_ALLOCATION;
-    }
+      sd->pidx = sd->opidx = -1;
 
+      sd->fps = TARGET_FPS;
+      if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
+
+      sd->width = width;
+      sd->height = height;
+
+      sd->die = false;
+      sd->failed = false;
+      sd->update_size = false;
+
+      sd->audio = (float *)weed_calloc(4096,  sizeof(float));
+      sd->audio_frames = 0;
+      sd->achans = 0;
+
+      pthread_mutex_init(&sd->mutex, NULL);
+      pthread_mutex_init(&sd->pcm_mutex, NULL);
+
+      sd->nprs = 0;
+      sd->prnames = NULL;
+      sd->worker_ready = false;
+      sd->rendering = false;
+
+      // kick off a thread to init screean and render
+      pthread_create(&sd->thread, NULL, worker, sd);
+
+      clock_gettime(CLOCK_REALTIME, &ts);
+      ts.tv_sec += 30;
+
+      // wait for worker thread ready
+      while (!sd->worker_ready && rc == 0) {
+        pthread_mutex_lock(&cond_mutex);
+        rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
+        pthread_mutex_unlock(&cond_mutex);
+      }
+
+      if (rc == ETIMEDOUT && !sd->worker_ready) {
+        // if we timedout then die
+        projectM_deinit(inst);
+        return WEED_ERROR_PLUGIN_INVALID;
+      }
+      statsd = sd;
+      inited = 1;
+    } else sd = statsd;
+
+    sd->rendering = true;
     weed_set_voidptr_value(inst, "plugin_internal", sd);
 
-    sd->pidx = sd->opidx = -1;
-
-    sd->fps = TARGET_FPS;
-    if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
-
-    sd->width = width;
-    sd->height = height;
-
-    sd->die = false;
-    sd->failed = false;
-    sd->update_size = false;
-
-    sd->audio = (float *)weed_calloc(4096,  sizeof(float));
-    sd->audio_frames = 0;
-    sd->achans = 0;
-
-    pthread_mutex_init(&sd->mutex, NULL);
-    pthread_mutex_init(&sd->pcm_mutex, NULL);
-
-    sd->nprs = 0;
-    sd->prnames = NULL;
-    sd->worker_ready = false;
-    sd->rendering = false;
-
-    // kick off a thread to init screean and render
-    pthread_create(&sd->thread, NULL, worker, sd);
-
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_sec += 30;
-
-    // wait for worker thread ready
-    while (!sd->worker_ready && rc == 0) {
-      pthread_mutex_lock(&cond_mutex);
-      rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
-      pthread_mutex_unlock(&cond_mutex);
+    if (!weed_plant_has_leaf(iparams[0], WEED_LEAF_GUI)) {
+      weed_plant_t *iparamgui = weed_param_get_gui(iparams[0]);
+      weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
     }
-
-    if (rc == ETIMEDOUT && !sd->worker_ready) {
-      // if we timedout then die
-      projectM_deinit(inst);
-      return WEED_ERROR_PLUGIN_INVALID;
-    }
-
-    inited = 1;
-    weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
-  } else sd = statsd;
-
-  sd->nprs--;
-
-  sd->rendering = true;
-
-  statsd = sd;
-
-  weed_set_voidptr_value(inst, "plugin_internal", sd);
-
+    weed_free(iparams);
+  }
   return WEED_SUCCESS;
 }
 
 
 static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-
   weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
   weed_plant_t *inparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
@@ -505,14 +491,14 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (sd->update_size || sd->fbuffer == NULL) return WEED_SUCCESS;
 
-  // ex. nprs = 10, we have 10 programs 0 - 9 and -1 is random
-  // 0 - 10, we just subtract 1
-  // else (val - 1) % nprs .e.g 11 - 1 = 10, 10 % 10 = 0
+  // ex. nprs = 10, we have 9 programs 1 - 9 and 0 is random
+  // 0 - 9, we just use the value
+  // else val % (nprs - 1) .e.g 10 = 1, 11 = 2
 
   sd->pidx = weed_get_int_value(inparam, WEED_LEAF_VALUE, NULL);
 
-  if (sd->pidx <= sd->nprs) sd->pidx--;
-  else sd->pidx = (sd->pidx - 1) % sd->nprs;
+  if (sd->pidx < sd->nprs) sd->pidx;
+  else sd->pidx = sd->pidx % (sd->nprs - 1);
 
   if (0) {
     projectMEvent evt;
@@ -595,29 +581,20 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
 WEED_SETUP_START(200, 200) {
   int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
-
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
-
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
-
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
-
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
                                    WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE), NULL
                                   };
-  weed_plant_t *filter_class;
-
-  filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list, projectM_init,
-                                        projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
-
+  weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list, projectM_init,
+                               projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
+  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
+  weed_gui_set_flags(gui, WEED_GUI_CHOICES_INCOMPLETE);
   weed_set_int_value(in_params[0], "max", INT_MAX);
-
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
-
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
-
   statsd = NULL;
 }
 WEED_SETUP_END;

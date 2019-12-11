@@ -21,6 +21,8 @@
 #include "giw/giwknob.h"
 #endif
 
+static int ireinit = 0;
+
 extern boolean do_effect(lives_rfx_t *, boolean is_preview);  //effects.c in LiVES
 extern void on_realfx_activate(LiVESMenuItem *, livespointer rfx);  // effects.c in LiVES
 
@@ -315,8 +317,9 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
       else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, &error));
     }
     filter_mutex_unlock(key);
-    set_copy_to(inst, trans, TRUE);
+    set_copy_to(inst, trans, rfx, TRUE);
   }
+  rfx->params[trans].change_blocked = TRUE; ///< prevent possible loops caused by "copy_value_to"
   update_visual_params(rfx, FALSE);
   lives_free(in_params);
 
@@ -325,6 +328,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
     set_int_param(rfx->params[trans].value, old_val);
     after_param_value_changed(LIVES_SPIN_BUTTON(rfx->params[trans].widgets[0]), rfx);
   }
+  rfx->params[trans].change_blocked = FALSE;
 }
 
 
@@ -398,7 +402,8 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
                   weed_plant_has_leaf(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION) &&
                   weed_get_boolean_value(mainw->multitrack->init_event, WEED_LEAF_HOST_AUDIO_TRANSITION, &error) == WEED_TRUE,
                   LIVES_BOX(hbox2), (tmp2 = lives_strdup(
-                      _("If checked, audio from both layers is mixed relative to the transition parameter.\nThe setting is applied instantly to the entire transition."))));
+                      _("If checked, audio from both layers is mixed relative to the transition parameter.\n"
+                        "The setting is applied instantly to the entire transition."))));
 
     lives_free(tmp);
     lives_free(tmp2);
@@ -433,9 +438,9 @@ void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_c
   hseparator = lives_hseparator_new();
   lives_box_pack_start(vbox, hseparator, FALSE, FALSE, 0);
 
-  rfx->params[trans].widgets[16] = radiobutton_in;
-  rfx->params[trans].widgets[17] = radiobutton_out;
-  rfx->params[trans].widgets[18] = radiobutton_dummy;
+  rfx->params[trans].widgets[WIDGET_RB_IN] = radiobutton_in;
+  rfx->params[trans].widgets[WIDGET_RB_OUT] = radiobutton_out;
+  rfx->params[trans].widgets[WIDGET_RB_DUMMY] = radiobutton_dummy;
 }
 
 
@@ -924,15 +929,13 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
 static void check_hidden_gui(weed_plant_t *inst, lives_param_t *param, int idx) {
   weed_plant_t *wparam;
-  if (param->reinit && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) == 2 ||
-                        (mainw->multitrack != NULL && mainw->multitrack->fx_box != NULL &&
-                         mt_get_effect_time(mainw->multitrack) > 0.))) {
-    // effect is running and user is editing the params (or in multitrack at not at fx time 0.)
+  if ((param->reinit & REINIT_FUNCTIONAL) && (weed_get_int_value(inst, WEED_LEAF_HOST_REFS, NULL) == 2)) {
+    // effect is running and user is editing the params, we should hide reinit params so as not to disturb the karma
     param->hidden |= HIDDEN_NEEDS_REINIT;
   } else if (param->hidden & HIDDEN_NEEDS_REINIT) param->hidden ^= HIDDEN_NEEDS_REINIT;
 
   wparam = weed_inst_in_param(inst, idx, FALSE, FALSE);
-  if (wparam != NULL && weed_param_is_hidden(wparam) == WEED_TRUE)
+  if (wparam != NULL && weed_param_is_hidden(wparam))
     param->hidden |= HIDDEN_GUI;
   else if (param->hidden & HIDDEN_GUI) param->hidden ^= HIDDEN_GUI;
 }
@@ -1492,15 +1495,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 
   switch (param->type) {
   case LIVES_PARAM_BOOL:
-    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
-    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("(%s)", _(disp_string)))); */
-    /*   lives_free(tmp); */
-    /*   lives_free(disp_string); */
-    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
-    /*   else lives_box_pack_end(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
-    /*   param->widgets[1] = dlabel; */
-    /* } */
-
     if (!param->group) {
       widget_opts.mnemonic_label = use_mnemonic;
       checkbutton = lives_standard_check_button_new(name, get_bool_param(param->value), (LiVESBox *)hbox, param->desc);
@@ -1607,22 +1601,10 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
 #endif
     }
 
-    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
-    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string)))); */
-    /*   lives_free(tmp); */
-    /*   lives_free(disp_string); */
-    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
-    /*   lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
-    /*   param->widgets[++wcount] = dlabel; */
-    /* } */
-
     if (add_scalers) {
       if (add_slider && !param->wrap) {
         spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
         scale = lives_standard_hscale_new(LIVES_ADJUSTMENT(spinbutton_adj));
-        //double val = *(double *)(param->def);
-        //lives_scale_add_mark(LIVES_SCALE(scale), val, LIVES_POS_TOP, NULL);
-        //lives_scale_add_mark(LIVES_SCALE(scale), val, LIVES_POS_BOTTOM, NULL);
         lives_widget_set_size_request(scale, DEF_SLIDER_WIDTH, -1);
         if (layout != NULL) {
           hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
@@ -1689,31 +1671,15 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       //lives_widget_set_sensitive(spinbutton_alpha,FALSE);
       lives_widget_set_sensitive(cbutton, FALSE);
     }
-
-    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
-    /*   dlabel = lives_standard_label_new((tmp = lives_strdup_printf("%s", _(disp_string)))); */
-    /*   lives_free(tmp); */
-    /*   lives_free(disp_string); */
-    /*   if (layout != NULL) lives_layout_pack(LIVES_HBOX(lives_layout_hbox_new(LIVES_LAYOUT(layout))), dlabel); */
-    /*   else lives_box_pack_start(LIVES_BOX(hbox), dlabel, FALSE, FALSE, widget_opts.packing_width); */
-    /*   param->widgets[5] = dlabel; */
-    /* } */
-
     break;
 
   case LIVES_PARAM_STRING:
-    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
-    /*   if (param->max == 0.) txt = lives_strdup(disp_string); */
-    /*   else txt = lives_strndup(disp_string, (int)param->max); */
-    /*   lives_free(disp_string); */
-    /* } else { */
-
     if (param->max == 0.) txt = lives_strdup((char *)param->value);
     else txt = lives_strndup((char *)param->value, (int)param->max);
-    //}
 
     if (((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) &&
-        param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
+        param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD
+        && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEWRITE) {
       LiVESWidget *vbox = lives_vbox_new(FALSE, 0);
       boolean woat = widget_opts.apply_theme;
 
@@ -1761,7 +1727,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       else label = lives_standard_label_new(_(name));
 
       lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
-      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max, (int)param->max, LIVES_BOX(hbox), param->desc);
+      param->widgets[0] = entry = lives_standard_entry_new(NULL, txt, (int)param->max,
+                                  (int)param->max, LIVES_BOX(hbox), param->desc);
 
       if (rfx->status == RFX_STATUS_WEED && param->special_type != LIVES_PARAM_SPECIAL_TYPE_FILEREAD) {
         lives_signal_connect_after(LIVES_WIDGET_OBJECT(entry), LIVES_WIDGET_CHANGED_SIGNAL,
@@ -1797,15 +1764,11 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     widget_opts.mnemonic_label = TRUE;
     widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
-    /* if (rfx->status == RFX_STATUS_WEED && (disp_string = get_weed_display_string((weed_plant_t *)rfx->source, pnum)) != NULL) { */
-    /*   lives_combo_set_active_string(LIVES_COMBO(combo), disp_string); */
-    /*   lives_free(disp_string); */
-    //} else {
     if (param->list != NULL) {
       lives_combo_set_active_string(LIVES_COMBO(combo),
                                     (char *)lives_list_nth_data(param->list, get_int_param(param->value)));
     }
-    //}
+
     lives_signal_connect_after(LIVES_WIDGET_OBJECT(combo), LIVES_WIDGET_CHANGED_SIGNAL,
                                LIVES_GUI_CALLBACK(after_string_list_changed), (livespointer) rfx);
 
@@ -1880,118 +1843,214 @@ lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
 }
 
 
+boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
+  weed_plant_t *wparam, *inst;
+  int keyw, modew;
+  lives_param_t *param;
+
+  if (mainw->multitrack == NULL) {
+    if (fx_dialog[1] != NULL) {
+      rfx = fx_dialog[1]->rfx;
+      if (!rfx->is_template) {
+        keyw = fx_dialog[1]->key;
+        modew = fx_dialog[1]->mode;
+      }
+      if (!rfx->is_template && (key != keyw && mode != modew)) return FALSE;
+    }
+  }
+
+  if ((fx_dialog[1] == NULL && mainw->multitrack == NULL) || rfx == NULL || rfx->status != RFX_STATUS_WEED) return FALSE;
+  inst = (weed_plant_t *)rfx->source;
+  for (int i = 0; i < rfx->num_params; i++) {
+    if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
+      for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
+        param = &rfx->params[i];
+        if (param->widgets[j] == NULL) break;
+        check_hidden_gui(inst, param, i);
+        if (param->hidden) lives_widget_hide(param->widgets[j]);
+        else lives_widget_show_all(param->widgets[j]);
+      }
+    }
+  }
+  return TRUE;
+}
+
+
+static void after_any_changed_1(lives_rfx_t *rfx, int param_number, int index) {
+  weed_plant_t *inst = (weed_plant_t *)rfx->source;
+  weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE), *paramtmpl;
+  int numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
+  int *ign, nvals;
+  //// update pt. 1:
+  /// fill param vals and  set "ignore" values
+  if (index >= numvals) {
+    paramtmpl = weed_param_get_template(wparam);
+    fill_param_vals_to(wparam, paramtmpl, index);
+    numvals = index + 1;
+  }
+
+  if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
+    if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
+      ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &nvals);
+      if (index >= 0 && index < nvals) {
+        ign[index] = WEED_FALSE;
+        weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
+      }
+      lives_freep((void **)&ign);
+    }
+  }
+}
+
+
+/**
+  @brief part 2 function for updating params visually
+*/
+static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean needs_update) {
+  weed_plant_t *wparam, *gui, *inst = NULL;
+  lives_filter_error_t retval = FILTER_SUCCESS;
+
+  /// update widgets on screen (as a result of copying values or triggers)
+  if (needs_update) update_visual_params(rfx, FALSE);
+  needs_update = FALSE;
+
+  /// only the first param in the chain can reinit
+  if (--ireinit > 0) {
+    param->changed = TRUE;
+    param->change_blocked = FALSE;
+    return;
+  }
+
+  /// plugin is allowed to show / hide params during its init_func()
+  /// so here we record the state b4 calling it; if any changes occur we want to refresh the whole window.
+  if (rfx->status == RFX_STATUS_WEED) {
+    if (mainw->multitrack != NULL) {
+      for (int i = 0; i < rfx->num_params; i++) {
+        if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
+          if ((gui = weed_param_get_gui(wparam, FALSE)) != NULL) {
+            if (retval != FILTER_INFO_REDRAWN) {
+              if (weed_get_boolean_value(gui, "host_hidden_backup", NULL) != weed_get_boolean_value(gui, WEED_LEAF_HIDDEN, NULL))
+                needs_update = TRUE;
+            }
+            weed_leaf_delete(gui, "host_hidden_backup");
+          }
+        }
+      }
+    }
+
+    inst = (weed_plant_t *)rfx->source;
+    if (rfx->needs_reinit) {
+      if (!(rfx->needs_reinit & REINIT_FUNCTIONAL)) {
+        weed_instance_set_flags(inst, weed_instance_get_flags(inst) | WEED_INSTANCE_UPDATE_GUI_ONLY);
+      }
+
+      retval = weed_reinit_effect(inst, FALSE);
+
+      if (!(rfx->needs_reinit & REINIT_FUNCTIONAL)) {
+        weed_instance_set_flags(inst, weed_instance_get_flags(inst) ^ WEED_INSTANCE_UPDATE_GUI_ONLY);
+      }
+      rfx->needs_reinit = 0;
+    }
+  }
+
+  needs_update = FALSE;
+  rfx->needs_reinit = 0;
+
+  if (fx_dialog[1] != NULL) {
+    // transfer param changes from rte_window to ce_thumbs window, and vice-versa
+    lives_rfx_t *rte_rfx = fx_dialog[1]->rfx;
+    int key = fx_dialog[1]->key;
+    int mode = fx_dialog[1]->mode;
+    mainw->block_param_updates = TRUE;
+    if (rfx == rte_rfx && mainw->ce_thumbs) ce_thumbs_update_visual_params(key);
+    else if (mode == rte_key_getmode(key + 1)) ce_thumbs_check_for_rte(rfx, rte_rfx, key);
+    mainw->block_param_updates = FALSE;
+  }
+
+  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
+    update_widget_vis(rfx, -1, -1);
+    activate_mt_preview(mainw->multitrack);
+  }
+
+  param->changed = TRUE;
+  param->change_blocked = FALSE;
+}
+
+
 void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *rfx) {
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(togglebutton), "param_number"));
-
   LiVESList *retvals = NULL;
-
+  weed_plant_t *inst = NULL;
   lives_param_t *param = &rfx->params[param_number];
-
   boolean old_bool = get_bool_param(param->value), new_bool;
-  boolean was_reinited = FALSE;
-
+  boolean needs_update = FALSE;
   int copyto = -1;
 
   new_bool = lives_toggle_button_get_active(togglebutton);
   if (old_bool == new_bool) return;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
 
-  set_bool_param(param->value, new_bool);
+  ireinit++;
 
+  set_bool_param(param->value, new_bool);
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int error;
-    weed_plant_t *inst = (weed_plant_t *)rfx->source;
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
+    inst = (weed_plant_t *)rfx->source;
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
       //char *disp_string;
-      weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       int index = 0, numvals;
       int key = -1;
-      int *valis;
+      weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
+      int *valis = weed_get_boolean_array(wparam, WEED_LEAF_VALUE, NULL);
 
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
-      numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
 
-      if (index >= numvals) {
-        weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
-        fill_param_vals_to(wparam, paramtmpl, index);
-        numvals = index + 1;
-      }
+      after_any_changed_1(rfx, param_number, index);
 
-      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
-        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
-          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
-          if (index >= 0 && index < nvals) {
-            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
-            ign[index] = WEED_FALSE;
-            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
-            lives_free(ign);
-          }
-        }
-      }
-
-      valis = weed_get_boolean_array(wparam, WEED_LEAF_VALUE, &error);
       valis[index] = new_bool;
-      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+      numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
       if (!filter_mutex_trylock(key)) {
         weed_set_boolean_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-        copyto = set_copy_to(inst, param_number, TRUE);
-        filter_mutex_unlock(key);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
+        filter_mutex_unlock(key); \
+        if (copyto != -1) needs_update = TRUE;
       }
-      lives_free(valis);
+      lives_freep((void **)&valis);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      /* disp_string = get_weed_display_string(inst, param_number); */
-      /* if (disp_string != NULL) { */
-      /*   widget_opts.mnemonic_label = FALSE; */
-      /*   lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string); */
-      /*   widget_opts.mnemonic_label = TRUE; */
-      /*   lives_free(disp_string); */
-      /* } */
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
+      if (param->reinit) rfx->needs_reinit |= param->reinit;
     }
   }
+
   if (get_bool_param(param->value) != old_bool && param->onchange) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(togglebutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
 void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
-  lives_param_t *param = &rfx->params[param_number];
-
   LiVESList *retvals = NULL;
-
+  lives_param_t *param = &rfx->params[param_number];
   double new_double = 0., old_double = 0.;
-
-  boolean was_reinited = FALSE;
-
   int new_int = 0, old_int = 0;
+  boolean needs_update = FALSE;
   int copyto = -1;
 
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
@@ -2007,19 +2066,20 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   }
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this (pre)change to our event_list
-    // however, we need to use the actual instance and not the one generated for the rte_window
     rec_param_change((weed_plant_t *)rfx->source, param_number);
-    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
-    if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
+    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, rfx, FALSE);
+    //if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
 
   if (param->dp > 0) {
@@ -2028,14 +2088,12 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     set_int_param(param->value, new_int);
   }
 
-  if (rfx->status == RFX_STATUS_WEED) {
-    int error;
-    weed_plant_t *inst = (weed_plant_t *)rfx->source;
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      //char *disp_string;
+  param->change_blocked = TRUE;
 
+  if (rfx->status == RFX_STATUS_WEED) {
+    weed_plant_t *inst = (weed_plant_t *)rfx->source;
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
-      weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
       int index = 0, numvals;
       int key = -1;
       double *valds;
@@ -2046,13 +2104,13 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
         if (enabled_in_channels(filter, FALSE) == 2 && param->transition) {
           if (param->dp == 0) {
-            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[16]), TRUE);
-            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[17]), TRUE);
-            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[18]), TRUE);
+            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
+            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_DUMMY]), TRUE);
           } else {
-            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[16]), TRUE);
-            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[17]), TRUE);
-            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[18]), TRUE);
+            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
+            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
+            else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_DUMMY]), TRUE);
           }
         }
       }
@@ -2060,94 +2118,50 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
+
+      after_any_changed_1(rfx, param_number, index);
+
       numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
-      if (index >= numvals) {
-        fill_param_vals_to(wparam, paramtmpl, index);
-        numvals = index + 1;
-      }
-
-      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
-        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
-          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
-          if (index >= 0 && index < nvals) {
-            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
-            ign[index] = WEED_FALSE;
-            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
-            lives_free(ign);
-          }
-        }
-      }
-
-      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
-
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       if (weed_leaf_seed_type(wparam, WEED_LEAF_VALUE) == WEED_SEED_DOUBLE) {
-        valds = weed_get_double_array(wparam, WEED_LEAF_VALUE, &error);
+        valds = weed_get_double_array(wparam, WEED_LEAF_VALUE, NULL);
         if (param->dp > 0) valds[index] = new_double;
         else valds[index] = (double)new_int;
         if (!filter_mutex_trylock(key)) {
           weed_set_double_array(wparam, WEED_LEAF_VALUE, numvals, valds);
-          copyto = set_copy_to(inst, param_number, TRUE);
+          copyto = set_copy_to(inst, param_number, rfx, TRUE);
           filter_mutex_unlock(key);
+          if (copyto != -1) needs_update = TRUE;
         }
         lives_freep((void **)&valds);
       } else {
-        valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
+        valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, NULL);
         valis[index] = new_int;
-        if (!filter_mutex_trylock(key)) {
-          weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-          copyto = set_copy_to(inst, param_number, TRUE);
-          filter_mutex_unlock(key);
-        }
+        weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
+        filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
         lives_freep((void **)&valis);
       }
-
-      if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
-        // if we are recording, add this change to our event_list
-        rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
-      }
-
-      /* disp_string = get_weed_display_string(inst, param_number); */
-      /* if (disp_string != NULL) { */
-      /*   widget_opts.mnemonic_label = FALSE; */
-      /*   lives_label_set_text(LIVES_LABEL(param->widgets[1]), disp_string); */
-      /*   widget_opts.mnemonic_label = TRUE; */
-      /*   lives_free(disp_string); */
-      /* } */
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
     }
+
+    if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
+      // if we are recording, add this change to our event_list
+      rec_param_change(inst, param_number);
+      //if (copyto != -1) rec_param_change(inst, copyto);
+    }
+    if (param->reinit) rfx->needs_reinit |= param->reinit;
   }
 
   if (((param->dp > 0 && (get_double_param(param->value) != old_double)) || (param->dp == 0 &&
-       (get_int_param(param->value) != old_int))) &&
-      param->onchange) {
+       (get_int_param(param->value) != old_int))) && param->onchange) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
-  }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-
-  if (fx_dialog[1] != NULL) {
-    // transfer param changes from rte_window to ce_thumbs window, and vice-versa
-    lives_rfx_t *rte_rfx = fx_dialog[1]->rfx;
-    int key = fx_dialog[1]->key;
-    int mode = fx_dialog[1]->mode;
-    mainw->block_param_updates = TRUE;
-    if (rfx == rte_rfx && mainw->ce_thumbs) ce_thumbs_update_visual_params(key);
-    else if (mode == rte_key_getmode(key + 1)) ce_thumbs_check_for_rte(rfx, rte_rfx, key);
-    mainw->block_param_updates = FALSE;
+    needs_update = TRUE;
   }
 
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    if (was_reinited) add_mt_param_box(mainw->multitrack);
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
@@ -2301,15 +2315,11 @@ void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int 
 
 void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
-
   lives_colRGB48_t old_value;
-
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
   int new_red;
+  boolean needs_update = FALSE;
   int copyto = -1;
-
-  boolean was_reinited = FALSE;
-
   lives_param_t *param = &rfx->params[param_number];
 
   get_colRGB24_param(param->value, &old_value);
@@ -2317,41 +2327,43 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (old_value.red == new_red) return;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
+
     rec_param_change((weed_plant_t *)rfx->source, param_number);
-    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
-    if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
+    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, rfx, FALSE);
   }
 
   set_colRGB24_param(param->value, new_red, old_value.green, old_value.blue);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int error;
+    int key = -1;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
-
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE)  {
-      update_weed_color_value(inst, param_number,
-                              new_red, old_value.green, old_value.blue, 0, rfx);
-      copyto = set_copy_to(inst, param_number, TRUE);
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+      if (!filter_mutex_trylock(key)) {
+        update_weed_color_value(inst, param_number, new_red, old_value.green, old_value.blue, 0, rfx);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
+        filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
+      }
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
+      if (param->reinit) rfx->needs_reinit |= param->reinit;
     }
   }
 
@@ -2359,29 +2371,19 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
 void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
-
   lives_colRGB48_t old_value;
-
   int new_green;
   int copyto = -1;
-
+  boolean needs_update = FALSE;
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
-
-  boolean was_reinited = FALSE;
-
   lives_param_t *param = &rfx->params[param_number];
 
   get_colRGB24_param(param->value, &old_value);
@@ -2389,41 +2391,43 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (old_value.green == new_green) return;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
-    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
-    if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
+    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, rfx, FALSE);
+    //if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
 
   set_colRGB24_param(param->value, old_value.red, new_green, old_value.blue);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int error;
+    int key = -1;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
-
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(inst, param_number, old_value.red, new_green, old_value.blue, 0, rfx);
-
-      copyto = set_copy_to(inst, param_number, TRUE);
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+      if (!filter_mutex_trylock(key)) {
+        update_weed_color_value(inst, param_number, old_value.red, new_green, old_value.blue, 0, rfx);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
+        filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
+      }
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
+      rfx->needs_reinit |= param->reinit;
     }
   }
 
@@ -2431,28 +2435,19 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
 void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
-
   lives_colRGB48_t old_value;
-
   int new_blue;
   int copyto = -1;
+  boolean needs_update = FALSE;
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
-
-  boolean was_reinited = FALSE;
-
   lives_param_t *param = &rfx->params[param_number];
 
   get_colRGB24_param(param->value, &old_value);
@@ -2460,40 +2455,42 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (old_value.blue == new_blue) return;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
-    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
-    if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
+    // if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
 
   set_colRGB24_param(param->value, old_value.red, old_value.green, new_blue);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int error;
+    int key = -1;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
-
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      update_weed_color_value(inst, param_number, old_value.red, old_value.green, new_blue, 0, rfx);
-      copyto = set_copy_to(inst, param_number, TRUE);
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
+      if (!filter_mutex_trylock(key)) {
+        update_weed_color_value(inst, param_number, old_value.red, old_value.green, new_blue, 0, rfx);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
+        filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
+      }
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
+      rfx->needs_reinit |= param->reinit;
     }
   }
 
@@ -2501,42 +2498,35 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
 void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   // not used yet
   int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number"));
-
   LiVESList *retvals = NULL;
-
   lives_param_t *param = &rfx->params[param_number];
-
   lives_colRGBA64_t old_value;
-
   int new_alpha = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
-
   int copyto = -1;
+  boolean needs_update = FALSE;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
     // if we are recording, add this change to our event_list
     rec_param_change((weed_plant_t *)rfx->source, param_number);
-    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, FALSE);
-    if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
+    copyto = set_copy_to((weed_plant_t *)rfx->source, param_number, rfx, FALSE);
+    //if (copyto != -1) rec_param_change((weed_plant_t *)rfx->source, copyto);
   }
 
   get_colRGBA32_param(param->value, &old_value);
@@ -2544,6 +2534,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
 
   set_colRGBA32_param(param->value, old_value.red, old_value.green, old_value.blue, new_alpha);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2556,13 +2547,9 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(spinbutton), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
@@ -2597,20 +2584,17 @@ boolean after_param_text_focus_changed(LiVESWidget *hbox, LiVESWidget *child, li
 
 void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   //LiVESTextBuffer *textbuffer = NULL;
-
+  weed_plant_t *inst = NULL, *wparam = NULL;
   LiVESList *retvals = NULL;
-
   lives_param_t *param;
-
   char *old_text;
   const char *new_text;
-
-  boolean was_reinited = FALSE, is_reiniting = FALSE;
-
   int copyto = -1;
+  boolean needs_update = FALSE;
   int param_number;
 
   if (rfx == NULL || rfx->params == NULL || textwidget == NULL) return;
+
 
   param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(textwidget), "param_number"));
   param = &rfx->params[param_number];
@@ -2625,77 +2609,51 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
   }
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
 
-  //if (param->value != NULL) lives_free(param->value); old_text !!!
+  ireinit++;
+
   param->value = lives_strdup(new_text);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
-    int error, i;
-    weed_plant_t *inst = (weed_plant_t *)rfx->source;
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
-      //char *disp_string = get_weed_display_string(inst, param_number);
-      weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
-      int index = 0, numvals;
-      int key = -1;
+    inst = (weed_plant_t *)rfx->source;
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
       char **valss;
-      is_reiniting = weed_get_boolean_value(inst, WEED_LEAF_HOST_REINITING, NULL);
+      int index = 0, numvals, key = -1;
+      wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
+
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
+
+      after_any_changed_1(rfx, param_number, index);
+
       numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
-      if (index >= numvals) {
-        weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
-        fill_param_vals_to(wparam, paramtmpl, index);
-        numvals = index + 1;
-      }
 
-      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
-        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
-          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
-          if (index >= 0 && index < nvals) {
-            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
-            ign[index] = WEED_FALSE;
-            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
-            lives_free(ign);
-          }
-        }
-      }
-
-      valss = weed_get_string_array(wparam, WEED_LEAF_VALUE, &error);
+      valss = weed_get_string_array(wparam, WEED_LEAF_VALUE, NULL);
       valss[index] = lives_strdup((char *)param->value);
-      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       if (!filter_mutex_trylock(key)) {
         weed_set_string_array(wparam, WEED_LEAF_VALUE, numvals, valss);
-        copyto = set_copy_to(inst, param_number, TRUE);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
         filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
       }
-      for (i = 0; i < numvals; i++) lives_free(valss[i]);
+      for (int i = 0; i < numvals; i++) lives_free(valss[i]);
       lives_free(valss);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      /* if (disp_string != NULL) { */
-      /*   if ((int)param->max > RFX_TEXT_MAGIC || param->max == 0.) { */
-      /*     lives_text_buffer_set_text(LIVES_TEXT_BUFFER(textbuffer), (char *)param->value, -1); */
-      /*   } else { */
-      /*     lives_entry_set_text(LIVES_ENTRY(textwidget), disp_string); */
-      /*   } */
-      /*   lives_free(disp_string); */
-      /* } */
-
-      if (!is_reiniting && (param->reinit || (copyto != -1 && rfx->params[copyto].reinit))) {
-        weed_reinit_effect(inst, FALSE);
-        was_reinited = TRUE;
-      }
+      rfx->needs_reinit |= param->reinit;
     }
   }
 
@@ -2703,17 +2661,9 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(textwidget), rfx);
     lives_list_free_all(&retvals);
-    if (!is_reiniting) lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  lives_free(old_text);
-  if (!is_reiniting) {
-    if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-    if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-      activate_mt_preview(mainw->multitrack);
-    }
-  }
-  param->changed = param->edited = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 
@@ -2723,15 +2673,15 @@ static void after_param_text_buffer_changed(LiVESTextBuffer *textbuffer, lives_r
 }
 
 
-void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
+void after_string_list_changed(LiVESWidget *entry, lives_rfx_t *rfx) {
   LiVESList *retvals = NULL;
-  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(combo), "param_number"));
+  int param_number = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(entry), "param_number"));
+  LiVESCombo *combo = (LiVESCombo *)(rfx->params[param_number].widgets[0]);
   lives_param_t *param = &rfx->params[param_number];
   char *txt = lives_combo_get_active_text(combo);
-  lives_filter_error_t retval;
-  boolean was_reinited = FALSE;
   int old_index = get_int_param(param->value);
   int new_index = lives_list_strcmp_index(param->list, txt, TRUE);
+  boolean needs_update = FALSE;
   int copyto = -1;
 
   lives_free(txt);
@@ -2740,18 +2690,19 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
   if (new_index == old_index) return;
 
   if (mainw->block_param_updates) {
-    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit = TRUE;
+    if (rfx->status == RFX_STATUS_WEED && param->reinit) rfx->needs_reinit |= param->reinit;
     return; // updates are blocked until all params are ready
   }
+
+  ireinit++;
 
   set_int_param(param->value, new_index);
 
   if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
-
+  param->change_blocked = TRUE;
   if (rfx->status == RFX_STATUS_WEED) {
-    int error;
     weed_plant_t *inst = (weed_plant_t *)rfx->source;
-    if (inst != NULL && weed_get_int_value(inst, WEED_LEAF_TYPE, &error) == WEED_PLANT_FILTER_INSTANCE) {
+    if (inst != NULL && WEED_PLANT_IS_FILTER_INSTANCE(inst)) {
       //char *disp_string = get_weed_display_string(inst, param_number);
       weed_plant_t *wparam = weed_inst_in_param(inst, param_number, FALSE, FALSE);
       int index = 0, numvals;
@@ -2761,61 +2712,27 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
       if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
         index = mainw->multitrack->track_index;
       }
-      numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
-      if (index >= numvals) {
-        weed_plant_t *paramtmpl = weed_get_plantptr_value(wparam, WEED_LEAF_TEMPLATE, &error);
-        fill_param_vals_to(wparam, paramtmpl, index);
-        numvals = index + 1;
-      }
 
-      if (mainw->multitrack != NULL && is_perchannel_multi(rfx, param_number)) {
-        if (weed_plant_has_leaf(wparam, WEED_LEAF_IGNORE)) {
-          int nvals = weed_leaf_num_elements(wparam, WEED_LEAF_IGNORE);
-          if (index >= 0 && index < nvals) {
-            int *ign = weed_get_boolean_array(wparam, WEED_LEAF_IGNORE, &error);
-            ign[index] = WEED_FALSE;
-            weed_set_boolean_array(wparam, WEED_LEAF_IGNORE, nvals, ign);
-            lives_free(ign);
-          }
-        }
-      }
+      after_any_changed_1(rfx, param_number, index);
 
-      valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, &error);
+      valis = weed_get_int_array(wparam, WEED_LEAF_VALUE, NULL);
       valis[index] = new_index;
-      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      numvals = weed_leaf_num_elements(wparam, WEED_LEAF_VALUE);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       if (!filter_mutex_trylock(key)) {
         weed_set_int_array(wparam, WEED_LEAF_VALUE, numvals, valis);
-        copyto = set_copy_to(inst, param_number, TRUE);
+        copyto = set_copy_to(inst, param_number, rfx, TRUE);
         filter_mutex_unlock(key);
+        if (copyto != -1) needs_update = TRUE;
       }
       lives_free(valis);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, param_number);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
-
-      /* if (disp_string != NULL) { */
-      /*   lives_signal_handlers_block_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx); */
-      /*   lives_combo_set_active_string(LIVES_COMBO(combo), disp_string); */
-      /*   lives_signal_handlers_unblock_by_func(combo, (livespointer)after_string_list_changed, (livespointer)rfx); */
-      /*   lives_free(disp_string); */
-      /* } */
-
-      if (param->reinit || (copyto != -1 && rfx->params[copyto].reinit)) {
-        // this will cause g_notify() to throw an error, because we destroy the combo in its own callback
-        // and it tries to notify its popup menu. So we will remove the text and leak it.
-        lives_widget_object_ref(combo);
-        retval = weed_reinit_effect(inst, FALSE);
-        if (retval == FILTER_INFO_REDRAWN) {
-          GtkCellArea *celly;
-          lives_widget_object_get(LIVES_WIDGET_OBJECT(combo), "cell-area", &celly);
-          if (GTK_IS_CELL_LAYOUT(celly)) gtk_cell_layout_clear(GTK_CELL_LAYOUT(celly));
-          lives_combo_set_model(combo, NULL);
-        } else lives_widget_object_unref(combo);
-        was_reinited = TRUE;
-      }
+      rfx->needs_reinit |= param->reinit;
     }
   }
 
@@ -2823,14 +2740,9 @@ void after_string_list_changed(LiVESCombo *combo, lives_rfx_t *rfx) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(combo), rfx);
     lives_list_free_all(&retvals);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    param->change_blocked = FALSE;
+    needs_update = TRUE;
   }
-  if (!was_reinited && copyto != -1) update_visual_params(rfx, FALSE);
-  if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
-    activate_mt_preview(mainw->multitrack);
-  }
-  param->changed = TRUE;
+  after_any_changed_2(rfx, param, needs_update);
 }
 
 

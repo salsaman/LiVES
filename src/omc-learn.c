@@ -172,14 +172,14 @@ static int get_nfixed(int type, const char *string) {
     type = midi_msg_type(string);
     return get_nfixed(type, NULL);
   case OMC_MIDI_CONTROLLER:
-    if (prefs->midi_rcv_channel > -1) nfixed = 2; // type, cnum
+    if (prefs->midi_rcv_channel > MIDI_OMNI) nfixed = 2; // type, cnum
     else nfixed = 3;   // type, channel, cnum
     break;
   case OMC_MIDI_NOTE:
   case OMC_MIDI_NOTE_OFF:
   case OMC_MIDI_PITCH_BEND:
   case OMC_MIDI_PGM_CHANGE:
-    if (prefs->midi_rcv_channel > -1) nfixed = 1; // type
+    if (prefs->midi_rcv_channel > MIDI_OMNI) nfixed = 1; // type
     else nfixed = 2; // type, channel
     break;
 #endif
@@ -465,9 +465,9 @@ char *midi_mangle(void) {
 
         switch (ev->type) {
         case SND_SEQ_EVENT_CONTROLLER:
-          if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
+          if (prefs->midi_rcv_channel != MIDI_OMNI && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 176;
-          if (prefs->midi_rcv_channel == -1)
+          if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %u %d", typeNumber + ev->data.control.channel, ev->data.control.channel,
                                          ev->data.control.param,
                                          ev->data.control.value);
@@ -477,9 +477,9 @@ char *midi_mangle(void) {
 
           break;
         case SND_SEQ_EVENT_PITCHBEND:
-          if (prefs->midi_rcv_channel != -1 && ev->data.control.channel != prefs->midi_rcv_channel) break;
+          if (prefs->midi_rcv_channel != MIDI_OMNI && ev->data.control.channel != prefs->midi_rcv_channel) break;
           typeNumber = 224;
-          if (prefs->midi_rcv_channel == -1)
+          if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.control.channel, ev->data.control.channel,
                                          ev->data.control.value);
           else
@@ -487,9 +487,9 @@ char *midi_mangle(void) {
           break;
 
         case SND_SEQ_EVENT_NOTEON:
-          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
+          if (prefs->midi_rcv_channel != MIDI_OMNI && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 144;
-          if (prefs->midi_rcv_channel == -1)
+          if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
                                          ev->data.note.velocity);
           else
@@ -498,9 +498,9 @@ char *midi_mangle(void) {
 
           break;
         case SND_SEQ_EVENT_NOTEOFF:
-          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
+          if (prefs->midi_rcv_channel != MIDI_OMNI && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 128;
-          if (prefs->midi_rcv_channel == -1)
+          if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.note.note,
                                          ev->data.note.off_velocity);
           else
@@ -509,9 +509,9 @@ char *midi_mangle(void) {
 
           break;
         case SND_SEQ_EVENT_PGMCHANGE:
-          if (prefs->midi_rcv_channel != -1 && ev->data.note.channel != prefs->midi_rcv_channel) break;
+          if (prefs->midi_rcv_channel != MIDI_OMNI && ev->data.note.channel != prefs->midi_rcv_channel) break;
           typeNumber = 192;
-          if (prefs->midi_rcv_channel == -1)
+          if (prefs->midi_rcv_channel == MIDI_OMNI)
             string = lives_strdup_printf("%d %d %d", typeNumber + ev->data.note.channel, ev->data.note.channel, ev->data.control.value);
           else
             string = lives_strdup_printf("%d %d", typeNumber, ev->data.control.value);
@@ -552,9 +552,9 @@ char *midi_mangle(void) {
 
     channel = (midbuf[0] & 0x0F); // MIDI channel
 
-    if (prefs->midi_rcv_channel != -1 && channel != prefs->midi_rcv_channel) return NULL; // wrong channel, ignore it
+    if (prefs->midi_rcv_channel != MIDI_OMNI && channel != prefs->midi_rcv_channel) return NULL; // wrong channel, ignore it
 
-    if (prefs->midi_rcv_channel == -1) {
+    if (prefs->midi_rcv_channel == MIDI_OMNI) {
       // omni mode
       if (target == 2) string = lives_strdup_printf("%u %u %u", midbuf[0], channel, midbuf[1]);
       else if (target == 3) string = lives_strdup_printf("%u %u %u %u", midbuf[0], channel, midbuf[1], midbuf[2]);
@@ -988,7 +988,7 @@ static LiVESWidget *create_omc_macro_combo(lives_omc_match_node_t *mnode, int ro
 
 static char *get_chan_string(const char *string) {
   char *chstr;
-  if (prefs->midi_rcv_channel == -1) {
+  if (prefs->midi_rcv_channel == MIDI_OMNI) {
     int chan = js_index(string);
     // TRANSLATORS: ch is abbreviation for MIDI "channel"
     chstr = lives_strdup_printf(_(" ch %d"), chan);
@@ -1271,7 +1271,7 @@ static void show_existing(omclearn_w *omclw) {
             2]);
       else idx = -1;
       srch = lives_strdup(mnode->srch);
-      if (prefs->midi_rcv_channel == -1) {
+      if (prefs->midi_rcv_channel == MIDI_OMNI) {
         // remove the channel if it is in the string
         tmp = cut_string_elems(srch, 1);
         blen = strlen(tmp);
@@ -2438,7 +2438,7 @@ void on_devicemap_save_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
       lives_write(fd, OMC_FILE_VSTRING, strlen(OMC_FILE_VSTRING), TRUE);
 
-      if (prefs->midi_rcv_channel == -1) omnimidi = 1;
+      if (prefs->midi_rcv_channel == MIDI_OMNI) omnimidi = 1;
       else omnimidi = 0;
 
       lives_write(fd, &omnimidi, 1, TRUE);
@@ -2661,9 +2661,9 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
 #endif
 #ifdef OMC_MIDI_IMPL
     case OMC_MIDI:
-      if (omnimidi && prefs->midi_rcv_channel > -1) {
-        new_midi_rcv_channel = -1;
-      } else if (!omnimidi && prefs->midi_rcv_channel == -1) {
+      if (omnimidi && prefs->midi_rcv_channel > MIDI_OMNI) {
+        new_midi_rcv_channel = MIDI_OMNI;
+      } else if (!omnimidi && prefs->midi_rcv_channel == MIDI_OMNI) {
         new_midi_rcv_channel = 0;
       }
       idx = -1;
@@ -2755,7 +2755,7 @@ void on_devicemap_load_activate(LiVESMenuItem *menuitem, livespointer user_data)
 
   if (new_midi_rcv_channel != prefs->midi_rcv_channel) {
     char *dpr;
-    if (new_midi_rcv_channel == -1) dpr = lives_strdup(_("MIDI receive channel was set to ALL CHANNELS\n"));
+    if (new_midi_rcv_channel == MIDI_OMNI) dpr = lives_strdup(_("MIDI receive channel was set to ALL CHANNELS\n"));
     else dpr = lives_strdup_printf(_("MIDI receive channel was set to channel %d\n"), new_midi_rcv_channel);
     prefs->midi_rcv_channel = new_midi_rcv_channel;
     d_print(dpr);

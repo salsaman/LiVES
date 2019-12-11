@@ -2486,7 +2486,8 @@ void create_LiVES(void) {
   mainw->config_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->video_draw), LIVES_WIDGET_CONFIGURE_EVENT,
                        LIVES_GUI_CALLBACK(config_event),
                        NULL);
-  mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+  mainw->pb_fps_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_pb_fps),
+                       LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(changed_fps_during_pb),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->open), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -2909,7 +2910,8 @@ void create_LiVES(void) {
                            LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(on_spinbutton_start_value_changed),
                            NULL);
-  mainw->spin_end_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_end), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+  mainw->spin_end_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mainw->spinbutton_end),
+                         LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                          LIVES_GUI_CALLBACK(on_spinbutton_end_value_changed),
                          NULL);
 

@@ -4648,11 +4648,12 @@ static int loop_lock_frame = -1;
 static boolean oloop;
 static boolean oloop_cont;
 static boolean oping_pong;
+static boolean ofwd;
 
 void unlock_loop_lock(void) {
   mainw->loop = oloop;
   mainw->loop_cont = oloop_cont;
-  mainw->ping_pong = oping_pong;
+  //mainw->ping_pong = oping_pong;
   mainw->loop_locked = FALSE;
   if (CURRENT_CLIP_IS_NORMAL) {
     mainw->play_start = cfile->start;
@@ -4673,8 +4674,10 @@ boolean dirchange_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   area = LIVES_POINTER_TO_INT(area_enum);
 
   if (!(mod & LIVES_SHIFT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
+    boolean do_ret = FALSE;
+    if (!mainw->ping_pong || ((cfile->pb_fps >= 0. && ofwd) || (cfile->pb_fps < 0. && !ofwd))) do_ret = TRUE;
     unlock_loop_lock();
-    if (cfile->pb_fps > 0.) return TRUE;
+    if (do_ret) return TRUE;
   }
 
   if (area == SCREEN_AREA_FOREGROUND || (area == SCREEN_AREA_BACKGROUND && mainw->blend_file == mainw->current_file)) {
@@ -4726,9 +4729,10 @@ boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, 
       oloop = mainw->loop;
       oloop_cont = mainw->loop_cont;
       oping_pong = mainw->ping_pong;
+      ofwd = cfile->pb_fps > 0.;
     }
     mainw->loop_cont = TRUE;
-    mainw->ping_pong = TRUE;
+    //mainw->ping_pong = TRUE;
     mainw->loop = FALSE;
     mainw->loop_locked = TRUE;
     loop_lock_frame = -1;
@@ -4751,6 +4755,10 @@ boolean fps_reset_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint3
   }
 
   mainw->rte_keys = -1;
+
+  if (mainw->loop_locked) {
+    dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
+  }
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(cfile->frameno);

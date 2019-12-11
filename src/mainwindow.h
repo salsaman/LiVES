@@ -51,6 +51,8 @@
 
 #define LOOP_LOCK_MIN_FRAMES (cfile->pb_fps + 1)
 
+#define DEF_DL_BANDWIDTH 5000 ///< Kb / sec
+
 /////// GUI related constants /////////////////////////////////////////////////////////
 
 // parameters for resizing the image frames, and for capture
@@ -59,12 +61,7 @@
 
 // space to reserve for the CE timeline
 // IMPORTANT to fine tune this - TODO
-
-#if GTK_CHECK_VERSION(3, 0, 0)
-#define CE_FRAME_HSPACE ((int)(420. * widget_opts.scale))
-#else
-#define CE_FRAME_HSPACE ((int)(420. * widget_opts.scale))
-#endif
+#define CE_TIMELINE_HSPACE ((int)(420. * widget_opts.scale))
 
 /// char width of combo entries (default)
 #define COMBOWIDTHCHARS 12
@@ -111,11 +108,11 @@
 #define DEF_FRAME_HSIZE_43S_UNSCALED 640.
 #define DEF_FRAME_VSIZE_43S_UNSCALED 480.
 
-// min screen height to show the message area
-#define MIN_MSG_AREA_SCRNHEIGHT SCREEN_43S_LIMIT_HEIGHT
-
 #define DEF_FRAME_HSIZE_GUI (((int)(DEF_FRAME_HSIZE_43S_UNSCALED * widget_opts.scale) >> 2) << 1)
 #define DEF_FRAME_VSIZE_GUI (((int)(DEF_FRAME_VSIZE_43S_UNSCALED * widget_opts.scale) >> 1) << 1)
+
+// min screen height to show the message area
+#define MIN_MSG_AREA_SCRNHEIGHT (DEF_FRAME_HSIZE_GUI + CE_TIMELINE_HSPACE)
 
 #define DEF_FRAME_HSIZE_UNSCALED ((GUI_SCREEN_WIDTH >= SCREEN_169_MIN_WIDTH) ? DEF_FRAME_HSIZE_169_UNSCALED : (GUI_SCREEN_WIDTH >= SCREEN_43S_LIMIT_WIDTH && GUI_SCREEN_HEIGHT >= SCREEN_43S_LIMIT_HEIGHT) ? DEF_FRAME_HSIZE_43_UNSCALED : DEF_FRAME_HSIZE_43S_UNSCALED)
 
@@ -178,14 +175,12 @@
 
 #define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
 
-/// max ext_cntl + 1
-#define MAX_EXT_CNTL 2
-
 /// external control types
 typedef enum {
   EXT_CNTL_NONE = -1, ///< not used
-  EXT_CNTL_JS = 0,
-  EXT_CNTL_MIDI = 1
+  EXT_CNTL_JS,
+  EXT_CNTL_MIDI,
+  MAX_EXT_CNTL
 } lives_ext_cntl_t;
 
 /// timebase sources
@@ -472,7 +467,8 @@ enum {
 
 #define LIVES_SUBS_FILTER  {"*.srt", "*.sub", NULL}
 #define LIVES_AUDIO_LOAD_FILTER  {"*.it", "*.mp3", "*.wav", "*.ogg", "*.mod", "*.xm", "*.wma", "*.flac", NULL}
-#define LIVES_TV_CARD_TYPES  {"v4l2", "v4l", "bsdbt848", "dummy", "*autodetect", "yv12", "*", "rgb32", "rgb24", "rgb16", "rgb15", "uyvy", "yuy2", "i2420", NULL}
+#define LIVES_TV_CARD_TYPES  {"v4l2", "v4l", "bsdbt848", "dummy", "*autodetect", "yv12", "*", "rgb32", "rgb24", "rgb16", \
+      "rgb15", "uyvy", "yuy2", "i2420", NULL}
 
 #define NUM_VOL_LIGHTS 10
 
@@ -1270,7 +1266,8 @@ typedef struct {
   volatile lives_rfx_t *vrfx_update;
 
   lives_fx_candidate_t
-  fx_candidates[MAX_FX_CANDIDATE_TYPES]; ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
+  ///< effects which can have candidates from which a delegate is selected (current examples are: audio_volume, resize)
+  fx_candidates[MAX_FX_CANDIDATE_TYPES];
 
   LiVESList *cached_list;  ///< cache of preferences or file header file (or NULL)
   FILE *clip_header;
@@ -1292,7 +1289,7 @@ typedef struct {
   char *string_constants[NUM_LIVES_STRING_CONSTANTS];
   char *any_string;  ///< localised text saying "Any", for encoder and output format
   char *none_string;  ///< localised text saying "None", for playback plugin name, etc.
-  char *recommended_string;  ///< localised text saying "recommended", for encoder and output format
+  char *recommended_string;  ///< localised text saying "recommended", for encoder and output format, etc.
   char *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
   char *cl_string; ///< localised text saying "*The current layout*", for layout warnings
 

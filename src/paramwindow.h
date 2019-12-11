@@ -50,7 +50,7 @@ void after_param_blue_changed(LiVESSpinButton *, lives_rfx_t *);
 void after_param_alpha_changed(LiVESSpinButton *, lives_rfx_t *);
 boolean after_param_text_focus_changed(LiVESWidget *, LiVESWidget *, lives_rfx_t *);
 void after_param_text_changed(LiVESWidget *, lives_rfx_t *);
-void after_string_list_changed(LiVESCombo *, lives_rfx_t *);
+void after_string_list_changed(LiVESWidget *, lives_rfx_t *);
 
 void on_pwcolsel(LiVESButton *, lives_rfx_t *);
 
@@ -68,6 +68,11 @@ LiVESList *do_onchange_init(lives_rfx_t *) WARN_UNUSED;
 
 void update_weed_color_value(weed_plant_t *plant, int pnum, int c1, int c2, int c3, int c4, lives_rfx_t *);
 
-void update_visual_params(lives_rfx_t *r, boolean update_hidden);
+/// apply internal value changes to interface widgets
+void update_visual_params(lives_rfx_t *, boolean update_hidden);
+
+/// show / hide widgets set by plugin in init_func()
+boolean update_widget_vis(lives_rfx_t *, int key, int mode);
+
 
 #endif

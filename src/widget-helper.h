@@ -1084,6 +1084,7 @@ boolean lives_accel_path_disconnect(LiVESAccelGroup *, const char *path);
 boolean lives_widget_get_mod_mask(LiVESWidget *, LiVESXModifierType *modmask);
 
 boolean lives_widget_nullify_with(LiVESWidget *, void **);
+boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease);
 
 #endif // cplusplus
 

@@ -362,7 +362,14 @@ lives_decoder_t *clone_decoder(int fileno);
 /// max number of display widgets per parameter (currently 7 for transition param with mergealign -
 /// spin + label + knob + scale + in + out + dummy
 // TODO : use enum for widget type
-#define MAX_PARAM_WIDGETS 32
+#define MAX_PARAM_WIDGETS 128
+
+#define RFX_MAX_NORM_WIDGETS 16
+
+/// special widgets
+#define WIDGET_RB_IN 			16
+#define WIDGET_RB_OUT 		17
+#define WIDGET_RB_DUMMY 		18
 
 /// length of max string (not including terminating NULL) for LiVES-perl
 #define RFX_MAXSTRINGLEN (PATH_MAX - 1)
@@ -422,7 +429,11 @@ typedef struct {
   double step_size;
   //int copy_to;
   boolean transition;
-  boolean reinit;
+
+#define REINIT_FUNCTIONAL 	1
+#define REINIT_VISUAL 		2
+
+  int reinit;
 
   boolean wrap;
   int group;
@@ -510,7 +521,7 @@ typedef struct {
   LiVESList *gui_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
   LiVESList *onchange_strings;  ///< rfxscript for constructing the params, param window and onchange triggers
   boolean is_template;
-  boolean needs_reinit;
+  int needs_reinit;
 } lives_rfx_t;
 
 boolean check_rfx_for_lives(lives_rfx_t *);

@@ -46,7 +46,7 @@
 // Have fun, and let's fight for Free Speech, Open Media and True Creativity !
 // - Salsaman
 
-// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC140 -xL -p
+// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC128 -xL -p -o -Q -xp
 
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H
@@ -274,6 +274,8 @@ typedef int lives_pgid_t;
 #define PATH_MAX 4096
 #endif
 #endif
+
+#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) ? fname : fname : fname : NULL))
 
 // math macros / functions
 

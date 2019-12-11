@@ -416,6 +416,9 @@ WEED_SETUP_START(200, 200) {
   int i, j;
 
   in_params[0] = weed_integer_init("fcsize", "Frame _Cache Size (max)", 20, 0, 50);
+  gui = weed_paramtmpl_get_gui(in_params[0]);
+  weed_gui_set_flags(gui, WEED_GUI_REINIT_ON_VALUE_CHANGE);
+
   weed_set_int_value(in_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_REINIT_ON_VALUE_CHANGE);
 
   for (i = 1; i < 205; i += 4) {

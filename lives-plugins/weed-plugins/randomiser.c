@@ -172,11 +172,9 @@ WEED_SETUP_START(200, 200) {
            "produce a random double when the corresponding boolean input changes state\n"
            "min and max may be set for each out parameter, as may the trigger direction(s) for each in parameter.\n"
            , NVALS);
-
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
 WEED_SETUP_END;

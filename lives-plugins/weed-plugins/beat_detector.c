@@ -362,6 +362,7 @@ WEED_SETUP_START(200, 200) {
   if (create_plans() != WEED_SUCCESS) return NULL;
   else {
     weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0", 0), NULL};
+
     weed_plant_t *in_params[] = {weed_switch_init("reset", "_Reset hold", WEED_FALSE),
                                  weed_float_init("avlim", "_Average threshold", 3., 0., 40.),
                                  weed_float_init("varlim", "_Variance threshold", 0.5, 0., 10.),
@@ -379,7 +380,6 @@ WEED_SETUP_START(200, 200) {
     weed_set_boolean_value(gui, WEED_LEAF_HIDDEN, WEED_TRUE);
 
     weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
     verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
     weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   }

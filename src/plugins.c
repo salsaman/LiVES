@@ -1,6 +1,6 @@
 // plugins.c
 // LiVES
-// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -3151,9 +3151,7 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
 
     rpar[i].flags = flags;
 
-    gui = NULL;
-
-    if (weed_plant_has_leaf(wtmpl, WEED_LEAF_GUI)) gui = weed_get_plantptr_value(wtmpl, WEED_LEAF_GUI, &error);
+    gui = weed_paramtmpl_get_gui(wtmpl, FALSE);
 
     rpar[i].group = 0;
 
@@ -3194,10 +3192,13 @@ lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *inst, boolean show_rei
     rpar[i].max = 0.;
     rpar[i].list = NULL;
 
-    if (flags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE) {
-      rpar[i].reinit = TRUE;
-      if (!show_reinits) rpar[i].hidden |= HIDDEN_NEEDS_REINIT;
-    } else rpar[i].reinit = FALSE;
+    rpar[i].reinit = 0;
+    if (flags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE)
+      rpar[i].reinit = REINIT_FUNCTIONAL;
+    if (gui != NULL && (weed_gui_get_flags(gui) & WEED_GUI_REINIT_ON_VALUE_CHANGE))
+      rpar[i].reinit |= REINIT_VISUAL;
+
+    if (!show_reinits && rpar[i].reinit != 0) rpar[i].hidden |= HIDDEN_NEEDS_REINIT;
 
     // hide internally connected params for compound fx
     if (weed_plant_has_leaf(wpar, WEED_LEAF_HOST_INTERNAL_CONNECTION)) rpar[i].hidden |= HIDDEN_COMPOUND_INTERNAL;

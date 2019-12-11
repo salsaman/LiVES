@@ -9383,7 +9383,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int osamtype,
       gudest_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
       ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
       convert_yuv888_to_yuv420_frame(gusrc, width, height, irowstride, ostrides, gudest_array, FALSE, iclamped);
-      weed_free(ostrides);
+      lives_free(ostrides);
       lives_free(gudest_array);
       weed_set_int_value(layer, WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
       //weed_set_int_value(layer,WEED_LEAF_YUV_SAMPLING,osamtype);

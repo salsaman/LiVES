@@ -72,56 +72,50 @@ typedef struct {
   char image_ext[16];
 
   uint32_t warning_mask;
+
+  /// bits 19,18,13,11 and 10 (off by default)
+#define DEF_WARNING_MASK 0x000C2C04
+
   // if these bits are set, we do not show the warning
-#define WARN_MASK_FPS (1<<0)
-#define WARN_MASK_FSIZE (1<<1)
+#define WARN_MASK_FPS 							(1<<0)
+#define WARN_MASK_FSIZE 							(1<<1)
+#define WARN_MASK_UNUSED1 						(1<<2)  ///< was "save_quality"
+#define WARN_MASK_SAVE_SET 						(1<<3)
+#define WARN_MASK_NO_MPLAYER 						(1<<4)
+#define WARN_MASK_RENDERED_FX 					(1<<5)
+#define WARN_MASK_NO_ENCODERS 					(1<<6)
+#define WARN_MASK_LAYOUT_MISSING_CLIPS 			(1<<7)
+#define WARN_MASK_LAYOUT_CLOSE_FILE 				(1<<8)
+#define WARN_MASK_LAYOUT_DELETE_FRAMES 			(1<<9)
 
-  /// no longer used
-#define WARN_MASK_SAVE_QUALITY (1<<2)
+  /** off by default on a fresh install */
+#define WARN_MASK_LAYOUT_SHIFT_FRAMES 				(1<<10)
 
-#define WARN_MASK_SAVE_SET (1<<3)
-#define WARN_MASK_NO_MPLAYER (1<<4)
-#define WARN_MASK_RENDERED_FX (1<<5)
-#define WARN_MASK_NO_ENCODERS (1<<6)
-#define WARN_MASK_LAYOUT_MISSING_CLIPS (1<<7)
-#define WARN_MASK_LAYOUT_CLOSE_FILE (1<<8)
-#define WARN_MASK_LAYOUT_DELETE_FRAMES (1<<9)
+  /** off by default on a fresh install */
+#define WARN_MASK_LAYOUT_ALTER_FRAMES 			(1<<11)
+#define WARN_MASK_DUPLICATE_SET 					(1<<12)
 
-  /* next two are off by default (on a fresh install) */
-#define WARN_MASK_LAYOUT_SHIFT_FRAMES (1<<10)
-#define WARN_MASK_LAYOUT_ALTER_FRAMES (1<<11)
+  /** off by default on a fresh install */
+#define WARN_MASK_EXIT_MT 						(1<<13)
+#define WARN_MASK_DISCARD_SET 					(1<<14)
+#define WARN_MASK_AFTER_DVGRAB 					(1<<15)
+#define WARN_MASK_MT_ACHANS 						(1<<16)
+#define WARN_MASK_LAYOUT_DELETE_AUDIO 			(1<<17)
 
-#define WARN_MASK_DUPLICATE_SET (1<<12)
+  /** off by default on a fresh install */
+#define WARN_MASK_LAYOUT_SHIFT_AUDIO 				(1<<18)
 
-#define WARN_MASK_EXIT_MT (1<<13)
-#define WARN_MASK_DISCARD_SET (1<<14)
-#define WARN_MASK_AFTER_DVGRAB (1<<15)
-
-#define WARN_MASK_MT_ACHANS (1<<16)
-
-#define WARN_MASK_LAYOUT_DELETE_AUDIO (1<<17)
-
-  /* next two are off by default (on a fresh install) */
-#define WARN_MASK_LAYOUT_SHIFT_AUDIO (1<<18)
-#define WARN_MASK_LAYOUT_ALTER_AUDIO (1<<19)
-
-#define WARN_MASK_MT_NO_JACK (1<<20)
-
-#define WARN_MASK_OPEN_YUV4M (1<<21)
-
-#define WARN_MASK_MT_BACKUP_SPACE (1<<22)
-
-#define WARN_MASK_LAYOUT_POPUP (1<<23)
-
-#define WARN_MASK_CLEAN_AFTER_CRASH (1<<24)
-
-#define WARN_MASK_NO_PULSE_CONNECT (1<<25)
-
-#define WARN_MASK_LAYOUT_WIPE (1<<26)
-
-#define WARN_MASK_LAYOUT_GAMMA (1<<27)
-
-#define WARN_MASK_VJMODE_ENTER (1<<28)
+  /** off by default on a fresh install */
+#define WARN_MASK_LAYOUT_ALTER_AUDIO 				(1<<19)
+#define WARN_MASK_MT_NO_JACK 						(1<<20)
+#define WARN_MASK_OPEN_YUV4M 					(1<<21)
+#define WARN_MASK_MT_BACKUP_SPACE 				(1<<22)
+#define WARN_MASK_LAYOUT_POPUP 					(1<<23)
+#define WARN_MASK_CLEAN_AFTER_CRASH 				(1<<24)
+#define WARN_MASK_NO_PULSE_CONNECT 				(1<<25)
+#define WARN_MASK_LAYOUT_WIPE 					(1<<26)
+#define WARN_MASK_LAYOUT_GAMMA 					(1<<27)
+#define WARN_MASK_VJMODE_ENTER 					(1<<28)
 
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
@@ -222,6 +216,8 @@ typedef struct {
 
   boolean move_effects;
 
+#define DEF_MT_UNDO_SIZE 32 ///< MB
+
   int mt_undo_buf;
   boolean mt_enter_prompt;
 
@@ -275,10 +271,6 @@ typedef struct {
   int midi_check_rate;
   int midi_rpt;
 
-#define OMC_DEV_MIDI (1<<0)
-#define OMC_DEV_JS (1<<1)
-#define OMC_DEV_FORCE_RAW_MIDI (1<<2)
-#define OMC_DEV_MIDI_DUMMY (1<<3)
   uint32_t omc_dev_opts;
 
   char omc_js_fname[PATH_MAX];  ///< utf8
@@ -308,7 +300,8 @@ typedef struct {
 
   boolean autoload_subs;
 
-  int rec_stop_gb;
+#define DEF_REC_STOP_GB 10.
+  double rec_stop_gb;
 
   int max_modes_per_key; ///< maximum effect modes per key
 
@@ -415,6 +408,8 @@ typedef struct {
   boolean show_dev_opts;
 
   boolean btgamma;
+
+  boolean msgs_pbdis;
 } _prefs;
 
 enum {
@@ -587,6 +582,7 @@ typedef struct {
   LiVESWidget *spinbutton_ocp;
   LiVESWidget *nmessages_spin;
   LiVESWidget *msgs_unlimited;
+  LiVESWidget *msgs_pbdis;
   LiVESWidget *msg_textsize_combo;
   LiVESWidget *acodec_combo;
   LiVESWidget *spinbutton_osc_udp;
@@ -859,6 +855,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 
 #define PREF_MAX_MSGS "max_text_messages"
 #define PREF_MSG_TEXTSIZE "msg_textsize"
+#define PREF_MSG_PBDIS "msg_disable_during_playback"
 
 #define PREF_RTE_KEYS_VIRTUAL "rte_keys_virtual"
 

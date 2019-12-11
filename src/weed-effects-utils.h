@@ -65,6 +65,8 @@ weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchan
 weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans);
 weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams);
 weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams);
+int weed_instance_get_flags(weed_plant_t *instance);
+void weed_instance_set_flags(weed_plant_t *instance, int flags);
 
 /* CHANNEL_TEMPLATE functions */
 char *weed_chantmpl_get_name(weed_plant_t *chantmpl);
@@ -127,6 +129,9 @@ int weed_param_get_value_type(weed_plant_t *param);
 
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);
+
+/// gui plants
+int weed_gui_get_flags(weed_plant_t *gui);
 
 // utils
 char *weed_seed_type_to_text(int32_t seed_type) WARN_UNUSED;

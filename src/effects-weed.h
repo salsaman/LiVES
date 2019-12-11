@@ -210,7 +210,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 void rec_param_change(weed_plant_t *inst, int pnum);
 
 // copy values for "copy_value_to" params
-int set_copy_to(weed_plant_t *inst, int pnum, boolean update);
+int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update);
 
 weed_plant_t *get_textparm();
 

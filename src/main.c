@@ -683,7 +683,7 @@ static boolean pre_init(void) {
   prefs->hide_framebar = FALSE;
 
   // get some prefs we need to set menu options
-  future_prefs->show_recent = prefs->show_recent = get_boolean_pref(PREF_SHOW_RECENT_FILES);
+  future_prefs->show_recent = prefs->show_recent = get_boolean_prefd(PREF_SHOW_RECENT_FILES, TRUE);
 
   get_string_pref(PREF_PREFIX_DIR, prefs->prefix_dir, PATH_MAX);
 
@@ -752,7 +752,8 @@ static boolean pre_init(void) {
   }
 
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
-  prefs->warning_mask = (uint32_t)get_int_pref(PREF_LIVES_WARNING_MASK);
+
+  prefs->warning_mask = (uint32_t)get_int_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
   if (!ign_opts.ign_jackopts) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 0);
@@ -780,11 +781,11 @@ static boolean pre_init(void) {
   prefs->volume = get_double_prefd(PREF_MASTER_VOLUME, 1.0);
   future_prefs->volume = (float)prefs->volume;
 
-  prefs->open_maximised = get_boolean_pref(PREF_OPEN_MAXIMISED);
+  prefs->open_maximised = get_boolean_prefd(PREF_OPEN_MAXIMISED, TRUE);
 
   for (i = 0; i < MAX_EXT_CNTL; i++) mainw->ext_cntl[i] = FALSE;
 
-  prefs->omc_dev_opts = get_int_pref(PREF_OMC_DEV_OPTS);
+  prefs->omc_dev_opts = get_int_prefd(PREF_OMC_DEV_OPTS, 3);
 
   get_utf8_pref(PREF_OMC_JS_FNAME, prefs->omc_js_fname, PATH_MAX);
 
@@ -820,26 +821,26 @@ static boolean pre_init(void) {
   if (prefs->omc_dev_opts & OMC_DEV_MIDI_DUMMY) prefs->alsa_midi_dummy = TRUE;
 #endif
 
-  prefs->midi_rcv_channel = get_int_prefd(PREF_MIDI_RCV_CHANNEL, -1);
+  prefs->midi_rcv_channel = get_int_prefd(PREF_MIDI_RCV_CHANNEL, MIDI_OMNI);
 
-  if (prefs->vj_mode)
-    mainw->ccpd_with_sound = FALSE;
-  else
-    mainw->ccpd_with_sound = TRUE;
-
+  mainw->ccpd_with_sound = TRUE;
   mainw->loop = TRUE;
+  mainw->loop_cont = FALSE;
+  mainw->fs = FALSE;
 
   if (prefs->vj_mode) {
     auto_recover = TRUE;
     mainw->loop_cont = TRUE;
-  } else mainw->loop_cont = FALSE;
+    mainw->ccpd_with_sound = FALSE;
+    prefs->sepwin_type = SEPWIN_TYPE_NON_STICKY;
+  }
 
 #ifdef GUI_GTK
   mainw->target_table = target_table;
 #endif
 
-  prefs->show_asrc = get_boolean_pref(PREF_SHOW_ASRC);
-  prefs->hfbwnp = get_boolean_pref(PREF_HFBWNP);
+  prefs->show_asrc = get_boolean_prefd(PREF_SHOW_ASRC, TRUE);
+  prefs->hfbwnp = get_boolean_prefd(PREF_HFBWNP, FALSE);
 
   mainw->next_free_alarm = 0;
 
@@ -929,7 +930,6 @@ static void lives_init(_ign_opts *ign_opts) {
   register int i;
 
   for (i = 0; i <= MAX_FILES; mainw->files[i++] = NULL);
-  mainw->fs = FALSE;
   mainw->prefs_changed = FALSE;
   mainw->first_free_file = 1;
   mainw->insert_after = TRUE;
@@ -1050,7 +1050,7 @@ static void lives_init(_ign_opts *ign_opts) {
   }
 
   prefs->fps_tolerance = .0005;
-  prefs->rec_opts = get_int_pref(PREF_RECORD_OPTS);
+  prefs->rec_opts = get_int_prefd(PREF_RECORD_OPTS, -1);
 
   if (prefs->rec_opts == -1) {
     prefs->rec_opts = REC_FPS | REC_FRAMES | REC_EFFECTS | REC_CLIPS | REC_AUDIO;
@@ -1317,13 +1317,11 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->ext_playback = mainw->ext_audio = FALSE;
 
-  get_string_pref(PREF_DEFAULT_IMAGE_FORMAT, buff, 256);
-  if (!strcmp(buff, LIVES_IMAGE_TYPE_JPEG)) lives_snprintf(prefs->image_ext, 16, "%s", LIVES_FILE_EXT_JPG);
-  else lives_snprintf(prefs->image_ext, 16, "%s", buff);
+  get_string_prefd(PREF_DEFAULT_IMAGE_FORMAT, prefs->image_ext, 16, LIVES_FILE_EXT_PNG);
 
   prefs->loop_recording = TRUE;
   prefs->no_bandwidth = FALSE;
-  prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
+  prefs->ocp = get_int_prefd(PREF_OPEN_COMPRESSION_PERCENT, 15);
 
   if (strcmp(future_prefs->theme, prefs->theme)) {
     // we set the theme here in case it got reset to 'none'
@@ -1331,8 +1329,8 @@ static void lives_init(_ign_opts *ign_opts) {
     lives_snprintf(future_prefs->theme, 64, "%s", prefs->theme);
   }
 
-  prefs->stop_screensaver = get_boolean_pref(PREF_STOP_SCREENSAVER);
-  future_prefs->show_tool = prefs->show_tool = get_boolean_pref(PREF_SHOW_TOOLBAR);
+  prefs->stop_screensaver = get_boolean_prefd(PREF_STOP_SCREENSAVER, TRUE);
+  future_prefs->show_tool = prefs->show_tool = get_boolean_prefd(PREF_SHOW_TOOLBAR, TRUE);
 
   if (prefs->gui_monitor != 0) {
     lives_window_center(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -1363,9 +1361,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->safe_symlinks = FALSE; // set to TRUE for dynebolic and other live CDs
 
-  prefs->ce_maxspect = get_boolean_pref(PREF_CE_MAXSPECT);
+  prefs->ce_maxspect = get_boolean_prefd(PREF_CE_MAXSPECT, TRUE);
 
-  prefs->rec_stop_gb = get_int_pref(PREF_REC_STOP_GB);
+  prefs->rec_stop_gb = get_double_prefd(PREF_REC_STOP_GB, DEF_REC_STOP_GB);
 
   if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
@@ -1393,18 +1391,18 @@ static void lives_init(_ign_opts *ign_opts) {
   prefs->force64bit = FALSE;
 
 #if LIVES_HAS_GRID_WIDGET
-  prefs->ce_thumb_mode = get_boolean_pref(PREF_CE_THUMB_MODE);
+  prefs->ce_thumb_mode = get_boolean_prefd(PREF_CE_THUMB_MODE, FALSE);
 #else
   prefs->ce_thumb_mode = FALSE;
 #endif
 
-  widget_opts.show_button_images = get_boolean_pref(PREF_SHOW_BUTTON_ICONS);
+  widget_opts.show_button_images = get_boolean_prefd(PREF_SHOW_BUTTON_ICONS, FALSE);
 
   prefs->push_audio_to_gens = get_boolean_prefd(PREF_PUSH_AUDIO_TO_GENS, TRUE);
 
   prefs->perm_audio_reader = TRUE;
 
-  prefs->max_disp_vtracks = get_int_pref(PREF_MAX_DISP_VTRACKS);
+  prefs->max_disp_vtracks = get_int_prefd(PREF_MAX_DISP_VTRACKS, DEF_MT_DISP_TRACKS);
 
   prefs->mt_load_fuzzy = FALSE;
 
@@ -1417,8 +1415,10 @@ static void lives_init(_ign_opts *ign_opts) {
   else
     prefs->load_rfx_builtin = get_boolean_prefd(PREF_LOAD_RFX_BUILTIN, TRUE);
 
-  prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, WEED_TRUE);
+  prefs->apply_gamma = get_boolean_prefd(PREF_APPLY_GAMMA, TRUE);
   prefs->btgamma = FALSE;
+
+  prefs->msgs_pbdis = get_boolean_prefd(PREF_MSG_PBDIS, TRUE);
 
   //////////////////////////////////////////////////////////////////
 
@@ -1431,7 +1431,7 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->midi_rpt = get_int_pref(PREF_MIDI_RPT);
     if (prefs->midi_rpt == 0) prefs->midi_rpt = DEF_MIDI_RPT;
 
-    prefs->mouse_scroll_clips = get_boolean_pref(PREF_MOUSE_SCROLL_CLIPS);
+    prefs->mouse_scroll_clips = get_boolean_prefd(PREF_MOUSE_SCROLL_CLIPS, TRUE);
 
     prefs->mt_auto_back = get_int_prefd(PREF_MT_AUTO_BACK, 120);
 
@@ -1469,11 +1469,8 @@ static void lives_init(_ign_opts *ign_opts) {
     if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
 
     prefs->show_rdet = TRUE;
-
     prefs->move_effects = TRUE;
-
-    prefs->mt_undo_buf = get_int_pref(PREF_MT_UNDO_BUF);
-
+    prefs->mt_undo_buf = get_int_prefd(PREF_MT_UNDO_BUF, DEF_MT_UNDO_SIZE);
     prefs->mt_enter_prompt = get_boolean_prefd(PREF_MT_ENTER_PROMPT, TRUE);
 
     // default frame sizes (TODO - allow pref)
@@ -1574,7 +1571,7 @@ static void lives_init(_ign_opts *ign_opts) {
       get_string_pref(PREF_OUTPUT_TYPE, prefs->encoder.of_name, 64);
     }
 
-    future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int_pref(PREF_ENCODER_ACODEC);
+    future_prefs->encoder.audio_codec = prefs->encoder.audio_codec = get_int_prefd(PREF_ENCODER_ACODEC, -1);
     prefs->encoder.capabilities = 0;
     prefs->encoder.of_allowed_acodecs = AUDIO_CODEC_UNKNOWN;
 
@@ -1683,12 +1680,12 @@ static void lives_init(_ign_opts *ign_opts) {
     ensure_isdir(mainw->proj_load_dir);
     lives_snprintf(mainw->proj_save_dir, PATH_MAX, "%s", mainw->proj_load_dir);
 
-    prefs->show_player_stats = get_boolean_pref(PREF_SHOW_PLAYER_STATS);
+    prefs->show_player_stats = get_boolean_prefd(PREF_SHOW_PLAYER_STATS, FALSE);
 
-    prefs->dl_bandwidth = get_int_pref(PREF_DL_BANDWIDTH_K);
-    prefs->fileselmax = get_boolean_pref(PREF_FILESEL_MAXIMISED);
+    prefs->dl_bandwidth = get_int_prefd(PREF_DL_BANDWIDTH_K, DEF_DL_BANDWIDTH);
+    prefs->fileselmax = get_boolean_prefd(PREF_FILESEL_MAXIMISED, TRUE);
 
-    prefs->midisynch = get_boolean_pref(PREF_MIDISYNCH);
+    prefs->midisynch = get_boolean_prefd(PREF_MIDISYNCH, FALSE);
     if (prefs->midisynch && !capable->has_midistartstop) {
       set_boolean_pref(PREF_MIDISYNCH, FALSE);
       prefs->midisynch = FALSE;
@@ -1697,18 +1694,18 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->discard_tv = FALSE;
 
     // conserve disk space ?
-    prefs->conserve_space = get_boolean_pref(PREF_CONSERVE_SPACE);
-    prefs->ins_resample = get_boolean_pref(PREF_INSERT_RESAMPLE);
+    prefs->conserve_space = get_boolean_prefd(PREF_CONSERVE_SPACE, FALSE);
+    prefs->ins_resample = get_boolean_prefd(PREF_INSERT_RESAMPLE, TRUE);
 
     // need better control of audio channels first
     prefs->pause_during_pb = FALSE;
 
     // should we always use the last directory ?
     // TODO - add to GUI
-    prefs->save_directories = get_boolean_pref(PREF_SAVE_DIRECTORIES);
-    prefs->antialias = get_boolean_pref(PREF_ANTIALIAS);
+    prefs->save_directories = get_boolean_prefd(PREF_SAVE_DIRECTORIES, FALSE);
+    prefs->antialias = get_boolean_prefd(PREF_ANTIALIAS, TRUE);
 
-    prefs->concat_images = get_boolean_pref(PREF_CONCAT_IMAGES);
+    prefs->concat_images = get_boolean_prefd(PREF_CONCAT_IMAGES, TRUE);
 
     prefs->fxdefsfile = NULL;
     prefs->fxsizesfile = NULL;
@@ -1762,7 +1759,7 @@ static void lives_init(_ign_opts *ign_opts) {
     load_default_keymap();
     threaded_dialog_spin(0.);
 
-    prefs->audio_opts = get_int_pref(PREF_AUDIO_OPTS);
+    prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
 #ifdef ENABLE_JACK
     lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
@@ -3337,7 +3334,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 #ifdef GUI_GTK
 #ifdef LIVES_NO_DEBUG
   // don't crash on GTK+ fatals
-  g_log_set_always_fatal((GLogLevelFlags)0);
+  //g_log_set_always_fatal((GLogLevelFlags)0);
   //gtk_window_set_interactive_debugging(TRUE);
 #else
   g_print("DEBUGGING IS ON !!\n");
@@ -4629,9 +4626,9 @@ void load_start_image(int frame) {
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
+    vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
     /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5; */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
@@ -4740,7 +4737,7 @@ void load_start_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -4835,9 +4832,9 @@ void load_end_image(int frame) {
     int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
+    vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
     /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by)) / 1.5; */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
@@ -4944,7 +4941,7 @@ void load_end_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
     rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 #else
@@ -6129,7 +6126,7 @@ static void get_player_size(int *opwidth, int *opheight) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
     int rwidth = mainw->ce_frame_width - H_RESIZE_ADJUST * 2;
     int rheight = mainw->ce_frame_height - V_RESIZE_ADJUST * 2;
 
@@ -6142,7 +6139,7 @@ static void get_player_size(int *opwidth, int *opheight) {
 #else
     // NB:
     /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
-    /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
     int rwidth = lives_widget_get_allocation_width(mainw->playframe) - H_RESIZE_ADJUST;
     int rheight = lives_widget_get_allocation_height(mainw->play_image) - V_RESIZE_ADJUST;
 #endif
@@ -7400,7 +7397,7 @@ void load_frame_image(int frame) {
       // resize frame widgets to default
       // NB:
       /* hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3; */
-      /* vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));  */
+      /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));  */
       cfile->hsize = mainw->def_width - H_RESIZE_ADJUST;
       cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
 
@@ -8223,7 +8220,7 @@ void load_frame_image(int frame) {
     if (mainw->play_window != NULL) return;
 
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
-    vsize = (scr_height - (CE_FRAME_HSPACE + hspace + by));
+    vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
 
     if (scale < 0.) {
       // foreign capture

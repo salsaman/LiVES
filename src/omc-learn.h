@@ -7,6 +7,11 @@
 #ifndef HAS_LIVES_OMC_LEARN_H
 #define HAS_LIVES_OMC_LEARN_H
 
+#define OMC_DEV_MIDI (1<<0)
+#define OMC_DEV_JS (1<<1)
+#define OMC_DEV_FORCE_RAW_MIDI (1<<2)
+#define OMC_DEV_MIDI_DUMMY (1<<3)
+
 /** max number of macros */
 #define N_OMC_MACROS 64
 
@@ -19,6 +24,8 @@
 #endif
 
 #define OMC_MIDI_IMPL
+
+#define MIDI_OMNI -1
 
 #ifdef OMC_JS_IMPL
 char *js_mangle(void);

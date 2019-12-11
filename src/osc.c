@@ -2944,7 +2944,7 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
   int error, i;
   int hint, cspace = -1;
   int x = 0;
-  int copyto = -1;
+  //int copyto = -1;
   int defargs;
   int maxi_r = 255, maxi_g = 255, maxi_b = 255, maxi_a = 255, mini_r = 0, mini_g = 0, mini_b = 0, mini_a = 0, mini, maxi;
   int key = -1;
@@ -3004,20 +3004,19 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
 
     if (inst != NULL) {
       if (!filter_mutex_trylock(key)) {
-        copyto = set_copy_to(inst, pnum, FALSE);
+        //copyto = set_copy_to(inst, pnum, FALSE);
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         weed_set_int_array(tparam, WEED_LEAF_VALUE, nargs, valuesi);
-        set_copy_to(inst, pnum, TRUE);
-
+        //set_copy_to(inst, pnum, TRUE);
 
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         filter_mutex_unlock(key);
       }
@@ -3053,11 +3052,11 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
     if (inst != NULL) {
       if (!filter_mutex_trylock(key)) {
         weed_set_boolean_array(tparam, WEED_LEAF_VALUE, nargs, valuesb);
-        copyto = set_copy_to(inst, pnum, TRUE);
+        //copyto = set_copy_to(inst, pnum, TRUE);
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         filter_mutex_unlock(key);
       }
@@ -3082,19 +3081,16 @@ static boolean setfx(weed_plant_t *plant, weed_plant_t *tparam, int pnum, int na
               if (xgroup == group) {
                 if (!filter_mutex_trylock(key)) {
                   weed_set_boolean_value(xtparam, WEED_LEAF_VALUE, WEED_FALSE);
-                  copyto = set_copy_to(inst, pnum, TRUE);
+                  //copyto = set_copy_to(inst, pnum, TRUE);
                   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
                     // if we are recording, add this change to our event_list
                     rec_param_change(inst, pnum);
-                    if (copyto != -1) rec_param_change(inst, copyto);
+                    //if (copyto != -1) rec_param_change(inst, copyto);
                   }
-                  filter_mutex_unlock(key);
-                }
-              }
-            }
-          }
-        }
-      }
+                    filter_mutex_unlock(key);
+		  // *INDENT-OFF*
+              }}}}}}
+    // *INDENT-ON*
     } else {
       weed_set_boolean_array(tparam, WEED_LEAF_HOST_DEFAULT, nargs, valuesb);
 
@@ -3155,21 +3151,21 @@ grpinvalid:
     }
 
     if (inst != NULL) {
-      copyto = set_copy_to(inst, pnum, FALSE);
+      //copyto = set_copy_to(inst, pnum, FALSE);
 
       if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
         // if we are recording, add this change to our event_list
         rec_param_change(inst, pnum);
-        if (copyto != -1) rec_param_change(inst, copyto);
+        //if (copyto != -1) rec_param_change(inst, copyto);
       }
       if (!filter_mutex_trylock(key)) {
         weed_set_double_array(tparam, WEED_LEAF_VALUE, nargs, valuesd);
-        set_copy_to(inst, pnum, TRUE);
+        //set_copy_to(inst, pnum, TRUE);
 
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         filter_mutex_unlock(key);
       }
@@ -3211,12 +3207,12 @@ grpinvalid:
     if (inst != NULL) {
       if (!filter_mutex_trylock(key)) {
         weed_set_string_array(tparam, WEED_LEAF_VALUE, nargs, valuess);
-        copyto = set_copy_to(inst, pnum, TRUE);
+        //copyto = set_copy_to(inst, pnum, TRUE);
 
         if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
           // if we are recording, add this change to our event_list
           rec_param_change(inst, pnum);
-          if (copyto != -1) rec_param_change(inst, copyto);
+          //if (copyto != -1) rec_param_change(inst, copyto);
         }
         filter_mutex_unlock(key);
       }
@@ -3308,21 +3304,21 @@ grpinvalid:
 
         if (inst != NULL) {
           if (!filter_mutex_trylock(key)) {
-            copyto = set_copy_to(inst, pnum, FALSE);
+            //copyto = set_copy_to(inst, pnum, FALSE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
 
             weed_set_int_array(tparam, WEED_LEAF_VALUE, nargs, valuesi);
-            set_copy_to(inst, pnum, TRUE);
+            //set_copy_to(inst, pnum, TRUE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
             filter_mutex_unlock(key);
           }
@@ -3404,21 +3400,21 @@ grpinvalid:
 
         if (inst != NULL) {
           if (!filter_mutex_trylock(key)) {
-            copyto = set_copy_to(inst, pnum, FALSE);
+            //copyto = set_copy_to(inst, pnum, FALSE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
 
             weed_set_double_array(tparam, WEED_LEAF_VALUE, nargs, valuesd);
-            set_copy_to(inst, pnum, TRUE);
+            //set_copy_to(inst, pnum, TRUE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
             filter_mutex_unlock(key);
           }
@@ -3515,21 +3511,21 @@ grpinvalid:
 
         if (inst != NULL) {
           if (!filter_mutex_trylock(key)) {
-            copyto = set_copy_to(inst, pnum, FALSE);
+            //copyto = set_copy_to(inst, pnum, FALSE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
 
             weed_set_int_array(tparam, WEED_LEAF_VALUE, nargs, valuesi);
-            set_copy_to(inst, pnum, TRUE);
+            //set_copy_to(inst, pnum, TRUE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
             filter_mutex_unlock(key);
           }
@@ -3619,21 +3615,21 @@ grpinvalid:
 
         if (inst != NULL) {
           if (!filter_mutex_trylock(key)) {
-            copyto = set_copy_to(inst, pnum, FALSE);
+            //copyto = set_copy_to(inst, pnum, FALSE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
 
             weed_set_double_array(tparam, WEED_LEAF_VALUE, nargs, valuesd);
-            set_copy_to(inst, pnum, TRUE);
+            //set_copy_to(inst, pnum, TRUE);
 
             if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS)) {
               // if we are recording, add this change to our event_list
               rec_param_change(inst, pnum);
-              if (copyto != -1) rec_param_change(inst, copyto);
+              //if (copyto != -1) rec_param_change(inst, copyto);
             }
             filter_mutex_unlock(key);
           }
@@ -7002,7 +6998,7 @@ static struct {
 };
 
 
-int lives_osc_build_cont(lives_osc *o) {
+int lives_osc_build_cont(lives_osc * o) {
   /* Create containers /video , /clip, /chain and /tag */
   register int i;
   for (i = 0; osc_cont[i].name != NULL ; i++) {
@@ -7052,7 +7048,7 @@ int lives_osc_build_cont(lives_osc *o) {
 }
 
 
-int lives_osc_attach_methods(lives_osc *o) {
+int lives_osc_attach_methods(lives_osc * o) {
   int i;
 
   for (i = 0; osc_methods[i].name != NULL ; i++) {
@@ -7128,7 +7124,7 @@ void lives_osc_dump(void) {
 // CALL THIS PERIODICALLY, will read all queued messages and call callbacks
 
 /* get a packet */
-static int lives_osc_get_packet(lives_osc *o) {
+static int lives_osc_get_packet(lives_osc * o) {
   //OSCTimeTag tag;
 
   /* see if there is something to read , this is effectivly NetworkPacketWaiting */
@@ -7155,7 +7151,7 @@ static int lives_osc_get_packet(lives_osc *o) {
 }
 
 
-static void oscbuf_to_packet(OSCbuf *obuf, OSCPacketBuffer packet) {
+static void oscbuf_to_packet(OSCbuf * obuf, OSCPacketBuffer packet) {
   int *psize = OSCPacketBufferGetSize(packet);
   int bufsize = OSC_packetSize(obuf);
 
@@ -7168,7 +7164,7 @@ static void oscbuf_to_packet(OSCbuf *obuf, OSCPacketBuffer packet) {
 }
 
 
-boolean lives_osc_act(OSCbuf *obuf) {
+boolean lives_osc_act(OSCbuf * obuf) {
   // this is a shortcut route to make LiVES carry out the OSC message in msg
 
   OSCPacketBuffer packet;
@@ -7189,7 +7185,7 @@ boolean lives_osc_act(OSCbuf *obuf) {
 }
 
 
-void lives_osc_free(lives_osc *c) {
+void lives_osc_free(lives_osc * c) {
   if (c == NULL) return;
   if (c->leaves) free(c->leaves);
   if (c) free(c);

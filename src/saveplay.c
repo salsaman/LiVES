@@ -1299,25 +1299,6 @@ void save_file(int clip, int start, int end, const char *filename) {
       return;
     }
     sfile->orig_file_name = FALSE;
-  } else if (!mainw->osc_auto && sfile->orig_file_name) {
-    if (!debug_mode) {
-      char *warn = lives_strdup(
-                     _("Saving your video could lead to a loss of quality !\nYou are strongly advised to 'Save As' to a new file.\n"
-                       "\nDo you still wish to continue ?"));
-      if (!do_yesno_dialog_with_check(warn, WARN_MASK_SAVE_QUALITY)) {
-        lives_free(warn);
-        lives_free(full_file_name);
-        if (rdet != NULL) {
-          lives_widget_destroy(rdet->dialog);
-          lives_free(rdet->encoder_name);
-          lives_freep((void **)&rdet);
-          lives_freep((void **)&resaudw);
-        }
-        lives_freep((void **)&mainw->subt_save_file);
-        return;
-      }
-      lives_free(warn);
-    }
   }
 
   if (!strlen(sfile->comment)) {

@@ -1024,8 +1024,9 @@ typedef struct {
   boolean current;
 } lmap_error;
 
-// array max: TODO - use dynamic arrays to bypass track limits
+#define DEF_MT_DISP_TRACKS 5
 
+// array max: TODO - use dynamic arrays to bypass track limits
 #define MAX_TRACKS 65536
 #define MAX_VIDEO_TRACKS 65536
 #define MAX_AUDIO_TRACKS 65536

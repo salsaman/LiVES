@@ -449,60 +449,14 @@ if (defined($ARGV[0])) {
 		    }
 
 		    # NOTE: the following definitions must match with equivalent keys in preferences.h
-		    &rc_set_if_not_set("video_open_command", "$video_open_command");
-		    &rc_set_if_not_set("audio_play_command", "$audio_play_command");
-		    &rc_set_if_not_set("audio_player", $audio_player);
-		    &rc_set_if_not_set("midisynch", "false");
-		    &rc_set_if_not_set("pb_quality", 2);
-		    &rc_set_if_not_set("insert_resample", "true");
-		    &rc_set_if_not_set("open_compression_percent", 15);
-		    &rc_set_if_not_set("conserve_space", "false");
-		    &rc_set_if_not_set("antialias", "true");
+		    &rc_set_if_not_set("video_open_command", "$video_open_command"); ## backend only
+		    &rc_set_if_not_set("audio_play_command", "$audio_play_command"); ## backend only
 
 		    # resize action when opening images - can be either: "bound" or "none"
-		    &rc_set_if_not_set("image_resize_action", "none");
-		    &rc_set_if_not_set("encoder", $encoder);
-		    &rc_set_if_not_set("output_type", "mjpeg");
-		    &rc_set_if_not_set("audio_effect", "none");
-		    &rc_set_if_not_set("default_image_format", "png");
-		    &rc_set_if_not_set("save_directories", "false");
-		    &rc_set_if_not_set("stop_screensaver", "true");
-		    &rc_set_if_not_set("open_maximised", "true");
-		    &rc_set_if_not_set("filesel_maximised", "true");
-		    &rc_set_if_not_set("show_recent_files", "true");
-		    &rc_set_if_not_set("ce_maxspect", "true");
-
-		    # bits 19,18,13,11 and 10
-		    &rc_set_if_not_set("lives_warning_mask", 797696);
-
-		    &rc_set_if_not_set("dl_bandwidth_K", 5000);
-		    &rc_set_if_not_set("show_player_stats", "false");
-		    &rc_set_if_not_set("show_toolbar", "true");
-
-		    # default of PCM
-		    &rc_set_if_not_set("encoder_acodec", 1);
-		    &rc_set_if_not_set("record_opts", -1);
-
-		    &rc_set_if_not_set("gui_theme", "crayons");
-
-		    # start aserver on startup
-		    &rc_set_if_not_set("jack_opts", 0);
-		    &rc_set_if_not_set("audio_opts", 3);
-		    &rc_set_if_not_set("mt_undo_buf", 32);
-
-		    &rc_set_if_not_set("concat_images", "true");
-		    &rc_set_if_not_set("mouse_scroll_clips", "true");
-		    &rc_set_if_not_set("omc_dev_opts", 3);
-		    &rc_set_if_not_set("rec_stop_gb", 10);
-
-		    #internal
-		    &rc_set_if_not_set("audio_src", 0);
-		    &rc_set_if_not_set("ce_thumb_mode", "false");
-		    &rc_set_if_not_set("show_button_icons", "false");
-		    &rc_set_if_not_set("max_disp_vtracks", 5);
-		    &rc_set_if_not_set("show_audio_src", "true");
-		    &rc_set_if_not_set("midi_rcv_chan", 0);
-		    &rc_set_if_not_set("hide_framebar_when_not_playing", "false");
+		    &rc_set_if_not_set("image_resize_action", "none"); ## backend only
+		    &rc_set_if_not_set("encoder", $encoder); ## TODO: check for encoders, formats; pick best
+		    &rc_set_if_not_set("audio_effect", "none"); ## backend only, only for sox player
+		    &rc_set_if_not_set("gui_theme", "crayons"); ## TODO: check for available themes @ startup
 		}
 		if ($old_version ne "") {
 		    if ($old_version_hash < $ver_hash) {
@@ -520,7 +474,7 @@ if (defined($ARGV[0])) {
 		    }
 		    # throw a warning if using png and convert_version < 6.0.0
 		    my $convert_version_hash = &version_hash($convert_version);
-		    if ($convert_version_hash < 6000 && $convert_version_hash > 0 && &rc_get("default_image_format") eq "png") {
+		    if ($convert_version_hash < 6000 && $convert_version_hash > 0 && &rc_get("default_image_format") ne "jpg") {
 			$msg .= "You are advised to upgrade to at least version 6.0 of Image Magick if using png files\n";
 		    }
 		}

@@ -117,6 +117,13 @@ typedef struct {
 #define WEED_PARAMETER_VARIABLE_SIZE                        (1<<1)
 #define WEED_PARAMETER_VALUE_PER_CHANNEL              (1<<2)
 
+/* Parameter template GUI flags */
+#define WEED_GUI_REINIT_ON_VALUE_CHANGE	(1 << 0)
+#define WEED_GUI_CHOICES_INCOMPLETE		(1 << 1)
+
+/* filter instance flags */
+#define WEED_INSTANCE_UPDATE_GUI_ONLY 1
+
 /* error codes (in addidion to WEED_SUCCESS and WEED_ERROR_MEMORY_ALLOCATION) */
 #define WEED_ERROR_PLUGIN_INVALID              	64
 #define WEED_ERROR_FILTER_INVALID			65

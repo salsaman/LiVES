@@ -230,8 +230,6 @@ static void draw_arrow(cairo_t *cr, int i, int j, float x, float y) {
 static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   cairo_t *cr;
   weed_plant_t **in_channels = weed_get_plantptr_array(inst, "in_channels", NULL);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, "in_parameters", NULL);
-
   weed_plant_t *out_channel = weed_get_plantptr_value(inst, "out_channels", NULL);
 
   float *alpha0 = (float *)weed_get_voidptr_value(in_channels[1], "pixel_data", NULL);
@@ -246,16 +244,7 @@ static weed_error_t vector_visualiser_process(weed_plant_t *inst, weed_timecode_
 
   int width = weed_get_int_value(out_channel, "width", NULL);
   int height = weed_get_int_value(out_channel, "height", NULL);
-
-  int enabled = weed_get_boolean_value(in_params[0], "value", NULL);
-
   register int i, j;
-
-  weed_free(in_params);
-
-  if (enabled == WEED_FALSE) {
-    return WEED_SUCCESS;
-  }
 
   cr = channel_to_cairo(in_channels[0]);
 
@@ -314,6 +303,7 @@ WEED_SETUP_START(200, 200) {
   int apalette_list[] = {WEED_PALETTE_AFLOAT, WEED_PALETTE_END};
   int vpalette_list[] = {WEED_PALETTE_BGRA32, WEED_PALETTE_END};
   char desc[1024];
+
   weed_plant_t *in_chantmpls[] = {
     weed_channel_template_init("video in", 0),
     weed_channel_template_init("X-plane", 0),
@@ -322,15 +312,9 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("video out", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
 
-  weed_plant_t *in_params[] = {weed_switch_init("enabled", "_Enabled", WEED_TRUE), NULL};
-
   weed_plant_t *filter_class = weed_filter_class_init("cairo vector visualiser", "salsaman", 1, WEED_FILTER_PALETTES_MAY_VARY,
                                NULL, NULL, vector_visualiser_process, NULL,
-                               in_chantmpls, out_chantmpls,
-                               in_params, NULL);
-
-  weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
-  weed_set_boolean_value(gui, "hidden", WEED_TRUE);
+                               in_chantmpls, out_chantmpls, NULL, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -361,7 +345,6 @@ WEED_SETUP_START(200, 200) {
            ,  MAX_ELEMS);
 
   weed_set_string_value(filter_class, WEED_LEAF_DESCRIPTION, desc);
-
   weed_set_int_value(plugin_info, "version", package_version);
 }
 WEED_SETUP_END;

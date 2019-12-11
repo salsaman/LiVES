@@ -1622,34 +1622,6 @@ LIVES_GLOBAL_INLINE double mt_get_effect_time(lives_mt *mt) {
 }
 
 
-void redraw_mt_param_box(lives_mt *mt) {
-  boolean res = FALSE;
-  int dph = widget_opts.packing_height;
-  int dbw = widget_opts.border_width;
-
-  LiVESList *child_list = lives_container_get_children(LIVES_CONTAINER(mt->fx_box));
-  for (int i = 0; i < lives_list_length(child_list); i++) {
-    LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
-    lives_widget_unparent(widget);
-  }
-  if (child_list != NULL) lives_list_free(child_list);
-
-  widget_opts.packing_height = 2. * widget_opts.scale;
-  widget_opts.border_width = 2. * widget_opts.scale;
-  res = make_param_box(LIVES_VBOX(mt->fx_box), mt->current_rfx);
-  widget_opts.packing_height = dph;
-  widget_opts.border_width = dbw;
-  lives_widget_show_all(mt->fx_box);
-  if (!res) {
-    lives_widget_hide(mt->apply_fx_button);
-    lives_widget_hide(mt->resetp_button);
-    lives_widget_hide(mt->del_node_button);
-    lives_widget_hide(mt->prev_node_button);
-    lives_widget_hide(mt->next_node_button);
-  }
-}
-
-
 boolean add_mt_param_box(lives_mt *mt) {
   // here we add a GUI box which will hold effect parameters
 
@@ -20700,7 +20672,6 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
   int pnum, thisct;
   int num_init_events;
   int num_params;
-  int pflags;
   int num_tracks, num_atracks;
   int last_valid_frame;
   int marker_type;
@@ -21136,69 +21107,59 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
                       delete_event(event_list, event);
                       was_deleted = TRUE;
                     } else {
-                      pflags = weed_get_int_value(ptmpls[pnum], WEED_LEAF_FLAGS, &error);
-                      if (0 && pflags & WEED_PARAMETER_REINIT_ON_VALUE_CHANGE && !
-                          is_init_pchange((weed_plant_t *)init_event, event)) {
-                        // check we are not changing a reinit param, unless we immediately follow the filter_init event
-                        ebuf = rec_error_add(ebuf, "Param_change sets a reinit parameter", pnum, tc);
-                        delete_event(event_list, event);
-                        was_deleted = TRUE;
-                      } else {
-                        // all checks passed
-                        host_tag_s = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &error);
-                        host_tag = atoi(host_tag_s);
-                        lives_free(host_tag_s);
-                        idx = host_tag - FX_KEYS_MAX_VIRTUAL - 1;
+                      // all checks passed
+                      host_tag_s = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &error);
+                      host_tag = atoi(host_tag_s);
+                      lives_free(host_tag_s);
+                      idx = host_tag - FX_KEYS_MAX_VIRTUAL - 1;
 
-                        if (pchains[idx][pnum] == init_event) {
-                          if (weed_leaf_seed_type((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS) == WEED_SEED_INT64) {
-                            // leave as int64_t and we will change afterwards
-                            uint64_t *orig_pchanges = (uint64_t *)weed_get_int64_array((weed_plant_t *)init_event,
-                                                      WEED_LEAF_IN_PARAMETERS, &error);
+                      if (pchains[idx][pnum] == init_event) {
+                        if (weed_leaf_seed_type((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS) == WEED_SEED_INT64) {
+                          // leave as int64_t and we will change afterwards
+                          uint64_t *orig_pchanges = (uint64_t *)weed_get_int64_array((weed_plant_t *)init_event,
+                                                    WEED_LEAF_IN_PARAMETERS, &error);
 
-                            uint64_t *pin_pchanges = (uint64_t *)lives_malloc(num_params * sizeof(uint64_t));
+                          uint64_t *pin_pchanges = (uint64_t *)lives_malloc(num_params * sizeof(uint64_t));
 
-                            for (i = 0; i < num_params; i++) {
-                              if (orig_pchanges[i] == 0 && i == pnum) pin_pchanges[i] = (uint64_t)event;
-                              else pin_pchanges[i] = (uint64_t)orig_pchanges[i];
-                            }
-
-                            weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS);
-                            weed_set_int64_array((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS, num_params,
-                                                 (int64_t *)pin_pchanges);
-
-                            lives_free(pin_pchanges);
-                            lives_free(orig_pchanges);
-                          } else {
-                            void **orig_pchanges = weed_get_voidptr_array((weed_plant_t *)init_event,
-                                                   WEED_LEAF_IN_PARAMETERS, &error);
-                            void **pin_pchanges = (void **)lives_malloc(num_params * sizeof(void *));
-
-                            for (i = 0; i < num_params; i++) {
-                              if (orig_pchanges[i] == NULL && i == pnum) pin_pchanges[i] = (void *)event;
-                              else pin_pchanges[i] = (void *)orig_pchanges[i];
-                            }
-                            weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS);
-                            weed_set_voidptr_array((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS, num_params, pin_pchanges);
-
-                            lives_free(pin_pchanges);
-                            lives_free(orig_pchanges);
+                          for (i = 0; i < num_params; i++) {
+                            if (orig_pchanges[i] == 0 && i == pnum) pin_pchanges[i] = (uint64_t)event;
+                            else pin_pchanges[i] = (uint64_t)orig_pchanges[i];
                           }
 
-                          weed_leaf_delete(event, WEED_LEAF_PREV_CHANGE);
-                          weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, NULL);
+                          weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS);
+                          weed_set_int64_array((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS, num_params,
+                                               (int64_t *)pin_pchanges);
+
+                          lives_free(pin_pchanges);
+                          lives_free(orig_pchanges);
                         } else {
-                          weed_leaf_delete(event, WEED_LEAF_NEXT_CHANGE);
-                          weed_set_voidptr_value((weed_plant_t *)pchains[idx][pnum], WEED_LEAF_NEXT_CHANGE, event);
-                          weed_leaf_delete(event, WEED_LEAF_PREV_CHANGE);
-                          weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, pchains[idx][pnum]);
+                          void **orig_pchanges = weed_get_voidptr_array((weed_plant_t *)init_event,
+                                                 WEED_LEAF_IN_PARAMETERS, &error);
+                          void **pin_pchanges = (void **)lives_malloc(num_params * sizeof(void *));
+
+                          for (i = 0; i < num_params; i++) {
+                            if (orig_pchanges[i] == NULL && i == pnum) pin_pchanges[i] = (void *)event;
+                            else pin_pchanges[i] = (void *)orig_pchanges[i];
+                          }
+                          weed_leaf_delete((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS);
+                          weed_set_voidptr_array((weed_plant_t *)init_event, WEED_LEAF_IN_PARAMETERS, num_params, pin_pchanges);
+
+                          lives_free(pin_pchanges);
+                          lives_free(orig_pchanges);
                         }
+                        weed_leaf_delete(event, WEED_LEAF_PREV_CHANGE);
+                        weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, NULL);
+                      } else {
                         weed_leaf_delete(event, WEED_LEAF_NEXT_CHANGE);
-                        weed_set_voidptr_value(event, WEED_LEAF_NEXT_CHANGE, NULL);
-                        weed_leaf_delete(event, WEED_LEAF_INIT_EVENT);
-                        weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
-                        pchains[idx][pnum] = event;
+                        weed_set_voidptr_value((weed_plant_t *)pchains[idx][pnum], WEED_LEAF_NEXT_CHANGE, event);
+                        weed_leaf_delete(event, WEED_LEAF_PREV_CHANGE);
+                        weed_set_voidptr_value(event, WEED_LEAF_PREV_CHANGE, pchains[idx][pnum]);
                       }
+                      weed_leaf_delete(event, WEED_LEAF_NEXT_CHANGE);
+                      weed_set_voidptr_value(event, WEED_LEAF_NEXT_CHANGE, NULL);
+                      weed_leaf_delete(event, WEED_LEAF_INIT_EVENT);
+                      weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, init_event);
+                      pchains[idx][pnum] = event;
                     }
                   }
                   lives_free(ptmpls);
@@ -21206,7 +21167,7 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
                 lives_free(filter_hash);
 		// *INDENT-OFF*
               }}}}}
-	  // *INDENT-ON*
+      // *INDENT-ON*
       break;
     case WEED_EVENT_HINT_FRAME:
       if (tc == last_frame_tc) {

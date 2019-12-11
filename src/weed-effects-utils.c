@@ -374,6 +374,16 @@ WEED_GLOBAL_INLINE weed_layer_t *weed_channel_set_audio_data(weed_plant_t *chann
   return channel;
 }
 
+WEED_GLOBAL_INLINE int weed_instance_get_flags(weed_plant_t *inst) {
+  if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return 0;
+  return weed_get_int_value(inst, WEED_LEAF_FLAGS, NULL);
+}
+
+WEED_GLOBAL_INLINE void weed_instance_set_flags(weed_plant_t *inst, int flags) {
+  if (!WEED_PLANT_IS_FILTER_INSTANCE(inst)) return;
+  weed_set_int_value(inst, WEED_LEAF_FLAGS, flags);
+}
+
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans) {
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_IN_CHANNELS, nchans);
@@ -418,6 +428,11 @@ WEED_GLOBAL_INLINE char *weed_param_get_value_string(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return NULL;
   if (weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) return NULL;
   return weed_get_string_value(param, WEED_LEAF_VALUE, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_gui_get_flags(weed_plant_t *gui) {
+  if (!WEED_PLANT_IS_GUI(gui)) return 0;
+  return weed_get_int_value(gui, WEED_LEAF_FLAGS, NULL);
 }
 
 //////////////////////////////////////////// utilities ///////////////////////

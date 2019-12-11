@@ -56,7 +56,6 @@ static weed_error_t  avol_init(weed_plant_t *inst) {
   weed_plant_t *gui2 = weed_param_get_gui(in_params[2]);
   weed_plant_t *gui3 = weed_param_get_gui(in_params[3]);
   int achans = weed_channel_get_naudchans(in_chan);
-
   weed_free(in_params);
 
   // hide the "pan" and "swap" controls if we are using mono audio

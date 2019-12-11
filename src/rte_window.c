@@ -2532,54 +2532,6 @@ void rtew_set_mode_radio(int key, int mode) {
 }
 
 
-void redraw_pwindow(int key, int mode) {
-  // called when the source inst is reinited / inited / deinited
-  LiVESList *child_list;
-  lives_rfx_t *rfx;
-
-  LiVESWidget *content_area, *button;
-
-  int keyw = 0, modew = 0;
-  int i;
-
-  if (fx_dialog[1] != NULL) {
-    rfx = fx_dialog[1]->rfx;
-    button = fx_dialog[1]->cancelbutton;
-    if (!rfx->is_template) {
-      keyw = fx_dialog[1]->key;
-      modew = fx_dialog[1]->mode;
-    }
-    if (rfx->is_template || (key == keyw && mode == modew)) {
-      // rip out the contents
-      // TODO !!!:: if we got here by way of a widget callback which caused a reinit, we can crash
-      // since gtk+ will try to continue handling the callback with an invalid widget
-      // so, we should note the widget that received the signal and the signal type
-      // then stop emmission of the signal before destroying it
-
-      content_area = lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog));
-      child_list = lives_container_get_children(LIVES_CONTAINER(content_area));
-      for (i = 0; i < lives_list_length(child_list); i++) {
-        LiVESWidget *widget = (LiVESWidget *)lives_list_nth_data(child_list, i);
-        if (lives_widget_is_ancestor(LIVES_WIDGET(button), widget)) continue;
-        lives_widget_unparent(widget);
-      }
-      if (child_list != NULL) lives_list_free(child_list);
-      on_paramwindow_button_clicked(NULL, NULL);
-      restore_pwindow(rfx);
-    }
-  }
-}
-
-
-void restore_pwindow(lives_rfx_t *rfx) {
-  if (fx_dialog[1] != NULL) {
-    make_param_box(LIVES_VBOX(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog))), rfx);
-    lives_widget_show_all(lives_dialog_get_content_area(LIVES_DIALOG(fx_dialog[1]->dialog)));
-    lives_widget_queue_draw(fx_dialog[1]->dialog);
-  }
-}
-
-
 void update_pwindow(int key, int i, LiVESList *list) {
   // called only from weed_set_blend_factor() and from setting param in ce_thumbs
 

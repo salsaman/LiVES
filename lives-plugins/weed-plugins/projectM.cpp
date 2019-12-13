@@ -11,6 +11,8 @@ static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
+#define NEED_AUDIO
+
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
 #include <weed/weed-plugin-utils.h> // optional
@@ -20,6 +22,8 @@ static int package_version = 1; // version of this package
 #endif
 
 #include "weed-plugin-utils.c" // optional
+
+static int verbosity = WEED_VERBOSITY_ERROR;
 
 /////////////////////////////////////////////////////////////
 
@@ -174,7 +178,9 @@ static int init_display(_sdata *sd) {
   maxwidth = info->current_w;
   maxheight = info->current_h;
 #endif
-  printf("Screen Resolution: %d x %d\n", maxwidth, maxheight);
+
+  if (verbosity >= WEED_VERBOSITY_DEBUG)
+    printf("Screen Resolution: %d x %d\n", maxwidth, maxheight);
 
   // if (defwidth > maxwidth) defwidth = maxwidth;
   // if (defheight > maxheight) defheight = maxheight;
@@ -275,6 +281,7 @@ static void *worker(void *data) {
   bool rerand = true;
   _sdata *sd = (_sdata *)data;
   float hwratio = (float)sd->height / (float)sd->width;
+  int new_stdout, new_stderr;
 
   if (init_display(sd)) {
     sd->failed = true;
@@ -289,6 +296,15 @@ static void *worker(void *data) {
   }
 
   atexit(do_exit);
+
+  if (verbosity < WEED_VERBOSITY_INFO) {
+    new_stdout = dup(1);
+    new_stderr = dup(2);
+    close(1);
+    close(2);
+    new_stdout = new_stdout;
+    new_stderr = new_stderr;
+  }
 
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
@@ -492,13 +508,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (sd->update_size || sd->fbuffer == NULL) return WEED_SUCCESS;
 
   // ex. nprs = 10, we have 9 programs 1 - 9 and 0 is random
-  // 0 - 9, we just use the value
-  // else val % (nprs - 1) .e.g 10 = 1, 11 = 2
+  // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
+  // 0 - 9, we just use the value - 1
+  // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
 
-  sd->pidx = weed_get_int_value(inparam, WEED_LEAF_VALUE, NULL);
-
-  if (sd->pidx < sd->nprs) sd->pidx;
-  else sd->pidx = sd->pidx % (sd->nprs - 1);
+  sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
 
   if (0) {
     projectMEvent evt;
@@ -518,19 +532,19 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   /// fill the audio buffer for the next frame, then get the frame
 
   if (in_channel != NULL) {
+    int achans;
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
-    float **adata = (float **)weed_get_voidptr_array(in_channel, WEED_LEAF_AUDIO_DATA, NULL);
+    float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
     if (adlen > 0 && adata != NULL && adata[0] != NULL) {
       int offset = 0, sdf;
       int overflow;
-      int achans = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_CHANNELS, NULL);
       achans = 1; /// 2 needs newer version of projM
       pthread_mutex_lock(&sd->pcm_mutex);
       if (achans != sd->achans) {
         sd->audio_frames = 0;
         sd->achans = achans;
       }
-      /// there is no point sending more than 2048 samples per channel since projectM will not use more
+      /// there is no point sending more than 2048 samples per channel ysince projectM will not use more
       /// so we use the buffer like a sliding window which will contain at most 2048 samples per channel
       sdf = sd->audio_frames / achans;
       overflow = sdf + adlen - 2048;
@@ -594,6 +608,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(in_params[0], "max", INT_MAX);
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   statsd = NULL;
 }

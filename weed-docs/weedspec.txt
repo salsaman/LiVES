@@ -2017,9 +2017,9 @@ which the host must not alter.
        Channels which are disabled in this way will still be present in the channel array for the instance,
        but their "pixel_data" may be set to NULL.
 
-      Altering the number of repeats (i.e. removing or adding channels) still requires a reinit of the plugin.
+      Altering the NUMBER of repeats (i.e. removing or adding channels) still requires a reinit of the plugin.
 
-      The leaf is valid for both in and out channel templates.
+      The leaf is valid for BOTH in and out channel templates.
 
 
  * Every plugin can have its internal data stored in leaves inside this plant, and host MUST NOT change their values or make them

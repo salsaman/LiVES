@@ -1347,7 +1347,7 @@ int process_one(boolean visible) {
 
     // playing back an event_list
     // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
-    if (LIVES_UNLIKELY(cfile->proc_ptr == NULL && cfile->next_event != NULL)) {
+    if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
       // playing an event_list
       if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
@@ -1378,10 +1378,9 @@ int process_one(boolean visible) {
                 wake_audio_thread();
               }
 #endif
-            }
-          }
-        }
-      }
+	      // *INDENT-OFF*
+            }}}}
+      // *INDENT-ON*
 
       lives_widget_context_update(); // animate GUI, allow kb timer to run
 
@@ -1570,7 +1569,7 @@ int process_one(boolean visible) {
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
-static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
+static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
   display_ready = TRUE;
 }
 #endif
@@ -2758,7 +2757,7 @@ void do_jack_noopen_warn2(void) {
 }
 #endif
 
-void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
+void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
@@ -3032,13 +3031,13 @@ void end_threaded_dialog(void) {
 }
 
 
-void response_ok(LiVESButton *button, livespointer user_data) {
+void response_ok(LiVESButton * button, livespointer user_data) {
   lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow *transient) {
+    LiVESWindow * transient) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   char *msg, *tmp, *emsg, *msgx;
   char *bit;
@@ -3169,7 +3168,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
+int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3223,7 +3222,7 @@ int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, L
 }
 
 
-int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
+int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3356,7 +3355,7 @@ boolean do_abort_check(void) {
 }
 
 
-void do_encoder_img_fmt_error(render_details *rdet) {
+void do_encoder_img_fmt_error(render_details * rdet) {
   char *msg = lives_strdup_printf(
                 _("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
                 prefs->encoder.name, get_image_ext_for_type(cfile->img_type));

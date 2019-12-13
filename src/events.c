@@ -3065,9 +3065,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, & error);
-          if (mainw->files[mainw->scrap_file]->ext_src != NULL) {
-            lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
-          }
+          if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
         }
       }
     }
@@ -3542,10 +3541,8 @@ lives_render_error_t render_events(boolean reset) {
               old_scrap_frame = mainw->frame_index[scrap_track];
               layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
-              if (mainw->files[mainw->clip_index[scrap_track]]->ext_src != NULL) {
-                lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
-              }
-
+              if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
               if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                 weed_layer_free(layer);
                 layer = NULL;
@@ -4754,12 +4751,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
     }
 
     if (IS_VALID_CLIP(mainw->scrap_file)) {
-      if (mainw->files[mainw->scrap_file]->ext_src != NULL) {
-        // rewind scrap file to beginning
-        lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
-      }
+      if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+      // rewind scrap file to beginning
+      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
     }
-
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
   if (esave_file != NULL) lives_rm(esave_file);

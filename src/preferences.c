@@ -1146,7 +1146,7 @@ boolean apply_prefs(boolean skip_warn) {
   char prefworkdir[PATH_MAX];
 
   const char *video_open_command = lives_entry_get_text(LIVES_ENTRY(prefsw->video_open_entry));
-  const char *audio_play_command = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry));
+  /* const char *audio_play_command = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)); */
   const char *def_vid_load_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->vid_load_dir_entry));
   const char *def_vid_save_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->vid_save_dir_entry));
   const char *def_audio_dir = lives_entry_get_text(LIVES_ENTRY(prefsw->audio_dir_entry));
@@ -1871,11 +1871,11 @@ boolean apply_prefs(boolean skip_warn) {
   //playback plugin
   set_vpp(TRUE);
 
-  // audio play command
-  if (strcmp(prefs->audio_play_command, audio_play_command)) {
-    lives_snprintf(prefs->audio_play_command, PATH_MAX * 2, "%s", audio_play_command);
-    set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
-  }
+  /* // audio play command */
+  /* if (strcmp(prefs->audio_play_command, audio_play_command)) { */
+  /*   lives_snprintf(prefs->audio_play_command, PATH_MAX * 2, "%s", audio_play_command); */
+  /*   set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command); */
+  /* } */
 
   // cd play device
   if (strcmp(prefs->cdplay_device, cdplay_device)) {
@@ -3464,6 +3464,22 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
+  label = lives_standard_label_new(_("Letterbox by default:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  prefsw->checkbutton_lb = lives_standard_check_button_new(_("In Clip Edit Mode"),
+                           prefs->letterbox, LIVES_BOX(hbox), NULL);
+  lives_widget_set_sensitive(prefsw->checkbutton_lb, FALSE); /// TODO !!
+
+  prefsw->checkbutton_lbmt = lives_standard_check_button_new(_("In Multitrack Mode"),
+                             prefs->letterbox_mt, LIVES_BOX(hbox), NULL);
+  lives_widget_set_sensitive(prefsw->checkbutton_lbmt, FALSE);
+
+  add_hsep_to_box(LIVES_BOX(vbox));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
   vid_playback_plugins = get_plugin_list(PLUGIN_VID_PLAYBACK, TRUE, NULL, "-"DLL_NAME);
   vid_playback_plugins = lives_list_prepend(vid_playback_plugins,
                          lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_NONE]));
@@ -3594,19 +3610,19 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   //---
 
-  add_fill_to_box(LIVES_BOX(vbox));
-  prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"), "", -1, PATH_MAX * 2, LIVES_BOX(vbox), NULL);
+  /* add_fill_to_box(LIVES_BOX(vbox)); */
+  /* prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"), "", -1, PATH_MAX * 2, LIVES_BOX(vbox), NULL); */
 
-  // get from prefs
-  if (!is_realtime_aplayer(prefs->audio_player))
-    if (prefs->audio_player == AUD_PLAYER_NONE) lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("N/A")));
-    else lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), prefs->audio_play_command);
-  else {
-    lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("- internal -")));
-    lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE);
-  }
+  /* // get from prefs */
+  /* if (!is_realtime_aplayer(prefs->audio_player)) */
+  /*   if (prefs->audio_player == AUD_PLAYER_NONE) lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("N/A"))); */
+  /*   else lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), prefs->audio_play_command); */
+  /* else { */
+  /*   lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("- internal -"))); */
+  /*   lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE); */
+  /* } */
 
-  add_fill_to_box(LIVES_BOX(vbox));
+  /* add_fill_to_box(LIVES_BOX(vbox)); */
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -5263,8 +5279,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), LIVES_WIDGET_CHANGED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  /* lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audio_command_entry), LIVES_WIDGET_CHANGED_SIGNAL, */
+  /*                      LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL); */
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_afollow), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_aclips), LIVES_WIDGET_TOGGLED_SIGNAL,

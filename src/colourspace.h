@@ -174,7 +174,7 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);
-boolean align_pixel_data(weed_layer_t *, size_t alignment);
+boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
@@ -217,6 +217,7 @@ int weed_layer_get_audio_rate(weed_plant_t *layer);
 int weed_layer_get_naudchans(weed_plant_t *layer);
 int weed_layer_get_audio_length(weed_plant_t *layer);
 int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
+int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);
 int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);

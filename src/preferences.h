@@ -316,6 +316,7 @@ typedef struct {
   boolean stream_audio_out;
   boolean unstable_fx;
   boolean letterbox; ///< playback with letterbox
+  boolean letterbox_mt; ///< playback with letterbox (multitrack)
   boolean enc_letterbox; ///< encode with letterbox
 
   boolean force_system_clock; /// < force system clock (rather than soundcard) for timing ( better for high framerates )
@@ -491,6 +492,8 @@ typedef struct {
   LiVESWidget *mouse_scroll;
   LiVESWidget *fs_max_check;
   LiVESWidget *recent_check;
+  LiVESWidget *checkbutton_lb; //< letterbox
+  LiVESWidget *checkbutton_lbmt;
   LiVESWidget *video_open_entry;
   LiVESWidget *audio_command_entry;
   LiVESWidget *vid_load_dir_entry;
@@ -779,7 +782,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LIB_DIR "lib_dir" // readonly
 
 #define PREF_AUDIO_PLAYER "audio_player"
-#define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
+//#define PREF_AUDIO_PLAY_COMMAND "audio_play_command"
 
 #define PREF_AUDIO_SRC "audio_src"
 
@@ -934,6 +937,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_ALLOW_EASING "allow_easing"
 #define PREF_SHOW_DEVOPTS "show_developer_options"
 #define PREF_VJMODE "vj_mode_startup"
+#define PREF_LETTERBOX "letterbox_ce"
+#define PREF_LETTERBOXMT "letterbox_mt"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

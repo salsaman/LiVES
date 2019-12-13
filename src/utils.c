@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
-
+#include <libexplain/system.h>
 #include "main.h"
 #include "support.h"
 #include "interface.h"
@@ -181,7 +181,13 @@ int lives_system(const char *com, boolean allow_error) {
       char *msg = NULL;
       mainw->com_failed = TRUE;
       if (!allow_error) {
-        msg = lives_strdup_printf("lives_system failed with code %d: %s", retval, com);
+        msg = lives_strdup_printf("lives_system failed with code %d: %s\n%s", retval, com,
+#ifdef HAVE_LIBEXPLAIN
+                                  explain_system(com)
+#else
+                                  ""
+#endif
+                                 );
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, retval, NULL, TRUE, NULL);
       }
@@ -491,7 +497,11 @@ static ssize_t file_buffer_flush(int fd) {
   }
 
   if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
-  if (res > 0) fbuff->offset += res;
+  if (res > 0) {
+    fbuff->offset += res;
+    fbuff->bytes = 0;
+    fbuff->ptr = fbuff->buffer;
+  }
 
   if (!fbuff->allow_fail && res < fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
@@ -547,6 +557,10 @@ int lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
   boolean should_close = TRUE;
   int ret = 0;
+
+  if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src &&
+      fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src))
+    g_print("cl scrap buff\n");
 
   if (fd < 0) {
     should_close = FALSE;
@@ -756,6 +770,26 @@ boolean lives_read_buffered_eof(int fd) {
 }
 
 
+ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boolean allow_fail) {
+  lives_file_buffer_t *fbuff;
+  ssize_t res;
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_write_buffered: no file buffer found");
+    return lives_write(fd, buf, count, allow_fail);
+  }
+
+  if (fbuff->read) {
+    LIVES_ERROR("lives_write_buffered: wrong buffer type");
+    return 0;
+  }
+
+  file_buffer_flush(fd);
+  res = lives_write(fd, buf, count, allow_fail);
+  if (res > 0) fbuff->offset += res;
+  return res;
+}
+
+
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
@@ -792,8 +826,6 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       // pre-allocate space for next buffer, we need to ftruncate this when closing the file
       posix_fallocate(fbuff->fd, fbuff->offset, BUFFER_FILL_BYTES);
 #endif
-      fbuff->bytes = 0;
-      fbuff->ptr = fbuff->buffer;
       count -= space_left;
       buf += space_left;
     } else {
@@ -2994,7 +3026,7 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   get_pref_default(PREF_SOX_COMMAND, prefs->audio_play_command, 256);
   if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
-  set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
+  //set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);
 
   if (mainw->is_ready) {
     /* //ubuntu / Unity has a hissy fit if you hide things in the menu !

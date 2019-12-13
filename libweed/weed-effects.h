@@ -98,19 +98,19 @@ typedef struct {
 #define WEED_FILTER_PALETTES_MAY_VARY               	(1<<7)
 
 /* audio */
-#define WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY		(1 << 15)
+#define WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY   	(1 << 15)
 #define WEED_FILTER_AUDIO_RATES_MAY_VARY	 	(1 << 16)
 
 /* Channel template flags */
 #define WEED_CHANNEL_REINIT_ON_SIZE_CHANGE                 	(1<<0)
 #define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE           	(1<<1)
-#define WEED_CHANNEL_CAN_DO_INPLACE                             	(1<<2)
+#define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1<<2)
 #define WEED_CHANNEL_OPTIONAL                                         	(1<<3)
-#define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1<<4)
+#define WEED_CHANNEL_CAN_DO_INPLACE                             	(1<<2)
 
 /* audio */
-#define WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE
-#define WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE	WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE
+#define WEED_CHANNEL_REINIT_ON_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE
+#define WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE	WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE
 
 /* Parameter template flags */
 #define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE     (1<<0)
@@ -132,8 +132,8 @@ typedef struct {
 
 #define WEED_VERBOSITY_SILENT	 	-2 ///< no output
 #define WEED_VERBOSITY_CRITICAL	-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
-#define WEED_VERBOSITY_ERROR	      	 0 ///< default choice (errors which prevent normal operation)
-#define WEED_VERBOSITY_WARN	      	 1 ///< default choice (errors which adversly affect operation)
+#define WEED_VERBOSITY_ERROR	      	 0 ///< default choice a (errors which prevent normal operation)
+#define WEED_VERBOSITY_WARN	      	 1 ///< default choice b (errors which adversly affect operation)
 #define WEED_VERBOSITY_INFO		 2 ///< info (any non-debug info)
 #define WEED_VERBOSITY_DEBUG		 3 ///< output to assist with debugging the plugin / filter
 
@@ -246,7 +246,9 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 ///
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
-#define WEED_LEAF_AUDIO_MINCHANS "audio_minchans"
+#define WEED_LEAF_MAX_AUDIO_CHANNELS "max_audio_channels"
+#define WEED_LEAF_AUDIO_MIN_AUDIO_LENGTH "min_audio_length"
+#define WEED_LEAF_AUDIO_MAX_AUDIO_LENGTH "max_audio_length"
 #define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// only if set in filter_class or channel_template
 
 /* audio channel layouts (default settings) */
@@ -257,10 +259,11 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_CH_FRONT_CENTER 0x00000004
 #define WEED_CH_LAYOUT_MONO (WEED_CH_FRONT_CENTER)
 #define WEED_CH_LAYOUT_STEREO (WEED_CH_FRONT_LEFT | WEED_CH_FRONT_RIGHT)
-#define WEED_CH_LAYOUTS_DEFAULT_MIN1 {WEED_CH_LAYOUT_MONO}
-#define WEED_CH_LAYOUTS_DEFAULT_MIN2 {WEED_CH_LAYOUT_STEREO, WEED_CH_LAYOUT_MONO}
-#define WEED_CH_LAYOUTS_DEFAULT WEED_CH_LAYOUTS_DEFAULT_MIN2
-
+#define WEED_CH_LAYOUT_DEFAULT_1 WEED_CH_LAYOUT_MONO
+#define WEED_CH_LAYOUT_DEFAULT_2 WEED_CH_LAYOUT_STEREO
+#define WEED_CH_LAYOUTS_DEFAULT (WEED_CH_LAYOUT_DEFAULT_2, WEED_CH_LAYOUT_DEFAULT_1}
+#define WEED_CH_LAYOUTS_DEFAULT_MIN2 (WEED_CH_LAYOUT_DEFAULT_2}
+#endif
 
 // FILTER_CLASS GUI
 #define WEED_LEAF_LAYOUT_SCHEME "layout_scheme"
@@ -311,7 +314,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_length"
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_AUDIO_CHANNELS "audio_channels"
-#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// ONLY if set in filter_class or channel_template
+//#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// ONLY if set in filter_class or channel_template
 
 // optional
 #define WEED_LEAF_OFFSET "offset" ///< threading
@@ -358,8 +361,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 // PARAM
 // mandatory
 #define WEED_LEAF_VALUE "value"
-
-#endif
 
 #ifdef __cplusplus
 }

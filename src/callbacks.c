@@ -175,6 +175,8 @@ void lives_exit(int signum) {
     pthread_mutex_trylock(&mainw->gamma_lut_mutex);
     pthread_mutex_unlock(&mainw->gamma_lut_mutex);
     // filter mutexes are unlocked in weed_unload_all
+
+    if (pthread_mutex_lock(&mainw->exit_mutex)) pthread_exit(NULL);
   }
 
   if (mainw->is_ready) {
@@ -491,6 +493,7 @@ void lives_exit(int signum) {
     if (mainw->frame_layer != NULL) {
       check_layer_ready(mainw->frame_layer);
       weed_layer_free(mainw->frame_layer);
+      mainw->framw_layer = NULL;
     }
 #endif
 
@@ -7116,8 +7119,10 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
-          check_layer_ready(mainw->frame_layer);
-          if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
+          if (mainw->frame_layer != NULL) {
+            check_layer_ready(mainw->frame_layer);
+            weed_layer_free(mainw->frame_layer);
+          }
           mainw->frame_layer = frame_layer;
         }
       }

@@ -206,7 +206,7 @@ FN_DECL int weed_channel_get_audio_rate(weed_plant_t *channel);
 FN_DECL int weed_channel_get_naudchans(weed_plant_t *channel);
 FN_DECL int weed_channel_get_audio_length(weed_plant_t *channel);
 #ifdef __WEED_UTILS_H__
-FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans;);
+FN_DECL float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
 #endif
 #endif
 

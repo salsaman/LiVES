@@ -653,7 +653,6 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-
   register short val;
   register unsigned short valu = 0;
   register float valf;
@@ -664,7 +663,6 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs));
       valf *= vol;
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
-
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
 
       if (asamps == 16) {
@@ -1309,11 +1307,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
                 lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2], 0x80, 1);
                 lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2 + 1], 0x00, 1);
               } else obuf->buffer16[0][j * out_achans + i] = 0x0080;
-            }
-          }
-        }
-      }
-
+	      // *INDENT-OFF*
+            }}}}
+	  // *INDENT-ON*
       obuf->samples_filled += tsamples;
     }
 
@@ -2837,7 +2833,7 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
   weed_timecode_t tc;
   weed_error_t retval;
   int flags, cflags;
-  int xnchans = 0, xrate = 0;
+  int xnchans = 0, xxnchans, xrate = 0;
   boolean rvary = FALSE, lvary = FALSE;
 
   if (mainw->agen_needs_reinit) {
@@ -2849,7 +2845,7 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
   flags = weed_filter_get_flags(filter);
 
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
-  if (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY) lvary = TRUE;
+  if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
 
 getaud1:
 
@@ -2858,16 +2854,19 @@ getaud1:
     xnchans = nchans; // preferred value
     ctmpl = weed_channel_get_template(channel);
     cflags = weed_chantmpl_get_flags(ctmpl);
-    if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
-      xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_MINCHANS, NULL);
-    else if (weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
-      xnchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MINCHANS, NULL);
+
+    if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS))
+      xnchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, NULL);
+    else if (weed_plant_has_leaf(filter, WEED_LEAF_MAX_AUDIO_CHANNELS)) {
+      xxnchans = weed_get_int_value(filter, WEED_LEAF_MAX_AUDIO_CHANNELS, NULL);
+      if (xxnchans > 0 && xxnchans < nchans) xnchans = xxnchans;
+    }
     if (xnchans > nchans) {
       weed_instance_unref(orig_inst);
       return FALSE;
     }
     if (weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, NULL) != nchans
-        && (cflags & WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE))
+        && (cflags & WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE))
       mainw->agen_needs_reinit = TRUE;
     else weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, nchans);
 
@@ -2882,7 +2881,7 @@ getaud1:
     }
 
     if (weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, NULL) != arate) {
-      if (cflags & WEED_CHANNEL_REINIT_ON_AUDIO_RATE_CHANGE) {
+      if (cflags & WEED_CHANNEL_REINIT_ON_RATE_CHANGE) {
         mainw->agen_needs_reinit = TRUE;
       }
     }
@@ -3198,7 +3197,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   size_t samps;
 
   boolean rvary = FALSE, lvary = FALSE;
-  int trate, tchans, flags;
+  int trate, tchans, xnchans, flags;
   int alen;
 
   register int i;
@@ -3211,7 +3210,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
-  if (flags & WEED_FILTER_AUDIO_LAYOUTS_MAY_VARY) lvary = TRUE;
+  if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
 
   // TODO: can be list
   if (rvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE))
@@ -3220,11 +3219,13 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     trate = weed_get_int_value(filter, WEED_LEAF_AUDIO_RATE, NULL);
   else trate = DEFAULT_AUDIO_RATE;
 
-  if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_MINCHANS))
+  tchans = DEFAULT_AUDIO_CHANS;
+  if (lvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_CHANNELS))
     tchans = weed_get_int_value(ctmpl, WEED_LEAF_AUDIO_CHANNELS, NULL);
-  else if (weed_plant_has_leaf(filter, WEED_LEAF_AUDIO_MINCHANS))
-    tchans = weed_get_int_value(filter, WEED_LEAF_AUDIO_MINCHANS, NULL);
-  else tchans = DEFAULT_AUDIO_CHANS;
+  else if (weed_plant_has_leaf(filter, WEED_LEAF_MAX_AUDIO_CHANNELS)) {
+    xnchans = weed_get_int_value(filter, WEED_LEAF_MAX_AUDIO_CHANNELS, NULL);
+    if (xnchans > 0 && xnchans < tchans) tchans = xnchans;
+  }
 
 #ifdef DEBUG_AFB
   g_print("push from afb %d\n", abuf->samples_filled);

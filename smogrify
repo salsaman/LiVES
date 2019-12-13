@@ -6379,7 +6379,7 @@ sub convert_audio_to_raw {
 	}
 
 	$smcom = "sox $nodither -t .wav  \"$audio_in\" -t .raw -r $arate " .
-	    "-c $achans $axsigned $axsamps \"$audio_out\" >$nulfile 2>&1";
+	    "-c $achans $axsigned -$axsamps \"$audio_out\" >$nulfile 2>&1";
 	if ($DEBUG_SMOGRIFY) {
 	    print STDERR "COM is $smcom\n";
 	}
@@ -7464,7 +7464,7 @@ sub othera_open {
     }
 
     if (!$is_mpv) {
-	$com = "$mplayer_command -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels <$nulfile";
+	$com = "$mplayer_command -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels $achans <$nulfile";
     }
     else {
 	$com = "$mplayer_command --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format --audio-channels=$achans";

@@ -4902,6 +4902,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     fd = lives_open_buffered_rdonly(oname);
     lives_free(oname);
     if (fd < 0) return FALSE;
+    g_print("SCRAP fd is %d\n", fd);
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
@@ -4909,8 +4910,9 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-  layer = weed_plant_deserialise(fd, NULL, layer);
+  if (frame < 0 || layer == NULL) return; /// just open fd
 
+  if (weed_plant_deserialise(fd, NULL, layer) == NULL) return FALSE;
   return TRUE;
 }
 

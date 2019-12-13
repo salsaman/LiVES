@@ -478,7 +478,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datai = datai2;
                   num = count;
 		// *INDENT-OFF*
-     }}}}
+   }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_int_array(dst, keyt, num, datai);

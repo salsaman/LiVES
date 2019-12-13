@@ -496,20 +496,6 @@ static boolean pre_init(void) {
                                 "\n\nThankyou.\n")));
     }
 
-    /* if (!capable->can_read_from_config) { */
-    /*   startup_message_fatal(lives_strdup_printf( */
-    /* 						_("\nLiVES was unable to read from the configuration directory %s\n" */
-    /* 						  "Please make sure you have write access to the directory and try again.\n"), */
-    /* 						prefs->config_dir)); */
-    /* } */
-    /* if (!capable->can_write_to_config_dir) { */
-    /*   startup_message_fatal(lives_strdup_printf( */
-    /* 						_("\nLiVES was unable to write to the directory %s\n", */
-    /* 						  "In order to create some small configuration files." */
-    /*                             "Please make sure you have write access to the directory and try again.\n"), */
-    /*                           prefs->config_dir)); */
-    /* } */
-
     if (!capable->can_read_from_config) {
       msg = lives_strdup_printf(
               _("\nLiVES was unable to read from its configuration file\n%s\n\n"
@@ -631,6 +617,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->cache_buffer_mutex, NULL);
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
   pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
+  pthread_mutex_init(&mainw->exit_mutex, NULL);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->fx_mutex[i], NULL);
@@ -670,7 +657,9 @@ static boolean pre_init(void) {
   prefs->autoload_subs = TRUE;
   prefs->show_subtitles = TRUE;
 
-  prefs->letterbox = FALSE;
+  prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
+  prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
+
   prefs->bigendbug = 0;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
@@ -1435,9 +1424,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
     prefs->mt_auto_back = get_int_prefd(PREF_MT_AUTO_BACK, 120);
 
-    if (!ign_opts->ign_aplayer) {
-      get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2);
-    }
+    /* if (!ign_opts->ign_aplayer) { */
+    /*   get_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command, PATH_MAX * 2); */
+    /* } */
 
     get_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command, PATH_MAX * 2);
 
@@ -4239,6 +4228,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->rename, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && !cfile->opening);
   lives_widget_set_sensitive(mainw->change_speed, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->resample_video, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->preferences, TRUE);
   lives_widget_set_sensitive(mainw->ins_silence, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->close, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked &&
@@ -4355,6 +4345,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->playclip, FALSE);
   lives_widget_set_sensitive(mainw->copy, FALSE);
   lives_widget_set_sensitive(mainw->cut, FALSE);
+  lives_widget_set_sensitive(mainw->preferences, FALSE);
   lives_widget_set_sensitive(mainw->rev_clipboard, FALSE);
   lives_widget_set_sensitive(mainw->insert, FALSE);
   lives_widget_set_sensitive(mainw->merge, FALSE);
@@ -5683,12 +5674,17 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       return TRUE;
     } else if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
-
-      if (!mainw->is_rendering && mainw->multitrack == NULL) {
-        // clip width and height may vary dynamically
-        cfile->hsize = weed_layer_get_width(layer);
-        cfile->vsize = weed_layer_get_height(layer);
+      if (!res) {
+        return FALSE;
       }
+      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
+      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
+      weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
+      // clip width and height may vary dynamically
+      sfile->hsize = weed_layer_get_width(layer);
+      sfile->vsize = weed_layer_get_height(layer);
+      // realign
+      copy_pixel_data(layer, NULL, mainw->rowstride_alignment);
       mainw->osc_block = FALSE;
       return res;
     } else {
@@ -5924,6 +5920,8 @@ boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t t
 
 void check_layer_ready(weed_plant_t *layer) {
   // block until layer pixel_data is ready. We may also deinterlace and overlay subs here
+  // if effects were applied then the frame_layer can depend on other layers, however
+  // these wil have been checked already when the effects were applied
 
   int clip;
   int frame;
@@ -6200,8 +6198,9 @@ static void load_frame_cleanup(boolean noswitch) {
   char *tmp;
 
   check_layer_ready(mainw->frame_layer);
-  if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
+  weed_layer_free(mainw->frame_layer);
   mainw->frame_layer = NULL;
+
   mainw->noswitch = noswitch;
 
   if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
@@ -6577,6 +6576,11 @@ void load_frame_image(int frame) {
           if (!pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), tc)) {
             weed_plant_free(mainw->frame_layer);
             mainw->frame_layer = NULL;
+            if (mainw->preview_rendering) {
+              mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
+              lives_freep((void **)&framecount);
+              return;
+            }
           }
         } else {
           int oclip, nclip;
@@ -6852,6 +6856,7 @@ void load_frame_image(int frame) {
 
     if (audio_timed_out == 0) {
       mainw->cancelled = handle_audio_timeout();
+      lives_freep((void **)&framecount);
       return;
     }
 
@@ -6877,6 +6882,10 @@ void load_frame_image(int frame) {
       check_layer_ready(mainw->frame_layer);
 
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
+      if (!weed_palette_is_valid(layer_palette)) {
+        lives_freep((void **)&framecount);
+        return;
+      }
 
       if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
           ((weed_palette_is_rgb(layer_palette) &&
@@ -6961,7 +6970,7 @@ void load_frame_image(int frame) {
       }
 
       if (return_layer != NULL) {
-        int width = MIN(weed_layer_get_width(frame_layer), weed_layer_get_width(return_layer));
+        int width = MIN(weed_layer_get_width(mainw->frame_layer), weed_layer_get_width(return_layer));
         int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
         resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
                      height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
@@ -6997,6 +7006,10 @@ void load_frame_image(int frame) {
       check_layer_ready(mainw->frame_layer);
 
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
+      if (!weed_palette_is_valid(layer_palette)) {
+        lives_freep((void **)&framecount);
+        return;
+      }
 
       interp = get_interp_value(prefs->pb_quality);
 
@@ -7126,12 +7139,8 @@ void load_frame_image(int frame) {
       }
       lives_free(pd_array);
 
-      if (frame_layer != mainw->frame_layer) {
-        weed_layer_free(frame_layer);
-      }
-
       if (return_layer != NULL) {
-        int width = MIN(weed_layer_get_width(frame_layer), weed_layer_get_width(return_layer));
+        int width = MIN(weed_layer_get_width(mainw->frame_layer), weed_layer_get_width(return_layer));
         int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
         resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
                      height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
@@ -7140,6 +7149,10 @@ void load_frame_image(int frame) {
         weed_layer_free(return_layer);
         lives_free(retdata);
         return_layer = NULL;
+      }
+
+      if (frame_layer != mainw->frame_layer) {
+        weed_layer_free(frame_layer);
       }
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
@@ -7156,7 +7169,6 @@ void load_frame_image(int frame) {
 
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
     if (weed_layer_get_width(mainw->frame_layer) == 0) return;
-
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
       // no display to output, skip the rest
       load_frame_cleanup(noswitch);
@@ -7165,6 +7177,10 @@ void load_frame_image(int frame) {
     }
 
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
+    if (!weed_palette_is_valid(layer_palette)) {
+      lives_freep((void **)&framecount);
+      return;
+    }
 
     if (cfile->img_type == IMG_TYPE_JPEG || !weed_palette_has_alpha_channel(layer_palette)) cpal = WEED_PALETTE_RGB24;
     else cpal = WEED_PALETTE_RGBA32;

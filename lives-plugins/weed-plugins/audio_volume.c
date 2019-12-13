@@ -179,9 +179,11 @@ static weed_error_t  avol_process(weed_plant_t *inst, weed_timecode_t timestamp)
 
 WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("in channel 0",
-                                  WEED_CHANNEL_REINIT_ON_AUDIO_LAYOUT_CHANGE), NULL
+                                  WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE), NULL
                                  };
+
   weed_plant_t *out_chantmpls[] = {weed_audio_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
+
   weed_plant_t *in_params[] = {weed_float_init("volume", "_Volume", 1.0, 0.0, 1.0), weed_float_init("pan", "_Pan", 0., -1., 1.),
                                weed_switch_init("swap", "_Swap left and right channels", WEED_FALSE),
                                weed_switch_init("swappan", "_Swap panning when channels swap", WEED_TRUE),

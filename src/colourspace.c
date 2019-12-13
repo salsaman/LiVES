@@ -7993,111 +7993,86 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new_for_frame(int clip, int frame) 
   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
   weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
-  weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
   return layer;
 }
 
 // returns TRUE on success
-boolean align_pixel_data(weed_layer_t *layer, size_t alignment) {
-#ifndef HAVE_POSIX_MEMALIGN
-  return FALSE;
-#else
+boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t alignment) {
+  // get old pdata,
+  // set align rs
+  // create empty
+  // copy each plane back row by row
 
-  void **pixel_data, **new_pixel_data;
-  uint8_t *npixel_data, zpixel_data = 0;
-  int *rowstrides;
+  int numplanes, xheight, xwidth;
+  int *orowstrides = weed_layer_get_rowstrides(layer, &numplanes), *rowstrides;
+  void **pixel_data, **npixel_data;
+  int pal = weed_layer_get_palette(layer);
+  int width = weed_layer_get_width(layer);
+  int height = weed_layer_get_height(layer);
+  int psize = pixel_size(pal);
+  boolean newdata = FALSE;
+  register int i, j;
 
-  size_t size, totsize = 0;
-
-  boolean needs_change = FALSE;
-  boolean can_contiguous = TRUE;
-
-  int memerror, error;
-
-  int numplanes, height;
-
-  register int i;
-
-  numplanes = weed_leaf_num_elements(layer, WEED_LEAF_ROWSTRIDES);
-  pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
-
-  for (i = 0; i < numplanes; i++) {
-    if (((uint64_t)(pixel_data[i])) % alignment == 0) continue;
-    needs_change = TRUE;
-  }
-
-  if (!needs_change) return TRUE;
-
-  rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &error);
-  height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
-
-  for (i = 0; i < numplanes; i++) {
-    size = height * rowstrides[i];
-    totsize += ALIGN_CEIL(size, 32);
-  }
-
-  for (i = 1; i < numplanes; i++) {
-    size = height * rowstrides[i];
-    zpixel_data += ALIGN_CEIL(size, 32);
-    if (zpixel_data % alignment != 0) {
-      can_contiguous = FALSE;
-      break;
-    }
-  }
-
-  new_pixel_data = (void **)lives_malloc(numplanes * (sizeof(void *)));
-
-  if (can_contiguous) {
-    // all planes can be set in contiguous block
-    if ((memerror = posix_memalign((void **)&npixel_data, alignment, totsize))) {
-      lives_freep((void **)&new_pixel_data);
-      lives_freep((void **)&pixel_data);
-      lives_freep((void **)&rowstrides);
-      return FALSE;
-    }
-
+  if (alignment != 0) {
     for (i = 0; i < numplanes; i++) {
-      lives_memcpy(npixel_data, pixel_data[i], height * rowstrides[i]);
-      new_pixel_data[i] = npixel_data;
-      size = height * rowstrides[i];
-      npixel_data += ALIGN_CEIL(size, 32);
+      if (orowstrides[i] % alignment != 0) break;
     }
-
-    weed_layer_pixel_data_free(layer);
-
-    weed_set_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, numplanes, new_pixel_data);
-    if (numplanes > 1) weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-    else weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_FALSE);
-
-    lives_freep((void **)&new_pixel_data);
-    lives_freep((void **)&pixel_data);
-    lives_freep((void **)&rowstrides);
-
-    return TRUE;
+    if (i >= numplanes) return TRUE;
   }
 
-  // non-contiguous
+  if (old_layer == NULL) {
+    newdata = TRUE;
+    old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+    weed_layer_copy(old_layer, layer);
+  }
+  pixel_data = weed_layer_get_pixel_data(old_layer, &numplanes);
+  if (pixel_data == NULL || pixel_data[0] == NULL) {
+    if (newdata) {
+      weed_layer_nullify_pixel_data(old_layer);
+      weed_layer_free(old_layer);
+    }
+    return FALSE;
+  }
+
+  weed_layer_nullify_pixel_data(layer);
+
+  if (alignment != 0) mainw->rowstride_alignment_hint = alignment;
+
+  if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
+    if (newdata) {
+      weed_layer_copy(layer, old_layer);
+      weed_layer_nullify_pixel_data(old_layer);
+      weed_layer_free(old_layer);
+    }
+    return FALSE;
+  }
+
+  rowstrides = weed_layer_get_rowstrides(layer, &numplanes);
+  npixel_data = weed_layer_get_pixel_data(layer, &numplanes);
+
   for (i = 0; i < numplanes; i++) {
-    if ((memerror = posix_memalign((void **)&npixel_data, alignment, height * rowstrides[i]))) {
-      lives_freep((void **)&new_pixel_data);
-      lives_freep((void **)&pixel_data);
-      lives_freep((void **)&rowstrides);
-      return FALSE;
+    xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
+    if (rowstrides[i] == orowstrides[i])
+      lives_memcpy(npixel_data[i], pixel_data[i], xheight *  rowstrides[i]);
+    else {
+      uint8_t *dst = (uint8_t *)npixel_data[i];
+      uint8_t *src = (uint8_t *)pixel_data[i];
+      xwidth = width * psize * weed_palette_get_plane_ratio_horizontal(pal, i);
+      for (j = 0; j < xheight; j++) {
+        lives_memcpy(dst, src, xwidth);
+        src += orowstrides[i];
+        dst += rowstrides[i];
+      }
     }
-    lives_memcpy(npixel_data, pixel_data[i], height * rowstrides[i]);
-    new_pixel_data[i] = npixel_data;
   }
 
-  weed_layer_pixel_data_free(layer);
-
-  lives_freep((void **)&new_pixel_data);
+  if (newdata)
+    weed_layer_free(old_layer);
+  lives_freep((void **)&npixel_data);
   lives_freep((void **)&pixel_data);
+  lives_freep((void **)&orowstrides);
   lives_freep((void **)&rowstrides);
-
-  weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_FALSE);
-
   return TRUE;
-#endif
 }
 
 
@@ -10103,10 +10078,10 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
     int start = 0;
     int lgamma_type = weed_layer_get_gamma(layer);
 
-    int orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-    int pal = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error), nchannels;
-    int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
-    int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
+    int orowstride = weed_layer_get_rowstride(layer);
+    int pal = weed_layer_get_palette(layer), nchannels;
+    int width = weed_layer_get_width(layer);
+    int height = weed_layer_get_height(layer);
 
     if (!weed_palette_is_rgb(pal)) return FALSE; //  dont know how to convert in yuv space
 
@@ -11350,27 +11325,9 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     if (height <= 0 || width < 0 || rowstrides == NULL || !weed_palette_is_valid(palette)) {
       return NULL;
     } else {
-      void **pixel_data;
       layer = weed_layer_create(width, height, rowstrides, palette);
-      if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
-        /// memory allocation errors
-        lives_free(rowstrides);
-        lives_free(pd_array);
-        return weed_layer_free(layer);
-      }
       if (pd_array == NULL) weed_layer_nullify_pixel_data(layer);
-      else {
-        int pd_elements;
-        pixel_data = weed_layer_get_pixel_data(layer, &pd_elements);
-        if (pixel_data != NULL) {
-          for (int i = 0; i < pd_elements; i++) {
-            size_t size = (size_t)((((int)(((float)height * weed_palette_get_plane_ratio_vertical(palette,
-                                            i))) >> 1) << 1) * rowstrides[i]);
-            lives_memcpy(pixel_data[i], pd_array[i], size);
-          }
-          lives_free(pixel_data);
-        }
-      }
+      else copy_pixel_data(layer, slayer, 0);
       lives_free(rowstrides);
     }
   } else {
@@ -11492,6 +11449,12 @@ LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_plant_t *layer, int *npl
   if (nplanes) *nplanes = 0;
   if (layer == NULL)  return NULL;
   return weed_get_int_array_counted(layer, WEED_LEAF_ROWSTRIDES, nplanes);
+}
+
+
+LIVES_GLOBAL_INLINE int weed_layer_get_rowstride(weed_plant_t *layer) {
+  if (layer == NULL)  return 0;
+  return weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
 }
 
 

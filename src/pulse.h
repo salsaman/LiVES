@@ -25,7 +25,7 @@
 typedef struct {
   ssize_t size;
   size_t max_size;
-  void *data;
+  volatile void *data;
 } audio_buffer_t;
 
 typedef struct {

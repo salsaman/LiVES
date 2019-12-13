@@ -108,6 +108,11 @@ wayland_LDADD = @WAYLAND_LIBS@
 wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
 
+if HAVE_LIBEXPLAIN
+libexplain_LDADD = @LIBEXPLAIN_LIBS@
+libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
+endif
+
 if DISABLE_GSLICE
 if !NEED_LOCAL_WEED
 libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
@@ -216,12 +221,12 @@ lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
 
 lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
 	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@
+	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(libexplain_LDADD)
 
 AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
+	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
 	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
 
 if HAVE_AVFORMAT

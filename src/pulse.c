@@ -571,7 +571,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           /// put silence if anything changed
-          if (pulsed->mute || pulsed->aPlayPtr->size == 0
+          if (pulsed->mute || pulsed->aPlayPtr->size == 0 || !IS_VALID_CLIP(pulsed->playing_file)
               || (pulsed->aPlayPtr->data == NULL && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) ||
                   mainw->multitrack != NULL || mainw->preview))) {
             sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);

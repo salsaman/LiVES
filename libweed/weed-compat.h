@@ -775,19 +775,20 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   switch (trc) {
   case AVCOL_TRC_BT709:
-    return WEED_GAMMA_BT809;
+    return WEED_GAMMA_BT709;
   case  AVCOL_TRC_LINEAR:
     return WEED_GAMMA_LINEAR;
   case AVCOL_TRC_GAMMA22:
     return WEED_GAMMA_SRGB;
   default:
+    break;
   }
   return WEED_GAMMA_UNKNOWN;
 }
 
 enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
   switch (gamma_type) {
-  case WEED_GAMMA_BT809:
+  case WEED_GAMMA_BT709:
         return AVCOL_TRC_BT709;
     case  WEED_GAMMA_LINEAR:
       return AVCOL_TRC_LINEAR;

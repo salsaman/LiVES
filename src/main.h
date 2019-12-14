@@ -1204,6 +1204,7 @@ void replace_with_delegates(void);
 void set_ce_frame_from_pixbuf(LiVESImage *image, LiVESPixbuf *pixbuf, lives_painter_t *);
 void load_start_image(int frame);
 void load_end_image(int frame);
+void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 

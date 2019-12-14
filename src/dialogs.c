@@ -1183,9 +1183,9 @@ void update_progress(boolean visible) {
     uint32_t apxl;
     ticks_t currticks = lives_get_current_ticks();
     if ((currticks - last_open_check_ticks) > OPEN_CHECK_TICKS *
-        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 100 ? apxl : 100) ||
+        ((apxl = get_approx_ln((uint32_t)cfile->opening_frames)) < 50 ? apxl : 50) ||
         (mainw->effects_paused && !shown_paused_frames)) {
-      cfile->proc_ptr->frames_done = cfile->opening_frames = get_frame_count(mainw->current_file,
+      cfile->proc_ptr->frames_done = cfile->end = cfile->opening_frames = get_frame_count(mainw->current_file,
                                      cfile->opening_frames > 1 ? cfile->opening_frames : 1);
       last_open_check_ticks = currticks;
       if (cfile->opening_frames > 1) {
@@ -1206,6 +1206,7 @@ void update_progress(boolean visible) {
         }
         lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3), prog_label);
         lives_free(prog_label);
+        showclipimgs();
       }
     }
     shown_paused_frames = mainw->effects_paused;

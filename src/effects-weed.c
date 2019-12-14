@@ -7686,7 +7686,8 @@ void weed_generator_end(weed_plant_t *inst) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
-      close_current_file(mainw->pre_src_file);
+      if (cfile->achans == 0)
+        close_current_file(mainw->pre_src_file);
     }
     if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
   }
@@ -10709,7 +10710,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 
 #define MAX_FRAME_SIZE 1000000000
 
-static int reallign(int fd, weed_plant_t *plant) {
+static int reallign_typeleaf(int fd, weed_plant_t *plant) {
   uint8_t buff[13];
   int type, nl;
   buff[12] = 0;
@@ -11070,7 +11071,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
         // create a new plant with type unknown
         plant = weed_plant_new(WEED_PLANT_UNKNOWN);
       }
-      numleaves = reallign(fd, plant);
+      numleaves = reallign_typeleaf(fd, plant);
       if (numleaves == 0 || weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) <= 0) {
         if (newd)
           weed_plant_free(plant);
@@ -11096,7 +11097,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 
   if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
     // check the WEED_LEAF_TYPE leaf first
-    / g_print("errtype was %d\n", type);
+    // g_print("errtype was %d\n", type);
     bugfd = fd;
     if (newd)
       weed_plant_free(plant);

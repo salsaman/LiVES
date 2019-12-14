@@ -2291,15 +2291,18 @@ LIVES_GLOBAL_INLINE char *make_image_file_name(lives_clip_t *sfile, int frame, c
   ignores gaps */
 boolean check_frame_count(int idx, boolean last_checked) {
   /// make sure nth frame is there...
-  char *frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames,
-                                     get_image_ext_for_type(mainw->files[idx]->img_type));
+  char *frame;
+  if (mainw->files[idx]->frames > 0) {
+    frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames,
+                                 get_image_ext_for_type(mainw->files[idx]->img_type));
 
-  if (!lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
-    // not enough frames
+    if (!lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
+      // not enough frames
+      lives_free(frame);
+      return FALSE;
+    }
     lives_free(frame);
-    return FALSE;
   }
-  lives_free(frame);
 
   /// ...make sure n + 1 th frame is not
   frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames + 1,
@@ -3601,9 +3604,9 @@ int lives_echo(const char *text, const char *to, boolean append) {
 void lives_kill_subprocesses(const char *dirname, boolean kill_parent) {
   char *com;
   if (kill_parent)
-    com = lives_strdup_printf("%s stopsubsub \"%s\" 2>/dev/null", prefs->backend_sync, dirname);
+    com = lives_strdup_printf("%s stopsubsub \"%s\"", prefs->backend_sync, dirname);
   else
-    com = lives_strdup_printf("%s stopsubsubs \"%s\" 2>/dev/null", prefs->backend_sync, dirname);
+    com = lives_strdup_printf("%s stopsubsubs \"%s\"", prefs->backend_sync, dirname);
   lives_system(com, TRUE);
   lives_free(com);
 }

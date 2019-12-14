@@ -4581,6 +4581,17 @@ void set_ce_frame_from_pixbuf(LiVESImage * image, LiVESPixbuf * pixbuf, lives_pa
 }
 
 
+LIVES_GLOBAL_INLINE void showclipimgs(void) {
+  if (CURRENT_CLIP_IS_VALID) {
+    load_start_image(cfile->start);
+    load_end_image(cfile->end);
+  } else {
+    load_start_image(0);
+    load_end_image(0);
+  }
+}
+
+
 void load_start_image(int frame) {
   LiVESPixbuf *start_pixbuf = NULL;
 
@@ -7815,8 +7826,7 @@ void load_frame_image(int frame) {
     if (cfile->opening) {
       open_file(cfile->file_name);
     } else {
-      load_start_image(cfile->start);
-      load_end_image(cfile->end);
+      showclipimgs();
       if (LIVES_IS_PLAYING) load_frame_image(cfile->frameno);
     }
 

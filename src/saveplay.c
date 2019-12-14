@@ -138,9 +138,9 @@ boolean read_file_details(const char *file_name, boolean is_audio) {
   // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
-  char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d %d", prefs->backend_sync, cfile->handle,
+  char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
-                                        get_image_ext_for_type(cfile->img_type), mainw->opening_loc, is_audio);
+                                        get_image_ext_for_type(cfile->img_type), mainw->opening_loc ? 3 : is_audio ? 2 : 0);
   lives_free(tmp);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
@@ -484,8 +484,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               insert_blank_frames(mainw->current_file, st_extra_frames, 0, WEED_PALETTE_RGB24);
               cfile->video_time += st_extra_frames / cfile->fps;
               extra_frames -= st_extra_frames;
-              load_start_image(cfile->start);
-              load_end_image(cfile->end);
+              showclipimgs();
             }
 
             if ((cfile->frames + extra_frames) / cfile->fps > cfile->laudio_time) {
@@ -732,6 +731,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           d_print_failed();
           do_blocking_error_dialog(mainw->msg);
         }
+        showclipimgs();
         return 0;
       }
     }
@@ -806,6 +806,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   }
 
   // now file should be loaded...get full details
+  if (cfile->ext_src == NULL) add_file_info(cfile->handle, FALSE);
   cfile->is_loaded = TRUE;
 
   if (cfile->frames <= 0) {
@@ -871,8 +872,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           insert_blank_frames(mainw->current_file, extra_frames, cfile->frames, WEED_PALETTE_RGB24);
           cfile->video_time += extra_frames / cfile->fps;
           cfile->end = cfile->frames;
-          load_start_image(cfile->start);
-          load_end_image(cfile->end);
+          showclipimgs();
         }
       }
       if (cfile->laudio_time < cfile->video_time && cfile->achans > 0) {
@@ -3090,8 +3090,7 @@ void play_file(void) {
   } else {
     if (mainw->current_file > -1) {
       if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !cfile->opening) {
-        load_start_image(cfile->start);
-        load_end_image(cfile->end);
+        showclipimgs();
       }
     }
   }
@@ -3133,8 +3132,7 @@ void play_file(void) {
 
   if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
       cfile->clip_type == CLIP_TYPE_FILE)) {
-    load_start_image(cfile->start);
-    load_end_image(cfile->end);
+    showclipimgs();
   }
 
   if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
@@ -4910,7 +4908,7 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
-  if (frame < 0 || layer == NULL) return; /// just open fd
+  if (frame < 0 || layer == NULL) return TRUE; /// just open fd
 
   if (weed_plant_deserialise(fd, NULL, layer) == NULL) return FALSE;
   return TRUE;
@@ -5699,8 +5697,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         lives_signal_handler_block(mainw->spinbutton_end, mainw->spin_end_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
         lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
-        load_start_image(cfile->start);
-        load_end_image(cfile->end);
+        showclipimgs();
       } else {
         int current_file = mainw->current_file;
         lives_mt *multi = mainw->multitrack;
@@ -5924,9 +5921,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
   }
 
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  if (mainw->current_file > -1 && cfile != NULL) {
-    load_start_image(cfile->start);
-    load_end_image(cfile->end);
+  if (CURRENT_CLIP_IS_VALID) {
+    showclipimgs();
     lives_widget_queue_resize(mainw->video_draw);
     lives_widget_queue_resize(mainw->laudio_draw);
     lives_widget_queue_resize(mainw->raudio_draw);

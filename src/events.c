@@ -2934,9 +2934,9 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
     if ((idx = weed_get_idx_for_hashname(filter_hash, TRUE)) != -1) {
       filter = get_weed_filter(idx);
       if (has_video_chans_in(filter, FALSE)) {
-        nintracks = weed_leaf_num_elements(init_events[i], WEED_LEAF_IN_TRACKS);
-        in_tracks = weed_get_int_array(init_events[i], WEED_LEAF_IN_TRACKS, &error);
+        in_tracks = weed_get_int_array(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
         for (j = 0; j < nintracks; j++) {
+          if (j  >= mainw->num_tracks) break;
           mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];   // valgrind
         }
         lives_free(in_tracks);
@@ -3051,13 +3051,11 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       }
     }
 
-    mainw->num_tracks = weed_leaf_num_elements(next_event, WEED_LEAF_CLIPS);
-
     lives_freep((void **)&mainw->clip_index);
     lives_freep((void **)&mainw->frame_index);
 
     // valgrind
-    mainw->clip_index = weed_get_int_array(next_event, WEED_LEAF_CLIPS, &error);
+    mainw->clip_index = weed_get_int_array_counted(next_event, WEED_LEAF_CLIPS, &mainw->num_tracks);
     mainw->frame_index = weed_get_int_array(next_event, WEED_LEAF_FRAMES, &error);
 
     if (mainw->scrap_file != -1) {
@@ -3411,7 +3409,6 @@ lives_render_error_t render_events(boolean reset) {
   int hint;
   int layer_palette;
   int weed_error;
-  int num_tracks;
   int num_params, offset = 0;
   int retval;
   int num_in_count = 0;
@@ -3510,16 +3507,14 @@ lives_render_error_t render_events(boolean reset) {
 
         if ((mainw->multitrack == NULL || (mainw->multitrack->opts.render_vidp && !mainw->multitrack->pr_audio)) &&
             !(!mainw->clip_switched && cfile->hsize * cfile->vsize == 0)) {
-          num_tracks = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
-
           lives_freep((void **)&mainw->clip_index);
           lives_freep((void **)&mainw->frame_index);
 
-          mainw->clip_index = weed_get_int_array(event, WEED_LEAF_CLIPS, &weed_error);
+          mainw->clip_index = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &mainw->num_tracks);
           mainw->frame_index = weed_get_int_array(event, WEED_LEAF_FRAMES, &weed_error);
 
           if (mainw->scrap_file != -1) {
-            for (i = 0; i < num_tracks; i++) {
+            for (i = 0; i < mainw->num_tracks; i++) {
               if (mainw->clip_index[i] != mainw->scrap_file) {
                 scrap_track = -1;
                 break;
@@ -3551,7 +3546,7 @@ lives_render_error_t render_events(boolean reset) {
           } else {
             int oclip, nclip;
 
-            layers = (weed_plant_t **)lives_malloc((num_tracks + 1) * sizeof(weed_plant_t *));
+            layers = (weed_plant_t **)lives_malloc((mainw->num_tracks + 1) * sizeof(weed_plant_t *));
 
             // get list of active tracks from mainw->filter map
             get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
@@ -3563,7 +3558,7 @@ lives_render_error_t render_events(boolean reset) {
               }
             }
 
-            for (i = 0; i < num_tracks; i++) {
+            for (i = 0; i < mainw->num_tracks; i++) {
               if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack != NULL) is_blank = FALSE;
               layers[i] = weed_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
               weed_layer_nullify_pixel_data(layers[i]);

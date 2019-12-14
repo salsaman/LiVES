@@ -693,7 +693,7 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
               active_dummy = weed_plant_new(WEED_PLANT_PARAMETER);
               weed_set_plantptr_value(active_dummy, WEED_LEAF_TEMPLATE, NULL);
             }
-            if (inst != NULL) weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL);
+            weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL);
             param = active_dummy;
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {

@@ -4339,8 +4339,10 @@ void on_record_perf_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
           && mainw->agen_key == 0 && !mainw->agen_needs_reinit &&
           prefs->audio_src == AUDIO_SRC_INT) {
-        weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
+        if (!mainw->mute) {
+          weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
+        }
       }
 #endif
 
@@ -7523,10 +7525,57 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->preview_box != NULL) mute_img2 = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_VOLUME_MUTE,
         LIVES_ICON_SIZE_CUSTOM, 24,
         24);
+
   if (mainw->mute) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
+      if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+          weed_plant_t *event = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(mainw->event_list, event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+        }
+        mainw->jackd->mute = TRUE;
+        mainw->jackd->in_use = TRUE;
+      }
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
+      if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+          weed_plant_t *event = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+        }
+        mainw->pulsed->mute = TRUE;
+        mainw->pulsed->in_use = TRUE;
+      }
+    }
+#endif
     lives_widget_set_tooltip_text(mainw->m_mutebutton, _("Unmute the audio (z)"));
     if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Unmute the audio (z)"));
   } else {
+#ifdef ENABLE_JACK
+    if (mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
+      if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+          jack_get_rec_avals(mainw->jackd);
+        }
+        mainw->jackd->mute = FALSE;
+        mainw->jackd->in_use = TRUE;
+      }
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
+      if (LIVES_IS_PLAYING) {
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+          pulse_get_rec_avals(mainw->pulsed);
+        }
+        mainw->pulsed->mute = FALSE;
+        mainw->pulsed->in_use = TRUE;
+      }
+    }
+#endif
     if (LIVES_IS_IMAGE(mute_img)) {
       LiVESPixbuf *pixbuf = lives_image_get_pixbuf(LIVES_IMAGE(mute_img));
       if (pixbuf != NULL) lives_pixbuf_saturate_and_pixelate(pixbuf, pixbuf, 0.2, FALSE);
@@ -7540,7 +7589,6 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   lives_widget_show(mute_img);
-
   lives_tool_button_set_icon_widget(LIVES_TOOL_BUTTON(mainw->m_mutebutton), mute_img);
 
   if (mainw->preview_box != NULL) {
@@ -7549,14 +7597,14 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     lives_widget_queue_draw(mainw->p_mutebutton);
     lives_widget_queue_draw(mute_img2);
   }
+
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd != NULL) {
-    mainw->jackd->mute = mainw->mute;
+
     if (mainw->jackd->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
       if (!jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos)) {
         if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos);
       }
-      mainw->jackd->in_use = TRUE;
     }
   }
 #endif
@@ -10192,8 +10240,10 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
         !mainw->agen_needs_reinit &&
         prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
-        weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+        if (!mainw->mute) {
+          weed_plant_t *event = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+        }
       } else {
         pulse_get_rec_avals(mainw->pulsed);
       }

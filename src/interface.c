@@ -3810,8 +3810,8 @@ autolives_window *autolives_pre_dialog(void) {
   lives_box_pack_start(LIVES_BOX(vbox), hbox, TRUE, TRUE, widget_opts.packing_height * 2);
 
   alwindow->mute_button = lives_standard_check_button_new
-                          ((tmp = lives_strdup(_("Mute audio during playback"))), FALSE, LIVES_BOX(hbox),
-                           (tmp2 = lives_strdup(_("Mute the audio in LiVES during playback."))));
+                          ((tmp = lives_strdup(_("Mute internal audio during playback"))), FALSE, LIVES_BOX(hbox),
+                           (tmp2 = lives_strdup(_("Mute the audio in LiVES during playback by setting the audio source to external."))));
 
   lives_free(tmp);
   lives_free(tmp2);

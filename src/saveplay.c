@@ -2680,8 +2680,9 @@ void play_file(void) {
   mainw->playing_file = -1;
 
   if (mainw->ext_playback) {
-    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    // need to exit_screen before unfullscreen, else the openGL player can hang
     vid_playback_plugin_exit();
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
   }
 
   // play completed
@@ -4900,7 +4901,6 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     fd = lives_open_buffered_rdonly(oname);
     lives_free(oname);
     if (fd < 0) return FALSE;
-    g_print("SCRAP fd is %d\n", fd);
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);

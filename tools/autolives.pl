@@ -15,7 +15,7 @@
 # -waitforplay
 # -omc <notify_port>
 # -time <secs> (ignored if -omc is passed)
-# -mute
+# -mute (Actually set the audio source ot External)
 # -loop (set continuous looping, ignored if -waitforplay is passed)
 # -debug
 
@@ -216,10 +216,10 @@ if ($loop) {
 
 if ($mute) {
     #mute the sound if requested
-    &send_command("/audio/mute/get");
+    &send_command("/audio/source/get");
     $mute = 1 - &get_newmsg;
     if ($mute) {
-	&send_command("/audio/mute/set,1");
+	&send_command("/audio/source/set,1");
     }
 }
 
@@ -383,7 +383,7 @@ sub finish {
 
     # reset mute status
     if ($mute) {
-	&send_command("/audio/mute/set,0");
+	&send_command("/audio/source/set,0");
 	$mute = 0;
     }
 }

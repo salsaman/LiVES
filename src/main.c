@@ -6288,8 +6288,10 @@ void load_frame_image(int frame) {
                                       mainw->files[mainw->ascrap_file]->asampsize >> 3);
           mainw->rec_avel = 1.;
         }
-        insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-        mainw->rec_aclip = -1;
+        if (!mainw->mute) {
+          insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+          mainw->rec_aclip = -1;
+        }
       }
     }
     get_play_times();
@@ -6441,11 +6443,12 @@ void load_frame_image(int frame) {
                 mainw->rec_avel = 1.;
 
               }
-              insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-              mainw->rec_aclip = -1;
+              if (!mainw->mute) {
+                insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+                mainw->rec_aclip = -1;
+              }
             }
           }
-
           pthread_mutex_unlock(&mainw->event_list_mutex);
 
           /* TRANSLATORS: rec(ord) */

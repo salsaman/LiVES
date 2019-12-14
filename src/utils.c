@@ -560,12 +560,11 @@ int lives_close_buffered(int fd) {
 
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src &&
       fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src))
-    g_print("cl scrap buff\n");
 
-  if (fd < 0) {
-    should_close = FALSE;
-    fd = -fd;
-  }
+    if (fd < 0) {
+      should_close = FALSE;
+      fd = -fd;
+    }
 
   fbuff = find_in_file_buffers(fd);
 

@@ -7,7 +7,9 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
+#ifdef HAVE_LIBEXPLAIN
 #include <libexplain/system.h>
+#endif
 #include "main.h"
 #include "support.h"
 #include "interface.h"

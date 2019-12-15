@@ -5,34 +5,22 @@
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
 
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#endif
-
 ///////////////////////////////////////////////////////////////////
-
-static int num_versions = 2; // number of different weed api versions supported
-static int api_versions[] = {131, 100}; // array of weed api versions supported in plugin, in order of preference (most preferred first)
 
 static int package_version = 2; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../../libweed/weed-plugin.h" // optional
-#endif
-
-#include "../weed-utils-code.c" // optional
-
 #define NEED_RANDOM
+#define NEED_PALETTE_CONVERSIONS
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-plugin-utils.h" // optional
+#endif
 
 #include "../weed-plugin-utils.c" // optional
 
@@ -49,18 +37,6 @@ static int package_version = 2; // version of this package
 
 #include <gdk/gdk.h>
 #include <pango/pangocairo.h>
-
-union memtest {
-  int32_t num;
-  char chr[4];
-};
-
-static int is_big_endian() {
-  union memtest mm;
-  mm.num = 0x12345678;
-  if (mm.chr[0] == 0x78) return 0;
-  return 1;
-}
 
 // defines for configure dialog elements
 enum DlgControls {
@@ -184,71 +160,6 @@ typedef struct {
   size_t length;
 } pt_subst_t;
 
-/////////////////////////////////////////////
-static int unal[256][256];
-static int al[256][256];
-
-
-static void init_unal(void) {
-  // premult to postmult and vice-versa
-
-  register int i, j;
-
-  for (i = 0; i < 256; i++) { //alpha val
-    for (j = 0; j < 256; j++) { // val to be converted
-      unal[i][j] = (float)j * 255. / (float)i;
-      al[i][j] = (float)j * (float)i / 255.;
-    }
-  }
-}
-
-
-static void alpha_unpremult(guchar *ptr, int width, int height, int rowstride, int pal, int un) {
-  int aoffs, coffs, psizel;
-  int alpha;
-  int psize = 4;
-
-  register int i, j, p;
-
-  switch (pal) {
-  case WEED_PALETTE_BGRA32:
-    psizel = 3;
-    coffs = 0;
-    aoffs = 3;
-    break;
-  case WEED_PALETTE_ARGB32:
-    psizel = 4;
-    coffs = 1;
-    aoffs = 0;
-    break;
-  default:
-    return;
-  }
-
-  if (un) {
-    for (i = 0; i < height; i++) {
-      for (j = 0; j < width; j += psize) {
-        alpha = ptr[j + aoffs];
-        for (p = coffs; p < psizel; p++) {
-          ptr[j + p] = unal[alpha][ptr[j + p]];
-        }
-      }
-      ptr += rowstride;
-    }
-  } else {
-    for (i = 0; i < height; i++) {
-      for (j = 0; j < width; j += psize) {
-        alpha = ptr[j + aoffs];
-        for (p = coffs; p < psizel; p++) {
-          ptr[j + p] = al[alpha][ptr[j + p]];
-        }
-      }
-      ptr += rowstride;
-    }
-  }
-}
-
-
 static char **fonts_available = NULL;
 static int num_fonts_available = 0;
 
@@ -350,8 +261,6 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
   int width, widthx;
   int height;
   int pal;
-  int error;
-  int flags = 0;
 
   register int i;
 
@@ -361,16 +270,16 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
   cairo_t *cairo;
   cairo_format_t cform = CAIRO_FORMAT_ARGB32;
 
-  width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
-  height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
-  pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
+  width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
+  height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+  pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
 
   widthx = width * 4;
 
   orowstride = cairo_format_stride_for_width(cform, width);
 
-  src = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
+  src = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   sdata->pixel_data = pixel_data = (guchar *)weed_malloc(height * orowstride);
 
@@ -388,11 +297,8 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
     }
   }
 
-  if (weed_plant_has_leaf(channel, WEED_LEAF_FLAGS)) flags = weed_get_int_value(channel, WEED_LEAF_FLAGS, &error);
-  if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-    // if we have post-multiplied alpha, pre multiply
-    alpha_unpremult(pixel_data, widthx, height, orowstride, pal, FALSE);
-  }
+  if (weed_get_boolean_value(channel, WEED_LEAF_ALPHA_PREMULTIPLIED, NULL) == WEED_FALSE)
+    alpha_premult(pixel_data, widthx, height, orowstride, pal, WEED_TRUE);
 
   surf = cairo_image_surface_create_for_data(pixel_data,
          cform,
@@ -414,19 +320,11 @@ static cairo_t *channel_to_cairo(sdata_t *sdata, weed_plant_t *channel) {
 static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // updates a weed_channel from a cairo_t
   cairo_surface_t *surface = cairo_get_target(cairo);
-
   cairo_format_t cform = CAIRO_FORMAT_ARGB32;
-
-  int error;
-
-  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
-
-  int flags = 0;
-
-  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
-  int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
-  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error), widthx = width * 4;
-
+  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+  int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL), widthx = width * 4;
   register int i;
 
   // flush to ensure all writing to the image was done
@@ -448,13 +346,12 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     }
   }
 
-  if (weed_plant_has_leaf(channel, WEED_LEAF_FLAGS)) flags = weed_get_int_value(channel, WEED_LEAF_FLAGS, &error);
-  if (!(flags & WEED_CHANNEL_ALPHA_PREMULT)) {
-    int pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
-
+  if (weed_get_boolean_value(channel, WEED_LEAF_ALPHA_PREMULTIPLIED, NULL) == WEED_FALSE) {
+    int pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
     // un-premultiply the alpha
-    alpha_unpremult(pixel_data, widthx, height, orowstride, pal, TRUE);
+    alpha_premult(pixel_data, widthx, height, orowstride, pal, TRUE);
   }
+  cairo_surface_finish(surface);
 }
 
 
@@ -882,21 +779,14 @@ static void proctext(sdata_t *sdata, weed_timecode_t tc, char *xtext, cairo_t *c
 }
 
 
-int puretext_init(weed_plant_t *inst) {
-  int error, fd, canstart;
-
+static weed_error_t puretext_init(weed_plant_t *inst) {
+  int fd, canstart;
   gboolean erropen = FALSE;
-
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
   sdata_t *sdata;
-
   char buff[65536];
-
   size_t b_read;
-
-  char *textfile = weed_get_string_value(in_params[P_TEXT], WEED_LEAF_VALUE, &error);
-
+  char *textfile = weed_get_string_value(in_params[P_TEXT], WEED_LEAF_VALUE, NULL);
   register int i, j = 0;
 
   weed_free(in_params);
@@ -907,15 +797,12 @@ int puretext_init(weed_plant_t *inst) {
     erropen = TRUE;
     fprintf(stderr, "Error opening file %s\n", textfile);
     weed_free(textfile);
-    return WEED_ERROR_INIT_ERROR;
+    return WEED_ERROR_FILTER_INVALID;
   }
 
   weed_free(textfile);
 
-  seed_rand();
-
   sdata = (sdata_t *)weed_malloc(sizeof(sdata_t));
-
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
   sdata->timer = -1;
@@ -947,7 +834,7 @@ int puretext_init(weed_plant_t *inst) {
 
   if (sdata->nstrings == 0) {
     fprintf(stderr, "No strings found in file.\n");
-    return WEED_ERROR_INIT_ERROR;
+    return WEED_ERROR_FILTER_INVALID;
   }
 
   sdata->strings = (char **)weed_malloc(sdata->nstrings * sizeof(char *));
@@ -990,10 +877,9 @@ int puretext_init(weed_plant_t *inst) {
 }
 
 
-int puretext_deinit(weed_plant_t *inst) {
-  int error;
+static weed_error_t puretext_deinit(weed_plant_t *inst) {
   int i;
-  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   if (sdata != NULL) {
     if (sdata->letter_data != NULL) letter_data_free(sdata);
@@ -1006,14 +892,12 @@ int puretext_deinit(weed_plant_t *inst) {
 }
 
 
-int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
-  int error;
+static weed_error_t puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
+  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, &error);
-  weed_plant_t **in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-
-  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  sdata_t *sdata = (sdata_t *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   guchar *bgdata = NULL;
 
@@ -1021,22 +905,22 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
 
   cairo_t *cairo;
 
-  guchar *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+  guchar *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   size_t toffs;
 
   //int alpha_threshold = 0;
 
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, &error);
+  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
 
-  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, &error);
+  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
 
-  int mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, &error);
+  int mode = weed_get_int_value(in_params[P_MODE], WEED_LEAF_VALUE, NULL);
 
   register int i, j;
 
-  sdata->rndorder = weed_get_boolean_value(in_params[P_RAND], WEED_LEAF_VALUE, &error);
+  sdata->rndorder = weed_get_boolean_value(in_params[P_RAND], WEED_LEAF_VALUE, NULL);
 
   weed_free(in_params); // must weed free because we got an array
 
@@ -1174,7 +1058,7 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
     if (sdata->dbl1 > 0.) {
       guchar *b_data = bgdata;
       int width4 = width * 4;
-      guchar *dstx = dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, &error);
+      guchar *dstx = dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
 
       for (i = 0; i < height; i++) {
         for (j = 0; j < width4; j += 4) {
@@ -1215,111 +1099,109 @@ int puretext_process(weed_plant_t *inst, weed_timecode_t tc) {
   return ret;
   }*/
 
-weed_plant_t *weed_setup(weed_bootstrap_f weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, num_versions, api_versions);
 
-  if (plugin_info != NULL) {
-    weed_plant_t *in_params[P_END + 1], *gui;
-    weed_plant_t *filter_class;
-    PangoContext *ctx;
+WEED_SETUP_START(200, 200) {
+  weed_plant_t *in_params[P_END + 1], *gui;
+  weed_plant_t *filter_class;
+  PangoContext *ctx;
 
-    const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce", NULL};
-    char *rfx_strings[] = {"special|fileread|0|"};
+  const char *modes[] = {"Spiral text", "Spinning letters", "Letter starfield", "Word coalesce", NULL};
+  char *rfx_strings[] = {"special|fileread|0|"};
 
-    char *deftextfile;
+  char *deftextfile;
 
-    int palette_list[2];
-    weed_plant_t *in_chantmpls[2];
-    weed_plant_t *out_chantmpls[2];
+  int palette_list[2];
+  weed_plant_t *in_chantmpls[2];
+  weed_plant_t *out_chantmpls[2];
+  weed_plant_t *host_info = weed_get_host_info(plugin_info);
+  int filter_flags = weed_host_supports_premultiplied_alpha(host_info);
+  int flags;
 
-    int flags, error;
+  if (is_big_endian())
+    palette_list[0] = WEED_PALETTE_ARGB32;
+  else
+    palette_list[0] = WEED_PALETTE_BGRA32;
 
-    if (is_big_endian())
-      palette_list[0] = WEED_PALETTE_ARGB32;
-    else
-      palette_list[0] = WEED_PALETTE_BGRA32;
+  palette_list[1] = WEED_PALETTE_END;
 
-    palette_list[1] = WEED_PALETTE_END;
+  in_chantmpls[0] = weed_channel_template_init("in channel 0", 0);
+  in_chantmpls[1] = NULL;
 
-    in_chantmpls[0] = weed_channel_template_init("in channel 0", 0, palette_list);
-    in_chantmpls[1] = NULL;
+  out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE);
+  out_chantmpls[1] = NULL;
 
-    out_chantmpls[0] = weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE, palette_list);
-    out_chantmpls[1] = NULL;
+  init_unal();
 
-    init_unal();
+  // this section contains code
+  // for configure fonts available
+  num_fonts_available = 0;
+  fonts_available = NULL;
 
-    // this section contains code
-    // for configure fonts available
-    num_fonts_available = 0;
-    fonts_available = NULL;
-
-    ctx = gdk_pango_context_get();
-    if (ctx) {
-      PangoFontMap *pfm = pango_context_get_font_map(ctx);
-      if (pfm) {
-        int num = 0;
-        PangoFontFamily **pff = NULL;
-        pango_font_map_list_families(pfm, &pff, &num);
-        if (num > 0) {
-          // we should reserve num+1 for a final NULL pointer
-          fonts_available = (char **)weed_malloc((num + 1) * sizeof(char *));
-          if (fonts_available) {
-            register int i;
-            num_fonts_available = num;
-            for (i = 0; i < num; ++i) {
-              fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
-            }
-            // don't forget this thing
-            fonts_available[num] = NULL;
+  ctx = gdk_pango_context_get();
+  if (ctx) {
+    PangoFontMap *pfm = pango_context_get_font_map(ctx);
+    if (pfm) {
+      int num = 0;
+      PangoFontFamily **pff = NULL;
+      pango_font_map_list_families(pfm, &pff, &num);
+      if (num > 0) {
+        // we should reserve num+1 for a final NULL pointer
+        fonts_available = (char **)weed_malloc((num + 1) * sizeof(char *));
+        if (fonts_available) {
+          register int i;
+          num_fonts_available = num;
+          for (i = 0; i < num; ++i) {
+            fonts_available[i] = strdup(pango_font_family_get_name(pff[i]));
           }
+          // don't forget this thing
+          fonts_available[num] = NULL;
         }
-        g_free(pff);
       }
-      g_object_unref(ctx);
+      g_free(pff);
     }
-
-    deftextfile = g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
-
-    in_params[P_TEXT] = weed_text_init("textfile", "_Text file", deftextfile);
-    gui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
-    weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
-    flags = 0;
-    if (weed_plant_has_leaf(in_params[P_TEXT], WEED_LEAF_FLAGS))
-      flags = weed_get_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, &error);
-    flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, flags);
-
-    in_params[P_RAND] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
-
-    in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
-    flags = 0;
-    if (weed_plant_has_leaf(in_params[P_MODE], WEED_LEAF_FLAGS))
-      flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, &error);
-    flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
-    weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, flags);
-    in_params[P_END] = NULL;
-
-    g_free(deftextfile);
-
-    filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1, 0, &puretext_init, &puretext_process, NULL,
-                                          in_chantmpls, out_chantmpls, in_params, NULL);
-
-    gui = weed_filter_get_gui(filter_class);
-    weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
-    weed_set_string_value(gui, "layout_rfx_delim", "|");
-    weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);
-
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
-
-    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+    g_object_unref(ctx);
   }
 
-  return plugin_info;
+  deftextfile = g_build_filename(g_get_home_dir(), "livestext.txt", NULL);
+
+  in_params[P_TEXT] = weed_text_init("textfile", "_Text file", deftextfile);
+  gui = weed_paramtmpl_get_gui(in_params[P_TEXT]);
+  weed_set_int_value(gui, WEED_LEAF_MAXCHARS, 80); // for display only - fileread will override this
+  flags = 0;
+  if (weed_plant_has_leaf(in_params[P_TEXT], WEED_LEAF_FLAGS))
+    flags = weed_get_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, NULL);
+  flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+  weed_set_int_value(in_params[P_TEXT], WEED_LEAF_FLAGS, flags);
+
+  in_params[P_RAND] = weed_switch_init("rand", "Select text lines _randomly", WEED_TRUE);
+
+  in_params[P_MODE] = weed_string_list_init("mode", "Effect _mode", 0, modes);
+  flags = 0;
+  if (weed_plant_has_leaf(in_params[P_MODE], WEED_LEAF_FLAGS))
+    flags = weed_get_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, NULL);
+  flags |= WEED_PARAMETER_REINIT_ON_VALUE_CHANGE;
+  weed_set_int_value(in_params[P_MODE], WEED_LEAF_FLAGS, flags);
+  in_params[P_END] = NULL;
+
+  g_free(deftextfile);
+
+  filter_class = weed_filter_class_init("puretext", "Salsaman & Aleksej Penkov", 1, filter_flags, palette_list,
+                                        puretext_init, puretext_process, NULL,
+                                        in_chantmpls, out_chantmpls, in_params, NULL);
+
+  gui = weed_filter_get_gui(filter_class);
+  weed_set_string_value(gui, WEED_LEAF_LAYOUT_SCHEME, "RFX");
+  weed_set_string_value(gui, "layout_rfx_delim", "|");
+  weed_set_string_array(gui, "layout_rfx_strings", 1, rfx_strings);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
+WEED_SETUP_END;
 
 
-void weed_desetup(void) {
+WEED_DESETUP_START {
   // clean up what we reserve for font family names
   if (num_fonts_available && fonts_available) {
     int i;
@@ -1331,3 +1213,4 @@ void weed_desetup(void) {
   num_fonts_available = 0;
   fonts_available = NULL;
 }
+WEED_DESETUP_END;

@@ -7205,7 +7205,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   else
-    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
+    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
     int num_inc = weed_leaf_num_elements(inst, WEED_LEAF_IN_CHANNELS);

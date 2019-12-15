@@ -104,7 +104,9 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     }
   }
 
-  alpha_premult(pixel_data, widthx, height, orowstride, pal, WEED_TRUE);
+  // pre-multiply alpha for cairo
+  if (weed_get_boolean_value(channel, WEED_LEAF_ALPHA_PREMULTIPLIED, NULL) == WEED_FALSE)
+    alpha_premult(pixel_data, widthx, height, orowstride, pal, WEED_FALSE);
 
   surf = cairo_image_surface_create_for_data(pixel_data,
          cform,
@@ -155,6 +157,12 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
       dst += orowstride;
       src += irowstride;
     }
+  }
+
+  if (weed_get_boolean_value(channel, WEED_LEAF_ALPHA_PREMULTIPLIED, NULL) == WEED_FALSE) {
+    int pal = weed_channel_get_palette(channel);
+    // un-premultiply the alpha
+    alpha_premult(pixel_data, widthx, height, orowstride, pal, TRUE);
   }
   cairo_surface_finish(surface);
 }
@@ -366,9 +374,10 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[2];
   weed_plant_t *in_params[P_END + 1], *pgui;
   weed_plant_t *filter_class, *gui;
+  weed_plant_t *host_info = weed_get_host_info(plugin_info);
   PangoContext *ctx;
-
-  int filter_flags = 0, param_flags = 0;
+  int filter_flags = weed_host_supports_premultiplied_alpha(host_info);
+  int param_flags = 0;
 
   if (is_big_endian())
     palette_list[0] = WEED_PALETTE_ARGB32;
@@ -444,7 +453,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_set_int_value(in_params[P_FGALPHA], WEED_LEAF_COPY_VALUE_TO, P_BGALPHA);
 
-  filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, 0, palette_list,
+  filter_class = weed_filter_class_init("scribbler", "Aleksej Penkov", 1, filter_flags, palette_list,
                                         scribbler_init, scribbler_process, NULL,
                                         in_chantmpls,
                                         out_chantmpls,

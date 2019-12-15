@@ -174,7 +174,9 @@ FN_DECL int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
 FN_DECL int weed_get_host_verbosity(weed_plant_t *host_info);
 //FN_DECL char *weed_get_host_name(weed_plant_t *host_info);
 //FN_DECL char *weed_get_host_version(weed_plant_t *host_info);
-FN_DECL int weed_get_host_flags(weed_plant_t *host_info);
+FN_DECL int weed_host_get_flags(weed_plant_t *host_info);
+FN_DECL int weed_host_supports_linear_gamma(weed_plant_t *host_info);
+FN_DECL int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info);
 //FN_DECL char **weed_get_host_layout_schemes(weed_plant_t *host_info);
 
 // filter_class

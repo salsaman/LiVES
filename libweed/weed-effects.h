@@ -85,17 +85,19 @@ typedef struct {
 
 /* host_info flags */
 /* API version 200 */
-#define WEED_HOST_SUPPORTS_LINEAR_GAMMA    (1<<0)
+#define WEED_HOST_SUPPORTS_LINEAR_GAMMA    			(1<<0)
+#define WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA    	(1<<1)
 
 /* Filter flags */
-#define WEED_FILTER_NON_REALTIME                        	(1<<0)
-#define WEED_FILTER_IS_CONVERTER                        	(1<<1)
-#define WEED_FILTER_HINT_IS_STATELESS                 	(1<<2)
-#define WEED_FILTER_HINT_LINEAR_GAMMA              	(1<<3)
-#define WEED_FILTER_PROCESS_LAST                        	(1<<4)
-#define WEED_FILTER_HINT_MAY_THREAD                  	(1<<5)
-#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     	(1<<6)
-#define WEED_FILTER_PALETTES_MAY_VARY               	(1<<7)
+#define WEED_FILTER_NON_REALTIME                        		(1<<0)
+#define WEED_FILTER_IS_CONVERTER                        		(1<<1)
+#define WEED_FILTER_HINT_IS_STATELESS                 		(1<<2)  // TODO HINT_STATELESS
+#define WEED_FILTER_HINT_LINEAR_GAMMA              		(1<<3)
+#define WEED_FILTER_HINT_PREMULTIPLIED_ALPHA              	(1<<4)
+#define WEED_FILTER_PROCESS_LAST                        		(1<<5)  // TODO _HINT_
+#define WEED_FILTER_HINT_MAY_THREAD                  		(1<<6)
+#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1<<7)
+#define WEED_FILTER_PALETTES_MAY_VARY               		(1<<8)
 
 /* audio */
 #define WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY   	(1 << 15)
@@ -326,6 +328,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 /// WEED_LEAF_YUV_SUBSPACE
 #define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
+#define WEED_LEAF_ALPHA_PREMULTIPLIED "alpha_premultiplied"
 
 
 // PARAM_TEMPLATE
@@ -345,7 +348,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_COLORSPACE "colorspace"
 #define WEED_LEAF_IS_TRANSITION "is_transition"
 #define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
-#define WEED_LEAF_WHITE_POINT "white_point"
 
 // PARAM_TEMPLATE GUI
 #define WEED_LEAF_WRAP "wrap"

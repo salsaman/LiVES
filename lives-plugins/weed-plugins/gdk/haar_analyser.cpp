@@ -1,4 +1,3 @@
-#if 0
 // haar_analyser.cpp
 // weed plugin
 // (c) G. Finch (salsaman) 2012
@@ -55,34 +54,26 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
-#ifdef HAVE_SYSTEM_WEED_PLUGIN_H
-#include <weed/weed-plugin.h> // optional
-#else
-#include "../../../libweed/weed-plugin.h" // optional
-#endif
-
-/////////////////////////////////////////////////////////////
-
-#ifdef HAVE_SYSTEM_WEED
-#include <weed/weed.h>
-#include <weed/weed-palettes.h>
-#include <weed/weed-effects.h>
-#else
-#include "../../../libweed/weed.h"
-#include "../../../libweed/weed-palettes.h"
-#include "../../../libweed/weed-effects.h"
-#endif
-
-#include "../weed-utils-code.c" // optional
-#define NEED_PALETTE_UTILS
-#include "../weed-plugin-utils.c" // optional
-
 ///////////////////////////////////////////////////////////////////
 
 static int package_version = 1; // version of this package
 
 //////////////////////////////////////////////////////////////////
+
+#define NEED_PALETTE_UTILS
+#define NEED_PALETTE_CONVERSIONS
+
+#ifndef NEED_LOCAL_WEED_PLUGIN
+#include <weed/weed-plugin.h>
+#include <weed/weed-plugin-utils.h> // optional
+#else
+#include "../../../libweed/weed-plugin.h"
+#include "../../../libweed/weed-plugin-utils.h" // optional
+#endif
+
+#include "../weed-plugin-utils.c" // optional
+
+/////////////////////////////////////////////////////////////
 
 /* C Includes */
 #include <math.h>
@@ -287,12 +278,12 @@ static GdkPixbuf *pl_gdk_pixbuf_cheat(GdkColorspace colorspace, gboolean has_alp
 static GdkPixbuf *pl_channel_to_pixbuf(weed_plant_t *channel) {
   int error;
   GdkPixbuf *pixbuf;
-  int palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
-  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
+  int palette = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
   int rowstride, orowstride;
-  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error), *pixels, *end;
+  guchar *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL), *pixels, *end;
   gboolean cheat = FALSE;
   gint n_channels;
 
@@ -348,8 +339,8 @@ static gboolean pl_pixbuf_to_channel(weed_plant_t *channel, GdkPixbuf *pixbuf) {
   int height = gdk_pixbuf_get_height(pixbuf);
   int n_channels = gdk_pixbuf_get_n_channels(pixbuf);
   guchar *in_pixel_data = (guchar *)gdk_pixbuf_get_pixels(pixbuf);
-  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
-  guchar *dst = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error);
+  int out_rowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
+  guchar *dst = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   register int i;
 
@@ -397,17 +388,17 @@ static int make_sigs(_sdata *sdata, int num_coefs) {
   }
 
   sdata->coefs = num_coefs;
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 ////////////////////////////////////////////////////////////
 
-static int haar_init(weed_plant_t *inst) {
-  int error, retval;
+static weed_error_t haar_init(weed_plant_t *inst) {
+  int retval;
   _sdata *sdata;
-  weed_plant_t **in_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
-  int num_coefs = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
+  weed_plant_t **in_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
+  int num_coefs = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
 
   weed_free(in_params);
 
@@ -415,48 +406,45 @@ static int haar_init(weed_plant_t *inst) {
 
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
 
-  if ((retval = make_sigs(sdata, num_coefs)) != WEED_NO_ERROR) return retval;
+  if ((retval = make_sigs(sdata, num_coefs)) != WEED_SUCCESS) return retval;
 
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
-static int haar_deinit(weed_plant_t *inst) {
-  int error;
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
-
+static weed_error_t haar_deinit(weed_plant_t *inst) {
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sdata != NULL) {
     weed_free(sdata->sig1);
     weed_free(sdata->sig2);
     weed_free(sdata->sig3);
     weed_free(sdata);
   }
-
-  return WEED_NO_ERROR;
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
+  return WEED_SUCCESS;
 }
 
 
-static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  int error;
-  weed_plant_t *channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, &error);
-  unsigned char *orig_src = (unsigned char *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, &error), *src;
-  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, &error);
-  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, &error);
-  int pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, &error);
-  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, &error);
-  weed_plant_t **out_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, &error);
-  weed_plant_t **in_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+static weed_error_t haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
+  weed_plant_t *channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
+  unsigned char *orig_src = (unsigned char *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL), *src;
+  int width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
+  int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+  int pal = weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);
+  int irowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
+  weed_plant_t **out_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_OUT_PARAMETERS, NULL);
+  weed_plant_t **in_params = (weed_plant_t **)weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, NULL);
 
-  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", &error);
+  _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
 
   int psize = 4;
   int clamped = 0;
 
   int hmax;
 
-  int num_coefs = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, &error);
+  int num_coefs = weed_get_int_value(in_params[0], WEED_LEAF_VALUE, NULL);
 
   register int i, j, k;
 
@@ -472,7 +460,7 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_free(in_params);
 
   if (weed_plant_has_leaf(channel, WEED_LEAF_YUV_CLAMPING) &&
-      (weed_get_int_value(channel, WEED_LEAF_YUV_CLAMPING, &error) == WEED_YUV_CLAMPING_CLAMPED))
+      (weed_get_int_value(channel, WEED_LEAF_YUV_CLAMPING, NULL) == WEED_YUV_CLAMPING_CLAMPED))
     clamped = 1;
 
   if (pal == WEED_PALETTE_YUV888) psize = 3;
@@ -550,36 +538,35 @@ static int haar_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   weed_free(out_params);
 
-  return WEED_NO_ERROR;
+  return WEED_SUCCESS;
 }
 
 
 //
 #define VLIMIT 4096
 
-weed_plant_t *weed_setup(weed_bootstrap_f *weed_boot) {
-  weed_plant_t *plugin_info = weed_plugin_info_init(weed_boot, 200, 200);
-  if (plugin_info != NULL) {
-    int palette_list[] = {WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888,
-                          WEED_PALETTE_END
-                         };
-    weed_plant_t *out_params[] = {weed_out_param_integer_init("Y maxima", 0, -VLIMIT, VLIMIT), weed_out_param_integer_init("U maxima", 0, -VLIMIT, VLIMIT), weed_out_param_integer_init("V maxima", 0, -VLIMIT, VLIMIT), weed_out_param_float_init("Y average", 0., 0., 1.), weed_out_param_float_init("U average", 0., 0., 1.), weed_out_param_float_init("V average", 0., 0., 1.), NULL};
-    weed_plant_t *in_params[] = {weed_integer_init("nco", "Number of _Coefficients", 40, 1, NUM_PIXELS), NULL};
-    weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0, palette_list), NULL};
-    weed_plant_t *filter_class = weed_filter_class_init("haar_analyser", "salsaman and others", 1, 0, &haar_init,
-                                 &haar_process, &haar_deinit, in_chantmpls, NULL, in_params, out_params);
+WEED_SETUP_START(200, 200) {
+  int palette_list[] = {WEED_PALETTE_YUVA8888, WEED_PALETTE_YUV888, WEED_PALETTE_END};
+  weed_plant_t *out_params[] = {weed_out_param_integer_init("Y maxima", 0, -VLIMIT, VLIMIT),
+                                weed_out_param_integer_init("U maxima", 0, -VLIMIT, VLIMIT),
+                                weed_out_param_integer_init("V maxima", 0, -VLIMIT, VLIMIT),
+                                weed_out_param_float_init("Y average", 0., 0., 1.),
+                                weed_out_param_float_init("U average", 0., 0., 1.),
+                                weed_out_param_float_init("V average", 0., 0., 1.), NULL
+                               };
 
-    weed_set_int_value(out_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(out_params[1], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_ELEMENTS);
-    weed_set_int_value(out_params[2], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_ELEMENTS);
+  weed_plant_t *in_params[] = {weed_integer_init("nco", "Number of _Coefficients", 40, 1, NUM_PIXELS), NULL};
 
-    weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
 
-    weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
+  weed_plant_t *filter_class = weed_filter_class_init("haar_analyser", "salsaman and others", 1, 0, palette_list,
+                               haar_init, haar_process, haar_deinit, in_chantmpls, NULL, in_params, out_params);
 
-    init_RGB_to_YCbCr_tables();
-    init_Y_to_Y_tables();
-  }
-  return plugin_info;
+  weed_set_int_value(out_params[0], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE);
+  weed_set_int_value(out_params[1], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE);
+  weed_set_int_value(out_params[2], WEED_LEAF_FLAGS, WEED_PARAMETER_VARIABLE_SIZE);
+
+  weed_plugin_info_add_filter_class(plugin_info, filter_class);
+  weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }
-#endif
+WEED_SETUP_END;

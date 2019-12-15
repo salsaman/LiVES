@@ -3332,12 +3332,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   g_log_set_default_handler(lives_log_handler, NULL);
 #endif
 
-  widget_helper_init();
-
-  /* TRANSLATORS: localised name may be used here */
-  lives_set_application_name(_("LiVES"));
-  widget_opts.title_prefix = lives_strdup_printf("%s-%s: - ", lives_get_application_name(), LiVES_VERSION);
-
 #ifndef IS_LIBLIVES
   // start up the Weed system
   werr = weed_init(WEED_API_VERSION);
@@ -3627,7 +3621,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
         }
 
         if (!strcmp(charopt, "debug")) {
-          // debuyg crashes
+          // debug crashes
           mainw->debug = TRUE;
           continue;
         }
@@ -4841,7 +4835,7 @@ void load_end_image(int frame) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
       /* mainw->ce_frame_height = vsize / scale + V_RESIZE_ADJUST; */
-      hsize = 2;
+      hsize /= 2;
       vsize /= 2;
     }
     lives_widget_set_size_request(mainw->end_image, hsize, vsize);
@@ -6294,7 +6288,9 @@ void load_frame_image(int frame) {
         }
       }
     }
-    get_play_times();
+    if (!mainw->fs && !mainw->faded) {
+      get_play_times();
+    }
     return;
   }
 
@@ -8125,6 +8121,10 @@ void load_frame_image(int frame) {
         && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
                                     || prefs->audio_src == AUDIO_SRC_EXT))) {
       switch_audio_clip(new_file, TRUE);
+    }
+
+    if (!mainw->fs && !mainw->faded) {
+      redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);
     }
 
     mainw->whentostop = NEVER_STOP;

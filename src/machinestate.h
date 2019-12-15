@@ -1,5 +1,4 @@
-// machinestate.h
-// LiVES
+// machinestate.hf
 // (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details

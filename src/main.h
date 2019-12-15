@@ -883,7 +883,6 @@ capability *capable;
 #include "colourspace.h"
 #include "paramspecial.h"
 #include "multitrack.h"
-#include "machinestate.h"
 #include "mainwindow.h"
 #include "events.h"
 #include "keyboard.h"

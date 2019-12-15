@@ -260,6 +260,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   double scalex;
   double ptrtime;
 
+  int start;
   int offset_left = 0;
   int offset_right = 0;
   int offset_end;
@@ -422,11 +423,14 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
     }
 
+    start = 0;
     if (cfile->audio_waveform[0] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
-      cfile->audio_waveform[0] = (float *)lives_malloc((int)offset_end * sizeof(float));
+      cfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
     } else if (cfile->aw_sizes[0] != offset_end) {
+      if (LIVES_IS_PLAYING)
+        start = cfile->aw_sizes[0];
       cfile->audio_waveform[0] = (float *)lives_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
     }
 
@@ -438,7 +442,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       afd = lives_open_buffered_rdonly(filename);
       lives_free(filename);
 
-      for (i = 0; i < offset_end; i++) {
+      for (i = start; i < offset_end; i++) {
         atime = (double)i / scalex;
         cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
       }
@@ -539,11 +543,14 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
     offset_end = ROUND_I(cfile->raudio_time * scalex);
 
+    start = 0;
     if (cfile->audio_waveform[1] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
-      cfile->audio_waveform[1] = (float *)lives_malloc(offset_end * sizeof(float));
+      cfile->audio_waveform[1] = (float *)lives_calloc(offset_end, sizeof(float));
     } else if (cfile->aw_sizes[1] != offset_end) {
+      if (LIVES_IS_PLAYING)
+        start = cfile->aw_sizes[1];
       cfile->audio_waveform[1] = (float *)lives_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
     cfile->aw_sizes[1] = 0;
@@ -554,7 +561,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       afd = lives_open_buffered_rdonly(filename);
       lives_free(filename);
 
-      for (i = 0; i < offset_end; i++) {
+      for (i = start; i < offset_end; i++) {
         atime = (double)i / scalex;
         cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
       }

@@ -39,6 +39,10 @@ fxpluginslib_LTLIBRARIES = gdk_fast_resize.la \
 	compositor.la \
 	videowall.la \
 	scribbler.la
+##	puretext.la \
+	mask_overlay.la \
+	haar_analyser.la \
+	$(vjack_libs) 
 
 EXTRA_DIST=data icons
 

@@ -50,6 +50,8 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 
 #include "projectM-ConfigFile.h"
 #include "projectM-getConfigFilename.h"
+#include <X11/extensions/Xrender.h>
+#include <X11/Xatom.h>
 
 #define TARGET_FPS 35.
 #define MESHSIZE 128
@@ -611,6 +613,7 @@ WEED_SETUP_START(200, 200) {
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   statsd = NULL;
+  XInitThreads();
 }
 WEED_SETUP_END;
 

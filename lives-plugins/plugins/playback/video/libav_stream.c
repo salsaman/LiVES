@@ -538,16 +538,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     maxvbitrate = atoi(argv[1]);
 
     switch (intent) {
-    case 0:
+    case LIVES_INTENTION_STREAM:
       stream_encode = TRUE;
       snprintf(uri, PATH_MAX, "udp://%s.%s.%s.%s:%s", argv[5], argv[6], argv[7], argv[8], argv[9]);
       break;
-    case 1:
-    case 2:
+    default:
       stream_encode = FALSE;
       snprintf(uri, PATH_MAX, "%s", argv[5]);
-      break;
-    default:
       break;
     }
   }

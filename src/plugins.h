@@ -70,9 +70,9 @@ typedef struct {
   boolean(*set_fps)(double fps);
 
   /// for future use
-#define LIVES_INTENTION_PLAY               1
-#define LIVES_INTENTION_STREAM          2
-#define LIVES_INTENTION_TRANSCODE    3
+#define LIVES_INTENTION_PLAY               	1
+#define LIVES_INTENTION_STREAM          	2
+#define LIVES_INTENTION_TRANSCODE    	3
 
   const char *(*get_init_rfx)(int intention);
 

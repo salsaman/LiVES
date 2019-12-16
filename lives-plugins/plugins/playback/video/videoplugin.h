@@ -93,9 +93,9 @@ boolean set_palette(int palette);
 uint64_t get_capabilities(int palette);
 
 /// for future use
-#define LIVES_INTENTION_PLAY               1
-#define LIVES_INTENTION_STREAM          2
-#define LIVES_INTENTION_TRANSCODE    3
+#define LIVES_INTENTION_PLAY               	1
+#define LIVES_INTENTION_STREAM          	2
+#define LIVES_INTENTION_TRANSCODE    	3
 
 //#define VPP_CAN                         (1<<0)   /// can resize the image to fit the play window
 #define VPP_CAN_RESIZE                         (1<<0)   /// can resize the image to fit the play window

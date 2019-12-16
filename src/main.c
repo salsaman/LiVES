@@ -4623,8 +4623,6 @@ void load_start_image(int frame) {
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
-    /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
-    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */
@@ -4829,8 +4827,6 @@ void load_end_image(int frame) {
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
-    /* hsize = (scr_width - (V_RESIZE_ADJUST * 2 + bx)) / 3; // yes this is correct (V_RESIZE_ADJUST) */
-    /* vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by)) / 1.5; */
     if (LIVES_IS_PLAYING && mainw->double_size) {
       // NB:
       /* mainw->ce_frame_width = hsize / scale + H_RESIZE_ADJUST; */

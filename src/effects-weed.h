@@ -144,8 +144,6 @@ boolean has_video_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean has_audio_chans_out(weed_plant_t *filter, boolean count_opt);
 boolean is_pure_audio(weed_plant_t *filter_or_instance, boolean count_opt); ///< TRUE if audio in or out and no vid in/out
 
-boolean weed_chantmpl_is_optional(weed_plant_t *chantmpl);
-
 boolean has_video_filters(boolean analysers_only);
 
 #ifdef HAS_LIVES_EFFECTS_H

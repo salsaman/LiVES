@@ -8,6 +8,9 @@
 #ifndef _MACHINESTATE_H_
 #define _MACHINESTATE_H_
 
+#include <sys/time.h>
+#include <time.h>
+
 #define EXTRA_BYTES 64
 
 typedef void *(*malloc_f)(size_t);

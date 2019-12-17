@@ -795,6 +795,7 @@ enum AVColorTransferCharacteristic weed_gamma_to_avi_trc(int gamma_type) {
     case WEED_GAMMA_SRGB:
       return AVCOL_TRC_GAMMA22;
     default:
+      break;
     }
     return AVCOL_TRC_UNSPECIFIED;
   }

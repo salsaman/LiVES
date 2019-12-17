@@ -78,6 +78,7 @@
 #endif
 
 #include <sys/types.h>
+#include <inttypes.h>
 #include <string.h>
 
 typedef int64_t ticks_t;

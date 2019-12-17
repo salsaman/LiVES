@@ -3916,8 +3916,8 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
 
   // for now we will only load realtime effects
   if (flags & WEED_FILTER_NON_REALTIME) return 5;
-  cvary = (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY);
-  pvary = (flags & WEED_FILTER_PALETTES_MAY_VARY);
+  if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) cvary = TRUE;
+  if (flags & WEED_FILTER_PALETTES_MAY_VARY) pvary = TRUE;
 
   // count number of mandatory and optional in_channels
   array = weed_filter_get_in_chantmpls(filter, &num_elements);

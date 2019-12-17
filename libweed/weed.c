@@ -139,7 +139,7 @@ static uint32_t weed_hash(const char *) GNU_PURE;
 				(char *)(weed_malloc_and_copy(weed_strlen(oldstring) + 1, oldstring)))
 
 
-weed_error_t weed_init(int32_t abi) {
+EXPORTED weed_error_t weed_init(int32_t abi) {
   // this is called by the host in order for it to set its version of the functions
 
   // *the plugin should never call this, instead the plugin functions are passed to the plugin

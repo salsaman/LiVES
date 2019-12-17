@@ -319,9 +319,9 @@ boolean transcode(int start, int end) {
     // get frame, send it
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
-
-    gamma_convert_layer(cfile->gamma_type, frame_layer);
-
+    gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
+    gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
     error = send_layer(frame_layer, vpp, currticks);
 
     // free pixel_data, but keep same layer around

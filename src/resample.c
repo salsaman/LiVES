@@ -647,8 +647,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             return NULL;
           }
           if (weed_plant_has_leaf(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
-            weed_set_int64_value(shortcut, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET,
-                                 &error));
+            weed_set_int64_value(shortcut, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, weed_get_int64_value(event,
+                                 WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &error));
           }
           if (add_audio) {
             weed_set_int_array(shortcut, WEED_LEAF_AUDIO_CLIPS, num_aclips, aclips);

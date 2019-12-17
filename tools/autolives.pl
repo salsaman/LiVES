@@ -123,8 +123,6 @@ else {
     die "error creating UDP status socket for $my_ip_addr  $@\n";
 }
 
-if ($DEBUG) {print STDERR "Status port ready.\n";}
-
 if ($noty) {
     if ($DEBUG) {print STDERR "Opening notify port UDP $local_port on $my_ip_addr...\n";}
     if ($ip2 = IO::Socket::INET->new(LocalPort => $notify_port, Proto=>'udp',
@@ -280,7 +278,7 @@ while (1) {
     }
 
     $action=int(rand(20))+1;
-    print STDERR "Action is $action $action\n";
+    if ($DEBUG) {print STDERR "Action is $action $action\n"};
     if ($action<6) {
 	# 1,2,3,4,5
 	# random clip switch
@@ -390,13 +388,10 @@ sub finish {
 
 
 sub get_newmsg {
-    print STDERR "getmsg\n";
     my $newmsg;
     while (1) {
-    print STDERR "getmsg2\n";
 	$lport = -1;
 	foreach $server($s->can_read($timeout)){
-    print STDERR "getmsg3\n";
 	    $server->recv($newmsg,1024);
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
@@ -411,6 +406,7 @@ sub get_newmsg {
 	}
 	#if ($DEBUG) {print STDERR "OK $lport $local_port : $newmsg\n";}
 	last if ($lport == $local_port || $lport == -1);
+	}
     }
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
@@ -482,4 +478,4 @@ sub HUP_handler {
 
     exit(0);
 }
-}
+

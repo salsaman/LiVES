@@ -1346,17 +1346,6 @@ void save_file(int clip, int start, int end, const char *filename) {
   if (prefs->encoder.capabilities & HAS_RFX) {
     char buff[65536];
 
-    /* // pull at least one frame so we know the file ext */
-    /* if (sfile->clip_type == CLIP_TYPE_FILE) { */
-    /*   resb = virtual_to_images(clip, start, start, TRUE, NULL); */
-
-    /*   if (!resb) { */
-    /*     lives_freep((void **)&mainw->subt_save_file); */
-    /*     d_print_file_error_failed(); */
-    /*     return; */
-    /*   } */
-    /* } */
-
     com = lives_strdup_printf("\"%s\" get_rfx %s %d %d %d", enc_exec_name, prefs->encoder.of_name,
                               prefs->encoder.audio_codec, cfile->hsize, cfile->vsize);
     if (debug_mode) {

@@ -248,7 +248,7 @@ if ($command eq "get_rfx") {
 	    print "<define>\n";
 	    print "|1.7\n";
 	    print "</define>\n";
-	    
+
 	    # optional section
 	    print "<params>\n";
 

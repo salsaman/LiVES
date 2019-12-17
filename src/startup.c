@@ -18,7 +18,9 @@ static LiVESResponseType prompt_existing_dir(const char *dirname, uint64_t frees
   if (wrtable) {
     if (dirs_equal(dirname, capable->home_dir)) {
       if (!do_yesno_dialog(
-            _("You have chosen to use your home directory as the LiVES working directory.\nThis is NOT recommended as it will possibly result in the loss of unrelated files.\nClick Yes if you REALLY want to continue, or No to create or select another directory.\n")))
+            _("You have chosen to use your home directory as the LiVES working directory.\n"
+              "This is NOT recommended as it will possibly result in the loss of unrelated files.\n"
+              "Click Yes if you REALLY want to continue, or No to create or select another directory.\n")))
         return LIVES_RESPONSE_CANCEL;
     } else {
       msg = lives_format_storage_space_string(freespace);

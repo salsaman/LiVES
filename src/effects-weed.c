@@ -2225,7 +2225,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     cpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
 
     if (cpalette != opalette) {
-      if (!convert_layer_palette_full(layer, opalette, osampling, oclamping, osubspace)) {
+      if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace)) {
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         goto done_video;
       }

@@ -1648,11 +1648,18 @@ The plugin should not alter any values in the plant after weed_setup() but may a
 '''Mandatory leaves''':[[BR]]
 
  * "name"         : WEED_SEED_STRING : the filter name; MUST be unique in the plugin, 
- * "author"       : WEED_SEED_STRING : the filter author(s) - DO NOT change this unless a new "version" of the plugin is made - instead add to the 
-                      "extra_authors" leaf (see below)
- * "version"      : WEED_SEED_INT : filter version. Adding more parameters does not require a version update. However, removing parameters, changing 
-   		    their order or type, adding or removing channel templates does require an update.
-		    Prior versions of the filter MUST be left in plugin, as hosts may be using them.
+ * "author"       : WEED_SEED_STRING : the filter author(s) - DO NOT change this unless a new "version" of the plugin is made -
+   		    instead add to the "extra_authors" leaf (see below)
+ * "version"      : WEED_SEED_INT : filter version. Adding (appending) more parameters (in or out) or appending extra optional channels
+   		    		    does not require a version update.
+   		    TODO: clarify:
+
+		    However, removing parameters, changing 
+   		    their order or type, adding mandatory channels or removing channel templates does require an update.
+		    Prior versions of the filter must be exported by the plugin, but these may be STUB filter_classes. (TODO).
+		    
+
+
 
 Mandatory for filters with video channels
 
@@ -3425,10 +3432,10 @@ WEED_PALETTE_YVU420P           WEED_PALETTE_I420         WEED_PALETTE_IYUV   515
 
 WEED_PALETTE_YUV444P   516
 [unofficial. 8 bit Y plane followed by 8 bit U and V planes, no
-   subsampling. Planar.]
+   subsampling. Planar version of YUV888]
 
 WEED_PALETTE_YUVA4444P   517
-[Unofficial, like YUV444P but with an additional Alpha plane. Planar.]
+[Unofficial, like YUV444P but with an additional Alpha plane. Planar version of YUVA8888]
 
 WEED_PALETTE_UYVY8888         WEED_PALETTE_UYVY     519
 [YUV 4:2:2 (Y sample at every pixel, U and V sampled at alternate
@@ -3449,7 +3456,7 @@ WEED_PALETTE_YUV888                   WEED_PALETTE_IYU2      521
 Packed YUV palette, no subsampling. Also known as IYU2
 
 WEED_PALETTE_YUVA8888                                        522
-Packed YUV palette with alpha channel. No subsampling.
+Packed YUV palette YUV888 with an alpha channel. No subsampling.
 
 
 '''Alpha Palettes'''
@@ -3463,8 +3470,8 @@ WEED_PALETTE_A8       1026
 WEED_PALETTE_AFLOAT   1027
 }}}
 
-The range for AFLOAT is 0.0 (fully transparent) to 1.0 (fully opaque) for transparency. 
-For other data a different range may be used.
+The range for AFLOAT when used to hold transparency values is 0.0 (fully transparent) to 1.0 (fully opaque).
+Such channels may also be used to hold other types of float data arrays, in which case the range may differ.
 
 
 Palette numbers >=2048 are reserved for custom palettes.
@@ -3484,7 +3491,7 @@ Gamma types >=1024 are reserved for custom color gamma types.
 
 
 ==== YUV sampling types ====
-     These definitions are somewhat unclear, and may be updated in the future.
+     These definitions are somewhat unclear, and may be augmented in the future.
 
 
  * WEED_YUV_SAMPLING_DEFAULT  0  : Default subsampling.
@@ -3512,12 +3519,12 @@ Sampling types >= 1024 are reserved for custom samplings.
 
 
 ==== YUV clamping ====
+     Indicates the value ranges for Y, U and V.
 
- * WEED_YUV_CLAMPING_CLAMPED  0  :: the default if not present (clamped to 16-235,
-   16-240, 16-240)                                                 
+ * WEED_YUV_CLAMPING_CLAMPED aka WEED_YUV_CLAMPING_MPEG   :: the default if not present (clamped to Y: 16 - 235,
+   U, V: 16 - 240)                                                 
 
- * WEED_YUV_CLAMPING_UNCLAMPED  1  :: Y, U and V are unclamped (0 - 255 range
-   for each) [used in jpeg for example]
+ * WEED_YUV_CLAMPING_UNCLAMPED  aka WEED_YUV_CLAMPING_JPEG 1  :: Y, U and V are unclamped (full range) 0 - 255
 
 clamping types >= 512 are reserved for custom clampings.
 
@@ -3525,14 +3532,17 @@ clamping types >= 512 are reserved for custom clampings.
 
 ==== YUV subspace ====
 
- * WEED_YUV_SUBSPACE_YUV  0   :: Any YUV colourspace may be used, with Y representing the luma 
-   channel, and U and V as colour offsets. Optional, since this is the default if not specified.
+ * WEED_YUV_SUBSPACE_YUV    :: Any YUV colourspace may be used, with Y representing the luma 
+   channel, and U and V as colour offsets. Optional, since this is the default if not specified. May be used in cases where 
+   be used in cases where no conversion to / from RGB or other YUV subspaces are required. Filters with out channels but no
+   in channels (i.e. generators) MUST NOT use this value for channels, since the host needs to know how to convert
+   the generated frames.
 
- * WEED_YUV_SUBSPACE_YCBCR   1  :: Standard YUV (Y'CbCr ITU-R BT.601) using conversion
+ * WEED_YUV_SUBSPACE_YCBCR     :: Standard YUV (Y'CbCr ITU-R BT.601) using conversion
    factors (Kr=0.299, Kb=0.114, UV offset 128). The plugin should specify this if for example 
    it sends to or receives from external sources.
 
- * WEED_YUV_SUBSPACE_BT709   2  :: ITU-R BT.709 high definition TV which uses different
+ * WEED_YUV_SUBSPACE_BT709 aka WEED_YUV_SUBSPACE_ITU709     :: ITU-R BT.709 high definition TV which uses different
    conversion factors than Y'CbCr digital/ananlog (Kr=0.2125, Kb=0.0721, UV offset 128)
 
 subspace types >= 512 are reserved for custom subspaces.

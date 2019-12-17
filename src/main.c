@@ -4697,7 +4697,7 @@ void load_start_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_convert_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_layer_free(layer);
@@ -4757,7 +4757,7 @@ void load_start_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_convert_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4900,7 +4900,7 @@ void load_end_image(int frame) {
       resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_convert_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -4959,7 +4959,7 @@ void load_end_image(int frame) {
       resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_convert_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
     }
 
@@ -5112,7 +5112,7 @@ void load_preview_image(boolean update_always) {
       resize_layer(layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
                    mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
-      gamma_convert_layer(cfile->gamma_type, layer);
+      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       pixbuf = layer_to_pixbuf(layer, TRUE);
     }
     weed_plant_free(layer);
@@ -6031,7 +6031,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
 #endif
 
   if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
-    gamma_convert_layer(cfile->gamma_type, layer);
+    gamma_convert_layer(WEED_GAMMA_SRGB, layer);
     pixbuf = layer_to_pixbuf(layer, TRUE);
   }
   weed_plant_free(layer);
@@ -6952,12 +6952,12 @@ void load_frame_image(int frame) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
           else {
-            gamma_convert_layer(cfile->gamma_type, frame_layer);
+            gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
           }
         }
       }
 
-      if (return_layer != NULL) weed_leaf_copy(return_layer, WEED_LEAF_GAMMA_TYPE, frame_layer, WEED_LEAF_GAMMA_TYPE);
+      if (return_layer != NULL) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
       if (!(*mainw->vpp->render_frame)(weed_layer_get_width(frame_layer),
                                        weed_layer_get_height(frame_layer),
@@ -7125,7 +7125,7 @@ void load_frame_image(int frame) {
           if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
             gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
           else
-            gamma_convert_layer(cfile->gamma_type, frame_layer);
+            gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
         }
       }
 
@@ -7217,8 +7217,9 @@ void load_frame_image(int frame) {
       resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
                    mainw->pheight, interp, cpal, 0);
     }
+
     convert_layer_palette(mainw->frame_layer, cpal, 0);
-    gamma_convert_layer(cfile->gamma_type, mainw->frame_layer);
+    gamma_convert_layer(WEED_GAMMA_SRGB, mainw->frame_layer);
 
     if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
       if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {

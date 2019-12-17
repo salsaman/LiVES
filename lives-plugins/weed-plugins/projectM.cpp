@@ -389,6 +389,7 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sd) sd->rendering = false;
   copies--;
+  weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
 }
 

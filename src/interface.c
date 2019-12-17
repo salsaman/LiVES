@@ -2324,7 +2324,7 @@ _entryw *create_rename_dialog(int type) {
   } else {
     if (type == 6) {
       if (strlen(prefs->workdir) > 0) workdir = lives_strdup(prefs->workdir);
-      else workdir = lives_strdup_printf("%s/%s/", capable->home_dir, LIVES_DEF_WORK_NAME);
+      else workdir = lives_build_path(capable->home_dir, LIVES_DEF_WORK_NAME, NULL);
       renamew->entry = lives_standard_direntry_new("", (tmp = F2U8(workdir)),
                        LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox),
                        (tmp2 = lives_strdup(_("LiVES working directory."))));

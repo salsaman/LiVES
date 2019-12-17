@@ -81,8 +81,8 @@ typedef struct {
   void *destp[4];
   boolean in_alpha;
   boolean out_alpha;
-  boolean in_clamped;
-  boolean out_clamped;
+  boolean in_clamping;
+  boolean out_clamping;
   int in_subspace;
   int out_subspace;
   int in_sampling;
@@ -178,7 +178,7 @@ boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t ali
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
-boolean convert_layer_palette_full(weed_layer_t *, int outpl, int osamtype, int oclamping, int osubspace);
+boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace);
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
                      int tclamp);

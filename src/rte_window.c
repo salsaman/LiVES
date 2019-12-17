@@ -2783,7 +2783,7 @@ void load_default_keymap(void) {
         // give up
         d_print((tmp = lives_strdup_printf
                        (_("Unable to create default keymap file: %s\nPlease make sure the directory\n%s\nis writable.\n"),
-                        keymap_file)));
+                        keymap_file, dir)));
 
         retval = do_abort_cancel_retry_dialog(tmp, NULL);
 

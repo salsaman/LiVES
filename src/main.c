@@ -2504,7 +2504,6 @@ capability *get_capabilities(void) {
 
   numtok = get_token_count(buffer, '|');
   if (numtok < 2) {
-    lives_strfreev(array);
     capable->smog_version_correct = FALSE;
     return capable;
   }

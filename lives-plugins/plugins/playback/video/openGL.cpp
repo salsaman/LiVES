@@ -89,7 +89,6 @@ static boolean is_ext;
 
 static volatile boolean playing;
 static volatile boolean rthread_ready;
-static volatile boolean has_texture;
 static volatile boolean has_new_texture;
 static volatile boolean return_ready;
 
@@ -601,7 +600,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   playing = TRUE;
 
   rthread_ready = FALSE;
-  has_texture = FALSE;
   has_new_texture = FALSE;
   texturebuf = NULL;
 
@@ -1880,7 +1878,7 @@ static void *render_thread_func(void *data) {
     usleep(timetowait);
     timetowait = usec;
     pthread_mutex_lock(&rthread_mutex);
-    if (has_texture && playing) {
+    if (has_new_texture && playing) {
       timetowait -= Upload();
       if (timetowait < 0) timetowait = 0;
     } else pthread_mutex_unlock(&rthread_mutex);
@@ -1904,9 +1902,6 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
   imgWidth = hsize;
   imgHeight = vsize;
-
-  has_texture = TRUE;
-  has_new_texture = TRUE;
 
   if (!npot) {
     hsize = next_pot(hsize);
@@ -1970,6 +1965,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       dst += twidth;
       src -= twidth;
     }
+    has_new_texture = TRUE;
     pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
   } else {
     if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL) {
@@ -1992,6 +1988,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     }
 
     retdata = NULL;
+    has_new_texture = TRUE;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
 

@@ -71,14 +71,15 @@ static weed_error_t mirrorx_process(weed_plant_t *inst, weed_timecode_t timestam
 static weed_error_t mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
   weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
-  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
   int palette = weed_channel_get_palette(in_channel);
   int width = weed_channel_get_width(in_channel);
   int height = weed_channel_get_height(in_channel);
   int irowstride = weed_channel_get_stride(in_channel);
   int orowstride = weed_channel_get_stride(out_channel);
-
-  int psize = pixel_size(pal);
+  uint8_t *src = (uint8_t *)weed_channel_get_pixel_data(in_channel);
+  uint8_t *dst = (uint8_t *)weed_channel_get_pixel_data(out_channel);
+  int psize = pixel_size(palette);
+  int inplace;
   unsigned char *end = dst + height * orowstride / 2, *oend = dst + (height - 1) * orowstride;
 
   width *= psize;

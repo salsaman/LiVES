@@ -1841,7 +1841,6 @@ if (defined($ARGV[0])) {
 			}
 		    }
 
-		    $DEBUG_OPEN = 0;
 		    if ($DEBUG_OPEN) {
 			print STDERR "vid open command for $handle is: $syscomv\n";
 			print STDERR "aud open command for $handle is: $syscoma\n";

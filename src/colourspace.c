@@ -11214,6 +11214,7 @@ weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer) {
     int palette = weed_layer_get_palette(slayer);
     int *rowstrides = weed_layer_get_rowstrides(slayer, NULL);
     if (height <= 0 || width < 0 || rowstrides == NULL || !weed_palette_is_valid(palette)) {
+      if (pd_array != NULL) lives_free(pd_array);
       return NULL;
     } else {
       layer = weed_layer_create(width, height, rowstrides, palette);

@@ -897,6 +897,9 @@ void create_LiVES(void) {
   mainw->select_to_end = lives_standard_image_menu_item_new_with_label(_("Select to _Last Frame"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_to_end);
 
+  mainw->select_to_aend = lives_standard_image_menu_item_new_with_label(_("Select to _Audio End"));
+  lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_to_aend);
+
   mainw->select_new = lives_standard_image_menu_item_new_with_label(_("Select Last Insertion/_Merge"));
   lives_container_add(LIVES_CONTAINER(select_submenu_menu), mainw->select_new);
 
@@ -1028,7 +1031,7 @@ void create_LiVES(void) {
     lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->fade);
   }
 
-  mainw->loop_video = lives_standard_check_menu_item_new_with_label(_("(Auto)_loop Video (to fit audio track)"), mainw->loop);
+  mainw->loop_video = lives_standard_check_menu_item_new_with_label(_("Stop on _Audio End"), mainw->loop);
   lives_container_add(LIVES_CONTAINER(mainw->play_menu), mainw->loop_video);
   lives_widget_set_sensitive(mainw->loop_video, FALSE);
   lives_widget_add_accelerator(mainw->loop_video, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
@@ -2628,6 +2631,9 @@ void create_LiVES(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_end), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_to_end_activate),
+                       NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_to_aend), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_select_to_aend_activate),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->select_from_start), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_select_from_start_activate),

@@ -4103,6 +4103,17 @@ void on_select_to_end_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 }
 
 
+void on_select_to_aend_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  int end = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
+  if (end > cfile->frames) end = cfile->frames;
+  if (end < cfile->start) end = cfile->start;
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), end);
+  cfile->end = end;
+  get_play_times();
+  load_end_image(cfile->end);
+}
+
+
 void on_select_from_start_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
   cfile->start = cfile->frames > 0 ? 1 : 0;
@@ -4114,13 +4125,7 @@ void on_select_from_start_activate(LiVESMenuItem *menuitem, livespointer user_da
 void on_lock_selwidth_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   mainw->selwidth_locked = !mainw->selwidth_locked;
   lives_widget_set_sensitive(mainw->select_submenu, !mainw->selwidth_locked);
-
-  if (mainw->selwidth_locked) {
-    lives_widget_set_sensitive(mainw->sa_button, FALSE);
-  } else if (CURRENT_CLIP_HAS_VIDEO && !LIVES_IS_PLAYING && !mainw->is_processing &&
-             (cfile->start > 1 || cfile->end < cfile->frames)) {
-    lives_widget_set_sensitive(mainw->sa_button, TRUE);
-  }
+  update_sel_menu();
 }
 
 
@@ -8872,6 +8877,63 @@ void on_prv_link_toggled(LiVESToggleButton * togglebutton, livespointer user_dat
 }
 
 
+void update_sel_menu(void) {
+  if (mainw->multitrack != NULL || mainw->selwidth_locked) return;
+
+  if (!CURRENT_CLIP_HAS_VIDEO || LIVES_IS_PLAYING || CURRENT_CLIP_IS_CLIPBOARD || mainw->is_processing) {
+    lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    lives_widget_set_sensitive(mainw->select_all, FALSE);
+    lives_widget_set_sensitive(mainw->sa_button, FALSE);
+    lives_widget_set_sensitive(mainw->select_start_only, FALSE);
+    lives_widget_set_sensitive(mainw->select_end_only, FALSE);
+    lives_widget_set_sensitive(mainw->select_from_start, FALSE);
+    lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+    lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+    return;
+  }
+
+  lives_widget_set_sensitive(mainw->select_new, cfile->insert_start > 0);
+  lives_widget_set_sensitive(mainw->select_last, cfile->undo_start > 0);
+
+  if (cfile->end > cfile->start) {
+    lives_widget_set_sensitive(mainw->select_start_only, TRUE);
+    lives_widget_set_sensitive(mainw->select_end_only, TRUE);
+  } else {
+    lives_widget_set_sensitive(mainw->select_start_only, FALSE);
+    lives_widget_set_sensitive(mainw->select_end_only, FALSE);
+  }
+  if (cfile->start == 1 && cfile->end == cfile->frames) {
+    lives_widget_set_sensitive(mainw->select_invert, FALSE);
+    lives_widget_set_sensitive(mainw->select_all, FALSE);
+    lives_widget_set_sensitive(mainw->sa_button, FALSE);
+  } else {
+    if (cfile->start == 1 || cfile->end == cfile->frames)
+      lives_widget_set_sensitive(mainw->select_invert, TRUE);
+    else
+      lives_widget_set_sensitive(mainw->select_invert, FALSE);
+
+    lives_widget_set_sensitive(mainw->select_all, TRUE);
+    lives_widget_set_sensitive(mainw->sa_button, TRUE);
+  }
+
+  if (cfile->start == 1) lives_widget_set_sensitive(mainw->select_from_start, FALSE);
+  else lives_widget_set_sensitive(mainw->select_from_start, TRUE);
+
+  if (cfile->end < cfile->frames) {
+    lives_widget_set_sensitive(mainw->select_to_end, TRUE);
+  } else {
+    lives_widget_set_sensitive(mainw->select_to_end, FALSE);
+    lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+  }
+  if (cfile->achans > 0) {
+    int audframe = calc_frame_from_time4(mainw->current_file, cfile->laudio_time);
+    if (audframe <= cfile->frames && audframe >= cfile->start && audframe != cfile->end)
+      lives_widget_set_sensitive(mainw->select_to_aend, TRUE);
+    else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+  } else lives_widget_set_sensitive(mainw->select_to_aend, FALSE);
+}
+
+
 void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   int start, ostart;
   static volatile boolean updated = FALSE;
@@ -8903,19 +8965,8 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
       load_end_image(cfile->end);
       mainw->selwidth_locked = TRUE;
     }
-  } else {
-    if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
-      lives_widget_set_sensitive(mainw->select_invert, TRUE);
-    } else {
-      lives_widget_set_sensitive(mainw->select_invert, FALSE);
-    }
-    if (cfile->start > 1 || cfile->end < cfile->frames) {
-      lives_widget_set_sensitive(mainw->sa_button, TRUE);
-    } else {
-      lives_widget_set_sensitive(mainw->sa_button, FALSE);
-    }
   }
-
+  update_sel_menu();
   load_start_image(cfile->start);
 
   if (cfile->start > cfile->end) {
@@ -8966,20 +9017,7 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
       mainw->selwidth_locked = TRUE;
     }
   }
-
-  else {
-    if ((cfile->start == 1 || cfile->end == cfile->frames) && !(cfile->start == 1 && cfile->end == cfile->frames)) {
-      lives_widget_set_sensitive(mainw->select_invert, TRUE);
-    } else {
-      lives_widget_set_sensitive(mainw->select_invert, FALSE);
-    }
-    if (cfile->start > 1 || cfile->end < cfile->frames) {
-      lives_widget_set_sensitive(mainw->sa_button, TRUE);
-    } else {
-      lives_widget_set_sensitive(mainw->sa_button, FALSE);
-    }
-  }
-
+  update_sel_menu();
   load_end_image(cfile->end);
 
   if (cfile->end < cfile->start) {

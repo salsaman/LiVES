@@ -467,8 +467,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         // from file or audio generator
         if (LIVES_LIKELY(pulsed->fd >= 0)) {
           int playfile = mainw->playing_file;
-          if ((pulsed->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
-              && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0) {
+          pulsed->seek_end = 0;
+
+          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(pulsed->playing_file))
+            pulsed->seek_end = afile->afilesize;
+
+          if (pulsed->seek_end == 0 || ((pulsed->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
+                                        && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0)) {
+            pulsed->seek_end = INT64_MAX;
           }
 #ifdef CACHE_TEST
           cache_buffer = pop_cache_buffer();
@@ -501,7 +507,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           // update looping mode
-          if (mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) {
+          if (mainw->whentostop == NEVER_STOP) {
             if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
                 && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == pulsed->playing_file)
                 && (mainw->event_list == NULL || mainw->record || mainw->record_paused)
@@ -526,7 +532,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   *pulsed->cancelled = CANCEL_AUD_END;
                 }
                 in_bytes = 0;
-                pulsed->in_use = FALSE;
               } else {
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
                   pulsed->in_arate = -pulsed->in_arate;
@@ -548,7 +553,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   *pulsed->cancelled = CANCEL_AUD_END;
                 }
                 in_bytes = 0;
-                pulsed->in_use = FALSE;
               } else {
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
                   pulsed->in_arate = -pulsed->in_arate;
@@ -574,7 +578,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           }
 
           /// put silence if anything changed
-          if (pulsed->mute || pulsed->aPlayPtr->size == 0 || !IS_VALID_CLIP(pulsed->playing_file)
+          if (pulsed->mute || in_bytes == 0 || pulsed->aPlayPtr->size == 0 || !IS_VALID_CLIP(pulsed->playing_file)
               || (pulsed->aPlayPtr->data == NULL && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) ||
                   mainw->multitrack != NULL || mainw->preview))) {
             sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);

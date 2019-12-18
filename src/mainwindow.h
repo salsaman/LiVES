@@ -905,6 +905,7 @@ typedef struct {
   LiVESWidget *select_all;
   LiVESWidget *select_new;
   LiVESWidget *select_to_end;
+  LiVESWidget *select_to_aend;
   LiVESWidget *select_from_start;
   LiVESWidget *select_start_only;
   LiVESWidget *select_end_only;

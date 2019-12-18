@@ -331,7 +331,7 @@ static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *ja
   cache_buffer->out_achans = jackd->num_output_channels;
 
   cache_buffer->in_asamps = afile->asampsize;
-  cache_buffer->out_asamps = -32;  ///< 32 bit float :: TODO - should this be 16, since
+  cache_buffer->out_asamps = -32;  ///< 32 bit float
 
   cache_buffer->shrink_factor = shrink_factor;
 
@@ -381,7 +381,6 @@ static void output_silence(size_t offset, nframes_t nframes, jack_driver_t *jack
     check_zero_buff(rbytes);
     audio_stream(zero_buff, rbytes, jackd->astream_fd);
   }
-  if (!jackd->is_paused) jackd->frames_written += nframes;
 }
 
 
@@ -526,21 +525,62 @@ static int audio_process(nframes_t nframes, void *arg) {
         jackd->frames_written += numFramesToWrite;
         jackFramesAvailable = 0;
       } else {
-        if (LIVES_LIKELY(jackd->playing_file >= 0)) {
-          if (jackd->playing_file == mainw->ascrap_file && mainw->playing_file >= -1
-              && mainw->files[mainw->playing_file]->achans > 0) {
-            xfile = mainw->files[mainw->playing_file];
+        boolean eof = FALSE;
+        int playfile = mainw->playing_file;
+
+        jackd->seek_end = 0;
+
+        if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file))
+          jackd->seek_end = afile->afilesize;
+
+        if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
+                                     && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0)) {
+          jackd->seek_end = INT64_MAX;
+        }
+
+        in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
+                                     (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
+                   * jackd->num_input_channels * jackd->bytes_per_channel;
+
+        // update looping mode
+        if (mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) {
+          if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+              && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == jackd->playing_file)
+              && (mainw->event_list == NULL || mainw->record || mainw->record_paused)
+              && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
+            jackd->loop = AUDIO_LOOP_PINGPONG;
+          else jackd->loop = AUDIO_LOOP_FORWARD;
+        } else {
+          jackd->loop = AUDIO_LOOP_NONE;
+        }
+
+        if (cache_buffer != NULL) eof = cache_buffer->eof;
+
+        if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable) >= 0.f) {
+          jackd->seek_pos += in_bytes;
+          if (jackd->playing_file != mainw->ascrap_file) {
+            if (eof || (jackd->seek_pos >= jackd->seek_end && jackd->playing_file != mainw->ascrap_file && !afile->opening)) {
+              if (jackd->loop == AUDIO_LOOP_NONE) {
+                if (*jackd->whentostop == STOP_ON_AUD_END) {
+                  *jackd->cancelled = CANCEL_AUD_END;
+                  jackd->in_use = FALSE;
+                }
+                in_bytes = 0;
+              } else {
+                if (jackd->loop == AUDIO_LOOP_PINGPONG) {
+                  jackd->sample_in_rate = -jackd->sample_in_rate;
+                  jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
+                } else {
+                  jackd->seek_pos = 0;
+                }
+              }
+            }
           }
-
-          in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
-                                       (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
-                     * jackd->num_input_channels * jackd->bytes_per_channel;
-
-          if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable) < 0.f) {
-            // reverse playback
-            if ((jackd->seek_pos -= in_bytes) < 0) {
-              // reached beginning backwards
-
+        } else {
+          // reverse playback
+          if (((jackd->seek_pos -= in_bytes) < 0) || eof) {
+            // reached beginning backwards
+            if (jackd->playing_file != mainw->ascrap_file) {
               if (jackd->loop == AUDIO_LOOP_NONE) {
                 if (*jackd->whentostop == STOP_ON_AUD_END) {
                   *jackd->cancelled = CANCEL_AUD_END;
@@ -557,68 +597,25 @@ static int audio_process(nframes_t nframes, void *arg) {
               jack_set_rec_avals(jackd);
             }
           }
+        }
 
-          if (jackd->mute || cache_buffer == NULL) {
-            // mute playback - as normal but we output silence
-            if (shrink_factor > 0.f) jackd->seek_pos += in_bytes;
-            if (jackd->seek_pos >= jackd->seek_end) {
-              if (*jackd->whentostop == STOP_ON_AUD_END) {
-                *jackd->cancelled = CANCEL_AUD_END;
-                jackd->in_use = FALSE;
-              } else {
-                if (jackd->loop == AUDIO_LOOP_PINGPONG) {
-                  jackd->sample_in_rate = -jackd->sample_in_rate;
-                  jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
-                } else {
-                  jackd->seek_pos = 0;
-                }
-              }
-            }
-
-            if (cache_buffer != NULL && !wait_cache_buffer
-                && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL
-                    || mainw->preview)) {
-              push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
-            }
-
-            output_silence(0, nframes, jackd, out_buffer);
-            return 0;
-          } else {
-            // not muted
-            if (shrink_factor > 0.) {
-              if (!(*jackd->cancelled)) {
-                boolean eof = FALSE;
-
-                if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->preview) eof = cache_buffer->eof;
-                else if (jackd->playing_file > -1 && xfile != NULL && xfile->afilesize <= jackd->seek_pos) eof = TRUE;
-
-                if (eof) {
-                  // reached the end, forwards
-                  if (*jackd->whentostop == STOP_ON_AUD_END) {
-                    jackd->in_use = FALSE;
-                    *jackd->cancelled = CANCEL_AUD_END;
-                  } else {
-                    if (jackd->loop == AUDIO_LOOP_PINGPONG) {
-                      jackd->sample_in_rate = -jackd->sample_in_rate;
-                      jackd->seek_pos -= in_bytes; // TODO
-                    } else {
-                      if (jackd->loop != AUDIO_LOOP_NONE) {
-                        jackd->seek_pos = 0;
-                      } else {
-                        jackd->in_use = FALSE;
-                      }
-                    }
-                    jackd->real_seek_pos = jackd->seek_pos;
-                    jack_set_rec_avals(jackd);
-		    // *INDENT-OFF*
-                  }}}}}
-	  // *INDENT-ON*
+        if (jackd->mute || cache_buffer == NULL ||
+            (in_bytes == 0 &&
+             ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL || mainw->preview))) {
+          if (cache_buffer != NULL && !wait_cache_buffer
+              && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL
+                  || mainw->preview)) {
+            push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
+          }
+          output_silence(0, nframes, jackd, out_buffer);
+          return 0;
+        } else {
           xin_bytes = in_bytes;
         }
         if (mainw->agen_key != 0 && mainw->multitrack == NULL && !mainw->preview) {
           // how much audio do we want to pull from any generator ?
           in_bytes = jackFramesAvailable * jackd->num_output_channels * 4;
-          if (xin_bytes == 0) xin_bytes = in_bytes;
+          xin_bytes = in_bytes;
         }
 
         if (!jackd->in_use || in_bytes == 0) {

@@ -102,7 +102,7 @@ void append_to_audio_bufferf(float *src, uint64_t nsamples, int channum) {
 
   if (abuf->bufferf == NULL) free_audio_frame_buffer(abuf);
 
-  nsampsize = (abuf->samples_filled + nsamples) * sizeof(float);
+  nsampsize = (abuf->samples_filled + nsamples);
 
   channum++;
   if (channum > abuf->out_achans) {
@@ -653,6 +653,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
+  float clip = 1.;
   register short val;
   register unsigned short valu = 0;
   register float valf;
@@ -660,7 +661,9 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   while ((nsamps - coffs) > 0) {
     frames_out++;
     for (i = 0; i < chans; i++) {
-      valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs));
+      if ((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))) > clip) clip = valf;
+      if (clip > 1.) valf /= clip;
+
       valf *= vol;
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
@@ -2469,6 +2472,16 @@ static void *cache_my_audio(void *arg) {
       continue;
     }
 #endif
+
+    while (cbuffer->is_ready && !cbuffer->die) {
+      sched_yield();
+      lives_usleep(prefs->sleep_time);
+    }
+
+    if (cbuffer->die) {
+      if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
+      return cbuffer;
+    }
 
     if (cbuffer->operation != LIVES_READ_OPERATION) {
       cbuffer->is_ready = TRUE;

@@ -2587,7 +2587,7 @@ void play_file(void) {
             mainw->pulsed->read_abuf = 0;
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
-            mainw->pulsed->in_use = TRUE;
+            //mainw->pulsed->in_use = TRUE;
           }
 #endif
           // let transport roll

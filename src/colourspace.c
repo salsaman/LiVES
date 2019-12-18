@@ -10572,9 +10572,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   }
 #endif
 
-  // reget these after conversion
-  iwidth = weed_layer_get_width(layer);
+  // reget these after conversion, convert width from macropixels to pixels
+  iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
   iheight = weed_layer_get_height(layer);
+  if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   switch (palette) {
   // anything with 3 or 4 channels (alpha must be last)

@@ -559,15 +559,13 @@ static boolean pre_init(void) {
   // now we can use PREFS properly
   cache_file_contents(capable->rcfile);
 
-  get_string_pref(PREF_DS_WARN_LEVEL, buff, 256);
-  if (!strlen(buff)) prefs->ds_warn_level = DEF_DS_WARN_LEVEL;
-  else prefs->ds_warn_level = strtol(buff, NULL, 10);
+  get_string_prefd(PREF_DS_WARN_LEVEL, buff, 256, DEF_DS_WARN_LEVEL);
+  prefs->ds_warn_level = strtol(buff, NULL, 10);
 
   mainw->next_ds_warn_level = prefs->ds_warn_level;
 
-  get_string_pref(PREF_DS_CRIT_LEVEL, buff, 256);
-  if (!strlen(buff)) prefs->ds_crit_level = DEF_DS_CRIT_LEVEL;
-  else prefs->ds_crit_level = strtol(buff, NULL, 10);
+  get_string_prefd(PREF_DS_CRIT_LEVEL, buff, 256, DEF_DS_CRIT_LEVEL);
+  prefs->ds_crit_level = strtol(buff, NULL, 10);
 
   if (mainw->next_ds_warn_level > 0) {
     mainw->ds_status = get_storage_status(prefs->workdir, mainw->next_ds_warn_level, &mainw->dsval);
@@ -890,7 +888,7 @@ void replace_with_delegates(void) {
 
   if (mainw->resize_menuitem != NULL) lives_widget_set_sensitive(mainw->resize_menuitem, CURRENT_CLIP_HAS_VIDEO);
 
-  deint_idx = weed_get_idx_for_hashname("deinterlcedeinterlace", FALSE);
+  deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
   if (deint_idx > -1) {
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list = lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
         LIVES_INT_TO_POINTER(deint_idx));
@@ -1368,7 +1366,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->enc_letterbox = FALSE;
 
-  prefs->clear_disk_opts = get_int_pref(PREF_CLEAR_DISK_OPTS);
+  prefs->clear_disk_opts = get_int_prefd(PREF_CLEAR_DISK_OPTS, 0);
 
   prefs->force_system_clock = TRUE;
 
@@ -4226,11 +4224,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->close, CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_IS_CLIPBOARD);
   lives_widget_set_sensitive(mainw->select_submenu, !CURRENT_CLIP_IS_CLIPBOARD && !mainw->selwidth_locked &&
                              CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_all, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_start_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_end_only, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_from_start, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
-  lives_widget_set_sensitive(mainw->select_to_end, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  update_sel_menu();
 #ifdef HAVE_YUV4MPEG
   lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
@@ -4238,6 +4232,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->select_new, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->insert_start > 0));
   lives_widget_set_sensitive(mainw->select_last, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->undo_start > 0));
   lives_widget_set_sensitive(mainw->lock_selwidth, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+
   lives_widget_set_sensitive(mainw->undo, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->undoable);
   lives_widget_set_sensitive(mainw->redo, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->redoable);
   lives_widget_set_sensitive(mainw->show_clipboard_info, !(clipboard == NULL));
@@ -8332,6 +8327,8 @@ void load_frame_image(int frame) {
       load_start_image(0);
       load_end_image(0);
     }
+
+    update_sel_menu();
 
     if (scale != oscale) {
       lives_widget_context_update();

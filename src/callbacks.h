@@ -88,6 +88,8 @@ void on_merge_activate(LiVESMenuItem *, livespointer);
 
 void on_delete_activate(LiVESMenuItem *, livespointer);
 
+void update_sel_menu(void);
+
 void on_select_all_activate(LiVESWidget *, livespointer);
 
 void on_select_new_activate(LiVESMenuItem *, livespointer);
@@ -95,6 +97,8 @@ void on_select_new_activate(LiVESMenuItem *, livespointer);
 void on_select_last_activate(LiVESMenuItem *, livespointer);
 
 void on_select_to_end_activate(LiVESMenuItem *, livespointer);
+
+void on_select_to_aend_activate(LiVESMenuItem *, livespointer);
 
 void on_select_from_start_activate(LiVESMenuItem *, livespointer);
 

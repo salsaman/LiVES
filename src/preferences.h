@@ -330,9 +330,9 @@ typedef struct {
   int bigendbug;
 
   // these are default values; actual values can be adjusted in Preferences
-#define DEF_DS_WARN_LEVEL 2500000000  // 2.5 GB
+#define DEF_DS_WARN_LEVEL "2500000000"  // 2.5 GB
   uint64_t ds_warn_level; ///< diskspace warn level bytes
-#define DEF_DS_CRIT_LEVEL 250000000 // 250MB
+#define DEF_DS_CRIT_LEVEL "250000000" // 250MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())

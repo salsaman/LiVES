@@ -1006,7 +1006,6 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
 lives_alarm_t lives_alarm_set(ticks_t ticks) {
   int i;
-  ticks_t cticks;
 
   // we will assign [this] next
   lives_alarm_t ret = mainw->next_free_alarm;
@@ -1020,11 +1019,9 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
     }
   }
 
-  // get current ticks
-  cticks = lives_get_current_ticks();
-
   // set to now + offset
-  mainw->alarms[ret] = cticks + ticks;
+  mainw->alarms[ret].lastcheck = lives_get_current_ticks();
+  mainw->alarms[ret].tleft = ticks;
 
   // system alarms
   if (ret >= LIVES_MAX_USER_ALARMS) return ++ret;
@@ -1032,7 +1029,7 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
   i = ++mainw->next_free_alarm;
 
   // find free slot for next time
-  while (mainw->alarms[i] != LIVES_NO_ALARM_TICKS && i < LIVES_MAX_USER_ALARMS) i++;
+  while (mainw->alarms[i].lastcheck != 0 && i < LIVES_MAX_USER_ALARMS) i++;
 
   if (i == LIVES_MAX_USER_ALARMS) mainw->next_free_alarm = ALL_USED; // no more alarm slots
   else mainw->next_free_alarm = i; // OK
@@ -1045,7 +1042,8 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
    else return FALSE
 */
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
-  ticks_t cticks;
+  ticks_t curticks;
+  lives_timeout_t alarm;
 
   // invalid alarm number
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
@@ -1054,26 +1052,34 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   }
 
   // offset of 1 was added for caller
-  alarm_handle--;
+  alarm = mainw->alarms[--alarm_handle];
 
   // alarm time was never set !
-  if (mainw->alarms[alarm_handle] == LIVES_NO_ALARM_TICKS) {
+  if (alarm.lastcheck == 0) {
     LIVES_WARN("Alarm time not set");
     return 0;
   }
 
-  // get current ticks
-  cticks = mainw->alarms[alarm_handle] - lives_get_current_ticks();
+  curticks = lives_get_current_ticks();
 
-  if (cticks <= 0) {
+  if (prefs->show_dev_opts) {
+    // guard against long interrupts (in gdb for example)
+    if (curticks - alarm.lastcheck > 5 * TICKS_PER_SECOND) {
+      alarm.lastcheck = curticks;
+      return alarm.tleft;
+    }
+  }
+  alarm.tleft += alarm.lastcheck - curticks;
+
+  if (alarm.tleft <= 0) {
     // reached alarm time, free up this timer and return TRUE
-    mainw->alarms[alarm_handle] = LIVES_NO_ALARM_TICKS;
+    alarm.lastcheck = 0;
     LIVES_DEBUG("Alarm reached");
     return 0;
   }
-
+  alarm.lastcheck = curticks;
   // alarm time not reached yet
-  return cticks;
+  return alarm.tleft;
 }
 
 
@@ -1083,9 +1089,10 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
     return FALSE;
   }
 
-  mainw->alarms[--alarm_handle] = LIVES_NO_ALARM_TICKS;
+  mainw->alarms[--alarm_handle].lastcheck = 0;
 
-  if (alarm_handle < LIVES_MAX_USER_ALARMS && (mainw->next_free_alarm == ALL_USED || alarm_handle < mainw->next_free_alarm)) {
+  if (alarm_handle < LIVES_MAX_USER_ALARMS
+      && (mainw->next_free_alarm == ALL_USED || alarm_handle < mainw->next_free_alarm)) {
     mainw->next_free_alarm = alarm_handle;
   }
   return TRUE;

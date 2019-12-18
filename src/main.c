@@ -834,7 +834,7 @@ static boolean pre_init(void) {
   mainw->next_free_alarm = 0;
 
   for (i = 0; i < LIVES_MAX_ALARMS; i++) {
-    mainw->alarms[i] = LIVES_NO_ALARM_TICKS;
+    mainw->alarms[i].lastcheck = 0;
   }
 
 #ifdef ENABLE_OSC
@@ -2471,8 +2471,8 @@ capability *get_capabilities(void) {
   xs = strlen(buffer);
   if (xs < 5) return capable;
 
-  if (buffer[xs - 1] == '\n') buffer[xs - 1] = '\0';
-  numtok = get_token_count(buffer, ' ');
+  if (buffer[xs - 1] == '\n') buffer[xs - 1] = 0;
+  numtok = get_token_count(buffer, ' ') ;
   if (numtok < 2) return capable;
 
   array = lives_strsplit(buffer, " ", numtok);
@@ -4694,8 +4694,7 @@ void load_start_image(int frame) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
-                   cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
@@ -4754,8 +4753,7 @@ void load_start_image(int frame) {
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
-                   height, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       start_pixbuf = layer_to_pixbuf(layer, TRUE);
@@ -4897,8 +4895,7 @@ void load_end_image(int frame) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, cfile->hsize / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
-                   cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
@@ -4956,8 +4953,7 @@ void load_end_image(int frame) {
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
-                   height, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       end_pixbuf = layer_to_pixbuf(layer, TRUE);
@@ -5109,8 +5105,7 @@ void load_preview_image(boolean update_always) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, mainw->pwidth, mainw->pheight,
                            WEED_PALETTE_RGB24)) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
-      resize_layer(layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer)),
-                   mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
+      resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0);
       convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
       gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       pixbuf = layer_to_pixbuf(layer, TRUE);
@@ -6815,7 +6810,6 @@ void load_frame_image(int frame) {
       if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) {
         size_ok = TRUE;
       } else {
-        // this is no longer true - the frame can be any size. We need to check when pulling it
         check_layer_ready(mainw->frame_layer);
         if ((weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error) == cfile->vsize) &&
             (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)*
@@ -6976,11 +6970,12 @@ void load_frame_image(int frame) {
       }
 
       if (return_layer != NULL) {
-        int width = MIN(weed_layer_get_width(mainw->frame_layer), weed_layer_get_width(return_layer));
+        int width = MIN(weed_layer_get_width(mainw->frame_layer)
+                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                        weed_layer_get_width(return_layer)
+                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
         int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
-        resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
-                     height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
-
+        resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
         save_to_scrap_file(return_layer);
         weed_layer_free(return_layer);
         lives_free(retdata);
@@ -7046,11 +7041,7 @@ void load_frame_image(int frame) {
         if (pwidth != lb_width || pheight != lb_height) {
           boolean orig_frame = (mainw->frame_layer == frame_layer);
           if (orig_frame) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-          letterbox_layer(frame_layer, lb_width /
-                          weed_palette_get_pixels_per_macropixel(layer_palette),
-                          lb_height, pwidth /
-                          weed_palette_get_pixels_per_macropixel(layer_palette),
-                          pheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
+          letterbox_layer(frame_layer, lb_width, lb_height, pwidth, pheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
           if (frame_layer == NULL) {
             if (orig_frame) frame_layer = mainw->frame_layer;
             else frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
@@ -7058,8 +7049,8 @@ void load_frame_image(int frame) {
         }
       }
       if (!resized) {
-        resize_layer(frame_layer, mainw->vpp->fwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
-                     mainw->vpp->fheight, interp, mainw->vpp->palette, mainw->vpp->YUV_clamping);
+        resize_layer(frame_layer, mainw->vpp->fwidth, mainw->vpp->fheight, interp,
+                     mainw->vpp->palette, mainw->vpp->YUV_clamping);
       }
 
       // resize_layer can change palette
@@ -7146,11 +7137,12 @@ void load_frame_image(int frame) {
       lives_free(pd_array);
 
       if (return_layer != NULL) {
-        int width = MIN(weed_layer_get_width(mainw->frame_layer), weed_layer_get_width(return_layer));
+        int width = MIN(weed_layer_get_width(mainw->frame_layer)
+                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                        weed_layer_get_width(return_layer)
+                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
         int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
-        resize_layer(return_layer, width / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)),
-                     height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
-
+        resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0);
         save_to_scrap_file(return_layer);
         weed_layer_free(return_layer);
         lives_free(retdata);
@@ -7205,17 +7197,12 @@ void load_frame_image(int frame) {
       get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
       if (pwidth != lb_width || pheight != lb_height) {
         convert_layer_palette(mainw->frame_layer, cpal, 0);
-        letterbox_layer(mainw->frame_layer, lb_width /
-                        weed_palette_get_pixels_per_macropixel(layer_palette),
-                        lb_height, mainw->pwidth /
-                        weed_palette_get_pixels_per_macropixel(layer_palette),
-                        mainw->pheight,  interp, cpal, 0);
+        letterbox_layer(mainw->frame_layer, lb_width, lb_height, mainw->pwidth, mainw->pheight,  interp, cpal, 0);
         resized = TRUE;
       }
     }
     if (!resized) {
-      resize_layer(mainw->frame_layer, mainw->pwidth / weed_palette_get_pixels_per_macropixel(layer_palette),
-                   mainw->pheight, interp, cpal, 0);
+      resize_layer(mainw->frame_layer, mainw->pwidth, mainw->pheight, interp, cpal, 0);
     }
 
     convert_layer_palette(mainw->frame_layer, cpal, 0);

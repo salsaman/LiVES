@@ -293,7 +293,10 @@ typedef int lives_pgid_t;
 #define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
 
 // round int a up to next multiple of int b, unless a is already a multiple of b
-#define ALIGN_CEIL(a, b) ((int)((a + b - 1.) / b) * b)
+#define ALIGN_CEIL(a, b) (((int)((a + b - 1.) / b)) * b)
+
+// round int a up to next multiple of int b, unless a is already a multiple of b
+#define ALIGN_CEILNG(a, b) (((int64_t)((a + b - 1.) / b)) * b)
 
 // round float / double a down to nearest multiple of int b
 #define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)

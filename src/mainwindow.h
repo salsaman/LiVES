@@ -8,7 +8,6 @@
 #define HAS_LIVES_MAINWINDOW_H
 
 #include <pthread.h>
-#include <inttypes.h>
 
 #include "effects-data.h"
 
@@ -484,6 +483,11 @@ typedef struct {
   lives_rect_t *rects; // for future use
   int z_index; // for future use
 } lives_screen_area_t;
+
+typedef struct {
+  int tleft;
+  ticks_t lastcheck;
+}  lives_timeout_t;
 
 typedef int lives_alarm_t;
 
@@ -1389,12 +1393,10 @@ typedef struct {
 #define LIVES_MAX_ALARMS 1024
 #define LIVES_MAX_USER_ALARMS 512
 
-#define LIVES_NO_ALARM_TICKS -1
-
 #define LIVES_URGENCY_ALARM LIVES_MAX_ALARMS // this is fine since we will subtract 1
 #define URGENCY_MSG_TIMEOUT 10. // seconds
 
-  ticks_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
+  lives_timeout_t alarms[LIVES_MAX_ALARMS]; ///< reserve 1 for emergency msgs
   int next_free_alarm;
 
   char *urgency_msg;

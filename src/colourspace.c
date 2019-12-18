@@ -7915,10 +7915,7 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new_for_frame(int clip, int frame) 
 
 // returns TRUE on success
 boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t alignment) {
-  // get old pdata,
-  // set align rs
-  // create empty
-  // copy each plane back row by row
+  // copy (deep) old_layer -> layer
 
   int numplanes, xheight, xwidth;
   int *orowstrides = weed_layer_get_rowstrides(layer, &numplanes), *rowstrides;
@@ -7929,13 +7926,6 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   int psize = pixel_size(pal);
   boolean newdata = FALSE;
   register int i, j;
-
-  if (alignment != 0) {
-    for (i = 0; i < numplanes; i++) {
-      if (orowstrides[i] % alignment != 0) break;
-    }
-    if (i >= numplanes) return TRUE;
-  }
 
   if (old_layer == NULL) {
     newdata = TRUE;
@@ -8221,7 +8211,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
-  //#define DEBUG_PCONV
+  //  #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -8315,8 +8305,9 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   if (istrides == NULL) return FALSE;
 
   irowstride = istrides[0];
-  weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, outpl);
-
+  weed_layer_set_palette(layer, outpl);
+  weed_layer_set_size(layer, width * weed_palette_get_pixels_per_macropixel(inpl)
+                      / weed_palette_get_pixels_per_macropixel(outpl), height);
   // TODO: rowstrides for uyvy, yuyv, 422P, 411
 
   switch (inpl) {
@@ -9811,11 +9802,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
           WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
   }
 
-  if (weed_palette_is_rgb(inpl) && weed_palette_is_yuv(outpl)) {
-    width = ((weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) * weed_palette_get_pixels_per_macropixel(outpl)) >> 1) << 1;
-    weed_set_int_value(layer, WEED_LEAF_WIDTH, width / weed_palette_get_pixels_per_macropixel(outpl));
-  }
-
   if ((outpl == WEED_PALETTE_YVU420P && inpl != WEED_PALETTE_YVU420P && inpl != WEED_PALETTE_YUV420P)) {
     // swap u and v planes
     uint8_t **pd_array = (uint8_t **)weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
@@ -10288,8 +10274,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 
   int palette = weed_layer_get_palette(layer);
 
-  // original width and height (in macropixels)
-  int iwidth = weed_layer_get_width(layer);
+  // original width and height (in pixels)
+  int iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
   int iheight = weed_layer_get_height(layer);
   int iclamping = weed_layer_get_yuv_clamping(layer);
   int new_gamma_type = weed_layer_get_gamma(layer);
@@ -10312,7 +10298,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  //  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -10347,10 +10333,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
           convert_layer_palette(layer, WEED_PALETTE_RGB24, 0);
         }
       }
-      iwidth = weed_layer_get_width(layer);
+      palette = weed_layer_get_palette(layer);
+      iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
       iheight = weed_layer_get_height(layer);
       if (iwidth == width && iheight == height) return TRUE; // no resize needed
-      palette = weed_layer_get_palette(layer);
 #ifdef DEBUG_RESIZE
       g_print("intermediate conversion 1 to %s\n", weed_palette_get_name_full(palette, iclamping, 0));
 #endif
@@ -10442,9 +10428,10 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     }
   }
 
-  // reget these after conversion
-  iwidth = weed_layer_get_width(layer);
+  // reget these after conversion, convert width from macropixels to pixels
+  iwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(palette);
   iheight = weed_layer_get_height(layer);
+  if (iwidth == width && iheight == height) return TRUE; // no resize needed
 
   if (opal_hint == WEED_PALETTE_YUV888) opal_hint = xopal_hint = WEED_PALETTE_YUV444P;
   else if (opal_hint == WEED_PALETTE_YUVA8888) opal_hint = xopal_hint = WEED_PALETTE_YUVA4444P;
@@ -10512,23 +10499,19 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       if (prefs->apply_gamma) {
         gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
-      new_gamma_type = weed_layer_get_gamma(layer);
     }
+    new_gamma_type = weed_layer_get_gamma(layer);
 
     // set new values
 
     if (palette != opal_hint) {
-      // our widths are in macropixels of the input palette
-      // convert output width to macropixels of the output palette
-      width *= weed_palette_get_pixels_per_macropixel(palette);
-      width /= weed_palette_get_pixels_per_macropixel(opal_hint);
       weed_layer_set_palette(layer, opal_hint);
     }
 
     if (weed_palette_is_yuv(opal_hint))
       weed_layer_set_yuv_clamping(layer, oclamp_hint);
 
-    weed_layer_set_size(layer, width, height);
+    weed_layer_set_size(layer, width / weed_palette_get_pixels_per_macropixel(opal_hint), height);
     weed_layer_nullify_pixel_data(layer);
 
     if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
@@ -10553,11 +10536,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-    // our input widths are in macropixels, but swscale uses pixels
-    width *= weed_palette_get_pixels_per_macropixel(opal_hint);
-    iwidth *= weed_palette_get_pixels_per_macropixel(palette);
-
-    // TODO - subspaces
+    // TODO - can we set the gamma ?
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                              ? SWS_CS_ITU709 : SWS_CS_DEFAULT) , iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
@@ -10656,7 +10635,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight,
                      LiVESInterpType interp, int tpal, int tclamp) {
   // stretch or shrink layer to width/height, then overlay it in a black rectangle size nwidth/nheight
-  // width, nwidth should be in _macropixels_
+  // width, nwidth should be in pixels
   weed_layer_t *old_layer;
   int *rowstrides, *irowstrides;
   void **pixel_data;
@@ -10698,14 +10677,13 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
   irowstrides = weed_layer_get_rowstrides(layer, NULL);
 
   /// create the outer rectangle in layer
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, nwidth);
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, nheight);
+  weed_layer_set_size(layer, nwidth / weed_palette_get_pixels_per_macropixel(pal), nheight);
   weed_layer_nullify_pixel_data(layer);
   create_empty_pixel_data(layer, TRUE, TRUE);
   new_pixel_data = weed_layer_get_pixel_data(layer, NULL);
 
   /// get the actual size after any adjustments
-  nwidth = weed_layer_get_width(layer);
+  nwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);
   nheight = weed_layer_get_height(layer);
 
   if (nwidth < width || nheight < height || new_pixel_data == NULL) {
@@ -10719,10 +10697,7 @@ void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int
     return;
   }
 
-  width *= weed_palette_get_pixels_per_macropixel(pal),
-           nwidth *= weed_palette_get_pixels_per_macropixel(pal),
-
-                     offs_x = (nwidth - width + 1) >> 1;
+  offs_x = (nwidth - width + 1) >> 1;
   offs_y = (nheight - height + 1) >> 1;
 
   rowstrides = weed_layer_get_rowstrides(layer, NULL);

@@ -525,15 +525,17 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   if (mainw->multitrack == NULL)
     redraw_framedraw_image(mainw->fd_layer);
   else {
-    int error;
     LiVESPixbuf *pixbuf;
-    int palette = weed_get_int_value(mainw->fd_layer, WEED_LEAF_CURRENT_PALETTE, &error);
+    int palette = weed_layer_get_palette(mainw->fd_layer);
     if (weed_palette_has_alpha_channel(palette)) {
       palette = WEED_PALETTE_RGBA32;
     } else {
       palette = WEED_PALETTE_RGB24;
     }
-    resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig), weed_layer_get_height(mainw->fd_layer_orig),
+
+    resize_layer(mainw->fd_layer, weed_layer_get_width(mainw->fd_layer_orig)
+                 * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->fd_layer_orig)),
+                 weed_layer_get_height(mainw->fd_layer_orig),
                  LIVES_INTERP_BEST,
                  palette, 0);
     convert_layer_palette(mainw->fd_layer, palette, 0);

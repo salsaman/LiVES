@@ -538,7 +538,8 @@ EXPORTS int weed_channel_get_audio_length(weed_plant_t *channel) {return general
 
 #ifdef __WEED_UTILS_H__
 EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans) {
-  if (naudchans) *naudchans = 0; return (float **)weed_get_voidptr_array_counted(channel, WEED_LEAF_AUDIO_DATA, naudchans);}
+  if (naudchans) *naudchans = 0;
+  return (float **)weed_get_voidptr_array_counted(channel, WEED_LEAF_AUDIO_DATA, naudchans);}
 #endif
 #endif
 
@@ -737,16 +738,33 @@ EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
 
 #if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
 
+#if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
+#ifndef _CRT_RAND_S
+#define _CRT_RAND_S
+#endif
+#endif
 #include <stdlib.h>
-#include <stdio.h>
 
-static INLINE double drand(double max) {return (double)(drand48() * max);}
+static INLINE double drand(double max)
+#if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
+{uint32_t rval; rand_s(&rval); return ((double)rval / (double)UINT_MAX * max);}
+#else
+{return (double)(drand48() * max);}
+#endif
 
 EXPORTS INLINE uint64_t fastrand(uint64_t oldval) {
   // pseudo-random number generator
 #define rand_a 1073741789L
 #define rand_c 32749L
-  if (oldval == 0) return fastrand(((uint64_t)lrand48() << 48) | (uint64_t)lrand48());
+  if (oldval == 0) {
+#if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
+    uint32_t rval, rval2; rand_s(&rval); rand_s(&rval2);
+    return fastrand(((uint64_t)rval << 32) | (uint64_t)rval2);
+  }
+#else
+    return fastrand(((uint64_t)lrand48() << 32) ^ (uint64_t)lrand48());
+}
+#endif
   return (rand_a * oldval + rand_c);
 }
 
@@ -788,7 +806,8 @@ EXPORTS INLINE int weed_palette_has_alpha_channel(int pal) {
 
 EXPORTS INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane) {
   // return ratio of plane[n] width/plane[0] width;
-  if (plane == 0) return 1.0; if (plane == 1 || plane == 2) {
+  if (plane == 0) return 1.0;
+  if (plane == 1 || plane == 2) {
     if (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 1.0;
     if (pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) return 0.5;
   }
@@ -797,7 +816,8 @@ EXPORTS INLINE double weed_palette_get_plane_ratio_horizontal(int pal, int plane
 
 EXPORTS INLINE double weed_palette_get_plane_ratio_vertical(int pal, int plane) {
   // return ratio of plane[n] height/plane[n] height
-  if (plane == 0) return 1.0; if (plane == 1 || plane == 2) {
+  if (plane == 0) return 1.0;
+  if (plane == 1 || plane == 2) {
     if (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUV422P) return 1.0;
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) return 0.5;
   }
@@ -914,9 +934,11 @@ EXPORTS void alpha_premult(unsigned char *ptr, int width, int height, int rowstr
   case WEED_PALETTE_ARGB32: psizel = 4; coffs = 1; aoffs = 0; break;
   default: return;
   }
-  if (!alpha_inited) init_unal(); if (un == WEED_TRUE) {for (i = 0; i < height; i++) {for (j = 0; j < width; j += psize)
+  if (!alpha_inited) init_unal();
+  if (un == WEED_TRUE) {for (i = 0; i < height; i++) {for (j = 0; j < width; j += psize)
 					{alpha = ptr[j + aoffs]; for (p = coffs; p < psizel; p++) ptr[j + p] = unal[alpha][ptr[j + p]];}
-      ptr += rowstride;}} else {for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {alpha = ptr[j + aoffs];
+      ptr += rowstride;}}
+  else {for (i = 0; i < height; i++) for (j = 0; j < width; j += psize) {alpha = ptr[j + aoffs];
 	for (p = coffs; p < psizel; p++) ptr[j + p] = al[alpha][ptr[j + p]];} ptr += rowstride;}}
 
 /* precomputed tables */
@@ -965,13 +987,12 @@ static void init_RGB_to_YCbCr_tables(void) {
 
 static void init_Y_to_Y_tables(void) {
   register int i;
-  for (i = 0; i < 17; i++) UVCL_UVUCL[i] = YCL_YUCL[i] = 0; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
+  for (i = 0; i < 17; i++) {UVCL_UVUCL[i] = YCL_YUCL[i] = 0; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;}
   for (i = 17; i < 235; i++) {
-    YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5);
-    UVCL_UVUCL[i] = (int)((float)(i - 16.) / 224. * 255. + .5);
+    YCL_YUCL[i] = (int)((float)(i - 16.) / 219. * 255. + .5); UVCL_UVUCL[i] = (int)((float)(i - 16.) / 224. * 255. + .5);
     YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
   }
-  for (i = 235; i < 256; i++) UVCL_UVUCL[i] = YCL_YUCL[i] = 255; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;
+  for (i = 235; i < 256; i++) {UVCL_UVUCL[i] = YCL_YUCL[i] = 255; YUCL_YCL[i] = (uint8_t)((float)i / 255. * 219. + .5)  + 16;}
   y_y_inited = 1;
 }
 

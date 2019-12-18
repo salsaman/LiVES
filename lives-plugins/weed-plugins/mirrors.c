@@ -69,21 +69,17 @@ static weed_error_t mirrorx_process(weed_plant_t *inst, weed_timecode_t timestam
 
 
 static weed_error_t mirrory_process(weed_plant_t *inst, weed_timecode_t timestamp) {
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  unsigned char *src = weed_get_voidptr_value(in_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  int inplace = (src == dst);
-  int pal = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int width = weed_get_int_value(in_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channel, WEED_LEAF_HEIGHT, NULL);
-  int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-  int psize = 4;
-  unsigned char *end = dst + height * orowstride / 2, *oend = dst + (height - 1) * orowstride;
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **in_params = weed_get_in_params(inst, NULL);
+  int palette = weed_channel_get_palette(in_channel);
+  int width = weed_channel_get_width(in_channel);
+  int height = weed_channel_get_height(in_channel);
+  int irowstride = weed_channel_get_stride(in_channel);
+  int orowstride = weed_channel_get_stride(out_channel);
 
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) psize = 3;
-  if (pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
+  int psize = pixel_size(pal);
+  unsigned char *end = dst + height * orowstride / 2, *oend = dst + (height - 1) * orowstride;
 
   width *= psize;
 

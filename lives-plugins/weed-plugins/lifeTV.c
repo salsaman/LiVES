@@ -107,10 +107,6 @@ void image_diff_filter(struct _sdata *sdata, int width, int height) {
   }
 }
 
-static void clear_field(struct _sdata *sdata, int video_area) {
-  bzero(sdata->field1, video_area);
-}
-
 /////////////////////////////////////////////////////////////
 
 static weed_error_t lifetv_init(weed_plant_t *inst) {
@@ -128,7 +124,7 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
 
   video_area = width * height;
 
-  sdata->field = (unsigned char *)weed_malloc(video_area * 2);
+  sdata->field = (unsigned char *)weed_calloc(video_area, 2);
   if (sdata->field == NULL) {
     weed_free(sdata);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -174,7 +170,6 @@ static weed_error_t lifetv_init(weed_plant_t *inst) {
   sdata->threshold = 280;
   sdata->field1 = sdata->field;
   sdata->field2 = sdata->field + video_area;
-  clear_field(sdata, video_area);
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
 
   return WEED_SUCCESS;

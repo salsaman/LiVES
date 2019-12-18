@@ -165,6 +165,8 @@ void *weed_layer_free(weed_layer_t *);
 weed_layer_t *weed_layer_new_for_frame(int clip, int frame);
 
 // pixel_data
+/// layer should be pre-set with palette, width in MACROPIXELS, and height
+/// gamma_type will be set WEED_GAMMA_SRGB, old pixel_data will not be freed.
 boolean create_empty_pixel_data(weed_layer_t *, boolean black_fill, boolean may_contig);
 void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, int palette, boolean dest_contig);
 void weed_layer_pixel_data_free(weed_layer_t *);
@@ -179,6 +181,8 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace);
+
+/// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
 void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
                      int tclamp);

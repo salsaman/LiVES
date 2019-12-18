@@ -2210,12 +2210,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
-      if (!resize_layer(layer,
-                        width / weed_palette_get_pixels_per_macropixel(opalette),
-                        height,
-                        interp,
-                        opalette,
-                        oclamping)) {
+      if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
         retval = FILTER_ERROR_UNABLE_TO_RESIZE;
         goto done_video;
       }

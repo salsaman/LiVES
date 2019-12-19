@@ -6992,7 +6992,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         resize_play_window();
 
-        if (mainw->opwx > -1) {
+        if (mainw->multitrack == NULL && mainw->opwx > -1) {
           //opwx and opwy were stored when we first switched to full screen
           lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->opwx, mainw->opwy);
           mainw->opwx = -1;

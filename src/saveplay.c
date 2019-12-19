@@ -2673,8 +2673,8 @@ void play_file(void) {
 
   if (mainw->ext_playback) {
     // need to exit_screen before unfullscreen, else the openGL player can hang
-    vid_playback_plugin_exit();
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+    vid_playback_plugin_exit();
   }
 
   // play completed

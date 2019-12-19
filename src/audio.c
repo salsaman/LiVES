@@ -2440,9 +2440,11 @@ static void *cache_my_audio(void *arg) {
 
   while (!cbuffer->die) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_wait(&cond, &cond_mutex);
-    pthread_mutex_unlock(&cond_mutex);
+    while (cbuffer->is_ready && !cbuffer->die) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+    }
 
     if (cbuffer->die) {
       if (mainw->event_list == NULL
@@ -2470,16 +2472,6 @@ static void *cache_my_audio(void *arg) {
       continue;
     }
 #endif
-
-    while (cbuffer->is_ready && !cbuffer->die) {
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
-    }
-
-    if (cbuffer->die) {
-      if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
-      return cbuffer;
-    }
 
     if (cbuffer->operation != LIVES_READ_OPERATION) {
       cbuffer->is_ready = TRUE;
@@ -2742,6 +2734,7 @@ static void *cache_my_audio(void *arg) {
 
 
 void wake_audio_thread(void) {
+  cache_buffer->is_ready = FALSE;
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);

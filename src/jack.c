@@ -539,7 +539,7 @@ static int audio_process(nframes_t nframes, void *arg) {
         }
 
         in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
-                                     (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT32))))
+                                     (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64))))
                    * jackd->num_input_channels * jackd->bytes_per_channel;
 
         // update looping mode

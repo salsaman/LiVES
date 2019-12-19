@@ -1822,7 +1822,7 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
 }
 
 
-static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                       uyvy_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
@@ -1847,7 +1847,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -1856,6 +1856,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -1884,12 +1885,14 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -1897,12 +1900,13 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 void *convert_rgb_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_rgb_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                            ccparams->orowstrides[0],
                             (uyvy_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                       yuyv_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
@@ -1925,7 +1929,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -1934,6 +1938,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -1962,12 +1967,14 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 YUYV bytes
       rgb2yuyv(rgbdata[i], rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + x], rgbdata[i + y], rgbdata[i + z], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -1975,12 +1982,13 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 void *convert_rgb_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_rgb_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                            ccparams->orowstrides[0],
                             (yuyv_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                       uyvy_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
@@ -2003,7 +2011,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2012,6 +2020,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -2040,12 +2049,14 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -2053,12 +2064,13 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
 void *convert_bgr_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_bgr_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                            ccparams->orowstrides[0],
                             (uyvy_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                       yuyv_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
@@ -2082,7 +2094,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2091,6 +2103,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_alpha = has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -2119,12 +2132,14 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2yuyv(rgbdata[i + 2], rgbdata[i + 1], rgbdata[i], rgbdata[i + z], rgbdata[i + y], rgbdata[i + x], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -2132,12 +2147,13 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 void *convert_bgr_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_bgr_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                            ccparams->orowstrides[0],
                             (yuyv_macropixel *)ccparams->dest, ccparams->in_alpha, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                        uyvy_macropixel *u, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 4, ipsize2;
@@ -2160,7 +2176,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2169,6 +2185,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
 
@@ -2189,12 +2206,14 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2uyvy(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -2202,12 +2221,13 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
 void *convert_argb_to_uyvy_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_argb_to_uyvy_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                             ccparams->orowstrides[0],
                              (uyvy_macropixel *)ccparams->dest, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride,
+static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowstride,
                                        yuyv_macropixel *u, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 4, ipsize2;
@@ -2230,7 +2250,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * (hsize >> 1);
+        ccparams[i].dest = u + dheight * i * orowstride;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2239,6 +2259,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
+        ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
 
@@ -2259,12 +2280,14 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
 
   ipsize2 = ipsize * 2;
   hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
+  orowstride -= hsize << 1;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
       rgb2yuyv(rgbdata[i + 1], rgbdata[i + 2], rgbdata[i + 3], rgbdata[i + 5], rgbdata[i + 6], rgbdata[i + 7], u++);
     }
+    u += orowstride;
   }
 }
 
@@ -2272,6 +2295,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
 void *convert_argb_to_yuyv_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_argb_to_yuyv_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
+                             ccparams->orowstrides[0],
                              (yuyv_macropixel *)ccparams->dest, ccparams->out_clamping, ccparams->thread_id);
   return NULL;
 }
@@ -2981,35 +3005,57 @@ static void convert_bgr_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, 
 }
 
 
-static void convert_yuv422p_to_uyvy_frame(uint8_t **src, int width, int height, uint8_t *dest) {
+static void convert_yuv422p_to_uyvy_frame(uint8_t **src, int width, int height, int *irows, int orow, uint8_t *dest) {
   // TODO - handle different in sampling types
   uint8_t *src_y = src[0];
   uint8_t *src_u = src[1];
   uint8_t *src_v = src[2];
-  uint8_t *end = src_y + width * height;
+  int i, j;
 
-  while (src_y < end) {
-    *(dest++) = *(src_u++);
-    *(dest++) = *(src_y++);
-    *(dest++) = *(src_v++);
-    *(dest++) = *(src_y++);
+  irows[0] -= width;
+  irows[1] -= width >> 1;
+  irows[2] -= width >> 1;
+  orow -= width * 4;
+
+  for (i = 0; i < height; i++) {
+    for (j = 0; j < width; j++) {
+      *(dest++) = *(src_u++);
+      *(dest++) = *(src_y++);
+      *(dest++) = *(src_v++);
+      *(dest++) = *(src_y++);
+    }
+    src_y += irows[0];
+    src_u += irows[1];
+    src_v += irows[2];
+    dest += orow;
   }
 }
 
 
-static void convert_yuv422p_to_yuyv_frame(uint8_t **src, int width, int height, uint8_t *dest) {
+static void convert_yuv422p_to_yuyv_frame(uint8_t **src, int width, int height, int *irows, int orow, uint8_t *dest) {
   // TODO - handle different in sampling types
 
   uint8_t *src_y = src[0];
   uint8_t *src_u = src[1];
   uint8_t *src_v = src[2];
-  uint8_t *end = src_y + width * height;
+  int i, j;
 
-  while (src_y < end) {
-    *(dest++) = *(src_u++);
-    *(dest++) = *(src_y++);
-    *(dest++) = *(src_v++);
-    *(dest++) = *(src_y++);
+  irows[0] -= width;
+  irows[1] -= width >> 1;
+  irows[2] -= width >> 1;
+  orow -= width * 4;
+
+  for (i = 0; i < height; i++) {
+    for (j = 0; j < width; j++) {
+      *(dest++) = *(src_y++);
+      *(dest++) = *(src_u++);
+      *(dest++) = *(src_y++);
+      *(dest++) = *(src_v++);
+    }
+    src_y += irows[0];
+    src_u += irows[1];
+    src_v += irows[2];
+    dest += orow;
   }
 }
 
@@ -3131,7 +3177,7 @@ static void convert_argb_to_yuv411_frame(uint8_t *rgbdata, int hsize, int vsize,
 }
 
 
-static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int height, int orowstride,
+static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
                                       uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
   register int i, j;
   int psize = 6;
@@ -3149,7 +3195,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3159,6 +3205,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 
         ccparams[i].vsize = dheight;
 
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_alpha = add_alpha;
         ccparams[i].in_clamping = clamping;
@@ -3187,6 +3234,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       uyvy2rgb(src, &dest[0], &dest[1], &dest[2], &dest[a], &dest[b], &dest[c]);
@@ -3194,6 +3242,7 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3201,13 +3250,14 @@ static void convert_uyvy_to_rgb_frame(uyvy_macropixel *src, int width, int heigh
 
 void *convert_uyvy_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_uyvy_to_rgb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_uyvy_to_rgb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                            ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int height, int orowstride,
+static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
                                       uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
   register int i, j;
   int psize = 6;
@@ -3226,7 +3276,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3236,6 +3286,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 
         ccparams[i].vsize = dheight;
 
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_alpha = add_alpha;
         ccparams[i].in_clamping = clamping;
@@ -3264,6 +3315,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       uyvy2rgb(src, &dest[2], &dest[1], &dest[0], &dest[c], &dest[b], &dest[a]);
@@ -3271,6 +3323,7 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3278,13 +3331,14 @@ static void convert_uyvy_to_bgr_frame(uyvy_macropixel *src, int width, int heigh
 
 void *convert_uyvy_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_uyvy_to_bgr_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_uyvy_to_bgr_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                            ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int height, int orowstride,
+static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int height, int irow, int orowstride,
                                        uint8_t *dest, int clamping, int thread_id) {
   register int i, j;
   int psize = 8;
@@ -3301,7 +3355,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3311,6 +3365,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
 
         ccparams[i].vsize = dheight;
 
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -3331,6 +3386,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       uyvy2rgb(src, &dest[1], &dest[2], &dest[3], &dest[5], &dest[6], &dest[7]);
@@ -3338,6 +3394,7 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3345,13 +3402,14 @@ static void convert_uyvy_to_argb_frame(uyvy_macropixel *src, int width, int heig
 
 void *convert_uyvy_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_uyvy_to_argb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_uyvy_to_argb_frame((uyvy_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                              (uint8_t *)ccparams->dest, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int height, int orowstride,
+static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
                                       uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
   register int i, j;
   int psize = 6;
@@ -3369,7 +3427,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3378,6 +3436,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
         }
 
         ccparams[i].vsize = dheight;
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_alpha = add_alpha;
         ccparams[i].in_clamping = clamping;
@@ -3406,6 +3465,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       yuyv2rgb(src, &dest[0], &dest[1], &dest[2], &dest[a], &dest[b], &dest[c]);
@@ -3413,6 +3473,7 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3420,13 +3481,14 @@ static void convert_yuyv_to_rgb_frame(yuyv_macropixel *src, int width, int heigh
 
 void *convert_yuyv_to_rgb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_yuyv_to_rgb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_yuyv_to_rgb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                            ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int height, int orowstride,
+static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
                                       uint8_t *dest, boolean add_alpha, int clamping, int thread_id) {
   register int i, j;
   int psize = 6;
@@ -3444,7 +3506,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3454,6 +3516,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
         ccparams[i].vsize = dheight;
 
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].out_alpha = add_alpha;
         ccparams[i].in_clamping = clamping;
@@ -3482,6 +3545,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       yuyv2rgb(src, &dest[2], &dest[1], &dest[0], &dest[c], &dest[b], &dest[a]);
@@ -3489,6 +3553,7 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3496,13 +3561,14 @@ static void convert_yuyv_to_bgr_frame(yuyv_macropixel *src, int width, int heigh
 
 void *convert_yuyv_to_bgr_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_yuyv_to_bgr_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_yuyv_to_bgr_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                            ccparams->irowstrides[0], ccparams->orowstrides[0],
                             (uint8_t *)ccparams->dest, ccparams->out_alpha, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int height, int orowstride,
+static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int height, int irow, int orowstride,
                                        uint8_t *dest, int clamping, int thread_id) {
   register int i, j;
   int psize = 8;
@@ -3519,7 +3585,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((dheight * i) < height) {
-        ccparams[i].src = src + dheight * i * width;
+        ccparams[i].src = src + dheight * i * irow / 4;
         ccparams[i].hsize = width;
         ccparams[i].dest = dest + dheight * i * orowstride;
 
@@ -3529,6 +3595,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
 
         ccparams[i].vsize = dheight;
 
+        ccparams[i].irowstrides[0] = irow;
         ccparams[i].orowstrides[0] = orowstride;
         ccparams[i].in_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -3549,6 +3616,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
   }
 
   orowstride -= width * psize;
+  irow = irow / 4 - width;
   for (i = 0; i < height; i++) {
     for (j = 0; j < width; j++) {
       yuyv2rgb(src, &dest[1], &dest[2], &dest[3], &dest[5], &dest[6], &dest[7]);
@@ -3556,6 +3624,7 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
       dest += psize;
       src++;
     }
+    src += irow;
     dest += orowstride;
   }
 }
@@ -3563,13 +3632,15 @@ static void convert_yuyv_to_argb_frame(yuyv_macropixel *src, int width, int heig
 
 void *convert_yuyv_to_argb_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
-  convert_yuyv_to_argb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->orowstrides[0],
+  convert_yuyv_to_argb_frame((yuyv_macropixel *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                             ccparams->irowstrides[0], ccparams->orowstrides[0],
                              (uint8_t *)ccparams->dest, ccparams->in_clamping, ccparams->thread_id);
   return NULL;
 }
 
 
-static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, uyvy_macropixel *dest, int clamping) {
+static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, int *irows, int orow,
+    uyvy_macropixel *dest, int clamping) {
   register int i = 0, j;
   uint8_t *y, *u, *v, *end;
   int hwidth = width >> 1;
@@ -3582,7 +3653,9 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, u
   u = src[1];
   v = src[2];
 
-  end = y + width * height;
+  end = y + width * irows[0];
+  orow -= hwidth;
+  irows[0] -= width;
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
@@ -3604,16 +3677,18 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, u
       v++;
     }
     if (chroma) {
-      u -= hwidth;
-      v -= hwidth;
+      u -= irows[1];
+      v -= irows[2];
     }
     chroma = !chroma;
-    i++;
+    y += irows[0];
+    dest += orow;
   }
 }
 
 
-static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, yuyv_macropixel *dest, int clamping) {
+static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, int *irows, int orow, yuyv_macropixel *dest,
+    int clamping) {
   register int i = 0, j;
   uint8_t *y, *u, *v, *end;
   int hwidth = width >> 1;
@@ -3626,7 +3701,9 @@ static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, y
   u = src[1];
   v = src[2];
 
-  end = y + width * height;
+  end = y + width * irows[0];
+  orow -= hwidth;
+  irows[0] -= width;
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
@@ -3648,11 +3725,11 @@ static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, y
       v++;
     }
     if (chroma) {
-      u -= hwidth;
-      v -= hwidth;
+      u -= irows[1];
+      v -= irows[2];
     }
     chroma = !chroma;
-    i++;
+    dest += orow;
   }
 }
 
@@ -3939,7 +4016,7 @@ void *convert_yuv_planar_to_argb_frame_thread(void *data) {
 }
 
 
-static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int height, int irowstride,
+static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
     uyvy_macropixel *uyvy, int clamping) {
   register int x, k;
   int size = (width * height) >> 1;
@@ -3950,7 +4027,7 @@ static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int heigh
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  if (irowstride == width) {
+  if (irowstride == width && orowstride == width << 1) {
     for (x = 0; x < size; x++) {
       // subsample two u pixels
       uyvy->u0 = avg_chroma(u[0], u[1]);
@@ -3965,6 +4042,7 @@ static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int heigh
     return;
   }
   irowstride -= width;
+  orowstride -= width << 1;
   for (k = 0; k < height; k++) {
     for (x = 0; x < width; x++) {
       // subsample two u pixels
@@ -3980,11 +4058,12 @@ static void convert_yuv_planar_to_uyvy_frame(uint8_t **src, int width, int heigh
     y += irowstride;
     u += irowstride;
     v += irowstride;
+    uyvy += orowstride;
   }
 }
 
 
-static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int height, int irowstride,
+static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int height, int irowstride, int orowstride,
     yuyv_macropixel *yuyv, int clamping) {
   register int x, k;
   int hsize = (width * height) >> 1;
@@ -3995,7 +4074,7 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  if (irowstride == width) {
+  if (irowstride == width && orowstride == (width << 1)) {
     for (x = 0; x < hsize; x++) {
       yuyv->y0 = *(y++);
       yuyv->u0 = avg_chroma(u[0], u[1]);
@@ -4009,6 +4088,7 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
   }
 
   irowstride -= width;
+  orowstride -= width << 1;
   for (k = 0; k < height; k++) {
     for (x = 0; x < width; x++) {
       yuyv->y0 = *(y++);
@@ -4022,6 +4102,7 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
     y += irowstride;
     u += irowstride;
     v += irowstride;
+    yuyv += orowstride;
   }
 }
 
@@ -4633,7 +4714,7 @@ static void convert_yuv888_to_yuv422_frame(uint8_t *yuv8, int width, int height,
 }
 
 
-static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, int irowstride,
+static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, int irowstride, int orow,
     uyvy_macropixel *uyvy, boolean has_alpha, int clamping) {
   int size = width * height;
 
@@ -4648,7 +4729,7 @@ static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, in
 
   ipsize = (3 + offs) << 1;
 
-  if ((irowstride << 1) == width * ipsize) {
+  if ((irowstride << 1) == width * ipsize && (width << 1) == orow) {
     for (x = 0; x < size; x += 2) {
       uyvy->u0 = avg_chroma(yuv[1], yuv[4 + offs]);
       uyvy->y0 = yuv[0];
@@ -4658,6 +4739,7 @@ static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, in
       uyvy++;
     }
   } else {
+    orow -= width << 1;
     width >>= 1;
     irowstride -= width * ipsize;
     for (i = 0; i < height; i++) {
@@ -4669,13 +4751,14 @@ static void convert_yuv888_to_uyvy_frame(uint8_t *yuv, int width, int height, in
         yuv += ipsize;
         uyvy++;
       }
+      uyvy += orow;
       yuv += irowstride;
     }
   }
 }
 
 
-static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, int irowstride,
+static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, int irowstride, int orow,
     yuyv_macropixel *yuyv, boolean has_alpha, int clamping) {
   int size = width * height;
 
@@ -4690,7 +4773,7 @@ static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, in
 
   ipsize = (3 + offs) << 1;
 
-  if (irowstride << 1 == width * ipsize) {
+  if (irowstride << 1 == width * ipsize && (width << 1) == orow) {
     for (x = 0; x < size; x += 2) {
       yuyv->y0 = yuv[0];
       yuyv->u0 = avg_chroma(yuv[1], yuv[4 + offs]);
@@ -4700,6 +4783,7 @@ static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, in
       yuyv++;
     }
   } else {
+    orow -= width << 1;
     width >>= 1;
     irowstride -= width * ipsize;
     for (i = 0; i < height; i++) {
@@ -4711,6 +4795,7 @@ static void convert_yuv888_to_yuyv_frame(uint8_t *yuv, int width, int height, in
         yuv += ipsize;
         yuyv++;
       }
+      yuyv += orow;
       yuv += irowstride;
     }
   }
@@ -6666,7 +6751,7 @@ void *convert_swapprepost_frame_thread(void *data) {
 //////////////////////////
 // genric YUV
 
-static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *dest, int thread_id) {
+static void convert_swab_frame(uint8_t *src, int width, int height, int irow, int orow, uint8_t *dest, int thread_id) {
   register int i;
   int width4 = width * 4;
   uint8_t *end = src + height * width4;
@@ -6679,15 +6764,17 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
     dheight = CEIL((double)height / (double)prefs->nfx_threads, 4);
     for (i = 0; i < prefs->nfx_threads; i++) {
       if ((src + dheight * i * width4) < end) {
-        ccparams[i].src = src + dheight * i * width4;
+        ccparams[i].src = src + dheight * i * irow;
         ccparams[i].hsize = width;
-        ccparams[i].dest = dest + dheight * i * width4;
+        ccparams[i].dest = dest + dheight * i * orow;
 
         if (dheight * (i + 1) > (height - 4)) {
           dheight = height - (dheight * i);
         }
 
         ccparams[i].vsize = dheight;
+        ccparams[i].irowstrides[0] = irow;
+        ccparams[i].orowstrides[0] = orow;
 
         ccparams[i].thread_id = i;
 
@@ -6706,11 +6793,11 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
     return;
   }
 
-  for (; src < end; src += width4) {
+  for (; src < end; src += irow) {
     for (i = 0; i < width4; i += 4) {
       swab(&src[i], &dest[i], 4);
     }
-    dest += width4;
+    dest += orow;
   }
 }
 
@@ -6718,6 +6805,7 @@ static void convert_swab_frame(uint8_t *src, int width, int height, uint8_t *des
 void *convert_swab_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swab_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize,
+                     ccparams->irowstrides[0], ccparams->orowstrides[0],
                      (uint8_t *)ccparams->dest, ccparams->thread_id);
   return NULL;
 }
@@ -7046,9 +7134,8 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
   int isubspace = weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, NULL);
 
   int palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
   int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
-
+  int rowstride = weed_layer_get_rowstride(layer);
   void **pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, NULL);
 
   uint8_t *src, *src1, *src2, *end;
@@ -7058,7 +7145,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
   switch (palette) {
   case WEED_PALETTE_YUVA8888:
     src = (uint8_t *)pixel_data[0];
-    end = src + width * height * 4;
+    end = src + height * rowstride;
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7070,7 +7157,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     break;
   case WEED_PALETTE_YUV888:
     src = (uint8_t *)pixel_data[0];
-    end = src + width * height * 3;
+    end = src + height * rowstride;
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7085,7 +7172,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     src = (uint8_t *)pixel_data[0];
     src1 = (uint8_t *)pixel_data[1];
     src2 = (uint8_t *)pixel_data[2];
-    end = src + width * height;
+    end = src + height * rowstride;
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7097,7 +7184,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     break;
   case WEED_PALETTE_UYVY:
     src = (uint8_t *)pixel_data[0];
-    end = src + width * height * 4;
+    end = src + height * rowstride;
     while (src < end) {
       *src = U_to_U[*src];
       src++;
@@ -7111,7 +7198,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     break;
   case WEED_PALETTE_YUYV:
     src = (uint8_t *)pixel_data[0];
-    end = src + width * height * 4;
+    end = src + height * rowstride;
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7127,7 +7214,8 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     src = (uint8_t *)pixel_data[0];
     src1 = (uint8_t *)pixel_data[1];
     src2 = (uint8_t *)pixel_data[2];
-    end = src + width * height;
+    end = src + height * rowstride;
+    // TODO: u, v rowstrides
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7143,7 +7231,8 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     src = (uint8_t *)pixel_data[0];
     src1 = (uint8_t *)pixel_data[2];
     src2 = (uint8_t *)pixel_data[1];
-    end = src + width * height;
+    end = src + height * rowstride;
+    // TODO: u, v rowstrides
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7163,7 +7252,8 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     src = (uint8_t *)pixel_data[0];
     src1 = (uint8_t *)pixel_data[1];
     src2 = (uint8_t *)pixel_data[2];
-    end = src + width * height;
+    end = src + height * rowstride;
+    // TODO: u, v rowstrides
     while (src < end) {
       *src = Y_to_Y[*src];
       src++;
@@ -7181,7 +7271,7 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
     break;
   case WEED_PALETTE_YUV411:
     src = (uint8_t *)pixel_data[0];
-    end = src + width * height * 6;
+    end = src + height * rowstride;
     while (src < end) {
       *src = U_to_U[*src];
       src++;
@@ -8342,14 +8432,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_bgr_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, FALSE, oclamping, -USE_THREADS);
+      convert_bgr_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, FALSE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_bgr_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, FALSE, oclamping, -USE_THREADS);
+      convert_bgr_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, FALSE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8431,14 +8525,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_rgb_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, TRUE, oclamping, -USE_THREADS);
+      convert_rgb_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, TRUE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_rgb_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, TRUE, oclamping, -USE_THREADS);
+      convert_rgb_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, TRUE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8523,14 +8621,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_rgb_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, FALSE, oclamping, -USE_THREADS);
+      convert_rgb_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, FALSE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_rgb_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, FALSE, oclamping, -USE_THREADS);
+      convert_rgb_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, FALSE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8611,14 +8713,18 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_bgr_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, TRUE, oclamping, -USE_THREADS);
+      convert_bgr_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, TRUE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_bgr_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, TRUE, oclamping, -USE_THREADS);
+      convert_bgr_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, TRUE,
+                                oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8700,14 +8806,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_argb_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, oclamping, -USE_THREADS);
+      convert_argb_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_argb_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, oclamping, -USE_THREADS);
+      convert_argb_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, oclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8816,14 +8924,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_uyvy_frame(gusrc_array, width, height, irowstride, (uyvy_macropixel *)gudest, iclamping);
+      convert_yuv_planar_to_uyvy_frame(gusrc_array, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, (yuyv_macropixel *)gudest, iclamping);
+      convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -8931,14 +9041,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_uyvy_frame(gusrc_array, width, height, irowstride, (uyvy_macropixel *)gudest, iclamping);
+      convert_yuv_planar_to_uyvy_frame(gusrc_array, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, (yuyv_macropixel *)gudest, iclamping);
+      convert_yuv_planar_to_yuyv_frame(gusrc_array, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
@@ -9001,8 +9113,9 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_YUYV8888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_swab_frame(gusrc, width, height, gudest, -USE_THREADS);
+      convert_swab_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -9016,35 +9129,39 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_uyvy_to_rgb_frame((uyvy_macropixel *)gusrc, width, height, orowstride, gudest, FALSE, iclamping, -USE_THREADS);
+      convert_uyvy_to_rgb_frame((uyvy_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                FALSE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_uyvy_to_rgb_frame((uyvy_macropixel *)gusrc, width, height, orowstride, gudest, TRUE, iclamping, -USE_THREADS);
+      convert_uyvy_to_rgb_frame((uyvy_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                TRUE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_uyvy_to_bgr_frame((uyvy_macropixel *)gusrc, width, height, orowstride, gudest, FALSE, iclamping, -USE_THREADS);
+      convert_uyvy_to_bgr_frame((uyvy_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                FALSE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_uyvy_to_bgr_frame((uyvy_macropixel *)gusrc, width, height, orowstride, gudest, TRUE, iclamping, -USE_THREADS);
+      convert_uyvy_to_bgr_frame((uyvy_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                TRUE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_uyvy_to_argb_frame((uyvy_macropixel *)gusrc, width, height, orowstride, gudest, iclamping, -USE_THREADS);
+      convert_uyvy_to_argb_frame((uyvy_macropixel *)gusrc, width, height, irowstride, orowstride, gudest, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -9100,8 +9217,9 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     switch (outpl) {
     case WEED_PALETTE_UYVY8888:
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_swab_frame(gusrc, width, height, gudest, -USE_THREADS);
+      convert_swab_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV422P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -9115,35 +9233,39 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_yuyv_to_rgb_frame((yuyv_macropixel *)gusrc, width, height, orowstride, gudest, FALSE, iclamping, -USE_THREADS);
+      convert_yuyv_to_rgb_frame((yuyv_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                FALSE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_yuyv_to_rgb_frame((yuyv_macropixel *)gusrc, width, height, orowstride, gudest, TRUE, iclamping, -USE_THREADS);
+      convert_yuyv_to_rgb_frame((yuyv_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                TRUE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_BGR24:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_yuyv_to_bgr_frame((yuyv_macropixel *)gusrc, width, height, orowstride, gudest, FALSE, iclamping, -USE_THREADS);
+      convert_yuyv_to_bgr_frame((yuyv_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                FALSE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_yuyv_to_bgr_frame((yuyv_macropixel *)gusrc, width, height, orowstride, gudest, TRUE, iclamping, -USE_THREADS);
+      convert_yuyv_to_bgr_frame((yuyv_macropixel *)gusrc, width, height, irowstride, orowstride, gudest,
+                                TRUE, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
       orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
-      convert_yuyv_to_argb_frame((yuyv_macropixel *)gusrc, width, height, orowstride, gudest, iclamping, -USE_THREADS);
+      convert_yuyv_to_argb_frame((yuyv_macropixel *)gusrc, width, height, irowstride, orowstride, gudest, iclamping, -USE_THREADS);
       break;
     case WEED_PALETTE_YUV444P:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width << 1);
@@ -9268,14 +9390,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv888_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, FALSE, iclamping);
+      convert_yuv888_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, FALSE, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv888_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, FALSE, iclamping);
+      convert_yuv888_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, FALSE, iclamping);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
@@ -9362,15 +9486,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      ostrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
-      convert_yuv888_to_uyvy_frame(gusrc, width, height, irowstride, (uyvy_macropixel *)gudest, TRUE, iclamping);
+      convert_yuv888_to_uyvy_frame(gusrc, width, height, irowstride, orowstride, (uyvy_macropixel *)gudest, TRUE, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv888_to_yuyv_frame(gusrc, width, height, irowstride, (yuyv_macropixel *)gudest, TRUE, iclamping);
+      convert_yuv888_to_yuyv_frame(gusrc, width, height, irowstride, orowstride, (yuyv_macropixel *)gudest, TRUE, iclamping);
       break;
     case WEED_PALETTE_YUV411:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 2);
@@ -9428,14 +9553,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv420_to_uyvy_frame(gusrc_array, width, height, (uyvy_macropixel *)gudest, iclamping);
+      convert_yuv420_to_uyvy_frame(gusrc_array, width, height, istrides, orowstride, (uyvy_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv420_to_yuyv_frame(gusrc_array, width, height, (yuyv_macropixel *)gudest, iclamping);
+      convert_yuv420_to_yuyv_frame(gusrc_array, width, height, istrides, orowstride, (yuyv_macropixel *)gudest, iclamping);
       break;
     case WEED_PALETTE_YUV422P:
       create_empty_pixel_data(layer, FALSE, FALSE);
@@ -9562,14 +9689,16 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv422p_to_uyvy_frame(gusrc_array, width, height, gudest);
+      convert_yuv422p_to_uyvy_frame(gusrc_array, width, height, istrides, orowstride, gudest);
       break;
     case WEED_PALETTE_YUYV8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) goto memfail;
+      orowstride = weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, &error);
       gudest = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-      convert_yuv422p_to_yuyv_frame(gusrc_array, width, height, gudest);
+      convert_yuv422p_to_yuyv_frame(gusrc_array, width, height, istrides, orowstride, gudest);
       break;
     case WEED_PALETTE_YUV420P:
     case WEED_PALETTE_YVU420P:

@@ -8382,10 +8382,10 @@ int set_copy_to(weed_plant_t *inst, int pnum, lives_rfx_t *rfx, boolean update) 
   if (weed_plant_has_leaf(in_param2, WEED_LEAF_HOST_INTERNAL_CONNECTION)) return -1;
   param_hint2 = weed_param_get_hint(in_param2);
 
-  if (!(param_hint == param_hint2 && (weed_param_has_variable_size(in_param2) ||
-                                      weed_param_get_default_size(in_param) ==
-                                      weed_param_get_default_size(in_param2)))) return -1;
-
+  /// check for compatibility nvalues
+  if (!(param_hint == param_hint2 && (!weed_param_has_variable_size(in_param) || weed_param_has_variable_size(in_param2))
+        && (!weed_param_has_value_perchannel(in_param) || weed_param_has_variable_size(in_param2)
+            || weed_param_has_value_perchannel(in_param2)))) return -1;
 
   if (update) {
     weed_plant_t *paramtmpl2 = weed_param_get_template(in_param2);

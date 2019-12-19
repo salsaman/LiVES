@@ -859,7 +859,7 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
 
   // all our pixel_data will have been free'd already
   for (i = 0; layers[i] != NULL; i++) {
-    if (layers[i] != retlayer) weed_plant_free(layers[i]);
+    if (layers[i] != retlayer) weed_layer_free(layers[i]);
   }
   lives_free(layers);
 

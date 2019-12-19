@@ -653,18 +653,16 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-  float clip = 1.;
+  register float valf, clip = 1., fval, volx = vol;
   register short val;
   register unsigned short valu = 0;
-  register float valf;
 
   while ((nsamps - coffs) > 0) {
     frames_out++;
     for (i = 0; i < chans; i++) {
-      if ((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))) > clip) clip = valf;
-      if (clip > 1.) valf /= clip;
-
-      valf *= vol;
+      if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip)
+        volx = vol / ((clip = fval));
+      valf *= volx;
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
 

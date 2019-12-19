@@ -126,6 +126,7 @@ int weed_param_has_variable_size(weed_plant_t *param);
 int weed_param_get_default_size(weed_plant_t *param);
 int weed_param_does_wrap(weed_plant_t *param);
 int weed_param_get_value_type(weed_plant_t *param);
+int weed_param_gui_only(weed_plant_t *param);
 
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);

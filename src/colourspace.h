@@ -184,9 +184,9 @@ boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
-void letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
-                     int tclamp);
-void compact_rowstrides(weed_layer_t *);
+boolean letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
+                        int tclamp);
+boolean compact_rowstrides(weed_layer_t *);
 
 void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in);
 

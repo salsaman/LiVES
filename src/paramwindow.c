@@ -1230,8 +1230,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             rfx->params[pnum].changed = FALSE;
           }
           if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, param, pnum);
-          if ((param->hidden && param->hidden != HIDDEN_NEEDS_REINIT) ||
-              param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
+          if (param->type == LIVES_PARAM_UNDISPLAYABLE || param->type == LIVES_PARAM_UNKNOWN) continue;
 
           has_param = TRUE;
 
@@ -1382,8 +1381,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       } else if (pass == 0) break;
 
       if (rfx->source_type == LIVES_RFX_SOURCE_WEED) check_hidden_gui((weed_plant_t *)rfx->source, &rfx->params[i], i);
-      if ((rfx->params[i].hidden && rfx->params[i].hidden != HIDDEN_NEEDS_REINIT) ||
-          rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
+      if (rfx->params[i].type == LIVES_PARAM_UNDISPLAYABLE || rfx->params[i].type == LIVES_PARAM_UNKNOWN) continue;
 
       if (chk_params) return TRUE;
 
@@ -1419,8 +1417,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   } else scrolledwindow = lives_standard_scrolled_window_new(-1, -1, top_hbox);
 
   lives_box_pack_start(LIVES_BOX(top_vbox), scrolledwindow, TRUE, TRUE, 0);
-
   lives_widget_destroy(dummy_label);
+  if (has_param)
+    update_widget_vis(rfx, -1, -1);
   return has_param;
 }
 
@@ -1506,7 +1505,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(checkbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = checkbutton;
-      if (param->hidden) lives_widget_set_sensitive(checkbutton, FALSE);
     } else {
       group = get_group(rfx, param);
 
@@ -1547,9 +1545,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
       // store parameter so we know whose trigger to use
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(radiobutton), "param_number", LIVES_INT_TO_POINTER(pnum));
       param->widgets[0] = radiobutton;
-
-      if (param->hidden) lives_widget_set_sensitive(radiobutton, FALSE);
     }
+    param->widgets[1] = widget_opts.last_label;
     break;
 
   case LIVES_PARAM_NUM:
@@ -1576,8 +1573,8 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), "param_number", LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = spinbutton;
+    param->widgets[++wcount] = widget_opts.last_label;
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(param->widgets[0]), "rfx", rfx);
-    if (param->hidden) lives_widget_set_sensitive(spinbutton, FALSE);
 
     if (add_scalers) {
       spinbutton_adj = lives_spin_button_get_adjustment(LIVES_SPIN_BUTTON(spinbutton));
@@ -1663,14 +1660,15 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     param->widgets[2] = spinbutton_blue;
     //param->widgets[3]=spinbutton_alpha;
     param->widgets[4] = cbutton;
+    param->widgets[5] = widget_opts.last_label;
 
-    if (param->hidden) {
-      lives_widget_set_sensitive(spinbutton_red, FALSE);
-      lives_widget_set_sensitive(spinbutton_green, FALSE);
-      lives_widget_set_sensitive(spinbutton_blue, FALSE);
-      //lives_widget_set_sensitive(spinbutton_alpha,FALSE);
-      lives_widget_set_sensitive(cbutton, FALSE);
-    }
+    /* if (param->hidden) { */
+    /*   lives_widget_set_sensitive(spinbutton_red, FALSE); */
+    /*   lives_widget_set_sensitive(spinbutton_green, FALSE); */
+    /*   lives_widget_set_sensitive(spinbutton_blue, FALSE); */
+    /*   //lives_widget_set_sensitive(spinbutton_alpha,FALSE); */
+    /*   lives_widget_set_sensitive(cbutton, FALSE); */
+    /* } */
     break;
 
   case LIVES_PARAM_STRING:
@@ -1736,6 +1734,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                    (livespointer) rfx);
       }
     }
+    param->widgets[1] = widget_opts.last_label;
 
     if (param->desc != NULL) lives_widget_set_tooltip_text(label, param->desc);
 
@@ -1743,7 +1742,6 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
                                LIVES_GUI_CALLBACK(after_param_text_focus_changed),
                                (livespointer) rfx);
 
-    if (param->hidden) lives_widget_set_sensitive(param->widgets[0], FALSE);
     if (use_mnemonic) lives_label_set_mnemonic_widget(LIVES_LABEL(label), param->widgets[0]);
 
     lives_free(txt);
@@ -1775,7 +1773,7 @@ boolean add_param_to_box(LiVESBox *box, lives_rfx_t *rfx, int pnum, boolean add_
     // store parameter so we know whose trigger to use
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(combo), "param_number", LIVES_INT_TO_POINTER(pnum));
     param->widgets[0] = combo;
-    //if (param->hidden) lives_widget_set_sensitive(combo, FALSE);
+    param->widgets[1] = widget_opts.last_label;
     break;
 
   default:
@@ -1844,7 +1842,7 @@ lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
 
 
 boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
-  weed_plant_t *wparam, *inst;
+  weed_plant_t *wparam = NULL, *inst;
   int keyw, modew;
   lives_param_t *param;
 
@@ -1862,13 +1860,19 @@ boolean update_widget_vis(lives_rfx_t *rfx, int key, int mode) {
   if ((fx_dialog[1] == NULL && mainw->multitrack == NULL) || rfx == NULL || rfx->status != RFX_STATUS_WEED) return FALSE;
   inst = (weed_plant_t *)rfx->source;
   for (int i = 0; i < rfx->num_params; i++) {
+    param = &rfx->params[i];
     if ((wparam = weed_inst_in_param(inst, i, FALSE, FALSE)) != NULL) {
+      check_hidden_gui(inst, param, i);
       for (int j = 0; j < RFX_MAX_NORM_WIDGETS; j++) {
-        param = &rfx->params[i];
+        if (param->type == LIVES_PARAM_COLRGB24 && j == 3 && param->widgets[j] == NULL) continue;
         if (param->widgets[j] == NULL) break;
-        check_hidden_gui(inst, param, i);
-        if (param->hidden) lives_widget_hide(param->widgets[j]);
-        else lives_widget_show_all(param->widgets[j]);
+        if (param->hidden) {
+          lives_widget_hide(param->widgets[j]);
+          lives_widget_set_no_show_all(param->widgets[j], TRUE);
+        } else {
+          lives_widget_set_no_show_all(param->widgets[j], FALSE);
+          lives_widget_show_all(param->widgets[j]);
+        }
       }
     }
   }
@@ -1906,7 +1910,7 @@ static void after_any_changed_1(lives_rfx_t *rfx, int param_number, int index) {
   @brief part 2 function for updating params visually
 */
 static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean needs_update) {
-  weed_plant_t *wparam, *gui, *inst = NULL;
+  weed_plant_t *wparam = NULL, *gui, *inst = NULL;
   lives_filter_error_t retval = FILTER_SUCCESS;
 
   /// update widgets on screen (as a result of copying values or triggers)
@@ -1966,12 +1970,15 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
     mainw->block_param_updates = FALSE;
   }
 
+  if (!weed_param_gui_only(wparam)) {
+    param->changed = TRUE;
+  }
+
   if (mainw->multitrack != NULL && rfx->status == RFX_STATUS_WEED) {
     update_widget_vis(rfx, -1, -1);
     activate_mt_preview(mainw->multitrack);
   }
 
-  param->changed = TRUE;
   param->change_blocked = FALSE;
 }
 
@@ -3004,13 +3011,17 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
 }
 
 
-int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd) {
-  // update values for param using values in plist
-  // if upd is TRUE, the widgets for that param also are updated;
-  // otherwise, we do not update the widgets, but we do update the default
+/**
+   @brief  update values for param using values in plist
+  if upd is TRUE, the widgets for that param also are updated;
+  otherwise, we do not update the widgets, but we do update the default
 
-  // for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
-  // (other types dont have a min/max anyway)
+  for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
+  (other types dont have a min/max anyway)
+
+  pnum here is not param number, but rather the offset of the element in plist
+*/
+int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolean with_min_max, boolean upd) {
   char *tmp;
   char *strval;
   int red, green, blue;

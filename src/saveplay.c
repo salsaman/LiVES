@@ -2568,7 +2568,8 @@ void play_file(void) {
             mainw->jackd->read_abuf = 0;
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
-            mainw->jackd->in_use = TRUE;
+            if (mainw->event_list != NULL)
+              mainw->jackd->is_paused = mainw->jackd->in_use = TRUE;
           }
 #endif
 #ifdef HAVE_PULSE_AUDIO
@@ -2587,7 +2588,9 @@ void play_file(void) {
             mainw->pulsed->read_abuf = 0;
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
-            //mainw->pulsed->in_use = TRUE;
+            if (mainw->event_list != NULL) {
+              mainw->pulsed->is_paused = mainw->pulsed->in_use = TRUE;
+            }
           }
 #endif
           // let transport roll

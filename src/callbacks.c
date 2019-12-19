@@ -6965,8 +6965,13 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       }
       if (CURRENT_CLIP_IS_NORMAL && (CURRENT_CLIP_HAS_VIDEO || cfile->play_paused) && !mainw->noswitch) {
         weed_plant_t *frame_layer = mainw->frame_layer;
+        check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         mainw->frame_layer = NULL;
         load_frame_image(cfile->frameno);
+        if (mainw->frame_layer != NULL) {
+          check_layer_ready(mainw->frame_layer);
+          weed_layer_free(mainw->frame_layer);
+        }
         mainw->frame_layer = frame_layer;
       }
     } else {
@@ -7003,8 +7008,13 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           if (mainw->play_window != NULL && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
             weed_plant_t *frame_layer = mainw->frame_layer;
+            check_layer_ready(mainw->frame_layer); // ensure all threads are complete
             mainw->frame_layer = NULL;
             load_frame_image(cfile->frameno);
+            if (mainw->frame_layer != NULL) {
+              check_layer_ready(mainw->frame_layer);
+              weed_layer_free(mainw->frame_layer);
+            }
             mainw->frame_layer = frame_layer;
           }
         }
@@ -7046,8 +7056,13 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     if ((cfile->frames == 1 || cfile->play_paused) && !mainw->noswitch && mainw->multitrack == NULL &&
         CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;
+      check_layer_ready(mainw->frame_layer); // ensure all threads are complete
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);
+      if (mainw->frame_layer != NULL) {
+        check_layer_ready(mainw->frame_layer);
+        weed_layer_free(mainw->frame_layer);
+      }
       mainw->frame_layer = frame_layer;
     }
   } else {
@@ -7121,6 +7136,7 @@ void on_double_size_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
         if (!(mainw->play_window == NULL) && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
           weed_plant_t *frame_layer = mainw->frame_layer;
+          check_layer_ready(mainw->frame_layer); // ensure all threads are complete
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
           if (mainw->frame_layer != NULL) {
@@ -7289,8 +7305,13 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window)) &&
               !mainw->noswitch && mainw->multitrack == NULL && CURRENT_CLIP_IS_NORMAL) {
             weed_plant_t *frame_layer = mainw->frame_layer;
+            check_layer_ready(mainw->frame_layer);
             mainw->frame_layer = NULL;
             load_frame_image(cfile->frameno);
+            if (mainw->frame_layer != NULL) {
+              check_layer_ready(mainw->frame_layer);
+              weed_layer_free(mainw->frame_layer);
+            }
             mainw->frame_layer = frame_layer;
           }
         }
@@ -7331,8 +7352,13 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         if (CURRENT_CLIP_IS_NORMAL && mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused) &&
             !mainw->noswitch) {
           weed_plant_t *frame_layer = mainw->frame_layer;
+          check_layer_ready(mainw->frame_layer);
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
+          if (mainw->frame_layer != NULL) {
+            check_layer_ready(mainw->frame_layer);
+            weed_layer_free(mainw->frame_layer);
+          }
           mainw->frame_layer = frame_layer;
         }
       }
@@ -10242,9 +10268,15 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     cfile->pb_fps = 0.;
     mainw->deltaticks = 0;
     if (!mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
-      weed_plant_t *frame_layer = mainw->frame_layer;
+      weed_plant_t *frame_layer;
+      check_layer_ready(mainw->frame_layer); // ensure all threads are complete
+      frame_layer = mainw->frame_layer;
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);
+      if (mainw->frame_layer != NULL) {
+        check_layer_ready(mainw->frame_layer);
+        weed_layer_free(mainw->frame_layer);
+      }
       mainw->frame_layer = frame_layer;
     }
   }

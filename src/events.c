@@ -2999,9 +2999,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         // ...but playing at fixed fps, which is faster than mt fps
         mainw->pchains = pchains;
         load_frame_image(cfile->last_frameno >= 1 ? cfile->last_frameno : cfile->start);
-        if (mainw->multitrack != NULL) {
-          mainw->pulsed->in_use = TRUE;
-        }
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)

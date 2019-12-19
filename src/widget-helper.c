@@ -10204,7 +10204,6 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     if (widget_opts.mnemonic_label) {
       labelcname = lives_standard_label_new_with_mnemonic_widget(name, cbutton);
     } else labelcname = lives_standard_label_new(name);
-    widget_opts.last_label = labelcname;
     lives_widget_set_show_hide_with(cbutton, labelcname);
     lives_widget_set_sensitive_with(cbutton, labelcname);
   }
@@ -10337,6 +10336,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
                        LIVES_GUI_CALLBACK(on_pwcolselx),
                        NULL);
 
+  widget_opts.last_label = labelcname;
   return cbutton;
 }
 

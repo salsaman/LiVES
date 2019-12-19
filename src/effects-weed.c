@@ -1303,10 +1303,10 @@ reinit:
           }
 
           // do updates from "gui"
-          rfx_params_free(rfx);
-          lives_freep((void **)&rfx->params);
-
-          rfx->params = weed_params_to_rfx(rfx->num_params, inst, FALSE);
+          //rfx_params_free(rfx);
+          //lives_freep((void **)&rfx->params);
+          if (rfx->num_params > 0 && rfx->params == NULL)
+            rfx->params = weed_params_to_rfx(rfx->num_params, inst, FALSE);
           if (fx_dialog[1] != NULL) {
             int keyw = fx_dialog[1]->key;
             int modew = fx_dialog[1]->mode;
@@ -1659,7 +1659,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   boolean all_out_alpha = TRUE; //,all_in_alpha=FALSE;
   boolean is_converter = FALSE, pvary = FALSE, svary = FALSE;
   int num_palettes;
-  int num_in_tracks, num_out_tracks;
+  int num_in_tracks = 0, num_out_tracks;
   int frame;
   int inwidth, inheight, inpalette, outpalette, opalette, channel_flags, filter_flags = 0;
   int palette, cpalette;
@@ -1737,7 +1737,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
           // this will look at width, height, current_palette, and create an empty pixel_data and set rowstrides
           // and update width and height if necessary
-          create_empty_pixel_data(channel, FALSE, TRUE);
+          if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
+            retval = FILTER_ERROR_MEMORY_ERROR;
+            goto done_video;
+          }
         }
       }
 
@@ -1750,13 +1753,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       lives_freep((void **)&in_channels);
       return retval;
     }
+    lives_freep((void **)&in_channels);
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_NO_IN_CHANNELS;
   }
 
   if (get_enabled_channel(inst, 0, TRUE) == NULL) {
     /// we process generators elsewhere
-    if (in_channels != NULL) lives_freep((void **)&in_channels);
+    lives_freep((void **)&in_channels);
     lives_freep((void **)&out_channels);
     return FILTER_ERROR_NO_IN_CHANNELS;
   }
@@ -1791,7 +1795,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   retval = check_cconx(inst, num_inc + num_in_alpha, &needs_reinit);
   if (retval != FILTER_SUCCESS) {
     goto done_video;
-    return retval;
   }
 
   if (num_in_tracks > num_inc) num_in_tracks = num_inc; // for example, compound fx
@@ -2257,7 +2260,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // width, height, rowstrides, current palette, pixel_data,
     // YUV_*, etc.
     if (weed_layer_copy((weed_layer_t *)channel, layer) == NULL) {
-      return FILTER_ERROR_COPYING_FAILED;
+      retval = FILTER_ERROR_COPYING_FAILED;
+      goto done_video;
     }
   }
 
@@ -6411,7 +6415,7 @@ start1:
         char *filter_name;
         filter = weed_filters[idx];
         filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, NULL);
-        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = lives_strdup(weed_error_to_text(error))));
+        d_print(_("Failed to start instance %s, (%s)\n"), filter_name, (tmp = weed_error_to_text(error)));
         lives_free(tmp);
         lives_free(filter_name);
         key_to_instance[hotkey][key_modes[hotkey]] = NULL;
@@ -7195,7 +7199,9 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     }
   }
 
-  create_empty_pixel_data(channel, FALSE, TRUE);
+  if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
+    return NULL;
+  }
 
   if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
@@ -7255,7 +7261,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
             mainw->rowstride_alignment_hint = rowstride_alignment_hint;
           }
         }
-        create_empty_pixel_data(channel, FALSE, TRUE);
+        if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
         if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
           weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
         else

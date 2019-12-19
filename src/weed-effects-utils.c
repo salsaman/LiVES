@@ -337,9 +337,19 @@ WEED_GLOBAL_INLINE int weed_param_has_variable_size(weed_plant_t *param) {
   return weed_paramtmpl_has_variable_size(weed_param_get_template(param));
 }
 
+// TODO: maybe remove
 WEED_GLOBAL_INLINE int weed_param_get_default_size(weed_plant_t *param) {
   if (!WEED_PLANT_IS_PARAMETER(param)) return -1;
   return weed_paramtmpl_default_size(weed_param_get_template(param));
+}
+
+WEED_GLOBAL_INLINE int weed_param_gui_only(weed_plant_t *param) {
+  weed_plant_t *wtmpl, *gui;
+  if (!WEED_PLANT_IS_PARAMETER(param)) return WEED_FALSE;
+  wtmpl = weed_param_get_template(param);
+  gui = weed_paramtmpl_get_gui(wtmpl, FALSE);
+  if (gui == NULL || !(weed_gui_get_flags(gui) & WEED_GUI_REINIT_ON_VALUE_CHANGE)) return WEED_FALSE;
+  return WEED_TRUE;
 }
 
 WEED_GLOBAL_INLINE int weed_param_does_wrap(weed_plant_t *param) {

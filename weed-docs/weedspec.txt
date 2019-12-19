@@ -2599,15 +2599,10 @@ rely on setting "copy_value_to" to force the host to set indentical
 
 '''Optional leaves''': [[BR]]
 
-* "label" : WEED_SEED_STRING : label for display. For parameters with multiple values in default, this may contain multiple
-  	    		     elements: the first (0) element is for the overall parameter, subsequent elements may be employed to
-			     label the individual values.
+* "label" : WEED_SEED_STRING : label for display.
 
- * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates whether "label" uses
-    underscore as mnemonic
-
-In the case where multiple values are contained in "default", the following 4 leaves may optionally contain multiple values,
-one per value in default.
+ * "use_mnemonic" : WEED_SEED_BOOLEAN : WEED_TRUE indicates that "label" uses
+    underscore as a mnemonic accelerator
 
  * "decimals" : WEED_SEED_INT : number of decimals to be displayed for a FLOAT or
    COLOR (FLOAT) hint. For other types this will be ignored.

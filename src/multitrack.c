@@ -2715,7 +2715,6 @@ boolean track_arrow_pressed(LiVESWidget * ebox, LiVESXEventButton * event, lives
   lives_tooltips_copy(new_arrow, arrow);
 
   // must do this after we update object data, to avoid a race condition
-  lives_widget_object_unref(arrow);
   lives_widget_destroy(arrow);
 
   scroll_tracks(mt, mt->top_track, FALSE);
@@ -3191,7 +3190,12 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     weed_plant_t *live_inst = NULL;
     mainw->is_rendering = TRUE;
 
-    if (mt->pb_start_event != NULL) {
+    if (mt->event_list != NULL) {
+      if (mt->pb_start_event != NULL) {
+        cfile->next_event = mt->pb_start_event;
+      } else {
+        cfile->next_event = get_first_event(mt->event_list);
+      }
       // "play" a single frame
       current_file = mainw->current_file;
       mainw->internal_messaging = TRUE; // stop load_frame from showing image
@@ -19354,8 +19358,14 @@ void activate_mt_preview(lives_mt * mt) {
       mainw->no_interp = FALSE;
     }
     if (mt->apply_fx_button != NULL) {
+      int nparams = mt->current_rfx->num_params;
       lives_widget_set_sensitive(mt->apply_fx_button, FALSE);
-      lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
+      for (int i = 0; i < nparams; i++) {
+        if (mt->current_rfx->params[i].changed) {
+          lives_widget_set_sensitive(mt->apply_fx_button, TRUE);
+          break;
+        }
+      }
       lives_widget_set_sensitive(mt->resetp_button, check_can_resetp(mt));
     }
   } else mt_show_current_frame(mt, FALSE);
@@ -19384,7 +19394,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   boolean was_changed = FALSE;
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
-
+  int nparams;
   int numtracks;
   register int i;
 
@@ -19420,8 +19430,8 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
       has_multi = TRUE;
       if (weed_plant_has_leaf(param, WEED_LEAF_IGNORE)) {
         int j;
-        int num_vals = weed_leaf_num_elements(param, WEED_LEAF_IGNORE);
-        int *ign = weed_get_boolean_array(param, WEED_LEAF_IGNORE, &error);
+        int num_vals;
+        int *ign = weed_get_boolean_array_counted(param, WEED_LEAF_IGNORE, &num_vals);
         weed_set_boolean_array(pchange, WEED_LEAF_IGNORE, num_vals, ign);
         for (j = 0; j < num_vals; j++) {
           if (ign[j] == WEED_FALSE) {
@@ -19457,6 +19467,9 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   filter_name = weed_filter_idx_get_name(mt->current_fx, FALSE, FALSE, FALSE);
   tracks = weed_get_int_array(mt->init_event, WEED_LEAF_IN_TRACKS, &error);
   numtracks = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE); // count repeated channels
+
+  nparams = mt->current_rfx->num_params;
+  for (i = 0; i < nparams; i++) mt->current_rfx->params[i].changed = FALSE;
 
   switch (numtracks) {
   case 1:

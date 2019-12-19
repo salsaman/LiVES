@@ -613,7 +613,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   int rc = 0;
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
-  ts.tv_sec += 30;
+  ts.tv_sec += 300;
 
   // wait for render thread ready
   while (!rthread_ready && rc == 0) {

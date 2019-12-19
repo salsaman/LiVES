@@ -500,8 +500,7 @@ static int ebml_parse_id(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 }
 
 
-static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
-                      void *data) {
+static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax, void *data) {
   int res;
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
@@ -510,15 +509,13 @@ static int ebml_parse(const lives_clip_data_t *cdata, EbmlSyntax *syntax,
 
     int res = ebml_read_num(cdata, NULL, 4, &id);
 
-    if (res < 0)
-      return res;
+    if (res < 0) return res;
 
     matroska->current_id = id | 1 << 7 * res;
 
     if (matroska->current_id != 163) {
       //printf("got id %08x\n",matroska->current_id);
     }
-
   }
   res = ebml_parse_id(cdata, syntax, matroska->current_id, data);
 

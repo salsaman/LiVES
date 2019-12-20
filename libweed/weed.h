@@ -109,6 +109,8 @@ struct _weed_leaf {
 typedef weed_leaf_t weed_plant_t;
 #endif
 
+typedef weed_plant_t *weed_plantptr_t;
+
 typedef void *(*weed_malloc_f)(size_t);
 typedef void (*weed_free_f)(void *);
 typedef void *(*weed_memset_f)(void *, int, size_t);

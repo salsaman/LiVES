@@ -2672,9 +2672,13 @@ void play_file(void) {
   mainw->playing_file = -1;
 
   if (mainw->ext_playback) {
-    // need to exit_screen before unfullscreen, else the openGL player can hang
+#ifndef IS_MINGW
+    vid_playback_plugin_exit();
+    lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+#else
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
     vid_playback_plugin_exit();
+#endif
   }
 
   // play completed

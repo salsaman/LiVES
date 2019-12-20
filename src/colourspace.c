@@ -2363,7 +2363,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
   hsize = (hsize >> 1) << 1;
   iwidth = hsize * ipsize;
-  orow = orow - hsize * opsize;
+  orow -= hsize * opsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < iwidth; i += ipsize) {
@@ -2658,10 +2658,10 @@ void *convert_bgr_to_yuvp_frame_thread(void *data) {
 }
 
 
-static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowst,
+static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
                                       uint8_t *u, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 4, opsize = 3;
-  int iwidth, orow;
+  int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
   register int i;
 
@@ -2680,7 +2680,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
 
-        ccparams[i].dest = u + dheight * i * orowst;
+        ccparams[i].dest = u + dheight * i * orow;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2689,7 +2689,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].vsize = dheight;
 
         ccparams[i].irowstrides[0] = rowstride;
-        ccparams[i].orowstrides[0] = orowst;
+        ccparams[i].orowstrides[0] = orow;
         ccparams[i].out_alpha = out_has_alpha;
         ccparams[i].out_clamping = clamping;
         ccparams[i].thread_id = i;
@@ -2713,7 +2713,7 @@ static void convert_argb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, in
 
   hsize = (hsize >> 1) << 1;
   iwidth = hsize * ipsize;
-  orow = orowst - hsize * opsize;
+  orow -= hsize * opsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < iwidth; i += ipsize) {
@@ -3649,7 +3649,7 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, i
   int hwidth = width >> 1;
   boolean chroma = TRUE;
 
-  // TODO - handle different in sampling types
+  // TODO - hasndle different in sampling types
   if (!avg_inited) init_average();
 
   y = src[0];
@@ -4140,7 +4140,7 @@ static void convert_combineplanes_frame(uint8_t **src, int width, int height, in
     }
   } else {
     irowstride -= width;
-    orowstride -= width *opsize;
+    orowstride -= width * opsize;
     for (k = 0; k < height; k++) {
       for (x = 0; x < width; x++) {
         *(dest++) = *(y++);

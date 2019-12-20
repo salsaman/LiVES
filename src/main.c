@@ -3360,9 +3360,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
 
-  // allow us to set immutable values (plugins can't)
-  weed_leaf_num_elements = weed_leaf_num_elements_host;
-
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
 

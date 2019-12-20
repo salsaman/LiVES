@@ -2482,12 +2482,11 @@ void *convert_rgb_to_yuvp_frame_thread(void *data) {
 }
 
 
-static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orowst,
+static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int rowstride, int orow,
                                      uint8_t *u, boolean in_has_alpha, boolean out_has_alpha, int clamping, int thread_id) {
   int ipsize = 3, opsize = 3;
   int iwidth;
   uint8_t *end = rgbdata + (rowstride * vsize);
-  int orow;
   register int i;
   uint8_t in_alpha = 255;
 
@@ -2505,7 +2504,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowst;
+        ccparams[i].dest = u + dheight * i * orow;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2539,7 +2538,7 @@ static void convert_bgr_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
   hsize = (hsize >> 1) << 1;
   iwidth = hsize * ipsize;
-  orow = orowst - hsize * opsize;
+  orow -= hsize * opsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < iwidth; i += ipsize) {
@@ -4123,12 +4122,13 @@ static void convert_combineplanes_frame(uint8_t **src, int width, int height, in
   uint8_t *u = src[1];
   uint8_t *v = src[2];
   uint8_t *a = NULL;
-
+  int opsize = 3;
   register int x, k;
 
   if (in_alpha) a = src[3];
+  if (out_alpha) opsize = 4;
 
-  if (irowstride == width && orowstride == width) {
+  if (irowstride == width && orowstride == width * opsize) {
     for (x = 0; x < size; x++) {
       *(dest++) = *(y++);
       *(dest++) = *(u++);
@@ -4140,7 +4140,7 @@ static void convert_combineplanes_frame(uint8_t **src, int width, int height, in
     }
   } else {
     irowstride -= width;
-    orowstride -= width;
+    orowstride -= width *opsize;
     for (k = 0; k < height; k++) {
       for (x = 0; x < width; x++) {
         *(dest++) = *(y++);

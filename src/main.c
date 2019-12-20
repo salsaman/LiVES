@@ -3208,7 +3208,7 @@ static boolean lives_startup(livespointer data) {
     sensitize();
   }
   if (prefs->vj_mode && capable->has_wmctrl) {
-    tmp = lives_strdup_printf("%s -Fa '%s'", EXEC_WMCTRL,
+    tmp = lives_strdup_printf("%s -Fa \"%s\"", EXEC_WMCTRL,
                               lives_window_get_title(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET)));
     lives_system(tmp, TRUE);
     lives_free(tmp);
@@ -3359,6 +3359,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
+
+  // allow us to set immutable values (plugins can't)
+  weed_leaf_num_elements = weed_leaf_num_elements_host;
 
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
@@ -5179,7 +5182,7 @@ static void png_row_callback(png_structp png_ptr,
 #ifndef NO_PROG_LOAD
 
 #ifdef GUI_GTK
-static void pbsize_set(GdkPixbufLoader * pbload, int width, int height, livespointer ptr) {
+static void pbsize_set(GdkPixbufLoader * pbload, int xxwidth, int xxheight, livespointer ptr) {
   if (xxwidth * xxheight > 0) gdk_pixbuf_loader_set_size(pbload, xxwidth, xxheight);
 }
 #endif
@@ -5242,8 +5245,7 @@ boolean layer_from_png(FILE * fp, weed_plant_t *layer, boolean prog) {
   // read header info
   png_read_info(png_ptr, info_ptr);
 
-  if (weed_plant_has_leaf(layer, WEED_LEAF_FLAGS))
-    flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
+  flags = weed_get_int_value(layer, WEED_LEAF_FLAGS, &error);
 
 #if PNG_LIBPNG_VER >= 10504
   if (prefs->alpha_post) {
@@ -7376,7 +7378,7 @@ void load_frame_image(int frame) {
         do {
           // TODO ***: add a timeout here
           if (gerror != NULL) lives_error_free(gerror);
-          lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, FALSE, &gerror);
+          lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, &gerror);
         } while (gerror != NULL);
 
         lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
@@ -7399,16 +7401,13 @@ void load_frame_image(int frame) {
 
   /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, boolean do_chmod,
-                            LiVESError **gerrorptr) {
+  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr) {
     int fd;
     ticks_t timeout;
     lives_alarm_t alarm_handle;
     // CALLER should check for errors
 
     // fname should be in local charset
-
-    // do_chmod is ignored now
 
     fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
     alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);

@@ -4860,7 +4860,7 @@ EXPOSE_FN_END
 
 
 LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget *widget, LiVESAdjustment *adj) {
-  if (msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj));
+  msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
 

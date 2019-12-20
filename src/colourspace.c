@@ -4375,7 +4375,7 @@ static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int hei
     *(v++) = yuyv->v0;
     yuyv++;
   }
-  if (x);
+
   if (add_alpha) lives_memset(dest[3], 255, size * 2);
 }
 
@@ -8050,6 +8050,8 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
 
   rowstrides = weed_layer_get_rowstrides(layer, &numplanes);
   npixel_data = weed_layer_get_pixel_data(layer, &numplanes);
+  width = weed_layer_get_width(layer);
+  height = weed_layer_get_height(layer);
 
   for (i = 0; i < numplanes; i++) {
     xheight = height * weed_palette_get_plane_ratio_vertical(pal, i);
@@ -9925,6 +9927,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   return TRUE;
 
 memfail:
+  lives_free(istrides);
   weed_layer_set_palette(layer, inpl);
   weed_layer_set_size(layer, width, height);
   if (gusrc != NULL) {

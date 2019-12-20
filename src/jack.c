@@ -731,7 +731,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 // push audio from cache_buffer to jack
                 for (i = 0; i < jackd->num_output_channels; i++) {
                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite,
-                                            jackd->num_output_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
+                                            jackd->num_input_channels, afile->signed_endian & AFORM_UNSIGNED, FALSE, vol);
 
                   pthread_mutex_lock(&mainw->abuf_frame_mutex);
                   if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT) {

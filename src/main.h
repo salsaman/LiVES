@@ -1220,8 +1220,7 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
                                        int width, int height, LiVESInterpType interp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
-boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype,
-                          int quality, boolean do_chmod, LiVESError **gerrorptr);
+boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr);
 
 void init_track_decoders(void);
 void free_track_decoders(void);

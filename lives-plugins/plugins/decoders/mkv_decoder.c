@@ -565,7 +565,7 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata, EbmlSyntax *syntax, v
     // no limits for anything else
   };
   uint32_t id = syntax->id;
-  uint64_t length;
+  uint64_t length = 0;
   int res;
   void *newelem;
 
@@ -1123,6 +1123,12 @@ static int get_last_video_dts(lives_clip_data_t *cdata) {
     if (got_picture) {
       frames++;
     }
+  }
+
+  if (priv->avpkt.data != NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data = NULL;
+    priv->avpkt.size = 0;
   }
 
   priv->expect_eof = FALSE;
@@ -1970,6 +1976,11 @@ skip_probe:
 
   if (!got_picture) {
     fprintf(stderr, "mkv_decoder: could not get picture.\n PLEASE SEND A PATCH FOR %s FORMAT.\n", cdata->video_name);
+    if (priv->avpkt.data != NULL) {
+      free(priv->avpkt.data);
+      priv->avpkt.data = NULL;
+      priv->avpkt.size = 0;
+    }
     detach_stream(cdata);
     return FALSE;
   }
@@ -2569,67 +2580,64 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
 
   if (res == 0) {
     for (n = 0; n < laces; n++) {
+      MatroskaTrackEncoding *encodings = track->encodings.elem;
+      int offset = 0, pkt_size = lace_size[n];
+      uint8_t *pkt_data = data;
 
-      {
-        MatroskaTrackEncoding *encodings = track->encodings.elem;
-        int offset = 0, pkt_size = lace_size[n];
-        uint8_t *pkt_data = data;
+      if (pkt_size > size) {
+        //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid packet size\n");
+        break;
+      }
 
-        if (pkt_size > size) {
-          //av_log(matroska->ctx, AV_LOG_ERROR, "Invalid packet size\n");
-          break;
-        }
+      if (encodings && encodings->scope & 1) {
+        offset = matroska_decode_buffer(&pkt_data, &pkt_size, track);
+        if (offset < 0)
+          continue;
+      }
 
-        if (encodings && encodings->scope & 1) {
-          offset = matroska_decode_buffer(&pkt_data, &pkt_size, track);
-          if (offset < 0)
-            continue;
-        }
+      pkt = calloc(sizeof(AVPacket), 1);
+      /* XXX: prevent data copy... */
+      if (av_new_packet(pkt, pkt_size + offset) < 0) {
+        free(pkt);
+        res = AVERROR(ENOMEM);
+        break;
+      }
+      if (offset)
+        memcpy(pkt->data, encodings->compression.settings.data, offset);
 
-        pkt = calloc(sizeof(AVPacket), 1);
-        /* XXX: prevent data copy... */
-        if (av_new_packet(pkt, pkt_size + offset) < 0) {
-          free(pkt);
-          res = AVERROR(ENOMEM);
-          break;
-        }
-        if (offset)
-          memcpy(pkt->data, encodings->compression.settings.data, offset);
+      memcpy(pkt->data + offset, pkt_data, pkt_size);
 
-        memcpy(pkt->data + offset, pkt_data, pkt_size);
+      if (pkt_data != data)
+        free(pkt_data);
 
-        if (pkt_data != data)
-          free(pkt_data);
+      if (n == 0)
+        pkt->flags = is_keyframe;
+      pkt->stream_index = st->index;
 
-        if (n == 0)
-          pkt->flags = is_keyframe;
-        pkt->stream_index = st->index;
+      if (track->ms_compat)
+        pkt->dts = timecode;
+      else
+        pkt->pts = timecode;
+      pkt->pos = pos;
 
-        if (track->ms_compat)
-          pkt->dts = timecode;
-        else
-          pkt->pts = timecode;
-        pkt->pos = pos;
+      if (st->codec->codec_id == AV_CODEC_ID_TEXT)
+        pkt->convergence_duration = duration;
 
-        if (st->codec->codec_id == AV_CODEC_ID_TEXT)
-          pkt->convergence_duration = duration;
+      else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
+        pkt->duration = duration;
 
-        else if (track->type != MATROSKA_TRACK_TYPE_SUBTITLE)
-          pkt->duration = duration;
+      if (st->codec->codec_id == AV_CODEC_ID_SSA)
+        matroska_fix_ass_packet(matroska, pkt, duration);
 
-        if (st->codec->codec_id == AV_CODEC_ID_SSA)
-          matroska_fix_ass_packet(matroska, pkt, duration);
-
-        if (matroska->prev_pkt &&
-            timecode != AV_NOPTS_VALUE &&
-            matroska->prev_pkt->pts == timecode &&
-            matroska->prev_pkt->stream_index == st->index &&
-            st->codec->codec_id == AV_CODEC_ID_SSA)
-          matroska_merge_packets(matroska->prev_pkt, pkt);
-        else {
-          lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
-          matroska->prev_pkt = pkt;
-        }
+      if (matroska->prev_pkt &&
+          timecode != AV_NOPTS_VALUE &&
+          matroska->prev_pkt->pts == timecode &&
+          matroska->prev_pkt->stream_index == st->index &&
+          st->codec->codec_id == AV_CODEC_ID_SSA)
+        matroska_merge_packets(matroska->prev_pkt, pkt);
+      else {
+        lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
+        matroska->prev_pkt = pkt;
       }
 
       if (timecode != AV_NOPTS_VALUE)
@@ -2769,7 +2777,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int rescan_limit = 16; // pick some arbitrary value
   int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
-  boolean got_picture = FALSE;
+  boolean got_picture = FALSE, retval = TRUE;
   unsigned char *dst, *src;
   unsigned char black[4] = {0, 0, 0, 255};
   index_entry *idx;
@@ -2854,8 +2862,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
         matroska_read_packet(cdata, &priv->avpkt);
 
-        if (got_eof) return FALSE;
-
+        if (got_eof) {
+          retval = FALSE;
+          goto cleanup;
+        }
 #if LIBAVCODEC_VERSION_MAJOR >= 52
         avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else
@@ -2865,7 +2875,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       nextframe++;
 
-      if (nextframe > cdata->nframes) return FALSE;
+      if (nextframe > cdata->nframes) {
+        retval = FALSE;
+        goto cleanup;
+      }
     } while (nextframe <= tframe);
 
     /////////////////////////////////////////////////////
@@ -2876,7 +2889,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #ifdef TEST_CACHING
 framedone2:
 #endif
-  if (priv->picture == NULL || pixel_data == NULL) return TRUE;
+  if (priv->picture == NULL || pixel_data == NULL) goto cleanup;
 
   // we are allowed to cast away const-ness for
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
@@ -2984,7 +2997,14 @@ framedone2:
       bbot >>= 1;
     }
   }
-  return TRUE;
+
+cleanup:
+  if (priv->avpkt.data != NULL) {
+    free(priv->avpkt.data);
+    priv->avpkt.data = NULL;
+    priv->avpkt.size = 0;
+  }
+  return retval;
 }
 
 

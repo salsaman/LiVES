@@ -222,7 +222,7 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   int intzero = 0;
   double dblzero = 0.;
 
-  if (mainw->vpp == NULL) {
+  if (vpp == NULL) {
     lives_rm(vpp_file);
     return;
   }
@@ -242,33 +242,33 @@ void save_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
   if (!lives_write(fd, msg, strlen(msg), FALSE)) return;
   lives_free(msg);
 
-  len = strlen(mainw->vpp->name);
+  len = strlen(vpp->name);
   if (lives_write_le(fd, &len, 4, FALSE) < 4) return;
-  if (lives_write(fd, mainw->vpp->name, len, FALSE) < len) return;
+  if (lives_write(fd, vpp->name, len, FALSE) < len) return;
 
-  version = (*mainw->vpp->version)();
+  version = (*vpp->version)();
   len = strlen(version);
   if (lives_write_le(fd, &len, 4, FALSE) < 4) return;
   if (lives_write(fd, version, len, FALSE) < len) return;
 
-  if (lives_write_le(fd, &(mainw->vpp->palette), 4, FALSE) < 4) return;
-  if (lives_write_le(fd, &(mainw->vpp->YUV_sampling), 4, FALSE) < 4) return;
-  if (lives_write_le(fd, &(mainw->vpp->YUV_clamping), 4, FALSE) < 4) return;
-  if (lives_write_le(fd, &(mainw->vpp->YUV_subspace), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, &(vpp->palette), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, &(vpp->YUV_sampling), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, &(vpp->YUV_clamping), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, &(vpp->YUV_subspace), 4, FALSE) < 4) return;
 
-  if (lives_write_le(fd, mainw->vpp->fwidth <= 0 ? &intzero : & (mainw->vpp->fwidth), 4, FALSE) < 4) return;
-  if (lives_write_le(fd, mainw->vpp->fheight <= 0 ? &intzero : & (mainw->vpp->fheight), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, vpp->fwidth <= 0 ? &intzero : & (vpp->fwidth), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, vpp->fheight <= 0 ? &intzero : & (vpp->fheight), 4, FALSE) < 4) return;
 
-  if (lives_write_le(fd, mainw->vpp->fixed_fpsd <= 0. ? &dblzero : & (mainw->vpp->fixed_fpsd), 8, FALSE) < 8) return;
-  if (lives_write_le(fd, mainw->vpp->fixed_fps_numer <= 0 ? &intzero : & (mainw->vpp->fixed_fps_numer), 4, FALSE) < 4) return;
-  if (lives_write_le(fd, mainw->vpp->fixed_fps_denom <= 0 ? &intzero : & (mainw->vpp->fixed_fps_denom), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, vpp->fixed_fpsd <= 0. ? &dblzero : & (vpp->fixed_fpsd), 8, FALSE) < 8) return;
+  if (lives_write_le(fd, vpp->fixed_fps_numer <= 0 ? &intzero : & (vpp->fixed_fps_numer), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, vpp->fixed_fps_denom <= 0 ? &intzero : & (vpp->fixed_fps_denom), 4, FALSE) < 4) return;
 
-  if (lives_write_le(fd, &(mainw->vpp->extra_argc), 4, FALSE) < 4) return;
+  if (lives_write_le(fd, &(vpp->extra_argc), 4, FALSE) < 4) return;
 
-  for (i = 0; i < mainw->vpp->extra_argc; i++) {
-    len = strlen(mainw->vpp->extra_argv[i]);
+  for (i = 0; i < vpp->extra_argc; i++) {
+    len = strlen(vpp->extra_argv[i]);
     if (lives_write_le(fd, &len, 4, FALSE) < 4) return;
-    if (lives_write(fd, mainw->vpp->extra_argv[i], len, FALSE) < len) return;
+    if (lives_write(fd, vpp->extra_argv[i], len, FALSE) < len) return;
   }
 
   close(fd);
@@ -300,7 +300,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
     if ((fd = lives_open2(vpp_file, O_RDONLY)) == -1) {
       retval = do_read_failed_error_s_with_retry(vpp_file, lives_strerror(errno), NULL);
       if (retval == LIVES_RESPONSE_CANCEL) {
-        mainw->vpp = NULL;
+        vpp = NULL;
         return;
       }
     } else {
@@ -332,14 +332,14 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
 
         if (mainw->read_failed) break;
 
-        if (strcmp(buf, mainw->vpp->name)) {
+        if (strcmp(buf, vpp->name)) {
           d_print_file_error_failed();
           close(fd);
           return;
         }
 
         // version string
-        version = (*mainw->vpp->version)();
+        version = (*vpp->version)();
         lives_read_le(fd, &len, 4, FALSE);
         if (mainw->read_failed) break;
         lives_read(fd, buf, len, FALSE);
@@ -352,7 +352,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           msg = lives_strdup_printf(
                   _("\nThe %s video playback plugin has been updated.\nPlease check your settings in\n"
                     "Tools|Preferences|Playback|Playback Plugins Advanced\n\n"),
-                  mainw->vpp->name);
+                  vpp->name);
           do_error_dialog(msg);
           lives_free(msg);
           lives_rm(vpp_file);
@@ -361,19 +361,19 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           return;
         }
 
-        lives_read_le(fd, &(mainw->vpp->palette), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->YUV_sampling), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->YUV_clamping), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->YUV_subspace), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->fwidth), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->fheight), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->fixed_fpsd), 8, FALSE);
-        lives_read_le(fd, &(mainw->vpp->fixed_fps_numer), 4, FALSE);
-        lives_read_le(fd, &(mainw->vpp->fixed_fps_denom), 4, FALSE);
+        lives_read_le(fd, &(vpp->palette), 4, FALSE);
+        lives_read_le(fd, &(vpp->YUV_sampling), 4, FALSE);
+        lives_read_le(fd, &(vpp->YUV_clamping), 4, FALSE);
+        lives_read_le(fd, &(vpp->YUV_subspace), 4, FALSE);
+        lives_read_le(fd, &(vpp->fwidth), 4, FALSE);
+        lives_read_le(fd, &(vpp->fheight), 4, FALSE);
+        lives_read_le(fd, &(vpp->fixed_fpsd), 8, FALSE);
+        lives_read_le(fd, &(vpp->fixed_fps_numer), 4, FALSE);
+        lives_read_le(fd, &(vpp->fixed_fps_denom), 4, FALSE);
 
         if (mainw->read_failed) break;
 
-        lives_read_le(fd, &(mainw->vpp->extra_argc), 4, FALSE);
+        lives_read_le(fd, &(vpp->extra_argc), 4, FALSE);
 
         if (mainw->read_failed) break;
 
@@ -384,18 +384,18 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
           lives_free(vpp->extra_argv);
         }
 
-        mainw->vpp->extra_argv = (char **)lives_malloc((mainw->vpp->extra_argc + 1) * (sizeof(char *)));
+        vpp->extra_argv = (char **)lives_malloc((vpp->extra_argc + 1) * (sizeof(char *)));
 
-        for (i = 0; i < mainw->vpp->extra_argc; i++) {
+        for (i = 0; i < vpp->extra_argc; i++) {
           lives_read_le(fd, &len, 4, FALSE);
           if (mainw->read_failed) break;
-          mainw->vpp->extra_argv[i] = (char *)lives_malloc(len + 1);
-          lives_read(fd, mainw->vpp->extra_argv[i], len, FALSE);
+          vpp->extra_argv[i] = (char *)lives_malloc(len + 1);
+          lives_read(fd, vpp->extra_argv[i], len, FALSE);
           if (mainw->read_failed) break;
-          lives_memset((mainw->vpp->extra_argv[i]) + len, 0, 1);
+          lives_memset((vpp->extra_argv[i]) + len, 0, 1);
         }
 
-        mainw->vpp->extra_argv[i] = NULL;
+        vpp->extra_argv[i] = NULL;
 
         close(fd);
       } while (FALSE);
@@ -405,7 +405,7 @@ void load_vpp_defaults(_vid_playback_plugin *vpp, char *vpp_file) {
         retval = do_read_failed_error_s_with_retry(vpp_file, NULL, NULL);
         if (retval == LIVES_RESPONSE_CANCEL) {
           mainw->read_failed = FALSE;
-          mainw->vpp = NULL;
+          vpp = NULL;
           d_print_file_error_failed();
           return;
         }
@@ -2413,15 +2413,15 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
   char *audname;
 
-  if (!strlen(cdata->container_name)) lives_snprintf(text, 40, "%s", _("unknown"));
-  else lives_snprintf(text, 40, "%s", cdata->container_name);
+  if (!strlen(cdata->container_name)) lives_snprintf(text, maxlen, "%s", _("unknown"));
+  else lives_snprintf(text, maxlen, "%s", cdata->container_name);
 
   if (!strlen(cdata->video_name) && !strlen(cdata->audio_name)) return;
 
-  if (!strlen(cdata->video_name)) lives_strappend(text, 40, _("/unknown"));
+  if (!strlen(cdata->video_name)) lives_strappend(text, maxlen, _("/unknown"));
   else {
     char *vidname = lives_strdup_printf("/%s", cdata->video_name);
-    lives_strappend(text, 40, vidname);
+    lives_strappend(text, maxlen, vidname);
     lives_free(vidname);
   }
 
@@ -2430,7 +2430,7 @@ void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
     audname = lives_strdup_printf("/%s", _("unknown"));
   } else
     audname = lives_strdup_printf("/%s", cdata->audio_name);
-  lives_strappend(text, 40, audname);
+  lives_strappend(text, maxlen, audname);
   lives_free(audname);
 }
 

@@ -45,6 +45,8 @@ struct _procvals {
   int ret;
 };
 
+static weed_plantptr_t statsplant = NULL;
+
 static int load_compound_fx(void);
 
 
@@ -3679,7 +3681,7 @@ int num_in_params(weed_plant_t *plant, boolean skip_hidden, boolean skip_interna
   weed_plant_t *param;
 
   int counted = 0;
-  int num_params, i, error;
+  int num_params, i;
   boolean is_template = (WEED_PLANT_IS_FILTER_CLASS(plant));
 
 nip1:
@@ -3687,22 +3689,17 @@ nip1:
   num_params = 0;
 
   if (is_template) {
-    if (!weed_plant_has_leaf(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES) ||
-        weed_get_plantptr_value(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error) == NULL) return 0;
-    num_params = weed_leaf_num_elements(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))
+        == NULL) return 0;
   } else {
-    if (!weed_plant_has_leaf(plant, WEED_LEAF_IN_PARAMETERS)) goto nip1done;
-    if (weed_get_plantptr_value(plant, WEED_LEAF_IN_PARAMETERS, &error) == NULL) goto nip1done;
-    num_params = weed_leaf_num_elements(plant, WEED_LEAF_IN_PARAMETERS);
+    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))
+        == NULL) goto nip1done;
   }
 
   if (!skip_hidden && !skip_internal) {
     counted += num_params;
     goto nip1done;
   }
-
-  if (is_template) params = weed_get_plantptr_array(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-  else params = weed_get_plantptr_array(plant, WEED_LEAF_IN_PARAMETERS, &error);
 
   for (i = 0; i < num_params; i++) {
     if (skip_hidden && is_hidden_param(plant, i)) continue;
@@ -4107,6 +4104,13 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 /*   return _weed_leaf_set(plant, key, seed_type, num_elems, values); */
 /* } */
 
+static void upd_statsplant(const char *key) {
+  if (mainw->is_exiting) return;
+  if (statsplant == NULL) statsplant = weed_plant_new(0);
+  weed_set_int_value(statsplant, key, weed_get_int_value(statsplant, key, NULL) + 1);
+}
+
+
 // memory profiling for plugins
 
 void *lives_monitor_malloc(size_t size) {
@@ -4133,14 +4137,18 @@ weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, int32_t
 }
 
 
+weed_size_t weed_leaf_num_elements_host(weed_plant_t *plant, const char *key) {
+  upd_statsplant(key);
+  return _weed_leaf_num_elements(plant, key);
+}
+
+
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
   // change even immutable leaves
   weed_error_t err;
 
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-
-  if (err == WEED_SUCCESS) return err;
   if (err == WEED_ERROR_IMMUTABLE) {
     int32_t flags = weed_leaf_get_flags(plant, key);
     flags ^= WEED_FLAG_IMMUTABLE;
@@ -4150,6 +4158,52 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
     weed_leaf_set_flags(plant, key, flags);
   }
   return err;
+}
+
+
+void show_weed_stats(void) {
+  LiVESList *freq = NULL, *sorted = NULL, *list;
+  char **leaves;
+  int val, i, added = 0, min, lmin = 0;
+  weed_size_t nleaves;
+
+  if (statsplant == NULL) return;
+  leaves = weed_plant_list_leaves(statsplant, &nleaves);
+  /// sort in descending order
+  for (i = 0; i < nleaves; i++) {
+    int f = weed_get_int_value(statsplant, leaves[i], NULL);
+    freq = lives_list_prepend(freq, LIVES_INT_TO_POINTER(f));
+    //g_print("added %s with freq %d\n", leaves[i], f);
+  }
+  while (added < nleaves) {
+    min = LIVES_MAXINT32;
+    for (list = freq; list != NULL; list = list->next) {
+      val = LIVES_POINTER_TO_INT(list->data);
+      if (val < min && val > lmin) min = val;
+    }
+    //g_print("next min was %d\n", min);
+    i = nleaves - 1;
+    for (list = freq; list != NULL; list = list->next) {
+      val = LIVES_POINTER_TO_INT(list->data);
+      if (val == min) {
+        //g_print("prep. %d %s\n", i, leaves[i]);
+        sorted = lives_list_prepend(sorted, LIVES_INT_TO_POINTER(i));
+        if (++added == nleaves) break;
+      }
+      i--;
+    }
+    if (min == lmin) break;
+    lmin = min;
+  }
+  for (list = sorted; list != NULL; list = list->next) {
+    val = LIVES_POINTER_TO_INT(list->data);
+    g_print("STATS: %s : %d\n", leaves[val], weed_get_int_value(statsplant, leaves[val], NULL));
+    free(leaves[val]);
+  }
+  free(leaves);
+  lives_list_free(freq);
+  lives_list_free(sorted);
+  weed_plant_free(statsplant);
 }
 
 
@@ -4260,6 +4314,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
   weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)_weed_leaf_set);
   weed_set_funcptr_value(xhost_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_NUM_ELEMENTS_FUNC, (weed_funcptr_t)_weed_leaf_num_elements);
 
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_NAME, "LiVES");
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_VERSION, LiVES_VERSION);
@@ -4951,7 +5006,6 @@ static void weed_filter_free(weed_plant_t *filter, LiVESList **freed_ptrs) {
 
 static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *filts) {
   weed_plant_t *filter = weed_plant_new(WEED_PLANT_FILTER_CLASS), *xfilter, *gui;
-
   weed_plant_t **in_params = NULL, **out_params = NULL, **params;
   weed_plant_t **in_chans, **out_chans;
 
@@ -4959,8 +5013,7 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
 
   double tgfps = -1., tfps;
 
-  int count, xcount, error;
-
+  int count, xcount, error, nvals;
   int txparam = -1, tparam, txvolm = -1, tvolm;
 
   register int i, j, x;
@@ -5017,18 +5070,16 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
         txvolm = tvolm;
       }
 
-      count += weed_leaf_num_elements(xfilter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-      params = weed_get_plantptr_array(xfilter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
+      params = weed_get_plantptr_array_counted(xfilter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &nvals);
+      count += nvals;
 
       in_params = (weed_plant_t **)lives_realloc(in_params, count * sizeof(weed_plant_t *));
       x = 0;
 
       for (j = xcount; j < count; j++) {
         in_params[j] = weed_plant_copy(params[x]);
-        if (weed_plant_has_leaf(params[x], WEED_LEAF_GUI)) {
-          gui = weed_get_plantptr_value(params[x], WEED_LEAF_GUI, &error);
-          weed_set_plantptr_value(in_params[j], WEED_LEAF_GUI, weed_plant_copy(gui));
-        }
+        gui = weed_get_plantptr_value(params[x], WEED_LEAF_GUI, &error);
+        if (gui != NULL) weed_set_plantptr_value(in_params[j], WEED_LEAF_GUI, weed_plant_copy(gui));
 
         if (x == tparam) {
           weed_set_boolean_value(in_params[j], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -5059,8 +5110,8 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
   for (i = 0; i < nfilts; i++) {
     xfilter = weed_filters[filts[i]];
     if (weed_plant_has_leaf(xfilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES)) {
-      count += weed_leaf_num_elements(xfilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES);
-      params = weed_get_plantptr_array(xfilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &error);
+      params = weed_get_plantptr_array_counted(xfilter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, &nvals);
+      count += nvals;
 
       out_params = (weed_plant_t **)lives_realloc(out_params, count * sizeof(weed_plant_t *));
       x = 0;
@@ -5082,8 +5133,7 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
 
   xfilter = weed_filters[filts[0]];
   if (weed_plant_has_leaf(xfilter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) {
-    count = weed_leaf_num_elements(xfilter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
-    in_chans = weed_get_plantptr_array(xfilter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
+    in_chans = weed_get_plantptr_array_counted(xfilter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &count);
     weed_set_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, count, in_chans);
     lives_free(in_chans);
   }
@@ -5092,8 +5142,7 @@ static weed_plant_t *create_compound_filter(char *plugin_name, int nfilts, int *
 
   xfilter = weed_filters[filts[nfilts - 1]];
   if (weed_plant_has_leaf(xfilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) {
-    count = weed_leaf_num_elements(xfilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
-    out_chans = weed_get_plantptr_array(xfilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
+    out_chans = weed_get_plantptr_array_counted(xfilter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &count);
     weed_set_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, count, out_chans);
     lives_free(out_chans);
   }

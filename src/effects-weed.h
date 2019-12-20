@@ -363,5 +363,9 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *value);
 weed_error_t weed_plant_free_host(weed_plant_t *plant);
+weed_size_t weed_leaf_num_elements_host(weed_plant_t *plant, const char *key);
+
+
+void show_weed_stats(void);
 
 #endif

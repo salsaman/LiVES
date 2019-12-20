@@ -3852,8 +3852,8 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
     do {
       retval = 0;
-      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, FALSE, &gerr);
-      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, FALSE, &gerr);
+      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
+      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
 
       if (gerr != NULL) {
         retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message, NULL);

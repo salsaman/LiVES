@@ -390,7 +390,7 @@ static boolean save_decoded(int fileno, int i, LiVESPixbuf *pixbuf, boolean sile
 
   do {
     retval = LIVES_RESPONSE_NONE;
-    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
+    retb = lives_pixbuf_save(pixbuf, oname, sfile->img_type, 100 - prefs->ocp, &error);
     if (error != NULL && !silent) {
       retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
       lives_error_free(error);
@@ -810,7 +810,7 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
     lives_snprintf(oname, PATH_MAX, "%s", tmp);
     lives_free(tmp);
     if (blankp == NULL) blankp = lives_pixbuf_new_blank(sfile->hsize, sfile->vsize, palette);
-    lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, TRUE, &error);
+    lives_pixbuf_save(blankp, oname, sfile->img_type, 100 - prefs->ocp, &error);
     if (error != NULL) {
       char *msg = lives_strdup_printf(_("Padding: Unable to write blank frame with size %d x %d to %s"),
                                       sfile->hsize, sfile->vsize, oname);

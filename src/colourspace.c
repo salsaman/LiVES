@@ -1830,12 +1830,13 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
   register int i;
 
   int x = 3, y = 4, z = 5;
+  hsize = (hsize >> 1) << 1;
 
   if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
   if (thread_id == -1)
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  end = rgbdata + (rowstride * vsize) - 5;
+  end = rgbdata + rowstride * vsize;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     int nthreads = 0;
@@ -1847,7 +1848,7 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -1884,9 +1885,8 @@ static void convert_rgb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
-
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
@@ -1910,10 +1910,11 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
                                       yuyv_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
-  uint8_t *end = rgbdata + (rowstride * vsize) - 5;
+  uint8_t *end = rgbdata + rowstride * vsize;
   register int i;
 
   int x = 3, y = 4, z = 5;
+  hsize = (hsize >> 1) << 1;
 
   if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
   if (thread_id == -1)
@@ -1929,7 +1930,7 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -1966,8 +1967,8 @@ static void convert_rgb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
@@ -1992,10 +1993,11 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
                                       uyvy_macropixel *u, boolean has_alpha, int clamping, int thread_id) {
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
-  uint8_t *end = rgbdata + (rowstride * vsize) - 5;
+  uint8_t *end = rgbdata + rowstride * vsize;
   register int i;
 
   int x = 3, y = 4, z = 5;
+  hsize = (hsize >> 1) << 1;
 
   if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
   if (thread_id == -1)
@@ -2011,7 +2013,7 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2048,8 +2050,8 @@ static void convert_bgr_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
@@ -2075,10 +2077,12 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
   // for odd sized widths, cut the rightmost pixel
   int hs3, ipsize = 3, ipsize2;
 
-  uint8_t *end = rgbdata + (rowstride * vsize) - 5;
+  uint8_t *end = rgbdata + rowstride * vsize;
   register int i;
 
   int x = 3, y = 4, z = 5;
+
+  hsize = (hsize >> 1) << 1;
 
   if (LIVES_UNLIKELY(!conv_RY_inited)) init_RGB_to_YUV_tables();
   if (thread_id == -1)
@@ -2094,7 +2098,7 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2131,8 +2135,8 @@ static void convert_bgr_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, in
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
@@ -2164,7 +2168,8 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
   if (thread_id == -1)
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  end = rgbdata + (rowstride * vsize) - 5;
+  end = rgbdata + rowstride * vsize;
+  hsize = (hsize >> 1) << 1;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     int nthreads = 0;
@@ -2176,7 +2181,7 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2205,8 +2210,8 @@ static void convert_argb_to_uyvy_frame(uint8_t *rgbdata, int hsize, int vsize, i
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
@@ -2238,7 +2243,8 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
   if (thread_id == -1)
     set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  end = rgbdata + (rowstride * vsize) - 5;
+  end = rgbdata + rowstride * vsize;
+  hsize = (hsize >> 1) << 1;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     int nthreads = 0;
@@ -2250,7 +2256,7 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
       if ((rgbdata + dheight * i * rowstride) < end) {
         ccparams[i].src = rgbdata + dheight * i * rowstride;
         ccparams[i].hsize = hsize;
-        ccparams[i].dest = u + dheight * i * orowstride;
+        ccparams[i].dest = u + dheight * i * orowstride / 4;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2279,9 +2285,8 @@ static void convert_argb_to_yuyv_frame(uint8_t *rgbdata, int hsize, int vsize, i
   }
 
   ipsize2 = ipsize * 2;
-  hs3 = ((hsize >> 1) * ipsize2) - (ipsize2 - 1);
-  orowstride -= hsize << 1;
-
+  hs3 = hsize * ipsize;
+  orowstride = orowstride / 4 - hsize;
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < hs3; i += ipsize2) {
       // convert 6 RGBRGB bytes to 4 UYVY bytes
@@ -2359,7 +2364,7 @@ static void convert_rgb_to_yuv_frame(uint8_t *rgbdata, int hsize, int vsize, int
 
   hsize = (hsize >> 1) << 1;
   iwidth = hsize * ipsize;
-  orow = orowst - hsize * opsize;
+  orow = orow - hsize * opsize;
 
   for (; rgbdata < end; rgbdata += rowstride) {
     for (i = 0; i < iwidth; i += ipsize) {
@@ -3654,7 +3659,7 @@ static void convert_yuv420_to_uyvy_frame(uint8_t **src, int width, int height, i
   v = src[2];
 
   end = y + width * irows[0];
-  orow -= hwidth;
+  orow = orow / 4 - width;
   irows[0] -= width;
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
@@ -3702,7 +3707,7 @@ static void convert_yuv420_to_yuyv_frame(uint8_t **src, int width, int height, i
   v = src[2];
 
   end = y + width * irows[0];
-  orow -= hwidth;
+  orow = orow / 4 - width;
   irows[0] -= width;
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
@@ -4088,7 +4093,7 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
   }
 
   irowstride -= width;
-  orowstride -= width << 1;
+  orowstride = orowstride / width;
   for (k = 0; k < height; k++) {
     for (x = 0; x < width; x++) {
       yuyv->y0 = *(y++);
@@ -6754,7 +6759,7 @@ void *convert_swapprepost_frame_thread(void *data) {
 static void convert_swab_frame(uint8_t *src, int width, int height, int irow, int orow, uint8_t *dest, int thread_id) {
   register int i;
   int width4 = width * 4;
-  uint8_t *end = src + height * width4;
+  uint8_t *end = src + height * irow;
 
   if (thread_id == -1 && prefs->nfx_threads > 1) {
     int nthreads = 0;

@@ -4409,7 +4409,7 @@ static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int hei
       v += orow;
     }
   }
-  if (add_alpha) lives_memset(dest[3], 255, width * orow);
+  if (add_alpha) lives_memset(dest[3], 255, size * 2);
 }
 
 
@@ -4433,7 +4433,7 @@ static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int hei
     yuyv++;
   }
 
-  if (add_alpha) lives_memset(dest[3], 255, width * orow);
+  if (add_alpha) lives_memset(dest[3], 255, size * 2);
 }
 
 

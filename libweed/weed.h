@@ -100,6 +100,7 @@ struct _weed_leaf {
   volatile weed_size_t num_elements;
   volatile weed_data_t **data;
   volatile weed_leaf_t *next;
+  char[16] padding;
 };
 #endif
 #endif

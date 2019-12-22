@@ -115,7 +115,7 @@ my $mplay_command = "";
 
 if (defined($ARGV[0])) {
     ## cant use my because callers need this
-    our $command = $ARGV[0]; ## our because we pas this to encoder plugins
+    our $command = $ARGV[0]; ## our because we pass this to encoder plugins
    ## print STDERR "COM is $command\n";
     if ($command eq "version" && !caller) {
 	print "smogrify $version\n";

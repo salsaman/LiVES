@@ -4989,8 +4989,8 @@ int save_to_scrap_file(weed_plant_t *layer) {
   pdata_size = weed_plant_serialise(fd, mainw->frame_layer, NULL);
   scrapfile->f_size += pdata_size;
 
-  // check free space every 1000 frames or every 10 MB of audio (TODO ****)
-  if (scrapfile->frames % 1000 == 0) {
+  // check free space every 1024 frames or every 10 MB of audio (TODO ****)
+  if ((scrapfile->frames & 0x3FF) == 0) {
     char *dir = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
     free_mb = (double)get_fs_free(dir) / 1000000.;
     if (free_mb == 0) writeable = is_writeable_dir(dir);

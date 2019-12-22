@@ -1243,9 +1243,9 @@ int process_one(boolean visible) {
       mainw->pre_src_file = mainw->new_clip;
       mainw->new_clip = -1;
     }
-    if (prefs->loadchecktime > 0.) {
-      load_measure_idle(NULL);
-    }
+    /* if (prefs->loadchecktime > 0.) { */
+    /*   load_measure_idle(NULL); */
+    /* } */
     // get current time
 
     // time is obtained as follows:
@@ -1554,6 +1554,7 @@ int process_one(boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
+    // a segfault here can indicate memory corruption in an FX plugin
     lives_widget_context_update();  // animate GUI, allow kb timer to run
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {

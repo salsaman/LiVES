@@ -11068,8 +11068,12 @@ boolean lives_widget_context_update(void) {
                 ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
         break;
       }
-      if (nulleventcount > MAX_NULL_EVENTS) break;
+      if (nulleventcount > MAX_NULL_EVENTS) {
+        g_print("too many X events !\n");
+        break;
+      }
       if (ev != NULL) {
+        //g_print("got ev type %d, nev is %d\n", ev->type, nulleventcount);
         if (ev->type != GDK_BUTTON_RELEASE && ev->type != GDK_EXPOSE && ev->type != GDK_DELETE &&
             ev->type != GDK_KEY_PRESS && ev->type != GDK_KEY_RELEASE)
           nulleventcount = 0;

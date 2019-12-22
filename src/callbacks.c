@@ -176,7 +176,7 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->gamma_lut_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
-    if (pthread_mutex_lock(&mainw->exit_mutex)) pthread_exit(NULL);
+    if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
 
     show_weed_stats();
   }
@@ -6981,17 +6981,20 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (mainw->sep_win) {
         // separate window
 
-        // multi monitors don't like this it seems, breaks the window
-        lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
-
-        if (!mainw->faded) {
-          unfade_background();
-        }
-
         if (mainw->ext_playback) {
+#ifndef IS_MINGW
           vid_playback_plugin_exit();
+          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+#else
+          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+          vid_playback_plugin_exit();
+#endif
+        } else {
+          // multi monitors don't like this it seems, breaks the window
+          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
         }
 
+        if (!mainw->faded) unfade_background();
         resize_play_window();
 
         if (mainw->multitrack == NULL && mainw->opwx > -1) {
@@ -7269,11 +7272,9 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
                     lives_widget_show(mainw->sep_image);
                   }
                   lives_widget_show_all(mainw->message_box);
-                }
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+                }}}}}
+	// *INDENT-ON*
 
         make_play_window();
 
@@ -7319,6 +7320,16 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         }
       } else {
         // switch from separate window during playback
+        if (mainw->ext_playback) {
+#ifndef IS_MINGW
+          vid_playback_plugin_exit();
+          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+#else
+          lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+          vid_playback_plugin_exit();
+#endif
+        }
+
         kill_play_window();
 
         if (!mainw->fs && mainw->multitrack == NULL) {
@@ -7341,9 +7352,6 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           }
         } else {
           // fullscreen
-          if (mainw->ext_playback) {
-            vid_playback_plugin_exit();
-          }
           if (mainw->multitrack == NULL && CURRENT_CLIP_HAS_VIDEO) {
             fade_background();
             fullscreen_internal();
@@ -7362,14 +7370,13 @@ void on_sepwin_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             weed_layer_free(mainw->frame_layer);
           }
           mainw->frame_layer = frame_layer;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 }
 
 
-void on_showfct_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_showfct_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   prefs->hide_framebar = !prefs->hide_framebar;
   if (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL && capable->nmonitors > 1)) {
     if (!prefs->hide_framebar) {
@@ -7383,7 +7390,7 @@ void on_showfct_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_sticky_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // type is SEPWIN_TYPE_STICKY (shown even when not playing)
   // or SEPWIN_TYPE_NON_STICKY (shown only when playing)
 
@@ -7395,14 +7402,14 @@ void on_sticky_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_fade_pressed(LiVESButton *button, livespointer user_data) {
+void on_fade_pressed(LiVESButton * button, livespointer user_data) {
   // toolbar button (unblank background)
   if (mainw->fs && (mainw->play_window == NULL || (prefs->play_monitor == prefs->gui_monitor || capable->nmonitors == 1))) return;
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->fade), !mainw->faded);
 }
 
 
-void on_fade_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_fade_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->faded = !mainw->faded;
   if (LIVES_IS_PLAYING && (!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && mainw->play_window != NULL &&
                                           capable->nmonitors > 1))) {

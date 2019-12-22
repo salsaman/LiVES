@@ -3176,12 +3176,17 @@ Explanation of flag bits.
     (and / or rowstrides value). The number of out video channels must be either 0, 1 or equal to the number of input video channels,
     in the latter case, if an input channel is marked optional then the corresponding output channel is assumed to be optional,
     and if an in channel has "max_repeats" then the corresponding out channel is assumed to have the same value
-    (though it is good practice to mark these options specifically.
+    (though it is good practice to mark these options specifically. (I.e it must be possible to match each channel to a corresponding
+    in channel; and the sizes (width * height) must match for each pair, unless WEED_FILTER_IS_CONVERTER is set.
+    Setting that flag bit allows the filter to resize between in and out channels.
+
+
+
 
     If the plugin has 0 output video channels, then the plugin is assumed to be some kind of analyser.
 
     If the plugin has exacly one output channel then it is assumed to be some kind of compositor, (the plugin may of course copy
-    and scale the inputs, but the resulting output size will always equal the size of the first in channel.)
+    and scale the inputs, but the resulting output size MUST still be equal the size of the first in channel.)
 
     Otherwise the sizes of each output channel must be set by the host equal to the corresponding input channel.
     I.e the plugin need never resize between input and output, UNLESS:
@@ -3194,27 +3199,51 @@ Explanation of flag bits.
     a border - or letterboxing, or scale at selectable quality values).
 
 
-    If the flag bit WEED_FILTER_PALETTES_MAY_VARY is set, then each of the input channels may have any of the palettes
-    declared in the corresponding channel_template's "palette_list"
+
+
+    If the flag bit WEED_FILTER_PALETTES_MAY_VARY is set, then each of the input channels may have ANY of the palettes
+    declared in the filter class, or in the corresponding channel_template's "palette_list" (whih may be used to override the filter class
+    defaults).
+
     The number of out video channels must be either 0, 1, or equal to the number of input video channels,
-    In the latter case, if an input channel is marked optional then the corresponding output channel is assumed to be optional.
+
+    If the filter has 0 output video channels, then the filter is assumed to be some kind of analyser, and no further consideration of
+    palette matching is necessary.
+
+    If the filter has 1 in and 1 out channel, then it must also set the flag WEED_FILTER_IS_CONVERTER (See below) and it MUST convert
+    between in and out palettes, UNLESS it is simply changing palettes around without any conversion of values, (e.g. RGB24 <-> BGR24,
+    RGB24 <-> RGBA32 , YUV888 <-> YUV444P); in this case WEED_FILTER_IS_CONVERTER should not be set.
+
+    If the filter has multiple input channels and a single ouptut video channel, then it can be assumed that the plugin combines the
+    input channels in some way (for example a plugin which mixes two colour channels using a separate alpha layer (alpha mixer),
+    could define three in channels:
+    two with colour palettes (perhaps using the filter class defaults) and a third (possibly optional)
+    with only alpha palettes in the channel template "palette_list"),
+    or for example 3 or 4 input channels with WEED_PALETTE_ALPHA8 could produce an output RGB, RGBA or YUV (unclamped) palette.
+
+    IF a filter has 1 in and multiple outs then it is a splitter, for example it could take RGBA32 in and produce RGB and alpha as output.
+    or it could split RGB24 to 3 alpha channels (R, G, and B for example).
+
+
+    If the filter has multiple ins and outs, then
+    if an input channel is marked optional then the corresponding output channel is assumed to be optional.
     and if an in channel has "max_repeats" then the corresponding out channel is assumed to have the same value (though it is good
-    practice to mark these options specifically.
-
-    If the plugin has 0 output video channels, then the plugin is assumed to be some kind of analyser.
-    If the plugin has multiple input channels and a single ouptut video channel, then it can be assumed that the plugin combines the
-    input channels in some way (for example a plugin which mixes using a separate alpha layer could define three in channels,
-    two with colour palettes and a third (possibly optional) with only alpha palettes in the "palette_list")
-
+    practice to mark these options specifically (i.e if there is more than 1 output channel, then it must be possible to match it with a 
+    corresponding in_channel to match the palettes for that pair).
     The palettes of each output channel are assumed to equal to that of the corresponding (by numeration) input channel.
-    I.e. the plugin need never change palettes between input and output, UNLESS:
+    I.e. the plugin need never change palettes between input and output - UNLESS:
 
-    If the flag bit WEED_FILTER_IS_CONVERTER is also set, then the plugin is a palette convertor and In this case its sole function
+
+    If the flag bit WEED_FILTER_IS_CONVERTER is also set, then the plugin is a palette converter and In this case its sole function
     should be to convert from the palette of each input channel to the palette of the corresponding out channel, or in the
     case of single input channel, to duplicate the input in each of the selected output channel palettes, or in the case of multiple
-    inputs and single output, to combine the inputs in some fashion (e.g adding an alpha layer).
+    inputs and single output, to combine the inputs in some fashion (e.g adding an alpha layer). If the flag bit is set then conversion
+    of channel values will be done, e.g. converting RGB <-> YUV.
+    
 
-    The "palette_lists" of the input and output channels define the palettes that can be accepted / will be produced.
+    The "palette_list"s of the input and output channels define the palettes that can be accepted / will be produced.
+
+
 
     The flag bits WEED_FILTER_CHANNEL_SIZES_MAY_VARY and WEED_FILTER_PALETTES_MAY_VARY may be combined, with or without
     WEED_FILTER_IS_CONVERTER.

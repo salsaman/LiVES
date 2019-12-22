@@ -124,6 +124,7 @@ static pthread_mutex_t cond_mutex;
 static void *render_thread_func(void *data);
 
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
+  fprintf(stderr, "got event type %d\n", event->type);
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
@@ -780,8 +781,6 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     if (fullscreen) setFullScreen();
 
     XMapRaised(dpy, xWin);
-    if (fullscreen) XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWin);
-
     if (fullscreen) setFullScreen();
 
     /* Create a GLX context for OpenGL rendering */
@@ -944,8 +943,6 @@ static int Upload(void) {
     set_priorities();
   }
 
-  pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
-
   if (!return_ready && retbuf != NULL) {
     retbuf = buffer_free(retbuf);
   }
@@ -956,6 +953,7 @@ static int Upload(void) {
   // modes
 
   XGetWindowAttributes(dpy, xWin, &attr);
+  pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
   window_width = attr.width;
   window_height = attr.height;
@@ -1875,13 +1873,16 @@ static void *render_thread_func(void *data) {
   pthread_mutex_unlock(&cond_mutex);
 
   while (playing) {
-    usleep(timetowait);
-    timetowait = usec;
+    while (!has_new_texture && playing) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+    if (!playing) break;
+
     pthread_mutex_lock(&rthread_mutex);
-    if (has_new_texture && playing) {
-      timetowait -= Upload();
-      if (timetowait < 0) timetowait = 0;
-    } else pthread_mutex_unlock(&rthread_mutex);
+    Upload();
+    pthread_mutex_unlock(&rthread_mutex);
   }
 
   if (retbuf != NULL) {
@@ -1944,12 +1945,12 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 
     // window size must not change here
 
-    // wait for render thread ready
-    while (!return_ready && rc == 0) {
-      pthread_mutex_lock(&cond_mutex);
-      rc = pthread_cond_wait(&cond, &cond_mutex);
-      pthread_mutex_unlock(&cond_mutex);
-    }
+    // // wait for render thread ready
+    // while (!return_ready && rc == 0) {
+    //   pthread_mutex_lock(&cond_mutex);
+    //   rc = pthread_cond_wait(&cond, &cond_mutex);
+    //   pthread_mutex_unlock(&cond_mutex);
+    // }
 
     pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
 
@@ -1986,12 +1987,13 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
                     imgWidth * typesize);
       }
     }
-
     retdata = NULL;
-    has_new_texture = TRUE;
-    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
-
+  pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
+  has_new_texture = TRUE;
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
   return TRUE;
 }
 
@@ -2054,6 +2056,10 @@ boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void *
 
 void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   playing = FALSE;
+
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
 
   pthread_join(rthread, NULL);
 

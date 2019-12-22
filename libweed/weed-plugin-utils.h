@@ -201,6 +201,7 @@ FN_DECL void *weed_channel_get_pixel_data(weed_plant_t *channel);
 FN_DECL int weed_channel_get_width(weed_plant_t *channel);
 FN_DECL int weed_channel_get_height(weed_plant_t *channel);
 FN_DECL int weed_channel_get_palette(weed_plant_t *channel);
+FN_DECL int weed_channel_get_yuv_clamping(weed_plant_t *channel);
 FN_DECL int weed_channel_get_stride(weed_plant_t *channel);
 
 #if defined(NEED_AUDIO) || defined(__LIBWEED_PLUGIN_UTILS__)
@@ -235,6 +236,7 @@ FN_DECL weed_plant_t **weed_get_in_channels(weed_plant_t *inst, int *nchans);
 FN_DECL weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
 FN_DECL weed_plant_t **weed_get_in_params(weed_plant_t *inst, int *nparams);
 FN_DECL weed_plant_t **weed_get_out_params(weed_plant_t *inst, int *nparams);
+FN_DECL int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
 #endif
 
 /* Threading */
@@ -324,6 +326,7 @@ FN_DECL size_t blank_pixel(uint8_t *dst, int pal, int yuv_clamping, uint8_t *src
 // and increase pdst[1], pdst[2] only on the odd rows (pscr is ignored)
 //
 FN_DECL void blank_row(uint8_t **pdst, int width, int pal, int yuv_clamping, int uvcopy, uint8_t **psrc);
+FN_DECL void blank_frame(void **pdata, int width, int height, int *rowstrides, int pal, int yuv_clamping);
 #endif
 
 #if defined(NEED_PALETTE_CONVERSIONS) || defined(__LIBWEED_PLUGIN_UTILS__)

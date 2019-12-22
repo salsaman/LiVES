@@ -78,6 +78,7 @@ typedef enum {
 #define WEED_LEAF_HOST_NORECORD "host_norecord" // do not record parameter changes for this instance
 #define WEED_LEAF_DUPLICATE "host_duplicate"
 #define WEED_LEAF_HOST_REINITING "host_reiniting"
+#define WEED_LEAF_HOST_UNUSED "host_unused"
 
 #define WEED_LEAF_HOST_INSTANCE "host_instance" // special value for text widgets
 #define WEED_LEAF_HOST_IDX "host_idx" // special value for text widgets

@@ -4292,7 +4292,10 @@ void resize_play_window(void) {
           }
 #endif
         }
-
+        for (int i = 0; i < 10; i++) {
+          lives_widget_context_update();
+          lives_usleep(1000);
+        }
         if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
             (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
              mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,

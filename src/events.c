@@ -3282,6 +3282,7 @@ filterinit1:
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
+        weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
       }
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_HOST_KEY)) {
@@ -3967,6 +3968,7 @@ filterinit2:
         }
 
         weed_set_boolean_value(inst, WEED_LEAF_HOST_INITED, WEED_TRUE);
+        weed_set_boolean_value(inst, WEED_LEAF_HOST_UNUSED, WEED_TRUE);
       }
 
       if (weed_plant_has_leaf(event, WEED_LEAF_HOST_KEY)) {

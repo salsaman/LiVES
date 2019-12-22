@@ -3116,7 +3116,7 @@ static boolean lives_startup(livespointer data) {
   }
 
   // begin load measuring
-  prefs->loadchecktime = get_double_prefd(PREF_LOADCHECK_TIME, 10.);
+  prefs->loadchecktime = get_double_prefd(PREF_LOADCHECK_TIME, 0);
   /* if (prefs->loadchecktime > 0.) { */
   /*   mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL); */
   /* } */

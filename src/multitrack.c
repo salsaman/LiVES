@@ -21289,12 +21289,13 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
         if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
           // check audio clips
           num_atracks = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
-          if (num_atracks % 2 != 0) {
+          if ((num_atracks & 1) != 0) {
             ebuf = rec_error_add(ebuf, "Invalid number of audio_clips", -1, tc);
             weed_leaf_delete(event, WEED_LEAF_AUDIO_CLIPS);
             weed_leaf_delete(event, WEED_LEAF_AUDIO_SEEKS);
           } else {
-            if (!weed_plant_has_leaf(event, WEED_LEAF_AUDIO_SEEKS) || weed_leaf_num_elements(event, WEED_LEAF_AUDIO_SEEKS) != num_atracks) {
+            if (!weed_plant_has_leaf(event, WEED_LEAF_AUDIO_SEEKS) || weed_leaf_num_elements(event,
+                WEED_LEAF_AUDIO_SEEKS) != num_atracks) {
               ebuf = rec_error_add(ebuf, "Invalid number of audio_seeks", -1, tc);
               weed_leaf_delete(event, WEED_LEAF_AUDIO_CLIPS);
               weed_leaf_delete(event, WEED_LEAF_AUDIO_SEEKS);

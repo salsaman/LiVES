@@ -2448,7 +2448,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].destp[0] = y + dheight * i * orow;
         ccparams[i].destp[1] = u + dheight * i * orow;
         ccparams[i].destp[2] = v + dheight * i * orow;
-        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * hsize;
+        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * orow;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2496,6 +2496,7 @@ static void convert_rgb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     y += orow;
     u += orow;
     v += orow;
+    if (out_has_alpha) a += orow;
   }
 }
 
@@ -2628,7 +2629,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
         ccparams[i].destp[0] = y + dheight * i * orow;
         ccparams[i].destp[1] = u + dheight * i * orow;
         ccparams[i].destp[2] = v + dheight * i * orow;
-        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * hsize;
+        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * orow;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2676,6 +2677,7 @@ static void convert_bgr_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, in
     y += orow;
     u += orow;
     v += orow;
+    if (out_has_alpha) a += orow;
   }
 }
 
@@ -2803,7 +2805,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
         ccparams[i].destp[0] = y + dheight * i * orow;
         ccparams[i].destp[1] = u + dheight * i * orow;
         ccparams[i].destp[2] = v + dheight * i * orow;
-        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * hsize;
+        if (out_has_alpha) ccparams[i].destp[3] = a + dheight * i * orow;
 
         if (dheight * (i + 1) > (vsize - 4)) {
           dheight = vsize - (dheight * i);
@@ -2847,6 +2849,7 @@ static void convert_argb_to_yuvp_frame(uint8_t *rgbdata, int hsize, int vsize, i
     y += orow;
     u += orow;
     v += orow;
+    if (out_has_alpha) a += orow;
   }
 }
 
@@ -4406,7 +4409,7 @@ static void convert_uyvy_to_yuvp_frame(uyvy_macropixel *uyvy, int width, int hei
       v += orow;
     }
   }
-  if (add_alpha) lives_memset(dest[3], 255, size * 2);
+  if (add_alpha) lives_memset(dest[3], 255, width * orow);
 }
 
 
@@ -4430,7 +4433,7 @@ static void convert_yuyv_to_yuvp_frame(yuyv_macropixel *yuyv, int width, int hei
     yuyv++;
   }
 
-  if (add_alpha) lives_memset(dest[3], 255, size * 2);
+  if (add_alpha) lives_memset(dest[3], 255, width * orow);
 }
 
 

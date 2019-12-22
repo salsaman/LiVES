@@ -396,17 +396,12 @@ sub get_newmsg {
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
 	    if ($DEBUG) {print STDERR "check $lport $local_port\n";}
-
-	    next if ($lport != $local_port);
-	    
+	    last if ($lport == $local_port);
 	    # TODO - check from address is our host
-	    if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
-	    
-	    last;
+	    if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  "};
 	}
 	#if ($DEBUG) {print STDERR "OK $lport $local_port : $newmsg\n";}
 	last if ($lport == $local_port || $lport == -1);
-	}
     }
     # remove terminating NULL
     $newmsg=substr($newmsg,0,length($newmsg)-1);
@@ -423,13 +418,7 @@ sub get_notify {
 	    ($rport,$ripaddr) = sockaddr_in($server->peername);
 	    ($lport,$lipaddr) = sockaddr_in($server->sockname);
 	    #if ($DEBUG) {print STDERR "check $lport $notify_port $newmsg\n";}
-
-	    next if ($lport != $notify_port);
-	    
-	    # TODO - check from address is our host
-	    #if ($DEBUG) {print STDERR "FROM : ".inet_ntoa($ripaddr)."($rport)  ";
-	    
-	    last;
+	    last if ($lport == $notify_port);
 	}
 	last if ($lport == $notify_port && $newmsg =~ /^32768\|(.*)/);
     }

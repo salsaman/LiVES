@@ -1133,7 +1133,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->abufs_to_fill = 0;
 
-  mainw->recoverable_layout = FALSE;
+  mainw->recoverable_layout = mainw->recording_recovered = FALSE;
 
   mainw->soft_debug = FALSE;
 

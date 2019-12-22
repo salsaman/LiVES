@@ -7780,7 +7780,7 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       }
     } else {
       weed_set_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
-      memblock = (uint8_t *)lives_calloc((framesize + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
+      memblock = (uint8_t *)lives_calloc((framesize * 4 + EXTRA_BYTES) >> SHIFTVAL, ALIGN_SIZE);
       if (memblock == NULL) return FALSE;
       pd_array[0] = memblock;
       pd_array[1] = memblock + framesize;

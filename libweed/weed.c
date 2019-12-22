@@ -135,7 +135,7 @@ static uint32_t weed_hash(const char *) GNU_PURE;
 #define weed_malloc_and_copy(size, src) memcpy(malloc(size), src, size)
 #endif
 
-#define weed_strdup(oldstring) (oldstring == NULL ? (char *)NULL : \
+#define weed_strdup(oldstring, size) (oldstring == NULL ? (char *)NULL : size < padbytes ? memcpy(leaf->padding, key, size + 1) : \
 				(char *)(weed_malloc_and_copy(weed_strlen(oldstring) + 1, oldstring)))
 
 
@@ -284,7 +284,8 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, u
 
 static inline void weed_leaf_free(weed_leaf_t *leaf) {
   weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
-  weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
+  if (leaf->key != leaf->padding)
+    weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
   weed_unmalloc_sizeof(weed_leaf_t, leaf);
 }
 
@@ -292,7 +293,7 @@ static inline void weed_leaf_free(weed_leaf_t *leaf) {
 static inline weed_leaf_t *weed_leaf_new(const char *key, int32_t seed_type, uint32_t hash) {
   weed_leaf_t *leaf;
   if ((leaf = weed_malloc_sizeof(weed_leaf_t)) == NULL) return NULL;
-  if ((leaf->key = weed_strdup(key)) == NULL) {
+  if ((leaf->key = weed_strdup(key, weed_strlen(key))) == NULL) {
     weed_unmalloc_sizeof(weed_leaf_t, leaf);
     return NULL;
   }

@@ -91,6 +91,7 @@ struct _weed_data {
 #define HAVE_WEED_LEAF_T
 typedef struct _weed_leaf weed_leaf_t;
 #ifdef __LIBWEED__
+#define padbytes 16
 struct _weed_leaf {
   const char *key;
   uint32_t	key_hash;
@@ -100,7 +101,7 @@ struct _weed_leaf {
   volatile weed_size_t num_elements;
   volatile weed_data_t **data;
   volatile weed_leaf_t *next;
-  char[16] padding;
+  char padding[padbytes];
 };
 #endif
 #endif

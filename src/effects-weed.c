@@ -2005,13 +2005,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (owidth != width || oheight != height) {
       set_channel_size(filter, channel, width, height);
-      if (owidth != weed_channel_get_width(channel)
-          || oheight != weed_channel_get_height(channel)) {
-        chantmpl = weed_channel_get_template(channel);
-        channel_flags = weed_chantmpl_get_flags(chantmpl);
-        if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
-          needs_reinit = TRUE;
-        }
+      chantmpl = weed_channel_get_template(channel);
+      channel_flags = weed_chantmpl_get_flags(chantmpl);
+      if (channel_flags & WEED_CHANNEL_REINIT_ON_SIZE_CHANGE) {
+        needs_reinit = TRUE;
       }
     }
     i++;
@@ -2220,15 +2217,20 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     /// check if we need to resize the layer
     /// get the pixel widths to compare
     /// the channel has the sizes we set in pass1
-    width = weed_channel_get_width_pixels(channel);
+    width = weed_channel_get_width(channel);
     height = weed_channel_get_height(channel);
 
-    inwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL) * weed_palette_get_pixels_per_macropixel(cpalette);
-    inheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
+    inwidth = weed_layer_get_width(layer);
+    inheight = weed_layer_get_height(layer);
 
+    // we are comparing the macropixel sizes which is fine because that won't change
+    // regardless of the channel / layer palette, but for resize_layer we need the pixel size,
+    // which will be width * pixels_per_macropixel of the original channel palette, which is the divisor we used when
+    // setting the channel width. resize_layer() will handle conversion of the macropixel sizes between layer palette
+    // and opalette
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
-      if (!resize_layer(layer, width, height, interp, opalette, oclamping)) {
+      if (!resize_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp, opalette, oclamping)) {
         retval = FILTER_ERROR_UNABLE_TO_RESIZE;
         goto done_video;
       }
@@ -11162,7 +11164,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 
   if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
     // check the WEED_LEAF_TYPE leaf first
-    // g_print("errtype was %d\n", type);
+    g_print("errtype was %d\n", type);
     bugfd = fd;
     if (newd)
       weed_plant_free(plant);
@@ -11174,7 +11176,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   while (numleaves--) {
     if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
       bugfd = fd;
-      //g_print("err was %d\n", err);
+      g_print("err was %d\n", err);
       if (newd)
         weed_plant_free(plant);
       return NULL;

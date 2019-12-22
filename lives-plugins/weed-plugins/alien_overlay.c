@@ -89,7 +89,7 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
   int inplace = (src == dst);
   int offs = rgb_offset(pal);
   int row = 0;
-  register int j, i = 0, k;
+  register int j, k;
 
   old_pixel_data = sdata->old_pixel_data;
 
@@ -100,31 +100,31 @@ static weed_error_t alien_over_process(weed_plant_t *inst, weed_timecode_t times
     src += offset * irowstride;
     dst += offset * orowstride;
     end = dst + dheight * orowstride;
-    old_pixel_data += width * offset;
+    old_pixel_data += width / psize * 3 * offset;
     row = offset;
   }
 
+  /// the secret to this effect is that we deliberately cast the values to (char) rather than (unsigned char)
+  /// when averaging the current frame with the prior one - the overflow when converted back produces some interesting visuals
   for (; dst < end; dst += orowstride) {
-    i = 0;
     for (j = offs; j < width; j += psize) {
       for (k = 0; k < 3; k++) {
         if (sdata->inited[row]) {
           if (!inplace) {
-            dst[j + k] = ((char)(old_pixel_data[i]) + (char)(src[j + k])) >> 1;
-            old_pixel_data[i] = src[j + k];
+            dst[j + k] = ((char)(*old_pixel_data) + (char)(src[j + k])) >> 1;
+            *old_pixel_data = src[j + k];
           } else {
-            val = ((char)(old_pixel_data[i]) + (char)(src[j + k])) >> 1;
-            old_pixel_data[i] = src[j + k];
+            val = ((char)(*old_pixel_data) + (char)(src[j + k])) >> 1;
+            *old_pixel_data = src[j + k];
             dst[j + k] = val;
           }
-        } else old_pixel_data[i] = dst[j + k] = src[j + k];
-        i++;
+        } else *old_pixel_data = dst[j + k] = src[j + k];
+        old_pixel_data++;
       }
     }
 
     sdata->inited[row++] = 1;
     src += irowstride;
-    old_pixel_data += width;
   }
 
   return WEED_SUCCESS;

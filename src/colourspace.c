@@ -7471,8 +7471,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
 
   for (sbits = 7; (1 << sbits) > rowstride_alignment; sbits--);
 
-  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PIXBUF_SRC)) {
     weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
   }
@@ -8102,8 +8100,13 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
   int height = weed_layer_get_height(layer);
   int psize = pixel_size(pal);
   boolean newdata = FALSE;
-  register int i, j;
+  register int i = numplanes, j;
 
+  if (alignment != 0 && old_layer == NULL) {
+    while (i > 0) if (orowstrides[--i] % alignment != 0) i = -1;
+    if (i == 0) return TRUE;
+  }
+  
   if (old_layer == NULL) {
     newdata = TRUE;
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);

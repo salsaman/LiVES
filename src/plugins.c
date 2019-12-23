@@ -588,7 +588,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 #endif
               }
 
-              if (vpp->init_screen != NULL) {
+	      if (vpp->init_screen != NULL) {
                 (*vpp->init_screen)(mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
                                     mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
                                     TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
@@ -1058,7 +1058,8 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
   // TODO - dirsep
 
-  char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_VID_PLAYBACK,
+  char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
+				       PLUGIN_VID_PLAYBACK,
                                        name);
 
   void *handle = dlopen(plugname, RTLD_LAZY);
@@ -1355,6 +1356,7 @@ void vid_playback_plugin_exit(void) {
     mainw->ext_audio = FALSE;
     pthread_mutex_unlock(&mainw->vpp_stream_mutex);
     lives_grab_remove(LIVES_MAIN_WINDOW_WIDGET);
+
     if (mainw->vpp->exit_screen != NULL) {
       (*mainw->vpp->exit_screen)(mainw->ptr_x, mainw->ptr_y);
     }

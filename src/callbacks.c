@@ -4660,6 +4660,7 @@ void on_insfitaudio_toggled(LiVESToggleButton *togglebutton, livespointer user_d
   }
 }
 
+
 /// stored values for loop locking
 static int loop_lock_frame = -1;
 static boolean oloop;
@@ -6965,7 +6966,7 @@ void on_full_screen_activate(LiVESMenuItem *menuitem, livespointer user_data) {
         mainw->pwidth = mainw->vpp->fwidth;
         mainw->pheight = mainw->vpp->fheight;
       }
-      if (CURRENT_CLIP_IS_NORMAL && (CURRENT_CLIP_HAS_VIDEO || cfile->play_paused) && !mainw->noswitch) {
+      if (1) {//!CURRENT_CLIP_IS_NORMAL && (CURRENT_CLIP_HAS_VIDEO || cfile->play_paused) && !mainw->noswitch) {
         weed_plant_t *frame_layer = mainw->frame_layer;
         check_layer_ready(mainw->frame_layer); // ensure all threads are complete
         mainw->frame_layer = NULL;
@@ -9310,24 +9311,35 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 }
 
 
-boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
+boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
+  static int owidth = -1, oheight = -1;
+  static int ovdwidth = -1, ovdheight = -1;
+
   if (!mainw->configured) {
     mainw->configured = TRUE;
     return FALSE;
   }
   if (widget == LIVES_MAIN_WINDOW_WIDGET) {
-    if (!mainw->ignore_screen_size) {
-      int scr_width = GUI_SCREEN_WIDTH;
-      int scr_height = GUI_SCREEN_HEIGHT;
-      get_monitors(FALSE);
-      if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
-        g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
-        resize_widgets_for_monitor(FALSE);
-      }
-      return FALSE;
+    int scr_width, scr_height;
+    if (mainw->ignore_screen_size) return FALSE;
+    if (owidth == event->width && oheight == event->height) return FALSE;
+    owidth = event->width;
+    oheight = event->height;
+    scr_width = GUI_SCREEN_WIDTH;
+    scr_height = GUI_SCREEN_HEIGHT;
+    get_monitors(FALSE);
+    if (scr_width != GUI_SCREEN_WIDTH || scr_height != GUI_SCREEN_HEIGHT) {
+      g_print("RESIZE %d %d -> %d %d\n", scr_width, scr_height, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT);
+      resize_widgets_for_monitor(FALSE);
     }
+    return FALSE;
+  }
+  else if (widget == mainw->video_draw) {
+    if (ovdwidth == event->width && ovdheight == event->height) return FALSE;
+    ovdwidth = event->width;
+    ovdheight = event->height;
     if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL &&
-        !mainw->preview) {
+	!mainw->preview) {
       get_play_times();
     }
   }
@@ -10342,7 +10354,24 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 }
 
 
-boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+			  livespointer statep) {
+  boolean state = LIVES_POINTER_TO_INT(statep);
+  if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack != NULL
+      || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
+      || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
+  prefs->audio_opts |= AUDIO_OPTS_FOLLOW_CLIPS;
+  if (state) prefs->audio_opts ^= AUDIO_OPTS_FOLLOW_CLIPS;
+  if (switch_audio_clip(mainw->current_file, FALSE)) {
+    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+      resync_audio(cfile->frameno);
+    }
+  }
+  return TRUE;
+}
+  
+
+ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   double avsync;
 

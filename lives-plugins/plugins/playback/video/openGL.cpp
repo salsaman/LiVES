@@ -1882,7 +1882,8 @@ static void *render_thread_func(void *data) {
 
     pthread_mutex_lock(&rthread_mutex);
     Upload();
-    pthread_mutex_unlock(&rthread_mutex);
+    // unlocked inside Upload
+    //pthread_mutex_unlock(&rthread_mutex);
   }
 
   if (retbuf != NULL) {

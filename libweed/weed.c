@@ -178,22 +178,21 @@ EXPORTED weed_error_t weed_init(int32_t abi) {
 }
 
 
+static const weed_size_t maxlen = (weed_size_t) - 2;
+
 static inline weed_size_t weed_strlen(const char *string) {
   weed_size_t len = 0;
-  weed_size_t maxlen = (weed_size_t) - 2;
   if (string == NULL) return 0;
-  while (*(string++) != 0 && (len != maxlen)) len++;
+  while (*(string++) != 0 && (len++ != maxlen));
   return len;
 }
 
 
 static inline int weed_strcmp(const char *st1, const char *st2) {
-  if (st1 == NULL && st2 == NULL) return 1;
-  if (st1 == NULL || st2 == NULL) return 0;
-  while (!(*st1 == 0 && *st2 == 0)) {
-    if (*(st1) == 0 || *(st2) == 0 || *(st1++) != *(st2++)) return 1;
-  }
-  return 0;
+  char c;
+  if (st1 == NULL || st2 == NULL) return (st1 != st2);
+  while ((c = *(st1++)) == *(st2++)) if (c == 0) return 0;
+  return 1;
 }
 
 
@@ -272,13 +271,10 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, u
   }
   hash = weed_hash(key);
   if (hash_ret) *hash_ret = hash;
-  while (leaf != NULL) {
-    if (hash == leaf->key_hash && !weed_strcmp((char *)leaf->key, (char *)key)) {
-      return leaf;
-    }
-    leaf = (weed_leaf_t *)leaf->next;
+  for (; leaf != NULL; leaf = (weed_leaf_t *)leaf->next) {
+    if (hash == leaf->key_hash && !weed_strcmp((char *)leaf->key, (char *)key)) break;
   }
-  return NULL;
+  return leaf;
 }
 
 
@@ -310,7 +306,7 @@ static inline weed_error_t weed_leaf_append(weed_plant_t *plant, weed_leaf_t *ne
   newleaf->next = plant->next;
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
   /// use gcc atomic function to update leafprev->next only if leafprev->next == leaf
-  if (__sync_val_compare_and_swap((weed_leaf_t **) & (plant->next), newleaf->next, newleaf) != newleaf->next)
+  if (__sync_val_compare_and_swap((weed_leaf_t **) &(plant->next), newleaf->next, newleaf) != newleaf->next)
     return WEED_ERROR_CONCURRENCY;
 #endif
   // check to try to make sure another thread hasn't already added this leaf
@@ -439,10 +435,9 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
     isnew = WEED_TRUE;
   } else {
     old_num_elems = leaf->num_elements;
-    old_data = (weed_data_t **)leaf->data;
     if (seed_type != leaf->seed_type) return WEED_ERROR_WRONG_SEED_TYPE;
     if (leaf->flags & WEED_FLAG_IMMUTABLE) return WEED_ERROR_IMMUTABLE;
-    if ((old_num_elems = leaf->num_elements) == 0 && (old_data = (weed_data_t **)leaf->data) != NULL) {
+    if ((old_data = (weed_data_t **)leaf->data) != NULL && old_num_elems == 0) {
       /// the data SHOULD be NULL if num_elements is 0. In this case either the memory is corrupted or some other thread
       /// set num_elements to zero and is about to nullify data, so we'll exit
       return WEED_ERROR_CONCURRENCY;
@@ -541,22 +536,25 @@ return WEED_SUCCESS;
 
 
 static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) {
+  weed_data_t **data;
+  int32_t type;
   weed_leaf_t *leaf;
   if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return WEED_ERROR_NOSUCH_LEAF;
   if (idx >= leaf->num_elements) return WEED_ERROR_NOSUCH_ELEMENT;
   if (value == NULL) return WEED_SUCCESS;
-  if (leaf->data == NULL) return WEED_ERROR_CONCURRENCY;
-  if (leaf->seed_type == WEED_SEED_FUNCPTR) {
-    memcpy(value, &((weed_data_t *)(leaf->data)[idx])->value.funcptr, WEED_FUNCPTR_SIZE);
-  } else if (weed_seed_is_ptr(leaf->seed_type)) {
-    memcpy(value, &((weed_data_t *)(leaf->data[idx]))->value.voidptr, WEED_VOIDPTR_SIZE);
+  type = leaf->seed_type;
+  if ((data = (weed_data_t **)leaf->data) == NULL) return WEED_ERROR_CONCURRENCY;
+  if (type == WEED_SEED_FUNCPTR) {
+    memcpy(value, &((weed_data_t *)(data)[idx])->value.funcptr, WEED_FUNCPTR_SIZE);
+  } else if (weed_seed_is_ptr(type)) {
+    memcpy(value, &((weed_data_t *)(data[idx]))->value.voidptr, WEED_VOIDPTR_SIZE);
   } else {
-    if (leaf->seed_type == WEED_SEED_STRING) {
-      size_t size = (size_t)leaf->data[idx]->size;
+    if (type == WEED_SEED_STRING) {
+      size_t size = (size_t)data[idx]->size;
       char **valuecharptrptr = (char **)value;
-      if (size > 0) memcpy(*valuecharptrptr, leaf->data[idx]->value.voidptr, size);
+      if (size > 0) memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
       (*valuecharptrptr)[size] = 0;
-    } else memcpy(value, leaf->data[idx]->value.voidptr, leaf->data[idx]->size);
+    } else memcpy(value, data[idx]->value.voidptr, leaf->data[idx]->size);
   }
   return WEED_SUCCESS;
 }

@@ -8,6 +8,7 @@
 #define HAS_LIVES_EFFECTS_WEED_H
 
 #define MAX_WEED_STRLEN 65535 // soft limit for LiVES
+#define MAX_WEED_ELEMENTS 65535 // soft limit for LiVES
 
 /// filter apply errors
 typedef enum {
@@ -68,7 +69,7 @@ typedef enum {
 #define WEED_LEAF_HOST_MODE "host_mode" // internal mode mapping
 #define WEED_LEAF_HOST_INPLACE "host_inplace" // inplace effect
 #define WEED_LEAF_HOST_DISABLED "host_disabled" // channel is disabled
-#define WEED_LEAF_HOST_TEMP_DISABLED "host_temp_disabled" // channel is temp disabled
+#define WEED_LEAF_HOST_TEMP_DISABLED "host_temp_dis" // channel is temp disabled
 #define WEED_LEAF_HOST_REFS "host_refs" // host ref counting
 #define WEED_LEAF_HOST_REPEATS "host_repeats" // host channel repeats
 #define WEED_LEAF_HOST_INITED "host_inited" // inited or not

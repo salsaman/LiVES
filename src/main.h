@@ -550,7 +550,7 @@ typedef enum {
 
 #include "pangotext.h"
 
-#define WEED_LEAF_HOST_DEINTERLACE "host_deinterlace" // frame needs deinterlacing
+#define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
 #define WEED_LEAF_HOST_TC "host_tc" // timecode for deinterlace
 #define WEED_LEAF_HOST_DECODER "host_decoder" // pointer to decoder for a layer
 #define WEED_LEAF_HOST_PTHREAD "host_pthread" // thread for a layer
@@ -1237,7 +1237,7 @@ void procw_desensitize(void);
 void close_current_file(int file_to_switch_to);   ///< close current file, and try to switch to file_to_switch_to
 void switch_to_file(int old_file, int new_file);
 void do_quick_switch(int new_file);
-void switch_audio_clip(int new_file, boolean activate);
+boolean switch_audio_clip(int new_file, boolean activate);
 void resize(double scale);
 boolean set_palette_colours(boolean force_reload);
 void set_main_title(const char *filename, int or_untitled_number);
@@ -1252,6 +1252,7 @@ void set_preview_box_colours(void);
 void load_theme_images(void);
 void set_interactive(boolean interactive);
 char *get_menu_name(lives_clip_t *sfile, boolean add_set);
+int get_hspace(void);
 void enable_record(void);
 void toggle_record(void);
 void disable_record(void);

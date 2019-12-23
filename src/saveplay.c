@@ -5,6 +5,7 @@
 // see file ../COPYING or www.gnu.org for licensing details
 
 #include <fcntl.h>
+#include <glib.h>
 
 #include "main.h"
 #include "callbacks.h"
@@ -2507,6 +2508,9 @@ void play_file(void) {
 
   find_when_to_stop();
 
+  // set in case audio lock gets actioned
+  future_prefs->audio_opts = prefs->audio_opts;
+
   if (mainw->foreign || weed_playback_gen_start()) {
     if (mainw->osc_auto)
       lives_notify(LIVES_OSC_NOTIFY_SUCCESS, "");
@@ -2535,7 +2539,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
     //lives_widget_context_update();
-
+    //g_print("ACQ is %d\n", g_main_context_acquire(g_main_context_default ()));
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
@@ -2670,6 +2674,16 @@ void play_file(void) {
   mainw->osc_block = TRUE;
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
+
+  /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
+  /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives 
+  if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
+      mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
+    weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
+  }
+  if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    weed_call_deinit_func(cfile->ext_src);
+  }
 
   if (mainw->ext_playback) {
 #ifndef IS_MINGW
@@ -2844,6 +2858,9 @@ void play_file(void) {
     }
   }
 
+  // reset in case audio lock was actioned
+  prefs->audio_opts = future_prefs->audio_opts;
+
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) lives_system("midistop", TRUE);
 
@@ -2921,7 +2938,7 @@ void play_file(void) {
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
-
+  
   /// kill the separate play window
   if (mainw->play_window != NULL) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
@@ -4887,7 +4904,6 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
   lives_clip_t *scrapfile = mainw->files[mainw->scrap_file];
 
   int fd;
-
   if (!IS_VALID_CLIP(mainw->scrap_file)) return FALSE;
 
   if (scrapfile->ext_src == NULL) {

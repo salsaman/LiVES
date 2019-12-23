@@ -1716,16 +1716,16 @@ Mandatory for filters with video channels
 * "deinit_func"  : WEED_SEED_FUNCPTR : pointer to a the deinit_func()
                     (can also be NULL)
 
-* "in_channel_templates"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of in channel templates,
+* "in_chantmpls"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of in channel templates,
   '''type''' of the referenced plants MUST be  WEED_PLANT_CHANNEL_TEMPLATE
 
-* "out_channel_templates"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '
+* "out_chantmpls"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '
   ''type''' of the referenced plants MUST be  WEED_PLANT_CHANNEL_TEMPLATE
 
-* "in_parameter_templates"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates,
+* "in_paramtmpls"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates,
   '''type''' of the referenced plants MUST be  WEED_PLANT_PARAMETER_TEMPLATE
 
-* "out_parameter_templates" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '
+* "out_paramtmpls" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '
   ''type''' of the referenced plants MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
 
@@ -2519,7 +2519,7 @@ possible, and process video accordingly:
 '''Optional leaves for channel plants with video''': [[BR]]
 
 
- * "pixel_aspect_ratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
+ * "pixel_aratio"   : WEED_SEED_DOUBLE : physical aspect ratio of the display device that the host is using to display
    			    		       the corresponding out_channel. par = pixel_width / pixel_height.
 
 					       Pixel aspect ratio 
@@ -2529,7 +2529,7 @@ possible, and process video accordingly:
 					       horizontal radius == vertical_radius / pixel_aspect_ratio.
 					       
 
- * "alpha_premultiplied" :       WEED_SEED_BOOLEAN :
+ * "alpha_premult" :       WEED_SEED_BOOLEAN :
    		  		  	     if the plugin set WEED_FILTER_PREMULTIPLIED_ALPHA for the filter, then the host MAY
 					     set this to WEED_TRUE if the channel contains pre-multiplied data.
 

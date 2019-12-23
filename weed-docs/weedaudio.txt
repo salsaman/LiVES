@@ -136,7 +136,7 @@ audio in the format requested.
 
 
 
-"max_audio_channels" : WEED_SEED_INT : the maximum number of audio subchannels for each stream
+"max_audio_chans" : WEED_SEED_INT : the maximum number of audio subchannels for each stream
 		       		       	   	   	     	   that is contained in a Weed channel.
 
 							. Eg, if set to 1 then each input / output audio channel only works with mono and any additional
@@ -175,7 +175,7 @@ Note: there is no "min_audio_channels" leaf: either the filter should be designe
 
 
 
-"audio_channel_layout" :: WEED_SEED_INT64  ::  the plugin may define the default
+"channel_layout" :: WEED_SEED_INT64  ::  the plugin may define the default
 		       	  		   (set of) audio channel layout(s) for all Weed audio channels for the filter_class.
 		       	  		   This is MANDATORY if "max_audio_channels" is set to a value > 2.
 					    If absent then WEED_CH_LAYOUT_STEREO, WEED_CH_LAYOUT_MONO is assumed,
@@ -193,17 +193,17 @@ Note: there is no "min_audio_channels" leaf: either the filter should be designe
 						   correctly.
 
 
- "min_audio_length"  : the plugin may set this for a filter to request that the host pass at least this number of samples per
+ "min_audio_len"  : the plugin may set this for a filter to request that the host pass at least this number of samples per
  		       	   	  audio (sub)channel in the "audio_data", ie. if fewer than this number are passed in, the the filter
 				  may buffer the audio data and will only produce new output when the buffer is filled to at least this level.
 
 
- "max_audio_length"  : the plugin may set this for a filter to request the host pass no more than this number of samples per
+ "max_audio_len"  : the plugin may set this for a filter to request the host pass no more than this number of samples per
  		       	   	  audio (sub)channel in the "audio_data", i.e any samples above this value will be ignored (dropped) by the
 				  filter.
 
 
-if "min_audio_length" == "max_audio_length", the the host should attempt to supply the specified number of samples,
+if "min_audio_len" == "max_audio_len", the the host should attempt to supply the specified number of samples,
    		      	 		     However this may not be possible due to timing / other hardware constraints.
 
 
@@ -313,7 +313,7 @@ set in any channel template, otherwise the defaults for the filter should be app
 
 
 
-"audio_channel_layout" :: 
+"channel_layout" :: 
 		       	  				       then this leaf may be used to define the set of
 							       permissible audio channel layouts for a specific Weed channel.
 							       if absent then the defaults for the filter_class will be applied.
@@ -377,7 +377,7 @@ Additional Mandatory leaves for CHANNELS with audio - these values are set by th
 	       			      audio buffer. Values within the buffer are nominally in the range -1.0 <=
 	  			           value <= 1.0. [can be NULL if the host has no audio to pass].
 
-"audio_data_length" : WEED_SEED_INT : length of audio_data in samples
+"audio_data_len" : WEED_SEED_INT : length of audio_data in samples
                                       [can be 0 if the host has no audio to pass]. The length may vary on each cycle, but if the plugin set
 				      audio_data_length in
 
@@ -392,7 +392,7 @@ Additional Mandatory leaves for CHANNELS with audio - these values are set by th
 
 
 T,B,D
-"audio_channel_layout" :: the host may set this to define the channel mapping for the channel.
+"channel_layout" :: the host may set this to define the channel mapping for the channel.
 			       	    	   If absent then it may be assumed 1 == MONO. 2 == STEREO (LEFT, RIGHT)
 
 					    It is envisaged that standard channel layout names will be added to weed-compat.h

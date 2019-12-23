@@ -21,13 +21,13 @@ static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 typedef struct {
   int fd;
-  ssize_t bytes;
+  ssize_t bytes;  /// buffer size
   boolean eof;
-  uint8_t *ptr;
-  uint8_t *buffer;
+  uint8_t *ptr;   /// read point in buffer
+  uint8_t *buffer;   /// bytes
   boolean read;
   boolean allow_fail;
-  off_t offset;
+  off_t offset; // file offs
   char *pathname;
 } lives_file_buffer_t;
 
@@ -472,7 +472,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 // if z > fbuff->bytes: subtract fbuff->bytes from z. Increase fbuff->offset by remainder. Fill buffer.
 
 // backward: if fbuff->ptr - z >= fbuff->buffer : fbuff->ptr -= z, fbuff->bytes += z
-// fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer) : fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes - z) : Fill buffer
+// fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer) : fbuff->offset -= (fbuff->bytes + z) : Fill buffer
 
 // seek absolute: current vitual posn is fbuff->offset - fbuff->bytes : subtract this from absolute posn
 
@@ -484,8 +484,6 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
 #define BUFFER_FILL_BYTES 65536
-
-size_t buffer_fill_bytes;
 
 static ssize_t file_buffer_flush(int fd) {
   // returns number of bytes written to file io, or error code
@@ -641,7 +639,6 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 
   // seek backwards
   offset = -offset;
-
   if (offset <= fbuff->ptr - fbuff->buffer) {
     fbuff->ptr -= offset;
     fbuff->bytes += offset;
@@ -649,11 +646,11 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
   }
 
   offset -= fbuff->ptr - fbuff->buffer;
-  fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes + offset);
+
+  fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes) - offset;
   if (fbuff->offset < 0) fbuff->offset = 0;
   fbuff->bytes = 0;
   fbuff->eof = FALSE;
-
   return fbuff->offset;
 }
 
@@ -679,6 +676,10 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_SET);
   }
 
+  if (fbuff->ptr == NULL) {
+    fbuff->offset = offset;
+    return fbuff->offset;
+  }
   offset -= fbuff->offset - fbuff->bytes;
   return _lives_lseek_buffered_rdonly_relative(fbuff, offset);
 }
@@ -702,15 +703,17 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   // read bytes from fbuff
   while (1) {
-    if (fbuff->bytes <= 0) {
-      if (!fbuff->eof) {
-        // refill the buffer
-        //fbuff->offset += fbuff->ptr - fbuff->buffer;
-        res = file_buffer_fill(fbuff);
-        if (res < 0) return res;
-        continue;
+    if (count < BUFFER_FILL_BYTES + fbuff->bytes) {
+      if (fbuff->bytes <= 0) {
+	if (!fbuff->eof) {
+	  // refill the buffer
+	  //fbuff->offset += fbuff->ptr - fbuff->buffer;
+	  res = file_buffer_fill(fbuff);
+	  if (res < 0) return res;
+	  continue;
+	}
+	break;
       }
-      break;
     }
     if (fbuff->bytes < count) {
       // use up buffer
@@ -723,6 +726,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       if (fbuff->eof) {
         break;
       }
+      if (count > BUFFER_FILL_BYTES) break;
       continue;
     }
     // buffer is sufficient
@@ -734,6 +738,18 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     break;
   }
 
+  if (count > BUFFER_FILL_BYTES) {
+    // direct read
+    res = lives_read(fbuff->fd, buf + retval, count, TRUE);
+    if (res < 0) {
+      lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
+      return res;
+    }
+    if (res < count) fbuff->eof = TRUE;
+    fbuff->offset += res;
+    count -= res;
+  }
+  
   if (!allow_less && count > 0) {
     do_file_read_error(fd, retval, ocount);
     lives_close_buffered(fd);

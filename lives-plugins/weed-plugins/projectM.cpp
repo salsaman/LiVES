@@ -53,7 +53,7 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 #include <X11/extensions/Xrender.h>
 #include <X11/Xatom.h>
 
-#define TARGET_FPS 35.
+#define TARGET_FPS 50.
 #define MESHSIZE 128
 #define DEF_TEXTURESIZE 1024
 
@@ -70,11 +70,13 @@ typedef struct {
   int width;
   int height;
   volatile bool worker_ready;
+  volatile bool worker_active;
   volatile int pidx;
   int opidx;
   volatile int nprs;
   char **volatile prnames;  // volatile ptr to non-volatile strings !!
   pthread_mutex_t mutex;
+  pthread_mutex_t frame_mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
   volatile int audio_frames;
@@ -156,7 +158,7 @@ static int init_display(_sdata *sd) {
   int defheight = sd->height;
 
   /* First, initialize SDL's video subsystem. */
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     fprintf(stderr, "Video initialization failed: %s\n",
             SDL_GetError());
     return 1;
@@ -250,17 +252,13 @@ static int render_frame(_sdata *sdata) {
 
 #if USE_DBLBUF
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
-  pthread_mutex_lock(&sdata->mutex);
 #ifdef HAVE_SDL2
   SDL_GL_SwapWindow(sdata->win);
 #else
   SDL_GL_SwapBuffers();
 #endif
-  pthread_mutex_unlock(&sdata->mutex);
 #else
-  pthread_mutex_lock(&sdata->mutex);
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
-  pthread_mutex_unlock(&sdata->mutex);
 #endif
   return 0;
 }
@@ -299,20 +297,20 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  if (verbosity < WEED_VERBOSITY_INFO) {
-    new_stdout = dup(1);
-    new_stderr = dup(2);
-    close(1);
-    close(2);
-    new_stdout = new_stdout;
-    new_stderr = new_stderr;
-  }
+  // if (verbosity < WEED_VERBOSITY_INFO) {
+  //   new_stdout = dup(1);
+  //   new_stderr = dup(2);
+  //   close(1);
+  //   close(2);
+  //   new_stdout = new_stdout;
+  //   new_stderr = new_stderr;
+  // }
 
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
   settings.meshX = MESHSIZE;
   settings.meshY = settings.meshX * hwratio;
-  settings.fps = sd->fps;
+  settings.fps = 0;//sd->fps;
   settings.smoothPresetDuration = 2;
   settings.presetDuration = 10;
   settings.beatSensitivity = .5;
@@ -341,11 +339,17 @@ static void *worker(void *data) {
   pthread_mutex_unlock(&cond_mutex);
 
   sd->worker_ready = true;
+  pthread_mutex_lock(&sd->mutex);
 
   while (!sd->die) {
     if (!sd->rendering) {
+      // deinit() will only exit once the mutex is unlocked, we need to make sure we are idling
+      // else we can pick up the wm response for the playback plugin and cause it to hang
+      pthread_mutex_unlock(&sd->mutex);
+      sd->worker_active = false;
       usleep(10000);
       rerand = true;
+      pthread_mutex_lock(&sd->mutex);
       continue;
     }
     if (sd->pidx == -1) {
@@ -368,14 +372,16 @@ static void *worker(void *data) {
       sd->audio_frames = 0;
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
-    pthread_mutex_lock(&sd->mutex);
+
+    pthread_mutex_lock(&sd->frame_mutex);
     if (sd->update_size) {
       change_size(sd);
       sd->update_size = false;
     }
-    pthread_mutex_unlock(&sd->mutex);
+    pthread_mutex_unlock(&sd->frame_mutex);
     render_frame(sd);
   }
+  pthread_mutex_unlock(&sd->mutex);
 
   // TODO : segfault
   //if (sd->globalPM != NULL) delete(sd->globalPM);
@@ -388,6 +394,8 @@ static void *worker(void *data) {
 static weed_error_t projectM_deinit(weed_plant_t *inst) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
   if (sd) sd->rendering = false;
+  pthread_mutex_lock(&sd->mutex);
+  pthread_mutex_unlock(&sd->mutex);
   copies--;
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
@@ -437,11 +445,13 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->achans = 0;
 
       pthread_mutex_init(&sd->mutex, NULL);
+      pthread_mutex_init(&sd->frame_mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
 
       sd->nprs = 0;
       sd->prnames = NULL;
       sd->worker_ready = false;
+      sd->worker_active = false;
       sd->rendering = false;
 
       // kick off a thread to init screean and render
@@ -578,7 +588,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   ptrs = sd->fbuffer;
 
-  pthread_mutex_lock(&sd->mutex);
+  pthread_mutex_lock(&sd->frame_mutex);
 
   // copy sd->fbuffer -> dst
   if (rowstride == widthx && width == sd->width && height == sd->height) {
@@ -590,7 +600,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     }
   }
 
-  pthread_mutex_unlock(&sd->mutex);
+  pthread_mutex_unlock(&sd->frame_mutex);
 
   return WEED_SUCCESS;
 }
@@ -632,6 +642,7 @@ WEED_DESETUP_START {
       weed_free(statsd->prnames);
     }
     pthread_mutex_destroy(&statsd->mutex);
+    pthread_mutex_destroy(&statsd->frame_mutex);
     pthread_mutex_destroy(&statsd->pcm_mutex);
     weed_free(statsd);
     statsd = NULL;

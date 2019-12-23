@@ -1746,7 +1746,7 @@ static void lives_init(_ign_opts *ign_opts) {
     load_default_keymap();
     threaded_dialog_spin(0.);
 
-    prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
+    future_prefs->audio_opts = prefs->audio_opts = get_int_prefd(PREF_AUDIO_OPTS, 3);
 
 #ifdef ENABLE_JACK
     lives_snprintf(prefs->jack_aserver, PATH_MAX, "%s/.jackdrc", capable->home_dir);
@@ -4609,11 +4609,10 @@ void load_start_image(int frame) {
 
   threaded_dialog_spin(0.);
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
-    LiVESPixbuf *sepbuf;
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
-    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
+    int hspace = get_hspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
@@ -4815,11 +4814,10 @@ void load_end_image(int frame) {
 
   threaded_dialog_spin(0.);
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
-    LiVESPixbuf *sepbuf;
     int bx, by, hsize, vsize;
     int scr_width = GUI_SCREEN_WIDTH;
     int scr_height = GUI_SCREEN_HEIGHT;
-    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ? lives_pixbuf_get_height(sepbuf) : 0;
+    int hspace = get_hspace();
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     hsize = (scr_width - (H_RESIZE_ADJUST * 3 + bx)) / 3;
     vsize = (scr_height - (CE_TIMELINE_HSPACE + hspace + by));
@@ -5679,7 +5677,6 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
       if (!res) {
         return FALSE;
       }
-      weed_leaf_delete(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS);
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
       weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
       // clip width and height may vary dynamically
@@ -6366,8 +6363,7 @@ void load_frame_image(int frame) {
         }
 
         if (rec_after_pb || !CURRENT_CLIP_IS_NORMAL ||
-            (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && (mainw->files[bg_file]->clip_type != CLIP_TYPE_DISK &&
-                mainw->files[bg_file]->clip_type != CLIP_TYPE_FILE))) {
+            (prefs->rec_opts & REC_EFFECTS && bg_file != -1 && !IS_NORMAL_CLIP(bg_file))) {
           // TODO - handle non-opening of scrap_file
           if (mainw->scrap_file == -1) open_scrap_file();
           fg_file = mainw->scrap_file;
@@ -6429,9 +6425,7 @@ void load_frame_image(int frame) {
           if (scrap_file_size != -1 || (mainw->rec_aclip != -1 && (prefs->rec_opts & REC_AUDIO))) {
             weed_plant_t *event = get_last_frame_event(mainw->event_list);
 
-            if (scrap_file_size != -1) {
-              weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, scrap_file_size);
-            }
+            if (scrap_file_size != -1) weed_set_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, scrap_file_size);
 
             if (mainw->rec_aclip != -1) {
               if (mainw->rec_aclip == mainw->ascrap_file) {
@@ -6485,7 +6479,7 @@ void load_frame_image(int frame) {
            (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)))
           && !prefs->hide_framebar) {
         lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), framecount);
-        lives_widget_queue_draw(mainw->framecounter);
+        //lives_widget_queue_draw(mainw->framecounter);
       }
       lives_freep((void **)&framecount);
     }
@@ -6791,10 +6785,13 @@ void load_frame_image(int frame) {
     if (LIVES_UNLIKELY((mainw->frame_layer == NULL) || mainw->cancelled > 0)) {
       // NULL frame or user cancelled
       check_layer_ready(mainw->frame_layer);
-
-      if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
-      mainw->frame_layer = NULL;
-
+      if (mainw->frame_layer != NULL) {
+	/* if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) { */
+	/*   save_to_scrap_file(mainw->frame_layer); */
+	/* } */
+	weed_layer_free(mainw->frame_layer);
+	mainw->frame_layer = NULL;
+      }
       mainw->noswitch = noswitch;
       lives_freep((void **)&framecount);
       return;
@@ -6884,10 +6881,10 @@ void load_frame_image(int frame) {
 
     // save to scrap_file now if we have to
     if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
-      if (!rec_after_pb) {
+      //if (!rec_after_pb) {
         check_layer_ready(mainw->frame_layer);
         save_to_scrap_file(mainw->frame_layer);
-      }
+	//}
       get_player_size(&opwidth, &opheight);
     }
 
@@ -7887,7 +7884,7 @@ void load_frame_image(int frame) {
   }
 
 
-  void switch_audio_clip(int new_file, boolean activate) {
+boolean  switch_audio_clip(int new_file, boolean activate) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
 
@@ -7896,7 +7893,7 @@ void load_frame_image(int frame) {
       if (mainw->jackd != NULL) {
         if (!activate) mainw->jackd->in_use = FALSE;
 
-        if (mainw->jackd->playing_file == new_file) return;
+        if (mainw->jackd->playing_file == new_file) return FALSE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
@@ -7907,7 +7904,7 @@ void load_frame_image(int frame) {
         lives_alarm_clear(alarm_handle);
         if (timeout == 0) {
           mainw->cancelled = handle_audio_timeout();
-          return;
+          return FALSE;
         }
 
         if (mainw->jackd->playing_file > 0) {
@@ -7925,13 +7922,13 @@ void load_frame_image(int frame) {
           lives_alarm_clear(alarm_handle);
           if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
-            return;
+            return FALSE;
           }
         }
       }
       if (!IS_VALID_CLIP(new_file)) {
         mainw->jackd->in_use = FALSE;
-        return;
+        return FALSE;
       }
 
       if (activate) mainw->jackd->in_use = TRUE;
@@ -7982,7 +7979,7 @@ void load_frame_image(int frame) {
         lives_alarm_clear(alarm_handle);
         if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
-          return;
+          return FALSE;
         }
         mainw->jackd->is_paused = mainw->files[new_file]->play_paused;
         mainw->jackd->is_silent = FALSE;
@@ -7998,7 +7995,7 @@ void load_frame_image(int frame) {
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL) {
-        if (mainw->pulsed->playing_file == new_file) return;
+        if (mainw->pulsed->playing_file == new_file) return FALSE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
@@ -8009,7 +8006,7 @@ void load_frame_image(int frame) {
         lives_alarm_clear(alarm_handle);
         if (timeout == 0)  {
           mainw->cancelled = handle_audio_timeout();
-          return;
+          return FALSE;
         }
 
         if (mainw->pulsed->fd > 0) {
@@ -8027,13 +8024,13 @@ void load_frame_image(int frame) {
           lives_alarm_clear(alarm_handle);
           if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
-            return;
+            return FALSE;
           }
         }
 
         if (!IS_VALID_CLIP(new_file)) {
           mainw->pulsed->in_use = FALSE;
-          return;
+          return FALSE;
         }
 
         mainw->pulsed->in_use = TRUE;
@@ -8082,7 +8079,7 @@ void load_frame_image(int frame) {
           lives_alarm_clear(alarm_handle);
           if (timeout == 0)  {
             mainw->cancelled = handle_audio_timeout();
-            return;
+            return FALSE;
           }
 
           mainw->pulsed->is_paused = mainw->files[new_file]->play_paused;
@@ -8100,9 +8097,9 @@ void load_frame_image(int frame) {
     if (prefs->audio_player == AUD_PLAYER_NONE) {
       if (!IS_VALID_CLIP(new_file)) {
         mainw->nullaudio_playing_file = -1;
-        return;
+        return FALSE;
       }
-      if (mainw->nullaudio->playing_file == new_file) return;
+      if (mainw->nullaudio->playing_file == new_file) return FALSE;
       nullaudio_clip_set(new_file);
       if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
         if (!mainw->files[new_file]->play_paused)
@@ -8121,6 +8118,7 @@ void load_frame_image(int frame) {
       }
     }
 #endif
+    return TRUE;
   }
 
 
@@ -8263,17 +8261,12 @@ void load_frame_image(int frame) {
   void resize(double scale) {
     // resize the frame widgets
     // set scale < 0. to _force_ the playback frame to expand (for external capture)
-
-    LiVESPixbuf *sepbuf;
-
     double oscale = scale;
 
-    int xsize;
+    int xsize, hspace;
     int bx, by;
 
     // height of the separator imeage
-    int hspace = ((sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image))) != NULL) ?
-                 lives_pixbuf_get_height(sepbuf) : 0;
 
     // maximum values
     int hsize, vsize;
@@ -8282,6 +8275,7 @@ void load_frame_image(int frame) {
     int scr_height = GUI_SCREEN_HEIGHT;
 
     if (!prefs->show_gui || mainw->multitrack != NULL) return;
+    hspace = get_hspace();
 
     get_border_size(LIVES_MAIN_WINDOW_WIDGET, &bx, &by);
     w = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);

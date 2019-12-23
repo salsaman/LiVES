@@ -217,10 +217,10 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_INIT_FUNC "init_func"
 #define WEED_LEAF_DEINIT_FUNC "deinit_func"
 #define WEED_LEAF_PROCESS_FUNC "process_func"
-#define WEED_LEAF_IN_PARAMETER_TEMPLATES "in_parameter_templates"
-#define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_parameter_templates"
-#define WEED_LEAF_IN_CHANNEL_TEMPLATES "in_channel_templates"
-#define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_channel_templates"
+#define WEED_LEAF_IN_PARAMETER_TEMPLATES "in_paramtmpls"
+#define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_paramtmpls"
+#define WEED_LEAF_IN_CHANNEL_TEMPLATES "in_chantmpls"
+#define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_chantmpls"
 #define WEED_LEAF_TARGET_FPS "target_fps"
 #define WEED_LEAF_GUI "gui"
 #define WEED_LEAF_DESCRIPTION "description"
@@ -248,10 +248,10 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 ///
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
-#define WEED_LEAF_MAX_AUDIO_CHANNELS "max_audio_channels"
-#define WEED_LEAF_AUDIO_MIN_AUDIO_LENGTH "min_audio_length"
-#define WEED_LEAF_AUDIO_MAX_AUDIO_LENGTH "max_audio_length"
-#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// only if set in filter_class or channel_template
+#define WEED_LEAF_MAX_AUDIO_CHANNELS "max_audio_chans"
+#define WEED_LEAF_AUDIO_MIN_AUDIO_LENGTH "min_audio_len"
+#define WEED_LEAF_AUDIO_MAX_AUDIO_LENGTH "max_audio_len"
+#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "channel_layout"  /// only if set in filter_class or channel_template
 
 /* audio channel layouts (default settings) */
 #ifndef  WEED_CHANNEL_LAYOUT_TYPE
@@ -313,7 +313,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 
 // mandatory for AUDIO
 #define WEED_LEAF_AUDIO_DATA "audio_data"
-#define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_length"
+#define WEED_LEAF_AUDIO_DATA_LENGTH "audio_data_len"
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_AUDIO_CHANNELS "audio_channels"
 //#define WEED_LEAF_AUDIO_CHANNEL_LAYOUT "audio_channel_layout"  /// ONLY if set in filter_class or channel_template
@@ -326,9 +326,9 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 /// WEED_LEAF_YUV_CLAMPING
 /// WEED_LEAF_YUV_SAMPLING
 /// WEED_LEAF_YUV_SUBSPACE
-#define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aspect_ratio"
+#define WEED_LEAF_PIXEL_ASPECT_RATIO "pixel_aratio"
 #define WEED_LEAF_GAMMA_TYPE "gamma_type"
-#define WEED_LEAF_ALPHA_PREMULTIPLIED "alpha_premultiplied"
+#define WEED_LEAF_ALPHA_PREMULTIPLIED "alpha_premult"
 
 
 // PARAM_TEMPLATE
@@ -347,7 +347,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_GROUP "group"
 #define WEED_LEAF_COLORSPACE "colorspace"
 #define WEED_LEAF_IS_TRANSITION "is_transition"
-#define WEED_LEAF_IS_VOLUME_MASTER "is_volume_master"
+#define WEED_LEAF_IS_VOLUME_MASTER "is_vol_master"
 
 // PARAM_TEMPLATE GUI
 #define WEED_LEAF_WRAP "wrap"

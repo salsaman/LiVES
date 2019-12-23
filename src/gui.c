@@ -49,6 +49,17 @@ static LiVESWidgetClosure *rec_closure;
 static LiVESWidgetClosure *mute_audio_closure;
 static LiVESWidgetClosure *ping_pong_closure;
 
+
+LIVES_GLOBAL_INLINE int get_hspace(void) {
+  static int hspace = -1;
+  if (hspace == -1) {
+    LiVESPixbuf *sepbuf = lives_image_get_pixbuf(LIVES_IMAGE(mainw->sep_image));
+    hspace = sepbuf  != NULL ? lives_pixbuf_get_height(sepbuf) : 0;
+  }
+  return hspace;
+}
+
+
 void load_theme_images(void) {
   // load the theme images
   // TODO - set palette in here ?
@@ -2358,6 +2369,13 @@ void create_LiVES(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_w, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(show_sync_callback), NULL, NULL));
 
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_a, (LiVESXModifierType)0, (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(aud_lock_callback), LIVES_INT_TO_POINTER(TRUE), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_a, (LiVESXModifierType)LIVES_SHIFT_MASK,
+			    (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(aud_lock_callback), LIVES_INT_TO_POINTER(FALSE), NULL));
+
   if (FN_KEYS > 0) {
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F1, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                               lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(1), NULL));
@@ -2395,18 +2413,9 @@ void create_LiVES(void) {
                           lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_F12, (LiVESXModifierType)0, (LiVESAccelFlags)0,
                                                     lives_cclosure_new(LIVES_GUI_CALLBACK(storeclip_callback), LIVES_INT_TO_POINTER(12), NULL));
                           // ad nauseum...
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+		// *INDENT-OFF*
+                        }}}}}}}}}}}}
+    // *INDENT-ON*
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_0, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(0), NULL));
@@ -2464,15 +2473,9 @@ void create_LiVES(void) {
                     lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                               (LiVESAccelFlags)0,
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(8), NULL));
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+		    // *INDENT-OFF*
+                  }}}}}}}}}
+  // *INDENT-ON*
 
   if (new_lives) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
@@ -4296,10 +4299,11 @@ void resize_play_window(void) {
           //lives_widget_context_update();
           lives_usleep(100);
         }
-        if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
-            (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
-             mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
-             fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
+
+	if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
+						  (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
+						   mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
+						   fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
           // start key polling from ext plugin

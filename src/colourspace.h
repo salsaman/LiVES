@@ -9,7 +9,7 @@
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
 
-#define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_pixel_data_contiguous"
+#define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
 

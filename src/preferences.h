@@ -707,6 +707,7 @@ typedef struct {
   uint32_t jack_opts;
 
   int audio_src;
+  uint32_t audio_opts;
 
   int nfx_threads;
 
@@ -870,8 +871,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MIDI_RCV_CHANNEL "midi_rcv_channel"
 
 #define PREF_ENCODER_ACODEC "encoder_acodec"
-
-#define PREF_AUDIO_OPTS "audio_opts"
 
 #define PREF_RECORD_OPTS "record_opts"
 

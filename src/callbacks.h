@@ -374,6 +374,9 @@ boolean storeclip_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiV
 
 boolean nervous_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer);
 
+boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+			  livespointer statep);
+
 boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
 boolean on_save_set_activate(LiVESMenuItem *, livespointer);

@@ -79,6 +79,7 @@ int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
 
 /* CHANNEL functions */
 void *weed_channel_get_pixel_data(weed_plant_t *channel);
+void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes);
 
 /// width in macropixels, normal value for channels etc.
 int weed_channel_get_width(weed_plant_t *channel);

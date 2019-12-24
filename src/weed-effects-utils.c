@@ -236,6 +236,11 @@ WEED_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_plant_t *channel) {
   return weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 }
 
+WEED_GLOBAL_INLINE void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
+  return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, NULL);
+}
+
 WEED_GLOBAL_INLINE int weed_channel_get_width(weed_plant_t *channel) {
   /// width in macropixels, normal value for channels etc.
   if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;

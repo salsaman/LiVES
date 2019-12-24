@@ -705,14 +705,14 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   while (1) {
     if (count < BUFFER_FILL_BYTES + fbuff->bytes) {
       if (fbuff->bytes <= 0) {
-	if (!fbuff->eof) {
-	  // refill the buffer
-	  //fbuff->offset += fbuff->ptr - fbuff->buffer;
-	  res = file_buffer_fill(fbuff);
-	  if (res < 0) return res;
-	  continue;
-	}
-	break;
+        if (!fbuff->eof) {
+          // refill the buffer
+          //fbuff->offset += fbuff->ptr - fbuff->buffer;
+          res = file_buffer_fill(fbuff);
+          if (res < 0) return res;
+          continue;
+        }
+        break;
       }
     }
     if (fbuff->bytes < count) {
@@ -749,7 +749,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->offset += res;
     count -= res;
   }
-  
+
   if (!allow_less && count > 0) {
     do_file_read_error(fd, retval, ocount);
     lives_close_buffered(fd);

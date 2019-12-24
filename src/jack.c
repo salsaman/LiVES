@@ -502,12 +502,6 @@ static int audio_process(nframes_t nframes, void *arg) {
         output_silence(0, nframes, jackd, out_buffer);
         jackd->is_silent = TRUE;
       }
-
-      /* if (!jackd->is_paused) jackd->frames_written += nframes; */
-
-      /* if (jackd->seek_pos < 0. && jackd->playing_file > -1 && afile != NULL) { */
-      /*   jackd->seek_pos += nframes * afile->achans * afile->asampsize / 8; */
-      /* } */
       return 0;
     }
 
@@ -571,10 +565,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
                 } else {
                   jackd->seek_pos = 0;
-                }
-              }
-            }
-          }
+		// *INDENT-OFF*
+                }}}}
+	  // *INDENT-ON*
         } else {
           // reverse playback
           if (((jackd->seek_pos -= in_bytes) < 0) || eof) {
@@ -609,7 +602,7 @@ static int audio_process(nframes_t nframes, void *arg) {
           output_silence(0, nframes, jackd, out_buffer);
           return 0;
         } else {
-          xin_bytes = in_bytes;
+          xin_bytes = 0;
         }
         if (mainw->agen_key != 0 && mainw->multitrack == NULL && !mainw->preview) {
           // how much audio do we want to pull from any generator ?
@@ -899,7 +892,9 @@ static int audio_process(nframes_t nframes, void *arg) {
                                  || mainw->multitrack != NULL || mainw->preview)) {
         push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
       }
-      if (shrink_factor > 0.) jackd->seek_pos += xin_bytes;
+      /// advance the seek pos even if we are reading from a generator
+      /// audio gen outptut is float, so convert to playing file bytesize
+      if (shrink_factor > 0.) jackd->seek_pos += xin_bytes / 4 * jackd->bytes_per_channel;
     }
 
     /*    jackd->jack_pulse[0]=set_pulse(out_buffer[0],jack->buffer_size,8);

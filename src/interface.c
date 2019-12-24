@@ -3656,9 +3656,11 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
   ADD_KEYDEF(_("ctrl-alt-space"), _("reverse direction (background clip)"));
   ADD_KEYDEF(_("ctrl-shift-space"),
-             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\nctrl-space clears)"));
+             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\nctrl-space, ctrl-enter, or switching clips clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
+  ADD_KEYDEF("a", _("audio lock on: play audio from current foreground clip, and ignore video clip switches"));
+  ADD_KEYDEF("A", _("audio lock off; audio follows the foreground video clip"));
   ADD_KEYDEF("n", _("nervous"));
   ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));
   ADD_KEYDEF(_("ctrl-page-down"), _("next clip"));

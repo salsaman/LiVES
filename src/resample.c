@@ -539,9 +539,71 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
   while ((out_tc + tl) <= tc_end) {
     // walk list of in events
+
+#ifdef RESAMPLE_SMOOTH
+    /// in this mode we walk the event_list until we reach the output time, keeping track of
+    /// state - frame and clip numbers, audio positions, param values, then insert everything at the output slot
+    /// if we get another slot without a frame event then we look at the next two frame events. If both are before the next slot
+    /// then we move the next frame event back and insert, since it would otherwise be dropped.
+
+    /// values which we maintain: current init_events (cancelled by a deinit)
+    /// current filter map (cancelled by a new filter_map)
+    /// current deinits (cancelled by cancelling an init_event)
+    /// current param changes (cancelled by another pchange for same fx / param or a deinit)
+    /// audio seeks
+
+    if (get_event_timecode(event) >= out_tc) {
+      /// insert the state
+      if (ins_tc == 0 && times_inserted > 0) {
+        // check for insert-next-frame
+        if ((next_frame_event = get_next_frame_event(event)) != NULL) {
+          if ((next_frame_event = get_next_frame_event(next_event)) != NULL) {
+            tp = get_event_timecode(next_frame_event);
+            if (tp <= out_tc + tl) {
+              /// when we hit next frame event, we will insert state at inc_tc
+              /// otherwise we would be repeating a frame and the dropping one
+              ins_tc = out_tc;
+              continue;
+            }
+          }
+        }
+      }
+      out_tc += tl;
+      out_tc = q_gint64(out_tc, qfps);
+      /// skip adding the duplicate frame and insert the next one instead
+      continue;
+    } else switch ((etype = weed_event_get_type(event)) {
+    case WEED_EVENT_FRAME:
+      // get clip / frame events
+      // update audio
+      break;
+    case WEED_EVENT_FILTER_INIT:
+      // add to filter_inits list
+      estate->init_events = lives_list_prepend(event);
+        break;
+      case WEED_EVENT_FILTER_DEINIT:
+        /// if init_event is is list, discard it + this event
+        break;
+      case WEED_EVENT_PCHANGE:
+        /// update pchanges; overwrite any value for init_event / idx, take account of "ign"
+        break;
+      case WEED_EVENT_FILTER_MAP:
+        /// replace current filter map
+        estate->filter_map = event;
+        break;
+      default:
+        /// probably a marker; add to misc_events list
+        break;
+      }
+    event = get_next_event(event);
+            continue;
+
+            //TODO....
+#endif
+
     while (event != NULL && !WEED_EVENT_IS_FRAME(event)) {
-      // copy non-FRAME events
-      if (!copy_with_check(event, out_list, what, 0)) {
+    // copy non-FRAME events
+    if (!copy_with_check(event, out_list, what, 0)) {
         lives_free(what);
         event_list_free(out_list);
         return NULL;
@@ -552,7 +614,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
     // now we are dealing with a FRAME event
     if (event != NULL) {
-      if (last_audio_event != event && WEED_EVENT_IS_AUDIO_FRAME(event)) {
+    if (last_audio_event != event && WEED_EVENT_IS_AUDIO_FRAME(event)) {
         last_audio_event = event;
         needs_audio = TRUE;
         if (aclips != NULL) lives_free(aclips);
@@ -578,8 +640,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     }
 
     if (in_tc <= (out_tc + tl) && event != NULL) {
-      // event is before slot, note it and get next event
-      numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
+    // event is before slot, note it and get next event
+    numframes = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
       do {
         response = LIVES_RESPONSE_OK;
         lives_freep((void **)&out_clips);

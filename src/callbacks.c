@@ -9311,7 +9311,7 @@ boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livesp
 }
 
 
-boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespointer user_data) {
+boolean config_event(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   static int owidth = -1, oheight = -1;
   static int ovdwidth = -1, ovdheight = -1;
 
@@ -9333,13 +9333,12 @@ boolean config_event(LiVESWidget *widget, LiVESXEventConfigure *event, livespoin
       resize_widgets_for_monitor(FALSE);
     }
     return FALSE;
-  }
-  else if (widget == mainw->video_draw) {
+  } else if (widget == mainw->video_draw) {
     if (ovdwidth == event->width && ovdheight == event->height) return FALSE;
     ovdwidth = event->width;
     ovdheight = event->height;
     if (CURRENT_CLIP_IS_VALID && !mainw->is_rendering && !mainw->is_processing && mainw->multitrack == NULL &&
-	!mainw->preview) {
+        !mainw->preview) {
       get_play_times();
     }
   }
@@ -9733,6 +9732,7 @@ void vj_mode_toggled(LiVESCheckMenuItem * menuitem, livespointer user_data) {
 
 
 void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data) {
+  /// user_data non-NULL to force audio rate update
   double new_fps;
 
   if (!LIVES_IS_PLAYING) return;
@@ -9740,7 +9740,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   new_fps = lives_fix(lives_spin_button_get_value(LIVES_SPIN_BUTTON(spinbutton)), 3);
 
-  if ((!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.)) {
+  if (user_data == NULL && (!cfile->play_paused && cfile->pb_fps == new_fps) || (cfile->play_paused && new_fps == 0.)) {
     mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     return;
   }
@@ -10355,7 +10355,7 @@ boolean nervous_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 
 
 boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-			  livespointer statep) {
+                          livespointer statep) {
   boolean state = LIVES_POINTER_TO_INT(statep);
   if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack != NULL
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
@@ -10365,13 +10365,14 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (switch_audio_clip(mainw->current_file, FALSE)) {
     if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
       resync_audio(cfile->frameno);
+      changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(TRUE));
     }
   }
   return TRUE;
 }
-  
 
- boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+
+boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   double avsync;
 

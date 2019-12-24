@@ -306,7 +306,7 @@ static inline weed_error_t weed_leaf_append(weed_plant_t *plant, weed_leaf_t *ne
   newleaf->next = plant->next;
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
   /// use gcc atomic function to update leafprev->next only if leafprev->next == leaf
-  if (__sync_val_compare_and_swap((weed_leaf_t **) &(plant->next), newleaf->next, newleaf) != newleaf->next)
+  if (__sync_val_compare_and_swap((weed_leaf_t **) & (plant->next), newleaf->next, newleaf) != newleaf->next)
     return WEED_ERROR_CONCURRENCY;
 #endif
   // check to try to make sure another thread hasn't already added this leaf

@@ -588,7 +588,7 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
 #endif
               }
 
-	      if (vpp->init_screen != NULL) {
+              if (vpp->init_screen != NULL) {
                 (*vpp->init_screen)(mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
                                     mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
                                     TRUE, xwinid, vpp->extra_argc, vpp->extra_argv);
@@ -1059,7 +1059,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // TODO - dirsep
 
   char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
-				       PLUGIN_VID_PLAYBACK,
+                                       PLUGIN_VID_PLAYBACK,
                                        name);
 
   void *handle = dlopen(plugname, RTLD_LAZY);

@@ -4105,18 +4105,6 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
-weed_error_t weed_leaf_get_plugin(weed_plant_t *plant, const char *key, int32_t idx, void *value) {
-  // plugins can be monitored for example
-  weed_error_t err = _weed_leaf_get(plant, key, idx, value);
-  // and simulating bugs...
-  /* if (!strcmp(key, WEED_LEAF_WIDTH) && value != NULL) { */
-  /*   int *ww = (int *)value; */
-  /*   *ww -= 100; */
-  /* } */
-  return err;
-}
-
-
 /* weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) { */
 /*   fprintf(stderr, "pl setting %s\n", key); */
 /*   return _weed_leaf_set(plant, key, seed_type, num_elems, values); */
@@ -4127,7 +4115,7 @@ static void upd_statsplant(const char *key) {
   if (mainw->is_exiting) return;
   if (statsplant == NULL) statsplant = weed_plant_new(0);
   freq = weed_get_int_value(statsplant, key, NULL) + 1;
-_weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
+  _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
 }
 
 
@@ -4157,7 +4145,20 @@ weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, int32_t
 }
 
 
-weed_size_t weed_leaf_num_elements_host(weed_plant_t *plant, const char *key) {
+weed_error_t weed_leaf_get_monitor(weed_plant_t *plant, const char *key, int32_t idx, void *value) {
+  // plugins can be monitored for example
+  weed_error_t err = _weed_leaf_get(plant, key, idx, value);
+  // and simulating bugs...
+  /* if (!strcmp(key, WEED_LEAF_WIDTH) && value != NULL) { */
+  /*   int *ww = (int *)value; */
+  /*   *ww -= 100; */
+  /* } */
+  upd_statsplant(key);
+  return err;
+}
+
+
+weed_size_t weed_leaf_num_elements_monitor(weed_plant_t *plant, const char *key) {
   upd_statsplant(key);
   return _weed_leaf_num_elements(plant, key);
 }
@@ -4177,7 +4178,6 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
     flags |= WEED_FLAG_IMMUTABLE;
     weed_leaf_set_flags(plant, key, flags);
   }
-  if (strlen(key) > 15) upd_statsplant(key);
   return err;
 }
 

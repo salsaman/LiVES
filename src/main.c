@@ -3360,6 +3360,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
 
+  // allow us to set immutable values (plugins can't)
+  weed_leaf_set = weed_leaf_set_host;
+
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
 
@@ -6786,11 +6789,11 @@ void load_frame_image(int frame) {
       // NULL frame or user cancelled
       check_layer_ready(mainw->frame_layer);
       if (mainw->frame_layer != NULL) {
-	/* if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) { */
-	/*   save_to_scrap_file(mainw->frame_layer); */
-	/* } */
-	weed_layer_free(mainw->frame_layer);
-	mainw->frame_layer = NULL;
+        /* if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) { */
+        /*   save_to_scrap_file(mainw->frame_layer); */
+        /* } */
+        weed_layer_free(mainw->frame_layer);
+        mainw->frame_layer = NULL;
       }
       mainw->noswitch = noswitch;
       lives_freep((void **)&framecount);
@@ -6882,9 +6885,9 @@ void load_frame_image(int frame) {
     // save to scrap_file now if we have to
     if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) {
       //if (!rec_after_pb) {
-        check_layer_ready(mainw->frame_layer);
-        save_to_scrap_file(mainw->frame_layer);
-	//}
+      check_layer_ready(mainw->frame_layer);
+      save_to_scrap_file(mainw->frame_layer);
+      //}
       get_player_size(&opwidth, &opheight);
     }
 
@@ -7884,7 +7887,7 @@ void load_frame_image(int frame) {
   }
 
 
-boolean  switch_audio_clip(int new_file, boolean activate) {
+  boolean  switch_audio_clip(int new_file, boolean activate) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
 

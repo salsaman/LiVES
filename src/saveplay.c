@@ -2539,7 +2539,7 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
     //lives_widget_context_update();
-    //g_print("ACQ is %d\n", g_main_context_acquire(g_main_context_default ()));
+    g_print("ACQ is %d\n", g_main_context_acquire(g_main_context_default()));
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
@@ -2676,7 +2676,7 @@ void play_file(void) {
   mainw->playing_file = -1;
 
   /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
-  /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives 
+  /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
   if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
@@ -2938,7 +2938,7 @@ void play_file(void) {
   }
 
   if (!is_realtime_aplayer(audio_player)) mainw->mute = mute;
-  
+
   /// kill the separate play window
   if (mainw->play_window != NULL) {
     lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
@@ -2976,6 +2976,7 @@ void play_file(void) {
         }
       }
     }
+    g_main_context_release(g_main_context_default());
 
     /// free the last frame image
     if (mainw->frame_layer != NULL) {

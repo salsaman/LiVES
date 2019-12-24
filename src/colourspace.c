@@ -8106,7 +8106,7 @@ boolean copy_pixel_data(weed_layer_t *layer, weed_layer_t *old_layer, size_t ali
     while (i > 0) if (orowstrides[--i] % alignment != 0) i = -1;
     if (i == 0) return TRUE;
   }
-  
+
   if (old_layer == NULL) {
     newdata = TRUE;
     old_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);

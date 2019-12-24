@@ -11069,7 +11069,11 @@ boolean lives_widget_context_update(void) {
         break;
       }
       if (nulleventcount > MAX_NULL_EVENTS) {
-        g_print("too many X events !\n");
+        if (prefs->show_dev_opts) {
+          g_print("too many X events !\n");
+          if (ev != NULL)
+            g_print("last was %d\n", ev->type);
+        }
         break;
       }
       if (ev != NULL) {

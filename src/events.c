@@ -3095,7 +3095,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       new_file = -1;
       for (i = 0; i < mainw->num_tracks && new_file == -1; i++) {
-	new_file = mainw->clip_index[i];
+        new_file = mainw->clip_index[i];
       }
       if (i == 2) mainw->blend_file = -1;
 

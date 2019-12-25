@@ -4374,7 +4374,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_NAME, "LiVES");
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_VERSION, LiVES_VERSION);
 
-  weed_set_string_value(xhost_info, WEED_LEAF_LAYOUT_SCHEMES_SUPPORTED, "rfx");
+  weed_set_string_value(xhost_info, WEED_LEAF_LAYOUT_SCHEMES, "rfx");
 
   if (fxname != NULL && !strcmp(fxname, "ladspa")) {
     //  weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)weed_leaf_set_monitor);

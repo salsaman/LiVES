@@ -1407,13 +1407,13 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   if (fps > 0) {
     dir = 0;
-    if (mainw->ping_pong) {
+    if (mainw->ping_pong && clip_can_reverse(fileno)) {
       dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
       dir %= 2;
     }
   } else {
     dir = 1;
-    if (mainw->ping_pong) {
+    if (mainw->ping_pong && clip_can_reverse(fileno)) {
       nframe -= (last_frame - first_frame);
       dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
       dir %= 2;
@@ -1427,7 +1427,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     // backwards
     if (dir == 1) {
       // even winding
-      if (!mainw->ping_pong) {
+      if (!mainw->ping_pong || !clip_can_reverse(fileno)) {
         // loop
         if (nframe < 0) nframe += last_frame + 1;
         else nframe += first_frame;
@@ -1447,7 +1447,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     } else {
       // odd winding
       nframe = ABS(nframe) + first_frame;
-      if (mainw->ping_pong) {
+      if (mainw->ping_pong && clip_can_reverse(fileno)) {
         // bounce
         if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
               LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
@@ -1459,14 +1459,14 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     nframe += first_frame;
     if (dir == 1) {
       // odd winding
-      if (mainw->ping_pong) {
+      if (mainw->ping_pong && clip_can_reverse(fileno)) {
         // bounce
         nframe = last_frame - (nframe - (first_frame - 1));
         if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
               LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
         else sfile->pb_fps = -sfile->pb_fps;
       }
-    } else if (mainw->playing_sel && !mainw->ping_pong
+    } else if (mainw->playing_sel && (!mainw->ping_pong || !clip_can_reverse(fileno))
                && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont && !mainw->loop) {
       // resync audio at start of loop selection
       if (nframe < first_frame) {
@@ -1476,7 +1476,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     }
     if (nframe < first_frame) {
       // scratch or transport backwards
-      if (mainw->ping_pong) {
+      if (mainw->ping_pong && clip_can_reverse(fileno)) {
         nframe = first_frame;
         if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
               LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));

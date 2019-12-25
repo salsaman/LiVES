@@ -2539,7 +2539,6 @@ void play_file(void) {
 
     mainw->abufs_to_fill = 0;
     //lives_widget_context_update();
-    g_print("ACQ is %d\n", g_main_context_acquire(g_main_context_default()));
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
@@ -2976,7 +2975,6 @@ void play_file(void) {
         }
       }
     }
-    g_main_context_release(g_main_context_default());
 
     /// free the last frame image
     if (mainw->frame_layer != NULL) {

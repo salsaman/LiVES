@@ -1575,7 +1575,7 @@ WEED_PLANT_LIST_LEAVES_FUNC "weed_plant_list_leaves_func"
  * "flags"        : WEED_SEED_INT    : bitmap of host_info flags (see below)
 
 
- * "layout_schemes_supported" : WEED_SEED_STRING : an array of layout schemes that the host supports (see below, "layout_scheme")
+ * "layout_schemes" : WEED_SEED_STRING : an array of layout schemes that the host supports (see below, "layout_scheme")
 
 
 * "verbosity" : WEED_SEED_INT : plugins should check the value of this leaf and produce debug / error / info messages accordingly.
@@ -1629,14 +1629,20 @@ versions of the spec.
 
 '''Mandatory leaves''':[[BR]]
 
- * "filters"	  : WEED_SEED_PLANTPTR : array of pointers to the filters in the plugin
+ * "filters"	  : WEED_SEED_PLANTPTR : array of pointers to the filters in the plugin. In case of a fatal error during weed_setup(),
+   		    		       	       	  	   the plugin should set this to NULL, and set the error leaves as described
+							   below.
 
  * "version"	  : WEED_SEED_INT : plugin package version
 
  * "host_info"	  : WEED_SEED_PLANTPTR : pointer to the HOST_INFO plant returned by weed_bootstrap() which contains information
-                                         about the host. If not already present, The plugin MUST set this when creating the plugin_info,
+                                         about the host. If not already present, the plugin MUST set this when creating the plugin_info,
 					 (the host may opt to use a standard bootstrap function which creates the plugin_info for the plugin
-					 and sets this automatically.)
+					 and sets this automatically. In addition, if the plugin is using standard library functions then this leaf will
+					 be set automatically anyway).
+
+					 Even in the case of fatal error during the plugin setup, it is essential to still set this leaf so that the host
+					 may free both the plugin_info and host_info plants.
 
 
 '''Optional leaves''':[[BR]]
@@ -1648,17 +1654,35 @@ versions of the spec.
 
  * "url"	  : WEED_SEED_STRING : URL of plugin package
 
+* "description" : WEED_SEED_STRING : description of the package, free form text, 
+	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
 
 
 The following may be set inside the weed_bootstrap() function from the values supplied by the plugin:
 
- * "min_weed_api_version"      : WEED_SEED_INT        :: min versions of the Weed API that the plugin supports
+ * "min_weed_api_version"      : WEED_SEED_INT        :: min version of the Weed API that the plugin supports
 
- * "max_weed_api_version"      : WEED_SEED_INT
+ * "max_weed_api_version"      : WEED_SEED_INT     :: etc
 
  * "min_weed_filter_version"   : WEED_SEED_INT
 
  * "max_weed_filter_version"   " WEED_SEED_INT
+
+
+
+In case of a fatal error during weed_setup() e.g. a needed library is missing, the plugin MUST still return the plugin_info to the host,
+with all of the mandatory leaves set; "filters" should be set to NULL. In addition it may set one or both of the error leaves:
+
+"error_code" : WEED_SEED_INT :: a standard Weed error code, possible values include: WEED_ERROR_MEMORY_ALLOCATION,
+	       		     	WEED_ERROR_BADVERSION, WEED_ERROR_PLUGIN_INVALID, WEED_ERROR_FILTER_INVALID,
+				WEED_ERROR_TOO_MANY_INSTANCES.
+
+"error_text" : WEED_SEED_STRING : free form text describing the error, e.g "Unable to find configuration files"
+	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+
+
 
 
 
@@ -1716,16 +1740,16 @@ Mandatory for filters with video channels
 * "deinit_func"  : WEED_SEED_FUNCPTR : pointer to a the deinit_func()
                     (can also be NULL)
 
-* "in_chantmpls"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of in channel templates,
+* "in_chan_tmpls"    : WEED_SEED_PLANTPTR, list of 0 or more elements: array of in channel templates,
   '''type''' of the referenced plants MUST be  WEED_PLANT_CHANNEL_TEMPLATE
 
-* "out_chantmpls"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '
+* "out_chan_tmpls"   : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out channel templates, '
   ''type''' of the referenced plants MUST be  WEED_PLANT_CHANNEL_TEMPLATE
 
-* "in_paramtmpls"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates,
+* "in_param_tmpls"  : WEED_SEED_PLANTPTR, list of 0 or more elements : array of in parameter templates,
   '''type''' of the referenced plants MUST be  WEED_PLANT_PARAMETER_TEMPLATE
 
-* "out_paramtmpls" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '
+* "out_param_tmpls" : WEED_SEED_PLANTPTR, list of 0 or more elements : array of out parameter templates, '
   ''type''' of the referenced plants MUST be  WEED_PLANT_PARAMETER_TEMPLATE.
 
 
@@ -1734,6 +1758,8 @@ Mandatory for filters with video channels
  * "extra_authors": WEED_SEED_STRING : list of extra authors which can be altered without changing the plugin "version"
 
  * "description"  : WEED_SEED_STRING : filter description, free text
+	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
 
  * "url"          : WEED_SEED_STRING : filter URL, free text
 
@@ -1989,6 +2015,8 @@ None.
  * "flags" : WEED_SEED_INT : bitmap of channel_flags that plugin sets
 
  * "description"  : WEED_SEED_STRING : description of this channel
+	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
 
  * "max_repeats" : WEED_SEED_INT : This is an important leaf, as it informs the host that it may create multiple channels from the
    		   		   	template. If absent then a default value of 1 is assumed.
@@ -2122,7 +2150,8 @@ value for the parameter. The host should not change any other leaves.
 * "flags"            : WEED_SEED_INT : bitmap of parameter template flags
 
  * "description"      : WEED_SEED_STRING : parameter description
-
+	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
 
 * "interpolate_func" : TODO
 
@@ -2632,7 +2661,7 @@ with keys prefixed "plugin_".
 '''Optional leaves''': [[BR]]
 
  * "layout_scheme" : WEED_SEED_STRING : string defining the layout scheme selected for creating interface windows
-                                        if the value is not equal to one of the elements of "layout_schemes_supported"
+                                        if the value is not equal to one of the elements of "layout_schemes"
 					set by the host in host_info, then the host is free to ignore this.
 
 					Depending on the layout_scheme selected, there may be additional optional
@@ -2760,7 +2789,10 @@ rely on setting "copy_value_to" to force the host to set indentical
    called again.
 
   
-
+ * "choices_langs" :: WEED_SEED_STRING (list) :: an optional list of IETF languages for the host to select from.
+   		     		      If present, the plugin should set the flag WEED_GUI_CHOICES_INCOMPLETE, and the host may optionally
+				      set one of the languages from the list in the parameter GUI leaf "choice_lang" before calling the
+				      filter init_func() for the first time.
 
 
 
@@ -2868,6 +2900,10 @@ parameter GUI plants, and may show or hide parameters in the interface according
 
     Optionally, the host can copy the leaf into the paramter template GUI as if the plugin had set it there originally.
 
+ * "choices_lang" :: WEED_SEED_STRING :: if the plugin set "choices_langs" in the parameter template GUI,
+   		    		     then the host may optionally select one of the elements from that list and set it here before calling
+				     init_func() for the first time. The plugin may then provide the list of choices in the language
+				     selected by the host.
 
 
 === WEED_SETUP ===========

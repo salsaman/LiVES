@@ -2675,7 +2675,7 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_showsubs_toggled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_boolean_toggled),
+                       LIVES_GUI_CALLBACK(toggle_sets_pref),
                        &prefs->letterbox);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_boolean_toggled),
@@ -3685,7 +3685,7 @@ void make_preview_box(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_end), mainw->prv_link == PRV_PTR);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_ptr), mainw->prv_link == PRV_PTR);
 
   add_hsep_to_box(LIVES_BOX(mainw->preview_controls));
 
@@ -3972,6 +3972,9 @@ void make_play_window(void) {
 
   mainw->play_window = lives_window_new(LIVES_WINDOW_TOPLEVEL);
   if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
+  gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+  gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
+
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());

@@ -560,7 +560,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                 }
                 in_bytes = 0;
               } else {
-                if (jackd->loop == AUDIO_LOOP_PINGPONG) {
+                if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
+                    || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
                 } else {
@@ -579,7 +580,8 @@ static int audio_process(nframes_t nframes, void *arg) {
                 }
                 jackd->in_use = FALSE;
               } else {
-                if (jackd->loop == AUDIO_LOOP_PINGPONG) {
+                if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
+                    || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
                   shrink_factor = -shrink_factor;
                   jackd->seek_pos = -jackd->seek_pos;

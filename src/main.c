@@ -820,6 +820,8 @@ static boolean pre_init(void) {
     mainw->loop_cont = TRUE;
     mainw->ccpd_with_sound = FALSE;
     prefs->sepwin_type = SEPWIN_TYPE_NON_STICKY;
+    prefs->letterbox = FALSE;
+    prefs->pb_quality = PB_QUALITY_LOW;
   }
 
 #ifdef GUI_GTK
@@ -975,7 +977,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->rte = EFFECT_NONE;
 
   mainw->preview_box = NULL;
-  mainw->prv_link = PRV_FREE;
+  mainw->prv_link = PRV_PTR;
 
   mainw->internal_messaging = FALSE;
   mainw->progress_fn = NULL;
@@ -7292,6 +7294,9 @@ void load_frame_image(int frame) {
       block_expose();
 
       lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
+      lives_painter_rectangle(cr, 0, 0,
+                              lives_widget_get_allocation_width(mainw->play_window),
+                              lives_widget_get_allocation_height(mainw->play_window));
       lives_painter_paint(cr);
 
       lives_painter_destroy(cr);

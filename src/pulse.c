@@ -533,7 +533,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 }
                 in_bytes = 0;
               } else {
-                if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
+                if (pulsed->loop == AUDIO_LOOP_PINGPONG && ((pulsed->playing_file != mainw->playing_file)
+                    || clip_can_reverse(mainw->playing_file))) {
                   pulsed->in_arate = -pulsed->in_arate;
                   pulsed->seek_pos -= in_bytes;
                 } else {
@@ -554,7 +555,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 }
                 in_bytes = 0;
               } else {
-                if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
+                if (pulsed->loop == AUDIO_LOOP_PINGPONG && ((pulsed->playing_file != mainw->playing_file)
+                    || clip_can_reverse(mainw->playing_file))) {
                   pulsed->in_arate = -pulsed->in_arate;
                   shrink_factor = -shrink_factor;
                   pulsed->seek_pos = -pulsed->seek_pos;

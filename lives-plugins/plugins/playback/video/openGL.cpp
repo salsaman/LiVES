@@ -1989,8 +1989,8 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       }
     }
     retdata = NULL;
+    pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
-  pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);

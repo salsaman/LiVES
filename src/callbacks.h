@@ -245,6 +245,8 @@ void on_back_pressed(LiVESButton *, livespointer);
 
 void on_forward_pressed(LiVESButton *, livespointer);
 
+boolean clip_can_reverse(int clipno);
+
 boolean dirchange_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer area_enum);
 
 boolean dirchange_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,

@@ -1591,6 +1591,7 @@ if (defined($ARGV[0])) {
 
 	    ## here we might set $mplay_command, $is_mpv
             &get_file_info($file, 1, 1);
+	    $mplay_command = "";
 
 	    if ($mplay_command eq "") {
 		my $mp_command = &rc_get("video_open_command");
@@ -1672,7 +1673,7 @@ if (defined($ARGV[0])) {
 
 	    my $wavhead = "nowaveheader";
 	    if ($is_mpv) {
-		$wavhead = "no-waveheader";
+		$wavhead = "--ao-pcm-waveheader=no";
 	    }
 
             if ($file =~ /:\/\//) {
@@ -1721,12 +1722,10 @@ if (defined($ARGV[0])) {
 		}
 		if ($is_mpv) {
 		    if ($img_ext eq ".jpg") {
-			#$img_fmt="--vo=image --vo-image-format=jpg --vo-image-jpeg-quality=$quality";
-			$img_fmt = "--vo=image:format=jpg:jpeg-quality=$quality";
+			$img_fmt="--vo=image --vo-image-format=jpg --vo-image-jpeg-quality=$quality";
 		    }
 		    else {
-			#$img_fmt="--vo=image --vo-image-format=png --vo-image-png-compression=$compression";
-			$img_fmt = "--vo=image:format=png:png-compression=$compression";
+			$img_fmt="--vo=image --vo-image-format=png --vo-image-png-compression=$compression";
 		    }
 		}
 		else {
@@ -1748,7 +1747,7 @@ if (defined($ARGV[0])) {
 		    $osd = "--osd-level=0";
 		    $threadopts = "--vd-lavc-threads=$threads";
 		    $noframedrop = "--framedrop=no";
-		    $audcom = "--ao=pcm:$wavhead";
+		    $audcom = "--ao=pcm $wavhead";
 		}
 
 		my $syscomv = "";
@@ -5548,13 +5547,15 @@ sub get_ffprobe_info {
 	}
 	open (my $fh, "$com |");
 	while (defined(my $line = <$fh>)) {
-	    if ($line =~ /^\[FORMAT\]$/) {
+	while (defined(my $line = <$fh>)) {
+	    $line =~ s/\r\n//g;
+	    if ($line =~ /^\[FORMAT\]/) {
 		$is_format = 1;
 		$is_video = 0;
 		$is_audio = 0;
 		next;
 	    }
-	    if ($line =~ /^\[\/FORMAT\]$/) {
+	    if ($line =~ /^\[\/FORMAT\]/) {
 		$is_format = 0;
 		next;
 	    }
@@ -5770,6 +5771,10 @@ sub get_ffprobe_info {
     }
     if ($subs && $VERBOSE > 0 ) {
 	print STDERR "clip has $subs subtitles available, these will not be imported (PATCHME).\n";
+    }
+
+    if (!$id_vid_form  && $codec) {
+	$id_vid_form = $codec;
     }
 
     if (!$id_vid_form || $id_vid_form eq "Unknown") {
@@ -6332,7 +6337,7 @@ sub convert_audio_to_raw {
 		return;
 	    }
 	    my $threadopts = "--vd-lavc-threads=$threads";
-	    $smcom = "$mp_com --really-quiet --no-config --vo=null --no-video --ao=pcm:no-waveheader:file=\"$audio_out\" $format";
+	    $smcom = "$mp_com --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no --ao-pcm-file=\"$audio_out\" $format";
         }
 	else {
 	    my $threadopts = "-lavdopts o=threads=$threads";

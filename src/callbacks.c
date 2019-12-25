@@ -177,7 +177,7 @@ void lives_exit(int signum) {
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
-    lives_threadpool_finish();
+    //lives_threadpool_finish();
     if (prefs->show_dev_opts)
       show_weed_stats();
   }

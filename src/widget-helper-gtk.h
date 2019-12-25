@@ -1144,6 +1144,7 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_KEY_Plus GDK_KEY_plus
 #define LIVES_KEY_Minus GDK_KEY_minus
 #define LIVES_KEY_Equal GDK_KEY_equal
+#define LIVES_KEY_Delete GDK_KEY_Delete
 
 #define LIVES_KEY_1 GDK_KEY_1
 #define LIVES_KEY_2 GDK_KEY_2
@@ -1217,6 +1218,7 @@ char LIVES_STOCK_LABEL_MEDIA_RECORD[32];
 #define LIVES_KEY_Plus GDK_plus
 #define LIVES_KEY_Minus GDK_minus
 #define LIVES_KEY_Equal GDK_equal
+#define LIVES_KEY_Delete GDK_delete
 
 #define LIVES_KEY_1 GDK_1
 #define LIVES_KEY_2 GDK_2

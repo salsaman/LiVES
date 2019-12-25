@@ -75,6 +75,7 @@ typedef struct {
   void *srcp[4];
   int hsize;
   int vsize;
+  int psize;
   int irowstrides[4];
   int orowstrides[4];
   void *dest;
@@ -215,6 +216,7 @@ int weed_layer_get_palette_yuv(weed_layer_t *, int *clamping, int *sampling, int
 int weed_layer_get_yuv_clamping(weed_layer_t *);
 int weed_layer_get_yuv_sampling(weed_layer_t *);
 int weed_layer_get_yuv_subspace(weed_layer_t *);
+uint8_t *weed_layer_get_pixel_data_packed(weed_layer_t *);
 void **weed_layer_get_pixel_data(weed_layer_t *, int *nplanes);
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
 int weed_layer_get_audio_rate(weed_plant_t *layer);

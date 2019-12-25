@@ -98,7 +98,6 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
     dst = pixel_data;
     for (i = 0; i < height; i++) {
       weed_memcpy((void *)dst, (void *)src, widthx);
-      weed_memset((void *)(dst + widthx), 0, widthx - orowstride);
       dst += orowstride;
       src += irowstride;
     }
@@ -114,14 +113,11 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
          orowstride);
 
   if (surf == NULL) {
-    //weed_free(pixel_data);
+    weed_free(pixel_data);
     return NULL;
   }
 
   cairo = cairo_create(surf);
-  //weed_free(pixel_data);
-  cairo_surface_destroy(surf);
-
   return cairo;
 }
 
@@ -153,7 +149,6 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     dst = pixel_data;
     for (i = 0; i < height; i++) {
       weed_memcpy((void *)dst, (void *)src, widthx);
-      //weed_memset((void *)(dst+widthx),0,orowstride-widthx);  // can cause a crash, not sure why
       dst += orowstride;
       src += irowstride;
     }
@@ -164,7 +159,9 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     // un-premultiply the alpha
     alpha_premult(pixel_data, widthx, height, orowstride, pal, TRUE);
   }
-  cairo_surface_finish(surface);
+  cairo_surface_flush(surface);
+  weed_free(src);
+  cairo_surface_destroy(surface);
 }
 
 
@@ -334,7 +331,6 @@ static weed_error_t scribbler_process(weed_plant_t *inst, weed_timecode_t timest
         }
 
         pango_cairo_show_layout(cairo, layout);
-
         g_object_unref(layout);
         pango_font_description_free(font);
       }

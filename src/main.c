@@ -578,6 +578,10 @@ static boolean pre_init(void) {
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
+  prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
+  if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
+  future_prefs->nfx_threads = prefs->nfx_threads;
+
   // get some prefs we need to set menu options
   future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
   prefs->gui_monitor = -1;
@@ -657,6 +661,10 @@ static boolean pre_init(void) {
 
   prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
   prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
+
+  prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL);
+  if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
+  if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
 
   prefs->bigendbug = 0;
 
@@ -1356,10 +1364,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (prefs->max_modes_per_key == 0) prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
-  prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
-  if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
-  future_prefs->nfx_threads = prefs->nfx_threads;
-
   prefs->stream_audio_out = get_boolean_pref(PREF_STREAM_AUDIO_OUT);
 
   prefs->unstable_fx = get_boolean_prefd(PREF_UNSTABLE_FX, TRUE);
@@ -1452,10 +1456,6 @@ static void lives_init(_ign_opts *ign_opts) {
     }
 
     prefs->warn_file_size = get_int_prefd(PREF_WARN_FILE_SIZE, WARN_FILE_SIZE);
-
-    prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL);
-    if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
-    if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
 
     prefs->show_rdet = TRUE;
     prefs->move_effects = TRUE;
@@ -3369,7 +3369,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_free = weed_plant_free_host;
 
   widget_helper_init();
-  lives_threadpool_init();
 
   /* TRANSLATORS: localised name may be used here */
   lives_set_application_name(_("LiVES"));
@@ -3973,6 +3972,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
+
+  lives_threadpool_init();
 
   lives_memset(start_file, 0, 1);
 

@@ -2477,6 +2477,15 @@ void create_LiVES(void) {
                   }}}}}}}}}
   // *INDENT-ON*
 
+  if (prefs->rte_keys_virtual > 9) {
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Minus, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                              lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(10), NULL));
+  }
+  if (prefs->rte_keys_virtual > 10) {
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Equal, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                              lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(11), NULL));
+  }
+
   if (new_lives) {
     lives_signal_connect(LIVES_GUI_OBJECT(LIVES_MAIN_WINDOW_WIDGET), LIVES_WIDGET_DELETE_EVENT,
                          LIVES_GUI_CALLBACK(on_LiVES_delete_event),

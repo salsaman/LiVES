@@ -791,6 +791,7 @@ static void *thrdpool(void *arg) {
 
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
+  if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
   poolthrds = lives_calloc(npoolthreads, sizeof(pthread_t));
   threads_die = FALSE;
   twork_list = NULL;
@@ -801,8 +802,10 @@ void lives_threadpool_init(void) {
 
 
 void lives_threadpool_finish(void) {
+  threads_die = TRUE;
   pthread_cond_broadcast(&tcond);
   for (int i = 0; i < npoolthreads; i++) {
+    pthread_cond_broadcast(&tcond);
     pthread_join(poolthrds[i], NULL);
   }
   lives_list_free_all(&twork_list);

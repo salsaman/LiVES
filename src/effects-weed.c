@@ -3720,7 +3720,7 @@ nip1:
     if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))
         == NULL) return 0;
   } else {
-    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETER_TEMPLATES, &num_params))
+    if ((params = weed_get_plantptr_array_counted(plant, WEED_LEAF_IN_PARAMETERS, &num_params))
         == NULL) goto nip1done;
   }
 
@@ -3736,9 +3736,9 @@ nip1:
     counted++;
   }
 
-  lives_freep((void **)&params);
-
 nip1done:
+
+  lives_freep((void **)&params);
 
   // TODO: should be skip_internal or !skip_internal ?
   if (!is_template && skip_internal && (plant = get_next_compound_inst(plant)) != NULL) goto nip1;

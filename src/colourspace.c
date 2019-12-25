@@ -10173,6 +10173,24 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
 }
 
 
+static void *gamma_convert_layer_thread(void *data) {
+  lives_cc_params *ccparams = (lives_cc_params *)data;
+  uint8_t *pixels = (uint8_t *)ccparams->src;
+  int rowstride = ccparams->orowstrides[0];
+  uint8_t *end = pixels + ccparams->vsize * rowstride;
+  int psize = ccparams->psize;
+  int widthx = ccparams->hsize * psize;
+  int start = 0;
+  if (ccparams->alpha_first) start = 1;
+  for (; pixels < end; pixels += rowstride) {
+    for (int j = start; j < widthx; j += psize) {
+      for (int k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
+    }
+  }
+  return NULL;
+}
+
+
 /**
    @brief alter the transfer function of a Weed layer, from current value to gamma_type
 
@@ -10181,44 +10199,65 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
   if (!prefs->apply_gamma) return TRUE;
   else {
     // convert layer from current gamma to target
-    register int j, k;
-
-    uint8_t *pixels, *end;
-    int widthx;
-    int error;
-    int start = 0;
-    int lgamma_type = weed_layer_get_gamma(layer);
-
-    int orowstride = weed_layer_get_rowstride(layer);
-    int pal = weed_layer_get_palette(layer), nchannels;
-    int width = weed_layer_get_width(layer);
-    int height = weed_layer_get_height(layer);
-
+    int pal = weed_layer_get_palette(layer);
     if (!weed_palette_is_rgb(pal)) return FALSE; //  dont know how to convert in yuv space
+    else {
+      int lgamma_type = weed_layer_get_gamma(layer);
+      if (gamma_type == lgamma_type) return TRUE;
+      else {
+        int nfx_threads = prefs->nfx_threads;
+        int width = weed_layer_get_width(layer);
+        uint8_t *pixels = weed_layer_get_pixel_data_packed(layer);
+        int height = weed_layer_get_height(layer);
+        int orowstride = weed_layer_get_rowstride(layer);
+        int nthreads = 1;
+        int dheight;
+        int psize = pixel_size(pal);
+        lives_cc_params *ccparams = (lives_cc_params *)lives_malloc(nfx_threads * sizeof(lives_cc_params));
+        int xdheight = CEIL((double)height / (double)nfx_threads, 4);
+        uint8_t *end = pixels + height * orowstride;
 
-    if (gamma_type == lgamma_type) return TRUE;
+        pthread_mutex_lock(&mainw->gamma_lut_mutex);
+        if (current_gamma_from != lgamma_type || current_gamma_to != gamma_type)
+          update_gamma_lut(lgamma_type, gamma_type);
 
-    nchannels = weed_palette_get_bits_per_macropixel(pal) >> 3;
-    widthx = width * nchannels;
+        for (int i = nfx_threads - 1; i >= 0; i--) {
 
-    pixels = (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error);
-    end = pixels + height * orowstride;
+          dheight = xdheight;
 
-    if (pal == WEED_PALETTE_ARGB32) start = 1;
+          if ((pixels + dheight * i * orowstride) < end) {
+            if (dheight * (i + 1) > (height - 4)) {
+              dheight = height - (dheight * i);
+            }
 
-    pthread_mutex_lock(&mainw->gamma_lut_mutex);
-    if (current_gamma_from != lgamma_type || current_gamma_to != gamma_type)
-      update_gamma_lut(lgamma_type, gamma_type);
-    for (; pixels < end; pixels += orowstride) {
-      for (j = start; j < widthx; j += nchannels) {
-        for (k = 0; k < 3; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
-      }
-    }
-    pthread_mutex_unlock(&mainw->gamma_lut_mutex);
-    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
-    return TRUE;
-  }
+            if (pal == WEED_PALETTE_ARGB32) ccparams[i].alpha_first = TRUE;
+            else ccparams[i].alpha_first = FALSE;
+
+            ccparams[i].src = pixels + dheight * i * orowstride;
+            ccparams[i].hsize = width;
+            ccparams[i].vsize = dheight;
+            ccparams[i].orowstrides[0] = orowstride;
+            ccparams[i].psize = psize;
+            ccparams[i].thread_id = i;
+            if (i == 0) gamma_convert_layer_thread(&ccparams[i]);
+            else {
+              lives_thread_create(&cthreads[i], NULL, gamma_convert_layer_thread, &ccparams[i]);
+              nthreads++;
+            }
+          }
+        }
+        for (int i = 1; i < nthreads; i++) {
+          lives_thread_join(cthreads[i], NULL);
+        }
+        lives_free(ccparams);
+        pthread_mutex_unlock(&mainw->gamma_lut_mutex);
+        weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, gamma_type);
+        return TRUE;
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
+
 
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
@@ -11547,6 +11586,12 @@ LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data(weed_plant_t *layer, int *n
   if (nplanes) *nplanes = 0;
   if (layer == NULL)  return NULL;
   return weed_get_voidptr_array_counted(layer, WEED_LEAF_PIXEL_DATA, nplanes);
+}
+
+
+LIVES_GLOBAL_INLINE uint8_t *weed_layer_get_pixel_data_packed(weed_plant_t *layer) {
+  if (layer == NULL)  return NULL;
+  return (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
 }
 
 

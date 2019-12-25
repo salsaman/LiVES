@@ -5547,7 +5547,6 @@ sub get_ffprobe_info {
 	}
 	open (my $fh, "$com |");
 	while (defined(my $line = <$fh>)) {
-	while (defined(my $line = <$fh>)) {
 	    $line =~ s/\r\n//g;
 	    if ($line =~ /^\[FORMAT\]/) {
 		$is_format = 1;
@@ -5743,50 +5742,50 @@ sub get_ffprobe_info {
 	    }
 	}
     }
-
-    if (!$count) {
-	$count = int($fps * $length + .5);
-    }
+}
+if (!$count) {
+    $count = int($fps * $length + .5);
+}
+if ($VERBOSE > 1) {
+    print STDERR "ffprobe got revised frames $count\n";
+}
+if (!$asamps && $arate * $achans > 0) {
+    $asamps = $abitrate / $arate / $achans;
     if ($VERBOSE > 1) {
-	print STDERR "ffprobe got revised frames $count\n";
-    }
-    if (!$asamps && $arate * $achans > 0) {
-	$asamps = $abitrate / $arate / $achans;
-	if ($VERBOSE > 1) {
-	    print STDERR "ffprobe guessed asamps $asamps\n";
-	}
-    }
-    if (!$asamps) {
-	$asamps = 16;
-	if ($VERBOSE > 1) {
-	    print STDERR "ffprobe forced asamps to $asamps\n";
-	}
-    }
-
-    if ($achans > 2) {
-	$achans = 2;
-	if ($VERBOSE > 1) {
-	    print STDERR "ffprobe forced achans to $achans\n";
-	}
-    }
-    if ($subs && $VERBOSE > 0 ) {
-	print STDERR "clip has $subs subtitles available, these will not be imported (PATCHME).\n";
-    }
-
-    if (!$id_vid_form  && $codec) {
-	$id_vid_form = $codec;
-    }
-
-    if (!$id_vid_form || $id_vid_form eq "Unknown") {
-	if ($id_aud_form) {
-	    $id_vid_form = $id_aud_form;
-	    $type = "Audio";
-	}
-	if ($VERBOSE > 1) {
-	    print STDERR "Video id not found, assuming Audio\n";
-	}
+	print STDERR "ffprobe guessed asamps $asamps\n";
     }
 }
+if (!$asamps) {
+    $asamps = 16;
+    if ($VERBOSE > 1) {
+	print STDERR "ffprobe forced asamps to $asamps\n";
+    }
+}
+
+if ($achans > 2) {
+    $achans = 2;
+    if ($VERBOSE > 1) {
+	print STDERR "ffprobe forced achans to $achans\n";
+    }
+}
+if ($subs && $VERBOSE > 0 ) {
+    print STDERR "clip has $subs subtitles available, these will not be imported (PATCHME).\n";
+}
+
+if (!$id_vid_form  && $codec) {
+    $id_vid_form = $codec;
+}
+
+if (!$id_vid_form || $id_vid_form eq "Unknown") {
+    if ($id_aud_form) {
+	$id_vid_form = $id_aud_form;
+	$type = "Audio";
+    }
+    if ($VERBOSE > 1) {
+	print STDERR "Video id not found, assuming Audio\n";
+    }
+}
+
 
 
 sub get_mplayer_info {

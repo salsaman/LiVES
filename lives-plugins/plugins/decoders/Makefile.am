@@ -9,7 +9,7 @@ shared_ldflags =  -lpthread -dynamiclib -module -avoid-version --tag=disable-sta
 shared_cflags = -fno-common -DIS_DARWIN=1 -I /sw/include
 else
 shared_ldflags =  -lpthread -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
-shared_cflags =  -fPIC -DPIC
+shared_cflags =  -fPIC -DPIC @TURBO_CFLAGS@
 endif
 
 if NEED_LOCAL_WEED

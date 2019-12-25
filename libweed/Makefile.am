@@ -70,7 +70,7 @@ libweedincludedir = "$(includedir)/weed"
 libweed_ladir = "$(libdir)/weed"
 libweed_scripting_ladir = "$(libdir)/weed"
 
-libweed_la_CFLAGS = -fvisibility=hidden $(extra_cflags)
+libweed_la_CFLAGS = -fvisibility=hidden $(extra_cflags) @TURBO_CFLAGS@
 
 shared_LDFLAGS = -shared --tag=disable-static
 

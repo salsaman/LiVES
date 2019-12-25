@@ -41,7 +41,7 @@ AM_CPPFLAGS = \
 	@UNICAP_CFLAGS@ \
 	@GTK_CFLAGS@ \
 	@X11_CFLAGS@ \
-	$(darwin_CPPFLAGS)
+	$(darwin_CPPFLAGS) @TURBO_CFLAGS@
 
 bin_PROGRAMS = lives-exe
 
@@ -227,7 +227,7 @@ AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvg
 	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
 	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
 	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def)
+	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@
 
 if HAVE_AVFORMAT
 if HAVE_AVCODEC

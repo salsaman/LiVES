@@ -544,7 +544,7 @@ dnl check for opencv
 
 PKG_CHECK_MODULES(OPENCV, opencv >= 2.3.1, HAVE_OPENCV=true, HAVE_OPENCV=false)
 
-if test "HAVE_OPENCV" = "true" ; then
+if test "$HAVE_OPENCV" = "true" ; then
 OPENCV_LIBS_ONLY_L = `pkg-config opencv --libs-only-L`
 fi
 
@@ -576,11 +576,20 @@ fi
 AC_SUBST(LIBFREENECT_CFLAGS)
 AC_SUBST(LIBFREENECT_LIBS)
 
-AM_CONDITIONAL(HAVE_LIBFREENECT,$HAVE_LIBFREENECT)
+AM_CONDITIONAL(HAVE_LIBFREENECT, $HAVE_LIBFREENECT)
 
-TURBO=false
-AC_ARG_ENABLE(turbo, [  --enable-turbo     Most optimised compile.] , TURBO=true, TURBO=false)
-AM_CONDITIONAL(TURBO,$TURBO)
+TURBO_CFLAGS=""
+
+AC_ARG_ENABLE(turbo, [  --enable-turbo     Most optimised compile. Do NOT use if making binaries for general distribution.] , TURBO=true, TURBO=false)
+
+if test "$TURBO" = "true" ; then
+TURBO_CFLAGS="-Ofast -O3 -march=native -mtune=native"
+echo "Turbo enabled"
+echo TURBO_CFLAGS set to $TURBO_CFLAGS
+fi
+
+AC_SUBST(TURBO_CFLAGS)
+AM_CONDITIONAL(TURBO, $TURBO)
 
 ENABLE_TOONZ=false
 AC_ARG_ENABLE(toonz, [  --enable-toonz     Enable plugins ported from toonz. Requires c++11 compiler support and opencv.] , ENABLE_TOONZ=true, ENABLE_TOONZ=false)

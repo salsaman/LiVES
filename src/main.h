@@ -83,8 +83,6 @@
 
 typedef int64_t ticks_t;
 
-#include "machinestate.h"
-
 #define ENABLE_OSC2
 
 #ifndef GUI_QT
@@ -338,6 +336,7 @@ typedef struct {
 } lives_colRGBA64_t;
 
 #include "widget-helper.h"
+#include "machinestate.h"
 
 #define ALLOW_PNG24
 

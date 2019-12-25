@@ -42,7 +42,7 @@ struct _procvals {
   weed_process_f procfunc;
   weed_plant_t *inst;
   weed_timecode_t tc;
-  int ret;
+  weed_error_t ret;
 };
 
 static weed_plantptr_t statsplant = NULL;
@@ -1353,7 +1353,7 @@ static void *thread_process_func(void *arg) {
 static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant_t **out_channels, weed_timecode_t tc) {
   // split output(s) into horizontal slices
   struct _procvals *procvals;
-  pthread_t *dthreads = NULL;
+  lives_thread_t *dthreads = NULL;
   weed_plant_t **xinst = NULL;
   weed_plant_t **xchannels;
   weed_plant_t *filter = weed_instance_get_filter(inst, FALSE);
@@ -1407,8 +1407,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   if (--to_use < 1) return FILTER_ERROR_DONT_THREAD;
 
   procvals = (struct _procvals *)lives_malloc(sizeof(struct _procvals) * to_use);
+  procvals->ret = WEED_SUCCESS;
   xinst = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *) * (to_use));
-  dthreads = (pthread_t *)lives_calloc(to_use, sizeof(pthread_t));
+  dthreads = (lives_thread_t *)lives_calloc(to_use, sizeof(lives_thread_t));
 
   for (i = 0; i < nchannels; i++) {
     heights[1] = height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
@@ -1451,7 +1452,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     procvals[j].tc = tc; // use same timecode for all slices
 
     // start a thread for processing
-    pthread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
+    lives_thread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
     nthreads++; // actual number of threads used
   }
 
@@ -1470,8 +1471,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   // wait for threads to finish
   for (j = 0; j < nthreads; j++) {
-    pthread_join(dthreads[j], (void *)procvals);
-    retval = procvals->ret;
+    lives_thread_join(dthreads[j], NULL);
+    retval = procvals[j].ret;
     if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
     if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
     if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;

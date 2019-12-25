@@ -224,3 +224,21 @@ uint32_t string_hash(const char *string) GNU_PURE;
 int check_for_bad_ffmpeg(void);
 
 #endif
+
+typedef void *(*lives_funcptr_t)(void *);
+
+typedef struct {
+  lives_funcptr_t func;
+  void *arg;
+  volatile int busy;
+  volatile int done;
+  void *ret;
+} thrd_work_t;
+
+
+typedef LiVESList *lives_thread_t;
+
+void lives_threadpool_init(void);
+void lives_threadpool_finish(void);
+int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg);
+int lives_thread_join(lives_thread_t work, void **retval);

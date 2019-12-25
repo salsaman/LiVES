@@ -3369,6 +3369,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   weed_plant_free = weed_plant_free_host;
 
   widget_helper_init();
+  lives_threadpool_init();
 
   /* TRANSLATORS: localised name may be used here */
   lives_set_application_name(_("LiVES"));
@@ -5939,8 +5940,8 @@ void check_layer_ready(weed_plant_t *layer) {
 
   if (layer == NULL) return;
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) {
-    pthread_t *frame_thread = (pthread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, &error);
-    int ret = pthread_join(*frame_thread, NULL);
+    lives_thread_t *frame_thread = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, &error);
+    int ret = lives_thread_join(*frame_thread, NULL);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
     if (ret != 0) {
       char *tmp = lives_strdup_printf("Check layer ready returned %d\n", ret);
@@ -6005,7 +6006,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 #else
 
   pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
-  pthread_t *frame_thread = (pthread_t *)lives_calloc(sizeof(pthread_t), 1);
+  lives_thread_t *frame_thread = (lives_thread_t *)lives_calloc(sizeof(lives_thread_t), 1);
 
   weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
   weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
@@ -6014,7 +6015,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
   in->layer = layer;
   in->tc = tc;
 
-  pthread_create(frame_thread, NULL, pft_thread, (void *)in);
+  lives_thread_create(frame_thread, NULL, pft_thread, (void *)in);
 #endif
 }
 

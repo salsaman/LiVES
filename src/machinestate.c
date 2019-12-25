@@ -746,3 +746,110 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
   while ((c = *(string++)) != 0) hash += (hash << 5) + c;
   return hash;
 }
+
+#define MINPOOLTHREADS 4
+static int npoolthreads;
+static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static pthread_t *poolthrds;
+static volatile LiVESList *twork_list;
+static boolean threads_die;
+
+static void *thrdpool(void *arg) {
+  LiVESList *list;
+  thrd_work_t *mywork;
+  boolean moretodo;
+  int myidx = LIVES_POINTER_TO_INT(arg);
+  while (!threads_die) {
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_wait(&tcond, &tcond_mutex);
+    pthread_mutex_unlock(&tcond_mutex);
+    if (threads_die) break;
+    moretodo = TRUE;
+    while (moretodo) {
+      pthread_mutex_lock(&twork_mutex);
+      list = (LiVESList *)twork_list;
+      while (list != NULL && list->next != NULL
+             && !(((thrd_work_t *)list->next->data)->busy || ((thrd_work_t *)list->next->data)->done)) list = list->next;
+      if (list == NULL || ((thrd_work_t *)list->data)->busy || ((thrd_work_t *)list->data)->done) {
+        pthread_mutex_unlock(&twork_mutex);
+        moretodo = FALSE;
+        continue;
+      }
+      mywork = (thrd_work_t *)list->data;
+      mywork->busy = myidx + 1;
+      pthread_mutex_unlock(&twork_mutex);
+      (*mywork->func)(mywork->arg);
+      mywork->done = myidx + 1;
+    }
+  }
+  return NULL;
+}
+
+
+void lives_threadpool_init(void) {
+  npoolthreads = MINPOOLTHREADS;
+  poolthrds = lives_calloc(npoolthreads, sizeof(pthread_t));
+  threads_die = FALSE;
+  twork_list = NULL;
+  for (int i = 0; i < npoolthreads; i++) {
+    pthread_create(&poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
+  }
+}
+
+
+void lives_threadpool_finish(void) {
+  pthread_cond_broadcast(&tcond);
+  for (int i = 0; i < npoolthreads; i++) {
+    pthread_join(poolthrds[i], NULL);
+  }
+  lives_list_free_all(&twork_list);
+  twork_list = NULL;
+}
+
+
+int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg) {
+  LiVESList *list, *xlist;
+  int nthreads = 0;
+  thrd_work_t *work = (thrd_work_t *)malloc(sizeof(thrd_work_t));
+  work->func = func;
+  work->arg = arg;
+  work->ret = NULL;
+  work->done = work->busy = 0;
+  pthread_mutex_lock(&twork_mutex);
+  list = twork_list = lives_list_prepend(twork_list, work);
+  xlist = list;
+  for (xlist = list; xlist != NULL; xlist = xlist->next) ++nthreads;
+  pthread_mutex_unlock(&twork_mutex);
+  pthread_mutex_lock(&tcond_mutex);
+  pthread_cond_signal(&tcond);
+  pthread_mutex_unlock(&tcond_mutex);
+  *thread = list;
+  if (nthreads > npoolthreads) {
+    poolthrds = (lives_thread_t *)lives_realloc(poolthrds, npoolthreads + MINPOOLTHREADS * sizeof(pthread_t));
+    for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++)
+      pthread_create(&poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
+    npoolthreads += MINPOOLTHREADS;
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_signal(&tcond);
+    pthread_mutex_unlock(&tcond_mutex);
+  }
+  return 0;
+}
+
+
+int lives_thread_join(lives_thread_t work, void **retval) {
+  while (((thrd_work_t *)work->data)->busy == 0) lives_usleep(100);
+  pthread_mutex_lock(&twork_mutex);
+  if (work->prev != NULL) work->prev->next = work->next;
+  if (work->next != NULL) work->next->prev = work->prev;
+  if (twork_list == work) twork_list = work->next;
+  pthread_mutex_unlock(&twork_mutex);
+  while (!((thrd_work_t *)work->data)->done) lives_usleep(100);
+  if (retval != NULL) *retval = ((thrd_work_t *)work->data)->ret;
+  free(work->data);
+  //free(work);
+  return 0;
+}

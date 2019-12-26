@@ -10380,8 +10380,13 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack != NULL
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
       || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
-  prefs->audio_opts |= AUDIO_OPTS_FOLLOW_CLIPS;
-  if (state) prefs->audio_opts ^= AUDIO_OPTS_FOLLOW_CLIPS;
+
+  if (!state) {
+    // lock OFF
+    prefs->audio_opts |= (AUDIO_OPTS_FOLLOW_CLIPS & future_prefs->audio_opts);
+    return TRUE;
+  }
+  prefs->audio_opts = ((prefs->audio_opts | AUDIO_OPTS_FOLLOW_CLIPS) ^ AUDIO_OPTS_FOLLOW_CLIPS);
   if (switch_audio_clip(mainw->current_file, TRUE)) {
     if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
       resync_audio(cfile->frameno);
@@ -10392,7 +10397,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   double avsync;
 

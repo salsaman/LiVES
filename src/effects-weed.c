@@ -7074,6 +7074,11 @@ void weed_deinit_all(boolean shutdown) {
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
+      if (LIVES_IS_PLAYING && !shutdown && i >  FX_KEYS_PHYSICAL) {
+	// meta-physical  keys only shutdown through the insterface or via easter-egg keys...
+	mainw->osc_block = FALSE;
+	return;
+      }
       filter_mutex_lock(i);
     } else {
       // on shutdown, another thread might be deadlocked on this

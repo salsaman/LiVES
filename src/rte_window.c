@@ -2180,7 +2180,7 @@ LiVESWidget *create_rte_window(void) {
 
   LiVESTreeModel *model;
 
-  char *tmp, *tmp2;
+  char *tmp, *tmp2, *labelt;
 
   int modes = rte_getmodespk();
 
@@ -2263,7 +2263,21 @@ LiVESWidget *create_rte_window(void) {
                        (LiVESAttachOptions)(LIVES_EXPAND | LIVES_FILL), 0, 0);
     lives_container_set_border_width(LIVES_CONTAINER(hbox), widget_opts.border_width);
 
-    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Ctrl-%d"), i + 1)));
+    if (i < 9) labelt = lives_strdup_printf("%d", i + 1);
+    else  {
+      switch (i) {
+      case 9:
+	labelt = lives_strdup(_("minus")); break;
+      case 10:
+	labelt = lives_strdup(_("equals")); break;
+      default:
+	labelt = lives_strdup("????");
+	break;
+      }
+    }
+
+    label = lives_standard_label_new((tmp = lives_strdup_printf(_("Ctrl-%s"), labelt)));
+    lives_free(labelt);
     lives_free(tmp);
 
     lives_box_pack_start(LIVES_BOX(hbox), label, TRUE, FALSE, widget_opts.packing_width);

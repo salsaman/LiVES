@@ -162,7 +162,7 @@
 
 /// must be >= FX_KEYS_PHYSICAL, and <=64 (number of bits in a 64bit int mask)
 /// (max number of keys accesible through rte window or via OSC)
-#define FX_KEYS_MAX_VIRTUAL 64
+#define FX_KEYS_MAX_VIRTUAL 64 ///< the "metaphysical" keys
 
 /// the rest of the keys are accessible through the multitrack renderer (must, be > FX_KEYS_MAX_VIRTUAL)
 #define FX_KEYS_MAX 65536

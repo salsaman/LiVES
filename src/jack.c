@@ -908,6 +908,7 @@ static int audio_process(nframes_t nframes, void *arg) {
 
     if (jackFramesAvailable > 0) {
 #ifdef DEBUG_AJACK
+      ++mainw->uflow_count;
       lives_printerr("buffer underrun of %ld frames\n", jackFramesAvailable);
 #endif
       output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer);

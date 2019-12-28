@@ -1234,6 +1234,8 @@ int process_one(boolean visible) {
 #ifdef RT_AUDIO
   double audio_stretch;
   ticks_t audio_ticks = 0;
+#define MAX_UFLOW_PAUSE 4 // may need some fine tuning for slower systems
+  int ucount = MAX_UFLOW_PAUSE;
 #endif
 
   if (!visible) {
@@ -1243,6 +1245,16 @@ int process_one(boolean visible) {
       mainw->pre_src_file = mainw->new_clip;
       mainw->new_clip = -1;
     }
+
+#ifdef RT_AUDIO
+    while (mainw->uflow_count > 0 && --ucount != 0) {
+      // handle audio underflows by pausing briefly
+      sched_yield();
+      mainw->uflow_count = 0;
+      lives_usleep(prefs->sleep_time);
+    }
+#endif
+
     /* if (prefs->loadchecktime > 0.) { */
     /*   load_measure_idle(NULL); */
     /* } */
@@ -1593,10 +1605,6 @@ static void reset_timebase(void) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed != NULL) {
-    /* while (mainw->pulsed->is_corked) { */
-    /*   lives_usleep(prefs->sleep_time); */
-    /*   sched_yield(); */
-    /* } */
     pa_time_reset(mainw->pulsed, 0);
   }
   if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read, 0);
@@ -1907,12 +1915,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         reinit_audio_gen();
       }
 
-      if ((visible && !mainw->internal_messaging)) lives_usleep(prefs->sleep_time);
+      if ((visible && !mainw->internal_messaging) || (LIVES_IS_PLAYING && cfile->play_paused)) lives_usleep(prefs->sleep_time);
 
       sched_yield();
-      if (cfile->play_paused) {
-        lives_usleep(prefs->sleep_time);
-      }
+
       // normal playback, wth realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
 

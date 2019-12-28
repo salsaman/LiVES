@@ -1529,6 +1529,7 @@ typedef struct {
   char *old_vhash;
 
   volatile uint32_t loadmeasure;
+  volatile int uflow_count;
 
 #define MAX_CBSTORES 8
   int ncbstores;

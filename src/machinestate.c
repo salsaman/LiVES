@@ -808,7 +808,7 @@ void lives_threadpool_finish(void) {
     pthread_cond_broadcast(&tcond);
     pthread_join(poolthrds[i], NULL);
   }
-  lives_list_free_all(&twork_list);
+  lives_list_free_all((LiVESList **)&twork_list);
   twork_list = NULL;
 }
 
@@ -822,7 +822,8 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
   work->ret = NULL;
   work->done = work->busy = 0;
   pthread_mutex_lock(&twork_mutex);
-  list = twork_list = lives_list_prepend(twork_list, work);
+  list = lives_list_prepend((LiVESList *)twork_list, work);
+  twork_list = (volatile LiVESList *)list;
   xlist = list;
   for (xlist = list; xlist != NULL; xlist = xlist->next) ++nthreads;
   pthread_mutex_unlock(&twork_mutex);
@@ -831,7 +832,7 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
   pthread_mutex_unlock(&tcond_mutex);
   *thread = list;
   if (nthreads > npoolthreads) {
-    poolthrds = (lives_thread_t *)lives_realloc(poolthrds, npoolthreads + MINPOOLTHREADS * sizeof(pthread_t));
+    poolthrds = (pthread_t *)lives_realloc(poolthrds, npoolthreads + MINPOOLTHREADS * sizeof(pthread_t));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++)
       pthread_create(&poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
     npoolthreads += MINPOOLTHREADS;

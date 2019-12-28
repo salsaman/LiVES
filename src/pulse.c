@@ -76,6 +76,7 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
   if (prefs->show_dev_opts) {
     fprintf(stderr, "PA Stream underrun.\n");
   }
+  mainw->uflow_count++;
 }
 
 

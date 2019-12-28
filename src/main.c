@@ -775,6 +775,7 @@ static boolean pre_init(void) {
 
   prefs->volume = get_double_prefd(PREF_MASTER_VOLUME, 1.0);
   future_prefs->volume = (float)prefs->volume;
+  mainw->uflow_count = 0;
 
   prefs->open_maximised = get_boolean_prefd(PREF_OPEN_MAXIMISED, TRUE);
 

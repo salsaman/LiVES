@@ -43,7 +43,6 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
 
   register int i, j;
 
-  irowstride /= psize;
   orowstride -= video_width * psize;
 
   xd = (stepx * zoom) >> 12;
@@ -69,10 +68,9 @@ static void draw_tile(int stepx, int stepy, int zoom, unsigned char *src, unsign
     for (i = 0; i < video_width; i++) {
       a = ((x >> 12 & 255) * video_width) >> 8;
       b = ((y >> 12 & 255) * video_height) >> 8;
-
       //       a*=video_width/64;
       //      b*=video_height/64;
-      origin = (b * irowstride + a) * psize;
+      origin = b * irowstride + a * psize;
 
       weed_memcpy(dst, &src[origin], psize);
       dst += psize;

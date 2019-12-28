@@ -4198,7 +4198,7 @@ boolean read_headers(const char *file_name) {
       if (retval) {
         if (cfile->header_version > 100) {
           detail = CLIP_DETAILS_GAMMA_TYPE;
-          retval = get_clip_value(mainw->current_file, detail, &cfile->gamma_type, 0);
+          get_clip_value(mainw->current_file, detail, &cfile->gamma_type, 0);
           if (cfile->gamma_type == 0) cfile->gamma_type = WEED_GAMMA_SRGB;
         }
       }

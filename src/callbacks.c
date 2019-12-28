@@ -10397,7 +10397,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
- boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   double avsync;
 

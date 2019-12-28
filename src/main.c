@@ -7261,6 +7261,7 @@ void load_frame_image(int frame) {
         resized = TRUE;
       }
     }
+
     if (!resized) {
       if (!resize_layer(mainw->frame_layer, mainw->pwidth, mainw->pheight, interp, cpal, 0)) {
         lives_freep((void **)&framecount);

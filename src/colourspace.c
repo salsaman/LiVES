@@ -569,6 +569,7 @@ static void init_YUV_to_RGB_tables(void) {
     HG_Cbc[i] = myround(-.5 / (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR);
     HB_Cbc[i] = myround(2. * (1. - KB_BT709) * ((double)i - UV_BIAS) * SCALE_FACTOR); // 2*(1-Kb)
   }
+  conv_YR_inited = TRUE;
 }
 
 
@@ -606,17 +607,28 @@ static void init_YUV_to_YUV_tables(void) {
 
 
 static void init_average(void) {
-  short a, b, c;
+  //short a, b, c;
   int x, y;
   for (x = 0; x < 256; x++) {
     for (y = 0; y < 256; y++) {
+      cavgu[x][y] = cavgc[x][y] = (uint8_t)((x + y) >> 1);
+#ifdef MULT_AVG_YUV
       a = (short)(x - 128);
       b = (short)(y - 128);
-      if ((c = (a + b - ((a * b) >> 8) + 128)) > UV_CLAMP_MAXI) c = UV_CLAMP_MAXI;
-      cavgc[x][y] = (uint8_t)(c > YUV_CLAMP_MINI ? c : YUV_CLAMP_MINI); // this is fine because headroom==footroom==16
       if ((c = (a + b - ((a * b) >> 8) + 128)) > 255) c = 255;
       cavgu[x][y] = (uint8_t)(c > 0 ? c : 0);
-      cavgrgb[x][y] = (x + y) / 2;
+      if (c > UV_CLAMP_MAXI) c = UV_CLAMP_MAXI;
+      cavgc[x][y] = (uint8_t)(c > YUV_CLAMP_MINI ? c : YUV_CLAMP_MINI);
+#else
+      cavgu[x][y] = cavgc[x][y] = (uint8_t)((x + y) >> 1);
+#endif
+
+#ifdef MULT_AVG_RGB
+      if ((c = (a + b - ((a * b) >> 8) + 0)) > 255) c = 255;
+      cavgrgb[x][y] = (uint8_t)(c > 0 ? c : 0);
+#else
+      cavgrgb[x][y] = (uint8_t)((x + y) >> 1);
+#endif
     }
   }
   avg_inited = TRUE;
@@ -812,7 +824,6 @@ static void get_YUV_to_YUV_conversion_arrays(int iclamping, int isubspace, int o
 //////////////////////////
 // pixel conversions
 
-static uint8_t avg_chroma(size_t x, size_t y) GNU_HOT;
 static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
 static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
@@ -834,11 +845,7 @@ static void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) GNU_FLATTEN GNU_HOT;
 static void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) GNU_HOT;
 static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) GNU_HOT;
 
-
-LIVES_INLINE uint8_t avg_chroma(size_t x, size_t y) {
-  // cavg == cavgc for clamped, cavgu for unclamped
-  return *(cavg + (x << 8) + y);
-}
+#define avg_chroma(x, y) ((uint8_t)(*(cavg + (x << 8) + y)))
 
 LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
   register short a;
@@ -858,11 +865,11 @@ LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) uyvy->y1 = max_Y;
   else uyvy->y1 = a < min_Y ? min_Y : a;
 
-  uyvy->u0 = avg_chroma((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS,
-                        (Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS);
+  uyvy->u0 = avg_chroma(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
+                        ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
 
-  uyvy->v0 = avg_chroma((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS,
-                        (Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS);
+  uyvy->v0 = avg_chroma(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
+                        ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
 }
 
 
@@ -873,11 +880,11 @@ LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
   if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) yuyv->y1 = max_Y;
   else yuyv->y1 = a < min_Y ? min_Y : a;
 
-  yuyv->u0 = avg_chroma((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS,
-                        (Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS);
+  yuyv->u0 = avg_chroma(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
+                        ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
 
-  yuyv->v0 = avg_chroma((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS,
-                        (Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS);
+  yuyv->v0 = avg_chroma(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
+                        ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
 }
 
 
@@ -1596,6 +1603,8 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
   int opsize = 3, opsize2;
   int irow = istrides[0] - width;
   uint8_t y, u, v;
+  size_t uv_offs = 0;
+  int lastrow = (height >> 1) << 1;
 
   if (add_alpha) opsize = 4;
 
@@ -1607,61 +1616,42 @@ static void convert_yuv420p_to_rgb_frame(uint8_t **src, int width, int height, i
   set_conversion_arrays(clamping, subspace);
 
   for (i = 0; i < height - 1; i++) {
-    y = *(s_y++);
-    u = s_u[0];
-    v = s_v[0];
-
-    yuv2rgb(y, u, v, &dest[0], &dest[1], &dest[2]);
-
-    if (add_alpha) dest[3] = dest[opsize + 3] = 255;
-
-    y = *(s_y++);
-    dest += opsize;
-
-    yuv2rgb(y, u, v, &dest[0], &dest[1], &dest[2]);
-    dest -= opsize;
-
-    for (j = opsize2; j < widthx; j += opsize2) {
+    uv_offs = 0;
+    for (j = 0; j < widthx; j += opsize2) {
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
+      if (is_422 || chroma || i == lastrow) {
+        y = *(s_y++);
+        u = s_u[uv_offs];
+        v = s_v[uv_offs++];
 
-      // implements jpeg style subsampling : TODO - mpeg and dvpal style
+        yuv2rgb(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
 
-      y = *(s_y++);
-      u = s_u[(j / opsize) / 2];
-      v = s_v[(j / opsize) / 2];
+        if (j != 0) {
+          dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
+          dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+          dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+        }
 
-      yuv2rgb(y, u, v, &dest[j], &dest[j + 1], &dest[j + 2]);
+        y = *(s_y++);
+        yuv2rgb(y, u, v, &dest[j + opsize], &dest[j + opsize + 1], &dest[j + opsize + 2]);
+        if (add_alpha) dest[j + 3] = dest[j + 7] = 255;
+      }
 
-      dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
-      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
-      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
-
-      y = *(s_y++);
-      yuv2rgb(y, u, v, &dest[j + opsize], &dest[j + opsize + 1], &dest[j + opsize + 2]);
-
-      if (add_alpha) dest[j + 3] = dest[j + 7] = 255;
-
-      if (!is_422 && !chroma && i > 0) {
-        // pass 2
+      if (!is_422 && !chroma && i > 2) {
         // average two src rows
-        dest[j - orowstride] = cavgrgb[dest[j - orowstride]][dest[j]];
-        dest[j + 1 - orowstride] = cavgrgb[dest[j + 1 - orowstride]][dest[j + 1]];
-        dest[j + 2 - orowstride] = cavgrgb[dest[j + 2 - orowstride]][dest[j + 2]];
-        dest[j - opsize - orowstride] = cavgrgb[dest[j - opsize - orowstride]][dest[j - opsize]];
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
+        dest[j - orowstride * 2] = cavgrgb[dest[j - orowstride * 3]][dest[j - orowstride]];
+        dest[j + 1 - orowstride * 2] = cavgrgb[dest[j + 1 - orowstride * 3]][dest[j + 1 - orowstride]];
+        dest[j + 2 - orowstride * 2] = cavgrgb[dest[j + 2 - orowstride * 3]][dest[j + 2 - orowstride]];
+        dest[j + opsize - orowstride * 2] = cavgrgb[dest[j + opsize - orowstride * 3]][dest[j + opsize - orowstride]];
+        dest[j + opsize + 1 - orowstride * 2] = cavgrgb[dest[j + opsize + 1 - orowstride * 3]][dest[j + opsize + 1 - orowstride]];
+        dest[j + opsize + 2 - orowstride * 2] = cavgrgb[dest[j + opsize + 2 - orowstride * 3]][dest[j + opsize + 2 - orowstride]];
       }
     }
-    if (is_422 || chroma) {
-      if (i > 0) {
-        dest[j - opsize - orowstride] = cavgrgb[dest[j - opsize - orowstride]][dest[j - opsize]];
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
-      }
+    if (is_422 || !chroma) {
       s_u += istrides[1];
       s_v += istrides[2];
-    }
+    } else s_y += width;
     s_y += irow;
     chroma = !chroma;
     dest += orowstride;
@@ -1679,6 +1669,8 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
   int irow = istrides[0] - width;
   int opsize = 3, opsize2;
   uint8_t y, u, v;
+  size_t uv_offs = 0;
+  int lastrow = (height >> 1) << 1;
 
   if (add_alpha) opsize = 4;
 
@@ -1689,63 +1681,43 @@ static void convert_yuv420p_to_bgr_frame(uint8_t **src, int width, int height, i
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  for (i = 0; i < height; i++) {
-    y = *(s_y++);
-    u = s_u[0];
-    v = s_v[0];
-
-    yuv2rgb(y, u, v, &dest[2], &dest[1], &dest[0]);
-
-    if (add_alpha) dest[3] = dest[opsize + 3] = 255;
-
-    y = *(s_y++);
-    dest += opsize;
-
-    yuv2rgb(y, u, v, &dest[2], &dest[1], &dest[0]);
-    dest -= opsize;
-
-    for (j = opsize2; j < widthx; j += opsize2) {
+  for (i = 0; i < height - 1; i++) {
+    uv_offs = 0;
+    for (j = 0; j < widthx; j += opsize2) {
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
+      if (is_422 || chroma || i == lastrow) {
+        y = *(s_y++);
+        u = s_u[uv_offs];
+        v = s_v[uv_offs++];
 
-      // implements jpeg style subsampling : TODO - mpeg and dvpal style
+        yuv2rgb(y, u, v, &dest[j + 2], &dest[j + 1], &dest[j]);
 
-      y = *(s_y++);
-      u = s_u[(j / opsize) / 2];
-      v = s_v[(j / opsize) / 2];
+        if (j != 0) {
+          dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
+          dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+          dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+        }
 
-      yuv2rgb(y, u, v, &dest[j + 2], &dest[j + 1], &dest[j]);
+        y = *(s_y++);
+        yuv2rgb(y, u, v, &dest[j + opsize + 2], &dest[j + opsize + 1], &dest[j + opsize]);
+        if (add_alpha) dest[j + 3] = dest[j + 7] = 255;
+      }
 
-      dest[j - opsize] = cavgrgb[dest[j - opsize]][dest[j]];
-      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
-      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
-
-      y = *(s_y++);
-      yuv2rgb(y, u, v, &dest[j + opsize + 2], &dest[j + opsize + 1], &dest[j + opsize]);
-
-      if (add_alpha) dest[j + 3] = dest[j + 7] = 255;
-
-      if (!is_422 && !chroma && i > 0) {
-        // pass 2
+      if (!is_422 && !chroma && i > 2) {
         // average two src rows
-        dest[j - orowstride] = cavgrgb[dest[j - orowstride]][dest[j]];
-        dest[j + 1 - orowstride] = cavgrgb[dest[j + 1 - orowstride]][dest[j + 1]];
-        dest[j + 2 - orowstride] = cavgrgb[dest[j + 2 - orowstride]][dest[j + 2]];
-        dest[j - opsize - orowstride] = cavgrgb[dest[j - opsize - orowstride]][dest[j - opsize]];
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
+        dest[j - orowstride * 2] = cavgrgb[dest[j - orowstride * 3]][dest[j - orowstride]];
+        dest[j + 1 - orowstride * 2] = cavgrgb[dest[j + 1 - orowstride * 3]][dest[j + 1 - orowstride]];
+        dest[j + 2 - orowstride * 2] = cavgrgb[dest[j + 2 - orowstride * 3]][dest[j + 2 - orowstride]];
+        dest[j + opsize - orowstride * 2] = cavgrgb[dest[j + opsize - orowstride * 3]][dest[j + opsize - orowstride]];
+        dest[j + opsize + 1 - orowstride * 2] = cavgrgb[dest[j + opsize + 1 - orowstride * 3]][dest[j + opsize + 1 - orowstride]];
+        dest[j + opsize + 2 - orowstride * 2] = cavgrgb[dest[j + opsize + 2 - orowstride * 3]][dest[j + opsize + 2 - orowstride]];
       }
     }
-    if (is_422 || chroma) {
-      if (i > 0) {
-        // TODO
-        dest[j - opsize - orowstride] = cavgrgb[dest[j - opsize - orowstride]][dest[j - opsize]];
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
-      }
+    if (is_422 || !chroma) {
       s_u += istrides[1];
       s_v += istrides[2];
-    }
+    } else s_y += width;
     s_y += irow;
     chroma = !chroma;
     dest += orowstride;
@@ -1763,6 +1735,8 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
   int irow = istrides[0] - width;
   int opsize = 4, opsize2;
   uint8_t y, u, v;
+  size_t uv_offs = 0;
+  int lastrow = (height >> 1) << 1;
 
   widthx = width * opsize;
   opsize2 = opsize * 2;
@@ -1771,62 +1745,43 @@ static void convert_yuv420p_to_argb_frame(uint8_t **src, int width, int height, 
 
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
-  for (i = 0; i < height; i++) {
-    y = *(s_y++);
-    u = s_u[0];
-    v = s_v[0];
-
-    yuv2rgb(y, u, v, &dest[1], &dest[2], &dest[3]);
-
-    dest[0] = dest[4] = 255;
-
-    y = *(s_y++);
-    dest += opsize;
-
-    yuv2rgb(y, u, v, &dest[0], &dest[1], &dest[2]);
-    dest -= opsize;
-
-    for (j = opsize2; j < widthx; j += opsize2) {
+  for (i = 0; i < height - 1; i++) {
+    uv_offs = 0;
+    for (j = 0; j < widthx; j += opsize2) {
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
+      if (is_422 || chroma || i == lastrow) {
+        y = *(s_y++);
+        u = s_u[uv_offs];
+        v = s_v[uv_offs++];
 
-      // implements jpeg style subsampling : TODO - mpeg and dvpal style
+        yuv2rgb(y, u, v, &dest[j + 1], &dest[j + 2], &dest[j + 3]);
 
-      y = *(s_y++);
-      u = s_u[(j / opsize) / 2];
-      v = s_v[(j / opsize) / 2];
+        if (j != 0) {
+          dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
+          dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+          dest[j - opsize + 3] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
+        }
 
-      yuv2rgb(y, u, v, &dest[j + 1], &dest[j + 2], &dest[j + 3]);
-
-      dest[j - opsize + 1] = cavgrgb[dest[j - opsize + 1]][dest[j + 1]];
-      dest[j - opsize + 2] = cavgrgb[dest[j - opsize + 2]][dest[j + 2]];
-      dest[j - opsize + 3] = cavgrgb[dest[j - opsize + 3]][dest[j + 3]];
-
-      y = *(s_y++);
-      yuv2rgb(y, u, v, &dest[j + opsize + 1], &dest[j + opsize + 2], &dest[j + opsize + 3]);
-
+        y = *(s_y++);
+        yuv2rgb(y, u, v, &dest[j + opsize + 1], &dest[j + opsize + 2], &dest[j + opsize + 3]);
+      }
       dest[j] = dest[j + 4] = 255;
 
-      if (!is_422 && !chroma && i > 0) {
-        // pass 2
+      if (!is_422 && !chroma && i > 2) {
         // average two src rows
-        dest[j + 1 - orowstride] = cavgrgb[dest[j + 1 - orowstride]][dest[j + 1]];
-        dest[j + 2 - orowstride] = cavgrgb[dest[j + 2 - orowstride]][dest[j + 2]];
-        dest[j + 3 - orowstride] = cavgrgb[dest[j + 3 - orowstride]][dest[j + 3]];
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
-        dest[j - opsize + 3 - orowstride] = cavgrgb[dest[j - opsize + 3 - orowstride]][dest[j - opsize + 3]];
+        dest[j + 1 - orowstride * 2] = cavgrgb[dest[j + 1 - orowstride * 3]][dest[j + 1 - orowstride]];
+        dest[j + 2 - orowstride * 2] = cavgrgb[dest[j + 2 - orowstride * 3]][dest[j + 2 - orowstride]];
+        dest[j + 3 - orowstride * 2] = cavgrgb[dest[j + 3 - orowstride * 3]][dest[j + 3 - orowstride]];
+        dest[j + opsize + 1 - orowstride * 2] = cavgrgb[dest[j + opsize + 1 - orowstride * 3]][dest[j + opsize + 1 - orowstride]];
+        dest[j + opsize + 2 - orowstride * 2] = cavgrgb[dest[j + opsize + 2 - orowstride * 3]][dest[j + opsize + 2 - orowstride]];
+        dest[j + opsize + 3 - orowstride * 2] = cavgrgb[dest[j + opsize + 3 - orowstride * 3]][dest[j + opsize + 3 - orowstride]];
       }
     }
-    if (is_422 || chroma) {
-      if (i > 0) {
-        dest[j - opsize + 1 - orowstride] = cavgrgb[dest[j - opsize + 1 - orowstride]][dest[j - opsize + 1]];
-        dest[j - opsize + 2 - orowstride] = cavgrgb[dest[j - opsize + 2 - orowstride]][dest[j - opsize + 2]];
-        dest[j - opsize + 3 - orowstride] = cavgrgb[dest[j - opsize + 3 - orowstride]][dest[j - opsize + 3]];
-      }
+    if (is_422 || !chroma) {
       s_u += istrides[1];
       s_v += istrides[2];
-    }
+    } else s_y += width;
     s_y += irow;
     chroma = !chroma;
     dest += orowstride;
@@ -4148,7 +4103,7 @@ static void convert_yuv_planar_to_yuyv_frame(uint8_t **src, int width, int heigh
   }
 
   irowstride -= width;
-  orowstride = orowstride / width;
+  orowstride = orowstride / 4 - width;
   for (k = 0; k < height; k++) {
     for (x = 0; x < width; x++) {
       yuyv->y0 = *(y++);
@@ -6984,11 +6939,8 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, int *istri
 
   //TODO: handle mpeg and dvpal input
 
-  // TESTED !
-
   register int i, j;
   uint8_t *d_u = dest[1], *d_v = dest[2], *s_u = src[1], *s_v = src[2];
-  boolean chroma = FALSE;
   int height2;
   int width2;
 
@@ -7000,42 +6952,44 @@ static void convert_quad_chroma(uint8_t **src, int width, int height, int *istri
   height2 = height << 1;
   width2 = width << 1;
 
-  // for this algorithm, we assume chroma samples are aligned like mpeg
-
   for (i = 0; i < height2; i++) {
-    d_u[0] = d_u[1] = s_u[0];
-    d_v[0] = d_v[1] = s_v[0];
+    if (!(i & 1)) {
+      // on even rows we write 2 chroma px
+      d_u[0] = d_u[1] = s_u[0];
+      d_v[0] = d_v[1] = s_v[0];
+    }
+
     for (j = 2; j < width2; j += 2) {
-      d_u[j + 1] = d_u[j] = s_u[(j >> 1)];
-      d_v[j + 1] = d_v[j] = s_v[(j >> 1)];
+      // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
+      // we know we can do this because Y must be even width
+      if (!(i & 1)) {
+        // on even rows we write 2 chroma px, then average 1st px with the previous one
+        d_u[j + 1] = d_u[j] = s_u[(j >> 1)];
+        d_v[j + 1] = d_v[j] = s_v[(j >> 1)];
 
-      d_u[j - 1] = avg_chroma(d_u[j - 1], d_u[j]);
-      d_v[j - 1] = avg_chroma(d_v[j - 1], d_v[j]);
+        d_u[j - 1] = avg_chroma(d_u[j - 1], d_u[j]);
+        d_v[j - 1] = avg_chroma(d_v[j - 1], d_v[j]);
+      }
 
-      if (!chroma && i > 0) {
-        // pass 2
-        // average two src rows (e.g 2 with 1, 4 with 3, ... etc) for odd dst rows
-        // thus dst row 1 becomes average of src chroma rows 0 and 1, etc.)
-        d_u[j - ostride] = avg_chroma(d_u[j - ostride], d_u[j]);
-        d_v[j - ostride] = avg_chroma(d_v[j - ostride], d_v[j]);
-        d_u[j - 1 - ostride] = avg_chroma(d_u[j - 1 - ostride], d_u[j - 1]);
-        d_v[j - 1 - ostride] = avg_chroma(d_v[j - 1 - ostride], d_v[j - 1]);
+      else if (i > 2) {
+        // on odd rows we average row - 1 with row - 3  ==> row - 2
+        d_u[j - ostride * 2] = avg_chroma(d_u[j - ostride * 3], d_u[j - ostride]);
+        d_v[j - ostride * 2] = avg_chroma(d_v[j - ostride * 3], d_v[j - ostride]);
+        d_u[j + 1 - ostride * 2] = avg_chroma(d_u[j + 1 - ostride * 3], d_u[j + 1 - ostride]);
+        d_v[j + 1 - ostride * 2] = avg_chroma(d_v[j + 1 - ostride * 3], d_v[j + 1 - ostride]);
       }
     }
-    if (!chroma && i > 0) {
-      d_u[j - 1 - ostride] = avg_chroma(d_u[j - 1 - ostride], d_u[j - 1]);
-      d_v[j - 1 - ostride] = avg_chroma(d_v[j - 1 - ostride], d_v[j - 1]);
-    }
-    if (chroma) {
+
+    if (i & 1) {
+      // after an odd row we advance u, v
       s_u += istrides[1];
       s_v += istrides[2];
     }
-    chroma = !chroma;
     d_u += ostride;
     d_v += ostride;
   }
 
-  if (add_alpha) lives_memset(dest + ((width * height) << 3), 255, ((width * height) << 3));
+  if (add_alpha) lives_memset(dest + ostride * height2 * 3, 255, ostride * height);
 }
 
 
@@ -7050,32 +7004,40 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
 
   //TODO: handle mpeg and dvpal input
 
-  // TESTED !
-
   register int i, j;
   uint8_t *s_y = src[0], *s_u = src[1], *s_v = src[2];
-  boolean chroma = FALSE;
   int widthx;
   int irow = istrides[0] - width;
-  int opsize = 3, opsize2;
+  int opsize = 3, opsize2, uv_offs;
+  int lastrow = (height >> 1) << 1; // height if even, height - 1 if odd
 
   //int count;
   set_conversion_arrays(clamping, WEED_YUV_SUBSPACE_YCBCR);
 
   if (add_alpha) opsize = 4;
 
+  width = (width >> 1) << 1;
+
   widthx = width * opsize;
   opsize2 = opsize * 2;
 
   for (i = 0; i < height; i++) {
     dest[0] = *(s_y++);
-    dest[1] = dest[opsize + 1] = s_u[0];
-    dest[2] = dest[opsize + 2] = s_v[0];
+    if (!(i & 1)) {
+      // on even rows we write 2 chroma px
+      dest[1] = dest[opsize + 1] = s_u[0];
+      dest[2] = dest[opsize + 2] = s_v[0];
+    } else if (i > 2) {
+      // on odd rows we average row - 1 with row - 3  ==> row - 2
+      dest[1 - ostride * 2] = avg_chroma(dest[1 - ostride * 3], dest[1 - ostride]);
+      dest[2 - ostride * 2] = avg_chroma(dest[2 - ostride * 3], dest[2 - ostride]);
+      dest[opsize + 1 - ostride * 2] = avg_chroma(dest[opsize + 1 - ostride * 3], dest[opsize + 1 - ostride]);
+      dest[opsize + 2 - ostride * 2] = avg_chroma(dest[opsize + 2 - ostride * 3], dest[opsize + 2 - ostride]);
+    }
     if (add_alpha) dest[3] = dest[opsize + 3] = 255;
     dest[opsize] = *(s_y++);
 
-    //count=10;
-
+    uv_offs = 0;
     for (j = opsize2; j < widthx; j += opsize2) {
       // process two pixels at a time, and we average the first colour pixel with the last from the previous 2
       // we know we can do this because Y must be even width
@@ -7085,30 +7047,44 @@ static void convert_quad_chroma_packed(uint8_t **src, int width, int height, int
       dest[j] = *(s_y++);
       dest[j + opsize] = *(s_y++);
       if (add_alpha) dest[j + 3] = dest[j + 7] = 255;
-      dest[j + 1] = dest[j + opsize + 1] = s_u[(j / opsize) / 2];
-      dest[j + 2] = dest[j + opsize + 2] = s_v[(j / opsize) / 2];
 
-      dest[j - opsize + 1] = avg_chroma(dest[j - opsize + 1], dest[j + 1]);
-      dest[j - opsize + 2] = avg_chroma(dest[j - opsize + 2], dest[j + 2]);
-      if (!chroma && i > 0) {
-        // pass 2
-        // average two src rows
-        dest[j + 1 - ostride] = avg_chroma(dest[j + 1 - ostride], dest[j + 1]);
-        dest[j + 2 - ostride] = avg_chroma(dest[j + 2 - ostride], dest[j + 2]);
-        dest[j - opsize + 1 - ostride] = avg_chroma(dest[j - opsize + 1 - ostride], dest[j - opsize + 1]);
-        dest[j - opsize + 2 - ostride] = avg_chroma(dest[j - opsize + 2 - ostride], dest[j - opsize + 2]);
+      if (!(i & 1)) {
+        // on even rows we write 2 chroma px, then average 1st px with the previous one
+        dest[j + 1] = dest[j + opsize + 1] = s_u[++uv_offs];
+        dest[j + 2] = dest[j + opsize + 2] = s_v[uv_offs];
+        dest[j - opsize + 1] = avg_chroma(dest[j - opsize + 1], dest[j + 1]);
+        dest[j - opsize + 2] = avg_chroma(dest[j - opsize + 2], dest[j + 2]);
+      }
+
+      else if (i > 2) {
+        // on odd rows we average row - 1 with row - 3  ==> row - 2
+        dest[j + 1 - ostride * 2] = avg_chroma(dest[j + 1 - ostride * 3], dest[j + 1 - ostride]);
+        dest[j + 2 - ostride * 2] = avg_chroma(dest[j + 2 - ostride * 3], dest[j + 2 - ostride]);
+        dest[j + opsize + 1 - ostride * 2] = avg_chroma(dest[j + opsize + 1 - ostride * 3], dest[j + opsize + 1 - ostride]);
+        dest[j + opsize + 2 - ostride * 2] = avg_chroma(dest[j + opsize + 2 - ostride * 3], dest[j + opsize + 2 - ostride]);
       }
     }
-    if (!chroma && i > 0) {
-      dest[j - opsize + 1 - ostride] = avg_chroma(dest[j - opsize + 1 - ostride], dest[j - opsize + 1]);
-      dest[j - opsize + 2 - ostride] = avg_chroma(dest[j - opsize + 2 - ostride], dest[j - opsize + 2]);
-    }
-    if (chroma) {
+
+    if (i & 1) {
+      // after an odd row we advance u, v
+      if (i == lastrow) {
+        // if last row is odd then we need to go back and fill in the u,v data
+        dest[1] = dest[opsize + 1] = s_u[0];
+        dest[2] = dest[opsize + 2] = s_v[0];
+        for (j = opsize2; j < widthx; j += opsize2) {
+          dest[j + 1] = dest[j + opsize + 1] = s_u[uv_offs];
+          dest[j + 2] = dest[j + opsize + 2] = s_v[uv_offs];
+          dest[j - opsize + 1] = avg_chroma(dest[j - opsize + 1], dest[j + 1]);
+          dest[j - opsize + 2] = avg_chroma(dest[j - opsize + 2], dest[j + 2]);
+        }
+        dest[j - opsize + 1 - ostride] = avg_chroma(dest[j - opsize + 1 - ostride], dest[j - opsize + 1]);
+        dest[j - opsize + 2 - ostride] = avg_chroma(dest[j - opsize + 2 - ostride], dest[j - opsize + 2]);
+        return;
+      }
       s_u += istrides[1];
       s_v += istrides[2];
     }
     s_y += irow;
-    chroma = !chroma;
     dest += ostride;
   }
 }
@@ -8394,7 +8370,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
-  //#define DEBUG_PCONV
+  //    #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -10028,7 +10004,7 @@ memfail:
 
 
 boolean convert_layer_palette(weed_layer_t *layer, int outpl, int op_clamping) {
-  return convert_layer_palette_full(layer, outpl,  op_clamping, WEED_YUV_SAMPLING_DEFAULT, WEED_YUV_SUBSPACE_YUV);
+  return convert_layer_palette_full(layer, outpl, op_clamping, WEED_YUV_SAMPLING_DEFAULT, WEED_YUV_SUBSPACE_YUV);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -10547,7 +10523,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //      #define DEBUG_RESIZE
+  //          #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -10788,8 +10764,8 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     // TODO - can we set the gamma ?
     swscale = sws_getCachedContext(swscale, iwidth, iheight, ipixfmt, width, height, opixfmt, flags, NULL, NULL, NULL);
     sws_setColorspaceDetails(swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                             ? SWS_CS_ITU709 : SWS_CS_DEFAULT) , iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
-                                 ? SWS_CS_ITU709 : SWS_CS_DEFAULT), oclamp_hint,  0, 1 << 16, 1 << 16);
+                             ? SWS_CS_ITU709 : SWS_CS_ITU601) , iclamping, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
+                                 ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 1 << 16, 1 << 16);
 
 
     if (swscale == NULL) {
@@ -10802,13 +10778,15 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
               weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
 
-      sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight,
-                (uint8_t *const *)opd, orw);
+      height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight, (uint8_t *const *)opd, orw);
+
+      //if (palette == 514 && opal_hint == 514 && width < iwidth &&  iwidth - width < 4) weed_layer_set_width(layer, iwidth);
 #ifdef DEBUG_RESIZE
       g_print("after resize with swscale: layer size %d X %d, palette %s (assumed succesful)\n", width, height,
               weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
 #endif
       //if (store_ctx) swscale_add_context(iwidth, iheight, width, height, ipixfmt, opixfmt, flags, swscale);
+      weed_layer_set_height(layer, height);
     }
 
     // this will properly free() in_pixel_data

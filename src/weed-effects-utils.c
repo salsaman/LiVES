@@ -242,9 +242,15 @@ WEED_GLOBAL_INLINE void **weed_channel_get_pixel_data_planar(weed_plant_t *chann
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_width(weed_plant_t *channel) {
-  /// width in macropixels, normal value for channels etc.
+  /// width in macropixels
   if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
   return weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
+}
+
+WEED_GLOBAL_INLINE void weed_channel_set_width(weed_plant_t *channel, int width) {
+  /// width in macropixels
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
+  weed_set_int_value(channel, WEED_LEAF_WIDTH, width);
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_width_pixels(weed_plant_t *channel) {
@@ -255,6 +261,17 @@ WEED_GLOBAL_INLINE int weed_channel_get_width_pixels(weed_plant_t *channel) {
 WEED_GLOBAL_INLINE int weed_channel_get_height(weed_plant_t *channel) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
   return weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+}
+
+WEED_GLOBAL_INLINE void weed_channel_set_height(weed_plant_t *channel, int height) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
+  weed_set_int_value(channel, WEED_LEAF_HEIGHT, height);
+}
+
+WEED_GLOBAL_INLINE void weed_channel_set_size(weed_plant_t *channel, int width, int height) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return 0;
+  weed_set_int_value(channel, WEED_LEAF_WIDTH, width);
+  weed_set_int_value(channel, WEED_LEAF_HEIGHT, height);
 }
 
 WEED_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {

@@ -1910,7 +1910,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       if ((visible && !mainw->internal_messaging)) lives_usleep(prefs->sleep_time);
 
       sched_yield();
-
+      if (cfile->play_paused) {
+        lives_usleep(prefs->sleep_time);
+      }
       // normal playback, wth realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
 

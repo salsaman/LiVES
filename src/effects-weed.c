@@ -1063,8 +1063,8 @@ static void set_channel_size(weed_plant_t *filter, weed_plant_t *channel, int wi
   int max, min;
   int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
 
-  width = (width >> 2) << 2;
-  height = (height >> 2) << 2;
+  /* width =  */
+  /* height = (height >> 1) << 1; */
 
   if (width < MIN_CHAN_WIDTH) width = MIN_CHAN_WIDTH;
   if (width > MAX_CHAN_WIDTH) width = MAX_CHAN_WIDTH;
@@ -2377,7 +2377,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         height = weed_channel_get_height(def_channel);
       }
 
-      set_channel_size(filter, channel, opwidth / weed_palette_get_pixels_per_macropixel(palette), opheight);
+      weed_channel_set_size(channel, width, height);
+      //set_channel_size(filter, channel, width, height);
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
         int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
@@ -7075,9 +7076,9 @@ void weed_deinit_all(boolean shutdown) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
       if (LIVES_IS_PLAYING && !shutdown && i >  FX_KEYS_PHYSICAL) {
-	// meta-physical  keys only shutdown through the insterface or via easter-egg keys...
-	mainw->osc_block = FALSE;
-	return;
+        // meta-physical  keys only shutdown through the insterface or via easter-egg keys...
+        mainw->osc_block = FALSE;
+        return;
       }
       filter_mutex_lock(i);
     } else {
@@ -11207,7 +11208,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 
   if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
     // check the WEED_LEAF_TYPE leaf first
-    g_print("errtype was %d\n", type);
+    //g_print("errtype was %d\n", type);
     //bugfd = fd;
     if (newd)
       weed_plant_free(plant);

@@ -2267,12 +2267,12 @@ LiVESWidget *create_rte_window(void) {
     else  {
       switch (i) {
       case 9:
-	labelt = lives_strdup(_("minus")); break;
+        labelt = lives_strdup(_("minus")); break;
       case 10:
-	labelt = lives_strdup(_("equals")); break;
+        labelt = lives_strdup(_("equals")); break;
       default:
-	labelt = lives_strdup("????");
-	break;
+        labelt = lives_strdup("????");
+        break;
       }
     }
 

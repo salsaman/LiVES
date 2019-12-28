@@ -41,6 +41,7 @@ static void make_blend_table(_sdata *sdata, unsigned char bf, unsigned char bfn)
   }
 }
 
+
 /////////////////////////////////////////////////////////////////////////
 
 static weed_error_t chroma_init(weed_plant_t *inst) {

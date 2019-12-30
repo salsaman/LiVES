@@ -3043,7 +3043,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
     if ((next_frame_event = get_next_frame_event(next_event)) != NULL) {
       next_tc = get_event_timecode(next_frame_event);
       // drop frame if it is too far behind
-      if (LIVES_IS_PLAYING && !mainw->noframedrop && next_tc <= curr_tc) break;
+      if (LIVES_IS_PLAYING && !prefs->noframedrop && next_tc <= curr_tc) break;
       if (!mainw->fs && !prefs->hide_framebar && mainw->multitrack == NULL) {
         lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
         lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
@@ -3217,7 +3217,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       if (num_in_channels > 0) {
         for (i = 0; i < num_in_channels; i++) {
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(bitmpl[i], WEED_LEAF_HOST_DISABLED, &error));
+            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(bitmpl[i],
+                                   WEED_LEAF_HOST_DISABLED, &error));
           else weed_leaf_delete(citmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(citmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(bitmpl[i], WEED_LEAF_HOST_REPEATS, &error));
@@ -3231,7 +3232,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       if (num_out_channels > 0) {
         for (i = 0; i < num_out_channels; i++) {
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(botmpl[i], WEED_LEAF_HOST_DISABLED, &error));
+            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(botmpl[i],
+                                   WEED_LEAF_HOST_DISABLED, &error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_REPEATS))
             weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i], WEED_LEAF_HOST_REPEATS, &error));
@@ -3592,10 +3594,9 @@ lives_render_error_t render_events(boolean reset) {
                     } else {
                       // add new clone for nclip
                       mainw->track_decoders[i] = clone_decoder(nclip);
-                    }
-                  }
-                }
-              }
+		      // *INDENT-OFF*
+                    }}}}
+	      // *INDENT-ON*
 
               mainw->old_active_track_list[i] = mainw->active_track_list[i];
 
@@ -3742,8 +3743,10 @@ lives_render_error_t render_events(boolean reset) {
                 mainw->read_failed = mainw->write_failed = FALSE;
                 lives_freep((void **)&mainw->read_failed_file);
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
-                                     mainw->current_file, xavel, xaseek, q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps),
-                                     q_gint64(tc + (weed_timecode_t)((next_frame_event != NULL || is_blank) ? 0 : TICKS_PER_SECOND_DBL / cfile->fps),
+                                     mainw->current_file, xavel, xaseek, q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5),
+                                         cfile->fps),
+                                     q_gint64(tc + (weed_timecode_t)((next_frame_event != NULL || is_blank) ? 0
+                                              : TICKS_PER_SECOND_DBL / cfile->fps),
                                               cfile->fps), chvols, 1., 1., NULL);
                 if (mainw->write_failed) {
                   int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
@@ -3901,11 +3904,13 @@ lives_render_error_t render_events(boolean reset) {
       if (num_in_channels > 0) {
         for (i = 0; i < num_in_channels; i++) {
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(bitmpl[i], WEED_LEAF_HOST_DISABLED,
-                                   &weed_error));
+            weed_set_boolean_value(citmpl[i], WEED_LEAF_HOST_DISABLED,
+                                   weed_get_boolean_value(bitmpl[i], WEED_LEAF_HOST_DISABLED,
+                                       &weed_error));
           else weed_leaf_delete(citmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(bitmpl[i], WEED_LEAF_HOST_REPEATS))
-            weed_set_int_value(citmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(bitmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
+            weed_set_int_value(citmpl[i], WEED_LEAF_HOST_REPEATS,
+                               weed_get_int_value(bitmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
           else weed_leaf_delete(citmpl[i], WEED_LEAF_HOST_REPEATS);
           weed_plant_free(bitmpl[i]);
         }
@@ -3916,11 +3921,13 @@ lives_render_error_t render_events(boolean reset) {
       if (num_out_channels > 0) {
         for (i = 0; i < num_out_channels; i++) {
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_DISABLED))
-            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED, weed_get_boolean_value(botmpl[i], WEED_LEAF_HOST_DISABLED,
-                                   &weed_error));
+            weed_set_boolean_value(cotmpl[i], WEED_LEAF_HOST_DISABLED,
+                                   weed_get_boolean_value(botmpl[i], WEED_LEAF_HOST_DISABLED,
+                                       &weed_error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_DISABLED);
           if (weed_plant_has_leaf(botmpl[i], WEED_LEAF_HOST_REPEATS))
-            weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i], WEED_LEAF_HOST_REPEATS, &weed_error));
+            weed_set_int_value(cotmpl[i], WEED_LEAF_HOST_REPEATS, weed_get_int_value(botmpl[i],
+                               WEED_LEAF_HOST_REPEATS, &weed_error));
           else weed_leaf_delete(cotmpl[i], WEED_LEAF_HOST_REPEATS);
           weed_plant_free(botmpl[i]);
         }

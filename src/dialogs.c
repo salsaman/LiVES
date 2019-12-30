@@ -1246,15 +1246,6 @@ int process_one(boolean visible) {
       mainw->new_clip = -1;
     }
 
-#ifdef RT_AUDIO
-    while (mainw->uflow_count > 0 && --ucount != 0) {
-      // handle audio underflows by pausing briefly
-      sched_yield();
-      mainw->uflow_count = 0;
-      lives_usleep(prefs->sleep_time);
-    }
-#endif
-
     /* if (prefs->loadchecktime > 0.) { */
     /*   load_measure_idle(NULL); */
     /* } */
@@ -1500,21 +1491,25 @@ int process_one(boolean visible) {
           cfile->aseek_pos = nullaudio_get_seek_pos();
         }
 #endif
-        // load and display the new frame
-        load_frame_image(cfile->frameno);
-        if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
-        else {
-          if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
-          else if (mainw->fixed_fpsd > 0.)
-            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
-          else mainw->last_display_ticks = real_ticks;
+#ifdef RT_AUDIO
+        if (mainw->uflow_count == 0 || prefs->noframedrop) {
+#endif
+          // load and display the new frame
+          load_frame_image(cfile->frameno);
+          if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
+          else {
+            if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
+              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
+            else if (mainw->fixed_fpsd > 0.)
+              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
+            else mainw->last_display_ticks = real_ticks;
+          }
+          if (force_show) force_show = FALSE;
         }
-        if (force_show) force_show = FALSE;
+#ifdef RT_AUDIO
       }
-
+#endif
 #ifdef ENABLE_JACK
-      // TODO - we should hand this off to another thread to do
       // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
         fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
@@ -1533,6 +1528,16 @@ int process_one(boolean visible) {
       mainw->startticks = mainw->currticks + mainw->deltaticks;
       pthread_mutex_unlock(&mainw->audio_resync_mutex);
     }
+#ifdef RT_AUDIO
+    mainw->uflow_count *= 2;
+    while (mainw->uflow_count > 0 && --ucount != 0) {
+      // handle audio underflows by pausing briefly
+      sched_yield();
+      g_print("underflow trigger (%d)\n", mainw->uflow_count);
+      mainw->uflow_count--;
+      lives_usleep(prefs->sleep_time * 100);
+    }
+#endif
   }
 
   if (visible) {
@@ -1787,13 +1792,13 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       // calculate the start position from jack transport
 
       ticks_t ntc = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
-      boolean noframedrop = mainw->noframedrop;
-      mainw->noframedrop = FALSE;
+      boolean noframedrop = prefs->noframedrop;
+      prefs->noframedrop = FALSE;
       cfile->last_frameno = 1;
       if (prefs->jack_opts & JACK_OPTS_TIMEBASE_START) {
         mainw->play_start = calc_new_playback_position(mainw->current_file, 0, &ntc);
       }
-      mainw->noframedrop = noframedrop;
+      prefs->noframedrop = noframedrop;
       if (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
         // timebase client - follows jack transport position
         mainw->startticks = ntc;

@@ -1710,13 +1710,12 @@ but plugin and host may add private leaves with keys prefixed "plugin_" and "hos
    		    		    does not require a version update.
 
 
-TODO: clarify:
-
 		    However, removing parameters, changing 
    		    their order or type, adding mandatory channels or removing channel templates does require an update.
-		    Prior versions of the filter must be exported by the plugin, but these may be STUB filter_classes. (TODO).
+		    Prior versions of the filter must be exported by the plugin,
 		    
-
+		    The plugin should then check the "filter_class" leaf of the instance and from there it can retrieve the "version" which
+		    the host selected.
 
 
 Mandatory for filters with video channels

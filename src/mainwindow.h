@@ -587,8 +587,6 @@ typedef struct {
 
   volatile lives_whentostop_t whentostop;
 
-  boolean noframedrop;
-
   int play_start;
   int play_end;
   boolean playing_sel;

@@ -857,3 +857,26 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   //free(work);
   return 0;
 }
+
+/////////////////////////
+
+LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
+  srandom(seed);
+}
+
+LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
+  return random();
+}
+
+LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
+  return getpid();
+}
+
+LIVES_GLOBAL_INLINE int lives_getuid(void) {
+  return geteuid();
+}
+
+LIVES_GLOBAL_INLINE int lives_getgid(void) {
+  return getegid();
+}
+

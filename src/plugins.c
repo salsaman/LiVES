@@ -2276,12 +2276,8 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
       xdisabled = lives_list_remove(xdisabled, decplugname);
       while (decoder_plugin != NULL) {
         lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)decoder_plugin->data;
-
-        //g_print("CHK %s %s\n", decplugname, dpsys->name);
-
         if (!strcmp(dpsys->name, decplugname)) {
-          if (strncmp(decplugname, "zz", 2))
-            mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
+          mainw->decoder_list = lives_list_move_to_first(mainw->decoder_list, decoder_plugin);
           break;
         }
         decoder_plugin = decoder_plugin->next;

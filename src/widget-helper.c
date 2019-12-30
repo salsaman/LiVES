@@ -11068,7 +11068,11 @@ boolean lives_widget_context_update(void) {
                 ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
         break;
       }
+      if (!(nulleventcount ^ 7)) mainw->uflow_count++;
       if (nulleventcount > MAX_NULL_EVENTS) {
+        // there are various reasons we can get here:
+        // - user is holding down a key (e.g. "s") during playback (MAX_NULL_EVENTS is set sufficiently high that a single key press
+        // should not trigger this)
         if (prefs->show_dev_opts) {
           g_print("too many X events !\n");
           if (ev != NULL)
@@ -11088,7 +11092,15 @@ boolean lives_widget_context_update(void) {
       /* 	mainw->loadmeasure = 0; */
       /* 	lm_needs_idlefunc = TRUE; */
       /* } */
-      g_main_context_iteration(NULL, FALSE);
+      if (mainw->uflow_count > 0) {
+        sched_yield();
+        lives_usleep(prefs->sleep_time * 10);
+        sched_yield();
+        --mainw->uflow_count;
+      } else {
+        g_main_context_iteration(NULL, FALSE);
+        sched_yield();
+      }
       //pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif

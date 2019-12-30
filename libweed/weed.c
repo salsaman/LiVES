@@ -180,11 +180,24 @@ EXPORTED weed_error_t weed_init(int32_t abi) {
 
 static const weed_size_t maxlen = (weed_size_t) - 2;
 
-static inline weed_size_t weed_strlen(const char *string) {
-  weed_size_t len = 0;
-  if (string == NULL) return 0;
-  while (*(string++) != 0 && (len++ != maxlen));
-  return len;
+#define hasNulByte(x) ((x - 0x01010101) & ~x & 0x80808080)
+#define SW (sizeof (int) / sizeof (char))
+static inline weed_size_t weed_strlen(const char *s) {
+  const char *p;
+  int d;
+  if (!s) return 0;
+  p = s - 1;
+  do {
+    p++;
+    if ((((int) p) & (SW - 1)) == 0) {
+      do {
+        d  = *((int *) p);
+        p += SW;
+      } while (!hasNulByte(d));
+      p -= SW;
+    }
+  } while (*p != 0);
+  return p - s;
 }
 
 

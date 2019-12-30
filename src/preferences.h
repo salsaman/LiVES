@@ -411,6 +411,8 @@ typedef struct {
   boolean btgamma;
 
   boolean msgs_pbdis;
+
+  boolean noframedrop;
 } _prefs;
 
 enum {
@@ -860,6 +862,8 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_MAX_MSGS "max_text_messages"
 #define PREF_MSG_TEXTSIZE "msg_textsize"
 #define PREF_MSG_PBDIS "msg_disable_during_playback"
+
+#define PREF_NOFRAMEDROP "no_framedrop"
 
 #define PREF_RTE_KEYS_VIRTUAL "rte_keys_virtual"
 

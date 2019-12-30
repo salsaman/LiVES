@@ -125,7 +125,7 @@ static cairo_t *channel_to_cairo(weed_plant_t *channel) {
 static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // updates a weed_channel from a cairo_t
   cairo_surface_t *surface = cairo_get_target(cairo);
-  guchar *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
+  guchar *osrc, *src, *dst, *pixel_data = (guchar *)weed_get_voidptr_value(channel, WEED_LEAF_PIXEL_DATA, NULL);
 
   int height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL), cheight;
   int irowstride, orowstride = weed_get_int_value(channel, WEED_LEAF_ROWSTRIDES, NULL);
@@ -136,8 +136,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
   // flush to ensure all writing to the image was done
   cairo_surface_flush(surface);
 
-  src = cairo_image_surface_get_data(surface);
-
+  osrc = src = cairo_image_surface_get_data(surface);
   irowstride = cairo_image_surface_get_stride(surface);
   cheight = cairo_image_surface_get_height(surface);
 
@@ -160,7 +159,7 @@ static void cairo_to_channel(cairo_t *cairo, weed_plant_t *channel) {
     alpha_premult(pixel_data, widthx, height, orowstride, pal, TRUE);
   }
   cairo_surface_flush(surface);
-  weed_free(src);
+  weed_free(osrc);
   cairo_surface_destroy(surface);
 }
 

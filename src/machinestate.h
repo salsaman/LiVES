@@ -109,30 +109,42 @@ typedef void (*unmalloc_and_copy_f)(size_t, void *);
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#ifndef PRId64
+#undef PRId64
+#undef PRIu64
 
-#ifndef __WORDSIZE
+#ifdef IS_MINGW
+#define LONGSIZE 32
+#else
+
+#ifdef __WORDSIZE
+#define LONGSIZE __WORDSIZE
+#else
 #if defined __x86_64__
-# define __WORDSIZE	64
+# define LONGSIZE	64
 #ifndef __WORDSIZE_COMPAT32
 # define __WORDSIZE_COMPAT32	1
 #endif
 #else
-# define __WORDSIZE	32
-#endif
+# define LONGSIZE	32
+#endif // x86
 #endif // __WORDSIZE
+#endif // mingw
 
-#ifndef __PRI64_PREFIX
-# if __WORDSIZE == 64
+#ifdef __PRI64_PREFIX
+#undef __PRI64_PREFIX
+#endif
+
+# if LONGSIZE == 64
 #  define __PRI64_PREFIX	"l"
 # else
 #  define __PRI64_PREFIX	"ll"
 # endif
-#endif
+
+#undef PRId64
+#undef PRIu64
 
 # define PRId64		__PRI64_PREFIX "d"
 # define PRIu64		__PRI64_PREFIX "u"
-#endif // ifndef PRI64d
 
 void *lives_calloc_safety(size_t nmemb, size_t xsize);
 
@@ -182,6 +194,8 @@ void quick_free(memheader_t *bp);
 void *quick_malloc(size_t alloc_size) GNU_MALLOC;
 
 void init_random(void);
+void lives_srandom(unsigned int seed);
+uint64_t lives_random(void);
 
 int load_measure_idle(void *data);
 

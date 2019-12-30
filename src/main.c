@@ -1027,9 +1027,9 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->framedraw_reset = NULL;
 
   // setting this to TRUE can possibly increase smoothness for lower framerates
-  // needs more testing and a preference - TODO
-  // can now be set through OSC: /output/nodrop/enable
-  mainw->noframedrop = FALSE;
+  // needs more testing and a preference in prefs window- TODO
+  // can also be set through OSC: /output/nodrop/enable
+  prefs->noframedrop = get_boolean_prefd(PREF_NOFRAMEDROP, FALSE);
 
   prefs->omc_noisy = FALSE;
   prefs->omc_events = TRUE;
@@ -8181,6 +8181,7 @@ void load_frame_image(int frame) {
 
     if (!mainw->fs && !mainw->faded) {
       redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);
+      sched_yield();
     }
 
     mainw->whentostop = NEVER_STOP;
@@ -8246,13 +8247,23 @@ void load_frame_image(int frame) {
         } else resize(1);
       }
     } else resize(1);
+    sched_yield();
+
+    if (!mainw->fs && !mainw->faded) {
+      load_start_image(cfile->start);
+      sched_yield();
+      load_end_image(cfile->end);
+      sched_yield();
+    }
 
     // force loading of a frame from the new clip
     if (!mainw->noswitch && !mainw->is_rendering && CURRENT_CLIP_IS_NORMAL) {
       weed_plant_t *frame_layer = mainw->frame_layer;
       check_layer_ready(mainw->frame_layer); // ensure all threads are complete
+      sched_yield();
       mainw->frame_layer = NULL;
       load_frame_image(cfile->frameno);
+      sched_yield();
       if (mainw->frame_layer != NULL) {
         check_layer_ready(mainw->frame_layer);
         weed_layer_free(mainw->frame_layer);
@@ -8267,6 +8278,7 @@ void load_frame_image(int frame) {
 
     mainw->switch_during_pb = FALSE;
     mainw->osc_block = osc_block;
+    sched_yield();
   }
 
 

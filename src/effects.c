@@ -1149,7 +1149,8 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 
   rte_swap_fg_bg();
 
-  if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
+  if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
+                           || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
     ce_thumbs_highlight_current_clip();
 
   return TRUE;

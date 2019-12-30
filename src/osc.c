@@ -2811,13 +2811,13 @@ boolean lives_osc_cb_freeze(void *context, int arglen, const void *vargs, OSCTim
 
 
 boolean lives_osc_cb_op_nodrope(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  mainw->noframedrop = TRUE;
+  prefs->noframedrop = TRUE;
   return lives_osc_notify_success(NULL);
 }
 
 
 boolean lives_osc_cb_op_nodropd(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
-  mainw->noframedrop = FALSE;
+  prefs->noframedrop = FALSE;
   return lives_osc_notify_success(NULL);
 }
 

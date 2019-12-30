@@ -85,21 +85,6 @@ LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
 
 // system calls
 
-LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
-  srandom(seed);
-}
-
-
-LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
-  return random();
-}
-
-
-LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
-  return getpid();
-}
-
-
 LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
   int fd = open(pathname, flags, mode);
   return fd;
@@ -109,16 +94,6 @@ LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode
 LIVES_GLOBAL_INLINE int lives_open2(const char *pathname, int flags) {
   int fd = open(pathname, flags);
   return fd;
-}
-
-
-LIVES_GLOBAL_INLINE int lives_getuid(void) {
-  return geteuid();
-}
-
-
-LIVES_GLOBAL_INLINE int lives_getgid(void) {
-  return getegid();
 }
 
 
@@ -1365,7 +1340,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   }
 
   if (mainw->playing_file == fileno) {
-    if (mainw->noframedrop) {
+    if (prefs->noframedrop) {
       // if noframedrop is set, we may not skip any frames
       // - the usual situation is that we are allowed to skip frames
       if (nframe > cframe) nframe = cframe + 1;

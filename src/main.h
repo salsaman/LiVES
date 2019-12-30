@@ -314,8 +314,6 @@ static int32_t testint = 0x12345678;
 #endif
 
 // utils.c math functions
-void lives_srandom(unsigned int seed);
-uint64_t lives_random(void);
 float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;

@@ -21,6 +21,7 @@ static pulse_driver_t pulsed_reader;
 
 static pa_threaded_mainloop *pa_mloop = NULL;
 static pa_context *pcon = NULL;
+static char pactxnm[512];
 
 static uint32_t pulse_server_rate = 0;
 
@@ -106,7 +107,8 @@ boolean lives_pulse_init(short startup_phase) {
   if (pa_mloop != NULL) return TRUE;
 
   pa_mloop = pa_threaded_mainloop_new();
-  pcon = pa_context_new(pa_threaded_mainloop_get_api(pa_mloop), "LiVES");
+  lives_snprintf(pactxnm, 512, "LiVES-%"PRId64, lives_random());
+  pcon = pa_context_new(pa_threaded_mainloop_get_api(pa_mloop), pactxnm);
   pa_context_connect(pcon, NULL, (pa_context_flags_t)0, NULL);
   pa_threaded_mainloop_start(pa_mloop);
 
@@ -132,12 +134,14 @@ boolean lives_pulse_init(short startup_phase) {
     if (!mainw->foreign) {
       if (startup_phase == 0 && capable->has_sox_play) {
         do_error_dialog_with_check(
-          _("\nUnable to connect to the pulseaudio server.\nFalling back to sox audio player.\nYou can change this in Preferences/Playback.\n"),
+          _("\nUnable to connect to the pulseaudio server.\nFalling back to sox audio player.\n"
+            "You can change this in Preferences/Playback.\n"),
           WARN_MASK_NO_PULSE_CONNECT);
         switch_aud_to_sox(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
       } else if (startup_phase == 0) {
         do_error_dialog_with_check(
-          _("\nUnable to connect to the pulseaudio server.\nFalling back to none audio player.\nYou can change this in Preferences/Playback.\n"),
+          _("\nUnable to connect to the pulseaudio server.\nFalling back to none audio player.\n"
+            "You can change this in Preferences/Playback.\n"),
           WARN_MASK_NO_PULSE_CONNECT);
         switch_aud_to_none(TRUE);
       } else {

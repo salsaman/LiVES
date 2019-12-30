@@ -91,10 +91,10 @@ typedef struct {
 /* Filter flags */
 #define WEED_FILTER_NON_REALTIME                        		(1<<0)
 #define WEED_FILTER_IS_CONVERTER                        		(1<<1)
-#define WEED_FILTER_HINT_IS_STATELESS                 		(1<<2)  // TODO HINT_STATELESS
-#define WEED_FILTER_HINT_LINEAR_GAMMA              		(1<<3)
-#define WEED_FILTER_HINT_PREMULTIPLIED_ALPHA              	(1<<4)
-#define WEED_FILTER_PROCESS_LAST                        		(1<<5)  // TODO _HINT_
+#define WEED_FILTER_HINT_STATELESS                 			(1<<2)
+#define WEED_FILTER_PREF_LINEAR_GAMMA              		(1<<3)
+#define WEED_FILTER_PREF_PREMULTIPLIED_ALPHA              	(1<<4)
+#define WEED_FILTER_HINT_PROCESS_LAST                   		(1<<5)
 #define WEED_FILTER_HINT_MAY_THREAD                  		(1<<6)
 #define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1<<7)
 #define WEED_FILTER_PALETTES_MAY_VARY               		(1<<8)
@@ -108,23 +108,24 @@ typedef struct {
 #define WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE           	(1<<1)
 #define WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE    	(1<<2)
 #define WEED_CHANNEL_OPTIONAL                                         	(1<<3)
-#define WEED_CHANNEL_CAN_DO_INPLACE                             	(1<<2)
+#define WEED_CHANNEL_CAN_DO_INPLACE                             	(1<<4)
 
 /* audio */
 #define WEED_CHANNEL_REINIT_ON_RATE_CHANGE	WEED_CHANNEL_REINIT_ON_SIZE_CHANGE
 #define WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE	WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE
 
 /* Parameter template flags */
-#define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE     (1<<0)
-#define WEED_PARAMETER_VARIABLE_SIZE                        (1<<1)
-#define WEED_PARAMETER_VALUE_PER_CHANNEL              (1<<2)
+#define WEED_PARAMETER_REINIT_ON_VALUE_CHANGE     	(1<<0)
+#define WEED_PARAMETER_VARIABLE_SIZE                        	(1<<1)
+#define WEED_PARAMETER_VALUE_PER_CHANNEL              	(1<<2)
+#define WEED_PARAMETER_VALUE_IRRELEVANT			(1<<3)
 
 /* Parameter template GUI flags */
 #define WEED_GUI_REINIT_ON_VALUE_CHANGE	(1 << 0)
 #define WEED_GUI_CHOICES_INCOMPLETE		(1 << 1)
 
 /* filter instance flags */
-#define WEED_INSTANCE_UPDATE_GUI_ONLY 1
+#define WEED_INSTANCE_UPDATE_GUI_ONLY		(1 << 0)
 
 /* error codes (in addidion to WEED_SUCCESS and WEED_ERROR_MEMORY_ALLOCATION) */
 #define WEED_ERROR_PLUGIN_INVALID              	64

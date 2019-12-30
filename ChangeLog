@@ -7,6 +7,9 @@ Update the plugin architecture (libweed) to version 2.0, update the specs. for W
 Optimised memory functions, colourspace conversions and frame decoding.
 Optimise communication with commandline plugins using popen().
 Fix screen / window sizing issues.
+Implement a thread pool with generic worker threads.
+Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
+Fix data connections window so it shows the correct out parameter.
 Correct bugs in letterboxing, make it the default player mode.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
@@ -23,18 +26,22 @@ Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
 Smooth out playback by interpolating between soundcard timing updates.
+Reduce audio underflows by temporarily slowing the video loop when they occur,
 Smooth out ctr-up, ctrl-down, ctrl-left and ctrl-right (Trickplay) keys during playback.
 Add ctrl-shift-space loop locking in clip editor (trickplay).
+Add keys a / A (audio track lock / unlock) for clip editor playback.
 Ensure audio is always rendered when it should be after recording.
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Fix rowstride alignment issues for YUV420 frames.
+Improvements to chroma supersampling e.g yuv420 - > rgb or yuv420 - > yuv444
 Workaround since swscale apparently cannot handle YUV888 or YUVA8888 palettes, we pretend they are RGB / RGBA.
 Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
-Permit switching audio source with no clips loaded (bugfix).
+Permit switching audio source (internal / external) with no clips loaded (bugfix).
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
 Fix recursive mutex issues with the audio_resync mutex and the audio buffer fill mutex.
-Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash)
+Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash) and create a new main loop for pulse
+on each startup (was also causing hangs on startup).
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Master audio volume is now maintained between sessions.
@@ -44,7 +51,8 @@ Add more preferences to the prefs window.
 Fix breakage in realtime audio effects.
 Multitrack parameter window now has a "Reset to Defaults" button.
 Double size playback in separate window now expands as much as comfortably possible.
-Scale size is always show in separate window.
+Scale size is always show in separate window (except during playback).
+Frame number now defaults to pointer position when opening the seperate window.
 Seperate  window in multitrack can now appear undecorated.
 Enable colour selection for 'blurzoom' effect, improve the effect appearance.
 Implement "easing out" for some selected effects.

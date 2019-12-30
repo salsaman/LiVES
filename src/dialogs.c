@@ -1206,6 +1206,7 @@ void update_progress(boolean visible) {
         }
         lives_label_set_text(LIVES_LABEL(cfile->proc_ptr->label3), prog_label);
         lives_free(prog_label);
+        cfile->start = cfile->file_end > 0 ? 1 : 0;
         showclipimgs();
       }
     }

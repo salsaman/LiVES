@@ -997,9 +997,9 @@ static void matroska_add_index_entries(const lives_clip_data_t *cdata) {
       MatroskaTrack *track = matroska_find_track_by_num(matroska, pos[j].track);
       if (track && track->stream && track->stream == priv->vidst) {
         pthread_mutex_lock(&priv->idxc->mutex);
-        lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (uint32_t)(index[i].time / index_scale));
+        lives_add_idx(cdata, pos[j].pos + matroska->segment_start, (int64_t)(index[i].time / index_scale));
         pthread_mutex_unlock(&priv->idxc->mutex);
-        //printf("ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
+        //fprintf(stderr, "ADD INDEX %ld %ld\n", pos[j].pos + matroska->segment_start, index[i].time/index_scale);
       }
     }
   }
@@ -1056,21 +1056,21 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
 
 //////////////////////////////////////////////
 
-static int frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
-  return (int)((double)(frame) * 1000. / cdata->fps);
+static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
+  return (int64_t)((double)(frame) * 1000. / cdata->fps);
 }
 
 
-static int64_t dts_to_frame(const lives_clip_data_t *cdata, int dts) {
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) {
   return (int64_t)((double)dts / 1000.*cdata->fps + .5);
 }
 
 
 //////////////////////////////////////////////////////////////////
 
-static int get_last_video_dts(lives_clip_data_t *cdata) {
+static int64_t get_last_video_dts(lives_clip_data_t *cdata) {
   lives_mkv_priv_t *priv = cdata->priv;
-  uint32_t ldts;
+  int64_t ldts;
   uint64_t frames = 0;
   boolean got_picture = FALSE;
 
@@ -1226,9 +1226,12 @@ static void index_free(index_entry *idx) {
 
 // we further assume that pts == dts for all frames
 
-static index_entry *index_walk(index_entry *idx, uint32_t pts) {
+static index_entry *index_walk(index_entry *idx, int64_t pts) {
   index_entry *xidx = idx;
   while (xidx != NULL) {
+    //fprintf(stderr, "VALS %ld %ld\n", pts, xidx->dts);
+    //if (xidx->next)
+    //fprintf(stderr, "VALS2 %ld\n", xidx->next->dts);
     if (xidx->next == NULL || (pts >= xidx->dts && pts < xidx->next->dts)) return xidx;
     xidx = xidx->next;
   }
@@ -1237,7 +1240,7 @@ static index_entry *index_walk(index_entry *idx, uint32_t pts) {
 }
 
 
-index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts) {
+index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int64_t pts) {
   lives_mkv_priv_t *priv = cdata->priv;
   index_entry *nidx;
   index_entry *nentry;
@@ -1281,7 +1284,7 @@ index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint
 }
 
 
-static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, uint32_t pts) {
+static index_entry *get_idx_for_pts(const lives_clip_data_t *cdata, int64_t pts) {
   lives_mkv_priv_t *priv = cdata->priv;
   return index_walk(priv->idxc->idxhh, pts);
 }
@@ -2090,7 +2093,17 @@ skip_probe:
 
   priv->last_frame = -1;
 
-  if (is_partial_clone) return TRUE;
+  if (is_partial_clone) {
+#define FR_ERROR_LIM 10
+    boolean recheck = FALSE;
+    if (duration > 0.) {
+      int64_t lframe = dts_to_frame(cdata, duration * 1000.);
+      if (cdata->nframes > lframe + FR_ERROR_LIM || cdata->nframes < lframe - FR_ERROR_LIM) {
+        recheck = TRUE;
+      }
+    }
+    if (!recheck) return TRUE;
+  }
 
   ldts = get_last_video_dts(cdata);
 
@@ -2103,7 +2116,7 @@ skip_probe:
   }
 
   cdata->nframes = dts_to_frame(cdata, ldts) + 2;
-
+  fprintf(stderr, "FRAMES %ld\n", cdata->nframes);
   // double check, sometimes we can be out by one or two frames
   while (1) {
     priv->expect_eof = TRUE;
@@ -2700,8 +2713,7 @@ static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pk
 }
 
 
-static index_entry *matroska_read_seek(const lives_clip_data_t *cdata,
-                                       uint32_t timestamp) {
+static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, int64_t timestamp) {
   lives_mkv_priv_t *priv = cdata->priv;
   MatroskaDemuxContext *matroska = &priv->matroska;
   //AVFormatContext *s=priv->s;
@@ -2722,7 +2734,7 @@ static index_entry *matroska_read_seek(const lives_clip_data_t *cdata,
   }
 
   idx = get_idx_for_pts(cdata, timestamp);
-
+  //fprintf(stderr, "got idx %p at tc %ld\n", idx, timestamp);
   matroska_clear_queue(matroska);
 
   priv->input_position = idx->offs;
@@ -2792,7 +2804,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   // calc frame width and height, including any border
 
   if (pixel_data != NULL) {
-    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
+    if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
+        || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
       nplanes = 3;
       black[0] = y_black;
       black[1] = black[2] = 128;
@@ -2805,7 +2818,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
     if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
 
-    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 ||
+    if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32
+        || pal == WEED_PALETTE_UYVY8888 ||
         pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888) psize = 4;
 
     if (pal == WEED_PALETTE_YUV411) psize = 6;
@@ -2843,7 +2857,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       nextframe = priv->last_frame + 1;
     }
 
-    //priv->ctx->skip_frame=AVDISCARD_NONREF;
+    //priv->ctx->skip_frame=AVDISCARD_NONKEY;
 
     priv->last_frame = tframe;
     if (priv->picture == NULL) priv->picture = av_frame_alloc();
@@ -2866,6 +2880,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
           retval = FALSE;
           goto cleanup;
         }
+
+#ifdef AV_NEW_VER
+        int ret = avcodec_send_packet(priv->ctx, &priv->avpkt);
+        if (ret < 0)
+          continue;
+
+        ret = avcodec_receive_frame(priv->ctx, priv->picture);
+        if (ret != 0) {
+          printf("avcodec_receive_frame error: %d\n", ret);
+          continue;
+        }
+        got_picture = TRUE;
+#endif
+
 #if LIBAVCODEC_VERSION_MAJOR >= 52
         avcodec_decode_video2(priv->ctx, priv->picture, &got_picture, &priv->avpkt);
 #else

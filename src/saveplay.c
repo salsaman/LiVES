@@ -5745,15 +5745,15 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
       start_file--;
     }
-    if ((!IS_VALID_CLIP(start_file) || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->achans == 0))
+    if ((!IS_VALID_CLIP(start_file) || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->afilesize == 0))
         && mainw->files[1] != NULL && start_file != 1) {
-      for (start_file = MAX_FILES;
-           start_file > 0 && (mainw->files[start_file] == NULL
-                              || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->achans == 0));
-           start_file--) {
-        if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file) break;
+      for (start_file = MAX_FILES; start_file > 0; start_file--) {
+        if (mainw->files[start_file] != NULL
+            && (mainw->files[start_file]->frames > 0 || mainw->files[start_file]->afilesize > 0))
+          if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file) break;
       }
-      if (start_file > 0) close_current_file(start_file);
+      if (start_file > 0 && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file)
+        close_current_file(start_file);
     }
     if (start_file != mainw->current_file) {
       switch_to_file(mainw->current_file, start_file);

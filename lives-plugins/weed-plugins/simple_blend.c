@@ -202,7 +202,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params2[] = {weed_integer_init("threshold", "luma _threshold", 64, 0, 255), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("chroma blend", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list, chroma_init,
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list, chroma_init,
                                chroma_process, chroma_deinit, in_chantmpls, out_chantmpls, in_params1, NULL);
 
   weed_set_boolean_value(in_params1[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -244,7 +244,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone2);
   weed_free(clone3);
 
-  filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+  filter_class = weed_filter_class_init("averaged luma overlay", "salsaman", 1, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, &avlumo_process, NULL, (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params2)), NULL);

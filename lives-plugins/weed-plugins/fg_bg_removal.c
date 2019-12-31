@@ -182,14 +182,14 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_params[] = {weed_integer_init("threshold", "_Threshold", 64, 0, 255), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("fg_bg_removal type 1", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                common_init, t1_process, common_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   // we must clone the arrays for the next filter
   filter_class = weed_filter_class_init("fg_bg_removal type 2", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         common_init, t2_process, common_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)), (clone2 = weed_clone_plants(out_chantmpls)),
                                         (clone3 = weed_clone_plants(in_params)), NULL);
@@ -200,7 +200,7 @@ WEED_SETUP_START(200, 200) {
 
   // we must clone the arrays for the next filter
   filter_class = weed_filter_class_init("fg_bg_removal type 3", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         common_init, t3_process, common_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)), (clone3 = weed_clone_plants(in_params)), NULL);

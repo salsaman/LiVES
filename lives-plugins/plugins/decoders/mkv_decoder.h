@@ -1051,7 +1051,7 @@ typedef struct _index_entry index_entry;
 
 struct _index_entry {
   index_entry *next; ///< ptr to next entry
-  int32_t dts; ///< dts of keyframe
+  int64_t dts; ///< dts of keyframe
   uint64_t offs;  ///< offset in file
 };
 
@@ -1094,10 +1094,10 @@ static int ebml_parse_elem(const lives_clip_data_t *cdata,  EbmlSyntax *syntax, 
 
 static boolean matroska_read_packet(const lives_clip_data_t *cdata, AVPacket *pkt);
 
-static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, uint32_t timestamp);
+static index_entry *matroska_read_seek(const lives_clip_data_t *cdata, int64_t timestamp);
 
 static int matroska_read_close(const lives_clip_data_t *cdata);
 
 static void matroska_clear_queue(MatroskaDemuxContext *matroska);
 
-static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, uint32_t pts);
+static index_entry *lives_add_idx(const lives_clip_data_t *cdata, uint64_t offset, int64_t pts);

@@ -605,6 +605,7 @@ WEED_SETUP_START(200, 200) {
           in_params[ninps + stcount - 1] = NULL;
           if (dual == WEED_TRUE) {
             in_params[ninps - 1] = weed_switch_init("link", "_Link left and right parameters", WEED_TRUE);
+            weed_paramtmpl_set_flags(in_params[ninps - 1], WEED_PARAMETER_VALUE_IRRELEVANT);
             gui = weed_paramtmpl_get_gui(in_params[ninps - 1]);
             weed_gui_set_flags(gui, WEED_GUI_REINIT_ON_VALUE_CHANGE);
             sprintf(rfx_strings[0], "layout|p%d|", ninps - 1);

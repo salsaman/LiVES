@@ -444,7 +444,7 @@ WEED_SETUP_START(200, 200) {
 
   in_params[205] = NULL;
 
-  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+  filter_class = weed_filter_class_init("RGBdelay", "salsaman", 1, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         RGBd_init, RGBd_process, RGBd_deinit,
                                         in_chantmpls, out_chantmpls,
                                         in_params,

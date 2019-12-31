@@ -92,9 +92,6 @@ Removed requirement that weed plugin file extensions be .wo, since this was disc
 11/10/09 salsaman
 Correct a typo, and try to further clarify about function passing.
 
-31/10/09 salsaman
-Correct WEED_FILTER_HINT_STATELESS -> WEED_FILTER_HINT_IS_STATELESS
-
 9/11/09
 Added WEED_CHANNEL_RESIZE_ON_ROWSTRIDES_CHANGE
 API Version to 130
@@ -1656,7 +1653,7 @@ versions of the spec.
 
 * "description" : WEED_SEED_STRING : description of the package, free form text, 
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
 
 The following may be set inside the weed_bootstrap() function from the values supplied by the plugin:
@@ -1680,7 +1677,7 @@ with all of the mandatory leaves set; "filters" should be set to NULL. In additi
 
 "error_text" : WEED_SEED_STRING : free form text describing the error, e.g "Unable to find configuration files"
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf=8: bar"
 
 
 
@@ -1712,10 +1709,26 @@ but plugin and host may add private leaves with keys prefixed "plugin_" and "hos
 
 		    However, removing parameters, changing 
    		    their order or type, adding mandatory channels or removing channel templates does require an update.
-		    Prior versions of the filter must be exported by the plugin,
-		    
-		    The plugin should then check the "filter_class" leaf of the instance and from there it can retrieve the "version" which
-		    the host selected.
+		    Prior versions of the filter must be exported by the plugin, If a parameter is removed, then the flag bit
+		    WEED_PARAMETER_VALUE_IRRELEVANT may be set in the parameter template in prior filter versions, so that the
+		    host can avoid wasting resources by recording / setting the value of the unused parameter, and
+		    additionally "hidden" may be set to WEED_TRUE in the template GUI plant(s) to hint to the host not to display
+		    the unused parameter in interaces.
+
+		    In the case of multiple versions of the same filter, the plugin should retrieve the value of the "filter_class"
+		    leaf of the instance and from that it can obtain the "version" which the host selected. To avoid repeatedly checking,
+		    the plugin may set this value in a private leaf for the instance, e.g. "plugin_version".
+
+		    Changes which do not require a new version:
+		    	    - appending parameters (in or out)
+			    - appending optional channels 
+			    - adding extra palettes to a channel template "palette_list"
+			    - changes to *_REINIT_ON_* flags
+			    - setting WEED_PARAMETER_VALUE_IRRELEVANT, WEED_PARAMETER_VARIABLE_SIZE
+			    - settting / unsetting WEED_CHANNEL_CAN_DO_INPLACE, WEED_FILTER_HINT_STATELESS,
+			    WEED_FILTER_HINT_MAY_THREAD, WEED_FILTER_PREF_PREMULTIPLIED_ALPHA , WEED_FILTER_PREF_LINEAR_GAMMA,
+			    WEED_GUI_REINIT_ON_VALUE_CHANGE, 
+
 
 
 Mandatory for filters with video channels
@@ -1758,7 +1771,7 @@ Mandatory for filters with video channels
 
  * "description"  : WEED_SEED_STRING : filter description, free text
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
  * "url"          : WEED_SEED_STRING : filter URL, free text
 
@@ -2015,7 +2028,7 @@ None.
 
  * "description"  : WEED_SEED_STRING : description of this channel
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
  * "max_repeats" : WEED_SEED_INT : This is an important leaf, as it informs the host that it may create multiple channels from the
    		   		   	template. If absent then a default value of 1 is assumed.
@@ -2126,10 +2139,10 @@ value for the parameter. The host should not change any other leaves.
 * "default" :           suggested default value(s) of the parameter :
   	    		     for in parameters, MUST contain exactly ONE value of the correct seed_type
   	    		     UNLESS the template has the WEED_PARAMETER_VARIABLE_SIZE flag set, in which case this leaf is optional,
+			     and may contain any number of elements; in the case of COLOR parameters the number MUST be an integer
+			     multiple of the value size (3 for RGB, 4 for RGBA).
 
-			     For out parameters this leaf may contain one or zero values (zero values meaning just the seed_type is set).
-			     if zero, then the plugin MUST provide an init_func() for the filter and set the actual "value" of the out parameter
-			     there.
+			     For out parameters this leaf may contain at least zero values (zero values meaning just the seed_type is set).
 
 			     For in parameters where the template has the flag WEED_PARAMETER_VALUE_PER_CHANNEL set, the "default"
 			     is applied to each value.
@@ -2150,7 +2163,7 @@ value for the parameter. The host should not change any other leaves.
 
  * "description"      : WEED_SEED_STRING : parameter description
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
 * "interpolate_func" : TODO
 
@@ -2328,11 +2341,11 @@ Depending on the seed_type of "default" / "new_default", the host knows the seed
 TODO: fix ambiguities.
 
 * "min" : WEED_SEED_DOUBLE or WEED_SEED_INT; the lower bound for each element, usually 0.
-  	  		      		     (optional for out parameters)
+  	  		      		     (optional but recommended for out parameters)
 					     A value of {min, min, min, min} indicates black / transparent.
 
 * "max" : WEED_SEED_DOUBLE or WEED_SEED_INT; the upper bound for each element.
-  	  		      		     (optional for out parameters)
+  	  		      		     (optional but recommended for out parameters)
 					     A value of {max, max, max, max} indicates white / opaque.
 
 * "colorspace" : WEED_SEED_INT : colorspace (see below), MANDATORY
@@ -2371,7 +2384,9 @@ then the "default" may have 0 values, or be absent; and "new_default" MUST conta
   non-disabled channel.
 
 
-
+-- MIN / MAX --
+These leaves may contain 3 or 4 values (depending on the colorspace), or a single value.
+In the case of a single value, it applies to all elements (R, G, B (and A)).
 
 
 
@@ -2776,7 +2791,7 @@ rely on setting "copy_value_to" to force the host to set indentical
    NOTE:
    Occasionally, the plugin may not know the valid set of choices until it is actually initialised, as it may be in a "dormant"
    state until then. In this case, the plugin should do the following:
-   - set a 'placeholder' value here so that the host knows the type, and set the flag bit: WEED_GUI_CHOICES_INCOMPLETE
+   - set a 'placeholder' value here so that the host knows the type, and set the flag bit: WEED_GUI_CHOICES_SET_ON_INIT
    in the "flags" for this plant. (See below for more details).
 
    The plugin is then obliged to create the full list the first time the init_func() is called for the filter. The list should
@@ -2789,8 +2804,8 @@ rely on setting "copy_value_to" to force the host to set indentical
 
   
  * "choices_langs" :: WEED_SEED_STRING (list) :: an optional list of IETF languages for the host to select from.
-   		     		      If present, the plugin should set the flag WEED_GUI_CHOICES_INCOMPLETE, and the host may optionally
-				      set one of the languages from the list in the parameter GUI leaf "choice_lang" before calling the
+   		     		      If present, the plugin should set the flag WEED_GUI_CHOICES_SET_ON_INIT, and the host may optionally
+				      set one of the languages from the list in the parameter GUI leaf "choices_lang" before calling the
 				      filter init_func() for the first time.
 
 
@@ -2812,8 +2827,9 @@ At other times the plugin must not alter any of the leaves, except for any priva
 
 Any parameters which may trigger a change in the GUI when the value changes, (i.e hiding / showing parameters, and setting
 copy_value_to) should have the flag bit: WEED_GUI_REINIT_ON_VALUE_CHANGE set in the parameter template GUI when the
-plugin is setting up the templates in weed_setup(). This is explained in more detail below, along with an explanation of the
-counterpart to this in the host.
+plugin is setting up the templates in weed_setup(), (unless WEED_PARAMETER_REINIT_ON_VALUE_CHANGE is set, in which case
+it would be redundant).
+This is explained in more detail below, along with an explanation of the counterpart to this in the host.
 
 
 
@@ -2844,7 +2860,9 @@ for the other audio channel. If "link" is not set then "copy_value_to" is set to
 
 The host that creates the interface for the plugin will then know to copy the values in the interface, producing the desired result.
 
-
+Since in this case, the value of the parameter only affects the current interface, the plugin should also set the flag
+WEED_PARAMETER_VALUE_IRRELEVANT in the parameter template, so that the host knows not to record / amend the parameter
+value changes.
 
 
 
@@ -2882,19 +2900,19 @@ parameter GUI plants, and may show or hide parameters in the interface according
     needing to be actually initialised first.
 
     In this case, the plugin may set this leaf in the PARAMETER GUI plant for the corresponding parameter during its init_func(),
-    PROVIDED it set the flag bit WEED_GUI_CHOICES_INCOMPLETE in the "flags" leaf of the parameter_template GUI.
+    PROVIDED it set the flag bit WEED_GUI_CHOICES_SET_ON_INIT in the "flags" leaf of the parameter_template GUI.
 
-    The list may be created one time only, - the first time any instance of the filter is initialized.
-    Once created, the list may not be altered again untll the plugin is unloaded / reloaded and weed_setup() called again.
+    The list may be created ONE TIME ONLY, - the first time any instance of the filter class is initialized.
+    Once created, the list MAY NOT be altered again untll weed_setup() is called again.
 
-    The plugin should also attempt as much as possible to return the same list on every session (i.e maintaining
+    The plugin should also attempt as much as is feasible to return the same list on every session (i.e maintaining
     the same values, ordering and number of choices to the greatest extent possible).
 
     On the host side: if a plugin creates a GUI plant in a parameter template of a filter, and sets "choices" in it,
     then, after return from the first init_func() with any instance created for that filter,
     the corresponding parameter should be checked to see if the plugin has set an updated "choices" there.
 
-    The plugin SHOULD set WEED_GUI_CHOICES_INCOMPLETE in the "flags" of the parameter_template GUI,
+    The plugin SHOULD set WEED_GUI_CHOICES_SET_ON_INIT in the "flags" of the parameter_template GUI,
     but there may be cases where the rule is neglected.
 
     Optionally, the host can copy the leaf into the paramter template GUI as if the plugin had set it there originally.
@@ -3157,17 +3175,17 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
     non-realtime filter: the filter is too slow to use in realtime processing.
     The exact definition of what is realtime and what is not is left to the plugin author to decide.
 
- * WEED_FILTER_HINT_IS_STATELESS    [[BR]]
+ * WEED_FILTER_HINT_STATELESS    [[BR]]
    This is optional, if the filter is stateless (i.e. not dependant on
    past calls to process_func() ) then this this flag
    bit can be set. Used mainly for compatibility with other plugin architectures.
 
- * WEED_FILTER_HINT_LINEAR_GAMMA
+ * WEED_FILTER_PREF_LINEAR_GAMMA
    This is a hint to the host that the plugin prefers to use R, G, B values in linear gamma space.
    (see note below about colour spaces). Hosts which support this option should set the flag bit
    WEED_HOST_SUPPORTS_LINEAR_GAMMA in the host_info plant.
 
- * WEED_FILTER_HINT_ALPHA_PREMULTIPLIED
+ * WEED_FILTER_PREF_ALPHA_PREMULTIPLIED
    This is a hint to the host that the plugin prefers to receive pre-multiplied alpha (i.e the values of the color pixels should
    already be multiplied by the alpha value). Hosts which support this option should set the flag bit
    WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA in the host_info plant.
@@ -3396,6 +3414,19 @@ The order of channels and values is the same.
    (Valid for in parameters only)
 
 
+ * WEED_PARAMETER_VALUE_IRRELEVANT :: setting this bit informs the host that the "value" of the parameter should be ignored
+  when storing / restoring the state of an instance. Examples might be: a parameter whose value is purely used for updating the
+  GUI (see below), in this case the filter may set the GUI flag WEED_GUI_REINIT_ON_VALUE_CHANGE as well as this flag bit;
+  or a filter could have a "reset" switch parameter with WEED_PARAMETER_REINIT_ON_VALUE_CHANGE, but which is only
+  intended for debugging purposes;
+
+  in addition a filter may set this in the case that a newer version of the filter exists, and this parameter no longer has any
+  functional value. Consider also setting "hidden" to WEED_TRUE in the parameter template GUI plant.
+
+  In the case of out paramters, setting the flag bit indicates that the filter will not update the parameter "value".
+  However, if the "default" leaf is absent then a "value" MUST still be set in the filter init_func().
+
+
 Flag bits >= 30 are free to use for custom flags.
 
 
@@ -3405,10 +3436,10 @@ Flag bits >= 30 are free to use for custom flags.
 === GUI plant flags ====
 (only valid for parameter_template GUI)
 
-* WEED_GUI_CHOICES_INCOMPLETE :: indicates to the host that the list of strings in "choices" set in the parameter_template GUI
+* WEED_GUI_CHOICES_SET_ON_INIT :: indicates to the host that the list of strings in "choices" set in the parameter_template GUI
   			      	 	      	       	    during weed_setup()
-							    is only a placeholder, and that the list should be read from the parameter GUI 
-							    after the first init_func() is called for an instance.
+							    is a placeholder only, and that the real list should be read from the parameter GUI 
+							    after the first init_func() is called for an instance of the filter_class.
 
 
 
@@ -3417,43 +3448,36 @@ Flag bits >= 30 are free to use for custom flags.
 								   and on return from init_func,
 								   the values of "hidden" and "copy_value_to" for any parameter GUI plants
 								   should be (re)checked. If the host is not currently displaying a visual interface for
-								   the plugin parameters then this flag bit may be ignored. 
+								   the plugin parameters then this flag bit may be ignored.; however,
 
 								   This flag bit MUST be set for any parameter for which may result in a GUI change
-								   when its value is altered,
+								   when its value is altered.
 
-								   This flag operates in conjunction with the flag
-								   WEED_PARAMETER_REINIT_ON_VALUE_CHANGE.
-								   which may be set in the parameter template. The idea is as follows:
+								   In the case that the filter sets WEED_PARAMETER_REINIT_ON_VALUE_CHANGE,
+								   in the parameter template flags, this flag bit MUST still be set to indicate that the
+								   value change may ADDITIONALLY cause changes in the parameter GUI plants.
 
-								   - if a filter_class  does NOT set WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in the
-								   parameter template, but
-								   DOES set WEED_GUI_REINIT_ON_VALUE_CHANGE in its GUI plant, then this indicates that the
-								   parameter exists for the sole purpose of updating GUI elements (hidden and copy_value_to)
-								   In this case, changing the value of the parameter must not affect the FUNCTIONAL
-								   operation of the
-								   plugin. The host may therefore ignore the value of this parameter when recording or
-								   running the plugin without an interface for it.
+								   This flag may be combined with the parameter template flag bit
+								   WEED_PARAMETER_VALUE_IRRELEVANT. In this case, the ONLY effect of changing
+								   the value MUST BE to update the parameter GUI plants, and thus the host should not
+								   record / restore the value changes to this parameter.
 
-								   - if the filter_class sets WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in the parameter
-								   template AND WEED_GUI_REINIT_ON_VALUE_CHANGE in the parameter_template GUI,
-								   then the parameter updates the filter internal state requiring a reinit, and also
-								   may update the parameter GUI plants. In this case the host SHOULD record the value
-								   since it has a functional effect as well as a visual effect in the GUI.
 
-								   - if the filter ONLY sets WEED_PARAMETER_REINIT_ON_VALUE_CHANGE, (the
-								   more common case), then the parameter
-								   is a purely functional parameter, and the GUI state should not be updated regardless
-								   of the value of this parameter.
 
 
 								   IMPORTANT:
-								   The host MAY set the flag bit WEED_INSTANCE_UPDATE_GUI_ONLY in the "flags"
+								   Before calling deinit_func() / init_func() for a filter instance, the host MAY set the flag bit
+								   WEED_INSTANCE_UPDATE_GUI_ONLY in the "flags"
 								   leaf of the filter instance, to request that the plugin ONLY update the parameter GUI plants
-								   when being reinited. The host may do this IF AND ONLY IF the sole reason for reiniting
-								   the plugin is to update the GUI - i.e the only changes made are to parameters which have
-								   WEED_GUI_REINIT_ON_VALUE_CHANGE set and
-								   WEED_PARAMETER_REINIT_ON_VALUE_CHANGE unset.
+								   during the deinit_func() / init_func.
+
+								   The host may do so IF AND ONLY IF the sole reason for reiniting
+								   the plugin is to update the GUI - i.e a change is made to one or more parameters which
+								   have WEED_GUI_REINIT_ON_VALUE_CHANGE set, and none of the changed parameters
+								   have WEED_PARAMETER_REINIT_ON_VALUE_CHANGE set. The plugin should still check
+								   anyway in case a WEED_PARAMETER_REINIT_ON_VALUE_CHANGE param was altered
+								   and the host overlooked this. In the latter case the plugin should still only update the GUI,
+								   and should then return WEED_ERROR_NEEDS_REINIT to alert the host.
 								   
 								   
 								   To recap:
@@ -3463,8 +3487,8 @@ Flag bits >= 30 are free to use for custom flags.
 
 								   This differs from the template flag WEED_PARAMETER_REINIT_ON_VALUE_CHANGE in
 								   that this flag is only a hint to reinit the instance if the host is showing a real time interface
-								   with the current parameter values, or that the plugin MAY update the GUI plants in
-								   addition to updating the state in the case that
+								   with the current parameter values, or that the plugin MAY update the GUI plants IN
+								   ADDITION to updating the state in the case that
 								   WEED_PARAMETER_REINIT_ON_VALUE_CHANGE is also set in the template.
 
 

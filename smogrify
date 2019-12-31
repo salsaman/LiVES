@@ -8904,7 +8904,7 @@ sub weed {
     if ($USE_WARNINGS) {
 	no warnings 'numeric';
     }
-    my $start_total = int((split / /, (&smog_system_direct("du -sb . 2>$nulfile")))[0]);
+    #my $start_total = int((split / /, (&smog_system_direct("du -sb . 2>$nulfile")))[0]);
     if ($USE_WARNINGS) {
 	use warnings 'numeric';
     }
@@ -8914,7 +8914,7 @@ sub weed {
     else {
 	print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
     }
-    print STDERR "smogrify: size of directory at start is $start_total bytes\n";
+    #print STDERR "smogrify: size of directory at start is $start_total bytes\n";
     use File::Find;
     opendir DIR, $workdir;
     while ($file = readdir(DIR)) {
@@ -9042,12 +9042,13 @@ sub weed {
 
     # total disk space at end
     &smog_chdir("$workdir");
-    my $end_total = (split / /, (smog_system_direct("du -sb .")))[0];
-    print STDERR "smogrify: size of directory at end is $end_total bytes\n";
-    print STDERR "smogrify: recovered " . ($start_total - $end_total) . " bytes\n";
+    #my $end_total = (split / /, (smog_system_direct("du -sb .")))[0];
+    #print STDERR "smogrify: size of directory at end is $end_total bytes\n";
+    #print STDERR "smogrify: recovered " . ($start_total - $end_total) . " bytes\n";
 
     # return disk space recovered
-    return $start_total - $end_total;
+    #return $start_total - $end_total;
+    return 0;
 }
 
 

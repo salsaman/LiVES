@@ -36,7 +36,7 @@ extra_cflags = -Wno-unused-function
 else
 extra_ldflags = -fPIC -DPIC
 
-extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function
+extra_cflags = -fPIC -DPIC -O3 -Wno-unused-function -Wno-pointer-to-int-cast
 endif
 
 if NEED_LOCAL_WEED

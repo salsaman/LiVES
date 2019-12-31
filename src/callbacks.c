@@ -5680,7 +5680,7 @@ boolean reload_set(const char *set_name) {
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
 
-  int64_t bytes = 0, fspace;
+  int64_t bytes = 0, fspace = -1;
   int64_t ds_warn_level = mainw->next_ds_warn_level;
 
   char *markerfile;
@@ -5762,13 +5762,16 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     }
   }
 
-  // get space before
-  fspace = get_fs_free(prefs->workdir);
-
   // call "smogrify bg_weed" to do the actual cleanup
   // its parameters are the handle of a temp file, and opts mask
 
   if (retval != LIVES_RESPONSE_CANCEL) {
+    lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+    lives_widget_context_update();
+
+    // get space before
+    fspace = get_fs_free(prefs->workdir);
+
     mainw->com_failed = FALSE;
     lives_rm(cfile->info_file);
     com = lives_strdup_printf("%s bg_weed \"%s\" %d", prefs->backend, cfile->handle, prefs->clear_disk_opts);
@@ -5815,14 +5818,15 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  if (bytes == 0) {
+  if (bytes == 0 && fspace > -1) {
     // get after
     bytes = get_fs_free(prefs->workdir) - fspace;
   }
 
   if (bytes < 0) bytes = 0;
+  lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
-  if (retval != LIVES_RESPONSE_CANCEL && !mainw->com_failed) {
+  if (retval != LIVES_RESPONSE_CANCEL && !mainw->com_failed && fspace > -1) {
     d_print_done();
     do_blocking_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"),
                             lives_format_storage_space_string((uint64_t)bytes)));

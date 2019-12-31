@@ -853,7 +853,7 @@ void **get_init_events_before(weed_plant_t *event, weed_plant_t *init_event, boo
             lives_free(fhash);
             if (weed_plant_has_leaf(filter, WEED_LEAF_FLAGS)) {
               tflags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
-              if (tflags & WEED_FILTER_PROCESS_LAST) {
+              if (tflags & WEED_FILTER_HINT_PROCESS_LAST) {
                 // add before any "process_last" filters
                 continue;
               }
@@ -1627,7 +1627,7 @@ boolean init_event_is_process_last(weed_plant_t *event) {
   filter = get_weed_filter(weed_get_idx_for_hashname(hashname, TRUE));
   if (weed_plant_has_leaf(filter, WEED_LEAF_FLAGS)) {
     int fflags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
-    if (fflags & WEED_FILTER_PROCESS_LAST) {
+    if (fflags & WEED_FILTER_HINT_PROCESS_LAST) {
       res = TRUE;
     }
   }

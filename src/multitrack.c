@@ -19439,7 +19439,8 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
             ign[j] = WEED_TRUE;
           }
         }
-        weed_set_boolean_array(param, WEED_LEAF_IGNORE, num_vals, ign);
+        if (was_changed)
+          weed_set_boolean_array(param, WEED_LEAF_IGNORE, num_vals, ign);
         lives_free(ign);
       }
     } else was_changed = TRUE;

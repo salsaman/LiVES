@@ -225,7 +225,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("blend_multiply", "salsaman", 1,
-                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list, NULL,
+                               WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list, NULL,
                                mpy_process, NULL, in_chantmpls, out_chantmpls, in_params1, NULL);
 
   weed_set_boolean_value(in_params1[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -233,7 +233,7 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   filter_class = weed_filter_class_init("blend_screen", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, screen_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -245,7 +245,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("blend_darken", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, darken_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -257,7 +257,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("blend_lighten", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, lighten_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -269,7 +269,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("blend_overlay", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, overlay_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -281,7 +281,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("blend_dodge", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, dodge_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -293,7 +293,7 @@ WEED_SETUP_START(200, 200) {
   weed_free(clone3);
 
   filter_class = weed_filter_class_init("blend_burn", "salsaman", 1,
-                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+                                        WEED_FILTER_HINT_MAY_THREAD | WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, burn_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),

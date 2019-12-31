@@ -2619,6 +2619,7 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
     filter = weed_instance_get_filter((weed_plant_t *)rfx->source, TRUE);
     for (i = 0; i < rfx->num_params; i++) {
       ptmpl = weed_filter_in_paramtmpl(filter, i, FALSE);
+      if (weed_paramtmpl_value_irrelevant(ptmpl)) continue;
       switch (rfx->params[i].type) {
       case LIVES_PARAM_COLRGB24:
         rgbp = (lives_colRGB48_t *)rfx->params[i].value;
@@ -2631,8 +2632,9 @@ void rte_set_defs_ok(LiVESButton *button, lives_rfx_t *rfx) {
         weed_set_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1, (int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_NUM:
-        if (weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT) == WEED_SEED_DOUBLE) weed_set_double_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1,
-              (double *)rfx->params[i].value);
+        if (weed_leaf_seed_type(ptmpl, WEED_LEAF_DEFAULT) == WEED_SEED_DOUBLE)
+          weed_set_double_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1,
+                                (double *)rfx->params[i].value);
         else weed_set_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, 1, (int *)rfx->params[i].value);
         break;
       case LIVES_PARAM_BOOL:

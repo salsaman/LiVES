@@ -263,6 +263,35 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
     }
   }
 
+
+  if (sfile->frame_index != NULL) {
+    int lgoodframe = -1, goodidx;
+    // check and attempt to correct frame_index
+    for (i = 0; i < sfile->frames; i++) {
+      int fr = sfile->frame_index[i];
+      if (fr < -1 || (cdata == NULL && fr > sfile->frames - 1)
+          || (cdata != NULL && fr > cdata->nframes - 1)) {
+        has_missing_frames = TRUE;
+        fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
+        if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) sfile->frame_index[i] = -1;
+        else {
+          if (lgoodframe != -1) {
+            sfile->frame_index[i] = lgoodframe + i - goodidx;
+          } else {
+            sfile->frame_index[i] = i;
+          }
+          if (sfile->frame_index[i] >= cdata->nframes) sfile->frame_index[i] = cdata->nframes - 1;
+        }
+        lives_free(fname);
+      } else {
+        if (cdata != NULL && fr != -1) {
+          lgoodframe = fr;
+          goodidx = i;
+        }
+      }
+    }
+  }
+
   if (sfile->frames > 0) {
     int hsize = sfile->hsize;
     int vsize = sfile->vsize;
@@ -648,7 +677,7 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
 
   do {
     response = LIVES_RESPONSE_OK;
-    create_frame_index(sfileno, FALSE, 0, nframes + frames);
+    create_frame_index(sfileno, FALSE, 0, nframes - frames);
     if (sfile->frame_index == NULL) {
       response = do_memory_error_dialog(what, (nframes - frames) * 4);
     }
@@ -663,7 +692,9 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
   lives_memcpy(sfile->frame_index, sfile->frame_index_back, start * 4);
   lives_memcpy(&sfile->frame_index[end - frames], &sfile->frame_index_back[end], (nframes - end) * 4);
 
+  sfile->frames = nframes - frames;
   save_frame_index(sfileno);
+  sfile->frames = nframes;
 }
 
 

@@ -2264,7 +2264,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
       // apply gamma conversion if plugin requested it
-      if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
+      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
         gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
       else {
         gamma_convert_layer(cfile->gamma_type, layer);
@@ -2394,7 +2394,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         goto done_video;
       }
 
-      if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
+      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
         weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
       else {
         if (CURRENT_CLIP_IS_VALID)
@@ -2439,9 +2439,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (prefs->apply_gamma) {
     // do gamma correction of any RGB(A) parameters
-    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA))
+    gamma_conv_params(((filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA))
                       ? WEED_GAMMA_LINEAR : WEED_GAMMA_SRGB, inst, TRUE);
-    gamma_conv_params(((filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA))
+    gamma_conv_params(((filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA))
                       ? WEED_GAMMA_LINEAR : WEED_GAMMA_SRGB, inst, FALSE);
   }
 
@@ -6029,7 +6029,7 @@ weed_plant_t **weed_params_create(weed_plant_t *filter, boolean in) {
   for (int i = 0; i < num_params; i++) {
     params[i] = weed_plant_new(WEED_PLANT_PARAMETER);
     weed_set_plantptr_value(params[i], WEED_LEAF_TEMPLATE, paramtmpls[i]);
-    if (in) {
+    if (in && !weed_paramtmpl_value_irrelevant(paramtmpls[i])) {
       if (weed_plant_has_leaf(paramtmpls[i], WEED_LEAF_HOST_DEFAULT)) {
         weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_HOST_DEFAULT);
       } else weed_leaf_copy(params[i], WEED_LEAF_VALUE, paramtmpls[i], WEED_LEAF_DEFAULT);
@@ -7313,7 +7313,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     return NULL;
   }
 
-  if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
+  if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
   else
     weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
@@ -7372,7 +7372,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
           }
         }
         if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
-        if (filter_flags & WEED_FILTER_HINT_LINEAR_GAMMA)
+        if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
           weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
         else
           weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
@@ -9703,14 +9703,15 @@ static int get_default_element_int(weed_plant_t *param, int idx, int mpy, int ad
   int error;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+  if (!weed_paramtmpl_value_irrelevant(ptmpl) && weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
       weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
     valsi = weed_get_int_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = valsi[idx * mpy + add];
     lives_free(valsi);
     return val;
   }
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) > idx * mpy + add) {
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_DEFAULT)
+      && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) > idx * mpy + add) {
     valsi = weed_get_int_array(ptmpl, WEED_LEAF_DEFAULT, &error);
     val = valsi[idx * mpy + add];
     lives_free(valsi);
@@ -9731,14 +9732,15 @@ static double get_default_element_double(weed_plant_t *param, int idx, int mpy, 
   int error;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+  if (!weed_paramtmpl_value_irrelevant(ptmpl) && weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
       weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx * mpy + add) {
     valsd = weed_get_double_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = valsd[idx * mpy + add];
     lives_free(valsd);
     return val;
   }
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_DEFAULT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) > idx * mpy + add) {
+  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_DEFAULT)
+      && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) > idx * mpy + add) {
     valsd = weed_get_double_array(ptmpl, WEED_LEAF_DEFAULT, &error);
     val = valsd[idx * mpy + add];
     lives_free(valsd);
@@ -9759,7 +9761,8 @@ static int get_default_element_bool(weed_plant_t *param, int idx) {
   int error;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx) {
+  if (!weed_paramtmpl_value_irrelevant(ptmpl) && weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+      weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT) > idx) {
     valsi = weed_get_boolean_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = valsi[idx];
     lives_free(valsi);
@@ -9781,7 +9784,7 @@ static char *get_default_element_string(weed_plant_t *param, int idx) {
   int numvals;
   weed_plant_t *ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
 
-  if (weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
+  if (!weed_paramtmpl_value_irrelevant(ptmpl) && weed_plant_has_leaf(ptmpl, WEED_LEAF_HOST_DEFAULT) &&
       (numvals = weed_leaf_num_elements(ptmpl, WEED_LEAF_HOST_DEFAULT)) > idx) {
     valss = weed_get_string_array(ptmpl, WEED_LEAF_HOST_DEFAULT, &error);
     val = lives_strdup(valss[idx]);
@@ -9825,6 +9828,7 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
 
   if (pchange == NULL) return TRUE;
   if (weed_leaf_num_elements(param, WEED_LEAF_VALUE) == 0) return FALSE;  // do not apply effect
+  if (weed_param_value_irrelevant(param)) return TRUE;
 
   while (pchange != NULL && get_event_timecode(pchange) <= tc) {
     last_pchange = pchange;
@@ -10314,6 +10318,7 @@ boolean interpolate_params(weed_plant_t *inst, void **pchains, weed_timecode_t t
         pchain = pchains[i];
         if (pchain != NULL && WEED_PLANT_IS_EVENT((weed_plant_t *)pchain)
             && WEED_EVENT_IS_PARAM_CHANGE((weed_plant_t *)pchain)) {
+          if (weed_param_value_irrelevant(in_params[i - offset])) continue;
           if (!interpolate_param(in_params[i - offset], pchain, tc)) {
             lives_free(in_params);
             return FALSE; // FALSE if param is not ready
@@ -10794,6 +10799,9 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   char **proplist = weed_plant_list_leaves(plant, &nleaves);
   char *prop;
   int i = (int)nleaves;
+  int pd_needed = 0, pd_reqs = 0;
+
+  if (WEED_IS_LAYER(plant)) pd_needed = 1;
 
   if (mem == NULL) lives_write_le_buffered(fd, &i, 4, TRUE); // write number of leaves
   else {
@@ -10806,12 +10814,32 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
   // serialise the "type" leaf first, so that we know this is a new plant when deserialising
   totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_TYPE, TRUE, mem);
 
-  // TODO: write pal, height, rowstrides before pixel_data.
-
-
-  for (i = 0; (prop = proplist[i]) != NULL; i++) {
+  for (i = 1; (prop = proplist[i]) != NULL; i++) {
     // write each leaf and key
-    if (strcmp(prop, WEED_LEAF_TYPE)) totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
+    if (pd_needed > 0) {
+      // write pal, height, rowstrides before pixel_data.
+      if (!strcmp(prop, WEED_LEAF_PIXEL_DATA)) {
+        if (pd_reqs > 3) pd_needed = 0;
+        else {
+          ++pd_needed;
+          lives_free(prop);
+          continue;
+        }
+      } else {
+        if (pd_reqs < 4 && (!strcmp(prop, WEED_LEAF_WIDTH) || !strcmp(prop, WEED_LEAF_HEIGHT)
+                            || !strcmp(prop, WEED_LEAF_CURRENT_PALETTE)
+                            || !strcmp(prop, WEED_LEAF_ROWSTRIDES))) {
+          if (++pd_reqs == 4 && pd_needed > 1) {
+            totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
+            lives_free(prop);
+            totsize += weed_leaf_serialise(fd, plant, WEED_LEAF_PIXEL_DATA, TRUE, mem);
+            pd_needed  = 0;
+            continue;
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
+
+    totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
     lives_freep((void **)&prop);
   }
   lives_freep((void **)&proplist);
@@ -10991,6 +11019,20 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   // for pixel_data we do special handling
   if (mem == NULL && !strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+    int width, height, pal = 0, *rs = NULL, nplanes = ne;
+    height = weed_layer_get_height(plant);
+    if (height > 0) {
+      width = weed_layer_get_width(plant);
+      if (width > 0) {
+        pal = weed_layer_get_palette(plant);
+        if (pal > 0) {
+          rs = weed_layer_get_rowstrides(plant, &nplanes); {
+            if (nplanes != ne) {
+              LIVES_WARN("Invalid planes in retrieved layer");
+	      // *INDENT-OFF*
+	    }}}}}
+    // *INDENT-ON*
+
     for (j = 0; j < ne; j++) {
       bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
       if (bytes < 4) {
@@ -11006,8 +11048,23 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         lives_freep((void **)&mykey);
         return -11;
       }
+      if (rs != NULL && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
+        int xrs, xw, xh, psize = pixel_size(pal);
+        xrs = vlen / height;
+        xw = xrs / psize;
+        xh = vlen / xrs;
 
-      /// TODO: **** always save palette, height, rowstrides first. Then call create_empty_pixel_data
+        LIVES_WARN("invalid frame size recovering layer");
+        msg = lives_strdup_printf(" for plane %d, size is %d. Should be %d. Will adjust rs to %d, width to %d "
+                                  "an d height to %d\n", j, vlen, rs[j] * height, xrs, xw, xh);
+        LIVES_WARN(msg);
+        lives_free(msg);
+        weed_layer_set_width(plant, (float)xw / weed_palette_get_plane_ratio_horizontal(pal, j));
+        weed_layer_set_height(plant, (float)xh / weed_palette_get_plane_ratio_vertical(pal, j));
+        rs[j] = xrs;
+        weed_layer_set_rowstrides(plant, rs, nplanes);
+      }
+
       values[j] = lives_calloc(ALIGN_CEIL(vlen + EXTRA_BYTES, 16) / 16, 16);
       if (values[j] == NULL) {
         msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
@@ -11019,8 +11076,9 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         return -5;
       }
       lives_read_buffered(fd, values[j], vlen, TRUE);
+      if (j >= nplanes) lives_free(values[j]);
     }
-    if (plant != NULL) weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, ne, values);
+    if (plant != NULL) weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
     lives_free(values);
     values = NULL;
     goto done;
@@ -11383,6 +11441,8 @@ boolean read_filter_defaults(int fd) {
       if (mainw->read_failed) {
         break;
       }
+      if (ptmpls != NULL && weed_paramtmpl_value_irrelevant(ptmpls[pnum]))
+        weed_leaf_delete(ptmpls[pnum], WEED_LEAF_HOST_DEFAULT);
     }
     if (mainw->read_failed) {
       if (ptmpls != NULL) lives_free(ptmpls);

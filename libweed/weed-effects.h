@@ -122,7 +122,7 @@ typedef struct {
 
 /* Parameter template GUI flags */
 #define WEED_GUI_REINIT_ON_VALUE_CHANGE	(1 << 0)
-#define WEED_GUI_CHOICES_INCOMPLETE		(1 << 1)
+#define WEED_GUI_CHOICES_SET_ON_INIT	      	(1 << 1)
 
 /* filter instance flags */
 #define WEED_INSTANCE_UPDATE_GUI_ONLY		(1 << 0)
@@ -252,8 +252,8 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 /* optional for filters with audio channels (maybe overriden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_AUDIO_RATE "audio_rate"
 #define WEED_LEAF_MAX_AUDIO_CHANNELS "max_audio_chans"
-#define WEED_LEAF_AUDIO_MIN_AUDIO_LENGTH "min_audio_len"
-#define WEED_LEAF_AUDIO_MAX_AUDIO_LENGTH "max_audio_len"
+#define WEED_LEAF_MIN_AUDIO_LENGTH "min_audio_len"
+#define WEED_LEAF_MAX_AUDIO_LENGTH "max_audio_len"
 #define WEED_LEAF_CHANNEL_LAYOUTS "channel_layouts"  /// only if set in filter_class or channel_template
 
 /* audio channel layouts (default settings) */

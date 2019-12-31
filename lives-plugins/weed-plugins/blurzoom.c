@@ -439,7 +439,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), \
                                weed_string_list_init("color", "_Color", 0, patterns), NULL
                               };
-  weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+  weed_plant_t *filter_class = weed_filter_class_init("blurzoom", "effectTV", 1, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                blurzoom_init, blurzoom_process, &blurzoom_deinit,
                                in_chantmpls,
                                out_chantmpls, in_params, NULL);

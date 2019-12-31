@@ -1970,7 +1970,7 @@ static void after_any_changed_2(lives_rfx_t *rfx, lives_param_t *param, boolean 
     mainw->block_param_updates = FALSE;
   }
 
-  if (!weed_param_gui_only(wparam)) {
+  if (!weed_param_value_irrelevant(wparam)) {
     param->changed = TRUE;
   }
 

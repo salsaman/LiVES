@@ -297,14 +297,14 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  // if (verbosity < WEED_VERBOSITY_INFO) {
-  //   new_stdout = dup(1);
-  //   new_stderr = dup(2);
-  //   close(1);
-  //   close(2);
-  //   new_stdout = new_stdout;
-  //   new_stderr = new_stderr;
-  // }
+  if (verbosity < WEED_VERBOSITY_INFO) {
+    new_stdout = dup(1);
+    new_stderr = dup(2);
+    close(1);
+    close(2);
+    new_stdout = new_stdout;
+    new_stderr = new_stderr;
+  }
 
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
@@ -617,8 +617,9 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
-  weed_gui_set_flags(gui, WEED_GUI_CHOICES_INCOMPLETE);
-  weed_set_int_value(in_params[0], "max", INT_MAX);
+  weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);
+  weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, 2048);
+  weed_set_int_value(in_params[0], WEED_LEAF_MAX, INT_MAX);
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));

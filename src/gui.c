@@ -143,7 +143,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
-    load_start_image(cfile->start);
+    load_start_image(-cfile->start);
   } else load_start_image(0);
   mainw->current_file = current_file;
   if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
@@ -160,7 +160,7 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   //if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
   if (CURRENT_CLIP_IS_VALID) {
-    load_end_image(cfile->end);
+    load_end_image(-cfile->end);
   } else load_end_image(0);
   if (mainw->stop_emmission == widget) mainw->stop_emmission = NULL;
   mainw->current_file = current_file;

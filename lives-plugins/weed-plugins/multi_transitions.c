@@ -231,7 +231,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_params[] = {weed_float_init("amount", "_Transition", 0., 0., 1.), NULL};
 
   weed_plant_t *filter_class = weed_filter_class_init("iris rectangle", "salsaman", 1,
-                               WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                               WEED_FILTER_HINT_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                NULL, irisr_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_set_boolean_value(in_params[0], WEED_LEAF_IS_TRANSITION, WEED_TRUE);
@@ -239,7 +239,7 @@ WEED_SETUP_START(200, 200) {
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
   filter_class = weed_filter_class_init("iris circle", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        WEED_FILTER_HINT_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         NULL, irisc_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -254,7 +254,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_value(out_chantmpls[0], WEED_LEAF_FLAGS, 0);
 
   filter_class = weed_filter_class_init("4 way split", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        WEED_FILTER_HINT_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         NULL, fourw_process, NULL,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),
@@ -270,7 +270,7 @@ WEED_SETUP_START(200, 200) {
                      WEED_CHANNEL_CAN_DO_INPLACE | WEED_CHANNEL_REINIT_ON_SIZE_CHANGE);
 
   filter_class = weed_filter_class_init("dissolve", "salsaman", 1,
-                                        WEED_FILTER_HINT_IS_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
+                                        WEED_FILTER_HINT_STATELESS | WEED_FILTER_HINT_MAY_THREAD, palette_list,
                                         dissolve_init, dissolve_process, dissolve_deinit,
                                         (clone1 = weed_clone_plants(in_chantmpls)),
                                         (clone2 = weed_clone_plants(out_chantmpls)),

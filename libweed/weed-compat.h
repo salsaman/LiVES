@@ -574,7 +574,7 @@ const AVCodecTag codec_bmp_tags[] = {
   { AV_CODEC_ID_NONE,         0 }
 };
 
-#ifdef FF_API_PIX_FMT
+#if defined FF_API_PIX_FMT ||  defined AVUTIL_PIXFMT_H
 
 int avi_color_range_to_weed_clamping(enum AVColorRange range) {
   switch (range) {
@@ -598,6 +598,8 @@ enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
     return AVCOL_RANGE_NB;
   }
 
+#ifndef AVUTIL_PIXFMT_H
+
   int avi_pix_fmt_to_weed_palette(enum PixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
@@ -613,6 +615,8 @@ enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
     return WEED_PALETTE_ARGB32;
   case PIX_FMT_YUV444P:
     return WEED_PALETTE_YUV444P;
+  case PIX_FMT_YUVA444P:
+    return WEED_PALETTE_YUVA4444P;
   case PIX_FMT_YUV422P:
     return WEED_PALETTE_YUV422P;
   case PIX_FMT_YUV420P:
@@ -634,6 +638,9 @@ enum AVColorRange weed_clamping_to_avi_color_range(int clamping) {
   case PIX_FMT_YUVJ444P:
     if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV444P;
+  case PIX_FMT_YUVAJ444P:
+    if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
+    return WEED_PALETTE_YUVA444P;
   case PIX_FMT_YUVJ420P:
     if (clamped) *clamped = WEED_YUV_CLAMPING_UNCLAMPED;
     return WEED_PALETTE_YUV420P;
@@ -659,6 +666,10 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
       if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return PIX_FMT_YUVJ444P;
       return PIX_FMT_YUV444P;
+    case WEED_PALETTE_YUVA444P:
+      if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
+        return PIX_FMT_YUVAJ444P;
+      return PIX_FMT_YUVA444P;
     case WEED_PALETTE_YUV422P:
       if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return PIX_FMT_YUVJ422P;
@@ -686,7 +697,7 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
 
 #else
 
-int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
+  int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
   // clamped may be set to NULL if you are not interested in the value
   switch (pix_fmt) {
   case AV_PIX_FMT_RGB24:
@@ -701,6 +712,8 @@ int avi_pix_fmt_to_weed_palette(enum AVPixelFormat pix_fmt, int *clamped) {
     return WEED_PALETTE_ARGB32;
   case AV_PIX_FMT_YUV444P:
     return WEED_PALETTE_YUV444P;
+  case AV_PIX_FMT_YUVA444P:
+    return WEED_PALETTE_YUVA4444P;
   case AV_PIX_FMT_YUV422P:
     return WEED_PALETTE_YUV422P;
   case AV_PIX_FMT_YUV420P:
@@ -747,6 +760,8 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
       if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return AV_PIX_FMT_YUVJ444P;
       return AV_PIX_FMT_YUV444P;
+    case WEED_PALETTE_YUVA4444P:
+      return AV_PIX_FMT_YUVA444P;
     case WEED_PALETTE_YUV422P:
       if (clamped && *clamped == WEED_YUV_CLAMPING_UNCLAMPED)
         return AV_PIX_FMT_YUVJ422P;
@@ -771,6 +786,7 @@ enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
       return AV_PIX_FMT_NONE;
     }
   }
+#endif
 
   int avi_trc_to_weed_gamma(enum AVColorTransferCharacteristic trc) {
   switch (trc) {

@@ -74,6 +74,9 @@ int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 int weed_chantmpl_is_optional(weed_plant_t *chantmpl);
 int *weed_chantmpl_get_palette_list(weed_plant_t *filter, weed_plant_t *chantmpl, int *nvals);
 
+// audio
+int weed_chantmpl_get_max_audio_length(weed_plant_t *chantmpl);
+
 /* a return value of zero means unlimited repeats */
 int weed_chantmpl_get_max_repeats(weed_plant_t *chantmpl);
 
@@ -121,7 +124,8 @@ int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtmpl);
 int weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
 int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl);
 int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl);
-int weed_paramtmpl_hints_hidden(weed_plant_t *param);
+int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl);
+int weed_paramtmpl_value_irrelevant(weed_plant_t *paramtmpl);
 
 // params
 int weed_param_is_hidden(weed_plant_t *param);
@@ -132,7 +136,7 @@ int weed_param_has_variable_size(weed_plant_t *param);
 int weed_param_has_value_perchannel(weed_plant_t *param);
 int weed_param_does_wrap(weed_plant_t *param);
 int weed_param_get_value_type(weed_plant_t *param);
-int weed_param_gui_only(weed_plant_t *param);
+int weed_param_value_irrelevant(weed_plant_t *param);
 
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);

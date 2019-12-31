@@ -193,14 +193,17 @@ Note: there is no "min_audio_channels" leaf: either the filter should be designe
 						   correctly.
 
 
- "min_audio_len"  : the plugin may set this for a filter to request that the host pass at least this number of samples per
- 		       	   	  audio (sub)channel in the "audio_data", ie. if fewer than this number are passed in, the the filter
-				  may buffer the audio data and will only produce new output when the buffer is filled to at least this level.
-
+ "min_audio_len"  : WEED_SEED_INT : the plugin may set this for a filter to request that the host pass at least this number of samples per
+ 		       	   	  audio (sub)channel in the "audio_data", 
+ 				  This leaf is intended mainly for use by plugins which have no audio output channels (i.e
+				  analysers or video filters). Use by filters which convert input audio to output audio is STRONGLY
+				  DISCOURAGED.
 
  "max_audio_len"  : the plugin may set this for a filter to request the host pass no more than this number of samples per
  		       	   	  audio (sub)channel in the "audio_data", i.e any samples above this value will be ignored (dropped) by the
-				  filter.
+				  filter. This leaf is intended mainly for use by plugins which have no audio output channels (i.e
+				  analysers or video filters). Use by filters which convert input audio to output audio is STRONGLY
+				  DISCOURAGED.
 
 
 if "min_audio_len" == "max_audio_len", the the host should attempt to supply the specified number of samples,
@@ -286,7 +289,7 @@ experimental:
  * WEED_FILTER_NON_REALTIME : as for video
 
 
- * WEED_FILTER_HINT_IS_STATELESS : as for video
+ * WEED_FILTER_HINT_STATELESS : as for video
 
 
 
@@ -458,7 +461,7 @@ I.E one value per stream, NOT one value per audio channel within the streams.)
 If the filter has repeating channels ("max_repeats"), then the flag WEED_PARAMETER_VARIABLE_SIZE should also be set to
 allow the number of values to increase or decrease according to the number of channels created from tha template.
 
-An audio filter may also set the flag WEED_FILTER_PROCESS_LAST, which would imply that it may be run (for example) as the final
+An audio filter may also set the flag WEED_FILTER_HINT_PROCESS_LAST, which would imply that it may be run (for example) as the final
 mixing filter before the resulting audio is sent to the audio player, or perhaps to overlay a commentary which ought not to
 have other effects applied to it.
 

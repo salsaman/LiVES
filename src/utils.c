@@ -473,7 +473,7 @@ static ssize_t file_buffer_flush(int fd) {
 
   if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
   if (res > 0) {
-    fbuff->offset += res;
+    //fbuff->offset += res;
     fbuff->bytes = 0;
     fbuff->ptr = fbuff->buffer;
   }
@@ -524,8 +524,9 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
 
 
 LIVES_GLOBAL_INLINE int lives_creat_buffered(const char *pathname, int mode) {
-  return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC, mode, FALSE);
+  return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC | O_DSYNC, mode, FALSE);
 }
+
 
 
 int lives_close_buffered(int fd) {
@@ -764,7 +765,7 @@ boolean lives_read_buffered_eof(int fd) {
 
 ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boolean allow_fail) {
   lives_file_buffer_t *fbuff;
-  ssize_t res;
+  ssize_t res = 0;
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_write_buffered: no file buffer found");
     return lives_write(fd, buf, count, allow_fail);
@@ -776,8 +777,19 @@ ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boole
   }
 
   file_buffer_flush(fd);
-  res = lives_write(fd, buf, count, allow_fail);
-  if (res > 0) fbuff->offset += res;
+  while (count > 0) {
+    size_t bigbsize = 128 * 1024, bytes;
+    if (bigbsize > count) bigbsize = count;
+    bytes = lives_write(fd, buf + res, bigbsize, allow_fail);
+    if (bytes > 0) {
+      fbuff->offset += bytes;
+      count -= bytes;
+      res += bytes;
+    } else {
+      LIVES_ERROR("lives_write_buffered: error in bigblock writer");
+      break;
+    }
+  }
   return res;
 }
 

@@ -36,7 +36,7 @@ static int package_version = 1; // version of this package
    WEED_FILTER_IS_CONVERTER. This allows it to mix multipl input streams into one output,
    and also permits remapping of channels within the layout (i.e. swap left / right).
 
-   It also sets the filter flag WEED_FILTER_PROCESS last, so the host should place it as near to the end of
+   It also sets the filter flag WEED_FILTER_HINT_PROCESS_LAST, so the host should place it as near to the end of
    the audio filter chain as possible.
 
    Second, only one input channel is created, however the "max_repeats" is set to 0, which means the host may create an
@@ -191,7 +191,7 @@ WEED_SETUP_START(200, 200) {
                               };
 
   weed_plant_t *filter_class = weed_filter_class_init("audio volume and pan", "salsaman", 2,
-                               WEED_FILTER_IS_CONVERTER | WEED_FILTER_PROCESS_LAST, NULL,
+                               WEED_FILTER_IS_CONVERTER | WEED_FILTER_HINT_PROCESS_LAST, NULL,
                                avol_init,
                                avol_process,
                                NULL, in_chantmpls, out_chantmpls, in_params, NULL);

@@ -301,7 +301,7 @@ WEED_SETUP_START(200, 200) {
   in_params[2] = weed_string_list_init("font", "_Font", 0, fonts);
   in_params[3] = NULL;
 
-  filter_class = weed_filter_class_init("textfun", "salsaman", 2, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+  filter_class = weed_filter_class_init("textfun", "salsaman", 2, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                         NULL, textfun_process, NULL, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);

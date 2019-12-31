@@ -3198,8 +3198,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
   float scale;
 
-  size_t samps;
-
+  size_t samps, offs = 0;
   boolean rvary = FALSE, lvary = FALSE;
   int trate, tchans, xnchans, flags;
   int alen;
@@ -3210,11 +3209,23 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
     return FALSE;
   }
 
+  samps = abuf->samples_filled;
+  //if (abuf->in_interleaf) samps /= abuf->in_achans;
+
   ctmpl = weed_get_plantptr_value(achan, WEED_LEAF_TEMPLATE, NULL);
 
   flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
   if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
+
+  if (!has_audio_chans_out(filter, FALSE)) {
+    int maxlen = weed_chantmpl_get_max_audio_length(ctmpl);
+    if (abuf->in_interleaf) maxlen *= abuf->in_achans;
+    if (maxlen < samps) {
+      offs = samps - maxlen;
+      samps = maxlen;
+    }
+  }
 
   // TODO: can be list
   if (rvary && weed_plant_has_leaf(ctmpl, WEED_LEAF_AUDIO_RATE))
@@ -3245,8 +3256,8 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
       abuf->s16_signed = TRUE;
       abuf->buffer16 = (short **)lives_calloc(abuf->out_achans, sizeof(short *));
       for (i = 0; i < abuf->out_achans; i++) {
-        abuf->buffer16[i] = (short *)lives_calloc_safety(abuf->samples_filled, sizeof(short));
-        sample_move_d8_d16(abuf->buffer16[i], abuf->buffer8[i], abuf->samples_filled, abuf->samples_filled * sizeof(short),
+        abuf->buffer16[i] = (short *)lives_calloc_safety(samps, sizeof(short));
+        sample_move_d8_d16(abuf->buffer16[i], &abuf->buffer8[i][offs], samps, samps * sizeof(short),
                            1.0, abuf->out_achans, abuf->out_achans, swap);
 
       }
@@ -3254,17 +3265,16 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
 
     // try convert S16 -> float
     if (abuf->buffer16 != NULL) {
-      size_t offs = 0;
       abuf->bufferf = (float **)lives_calloc(abuf->out_achans, sizeof(float *));
       for (i = 0; i < abuf->out_achans; i++) {
         if (!abuf->in_interleaf) {
           abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled, sizeof(float));
-          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], abuf->samples_filled, 1,
+          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], samps, 1,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
           offs += abuf->samples_filled;
         } else {
-          abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled / abuf->out_achans, sizeof(float));
-          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], abuf->samples_filled / abuf->out_achans, abuf->out_achans,
+          abuf->bufferf[i] = (float *)lives_calloc_safety(samps / abuf->out_achans, sizeof(float));
+          sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], samps / abuf->in_achans, abuf->in_achans,
                                 (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
         }
       }
@@ -3275,8 +3285,7 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
   if (abuf->bufferf == NULL) return FALSE;
   // now we should have float
 
-  samps = abuf->samples_filled;
-  if (abuf->in_interleaf) samps /= abuf->out_achans;
+  if (abuf->in_interleaf) samps /= abuf->in_achans;
 
   // push to achan "audio_data", taking into account "audio_data_length" and "audio_channels"
 

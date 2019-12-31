@@ -874,11 +874,11 @@ WEED_SETUP_START(200, 200) {
           break;
         case F0R_PLUGIN_TYPE_FILTER:
           weed_set_voidptr_value(filter_class, "plugin_f0r_update", f0r_update);
-          weed_set_int_value(filter_class, WEED_LEAF_FLAGS, WEED_FILTER_HINT_LINEAR_GAMMA);
+          weed_set_int_value(filter_class, WEED_LEAF_FLAGS, WEED_FILTER_PREF_LINEAR_GAMMA);
           break;
         default:
           weed_set_voidptr_value(filter_class, "plugin_f0r_update2", f0r_update2);
-          weed_set_int_value(filter_class, WEED_LEAF_FLAGS, WEED_FILTER_HINT_LINEAR_GAMMA);
+          weed_set_int_value(filter_class, WEED_LEAF_FLAGS, WEED_FILTER_PREF_LINEAR_GAMMA);
           break;
         }
 

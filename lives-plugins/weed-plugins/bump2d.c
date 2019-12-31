@@ -197,7 +197,7 @@ WEED_SETUP_START(200, 200) {
   int palette_list[] = ALL_PACKED_PALETTES;
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
-  weed_plant_t *filter_class = weed_filter_class_init("bumpmap", "salsaman", 1, WEED_FILTER_HINT_LINEAR_GAMMA, palette_list,
+  weed_plant_t *filter_class = weed_filter_class_init("bumpmap", "salsaman", 1, WEED_FILTER_PREF_LINEAR_GAMMA, palette_list,
                                bumpmap_init, bumpmap_process, bumpmap_deinit,
                                in_chantmpls,
                                out_chantmpls, NULL, NULL);

@@ -4596,7 +4596,7 @@ void load_start_image(int frame) {
   weed_timecode_t tc;
 
   LiVESInterpType interp;
-
+  boolean expose = FALSE;
   boolean noswitch = mainw->noswitch;
   int rwidth, rheight, width, height;
 
@@ -4614,6 +4614,11 @@ void load_start_image(int frame) {
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
   //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
+
+  if (frame < 0) {
+    frame = -frame;
+    expose = TRUE;
+  }
 
   threaded_dialog_spin(0.);
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
@@ -4685,7 +4690,7 @@ void load_start_image(int frame) {
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-      if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+      if (cdata != NULL && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
@@ -4748,7 +4753,7 @@ void load_start_image(int frame) {
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-      if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+      if (cdata != NULL && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
@@ -4803,6 +4808,7 @@ void load_end_image(int frame) {
   weed_timecode_t tc;
   int rwidth, rheight, width, height;
   boolean noswitch = mainw->noswitch;
+  boolean expose = FALSE;
   LiVESInterpType interp;
 
   if (!prefs->show_gui) return;
@@ -4819,6 +4825,11 @@ void load_end_image(int frame) {
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
   // lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 #endif
+
+  if (frame < 0) {
+    frame = -frame;
+    expose = TRUE;
+  }
 
   threaded_dialog_spin(0.);
   if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
@@ -4890,7 +4901,7 @@ void load_end_image(int frame) {
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-      if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+      if (cdata != NULL && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
@@ -4951,7 +4962,7 @@ void load_end_image(int frame) {
     if (!LIVES_IS_PLAYING && cfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->current_file, frame) &&
         cfile->ext_src != NULL) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
-      if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST)) {
+      if (cdata != NULL && (expose || !(cdata->seek_flag & LIVES_SEEK_FAST))) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }

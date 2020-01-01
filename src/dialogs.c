@@ -2923,6 +2923,13 @@ void do_after_crash_warning(void) {
 }
 
 
+void do_after_invalid_warning(void) {
+  do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
+                               "File|Clean up disk space\n"),
+                             WARN_MASK_CLEAN_INVALID);
+}
+
+
 void do_rmem_max_error(int size) {
   char *msg = lives_strdup_printf((
                                     _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"

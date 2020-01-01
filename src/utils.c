@@ -34,12 +34,33 @@ typedef struct {
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
 
+/**
+  @brief: return filename from an open fd, freeing val first
+
+  in case of error function returns val
+
+  if fd is a buffered file then the function just returns the know name,
+  else the name is procured from /proc
+
+  call like: foo = filename_from_fd(foo,fd); lives_free(foo);
+  input param foo can be NULL or some (non-const) string buffer
+  if non-NULL the old value will be freed, so e.g
+
+  char *badfile = NULL;
+  while (condition) {
+  ....
+      if (failed) badfile = filename_from_fd(badfile, fd);
+    }
+    if (badfile != NULL) lives_free(badfile);
+
+    or:
+
+  char *badfile =  NULL;
+  badfile = filename_from_fd(badfile, fd);
+  if (badfile == NULL) // error getting filename
+
+**/
 char *filename_from_fd(char *val, int fd) {
-  // return filename from an open fd, freeing val first
-
-  // in case of error we return val
-
-  // call like: foo = filename_from_fd(foo,fd); lives_free(foo);
 
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (fbuff != NULL) {
@@ -64,11 +85,8 @@ char *filename_from_fd(char *val, int fd) {
     lives_memset(rfdpath + slen, 0, 1);
 
     if (stat(rfdpath, &stb1)) return val;
-
     if (stb0.st_dev != stb1.st_dev) return val;
-
     if (stb0.st_ino != stb1.st_ino) return val;
-
     if (val != NULL) lives_free(val);
     return lives_strdup(rfdpath);
   }
@@ -473,7 +491,7 @@ static ssize_t file_buffer_flush(int fd) {
 
   if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
   if (res > 0) {
-    //fbuff->offset += res;
+    fbuff->offset += res;
     fbuff->bytes = 0;
     fbuff->ptr = fbuff->buffer;
   }

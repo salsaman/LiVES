@@ -1146,8 +1146,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->recoverable_layout = mainw->recording_recovered = FALSE;
 
-  mainw->soft_debug = FALSE;
-
   mainw->iochan = NULL;
 
   mainw->stored_event_list = NULL;
@@ -1302,6 +1300,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->loop_locked = FALSE;
 
+  mainw->invalid_clips = FALSE;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -6907,7 +6906,8 @@ void load_frame_image(int frame) {
       get_player_size(&opwidth, &opheight);
     }
 
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox && !mainw->multitrack) {
+    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && (!prefs->letterbox || mainw->num_tr_applied > 0)
+        && !mainw->multitrack) {
       // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
@@ -7037,7 +7037,8 @@ void load_frame_image(int frame) {
 
     get_player_size(&mainw->pwidth, &mainw->pheight);
 
-    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE) || prefs->letterbox || mainw->multitrack != NULL)) {
+    if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
+                                || (prefs->letterbox && mainw->num_tr_applied == 0) || mainw->multitrack != NULL)) {
       // here we are either: playing through an external video playback plugin which cannot resize
       // - we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
@@ -7081,7 +7082,7 @@ void load_frame_image(int frame) {
         frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
       }
 
-      if (mainw->multitrack != NULL || prefs->letterbox) {
+      if (mainw->multitrack != NULL || (prefs->letterbox && mainw->num_tr_applied == 0)) {
         /// letterbox external
         get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
         if (pwidth != lb_width || pheight != lb_height) {
@@ -7254,7 +7255,7 @@ void load_frame_image(int frame) {
 
     interp = get_interp_value(prefs->pb_quality);
 
-    if (mainw->multitrack != NULL || prefs->letterbox) {
+    if (mainw->multitrack != NULL || (prefs->letterbox && mainw->num_tr_applied == 0)) {
       /// letterbox internal
       lb_width = cfile->hsize;
       lb_height = cfile->vsize;

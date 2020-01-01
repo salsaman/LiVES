@@ -674,7 +674,7 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
   boolean has_param;
 
-  int scrw, didx;
+  int scrw, didx = 0;
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
@@ -688,7 +688,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     didx = 1;
     no_process = TRUE;
   } else if (rfx->status != RFX_STATUS_WEED) {
-    didx = 0;
     retvals = do_onchange_init(rfx);
   }
   if (rfx->min_frames < 0) no_process = TRUE;

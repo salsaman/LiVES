@@ -1084,6 +1084,7 @@ void do_dir_perm_error(const char *dir_name);
 void do_dir_perm_access_error(const char *dir_name);
 void do_encoder_img_fmt_error(render_details *rdet);
 void do_after_crash_warning(void);
+void do_after_invalid_warning(void);
 void do_bad_layout_error(void);
 void do_card_in_use_error(void);
 void do_dev_busy_error(const char *devstr);

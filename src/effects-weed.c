@@ -10847,23 +10847,41 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 }
 
 
+static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
+  int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
+  // clear the default flags to allow the "type" leaf to be altered
+  weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~(WEED_FLAG_IMMUTABLE));
+  weed_set_int_value(plant, WEED_LEAF_TYPE, newtype);
+  // lock the "type" leaf again so it cannot be altered accidentally
+  weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_FLAG_IMMUTABLE);
+  return weed_plant_get_type(plant);
+}
+
+
 #define MAX_FRAME_SIZE 1000000000
 
-static int reallign_typeleaf(int fd, weed_plant_t *plant) {
+static int realign_typeleaf(int fd, weed_plant_t *plant) {
   uint8_t buff[13];
   int type, nl;
   buff[12] = 0;
+  g_print("realinging\n");
   if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
+  g_print("reallign got %s\n", buff + 8);
   while (1) {
-    break_me();
-    if (!strncmp((char *)(&buff[8]), "type", 4)) {
+    g_print("checking %s\n", buff + 8);
+    if (!strncmp((char *)(buff + 8), "type", 4)) {
+      g_print("mstched\n");
       nl = (int)((buff[3] << 24) + (buff[2] << 16) + (buff[1] << 8) + buff[0]);
       // st, ne, vlen, val
+      g_print("nl is %d\n", nl);
+      // skip st, ne, valsize
       if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
-      lives_memcpy(&type, buff + 8, 4);
-      weed_set_int_value(plant, WEED_LEAF_TYPE, type);
+      if (lives_read_le_buffered(fd, &type, 4, TRUE) < 4) return 0;
+      g_print("type is %d\n", type);
+      weed_plant_mutate(plant, type);
       return nl;
     }
+    g_print("not mstched\n");
     lives_memmove(buff, &buff[1], 11);
     if (lives_read_buffered(fd, &buff[11], 1, TRUE) < 1) return 0;
     //g_print("buff is %s\n", buff);
@@ -11056,7 +11074,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
         LIVES_WARN("invalid frame size recovering layer");
         msg = lives_strdup_printf(" for plane %d, size is %d. Should be %d. Will adjust rs to %d, width to %d "
-                                  "an d height to %d\n", j, vlen, rs[j] * height, xrs, xw, xh);
+                                  "and height to %d\n", j, vlen, rs[j] * height, xrs, xw, xh);
         LIVES_WARN(msg);
         lives_free(msg);
         weed_layer_set_width(plant, (float)xw / weed_palette_get_plane_ratio_horizontal(pal, j));
@@ -11154,13 +11172,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           if (weed_plant_has_leaf(plant, WEED_LEAF_TYPE)) {
             type = weed_get_int_value(plant, WEED_LEAF_TYPE, &error);
             if (type == WEED_PLANT_UNKNOWN) {
-              int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
-              // clear the default flags to allow the "type" leaf to be altered
-              weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~(WEED_FLAG_IMMUTABLE));
-              weed_set_int_value(plant, WEED_LEAF_TYPE, *ints);
-              // lock the "type" leaf again so it cannot be altered accidentally
-              weed_leaf_set_flags(plant, WEED_LEAF_TYPE, WEED_FLAG_IMMUTABLE);
-              type = weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
+              type = weed_plant_mutate(plant, *ints);
             } else {
               if (*ints != type) {
                 msg = lives_strdup_printf("Type mismatch in deserialization: expected %d, got %d\n",
@@ -11229,7 +11241,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   int numleaves;
   ssize_t bytes;
   int err;
-  int32_t type;
+  int32_t type = WEED_PLANT_UNKNOWN;
   boolean newd = FALSE;
   static int bugfd = -1;
 
@@ -11240,8 +11252,8 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
         // create a new plant with type unknown
         plant = weed_plant_new(WEED_PLANT_UNKNOWN);
       }
-      numleaves = reallign_typeleaf(fd, plant);
-      if (numleaves == 0 || weed_get_int_value(plant, WEED_LEAF_TYPE, NULL) <= 0) {
+      numleaves = realign_typeleaf(fd, plant);
+      if (numleaves == 0 || (type = weed_plant_get_type(plant)) <= 0) {
         if (newd)
           weed_plant_free(plant);
         return NULL;
@@ -11261,24 +11273,38 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
 
   if (plant == NULL) {
     // create a new plant with type unknown
-    plant = weed_plant_new(WEED_PLANT_UNKNOWN);
+    plant = weed_plant_new(type);
   }
 
-  if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
-    // check the WEED_LEAF_TYPE leaf first
-    //g_print("errtype was %d\n", type);
-    //bugfd = fd;
-    if (newd)
-      weed_plant_free(plant);
-    return NULL;
+  if (type == WEED_PLANT_UNKNOWN) {
+    if ((type = weed_leaf_deserialise(fd, plant, WEED_LEAF_TYPE, mem, TRUE)) <= 0) {
+      // check the WEED_LEAF_TYPE leaf first
+      if (type != -5) {  // all except malloc error
+        char *badfname = filename_from_fd(NULL, fd);
+        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", type,
+                                        badfname != NULL ? badfname : "unknown file");
+        bugfd = fd;
+        LIVES_ERROR(msg);
+        lives_free(msg);
+      }
+      if (newd)
+        weed_plant_free(plant);
+      return NULL;
+    }
   }
 
   numleaves--;
 
   while (numleaves--) {
     if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
-      //bugfd = fd;
-      g_print("err was %d\n", err);
+      if (type != -5) {  // all except malloc error
+        char *badfname = filename_from_fd(NULL, fd);
+        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", err,
+                                        badfname != NULL ? badfname : "unknown file");
+        bugfd = fd;
+        LIVES_ERROR(msg);
+        lives_free(msg);
+      }
       if (newd)
         weed_plant_free(plant);
       return NULL;

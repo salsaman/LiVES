@@ -596,8 +596,8 @@ static int audio_process(nframes_t nframes, void *arg) {
         if (jackd->mute || cache_buffer == NULL ||
             (in_bytes == 0 &&
              ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL || mainw->preview))) {
-          if (cache_buffer != NULL && !wait_cache_buffer
-              && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack != NULL
+          if (mainw->multitrack == NULL && cache_buffer != NULL && !wait_cache_buffer
+              && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit)
                   || mainw->preview)) {
             push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
           }
@@ -890,8 +890,8 @@ static int audio_process(nframes_t nframes, void *arg) {
 
     if (!from_memory) {
       // push the cache_buffer to be filled
-      if (!wait_cache_buffer && ((mainw->agen_key == 0 && ! mainw->agen_needs_reinit)
-                                 || mainw->multitrack != NULL || mainw->preview)) {
+      if (mainw->multitrack == NULL && !wait_cache_buffer && ((mainw->agen_key == 0 && ! mainw->agen_needs_reinit)
+          || mainw->preview)) {
         push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
       }
       /// advance the seek pos even if we are reading from a generator

@@ -71,7 +71,7 @@ typedef struct {
 
   char image_ext[16];
 
-  uint32_t warning_mask;
+  uint64_t warning_mask;
 
   /// bits 19,18,13,11 and 10 (off by default)
 #define DEF_WARNING_MASK 0x000C2C04
@@ -116,6 +116,7 @@ typedef struct {
 #define WARN_MASK_LAYOUT_WIPE 					(1<<26)
 #define WARN_MASK_LAYOUT_GAMMA 					(1<<27)
 #define WARN_MASK_VJMODE_ENTER 					(1<<28)
+#define WARN_MASK_CLEAN_INVALID 					(1<<29)
 
   char cmd_log[PATH_MAX];
   char effect_command[PATH_MAX * 2];
@@ -553,6 +554,7 @@ typedef struct {
   LiVESWidget *checkbutton_warn_yuv4m_open;
   LiVESWidget *checkbutton_warn_mt_backup_space;
   LiVESWidget *checkbutton_warn_after_crash;
+  LiVESWidget *checkbutton_warn_invalid_clip;
   LiVESWidget *spinbutton_warn_fsize;
   LiVESWidget *spinbutton_bwidth;
   LiVESWidget *theme_combo;
@@ -986,6 +988,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
 
 boolean get_boolean_prefd(const char *key, boolean defval);
 int get_int_prefd(const char *key, int defval);
+int64_t get_int64_prefd(const char *key, int64_t defval);
 
 int delete_pref(const char *key);
 

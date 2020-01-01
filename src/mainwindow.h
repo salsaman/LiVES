@@ -1355,8 +1355,7 @@ typedef struct {
 #define SPLASH_LEVEL_COMPLETE 1.
 
   boolean recoverable_layout;
-
-  boolean soft_debug; ///< for testing
+  boolean invalid_clips;
 
   /// encoder text output
   LiVESIOChannel *iochan;

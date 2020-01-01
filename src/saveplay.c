@@ -2673,6 +2673,7 @@ void play_file(void) {
   mainw->osc_block = TRUE;
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
+  mainw->abufs_to_fill = 0;
 
   /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
   /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
@@ -2746,38 +2747,40 @@ void play_file(void) {
       }
 
       // tell pulse client to close audio file
-      if (mainw->pulsed != NULL && (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0)) {
-        ticks_t timeout = 0;
-        if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
-          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
-          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
-            sched_yield(); // wait for seek
-            lives_usleep(prefs->sleep_time);
+      if (mainw->pulsed != NULL) {
+        if (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0) {
+          ticks_t timeout = 0;
+          if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
+            lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+            while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
+              sched_yield(); // wait for seek
+              lives_usleep(prefs->sleep_time);
+            }
+            lives_alarm_clear(alarm_handle);
           }
-          lives_alarm_clear(alarm_handle);
-        }
-        if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
-        pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-        pulse_message.data = NULL;
-        pulse_message.next = NULL;
-        mainw->pulsed->msgq = &pulse_message;
-        if (timeout == 0)  {
-          handle_audio_timeout();
-          mainw->pulsed->playing_file = -1;
-          mainw->pulsed->fd = -1;
-        } else {
-          while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
-            sched_yield();
-            lives_usleep(prefs->sleep_time);
-          }
-          if (mainw->pulsed != NULL) {
+          if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
+          mainw->pulsed->msgq = &pulse_message;
+          if (timeout == 0)  {
+            handle_audio_timeout();
+            mainw->pulsed->playing_file = -1;
+            mainw->pulsed->fd = -1;
+          } else {
+            while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
+              sched_yield();
+              lives_usleep(prefs->sleep_time);
+            }
             pulse_driver_cork(mainw->pulsed);
           }
+        } else {
+          pulse_driver_cork(mainw->pulsed);
         }
-      }
-      if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-        weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+        if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+          weed_plant_t *event = get_last_frame_event(mainw->event_list);
+          insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+        }
       }
     } else {
 #endif
@@ -4161,6 +4164,8 @@ boolean read_headers(const char *file_name) {
         return FALSE;
       }
 
+      if (mainw->ascrap_file != -1 && mainw->current_file == mainw->ascrap_file) goto get_avals;
+
       detail = CLIP_DETAILS_FRAMES;
       retval = get_clip_value(mainw->current_file, detail, &cfile->frames, 0);
 
@@ -4211,6 +4216,7 @@ boolean read_headers(const char *file_name) {
         get_clip_value(mainw->current_file, detail, cfile->file_name, PATH_MAX);
       }
 
+get_avals:
       if (retval) {
         detail = CLIP_DETAILS_ACHANS;
         retvala = get_clip_value(mainw->current_file, detail, &cfile->achans, 0);
@@ -5394,6 +5400,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   boolean mt_needs_idlefunc = FALSE;
   boolean retb = TRUE;
   boolean load_from_set = TRUE;
+  boolean rec_cleanup = FALSE;
 
   splash_end();
 
@@ -5511,6 +5518,10 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         is_ascrap = TRUE;
         buffptr = buff + 7;
       } else {
+        if (!strncmp(buff, "ascrap", 6) || !strncmp(buff, "scrap", 5)) {
+          rec_cleanup = TRUE;
+          continue;
+        }
         buffptr = buff;
       }
 
@@ -5734,7 +5745,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   }
 
-  if (mainw->multitrack == NULL) {
+  if (mainw->multitrack == NULL) { // TODO check if we can do this in mt too
     int start_file = mainw->current_file;
     if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
       start_file--;
@@ -5756,6 +5767,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
         close_current_file(start_file);
     }
     if (start_file != mainw->current_file) {
+      rec_cleanup = TRUE;
       switch_to_file(mainw->current_file, start_file);
     }
   } else {
@@ -5785,6 +5797,7 @@ recovery_done:
   mainw->last_dprint_file = -1;
   mainw->no_switch_dprint = FALSE;
   d_print("");
+  mainw->invalid_clips = rec_cleanup;
   return retb;
 }
 
@@ -6045,8 +6058,12 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   rewrite_recovery_file();
 
-  if (!mainw->recoverable_layout && !mainw->recording_recovered) do_after_crash_warning();
-
+  if (!mainw->recoverable_layout && !mainw->recording_recovered) {
+    if (mainw->invalid_clips && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))
+        == WARN_MASK_CLEAN_INVALID) do_after_invalid_warning();
+    else do_after_crash_warning();
+    mainw->invalid_clips = FALSE;
+  }
   return retval;
 }
 

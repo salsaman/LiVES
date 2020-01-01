@@ -2435,9 +2435,6 @@ static void *cache_my_audio(void *arg) {
   char *filename;
   register int i;
 
-  if (mainw->multitrack == NULL)
-    cbuffer->is_ready = TRUE;
-
   while (!cbuffer->die) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
     while (cbuffer->is_ready && !cbuffer->die) {
@@ -3558,10 +3555,9 @@ int64_t nullaudio_update_seek_posn() {
             mainw->nullaudio_seek_posn -= mainw->nullaudio_seek_end;
           }
           nullaudio_set_rec_avals();
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 }
 
 

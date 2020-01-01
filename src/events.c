@@ -4985,6 +4985,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   char *text;
   char *oldval = NULL, *final = NULL;
   char *iname = NULL, *fname = NULL;
+  char *tmp;
 
   boolean woat = widget_opts.apply_theme;
 
@@ -5047,7 +5048,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
       for (i = 0; propnames[i] != NULL; i++) {
         if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_HINT) ||
-            !strcmp(propnames[i], WEED_LEAF_TIMECODE)) {
+            !strcmp(propnames[i], WEED_LEAF_TIMECODE) || !strncmp(propnames[i], "host_", 5)) {
           lives_free(propnames[i]);
           continue;
         }
@@ -5094,7 +5095,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
         ievent = NULL;
 
         for (j = 0; j < num_elems; j++) {
-          if (hint == WEED_EVENT_HINT_PARAM_CHANGE && (!strcmp(propnames[i], WEED_LEAF_INDEX)) && seed_type == WEED_SEED_INT) {
+          if (hint == WEED_EVENT_HINT_PARAM_CHANGE && (!strcmp(propnames[i], WEED_LEAF_INDEX))
+              && seed_type == WEED_SEED_INT) {
             char *pname = NULL; // want the parameter name for the index
             weed_plant_t *ptmpl = NULL;
             ievent = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
@@ -5110,56 +5112,91 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
             if (ptmpl != NULL)
               pname = weed_get_string_value(ptmpl, WEED_LEAF_NAME, &error);
             else pname = lives_strdup("???");
-            strval = lives_strdup_printf("%d (%s)", intval[j], pname);
+            strval = lives_strdup_printf("%d		(%s)", intval[j], pname);
             lives_freep((void **)&pname);
           } else {
-            switch (seed_type) {
-            // format each element of value
-            case WEED_SEED_INT:
-              strval = lives_strdup_printf("%d", intval[j]);
-              break;
-            case WEED_SEED_INT64:
-              strval = lives_strdup_printf("%"PRId64, int64val[j]);
-              break;
-            case WEED_SEED_DOUBLE:
-              strval = lives_strdup_printf("%.4f", doubval[j]);
-              break;
-            case WEED_SEED_BOOLEAN:
-              if (intval[j] == WEED_TRUE) strval = lives_strdup(_("TRUE"));
-              else strval = lives_strdup(_("FALSE"));
-              break;
-            case WEED_SEED_STRING:
-              strval = lives_strdup(string[j]);
-              lives_free(string[j]);
-              break;
-            case WEED_SEED_VOIDPTR:
-              if (hint == WEED_EVENT_HINT_FILTER_DEINIT || hint == WEED_EVENT_HINT_PARAM_CHANGE) {
-                if (!(strncmp(propnames[i], WEED_LEAF_INIT_EVENT, strlen(WEED_LEAF_INIT_EVENT)))) {
-                  ievent = (weed_plant_t *)voidval[j];
-                  if (ievent != NULL) {
-                    lives_freep((void **)&iname);
-                    iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
-                    if (iname != NULL) {
-                      ie_idx = weed_get_idx_for_hashname(iname, TRUE);
-                      fname = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
-                      strval = lives_strdup_printf("%p (%s)", voidval[j], fname);
-                      lives_freep((void **)&iname);
+            if (hint == WEED_EVENT_HINT_FILTER_INIT && (!strcmp(propnames[i], WEED_LEAF_IN_TRACKS)
+                || !strcmp(propnames[i], WEED_LEAF_OUT_TRACKS))) {
+              if (mainw->multitrack != NULL) {
+                iname = weed_get_string_value(event, WEED_LEAF_FILTER, &error);
+                if (iname != NULL) {
+                  ie_idx = weed_get_idx_for_hashname(iname, TRUE);
+                }
+                lives_freep((void **)&iname);
+                strval = lives_strdup_printf("%d		(%s)", intval[j],
+                                             (tmp = get_track_name(mainw->multitrack, intval[j], is_pure_audio(get_weed_filter(ie_idx), FALSE))));
+                lives_free(tmp);
+              } else {
+                strval = lives_strdup_printf("%d		(%s)", intval[j], intval[j] == 0 ? _("		(foreground clip)")
+                                             : _("		(background_clip)"));
+              }
+            } else {
+              if (0);
+              /* if (hint == WEED_EVENT_HINT_FILTER_INIT && (!strcmp(propnames[i], WEED_LEAF_IN_COUNT) */
+              /* 						  || !strcmp(propnames[i], WEED_LEAF_OUT_COUNT))) { */
+              /* 	iname = weed_get_string_value(event, WEED_LEAF_FILTER, &error); */
+              /* 	if (iname != NULL) { */
+              /* 	  ie_idx = weed_get_idx_for_hashname(iname, TRUE); */
+              /* 	} */
+              /* 	strval = lives_strdup_printf("%d		(%s X %d)", intval[j], weed_chantmpl_get_name(...etc)); */
+              /* 	lives_freep((void **)&iname); */
+              /* } */
+              else {
+                switch (seed_type) {
+                // format each element of value
+                case WEED_SEED_INT:
+                  strval = lives_strdup_printf("%d", intval[j]);
+                  break;
+                case WEED_SEED_INT64:
+                  strval = lives_strdup_printf("%"PRId64, int64val[j]);
+                  break;
+                case WEED_SEED_DOUBLE:
+                  strval = lives_strdup_printf("%.4f", doubval[j]);
+                  break;
+                case WEED_SEED_BOOLEAN:
+                  if (intval[j] == WEED_TRUE) strval = lives_strdup(_("TRUE"));
+                  else strval = lives_strdup(_("FALSE"));
+                  break;
+                case WEED_SEED_STRING:
+                  if (hint == WEED_EVENT_HINT_FILTER_INIT && (!strcmp(propnames[i], WEED_LEAF_FILTER))) {
+                    ie_idx = weed_get_idx_for_hashname(string[j], TRUE);
+                    strval = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
+                  } else strval = lives_strdup(string[j]);
+                  lives_free(string[j]);
+                  break;
+                case WEED_SEED_VOIDPTR:
+                  if (hint == WEED_EVENT_HINT_FILTER_DEINIT || hint == WEED_EVENT_HINT_FILTER_MAP
+                      || hint == WEED_EVENT_HINT_PARAM_CHANGE) {
+                    if (!(strncmp(propnames[i], WEED_LEAF_INIT_EVENT, strlen(WEED_LEAF_INIT_EVENT)))) {
+                      ievent = (weed_plant_t *)voidval[j];
+                      if (ievent != NULL) {
+                        lives_freep((void **)&iname);
+                        iname = weed_get_string_value(ievent, WEED_LEAF_FILTER, &error);
+                        if (iname != NULL) {
+                          ie_idx = weed_get_idx_for_hashname(iname, TRUE);
+                          fname = weed_filter_idx_get_name(ie_idx, FALSE, FALSE, FALSE);
+                          strval = lives_strdup_printf("%p		(%s)", voidval[j], fname);
+                          lives_freep((void **)&fname);
+                        }
+                        lives_freep((void **)&iname);
+                      }
                     }
-                    lives_freep((void **)&iname);
                   }
+                  if (strval == NULL) {
+                    if (voidval[j] != NULL) strval = lives_strdup_printf("%p", voidval[j]);
+                    else strval = lives_strdup(" - ");
+                  }
+                  break;
+                case WEED_SEED_PLANTPTR:
+                  strval = lives_strdup_printf("%p", voidval[j]);
+                  break;
+                default:
+                  strval = lives_strdup("???");
+                  break;
                 }
               }
-              if (strval == NULL) strval = lives_strdup_printf("%p", voidval[j]);
-              break;
-            case WEED_SEED_PLANTPTR:
-              strval = lives_strdup_printf("-->%p", voidval[j]);
-              break;
-            default:
-              strval = lives_strdup("???");
-              break;
             }
           }
-
           // attach to treestore
           if (j == 0) {
             if (num_elems == 1) {

@@ -230,7 +230,7 @@ static inline uint32_t weed_hash(const char *string) {
 
 
 static inline void *weed_data_free(weed_data_t **data, weed_size_t num_valid_elems, weed_size_t num_elems, int32_t seed_type) {
-  register int i;
+  register uint32_t i;
   int is_nonptr = !weed_seed_is_ptr(seed_type);
   for (i = 0; i < num_valid_elems; i++) {
     if (is_nonptr && data[i]->value.voidptr) weed_unmalloc_and_copy(data[i]->size, data[i]->value.voidptr);

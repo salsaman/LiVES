@@ -24,6 +24,30 @@ static int render_choice;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
+//lib stuff
+LIVES_GLOBAL_INLINE int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int **frames) {
+  int ntracks = 0, xntracks = 0;
+  if (event == NULL || !WEED_IS_FRAME_EVENT(event)) return -1;
+  if (clips) *clips = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &ntracks);
+  else ntracks = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
+  if (frames) *frames = weed_get_int_array_counted(event, WEED_LEAF_FRAMES, &xntracks);
+  else xntracks = weed_leaf_num_elements(event, WEED_LEAF_FRAMES);
+
+  if (ntracks != xntracks && xntracks * ntracks > 0) {
+    if (clips) {
+      weed_free(*clips);
+      *clips = NULL:
+    }
+    if (frames) {
+      weed_free(*frames);
+      *frames = NULL:
+    }
+    return -2;
+  }
+  if (ntracks != 0) return ntracks;
+  return xntracks;
+}
+
 
 GNU_PURE void ** *get_event_pchains(void) {
   return pchains;

@@ -9,6 +9,8 @@
 #ifndef HAS_LIVES_EVENTS_H
 #define HAS_LIVES_EVENTS_H
 
+/// parts of this may eventually become libweed-events
+
 // event_list
 #define WEED_LEAF_WEED_EVENT_API_VERSION "weed_event_api_version"
 #define WEED_LEAF_AUDIO_SIGNED "audio_signed"
@@ -111,6 +113,13 @@ void event_list_close_start_gap(weed_plant_t *event_list);
 void event_list_add_track(weed_plant_t *event_list, int layer);
 void add_track_to_avol_init(weed_plant_t *filter, weed_plant_t *event, int nbtracks, boolean behind);
 void event_list_free(weed_plant_t *event_list);
+
+
+/// lib-ish stuff
+typedef weed_plant_t weed_event_t;
+
+int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int **frames); // returns ntracks
+int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double **aseeks); // returns natracks
 
 /// replace events in event_list with events in new_event_list
 void event_list_replace_events(weed_plant_t *event_list, weed_plant_t *new_event_list);

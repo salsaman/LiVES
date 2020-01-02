@@ -476,7 +476,8 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES 65536
+#define BUFFER_FILL_BYTES 4096
+#define BUFFER_FILL_BYTES_MED 32768
 
 static ssize_t file_buffer_flush(int fd) {
   // returns number of bytes written to file io, or error code

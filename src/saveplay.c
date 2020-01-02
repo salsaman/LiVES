@@ -5747,13 +5747,13 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   if (mainw->multitrack == NULL) { // TODO check if we can do this in mt too
     int start_file = mainw->current_file;
-    if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
+    if (start_file > 1 && start_file == mainw->ascrap_file && mainw->files[start_file - 1] != NULL) {
       start_file--;
     }
-    if (mainw->current_file > 1 && mainw->current_file == mainw->scrap_file && mainw->files[mainw->current_file - 1] != NULL) {
+    if (start_file > 1 && start_file == mainw->scrap_file && mainw->files[start_file - 1] != NULL) {
       start_file--;
     }
-    if (mainw->current_file > 1 && mainw->current_file == mainw->ascrap_file && mainw->files[mainw->current_file - 1] != NULL) {
+    if (start_file > 1 && start_file == mainw->ascrap_file && mainw->files[start_file - 1] != NULL) {
       start_file--;
     }
     if ((!IS_VALID_CLIP(start_file) || (mainw->files[start_file]->frames == 0 && mainw->files[start_file]->afilesize == 0))
@@ -5763,12 +5763,11 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
             && (mainw->files[start_file]->frames > 0 || mainw->files[start_file]->afilesize > 0))
           if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file) break;
       }
-      if (start_file > 0 && mainw->current_file != mainw->scrap_file && mainw->current_file != mainw->ascrap_file)
-        close_current_file(start_file);
     }
     if (start_file != mainw->current_file) {
       rec_cleanup = TRUE;
       switch_to_file(mainw->current_file, start_file);
+      showclipimgs();
     }
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen

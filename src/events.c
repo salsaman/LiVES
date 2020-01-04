@@ -3309,9 +3309,11 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
         int nparams;
-        pchains[key] = weed_get_voidptr_array(next_event, WEED_LEAF_IN_PARAMETERS, &nparams);
+        void **xpchains = weed_get_voidptr_array(next_event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
+        for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
         pchains[key][nparams] = NULL;
+        lives_free(xpchains);
       } else pchains[key] = NULL;
 
 filterinit1:
@@ -3321,8 +3323,8 @@ filterinit1:
       if (num_params > 0) {
         weed_call_deinit_func(inst);
         if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
-          source_params = (weed_plant_t **)pchains[key];
           in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+          source_params = (weed_plant_t **)pchains[key];
 
           for (i = 0; i < num_params; i++) {
             if (source_params != NULL && source_params[i + offset] != NULL && is_init_pchange(next_event, source_params[i + offset]))
@@ -3865,8 +3867,8 @@ lives_render_error_t render_events(boolean reset) {
                   mytrack = aclips[i] + nbtracks;
                   if (mytrack < 0) mytrack = 0;
                   xaclips[mytrack] = aclips[i + 1];
-                  g_print("audio DIFF was %f\n", xaseek[mytrack] - aseeks[i]);
-                  xaseek[mytrack] = aseeks[i];
+                  if (xaseek[mytrack] - aseeks[i] > AUD_DIFF_MIN) /// smooth out audio by ignoring tiny seek differences
+                    xaseek[mytrack] = aseeks[i];
                   xavel[mytrack] = aseeks[i + 1];
                 }
               }
@@ -4027,9 +4029,11 @@ lives_render_error_t render_events(boolean reset) {
 
       if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
         int nparams;
-        pchains[key] = weed_get_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, &nparams);
+        void **xpchains = weed_get_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
+        for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
         pchains[key][nparams] = NULL;
+        lives_free(xpchains);
       } else pchains[key] = NULL;
 
 filterinit2:

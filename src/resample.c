@@ -621,12 +621,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             for (i = 0; i < natracks; i += 2) {
               double vel = naseeks[i + 1];
               for (j = 0; j < xatracks; j += 2) {
-                if (xaclips[j] == naclips[i]) {
-                  vel = xaseeks[i + 1];
+                if (xaclips[j] == naclips[i] && xaseeks[j + 1] != 0.) {
+                  vel = xaseeks[j + 1];
                   break;
                 }
               }
-              if (naseeks[i + 1] != 0. || naccels[i >> 1] != 0.) {
+              if (naseeks[i + 1] != 0.) {
                 naseeks[i] += vel * dt;//dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
                 //naseeks[i + 1] += naccels[i >> 1];
               }
@@ -853,35 +853,36 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           for (i = 0; i < natracks; i += 2) {
             double vel = naseeks[i + 1];
             for (j = 0; j < xatracks; j += 2) {
-              if (xaclips[j] == naclips[i]) {
-                vel = xaseeks[i + 1];
+              if (xaclips[j] == naclips[i] && xaseeks[j + 1] != 0.) {
+                vel = xaseeks[j + 1];
                 break;
               }
             }
-            if (naseeks[i + 1] != 0. || naccels[i >> 1] != 0.) {
+            if (naseeks[i + 1] != 0.) {
               naseeks[i] += vel * dt;//dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
               //naseeks[i + 1] += naccels[i >> 1];
             }
           }
 
-          if (old_fps == 0.) {
-            int *aclips;
-            double *aseeks;
-            /// for recorded event_lists we try to smooth velocity changes (i.e. acceleration)
-            if (naudio_event == NULL) naudio_event = get_next_audio_frame_event(event);
-            if (naudio_event != NULL) {
-              if (weed_frame_event_get_audio_tracks(naudio_event, &aclips, &aseeks) == 2) {
-                if (naclips[1] == aclips[1] && naseeks[1] != aseeks[1] && naseeks[1] != 0. && aseeks[1] != 0.) {
-                  /// assume the velocity goes smoothly from a to b, then we can work out the seek point at b.
-                  double dt = (double)(get_event_timecode(naudio_event) - (out_tc + offset_tc)) / TICKS_PER_SECOND_DBL;
-                  naseeks[1] = (aseeks[0] - naseeks[0]) / dt;
-                }
-              }
-              // *INDENT-ON*
-              lives_free(aclips);
-              lives_free(aseeks);
-            }
-          }
+          /// attempt to ad just velocity dynamically to hit the exact seek point
+          /// however does not work as the velocity can then vary too dramatically
+          /* if (old_fps == 0.) { */
+          /*   int *aclips; */
+          /*   double *aseeks; */
+          /*   /// for recorded event_lists we try to smooth velocity changes (i.e. acceleration) */
+          /*   if (naudio_event == NULL) naudio_event = get_next_audio_frame_event(event); */
+          /*   if (naudio_event != NULL) { */
+          /*     if (weed_frame_event_get_audio_tracks(naudio_event, &aclips, &aseeks) == 2) { */
+          /*       if (naclips[1] == aclips[1] && naseeks[1] != aseeks[1] && naseeks[1] != 0. && aseeks[1] != 0.) { */
+          /*         /// assume the velocity goes smoothly from a to b, then we can work out the seek point at b. */
+          /*         double dt = (double)(get_event_timecode(naudio_event) - (out_tc + offset_tc)) / TICKS_PER_SECOND_DBL; */
+          /*         naseeks[1] = (aseeks[0] - naseeks[0]) / dt; */
+          /*       } */
+          /*     } */
+          /*     lives_free(aclips); */
+          /*     lives_free(aseeks); */
+          /*   } */
+          /* } */
 
           weed_set_int_array(shortcut, WEED_LEAF_AUDIO_CLIPS, natracks, naclips);
           weed_set_double_array(shortcut, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);

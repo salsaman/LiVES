@@ -817,8 +817,11 @@ static void create_filter_map(uint64_t rteval) {
 /**
    @brief add effect_deinit events to an event_list
 
-    during rendering we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
-    here we add effect_deinit events to an event_list */
+    during real time recording we use the "keys" 0 -> FX_KEYS_MAX_VIRTUAL
+    here we add effect_deinit events to an event_list
+
+    @see deinit_render_effects()
+ */
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   // should be called with mainw->event_list_mutex unlocked !
   int i;
@@ -7036,9 +7039,14 @@ deinit3:
 }
 
 
+/**
+   @brief switch off effects after render preview
+   during rendering/render preview, we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
+   here we deinit all active ones, similar to weed_deinit_all, but we use higher keys
+
+   @see weed_deinit_all()
+*/
 void deinit_render_effects(void) {
-  // during rendering/render preview, we use the "keys" FX_KEYS_MAX_VIRTUAL -> FX_KEYS_MAX
-  // here we deinit all active ones, similar to weed_deinit_all, but we use higher keys
   register int i;
 
   for (i = FX_KEYS_MAX_VIRTUAL; i < FX_KEYS_MAX; i++) {
@@ -7051,16 +7059,15 @@ void deinit_render_effects(void) {
       }
     }
   }
-
 }
 
 
+/**
+   @brief deinit all effects (except generators* during playback)
+   this is called on ctrl-0 or on shutdown
+   * background generators will be killed because their transition will be deinited
+*/
 void weed_deinit_all(boolean shutdown) {
-  // deinit all (except generators* during playback)
-  // this is called on ctrl-0 or on shutdown
-
-  // * background generators will be killed because their transition will be deinited
-
   int i;
   weed_plant_t *instance;
 
@@ -7106,6 +7113,14 @@ void weed_deinit_all(boolean shutdown) {
 }
 
 
+/**
+   @brief registration fn. for video effects with audio input channels
+   during playback there is the option of buffering audio sent to the soundcard
+   if a video effect requires audio it can register itself here, and the audio buffer will be filled and 
+   only refreshed after all clients have read from it. Once this has happened, the read / write buffers are swapped for the 
+   following cycle. This ensures that no client will miss audio samples, at the cost of some minor latency.
+   Purely audio filters are run directly during the audio cycle or by the audio caching thread.
+*/ 
 static int register_audio_channels(int nchannels) {
   if (!is_realtime_aplayer(prefs->audio_player)) {
     mainw->afbuffer_clients = 0;

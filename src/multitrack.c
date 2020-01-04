@@ -9609,9 +9609,7 @@ static boolean on_tleb_enter(LiVESWidget * widget, LiVESXEventCrossing * event, 
 
 
 void reset_renumbering(void) {
-  int i;
-
-  for (i = 1; i <= MAX_FILES; i++) {
+  for (int i = 1; i <= MAX_FILES; i++) {
     if (mainw->files[i] != NULL) {
       renumbered_clips[i] = i;
     } else renumbered_clips[i] = 0;

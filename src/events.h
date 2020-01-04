@@ -117,6 +117,9 @@ void event_list_free(weed_plant_t *event_list);
 
 /// lib-ish stuff
 typedef weed_plant_t weed_event_t;
+int weed_event_get_type(weed_event_t *event);
+weed_timecode_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
+weed_timecode_t weed_event_get_timecode(weed_event_t *);
 
 int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int **frames); // returns ntracks
 int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double **aseeks); // returns natracks
@@ -125,7 +128,7 @@ int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double
 void event_list_replace_events(weed_plant_t *event_list, weed_plant_t *new_event_list);
 
 /// called during quantisation
-weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_plant_t *event_list);
+weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t tc, weed_plant_t *event_list);
 
 /// if all_events is FALSE we only count FRAME events
 int count_events(weed_plant_t *event_list, boolean all_events, ticks_t start_tc, ticks_t end_tc);

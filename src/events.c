@@ -3309,7 +3309,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
 
       if (weed_plant_has_leaf(next_event, WEED_LEAF_IN_PARAMETERS)) {
         int nparams;
-        void **xpchains = weed_get_voidptr_array(next_event, WEED_LEAF_IN_PARAMETERS, &nparams);
+        void **xpchains = weed_get_voidptr_array_counted(next_event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
         for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
         pchains[key][nparams] = NULL;
@@ -4029,7 +4029,7 @@ lives_render_error_t render_events(boolean reset) {
 
       if (weed_plant_has_leaf(event, WEED_LEAF_IN_PARAMETERS)) {
         int nparams;
-        void **xpchains = weed_get_voidptr_array(event, WEED_LEAF_IN_PARAMETERS, &nparams);
+        void **xpchains = weed_get_voidptr_array_counted(event, WEED_LEAF_IN_PARAMETERS, &nparams);
         pchains[key] = (void **)lives_realloc(pchains[key], (nparams + 1) * sizeof(void *));
         for (i = 0; i < nparams; i++) pchains[key][i] = xpchains[i];
         pchains[key][nparams] = NULL;

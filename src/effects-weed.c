@@ -821,7 +821,7 @@ static void create_filter_map(uint64_t rteval) {
     here we add effect_deinit events to an event_list
 
     @see deinit_render_effects()
- */
+*/
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   // should be called with mainw->event_list_mutex unlocked !
   int i;
@@ -7065,7 +7065,7 @@ void deinit_render_effects(void) {
 /**
    @brief deinit all effects (except generators* during playback)
    this is called on ctrl-0 or on shutdown
-   * background generators will be killed because their transition will be deinited
+     background generators will be killed because their transition will be deinited
 */
 void weed_deinit_all(boolean shutdown) {
   int i;
@@ -7116,11 +7116,11 @@ void weed_deinit_all(boolean shutdown) {
 /**
    @brief registration fn. for video effects with audio input channels
    during playback there is the option of buffering audio sent to the soundcard
-   if a video effect requires audio it can register itself here, and the audio buffer will be filled and 
-   only refreshed after all clients have read from it. Once this has happened, the read / write buffers are swapped for the 
+   if a video effect requires audio it can register itself here, and the audio buffer will be filled and
+   only refreshed after all clients have read from it. Once this has happened, the read / write buffers are swapped for the
    following cycle. This ensures that no client will miss audio samples, at the cost of some minor latency.
    Purely audio filters are run directly during the audio cycle or by the audio caching thread.
-*/ 
+*/
 static int register_audio_channels(int nchannels) {
   if (!is_realtime_aplayer(prefs->audio_player)) {
     mainw->afbuffer_clients = 0;
@@ -10230,7 +10230,6 @@ boolean interpolate_param(weed_plant_t *param, void *pchain, weed_timecode_t tc)
 
         valis[j] = last_valuei + (next_valuesi[j] - last_valuei) / (tc_diff / TICKS_PER_SECOND_DBL) *
                    ((tc - weed_get_int64_value((weed_plant_t *)lpc[j], WEED_LEAF_TIMECODE, NULL)) / TICKS_PER_SECOND_DBL) + .5;
-
         lives_free(last_valuesi);
         lives_free(next_valuesi);
         break;

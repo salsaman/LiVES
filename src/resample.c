@@ -493,8 +493,11 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
    /// - get tc of 1st frame event in in_list
    /// tc of out_list starts at zero. If allow_gap is FALSE we add an offset_tc so out_list 0 coincides with tc of 1st frame in in_list.
    /// loop:
-   /// - advance in_list until NEXT event tc > out_tc
-   /// - apply in_list state at out_tc, interpolating between last in frame and next in frame
+   /// - advance in_list until either we hit a frame event, or tc of NEXT event > out_tc
+   ///  -- if tc of next frame is <= out_tc, we continue
+   ///  -- update the state to current event
+   /// 
+   /// - apply in_list state at out_tc, interpolating between last (current) in frame and next in frame
    /// - advance out_tc by 1. / out_fps
    ///  - goto loop
    
@@ -503,7 +506,7 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 
 */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
-  weed_timecode_t out_tc = 0, ntc, offset_tc = 0, in_tc, ltc = 0;
+  weed_timecode_t out_tc = 0, ntc = 0, offset_tc = 0, in_tc, ltc = 0;
   weed_timecode_t tc_end;
 
   weed_plant_t *out_list;
@@ -566,12 +569,13 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   tc_end = get_event_timecode(last_frame_event) - offset_tc;
   tc_end = q_gint64(tc_end + tl, qfps);
 
-  for (out_tc = 0; out_tc < tc_end; out_tc = q_gint64(out_tc + tl, qfps)) {
+  for (out_tc = 0; out_tc < tc_end; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) { // make sure we round up
     //if (out_tc + offset_tc < ntc) continue;
 
-    while (event != NULL) {
+    weed_timecode_t stop_tc = out_tc + offset_tc;
+    
+    while (1) {
       // if event_list started as a recording then this will have been set for previews, but we now need to discard it
-      weed_leaf_delete(event, WEED_LEAF_HOST_TAG);
 
       /// in this mode we walk the event_list until we pass the output time, keeping track of
       /// state - frame and clip numbers, audio positions, param values, then insert everything at the output slot
@@ -588,22 +592,42 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
       /// events are added in the standard ordering, i.e filter_inits, param changes, filter map, frame, filter_deinits
 
-      in_tc = get_event_timecode(event);
-      if (in_tc <= out_tc + offset_tc) {
-	/// update the state until we 
+      if (event != NULL) {
+	//weed_event_t *nevent = get_next_event(event);
+	in_tc = get_event_timecode(event);
+	//if (nevent != NULL) ntc = weed_event_get_timecode(nevent);
+	//else ntc = in_tc;
+      }
+
+      if (event != NULL && in_tc <= stop_tc) {
+	/// update the state until we pass out_tc
 	etype = weed_event_get_type(event);
 	g_print("got event type %d at tc %ld, out = %ld\n", etype, in_tc, out_tc);
 	switch (etype) {
 	case WEED_EVENT_HINT_FRAME:
+	  /// now we have a choice: we can either insert this frame at out_tc with the current fx state, or with the state at out_tc
+#ifdef KEEP_FRAME_STATE
+	  nframe_event = get_next_frame_event(event);
+	  if (nframe_event != NULL) {
+	    if (weed_event_get_timecode(nframe_event) > stop_tc) stop_tc = in_tc; // force insertion after this
+	  }
+#endif
 	  /* // interpolate unadded audio */
 	  if (natracks > 0) {
 	    // advance the seek value, so when we do add the audio vals, the seek is to the right time
 	    // we use const. accel calculated when picked up
 	    double dt = (double)(in_tc - ltc) / TICKS_PER_SECOND_DBL;
 	    for (i = 0; i < natracks; i += 2) {
+	      double vel = naseeks[i + 1];
+	      for (j = 0; j < xatracks; j += 2) {
+		if (xaclips[j] == naclips[i]) {
+		  vel = xaseeks[i + 1];
+		  break;
+		}
+	      }
 	      if (naseeks[i + 1] != 0. || naccels[i >> 1] != 0.) {
-		naseeks[i] += dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
-		naseeks[i + 1] += naccels[i >> 1];
+		naseeks[i] += vel * dt;//dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
+		//naseeks[i + 1] += naccels[i >> 1];
 	      }
 	    }
 	  }
@@ -636,43 +660,18 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 		naseeks[natracks - 1] = aseeks[j + 1];
 		naccels[(natracks >> 1) - 1] = 0.;
 	      }}
-
-	    if (old_fps == 0.) {
-	      /// for recorded event_lists we try to smooth velocity changes (i.e. acceleration)
-	      /// test with constant acceleration and with 0. We use whichever results in a seek time nearest to the next seek time
-	      /// (if any). This helps smooth out keyboard rate changes.
-	      if (naudio_event == event) naudio_event = NULL;
-	      if (naudio_event == NULL) naudio_event = get_next_audio_frame_event(event);
-	      if (naudio_event != NULL) {
-		lives_free(aclips);
-		lives_free(aseeks);
-		if (weed_frame_event_get_audio_tracks(naudio_event, &aclips, &aseeks) == 2) {
-		  if (naclips[1] == aclips[1] && naseeks[1] != aseeks[1] && naseeks[1] != 0. && aseeks[1] != 0.) {
-		    /// assume the velocity goes smoothly from a to b, then we can work out the seek point at b.
-		    /// if this is close to the actual seek at b then we interplolate avel
-		    /// given s0, v0 at t0, and s1, v1 at t1, accel = dv / dt
-		    // then seek at t1 should be s0 + v0. (t1 - t0) + 1/ 2. a. (t1 - t0) ^ 2
-		    double taccel = (aseeks[1] - naseeks[1]) / 2.;  /// accel * dt / 2.0
-		    double dt = (double)(get_event_timecode(naudio_event) - get_event_timecode(event)) / TICKS_PER_SECOND_DBL;
-		    double seek = naseeks[0] + naseeks[1] * dt;
-		    double delta = fabs(seek - aseeks[0]);
-		    seek += taccel * dt; ///  (taccel == accel * dt / 2)
-		    if (fabs(seek - aseeks[0]) < delta) {
-		      //naccels[0] = 2. * (aseeks[0] - naseeks[0] - dt * naseeks[1]) / (dt * dt);
-		      naccels[0] = (aseeks[1] * aseeks[1] - naseeks[1] * naseeks[1]) / (2 * (aseeks[0] - naseeks[0]));
-		      // *INDENT-OFF*
-		    }}}}}
-	    // *INDENT-ON*
 	    lives_free(aclips);
 	    lives_free(aseeks);
+	    if (naudio_event == event) naudio_event = NULL;
 	  }
-
+	  /// ltc is last frame in_tc, frame_event is last frame
 	  ltc = in_tc;
 	  frame_event = event;
 	  if (event == nframe_event) nframe_event = NULL;
 	  break;
 	case WEED_EVENT_HINT_FILTER_INIT:
 	  // add to filter_inits list
+	  weed_leaf_delete(event, WEED_LEAF_HOST_TAG);
 	  init_events = lives_list_prepend(init_events, event);
 	  break;
 	case WEED_EVENT_HINT_FILTER_DEINIT:
@@ -763,6 +762,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 	tracks = weed_frame_event_get_tracks(frame_event, &clips, &frames);
 	frame_tc = get_event_timecode(frame_event);
 
+	// frame_event is always <= out_tc, nframe_event is always > out_tc
 	if (nframe_event == NULL) nframe_event = get_next_frame_event(frame_event);
 	ntracks = weed_frame_event_get_tracks(nframe_event, &nclips, &nframes);
 	ntc = get_event_timecode(nframe_event);
@@ -843,18 +843,43 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 		  naclips = (int *)lives_realloc(naclips, natracks * sizint);
 		  naseeks = (double *)lives_realloc(naseeks, natracks * sizdbl);
 		  naccels = (double *)lives_realloc(naccels, (natracks >> 1) * sizdbl);
+		  // *INDENT-OFF*
+		}}}}}
+	// *INDENT-ON*
+
+	if (natracks > 0) {
+	  /// if there is still audio to be added, update the seek posn to out_tc
+	    double dt = (double)(out_tc + offset_tc - ltc) / TICKS_PER_SECOND_DBL;
+	    for (i = 0; i < natracks; i += 2) {
+	      double vel = naseeks[i + 1];
+	      for (j = 0; j < xatracks; j += 2) {
+		if (xaclips[j] == naclips[i]) {
+		  vel = xaseeks[i + 1];
+		  break;
 		}
 	      }
-	    }
-	  }
-
-	  if (natracks > 0) {
-	    /// if there is still audio to be added, update the seek posn to out_tc
-	    double dt = (double)(in_tc - ltc) / TICKS_PER_SECOND_DBL;
-	    for (i = 0; i < natracks; i += 2) {
 	      if (naseeks[i + 1] != 0. || naccels[i >> 1] != 0.) {
-		naseeks[i] += dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
-		naseeks[i + 1] += naccels[i >> 1];
+		naseeks[i] += vel * dt;//dt * naseeks[i + 1] + dt * naccels[i >> 1] / 2.;
+		//naseeks[i + 1] += naccels[i >> 1];
+	      }
+	    }
+
+	    if (old_fps == 0.) {
+	      int *aclips;
+	      double *aseeks;
+	      /// for recorded event_lists we try to smooth velocity changes (i.e. acceleration)
+	      if (naudio_event == NULL) naudio_event = get_next_audio_frame_event(event);
+	      if (naudio_event != NULL) {
+		if (weed_frame_event_get_audio_tracks(naudio_event, &aclips, &aseeks) == 2) {
+		  if (naclips[1] == aclips[1] && naseeks[1] != aseeks[1] && naseeks[1] != 0. && aseeks[1] != 0.) {
+		    /// assume the velocity goes smoothly from a to b, then we can work out the seek point at b.
+		    double dt = (double)(get_event_timecode(naudio_event) - (out_tc + offset_tc)) / TICKS_PER_SECOND_DBL;
+		    naseeks[1] = (aseeks[0] - naseeks[0]) / dt;
+		  }
+		}
+		// *INDENT-ON*
+		lives_free(aclips);
+		lives_free(aseeks);
 	      }
 	    }
 
@@ -884,7 +909,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 	    lives_freep((void **)&naclips);
 	    lives_freep((void **)&naseeks);
 	    lives_freep((void **)&naccels);
-	  }
 	}
 
 	lives_freep((void **)&frames);
@@ -920,7 +944,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
       }
     } /// end of the in_list
   } /// end of out_list
-
 
   g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, tc_end);
   

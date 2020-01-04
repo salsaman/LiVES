@@ -7324,7 +7324,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     }
   }
 
-  if (!create_empty_pixel_data(channel, FALSE, TRUE)) {
+  if (!create_empty_pixel_data(channel, TRUE, TRUE)) {
     return NULL;
   }
 
@@ -8566,7 +8566,8 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
   weed_instance_ref(inst);
 
   // do not record changes for the floating fx dialog box (rte window params)
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD) && weed_get_boolean_value(inst, WEED_LEAF_HOST_NORECORD, &error)) {
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)
+      && weed_get_boolean_value(inst, WEED_LEAF_HOST_NORECORD, &error)) {
     weed_instance_unref(inst);
     return;
   }

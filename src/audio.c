@@ -1363,9 +1363,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (is_silent[track]) {
         // zero float_buff
         for (c = 0; c < out_achans; c++) {
-          for (x = 0; x < xsamples; x++) {
-            float_buffer[track * out_achans + c][x] = 0.;
-          }
+	  lives_memset(float_buffer[track * out_achans + c], 0, xsamples * sizeof(float));
         }
         continue;
       }
@@ -1379,6 +1377,13 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// otherwise we would be gradually losing or gaining samples
       tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
                in_asamps[track] * in_achans[track];
+
+      if (tbytes <= 0) {
+	for (c = 0; c < out_achans; c++) {
+	  lives_memset(float_buffer[track * out_achans + c], 0, xsamples * sizeof(float));
+        }
+        continue;
+      }
 
       in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
 
@@ -1557,8 +1562,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     xsamples = zsamples;
   }
 
-  if (xsamples > 0) {
-    for (i = 0; i < out_achans * nfiles; i++) {
+  if (xsamples > 0) { 
+   for (i = 0; i < out_achans * nfiles; i++) {
       if (float_buffer[i] != NULL) lives_free(float_buffer[i]);
     }
   }

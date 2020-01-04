@@ -2263,7 +2263,8 @@ void event_list_free(weed_plant_t *event_list) {
 
 
 void event_list_replace_events(weed_plant_t *event_list, weed_plant_t *new_event_list) {
-  if (event_list == NULL) return;
+  if (event_list == NULL || new_event_list == NULL) return;
+  if (event_list == new_event_list) return;
   event_list_free_events(event_list);
   weed_set_voidptr_value(event_list, WEED_LEAF_FIRST, get_first_event(new_event_list));
   weed_set_voidptr_value(event_list, WEED_LEAF_LAST, get_last_event(new_event_list));
@@ -3782,7 +3783,7 @@ lives_render_error_t render_events(boolean reset) {
                 lives_freep((void **)&mainw->read_failed_file);
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                                      mainw->current_file, xavel, xaseek, q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5),
-                                         cfile->fps),
+										  cfile->fps),
                                      q_gint64(tc + (weed_timecode_t)((next_frame_event != NULL || is_blank) ? 0
                                               : TICKS_PER_SECOND_DBL / cfile->fps),
                                               cfile->fps), chvols, 1., 1., NULL);
@@ -4433,6 +4434,8 @@ boolean render_to_clip(boolean new_clip) {
     if (qevent_list != NULL) {
       event_list_replace_events(mainw->event_list, qevent_list);
       weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
+      reset_renumbering();
+      event_list_rectify(NULL, mainw->event_list);
     }
   }
 
@@ -4782,13 +4785,14 @@ boolean deal_with_render_choice(boolean add_deinit) {
           render_choice = RENDER_CHOICE_PREVIEW;
           break;
         }
-    /* weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, FALSE); */
-    /* if (qevent_list != NULL) { */
-    /*   reset_renumbering(); */
-    /*   event_list_rectify(NULL, qevent_list); */
-    /*   event_list_replace_events(mainw->event_list, qevent_list); */
-    /*   weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps); */
-    /* } */
+    weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, FALSE);
+    if (qevent_list != NULL) {
+      /* reset_renumbering(); */
+      /* event_list_rectify(NULL, qevent_list); */
+      if (qevent_list != mainw->event_list)
+	event_list_replace_events(mainw->event_list, qevent_list);
+      weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
+    }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

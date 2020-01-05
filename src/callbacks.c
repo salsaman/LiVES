@@ -2242,9 +2242,9 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
         lives_system(com, FALSE);
         lives_free(com);
         if (mainw->com_failed) {
-	  lives_free(audfile);
-	  return;
-	}
+          lives_free(audfile);
+          return;
+        }
         retvalb = do_auto_dialog(_("Restoring audio"), 0);
         if (!retvalb) {
           d_print_failed();
@@ -4734,11 +4734,11 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       cfile->freeze_fps = -cfile->freeze_fps;
       return TRUE;
     }
-      
+
     lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-      
+
     // make sure this is called, sometimes we switch clips too soon...
     changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
   } else if (area == SCREEN_AREA_BACKGROUND) {
@@ -6076,7 +6076,7 @@ void switch_clip(int type, int newclip, boolean force) {
       mainw->blend_file = newclip;
       mainw->whentostop = NEVER_STOP;
       if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
-	ce_thumbs_highlight_current_clip();
+        ce_thumbs_highlight_current_clip();
       }
     }
     return;
@@ -6771,7 +6771,7 @@ void on_save_textview_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   lives_free(save_file);
-  }
+}
 
 
 void on_filechooser_cancel_clicked(LiVESWidget * widget) {
@@ -9189,7 +9189,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget, user_data) {
 EXPOSE_FN_END
 
 
-  static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
+static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   int width;
 
   if (mainw->laudio_drawable != NULL) {

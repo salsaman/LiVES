@@ -10876,7 +10876,7 @@ static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
 #define MAX_FRAME_SIZE 1000000000
 
 static int realign_typeleaf(int fd, weed_plant_t *plant) {
-   uint8_t buff[12];
+  uint8_t buff[12];
   const char XMATCH[8] = {4, 0, 0, 0, 't', 'y', 'p', 'e'};
   int type, nl;
   register uint64_t count = REALIGN_MAX;
@@ -11268,15 +11268,15 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   boolean newd = FALSE, retried = FALSE;
   int bugfd = -1;
 
- realign:
-  
+realign:
+
   // caller should clear and check mainw->read_failed
   if (mem == NULL) {
     if (fd == bugfd) {
       if (plant == NULL) {
         // create a new plant with type unknown
         plant = weed_plant_new(WEED_PLANT_UNKNOWN);
-	newd = TRUE;
+        newd = TRUE;
       }
       numleaves = realign_typeleaf(fd, plant);
       if (numleaves == 0 || (type = weed_plant_get_type(plant)) <= 0) {
@@ -11313,12 +11313,12 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
         bugfd = fd;
       }
       if (newd) {
-	weed_plant_free(plant);
-	plant = NULL;
+        weed_plant_free(plant);
+        plant = NULL;
       }
       if (bugfd == fd && !retried) {
-	retried = TRUE;
-	goto realign;
+        retried = TRUE;
+        goto realign;
       }
       return NULL;
     }
@@ -11336,12 +11336,12 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
         bugfd = fd;
       }
       if (newd) {
-	weed_plant_free(plant);
-	plant = NULL;
+        weed_plant_free(plant);
+        plant = NULL;
       }
       if (bugfd == fd && !retried) {
-	retried = TRUE;
-	goto realign;
+        retried = TRUE;
+        goto realign;
       }
       return NULL;
     }

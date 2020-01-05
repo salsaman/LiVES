@@ -180,6 +180,14 @@ LIVES_GLOBAL_INLINE int get_int_prefd(const char *key, int defval) {
 }
 
 
+LIVES_GLOBAL_INLINE int64_t get_int64_prefd(const char *key, int64_t defval) {
+  char buffer[64];
+  get_string_pref(key, buffer, 64);
+  if (strlen(buffer) == 0) return defval;
+  return atol(buffer);
+}
+
+
 LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
@@ -1372,7 +1380,7 @@ boolean apply_prefs(boolean skip_warn) {
   int rec_opts = rec_frames * REC_FRAMES + rec_fps * REC_FPS + rec_effects * REC_EFFECTS + rec_clips * REC_CLIPS + rec_audio *
                  REC_AUDIO
                  + rec_after_pb * REC_AFTER_PB;
-  uint32_t warn_mask;
+  uint64_t warn_mask;
 
   unsigned char *new_undo_buf;
   LiVESList *ulist;
@@ -1541,7 +1549,8 @@ boolean apply_prefs(boolean skip_warn) {
     future_prefs->audio_src = rec_ext_audio ? AUDIO_SRC_EXT : AUDIO_SRC_INT;
   }
 
-  warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
+  warn_mask = !warn_fps * WARN_MASK_FPS + !warn_save_set * WARN_MASK_SAVE_SET
+              + !warn_fsize * WARN_MASK_FSIZE + !warn_mplayer *
               WARN_MASK_NO_MPLAYER + !warn_rendered_fx * WARN_MASK_RENDERED_FX + !warn_encoders *
               WARN_MASK_NO_ENCODERS + !warn_layout_missing_clips * WARN_MASK_LAYOUT_MISSING_CLIPS + !warn_duplicate_set *
               WARN_MASK_DUPLICATE_SET + !warn_layout_close * WARN_MASK_LAYOUT_CLOSE_FILE + !warn_layout_delete *
@@ -1551,13 +1560,14 @@ boolean apply_prefs(boolean skip_warn) {
               WARN_MASK_MT_NO_JACK + !warn_layout_adel * WARN_MASK_LAYOUT_DELETE_AUDIO + !warn_layout_ashift *
               WARN_MASK_LAYOUT_SHIFT_AUDIO + !warn_layout_aalt * WARN_MASK_LAYOUT_ALTER_AUDIO + !warn_layout_popup *
               WARN_MASK_LAYOUT_POPUP + !warn_yuv4m_open * WARN_MASK_OPEN_YUV4M + !warn_mt_backup_space *
-              WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
+              WARN_MASK_MT_BACKUP_SPACE + !warn_after_crash * WARN_MASK_CLEAN_AFTER_CRASH
+              + !warn_no_pulse * WARN_MASK_NO_PULSE_CONNECT
               + !warn_layout_wipe * WARN_MASK_LAYOUT_WIPE + !warn_layout_gamma * WARN_MASK_LAYOUT_GAMMA + !warn_vjmode_enter *
               WARN_MASK_VJMODE_ENTER;
 
   if (warn_mask != prefs->warning_mask) {
     prefs->warning_mask = warn_mask;
-    set_int_pref(PREF_LIVES_WARNING_MASK, prefs->warning_mask);
+    set_int64_pref(PREF_LIVES_WARNING_MASK, prefs->warning_mask);
   }
 
   if (msgs_unlimited) {

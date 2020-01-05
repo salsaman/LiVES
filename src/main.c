@@ -748,7 +748,7 @@ static boolean pre_init(void) {
 
   get_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device, PATH_MAX);
 
-  prefs->warning_mask = (uint32_t)get_int_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
+  prefs->warning_mask = (uint64_t)get_int64_prefd(PREF_LIVES_WARNING_MASK, DEF_WARNING_MASK);
 
   if (!ign_opts.ign_jackopts) {
     prefs->jack_opts = future_prefs->jack_opts = get_int_prefd(PREF_JACK_OPTS, 0);
@@ -2979,7 +2979,8 @@ static boolean lives_startup(livespointer data) {
       if (info_only) startup_message_info(capable->startup_msg);
       else startup_message_nonfatal(capable->startup_msg);
     } else {
-      if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
+      if (!capable->has_mplayer && !capable->has_mplayer2 && !capable->has_mpv
+          && !(prefs->warning_mask & WARN_MASK_NO_MPLAYER)) {
         startup_message_nonfatal_dismissable(
           _("\nLiVES was unable to locate 'mplayer','mplayer2' or 'mpv'. "
             "You may wish to install one of these to use LiVES more fully.\n"),
@@ -4052,7 +4053,7 @@ boolean startup_message_info(const char *msg) {
 }
 
 
-boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask) {
+boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask) {
   do_error_dialog_with_check(msg, warning_mask);
   return TRUE;
 }

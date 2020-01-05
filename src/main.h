@@ -966,14 +966,12 @@ typedef enum {
 boolean do_progress_dialog(boolean visible, boolean cancellable, const char *text);
 boolean do_warning_dialog(const char *text);
 boolean do_warning_dialogf(const char *fmt, ...);
-boolean do_warning_dialog_with_check(const char *text, int warn_mask_number);
-boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number);
+boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient);
 boolean do_yesno_dialog(const char *text);
 boolean do_yesno_dialogf(const char *fmt, ...);
-boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
-boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number);
-boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient);
+boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number);
+boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient);
 LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
@@ -981,12 +979,12 @@ int do_error_dialog(const char *text);
 int do_error_dialogf(const char *fmt, ...);
 int do_info_dialog(const char *text);
 int do_info_dialogf(const char *fmt, ...);
-int do_error_dialog_with_check(const char *text, int warn_mask_number);
+int do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
 int do_blocking_error_dialog(const char *text);
 int do_blocking_error_dialogf(const char *fmt, ...);
 int do_blocking_info_dialog(const char *text);
 int do_blocking_info_dialogf(const char *fmt, ...);
-int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, int warn_mask_number,
+int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
     LiVESWindow *transient);
 int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient);
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
@@ -1198,7 +1196,7 @@ void startup_message_fatal(char *msg) GNU_NORETURN;
 boolean startup_message_choice(const char *msg, int msgtype);
 boolean startup_message_nonfatal(const char *msg);
 boolean startup_message_info(const char *msg);
-boolean startup_message_nonfatal_dismissable(const char *msg, int warning_mask);
+boolean startup_message_nonfatal_dismissable(const char *msg, uint64_t warning_mask);
 capability *get_capabilities(void);
 void get_monitors(boolean reset);
 void replace_with_delegates(void);

@@ -399,7 +399,7 @@ boolean do_warning_dialog(const char *text) {
 }
 
 
-boolean do_warning_dialog_with_check(const char *text, int warn_mask_number) {
+boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text, warn_mask_number, NULL);
   } else {
@@ -408,12 +408,12 @@ boolean do_warning_dialog_with_check(const char *text, int warn_mask_number) {
 }
 
 
-boolean do_yesno_dialog_with_check(const char *text, int warn_mask_number) {
+boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
 }
 
 
-boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
+boolean do_warning_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient) {
   // show OK/CANCEL, returns FALSE if cancelled
   LiVESWidget *warning;
   int response = 1;
@@ -442,7 +442,7 @@ boolean do_warning_dialog_with_check_transient(const char *text, int warn_mask_n
 }
 
 
-boolean do_yesno_dialog_with_check_transient(const char *text, int warn_mask_number, LiVESWindow *transient) {
+boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mask_number, LiVESWindow *transient) {
   // show YES/NO, returns TRUE for YES
   LiVESWidget *warning;
   int response = 1;
@@ -615,7 +615,7 @@ LIVES_GLOBAL_INLINE int do_info_dialog(const char *text) {
 }
 
 
-int do_error_dialog_with_check(const char *text, int warn_mask_number) {
+int do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show warning box
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
@@ -666,7 +666,8 @@ int do_blocking_info_dialog(const char *text) {
 }
 
 
-int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, int warn_mask_number, LiVESWindow *transient) {
+int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
+    LiVESWindow *transient) {
   // show error box
 
   LiVESWidget *err_box;
@@ -2230,7 +2231,6 @@ boolean do_auto_dialog(const char *text, int type) {
         if (alarm_handle > 0) {
           ticks_t tl;
           while ((tl = lives_alarm_check(alarm_handle)) > 0) {
-            g_print("TL is %ld\n", tl);
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
             lives_widget_context_update();
             lives_usleep(prefs->sleep_time);
@@ -2578,7 +2578,8 @@ boolean do_yuv4m_open_warning(void) {
   msg = lives_strdup_printf(
           _("When opening a yuvmpeg stream, you should first create a fifo file, and then write yuv4mpeg frames to it.\n"
             "Now you will get a chance to browse for the fifo file here.\nFollowing that,\n"
-            "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, otherwise, click Cancel."),
+            "LiVES will pause briefly until frames are received.\nYou should only click OK if you understand what you are doing, "
+            "otherwise, click Cancel."),
           prefs->workdir);
   resp = do_warning_dialog_with_check(msg, WARN_MASK_OPEN_YUV4M);
   lives_free(msg);
@@ -2656,9 +2657,11 @@ void do_upgrade_error_dialog(void) {
 void do_rendered_fx_dialog(void) {
   char *tmp;
   char *msg = lives_strdup_printf(
-                _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n%s%s%s\nor change the value of <lib_dir> in %s\n"),
-                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN, (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
-                    NULL)));
+                _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
+                  "%s%s%s\nor change the value of <lib_dir> in %s\n"),
+                prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_RENDERED_EFFECTS_BUILTIN,
+                (tmp = lives_filename_to_utf8(capable->rcfile, -1, NULL, NULL,
+                       NULL)));
   do_error_dialog_with_check(msg, WARN_MASK_RENDERED_FX);
   lives_free(msg);
   lives_free(tmp);
@@ -2700,7 +2703,8 @@ boolean prompt_remove_layout_files(void) {
 
 boolean do_set_duplicate_warning(const char *new_set) {
   char *msg = lives_strdup_printf(
-                _("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\nClick Cancel to pick a new name.\n"),
+                _("\nA set entitled %s already exists.\nClick OK to add the current clips and layouts to the existing set.\n"
+                  "Click Cancel to pick a new name.\n"),
                 new_set);
   boolean retcode = do_warning_dialog_with_check(msg, WARN_MASK_DUPLICATE_SET);
   lives_free(msg);
@@ -2838,14 +2842,16 @@ void do_mt_no_audchan_error(void) {
 
 void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
-    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\nYou can set this in Tools|Preferences|Playback."),
+    _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
+      "You can set this in Tools|Preferences|Playback."),
     warn_mask);
 }
 
 
 boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
-           _("Errors were detected in the layout (which may be due to transferring from another system, or from an older version of LiVES).\n"
+           _("Errors were detected in the layout (which may be due to transferring from another system, "
+             "or from an older version of LiVES).\n"
              "Should I try to repair the disk copy of the layout ?\n"));
 }
 
@@ -3400,7 +3406,8 @@ void do_card_in_use_error(void) {
 
 void do_dev_busy_error(const char *devstr) {
   char *msg = lives_strdup_printf(
-                _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n- Check if this device is in use by another program.\n"
+                _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n"
+                  "- Check if this device is in use by another program.\n"
                   "- Check if the device actually exists.\n"),
                 devstr);
   do_blocking_error_dialog(msg);

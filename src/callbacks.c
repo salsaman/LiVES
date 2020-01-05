@@ -4848,7 +4848,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
-    if (!IS_NORMAL_CLIP(mainw->blend_file)) return TRUE;
+    if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,
@@ -4894,7 +4894,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
-    if (!IS_NORMAL_CLIP(mainw->blend_file)) return TRUE;
+    if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,

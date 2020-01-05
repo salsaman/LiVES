@@ -2006,13 +2006,12 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
     boolean get_audstate, boolean exact) {
   // if exact is set, we must rewind back to first active stateful effect,
   // and play forwards from there (not yet implemented - TODO)
-
-  weed_plant_t *nevent = get_first_event(event_list), *event;
   lives_audio_track_state_t *atstate = NULL, *audstate = NULL;
-  weed_plant_t *deinit_event;
-  int error, nfiles, nnfiles;
   weed_timecode_t last_tc = 0, fill_tc;
-  int i;
+  weed_plant_t *nevent = get_first_event(event_list), *event;
+  weed_plant_t *deinit_event;
+  weed_error_t error;
+  int i, nfiles, nnfiles, etype;
 
   // gets effects state (initing any effects which should be active)
 
@@ -2028,46 +2027,74 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
   do {
     event = nevent;
-    if (WEED_EVENT_IS_FILTER_MAP(event)) {
+    etype = weed_event_get_type(event);
+    switch (etype) {
+    case WEED_EVENT_HINT_FILTER_MAP:
       mainw->afilter_map = mainw->filter_map = event;
-    } else if (WEED_EVENT_IS_FILTER_INIT(event)) {
+      break;
+    case WEED_EVENT_HINT_FILTER_INIT:
       deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
       if (get_event_timecode(deinit_event) >= fill_tc) {
         // this effect should be activated
         process_events(event, FALSE, get_event_timecode(event));
         process_events(event, TRUE, get_event_timecode(event));
       }
-    } else if (get_audstate && WEED_EVENT_IS_AUDIO_FRAME(event)) {
-      atstate = aframe_to_atstate(event);
-
-      if (audstate == NULL) audstate = atstate;
-      else {
-        // have an existing audio state, update with current
-        for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++);
-
-        for (i = 0; i < nfiles; i++) {
-          // increase seek values up to current frame
-          audstate[i].seek += audstate[i].vel * (get_event_timecode(event) - last_tc) / TICKS_PER_SECOND_DBL;
+      break;
+    case WEED_EVENT_HINT_PARAM_CHANGE:
+      if (mainw->multitrack == NULL) {
+        weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, &error);
+        if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
+          char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &error);
+          int key = atoi(key_string);
+          char *filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &error);
+          int idx = weed_get_idx_for_hashname(filter_name, TRUE);
+          weed_event_t *filter = get_weed_filter(idx), *inst;
+          lives_free(filter_name);
+          lives_free(key_string);
+          if (!is_pure_audio(filter, FALSE)) break;
+          if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
+            int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
+            weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
+            weed_leaf_dup(param, event, WEED_LEAF_VALUE);
+          }
         }
+      }
+      break;
+    case WEED_EVENT_HINT_FRAME:
+      if (get_audstate && WEED_EVENT_IS_AUDIO_FRAME(event)) {
+        atstate = aframe_to_atstate(event);
 
-        for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
+        if (audstate == NULL) audstate = atstate;
+        else {
+          // have an existing audio state, update with current
+          for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++);
 
-        if (nnfiles > nfiles) {
-          audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
-          audstate[nnfiles].afile = -1;
-        }
+          for (i = 0; i < nfiles; i++) {
+            // increase seek values up to current frame
+            audstate[i].seek += audstate[i].vel * (get_event_timecode(event) - last_tc) / TICKS_PER_SECOND_DBL;
+          }
 
-        for (i = 0; i < nnfiles; i++) {
-          if (atstate[i].afile > 0) {
-            audstate[i].afile = atstate[i].afile;
-            audstate[i].seek = atstate[i].seek;
-            audstate[i].vel = atstate[i].vel;
+          for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
+
+          if (nnfiles > nfiles) {
+            audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
+            audstate[nnfiles].afile = -1;
+          }
+
+          for (i = 0; i < nnfiles; i++) {
+            if (atstate[i].afile > 0) {
+              audstate[i].afile = atstate[i].afile;
+              audstate[i].seek = atstate[i].seek;
+              audstate[i].vel = atstate[i].vel;
+            }
           }
         }
         lives_free(atstate);
       }
-
       last_tc = get_event_timecode(event);
+      break;
+    default:
+      break;
     }
     nevent = get_next_event(event);
   } while (event != st_event);
@@ -2258,13 +2285,12 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 void init_jack_audio_buffers(int achans, int arate, boolean exact) {
 #ifdef ENABLE_JACK
 
-  int i, chan;
+  int chan;
 
   mainw->jackd->abufs = (lives_audio_buf_t **)lives_calloc(prefs->num_rtaudiobufs, sizeof(lives_audio_buf_t *));
 
-  for (i = 0; i < prefs->num_rtaudiobufs; i++) {
+  for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
     mainw->jackd->abufs[i] = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
-
     mainw->jackd->abufs[i]->out_achans = achans;
     mainw->jackd->abufs[i]->arate = arate;
     mainw->jackd->abufs[i]->samp_space = XSAMPLES / prefs->num_rtaudiobufs;
@@ -2279,12 +2305,9 @@ void init_jack_audio_buffers(int achans, int arate, boolean exact) {
 
 void init_pulse_audio_buffers(int achans, int arate, boolean exact) {
 #ifdef HAVE_PULSE_AUDIO
-
-  int i;
-
   mainw->pulsed->abufs = (lives_audio_buf_t **)lives_calloc(prefs->num_rtaudiobufs, sizeof(lives_audio_buf_t *));
 
-  for (i = 0; i < prefs->num_rtaudiobufs; i++) {
+  for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
     mainw->pulsed->abufs[i] = (lives_audio_buf_t *)lives_calloc(1, sizeof(lives_audio_buf_t));
 
     mainw->pulsed->abufs[i]->out_achans = achans;
@@ -2300,14 +2323,12 @@ void init_pulse_audio_buffers(int achans, int arate, boolean exact) {
 
 void free_jack_audio_buffers(void) {
 #ifdef ENABLE_JACK
-
-  int i, chan;
+  int chan;
 
   if (mainw->jackd == NULL) return;
-
   if (mainw->jackd->abufs == NULL) return;
 
-  for (i = 0; i < prefs->num_rtaudiobufs; i++) {
+  for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
     if (mainw->jackd->abufs[i] != NULL) {
       for (chan = 0; chan < mainw->jackd->abufs[i]->out_achans; chan++) {
         lives_free(mainw->jackd->abufs[i]->bufferf[chan]);
@@ -2324,13 +2345,10 @@ void free_jack_audio_buffers(void) {
 void free_pulse_audio_buffers(void) {
 #ifdef HAVE_PULSE_AUDIO
 
-  int i;
-
   if (mainw->pulsed == NULL) return;
-
   if (mainw->pulsed->abufs == NULL) return;
 
-  for (i = 0; i < prefs->num_rtaudiobufs; i++) {
+  for (int i = 0; i < prefs->num_rtaudiobufs; i++) {
     if (mainw->pulsed->abufs[i] != NULL) {
       lives_free(mainw->pulsed->abufs[i]->buffer16[0]);
       lives_free(mainw->pulsed->abufs[i]->buffer16);
@@ -2380,7 +2398,6 @@ boolean resync_audio(int frameno) {
 #endif
           0)))
     return FALSE;
-
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -2820,10 +2837,9 @@ void audio_cache_end(void) {
 }
 
 
-lives_audio_buf_t *audio_cache_get_buffer(void) {
+LIVES_GLOBAL_INLINE lives_audio_buf_t *audio_cache_get_buffer(void) {
   return cache_buffer;
 }
-
 
 ///////////////////////////////////////
 

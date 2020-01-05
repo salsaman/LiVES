@@ -538,24 +538,28 @@ boolean is_init_pchange(weed_plant_t *init_event, weed_plant_t *pchange_event) {
 }
 
 
+/**
+   @brief copy (duplicate) in_event and append it to event_list, changing the timecode to out_tc
+   this is called during quantisation
+
+   copy an event and insert it in event_list
+   events must be copied in time order, since filter_deinit,
+   filter_map and param_change events MUST refer to prior filter_init events
+
+   when we copy a filter_init, we add a new field to the copy "event_id".
+   This contains the value of the pointer to original event
+   we use this to locate the effect_init event in the new event_list
+
+   for effect_deinit, effect_map, param_change, we change the "init_event(s)" property to point to our copy effect_init
+
+   we don't need to make pchain array here, provided we later call event_list_rectify()
+   (this only applies to multitrack, since we interpolate parameters there; in clip editor the paramter changes are applied
+   as recorded, with no interpolation)
+
+   we check for memory allocation errors here, because we could be building a large new event_list
+   on mem error we return NULL, caller should free() event_list in that case
+*/
 weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_tc, weed_plant_t *event_list) {
-  // this is called during quantisation
-
-  // copy an event and insert it in event_list
-  // events must be copied in time order, since filter_deinit,
-  // filter_map and param_change events MUST refer to prior filter_init events
-
-  // when we copy a filter_init, we add a new field to the copy "event_id".
-  // This contains the value of the pointer to original event
-  // we use this to locate the effect_init event in the new event_list
-
-  // for effect_deinit, effect_map, param_change, we change the "init_event(s)" property to point to our copy effect_init
-
-  // we don't need to make pchain array here, provided we later call event_list_rectify()
-
-  // we check for memory allocation errors here, because we could be building a large new event_list
-  // on mem error we return NULL, caller should free() the event_list in that case
-
   void **in_pchanges;
 
   weed_plant_t *event;
@@ -3707,7 +3711,7 @@ lives_render_error_t render_events(boolean reset) {
               }
             }
 
-            layer = weed_apply_effects(layers, mainw->filter_map, tc, 0, 0, pchains);
+            layer = weed_apply_effects(layers, mainw->filter_map, tc, cfile->hsize, cfile->vsize, pchains);
 
             for (i = 0; layers[i] != NULL; i++) {
               if (layer != layers[i]) {
@@ -3722,7 +3726,8 @@ lives_render_error_t render_events(boolean reset) {
             check_layer_ready(layer);
 #ifndef ALLOW_PNG24
             layer_palette = weed_layer_get_palette(layer);
-            if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24 && layer_palette != WEED_PALETTE_RGBA32)
+            if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24
+                && layer_palette != WEED_PALETTE_RGBA32)
               layer_palette = WEED_PALETTE_RGB24;
 
             else if (cfile->img_type == IMG_TYPE_PNG && layer_palette != WEED_PALETTE_RGBA32)

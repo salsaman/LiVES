@@ -743,6 +743,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     if (res < count) fbuff->eof = TRUE;
     fbuff->offset += res;
     count -= res;
+    retval += res;
   }
 
   if (!allow_less && count > 0) {

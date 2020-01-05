@@ -4420,45 +4420,71 @@ weed_plant_t *weed_out_param_switch_init(const char *name, int def);
 weed_plant_t *weed_out_param_integer_init_nominmax(const char *name, int def);
 weed_plant_t *weed_out_param_integer_init(const char *name, int def, int min, int max);
 
-// host info
-weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info);
-int weed_get_host_verbosity(weed_plant_t *host_info);
-char *weed_get_host_name(weed_plant_t *host_info);
-char *weed_get_host_version(weed_plant_t *host_info);
-int weed_get_host_flags(weed_plant_t *host_info);
-char **weed_get_host_layout_schemes(weed_plant_t *host_info, int *nvals);
-
 // value setters
 void weed_filter_set_flags(weed_plant_t *filter, int flags);
 void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags);
 void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags);
+void weed_gui_set_flags(weed_plant_t *paramtmpl, int flags);
 void weed_filter_set_name(weed_plant_t *filter, const char *name);
 void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name);
 void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name);
+//void weed_chantmpl_set_palette_list()
 
 // value getters
+
+// plugin_info
+weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info);
+int weed_get_api_version(weed_plant_t *plugin_info) ALLOW_UNUSED;
+
+// host info
+int weed_get_host_verbosity(weed_plant_t *host_info);
+//FN_DECL char *weed_get_host_name(weed_plant_t *host_info);
+//FN_DECL char *weed_get_host_version(weed_plant_t *host_info);
+int weed_host_get_flags(weed_plant_t *host_info);
+int weed_host_supports_linear_gamma(weed_plant_t *host_info);
+int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info);
+//FN_DECL char **weed_get_host_layout_schemes(weed_plant_t *host_info);
+
+// filter_class
 int weed_filter_get_flags(weed_plant_t *filter);
+weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) ALLOW_UNUSED;
+
+// param_tmpl
+weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt) ALLOW_UNUSED;
+int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
+
+// chan tmpl
 int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
-int weed_parammpl_get_flags(weed_plant_t *paramtmpl);
+
+// inst
+weed_plant_t *weed_get_filter_class(weed_plant_t *inst);
 weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);
 weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx);
+int weed_instance_get_flags(weed_plant_t *inst);
+
+// channel
 void *weed_channel_get_pixel_data(weed_plant_t *channel);
-void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes);
 int weed_channel_get_width(weed_plant_t *channel);
 int weed_channel_get_height(weed_plant_t *channel);
 int weed_channel_get_palette(weed_plant_t *channel);
+int weed_channel_get_yuv_clamping(weed_plant_t *channel);
 int weed_channel_get_stride(weed_plant_t *channel);
-int weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
 
-//if defined(NEED_AUDIO)
+#if defined(NEED_AUDIO) || defined(__LIBWEED_PLUGIN_UTILS__)
 int weed_channel_get_audio_rate(weed_plant_t *channel);
 int weed_channel_get_naudchans(weed_plant_t *channel);
 int weed_channel_get_audio_length(weed_plant_t *channel);
-//if defined __WEED_UTILS_H__
-float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans;);
+#ifdef __WEED_UTILS_H__
+float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans);
+#endif
+#endif
 
 int weed_channel_is_disabled(weed_plant_t *channel);
-  
+
+// params
+weed_plant_t  *weed_param_get_template(weed_plant_t *param);
+weed_plant_t *weed_param_get_gui(weed_plant_t *param);
+
 // param values
 int weed_param_get_value_int(weed_plant_t *param);
 int weed_param_get_value_boolean(weed_plant_t *param);
@@ -4466,7 +4492,7 @@ double weed_param_get_value_double(weed_plant_t *param);
 int64_t weed_param_get_value_int64(weed_plant_t *param);
 char *weed_param_get_value_string(weed_plant_t *param);
 
-//if defined __WEED_UTILS_H__
+#ifdef __WEED_UTILS_H__
 int *weed_param_get_array_int(weed_plant_t *param, int *nvalues);
 int *weed_param_get_array_boolean(weed_plant_t *param, int *nvalues);
 double *weed_param_get_array_double(weed_plant_t *param, int *nvalues);
@@ -4476,6 +4502,8 @@ weed_plant_t **weed_get_in_channels(weed_plant_t *inst, int *nchans);
 weed_plant_t **weed_get_out_channels(weed_plant_t *inst, int *nchans);
 weed_plant_t **weed_get_in_params(weed_plant_t *inst, int *nparams);
 weed_plant_t **weed_get_out_params(weed_plant_t *inst, int *nparams);
+int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes);
+#endif
 
 /* Threading */
 int weed_is_threading(weed_plant_t *inst);
@@ -4544,7 +4572,7 @@ EXAMPLE 1: function overloading for host and plugins
 #include <weed/weed.h>
 #include <weed/weed-effects.h>
 
-static void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags) {
+static void weed_clear_plant_flags(weed_plant_t *plant, int32_t flagsmask) {
        // clear any bits set in flagsmask from every leaf in plant
 	int nleaves;
    	char **leaves = weed_plant_list_leaves(plant, &nleaves);

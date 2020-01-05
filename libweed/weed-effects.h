@@ -371,8 +371,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 // PARAM_GUI
 #define WEED_LEAF_CHOICES_LANGUAGE "choices_lang"
 
-
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -485,7 +485,7 @@ typedef struct {
 } lives_screen_area_t;
 
 typedef struct {
-  int tleft;
+  ticks_t tleft;
   ticks_t lastcheck;
 }  lives_timeout_t;
 

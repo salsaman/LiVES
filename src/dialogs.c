@@ -2219,22 +2219,26 @@ boolean do_auto_dialog(const char *text, int type) {
     }
   }
 
-  if (infofile != NULL) {
-    if (type == 0 || type == 2) {
-      mainw->read_failed = FALSE;
-      lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
-      fclose(infofile);
-      infofile = NULL;
-      if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-      if (alarm_handle > 0) {
-        while (lives_alarm_check(alarm_handle) > 0) {
-          lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
-          lives_widget_context_update();
-          lives_usleep(prefs->sleep_time);
-        }
-        lives_alarm_clear(alarm_handle);
-      }
-    } else fclose(infofile);
+  if (!mainw->cancelled) {
+    if (infofile != NULL) {
+      if (type == 0 || type == 2) {
+	mainw->read_failed = FALSE;
+	lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
+	fclose(infofile);
+	infofile = NULL;
+	if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
+	if (alarm_handle > 0) {
+	  ticks_t tl;
+	  while ((tl = lives_alarm_check(alarm_handle)) > 0) {
+	    g_print("TL is %ld\n", tl);
+	    lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
+	    lives_widget_context_update();
+	    lives_usleep(prefs->sleep_time);
+	  }
+	  lives_alarm_clear(alarm_handle);
+	}
+      } else fclose(infofile);
+    }
   }
 
   if (proc_ptr != NULL) {
@@ -2243,8 +2247,8 @@ boolean do_auto_dialog(const char *text, int type) {
   }
 
   if (type == 2) mainw->cancel_type = CANCEL_KILL;
-
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  if (mainw->cancelled) return FALSE;
 
   // get error message (if any)
   if (type != 1 && !strncmp(mainw->msg, "error", 5)) {

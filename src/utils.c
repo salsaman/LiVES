@@ -1091,7 +1091,8 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
       return alarm.tleft;
     }
   }
-  alarm.tleft += alarm.lastcheck - curticks;
+
+  alarm.tleft -= curticks - alarm.lastcheck;
 
   if (alarm.tleft <= 0) {
     // reached alarm time, free up this timer and return TRUE

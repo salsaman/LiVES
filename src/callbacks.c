@@ -1023,6 +1023,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
                               req->do_update);
 
     mainw->com_failed = FALSE;
+    mainw->error = FALSE;
     lives_system(com, FALSE);
     lives_free(com);
 
@@ -1042,18 +1043,18 @@ void on_utube_select(lives_remote_clip_request_t *req) {
 
     // we expect to get back a list of available formats
     // or the selected format
-    if (!do_auto_dialog(_("Getting format list"), 0)) {
+    if (!do_auto_dialog(_("Getting format list"), 2)) {
       lives_free(dfile);
       if (!IS_VALID_CLIP(current_file)) {
         close_temp_handle(-1);
       }
       if (mainw->cancelled) d_print_cancelled();
-      if (mainw->error) {
+      else if (mainw->error) {
         d_print_failed();
         do_blocking_error_dialog(mainw->msg);
-        mainw->error = FALSE;
-        mainw->cancelled = CANCEL_RETRY;
       }
+      mainw->error = FALSE;
+      mainw->cancelled = CANCEL_RETRY;
       mainw->no_switch_dprint = FALSE;
       return;
     }
@@ -2240,8 +2241,10 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
         lives_rm(cfile->info_file);
         lives_system(com, FALSE);
         lives_free(com);
-        if (mainw->com_failed) return;
-
+        if (mainw->com_failed) {
+	  lives_free(audfile);
+	  return;
+	}
         retvalb = do_auto_dialog(_("Restoring audio"), 0);
         if (!retvalb) {
           d_print_failed();
@@ -4721,13 +4724,9 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     unlock_loop_lock();
     if (do_ret) return TRUE;
   }
-  if (area == SCREEN_AREA_FOREGROUND && !clip_can_reverse(mainw->current_file)) return TRUE;
-  if (area == SCREEN_AREA_FOREGROUND ||
-      (area == SCREEN_AREA_BACKGROUND
-       && (mainw->blend_file < 0 || (mainw->blend_file == mainw->current_file)
-           || !clip_can_reverse(mainw->blend_file)))) {
-    if (!CURRENT_CLIP_IS_NORMAL) return TRUE;
 
+  if (area == SCREEN_AREA_FOREGROUND) {
+    if (!CURRENT_CLIP_IS_NORMAL || !clip_can_reverse(mainw->current_file)) return TRUE;
     mainw->rte_keys = -1;
 
     // change play direction
@@ -4735,16 +4734,15 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       cfile->freeze_fps = -cfile->freeze_fps;
       return TRUE;
     }
-
+      
     lives_signal_handler_block(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), -cfile->pb_fps);
     lives_signal_handler_unblock(mainw->spinbutton_pb_fps, mainw->pb_fps_func);
-
+      
     // make sure this is called, sometimes we switch clips too soon...
     changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
   } else if (area == SCREEN_AREA_BACKGROUND) {
-    if (mainw->blend_file <= 0 || ((mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_DISK &&
-                                    mainw->files[mainw->blend_file]->clip_type != CLIP_TYPE_FILE))) return TRUE;
+    if (!IS_NORMAL_CLIP(mainw->blend_file) || !clip_can_reverse(mainw->blend_file)) return TRUE;
     mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->pb_fps;
   }
   return TRUE;
@@ -4794,7 +4792,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   area = LIVES_POINTER_TO_INT(area_enum);
   if (area == SCREEN_AREA_BACKGROUND) {
-    if (IS_VALID_CLIP(mainw->blend_file)) mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
+    if (!IS_NORMAL_CLIP(mainw->blend_file)) return TRUE;
+    mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
     return TRUE;
   }
 
@@ -4849,6 +4848,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
+    if (!IS_NORMAL_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,
@@ -4894,6 +4894,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
+    if (!IS_NORMAL_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
     list_index = lives_list_find(mainw->cliplist,
@@ -6054,6 +6055,8 @@ void switch_clip(int type, int newclip, boolean force) {
       (mainw->is_processing && cfile != NULL && cfile->is_loaded) || mainw->cliplist == NULL) return;
 
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
+    if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
+
     // switch bg clip
     if (newclip != mainw->blend_file) {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
@@ -6072,7 +6075,9 @@ void switch_clip(int type, int newclip, boolean force) {
       }
       mainw->blend_file = newclip;
       mainw->whentostop = NEVER_STOP;
-      if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_highlight_current_clip();
+      if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
+	ce_thumbs_highlight_current_clip();
+      }
     }
     return;
   }
@@ -6766,7 +6771,7 @@ void on_save_textview_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   lives_free(save_file);
-}
+  }
 
 
 void on_filechooser_cancel_clicked(LiVESWidget * widget) {
@@ -9184,7 +9189,7 @@ EXPOSE_FN_DECL(expose_vid_event, widget, user_data) {
 EXPOSE_FN_END
 
 
-static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
+  static void redraw_laudio(lives_painter_t *cr, int ex, int ey, int ew, int eh) {
   int width;
 
   if (mainw->laudio_drawable != NULL) {
@@ -10198,7 +10203,10 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
 
   if (user_data != NULL) {
     type = LIVES_POINTER_TO_INT(user_data);
-    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
+    if (type == SCREEN_AREA_BACKGROUND) {
+      if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
+      sfile = mainw->files[mainw->blend_file];
+    }
   }
 
   if (sfile->next_event != NULL) return;
@@ -10240,7 +10248,10 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
 
   if (user_data != NULL) {
     type = LIVES_POINTER_TO_INT(user_data);
-    if (type == SCREEN_AREA_BACKGROUND) sfile = mainw->files[mainw->blend_file];
+    if (type == SCREEN_AREA_BACKGROUND) {
+      if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
+      sfile = mainw->files[mainw->blend_file];
+    }
   }
 
   if (sfile->play_paused && sfile->freeze_fps < 0.) {

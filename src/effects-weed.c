@@ -4119,6 +4119,23 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
+  // change even immutable leaves
+  weed_error_t err;
+  if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+  if (err == WEED_ERROR_IMMUTABLE) {
+    int32_t flags = weed_leaf_get_flags(plant, key);
+    flags ^= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+    err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
+    flags |= WEED_FLAG_IMMUTABLE;
+    weed_leaf_set_flags(plant, key, flags);
+  }
+  return err;
+}
+
+
 /* weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) { */
 /*   fprintf(stderr, "pl setting %s\n", key); */
 /*   return _weed_leaf_set(plant, key, seed_type, num_elems, values); */
@@ -4128,7 +4145,7 @@ static void upd_statsplant(const char *key) {
   int freq;
   if (mainw->is_exiting) return;
   if (statsplant == NULL) statsplant = weed_plant_new(0);
-  freq = weed_get_int_value(statsplant, key, NULL) + 1;
+  _weed_leaf_get(statsplant, key, WEED_SEED_INT, &freq);
   _weed_leaf_set(statsplant, key, WEED_SEED_INT, 1, &freq);
 }
 
@@ -4199,24 +4216,6 @@ void *lives_memcpy_monitor(void *d, const void *s, size_t sz) {
 weed_size_t weed_leaf_num_elements_monitor(weed_plant_t *plant, const char *key) {
   upd_statsplant(key);
   return _weed_leaf_num_elements(plant, key);
-}
-
-
-weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
-  // change even immutable leaves
-  weed_error_t err;
-
-  if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
-  err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-  if (err == WEED_ERROR_IMMUTABLE) {
-    int32_t flags = weed_leaf_get_flags(plant, key);
-    flags ^= WEED_FLAG_IMMUTABLE;
-    weed_leaf_set_flags(plant, key, flags);
-    err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-    flags |= WEED_FLAG_IMMUTABLE;
-    weed_leaf_set_flags(plant, key, flags);
-  }
-  return err;
 }
 
 
@@ -10863,6 +10862,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
 
 
 static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
+  // beware of mutant plants....
   int32_t flags = weed_leaf_get_flags(plant, WEED_LEAF_TYPE);
   // clear the default flags to allow the "type" leaf to be altered
   weed_leaf_set_flags(plant, WEED_LEAF_TYPE, flags & ~(WEED_FLAG_IMMUTABLE));
@@ -10872,35 +10872,44 @@ static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
   return weed_plant_get_type(plant);
 }
 
-
+#define REALIGN_MAX (40 * 1024 * 1024)  /// 40 MiB "should be enough for anyone"
 #define MAX_FRAME_SIZE 1000000000
 
 static int realign_typeleaf(int fd, weed_plant_t *plant) {
-  uint8_t buff[13];
+   uint8_t buff[12];
+  const char XMATCH[8] = {4, 0, 0, 0, 't', 'y', 'p', 'e'};
   int type, nl;
-  buff[12] = 0;
-  g_print("realinging\n");
+  register uint64_t count = REALIGN_MAX;
+  register int len;
+
   if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
-  g_print("reallign got %s\n", buff + 8);
-  while (1) {
-    g_print("checking %s\n", buff + 8);
-    if (!strncmp((char *)(buff + 8), "type", 4)) {
-      g_print("mstched\n");
-      nl = (int)((buff[3] << 24) + (buff[2] << 16) + (buff[1] << 8) + buff[0]);
-      // st, ne, vlen, val
-      g_print("nl is %d\n", nl);
-      // skip st, ne, valsize
-      if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
-      if (lives_read_le_buffered(fd, &type, 4, TRUE) < 4) return 0;
-      g_print("type is %d\n", type);
-      weed_plant_mutate(plant, type);
-      return nl;
+  for (len = 8; len > 0; len--) {
+    if (!memcmp((void *)(buff + 12 - len), (void *)(XMATCH + 8 - len), len)) break;
+  }
+  if (len == 8) len--;
+
+  while (--count != 0) {
+    if (buff[11] == XMATCH[len]) {
+      len++;
+      if (len == 8) {
+        nl = (uint32_t)((buff[3] << 24) + (buff[2] << 16) + (buff[1] << 8) + buff[0]);
+        // skip st, ne, valsize
+        if (lives_read_buffered(fd, buff, 12, TRUE) < 12) return 0;
+        if (lives_read_le_buffered(fd, &type, 4, TRUE) < 4) return 0;
+        weed_plant_mutate(plant, type);
+        return nl;
+      }
+    } else {
+      if (len > 0) {
+        len = 0;
+        continue;
+      }
     }
-    g_print("not mstched\n");
-    lives_memmove(buff, &buff[1], 11);
+    lives_memmove(buff + 7 - len, buff + 8 - len, len + 4);
     if (lives_read_buffered(fd, &buff[11], 1, TRUE) < 1) return 0;
     //g_print("buff is %s\n", buff);
   }
+  return 0;
 }
 
 
@@ -10911,7 +10920,6 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   // WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
 
   // if check_key set to TRUE - check that we read the correct key seed_type and n_elements
-
 
   // return values:
   // -1 : check_key key mismatch
@@ -11257,20 +11265,22 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   ssize_t bytes;
   int err;
   int32_t type = WEED_PLANT_UNKNOWN;
-  boolean newd = FALSE;
-  static int bugfd = -1;
+  boolean newd = FALSE, retried = FALSE;
+  int bugfd = -1;
 
+ realign:
+  
   // caller should clear and check mainw->read_failed
   if (mem == NULL) {
     if (fd == bugfd) {
       if (plant == NULL) {
         // create a new plant with type unknown
         plant = weed_plant_new(WEED_PLANT_UNKNOWN);
+	newd = TRUE;
       }
       numleaves = realign_typeleaf(fd, plant);
       if (numleaves == 0 || (type = weed_plant_get_type(plant)) <= 0) {
-        if (newd)
-          weed_plant_free(plant);
+        if (newd) weed_plant_free(plant);
         return NULL;
       }
       bugfd = -1;
@@ -11289,6 +11299,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   if (plant == NULL) {
     // create a new plant with type unknown
     plant = weed_plant_new(type);
+    newd = TRUE;
   }
 
   if (type == WEED_PLANT_UNKNOWN) {
@@ -11296,14 +11307,19 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
       // check the WEED_LEAF_TYPE leaf first
       if (type != -5) {  // all except malloc error
         char *badfname = filename_from_fd(NULL, fd);
-        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", type,
-                                        badfname != NULL ? badfname : "unknown file");
-        bugfd = fd;
+        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", type, badfname != NULL ? badfname : "unknown file");
         LIVES_ERROR(msg);
         lives_free(msg);
+        bugfd = fd;
       }
-      if (newd)
-        weed_plant_free(plant);
+      if (newd) {
+	weed_plant_free(plant);
+	plant = NULL;
+      }
+      if (bugfd == fd && !retried) {
+	retried = TRUE;
+	goto realign;
+      }
       return NULL;
     }
   }
@@ -11314,22 +11330,26 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
     if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
       if (type != -5) {  // all except malloc error
         char *badfname = filename_from_fd(NULL, fd);
-        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", err,
-                                        badfname != NULL ? badfname : "unknown file");
-        bugfd = fd;
+        char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", err, badfname != NULL ? badfname : "unknown file");
         LIVES_ERROR(msg);
         lives_free(msg);
+        bugfd = fd;
       }
-      if (newd)
-        weed_plant_free(plant);
+      if (newd) {
+	weed_plant_free(plant);
+	plant = NULL;
+      }
+      if (bugfd == fd && !retried) {
+	retried = TRUE;
+	goto realign;
+      }
       return NULL;
     }
   }
 
   if ((type = weed_get_plant_type(plant)) == WEED_PLANT_UNKNOWN) {
     //g_print("badplant was %d\n", type);
-    if (newd)
-      weed_plant_free(plant);
+    if (newd) weed_plant_free(plant);
     return NULL;
   }
   //g_print("goodplant %p\n", plant);

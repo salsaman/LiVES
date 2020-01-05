@@ -7,7 +7,7 @@ Update the plugin architecture (libweed) to version 2.0, update the specs. for W
 Optimised memory functions, colourspace conversions and frame decoding.
 Optimise communication with commandline plugins using popen().
 Fix screen / window sizing issues.
-Implement a thread pool with generic worker threads.
+Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
 Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
 Fix data connections window so it shows the correct out parameter.
 Correct bugs in letterboxing, make it the default player mode.
@@ -20,7 +20,7 @@ Improvements to Fileselector preview / Selection opener.
 Improvements to effects previews.
 Improvements to "targeted_zoom" effect in multitrack; add "scaledpoint" layout element in RFX windows.
 New "auto-layout" mode to improve the appearance of all parameter windows.
-Tweaks for Preferences window.
+Visual tweaks for Preferences window.
 Fix mkv_decoder so it can decode webm clips.
 Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
@@ -38,6 +38,9 @@ Improvements to chroma supersampling e.g yuv420 - > rgb or yuv420 - > yuv444
 Workaround since swscale apparently cannot handle YUV888 or YUVA8888 palettes, we pretend they are RGB / RGBA.
 Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
 Permit switching audio source (internal / external) with no clips loaded (bugfix).
+Rewrite the event_list quantizer, resulting in smoother rendering of recorded clips.
+Ignore seek differences below a predefined limit (default .01 seconds) when rendering recorded audio,
+	resulting in flawless rendering of audio at variable velocities.
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
 Fix recursive mutex issues with the audio_resync mutex and the audio buffer fill mutex.
 Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash) and create a new main loop for pulse

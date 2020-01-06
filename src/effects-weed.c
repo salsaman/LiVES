@@ -11093,7 +11093,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       }
       if (j >= nplanes) lives_free(values[j]);
     }
-    if (plant != NULL) weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
+    if (plant != NULL) {
+      weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
+      while (nplanes != 0) values[--nplanes] = NULL; /// prevent "values" from being freed because we copy-by-value
+    }
     goto done;
   } else {
     for (i = 0; i < ne; i++) {

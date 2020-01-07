@@ -3840,7 +3840,7 @@ void disable_record(void) {
 void play_window_set_title(void) {
   char *xtrabit;
   char *title = NULL;
-
+  if (mainw->multitrack != NULL) return;
   if (mainw->play_window == NULL) return;
 
   if (!LIVES_IS_PLAYING)

@@ -1055,6 +1055,8 @@ boolean do_set_rename_old_layouts_warning(const char *new_set);
 boolean do_layout_alter_frames_warning(void);
 boolean do_layout_alter_audio_warning(void);
 boolean do_reload_set_query(void);
+boolean findex_bk_dialog(const char *fname_back);
+boolean paste_enough_dlg(int lframe);
 boolean do_yuv4m_open_warning(void);
 void do_mt_undo_mem_error(void);
 void do_mt_undo_buf_error(void);

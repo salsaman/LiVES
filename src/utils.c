@@ -1066,7 +1066,7 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
 */
 ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   ticks_t curticks;
-  lives_timeout_t alarm;
+  lives_timeout_t *alarm;
 
   // invalid alarm number
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
@@ -1075,10 +1075,10 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   }
 
   // offset of 1 was added for caller
-  alarm = mainw->alarms[--alarm_handle];
+  alarm = &mainw->alarms[--alarm_handle];
 
   // alarm time was never set !
-  if (alarm.lastcheck == 0) {
+  if (alarm->lastcheck == 0) {
     LIVES_WARN("Alarm time not set");
     return 0;
   }
@@ -1087,23 +1087,23 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
 
   if (prefs->show_dev_opts) {
     // guard against long interrupts (in gdb for example)
-    if (curticks - alarm.lastcheck > 5 * TICKS_PER_SECOND) {
-      alarm.lastcheck = curticks;
-      return alarm.tleft;
+    if (curticks - alarm->lastcheck > 5 * TICKS_PER_SECOND) {
+      alarm->lastcheck = curticks;
+      return alarm->tleft;
     }
   }
 
-  alarm.tleft -= curticks - alarm.lastcheck;
+  alarm->tleft -= curticks - alarm->lastcheck;
 
-  if (alarm.tleft <= 0) {
+  if (alarm->tleft <= 0) {
     // reached alarm time, free up this timer and return TRUE
-    alarm.lastcheck = 0;
+    alarm->lastcheck = 0;
     LIVES_DEBUG("Alarm reached");
     return 0;
   }
-  alarm.lastcheck = curticks;
+  alarm->lastcheck = curticks;
   // alarm time not reached yet
-  return alarm.tleft;
+  return alarm->tleft;
 }
 
 

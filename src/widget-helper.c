@@ -1220,7 +1220,9 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
-  LiVESResponseType ret = gtk_dialog_run(dialog);
+  LiVESResponseType ret;
+  lives_widget_context_update();
+  ret = gtk_dialog_run(dialog);
   if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
     if (prefs->show_msg_area) {
       // TODO

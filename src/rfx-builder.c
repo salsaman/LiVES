@@ -4427,6 +4427,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #ifdef DEBUG_RENDER_FX
         g_print("No get_define in %s\n", plugin_name);
 #endif
+        lives_free(plugin_name);
         continue;
       }
       def = lives_strdup((char *)lives_list_nth_data(define, 0));
@@ -4436,6 +4437,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #ifdef DEBUG_RENDER_FX
         g_print("Invalid get_define in %s\n", plugin_name);
 #endif
+        lives_free(plugin_name);
         lives_free(def);
         continue;
       }
@@ -4443,6 +4445,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
 #ifdef DEBUG_RENDER_FX
         g_print("Invalid version %s instead of %s in %s\n", def + 1, RFX_VERSION, plugin_name);
 #endif
+        lives_free(plugin_name);
         lives_free(def);
         continue;
       }

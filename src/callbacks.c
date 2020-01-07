@@ -177,6 +177,11 @@ void lives_exit(int signum) {
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
+
+    if (prefs->crash_recovery && mainw->record) {
+      backup_recording(NULL, NULL);
+    }
+
     //lives_threadpool_finish();
     if (prefs->show_dev_opts)
       show_weed_stats();
@@ -2943,7 +2948,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *msg;
   int old_file = mainw->current_file, current_file;
-  int i;
+  int cbframes;
 
   if (clipboard == NULL) return;
 
@@ -2953,6 +2958,8 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     mainw->current_file = old_file;
     return;
   }
+
+  cbframes = clipboard->frames;
 
   //set file details
   cfile->hsize = clipboard->hsize;
@@ -2969,11 +2976,16 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   msg = lives_strdup(_("Pulling frames from clipboard..."));
 
-  if (!realize_all_frames(0, msg, FALSE)) {
-    lives_free(msg);
-    close_current_file(old_file);
-    sensitize();
-    return;
+  if (!realize_all_frames(0, msg, TRUE)) {
+    int lframe = first_virtual_frame(0, 1, clipboard->frames);
+    if (lframe < clipboard->frames && lframe != 0 && !paste_enough_dlg(lframe - 1)) {
+      lives_free(msg);
+      close_current_file(old_file);
+      sensitize();
+      return;
+    }
+    if (lframe != 0)
+      clipboard->frames = lframe - 1;
   }
 
   cfile->frames = clipboard->frames;
@@ -2997,6 +3009,8 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_system(com, FALSE);
   lives_free(com);
 
+  clipboard->frames = cbframes;
+
   if (mainw->com_failed) {
     d_print_failed();
     close_current_file(old_file);
@@ -3015,7 +3029,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   if (mainw->ccpd_with_sound) {
     if (cfile->audio_waveform != NULL) {
-      for (i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
+      for (int i = 0; i < cfile->achans; lives_freep((void **)&cfile->audio_waveform[i++]));
       lives_freep((void **)&cfile->audio_waveform);
       lives_freep((void **)&cfile->aw_sizes);
     }
@@ -4847,7 +4861,8 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
-  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
+  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
+                    && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
     if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
@@ -4880,7 +4895,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   int i;
   int num_tried = 0, num_clips;
 
-  int type = 0;
+  int type = 0; ///< auto (switch bg if a transition is active, otherwise foreground)
 
   if (!mainw->interactive) return TRUE;
 
@@ -4893,7 +4908,8 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
   if (type == 1 && mainw->new_clip != -1) return TRUE;
 
-  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
+  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
+                    && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
     if (!IS_VALID_CLIP(mainw->blend_file)) return TRUE;
     list_index = lives_list_find(mainw->cliplist, LIVES_INT_TO_POINTER(mainw->blend_file));
   } else {
@@ -6054,9 +6070,8 @@ void switch_clip(int type, int newclip, boolean force) {
   if (mainw->current_file < 1 || mainw->multitrack != NULL || mainw->preview || mainw->internal_messaging ||
       (mainw->is_processing && cfile != NULL && cfile->is_loaded) || mainw->cliplist == NULL) return;
 
-  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1)) {
-    if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
-
+  if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
+                    && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
     // switch bg clip
     if (newclip != mainw->blend_file) {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
@@ -10206,7 +10221,7 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
     if (type == SCREEN_AREA_BACKGROUND) {
       if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
       sfile = mainw->files[mainw->blend_file];
-    }
+    } else if (!IS_NORMAL_CLIP(mainw->current_file)) return;
   }
 
   if (sfile->next_event != NULL) return;
@@ -10251,7 +10266,7 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
     if (type == SCREEN_AREA_BACKGROUND) {
       if (!IS_NORMAL_CLIP(mainw->blend_file)) return;
       sfile = mainw->files[mainw->blend_file];
-    }
+    } else if (!IS_NORMAL_CLIP(mainw->current_file)) return;
   }
 
   if (sfile->play_paused && sfile->freeze_fps < 0.) {
@@ -10280,8 +10295,9 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
 
 void on_back_pressed(LiVESButton * button, livespointer user_data) {
   int type = 0;
-  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_NORMAL) return;
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+  if (!clip_can_reverse(mainw->current_file)) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
@@ -10297,7 +10313,7 @@ void on_back_pressed(LiVESButton * button, livespointer user_data) {
 
 void on_forward_pressed(LiVESButton * button, livespointer user_data) {
   int type = 0;
-  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_NORMAL) return;
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;

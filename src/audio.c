@@ -1946,8 +1946,7 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
   // increase the element size of the audstate array (ostate)
   // from nostate elements to nstate elements
 
-  lives_audio_track_state_t *audstate
-    = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
+  lives_audio_track_state_t *audstate = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
   int i;
 
   for (i = 0; i < nstate; i++) {
@@ -2171,7 +2170,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // a negative seek value would mean that we need to pad silence at the
     // start of the track buffer
 
-    if (event != get_first_event(event_list))
+    if (event != get_first_frame_event(event_list))
       atstate = get_audio_and_effects_state_at(event_list, event, TRUE, exact);
 
     // process audio updates at this frame

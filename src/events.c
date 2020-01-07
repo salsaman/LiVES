@@ -3127,8 +3127,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
           int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, & error);
-          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
           if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+          lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
         }
       }
     }
@@ -3633,8 +3633,8 @@ lives_render_error_t render_events(boolean reset) {
               old_scrap_frame = mainw->frame_index[scrap_track];
               layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
-              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
               if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+              lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
               if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), tc)) {
                 weed_layer_free(layer);
                 layer = NULL;
@@ -4648,11 +4648,14 @@ LIVES_INLINE void dprint_recneg(void) {
   d_print(_("nothing recorded.\n"));
 }
 
-
-static boolean backup_recording(char **esave_file, char **asave_file) {
+boolean backup_recording(char **esave_file, char **asave_file) {
+  char *x, *y;
   LiVESList *clist = mainw->cliplist;
   double vald = 0.;
   int fd, i, hdlsize;
+
+  if (esave_file == NULL) esave_file = &x;
+  if (asave_file == NULL) asave_file = &y;
 
   *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
@@ -4663,6 +4666,7 @@ static boolean backup_recording(char **esave_file, char **asave_file) {
     lives_close_buffered(fd);
   }
   if (fd < 0 || mainw->write_failed) {
+    if (mainw->is_exiting) return FALSE;
     mainw->write_failed = FALSE;
     lives_freep((void **)esave_file);
     *asave_file = NULL;
@@ -4690,6 +4694,7 @@ static boolean backup_recording(char **esave_file, char **asave_file) {
   }
 
   if (fd < 0 || mainw->write_failed) {
+    if (mainw->is_exiting) return FALSE;
     mainw->write_failed = FALSE;
     lives_rm(*esave_file);
     if (fd >= 0) lives_rm(*asave_file);
@@ -4852,6 +4857,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
         stored_event_list_free_all(TRUE);
       }
       mainw->unordered_blocks = TRUE;
+      pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {
         mainw->event_list = NULL;
         new_clip = TRUE;
@@ -4876,8 +4882,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
 
     if (IS_VALID_CLIP(mainw->scrap_file)) {
       // rewind scrap file to beginning
-      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
       if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
+      lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), 0);
     }
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
@@ -4889,7 +4895,9 @@ boolean deal_with_render_choice(boolean add_deinit) {
     mainw->event_list = NULL;
   }
 
-  pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
+  /// multitrack will set this itself
+  if (render_choice != RENDER_CHOICE_MULTITRACK)
+    pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
 
   return new_clip;
 }

@@ -4930,7 +4930,10 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
 
   if (frame < 0 || layer == NULL) return TRUE; /// just open fd
 
-  if (weed_plant_deserialise(fd, NULL, layer) == NULL) return FALSE;
+  if (weed_plant_deserialise(fd, NULL, layer) == NULL) {
+    //g_print("bad scrapfile frame\n");
+    return FALSE;
+  }
   return TRUE;
 }
 

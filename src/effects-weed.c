@@ -2569,6 +2569,7 @@ static lives_filter_error_t enable_disable_channels(weed_plant_t *inst, boolean 
         } else weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
       } else {
         lives_free(channels);
+        lives_freep((void **)&pixdata);
         return FILTER_ERROR_MISSING_LAYER;
       }
     }
@@ -11302,7 +11303,7 @@ realign:
 
   while (numleaves--) {
     if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
-      if (type != -5) {  // all except malloc error
+      if (err != -5) {  // all except malloc error
         char *badfname = filename_from_fd(NULL, fd);
         char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", err, badfname != NULL ? badfname : "unknown file");
         LIVES_ERROR(msg);

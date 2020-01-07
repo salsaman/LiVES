@@ -2,18 +2,19 @@ Version 3.0.3
 -------------
 Rewrite inital startup, optimising it and making it more robust.
 Configuration directory can now be specified from the commandline (-configdir)
-Implement auto gamma correction, (sRGB, Linear, experimental rec bt.709)
+Implement auto gamma correction, (sRGB, Linear, experimental rec bt.709). Conversion is done via the new threadpool.
 Update the plugin architecture (libweed) to version 2.0, update the specs. for Weed, Weed Effects, Weed Audio Effects.
 Optimised memory functions, colourspace conversions and frame decoding.
 Optimise communication with commandline plugins using popen().
 Fix screen / window sizing issues.
 Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
 Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
+Audio effects now have automatic clipping prevention, using a dynamic volume adjustment.
 Fix data connections window so it shows the correct out parameter.
 Correct bugs in letterboxing, make it the default player mode.
 Fix new crashes with rendered effects generators.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
-Crash recovery now recovers performance recording if lives crashes during rendering.
+Crash recovery now recovers performance recording if LiVES crashes before or during rendering.
 Crash recovery now restores the config file from backup if the original is damaged / missing.
 Improvements to RFX script builder tool.
 Improvements to Fileselector preview / Selection opener.
@@ -24,12 +25,14 @@ Visual tweaks for Preferences window.
 Fix mkv_decoder so it can decode webm clips.
 Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
+Multitrack parameter window now also has a "Reset to Defaults" button.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
-Smooth out playback by interpolating between soundcard timing updates.
+Smooth out playback by interpolating sample counts between soundcard timing updates.
 Reduce audio underflows by temporarily slowing the video loop when they occur,
 Smooth out ctr-up, ctrl-down, ctrl-left and ctrl-right (Trickplay) keys during playback.
 Add ctrl-shift-space loop locking in clip editor (trickplay).
 Add keys a / A (audio track lock / unlock) for clip editor playback.
+Added two more keyboard effect keys (ctrl-minus and ctrl-equals). Effects on these keys are NOT affected by ctrl-0 (all effects off).
 Ensure audio is always rendered when it should be after recording.
 Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
@@ -52,7 +55,9 @@ Volume level of previews in file open dialog is now set depending on master volu
 Fix label layouts for RFX windows.
 Add more preferences to the prefs window.
 Fix breakage in realtime audio effects.
-Multitrack parameter window now has a "Reset to Defaults" button.
+"Paste as new" now has an 'Enough' button when pullling frames from the clipboard, so it can be partially pasted.
+When switching clips with an active transition, if the background clip is a non-normal clip (e.g generator or webcam), the
+	foreground clip will be switched as if there were no transition active
 Double size playback in separate window now expands as much as comfortably possible.
 Scale size is always show in separate window (except during playback).
 Frame number now defaults to pointer position when opening the seperate window.
@@ -60,7 +65,7 @@ Seperate  window in multitrack can now appear undecorated.
 Enable colour selection for 'blurzoom' effect, improve the effect appearance.
 Implement "easing out" for some selected effects.
 Improved appearance for 'fireTV' effect.
-'ffprobe' may be used to get file details if present. 'file' may be used to aid in identifying filetypes.
+'ffprobe' may be used to get file details if present. 'file' may also be used to aid in identifying filetypes.
 Change the 'RGBDelay' and 'YUVDelay' effects to use less memory.
 Video effect plugins can now "ease out" rather than switching off immediately
 Improve a/v sync when changing playback direction.

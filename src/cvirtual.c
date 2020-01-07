@@ -79,10 +79,9 @@ boolean save_frame_index(int fileno) {
           lives_cp(fname, fname_new);
           if (sget_file_size(fname_new) != sfile->frames * 4) {
             retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
   } while (retval == LIVES_RESPONSE_RETRY);
 
   lives_free(fname);
@@ -101,8 +100,8 @@ boolean save_frame_index(int fileno) {
 int load_frame_index(int fileno) {
   lives_clip_t *sfile = mainw->files[fileno];
   uint64_t filesize;
-  char *fname;
-
+  char *fname, *fname_back;
+  boolean backuptried = FALSE;
   int fd;
   int retval;
   int maxframe = -1;
@@ -114,7 +113,6 @@ int load_frame_index(int fileno) {
   lives_freep((void **)&sfile->frame_index);
 
   fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
-
   filesize = sget_file_size(fname);
 
   if (filesize <= 0) {
@@ -123,16 +121,27 @@ int load_frame_index(int fileno) {
   }
 
   if (filesize >> 2 > sfile->frames) sfile->frames = filesize >> 2;
+  fname_back = lives_build_filename(prefs->workdir, sfile->handle, "file_index.back", NULL);
 
   do {
     retval = 0;
-
     fd = lives_open_buffered_rdonly(fname);
-
     if (fd < 0) {
       retval = do_read_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
+      if (!backuptried) {
+        fd = lives_open_buffered_rdonly(fname_back);
+        if (fd >= 0) {
+          lives_close_buffered(fd);
+          if (findex_bk_dialog(fname_back)) {
+            lives_cp(fname_back, fname);
+            backuptried = TRUE;
+            continue;
+          }
+        }
+      }
       if (retval == LIVES_RESPONSE_CANCEL) {
         lives_free(fname);
+        lives_free(fname_back);
         return -1;
       }
     } else {
@@ -167,6 +176,7 @@ int load_frame_index(int fileno) {
   } while (retval == LIVES_RESPONSE_RETRY);
 
   lives_free(fname);
+  lives_free(fname_back);
 
   if (maxframe >= 0) sfile->clip_type = CLIP_TYPE_FILE;
   return ++maxframe;
@@ -287,10 +297,9 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
         if (cdata != NULL && fr != -1) {
           lgoodframe = fr;
           goodidx = i;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   if (sfile->frames > 0) {
     int hsize = sfile->hsize;
@@ -343,17 +352,19 @@ mismatch:
 }
 
 
-boolean check_if_all_virtual(int fileno, int start, int end) {
-  // check if all frames are virtual from start to end inclusive in clip fileno
+int first_virtual_frame(int fileno, int start, int end) {
+  // check all franes in frame_index betweem start and end inclusive
+  // if we find a virtual frame, we stop checking and return the frame number
+  // if all are non - virtual we return 0
   register int i;
   lives_clip_t *sfile = mainw->files[fileno];
 
-  if (sfile->frame_index == NULL) return FALSE;
+  if (sfile->frame_index == NULL) return  0;
   for (i = start; i <= end; i++) {
-    if (sfile->frame_index[i - 1] == -1) return FALSE;
+    if (sfile->frame_index[i - 1] != -1) return i;
   }
 
-  return TRUE;
+  return 0;
 }
 
 
@@ -410,7 +421,7 @@ boolean check_if_non_virtual(int fileno, int start, int end) {
 #define DS_SPACE_CHECK_FRAMES 100
 
 
-static boolean save_decoded(int fileno, int i, LiVESPixbuf *pixbuf, boolean silent, int progress) {
+static boolean save_decoded(int fileno, int i, LiVESPixbuf * pixbuf, boolean silent, int progress) {
   lives_clip_t *sfile = mainw->files[fileno];
   boolean retb;
   int retval;
@@ -816,7 +827,7 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
 
   register int i;
 
-  if (!check_if_all_virtual(sfileno, 1, sfile->frames)) {
+  if (first_virtual_frame(sfileno, 1, sfile->frames) != 0) {
     for (i = after + 1; i <= sfile->frames; i++) {
       if (sfile->frame_index == NULL || sfile->frame_index[i - 1] == -1) {
         tmp = make_image_file_name(sfile, i, get_image_ext_for_type(sfile->img_type));
@@ -830,11 +841,9 @@ void insert_blank_frames(int sfileno, int nframes, int after, int palette) {
           lives_mv(oname, nname);
           if (mainw->com_failed) {
             return;
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 
   for (i = after; i < after + nframes; i++) {
     tmp = make_image_file_name(sfile, i + 1, get_image_ext_for_type(sfile->img_type));

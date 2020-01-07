@@ -2230,7 +2230,7 @@ boolean do_auto_dialog(const char *text, int type) {
         if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
         if (alarm_handle > 0) {
           ticks_t tl;
-          while ((tl = lives_alarm_check(alarm_handle)) > 0) {
+          while ((tl = lives_alarm_check(alarm_handle)) > 0 && !mainw->cancelled) {
             lives_progress_bar_pulse(LIVES_PROGRESS_BAR(proc_ptr->progressbar));
             lives_widget_context_update();
             lives_usleep(prefs->sleep_time);
@@ -2564,10 +2564,19 @@ boolean do_clipboard_fps_warning(void) {
 }
 
 
-boolean do_reload_set_query(void) {
+LIVES_GLOBAL_INLINE boolean do_reload_set_query(void) {
   return do_yesno_dialog(_("Current clips will be added to the clip set.\nIs that what you want ?\n"));
 }
 
+
+LIVES_GLOBAL_INLINE boolean findex_bk_dialog(const char *fname_back) {
+  return do_yesno_dialogf(_("I can attempt to restore the frame index from a backup.\n(%s)\nShall I try ?\n"), fname_back);
+}
+
+
+LIVES_GLOBAL_INLINE boolean paste_enough_dlg(int lframe) {
+  return do_yesno_dialogf(P_("\nPaste %d frame ?\n", "Paste %d frames ?\n", lframe), lframe);
+}
 
 boolean do_yuv4m_open_warning(void) {
   char *msg;

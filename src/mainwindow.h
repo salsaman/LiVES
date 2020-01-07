@@ -486,7 +486,7 @@ typedef struct {
 
 typedef struct {
   ticks_t tleft;
-  ticks_t lastcheck;
+  volatile ticks_t lastcheck;
 }  lives_timeout_t;
 
 typedef int lives_alarm_t;

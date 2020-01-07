@@ -2373,6 +2373,7 @@ capability *get_capabilities(void) {
 
   char buffer[PATH_MAX * 4];
   char command[PATH_MAX * 4];
+  char dir[PATH_MAX];
 
   int numtok;
 
@@ -2561,34 +2562,36 @@ capability *get_capabilities(void) {
     old_vhash = lives_strdup(mainw->old_vhash);
   }
 
+  lives_snprintf(dir, PATH_MAX, "%s", array[1]);
+
   if (!mainw->has_session_workdir) {
-    size_t dirlen = strlen(array[1]);
+    size_t dirlen = strlen(dir);
     boolean dir_valid = TRUE;
 
     if (dirlen > 0) {
       if (mainw->old_vhash == NULL || strlen(mainw->old_vhash) == 0 || !strcmp(mainw->old_vhash, "0")) {
-        msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", array[1], old_vhash);
+        msg = lives_strdup_printf("The backend found a workdir (%s), but claimed old version was %s !", dir, old_vhash);
         LIVES_WARN(msg);
         lives_free(msg);
       }
 
       if (dirlen < PATH_MAX - MAX_SET_NAME_LEN * 2) {
-        ensure_isdir(array[1]);
+        ensure_isdir(dir);
 
         if (dirlen >= PATH_MAX - MAX_SET_NAME_LEN * 2) {
-          dir_toolong_error(array[1], (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
+          dir_toolong_error(dir, (tmp = lives_strdup(_("working directory"))), PATH_MAX - MAX_SET_NAME_LEN * 2, TRUE);
           lives_free(tmp);
           dir_valid = FALSE;
         }
 
-        if (!lives_make_writeable_dir(array[1])) {
-          do_bad_dir_perms_error(array[1]);
+        if (!lives_make_writeable_dir(dir)) {
+          do_bad_dir_perms_error(dir);
           dir_valid = FALSE;
         }
       }
 
       if (dir_valid) {
-        lives_snprintf(prefs->workdir, PATH_MAX, "%s", array[1]);
+        lives_snprintf(prefs->workdir, PATH_MAX, "%s", dir);
 
         lives_snprintf(prefs->backend, PATH_MAX * 4, "%s -s \"%s\" -WORKDIR=\"%s\" -CONFIGDIR=\"%s\" --", EXEC_PERL,
                        capable->backend_path,
@@ -2786,12 +2789,23 @@ static boolean open_yuv4m_startup(livespointer data) {
 
 static boolean render_choice_idle(livespointer data) {
   // TODO: *** figure out why we cant preview with only scrap_file loaded
+  static boolean norecurse = FALSE;
+  boolean rec_recovered = FALSE;
+  if (norecurse) return FALSE;
+  norecurse = TRUE;
   if (mt_load_recovery_layout(NULL)) {
     if (mainw->event_list != NULL) {
+      if (mainw->multitrack != NULL) {
+        /// exit multitrack, backup mainw->event_as it will get set to NULL
+        weed_plant_t *backup_elist = mainw->event_list;
+        multitrack_delete(mainw->multitrack, FALSE);
+        mainw->event_list = backup_elist;
+      }
       deal_with_render_choice(FALSE);
+      if (mainw->multitrack != NULL) rec_recovered = TRUE;
     }
   }
-  mainw->recording_recovered = FALSE;
+  mainw->recording_recovered = rec_recovered;
   return FALSE;
 }
 
@@ -2830,9 +2844,6 @@ boolean resize_message_area(livespointer data) {
 #endif
   if (isfirst && mainw->current_file == -1) d_print("");
   isfirst = FALSE;
-  if (mainw->recording_recovered) {
-    lives_idle_add(render_choice_idle, NULL);
-  }
   return FALSE;
 }
 
@@ -3198,13 +3209,11 @@ static boolean lives_startup(livespointer data) {
       }
       draw_little_bars(0., 0);
     }
-    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   } else {
     lives_idle_add(mt_idle_show_current_frame, (livespointer)mainw->multitrack);
     if (mainw->multitrack->idlefunc == 0) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
     }
-    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
   }
   mainw->go_away = FALSE;
   if (mainw->current_file > -1 && mainw->multitrack == NULL) {
@@ -3216,6 +3225,15 @@ static boolean lives_startup(livespointer data) {
     lives_system(tmp, TRUE);
     lives_free(tmp);
   }
+  if (mainw->recording_recovered) {
+    lives_idle_add(render_choice_idle, NULL);
+  }
+
+  if (mainw->multitrack == NULL)
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
+  else
+    lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_MT);
+
   return FALSE;
 } // end lives_startup()
 
@@ -4215,7 +4233,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
                              capable->has_sox_sox));
-  lives_widget_set_sensitive(mainw->dsize, !(mainw->fs));
+  lives_widget_set_sensitive(mainw->dsize, TRUE);
   lives_widget_set_sensitive(mainw->fade, !(mainw->fs));
   lives_widget_set_sensitive(mainw->mute_audio, TRUE);
   lives_widget_set_sensitive(mainw->loop_video, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_TOTAL_TIME > 0.));
@@ -4667,7 +4685,7 @@ void load_start_image(int frame) {
     return;
   }
 
-  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
+  if (!CURRENT_CLIP_IS_NORMAL || mainw->current_file == mainw->scrap_file || frame < 1 || frame > cfile->frames) {
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), mainw->imframe, NULL);
     } else {
@@ -4878,7 +4896,7 @@ void load_end_image(int frame) {
     return;
   }
 
-  if (!CURRENT_CLIP_IS_NORMAL || frame < 1 || frame > cfile->frames) {
+  if (!CURRENT_CLIP_IS_NORMAL || mainw->current_file == mainw->scrap_file || frame < 1 || frame > cfile->frames) {
     if (!(mainw->imframe == NULL)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), mainw->imframe, NULL);
     } else {
@@ -4894,7 +4912,7 @@ void load_end_image(int frame) {
     return;
   }
 
-  tc = ((frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
+  tc = (frame - 1.) / cfile->fps * TICKS_PER_SECOND;
 
   if (!prefs->ce_maxspect) {
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -6019,7 +6037,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 #else
 
   pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
-  lives_thread_t *frame_thread = (lives_thread_t *)lives_calloc(sizeof(lives_thread_t), 1);
+  lives_thread_t *frame_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
 
   weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
   weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
@@ -6609,7 +6627,7 @@ void load_frame_image(int frame) {
         } else {
           int oclip, nclip;
           register int i;
-          weed_plant_t **layers = (weed_plant_t **)lives_malloc((mainw->num_tracks + 1) * sizeof(weed_plant_t *));
+          weed_plant_t **layers = (weed_plant_t **)lives_calloc((mainw->num_tracks + 1), sizeof(weed_plant_t *));
 
           // get list of active tracks from mainw->filter map
           get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
@@ -7057,6 +7075,7 @@ void load_frame_image(int frame) {
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
       if (!weed_palette_is_valid(layer_palette)) {
         lives_freep((void **)&framecount);
+        load_frame_cleanup(noswitch);
         return;
       }
 
@@ -7243,6 +7262,7 @@ void load_frame_image(int frame) {
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
     if (!weed_palette_is_valid(layer_palette)) {
       lives_freep((void **)&framecount);
+      load_frame_cleanup(noswitch);
       return;
     }
 
@@ -7299,7 +7319,8 @@ void load_frame_image(int frame) {
     }
 
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
-    weed_plant_free(mainw->frame_layer);
+    weed_layer_nullify_pixel_data(mainw->frame_layer);
+    weed_layer_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 
     mainw->noswitch = noswitch;
@@ -7336,7 +7357,6 @@ void load_frame_image(int frame) {
                  (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                             mainw->current_file, mainw->actual_frame, cfile->pb_fps)));
     lives_free(tmp);
-
     lives_freep((void **)&framecount);
     return;
   }

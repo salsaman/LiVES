@@ -3634,7 +3634,7 @@ if (defined($ARGV[0])) {
 		my @lines;
 		my $count = 0;
 
-		##print "DOING .youtube-dl --no-playlist -F '$url'\n";
+		##print STDERR "DOING .youtube-dl --no-playlist -F '$url'\n";
 		
 		open (my $fh, "youtube-dl --no-playlist -F '$url' |");
 		while (defined(my $line = <$fh>)) {
@@ -3778,13 +3778,15 @@ if (defined($ARGV[0])) {
 		}
 		close $fh;
 
-		##print "SMOG OK $count\n";
+		##print STDERR "SMOG OK $count\n";
 		if ($matchsize == 6 && $count > 0) {
+		    ##print STDERR "SMOG returning lines\n";
 		    &sig_complete(@lines);
 		    exit 0;
 		}
 
 		if ($bestvideo eq "" || ($count == 0 && $matchsize != 7)) {
+		    ##print STDERR "SMOG returning error\n";
 		    &sig_error("The requested URL", $url, "could not be opened with the desired format.", "\nPlease try again.");
 		    exit 1;
 		}
@@ -3794,6 +3796,7 @@ if (defined($ARGV[0])) {
 		}
 
 		if ($vidchoice eq "") {
+		    ##print STDERR "SMOG returning sel\n";
 		    &sig_complete("$bestvideo", "$bestaudio");
 		    exit 0;
 		}
@@ -3804,6 +3807,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if (-f $xdfile) {
+		##print STDERR "SMOG returning error2\n";
 		&sig_error;
 		exit 3;
 	    }
@@ -3823,7 +3827,7 @@ if (defined($ARGV[0])) {
 		$com = "youtube-dl --no-playlist -o \"$dfile\" --no-part --no-cache-dir -f '$bestvideo$xbestaudio' \"$url\"";
 	    }
 
-	    print ("RUNNING $com\n");
+	    ##print STDERR "RUNNING $com\n";
 	    
 	    &sig_progress(1);
 
@@ -3838,9 +3842,11 @@ if (defined($ARGV[0])) {
 		    unlink "$dfile.temp.mp4";
 		    ##unlink "$dfile.mp4.f$audfmt"; ## need actual audfmt
 		}
+		##print STDERR "SMOG returning error 3\n";
 		sig_system_error("$com", $res);
 		exit 1;
 	    }
+	    ##print STDERR "SMOG done\n";
 
 	    &sig_complete;
 	    exit 0;

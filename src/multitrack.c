@@ -708,7 +708,8 @@ static void upd_layout_maps(weed_plant_t *event_list) {
 static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   // this is used only for crash recovery
 
-  // layout_numbering simply maps our clip unique_id to clip numbers in the current layout
+  // layout_numbering simply maps our clip handle to clip numbers in the current layout
+  // (it would have been better to use the unique_id, but for backwards compatibility that is not possible)
   // we assume the order hasnt changed (it cant), but there may be gaps in the numbering
   // the numbering may have changed (for example we started last time in mt mode, this time in ce mode)
 
@@ -1159,7 +1160,7 @@ static void draw_block(lives_mt *mt, lives_painter_t *cairo,
             if (thumbnail != NULL) lives_widget_object_unref(thumbnail);
             thumbnail = NULL;
 
-            if (filenum > -1 && mainw->files[filenum] != NULL && framenum != last_framenum) {
+            if (IS_VALID_CLIP(filenum) && filenum != mainw->scrap_file && framenum != last_framenum) {
               if (mainw->files[filenum]->frames > 0 && mainw->files[filenum]->clip_type == CLIP_TYPE_FILE) {
                 lives_clip_data_t *cdata = ((lives_decoder_t *)mainw->files[filenum]->ext_src)->cdata;
                 if (cdata != NULL && !(cdata->seek_flag & LIVES_SEEK_FAST) &&
@@ -5784,6 +5785,7 @@ boolean check_for_layout_del(lives_mt * mt, boolean exiting) {
     mt_clear_timeline(mt);
     close_scrap_file(TRUE);
     close_ascrap_file(TRUE);
+    mainw->recording_recovered = FALSE;
     print_layout_wiped();
   }
 
@@ -9219,13 +9221,15 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     mt->frame_pixbuf = NULL;
   }
 
-  if (save_layout || ((mainw->scrap_file != -1 || mainw->ascrap_file != -1) && !mainw->recording_recovered)) {
-    int file_selected = mt->file_selected;
-    if (!check_for_layout_del(mt, TRUE)) {
-      if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
-      return FALSE;
-    }
-    mt->file_selected = file_selected; // because init_clips will reset this
+  if (save_layout || mainw->scrap_file != -1 || mainw->ascrap_file != -1) {
+    if (!mainw->recording_recovered) {
+      int file_selected = mt->file_selected;
+      if (!check_for_layout_del(mt, TRUE)) {
+        if (needs_idlefunc || (!did_backup && mt->auto_changed)) mt->idlefunc = mt_idle_add(mt);
+        return FALSE;
+      }
+      mt->file_selected = file_selected; // because init_clips will reset this
+    } else mainw->recording_recovered = FALSE;
   } else {
     if (mt->event_list != NULL) {
 
@@ -9636,7 +9640,6 @@ static void set_track_labels(lives_mt * mt) {
         set_track_label_string(mt, nt, labs[i]);
       }
     }
-
     lives_free(labs);
     lives_free(navals);
   }
@@ -9874,9 +9877,7 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
         }
       } else if (WEED_EVENT_IS_FRAME(event)) {
         tc = get_event_timecode(event);
-        num_tracks = weed_leaf_num_elements(event, WEED_LEAF_CLIPS);
-
-        clip_index = weed_get_int_array(event, WEED_LEAF_CLIPS, &error);
+        clip_index = weed_get_int_array_counted(event, WEED_LEAF_CLIPS, &num_tracks);
         frame_index = weed_get_int_array(event, WEED_LEAF_FRAMES, &error);
 
         if (num_tracks < last_tracks) {
@@ -9903,8 +9904,9 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
         for (j = 0; j < num_tracks; j++) {
           // TODO - tracks should be linked list
           if (clip_index[j] > 0 && frame_index[j] > -1 && clip_index[j] <= MAX_FILES &&
-              renumbered_clips[clip_index[j]] > 0 && frame_index[j] <=
-              mainw->files[renumbered_clips[clip_index[j]]]->frames) {
+              renumbered_clips[clip_index[j]] > 0 && (frame_index[j] <=
+                  mainw->files[renumbered_clips[clip_index[j]]]->frames
+                  || renumbered_clips[clip_index[j]] == mainw->scrap_file)) {
             forced_end = FALSE;
             if (tc == block_marker_tc && int_array_contains_value(block_marker_tracks, block_marker_num_tracks, j))
               forced_end = TRUE;
@@ -10016,10 +10018,9 @@ void mt_init_tracks(lives_mt * mt, boolean set_min_max) {
                 last_tc = get_event_timecode(block->start_event);
                 offset_start = block->offset_start + (weed_timecode_t)((double)(tc - last_tc) * avels[i] + .5);
                 add_block_start_point(audio_draw, tc, -1, offset_start, event, TRUE);
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+              }}}}
+	  // *INDENT-ON*
 
         next_frame_event = get_next_frame_event(event);
 
@@ -17052,7 +17053,7 @@ void mt_sensitise(lives_mt * mt) {
     lives_widget_set_sensitive(mt->render, TRUE);
     if (mt->avol_init_event != NULL && mt->opts.pertrack_audio && mainw->files[mt->render_file]->achans > 0)
       lives_widget_set_sensitive(mt->prerender_aud, TRUE);
-    lives_widget_set_sensitive(mt->save_event_list, TRUE);
+    lives_widget_set_sensitive(mt->save_event_list, !mainw->recording_recovered);
   } else {
     lives_widget_set_sensitive(mt->playall, FALSE);
     lives_widget_set_sensitive(mt->playsel, FALSE);
@@ -17107,7 +17108,7 @@ void mt_sensitise(lives_mt * mt) {
     if (mainw->files[mt->file_selected]->frames > 0) lives_widget_set_sensitive(mt->insert, TRUE);
     if (mainw->files[mt->file_selected]->achans > 0 && mainw->files[mt->file_selected]->laudio_time > 0.)
       lives_widget_set_sensitive(mt->audio_insert, TRUE);
-    lives_widget_set_sensitive(mt->save_set, TRUE);
+    lives_widget_set_sensitive(mt->save_set, !mainw->recording_recovered);
     lives_widget_set_sensitive(mt->close, TRUE);
     lives_widget_set_sensitive(mt->adjust_start_end, TRUE);
   }
@@ -21871,6 +21872,7 @@ void wipe_layout(lives_mt * mt) {
   close_ascrap_file(TRUE);
 
   recover_layout_cancelled(FALSE);
+  mainw->recording_recovered = FALSE;
 
   if (strlen(mt->layout_name) > 0 && !strcmp(mt->layout_name, prefs->ar_layout_name)) {
     set_string_pref(PREF_AR_LAYOUT, "");

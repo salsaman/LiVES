@@ -8469,7 +8469,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     }
     new_gamma_type = weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL);
   }
-
+  lives_free(istrides);
   istrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, &nplanes);
   if (istrides == NULL) return FALSE;
 

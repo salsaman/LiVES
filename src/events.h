@@ -137,6 +137,8 @@ int count_events(weed_plant_t *event_list, boolean all_events, ticks_t start_tc,
 
 int count_resampled_events(weed_plant_t *event_list, double fps);
 
+boolean backup_recording(char **esave_file, char **asave_file);
+
 boolean event_list_to_block(weed_plant_t *event_list, int num_events);
 double event_list_get_end_secs(weed_plant_t *event_list);
 double event_list_get_start_secs(weed_plant_t *event_list);

@@ -851,7 +851,10 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   if (work->next != NULL) work->next->prev = work->prev;
   if (twork_list == work) twork_list = work->next;
   pthread_mutex_unlock(&twork_mutex);
-  while (!((thrd_work_t *)work->data)->done) lives_usleep(100);
+  while (!((thrd_work_t *)work->data)->done) {
+    sched_yield();
+    lives_usleep(100);
+  }
   if (retval != NULL) *retval = ((thrd_work_t *)work->data)->ret;
   free(work->data);
   //free(work);

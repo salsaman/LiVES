@@ -4291,7 +4291,8 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
       toggle_record();
 
-      if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit || prefs->audio_src == AUDIO_SRC_EXT) &&
+      if ((prefs->rec_opts & REC_AUDIO) && (mainw->agen_key != 0 || mainw->agen_needs_reinit
+                                            || prefs->audio_src == AUDIO_SRC_EXT) &&
           ((prefs->audio_player == AUD_PLAYER_JACK) ||
            (prefs->audio_player == AUD_PLAYER_PULSE))) {
         if (mainw->ascrap_file == -1) {
@@ -4731,7 +4732,7 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
                            livespointer area_enum) {
   int area = LIVES_POINTER_TO_INT(area_enum);
 
-  if (!(mod & LIVES_SHIFT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
+  if (!(mod & LIVES_ALT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
     boolean do_ret = FALSE;
     if (!clip_can_reverse(mainw->current_file) || !mainw->ping_pong || ((cfile->pb_fps >= 0. && ofwd)
         || (cfile->pb_fps < 0. && !ofwd))) do_ret = TRUE;
@@ -4741,7 +4742,6 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (area == SCREEN_AREA_FOREGROUND) {
     if (!CURRENT_CLIP_IS_NORMAL || !clip_can_reverse(mainw->current_file)) return TRUE;
-    mainw->rte_keys = -1;
 
     // change play direction
     if (cfile->play_paused) {
@@ -4810,8 +4810,6 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
     return TRUE;
   }
-
-  mainw->rte_keys = -1;
 
   if (mainw->loop_locked) {
     dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
@@ -9893,7 +9891,7 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
 
   if (!prefs->mouse_scroll_clips) return FALSE;
 
-  if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_SHIFT_MASK) type = 2; // bg
+  if ((kstate & LIVES_DEFAULT_MOD_MASK) == (LIVES_CONTROL_MASK | LIVES_SHIFT_MASK)) type = 2; // bg
   else if ((kstate & LIVES_DEFAULT_MOD_MASK) == LIVES_CONTROL_MASK) type = 0; // fg or bg
 
   if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) prevclip_callback(NULL, NULL, 0, (LiVESXModifierType)0,
@@ -10196,6 +10194,20 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 }
 
 
+void on_less_pressed(LiVESButton * button, livespointer user_data) {
+  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+
+  if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+  if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
+  if (cfile->next_event != NULL) return;
+
+  if (mainw->rte_keys != -1) {
+    mainw->blend_factor -= prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
+    weed_set_blend_factor(mainw->rte_keys);
+  }
+}
+
+
 void on_slower_pressed(LiVESButton * button, livespointer user_data) {
   double change = 1., new_fps;
 
@@ -10207,12 +10219,6 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
-
-  if (mainw->rte_keys != -1 && user_data == NULL) {
-    mainw->blend_factor -= prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
-    weed_set_blend_factor(mainw->rte_keys);
-    return;
-  }
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
 
@@ -10242,6 +10248,20 @@ void on_slower_pressed(LiVESButton * button, livespointer user_data) {
 }
 
 
+void on_more_pressed(LiVESButton * button, livespointer user_data) {
+  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
+
+  if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+  if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
+  if (cfile->next_event != NULL) return;
+
+  if (mainw->rte_keys != -1) {
+    mainw->blend_factor += prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
+    weed_set_blend_factor(mainw->rte_keys);
+  }
+}
+
+
 void on_faster_pressed(LiVESButton * button, livespointer user_data) {
   double change = 1.;
   int type = 0;
@@ -10252,12 +10272,6 @@ void on_faster_pressed(LiVESButton * button, livespointer user_data) {
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
-
-  if (mainw->rte_keys != -1 && user_data == NULL) {
-    mainw->blend_factor += prefs->blendchange_amount * (double)KEY_RPT_INTERVAL / 1000.;
-    weed_set_blend_factor(mainw->rte_keys);
-    return;
-  }
 
   if (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_FPS)) return;
 
@@ -10330,6 +10344,7 @@ void on_forward_pressed(LiVESButton * button, livespointer user_data) {
 
 boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
+  weed_timecode_t tc;
   if (mainw->multitrack != NULL && (LIVES_IS_PLAYING || mainw->multitrack->is_paused)) {
     on_playall_activate(NULL, NULL);
     return TRUE;
@@ -10346,7 +10361,18 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     if (cfile->pb_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     else mainw->period = INT_MAX;
     cfile->play_paused = FALSE;
+    pthread_mutex_lock(&mainw->event_list_mutex);
+    // write a RECORD_START marker
+    tc = get_event_timecode(get_last_event(mainw->event_list));
+    mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_START); // mark record end
+    pthread_mutex_unlock(&mainw->event_list_mutex);
   } else {
+    pthread_mutex_lock(&mainw->event_list_mutex);
+    // write a RECORD_END marker
+    tc = get_event_timecode(get_last_event(mainw->event_list));
+    mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
+    pthread_mutex_unlock(&mainw->event_list_mutex);
+
     cfile->freeze_fps = cfile->pb_fps;
     cfile->play_paused = TRUE;
     cfile->pb_fps = 0.;

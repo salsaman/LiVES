@@ -26,9 +26,14 @@ static int package_version = 1; // version of this package
 
 /////////////////////////////////////////////////////////////
 
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 typedef struct _sdata {
   unsigned char obf;
   unsigned char blend[256][256];
+  volatile weed_timecode_t master_tc;
 } _sdata;
 
 
@@ -48,6 +53,7 @@ static weed_error_t chroma_init(weed_plant_t *inst) {
   _sdata *sdata = weed_malloc(sizeof(_sdata));
   if (sdata == NULL) return WEED_ERROR_MEMORY_ALLOCATION;
   sdata->obf = 0;
+  sdata->master_tc = -1;
   make_blend_table(sdata, 0, 255);
   weed_set_voidptr_value(inst, "plugin_internal", sdata);
   return WEED_SUCCESS;
@@ -84,6 +90,7 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   int inplace = (src1 == dst);
   int bf, psize = 4;
   int start = 0, row = 0;
+  int offset = 0;
 
   unsigned char *end = src1 + height * irowstride1;
 
@@ -100,22 +107,29 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
   blend_factor = (unsigned char)bf;
   blendneg = blend_factor ^ 0xFF;
 
-  if (type == 0) {
-    sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-    if (sdata->obf != blend_factor) {
-      make_blend_table(sdata, blend_factor, blendneg);
-      sdata->obf = blend_factor;
-    }
-  }
-
   // new threading arch
   if (weed_plant_has_leaf(out_channel, WEED_LEAF_OFFSET)) {
-    int offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
     int dheight = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+    offset = weed_get_int_value(out_channel, WEED_LEAF_OFFSET, NULL);
     src1 += offset * irowstride1;
     end = src1 + dheight * irowstride1;
     src2 += offset * irowstride2;
     dst += offset * orowstride;
+  }
+
+  if (type == 0) {
+    sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
+    if (offset == 0) {
+      if (sdata->obf != blend_factor) {
+        make_blend_table(sdata, blend_factor, blendneg);
+        sdata->obf = blend_factor;
+      }
+      sdata->master_tc = timecode;
+    } else {
+      while (sdata->master_tc != timecode) {
+        usleep(100);
+      }
+    }
   }
 
   for (; src1 < end; src1 += irowstride1) {

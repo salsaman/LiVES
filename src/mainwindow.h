@@ -640,7 +640,7 @@ typedef struct {
   volatile uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
   uint32_t last_grabbable_effect;
-  int rte_keys; ///< which effect is bound to keyboard
+  int rte_keys; ///< which effect is bound to keyboard (m) modechange and ctrl-alt-up-arrow / ctrl-alt-down-arrow param changes
   int num_tr_applied; ///< number of transitions active
   double blend_factor; ///< keyboard control parameter
 

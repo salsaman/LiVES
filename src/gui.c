@@ -2299,22 +2299,35 @@ void create_LiVES(void) {
                             lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
+                            (LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+
+  //////////////////////////
+
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
                             LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
                             (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Up,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
-                            lives_cclosure_new(LIVES_GUI_CALLBACK(faster_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left,
                             LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
@@ -2331,23 +2344,24 @@ void create_LiVES(void) {
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return,
+                            LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Return,
-                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(fps_reset_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL));
 
@@ -4284,7 +4298,7 @@ void resize_play_window(void) {
         if (mainw->vpp->audio_codec != AUDIO_CODEC_NONE && prefs->stream_audio_out) {
           start_audio_stream();
         } else {
-          clear_audio_stream();
+          //clear_audio_stream();
         }
 #endif
 

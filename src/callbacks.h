@@ -241,6 +241,10 @@ void on_slower_pressed(LiVESButton *, livespointer);
 
 void on_faster_pressed(LiVESButton *, livespointer);
 
+void on_less_pressed(LiVESButton *, livespointer);
+
+void on_more_pressed(LiVESButton *, livespointer);
+
 void on_back_pressed(LiVESButton *, livespointer);
 
 void on_forward_pressed(LiVESButton *, livespointer);

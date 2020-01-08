@@ -38,6 +38,10 @@ boolean faster_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESX
 
 boolean slower_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
+boolean more_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+
+boolean less_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
+
 boolean skip_back_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);
 
 boolean skip_forward_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer user_data);

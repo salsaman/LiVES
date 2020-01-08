@@ -359,11 +359,29 @@ boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
 }
 
 
+boolean less_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
+  on_less_pressed(NULL, user_data);
+  return TRUE;
+}
+
+
 boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_faster_pressed(NULL, user_data);
+  return TRUE;
+}
+
+
+boolean more_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                      livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
+  on_more_pressed(NULL, user_data);
   return TRUE;
 }
 

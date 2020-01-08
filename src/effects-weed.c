@@ -1440,7 +1440,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
       xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
       height = xheights[1];
       dheight = xheights[0];
-      offset = dheight * (j + 1);
+      offset = dheight * j;
       if ((height - offset) < dheight) dheight = height - offset;
       xheights[0] = dheight;
       weed_set_int_value(xchannels[i], WEED_LEAF_OFFSET, offset);
@@ -1455,22 +1455,19 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     procvals[j].inst = xinst[j];
     procvals[j].tc = tc; // use same timecode for all slices
 
-    // start a thread for processing
-    lives_thread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
-    nthreads++; // actual number of threads used
-  }
-
-  // we'll run the 'master' thread (with offset 0) ourselves...
-  retval = (*process_func)(inst, tc);
-  if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
-  if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
-  if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
-
-  for (i = 0; i < nchannels; i++) {
-    xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
-    weed_set_int_value(out_channels[i], WEED_LEAF_HEIGHT, xheights[1]);
-    lives_free(xheights);
-    weed_leaf_delete(out_channels[i], WEED_LEAF_OFFSET);
+    if (j < to_use - 1) {
+      // start a thread for processing
+      g_print("THREAD %d with offs %d\n", nthreads, offset);
+      lives_thread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
+      nthreads++; // actual number of threads used
+    } else {
+      /// do the last portion oiurselves, rather than just waiting around
+      (*thread_process_func)(&procvals[j]);
+      retval = procvals[j].ret;
+      if (retval == WEED_ERROR_PLUGIN_INVALID) plugin_invalid = TRUE;
+      if (retval == WEED_ERROR_FILTER_INVALID) filter_invalid = TRUE;
+      if (retval == WEED_ERROR_REINIT_NEEDED) needs_reinit = TRUE;
+    }
   }
 
   // wait for threads to finish
@@ -1487,6 +1484,14 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
     }
     lives_freep((void **)&xchannels);
     weed_plant_free(xinst[j]);
+  }
+
+  for (i = 0; i < nchannels; i++) {
+    // reset the channel heights
+    xheights = weed_get_int_array(out_channels[i], WEED_LEAF_HEIGHT, NULL);
+    weed_set_int_value(out_channels[i], WEED_LEAF_HEIGHT, xheights[1]);
+    lives_free(xheights);
+    weed_leaf_delete(out_channels[i], WEED_LEAF_OFFSET);
   }
 
   lives_freep((void **)&procvals);
@@ -9310,6 +9315,7 @@ boolean rte_key_setmode(int key, int newmode) {
     key_modes[real_key] = newmode;
 
     mainw->blend_file = blend_file;
+
     if (inst != NULL) {
       if (!weed_init_effect(key)) {
         weed_instance_unref(inst);

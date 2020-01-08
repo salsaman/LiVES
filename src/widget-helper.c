@@ -1217,11 +1217,14 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_app_paintable(LiVESWidget *
   return FALSE;
 }
 
+static boolean allow_all = FALSE;
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dialog) {
 #ifdef GUI_GTK
   LiVESResponseType ret;
+  allow_all = TRUE;
   lives_widget_context_update();
+  allow_all = FALSE;
   ret = gtk_dialog_run(dialog);
   if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
     if (prefs->show_msg_area) {
@@ -11071,7 +11074,7 @@ boolean lives_widget_context_update(void) {
         break;
       }
       if (!(nulleventcount ^ 7)) mainw->uflow_count++;
-      if (nulleventcount > MAX_NULL_EVENTS) {
+      if (nulleventcount > MAX_NULL_EVENTS && !allow_all) {
         // there are various reasons we can get here:
         // - user is holding down a key (e.g. "s") during playback (MAX_NULL_EVENTS is set sufficiently high that a single key press
         // should not trigger this)
@@ -11094,10 +11097,12 @@ boolean lives_widget_context_update(void) {
       /* 	mainw->loadmeasure = 0; */
       /* 	lm_needs_idlefunc = TRUE; */
       /* } */
-      if (mainw->uflow_count > 0) {
-        sched_yield();
-        lives_usleep(prefs->sleep_time * 10);
-        sched_yield();
+      if (mainw->uflow_count > 0 && !allow_all) {
+        for (int ll = 0; ll < 10; ll++) {
+          sched_yield();
+          lives_usleep(prefs->sleep_time);
+          sched_yield();
+        }
         --mainw->uflow_count;
       } else {
         g_main_context_iteration(NULL, FALSE);

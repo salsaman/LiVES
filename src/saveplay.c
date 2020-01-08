@@ -3610,14 +3610,12 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
       cfile->asampsize = atoi(array[11]);
       cfile->signed_endian = get_signed_endian(atoi(array[12]), atoi(array[13]));
       cfile->afilesize = strtol(array[14], NULL, 10);
-      g_print("achans is %d\n", cfile->achans);
       if (aud_only) {
         lives_strfreev(array);
         return TRUE;
       }
 
       cfile->frames = atoi(array[2]);
-      g_print("achans is %d\n", cfile->achans);
       if (aud_only) {
         lives_strfreev(array);
         return TRUE;
@@ -3690,7 +3688,8 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
     if ((cfile->afilesize * cfile->asampsize * cfile->arate * cfile->achans == 0) || cfile->frames < 2) {
       if (cfile->frames != 1) {
-        d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \nDefault can be set in Tools | Preferences | Misc.\n"),
+        d_print(_("\nPlayback speed not found or invalid ! Using default fps of %.3f fps. \n"
+                  "Default can be set in Tools | Preferences | Misc.\n"),
                 prefs->default_fps);
       }
       cfile->pb_fps = cfile->fps = prefs->default_fps;

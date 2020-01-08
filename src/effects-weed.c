@@ -1457,7 +1457,6 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
     if (j < to_use - 1) {
       // start a thread for processing
-      g_print("THREAD %d with offs %d\n", nthreads, offset);
       lives_thread_create(&dthreads[j], NULL, thread_process_func, &procvals[j]);
       nthreads++; // actual number of threads used
     } else {

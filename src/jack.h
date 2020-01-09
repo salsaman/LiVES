@@ -154,7 +154,7 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg f
 void jack_time_reset(jack_driver_t *jackd, int64_t offset);
 ticks_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 seconds
 boolean jack_audio_seek_frame(jack_driver_t *, int frame);  ///< seek to (video) frame
-int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes);  ///< seek to byte position
+int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes, lives_clip_t *sfile);  ///< seek to byte position
 
 void jack_get_rec_avals(jack_driver_t *);
 

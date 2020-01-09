@@ -115,7 +115,7 @@ boolean lives_pulse_init(short startup_phase) {
 
   pa_state = pa_context_get_state(pcon);
 
-  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+  alarm_handle = lives_alarm_set(prefs->pa_restart ? LIVES_LONGEST_TIMEOUT : LIVES_SHORT_TIMEOUT);
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
@@ -475,9 +475,13 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           int playfile = mainw->playing_file;
           pulsed->seek_end = 0;
 
-          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(pulsed->playing_file))
-            pulsed->seek_end = afile->afilesize;
-
+          if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(pulsed->playing_file)) {
+            if (mainw->playing_sel) {
+              pulsed->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps)
+                                 * afile->achans * (afile->asampsize / 8);
+              if (pulsed->seek_end > afile->afilesize) pulsed->seek_end = afile->afilesize;
+            } else pulsed->seek_end = afile->afilesize;
+          }
           if (pulsed->seek_end == 0 || ((pulsed->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
                                         && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0)) {
             pulsed->seek_end = INT64_MAX;
@@ -544,7 +548,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   pulsed->in_arate = -pulsed->in_arate;
                   pulsed->seek_pos -= in_bytes;
                 } else {
-                  pulsed->seek_pos = pulsed->real_seek_pos = 0;
+                  if (mainw->playing_sel) {
+                    pulsed->seek_pos = pulsed->real_seek_pos = (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                       * afile->achans * (afile->asampsize / 8);
+                  } else pulsed->seek_pos = pulsed->real_seek_pos = 0;
                 }
                 if (mainw->record && !mainw->record_paused)
                   pulse_set_rec_avals(pulsed);
@@ -554,7 +561,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
           else if (pulsed->playing_file != mainw->ascrap_file && shrink_factor  < 0.f) {
             /// reversed playback
-            if ((pulsed->seek_pos -= in_bytes) < 0) {
+            if ((pulsed->seek_pos -= in_bytes) < mainw->playing_sel ?
+                (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8) : 0) {
               if (pulsed->loop == AUDIO_LOOP_NONE) {
                 if (*pulsed->whentostop == STOP_ON_AUD_END) {
                   *pulsed->cancelled = CANCEL_AUD_END;
@@ -565,7 +573,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                     || clip_can_reverse(mainw->playing_file))) {
                   pulsed->in_arate = -pulsed->in_arate;
                   shrink_factor = -shrink_factor;
-                  pulsed->seek_pos = -pulsed->seek_pos;
+                  pulsed->seek_pos = (mainw->playing_sel ?
+                                      (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                      * afile->achans * (afile->asampsize / 8) : 0)
+                                     - pulsed->seek_pos;
                 } else pulsed->seek_pos += pulsed->seek_end;
               }
               pulsed->real_seek_pos = pulsed->seek_pos;

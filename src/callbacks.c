@@ -7694,8 +7694,8 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd != NULL) {
 
     if (mainw->jackd->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
-      if (!jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos)) {
-        if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos);
+      if (!jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, cfile)) {
+        if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, cfile);
       }
     }
   }
@@ -10484,9 +10484,7 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 #else
     return FALSE;
 #endif
-  }
-
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+  } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = (double)mainw->pulsed->seek_pos /
           cfile->arate / cfile->achans / cfile->asampsize * 8;

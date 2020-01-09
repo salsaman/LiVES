@@ -965,10 +965,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 ////////// list values
 #define PREF_DISABLED_DECODERS "disabled_decoders"
 
-// defaults (readonly)
-/////////////// string values
-#define PREF_SOX_COMMAND "sox_command"
-
 boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent);
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent);
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent);
@@ -979,7 +975,6 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
 boolean has_pref(const char *key);
 
 LiVESResponseType get_pref_from_file(const char *filename, const char *key, char *val, int maxlen);
-void get_pref_default(const char *key, char *val, int maxlen); // valid only for select prefs (PREF_SOX_COMMAND)
 
 int get_utf8_pref(const char *key, char *val, int maxlen);
 LiVESResponseType get_string_pref(const char *key, char *val, int maxlen);

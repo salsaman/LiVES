@@ -523,9 +523,13 @@ static int audio_process(nframes_t nframes, void *arg) {
 
         jackd->seek_end = 0;
 
-        if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file))
-          jackd->seek_end = afile->afilesize;
-
+        if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) {
+          if (mainw->playing_sel) {
+            jackd->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps)
+                              * afile->achans * (afile->asampsize / 8);
+            if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize;
+          } else jackd->seek_end = afile->afilesize;
+        }
         if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
                                      && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0)) {
           jackd->seek_end = INT64_MAX;
@@ -565,7 +569,10 @@ static int audio_process(nframes_t nframes, void *arg) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
                 } else {
-                  jackd->seek_pos = 0;
+                  if (mainw->playing_sel) {
+                    jackd->seek_pos = jackd->real_seek_pos = (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                      * afile->achans * (afile->asampsize / 8);
+                  } else jackd->seek_pos = jackd->real_seek_pos = 0;
 		// *INDENT-OFF*
                 }}}}
 	  // *INDENT-ON*
@@ -584,7 +591,10 @@ static int audio_process(nframes_t nframes, void *arg) {
                     || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
                   shrink_factor = -shrink_factor;
-                  jackd->seek_pos = -jackd->seek_pos;
+                  jackd->seek_pos = (mainw->playing_sel ?
+                                     (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                     * afile->achans * (afile->asampsize / 8) : 0)
+                                    - jackd->seek_pos;
                 } else jackd->seek_pos += jackd->seek_end;
               }
               jackd->real_seek_pos = jackd->seek_pos;
@@ -1182,7 +1192,7 @@ void jack_shutdown(void *arg) {
   mainw->jackd->msgq = NULL;
 
   if (mainw->jackd->playing_file != -1 && afile != NULL)
-    jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos); // at least re-seek to the right place
+    jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, afile); // at least re-seek to the right place
 }
 
 
@@ -1689,14 +1699,14 @@ boolean jack_audio_seek_frame(jack_driver_t *jackd, int frame) {
   if (timeout == 0 || jackd->playing_file == -1) {
     return FALSE;
   }
-  if (frame > afile->frames) frame = afile->frames;
+  if (frame > afile->frames && afile->frames != 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
-  jack_audio_seek_bytes(jackd, seekstart);
+  jack_audio_seek_bytes(jackd, seekstart, afile);
   return TRUE;
 }
 
 
-int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
+int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t *sfile) {
   // seek to position "bytes" in current audio file
   // position will be adjusted to (floor) nearest sample
 
@@ -1725,10 +1735,10 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes) {
     return 0;
   }
 
-  seekstart = ((int64_t)(bytes / afile->achans / (afile->asampsize / 8))) * afile->achans * (afile->asampsize / 8);
+  seekstart = ((int64_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
 
   if (seekstart < 0) seekstart = 0;
-  if (seekstart > afile->afilesize) seekstart = afile->afilesize;
+  if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
   jack_message2.command = ASERVER_CMD_FILE_SEEK;
   jack_message2.next = NULL;
   jack_message2.data = lives_strdup_printf("%"PRId64, seekstart);
@@ -1813,9 +1823,9 @@ void jack_aud_pb_ready(int fileno) {
         jack_message.next = NULL;
         mainw->jackd->msgq = &jack_message;
 
-        jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos);
+        jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
         if (seek_err) {
-          if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos);
+          if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, sfile->aseek_pos, sfile);
         }
 
         //mainw->jackd->in_use = TRUE;

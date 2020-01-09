@@ -1819,6 +1819,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     mainw->deltaticks = 0;
   }
 
+  if (!mainw->playing_sel) mainw->play_start = 1;
+
   if (mainw->multitrack != NULL && !mainw->multitrack->is_rendering) {
     // playback start from middle of multitrack
     // calculate when we "would have started" at time 0

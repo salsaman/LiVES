@@ -304,16 +304,21 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
-  if (down && (unicode == LIVES_KEY_Left || unicode == LIVES_KEY_Right || unicode == LIVES_KEY_Up || unicode == LIVES_KEY_Down) &&
+  if (down && (unicode == LIVES_KEY_Left || unicode == LIVES_KEY_Right
+               || unicode == LIVES_KEY_Up || unicode == LIVES_KEY_Down) &&
       (keymod & LIVES_CONTROL_MASK)) {
     cached_key = unicode;
     cached_mod = LIVES_CONTROL_MASK;
     if (keymod & LIVES_ALT_MASK) {
       cached_mod |= LIVES_ALT_MASK;
     }
+    if (keymod & LIVES_SHIFT_MASK) {
+      cached_mod |= LIVES_SHIFT_MASK;
+    }
   }
 
-  if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK || keymod == LIVES_LOCK_MASK || keymod == 16)) {
+  if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK
+                                      || keymod == LIVES_LOCK_MASK || keymod == 16)) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
     if (unicode == LIVES_KEY_BackSpace) unicode = 8; // bs
     if (unicode == LIVES_KEY_Tab || unicode == 9) mainw->rte_textparm = NULL;
@@ -354,7 +359,8 @@ boolean slower_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
                         livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
-  on_slower_pressed(NULL, user_data);
+  if (mod & LIVES_SHIFT_MASK) on_slower_pressed(NULL, LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND));
+  else on_slower_pressed(NULL, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   return TRUE;
 }
 
@@ -372,7 +378,8 @@ boolean faster_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t
                         livespointer user_data) {
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
-  on_faster_pressed(NULL, user_data);
+  if (mod & LIVES_SHIFT_MASK) on_faster_pressed(NULL, LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND));
+  else on_faster_pressed(NULL, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   return TRUE;
 }
 

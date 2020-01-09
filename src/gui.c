@@ -2294,6 +2294,8 @@ void create_LiVES(void) {
 
   // Let the player handle this
 
+  // actually, for up and down, the user data doesn't matter since it is ignored when we create synthetic
+  // key presses, and only the keymod counts. However it's added here as a guide.
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
                             LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(slower_callback),
@@ -2308,7 +2310,7 @@ void create_LiVES(void) {
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Down,
                             (LIVES_CONTROL_MASK | LIVES_ALT_MASK), (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(less_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+                                NULL, NULL));
 
   //////////////////////////
 
@@ -2327,7 +2329,7 @@ void create_LiVES(void) {
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0,
                             lives_cclosure_new(LIVES_GUI_CALLBACK(more_callback),
-                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+                                NULL, NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Left,
                             LIVES_CONTROL_MASK, (LiVESAccelFlags)0,

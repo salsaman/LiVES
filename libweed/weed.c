@@ -178,8 +178,6 @@ EXPORTED weed_error_t weed_init(int32_t abi) {
 }
 
 
-static const weed_size_t maxlen = (weed_size_t) - 2;
-
 #define hasNulByte(x) ((x - 0x01010101) & ~x & 0x80808080)
 #define SW (sizeof (int) / sizeof (char))
 static inline weed_size_t weed_strlen(const char *s) {

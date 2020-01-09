@@ -3058,7 +3058,7 @@ boolean switch_aud_to_sox(boolean set_in_prefs) {
   if (!capable->has_sox_play) return FALSE; // TODO - show error
 
   prefs->audio_player = AUD_PLAYER_SOX;
-  get_pref_default(PREF_SOX_COMMAND, prefs->audio_play_command, 256);
+  lives_snprintf(prefs->audio_play_command, 256, "%s", EXEC_PLAY);
   if (set_in_prefs) set_string_pref(PREF_AUDIO_PLAYER, AUDIO_PLAYER_SOX);
   lives_snprintf(prefs->aplayer, 512, "%s", AUDIO_PLAYER_SOX);
   //set_string_pref(PREF_AUDIO_PLAY_COMMAND, prefs->audio_play_command);

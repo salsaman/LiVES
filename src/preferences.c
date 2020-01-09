@@ -138,15 +138,6 @@ LiVESList *get_list_pref(const char *key) {
 }
 
 
-void get_pref_default(const char *key, char *val, int maxlen) {
-  char *com = lives_strdup_printf("%s get_pref_default \"%s\" -", prefs->backend_sync, key);
-  memset(val, 0, 1);
-  lives_popen(com, TRUE, val, maxlen);
-  if (!strcmp(val, "NULL")) memset(val, 0, 1);
-  lives_free(com);
-}
-
-
 LIVES_GLOBAL_INLINE boolean get_boolean_pref(const char *key) {
   char buffer[16];
   get_string_pref(key, buffer, 16);

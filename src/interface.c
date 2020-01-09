@@ -423,31 +423,33 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
     }
 
-    start = 0;
+    start = offset_end;
     if (cfile->audio_waveform[0] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
       cfile->audio_waveform[0] = (float *)lives_calloc((int)offset_end, sizeof(float));
+      start = cfile->aw_sizes[0] = 0;
     } else if (cfile->aw_sizes[0] != offset_end) {
       if (LIVES_IS_PLAYING)
         start = cfile->aw_sizes[0];
+      else start = 0;
       cfile->audio_waveform[0] = (float *)lives_realloc(cfile->audio_waveform[0], (int)offset_end * sizeof(float));
     }
 
-    cfile->aw_sizes[0] = 0;
-
     if (cfile->audio_waveform[0] != NULL) {
-      cfile->aw_sizes[0] = offset_end;
-      filename = lives_get_audio_file_name(mainw->current_file);
-      afd = lives_open_buffered_rdonly(filename);
-      lives_free(filename);
+      if (start != offset_end) {
+        cfile->aw_sizes[0] = offset_end;
+        filename = lives_get_audio_file_name(mainw->current_file);
+        afd = lives_open_buffered_rdonly(filename);
+        lives_free(filename);
 
-      for (i = start; i < offset_end; i++) {
-        atime = (double)i / scalex;
-        cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
+        for (i = start; i < offset_end; i++) {
+          atime = (double)i / scalex;
+          cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
+        }
+
+        lives_close_buffered(afd);
       }
-
-      lives_close_buffered(afd);
 
       if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
@@ -543,31 +545,34 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
     offset_right = ROUND_I((double)(cfile->end) / cfile->fps * scalex);
     offset_end = ROUND_I(cfile->raudio_time * scalex);
 
-    start = 0;
+    start = offset_end;
     if (cfile->audio_waveform[1] == NULL) {
       // re-read the audio
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
       cfile->audio_waveform[1] = (float *)lives_calloc(offset_end, sizeof(float));
+      start = cfile->aw_sizes[1] = 0;
     } else if (cfile->aw_sizes[1] != offset_end) {
       if (LIVES_IS_PLAYING)
         start = cfile->aw_sizes[1];
+      else
+        start = 0;
       cfile->audio_waveform[1] = (float *)lives_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
-    cfile->aw_sizes[1] = 0;
 
     if (cfile->audio_waveform[1] != NULL) {
-      cfile->aw_sizes[1] = offset_end;
-      filename = lives_get_audio_file_name(mainw->current_file);
-      afd = lives_open_buffered_rdonly(filename);
-      lives_free(filename);
+      if (start != offset_end) {
+        cfile->aw_sizes[1] = offset_end;
+        filename = lives_get_audio_file_name(mainw->current_file);
+        afd = lives_open_buffered_rdonly(filename);
+        lives_free(filename);
 
-      for (i = start; i < offset_end; i++) {
-        atime = (double)i / scalex;
-        cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+        for (i = start; i < offset_end; i++) {
+          atime = (double)i / scalex;
+          cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+        }
+
+        lives_close_buffered(afd);
       }
-
-      lives_close_buffered(afd);
-
       if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
                                cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);

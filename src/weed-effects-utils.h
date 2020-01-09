@@ -138,6 +138,12 @@ int weed_param_does_wrap(weed_plant_t *param);
 int weed_param_get_value_type(weed_plant_t *param);
 int weed_param_value_irrelevant(weed_plant_t *param);
 
+int weed_param_get_value_int(weed_plant_t *param);
+int weed_param_get_value_boolean(weed_plant_t *param);
+double weed_param_get_value_double(weed_plant_t *param);
+int64_t weed_param_get_value_int64(weed_plant_t *param);
+char *weed_param_get_value_string(weed_plant_t *param);
+
 /* if param is WEED_SEED_STRING and WEED_LEAF_CHOICES is set in param or template, returns the length, else returns 0 */
 int weed_param_get_nchoices(weed_plant_t *param);
 

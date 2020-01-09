@@ -286,8 +286,7 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
   weed_plant_t *tparamtmpl;
 
   int key = -1;
-  int hint, error, nparams;
-  int old_val;
+  int hint, nparams;
   int trans = get_transition_param(filter, FALSE);
 
   do {
@@ -298,37 +297,29 @@ static void trans_in_out_pressed(lives_rfx_t *rfx, boolean in) {
       trans -= nparams;
     }
   } while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE) &&
-           (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error)) != NULL);
+           (inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL)) != NULL);
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
+  in_params = weed_instance_get_in_params(inst, NULL);
   tparam = in_params[trans];
-  tparamtmpl = weed_get_plantptr_value(tparam, WEED_LEAF_TEMPLATE, &error);
-  hint = weed_get_int_value(tparamtmpl, WEED_LEAF_HINT, &error);
+  tparamtmpl = weed_param_get_template(tparam);
+  hint = weed_paramtmpl_get_hint(tparamtmpl);
 
-  old_val = get_int_param(rfx->params[trans].value);
-
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
   if (!filter_mutex_trylock(key)) {
     if (hint == WEED_HINT_INTEGER) {
-      if (in) weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MIN, &error));
-      else weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MAX, &error));
+      if (in) weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MIN, NULL));
+      else weed_set_int_value(tparam, WEED_LEAF_VALUE, weed_get_int_value(tparamtmpl, WEED_LEAF_MAX, NULL));
     } else {
-      if (in) weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MIN, &error));
-      else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, &error));
+      if (in) weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MIN, NULL));
+      else weed_set_double_value(tparam, WEED_LEAF_VALUE, weed_get_double_value(tparamtmpl, WEED_LEAF_MAX, NULL));
     }
     filter_mutex_unlock(key);
     set_copy_to(inst, trans, rfx, TRUE);
   }
-  rfx->params[trans].change_blocked = TRUE; ///< prevent possible loops caused by "copy_value_to"
+
   update_visual_params(rfx, FALSE);
   lives_free(in_params);
-
-  if (mainw->multitrack != NULL) {
-    // force parameter update in multitrack
-    set_int_param(rfx->params[trans].value, old_val);
-    after_param_value_changed(LIVES_SPIN_BUTTON(rfx->params[trans].widgets[0]), rfx);
-  }
-  rfx->params[trans].change_blocked = FALSE;
+  activate_mt_preview(mainw->multitrack);
 }
 
 
@@ -2110,12 +2101,16 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
         weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
         if (enabled_in_channels(filter, FALSE) == 2 && param->transition) {
           if (param->dp == 0) {
-            if (new_int == (int)param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
-            else if (new_int == (int)param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
+            if (new_int == (int)param->min)
+              lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
+            else if (new_int == (int)param->max)
+              lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
             else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_DUMMY]), TRUE);
           } else {
-            if (new_double == param->min) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
-            else if (new_double == param->max) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
+            if (new_double == param->min)
+              lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_IN]), TRUE);
+            else if (new_double == param->max)
+              lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_OUT]), TRUE);
             else lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(param->widgets[WIDGET_RB_DUMMY]), TRUE);
           }
         }
@@ -3313,20 +3308,18 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
 
   register int i, j;
 
-  if (weed_plant_has_leaf(inst, WEED_LEAF_IN_PARAMETERS))
-    num_params = weed_leaf_num_elements(inst, WEED_LEAF_IN_PARAMETERS);
+  in_params = weed_instance_get_in_params(inst, &num_params);
   if (num_params == 0) return;
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
 
-  in_params = weed_get_plantptr_array(inst, WEED_LEAF_IN_PARAMETERS, &error);
   for (i = 0; i < num_params; i++) {
     if (!is_hidden_param(inst, i) || update_hidden) {
       // by default we dont update hidden or reinit params
 
       in_param = in_params[i];
-      paramtmpl = weed_get_plantptr_value(in_param, WEED_LEAF_TEMPLATE, &error);
-      param_hint = weed_get_int_value(paramtmpl, WEED_LEAF_HINT, &error);
+      paramtmpl = weed_param_get_template(in_param);
+      param_hint = weed_paramtmpl_get_hint(paramtmpl);
       list = NULL;
 
       // assume index is 0, unless we are a framedraw multi parameter

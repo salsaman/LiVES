@@ -659,6 +659,9 @@ static boolean pre_init(void) {
   prefs->autoload_subs = TRUE;
   prefs->show_subtitles = TRUE;
 
+  prefs->pa_restart = get_boolean_prefd(PREF_PARESTART, FALSE);
+  get_string_prefd(PREF_PASTARTOPTS, prefs->pa_start_opts, 255, "-k --realtime");
+
   prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
   prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
 
@@ -1878,6 +1881,12 @@ static void lives_init(_ign_opts *ign_opts) {
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
+
+      if (prefs->pa_restart) {
+        char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+        lives_system(com, TRUE);
+        lives_free(com);
+      }
 
       if (!lives_pulse_init(prefs->startup_phase)) {
         if (prefs->startup_phase == 4) {
@@ -3359,6 +3368,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
     lives_free(msg);
     _exit(1);
   }
+  weed_utils_set_custom_memfuncs(lives_malloc, lives_calloc, lives_memcpy, NULL, lives_free);
 #endif
 
   // backup the core functions so we can override them

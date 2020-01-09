@@ -3647,15 +3647,17 @@ void do_keys_window(void) {
   ADD_KEYDEF(NULL, _("Recordable keys (press 'r' before playback to make a recording)"));
   ADD_KEYDEF(_("ctrl-left"), _("skip back"));
   ADD_KEYDEF(_("ctrl-right"), _("skip forwards"));
-  ADD_KEYDEF(_("ctrl-up"), _("play faster/increase effect"));
-  ADD_KEYDEF(_("ctrl-down"), _("play slower/decrease effect"));
-  ADD_KEYDEF(_("ctrl-alt-up"), _("background clip play faster"));
-  ADD_KEYDEF(_("ctrl-alt-down"), _("background clip play slower"));
+  ADD_KEYDEF(_("ctrl-up"), _("play faster"));
+  ADD_KEYDEF(_("ctrl-down"), _("play slower"));
+  ADD_KEYDEF(_("ctrl-shift-up"), _("background clip play faster"));
+  ADD_KEYDEF(_("ctrl-shift-down"), _("background clip play slower"));
+  ADD_KEYDEF(_("ctrl-alt-up"), _("increase effect parameter for keygrabbed effect"));
+  ADD_KEYDEF(_("ctrl-alt-down"), _("decrease effect parameter for keybrabbed effect"));
   ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate"));
-  ADD_KEYDEF(_("ctrl-alt-enter"), _("reset frame rate (background clip)"));
+  ADD_KEYDEF(_("ctrl-shift-enter"), _("reset frame rate (background clip)"));
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
-  ADD_KEYDEF(_("ctrl-alt-space"), _("reverse direction (background clip)"));
-  ADD_KEYDEF(_("ctrl-shift-space"),
+  ADD_KEYDEF(_("ctrl-shift-space"), _("reverse direction (background clip)"));
+  ADD_KEYDEF(_("ctrl-alt-space"),
              _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\nctrl-space, ctrl-enter, or switching clips clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
@@ -3671,9 +3673,9 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-0"), _("real-time effects off"));
   ADD_KEYDEF("x", _("swap background/foreground"));
   ADD_KEYDEF("", "");
-  ADD_KEYDEF("k", _("grab keyboard for last activated effect"));
+  ADD_KEYDEF("k", _("grab keyboard for last activated effect key (affects m, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
   ADD_KEYDEF("m", _("switch effect mode (when effect has keyboard grab)"));
-  ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1"));
+  ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1 (similar to k key)"));
   ADD_KEYDEF(_("ctrl-alt-2"), _("grab keyboard for effect key 2"));
   ADD_KEYDEF(_("...etc..."), "");
   ADD_KEYDEF("t", _("enter text parameter (when effect has keyboard grab)"));

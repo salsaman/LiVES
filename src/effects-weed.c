@@ -8140,24 +8140,18 @@ boolean is_hidden_param(weed_plant_t *plant, int i) {
       }
     }
   }
-
   lives_free(wtmpls);
   return !visible;
 }
 
 
 int get_transition_param(weed_plant_t *filter, boolean skip_internal) {
-  int error, num_params, i, count = 0;
-  weed_plant_t **in_ptmpls;
-
-  if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES)) return -1; // has no in_parameters
-
-  num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
-  in_ptmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error);
-  for (i = 0; i < num_params; i++) {
+  int num_params, count = 0;
+  weed_plant_t **in_ptmpls = weed_filter_get_in_paramtmpls(filter, &num_params);
+  if (num_params == 0) return -1;
+  for (int i = 0; i < num_params; i++) {
     if (skip_internal && weed_plant_has_leaf(in_ptmpls[i], WEED_LEAF_HOST_INTERNAL_CONNECTION)) continue;
-    if (weed_plant_has_leaf(in_ptmpls[i], WEED_LEAF_IS_TRANSITION) &&
-        weed_get_boolean_value(in_ptmpls[i], WEED_LEAF_IS_TRANSITION, &error) == WEED_TRUE) {
+    if (weed_get_boolean_value(in_ptmpls[i], WEED_LEAF_IS_TRANSITION, NULL) == WEED_TRUE) {
       lives_free(in_ptmpls);
       return count;
     }

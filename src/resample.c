@@ -502,8 +502,6 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
    ///  - goto loop
 
    /// inserting from scrap_file, we cannot interpolate frame numbers. So we just insert nearest frame
-
-
 */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   weed_timecode_t out_tc = 0, ntc = 0, offset_tc = 0, in_tc, ltc = 0;

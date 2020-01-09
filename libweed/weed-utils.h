@@ -39,9 +39,13 @@ extern "C"
 #endif /* __cplusplus */
 
 #if defined(__WEED_HOST__) || defined(__LIBWEED__)
-/* functions return WEED_TRUE or WEED_FALSE */
 
-/* check if leaf exists and has a value */
+typedef int (*weed_memcmp_f)(const void *, const void *, size_t);
+
+void weed_utils_set_custom_memfuncs(weed_malloc_f malloc_func, weed_calloc_f calloc_func, weed_memcpy_f memcpy_func,
+                                    weed_memcmp_f memcmp_func, weed_free_f free_func);
+
+/* check if leaf exists and has a value, returns WEED_TRUE or WEED_FALSE */
 int weed_plant_has_leaf(weed_plant_t *, const char *key);
 
 /* check if leaf exists; may have a seed_type but no value set */

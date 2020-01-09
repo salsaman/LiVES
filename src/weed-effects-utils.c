@@ -37,6 +37,11 @@
 #define WEED_LOCAL_INLINE static inline
 #endif
 
+#ifndef free_func
+// TODO
+#define free_func(ptr) free(ptr)
+#endif
+
 WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
   if (plant == NULL) return WEED_PLANT_UNKNOWN;
   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
@@ -128,6 +133,22 @@ WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *f
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, ntmpls);
 }
+
+/* int weed_filter_get_transition_param(weed_plant_t *filter, const char *skip) { */
+/*   int num_params, count = 0; */
+/*   weed_plant_t **in_ptmpls = weed_filter_get_in_paramtmpls(filter, &num_params); */
+/*   if (num_params == 0) return -1; */
+/*   for (int i = 0; i < num_params; i++) { */
+/*     if (skip != NULL && weed_plant_has_leaf(in_ptmpls[i], skip)) continue; */
+/*     if (weed_get_boolean_value(in_ptmpls[i], WEED_LEAF_IS_TRANSITION, NULL) == WEED_TRUE) { */
+/*       free_func(in_ptmpls); */
+/*       return count; */
+/*     } */
+/*     count++; */
+/*   } */
+/*   free_func(in_ptmpls); */
+/*   return -1; */
+/* } */
 
 WEED_GLOBAL_INLINE char *weed_chantmpl_get_name(weed_plant_t *chantmpl) {
   if (!WEED_PLANT_IS_CHANNEL_TEMPLATE(chantmpl)) return NULL;

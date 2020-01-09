@@ -2582,8 +2582,10 @@ void play_file(void) {
 
             /// fill our audio buffers now
             /// this will also get our effects state
+            if (mainw->multitrack != NULL) mainw->pulsed->abufs[0]->arate = cfile->arate;
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
+              if (mainw->multitrack != NULL) mainw->pulsed->abufs[i]->arate = cfile->arate;
               fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);
             }
 
@@ -2628,8 +2630,8 @@ void play_file(void) {
         if (!has_audio_buffers) {
           // no audio buffering
           // get just effects state
-          get_audio_and_effects_state_at(mainw->multitrack->event_list, mainw->multitrack->pb_start_event, FALSE,
-                                         mainw->multitrack->exact_preview);
+          get_audio_and_effects_state_at(mainw->multitrack->event_list, mainw->multitrack->pb_start_event, 0,
+                                         LIVES_PREVIEW_TYPE_VIDEO_ONLY, mainw->multitrack->exact_preview);
         }
 
         do_progress_dialog(FALSE, FALSE, NULL);

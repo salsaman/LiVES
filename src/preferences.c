@@ -658,6 +658,17 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
+#ifdef HAVE_PULSE_AUDIO
+  if (!strcmp(prefidx, PREF_PASTARTOPTS)) {
+    if (strcmp(newval, prefs->pa_start_opts)) {
+      lives_snprintf(prefs->pa_start_opts, 255, "%s", newval);
+      if (permanent) set_string_pref(PREF_PASTARTOPTS, newval);
+      goto success1;
+    }
+    goto fail1;
+  }
+#endif
+
   if (!strcmp(prefidx, PREF_OMC_JS_FNAME)) {
     if (strcmp(newval, prefs->omc_js_fname)) {
       lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
@@ -821,6 +832,16 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
       lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pa_gens), prefs->push_audio_to_gens);
     goto success2;
   }
+
+#ifdef HAVE_PULSE_AUDIO
+  if (!strcmp(prefidx, PREF_PARESTART)) {
+    if (prefs->pa_restart == newval) goto fail2;
+    prefs->pa_restart = newval;
+    if (prefsw != NULL)
+      lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefs->pa_restart);
+    goto success2;
+  }
+#endif
 
   if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
     if (prefs->show_asrc == newval) goto fail2;
@@ -1614,6 +1635,13 @@ boolean apply_prefs(boolean skip_warn) {
     widget_opts.show_button_images = show_button_icons;
     set_boolean_pref(PREF_SHOW_BUTTON_ICONS, show_button_icons);
   }
+
+#ifdef HAVE_PULSE_AUDIO
+  pref_factory_bool(PREF_PARESTART, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)),
+                    TRUE);
+  if (prefs->pa_restart)
+    pref_factory_string(PREF_PASTARTOPTS, lives_entry_get_text(LIVES_ENTRY(prefsw->audio_command_entry)), TRUE);
+#endif
 
   if (show_asrc != (prefs->show_asrc)) {
     pref_factory_bool(PREF_SHOW_ASRC, show_asrc, TRUE);
@@ -2486,6 +2514,14 @@ static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
     lives_widget_set_sensitive(prefsw->checkbutton_jack_read_autocon, FALSE);
     lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_start_ajack), FALSE);
     lives_widget_hide(prefsw->jack_int_label);
+  }
+  if (!strcmp(audp, AUDIO_PLAYER_PULSE_AUDIO)) {
+    lives_widget_set_sensitive(prefsw->checkbutton_parestart, TRUE);
+    lives_widget_set_sensitive(prefsw->audio_command_entry,
+                               lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart)));
+  } else {
+    lives_widget_set_sensitive(prefsw->checkbutton_parestart, FALSE);
+    lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE);
   }
 #endif
   lives_free(prefsw->audp_name);
@@ -3620,19 +3656,26 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   //---
 
-  /* add_fill_to_box(LIVES_BOX(vbox)); */
-  /* prefsw->audio_command_entry = lives_standard_entry_new(_("Audio play _command"), "", -1, PATH_MAX * 2, LIVES_BOX(vbox), NULL); */
+#ifdef HAVE_PULSE_AUDIO
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
 
-  /* // get from prefs */
-  /* if (!is_realtime_aplayer(prefs->audio_player)) */
-  /*   if (prefs->audio_player == AUD_PLAYER_NONE) lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("N/A"))); */
-  /*   else lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), prefs->audio_play_command); */
-  /* else { */
-  /*   lives_entry_set_text(LIVES_ENTRY(prefsw->audio_command_entry), (_("- internal -"))); */
-  /*   lives_widget_set_sensitive(prefsw->audio_command_entry, FALSE); */
-  /* } */
+  prefsw->checkbutton_parestart = lives_standard_check_button_new((tmp = lives_strdup(_("Restart pulseaudio on LiVES startup"))),
+                                  prefs->pa_restart, LIVES_BOX(hbox),
+                                  (tmp2 = lives_strdup(_("Recommended, but may interfere with other running "
+                                          "audio applications"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+  ACTIVE(checkbutton_parestart, TOGGLED);
 
-  /* add_fill_to_box(LIVES_BOX(vbox)); */
+  add_fill_to_box(LIVES_BOX(hbox));
+
+  prefsw->audio_command_entry = lives_standard_entry_new(_("Pulseaudio restart command"),
+                                prefs->pa_start_opts, -1, PATH_MAX * 2,
+                                LIVES_BOX(hbox), NULL);
+  ACTIVE(audio_command_entry, CHANGED);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry);
+#endif
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);

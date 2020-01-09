@@ -1117,11 +1117,14 @@ static void cancel_process(boolean visible) {
       sensitize();
     }
   } else {
+    /// ????
     mainw->is_processing = TRUE;
   }
-  if (mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW
+  sched_yield();
+  if (visible && mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW
       && mainw->cancelled != CANCEL_PREVIEW_FINISHED && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
     lives_rm(cfile->info_file);
+    sched_yield();
   }
 }
 
@@ -1534,10 +1537,12 @@ int process_one(boolean visible) {
     mainw->uflow_count *= 2;
     while (mainw->uflow_count > 0 && --ucount != 0) {
       // handle audio underflows by pausing briefly
-      sched_yield();
       g_print("underflow trigger (%d)\n", mainw->uflow_count);
       mainw->uflow_count--;
-      lives_usleep(prefs->sleep_time * 100);
+      for (int i = 0; i < 100; i++) {
+        sched_yield();
+        lives_usleep(prefs->sleep_time);
+      }
     }
 #endif
   }

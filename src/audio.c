@@ -1013,56 +1013,9 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
 }
 
 
-static void audio_process_events_to(weed_timecode_t tc) {
-  // process events from mainw->audio_event up to tc
-  // at playback start we should have set mainw->audio_event and mainw->afilter_map
-
-  int hint, error;
-
-  weed_plant_t *event = mainw->audio_event;
-
-  weed_timecode_t ctc;
-
-  while (event != NULL && get_event_timecode(event) <= tc) {
-    hint = get_event_hint(event);
-    ctc = get_event_timecode(event);
-
-    switch (hint) {
-    case WEED_EVENT_HINT_FILTER_INIT: {
-      weed_plant_t *deinit_event;
-      if (!weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT)) {
-        LIVES_ERROR("Init event with no deinit !\n");
-      } else {
-        deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
-        if (deinit_event == NULL) {
-          LIVES_ERROR("NULL deinit !\n");
-        } else {
-          if (get_event_timecode(deinit_event) < tc) break;
-        }
-      }
-      process_events(event, TRUE, ctc);
-    }
-    break;
-    case WEED_EVENT_HINT_FILTER_DEINIT: {
-      weed_plant_t *init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
-      if (weed_plant_has_leaf(init_event, WEED_LEAF_HOST_TAG)) {
-        process_events(event, TRUE, ctc);
-      }
-    }
-    break;
-    case WEED_EVENT_HINT_FILTER_MAP:
-#ifdef DEBUG_EVENTS
-      g_print("got new audio effect map\n");
-#endif
-      mainw->afilter_map = event;
-      break;
-    default:
-      break;
-    }
-    event = get_next_event(event);
-  }
-
-  mainw->audio_event = event;
+LIVES_LOCAL_INLINE void audio_process_events_to(weed_timecode_t tc) {
+  if (tc > get_event_timecode(mainw->audio_event))
+    get_audio_and_effects_state_at(NULL, mainw->audio_event, tc, LIVES_PREVIEW_TYPE_AUDIO_ONLY, FALSE);
 }
 
 
@@ -1947,9 +1900,8 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
   // from nostate elements to nstate elements
 
   lives_audio_track_state_t *audstate = (lives_audio_track_state_t *)lives_calloc(nstate, sizeof(lives_audio_track_state_t));
-  int i;
 
-  for (i = 0; i < nstate; i++) {
+  for (int i = 0; i < nstate; i++) {
     if (i < nostate) {
       audstate[i].afile = ostate[i].afile;
       audstate[i].seek = ostate[i].seek;
@@ -1961,7 +1913,6 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
   }
 
   lives_freep((void **)&ostate);
-
   return audstate;
 }
 
@@ -2001,56 +1952,86 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
 }
 
 
+/**
+   @brief get audio (and optionally video) state at timecode tc OR before event st_event
+
+   if st_event is not NULL, we get the state just prior to it
+   (state being effects and filter maps, audio tracks / positions)
+
+   if st_event is NULL, this is a continuation, and we get the audio state only at timecode tc
+   similar to quantise_events(), except we don't produce output frames
+*/
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    boolean get_audstate, boolean exact) {
+    weed_timecode_t fill_tc,
+    int what_to_get, boolean exact) {
   // if exact is set, we must rewind back to first active stateful effect,
   // and play forwards from there (not yet implemented - TODO)
   lives_audio_track_state_t *atstate = NULL, *audstate = NULL;
-  weed_timecode_t last_tc = 0, fill_tc;
-  weed_plant_t *nevent = get_first_event(event_list), *event;
-  weed_plant_t *deinit_event;
-  weed_error_t error;
-  int i, nfiles, nnfiles, etype;
+  weed_timecode_t last_tc = 0;
+  weed_event_t *event, *nevent;
+  weed_event_t *deinit_event;
+  int nfiles, nnfiles, etype;
 
-  // gets effects state (initing any effects which should be active)
+  // gets effects state immediately prior to start_event. (initing any effects which should be active, and applying param changes
+  // if not in multrack)
 
-  // optionally: gets audio state at audio frame prior to st_event, sets atstate[0].tc
+  // optionally: gets audio state, sets atstate[0].tc
   // and initialises audio buffers
 
-  mainw->filter_map = NULL;
-  mainw->afilter_map = NULL;
+  if (fill_tc == 0) {
+    if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+      mainw->filter_map = NULL;
+    if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+      mainw->afilter_map = NULL;
+    event = get_first_event(event_list);
+  } else {
+    event = st_event;
+    st_event = NULL;
+    last_tc = get_event_timecode(event);
+  }
 
-  mainw->audio_event = st_event;
-
-  fill_tc = get_event_timecode(st_event);
-
-  do {
-    event = nevent;
+  while ((st_event != NULL && event != st_event) || (st_event == NULL && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
     switch (etype) {
     case WEED_EVENT_HINT_FILTER_MAP:
-      mainw->afilter_map = mainw->filter_map = event;
+      if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+        mainw->filter_map = event;
+      if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+        mainw->afilter_map = event;
       break;
     case WEED_EVENT_HINT_FILTER_INIT:
-      deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
+      deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
       if (get_event_timecode(deinit_event) >= fill_tc) {
         // this effect should be activated
-        process_events(event, FALSE, get_event_timecode(event));
-        process_events(event, TRUE, get_event_timecode(event));
+        if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+          process_events(event, FALSE, get_event_timecode(event));
+        if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+          process_events(event, TRUE, get_event_timecode(event));
+        /// TODO: if exact && non-stateless, silently process audio / video until st_event
       }
       break;
     case WEED_EVENT_HINT_PARAM_CHANGE:
       if (mainw->multitrack == NULL) {
-        weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, &error);
+        weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
+        deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
+        if (get_event_timecode(deinit_event) < fill_tc) continue;
+
         if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
-          char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, &error);
+          char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
           int key = atoi(key_string);
-          char *filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, &error);
+          char *filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, NULL);
           int idx = weed_get_idx_for_hashname(filter_name, TRUE);
           weed_event_t *filter = get_weed_filter(idx), *inst;
           lives_free(filter_name);
           lives_free(key_string);
-          if (!is_pure_audio(filter, FALSE)) break;
+
+          if (!is_pure_audio(filter, FALSE)) {
+            if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+              break;
+          } else {
+            if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+              break;
+          }
           if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
             int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
             weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
@@ -2060,53 +2041,58 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       }
       break;
     case WEED_EVENT_HINT_FRAME:
-      if (get_audstate && WEED_EVENT_IS_AUDIO_FRAME(event)) {
-        atstate = aframe_to_atstate(event);
+      if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_ONLY) break;
 
+      if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
+        /// update audio state
+        atstate = aframe_to_atstate(event);
         if (audstate == NULL) audstate = atstate;
         else {
           // have an existing audio state, update with current
-          for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++);
-
-          for (i = 0; i < nfiles; i++) {
-            // increase seek values up to current frame
-            audstate[i].seek += audstate[i].vel * (get_event_timecode(event) - last_tc) / TICKS_PER_SECOND_DBL;
+          weed_timecode_t delta = get_event_timecode(event) - last_tc;
+          for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
+            if (delta > 0) {
+              // increase seek values up to current frame
+              audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+            }
           }
-
+          last_tc += delta;
           for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-
           if (nnfiles > nfiles) {
             audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
             audstate[nnfiles].afile = -1;
           }
 
-          for (i = 0; i < nnfiles; i++) {
+          for (int i = 0; i < nnfiles; i++) {
             if (atstate[i].afile > 0) {
               audstate[i].afile = atstate[i].afile;
               audstate[i].seek = atstate[i].seek;
               audstate[i].vel = atstate[i].vel;
             }
           }
+          lives_free(atstate);
         }
-        lives_free(atstate);
       }
-      last_tc = get_event_timecode(event);
       break;
     default:
       break;
     }
     nevent = get_next_event(event);
-  } while (event != st_event);
-
-  if (audstate != NULL) {
-    for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++);
-
-    for (i = 0; i < nfiles; i++) {
-      // increase seek values
-      audstate[i].seek += audstate[i].vel * (fill_tc - last_tc) / TICKS_PER_SECOND_DBL;
-    }
+    if (nevent == NULL) break;
+    event = nevent;
   }
-
+  if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY) {
+    if (audstate != NULL) {
+      weed_timecode_t delta = get_event_timecode(event) - last_tc;
+      if (delta > 0) {
+        for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
+          // increase seek values up to current frame
+          audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+        }
+      }
+    }
+    mainw->audio_event = event;
+  }
   return audstate;
 }
 
@@ -2118,7 +2104,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   // otherwise, we continue from where we left off the last time
 
-  // all we really do here is set from_files,aseeks and avels arrays and call render_audio_segment
+  // all we really do here is set from_files, aseeks and avels arrays and call render_audio_segment
+  // effects are ignored here; they are applied in smaller chunks in render_audio_segment, so that parameter interpolation can be done
 
   lives_audio_track_state_t *atstate = NULL;
   int nnfiles, i;
@@ -2132,7 +2119,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   static int *from_files = NULL;
   static double *aseeks = NULL, *avels = NULL;
 
-  boolean is_cont = FALSE;
   if (abuf == NULL) return;
 
   abuf->samples_filled = 0; // write fill level of buffer
@@ -2140,6 +2126,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   if (st_event != NULL) {
     // this is only called for the first buffered read
+    //
     event = st_event;
     last_tc = get_event_timecode(event);
 
@@ -2161,22 +2148,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       avels[i] = aseeks[i] = 0.;
     }
 
-    // TODO - actually what we should do here is get the audio state for
-    // the *last* frame in the buffer and then adjust the seeks back to the
-    // beginning of the buffer, in case an audio track starts during the
-    // buffering period. The current way is fine for a preview, but when we
-    // implement rendering of *partial* event lists we will need to do this
-
-    // a negative seek value would mean that we need to pad silence at the
-    // start of the track buffer
-
-    if (event != get_first_frame_event(event_list))
-      atstate = get_audio_and_effects_state_at(event_list, event, TRUE, exact);
-
-    // process audio updates at this frame
-    else atstate = aframe_to_atstate(event);
-
-    mainw->audio_event = event;
+    // get audio and fx state at pt immediately before st_event
+    atstate = get_audio_and_effects_state_at(event_list, event, 0, LIVES_PREVIEW_TYPE_VIDEO_AUDIO, exact);
 
     if (atstate != NULL) {
       for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
@@ -2188,11 +2161,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
           aseeks[i] = atstate[i].seek;
         }
       }
-
       lives_free(atstate);
     }
-  } else {
-    is_cont = TRUE;
   }
 
   if (mainw->multitrack != NULL) {
@@ -2206,9 +2176,10 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   fill_tc = last_tc + (double)(abuf->samp_space) / (double)abuf->arate * TICKS_PER_SECOND_DBL;
 
-  // continue until either we have a full buffer, or we reach next audio frame
+  // continue until we have a full buffer
+  // if we get an audio frame we render up to that point
+  // then we render what is left to fill abuf
   while (event != NULL && get_event_timecode(event) <= fill_tc) {
-    if (!is_cont) event = get_next_frame_event(event);
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
       weed_timecode_t tc = get_event_timecode(event);
@@ -2237,7 +2208,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
       if (atstate != NULL) {
         for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-
         for (i = 0; i < nnfiles; i++) {
           if (atstate[i].afile > 0) {
             from_files[i] = atstate[i].afile;
@@ -2248,7 +2218,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
         lives_free(atstate);
       }
     }
-    is_cont = FALSE;
+    event = get_next_audio_frame_event(event);
   }
 
   if (last_tc < fill_tc) {
@@ -2273,11 +2243,11 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   last_tc = fill_tc;
 
+  pthread_mutex_lock(&mainw->abuf_mutex);
   if (mainw->abufs_to_fill > 0) {
-    pthread_mutex_lock(&mainw->abuf_mutex);
     mainw->abufs_to_fill--;
-    pthread_mutex_unlock(&mainw->abuf_mutex);
   }
+  pthread_mutex_unlock(&mainw->abuf_mutex);
 }
 
 

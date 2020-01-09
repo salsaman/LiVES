@@ -414,6 +414,9 @@ typedef struct {
   boolean msgs_pbdis;
 
   boolean noframedrop;
+
+  char pa_start_opts[255];
+  boolean pa_restart;
 } _prefs;
 
 enum {
@@ -607,6 +610,7 @@ typedef struct {
   LiVESWidget *checkbutton_jack_read_autocon;
   LiVESWidget *checkbutton_start_tjack;
   LiVESWidget *checkbutton_start_ajack;
+  LiVESWidget *checkbutton_parestart;
   LiVESWidget *checkbutton_afollow;
   LiVESWidget *checkbutton_aclips;
   LiVESWidget *spinbutton_ext_aud_thresh;
@@ -816,6 +820,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_ACTIVE_AUTOTRANS "active_autotrans"
 
 #define PREF_SCREEN_SCALE "screen_scale"
+#define PREF_PASTARTOPTS "pa_start_opts"
 
 ////////////////////// utf8 values
 
@@ -944,6 +949,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_VJMODE "vj_mode_startup"
 #define PREF_LETTERBOX "letterbox_ce"
 #define PREF_LETTERBOXMT "letterbox_mt"
+#define PREF_PARESTART "pa_restart"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

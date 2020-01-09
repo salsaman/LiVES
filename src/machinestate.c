@@ -845,7 +845,10 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
 
 
 int lives_thread_join(lives_thread_t work, void **retval) {
-  while (((thrd_work_t *)work->data)->busy == 0) lives_usleep(100);
+  while (((thrd_work_t *)work->data)->busy == 0) {
+    sched_yield();
+    lives_usleep(100);
+  }
   pthread_mutex_lock(&twork_mutex);
   if (work->prev != NULL) work->prev->next = work->next;
   if (work->next != NULL) work->next->prev = work->prev;

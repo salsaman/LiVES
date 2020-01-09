@@ -3207,7 +3207,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
       }
 
       // pass quickly through events_list, switching on and off effects and interpolating at current time
-      get_audio_and_effects_state_at(mt->event_list, mt->pb_start_event, FALSE, mt->exact_preview);
+      get_audio_and_effects_state_at(mt->event_list, mt->pb_start_event, 0, LIVES_PREVIEW_TYPE_VIDEO_ONLY, mt->exact_preview);
 
       // if we are previewing a specific effect we also need to init it
       if (mt->current_rfx != NULL && mt->init_event != NULL) {
@@ -6903,10 +6903,19 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_sensitive(mt->mark_jumpback, FALSE);
 
+  lives_widget_add_accelerator(mt->jumpback, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
+                               LIVES_KEY_j, (LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                               LIVES_ACCEL_VISIBLE);
+
   mt->mark_jumpnext = lives_standard_image_menu_item_new_with_label(_("_Jump to Next Timeline Mark"));
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->mark_jumpnext);
 
   lives_widget_set_sensitive(mt->mark_jumpnext, FALSE);
+
+  lives_widget_add_accelerator(mt->mark_jumpnext, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
+                               LIVES_KEY_l, (LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
+                               LIVES_ACCEL_VISIBLE);
+
 
   mt->clear_marks = lives_standard_image_menu_item_new_with_label(_("Clear _Marks from Timeline"));
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->clear_marks);
@@ -20771,9 +20780,12 @@ boolean event_list_rectify(lives_mt * mt, weed_plant_t *event_list) {
       // set in table
       if (!weed_plant_has_leaf(event, WEED_LEAF_EVENT_ID)) {
         ebuf = rec_error_add(ebuf, "Filter_init missing event_id", -1, tc);
-        delete_event(event_list, event);
-        was_deleted = TRUE;
-      } else {
+        /* delete_event(event_list, event); */
+        /* was_deleted = TRUE; */
+        weed_set_int64_value(event, WEED_LEAF_EVENT_ID, (uint64_t)((void *)event));
+      }
+
+      if (1) {
         if (!weed_plant_has_leaf(event, WEED_LEAF_FILTER)) {
           ebuf = rec_error_add(ebuf, "Filter_init missing filter", -1, tc);
           delete_event(event_list, event);

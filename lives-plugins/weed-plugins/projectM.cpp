@@ -249,6 +249,7 @@ static int render_frame(_sdata *sdata) {
 
   glMatrixMode(GL_MODELVIEW);
   glDisable(GL_DEPTH_TEST);
+  glFlush();
 
 #if USE_DBLBUF
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);

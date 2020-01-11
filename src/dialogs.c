@@ -1239,8 +1239,6 @@ int process_one(boolean visible) {
 #ifdef RT_AUDIO
   double audio_stretch;
   ticks_t audio_ticks = 0;
-#define MAX_UFLOW_PAUSE 4 // may need some fine tuning for slower systems
-  int ucount = MAX_UFLOW_PAUSE;
 #endif
 
   if (!visible) {
@@ -1496,24 +1494,18 @@ int process_one(boolean visible) {
           cfile->aseek_pos = nullaudio_get_seek_pos();
         }
 #endif
-#ifdef RT_AUDIO
-        if (mainw->uflow_count == 0 || prefs->noframedrop) {
-#endif
-          // load and display the new frame
-          load_frame_image(cfile->frameno);
-          if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
-          else {
-            if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
-              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
-            else if (mainw->fixed_fpsd > 0.)
-              mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
-            else mainw->last_display_ticks = real_ticks;
-          }
-          if (force_show) force_show = FALSE;
+        // load and display the new frame
+        load_frame_image(cfile->frameno);
+        if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
+        else {
+          if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->vpp->fixed_fpsd;
+          else if (mainw->fixed_fpsd > 0.)
+            mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
+          else mainw->last_display_ticks = real_ticks;
         }
-#ifdef RT_AUDIO
+        if (force_show) force_show = FALSE;
       }
-#endif
 #ifdef ENABLE_JACK
       // request for another audio buffer - used only during mt render preview
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
@@ -1533,18 +1525,6 @@ int process_one(boolean visible) {
       mainw->startticks = mainw->currticks + mainw->deltaticks;
       pthread_mutex_unlock(&mainw->audio_resync_mutex);
     }
-#ifdef RT_AUDIO
-    mainw->uflow_count *= 2;
-    while (mainw->uflow_count > 0 && --ucount != 0) {
-      // handle audio underflows by pausing briefly
-      g_print("underflow trigger (%d)\n", mainw->uflow_count);
-      mainw->uflow_count--;
-      for (int i = 0; i < 100; i++) {
-        sched_yield();
-        lives_usleep(prefs->sleep_time);
-      }
-    }
-#endif
   }
 
   if (visible) {

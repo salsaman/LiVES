@@ -768,7 +768,7 @@ static void *thrdpool(void *arg) {
     pthread_mutex_unlock(&tcond_mutex);
     if (threads_die) break;
     moretodo = TRUE;
-    while (moretodo) {
+    while (moretodo && !threads_die) {
       pthread_mutex_lock(&twork_mutex);
       list = (LiVESList *)twork_list;
       while (list != NULL && list->next != NULL
@@ -783,6 +783,9 @@ static void *thrdpool(void *arg) {
       pthread_mutex_unlock(&twork_mutex);
       (*mywork->func)(mywork->arg);
       mywork->done = myidx + 1;
+      pthread_mutex_lock(&mywork->cond_mutex);
+      pthread_cond_signal(&mywork->cond);
+      pthread_mutex_unlock(&mywork->cond_mutex);
     }
   }
   return NULL;
@@ -816,10 +819,12 @@ void lives_threadpool_finish(void) {
 int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg) {
   LiVESList *list, *xlist;
   int nthreads = 0;
-  thrd_work_t *work = (thrd_work_t *)malloc(sizeof(thrd_work_t));
+  thrd_work_t *work = (thrd_work_t *)lives_malloc(sizeof(thrd_work_t));
   work->func = func;
   work->arg = arg;
   work->ret = NULL;
+  pthread_cond_init(&work->cond, NULL);
+  pthread_mutex_init(&work->cond_mutex, NULL);
   work->done = work->busy = 0;
   pthread_mutex_lock(&twork_mutex);
   list = lives_list_prepend((LiVESList *)twork_list, work);
@@ -845,7 +850,8 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
 
 
 int lives_thread_join(lives_thread_t work, void **retval) {
-  while (((thrd_work_t *)work->data)->busy == 0) {
+  thrd_work_t *task = (thrd_work_t *)work->data;
+  while (!task->busy) {
     sched_yield();
     lives_usleep(100);
   }
@@ -854,12 +860,13 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   if (work->next != NULL) work->next->prev = work->prev;
   if (twork_list == work) twork_list = work->next;
   pthread_mutex_unlock(&twork_mutex);
-  while (!((thrd_work_t *)work->data)->done) {
-    sched_yield();
-    lives_usleep(100);
+  while (!task->done) {
+    pthread_mutex_lock(&task->cond_mutex);
+    pthread_cond_wait(&task->cond, &task->cond_mutex);
+    pthread_mutex_unlock(&task->cond_mutex);
   }
-  if (retval != NULL) *retval = ((thrd_work_t *)work->data)->ret;
-  free(work->data);
+  if (retval != NULL) *retval = task->ret;
+  lives_free(task);
   //free(work);
   return 0;
 }

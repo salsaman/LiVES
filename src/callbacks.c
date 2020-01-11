@@ -7179,7 +7179,9 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     // needed
     block_expose();
     do {
+      sched_yield();
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      sched_yield();
       mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
       mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
     } while (mainw->pwidth == 0 || mainw->pheight == 0);
@@ -7187,6 +7189,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     if (mainw->play_window != NULL) {
       resize_play_window();
+      sched_yield();
       if (!mainw->double_size) lives_window_center(LIVES_WINDOW(mainw->play_window));
       if (cfile->frames == 1 || cfile->play_paused) {
         lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -7196,6 +7199,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           check_layer_ready(mainw->frame_layer); // ensure all threads are complete
           mainw->frame_layer = NULL;
           load_frame_image(cfile->frameno);
+          sched_yield();
           if (mainw->frame_layer != NULL) {
             check_layer_ready(mainw->frame_layer);
             weed_layer_free(mainw->frame_layer);
@@ -7256,7 +7260,8 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   sep_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
-  sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN, lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
+  sep_img2 = lives_image_new_from_stock(LIVES_LIVES_STOCK_SEPWIN,
+                                        lives_toolbar_get_icon_size(LIVES_TOOLBAR(mainw->btoolbar)));
 
   if (mainw->sep_win) {
     lives_widget_set_tooltip_text(mainw->m_sepwinbutton, _("Hide the play window (s)"));
@@ -7283,6 +7288,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     } else {
       kill_play_window();
     }
+    sched_yield();
     /* if (mainw->multitrack != NULL && !LIVES_IS_PLAYING) { */
     /*   activate_mt_preview(mainw->multitrack); // show frame preview */
     /* } */
@@ -7328,6 +7334,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	// *INDENT-ON*
 
         make_play_window();
+        sched_yield();
 
         mainw->pw_scroll_func = lives_signal_connect(LIVES_GUI_OBJECT(mainw->play_window), LIVES_WIDGET_SCROLL_EVENT,
                                 LIVES_GUI_CALLBACK(on_mouse_scroll),
@@ -7347,6 +7354,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           }
           resize(1.);
           resize_play_window();
+          sched_yield();
         }
 
         if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
@@ -7355,13 +7363,16 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
         if (CURRENT_CLIP_IS_VALID && (cfile->frames == 1 || cfile->play_paused)) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+          sched_yield();
 
           if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window)) &&
               !mainw->noswitch && mainw->multitrack == NULL && CURRENT_CLIP_IS_NORMAL) {
             weed_plant_t *frame_layer = mainw->frame_layer;
             check_layer_ready(mainw->frame_layer);
             mainw->frame_layer = NULL;
+            sched_yield();
             load_frame_image(cfile->frameno);
+            sched_yield();
             if (mainw->frame_layer != NULL) {
               check_layer_ready(mainw->frame_layer);
               weed_layer_free(mainw->frame_layer);
@@ -7374,7 +7385,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         if (mainw->ext_playback) {
 #ifndef IS_MINGW
           vid_playback_plugin_exit();
+          sched_yield();
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
+          sched_yield();
 #else
           lives_window_unfullscreen(LIVES_WINDOW(mainw->play_window));
           vid_playback_plugin_exit();
@@ -7382,6 +7395,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
 
         kill_play_window();
+        sched_yield();
 
         if (!mainw->fs && mainw->multitrack == NULL) {
           //mainw->pwidth = DEFAULT_FRAME_HSIZE - H_RESIZE_ADJUST;
@@ -7415,7 +7429,9 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           weed_plant_t *frame_layer = mainw->frame_layer;
           check_layer_ready(mainw->frame_layer);
           mainw->frame_layer = NULL;
+          sched_yield();
           load_frame_image(cfile->frameno);
+          sched_yield();
           if (mainw->frame_layer != NULL) {
             check_layer_ready(mainw->frame_layer);
             weed_layer_free(mainw->frame_layer);

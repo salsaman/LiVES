@@ -66,6 +66,8 @@ static void pulse_success_cb(pa_stream *stream, int i, void *userdata) {
   pa_threaded_mainloop_signal(pa_mloop, 0);
 }
 
+#include <sys/time.h>
+#include <sys/resource.h>
 
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
   //pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
@@ -1678,11 +1680,12 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   do {
-    pa_mloop_lock();
+    //pa_mloop_lock();
     err = pa_stream_get_time(pulsed->pstream, &usec);
-    pa_mloop_unlock();
+    //pa_mloop_unlock();
     sched_yield();
-    lives_usleep(prefs->sleep_time);
+    lives_usleep(100);
+    sched_yield();
   } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && usec == 0 && err == 0);
 #ifdef DEBUG_PA_TIME
   g_print("gettime3 %d %ld %ld %ld %f\n", err, usec, pulsed->usec_start, (usec - pulsed->usec_start) * USEC_TO_TICKS,

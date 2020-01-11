@@ -2238,6 +2238,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_UNABLE_TO_RESIZE;
         goto done_video;
       }
+      sched_yield();
     }
 
     // check palette again in case it changed during resize
@@ -2248,6 +2249,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         goto done_video;
       }
+      sched_yield();
     }
 
     /// check if the plugin needs reinit
@@ -2272,6 +2274,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       else {
         gamma_convert_layer(cfile->gamma_type, layer);
       }
+      sched_yield();
     }
 
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
@@ -2396,6 +2399,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
       }
+      sched_yield();
 
       if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
         weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
@@ -2438,6 +2442,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
       goto done_video;
     }
+    sched_yield();
   }
 
   if (prefs->apply_gamma) {
@@ -2457,6 +2462,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc, key);
+  sched_yield();
 
   /// do gamma correction of any integer RGB(A) parameters
   /// convert in and out parameters to SRGB
@@ -7051,7 +7057,7 @@ void deinit_render_effects(void) {
 /**
    @brief deinit all effects (except generators* during playback)
    this is called on ctrl-0 or on shutdown
-     background generators will be killed because their transition will be deinited
+   background generators will be killed because their transition will be deinited
 */
 void weed_deinit_all(boolean shutdown) {
   int i;
@@ -7064,11 +7070,12 @@ void weed_deinit_all(boolean shutdown) {
 
   mainw->rte_keys = -1;
   mainw->last_grabbable_effect = -1;
+  if (!LIVES_IS_PLAYING) bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
 
   for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
-      if (LIVES_IS_PLAYING && !shutdown && i >  FX_KEYS_PHYSICAL) {
+      if (LIVES_IS_PLAYING && !shutdown && i >= FX_KEYS_PHYSICAL) {
         // meta-physical  keys only shutdown through the insterface or via easter-egg keys...
         mainw->osc_block = FALSE;
         return;
@@ -7813,12 +7820,13 @@ void weed_generator_end(weed_plant_t *inst) {
 
 
 void weed_bg_generator_end(weed_plant_t *inst) {
-  // when we stop with a bg generator we want it to be restarted next time ??? TODO !
+  // when we stop with a bg generator we want it to be restarted next time
   // i.e we will need a new clip for it
   int bg_gen_key = bg_generator_key;
 
   // filter_mutex unlocked
 
+  /// ref the isntance so it isn't deleted
   weed_instance_ref(inst);
   weed_generator_end(inst);
   weed_instance_unref(inst);

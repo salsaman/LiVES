@@ -558,21 +558,21 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         start = 0;
       cfile->audio_waveform[1] = (float *)lives_realloc(cfile->audio_waveform[1], (int)offset_end * sizeof(float));
     }
+    cfile->aw_sizes[1] = offset_end;
 
     if (cfile->audio_waveform[1] != NULL) {
-      if (start != offset_end) {
-        cfile->aw_sizes[1] = offset_end;
-        filename = lives_get_audio_file_name(mainw->current_file);
-        afd = lives_open_buffered_rdonly(filename);
-        lives_free(filename);
+      filename = lives_get_audio_file_name(mainw->current_file);
+      afd = lives_open_buffered_rdonly(filename);
+      lives_free(filename);
 
-        for (i = start; i < offset_end; i++) {
-          atime = (double)i / scalex;
-          cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
-        }
-
-        lives_close_buffered(afd);
+      for (i = start; i < offset_end; i++) {
+        atime = (double)i / scalex;
+        cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
       }
+
+      lives_close_buffered(afd);
+      afd = -1;
+
       if (LIVES_IS_PLAYING) {
         offset_left = ROUND_I(((mainw->playing_sel && is_realtime_aplayer(prefs->audio_player)) ?
                                cfile->start - 1. : mainw->audio_start - 1.) / cfile->fps * scalex);

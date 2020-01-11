@@ -1031,10 +1031,6 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 
   mainw->osc_block = FALSE;
 
-  if (mainw->current_file > 0 && cfile->play_paused && !mainw->noswitch) {
-    load_frame_image(cfile->frameno);
-  }
-
   if (mainw->rendered_fx != NULL) {
     if (!LIVES_IS_PLAYING && mainw->current_file > 0 && ((has_video_filters(FALSE) && !has_video_filters(TRUE)) ||
         (cfile->achans > 0 && prefs->audio_src == AUDIO_SRC_INT && has_audio_filters(AF_TYPE_ANY)) ||
@@ -1049,6 +1045,10 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 
     // if this is an outlet for ACTIVATE, disable the override now
     end_override_if_activate_output(key);
+  }
+
+  if (mainw->current_file > 0 && cfile->play_paused && !mainw->noswitch) {
+    load_frame_image(cfile->frameno);
   }
 
   mainw->fx_is_auto = FALSE;

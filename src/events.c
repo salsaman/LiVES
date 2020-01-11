@@ -4903,7 +4903,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
 }
 
 
-/**  @brief calculate the "visibility" of each track at timecode tc
+/**
+   @brief calculate the "visibility" of each track at timecode tc
 
      that is to say, only the front track is visible, except if we have a transition and WEED_LEAF_HOST_AUDIO_TRANSITION is set
      - in which case the track visibilty is proportional to the transition parameter

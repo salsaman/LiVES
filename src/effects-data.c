@@ -98,9 +98,7 @@ static void switch_fx_state(int hotkey) {
 
 
 void override_if_active_input(int hotkey) {
-  // if we have a connection from oparam -1 to iparam -1 for key/mode then set autoscale to TRUE
-  // this allows user override of LIVES_WIDGET_CLICKED_SIGNAL when connected from another filter's "activated"
-
+  // if we have a connection to ACTIVATE, allow override if the user changes the state from the kbd
   lives_pconnect_t *pconx = mainw->pconx;
 
   int totcons;
@@ -116,10 +114,10 @@ void override_if_active_input(int hotkey) {
       for (; j < totcons; j++) {
         if (pconx->ikey[j] == hotkey && pconx->imode[j] == imode && pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
           // out param is "ACTIVATED"
-          if (pconx->params[i] == FX_DATA_PARAM_ACTIVE) {
-            // abuse "autoscale" for this
-            pconx->autoscale[i] = TRUE;
-          }
+          //if (pconx->params[i] == FX_DATA_PARAM_ACTIVE) {
+          // abuse "autoscale" for this
+          pconx->autoscale[i] = TRUE;
+          //}
           return;
         }
       }
@@ -131,9 +129,7 @@ void override_if_active_input(int hotkey) {
 
 
 void end_override_if_activate_output(int hotkey) {
-  // if any iparam -1 has key/mode/-1 as oparam, set autoscale to FALSE
-  // this ends the override when the controlling effect changes state
-
+  // if we activate an effect and it is connected to ACTIVATE another effect, end any user override
   lives_pconnect_t *pconx = mainw->pconx;
 
   int totcons;
@@ -147,17 +143,12 @@ void end_override_if_activate_output(int hotkey) {
       j = 0;
       for (i = 0; i < pconx->nparams; i++) {
         totcons += pconx->nconns[i];
-
-        if (pconx->params[i] == FX_DATA_PARAM_ACTIVE) {
-          for (; j < totcons; j++) {
-            if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
-              // abuse "autoscale" for this
-              pconx->autoscale[i] = FALSE;
-            }
+        for (; j < totcons; j++) {
+          if (pconx->ipnum[j] == FX_DATA_PARAM_ACTIVE) {
+            // abuse "autoscale" for this
+            pconx->autoscale[j] = FALSE;
           }
         }
-
-        else j += pconx->nconns[i];
       }
     }
     pconx = pconx->next;
@@ -269,7 +260,8 @@ char *pconx_list(int okey, int omode, int opnum) {
           for (j = totcons; j < totcons + pconx->nconns[i]; j++) {
             if (strlen(st1) == 0) st2 = lives_strdup_printf("%d %d %d %d", pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j],
                                           pconx->autoscale[j]);
-            st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1, pconx->ipnum[j], pconx->autoscale[j]);
+            st2 = lives_strdup_printf("%s %d %d %d %d", st1, pconx->ikey[j] + 1, pconx->imode[j] + 1,
+                                      pconx->ipnum[j], pconx->autoscale[j]);
             lives_free(st1);
             st1 = st2;
           }
@@ -497,8 +489,7 @@ static int pconx_get_nconns(lives_pconnect_t *pconx, int pnum) {
 
 
 static void pconx_add_connection_private(lives_pconnect_t *pconx, int okey, int omode, int opnum, int ikey, int imode,
-    int ipnum,
-    boolean autoscale) {
+    int ipnum, boolean autoscale) {
   int posn = 0, totcons = 0;
   register int i, j;
 
@@ -701,7 +692,8 @@ static weed_plant_t *pconx_get_out_param(boolean use_filt, int ikey, int imode, 
               active_dummy = weed_plant_new(WEED_PLANT_PARAMETER);
               weed_set_plantptr_value(active_dummy, WEED_LEAF_TEMPLATE, NULL);
             }
-            weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL);
+            weed_set_boolean_value(active_dummy, WEED_LEAF_VALUE, inst != NULL
+                                   && !weed_plant_has_leaf(inst, WEED_LEAF_HOST_EASE_OUT));
             param = active_dummy;
             pthread_mutex_unlock(&mainw->fxd_active_mutex);
           } else {
@@ -748,34 +740,45 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 
   int error;
 
-  weed_plant_t *dptmpl;
+  weed_plant_t *dptmpl = NULL;
 
-  int dtype;
+  int dtype = 0;
 
-  int stype;
+  int stype = 0;
 
-  int ndvals;
-  int nsvals;
+  int ndvals = 0;
+  int nsvals = 0;
 
   int dhint;
   int dflags = 0;
 
-  if (WEED_PLANT_IS_PARAMETER(dparam)) {
-    dptmpl = weed_get_plantptr_value(dparam, WEED_LEAF_TEMPLATE, &error);
-    dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
-    ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
+  if (dparam == active_dummy) {
+    dptmpl = NULL;
+    dtype = WEED_SEED_BOOLEAN;
+    ndvals = 1;
   } else {
-    dptmpl = dparam;
-    dtype = weed_leaf_seed_type(dparam, WEED_LEAF_DEFAULT);
-    ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_DEFAULT);
+    if (WEED_PLANT_IS_PARAMETER(dparam)) {
+      dptmpl = weed_get_plantptr_value(dparam, WEED_LEAF_TEMPLATE, &error);
+      dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
+      ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
+    } else {
+      dptmpl = dparam;
+      dtype = weed_leaf_seed_type(dparam, WEED_LEAF_DEFAULT);
+      ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_DEFAULT);
+    }
   }
 
-  if (WEED_PLANT_IS_PARAMETER(sparam)) {
-    stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
-    nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
+  if (sparam == active_dummy) {
+    stype = WEED_SEED_BOOLEAN;
+    nsvals = 1;
   } else {
-    stype = weed_leaf_seed_type(sparam, WEED_LEAF_DEFAULT);
-    nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_DEFAULT);
+    if (WEED_PLANT_IS_PARAMETER(sparam)) {
+      stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
+      nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
+    } else {
+      stype = weed_leaf_seed_type(sparam, WEED_LEAF_DEFAULT);
+      nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_DEFAULT);
+    }
   }
 
   if (dptmpl != NULL) {
@@ -817,12 +820,12 @@ static boolean params_compatible(weed_plant_t *sparam, weed_plant_t *dparam) {
 static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, weed_plant_t *dparam, int okey,
                                         weed_plant_t *sparam, boolean autoscale, boolean is_audio_thread, boolean * toggle_fx) {
   // try to convert values of various type, if we succeed, copy the "value" and return TRUE (if changed)
-  weed_plant_t *dptmpl, *sptmpl;
+  weed_plant_t *dptmpl = NULL, *sptmpl;
 
   double ratio;
 
-  int dtype, stype, nsvals, ndvals, error;
-  int ondvals;
+  int dtype = 0, stype, nsvals, ndvals = 0, error;
+  int ondvals = 0;
   int nsmin = 0, nsmax = 0;
   int minct = 0, maxct = 0;
   int sminct = 0, smaxct = 0;
@@ -834,21 +837,33 @@ static boolean pconx_convert_value_data(weed_plant_t *inst, int pnum, int key, w
   if (toggle_fx) *toggle_fx = FALSE;
 
   if (dparam == sparam && (dparam != active_dummy || active_dummy == NULL)) return FALSE;
+
+  if (sparam == active_dummy) {
+    nsvals = 1;
+    sptmpl = NULL;
+    stype = WEED_SEED_BOOLEAN;
+  }
+
   nsvals = weed_leaf_num_elements(sparam, WEED_LEAF_VALUE);
   if (nsvals == 0) return FALSE;
-
   sptmpl = weed_param_get_template(sparam);
   stype = weed_leaf_seed_type(sparam, WEED_LEAF_VALUE);
 
-  ondvals = ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
-  dptmpl = weed_param_get_template(dparam);
-  dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
+  if (dparam != active_dummy) {
+    ondvals = ndvals = weed_leaf_num_elements(dparam, WEED_LEAF_VALUE);
+    dptmpl = weed_param_get_template(dparam);
+    dtype = weed_leaf_seed_type(dparam, WEED_LEAF_VALUE);
+  } else {
+    dtype = WEED_SEED_BOOLEAN;
+    ondvals = ndvals = 1;
+    dptmpl = NULL;
+  }
 
   if (!params_compatible(sparam, dparam)) return FALSE;
 
   if (ndvals > nsvals) ndvals = nsvals;
 
-  if (dparam != active_dummy && sparam != active_dummy && autoscale) {
+  if (dparam != active_dummy && sparam != active_dummy) {// && autoscale) {
     if (weed_plant_has_leaf(sptmpl, WEED_LEAF_MIN) && weed_plant_has_leaf(sptmpl, WEED_LEAF_MAX)) {
       nsmin = weed_leaf_num_elements(sptmpl, WEED_LEAF_MIN);
       nsmax = weed_leaf_num_elements(sptmpl, WEED_LEAF_MAX);

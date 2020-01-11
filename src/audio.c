@@ -2657,7 +2657,9 @@ static void *cache_my_audio(void *arg) {
         posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
       }
 #endif
+      sched_yield();
       lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
+      sched_yield();
     }
 
     cbuffer->_cfileno = cbuffer->fileno;
@@ -2677,6 +2679,7 @@ static void *cache_my_audio(void *arg) {
 
     // read from file
     cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE);
+    sched_yield();
 
     if (cbuffer->_cbytesize < 0) {
       // there is not much we can do if we get a read error, since we are running in a realtime thread here
@@ -2712,6 +2715,7 @@ static void *cache_my_audio(void *arg) {
                           cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans,
                           cbuffer->swap_endian ? SWAP_X_TO_L : 0, 0);
     }
+    sched_yield();
 
     // if our out_asamps is 16, we are done
 

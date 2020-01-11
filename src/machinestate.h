@@ -244,6 +244,8 @@ typedef void *(*lives_funcptr_t)(void *);
 typedef struct {
   lives_funcptr_t func;
   void *arg;
+  pthread_cond_t cond;
+  pthread_mutex_t cond_mutex;
   volatile int busy;
   volatile int done;
   void *ret;

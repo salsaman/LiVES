@@ -4221,7 +4221,7 @@ void resize_play_window(void) {
                             mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
         } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x, mainw->mgeom[pmonitor - 1].y);
       }
-
+      sched_yield();
       // leave this alone * !
       if (!(mainw->vpp != NULL && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) {
 #if GTK_CHECK_VERSION(99999, 0, 0) // TODO
@@ -4233,6 +4233,7 @@ void resize_play_window(void) {
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
         lives_widget_queue_resize(mainw->play_window);
       }
+      sched_yield();
 
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
@@ -4324,8 +4325,10 @@ void resize_play_window(void) {
 #endif
         }
 
+        lives_widget_context_update();
+        sched_yield();
+
         /* for (int i = 0; i < 10; i++) { */
-        /*   //lives_widget_context_update(); */
         /*   lives_usleep(100); */
         /* } */
 

@@ -848,7 +848,8 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glFinish();
+  //glFinish();
+  glFlush();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
   type = GL_RGBA;

@@ -11068,12 +11068,22 @@ boolean lives_widget_context_update(void) {
       GdkEvent *ev = gtk_get_current_event();
       nulleventcount++;
       loops++;
+      if (LIVES_IS_PLAYING) {
+        for (int xloops = get_approx_ln(loops - 2); xloops > 0; xloops--) {
+          /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
+          /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
+          /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
+          sched_yield();
+          lives_usleep(100);
+          sched_yield();
+        }
+      }
       if (loops > 1000) {
         fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
                 ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
         break;
       }
-      if (!(nulleventcount ^ 7)) mainw->uflow_count++;
+      //if (!(nulleventcount ^ 7)) mainw->uflow_count++;
       if (nulleventcount > MAX_NULL_EVENTS && !allow_all) {
         // there are various reasons we can get here:
         // - user is holding down a key (e.g. "s") during playback (MAX_NULL_EVENTS is set sufficiently high that a single key press
@@ -11097,22 +11107,15 @@ boolean lives_widget_context_update(void) {
       /* 	mainw->loadmeasure = 0; */
       /* 	lm_needs_idlefunc = TRUE; */
       /* } */
-      if (mainw->uflow_count > 0 && !allow_all) {
-        for (int ll = 0; ll < 10; ll++) {
-          sched_yield();
-          lives_usleep(prefs->sleep_time);
-          sched_yield();
-        }
-        --mainw->uflow_count;
-      } else {
-        g_main_context_iteration(NULL, FALSE);
-        sched_yield();
-      }
+      g_main_context_iteration(NULL, FALSE);
+      sched_yield();
       //pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif
+    if (!mainw->is_exiting && LIVES_IS_PLAYING && loops > 2) {
+      lives_usleep(100);
+    }
   }
-
   if (!mainw->is_exiting && mt_needs_idlefunc) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
@@ -11122,7 +11125,6 @@ boolean lives_widget_context_update(void) {
   /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
   /*   } */
   /* } */
-
 
   return TRUE;
 }

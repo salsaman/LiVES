@@ -91,11 +91,11 @@ static void getenv_piece(char *target, size_t tlen, char *envvar, int num) {
 /////////////////////////////////////////////////////////////
 
 static weed_error_t ladspa_init(weed_plant_t *inst) {
-  weed_plant_t *filter = weed_get_filter_class(inst);
+  weed_plant_t *filter = weed_instance_get_filter(inst);
 
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     lad_instantiate_f lad_instantiate_func = (lad_instantiate_f)weed_get_funcptr_value(filter, "plugin_lad_instantiate_func", NULL);
-    LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_funcptr_value(filter, "plugin_lad_descriptor", NULL);
+    LADSPA_Descriptor *laddes = (LADSPA_Descriptor *)weed_get_voidptr_value(filter, "plugin_lad_descriptor", NULL);
     weed_plant_t *channel = NULL;
     int rate = 0;
     int pinc, poutc;
@@ -112,7 +112,6 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 
     pinc = weed_get_int_value(filter, "plugin_in_channels", NULL);
     poutc = weed_get_int_value(filter, "plugin_out_channels", NULL);
-
     sdata->activated_l = sdata->activated_r = WEED_FALSE;
     sdata->handle_l = (*lad_instantiate_func)(laddes, rate);
     if (pinc == 1 || poutc == 1) sdata->handle_r = (*lad_instantiate_func)(laddes, rate);
@@ -152,7 +151,7 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
 static weed_error_t ladspa_deinit(weed_plant_t *inst) {
   if (!(weed_instance_get_flags(inst) & WEED_INSTANCE_UPDATE_GUI_ONLY)) {
     _sdata *sdata = (_sdata *)weed_get_voidptr_value(inst, "plugin_data", NULL);
-    weed_plant_t *filter = weed_get_filter_class(inst);
+    weed_plant_t *filter = weed_instance_get_filter(inst);
     lad_deactivate_f lad_deactivate_func = (lad_activate_f)weed_get_funcptr_value(filter, "plugin_lad_deactivate_func", NULL);
     lad_cleanup_f lad_cleanup_func = (lad_cleanup_f)weed_get_funcptr_value(filter, "plugin_lad_cleanup_func", NULL);
 
@@ -185,7 +184,7 @@ static weed_error_t ladspa_process(weed_plant_t *inst, weed_timecode_t timestamp
   int dstcnt = 0;
 
   weed_plant_t *in_channel = NULL, *out_channel = NULL;
-  weed_plant_t *filter = weed_get_filter_class(inst);
+  weed_plant_t *filter = weed_instance_get_filter(inst);
   weed_plant_t *ptmpl;
 
   lad_connect_port_f lad_connect_port_func;
@@ -583,8 +582,8 @@ WEED_SETUP_START(200, 200) {
           ninps = oninps * 2;
           noutps = onoutps * 2;
 
-          rfx_strings = weed_malloc((ninps + 3 + stcount) * sizeof(char *));
-          for (pnum = 0; pnum < ninps + 3 + stcount; pnum++) {
+          rfx_strings = weed_malloc((ninps + 4 + stcount) * sizeof(char *));
+          for (pnum = 0; pnum < ninps + 4 + stcount; pnum++) {
             rfx_strings[pnum] = (char *)weed_malloc(256);
           }
 
@@ -592,8 +591,8 @@ WEED_SETUP_START(200, 200) {
             sprintf(rfx_strings[stcount], "layout|\"Left output channel\"|");
             sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right output channel\"|");
           } else {
-            if (ninchs == 1) sprintf(rfx_strings[stcount], "layout|\"Left/mono channel\"");
-            else sprintf(rfx_strings[stcount], "layout|\"Left channel\"");
+            if (ninchs == 1) sprintf(rfx_strings[stcount + 1], "layout|\"Left/mono channel\"");
+            else sprintf(rfx_strings[stcount + 1], "layout|\"Left channel\"");
             sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right channel\"");
           }
           sprintf(rfx_strings[oninps + 1 + stcount], "layout|hseparator|");
@@ -739,8 +738,8 @@ WEED_SETUP_START(200, 200) {
                       "plugin_logarithmic", WEED_TRUE);
                 else weed_set_boolean_value(in_params[cninps + oninps], "plugin_logarithmic", WEED_FALSE);
 
-                sprintf(rfx_strings[cninps + 1 + stcount], "layout|p%d|", cninps);
-                sprintf(rfx_strings[cninps + oninps + 3 + stcount], "layout|p%d|", cninps + oninps);
+                sprintf(rfx_strings[cninps + 2 + stcount], "layout|p%d|", cninps);
+                sprintf(rfx_strings[cninps + oninps + 4 + stcount], "layout|p%d|", cninps + oninps);
               }
 
               cninps++;
@@ -844,8 +843,8 @@ WEED_SETUP_START(200, 200) {
             weed_set_string_value(gui, "layout_rfx_delim", "|");
 
             // subtract 1 from ninps since we incremented it
-            weed_set_string_array(gui, "layout_rfx_strings", ninps + 2 + stcount, rfx_strings);
-            for (wnum = 0; wnum < ninps + 2 + stcount; wnum++) weed_free(rfx_strings[wnum]);
+            weed_set_string_array(gui, "layout_rfx_strings", ninps + 3 + stcount, rfx_strings);
+            for (wnum = 0; wnum < ninps + 3 + stcount; wnum++) weed_free(rfx_strings[wnum]);
             weed_free(rfx_strings);
             rfx_strings = NULL;
           }

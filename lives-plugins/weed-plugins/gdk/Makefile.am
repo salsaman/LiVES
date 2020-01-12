@@ -32,7 +32,7 @@ if NEED_LOCAL_WEED_COMPAT
 weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
-AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math @TURBO_CFLAGS@
+AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math @TURBO_CFLAGS@ -fno-math-errno
 AM_CXXFLAGS = $(AM_CFLAGS)
 
 if ENABLE_VJACK

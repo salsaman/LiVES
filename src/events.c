@@ -2091,14 +2091,13 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
 
   register int i;
 
-  if (WEED_EVENT_IS_FILTER_DEINIT(event)) init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT,
-        &error);
+  if (WEED_EVENT_IS_FILTER_DEINIT(event))
+    init_event = (weed_plant_t *)weed_get_voidptr_value(event, WEED_LEAF_INIT_EVENT, &error);
   else return TRUE;
 
-  if (weed_plant_has_leaf(init_event, WEED_LEAF_IN_TRACKS)) num_owners = weed_leaf_num_elements(init_event, WEED_LEAF_IN_TRACKS);
+  owners = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &num_owners);
 
   if (num_owners > 0) {
-    owners = weed_get_int_array(init_event, WEED_LEAF_IN_TRACKS, &error);
     while (xevent != NULL) {
       if (WEED_EVENT_IS_FRAME(xevent)) {
         if ((new_tc = get_event_timecode(xevent)) < tc || (can_stay && new_tc == tc)) {
@@ -2117,7 +2116,7 @@ boolean move_event_left(weed_plant_t *event_list, weed_plant_t *event, boolean c
       }
       xevent = get_prev_event(xevent);
     }
-    lives_free(owners);
+    lives_freep((void **)&owners);
   } else {
     if (can_stay) return TRUE; // bound to timeline, and allowed to stay
     while (xevent != NULL) {
@@ -3872,7 +3871,8 @@ lives_render_error_t render_events(boolean reset) {
                   mytrack = aclips[i] + nbtracks;
                   if (mytrack < 0) mytrack = 0;
                   xaclips[mytrack] = aclips[i + 1];
-                  if (xaseek[mytrack] - aseeks[i] > AUD_DIFF_MIN) /// smooth out audio by ignoring tiny seek differences
+                  g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
+                  if (fabs(xaseek[mytrack] - aseeks[i]) > AUD_DIFF_MIN) /// smooth out audio by ignoring tiny seek differences
                     xaseek[mytrack] = aseeks[i];
                   xavel[mytrack] = aseeks[i + 1];
                 }

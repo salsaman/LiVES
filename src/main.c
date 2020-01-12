@@ -665,7 +665,7 @@ static boolean pre_init(void) {
   prefs->letterbox = get_boolean_prefd(PREF_LETTERBOX, TRUE);
   prefs->letterbox_mt = get_boolean_prefd(PREF_LETTERBOXMT, TRUE);
 
-  prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL);
+  prefs->rte_keys_virtual = get_int_prefd(PREF_RTE_KEYS_VIRTUAL, FX_KEYS_PHYSICAL_EXTRA);
   if (prefs->rte_keys_virtual < 0) prefs->rte_keys_virtual = 0;
   if (prefs->rte_keys_virtual > FX_KEYS_MAX_VIRTUAL) prefs->rte_keys_virtual = FX_KEYS_MAX_VIRTUAL;
 
@@ -7304,7 +7304,7 @@ void load_frame_image(int frame) {
     }
 
     layer_palette = weed_layer_get_palette(mainw->frame_layer);
-    if (!weed_palette_is_valid(layer_palette)) {
+    if (!weed_palette_is_valid(layer_palette) || !CURRENT_CLIP_IS_VALID) {
       lives_freep((void **)&framecount);
       load_frame_cleanup(noswitch);
       return;
@@ -8275,6 +8275,8 @@ void load_frame_image(int frame) {
     mainw->clip_switched = TRUE;
 
     mainw->current_file = new_file;
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
 
     set_main_title(cfile->name, 0);
 

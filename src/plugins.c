@@ -2351,7 +2351,8 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 
   dplug->name = NULL;
 
-  plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS, plname);
+  plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir,
+                                 PLUGIN_EXEC_DIR, PLUGIN_DECODERS, plname);
 
   dplug->handle = dlopen(plugname, RTLD_LAZY);
   lives_free(plugname);

@@ -72,7 +72,7 @@ if NEED_LOCAL_WEED_COMPAT
 weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
-AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall  @TURBO_CFLAGS@
+AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall  @TURBO_CFLAGS@ -fno-math-errno
 AM_CPPFLAGS = $(AM_CFLAGS)
 
 if HAVE_LIBVISUAL

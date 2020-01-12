@@ -84,7 +84,7 @@
 
 #define LIVES_TRACK_ANY -1000000
 
-#define AUD_DIFF_MIN 0.01  ///< ignore audio seek differences < than this (seconds)
+#define AUD_DIFF_MIN 0.001  ///< ignore audio seek differences < than this (seconds)
 
 weed_plant_t *append_frame_event(weed_plant_t *event_list, ticks_t tc, int numframes,
                                  int *clips, int *frames) WARN_UNUSED;

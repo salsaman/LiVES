@@ -954,7 +954,6 @@ static int Upload(void) {
   // modes
 
   XGetWindowAttributes(dpy, xWin, &attr);
-  pthread_mutex_unlock(&rthread_mutex); // re-enable texture thread
 
   window_width = attr.width;
   window_height = attr.height;
@@ -1836,7 +1835,7 @@ static int Upload(void) {
   if (retdata != NULL) {
     // copy buffer to retbuf
 
-    pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex);
+    //pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex);
 
     if (retbuf != NULL) {
       buffer_free(retbuf);
@@ -1851,6 +1850,7 @@ static int Upload(void) {
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
   }
+  pthread_mutex_unlock(&rthread_mutex);
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);

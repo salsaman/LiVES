@@ -258,10 +258,10 @@ static inline weed_data_t **weed_data_new(int32_t seed_type, weed_size_t num_ele
     } else {
       data[i]->size = weed_seed_get_size(seed_type, 0);
       if (seed_type == WEED_SEED_FUNCPTR) {
-        data[i]->value.funcptr = (weed_funcptr_t)valuef[i];
+        memcpy(&data[i]->value.funcptr, &valuef[i], WEED_FUNCPTR_SIZE);
       } else {
         if (is_ptr) {
-          data[i]->value.voidptr = (weed_voidptr_t)valuep[i];
+          memcpy(&data[i]->value.voidptr, &valuep[i], WEED_VOIDPTR_SIZE);
         } else {
           data[i]->value.voidptr = (weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + i * data[i]->size));
         }

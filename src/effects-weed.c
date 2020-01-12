@@ -845,7 +845,7 @@ weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list) {
   create_filter_map(mainw->rte); ///< we create filter_map event_t * array with ordered effects
   if (needs_filter_map) {
     pthread_mutex_lock(&mainw->event_list_mutex);
-    event_list = append_filter_map_event(mainw->event_list, last_tc, filter_map);
+    event_list = append_filter_map_event(event_list, last_tc, filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
   }
   return event_list;
@@ -7076,7 +7076,7 @@ void weed_deinit_all(boolean shutdown) {
     if (!shutdown) {
       // maintain braces because of #DEBUG_FILTER_MUTEXES
       if (LIVES_IS_PLAYING && !shutdown && i >= FX_KEYS_PHYSICAL) {
-        // meta-physical  keys only shutdown through the insterface or via easter-egg keys...
+        // meta-physical  keys only shutdown through the interface or via easter-egg keys...
         mainw->osc_block = FALSE;
         return;
       }
@@ -10914,7 +10914,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   // - 10 : key length too long
   // - 11 : data length too long
 
-  void **values;
+  void **values = NULL;
 
   ssize_t bytes;
 

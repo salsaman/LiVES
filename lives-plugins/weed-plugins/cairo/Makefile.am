@@ -32,8 +32,8 @@ if NEED_LOCAL_WEED_COMPAT
 weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
-AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math
-AM_CXXFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@ -ffast-math
+AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) @GTK_CFLAGS@  @TURBO_CFLAGS@ -ffast-math -fno-math-errno
+AM_CXXFLAGS = AM_CFLAGS
 
 fxpluginslib_LTLIBRARIES = vector_visualiser.la
 

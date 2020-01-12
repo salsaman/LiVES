@@ -159,6 +159,7 @@
 
 /// FX keys, 1 - 9 normally
 #define FX_KEYS_PHYSICAL 9
+#define FX_KEYS_PHYSICAL_EXTRA FX_KEYS_PHYSICAL + 2
 
 /// must be >= FX_KEYS_PHYSICAL, and <=64 (number of bits in a 64bit int mask)
 /// (max number of keys accesible through rte window or via OSC)

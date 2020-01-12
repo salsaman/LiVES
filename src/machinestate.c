@@ -850,6 +850,7 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
 
 
 int lives_thread_join(lives_thread_t work, void **retval) {
+  struct timespec ts;
   thrd_work_t *task = (thrd_work_t *)work->data;
   while (!task->busy) {
     sched_yield();
@@ -861,8 +862,10 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   if (twork_list == work) twork_list = work->next;
   pthread_mutex_unlock(&twork_mutex);
   while (!task->done) {
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_nsec += 100000;
     pthread_mutex_lock(&task->cond_mutex);
-    pthread_cond_wait(&task->cond, &task->cond_mutex);
+    pthread_cond_timedwait(&task->cond, &task->cond_mutex, &ts);
     pthread_mutex_unlock(&task->cond_mutex);
   }
   if (retval != NULL) *retval = task->ret;

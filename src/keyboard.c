@@ -10,7 +10,7 @@
 #include "effects.h"
 #include "callbacks.h"
 
-#define NEEDS_TRANSLATION 1<<15
+#define NEEDS_TRANSLATION LIVES_SPECIAL_MASK
 
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
@@ -166,6 +166,8 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
 
   // down is a press, up is a release
 
+  keymod = keymod & ~(LIVES_NUMLOCK_MASK);
+
   if (!down) {
     // up...
     if (keymod & NEEDS_TRANSLATION) {
@@ -317,8 +319,7 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
-  if (mainw->rte_textparm != NULL && (keymod == 0 || keymod == LIVES_SHIFT_MASK
-                                      || keymod == LIVES_LOCK_MASK || keymod == 16)) {
+  if (mainw->rte_textparm != NULL) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
     if (unicode == LIVES_KEY_BackSpace) unicode = 8; // bs
     if (unicode == LIVES_KEY_Tab || unicode == 9) mainw->rte_textparm = NULL;

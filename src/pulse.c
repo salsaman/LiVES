@@ -106,8 +106,11 @@ boolean lives_pulse_init(short startup_phase) {
   pa_context_state_t pa_state;
   ticks_t timeout;
   lives_alarm_t alarm_handle;
+  LiVESResponseType resp;
 
   if (pa_mloop != NULL) return TRUE;
+
+retry:
 
   pa_mloop = pa_threaded_mainloop_new();
   lives_snprintf(pactxnm, 512, "LiVES-%"PRId64, lives_random());
@@ -135,17 +138,13 @@ boolean lives_pulse_init(short startup_phase) {
     LIVES_WARN("Unable to connect to the pulseaudio server");
 
     if (!mainw->foreign) {
-      if (startup_phase == 0 && capable->has_sox_play) {
-        do_error_dialog_with_check(
-          _("\nUnable to connect to the pulseaudio server.\nFalling back to sox audio player.\n"
-            "You can change this in Preferences/Playback.\n"),
-          WARN_MASK_NO_PULSE_CONNECT);
-        switch_aud_to_sox(prefs->warning_mask & WARN_MASK_NO_PULSE_CONNECT);
-      } else if (startup_phase == 0) {
-        do_error_dialog_with_check(
-          _("\nUnable to connect to the pulseaudio server.\nFalling back to none audio player.\n"
-            "You can change this in Preferences/Playback.\n"),
-          WARN_MASK_NO_PULSE_CONNECT);
+      if (startup_phase != 2) {
+        resp = do_abort_cancel_retry_dialog(
+                 _("\nUnable to connect to the pulseaudio server.\n"
+                   "Click Abort to exit from LiVES, Retry to try again,\n"
+                   "or Cancel to run LiVES without audio features.\n"
+                   "Audio settings can be upodated in Tools/Preferences/Playback.\n"), NULL);
+        if (resp == LIVES_RESPONSE_RETRY) goto retry;
         switch_aud_to_none(TRUE);
       } else {
         msg = lives_strdup(_("\nUnable to connect to the pulseaudio server.\n"));

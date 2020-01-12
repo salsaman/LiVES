@@ -76,6 +76,8 @@ static int wtrue = WEED_TRUE;
 #define general_get(plant, what, idx, val) (plant ? (weed_leaf_get(plant, what, idx, val) == WEED_SUCCESS) ? val : NULL : NULL)
 NOT_EXPORTED int general_get_int(weed_plant_t *plant, const char *what) {
 int v, *vp = (int *)general_get(plant, what, 0, &v); return vp ? v : 0;}
+NOT_EXPORTED weed_plant_t *general_get_plantptr(weed_plant_t *plant, const char *what, int idx) {
+  weed_plant_t *v, **vp = (weed_plant_t **)general_get(plant, what, idx, &v); return vp ? v : 0;}
 NOT_EXPORTED int64_t general_get_i64(weed_plant_t *plant, const char *what) {
   int64_t v, *vp = (int64_t *)general_get(plant, what, 0, &v); return vp ? v : 0;}
 EXPORTS int weed_plant_get_type(weed_plant_t *plant) {return general_get_int(plant, WEED_LEAF_TYPE);}
@@ -131,12 +133,12 @@ EXPORTS int weed_host_supports_linear_gamma(weed_plant_t *host_info) {
   return (weed_host_get_flags(host_info) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
 EXPORTS int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info) {
 return (weed_host_get_flags(host_info) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);}
-EXPORTS weed_plant_t *weed_get_filter_class(weed_plant_t *inst) {
+EXPORTS weed_plant_t *weed_instance_get_filter(weed_plant_t *inst) {
   weed_plant_t *filter; return *((weed_plant_t **)general_get(inst, WEED_LEAF_FILTER_CLASS, 0, (void *)&filter));}
 EXPORTS weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx) {
-  weed_plant_t *channel; return *((weed_plant_t **)general_get(inst, WEED_LEAF_IN_CHANNELS, idx, (void *)&channel));}
+  return general_get_plantptr(inst, WEED_LEAF_IN_CHANNELS, idx);}
 EXPORTS weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx) {
-  weed_plant_t *channel; return *((weed_plant_t **)(general_get(inst, WEED_LEAF_OUT_CHANNELS, idx, (void *)&channel)));}
+  return general_get_plantptr(inst, WEED_LEAF_OUT_CHANNELS, idx);}
 EXPORTS void *weed_channel_get_pixel_data(weed_plant_t *channel) {
   void *pd; return *((void **)(general_get(channel, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));}
 EXPORTS int weed_channel_get_width(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_WIDTH);}

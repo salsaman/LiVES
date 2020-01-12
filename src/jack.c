@@ -1655,6 +1655,7 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
     lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
     while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(jackd) != NULL) {
       sched_yield(); // wait for seek
+      lives_usleep(prefs->sleep_time);
     }
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return -1;
@@ -1810,6 +1811,7 @@ void jack_aud_pb_ready(int fileno) {
       alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
       while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
         sched_yield(); // wait for seek
+        lives_usleep(prefs->sleep_time);
       }
       lives_alarm_clear(alarm_handle);
       if (timeout == 0) jack_try_reconnect();

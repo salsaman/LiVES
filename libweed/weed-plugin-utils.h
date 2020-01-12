@@ -191,10 +191,10 @@ FN_DECL int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
 FN_DECL int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 
 // inst
-FN_DECL weed_plant_t *weed_get_filter_class(weed_plant_t *inst);
 FN_DECL weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);
 FN_DECL weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx);
 FN_DECL int weed_instance_get_flags(weed_plant_t *inst);
+FN_DECL weed_plant_t *weed_instance_get_filter(weed_plant_t *inst);
 
 // channel
 FN_DECL void *weed_channel_get_pixel_data(weed_plant_t *channel);

@@ -204,7 +204,7 @@ typedef int lives_pgid_t;
 
 #define LIVES_DEVICE_DIR "/dev/"
 
-#define LIVES_COPYRIGHT_YEARS "2002 - 2019"
+#define LIVES_COPYRIGHT_YEARS "2002 - 2020"
 
 #define LIVES_WEBSITE PACKAGE_URL
 #define LIVES_MANUAL_URL LIVES_WEBSITE "/manual/"

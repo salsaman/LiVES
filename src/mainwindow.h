@@ -380,6 +380,7 @@ enum {
 #define LIVES_AUDIO_TYPE_PCM "pcm"
 
 // file extensions
+#define LIVES_FILE_EXT_TMP "tmp"
 #define LIVES_FILE_EXT_PNG "png"
 #define LIVES_FILE_EXT_JPG "jpg"
 #define LIVES_FILE_EXT_MGK "mgk"
@@ -495,7 +496,7 @@ typedef int lives_alarm_t;
 /// where do we add the builtin tools in the tools menu
 #define RFX_TOOL_MENU_POSN 2
 
-/// mainw->
+/// mainw->msg bytesize
 #define MAINW_MSG_SIZE 8192
 
 typedef struct {

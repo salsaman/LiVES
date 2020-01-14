@@ -5844,7 +5844,7 @@ boolean rewrite_recovery_file(void) {
     return FALSE;
   }
 
-  temp_recovery_file = lives_strdup_printf("%s.tmp", mainw->recovery_file);
+  temp_recovery_file = lives_strdup_printf("%s.%s", mainw->recovery_file, LIVES_FILE_EXT_TMP);
 
   do {
     retval = LIVES_RESPONSE_INVALID;

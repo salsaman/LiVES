@@ -940,7 +940,7 @@ static int num_in_params_for_nth_instance(weed_plant_t *inst, int idx) {
 
 static boolean fmt_match(char *fmt_string) {
   const char *myfmt = fmt_string, *xfmt = myfmt + FMT_STRING_SIZE;
-  size_t xlen = strlen(myfmt), ylen;
+  size_t xlen = lives_strlen(myfmt), ylen;
   int j;
 
   // g_print("\nROW\n");
@@ -948,7 +948,7 @@ static boolean fmt_match(char *fmt_string) {
     //g_print("HSEP\n");
     return FALSE;
   }
-  ylen = strlen(xfmt);
+  ylen = lives_strlen(xfmt);
   if (ylen == 0) {
     //g_print("2HSEP\n");
     return FALSE;
@@ -998,7 +998,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   char fmt_strings[MAX_FMT_STRINGS][FMT_STRING_SIZE];
 
-  size_t fmtlen;
+  size_t fmtlen, ll;
 
   boolean used[rfx->num_params];
   boolean has_box = FALSE;
@@ -1192,7 +1192,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       num_tok = get_token_count(line, (unsigned int)rfx->delim[0]);
       // ignore | inside strings
       array = lives_strsplit(line, rfx->delim, num_tok);
-      if (!strlen(array[num_tok - 1])) num_tok--;
+      if (!(*(array[num_tok - 1]))) num_tok--;
 
       for (j = 0; j < num_tok; j++) {
         if (!strcmp(array[j], "nextfilter")) {
@@ -1225,7 +1225,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           has_param = TRUE;
 
           if (pass == 0) {
-            if ((fmtlen = strlen((const char *)format)) < FMT_STRING_SIZE - 1) format[fmtlen] = (unsigned char)param->type;
+            if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE - 1) format[fmtlen] = (unsigned char)param->type;
           } else {
             used[pnum] = TRUE;
             if (!has_box) {
@@ -1289,12 +1289,12 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
                 add_fill_to_box(LIVES_BOX(hbox));
               }
               widget_opts.filler_len = wofl;
-            } else if ((fmtlen = strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -1;
+            } else if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -1;
           }
         } else if (!strncmp(array[j], "\"", 1)) {
           // add a label
           if (pass == 0) {
-            if ((fmtlen = strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -2;
+            if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = -2;
             if (has_box) last_label = dummy_label;
             continue;
           }
@@ -1320,9 +1320,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
             lives_strappend(label_text, 256, array[++j]);
           }
 
-          if (strlen(label_text) > 1) {
-            if (!strcmp(label_text + strlen(label_text) - 1, "\"")) {
-              lives_memset(label_text + strlen(label_text) - 1, 0, 1);
+          if ((ll = strlen(label_text)) > 1) {
+            if (!strcmp(label_text + ll - 1, "\"")) {
+              lives_memset(label_text + ll - 1, 0, 1);
             }
 
             if (last_label == NULL && !has_param) widget_opts.justify = LIVES_JUSTIFY_CENTER;
@@ -1377,7 +1377,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
       has_param = TRUE;
       if (pass == 0) {
-        if ((fmtlen = strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = (unsigned char)(rfx->params[i].type);
+        if ((fmtlen = lives_strlen((const char *)format)) < FMT_STRING_SIZE) format[fmtlen] = (unsigned char)(rfx->params[i].type);
       } else {
         if (layoutx != NULL) {
           add_param_to_box(LIVES_BOX(lives_layout_row_new(LIVES_LAYOUT(layoutx))), rfx, i, TRUE);
@@ -2928,7 +2928,7 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
 
   word = L2U8((char *)lives_list_nth_data(plist, start));
 
-  if (word == NULL || !strlen(word) || word[0] != '\"') {
+  if (word == NULL || !(*word) || word[0] != '\"') {
     if (word != NULL) lives_free(word);
     return 0;
   }
@@ -2936,10 +2936,11 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
   word++;
 
   for (i = start; i < lives_list_length(plist); i++) {
-    if (strlen(word)) {
-      if ((word[strlen(word) - 1] == '\"') && (strlen(word) == 1 || word[strlen(word) - 2] != '\\')) {
+    size_t wl = lives_strlen(word);
+    if (wl > 0) {
+      if ((word[wl - 1] == '\"') && (wl == 1 || word[wl - 2] != '\\')) {
         lastword = TRUE;
-        lives_memset(word + strlen(word) - 1, 0, 1);
+        lives_memset(word + wl - 1, 0, 1);
       }
     }
 
@@ -2959,7 +2960,7 @@ char *reconstruct_string(LiVESList *plist, int start, int *offs) {
   set_int_param(offs, i - start + 1);
 
   // remove trailing space
-  lives_memset(ret + strlen(ret) - 1, 0, 1);
+  lives_memset(ret + lives_strlen(ret) - 1, 0, 1);
   return ret;
 }
 

@@ -658,9 +658,9 @@ weed_plant_t *event_copy_and_insert(weed_plant_t *in_event, weed_timecode_t out_
     new_init_event = find_init_event_by_id(init_event, event);
     error = weed_set_voidptr_value(event, WEED_LEAF_INIT_EVENT, new_init_event);
     if (error == WEED_ERROR_MEMORY_ALLOCATION) return NULL;
-    weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID);
-    error = weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID,
-                                   (void *)new_init_event);  // useful later for event_list_rectify
+    /* weed_leaf_delete((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID); */
+    /* error = weed_set_voidptr_value((weed_plant_t *)new_init_event, WEED_LEAF_EVENT_ID, */
+    /*                                (void *)new_init_event);  // useful later for event_list_rectify */
     weed_leaf_delete((weed_plant_t *)new_init_event,
                      WEED_LEAF_DEINIT_EVENT); // delete since we assign a placeholder with int64 type
     weed_set_plantptr_value((weed_plant_t *)new_init_event, WEED_LEAF_DEINIT_EVENT, event);

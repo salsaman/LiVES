@@ -355,7 +355,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       new_file = atoi((char *)msg->data);
       if (pulsed->playing_file != new_file) {
         filename = lives_get_audio_file_name(new_file);
-        pulsed->fd = lives_open2(filename, O_RDONLY);
+        pulsed->fd = lives_open_buffered_rdonly(filename);
         if (pulsed->fd == -1) {
           // dont show gui errors - we are running in realtime thread
           LIVES_ERROR("pulsed: error opening");
@@ -375,7 +375,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
       break;
     case ASERVER_CMD_FILE_CLOSE:
-      if (pulsed->fd >= 0) close(pulsed->fd);
+      if (pulsed->fd >= 0) lives_close_buffered(pulsed->fd);
       if (pulsed->sound_buffer == pulsed->aPlayPtr->data) pulsed->sound_buffer = NULL;
       if (pulsed->aPlayPtr->data != NULL) {
         lives_free((void *)(pulsed->aPlayPtr->data));
@@ -393,7 +393,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (seek < 0.) xseek = 0.;
       if (mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) {
         xseek = ALIGN_CEILNG(xseek, afile->achans * (afile->asampsize >> 3));
-        lseek(pulsed->fd, xseek, SEEK_SET);
+        lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek);
+#ifdef HAVE_POSIX_FADVISE
+        // TODO - redo on dir. change / jump
+        if (pulsed->playing_file == mainw->ascrap_file || afile->pb_fps > 0.) {
+          posix_fadvise(pulsed->fd, xseek, 0, POSIX_FADV_SEQUENTIAL);
+        } else
+          posix_fadvise(pulsed->fd, 0, xseek, POSIX_FADV_RANDOM);
+#endif
       }
       pulsed->real_seek_pos = pulsed->seek_pos = seek;
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
@@ -533,7 +540,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           if (shrink_factor  > 0.) {
             // forward playback
             if ((mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
-              pulsed->aPlayPtr->size = read(pulsed->fd, (void *)(pulsed->aPlayPtr->data), in_bytes);
+              pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data), in_bytes, TRUE);
             } else pulsed->aPlayPtr->size = in_bytes;
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data); // ASSIG to p.sb
             pulsed->seek_pos += in_bytes;
@@ -589,11 +596,18 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                mainw->multitrack != NULL) && in_bytes > 0) {
             int qnt = afile->achans * (afile->asampsize >> 3);
             pulsed->seek_pos = ALIGN_CEILNG(pulsed->seek_pos, qnt);
-            lseek(pulsed->fd, pulsed->seek_pos, SEEK_SET);
+            lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+#ifdef HAVE_POSIX_FADVISE
+            // TODO - redo on dir. change / jump
+            if (pulsed->playing_file == mainw->ascrap_file || afile->pb_fps > 0.) {
+              posix_fadvise(pulsed->fd, pulsed->seek_pos, 0, POSIX_FADV_SEQUENTIAL);
+            } else
+              posix_fadvise(pulsed->fd, 0, pulsed->seek_pos, POSIX_FADV_RANDOM);
+#endif
           }
 
           if (shrink_factor < 0 && (mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
-            pulsed->aPlayPtr->size = read(pulsed->fd, (void *)(pulsed->aPlayPtr->data), in_bytes);
+            pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data), in_bytes, TRUE);
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data); // ASSIG to p.sb
           }
 
@@ -1457,13 +1471,15 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   if (pdriver->is_output) {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
     pa_battr.tlength = LIVES_PA_BUFF_TARGET;
+    pa_battr.minreq = LIVES_PA_BUFF_MINREQ;
+    pa_battr.prebuf = 0;
   } else {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
     pa_battr.fragsize = LIVES_PA_BUFF_FRAGSIZE * 4;
+    pa_battr.minreq = (uint32_t) - 1;
+    pa_battr.prebuf = -1;
   }
 
-  pa_battr.minreq = (uint32_t) - 1;
-  pa_battr.prebuf = -1;
 
   pa_mloop_lock();
   if (pulse_server_rate == 0) {
@@ -1777,8 +1793,11 @@ boolean pulse_try_reconnect(void) {
 
   pulse_shutdown();
   mainw->pulsed = NULL;
-
-  lives_system("pulseaudio -k", TRUE);
+  if (prefs->pa_restart && !prefs->vj_mode) {
+    char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+    lives_system(com, TRUE);
+    lives_free(com);
+  } else lives_system("pulseaudio -k", TRUE);
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while (lives_alarm_check(alarm_handle) > 0) {
     sched_yield();
@@ -1786,7 +1805,6 @@ boolean pulse_try_reconnect(void) {
     threaded_dialog_spin(0.);
   }
   lives_alarm_clear(alarm_handle);
-
   if (!lives_pulse_init(9999)) {
     end_threaded_dialog();
     goto err123; // init server failed

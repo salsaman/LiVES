@@ -178,40 +178,54 @@ EXPORTED weed_error_t weed_init(int32_t abi) {
 }
 
 
-#define hasNulByte(x) ((x - 0x01010101) & ~x & 0x80808080)
-#define SW (sizeof (int) / sizeof (char))
+#define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
 static inline weed_size_t weed_strlen(const char *s) {
-  const char *p;
-  int d;
-  if (!s) return 0;
-  p = s - 1;
-  do {
-    p++;
-    if ((((int) p) & (SW - 1)) == 0) {
-      do {
-        d  = *((int *) p);
-        p += SW;
-      } while (!hasNulByte(d));
-      p -= SW;
-    }
-  } while (*p != 0);
+  int64_t d;
+  const char *p = s;
+  int64_t *pi = (int64_t *)p;
+  if (s) do {
+      if ((const char *)pi == p) {
+        do {
+          d  = *(int64_t *)p;
+          p += 8;
+          pi++;
+        } while (!hasNulByte(d));
+        p -= 8;
+        if (!(*p)) break;
+        pi = (int64_t *)p;
+      } p++;
+    } while (*p);
   return p - s;
 }
 
 
 static inline int weed_strcmp(const char *st1, const char *st2) {
-  char c;
-  if (st1 == NULL || st2 == NULL) return (st1 != st2);
-  while ((c = *(st1++)) == *(st2++)) if (c == 0) return 0;
-  return 1;
+  if (!st1 || !st2) return (st1 != st2);
+  else {
+    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+    while (1) {
+      if ((const char *)ip1 == st1 && (const char *)ip2 == st2) {
+        do {
+          d1 = *(ip1++);
+          d2 = *(ip2++);
+        } while (d1 == d2 && !hasNulByte(d1));
+        if (!hasNulByte(d2)) return 1;
+        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
+      }
+      if (*st1 != *st2 || !(*st1)) break;
+      st1++;
+      st2++;
+    }
+  }
+  return (*st1 != *st2);
 }
 
 
+#define HASHROOT 5381
+
 static inline uint32_t weed_hash(const char *string) {
-  char c;
-  uint32_t hash = 5381;
-  if (string == NULL) return 0;
-  while ((c = *(string++)) != 0) hash += (hash << 5) + c;
+  uint32_t hash;
+  for (hash = HASHROOT; *string; hash += (hash << 5) + * (string++));
   return hash;
 }
 
@@ -393,6 +407,7 @@ static weed_error_t _weed_leaf_set_private_data(weed_plant_t *plant, const char 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) {
   weed_leaf_t *leaf;
   if ((leaf = weed_leaf_new(WEED_LEAF_TYPE, WEED_SEED_INT, WEED_MAGIC_HASH)) == NULL) return NULL;
+
   if ((leaf->data = (volatile weed_data_t **)weed_data_new(WEED_SEED_INT, 1, &plant_type)) == NULL) {
     weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
     weed_unmalloc_sizeof(weed_leaf_t, leaf);

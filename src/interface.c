@@ -532,10 +532,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           lives_painter_rectangle(cr, posx, posy, xwidth, UTIL_CLAMP(height, allocheight));
           lives_painter_fill(cr);
           lives_painter_destroy(cr);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   if (cfile->achans > 1 && mainw->raudio_drawable != NULL && (which == 0 || which == 3)) {
     allocwidth = lives_widget_get_allocation_width(mainw->raudio_draw);
@@ -956,13 +955,13 @@ void draw_little_bars(double ptrtime, int which) {
 }
 
 
-static boolean on_fsp_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+static boolean on_fsp_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   lives_button_clicked(LIVES_BUTTON(user_data));
   return FALSE;
 }
 
 
-void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button, LiVESBox *for_deint,
+void widget_add_preview(LiVESWidget * widget, LiVESBox * for_preview, LiVESBox * for_button, LiVESBox * for_deint,
                         int preview_type) {
   LiVESWidget *preview_button = NULL;
 
@@ -1051,7 +1050,7 @@ void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *fo
 }
 
 
-static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
+static void on_dth_cancel_clicked(LiVESButton * button, livespointer user_data) {
   if (LIVES_POINTER_TO_INT(user_data) == 1) mainw->cancelled = CANCEL_KEEP;
   else mainw->cancelled = CANCEL_USER;
 }
@@ -1059,7 +1058,7 @@ static void on_dth_cancel_clicked(LiVESButton *button, livespointer user_data) {
 
 static ticks_t last_t;
 
-xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had_focus) {
+xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean * td_had_focus) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *vbox;
   LiVESWidget *hbox;
@@ -1660,7 +1659,7 @@ lives_clipinfo_t *create_clip_info_window(int audio_channels, boolean is_mt) {
 }
 
 
-static void on_resizecb_toggled(LiVESToggleButton *t, livespointer user_data) {
+static void on_resizecb_toggled(LiVESToggleButton * t, livespointer user_data) {
   LiVESWidget *cb = (LiVESWidget *)user_data;
 
   if (!lives_toggle_button_get_active(t)) {
@@ -1753,7 +1752,7 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 // the type of message box here is with a single OK button
 // if 2 or more buttons (e.g. OK/CANCEL, YES/NO, ABORT/RETRY/CANCEL) are needed, use create_message_dialog() in dialogs.c
 
-LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow *transient, int mask,
+LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text, LiVESWindow * transient, int mask,
                                       boolean is_blocking) {
   LiVESWidget *dialog;
 
@@ -1766,7 +1765,7 @@ LiVESWidget *create_info_error_dialog(lives_dialog_t info_type, const char *text
 }
 
 
-text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer *textbuffer) {
+text_window *create_text_window(const char *title, const char *text, LiVESTextBuffer * textbuffer) {
   // general text window
   LiVESWidget *dialog_vbox;
   LiVESWidget *scrolledwindow;
@@ -2395,7 +2394,7 @@ _entryw *create_rename_dialog(int type) {
 }
 
 
-void on_liveinp_advanced_clicked(LiVESButton *button, livespointer user_data) {
+void on_liveinp_advanced_clicked(LiVESButton * button, livespointer user_data) {
   lives_tvcardw_t *tvcardw = (lives_tvcardw_t *)(user_data);
 
   tvcardw->use_advanced = !tvcardw->use_advanced;
@@ -2413,7 +2412,7 @@ void on_liveinp_advanced_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data) {
+static void rb_tvcarddef_toggled(LiVESToggleButton * tbut, livespointer user_data) {
   lives_tvcardw_t *tvcardw = (lives_tvcardw_t *)(user_data);
 
   if (!lives_toggle_button_get_active(tbut)) {
@@ -2428,7 +2427,7 @@ static void rb_tvcarddef_toggled(LiVESToggleButton *tbut, livespointer user_data
 }
 
 
-static void after_dialog_combo_changed(LiVESWidget *combo, livespointer plist) {
+static void after_dialog_combo_changed(LiVESWidget * combo, livespointer plist) {
   // set mainw->fx1_val to the index of combo text in plist
   LiVESList *list = (LiVESList *)plist;
   char *etext = lives_combo_get_active_text(LIVES_COMBO(combo));
@@ -2437,7 +2436,7 @@ static void after_dialog_combo_changed(LiVESWidget *combo, livespointer plist) {
 }
 
 
-LiVESWidget *create_combo_dialog(int type, LiVESList *list) {
+LiVESWidget *create_combo_dialog(int type, LiVESList * list) {
   // create a dialog with combo box selector
 
   // type 1 == unicap device
@@ -2751,7 +2750,7 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 }
 
 
-static void rb_aud_sel_pressed(LiVESButton *button, livespointer user_data) {
+static void rb_aud_sel_pressed(LiVESButton * button, livespointer user_data) {
   aud_dialog_t *audd = (aud_dialog_t *)user_data;
   audd->is_sel = !audd->is_sel;
   lives_widget_set_sensitive(audd->time_spin, !audd->is_sel);
@@ -2987,7 +2986,7 @@ _commentsw *create_comments_dialog(lives_clip_t *sfile, char *filename) {
 
 static char last_good_folder[PATH_MAX];
 
-static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data) {
+static void chooser_check_dir(LiVESFileChooser * chooser, livespointer user_data) {
   char *cwd = lives_get_current_dir();
   char *new_dir;
 
@@ -3023,13 +3022,13 @@ static void chooser_check_dir(LiVESFileChooser *chooser, livespointer user_data)
 }
 
 
-LIVES_INLINE void chooser_response(LiVESWidget *widget, int response, livespointer udata) {
+LIVES_INLINE void chooser_response(LiVESWidget * widget, int response, livespointer udata) {
   mainw->fc_buttonresponse = response;
 }
 
 
 char *choose_file(const char *dir, const char *fname, char **const filt, LiVESFileChooserAction act,
-                  const char *title, LiVESWidget *extra_widget) {
+                  const char *title, LiVESWidget * extra_widget) {
   // new style file chooser
 
   // in/out values are in utf8 encoding
@@ -3284,7 +3283,7 @@ LiVESWidget *choose_file_with_preview(const char *dir, const char *title, char *
 }
 
 
-LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox *hbox, boolean is_active) {
+LIVES_GLOBAL_INLINE LiVESWidget *make_autoreload_check(LiVESHBox * hbox, boolean is_active) {
   return lives_standard_check_button_new(_("_Autoreload next time"), is_active, LIVES_BOX(hbox), NULL);
 }
 
@@ -3405,7 +3404,7 @@ _entryw *create_cds_dialog(int type) {
 }
 
 
-static void flip_cdisk_bit(LiVESToggleButton *t, livespointer user_data) {
+static void flip_cdisk_bit(LiVESToggleButton * t, livespointer user_data) {
   uint32_t bitmask = LIVES_POINTER_TO_INT(user_data);
   prefs->clear_disk_opts ^= bitmask;
 }
@@ -3488,7 +3487,7 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
 
 static ulong expt;
 
-static boolean exposetview(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
+static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespointer user_data) {
   LiVESWidgetColor fgcol, bgcol;
   lives_colRGBA64_t fg, bg;
   LingoLayout *layout = NULL;
@@ -3546,7 +3545,7 @@ LiVESTextView *create_output_textview(void) {
 
 static int currow;
 
-static void pair_add(LiVESWidget *table, const char *key, const char *meaning) {
+static void pair_add(LiVESWidget * table, const char *key, const char *meaning) {
   LiVESWidget *labelk, *labelm, *align;
   double kalign = 0., malign = 0.;
   boolean key_all = FALSE;
@@ -3851,7 +3850,7 @@ autolives_window *autolives_pre_dialog(void) {
 }
 
 
-static boolean special_cleanup_cb(LiVESWidget *widget, void *userdata) {
+static boolean special_cleanup_cb(LiVESWidget * widget, void *userdata) {
   // need to call special_cleanup(TRUE) before destroying the toplevel if you want to prompt
   // for filewrite overwrites
   special_cleanup(FALSE);
@@ -3859,7 +3858,7 @@ static boolean special_cleanup_cb(LiVESWidget *widget, void *userdata) {
 }
 
 
-const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width, LiVESSpinButton *sp_height, LiVESBox *box) {
+const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton * sp_width, LiVESSpinButton * sp_height, LiVESBox * box) {
   static lives_param_t aspect_width, aspect_height;
 
   init_special();
@@ -3880,8 +3879,47 @@ const lives_special_aspect_t *add_aspect_ratio_button(LiVESSpinButton *sp_width,
 }
 
 
+LiVESWidget *add_list_expander(LiVESBox * box, const char *title, int width, int height, LiVESList * xlist) {
+  // add widget to preview affected layouts
+
+  LiVESWidget *expander;
+  LiVESWidget *textview = lives_text_view_new();
+  LiVESTextBuffer *textbuffer = lives_text_view_get_buffer(LIVES_TEXT_VIEW(textview));
+
+  LiVESWidget *scrolledwindow =
+    lives_standard_scrolled_window_new(width, height, LIVES_WIDGET(textview));
+
+  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
+
+  lives_widget_set_size_request(scrolledwindow, width, height);
+
+  expander = lives_standard_expander_new(title, LIVES_BOX(box), scrolledwindow);
+
+  if (palette->style & STYLE_1) {
+    LiVESWidget *label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
+    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+    lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
+    lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
+
+    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+    lives_widget_set_base_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
+    lives_widget_set_text_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
+  }
+
+  lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
+
+  for (; xlist != NULL; xlist = xlist->next) {
+    lives_text_buffer_insert_at_cursor(textbuffer, (const char *)xlist->data, strlen((char *)xlist->data));
+    lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
+  }
+  return expander;
+}
+
+
 #ifdef ALLOW_NONFREE_CODECS
-static void on_freedom_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
+static void on_freedom_toggled(LiVESToggleButton * togglebutton, livespointer user_data) {
   LiVESWidget *label = (LiVESWidget *)user_data;
   if (!lives_toggle_button_get_active(togglebutton)) lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_WEBM);
   else lives_label_set_text(LIVES_LABEL(label), "." LIVES_FILE_EXT_MP4);
@@ -3892,7 +3930,7 @@ static LiVESWidget *spinbutton_width;
 static LiVESWidget *spinbutton_height;
 static const lives_special_aspect_t *aspect;
 
-static void utsense(LiVESToggleButton *togglebutton, livespointer user_data) {
+static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
   boolean sensitive = (boolean)LIVES_POINTER_TO_INT(user_data);
   if (!lives_toggle_button_get_active(togglebutton)) return;
   lives_widget_set_sensitive(spinbutton_width, sensitive);
@@ -4278,7 +4316,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 }
 
 
-static boolean on_ebox_click(LiVESWidget *widget, LiVESXEventButton *event, livespointer user_data) {
+static boolean on_ebox_click(LiVESWidget * widget, LiVESXEventButton * event, livespointer user_data) {
   // want to get doubleclick and then exit somehow
   int val = LIVES_POINTER_TO_INT(user_data);
   if (event->type != LIVES_BUTTON_PRESS) {
@@ -4526,7 +4564,7 @@ boolean get_screen_usable_size(int *w, int *h) {
 }
 
 
-static boolean msg_area_scroll_to(LiVESWidget *widget, int msgno, boolean recompute, LiVESAdjustment *adj) {
+static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recompute, LiVESAdjustment * adj) {
   // "scroll" the message area so that the last message appears at the bottom
   LingoLayout *layout;
   lives_colRGBA64_t fg, bg;
@@ -4868,13 +4906,13 @@ EXPOSE_FN_DECL(expose_msg_area, widget, user_data) {
 EXPOSE_FN_END
 
 
-LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget *widget, LiVESAdjustment *adj) {
+LIVES_GLOBAL_INLINE void msg_area_scroll_to_end(LiVESWidget * widget, LiVESAdjustment * adj) {
   msg_area_scroll_to(widget, mainw->n_messages - 1, TRUE, adj);
   // expose_msg_area(widget, NULL, NULL);
 }
 
 
-void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
+void msg_area_scroll(LiVESAdjustment * adj, livespointer userdata) {
   // scrollbar callback
   LiVESWidget *widget = (LiVESWidget *)userdata;
   double val = lives_adjustment_get_value(adj);
@@ -4884,7 +4922,7 @@ void msg_area_scroll(LiVESAdjustment *adj, livespointer userdata) {
 }
 
 
-boolean on_msg_area_scroll(LiVESWidget *widget, LiVESXEventScroll *event, livespointer user_data) {
+boolean on_msg_area_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespointer user_data) {
   // mouse scroll callback
   LiVESAdjustment *adj = (LiVESAdjustment *)user_data;
   if (lives_get_scroll_direction(event) == LIVES_SCROLL_UP) lives_adjustment_set_value(adj, lives_adjustment_get_value(adj) - 1.);

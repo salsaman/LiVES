@@ -9051,7 +9051,7 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes,
           } else if (weed_plant_has_leaf(filter, WEED_LEAF_AUTHOR)) author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &error);
           else author = lives_strdup("??????");
         }
-        if (strlen(author) > MAX_AUTHOR_LEN) {
+        if (lives_strlen(author) > MAX_AUTHOR_LEN) {
           author[MAX_AUTHOR_LEN - 1] = '.';
           author[MAX_AUTHOR_LEN] = 0;
         }
@@ -10418,7 +10418,7 @@ char *make_weed_hashname(int filter_idx, boolean fullname, boolean use_extra_aut
 
   if (subs) {
     char *xhashname = subst(hashname, " ", "_");
-    if (strcmp(xhashname, hashname)) {
+    if (lives_strcmp(xhashname, hashname)) {
       lives_free(hashname);
       return xhashname;
     }
@@ -10509,7 +10509,7 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
   int filter_version;
   int error;
 
-  if (pkg != NULL && strlen(pkg)) {
+  if (pkg != NULL && *pkg) {
     char *filename;
 
     if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_INFO)) {
@@ -10534,7 +10534,7 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
     lives_freep((void **)&filename);
   }
 
-  if (fxname != NULL && strlen(fxname)) {
+  if (fxname != NULL && *fxname) {
     filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
     if (lives_utf8_strcasecmp(fxname, filter_name)) {
       lives_freep((void **)&filter_name);
@@ -10543,7 +10543,7 @@ static boolean check_match(weed_plant_t *filter, const char *pkg, const char *fx
     lives_freep((void **)&filter_name);
   }
 
-  if (auth != NULL && strlen(auth)) {
+  if (auth != NULL && *auth) {
     filter_author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &error);
     if (lives_utf8_strcasecmp(auth, filter_author)) {
       if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) {
@@ -10665,7 +10665,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
   size_t totsize = 0;
 
   weed_size_t vlen;
-  weed_size_t keylen = (weed_size_t)strlen(key);
+  weed_size_t keylen = (weed_size_t)lives_strlen(key);
 
   int st, ne;
   int j;
@@ -10707,7 +10707,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
   // for pixel_data we do special handling
   // instead of writing size == 8 (4 bytes) and a voidptr (8 bytes)
   // we write each plane's bytesize and the contents
-  if (mem == NULL && !strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+  if (mem == NULL && !lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
     int error;
     int *rowstrides = weed_get_int_array(plant, WEED_LEAF_ROWSTRIDES, &error);
     int pal = weed_get_int_value(plant, WEED_LEAF_CURRENT_PALETTE, &error);
@@ -10812,7 +10812,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
     // write each leaf and key
     if (pd_needed > 0) {
       // write pal, height, rowstrides before pixel_data.
-      if (!strcmp(prop, WEED_LEAF_PIXEL_DATA)) {
+      if (!lives_strcmp(prop, WEED_LEAF_PIXEL_DATA)) {
         if (pd_reqs > 3) pd_needed = 0;
         else {
           ++pd_needed;
@@ -10821,7 +10821,7 @@ size_t weed_plant_serialise(int fd, weed_plant_t *plant, unsigned char **mem) {
         }
       } else {
         if (pd_reqs < 4 && (!strcmp(prop, WEED_LEAF_WIDTH) || !strcmp(prop, WEED_LEAF_HEIGHT)
-                            || !strcmp(prop, WEED_LEAF_CURRENT_PALETTE)
+                            || !lives_strcmp(prop, WEED_LEAF_CURRENT_PALETTE)
                             || !strcmp(prop, WEED_LEAF_ROWSTRIDES))) {
           if (++pd_reqs == 4 && pd_needed > 1) {
             totsize += weed_leaf_serialise(fd, plant, prop, TRUE, mem);
@@ -10946,7 +10946,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       *mem += 4;
     }
 
-    if (check_key && len != strlen(key)) return -9;
+    if (check_key && len != lives_strlen(key)) return -9;
     //g_print("len was %d\n", len);
     if (len > MAX_WEED_STRLEN) return -10;
 
@@ -10965,7 +10965,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
     lives_memset(mykey + (size_t)len, 0, 1);
     //g_print("got key %s\n", mykey);
-    if (check_key && strcmp(mykey, key)) {
+    if (check_key && lives_strcmp(mykey, key)) {
       type = -1;
       goto done;
     }
@@ -11014,7 +11014,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     goto done;
   }
 
-  if (!strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+  if (!lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
     //g_print("ne was %d\n", ne);
     if (ne > 4) {
       // max planes is 4 (YUVA4444P)
@@ -11040,7 +11040,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   }
 
   // for pixel_data we do special handling
-  if (mem == NULL && !strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+  if (mem == NULL && !lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
     int width, height, pal = 0, *rs = NULL, nplanes = ne;
     height = weed_layer_get_height(plant);
     if (height > 0) {
@@ -11365,7 +11365,7 @@ boolean write_filter_defaults(int fd, int idx) {
     if (weed_plant_has_leaf(ptmpls[i], WEED_LEAF_HOST_DEFAULT)) {
       if (!wrote_hashname) {
         hashname = make_weed_hashname(idx, TRUE, FALSE, 0, FALSE);
-        vlen = strlen(hashname);
+        vlen = lives_strlen(hashname);
 
         lives_write_le_buffered(fd, &vlen, 4, TRUE);
         lives_write_buffered(fd, hashname, vlen, TRUE);
@@ -11436,7 +11436,7 @@ boolean read_filter_defaults(int fd) {
 
     lives_memset((char *)buf + vlen, 0, 1);
     for (i = 0; i < num_weed_filters; i++) {
-      if (!strcmp((char *)buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0, FALSE)))) {
+      if (!lives_strcmp((char *)buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0, FALSE)))) {
         lives_free(tmp);
         found = TRUE;
         break;
@@ -11445,7 +11445,7 @@ boolean read_filter_defaults(int fd) {
     }
     if (!found) {
       for (i = 0; i < num_weed_filters; i++) {
-        if (!strcmp((char *)buf, (tmp = make_weed_hashname(i, TRUE, TRUE, 0, FALSE)))) {
+        if (!lives_strcmp((char *)buf, (tmp = make_weed_hashname(i, TRUE, TRUE, 0, FALSE)))) {
           lives_free(tmp);
           break;
         }
@@ -11533,7 +11533,7 @@ boolean write_generator_sizes(int fd, int idx) {
         (!wrote_hashname && weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))) {
       if (!wrote_hashname) {
         hashname = make_weed_hashname(idx, TRUE, FALSE, 0, FALSE);
-        vlen = strlen(hashname);
+        vlen = lives_strlen(hashname);
         lives_write_le_buffered(fd, &vlen, 4, TRUE);
         lives_write_buffered(fd, hashname, vlen, TRUE);
         lives_free(hashname);
@@ -11621,7 +11621,7 @@ boolean read_generator_sizes(int fd) {
     lives_memset((char *)buf + vlen, 0, 1);
 
     for (i = 0; i < num_weed_filters; i++) {
-      if (!strcmp(buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0, FALSE)))) {
+      if (!lives_strcmp(buf, (tmp = make_weed_hashname(i, TRUE, FALSE, 0, FALSE)))) {
         lives_free(tmp);
         found = TRUE;
         break;
@@ -11630,7 +11630,7 @@ boolean read_generator_sizes(int fd) {
     }
     if (!found) {
       for (i = 0; i < num_weed_filters; i++) {
-        if (!strcmp(buf, (tmp = make_weed_hashname(i, TRUE, TRUE, 0, FALSE)))) {
+        if (!lives_strcmp(buf, (tmp = make_weed_hashname(i, TRUE, TRUE, 0, FALSE)))) {
           lives_free(tmp);
           break;
         }

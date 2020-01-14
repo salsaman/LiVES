@@ -197,7 +197,7 @@ typedef struct {
 _encoder;
 
 // defined in plugins.c for the whole app
-extern const char *anames[AUDIO_CODEC_MAX];
+extern const char *const anames[AUDIO_CODEC_MAX];
 
 // decoder plugins
 

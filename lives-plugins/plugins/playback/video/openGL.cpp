@@ -941,7 +941,7 @@ static int Upload(void) {
 
     render_to_gpumem_inner(0, texWidth, texHeight, type, typesize, texturebuf);
 
-    set_priorities();
+    //set_priorities();
   }
 
   if (!return_ready && retbuf != NULL) {

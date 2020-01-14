@@ -11009,7 +11009,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
     char *ret;
     while (1) {
       gtk_tree_model_get(LIVES_TREE_MODEL(tstore), titer2, col, &ret, -1);
-      if (!strcmp(ret, val)) {
+      if (!lives_strcmp(ret, val)) {
         lives_free(ret);
         return TRUE;
       }
@@ -11387,7 +11387,8 @@ EXPOSE_FN_DECL(draw_cool_toggle, widget, user_data) {
   double scaley = .8;
 
   boolean active = ((LIVES_IS_TOGGLE_BUTTON(widget) && lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget))) ||
-                    (LIVES_IS_TOGGLE_TOOL_BUTTON(widget) && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
+                    (LIVES_IS_TOGGLE_TOOL_BUTTON(widget)
+                     && lives_toggle_tool_button_get_active(LIVES_TOGGLE_TOOL_BUTTON(widget))));
 
   lives_painter_translate(cr, rwidth * (1. - scalex) / 2., rheight * (1. - scaley) / 2.);
 

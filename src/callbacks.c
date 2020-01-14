@@ -150,6 +150,10 @@ void lives_exit(int signum) {
     mainw->is_exiting = TRUE;
 
     // unlock all mutexes to prevent deadlocks
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed != NULL || mainw->pulsed_read != NULL)
+      pa_mloop_unlock();
+#endif
 
     // recursive
     while (!pthread_mutex_unlock(&mainw->gtk_mutex));
@@ -5694,13 +5698,12 @@ boolean reload_set(const char *set_name) {
 
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
-
+  LiVESList *left_list = NULL;
   int64_t bytes = 0, fspace = -1;
   int64_t ds_warn_level = mainw->next_ds_warn_level;
 
   char *markerfile;
-  char **array;
-  char *com;
+  char *com, *msg, *tmp;
 
   int current_file = mainw->current_file;
   int marker_fd;
@@ -5796,13 +5799,21 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
     if (!mainw->com_failed) {
       // show a progress dialog, not cancellable
       do_progress_dialog(TRUE, FALSE, _("Recovering disk space"));
-
-      array = lives_strsplit(mainw->msg, "|", 2);
-      bytes = strtol(array[1], NULL, 10);
-      if (bytes < 0) bytes = 0;
-      lives_strfreev(array);
-    }
-  }
+      left_list = buff_to_list(mainw->msg, "|", FALSE, TRUE);
+      if (left_list != NULL) {
+        if (strcmp((char *)left_list->data, "completed")) {
+          lives_list_free_all(&left_list);
+        } else {
+          LiVESList *list;
+          lives_free(left_list->data);
+          left_list->data = lives_strdup(_("The following directories may be removed manually if not required:\n"));
+          for (list = left_list->next; list != NULL; list = list->next) {
+            tmp = (char *)list->data;
+            list->data = lives_build_path(prefs->workdir, tmp, NULL);
+            lives_free(tmp);
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
 
   // close the temporary clip
   close_temp_handle(current_file);
@@ -5833,20 +5844,22 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
       mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  if (bytes == 0 && fspace > -1) {
-    // get after
-    bytes = get_fs_free(prefs->workdir) - fspace;
-  }
+  bytes = get_fs_free(prefs->workdir) - fspace;
 
   if (bytes < 0) bytes = 0;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (retval != LIVES_RESPONSE_CANCEL && !mainw->com_failed && fspace > -1) {
     d_print_done();
-    do_blocking_info_dialog(lives_strdup_printf(_("%s of disk space was recovered.\n"),
-                            lives_format_storage_space_string((uint64_t)bytes)));
+    msg = lives_strdup_printf(_("%s of disk space was recovered.\n"),
+                              lives_format_storage_space_string((uint64_t)bytes));
+    do_blocking_info_dialog_with_expander(msg,
+                                          (tmp = lives_strdup(_("Some directories may be removed manually if desired.\nClick for details:\n"))),
+                                          left_list);
     if (user_data != NULL) lives_widget_set_sensitive(lives_widget_get_toplevel(LIVES_WIDGET(user_data)), FALSE);
   } else d_print_failed();
+
+  if (left_list != NULL) lives_list_free_all(&left_list);
 
   mainw->next_ds_warn_level = ds_warn_level;
 }
@@ -12019,4 +12032,3 @@ void on_lerrors_delete_clicked(LiVESButton * button, livespointer user_data) {
   remove_layout_files(mainw->affected_layouts_map);
   on_lerrors_clear_clicked(button, LIVES_INT_TO_POINTER(TRUE));
 }
-

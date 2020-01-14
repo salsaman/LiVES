@@ -282,7 +282,7 @@ static void *worker(void *data) {
   bool rerand = true;
   _sdata *sd = (_sdata *)data;
   float hwratio = (float)sd->height / (float)sd->width;
-  int new_stdout, new_stderr;
+  //  int new_stdout, new_stderr;
 
   if (init_display(sd)) {
     sd->failed = true;
@@ -298,14 +298,14 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  if (verbosity < WEED_VERBOSITY_INFO) {
-    new_stdout = dup(1);
-    new_stderr = dup(2);
-    close(1);
-    close(2);
-    new_stdout = new_stdout;
-    new_stderr = new_stderr;
-  }
+  // if (verbosity < WEED_VERBOSITY_INFO) {
+  //   new_stdout = dup(1);
+  //   new_stderr = dup(2);
+  //   close(1);
+  //   close(2);
+  //   new_stdout = new_stdout;
+  //   new_stderr = new_stderr;
+  // }
 
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;

@@ -16,7 +16,7 @@
 #include "rfx-builder.h"
 #include "paramwindow.h"
 
-const char *anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB", "raw", "wma2", "opus", ""};
+const char *const anames[AUDIO_CODEC_MAX] = {"mp3", "pcm", "mp2", "vorbis", "AC3", "AAC", "AMR_NB", "raw", "wma2", "opus", ""};
 
 static boolean list_plugins;
 
@@ -25,36 +25,18 @@ static boolean list_plugins;
 
 LiVESList *get_plugin_result(const char *command, const char *delim, boolean allow_blanks, boolean strip) {
   LiVESList *list = NULL;
-  char **array;
-  char *buf;
-
   char buffer[65536];
-
-  int pieces, i;
 
   threaded_dialog_spin(0.);
 
   mainw->com_failed = FALSE;
   lives_popen(command, !mainw->is_ready && !list_plugins, buffer, 65535);
 
-  if (mainw->com_failed) {
-    return NULL;
-  }
+  if (mainw->com_failed) return NULL;
 
   threaded_dialog_spin(0.);
 
-  pieces = get_token_count(buffer, delim[0]);
-  array = lives_strsplit(buffer, delim, pieces);
-  for (i = 0; i < pieces; i++) {
-    if (array[i] != NULL) {
-      if (strip) buf = lives_strstrip(array[i]);
-      else buf = array[i];
-      if (strlen(buf) || allow_blanks) {
-        list = lives_list_append(list, lives_strdup(buf));
-      }
-    }
-  }
-  lives_strfreev(array);
+  list = buff_to_list(buffer, "|", allow_blanks, strip);
   threaded_dialog_spin(0.);
   return list;
 }
@@ -3623,7 +3605,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
 
   char *string;
   char *rfx_scrapname = lives_strdup_printf("rfx.%d", capable->mainpid);
-  char *rfxfile = lives_strdup_printf("%s/.%s.script", prefs->workdir, rfx_scrapname);
+  char *rfxfile = lives_strdup_printf("%s/.%s.%s", prefs->workdir, rfx_scrapname, LIVES_FILE_EXT_RFX_SCRIPT);
   char *com;
   char *fnamex = NULL;
   char *res_string = NULL;
@@ -3771,8 +3753,9 @@ prpw_done:
       lives_free(rfx);
     }
   }
-
   lives_free(rfx_scrapname);
+  lives_rm(fnamex);
+  lives_free(fnamex);
 
   return res_string;
 }

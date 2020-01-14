@@ -54,6 +54,8 @@ LiVESWidget *create_cleardisk_advanced_dialog(void);
 
 LiVESWidget *make_autoreload_check(LiVESHBox *parent, boolean is_active);
 
+LiVESWidget *add_list_expander(LiVESBox *box, const char *title, int width, int height, LiVESList *xlist);
+
 typedef struct {
   LiVESWidget *dialog;
   LiVESWidget *textview_type;

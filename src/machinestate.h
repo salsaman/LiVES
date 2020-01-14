@@ -189,6 +189,9 @@ void *_ext_memmove(void *, const void *, size_t);
 void *_ext_realloc(void *, size_t);
 void *_ext_calloc(size_t, size_t);
 
+size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
+boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT;
+
 // TODO
 void quick_free(memheader_t *bp);
 void *quick_malloc(size_t alloc_size) GNU_MALLOC;
@@ -233,7 +236,7 @@ uint64_t reget_afilesize_inner(int fileno);
 void lives_log(const char *what);
 #endif
 
-uint32_t string_hash(const char *string) GNU_PURE;
+uint32_t string_hash(const char *string) GNU_PURE GNU_HOT;
 
 int check_for_bad_ffmpeg(void);
 

@@ -304,7 +304,7 @@ if (defined($ARGV[0])) {
 		    if ($upd) {
 			# we only accept settings files with a valid version entry
 			my $xsize = -s $rcfile;
-			smog_rename($rcfile, $rcfile_damaged);
+			&smog_rename($rcfile, $rcfile_damaged);
 			unlink($rcfile);
 			if (-e $rcfile) {
 			    $bad_rcfile = 1;
@@ -325,7 +325,7 @@ if (defined($ARGV[0])) {
 				$old_version = &rc_get("version");
 				if ($old_version eq "") {
 				    # still no joy
-				    smog_rename($rcfile, $rcfile_damaged);
+				    &smog_rename($rcfile, $rcfile_damaged);
 				    unlink ($rcfile);
 				    if (-e $rcfile) {
 					$bad_rcfile = 1;
@@ -341,7 +341,7 @@ if (defined($ARGV[0])) {
 					$workdir = &rc_get("tempdir");
 				    }
 				    if ($workdir eq "") {
-					smog_rename($rcfile, $rcfile_damaged);
+					&smog_rename($rcfile, $rcfile_damaged);
 					unlink ($rcfile);
 					if (-e $rcfile) {
 					    $bad_rcfile = 1;
@@ -1206,8 +1206,8 @@ if (defined($ARGV[0])) {
 	    else {
 		print "Smogrify: Leaving sets intact.\n";
 	    }
-	    &weed(0);
-	    exit 0;
+	   &weed(0);
+	   exit 0;
         }
 
 
@@ -2118,7 +2118,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "close") {
-	    if (! -d $curworkdir || ! -f "$curworkdir/header.lives") {
+	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !($handle =~ /^fsp/))) {
 		exit 1;
 	    }
 
@@ -4294,8 +4294,8 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "bg_weed") {
 	    my $opts = $ARGV[2];
-	    my $bytes_cleaned = &weed($opts);
-	    &sig_complete($bytes_cleaned);
+	    my @left = &weed(0);
+	    &sig_complete(@left);
 	    exit 0;
 	}
 
@@ -8907,7 +8907,7 @@ sub weed {
     #      - if unset bit 4 (16) remove misc. files
 
     my $file;
-
+    my @left; ## list of diirs for manual removal
     &smog_chdir($workdir);
 
     # get initial diskspace
@@ -8996,11 +8996,12 @@ sub weed {
 				    print STDERR "     - directory name does not begin with scrap, ascrap or fsp followed by digits.\n";
 				}
 				print STDERR "smogrify: manual cleanup may be required if this directory is no longer needed\n";
+				push (@left, $file);
 			    }}}
 
                     else {
                         unless ($opts & 0x02) {
-			    print STDERR "smogrify: file contain set.* file, assuming it is in a set\n";
+			    print STDERR "smogrify: $file contains set.* file, assuming it is in a set\n";
                             unless (-f "$workdir/$file/noprune") {
 				print STDERR "smogrify: removing unnecessary files from directory\n";
                                 &smog_chdir("$workdir/$file");
@@ -9058,7 +9059,7 @@ sub weed {
 
     # return disk space recovered
     #return $start_total - $end_total;
-    return 0;
+    return @left;
 }
 
 

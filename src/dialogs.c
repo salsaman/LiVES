@@ -71,43 +71,9 @@ void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_dat
 
 
 static void add_xlays_widget(LiVESBox *box) {
-  // add widget to preview affected layouts
-
-  LiVESWidget *expander;
-  LiVESWidget *textview = lives_text_view_new();
-  LiVESWidget *label, *scrolledwindow;
-  LiVESList *xlist = mainw->xlays;
-  LiVESTextBuffer *textbuffer = lives_text_view_get_buffer(LIVES_TEXT_VIEW(textview));
-
-  scrolledwindow = lives_standard_scrolled_window_new(ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, LIVES_WIDGET(textview));
-
-  lives_text_view_set_editable(LIVES_TEXT_VIEW(textview), FALSE);
-
-  lives_widget_set_size_request(scrolledwindow, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-
-  expander = lives_standard_expander_new(_("Show affeced _layouts"), LIVES_BOX(box), scrolledwindow);
-
-  if (palette->style & STYLE_1) {
-    label = lives_expander_get_label_widget(LIVES_EXPANDER(expander));
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_NORMAL, &palette->normal_fore);
-    lives_widget_set_fg_color(label, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_fg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_fore);
-    lives_widget_set_bg_color(expander, LIVES_WIDGET_STATE_PRELIGHT, &palette->normal_back);
-
-    lives_widget_set_base_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(textview, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-    lives_widget_set_base_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_base);
-    lives_widget_set_text_color(scrolledwindow, LIVES_WIDGET_STATE_NORMAL, &palette->info_text);
-  }
-
-  lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
-
-  while (xlist != NULL) {
-    lives_text_buffer_insert_at_cursor(textbuffer, (const char *)xlist->data, strlen((char *)xlist->data));
-    lives_text_buffer_insert_at_cursor(textbuffer, "\n", strlen("\n"));
-    xlist = xlist->next;
-  }
+  char *tmp = lives_strdup(_("Show affected _layouts"));
+  add_list_expander(box, tmp, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, mainw->xlays);
+  lives_free(tmp);
 }
 
 
@@ -293,9 +259,9 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESW
   lives_free(mytext);
 
   pad = lives_strdup("");
-  if (strlen(textx) < MIN_MSG_WIDTH_CHARS) {
+  if (lives_strlen(textx) < MIN_MSG_WIDTH_CHARS) {
     lives_free(pad);
-    pad = lives_strndup("                                  ", (MIN_MSG_WIDTH_CHARS - strlen(textx)) / 2);
+    pad = lives_strndup("                                  ", (MIN_MSG_WIDTH_CHARS - lives_strlen(textx)) / 2);
   }
   form_text = lives_strdup_printf("\n%s%s%s\n", pad, textx, pad);
 
@@ -513,8 +479,8 @@ boolean do_yesno_dialog(const char *text) {
 }
 
 
-static int _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient, lives_dialog_t dtype) {
-  int response;
+static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient, lives_dialog_t dtype) {
+  LiVESResponseType response;
   char *mytext;
   LiVESWidget *warning;
 
@@ -571,10 +537,10 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_abort_ok_dialog(const char *text, LiVES
 }
 
 
-int do_error_dialogf(const char *fmt, ...) {
+LiVESResponseType do_error_dialogf(const char *fmt, ...) {
   // show error box
   LiVESWindow *transient = get_transient_full();
-  int resi;
+  LiVESResponseType resi;
   char *textx;
   va_list xargs;
   va_start(xargs, fmt);
@@ -586,101 +552,26 @@ int do_error_dialogf(const char *fmt, ...) {
 }
 
 
-LIVES_GLOBAL_INLINE int do_error_dialog(const char *text) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog(const char *text) {
   // show error box
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, 0, transient);
 }
 
 
-int do_info_dialogf(const char *fmt, ...) {
-  // show info box
-  LiVESWindow *transient = get_transient_full();
-  int resi;
-  char *textx;
-  va_list xargs;
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  resi = do_info_dialog_with_transient(textx, FALSE, transient);
-  lives_free(textx);
-  return resi;
-}
+static LiVESResponseType do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient,
+    const char *exp_title, LiVESList *exp_list) {
+  LiVESResponseType ret = LIVES_RESPONSE_NONE;
+  LiVESWidget *info_box = create_info_error_dialog(LIVES_DIALOG_INFO, text, transient, 0, is_blocking);
 
-
-LIVES_GLOBAL_INLINE int do_info_dialog(const char *text) {
-  // show info box
-  LiVESWindow *transient = get_transient_full();
-  return do_info_dialog_with_transient(text, FALSE, transient);
-}
-
-
-int do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
-  // show warning box
-  LiVESWindow *transient = get_transient_full();
-  return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
-}
-
-
-int do_blocking_error_dialogf(const char *fmt, ...) {
-  // show error box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  va_list xargs;
-  char *textx;
-  int resi;
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  resi = do_error_dialog_with_check_transient(textx, TRUE, 0, transient);
-  lives_free(textx);
-  return resi;
-}
-
-
-int do_blocking_info_dialogf(const char *fmt, ...) {
-  // show info box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  va_list xargs;
-  char *textx;
-  int resi;
-  va_start(xargs, fmt);
-  textx = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-  resi = do_info_dialog_with_transient(textx, TRUE, transient);
-  lives_free(textx);
-  return resi;
-}
-
-
-int do_blocking_error_dialog(const char *text) {
-  // show error box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  return do_error_dialog_with_check_transient(text, TRUE, 0, transient);
-}
-
-
-int do_blocking_info_dialog(const char *text) {
-  // show info box - blocks until OK is pressed
-  LiVESWindow *transient = get_transient_full();
-  return do_info_dialog_with_transient(text, TRUE, transient);
-}
-
-
-int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
-    LiVESWindow *transient) {
-  // show error box
-
-  LiVESWidget *err_box;
-
-  int ret = LIVES_RESPONSE_NONE;
-
-  if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
-  err_box = create_info_error_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
-                                     LIVES_DIALOG_WARN, text, transient, warn_mask_number,
-                                     is_blocking);
+  if (exp_list != NULL) {
+    LiVESWidget *dab = lives_dialog_get_content_area(LIVES_DIALOG(info_box));
+    add_list_expander(LIVES_BOX(dab), exp_title, ENC_DETAILS_WIN_H, ENC_DETAILS_WIN_V, exp_list);
+    lives_widget_show_all(info_box);
+  }
 
   if (is_blocking) {
-    ret = lives_dialog_run(LIVES_DIALOG(err_box));
+    ret = lives_dialog_run(LIVES_DIALOG(info_box));
     if (mainw != NULL && mainw->is_ready && transient != NULL) {
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
@@ -690,17 +581,106 @@ int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, 
 }
 
 
-int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient) {
-  // info box
+LiVESResponseType do_info_dialogf(const char *fmt, ...) {
+  // show info box
+  LiVESWindow *transient = get_transient_full();
+  LiVESResponseType resi;
+  char *textx;
+  va_list xargs;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_info_dialog_with_transient(textx, FALSE, transient, NULL, NULL);
+  lives_free(textx);
+  return resi;
+}
 
-  LiVESWidget *info_box;
 
-  int ret = LIVES_RESPONSE_NONE;
+LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog(const char *text) {
+  // show info box
+  LiVESWindow *transient = get_transient_full();
+  return do_info_dialog_with_transient(text, FALSE, transient, NULL, NULL);
+}
 
-  info_box = create_info_error_dialog(LIVES_DIALOG_INFO, text, transient, 0, is_blocking);
+
+LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+  // show warning box
+  LiVESWindow *transient = get_transient_full();
+  return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
+}
+
+
+LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...) {
+  // show error box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  va_list xargs;
+  char *textx;
+  LiVESResponseType resi;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_error_dialog_with_check_transient(textx, TRUE, 0, transient);
+  lives_free(textx);
+  return resi;
+}
+
+
+LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...) {
+  // show info box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  va_list xargs;
+  char *textx;
+  LiVESResponseType resi;
+  va_start(xargs, fmt);
+  textx = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  resi = do_info_dialog_with_transient(textx, TRUE, transient, NULL, NULL);
+  lives_free(textx);
+  return resi;
+}
+
+
+LiVESResponseType do_blocking_error_dialog(const char *text) {
+  // show error box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  return do_error_dialog_with_check_transient(text, TRUE, 0, transient);
+}
+
+
+static LiVESResponseType _do_blocking_info_dialog(const char *text,  const char *exp_text, LiVESList *list) {
+  // show info box - blocks until OK is pressed
+  LiVESWindow *transient = get_transient_full();
+  return do_info_dialog_with_transient(text, TRUE, transient, exp_text, list);
+}
+
+
+LiVESResponseType do_blocking_info_dialog(const char *text) {
+  // show info box - blocks until OK is pressed
+  return _do_blocking_info_dialog(text, NULL, NULL);
+}
+
+
+LiVESResponseType do_blocking_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *list) {
+  // show info box - blocks until OK is pressed
+  return _do_blocking_info_dialog(text, exp_text, list);
+}
+
+
+LiVESResponseType do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
+    LiVESWindow *transient) {
+  // show error box
+
+  LiVESWidget *err_box;
+
+  LiVESResponseType ret = LIVES_RESPONSE_NONE;
+
+  if (prefs != NULL && (prefs->warning_mask & warn_mask_number)) return ret;
+  err_box = create_info_error_dialog(warn_mask_number == 0 ? LIVES_DIALOG_ERROR :
+                                     LIVES_DIALOG_WARN, text, transient, warn_mask_number,
+                                     is_blocking);
 
   if (is_blocking) {
-    ret = lives_dialog_run(LIVES_DIALOG(info_box));
+    ret = lives_dialog_run(LIVES_DIALOG(err_box));
     if (mainw != NULL && mainw->is_ready && transient != NULL) {
       lives_widget_queue_draw(LIVES_WIDGET(transient));
     }
@@ -816,7 +796,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
 
   if (numtok > 2 && !strcmp(array[1], "read")) {
     /// got read error from backend
-    if (numtok > 3 && strlen(array[3])) addinfo = array[3];
+    if (numtok > 3 && *(array[3])) addinfo = array[3];
     else addinfo = NULL;
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_read_errors)
       do_read_failed_error_s(array[2], addinfo);
@@ -829,7 +809,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
 
   else if (numtok > 2 && !strcmp(array[1], "write")) {
     /// got write error from backend
-    if (numtok > 3 && strlen(array[3])) addinfo = array[3];
+    if (numtok > 3 && *(array[3])) addinfo = array[3];
     else addinfo = NULL;
     if (mainw->current_file == -1 || cfile == NULL || !cfile->no_proc_write_errors)
       do_write_failed_error_s(array[2], addinfo);
@@ -842,7 +822,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
 
   else if (numtok > 3 && !strcmp(array[1], "system")) {
     /// got (sub) system error from backend
-    if (numtok > 4 && strlen(array[4])) addinfo = array[4];
+    if (numtok > 4 && *(array[4])) addinfo = array[4];
     else addinfo = NULL;
     if (!CURRENT_CLIP_IS_VALID || !cfile->no_proc_sys_errors) {
       response = do_system_failed_error(array[2], atoi(array[3]), addinfo, can_retry, transient);
@@ -857,7 +837,7 @@ LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transien
   /// set mainw->error but not mainw->cancelled
   lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "\n\n");
   for (i = pxstart; i < numtok; i++) {
-    if (!strlen(array[i]) || !strcmp(array[i], "ERROR")) break;
+    if (!*(array[i]) || !strcmp(array[i], "ERROR")) break;
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, _(array[i]));
     lives_strappend(mainw->msg, MAINW_MSG_SIZE, "\n");
   }
@@ -1943,7 +1923,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       // display progress fraction or pulse bar
-      if (strlen(mainw->msg) > 0 && (frames_done = atoi(mainw->msg)) > 0)
+      if (*(mainw->msg) && (frames_done = atoi(mainw->msg)) > 0)
         cfile->proc_ptr->frames_done = atoi(mainw->msg);
       else
         cfile->proc_ptr->frames_done = 0;
@@ -1959,7 +1939,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
     //#define DEBUG
 #ifdef DEBUG
-    if (strlen(mainw->msg)) g_print("%s msg %s\n", cfile->info_file, mainw->msg);
+    if (*(mainw->msg)) g_print("%s msg %s\n", cfile->info_file, mainw->msg);
 #endif
 
     // we got a message from the backend...
@@ -2006,8 +1986,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (numtok > 1) {
           char **array = lives_strsplit(mainw->msg, "|", numtok);
           cfile->proc_ptr->frames_done = atoi(array[0]);
-          if (numtok == 2 && strlen(array[1]) > 0) cfile->progress_end = atoi(array[1]);
-          else if (numtok == 5 && strlen(array[4]) > 0) {
+          if (numtok == 2 && *(array[1])) cfile->progress_end = atoi(array[1]);
+          else if (numtok == 5 && *(array[4])) {
             // rendered generators
             cfile->start = cfile->undo_start = 1;
             cfile->frames = cfile->end = cfile->undo_end = atoi(array[0]);
@@ -2720,14 +2700,14 @@ boolean do_layout_alter_audio_warning(void) {
 }
 
 
-int do_original_lost_warning(const char *fname) {
+LiVESResponseType do_original_lost_warning(const char *fname) {
   char *msg = lives_strdup_printf(
                 _("\nThe original file\n%s\ncould not be found.\nClick Retry to try again, or Browse to browse to the new location.\n"
                   "Otherwise click Cancel to skip loading this file.\n"),
                 fname);
-  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg, LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0,
-                         TRUE);
-  int response = lives_dialog_run(LIVES_DIALOG(warning));
+  LiVESWidget *warning = create_message_dialog(LIVES_DIALOG_CANCEL_RETRY_BROWSE, msg,
+                         LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, TRUE);
+  LiVESResponseType response = lives_dialog_run(LIVES_DIALOG(warning));
   lives_widget_destroy(warning);
   lives_widget_context_update();
   lives_free(msg);
@@ -2964,7 +2944,7 @@ void threaded_dialog_spin(double fraction) {
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   } else {
     if (!CURRENT_CLIP_IS_VALID || cfile->progress_start == 0 || cfile->progress_end == 0 ||
-        strlen(mainw->msg) == 0 || (progress = atoi(mainw->msg)) == 0) {
+        *(mainw->msg) || (progress = atoi(mainw->msg)) == 0) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
@@ -3197,12 +3177,12 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
-  int ret;
+  LiVESResponseType ret;
   char *msg, *emsg, *tmp;
   char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL);
   char *dsmsg = lives_strdup("");
@@ -3251,12 +3231,12 @@ int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, L
 }
 
 
-int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
 
-  int ret;
+  LiVESResponseType ret;
   char *msg, *emsg;
   char *sutf = lives_filename_to_utf8(fname, -1, NULL, NULL, NULL);
 
@@ -3282,8 +3262,8 @@ int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, Li
 }
 
 
-int do_header_read_error_with_retry(int clip) {
-  int ret;
+LiVESResponseType do_header_read_error_with_retry(int clip) {
+  LiVESResponseType ret;
   char *hname;
   if (mainw->files[clip] == NULL) return 0;
 
@@ -3300,7 +3280,7 @@ boolean do_header_write_error(int clip) {
   // returns TRUE if we manage to clear the error
 
   char *hname;
-  int retval;
+  LiVESResponseType retval;
 
   if (mainw->files[clip] == NULL) return TRUE;
 
@@ -3313,8 +3293,8 @@ boolean do_header_write_error(int clip) {
 }
 
 
-int do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
-  int ret;
+LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t detail) {
+  LiVESResponseType ret;
   char *hname, *key, *msg;
   if (mainw->files[clip] == NULL) return 0;
 
@@ -3553,7 +3533,8 @@ boolean ask_permission_dialog(int what) {
   switch (what) {
   case LIVES_PERM_OSC_PORTS:
     return do_yesno_dialogf(
-             _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\nDo you wish to allow this (for this session only) ?\n"),
+             _("\nLiVES would like to open a local network connection (UDP port %d),\nto let other applications connect to it.\n"
+               "Do you wish to allow this (for this session only) ?\n"),
              prefs->osc_udp_port);
   default:
     break;

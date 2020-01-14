@@ -467,12 +467,14 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
           else *(dst++) = *ptr - SAMPLE_MAX_16BITI;
         } else if (swap_endian == SWAP_X_TO_L) {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
-          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(((*ptr & 0x00FF) << 8) + (*ptr >> 8) + SAMPLE_MAX_16BITI);
+          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(((*ptr & 0x00FF) << 8) + (*ptr >> 8)
+                + SAMPLE_MAX_16BITI);
           else *(dst++) = ((*ptr & 0x00FF) << 8) + (*ptr >> 8) - SAMPLE_MAX_16BITI;
         } else {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
-          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) & 0x00FF) << 8) +
-                (((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) >> 8));
+          else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) =
+              (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) & 0x00FF) << 8) +
+                         (((uint16_t)(*ptr + SAMPLE_MAX_16BITI)) >> 8));
           else *(dst++) = ((((int16_t)(*ptr - SAMPLE_MAX_16BITI)) & 0x00FF) << 8) + (((int16_t)(*ptr - SAMPLE_MAX_16BITI)) >> 8);
         }
 

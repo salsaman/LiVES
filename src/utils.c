@@ -1125,7 +1125,7 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
 
 
 LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
-  size_t sz = strlen(string);
+  size_t sz = lives_strlen(string);
   lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
   return string;
 }
@@ -1142,19 +1142,6 @@ LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, co
   lives_strappend(string, len, text);
   lives_free(text);
   return string;
-}
-
-
-LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add) {
-  LiVESList *list = xlist, *listlast = NULL;
-  while (list != NULL) {
-    listlast = list;
-    if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
-    list = list->next;
-  }
-  list = lives_list_append(listlast, lives_strdup(add));
-  if (xlist == NULL) return list;
-  return xlist;
 }
 
 
@@ -1235,10 +1222,10 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
         if (mainw->aframeno < 1 ||
             calc_time_from_frame(mainw->current_file, mainw->aframeno) > cfile->laudio_time) {
           return FALSE;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) {
@@ -1253,10 +1240,10 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
         if (mainw->aframeno < 1 ||
             calc_time_from_frame(mainw->current_file, mainw->aframeno) > cfile->laudio_time) {
           return FALSE;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
 #endif
   return TRUE;
 }
@@ -1722,7 +1709,7 @@ int add_messages_to_list(const char *text) {
   int error, i, numlines;
 
   if (prefs->max_messages == 0) return WEED_SUCCESS;
-  if (text == NULL || strlen(text) == 0) return WEED_SUCCESS;
+  if (text == NULL || !(*text)) return WEED_SUCCESS;
 
   // split text into lines
   numlines = get_token_count(text, '\n');
@@ -2171,7 +2158,7 @@ boolean check_for_lock_file(const char *set_name, int type) {
 
   if (mainw->com_failed) return FALSE;
 
-  if (strlen(mainw->msg) > 0) {
+  if (*(mainw->msg)) {
     if (type == 0) {
       if (mainw->recovering_files) {
         return do_set_locked_warning(set_name);
@@ -2399,8 +2386,8 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
   textx = lives_strdup_vprintf(fmt, xargs);
   va_end(xargs);
   if (textx == NULL) return FALSE;
-  slen = strlen(string);
-  cklen = strlen(textx);
+  slen = lives_strlen(string);
+  cklen = lives_strlen(textx);
   if (cklen == 0 || cklen > slen) {
     lives_free(textx);
     return FALSE;
@@ -2494,7 +2481,7 @@ char *ensure_extension(const char *fname, const char *ext) {
     se--;
   }
 
-  sf = strlen(fname);
+  sf = lives_strlen(fname);
   if (sf < se + 1 || strcmp(fname + sf - se, eptr) || fname[sf - se - 1] != '.') {
     return lives_strconcat(fname, ".", eptr, NULL);
   }
@@ -2509,7 +2496,7 @@ boolean ensure_isdir(char *fname) {
 
   // returns TRUE if fname was altered
 
-  size_t tlen = strlen(fname), slen, tlen2;
+  size_t tlen = lives_strlen(fname), slen, tlen2;
   size_t dslen = strlen(LIVES_DIR_SEP);
   ssize_t offs;
   boolean ret = FALSE;
@@ -2518,7 +2505,7 @@ boolean ensure_isdir(char *fname) {
   while (1) {
     // recursively remove double DIR_SEP
     tmp2 = subst(tmp, LIVES_DIR_SEP LIVES_DIR_SEP, LIVES_DIR_SEP);
-    if ((tlen2 = strlen(tmp2)) < tlen) {
+    if ((tlen2 = lives_strlen(tmp2)) < tlen) {
       ret = TRUE;
       lives_free(tmp);
       tmp = tmp2;
@@ -2560,7 +2547,7 @@ boolean dirs_equal(const char *dira, const char *dirb) {
   ensure_isdir(dir2);
   // TODO: for some (Linux) fstypes we should use strcasecmp
   // can get this using "df -T"
-  return (!lives_utf8_strcmp(dir1, dir2));
+  return (!lives_strcmp(dir1, dir2));
 }
 
 
@@ -2649,13 +2636,13 @@ char *repl_workdir(const char *entry, boolean fwd) {
 
   // fwd TRUE replaces "/tmp/foo" with "workdir"
   // fwd FALSE replaces "workdir" with "/tmp/foo"
-
+  size_t wdl;
   char *string = lives_strdup(entry);
 
   if (fwd) {
-    if (!strncmp(entry, prefs->workdir, strlen(prefs->workdir))) {
+    if (!strncmp(entry, prefs->workdir, (wdl = lives_strlen(prefs->workdir)))) {
       lives_free(string);
-      string = lives_strdup_printf("%s%s", WORKDIR_LITERAL, entry + strlen(prefs->workdir));
+      string = lives_strdup_printf("%s%s", WORKDIR_LITERAL, entry + wdl);
     }
   } else {
     if (!strncmp(entry, WORKDIR_LITERAL, WORKDIR_LITERAL_LEN)) {
@@ -2667,7 +2654,7 @@ char *repl_workdir(const char *entry, boolean fwd) {
 }
 
 
-void remove_layout_files(LiVESList *map) {
+void remove_layout_files(LiVESList * map) {
   // removes a LiVESList of layouts from the set layout map
 
   // removes from: - global layouts map
@@ -2696,7 +2683,7 @@ void remove_layout_files(LiVESList *map) {
         fname = lives_strdup(mainw->string_constants[LIVES_STRING_CONSTANT_CL]);
       } else {
         is_current = FALSE;
-        maplen = strlen((char *)map->data);
+        maplen = lives_strlen((char *)map->data);
 
         // remove from mainw->current_layouts_map
         cmap = mainw->current_layouts_map;
@@ -2724,7 +2711,7 @@ void remove_layout_files(LiVESList *map) {
         // if no more layouts in parent dir, we can delete dir
 
         // ensure that parent dir is below our own working dir
-        if (!strncmp(fname, prefs->workdir, strlen(prefs->workdir))) {
+        if (!strncmp(fname, prefs->workdir, lives_strlen(prefs->workdir))) {
           // is in workdir, safe to remove parents
 
           char *protect_file = lives_build_filename(prefs->workdir, "noremove", NULL);
@@ -3740,7 +3727,7 @@ void activate_url_inner(const char *link) {
 }
 
 
-void activate_url(LiVESAboutDialog *about, const char *link, livespointer data) {
+void activate_url(LiVESAboutDialog * about, const char *link, livespointer data) {
   activate_url_inner(link);
 }
 
@@ -3794,7 +3781,7 @@ boolean create_event_space(int length) {
 }
 
 
-int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive) {
+int lives_list_strcmp_index(LiVESList * list, livesconstpointer data, boolean case_sensitive) {
   // find data in list, using strcmp
   int i;
   int len;
@@ -3804,8 +3791,8 @@ int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean cas
 
   if (case_sensitive) {
     for (i = 0; i < len; i++) {
-      if (!lives_utf8_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
-      if (!lives_utf8_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+      if (!lives_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
+      if (!lives_strcmp((const char *)lives_list_nth_data(list, i), (const char *)data)) return i;
     }
   } else {
     for (i = 0; i < len; i++) {
@@ -3994,7 +3981,7 @@ void set_redoable(const char *what, boolean sensitive) {
 }
 
 
-void set_sel_label(LiVESWidget *sel_label) {
+void set_sel_label(LiVESWidget * sel_label) {
   char *tstr, *frstr, *tmp;
   char *sy, *sz;
 
@@ -4020,7 +4007,7 @@ void set_sel_label(LiVESWidget *sel_label) {
 }
 
 
-LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList *list) {
+LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList * list) {
   register int i;
 
   if (list == NULL) return;
@@ -4071,15 +4058,13 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
   LiVESList *clist = mainw->cached_list;
   char *keystr_start = lives_strdup_printf("<%s>", key);
   char *keystr_end = lives_strdup_printf("</%s>", key);
-  size_t kslen = strlen(keystr_start);
-  size_t kelen = strlen(keystr_end);
+  size_t kslen = lives_strlen(keystr_start);
+  size_t kelen = lives_strlen(keystr_end);
   size_t xs;
 
   boolean gotit = FALSE;
   char buff[maxlen];
-
-  lives_memset(buff, 0, 1);
-
+  buff[0] = 0;
   while (clist != NULL) {
     if (gotit) {
       if (!strncmp(keystr_end, (char *)clist->data, kelen)) {
@@ -4099,7 +4084,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   if (!gotit) return NULL;
 
-  xs = strlen(buff);
+  xs = lives_strlen(buff);
   if (xs > 0 && buff[xs - 1] == '\n') buff[xs - 1] = '\0'; // remove trailing newline
 
   return lives_strdup(buff);
@@ -4631,7 +4616,7 @@ int lives_utf8_strcasecmp(const char *s1, const char *s2) {
   // ignore case
   char *s1u = lives_utf8_casefold(s1, -1);
   char *s2u = lives_utf8_casefold(s2, -1);
-  int ret = lives_utf8_strcmp(s1u, s2u);
+  int ret = lives_strcmp(s1u, s2u);
   lives_free(s1u);
   lives_free(s2u);
   return ret;
@@ -4643,7 +4628,7 @@ LIVES_GLOBAL_INLINE int lives_utf8_strcmp(const char *s1, const char *s2) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd) {
+LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList * list, boolean fwd) {
   return lives_list_sort_with_data(list, lives_utf8_strcmpfunc, LIVES_INT_TO_POINTER(fwd));
 }
 
@@ -4691,7 +4676,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   if (maxwidth < 1) return lives_strdup("Bad maxwidth, dummy");
 
-  tlen = strlen(text);
+  tlen = lives_strlen(text);
 
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
@@ -4849,7 +4834,42 @@ LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) {
+#define BL_LIM 128
+LIVES_GLOBAL_INLINE LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip) {
+  LiVESList *list = NULL;
+  int pieces = get_token_count(buffer, delim[0]);
+  char *buf, **array = lives_strsplit(buffer, delim, pieces);
+  boolean biglist = pieces >= BL_LIM;
+  for (int i = 0; i < pieces; i++) {
+    if (array[i] != NULL) {
+      if (strip) buf = lives_strstrip(array[i]);
+      else buf = array[i];
+      if (*buf || allow_blanks) {
+        if (biglist) list = lives_list_prepend(list, lives_strdup(buf));
+        else list = lives_list_append(list, lives_strdup(buf));
+      }
+    }
+  }
+  lives_strfreev(array);
+  if (biglist && list != NULL) return lives_list_reverse(list);
+  return list;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList * xlist, const char *add) {
+  LiVESList *list = xlist, *listlast = NULL;
+  while (list != NULL) {
+    listlast = list;
+    if (!lives_utf8_strcasecmp((const char *)list->data, add)) return xlist;
+    list = list->next;
+  }
+  list = lives_list_append(listlast, lives_strdup(add));
+  if (xlist == NULL) return list;
+  return xlist;
+}
+
+
+LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList * list, LiVESList * item) {
   // move item to first in list
   LiVESList *xlist = lives_list_remove_link(list, item); // item becomes standalone list
   if (xlist == NULL) return list;
@@ -4857,7 +4877,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList *list, LiVESLi
 }
 
 
-LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
+LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
   // remove string from list, using strcmp
 
   LiVESList *xlist = list;
@@ -4873,7 +4893,7 @@ LiVESList *lives_list_delete_string(LiVESList *list, const char *string) {
 }
 
 
-LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList *list) {
+LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList * list) {
   // copy a list, copying the strings too
 
   LiVESList *xlist = NULL, *olist = list;
@@ -4887,7 +4907,7 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList *list) {
 }
 
 
-boolean string_lists_differ(LiVESList *alist, LiVESList *blist) {
+boolean string_lists_differ(LiVESList * alist, LiVESList * blist) {
   // compare 2 lists of strings and see if they are different (ignoring ordering)
   // for long lists this would be quicker if we sorted the lists first; however this function
   // is designed to deal with short lists only

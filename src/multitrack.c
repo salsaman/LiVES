@@ -16434,7 +16434,8 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
         // move effects
 
         if (weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT) && weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) &&
-            weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) == 1 && weed_get_int_value(event, WEED_LEAF_IN_TRACKS, &error) == track) {
+            weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) == 1
+            && weed_get_int_value(event, WEED_LEAF_IN_TRACKS, &error) == track) {
           // this effect has a deinit_event, it has one in_track, which is this one
 
           deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, &error);
@@ -16521,7 +16522,8 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
             if (init_event != mt->avol_init_event &&
                 (event_tc > last_frame_tc ||
                  (lives_list_index(moved_events, init_event) == -1 &&
-                  weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) && (nins = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) <= 2))) {
+                  weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS)
+                  && (nins = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) <= 2))) {
               // move it if: it is not avol event, and either it is after all frames or init_event was not moved
               // and it has one or two tracks, one of which is our track
               if (event_tc <= last_frame_tc) {

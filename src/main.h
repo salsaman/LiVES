@@ -1,6 +1,6 @@
 // main.h
 // LiVES
-// (c) G. Finch (salsaman@gmail.com) 2003 - 2018
+// (c) G. Finch (salsaman@gmail.com) 2003 - 2020
 // see file ../COPYING for full licensing details
 
 /*  This program is free software; you can redistribute it and/or modify
@@ -975,18 +975,18 @@ boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mas
 LiVESResponseType do_abort_ok_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_retry_dialog(const char *text, LiVESWindow *transient);
 LiVESResponseType do_abort_cancel_retry_dialog(const char *text, LiVESWindow *transient) WARN_UNUSED;
-int do_error_dialog(const char *text);
-int do_error_dialogf(const char *fmt, ...);
-int do_info_dialog(const char *text);
-int do_info_dialogf(const char *fmt, ...);
-int do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
-int do_blocking_error_dialog(const char *text);
-int do_blocking_error_dialogf(const char *fmt, ...);
-int do_blocking_info_dialog(const char *text);
-int do_blocking_info_dialogf(const char *fmt, ...);
-int do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
+LiVESResponseType do_error_dialog(const char *text);
+LiVESResponseType do_error_dialogf(const char *fmt, ...);
+LiVESResponseType do_info_dialog(const char *text);
+LiVESResponseType do_info_dialogf(const char *fmt, ...);
+LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number);
+LiVESResponseType do_blocking_error_dialog(const char *text);
+LiVESResponseType do_blocking_error_dialogf(const char *fmt, ...);
+LiVESResponseType do_blocking_info_dialog(const char *text);
+LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...);
+LiVESResponseType do_blocking_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *);
+LiVESResponseType do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
     LiVESWindow *transient);
-int do_info_dialog_with_transient(const char *text, boolean is_blocking, LiVESWindow *transient);
 LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, LiVESWindow *transient,
                                    int warn_mask_number, boolean is_blocking);
 LiVESWidget *create_question_dialog(const char *title, const char *text, LiVESWindow *parent);
@@ -996,13 +996,14 @@ void do_optarg_blank_err(const char *what);
 void do_clip_divergence_error(int fileno);
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
     LiVESWindow *transient);
-int do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext,
+    LiVESWindow *transient) WARN_UNUSED;
 void do_write_failed_error_s(const char *filename, const char *addinfo);
-int do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) WARN_UNUSED;
 void do_read_failed_error_s(const char *filename, const char *addinfo);
 boolean do_header_write_error(int clip);
-int do_header_read_error_with_retry(int clip) WARN_UNUSED;
-int do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
+LiVESResponseType do_header_read_error_with_retry(int clip) WARN_UNUSED;
+LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t detail) WARN_UNUSED;
 void do_chdir_failed_error(const char *dir);
 LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient);
 boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient);
@@ -1072,7 +1073,7 @@ void do_vpp_palette_error(void);
 void do_vpp_fps_error(void);
 void do_decoder_palette_error(void);
 void do_rmem_max_error(int size);
-int do_original_lost_warning(const char *fname);
+LiVESResponseType do_original_lost_warning(const char *fname);
 void do_no_decoder_error(const char *fname);
 void do_no_loadfile_error(const char *fname);
 void do_jack_noopen_warn(void);
@@ -1441,7 +1442,6 @@ size_t get_token_count(const char *string, int delim);
 LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 const char *lives_strappend(const char *string, int len, const char *newbit);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
-LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
 void find_when_to_stop(void);
 int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
@@ -1452,6 +1452,9 @@ LiVESList *lives_list_move_to_first(LiVESList *list, LiVESList *item) WARN_UNUSE
 LiVESList *lives_list_delete_string(LiVESList *, const char *string) WARN_UNUSED;
 LiVESList *lives_list_copy_strings(LiVESList *list);
 boolean string_lists_differ(LiVESList *, LiVESList *);
+LiVESList *lives_list_append_unique(LiVESList *xlist, const char *add);
+LiVESList *buff_to_list(const char *buffer, const char *delim, boolean allow_blanks, boolean strip);
+int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
 LiVESList *get_set_list(const char *dir, boolean utf8);
 
@@ -1463,8 +1466,6 @@ int get_hex_digit(const char *c) GNU_CONST;
 
 uint64_t fastrand(void);
 void fastsrand(uint64_t seed);
-
-int lives_list_strcmp_index(LiVESList *list, livesconstpointer data, boolean case_sensitive);
 
 // pangotext.c
 boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);

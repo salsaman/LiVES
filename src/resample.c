@@ -505,7 +505,7 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 */
 weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_gap) {
   weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;
-  weed_timecode_t end_tc, last_tc, recst_tc = 0;
+  weed_timecode_t end_tc, recst_tc = 0;
 
   weed_plant_t *out_list;
   weed_plant_t *naudio_event = NULL, *prev_aframe;
@@ -522,12 +522,13 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   double old_fps;
   char *what;
 
-  boolean is_final = FALSE, interpolate = TRUE;
+  boolean interpolate = TRUE;
   int *clips = NULL, *naclips = NULL, *frames = NULL, *nclips = NULL, *nframes = NULL;
   int *xaclips = NULL;
 
   int tracks, ntracks = 0, natracks = 0, xatracks = 0;
   int etype;
+  int is_final = 0;
   register int i, j, k;
 
   if (in_list == NULL) return NULL;
@@ -566,9 +567,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   end_tc = get_event_timecode(last_frame_event) - offset_tc;
   end_tc = q_gint64(end_tc + tl, qfps);
 
-  for (out_tc = 0; out_tc < end_tc; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) { // tl >>2 - make sure we don't round down
+  // tl >>2 - make sure we don't round down
+  for (out_tc = 0; out_tc < end_tc || event != NULL; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) {
     weed_timecode_t stop_tc = out_tc + offset_tc;
-    last_tc = out_tc;
+    if (out_tc > end_tc) out_tc = end_tc;
 
     while (1) {
       // if event_list started as a recording then this will have been set for previews, but we now need to discard it
@@ -587,10 +589,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
       /// audio seeks
 
       /// events are added in the standard ordering, i.e filter_inits, param changes, filter map, frame, filter_deinits
-
       if (event != NULL) in_tc = get_event_timecode(event);
 
-      if (event != NULL && (in_tc <= stop_tc || is_final)) {
+      if (event != NULL && (is_final == 2 || (in_tc <= stop_tc && is_final != 1))) {
         /// update the state until we pass out_tc
         etype = weed_event_get_type(event);
         //g_print("got event type %d at tc %ld, out = %ld\n", etype, in_tc, out_tc);
@@ -615,7 +616,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         case WEED_EVENT_HINT_FRAME:
           interpolate = TRUE;
           nframe_event = get_next_frame_event(event);
-          if (nframe_event == NULL) is_final = TRUE;
+          if (nframe_event == NULL) is_final = 1;
+
           /// now we have a choice: we can either insert this frame at out_tc with the current fx state, or with the state at out_tc
 #define KEEP_FRAME_STATE
 #ifdef KEEP_FRAME_STATE
@@ -693,7 +695,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           if (list == NULL) {
             if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
             else {
-              if (!copy_with_check(event, out_list, in_tc - offset_tc, what, 0)) {
+              g_print("adding deinit at %lld\n", out_tc);
+              if (!copy_with_check(event, out_list, out_tc, what, 0)) {
                 event_list_free(out_list);
                 out_list = NULL;
                 goto q_done;
@@ -986,7 +989,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           }
           filter_map = NULL;
         }
-        break;  /// increase out_tc
+        if (is_final == 1) {
+          g_print("set is_final to 2\n");
+          is_final = 2;
+        } else break; /// increase out_tc
       }
     } /// end of the in_list
   } /// end of out_list
@@ -994,7 +1000,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   //g_print("RES: %p and %ld, %ld\n", event, out_tc + tl, end_tc);
   if (filter_map != NULL) {
     // insert final filter_map
-    if (!copy_with_check(filter_map, out_list, last_tc, what, 0)) {
+    if (!copy_with_check(filter_map, out_list, end_tc, what, 0)) {
       event_list_free(out_list);
       out_list = NULL;
       goto q_done;

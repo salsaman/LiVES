@@ -661,8 +661,7 @@ static int audio_process(nframes_t nframes, void *arg) {
       }
 
       // playback from memory or file
-      vol = future_prefs->volume * future_prefs->volume;
-      vol *= vol;
+      vol = lives_vol_from_linear(future_prefs->volume);
 
       if (numFramesToWrite > 0) {
         if (!from_memory) {

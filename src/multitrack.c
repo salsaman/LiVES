@@ -4072,7 +4072,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
   char *fname, *pkgstring = NULL, *pkg_name = NULL, *catstring;
 
   int nfilts = rte_get_numfilters();
-  int nins, error;
+  int nins;
 
   register int i;
 
@@ -6287,7 +6287,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   int dph;
   int num_filters;
-  int error;
   int scr_width = lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET);
   int scr_height = GUI_SCREEN_HEIGHT;
 
@@ -10312,10 +10311,9 @@ LiVESWidget *add_audio_track(lives_mt * mt, int track, boolean behind) {
 
           adj = (LiVESWidgetObject *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(mt->amixer->ch_sliders[i]), "adj");
           lives_widget_object_set_data(LIVES_WIDGET_OBJECT(adj), "layer", LIVES_INT_TO_POINTER(i));
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   return audio_draw;
 }
@@ -22468,6 +22466,7 @@ void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
 #if ENABLE_GIW
     }
 #endif
+    val = lives_vol_from_linear(val);
     set_mixer_track_vol(mt, i, val);
   }
 
@@ -22493,7 +22492,8 @@ static void on_amixer_reset_clicked(LiVESButton * button, lives_mt * mt) {
   // copy vols to slider vals
 
   for (i = 0; i < amixer->nchans; i++) {
-    double val = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE;
+    float val = (float)LIVES_POINTER_TO_INT(lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE;
+    val = lives_vol_from_linear(val);
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       lives_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
@@ -22594,6 +22594,7 @@ void on_amixer_slider_changed(LiVESAdjustment * adj, lives_mt * mt) {
   }
 
   if (!mt->is_rendering) {
+    val = lives_vol_from_linear(val);
     set_mixer_track_vol(mt, layer, val);
   }
 }

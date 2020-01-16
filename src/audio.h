@@ -247,4 +247,8 @@ char *get_achannel_name(int totchans, int idx) WARN_UNUSED;
 const char *audio_player_get_display_name(const char *aplayer);
 
 lives_cancel_t handle_audio_timeout(void);
+
+float lives_vol_from_linear(float vol);
+float lives_vol_to_linear(float vol);
+
 #endif

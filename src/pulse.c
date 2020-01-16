@@ -565,6 +565,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                   *pulsed->cancelled = CANCEL_AUD_END;
                 }
                 in_bytes = 0;
+		pulsed->in_use = FALSE;
               } else {
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG && ((pulsed->playing_file != mainw->playing_file)
                     || clip_can_reverse(mainw->playing_file))) {

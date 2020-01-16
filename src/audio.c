@@ -1,6 +1,6 @@
 // audio.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2019
+// (c) G. Finch 2005 - 2020
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -14,6 +14,17 @@
 static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
+
+LIVES_GLOBAL_INLINE float lives_vol_from_linear(float vol) {
+  vol *= vol;
+  return vol * vol;
+}
+
+
+LIVES_GLOBAL_INLINE float lives_vol_to_linear(float vol) {
+  return sqrtf(sqrtf(vol));
+}
+
 
 LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
   return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE);
@@ -1476,6 +1487,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (mainw->multitrack == NULL && opvol_end != opvol_start) {
         time += (double)frames_out / (double)out_arate;
         opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
+	opvol = lives_vol_from_linear(opvol);
       }
 
       if (is_fade) {

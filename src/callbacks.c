@@ -9949,38 +9949,29 @@ boolean on_mouse_scroll(LiVESWidget * widget, LiVESXEventScroll * event, livespo
 boolean on_mouse_sel_update(LiVESWidget * widget, LiVESXEventMotion * event, livespointer user_data) {
   if (!mainw->interactive) return FALSE;
 
-  if (mainw->current_file > -1 && mainw->sel_start > 0) {
+  if (CURRENT_CLIP_IS_VALID && mainw->sel_start > 0) {
     int x, sel_current;
+    double tpos;
 
     lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[widget_opts.monitor].mouse_device,
                              LIVES_MAIN_WINDOW_WIDGET, &x, NULL);
-
+    tpos = (double)x / (double)(lives_widget_get_allocation_width(mainw->video_draw) - 1) * CLIP_TOTAL_TIME(mainw->current_file);
     if (mainw->sel_move == SEL_MOVE_AUTO)
-      sel_current = calc_frame_from_time3(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
-                                          * CLIP_TOTAL_TIME(mainw->current_file));
+      sel_current = calc_frame_from_time3(mainw->current_file, tpos);
     else
-      sel_current = calc_frame_from_time(mainw->current_file,
-                                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
-                                         * CLIP_TOTAL_TIME(mainw->current_file));
+      sel_current = calc_frame_from_time(mainw->current_file, tpos);
 
     if (mainw->sel_move == SEL_MOVE_SINGLE) {
-      sel_current = calc_frame_from_time3(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
-                                          * CLIP_TOTAL_TIME(mainw->current_file));
+      sel_current = calc_frame_from_time3(mainw->current_file, tpos);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), sel_current);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current);
     }
 
     if (mainw->sel_move == SEL_MOVE_START || (mainw->sel_move == SEL_MOVE_AUTO && sel_current < mainw->sel_start)) {
-      sel_current = calc_frame_from_time(mainw->current_file,
-                                         (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
-                                         * CLIP_TOTAL_TIME(mainw->current_file));
+      sel_current = calc_frame_from_time(mainw->current_file, tpos);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), sel_current);
     } else if (mainw->sel_move == SEL_MOVE_END || (mainw->sel_move == SEL_MOVE_AUTO && sel_current > mainw->sel_start)) {
-      sel_current = calc_frame_from_time2(mainw->current_file,
-                                          (double)x / (double)lives_widget_get_allocation_width(mainw->video_draw)
-                                          * CLIP_TOTAL_TIME(mainw->current_file));
+      sel_current = calc_frame_from_time2(mainw->current_file, tpos);
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), sel_current - 1);
     }
   }

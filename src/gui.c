@@ -1484,10 +1484,11 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->vj_menu));
 
-  mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames"));
+  mainw->vj_realize = lives_standard_menu_item_new_with_label(_("_Pre-decode all frames (unlocks reverse playback)"));
   lives_container_add(LIVES_CONTAINER(mainw->vj_menu), mainw->vj_realize);
   lives_widget_set_tooltip_text(mainw->vj_realize,
-                                (_("Decode all frames to images. This can improve reverse playback and random seek times,\nat the cost of diskspace.")));
+                                (_("Decode all frames to images. This will unlock reverse playback and can improve random seek times,\n"
+                                   "but may require additional diskspace.")));
   lives_widget_set_sensitive(mainw->vj_realize, FALSE);
 
   mainw->vj_reset = lives_standard_menu_item_new_with_label(_("_Reset All Playback Speeds and Positions"));

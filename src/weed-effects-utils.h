@@ -50,6 +50,10 @@ int32_t weed_plant_get_type(weed_plant_t *);
 void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
 void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
 
+/* PLUGIN_INFO functions */
+char *weed_plugin_info_get_package_name(weed_plant_t *pinfo);
+
+
 /* FILTER functions */
 int weed_filter_get_flags(weed_plant_t *filter);
 int weed_filter_is_resizer(weed_plant_t *filter);
@@ -59,6 +63,9 @@ weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls);
 weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists);
+weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filter);
+int weed_filter_hints_unstable(weed_plant_t *filter);
+
 
 /* FILTER_INSTANCE functions */
 weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans);

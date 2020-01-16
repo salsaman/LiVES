@@ -1,6 +1,6 @@
 // colourspace.h
 // LiVES
-// (c) G. Finch 2004 - 2017 <salsaman+lives@gmail.com>
+// (c) G. Finch 2004 - 2020 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -91,6 +91,22 @@ typedef struct {
   boolean alpha_first;
   int thread_id;
 } lives_cc_params;
+
+#ifdef USE_SWSCALE
+#include <libswscale/swscale.h>
+
+typedef struct {
+  int thread_id;
+  int iheight;
+  struct SwsContext *swscale;
+  const uint8_t *ipd[4];
+  const uint8_t  *opd[4];
+  const int *irw;
+  const int *orw;
+  int ret;
+} lives_sw_params;
+
+#endif
 
 // internal thread fns
 void *convert_rgb_to_uyvy_frame_thread(void *cc_params);

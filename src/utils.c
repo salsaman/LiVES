@@ -21,14 +21,17 @@ static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 typedef struct {
   int fd;
-  ssize_t bytes;  /// buffer size
+  ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
   boolean eof;
   uint8_t *ptr;   /// read point in buffer
-  uint8_t *buffer;   /// bytes
+  uint8_t *buffer;   /// ptr to data
   boolean read;
   boolean allow_fail;
+  boolean reversed;
   off_t offset; // file offs
   char *pathname;
+  int bufsztype;
+  int seqrdsize;
 } lives_file_buffer_t;
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
@@ -517,7 +520,10 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->buffer = NULL;
     fbuff->read = isread;
     fbuff->offset = 0;
+    fbuff->reversed = FALSE;
     fbuff->pathname = lives_strdup(pathname);
+    fbuff->bufsztype = 0;
+    fbuff->seqrdsize = 0;
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
@@ -539,6 +545,19 @@ LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
 #endif
   return fd;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+
+  if (fbuff == NULL) {
+    // normal non-buffered file
+    LIVES_DEBUG("lives_buffered_readonly_set_reversed: no file buffer found");
+    return FALSE;
+  }
+  fbuff->reversed = val;
+  return TRUE;
 }
 
 
@@ -597,21 +616,29 @@ int lives_close_buffered(int fd) {
 
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   ssize_t res;
+  ssize_t delta = 0;
+  size_t bufsize = BUFFER_FILL_BYTES;
 
-  if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
+  if (fbuff->bufsztype == 1) bufsize = BUFFER_FILL_BYTES_MED;
+
+  if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc(bufsize >> 3, 8);
+  if (fbuff->reversed) delta = bufsize >> 1;
+  if (delta > fbuff->offset) delta = fbuff->offset;
+  fbuff->offset -= delta;
 
   lseek(fbuff->fd, fbuff->offset, SEEK_SET);
-  res = lives_read(fbuff->fd, fbuff->buffer, BUFFER_FILL_BYTES, TRUE);
+
+  res = lives_read(fbuff->fd, fbuff->buffer, bufsize, TRUE);
   if (res < 0) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
   }
 
-  fbuff->bytes = res;
-  fbuff->ptr = fbuff->buffer;
+  fbuff->bytes = res - delta;
+  fbuff->ptr = fbuff->buffer + delta;
   fbuff->offset += res;
 
-  if (res < BUFFER_FILL_BYTES) fbuff->eof = TRUE;
+  if (res < bufsize) fbuff->eof = TRUE;
   else fbuff->eof = FALSE;
 
   return res;
@@ -644,7 +671,9 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
 
   fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes) - offset;
   if (fbuff->offset < 0) fbuff->offset = 0;
+
   fbuff->bytes = 0;
+
   fbuff->eof = FALSE;
   return fbuff->offset;
 }
@@ -697,47 +726,45 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   }
 
   // read bytes from fbuff
-  while (1) {
-    if (count < BUFFER_FILL_BYTES + fbuff->bytes) {
-      if (fbuff->bytes <= 0) {
-        if (!fbuff->eof) {
-          // refill the buffer
-          //fbuff->offset += fbuff->ptr - fbuff->buffer;
-          res = file_buffer_fill(fbuff);
-          if (res < 0) return res;
-          continue;
-        }
-        break;
-      }
-    }
-    if (fbuff->bytes < count) {
-      // use up buffer
-      lives_memcpy(ptr, fbuff->ptr, fbuff->bytes);
-      retval += fbuff->bytes;
-      count -= fbuff->bytes;
-      fbuff->ptr += fbuff->bytes;
-      ptr += fbuff->bytes;
-      fbuff->bytes = 0;
-      if (fbuff->eof) {
-        break;
-      }
-      if (count > BUFFER_FILL_BYTES) break;
-      continue;
-    }
-    // buffer is sufficient
-    lives_memcpy(ptr, fbuff->ptr, count);
-    retval += count;
-    fbuff->ptr += count;
-    fbuff->bytes -= count;
-    count = 0;
-    break;
+  //while (1) {
+  if (fbuff->bytes > 0) {
+    size_t nbytes = fbuff->bytes;
+    if (nbytes > count) nbytes = count;
+    // use up buffer
+    lives_memcpy(ptr, fbuff->ptr, nbytes);
+    retval += nbytes;
+    count -= nbytes;
+    fbuff->ptr += nbytes;
+    ptr += nbytes;
+    fbuff->bytes -= nbytes;
+
+    if (count == 0) return retval;
+    if (fbuff->eof) goto rd_done;
   }
 
-  if (count > BUFFER_FILL_BYTES) {
-    // direct read
-    res = lives_read(fbuff->fd, buf + retval, count, TRUE);
+  if (count <= (BUFFER_FILL_BYTES_MED >> 2)) {
+    int bufsztype = fbuff->bufsztype;
+    if (ocount <= (BUFFER_FILL_BYTES >> 2)) fbuff->bufsztype = 0;
+    else fbuff->bufsztype = 1;
+    if (fbuff->bufsztype != bufsztype) {
+      lives_freep((void **)&fbuff->buffer);
+    }
+
+    res = file_buffer_fill(fbuff);
+    if (res < 0)  return res;
+
+    // buffer is sufficient (or eof hit)
+    if (res > count) res = count;
+    lives_memcpy(ptr, fbuff->ptr, res);
+    retval += res;
+    fbuff->ptr += res;
+    fbuff->bytes -= res;
+    count -= res;
+  } else {
+    // larger size -> direct read
+    res = lives_read(fbuff->fd, ptr, count, TRUE);
     if (res < 0) {
-      lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
+      lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed physical file
       return res;
     }
     if (res < count) fbuff->eof = TRUE;
@@ -746,6 +773,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     retval += res;
   }
 
+rd_done:
   if (!allow_less && count > 0) {
     do_file_read_error(fd, retval, ocount);
     lives_close_buffered(fd);

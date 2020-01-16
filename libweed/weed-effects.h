@@ -96,8 +96,9 @@ typedef struct {
 #define WEED_FILTER_PREF_PREMULTIPLIED_ALPHA              	(1<<4)
 #define WEED_FILTER_HINT_PROCESS_LAST                   		(1<<5)
 #define WEED_FILTER_HINT_MAY_THREAD                  		(1<<6)
-#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1<<7)
-#define WEED_FILTER_PALETTES_MAY_VARY               		(1<<8)
+#define WEED_FILTER_HINT_MAYBE_UNSTABLE             		(1<<7)
+#define WEED_FILTER_CHANNEL_SIZES_MAY_VARY     		(1<<8)
+#define WEED_FILTER_PALETTES_MAY_VARY               		(1<<9)
 
 /* audio */
 #define WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY   	(1 << 15)

@@ -58,6 +58,7 @@ boolean save_frame_index(int fileno) {
   do {
     retval = 0;
     fd = lives_creat_buffered(fname, DEF_FILE_PERMS);
+    //g_print("fd was %d\n", fd);
     if (fd < 0) {
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
     } else {
@@ -70,6 +71,7 @@ boolean save_frame_index(int fileno) {
       lives_close_buffered(fd);
 
       if (mainw->write_failed) {
+        ///g_print("wrt failed  was %d\n", i - 1);
         retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
       } else {
         if (sget_file_size(fname) != sfile->frames * 4) {

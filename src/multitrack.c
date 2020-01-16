@@ -4114,12 +4114,7 @@ static void populate_filter_box(int ninchans, lives_mt * mt, int pkgnum) {
       if ((is_pure_audio(filter, FALSE) && (eventbox == NULL || !is_audio_eventbox(eventbox))) ||
           (!is_pure_audio(filter, FALSE) && eventbox != NULL && is_audio_eventbox(eventbox))) continue;
 
-      if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-          weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-        if (!prefs->unstable_fx) {
-          continue;
-        }
-      }
+      if (weed_filter_hints_unstable(filter) && !prefs->unstable_fx) continue;
 
       nins = enabled_in_channels(filter, TRUE);
 
@@ -7168,13 +7163,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
       LiVESWidget *menuitem;
       char *fxname = NULL;
 
-      if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-          weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
-        if (!prefs->unstable_fx) {
-          continue;
-        }
-      }
-
+      if (weed_filter_hints_unstable(filter) && !prefs->unstable_fx) continue;
       pkg = weed_get_package_name(filter);
 
       if (enabled_in_channels(filter, TRUE) >= 1000000 && enabled_out_channels(filter, FALSE) == 1) {

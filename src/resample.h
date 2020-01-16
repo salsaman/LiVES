@@ -40,6 +40,8 @@ ticks_t q_gint64(ticks_t in, double fps);
 ticks_t q_gint64_floor(ticks_t in, double fps);
 ticks_t q_dbl(double in, double fps);
 
+#define SKJUMP_THRESH_RATIO 0.1 /// if fabs(recorded_vel / predicted_vel) < 1.0 +- SKJUMP_THRESH_RATIO then smooth the velocity
+#define SKJUMP_THRESH_SECS 0.1 /// if fabs(rec_seek - predicted_seek) < SKJUMP_THRESH_SECS then smooth the seek time
 
 weed_plant_t *quantise_events(weed_plant_t *in_list, double new_fps,
                               boolean allow_gap) WARN_UNUSED;  ///< quantise frame events for a single clip

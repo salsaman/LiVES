@@ -695,7 +695,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           if (list == NULL) {
             if (!is_final) deinit_events = lives_list_prepend(deinit_events, event);
             else {
-              g_print("adding deinit at %lld\n", out_tc);
+              //g_print("adding deinit at %lld\n", out_tc);
               if (!copy_with_check(event, out_list, out_tc, what, 0)) {
                 event_list_free(out_list);
                 out_list = NULL;
@@ -906,22 +906,22 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
               patracks = weed_frame_event_get_audio_tracks(prev_aframe, &paclips, &paseeks);
 
-#define SKJUMP_THRESH 0.1
-
               for (j = 0; j < patracks; j += 2) {
                 if (naclips[i] == paclips[j]) {
                   if (paclips[j + 1] == naclips[i + 1]) {
                     /// velocity should be close to seek_time / clock_time, else this was a jump
                     double dt = (double)(out_tc  - ptc) / TICKS_PER_SECOND_DBL;
                     double nvel = (naseeks[i] - paseeks[j]) / dt;
-                    if (fabs(nvel / paseeks[j + 1] - 1.) < SKJUMP_THRESH) {
+                    if (fabs(nvel / paseeks[j + 1] - 1.) < SKJUMP_THRESH_RATIO) {
                       paseeks[j + 1] = nvel;
-                      g_print("withn thresh\n");
-
                       weed_set_double_array(prev_aframe, WEED_LEAF_AUDIO_SEEKS, patracks, paseeks);
-                      naseeks[i] = paseeks[j] + paseeks[j + 1] * dt;
-                      weed_set_double_array(shortcut, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-                    } else 		      g_print("without thresh\n");
+                    } else {
+                      double zaseek = paseeks[j] + paseeks[j + 1] * dt;
+                      if (fabs(naseeks[i] - zaseek) < SKJUMP_THRESH_SECS) {
+                        naseeks[i] = zaseek;
+                        weed_set_double_array(shortcut, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
+                      }
+                    }
                   }
                   break;
                 }
@@ -990,7 +990,6 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           filter_map = NULL;
         }
         if (is_final == 1) {
-          g_print("set is_final to 2\n");
           is_final = 2;
         } else break; /// increase out_tc
       }

@@ -447,8 +447,8 @@ if (defined($ARGV[0])) {
 		    }
 
 		    # NOTE: the following definitions must match with equivalent keys in preferences.h
-		    &rc_set_if_not_set("video_open_command", "$video_open_command"); ## backend only
-		    &rc_set_if_not_set("audio_play_command", "$audio_play_command"); ## backend only
+		    &rc_set_if_not_set("video_open_command", $video_open_command); ## backend only
+		    &rc_set_if_not_set("audio_play_command", $audio_play_command); ## backend only
 
 		    # resize action when opening images - can be either: "bound" or "none"
 		    &rc_set_if_not_set("image_resize_action", "none"); ## backend only
@@ -1592,7 +1592,6 @@ if (defined($ARGV[0])) {
 	    ## here we might set $mplay_command, $is_mpv
             &get_file_info($file, 1, 1);
 	    $mplay_command = "";
-
 	    if ($mplay_command eq "") {
 		my $mp_command = &rc_get("video_open_command");
 		if ($mp_command ne "") {
@@ -1605,7 +1604,6 @@ if (defined($ARGV[0])) {
 		    # sets $is_mpv
 		    $mp_command = "\"" . &get_mplayer_location . "\"";
 		}
-
 		if ($mp_command eq "") {
 		    $panic = 1;
 		}
@@ -6074,8 +6072,10 @@ sub get_file_info {
     my $P_AUDIO = 2;
     my $P_VIDEO = 4;
 
-    my $ptypes = $P_IMAGE | $P_AUDIO | $P_VIDEO;
-
+    my $ptypes = $P_AUDIO | $P_VIDEO;
+    if ($scantype == 0) {
+	$ptypes |= $P_IMAGE;
+    }
     $count = 0;
     $bpp = 24;
     # default if none is found
@@ -6179,6 +6179,10 @@ sub get_file_info {
 			&get_mplayer_info($file, $VERBOSE);
 		    }
 		}
+	    }
+	    if ($id_vid_form && $id_vid_form ne "Unknown") {
+		$type = $id_vid_form;
+		last;
 	    }
 	    last if $type eq "Audio";
 	}

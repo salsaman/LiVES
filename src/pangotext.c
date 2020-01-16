@@ -400,7 +400,7 @@ static int font_cmp(const void *p1, const void *p2) {
   const char *s2 = (const char *)(*(char **)p2);
   char *u1 = g_utf8_casefold(s1, -1);
   char *u2 = g_utf8_casefold(s2, -1);
-  int ret = strcmp(u1, u2);
+  int ret = lives_strcmp(u1, u2);
   lives_free(u1);
   lives_free(u2);
   return ret;

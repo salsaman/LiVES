@@ -434,8 +434,10 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 
   // take care of rounding errors
   src_end = src + tbytes / sizeof(short) - nSrcChannels;
-
-  while (nsamples--) {  // vagrind
+  if (fabs(nsamples * scale * 2. * nSrcChannels) > tbytes) scale = (scale > 0. ? (float)tbytes / (float)(
+          nsamples * nSrcChannels * 2.)
+        : (float)tbytes / (float)(-nsamples * nSrcChannels * 2.));
+  while (nsamples--) {
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
       // same number of channels
 
@@ -2003,7 +2005,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       break;
     case WEED_EVENT_HINT_FILTER_INIT:
       deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
-      if (get_event_timecode(deinit_event) >= fill_tc) {
+      if (deinit_event == NULL || get_event_timecode(deinit_event) >= fill_tc) {
         // this effect should be activated
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
           process_events(event, FALSE, get_event_timecode(event));
@@ -2016,7 +2018,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       if (mainw->multitrack == NULL) {
         weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
         deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
-        if (get_event_timecode(deinit_event) < fill_tc) continue;
+        if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) continue;
 
         if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
           char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
@@ -2654,11 +2656,17 @@ static void *cache_my_audio(void *arg) {
     }
 
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
+      if (cbuffer->sequential || cbuffer->shrink_factor > 0.) {
 #ifdef HAVE_POSIX_FADVISE
-      if (cbuffer->sequential) {
         posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
-      }
 #endif
+        lives_buffered_rdonly_set_reversed(cbuffer->_fd, FALSE);
+      } else {
+#ifdef HAVE_POSIX_FADVISE
+        posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_RANDOM);
+#endif
+        lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
+      }
       sched_yield();
       lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
       sched_yield();

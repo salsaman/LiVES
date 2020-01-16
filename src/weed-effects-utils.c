@@ -86,8 +86,17 @@ WEED_LOCAL_INLINE weed_plant_t *_weed_get_gui(weed_plant_t *plant,  int create_i
   return gui;
 }
 
+WEED_GLOBAL_INLINE char *weed_plugin_info_get_package_name(weed_plant_t *pinfo) {
+  if (!WEED_PLANT_IS_PLUGIN_INFO(pinfo)) return NULL;
+  return weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, NULL);
+}
+
 WEED_GLOBAL_INLINE weed_plant_t *weed_filter_get_gui(weed_plant_t *filter, int create_if_not_exists) {
   return _weed_get_gui(filter, create_if_not_exists);
+}
+
+WEED_GLOBAL_INLINE weed_plant_t *weed_filter_get_plugin_info(weed_plant_t *filter) {
+  return weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt, int create_if_not_exists) {
@@ -107,6 +116,11 @@ WEED_GLOBAL_INLINE int weed_param_is_hidden(weed_plant_t *param) {
 WEED_GLOBAL_INLINE int weed_filter_get_flags(weed_plant_t *filter) {
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return 0;
   return weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
+}
+
+WEED_GLOBAL_INLINE int weed_filter_hints_unstable(weed_plant_t *filter) {
+  if (weed_filter_get_flags(filter) & WEED_FILTER_HINT_MAYBE_UNSTABLE) return WEED_TRUE;
+  return WEED_FALSE;
 }
 
 WEED_GLOBAL_INLINE char *weed_filter_get_name(weed_plant_t *filter) {

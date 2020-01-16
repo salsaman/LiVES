@@ -171,7 +171,7 @@
 #define EFFECT_NONE 0
 #define GU641 ((uint64_t)1)
 
-#define MAX_FX_THREADS 65536
+#define MAX_FX_THREADS 1024 ///< may be increased if necessary
 
 #define LIVES_DCLICK_TIME 400 ///< double click time (milliseconds)
 

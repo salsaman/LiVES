@@ -1659,34 +1659,34 @@ boolean apply_prefs(boolean skip_warn) {
     }
   }
 
-  if (strcmp(wp_path, prefs->weed_plugin_path)) {
+  if (lives_strcmp(wp_path, prefs->weed_plugin_path)) {
     set_string_pref(PREF_WEED_PLUGIN_PATH, wp_path);
     lives_snprintf(prefs->weed_plugin_path, PATH_MAX, "%s", wp_path);
   }
 
-  if (strcmp(frei0r_path, prefs->frei0r_path)) {
+  if (lives_strcmp(frei0r_path, prefs->frei0r_path)) {
     set_string_pref(PREF_FREI0R_PATH, frei0r_path);
     lives_snprintf(prefs->frei0r_path, PATH_MAX, "%s", frei0r_path);
   }
 
-  if (strcmp(ladspa_path, prefs->ladspa_path)) {
+  if (lives_strcmp(ladspa_path, prefs->ladspa_path)) {
     set_string_pref(PREF_LADSPA_PATH, ladspa_path);
     lives_snprintf(prefs->ladspa_path, PATH_MAX, "%s", ladspa_path);
   }
 
-  if (strcmp(sepimg_path, mainw->sepimg_path)) {
+  if (lives_strcmp(sepimg_path, mainw->sepimg_path)) {
     lives_snprintf(mainw->sepimg_path, PATH_MAX, "%s", sepimg_path);
     mainw->prefs_changed |= PREFS_IMAGES_CHANGED;
   }
 
-  if (strcmp(frameblank_path, mainw->frameblank_path)) {
+  if (lives_strcmp(frameblank_path, mainw->frameblank_path)) {
     lives_snprintf(mainw->frameblank_path, PATH_MAX, "%s", frameblank_path);
     mainw->prefs_changed |= PREFS_IMAGES_CHANGED;
   }
 
   ensure_isdir(workdir);
 
-  if (strcmp(prefworkdir, workdir)) {
+  if (lives_strcmp(prefworkdir, workdir)) {
     char *xworkdir = lives_strdup(workdir);
     if (check_workdir_valid(&xworkdir, LIVES_DIALOG(prefsw->prefs_dialog), FALSE) == LIVES_RESPONSE_OK) {
       char *msg = lives_strdup(
@@ -1892,7 +1892,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // video open command
-  if (strcmp(prefs->video_open_command, video_open_command)) {
+  if (lives_strcmp(prefs->video_open_command, video_open_command)) {
     lives_snprintf(prefs->video_open_command, PATH_MAX * 2, "%s", video_open_command);
     set_string_pref(PREF_VIDEO_OPEN_COMMAND, prefs->video_open_command);
   }
@@ -1907,7 +1907,7 @@ boolean apply_prefs(boolean skip_warn) {
   /* } */
 
   // cd play device
-  if (strcmp(prefs->cdplay_device, cdplay_device)) {
+  if (lives_strcmp(prefs->cdplay_device, cdplay_device)) {
     lives_snprintf(prefs->cdplay_device, PATH_MAX, "%s", cdplay_device);
     set_string_pref(PREF_CDPLAY_DEVICE, prefs->cdplay_device);
   }
@@ -1915,7 +1915,7 @@ boolean apply_prefs(boolean skip_warn) {
   lives_free(cdplay_device);
 
   // default video load directory
-  if (strcmp(prefs->def_vid_load_dir, def_vid_load_dir)) {
+  if (lives_strcmp(prefs->def_vid_load_dir, def_vid_load_dir)) {
     lives_snprintf(prefs->def_vid_load_dir, PATH_MAX, "%s/", def_vid_load_dir);
     get_dirname(prefs->def_vid_load_dir);
     set_utf8_pref(PREF_VID_LOAD_DIR, prefs->def_vid_load_dir);
@@ -1923,7 +1923,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // default video save directory
-  if (strcmp(prefs->def_vid_save_dir, def_vid_save_dir)) {
+  if (lives_strcmp(prefs->def_vid_save_dir, def_vid_save_dir)) {
     lives_snprintf(prefs->def_vid_save_dir, PATH_MAX, "%s/", def_vid_save_dir);
     get_dirname(prefs->def_vid_save_dir);
     set_utf8_pref(PREF_VID_SAVE_DIR, prefs->def_vid_save_dir);
@@ -1931,7 +1931,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // default audio directory
-  if (strcmp(prefs->def_audio_dir, def_audio_dir)) {
+  if (lives_strcmp(prefs->def_audio_dir, def_audio_dir)) {
     lives_snprintf(prefs->def_audio_dir, PATH_MAX, "%s/", def_audio_dir);
     get_dirname(prefs->def_audio_dir);
     set_utf8_pref(PREF_AUDIO_DIR, prefs->def_audio_dir);
@@ -1939,7 +1939,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // default image directory
-  if (strcmp(prefs->def_image_dir, def_image_dir)) {
+  if (lives_strcmp(prefs->def_image_dir, def_image_dir)) {
     lives_snprintf(prefs->def_image_dir, PATH_MAX, "%s/", def_image_dir);
     get_dirname(prefs->def_image_dir);
     set_utf8_pref(PREF_IMAGE_DIR, prefs->def_image_dir);
@@ -1947,7 +1947,7 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   // default project directory - for backup and restore
-  if (strcmp(prefs->def_proj_dir, def_proj_dir)) {
+  if (lives_strcmp(prefs->def_proj_dir, def_proj_dir)) {
     lives_snprintf(prefs->def_proj_dir, PATH_MAX, "%s/", def_proj_dir);
     get_dirname(prefs->def_proj_dir);
     set_utf8_pref(PREF_PROJ_DIR, prefs->def_proj_dir);
@@ -2463,7 +2463,7 @@ static void on_alsa_midi_toggled(LiVESToggleButton *tbutton, livespointer user_d
 static void on_audp_entry_changed(LiVESWidget *audp_combo, livespointer ptr) {
   char *audp = lives_combo_get_active_text(LIVES_COMBO(audp_combo));
 
-  if (!strlen(audp) || !strcmp(audp, prefsw->audp_name)) {
+  if (!(*audp) || !strcmp(audp, prefsw->audp_name)) {
     lives_free(audp);
     return;
   }

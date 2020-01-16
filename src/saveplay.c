@@ -421,7 +421,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                                     prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, mainw->file_open_params);
 
           lives_free(tmp);
-
+          g_print("AUDCOM %s\n", com);
           cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(file_name)), -1, NULL, NULL, NULL);
           lives_freep((void **)&tmp);
 
@@ -475,6 +475,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           wait_for_bg_audio_sync(mainw->current_file);
           if (mainw->error == 0) add_file_info(cfile->handle, TRUE);
+          g_print("MSG  %d is %s\n", cfile->achans, mainw->msg);
           mainw->error = 0;
           get_total_time(cfile);
 
@@ -549,10 +550,9 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 if (on_ins_silence_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+              }}}}
+	// *INDENT-ON*
 
         get_mime_type(cfile->type, 40, cdata);
         save_frame_index(mainw->current_file);
@@ -1067,7 +1067,7 @@ boolean get_handle_from_info_file(int index) {
 }
 
 
-void save_frame(LiVESMenuItem *menuitem, livespointer user_data) {
+void save_frame(LiVESMenuItem * menuitem, livespointer user_data) {
   int frame;
   // save a single frame from a clip
   char *filt[2];

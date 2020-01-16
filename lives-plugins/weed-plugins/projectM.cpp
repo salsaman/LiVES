@@ -148,7 +148,7 @@ static int change_size(_sdata *sdata) {
 #else
   ret = resize_display(sdata->width, sdata->height);
 #endif
-  sdata->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * sdata->width * sdata->height * 3);
+  sdata->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sdata->width * sdata->height * 3, 1);
   return ret;
 }
 
@@ -420,7 +420,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd = (_sdata *)weed_malloc(sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
-      sd->fbuffer = (GLubyte *)weed_malloc(sizeof(GLubyte) * width * height * 3);
+      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * width * height * 3, 1);
 
       if (!sd->fbuffer) {
         weed_free(sd);

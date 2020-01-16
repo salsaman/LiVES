@@ -35,6 +35,8 @@ static int package_version = 1; // version of this package
 
 #include "weed-plugin-utils.c" // optional
 
+static int verbosity = WEED_VERBOSITY_ERROR;
+
 /////////////////////////////////////////////////////////////
 typedef f0r_instance_t (*f0r_construct_f)(unsigned int width, unsigned int height);
 typedef void (*f0r_destruct_f)(f0r_instance_t instance);
@@ -318,14 +320,8 @@ WEED_SETUP_START(200, 200) {
 #endif
 
   char *fpp = getenv("FREI0R_PATH");
-#define DEBUG
-#ifndef DEBUG
-  int new_stdout = dup(1);
-  int new_stderr = dup(2);
 
-  close(1);
-  close(2);
-#endif
+  verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
 
   weed_set_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, "Frei0r");
 
@@ -514,7 +510,8 @@ WEED_SETUP_START(200, 200) {
 
         for (i = 0; blacklist[i] != NULL; i++) {
           if (!strcmp(f0rinfo.name, blacklist[i])) {
-            fprintf(stderr, "Warning, frei0r plugin skipping blacklisted plugin %s\n", f0rinfo.name);
+            if (verbosity >= WEED_VERBOSITY_WARN)
+              fprintf(stderr, "Warning, frei0r plugin skipping blacklisted plugin %s\n", f0rinfo.name);
             blacklisted = 1;
             break;
           }
@@ -677,9 +674,10 @@ WEED_SETUP_START(200, 200) {
 #ifdef CAN_GET_DEF
               f0r_get_param_value(f0r_inst, (void **)&vald, pnum);
               if (vald != 0. && vald != 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) "
-                        "for boolean parameter %s.\nThis plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) "
+                          "for boolean parameter %s.\nThis plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
               }
               if (vald <= 0.5) vald = 0.;
@@ -695,9 +693,10 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&vald, pnum);
 
               if (vald < 0. || vald > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (vald < 0.) vald = 0.;
                 if (vald > 1.) vald = 1.;
@@ -717,27 +716,30 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&valcol, pnum);
 
               if (valcol.r < 0. || valcol.r > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.r < 0.) valcol.r = 0.;
                 if (valcol.r > 1.) valcol.r = 1.;
               }
 
               if (valcol.g < 0. || valcol.g > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.g < 0.) valcol.g = 0.;
                 if (valcol.g > 1.) valcol.g = 1.;
               }
 
               if (valcol.b < 0. || valcol.b > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valcol.b < 0.) valcol.b = 0.;
                 if (valcol.b > 1.) valcol.b = 1.;
@@ -753,18 +755,20 @@ WEED_SETUP_START(200, 200) {
 #ifdef CAN_GET_DEF
               f0r_get_param_value(f0r_inst, (void **)&valpos, pnum);
               if (valpos.x < 0. || valpos.x > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valpos.x < 0.) valpos.x = 0.;
                 if (valpos.x > 1.) valpos.x = 1.;
               }
 
               if (valpos.y < 0. || valpos.y > 1.) {
-                fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
-                        "This plugin may be unstable !\n",
-                        f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                if (verbosity >= WEED_VERBOSITY_WARN)
+                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                          "This plugin may be unstable !\n",
+                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
                 if (valpos.y < 0.) valpos.y = 0.;
                 if (valpos.y > 1.) valpos.y = 1.;
@@ -833,9 +837,7 @@ WEED_SETUP_START(200, 200) {
 
         weed_set_string_value(filter_class, WEED_LEAF_EXTRA_AUTHORS, (char *)f0rinfo.author);
 
-        if (is_unstable) {
-          weed_set_boolean_value(filter_class, "plugin_unstable", WEED_TRUE);
-        }
+        if (is_unstable) weed_filter_set_flags(filter_class, weed_filter_get_flags(filter_class) | WEED_FILTER_HINT_MAYBE_UNSTABLE);
 
         weed_set_int_value(filter_class, WEED_LEAF_HSTEP, 8);
         weed_set_int_value(filter_class, WEED_LEAF_VSTEP, 8);
@@ -902,13 +904,14 @@ WEED_SETUP_START(200, 200) {
   curdir = NULL;
 
 #ifndef DEBUG
-  dup2(new_stdout, 1);
-  dup2(new_stderr, 2);
+  /* dup2(new_stdout, 1); */
+  /* dup2(new_stderr, 2); */
 #endif
 
   if (num_filters == 0) {
-    fprintf(stderr,
-            "No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      fprintf(stderr,
+              "No frei0r plugins found; if you have them installed please set the FREI0R_PATH environment variable to point to them.\n");
     return NULL;
   }
 

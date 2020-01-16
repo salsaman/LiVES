@@ -578,7 +578,9 @@ static int audio_process(nframes_t nframes, void *arg) {
 	  // *INDENT-ON*
         } else {
           // reverse playback
-          if (((jackd->seek_pos -= in_bytes) < 0) || eof) {
+          if ((jackd->seek_pos -= in_bytes) < (mainw->playing_sel ?
+                                               (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                               * afile->achans * (afile->asampsize / 8) : 0)) {
             // reached beginning backwards
             if (jackd->playing_file != mainw->ascrap_file) {
               if (jackd->loop == AUDIO_LOOP_NONE) {

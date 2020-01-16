@@ -2085,13 +2085,12 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   while (list != NULL) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
     int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
-    if ((weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-         weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) ==
-         WEED_TRUE && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
-             !has_video_chans_in(filter, FALSE)) ||
-             (weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
-              weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_TRUE)
-             || (filter_flags & WEED_FILTER_IS_CONVERTER)) || enabled_in_channels(filter, TRUE) == 1000000) {
+    if ((weed_filter_hints_unstable(filter) && !prefs->unstable_fx) || ((enabled_in_channels(filter, FALSE) > 1 &&
+        !has_video_chans_in(filter, FALSE)) ||
+        (weed_plant_has_leaf(filter, WEED_LEAF_HOST_MENU_HIDE) &&
+         weed_get_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, &error) == WEED_TRUE)
+        || (filter_flags & WEED_FILTER_IS_CONVERTER))
+        || enabled_in_channels(filter, TRUE) == 1000000) {
       list = list->next;
       fx_idx++;
       pname_list = pname_list->next;
@@ -2112,7 +2111,7 @@ static LiVESTreeModel *rte_window_fx_model(void) {
 
     if (pkgstring != NULL) {
       // package effect
-      if (pkg != NULL && strcmp(pkg, pkgstring)) {
+      if (pkg != NULL && lives_strcmp(pkg, pkgstring)) {
         // new package
         lives_freep((void **)&pkg);
       }

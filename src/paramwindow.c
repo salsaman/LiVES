@@ -1315,7 +1315,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
           }
 
           lives_snprintf(label_text, 256, "%s", array[j] + 1);
-          while (strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {
+          while (lives_strcmp(array[j] + strlen(array[j]) - 1, "\"") && j < num_tok - 1) {
             // handle separators within label text
             lives_strappend(label_text, 256, array[++j]);
           }
@@ -2603,10 +2603,10 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
 
   if (LIVES_IS_TEXT_VIEW(textwidget)) {
     new_text = lives_text_view_get_text(LIVES_TEXT_VIEW(textwidget));
-    if (!strcmp(new_text, old_text)) return;
+    if (!lives_strcmp(new_text, old_text)) return;
   } else {
     new_text = lives_entry_get_text(LIVES_ENTRY(textwidget));
-    if (!strcmp(new_text, old_text)) return;
+    if (!lives_strcmp(new_text, old_text)) return;
   }
 
   if (mainw->block_param_updates) {
@@ -2658,7 +2658,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
     }
   }
 
-  if (strcmp(old_text, (char *)param->value) && param->onchange) {
+  if (lives_strcmp(old_text, (char *)param->value) && param->onchange) {
     param->change_blocked = TRUE;
     retvals = do_onchange(LIVES_WIDGET_OBJECT(textwidget), rfx);
     lives_list_free_all(&retvals);

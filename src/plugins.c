@@ -36,7 +36,7 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
 
   threaded_dialog_spin(0.);
 
-  list = buff_to_list(buffer, "|", allow_blanks, strip);
+  list = buff_to_list(buffer, delim, allow_blanks, strip);
   threaded_dialog_spin(0.);
   return list;
 }

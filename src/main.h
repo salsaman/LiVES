@@ -293,9 +293,6 @@ typedef int lives_pgid_t;
 // round int a up to next multiple of int b, unless a is already a multiple of b
 #define ALIGN_CEIL(a, b) (((int)((a + b - 1.) / b)) * b)
 
-// round int a up to next multiple of int b, unless a is already a multiple of b
-#define ALIGN_CEILNG(a, b) (((int64_t)((a + b - 1.) / b)) * b)
-
 // round float / double a down to nearest multiple of int b
 #define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)
 
@@ -1294,6 +1291,7 @@ int lives_close_buffered(int fd);
 void lives_close_all_file_buffers(void);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
+boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);

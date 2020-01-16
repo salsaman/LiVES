@@ -3203,7 +3203,20 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
    then it may set this hint. Ignored for filters which have no out_channels.
    See note below about threading.
 
- *  WEED_FILTER_IS_CONVERTER   [[BR]]
+
+ * WEED_FILTER_HINT_MAYBE_UNSTABLE
+ The plugin may set this flag bit to indicate that the particular filter may be "problematic". For example, a wrapper type plugin may
+ set this flag bit to indicate that the filter in question has deviated from the wrapped type specification - perhaps failing to set valid
+ default values for parameters; or for filters that exhibit 'buggy' behaviour such as memory leaks or occasional crashes. It is left to
+ the host application to decide how to handle this - it may choose to ignore such filters, run them in a 'sandbox'; or perhaps
+ alert the user if the filter is selected for use.
+
+The flag bit may also be applied in the case where a flaw is discovered in a filter and resolving it requires a version update;
+ - in this case the flag bit may be set for the older version so that the host application may take appropriate measures
+  such as encouraging the user to migrate to the newer version
+
+
+*  WEED_FILTER_IS_CONVERTER   [[BR]]
     see below
 
  *  WEED_FILTER_CHANNEL_SIZES_MAY_VARY    [[BR]]
@@ -3213,8 +3226,7 @@ WEED_VERBOSITY_DEBUG 	(3) : WEED_VERBOSITY_INFO + debugging messages
     see below (video filters only)
 
 
-
-Explanation of flag bits.
+Explanation of flag bit combinations:
 
     In Weed, all video channels are assumed to have the same (macro) pixel size (width and height - but not necessarily rowstrides)
     as the first non-disabled in_channel (or first non-disabled out_channel for filters that have no in channels).

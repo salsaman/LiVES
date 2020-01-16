@@ -52,7 +52,6 @@ typedef enum {
 #define WEED_FLAG_HOST_READONLY (1 << 16)
 
 // plugin specific values
-#define WEED_LEAF_PLUGIN_UNSTABLE "plugin_unstable" // plugin hint to host
 #define WEED_LEAF_HOST_SUSPICIOUS "host_suspicious" // plugin is badly behaved
 
 // internal values

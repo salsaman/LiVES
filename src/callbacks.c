@@ -4706,7 +4706,7 @@ static boolean ofwd;
 void unlock_loop_lock(void) {
   mainw->loop = oloop;
   mainw->loop_cont = oloop_cont;
-  //mainw->ping_pong = oping_pong;
+  mainw->ping_pong = oping_pong;
   mainw->loop_locked = FALSE;
   if (CURRENT_CLIP_IS_NORMAL) {
     mainw->play_start = cfile->start;
@@ -9861,6 +9861,19 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
       if (mainw->pulsed->playing_file == mainw->current_file) {
         mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
+        if (mainw->pulsed->fd >= 0) {
+          if (mainw->pulsed->in_arate > 0.) {
+#ifdef HAVE_POSIX_FADVISE
+            posix_fadvise(mainw->pulsed->fd, mainw->pulsed->seek_pos, 0, POSIX_FADV_SEQUENTIAL);
+#endif
+            lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, FALSE);
+          } else {
+#ifdef HAVE_POSIX_FADVISE
+            posix_fadvise(mainw->pulsed->fd, mainw->pulsed->seek_pos, 0, POSIX_FADV_RANDOM);
+#endif
+            lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, TRUE);
+          }
+        }
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
             && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
           pulse_get_rec_avals(mainw->pulsed);
@@ -10390,17 +10403,21 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     if (cfile->pb_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     else mainw->period = INT_MAX;
     cfile->play_paused = FALSE;
-    pthread_mutex_lock(&mainw->event_list_mutex);
-    // write a RECORD_START marker
-    tc = get_event_timecode(get_last_event(mainw->event_list));
-    mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_START); // mark record end
-    pthread_mutex_unlock(&mainw->event_list_mutex);
+    if (mainw->record && !mainw->record_paused) {
+      pthread_mutex_lock(&mainw->event_list_mutex);
+      // write a RECORD_START marker
+      tc = get_event_timecode(get_last_event(mainw->event_list));
+      mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_START); // mark record end
+      pthread_mutex_unlock(&mainw->event_list_mutex);
+    }
   } else {
-    pthread_mutex_lock(&mainw->event_list_mutex);
-    // write a RECORD_END marker
-    tc = get_event_timecode(get_last_event(mainw->event_list));
-    mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
-    pthread_mutex_unlock(&mainw->event_list_mutex);
+    if (mainw->record) {
+      pthread_mutex_lock(&mainw->event_list_mutex);
+      // write a RECORD_END marker
+      tc = get_event_timecode(get_last_event(mainw->event_list));
+      mainw->event_list = append_marker_event(mainw->event_list, tc, EVENT_MARKER_RECORD_END); // mark record end
+      pthread_mutex_unlock(&mainw->event_list_mutex);
+    }
 
     cfile->freeze_fps = cfile->pb_fps;
     cfile->play_paused = TRUE;

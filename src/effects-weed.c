@@ -3292,7 +3292,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 
   boolean needs_reinit;
 
-  int error;
   int output = -1;
   int clip;
   int easeval = 0;
@@ -3350,7 +3349,6 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
 		// *INDENT-OFF*
               }}}
 	  // *INDENT-ON*
-
 
           if (mainw->pchains != NULL && mainw->pchains[i] != NULL) {
             if (!filter_mutex_trylock(i)) {
@@ -3452,15 +3450,14 @@ apply_inst3:
 
     if ((mainw->multitrack != NULL && i == mainw->multitrack->preview_layer) || ((mainw->multitrack == NULL ||
         mainw->multitrack->preview_layer < 0) &&
-        ((weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA) && weed_get_voidptr_value(layers[i],
-            WEED_LEAF_PIXEL_DATA, &error) != NULL) ||
-         (weed_get_int_value(layers[i], WEED_LEAF_FRAME, &error) != 0 &&
+        ((weed_get_voidptr_value(layers[i], WEED_LEAF_PIXEL_DATA, NULL) != NULL) ||
+         (weed_get_int_value(layers[i], WEED_LEAF_FRAME, NULL) != 0 &&
           (LIVES_IS_PLAYING || mainw->multitrack == NULL || mainw->multitrack->current_rfx == NULL ||
            (mainw->multitrack->init_event == NULL || tc < get_event_timecode(mainw->multitrack->init_event) ||
             (mainw->multitrack->init_event == mainw->multitrack->avol_init_event) ||
             tc > get_event_timecode(weed_get_plantptr_value
-                                    (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, &error)))))))) {
-      if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, &error) == -1) {
+                                    (mainw->multitrack->init_event, WEED_LEAF_DEINIT_EVENT, NULL)))))))) {
+      if (output != -1 || weed_get_int_value(layers[i], WEED_LEAF_CLIP, NULL) == -1) {
         if (!weed_plant_has_leaf(layers[i], WEED_LEAF_PIXEL_DATA)) continue;
         weed_layer_pixel_data_free(layers[i]);
       } else output = i;
@@ -3478,18 +3475,21 @@ apply_inst3:
   }
 
   layer = layers[output];
-  clip = weed_get_int_value(layer, WEED_LEAF_CLIP, &error);
+  clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
 
   // frame is pulled uneffected here. TODO: Try to pull at target output palette
-  if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA) || weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, &error) == NULL)
+  if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL)
     if (!pull_frame_at_size(layer, get_image_ext_for_type(mainw->files[clip]->img_type), tc, opwidth, opheight,
                             WEED_PALETTE_END)) {
+      char *msg = lives_strdup_printf("weed_apply_effects created empty pixel_data at tc %ld, map was %p, clip = %d, frame = %d",
+                                      tc, filter_map, clip, weed_get_int_value(layer, WEED_LEAF_FRAME, NULL));
+      LIVES_WARN(msg);
+      lives_free(msg);
       weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, mainw->files[clip]->img_type == IMG_TYPE_JPEG ?
                          WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
       weed_set_int_value(layer, WEED_LEAF_WIDTH, opwidth);
       weed_set_int_value(layer, WEED_LEAF_HEIGHT, opheight);
       create_empty_pixel_data(layer, TRUE, TRUE);
-      LIVES_WARN("weed_apply_effects created empty pixel_data");
     }
 
   return layer;
@@ -4731,13 +4731,7 @@ static void make_fx_defs_menu(int num_weed_compounds) {
   for (i = 0; i < num_weed_filters; i++) {
     filter = weed_filters[i];
 
-    if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-        weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, NULL) == WEED_TRUE) {
-      if (!prefs->unstable_fx) {
-        continue;
-      }
-    }
-
+    if (weed_filter_hints_unstable(filter) && !prefs->unstable_fx) continue;
     filter_name = weed_filter_idx_get_name(i, FALSE, TRUE, FALSE); // mark dupes
 
     // skip hidden filters
@@ -4748,9 +4742,8 @@ static void make_fx_defs_menu(int num_weed_compounds) {
       hidden = TRUE;
     else hidden = FALSE;
 
-    pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, NULL);
-    if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME))
-      pkgstring = weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, NULL);
+    pinfo = weed_filter_get_plugin_info(filter);
+    if (pinfo != NULL) pkgstring = weed_plugin_info_get_package_name(pinfo);
     else pkgstring = NULL;
 
     if (pkgstring != NULL) {
@@ -9029,26 +9022,25 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes,
   // return value should be free'd after use
   weed_plant_t *filter;
   char *filter_name, *tmp;
-  int i, error;
 
   if (idx == -1) return lives_strdup("");
   if ((filter = weed_filters[idx]) == NULL) return lives_strdup("");
 
-  filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
+  filter_name = weed_filter_get_name(filter);
 
   if (mark_dupes) {
     weed_plant_t *dfilter;
     char *dupe_name;
     // if it's a dupe we add the package name; if no package, the author name
-    for (i = 0; i < num_weed_dupes; i++) {
+    for (int i = 0; i < num_weed_dupes; i++) {
       dfilter = get_weed_filter(i);
-      dupe_name = weed_get_string_value(dfilter, WEED_LEAF_NAME, &error);
+      dupe_name = weed_get_string_value(dfilter, WEED_LEAF_NAME, NULL);
       if (!lives_utf8_strcasecmp(filter_name, dupe_name)) {
         char *author = weed_get_package_name(filter);
         if (author == NULL) {
           if (weed_plant_has_leaf(filter, WEED_LEAF_EXTRA_AUTHORS)) {
-            author = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS, &error);
-          } else if (weed_plant_has_leaf(filter, WEED_LEAF_AUTHOR)) author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, &error);
+            author = weed_get_string_value(filter, WEED_LEAF_EXTRA_AUTHORS, NULL);
+          } else if (weed_plant_has_leaf(filter, WEED_LEAF_AUTHOR)) author = weed_get_string_value(filter, WEED_LEAF_AUTHOR, NULL);
           else author = lives_strdup("??????");
         }
         if (lives_strlen(author) > MAX_AUTHOR_LEN) {
@@ -9080,8 +9072,7 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes,
 
   if (add_notes) {
     // if it's unstable add that
-    if (weed_plant_has_leaf(filter, WEED_LEAF_PLUGIN_UNSTABLE) &&
-        weed_get_boolean_value(filter, WEED_LEAF_PLUGIN_UNSTABLE, &error) == WEED_TRUE) {
+    if (weed_filter_hints_unstable(filter)) {
       tmp = lives_strdup_printf(_("%s [unstable]"), filter_name);
       lives_free(filter_name);
       filter_name = tmp;
@@ -9095,27 +9086,22 @@ char *weed_filter_idx_get_name(int idx, boolean add_subcats, boolean mark_dupes,
 char *weed_filter_idx_get_package_name(int idx) {
   // return value should be free'd after use
   weed_plant_t *filter, *pinfo;
-  int error;
 
   if (idx == -1) return NULL;
   if ((filter = weed_filters[idx]) == NULL) return NULL;
-  pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME)) return weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
-  return NULL;
+  pinfo = weed_filter_get_plugin_info(filter);
+  return weed_plugin_info_get_package_name(pinfo);
 }
 
 
 char *weed_get_package_name(weed_plant_t *plant) {
   // return value should be free'd after use
   weed_plant_t *filter, *pinfo;
-  int error;
 
   if (WEED_PLANT_IS_FILTER_INSTANCE(plant)) filter = weed_instance_get_filter(plant, TRUE);
   else filter = plant;
-
-  pinfo = weed_get_plantptr_value(filter, WEED_LEAF_PLUGIN_INFO, &error);
-  if (weed_plant_has_leaf(pinfo, WEED_LEAF_PACKAGE_NAME)) return weed_get_string_value(pinfo, WEED_LEAF_PACKAGE_NAME, &error);
-  return NULL;
+  pinfo = weed_filter_get_plugin_info(filter);
+  return weed_plugin_info_get_package_name(pinfo);
 }
 
 

@@ -1487,7 +1487,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (mainw->multitrack == NULL && opvol_end != opvol_start) {
         time += (double)frames_out / (double)out_arate;
         opvol = opvol_start + (opvol_end - opvol_start) * (time / (double)((tc_end - tc_start) / TICKS_PER_SECOND_DBL));
-	opvol = lives_vol_from_linear(opvol);
+        opvol = lives_vol_from_linear(opvol);
       }
 
       if (is_fade) {

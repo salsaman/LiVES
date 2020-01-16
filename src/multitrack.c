@@ -1013,7 +1013,8 @@ char *get_track_name(lives_mt *mt, int track_num, boolean is_audio) {
 
 
 LIVES_INLINE double get_time_from_x(lives_mt *mt, int x) {
-  double time = (double)x / (double)lives_widget_get_allocation_width(mt->timeline) * (mt->tl_max - mt->tl_min) + mt->tl_min;
+  double time = (double)x / (double)(lives_widget_get_allocation_width(mt->timeline) - 1) *
+                (mt->tl_max - mt->tl_min) + mt->tl_min;
   if (time < 0.) time = 0.;
   else if (time > mt->end_secs + 1. / mt->fps) time = mt->end_secs + 1. / mt->fps;
   return q_dbl(time, mt->fps) / TICKS_PER_SECOND_DBL;
@@ -22466,7 +22467,8 @@ void on_amixer_close_clicked(LiVESButton * button, lives_mt * mt) {
 #if ENABLE_GIW
     }
 #endif
-    val = lives_vol_from_linear(val);
+    if (0)
+      val = lives_vol_from_linear(val);
     set_mixer_track_vol(mt, i, val);
   }
 
@@ -22493,7 +22495,8 @@ static void on_amixer_reset_clicked(LiVESButton * button, lives_mt * mt) {
 
   for (i = 0; i < amixer->nchans; i++) {
     float val = (float)LIVES_POINTER_TO_INT(lives_list_nth_data(mt->audio_vols_back, i)) / LIVES_AVOL_SCALE;
-    val = lives_vol_from_linear(val);
+    if (0)
+      val = lives_vol_to_linear(val);
 #if ENABLE_GIW
     if (prefs->lamp_buttons) {
       lives_signal_handler_block(giw_vslider_get_adjustment(GIW_VSLIDER(amixer->ch_sliders[i])), amixer->ch_slider_fns[i]);
@@ -22588,13 +22591,13 @@ void on_amixer_slider_changed(LiVESAdjustment * adj, lives_mt * mt) {
 #if ENABLE_GIW
           }
 #endif
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   if (!mt->is_rendering) {
-    val = lives_vol_from_linear(val);
+    if (0)
+      val = lives_vol_from_linear(val);
     set_mixer_track_vol(mt, layer, val);
   }
 }

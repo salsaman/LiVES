@@ -853,8 +853,8 @@ boolean on_framedraw_mouse_start(LiVESWidget *widget, LiVESXEventButton *event, 
   xstart = (double)xstarti - (double)(fd_width - width) / 2.;
   ystart = (double)ystarti - (double)(fd_height - height) / 2.;
 
-  xstart /= (double)width;
-  ystart /= (double)height;
+  xstart /= (double)(width - 1);
+  ystart /= (double)(height - 1);
 
   xend = xcurrent = xstart;
   yend = ycurrent = ystart;
@@ -956,8 +956,8 @@ boolean on_framedraw_mouse_update(LiVESWidget *widget, LiVESXEventMotion *event,
   xcurrent = (double)xcurrenti - (fd_width - width) / 2.;
   ycurrent = (double)ycurrenti - (fd_height - height) / 2.;
 
-  xcurrent /= (double)width;
-  ycurrent /= (double)height;
+  xcurrent /= (double)(width - 1);
+  ycurrent /= (double)(height - 1);
 
   noupdate = TRUE;
 

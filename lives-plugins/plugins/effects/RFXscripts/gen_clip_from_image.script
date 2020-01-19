@@ -49,11 +49,11 @@ if ($p0) {
 	&get_image_size($p1);
 	$width = $hsize; $height = $vsize;
 }
-
+$rdyfile = "";
 </pre>
 
 <loop>
-if ($frame == $start) {
+if ($rdyfile eq "") {
 if ($p0) {
 	`$convert_command $p1 $out_prefix$out`;
 } else {

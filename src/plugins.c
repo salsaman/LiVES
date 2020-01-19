@@ -916,6 +916,12 @@ _vppaw *on_vpp_advanced_clicked(LiVESButton *button, livespointer user_data) {
     LiVESWidget *scrolledwindow = lives_standard_scrolled_window_new(RFX_WINSIZE_H, RFX_WINSIZE_V / 2, vbox);
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrolledwindow, TRUE, TRUE, 0);
     plugin_run_param_window((*tmpvpp->get_init_rfx)(intention), LIVES_VBOX(vbox), &(vppa->rfx));
+    if (intention != LIVES_INTENTION_TRANSCODE) {
+      char *fnamex = lives_build_filename(prefs->workdir, vppa->rfx->name, NULL);
+      if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS))
+        lives_rm(fnamex);
+      lives_free(fnamex);
+    }
     if (tmpvpp->extra_argv != NULL && tmpvpp->extra_argc > 0) {
       // update with defaults
       LiVESList *plist = argv_to_marshalled_list(vppa->rfx, tmpvpp->extra_argc, tmpvpp->extra_argv);
@@ -1001,7 +1007,6 @@ void close_vid_playback_plugin(_vid_playback_plugin *vpp) {
     }
 
     lives_freep((void **)&vpp->play_params);
-
     lives_free(vpp);
   }
 }
@@ -3739,9 +3744,11 @@ prpw_done:
     if (ret_rfx != NULL) {
       *ret_rfx = rfx;
     } else {
+      lives_rm(fnamex);
       rfx_free(rfx);
       lives_free(rfx);
     }
+    lives_free(fnamex);
   } else {
     if (ret_rfx != NULL) {
       *ret_rfx = NULL;
@@ -3753,9 +3760,6 @@ prpw_done:
     }
   }
   lives_free(rfx_scrapname);
-  lives_rm(fnamex);
-  lives_free(fnamex);
-
   return res_string;
 }
 

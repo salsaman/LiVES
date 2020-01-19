@@ -1152,7 +1152,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
     } else {
       lives_progress_bar_pulse(LIVES_PROGRESS_BAR(sfile->proc_ptr->progressbar));
       progress_count = 0;
-      if (!mainw->is_rendering)  progress_speed = 1.;
+      if (!mainw->is_rendering)  progress_speed = 2.;
     }
   }
 }
@@ -1911,6 +1911,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         lives_fread(mainw->msg, 1, MAINW_MSG_SIZE, infofile);
         fclose(infofile);
       }
+      progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
     }
     // else call realtime effect pass
     else {

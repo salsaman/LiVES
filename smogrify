@@ -2572,7 +2572,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    unlink glob "*.tar";
-	    $com="tar --ignore-failed-read -cf header.tar \"$audio\" header* extended* event.* subs.* file* 2>$nulfile";
+	    $com="tar --ignore-failed-read -cf header.tar \"$audio\" header* extended* event.* subs.* file*";
 	    &smog_system ($com);
 	    if ($smerr) {
 		&sig_system_error($com, $smerr);
@@ -2581,7 +2581,7 @@ if (defined($ARGV[0])) {
 
 	    &sig_progress(0);
 
-	    $com = "tar -cf temp.tar header.tar 2>.tar_err";
+	    $com = "tar -cf temp.tar header.tar";
 	    $smerr = &smog_system($com);
 	    if ($smerr) {
 		&sig_system_error($com, $smerr);
@@ -2589,7 +2589,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    $com = "tar --exclude=*.bak --exclude=*.tar --exclude=./.* --exclude=*.mgk --exclude=*.tmp " .
-		"--exclude=audioclip* -rf temp.tar * 2>>.tar_err";
+		"--exclude=audioclip* -rf temp.tar *";
 	    $smerr = &smog_system($com);
 	    if ($smerr) {
 		&sig_system_error($com, $smerr);

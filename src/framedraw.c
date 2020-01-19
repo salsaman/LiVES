@@ -90,6 +90,13 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   mainw->cancelled = CANCEL_NONE;
   mainw->error = FALSE;
 
+  if (rfx->num_in_channels == 0) {
+    // reset values to specified
+    cfile->hsize = cfile->ohsize;
+    cfile->vsize = cfile->ovsize;
+    cfile->fps = cfile->pb_fps;
+  }
+
   // within do_effect() we check and if
   do_effect(rfx, TRUE); // actually start effect processing in the background
 

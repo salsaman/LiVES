@@ -77,7 +77,7 @@ boolean transcode(int start, int end) {
 
   char *afname = NULL;
   char *pname = NULL;
-  char *msg = NULL, *tmp;
+  char *msg = NULL, *tmp, * fnamex;
 
   double spf = 0., ospf;
 
@@ -138,6 +138,11 @@ boolean transcode(int start, int end) {
   do {
     resp = lives_dialog_run(LIVES_DIALOG(vppa->dialog));
   } while (resp == LIVES_RESPONSE_RETRY);
+  fnamex = lives_build_filename(prefs->workdir, rfx->name, NULL);
+  if (lives_file_test(fnamex, LIVES_FILE_TEST_EXISTS))
+    lives_rm(fnamex);
+  lives_free(fnamex);
+
   if (resp == LIVES_RESPONSE_CANCEL) {
     mainw->cancelled = CANCEL_USER;
     rfx_free(rfx);

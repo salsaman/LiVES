@@ -322,17 +322,6 @@ if (!$is_scrap) {
 	}
     }
 
-    if ($in_channels == 2) {
-	print OUT "    if (\$img_ext2 eq \".png\") {\n";
-	print OUT "        \$img_prefix2 = \"PNG32:\";\n";
-	print OUT "    } else {\n";
-	print OUT "        \$img_prefix2 = \"\";\n";
-	print OUT "    }\n";
-
-    }
-
-    print OUT "\n";
-
     print OUT "    if (\$img_ext eq \".png\") {\n";
     print OUT "        \$img_prefix = \"PNG32:\";\n";
     print OUT "    } else {\n";
@@ -345,6 +334,18 @@ if (!$is_scrap) {
     print OUT "        \$out_prefix=\"\";\n";
     print OUT "    }\n\n";
 
+   if ($in_channels == 2) {
+	print OUT "    unless (defined(\$img_ext2)) {\n";
+	print OUT "        \$img_ext2 = \$img_ext;\n";
+	print OUT "    }\n\n";
+
+	print OUT "    if (\$img_ext2 eq \".png\") {\n";
+	print OUT "        \$img_prefix2 = \"PNG32:\";\n";
+	print OUT "    } else {\n";
+	print OUT "        \$img_prefix2 = \"\";\n";
+	print OUT "    }\n\n";
+    }
+
     if (@pre) {
 	&gen_pre;
     }
@@ -356,33 +357,11 @@ if (!$is_scrap) {
     unless ($is_batch_gen) {
 	print OUT "\n################# loop through frames #################\n";
 
-	print OUT "    if (\$img_ext eq \".png\") {\n";
-	print OUT "        \$img_prefix = \"PNG32:\";\n";
-	print OUT "    } else {\n";
-	print OUT "        \$img_prefix = \"\";\n";
-	print OUT "    }\n\n";
-
-	print OUT "    if (\$out_ext eq \".png\") {\n";
-	print OUT "        \$out_prefix = \"PNG32:\";\n";
-	print OUT "    } else {\n";
-	print OUT "        \$out_prefix = \"\";\n";
-	print OUT "    }\n\n";
-
 	if ($in_channels==2) {
 	    print OUT "    \$frame2 = \$start2;\n";
-	    print OUT "    unless (defined(\$img_ext2)) {\n";
-	    print OUT "        \$img_ext2 = \$img_ext;\n";
-	    print OUT "    }\n\n";
-
 	    print OUT "    if (!(\$img_ext2 eq \$img_ext) && &location(\"convert\") eq \"\") {\n";
 	    print OUT "        &sig_error(\"'convert' is required by this plugin.\", \"Please install imagemagick and try again.\");\n";
 	    print OUT "        exit 1;\n";
-	    print OUT "    }\n\n";
-
-	    print OUT "    if (\$img_ext2 eq \".png\") {\n";
-	    print OUT "        \$img_prefix2 = \"PNG32:\";\n";
-	    print OUT "    } else {\n";
-	    print OUT "        \$img_prefix2 = \"\";\n";
 	    print OUT "    }\n\n";
 	}
 
@@ -422,7 +401,6 @@ if (!$is_scrap) {
 	    print OUT "            sleep 1;\n";
 	    print OUT "        }\n\n";
 	    print OUT "        `flock \$in true`;\n";
-
 	}
 
 	if ($in_channels > 1) {
@@ -488,7 +466,6 @@ if (!$is_scrap) {
 		    print OUT "            \$p$i" . "_blue = 0;\n";
 		    print OUT "        }\n";
 		}}}
-
 	print OUT "        }\n";
     }
 
@@ -499,13 +476,10 @@ if (!$is_scrap) {
 
     print OUT "if (\$command eq \"clear\") {\n";
 
-    print OUT "    \$start = \$ARGV[1];\n";
-    print OUT "    \$end = \$ARGV[2];\n";
-    print OUT "    \$img_ext = \$ARGV[3];\n";
-
-    print OUT "\n";
-
     if (@post) {
+	print OUT "    \$start = \$ARGV[1];\n";
+	print OUT "    \$end = \$ARGV[2];\n";
+	print OUT "    \$img_ext = \$ARGV[3];\n\n";
 	&gen_post;
     }
     print OUT "    exit 0;\n";
@@ -605,7 +579,7 @@ sub gen_param_checks {
 		print OUT "    }\n";
 	    }
 	    if ($type eq "bool") {
-		print OUT "    \$p$i =~ (~\$p$i);\n";
+		print OUT "    \$p$i = ~(~\$p$i);\n";
 	    }
 	    $i++;
 	}}
@@ -657,7 +631,6 @@ sub rc_read {
 	    else {
 		$part = 1;
 	    }}}
-
     return @result;
 }
 

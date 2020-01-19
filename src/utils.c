@@ -2385,7 +2385,6 @@ boolean check_frame_count(int idx, boolean last_checked) {
   if (mainw->files[idx]->frames > 0) {
     frame = make_image_file_name(mainw->files[idx], mainw->files[idx]->frames,
                                  get_image_ext_for_type(mainw->files[idx]->img_type));
-
     if (!lives_file_test(frame, LIVES_FILE_TEST_EXISTS)) {
       // not enough frames
       lives_free(frame);

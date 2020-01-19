@@ -40,16 +40,17 @@ colour|Frame _Colour|colRGB24|255|255|255|
 </language_code>
 
 <pre>
+$rdyfile = "";
 $cstring=&RGB24_to_string($p0_red,$p0_green,$p0_blue);
 </pre>
 
 <loop>
-if ($frame == $start) {
-`$convert_command -size $width!x$height! xc:$cstring +matte $out_prefix$out`;
-  $rdyfile = $out;
+if ($rdyfile eq "") {
+   `$convert_command -size $width!x$height! xc:$cstring +matte $out_prefix$out`;
+    $rdyfile = $out;
 }
 else {
- `cp $rdyfile $out`;
+     `cp $rdyfile $out`;
  }
 </loop>
 

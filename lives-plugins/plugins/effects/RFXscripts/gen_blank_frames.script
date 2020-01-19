@@ -39,10 +39,11 @@ convert
 </language_code>
 
 <pre>
+$rdyfile = "";
 </pre>
 
 <loop>
-if ($frame == $start) {
+if ($rdyfile eq "") {
 `$convert_command -size $width!x$height! xc:black +matte $out_prefix$out`;
   $rdyfile = $out;
 }

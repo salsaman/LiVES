@@ -132,11 +132,11 @@ if ($p7 >= 0) {
 }
 $cstring1 = &RGB24_to_string($p3_red, $p3_green, $p3_blue);
 $cstring2 = &RGB24_to_string($p4_red, $p4_green, $p4_blue);
-
+$rdyfile = "";
 </pre>
 
 <loop>
-if ($frame == $start) {
+if ($rdyfile eq "") {
   system("$convert_command $out_prefix" . "temp$out_ext -gravity Center -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 " .
 			 "-draw \"text $p1 $p2 '$p0' gravity Center\" $out_prefix$out");
   $rdyfile = $out;

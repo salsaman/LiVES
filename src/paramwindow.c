@@ -634,12 +634,12 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 
 
 static void xspinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  cfile->ohsize = cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   reset_framedraw_preview();
 }
 
 static void xspinh_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  cfile->vsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  cfile->ovsize = cfile->vsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   reset_framedraw_preview();
 }
 
@@ -648,7 +648,7 @@ static void xspinfr_changed(LiVESSpinButton *spinbutton, livespointer user_data)
 }
 
 static void xspinfps_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
-  cfile->fps = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  cfile->pb_fps = cfile->fps = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   reset_framedraw_preview();
 }
 
@@ -758,6 +758,10 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     mainw->current_file = new_file;
     rfx->source_type = LIVES_RFX_SOURCE_NEWCLIP;
     rfx->source = cfile;
+
+    cfile->ohsize = cfile->hsize;
+    cfile->ovsize = cfile->vsize;
+    cfile->pb_fps = cfile->fps;
 
     // dummy values
     cfile->start = 1;

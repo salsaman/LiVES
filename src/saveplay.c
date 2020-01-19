@@ -4616,7 +4616,15 @@ ulong restore_file(const char *file_name) {
     return 0;
   }
 
-  if (!check_frame_count(mainw->current_file, FALSE)) cfile->frames = get_frame_count(mainw->current_file, 1);
+  // get img_type, check frame count and size
+  if (!check_clip_integrity(mainw->current_file, NULL , cfile->frames)) {
+    if (cfile->afilesize == 0) {
+      reget_afilesize_inner(mainw->current_file);
+    }
+    if (!check_frame_count(mainw->current_file, FALSE)) {
+      cfile->frames = get_frame_count(mainw->current_file, 1);
+    }
+  }
 
   // add entry to window menu
   // TODO - do this earlier and allow switching during restore

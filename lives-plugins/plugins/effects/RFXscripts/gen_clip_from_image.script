@@ -25,19 +25,13 @@ convert
 </requires>
 
 <params>
-width|_Width|num0|640|1|10000|
-height|_Height|num0|480|1|10000|
-nframes|_Number of frames|num0|100|1|100000|
-imgfile|_Image File|string||80|
-fps|_Frames per second|num3|25.000|1.000|200.000|
 nsize|Use _Natural image size|bool|0|
+imgfile|_Image File|string||80|
 </params>
 
 <param_window>
-layout|p2|p4|
-layout|p0|p1|
-layout|p5|
-special|fileread|3|
+layout|p0|
+special|fileread|1|
 </param_window>
 
 <properties>
@@ -49,32 +43,32 @@ special|fileread|3|
 </language_code>
 
 <pre>
-$end=$p2;
 
-if ($p5) {
-	$imresact="none";
-	&get_image_size($p3);
-	$nwidth=$hsize;$nheight=$vsize;
-} else {
-	$nwidth=$p0;
-	$nheight=$p1;
+if ($p0) {
+	$imresact = "none";
+	&get_image_size($p1);
+	$width = $hsize; $height = $vsize;
 }
 
-$fps=$p4;
 </pre>
 
 <loop>
-if ($p5) {
-	`$convert_command "$p3" $out_prefix$out`;
+if ($frame == $start) {
+if ($p0) {
+	`$convert_command $p1 $out_prefix$out`;
 } else {
-	`$convert_command "$p3" -resize $p0!x$p1! $out_prefix$out`;
+	`$convert_command $p1 -resize $width!x$height! $out_prefix$out`;
 }
+ $rdyfile = $out;
+}
+else {
+ `cp $rdyfile $out`;
+ }
 </loop>
 
 <post>
 </post>
 
 <onchange>
-init|if ($width>0) {$p0=$width}; if ($height>0) {$p1=$height};
 </onchange>
 

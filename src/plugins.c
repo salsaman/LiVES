@@ -35,7 +35,6 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
   if (mainw->com_failed) return NULL;
 
   threaded_dialog_spin(0.);
-
   list = buff_to_list(buffer, delim, allow_blanks, strip);
   threaded_dialog_spin(0.);
   return list;

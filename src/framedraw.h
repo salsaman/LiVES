@@ -48,6 +48,9 @@ void load_rfx_preview(lives_rfx_t *rfx); ///< rfx preview
 /// just redraw the frame
 void redraw_framedraw_image(weed_plant_t *layer);
 
+// reset preview when any param changes
+void reset_framedraw_preview(void);
+
 /// reset button
 void on_framedraw_reset_clicked(LiVESButton *, lives_special_framedraw_rect_t *);
 

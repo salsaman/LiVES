@@ -399,10 +399,9 @@ void lives_exit(int signum) {
               save_frame_index(i);
             }
             lives_freep((void **)&mainw->files[i]->op_dir);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     if (!mainw->leave_files && strlen(mainw->set_name) && !mainw->leave_recovery) {
       char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
@@ -613,7 +612,7 @@ void lives_exit(int signum) {
 #endif
 #endif
 
-void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
+void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
   LiVESWidget *tentry = LIVES_WIDGET(user_data);
 
   lives_rfx_t *rfx;
@@ -626,7 +625,7 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   char *def_dir = NULL;
 
-  boolean is_dir = TRUE;
+  boolean is_dir = TRUE, free_def_dir = FALSE;
 
   int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
 
@@ -642,7 +641,7 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   if (LIVES_IS_TEXT_VIEW(tentry)) fname = lives_text_view_get_text(LIVES_TEXT_VIEW(tentry));
   else fname = lives_strdup(lives_entry_get_text(LIVES_ENTRY(tentry)));
 
-  if (!strlen(fname)) {
+  if (!(*fname)) {
     lives_free(fname);
     fname = def_dir;
   }
@@ -651,6 +650,10 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
 
   switch (filesel_type) {
   case LIVES_FILE_SELECTION_UNDEFINED:
+    if (!is_dir && *fname && (def_dir == NULL || !(*def_dir))) {
+      def_dir = get_dir(fname);
+      free_def_dir = TRUE;
+    }
   case LIVES_DIR_SELECTION_WORKDIR:
     dirname = choose_file(is_dir ? fname : def_dir, is_dir ? NULL : fname, filt,
                           is_dir ? LIVES_FILE_CHOOSER_ACTION_SELECT_FOLDER :
@@ -667,6 +670,10 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
           dirname = lives_strdup(fname);
         }
       }
+    }
+    if (free_def_dir) {
+      lives_free(def_dir);
+      def_dir = NULL;
     }
     break;
   case LIVES_FILE_SELECTION_SAVE: {
@@ -774,7 +781,7 @@ static boolean read_file_details_generic(char *fname) {
 }
 
 
-void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // OPEN A FILE
   LiVESWidget *chooser;
   char **array;
@@ -859,7 +866,7 @@ void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
+void on_open_vcd_activate(LiVESMenuItem * menuitem, livespointer device_type) {
   LiVESWidget *vcdtrack_dialog;
 
   int type = LIVES_POINTER_TO_INT(device_type);
@@ -883,7 +890,7 @@ void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
 }
 
 
-void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // need non-instant opening (for now)
 
   if (!HAS_EXTERNAL_PLAYER) {
@@ -906,7 +913,7 @@ void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_remote_clip_request_t *req;
 
   if (mainw->multitrack != NULL) {
@@ -930,7 +937,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char file[PATH_MAX];
   double start = 0.;
   boolean needs_idlefunc = FALSE;
@@ -982,7 +989,7 @@ void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_location_select(LiVESButton *button, livespointer user_data) {
+void on_location_select(LiVESButton * button, livespointer user_data) {
   lives_snprintf(file_name, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(locw->entry)));
   lives_widget_destroy(locw->dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -1171,7 +1178,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
 }
 
 
-void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_stop_clicked(LiVESMenuItem * menuitem, livespointer user_data) {
   // 'enough' button for open, open location, and record audio
 
 #ifdef ENABLE_JACK
@@ -1205,7 +1212,7 @@ void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_save_as_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (cfile->frames == 0) {
     on_export_audio_activate(NULL, NULL);
     return;
@@ -1215,14 +1222,14 @@ void on_save_as_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 #ifdef LIBAV_TRANSCODE
-void on_transcode_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->current_file < 1 || mainw->files[mainw->current_file] == NULL) return;
   transcode(cfile->start, cfile->end);
 }
 #endif
 
 
-void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_save_selection_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   save_file(mainw->current_file, cfile->start, cfile->end, NULL);
 }
 
@@ -1238,7 +1245,7 @@ static void check_remove_layout_files(void) {
 }
 
 
-void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *warn, *extra;
   boolean lmap_errors = FALSE, acurrent = FALSE, only_current = FALSE;
 
@@ -1345,7 +1352,7 @@ close_done:
 }
 
 
-void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *com;
   char *filt[] = {"*."LIVES_FILE_EXT_PROJECT, NULL};
   char *proj_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
@@ -1434,7 +1441,7 @@ void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_PROJECT, NULL};
   char *def_file;
   char *proj_file;
@@ -1510,7 +1517,7 @@ void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_export_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   lives_colRGBA64_t lcol;
 
   char *filt[] = {"*."LIVES_FILE_EXT_TAR_GZ, NULL};
@@ -1687,7 +1694,7 @@ void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_TAR_GZ, NULL};
   char tname[128];
 
@@ -1813,7 +1820,7 @@ void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_backup_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_BACKUP, NULL};
   char *file_name;
   char *defname, *text;
@@ -1838,7 +1845,7 @@ void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_restore_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_restore_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_BACKUP, NULL};
   char *file_name, *text;
 
@@ -1894,7 +1901,7 @@ void mt_memory_free(void) {
 }
 
 
-void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *msg, *tmp;
 
   boolean has_layout_map = FALSE;
@@ -2054,7 +2061,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 // TODO - split into undo.c
-void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
+void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
   char *com, *tmp;
 
   boolean bad_header = FALSE;
@@ -2603,7 +2610,7 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
 }
 
 
-void on_redo_activate(LiVESWidget *menuitem, livespointer user_data) {
+void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
   char *com;
 
   int ostart = cfile->start;
@@ -2790,7 +2797,7 @@ void on_redo_activate(LiVESWidget *menuitem, livespointer user_data) {
 
 //////////////////////////////////////////////////
 
-void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *com;
 
   int current_file = mainw->current_file;
@@ -2916,7 +2923,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_cut_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   uint32_t chk_mask = 0;
   int current_file = mainw->current_file;
 
@@ -2948,7 +2955,7 @@ void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   char *com;
   char *msg;
   int old_file = mainw->current_file, current_file;
@@ -3066,7 +3073,7 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_insert_pre_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+void on_insert_pre_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   insertw = create_insert_dialog();
 
   lives_widget_show_all(insertw->insert_dialog);
@@ -3077,7 +3084,7 @@ void on_insert_pre_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 }
 
 
-void on_insert_activate(LiVESButton *button, livespointer user_data) {
+void on_insert_activate(LiVESButton * button, livespointer user_data) {
   double times_to_insert;
   double audio_stretch;
 

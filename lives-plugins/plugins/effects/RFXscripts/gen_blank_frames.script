@@ -25,15 +25,9 @@ convert
 </requires>
 
 <params>
-width|_Width|num0|640|1|10000|
-height|_Height|num0|480|1|10000|
-nframes|_Number of frames|num0|100|1|100000|
-fps|_Frames per second|num3|25.000|1.000|200.000|
 </params>
 
 <param_window>
-layout|p2|p3|
-layout|p0||p1|
 </param_window>
 
 <properties>
@@ -45,18 +39,20 @@ layout|p0||p1|
 </language_code>
 
 <pre>
-$end=$p2;
-$fps=$p3;
 </pre>
 
 <loop>
-`$convert_command -size $p0!x$p1! xc:black +matte $out_prefix$out`;
-$nwidth=$p0;$nheight=$p1;
+if ($frame == $start) {
+`$convert_command -size $width!x$height! xc:black +matte $out_prefix$out`;
+  $rdyfile = $out;
+}
+else {
+ `cp $rdyfile $out`;
+ }
 </loop>
 
 <post>
 </post>
 
 <onchange>
-init|if ($width>0) {$p0=$width}; if ($height>0) {$p1=$height};
 </onchange>

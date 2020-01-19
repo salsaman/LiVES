@@ -40,6 +40,14 @@ static double calc_fd_scale(int width, int height) {
 }
 
 
+void reset_framedraw_preview(void) {
+  lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start);
+  lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), cfile->start);
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, cfile->start);
+}
+
+
 static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   int i;
   char *com;
@@ -57,6 +65,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
     return;
   }
 
+  clear_widget_bg(LIVES_WIDGET(mainw->framedraw));
   lives_widget_set_sensitive(mainw->framedraw_preview, FALSE);
   lives_widget_context_update();
 
@@ -84,9 +93,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
   // within do_effect() we check and if
   do_effect(rfx, TRUE); // actually start effect processing in the background
 
-  if (cfile->start == 0 && mainw->framedraw_frame == 1) {
-    load_rfx_preview(rfx);
-  }
+  load_rfx_preview(rfx);
 
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, TRUE);
   lives_widget_set_sensitive(mainw->framedraw_scale, TRUE);
@@ -94,7 +101,7 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
     if (fx_dialog[0]->okbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->okbutton, TRUE);
     if (fx_dialog[0]->cancelbutton != NULL) lives_widget_set_sensitive(fx_dialog[0]->cancelbutton, TRUE);
   }
-
+  lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, cfile->start + 1);
   mainw->did_rfx_preview = TRUE;
 }
 
@@ -664,7 +671,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       }
     }
   } else {
-    mainw->fd_max_frame = cfile->end;
+    tot_frames = mainw->fd_max_frame = cfile->end;
   }
 
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
@@ -676,6 +683,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       lives_entry_set_width_chars(LIVES_ENTRY(mainw->framedraw_spinbutton), maxlen);
       lives_widget_queue_draw(mainw->framedraw_spinbutton);
       lives_widget_queue_draw(mainw->framedraw_scale);
+      cfile->frames = tot_frames;
     }
 
     if (mainw->framedraw_frame > mainw->fd_max_frame) {

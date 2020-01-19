@@ -4071,16 +4071,14 @@ if (defined($ARGV[0])) {
 	    $img_ext = ".".$ARGV[5];
 
 	    # move extra frames back to end
-	    smog_system_sync();
+	    &smog_system_sync();
 	    &undo_insert;
 
 	    if (-f "$curworkdir/audio.bak") {
 		&undo_audio;
 	    }
 	    # will abort on failure
-
 	    &clean_old;
-
 	    &sig_complete;
 	    exit 0;
 	}
@@ -4097,7 +4095,7 @@ if (defined($ARGV[0])) {
 
 	if ($command =~ /^fxrender_(.*)/) {
 	    my $lives_config_dir = "$configdir/.lives-dir";
-	    smog_chdir($curworkdir);
+	    &smog_chdir($curworkdir);
 	    unlink "$curworkdir/pause";
 	    $command = $1;
 	    $status = $ARGV[2];
@@ -4108,7 +4106,7 @@ if (defined($ARGV[0])) {
 
 	    $img_ext = "." . $ARGV[7];
 	    $img_prefix = &get_img_prefix($img_ext);
-	    splice(@ARGV, 7, 1);
+	    $fps = $ARGV[8];
 
 	    if ($USE_WARNINGS) {
 		no warnings 'once';
@@ -4126,7 +4124,7 @@ if (defined($ARGV[0])) {
 		&clean_old;
 	    }
 	    if ($status == 0) {
-		$plugin_name = "$command";
+		$plugin_name = $command;
 	    }
 	    elsif ($status == 1) {
 		$plugin_dir = "$lives_config_dir/plugins/effects/rendered/custom";
@@ -4137,9 +4135,9 @@ if (defined($ARGV[0])) {
 		$plugin_name = "$plugin_dir/$command";
 	    }
 	    $smcom = "\"$plugin_name\" get_description";
-	    $fx_desc = smog_system_direct($smcom);
+	    $fx_desc = &smog_system_direct($smcom);
 	    if ($?) {
-		sig_system_error($smcom, $?);
+		&sig_system_error($smcom, $?);
 		exit 1;
 	    }
 	    $num_in_channels = (split( /\|/, $fx_desc))[3];
@@ -4152,7 +4150,7 @@ if (defined($ARGV[0])) {
 
 	    if ($num_in_channels == 2) {
 		# transitions get some extra params
-		$img_ext2 = ".".$ARGV[7];
+		$img_ext2 = "." . $ARGV[7];
 		$img_prefix2 = &get_img_prefix($img_ext2);
 		splice(@ARGV, 7, 1);
 		if ($USE_WARNINGS) {
@@ -4166,9 +4164,9 @@ if (defined($ARGV[0])) {
 	    }
 
 	    $fps = 0;
-	    $fx_caps = smog_system_direct("\"$plugin_name\" get_capabilities");
+	    $fx_caps = &smog_system_direct("\"$plugin_name\" get_capabilities");
 	    if ($?) {
-		sig_system_error($smcom, $?);
+		&sig_system_error($smcom, $?);
 		exit 1;
 	    }
 	    if ($fx_caps & 0x8000) {
@@ -4176,38 +4174,39 @@ if (defined($ARGV[0])) {
 		# we are so nice :-), we set:
 		# $handle,$curworkdir,$img_ext,$start,$end,$width,$height
 		# and for transitions $where, $chandle
-		# remove fxrender $handle $status start end width height (start2 clipboard)
-		splice(@ARGV, 0, 6);
+		# remove fxrender $handle $status start end width height img_ext fps (start2 clipboard)
+		##splice(@ARGV, 0, 6);
+		splice(@ARGV, 0, 8); ## 1 less, since we will replace $ARGV[0]
 		if ($num_in_channels == 2) {
-		    splice(@ARGV, 0, 2);
+		    splice(@ARGV, 0, 3);
 		}
 
 		$ARGV[0] = "process";
 		if ($status > 1) {
 		    $error = "";
-		    unless(eval "require (\"$plugin_name\")") {
+		    unless (eval "require (\"$plugin_name\")") {
 			$error = $@;
 		    }
-		    unless($error eq "") {
+		    unless ($error eq "") {
 			&sig_error("$plugin_name failed:", $error);
 		    }
 		} else {
-		    require("$plugin_name");
+		    require($plugin_name);
 		}
 		if ($num_in_channels > 0) {
 		    $end = $frame - 1;
 		    $frames = $frame - $start;
-		    unless(defined($fx_prev)) {
+		    unless (defined($fx_prev)) {
 			&mv_mgk;
 			if ($panic) {
-			    unlink "$pidfile";
+			    unlink $pidfile;
 			    exit 1;
 			}
 		    }
 		} else {
 		    $frames = &count_frames(1, $img_ext);
 		}
-		&sig_complete($nwidth, $nheight, $fps, $frames);
+		&sig_complete($width, $height, $fps, $frames);
 		exit 0;
 	    } else {
 		# other (non-perl) language
@@ -4220,20 +4219,20 @@ if (defined($ARGV[0])) {
 		#img_ext is also in ARGV, but never mind
 
 		if ($num_in_channels == 2) {
-		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
 		}
-		elsif($num_in_channels == 1) {
-		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+		elsif ($num_in_channels == 1) {
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
 		}
 		else {
-		    $err = smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
 		}
 		if (!$err) {
 		    if (defined(open IN, "< $res_file")) {
 			read IN, $size, 128;
 			($nwidth, $nheight) = split(" ", $size);
 			close IN;
-			unlink "$res_file";
+			unlink $res_file;
 		    }
 		} else {
 		    my (@err) = "";
@@ -4241,7 +4240,7 @@ if (defined($ARGV[0])) {
 			read IN, $errt, 512;
 			@err = split("\n", $errt);
 			close IN;
-			unlink "$res_file";
+			unlink $res_file;
 		    }
 		    &sig_error(@err);
 		    exit 1;
@@ -4249,7 +4248,7 @@ if (defined($ARGV[0])) {
 		unless(defined($fx_prev)) {
 		    &mv_mgk;
 		    if ($panic) {
-			unlink "$pidfile";
+			unlink $pidfile;
 			exit 1;
 		    }
 		}
@@ -4266,7 +4265,7 @@ if (defined($ARGV[0])) {
 	    $com = "tar --no-same-owner -xzf \"$proj_file\"";
 	    $smerr = &smog_system($com);
 	    if ($smerr) {
-		&sig_system_error("$com", $smerr);
+		&sig_system_error($com, $smerr);
 		exit 1;
 	    }
 	    &sig_complete;

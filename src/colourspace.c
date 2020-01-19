@@ -10522,7 +10522,7 @@ void *swscale_threadfunc(void *arg) {
 /**
    @brief resize a layer
 
-   width is in macropixels of the output palette
+   width is in PIXELS (not macropixels)
 
    opal_hint and oclamp_hint may be set to hint the desired output palette and YUV clamping
    this is simply to ensure more efficient resizing, and may be ignored

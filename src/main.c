@@ -1,6 +1,6 @@
 // main.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 
 /*  This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 3 or higher as published by
@@ -904,8 +904,9 @@ void replace_with_delegates(void) {
 
   deint_idx = weed_get_idx_for_hashname("deinterlacedeinterlace", FALSE);
   if (deint_idx > -1) {
-    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list = lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
-        LIVES_INT_TO_POINTER(deint_idx));
+    mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list
+      = lives_list_append(mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].list,
+                          LIVES_INT_TO_POINTER(deint_idx));
     mainw->fx_candidates[FX_CANDIDATE_DEINTERLACE].delegate = 0;
   }
 }
@@ -1813,7 +1814,8 @@ static void lives_init(_ign_opts *ign_opts) {
         // start jack transport polling
         if (prefs->jack_opts & JACK_OPTS_START_ASERVER) splash_msg(_("Starting jack audio server..."), SPLASH_LEVEL_LOAD_APLAYER);
         else {
-          if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."), SPLASH_LEVEL_LOAD_APLAYER);
+          if (prefs->jack_opts & JACK_OPTS_START_TSERVER) splash_msg(_("Starting jack transport server..."),
+                SPLASH_LEVEL_LOAD_APLAYER);
           else splash_msg(_("Connecting to jack server..."), SPLASH_LEVEL_LOAD_APLAYER);
         }
         if (!lives_jack_init()) {
@@ -2148,8 +2150,8 @@ boolean set_palette_colours(boolean force_reload) {
   palette->style = STYLE_PLAIN;
 
   // defaults
-  palette->frame_surround.red = palette->frame_surround.green = palette->frame_surround.blue = palette->frame_surround.alpha =
-                                  65535;
+  palette->frame_surround.red = palette->frame_surround.green
+                                = palette->frame_surround.blue = palette->frame_surround.alpha = 65535;
 
   palette->audcol.blue = palette->audcol.red = 16384;
   palette->audcol.green = palette->audcol.alpha = 65535;
@@ -3018,7 +3020,8 @@ static boolean lives_startup(livespointer data) {
       }
       if (!capable->has_composite) {
         startup_message_nonfatal_dismissable(
-          _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick if you want to use the merge function.\n"),
+          _("\nLiVES was unable to locate 'composite'. You should install composite and image-magick "
+            "if you want to use the merge function.\n"),
           WARN_MASK_NO_MPLAYER);
       }
       if (!capable->has_sox_sox) {
@@ -3995,10 +3998,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
           lives_snprintf(start_file, PATH_MAX, "%s", (tmp = lives_build_filename(dir, start_file, NULL)));
           lives_free(tmp);
           lives_free(dir);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   if (strlen(prefs->configdir) == 0) {
     lives_snprintf(prefs->configdir, PATH_MAX, "%s", capable->home_dir);
@@ -4149,7 +4151,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->open_device_menu, TRUE);
   lives_widget_set_sensitive(mainw->restore, TRUE);
   lives_widget_set_sensitive(mainw->recent_menu, TRUE);
-  lives_widget_set_sensitive(mainw->save_as, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && capable->has_encoder_plugins);
+  lives_widget_set_sensitive(mainw->save_as, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+                             && capable->has_encoder_plugins);
 #ifdef LIBAV_TRANSCODE
   lives_widget_set_sensitive(mainw->transcode, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 #endif
@@ -4241,7 +4244,8 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+  lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
+                             && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
   lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
                              cfile->pointer_time > 0.));
   lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
@@ -4270,8 +4274,10 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->open_yuv4m, TRUE);
 #endif
 
-  lives_widget_set_sensitive(mainw->select_new, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->insert_start > 0));
-  lives_widget_set_sensitive(mainw->select_last, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->undo_start > 0));
+  lives_widget_set_sensitive(mainw->select_new, !CURRENT_CLIP_IS_CLIPBOARD
+                             && CURRENT_CLIP_IS_VALID && (cfile->insert_start > 0));
+  lives_widget_set_sensitive(mainw->select_last, !CURRENT_CLIP_IS_CLIPBOARD
+                             && CURRENT_CLIP_IS_VALID && (cfile->undo_start > 0));
   lives_widget_set_sensitive(mainw->lock_selwidth, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
 
   lives_widget_set_sensitive(mainw->undo, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && cfile->undoable);
@@ -4327,9 +4333,10 @@ void sensitize(void) {
     if (!(mainw->files[i] == NULL)) {
       if (!(mainw->files[i]->menuentry == NULL)) {
         lives_widget_set_sensitive(mainw->files[i]->menuentry, TRUE);
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+
 }
 
 
@@ -4470,7 +4477,8 @@ void procw_desensitize(void) {
   lives_widget_set_sensitive(mainw->int_audio_checkbutton, FALSE);
   lives_widget_set_sensitive(mainw->ext_audio_checkbutton, FALSE);
 
-  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
+  if (!CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_IS_VALID
+      && (cfile->menuentry != NULL || cfile->opening) && !mainw->preview) {
     // an effect etc,
     lives_widget_set_sensitive(mainw->loop_video, CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO);
     lives_widget_set_sensitive(mainw->loop_continue, TRUE);
@@ -5618,7 +5626,8 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
   if (pixbuf == NULL) return FALSE;
 
   if (lives_pixbuf_get_has_alpha(pixbuf)) {
-    /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own. We need to hence reset it back to opaque */
+    /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own.
+       We need to hence reset it back to opaque */
     lives_pixbuf_set_opaque(pixbuf);
     weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
   } else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
@@ -5976,29 +5985,27 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 }
 
 
-boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
-  // pull a frame from an external source into a layer
-  // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
-  // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
-  // image_ext is used if the source is an image file (eg. "jpg" or "png")
-
+/** pull a frame from an external source into a layer
+    the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
+    tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
+    image_ext is used if the source is an image file (eg. "jpg" or "png")
+*/
+LIVES_GLOBAL_INLINE boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
   return pull_frame_at_size(layer, image_ext, tc, 0, 0, WEED_PALETTE_END);
 }
 
 
+/** block until layer pixel_data is ready. We may also deinterlace and overlay subs here
+    if effects were applied then the frame_layer can depend on other layers, however
+    these wil have been checked already when the effects were applied
+*/
 void check_layer_ready(weed_plant_t *layer) {
-  // block until layer pixel_data is ready. We may also deinterlace and overlay subs here
-  // if effects were applied then the frame_layer can depend on other layers, however
-  // these wil have been checked already when the effects were applied
-
-  int clip;
-  int frame;
-  int error;
+  int clip, frame;
   lives_clip_t *sfile;
 
   if (layer == NULL) return;
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) {
-    lives_thread_t *frame_thread = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, &error);
+    lives_thread_t *frame_thread = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
     int ret = lives_thread_join(*frame_thread, NULL);
     weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
     if (ret != 0) {
@@ -6010,15 +6017,14 @@ void check_layer_ready(weed_plant_t *layer) {
     free(frame_thread);
 
     if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_DEINTERLACE) &&
-        weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, &error) == WEED_TRUE) {
-      int error;
-      weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, &error);
+        weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
+      weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
       deinterlace_frame(layer, tc);
       weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
     }
 
-    clip = weed_get_int_value(layer, WEED_LEAF_CLIP, &error);
-    frame = weed_get_int_value(layer, WEED_LEAF_FRAME, &error);
+    clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
+    frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
 
     if (clip != -1) {
       sfile = mainw->files[clip];
@@ -6695,10 +6701,9 @@ void load_frame_image(int frame) {
                   } else {
                     // add new clone for nclip
                     mainw->track_decoders[i] = clone_decoder(nclip);
-                  }
-                }
-              }
-            }
+		    // *INDENT-OFF*
+                  }}}}
+	    // *INDENT-ON*
 
             mainw->old_active_track_list[i] = mainw->active_track_list[i];
 
@@ -7267,9 +7272,9 @@ void load_frame_image(int frame) {
 
       if (return_layer != NULL) {
         int width = MIN(weed_layer_get_width(mainw->frame_layer)
-                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
+                        * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer)),
                         weed_layer_get_width(return_layer)
-                        / weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
+                        * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(return_layer)));
         int height = MIN(weed_layer_get_height(mainw->frame_layer), weed_layer_get_height(return_layer));
         if (resize_layer(return_layer, width, height, LIVES_INTERP_FAST, WEED_PALETTE_END, 0))
           save_to_scrap_file(return_layer);
@@ -7441,18 +7446,11 @@ void load_frame_image(int frame) {
 #if GTK_CHECK_VERSION(3, 0, 0)
     xwidth = gdk_window_get_width(mainw->foreign_window);
     xheight = gdk_window_get_height(mainw->foreign_window);
-    if ((pixbuf = gdk_pixbuf_get_from_window(mainw->foreign_window,
-                  0, 0,
-                  xwidth,
-                  xheight
-                                            )) != NULL) {
+    if ((pixbuf = gdk_pixbuf_get_from_window(mainw->foreign_window, 0, 0, xwidth, xheight)) != NULL) {
 #else
     gdk_window_get_size(mainw->foreign_window, &xwidth, &xheight);
     if ((pixbuf = gdk_pixbuf_get_from_drawable(NULL, GDK_DRAWABLE(mainw->foreign_window),
-                  mainw->foreign_cmap, 0, 0, 0, 0,
-                  xwidth,
-                  xheight
-                                              )) != NULL) {
+                  mainw->foreign_cmap, 0, 0, 0, 0, xwidth, xheight)) != NULL) {
 #endif
 #endif
 #ifdef GUI_QT
@@ -7845,10 +7843,9 @@ void load_frame_image(int frame) {
           if (mainw->files[old_file]->proc_ptr != NULL) {
             lives_widget_destroy(mainw->files[old_file]->proc_ptr->processing);
             lives_freep((void **)&mainw->files[old_file]->proc_ptr);
-          }
-        }
-      }
-    }
+	    // *INDENT-OFF*
+          }}}}
+    // *INDENT-ON*
 
     if (!cfile->opening) {
       sensitize();
@@ -7910,7 +7907,8 @@ void load_frame_image(int frame) {
       lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO));
       lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO));
-      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
+                                 && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
       lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO));
@@ -8242,10 +8240,10 @@ void load_frame_image(int frame) {
         new_file != mainw->blend_file && !mainw->is_rendering) {
       // switched from generator to another clip, end the generator
       // will cause recursion, but second time around cfile->ext_src should be NULL
-      int error, key;
+      int key;
       weed_plant_t *inst = cfile->ext_src;
       if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file;
-      key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+      key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
       rte_key_on_off(key + 1, FALSE);
       return;
     }
@@ -8434,10 +8432,9 @@ void load_frame_image(int frame) {
       if (CURRENT_CLIP_IS_VALID) {
         if (cfile->clip_type == CLIP_TYPE_YUV4MPEG || cfile->clip_type == CLIP_TYPE_VIDEODEV) {
           if (mainw->camframe == NULL) {
-            LiVESError *error = NULL;
             char *fname = lives_strdup_printf("%s.%s", THEME_FRAME_IMG_LITERAL, LIVES_FILE_EXT_JPG);
             char *tmp = lives_build_filename(prefs->prefix_dir, THEME_DIR, LIVES_THEME_CAMERA, fname, NULL);
-            mainw->camframe = lives_pixbuf_new_from_file(tmp, &error);
+            mainw->camframe = lives_pixbuf_new_from_file(tmp, NULL);
             if (mainw->camframe != NULL) lives_pixbuf_saturate_and_pixelate(mainw->camframe, mainw->camframe, 0.0, FALSE);
             lives_free(fname);
             lives_free(tmp);

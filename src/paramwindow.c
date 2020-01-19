@@ -92,7 +92,10 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   boolean def_ok = FALSE;
   int i;
 
-  if (button != NULL) dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  if (button != NULL) {
+    lives_widget_set_sensitive(LIVES_WIDGET(button), FALSE);
+    dialog = lives_widget_get_toplevel(LIVES_WIDGET(button));
+  }
 
   if (dialog != NULL && LIVES_IS_DIALOG(dialog)) {
     if (lives_dialog_get_response_for_widget(LIVES_DIALOG(dialog), LIVES_WIDGET(button)) == LIVES_RESPONSE_OK) {
@@ -109,6 +112,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
 
   if (!special_cleanup(def_ok)) {
     lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_RETRY);
+    if (button != NULL) lives_widget_set_sensitive(LIVES_WIDGET(button), TRUE);
     return;
   }
 
@@ -143,7 +147,9 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
   }
 
   if (!def_ok) {
-    if (rfx != NULL && rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
+    if (rfx != NULL && mainw->is_generating && rfx->source_type == LIVES_RFX_SOURCE_NEWCLIP &&
+        CURRENT_CLIP_IS_NORMAL && rfx->source == cfile &&
+        rfx->name != NULL && rfx->status != RFX_STATUS_WEED && rfx->status != RFX_STATUS_SCRAP &&
         rfx->num_in_channels == 0 && rfx->min_frames >= 0 && !rfx->is_template) {
       // for a generator, we silently close the (now) temporary file we would have generated frames into
       mainw->suppress_dprint = TRUE;
@@ -152,6 +158,8 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
       mainw->keep_pre = FALSE;
       mainw->is_generating = FALSE;
+      rfx->source = NULL;
+      rfx->source_type = LIVES_RFX_SOURCE_RFX;
     }
   }
 
@@ -625,6 +633,43 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
 }
 
 
+static void xspinw_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+  cfile->hsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  reset_framedraw_preview();
+}
+
+static void xspinh_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+  cfile->vsize = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  reset_framedraw_preview();
+}
+
+static void xspinfr_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+  cfile->end = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+}
+
+static void xspinfps_changed(LiVESSpinButton *spinbutton, livespointer user_data) {
+  cfile->fps = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
+  reset_framedraw_preview();
+}
+
+static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
+  // add nframes, fps, width, heights
+  LiVESWidget *sp_width, *sp_height, *sp_frames, *sp_fps;
+  LiVESWidget *frame = add_video_options(&sp_width, cfile->hsize, &sp_height, cfile->vsize, &sp_fps, cfile->fps,
+                                         &sp_frames, cfile->end, TRUE, NULL);
+  lives_box_pack_start(LIVES_BOX(vbox), frame, FALSE, TRUE, 0);
+
+  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_width), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(xspinw_changed), NULL);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_height), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(xspinh_changed), NULL);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_frames), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(xspinfr_changed), NULL);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(sp_fps), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(xspinfps_changed), NULL);
+}
+
+
 LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   _fx_dialog *fxdialog;
   uint32_t chk_mask;
@@ -699,11 +744,24 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
       return NULL;
     }
 
+    if (CURRENT_CLIP_IS_NORMAL) {
+      mainw->files[new_file]->hsize = cfile->hsize;
+      mainw->files[new_file]->vsize = cfile->vsize;
+      mainw->files[new_file]->fps = cfile->fps;
+    } else {
+      mainw->files[new_file]->hsize = DEF_GEN_WIDTH;
+      mainw->files[new_file]->vsize = DEF_GEN_HEIGHT;
+      mainw->files[new_file]->fps = DEF_FPS;
+    }
+
     mainw->is_generating = TRUE;
     mainw->current_file = new_file;
+    rfx->source_type = LIVES_RFX_SOURCE_NEWCLIP;
+    rfx->source = cfile;
 
     // dummy values
-    cfile->progress_start = 1;
+    cfile->start = 1;
+    cfile->end = 100;
   }
 
   if (!no_process && rfx->num_in_channels > 0) {
@@ -768,16 +826,11 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
     lives_widget_set_vexpand(pbox, TRUE);
 
     // add preview window
-    if (rfx->num_in_channels > 0) {
+    if (rfx->num_in_channels > 0 || !(rfx->props & RFX_PROPS_BATCHG)) {
       mainw->framedraw_frame = cfile->start;
       widget_add_framedraw(LIVES_VBOX(pbox), cfile->start, cfile->end, !(rfx->props & RFX_PROPS_MAY_RESIZE),
                            cfile->hsize, cfile->vsize, rfx);
       if (rfx->props & RFX_PROPS_MAY_RESIZE) mainw->fd_max_frame = cfile->end;
-    } else {
-      if (!(rfx->props & RFX_PROPS_BATCHG)) {
-        mainw->framedraw_frame = 0;
-        widget_add_framedraw(LIVES_VBOX(pbox), 1, 1, TRUE, MAX_PRE_X, MAX_PRE_Y, rfx); // create a (drawable on) preview window
-      }
     }
 
     if (!(rfx->props & RFX_PROPS_BATCHG)) {
@@ -796,7 +849,8 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
 
     if (!no_process || is_defaults || rfx->status == RFX_STATUS_SCRAP) {
       if (!is_defaults) {
-        fx_dialog[didx]->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_CANCEL,
+        fx_dialog[didx]->cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog),
+                                        LIVES_STOCK_CANCEL,
                                         NULL,
                                         LIVES_RESPONSE_CANCEL);
         fx_dialog[didx]->okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(fx_dialog[didx]->dialog), LIVES_STOCK_OK, NULL,
@@ -892,7 +946,6 @@ _fx_dialog *on_fx_pre_activate(lives_rfx_t *rfx, boolean is_realtime, LiVESWidge
           lives_signal_connect_after(LIVES_GUI_OBJECT(fx_dialog[didx]->resetbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                                      LIVES_GUI_CALLBACK(rte_reset_defs_clicked),
                                      rfx);
-
         }
         lives_signal_connect(LIVES_GUI_OBJECT(fx_dialog[didx]->cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                              LIVES_GUI_CALLBACK(rte_set_defs_cancel),
@@ -967,10 +1020,12 @@ static boolean fmt_match(char *fmt_string) {
 }
 
 
-/** @brief make a dynamic parameter window
+/**
+   @brief make a dynamic parameter window
 
    if top_vbox is NULL: we just check for displayable params, returning FALSE there are none to be shown.
-   otherwise, adds widgets to top_vbox, returning FALSE if nothing was added */
+   otherwise, adds widgets to top_vbox, returning FALSE if nothing was added
+*/
 boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_param_t *param = NULL;
 
@@ -1103,8 +1158,10 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       if (mainw->multitrack == NULL) {
         if (chk_params) return TRUE;
         add_gen_to(LIVES_BOX(param_vbox), rfx);
-        has_param = TRUE;
       } else mainw->gen_to_clipboard = FALSE;
+      /// add nframes, fps, width, height
+      add_genparams(param_vbox, rfx);
+      has_param = TRUE;
     }
 
     if (!chk_params) {
@@ -1993,7 +2050,7 @@ void after_boolean_param_toggled(LiVESToggleButton *togglebutton, lives_rfx_t *r
   ireinit++;
 
   set_bool_param(param->value, new_bool);
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
@@ -2069,7 +2126,7 @@ void after_param_value_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   ireinit++;
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
 
   if (rfx->status == RFX_STATUS_WEED && mainw->record && !mainw->record_paused && LIVES_IS_PLAYING &&
       (prefs->rec_opts & REC_EFFECTS)) {
@@ -2344,7 +2401,7 @@ void after_param_red_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   set_colRGB24_param(param->value, new_red, old_value.green, old_value.blue);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
@@ -2408,7 +2465,7 @@ void after_param_green_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   set_colRGB24_param(param->value, old_value.red, new_green, old_value.blue);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
@@ -2471,7 +2528,7 @@ void after_param_blue_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   set_colRGB24_param(param->value, old_value.red, old_value.green, new_blue);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
@@ -2532,7 +2589,7 @@ void after_param_alpha_changed(LiVESSpinButton *spinbutton, lives_rfx_t *rfx) {
 
   get_colRGBA32_param(param->value, &old_value);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
 
   set_colRGBA32_param(param->value, old_value.red, old_value.green, old_value.blue, new_alpha);
   param->change_blocked = TRUE;
@@ -2618,7 +2675,7 @@ void after_param_text_changed(LiVESWidget *textwidget, lives_rfx_t *rfx) {
 
   param->value = lives_strdup(new_text);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
 
   if (rfx->status == RFX_STATUS_WEED) {
@@ -2699,7 +2756,7 @@ void after_string_list_changed(LiVESWidget *entry, lives_rfx_t *rfx) {
 
   set_int_param(param->value, new_index);
 
-  if (mainw->framedraw_preview != NULL) lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  if (mainw->framedraw_preview != NULL) reset_framedraw_preview();
   param->change_blocked = TRUE;
   if (rfx->status == RFX_STATUS_WEED) {
     weed_plant_t *inst = (weed_plant_t *)rfx->source;

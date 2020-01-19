@@ -3231,7 +3231,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   frame = add_video_options(&prefsw->spinbutton_mt_def_width, mainw->multitrack == NULL ? prefs->mt_def_width : cfile->hsize,
                             &prefsw->spinbutton_mt_def_height,
                             mainw->multitrack == NULL ? prefs->mt_def_height : cfile->vsize, &prefsw->spinbutton_mt_def_fps,
-                            mainw->multitrack == NULL ? prefs->mt_def_fps : cfile->fps, FALSE, NULL);
+                            mainw->multitrack == NULL ? prefs->mt_def_fps : cfile->fps, NULL, 0, FALSE, NULL);
 
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_multitrack), frame, FALSE, FALSE, widget_opts.packing_height);
 

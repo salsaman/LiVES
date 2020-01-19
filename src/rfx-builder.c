@@ -3941,7 +3941,8 @@ void on_import_rfx_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (lives_file_test(rfx_script_to, LIVES_FILE_TEST_EXISTS)) {
     // needs switch...eventually
     do_blocking_error_dialog((tmpx = lives_strdup_printf
-                                     (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"), basename)));
+                                     (_("\nCustom script file:\n%s\nalready exists.\nPlease delete it first, or rename the import script.\n"),
+                                      basename)));
     lives_free(tmpx);
     lives_free(rfx_script_to);
     lives_free(filename);
@@ -4065,7 +4066,8 @@ char *prompt_for_script_name(const char *sname, lives_rfx_status_t status) {
                                           LIVES_BOX(hbox), NULL);
 
     if (copy_mode) {
-      lives_signal_connect(LIVES_GUI_OBJECT(status_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(on_script_status_changed),
+      lives_signal_connect(LIVES_GUI_OBJECT(status_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                           LIVES_GUI_CALLBACK(on_script_status_changed),
                            (livespointer)script_combo);
     }
   }
@@ -4712,9 +4714,10 @@ void add_rfx_effects(lives_rfx_status_t status) {
                                  (livespointer)rfx);
           }
         } else {
-          mainw->fx_candidates[FX_CANDIDATE_RESIZER].func = lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-              LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-              (livespointer)rfx);
+          mainw->fx_candidates[FX_CANDIDATE_RESIZER].func
+            = lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                                   LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
+                                   (livespointer)rfx);
         }
 
         if (rfx->min_frames >= 0) lives_widget_set_sensitive(menuitem, FALSE);
@@ -4743,18 +4746,12 @@ void add_rfx_effects(lives_rfx_status_t status) {
           break;
         }
 
-        if (rfx->params == NULL) {
-          lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_render_fx_activate),
-                               (livespointer)rfx);
-        } else {
-          lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                               LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
-                               (livespointer)rfx);
-        }
-      }
-    }
-  }
+        lives_signal_connect(LIVES_GUI_OBJECT(menuitem), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_render_fx_pre_activate),
+                             (livespointer)rfx);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 
   threaded_dialog_spin(0.);
   update_rfx_menus();

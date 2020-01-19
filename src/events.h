@@ -238,7 +238,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, ticks_t start_tc
 render_details *create_render_details(int type);
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
-                               LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget *extra);
+                               LiVESWidget **spfps, double deffps, LiVESWidget **spframes, int defframes,
+                               boolean add_aspect, LiVESWidget *extra);
 
 LiVESWidget *add_audio_options(LiVESWidget **cbbackaudio, LiVESWidget **cbpertrack);
 

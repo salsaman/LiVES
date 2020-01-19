@@ -30,24 +30,18 @@ xoffs|_X offset|num0|0|0|10000|
 yoffs|_Y offset|num0|0|0|10000|
 fcol|_Fill colour|colRGB24|255|255|255|
 scol|_Stroke colour|colRGB24|255|255|255|
-psize|_Point size|num0|32|10|120|
+psize|_Point size|num0|64|10|240|
 bgcol|_Background colour|colRGB24|0|0|0|
-nframes|Number of _frames|num0|100|1|100000|
-width|Frame _width|num0|640|2|10000|
-height|Frame _height|num0|480|2|10000|
 font|_Font|string_list|0|Default|AvantGarde-Book|AvantGarde-BookOblique|AvantGarde-Demi|AvantGarde-DemiOblique|Bookman-Demi|Bookman-DemiItalic|Bookman-Light|Bookman-LightItalic|Courier|Courier-Bold|Courier-Oblique|Courier-BoldOblique|Helvetica|Helvetica-Bold|Helvetica-BoldOblique|Helvetica-Narrow|Helvetica-Narrow-Oblique|Helvetica-Narrow-Bold|Helvetica-Narrow-BoldOblique|NewCenturySchlbk-Roman|NewCenturySchlbk-Italic|NewCenturySchlbk-Bold|NewCenturySchlbk-BoldItalic|Palatino-Roman|Palatino-Italic|Palatino-Bold|Palatino-BoldItalic|Times-Roman|Times-Bold|Times-Italic|Times-BoldItalic|Symbol||
-fps|_Frames per second|num3|25.000|1.000|200.000|
 </params>
 
 <param_window>
-layout|p7|p11|
-layout|p8|p9|
 layout|p1|p2|
 layout|p0|
 layout|p3|
 layout|p4|
 layout|p6|
-layout|p10|p5|
+layout|p7|p5|
 </param_window>
 
 <properties>
@@ -59,94 +53,97 @@ layout|p10|p5|
 </language_code>
 
 <pre>
-$end=$p7;
-$cstring0=&RGB24_to_string($p6_red,$p6_green,$p6_blue);
+$cstring0 = &RGB24_to_string($p6_red, $p6_green, $p6_blue);
 
-system("$convert_command -size $p8!x$p9! xc:$cstring0 $out_prefix"."temp$out_ext");
+system("$convert_command -size $width!x$height! xc:$cstring0 $out_prefix" . "temp$out_ext");
 
-$p10--;
+$p7--;
 
-if ($p10==-1) {
+if ($p7==-1) {
 	$font="";
- } elsif ($p10==0) {
+ } elsif ($p7==0) {
    $fo="AvantGarde-Book";
- } elsif ($p10==1) {
+ } elsif ($p7==1) {
   $fo="AvantGarde-BookOblique";
- } elsif ($p10==2) {
+ } elsif ($p7==2) {
    $fo="AvantGarde-Demi";
- } elsif ($p10==3) {
+ } elsif ($p7==3) {
    $fo="AvantGarde-DemiOblique";
- } elsif ($p10==4) {
+ } elsif ($p7==4) {
    $fo="Bookman-Demi";
- } elsif ($p10==5) {
+ } elsif ($p7==5) {
    $fo="Bookman-DemiItalic";
- } elsif ($p10==6) { 
+ } elsif ($p7==6) {
    $fo="Bookman-Light";
- } elsif ($p10==7) {
+ } elsif ($p7==7) {
    $fo="Bookman-LightItalic";
- } elsif ($p10==8) {
+ } elsif ($p7==8) {
    $fo="Courier";
- } elsif ($p10==9) { 
+ } elsif ($p7==9) {
    $fo="Courier-Bold";
- } elsif ($p10==10) {
+ } elsif ($p7==10) {
    $fo="Courier-Oblique";
- } elsif ($p10==11) {
+ } elsif ($p7==11) {
    $fo="Courier-BoldOblique";
- } elsif ($p10==12) { 
+ } elsif ($p7==12) {
    $fo="Helvetica";
- } elsif ($p10==13) { 
+ } elsif ($p7==13) {
    $fo="Helvetica-Bold";
- } elsif ($p10==14) {
+ } elsif ($p7==14) {
    $fo="Helvetica-BoldOblique";
- } elsif ($p10==15) {
+ } elsif ($p7==15) {
    $fo="Helvetica-Narrow";
- } elsif ($p10==16) {
+ } elsif ($p7==16) {
    $fo="Helvetica-Narrow-Oblique";
- } elsif ($p10==17) {
+ } elsif ($p7==17) {
    $fo="Helvetica-Narrow-Bold";
- } elsif ($p10==18) {
+ } elsif ($p7==18) {
    $fo="Helvetica-Narrow-BoldOblique";
- } elsif ($p10==19) {
+ } elsif ($p7==19) {
    $fo="NewCenturySchlbk-Roman";
- } elsif ($p10==20) {
+ } elsif ($p7==20) {
    $fo="NewCenturySchlbk-Italic";
- } elsif ($p10==21) {
+ } elsif ($p7==21) {
    $fo="NewCenturySchlbk-Bold  ";
- } elsif ($p10==22) {
+ } elsif ($p7==22) {
    $fo="NewCenturySchlbk-BoldItalic";
- } elsif ($p10==23) {
+ } elsif ($p7==23) {
    $fo="Palatino-Roman";
- } elsif ($p10==24) { 
+ } elsif ($p7==24) {
    $fo="Palatino-Italic";
- } elsif ($p10==25) { 
+ } elsif ($p7==25) {
    $fo="Palatino-Bold  "; 
- } elsif ($p10==26) {
+ } elsif ($p7==26) {
    $fo="Palatino-BoldItalic";
- } elsif ($p10==27) { 
+ } elsif ($p7==27) {
    $fo="Times-Roman";
- } elsif ($p10==28) { 
+ } elsif ($p7==28) {
    $fo="Times-Bold ";
- } elsif ($p10==29) {
+ } elsif ($p7==29) {
    $fo="Times-Italic";
- } elsif ($p10==30) { 
+ } elsif ($p7==30) {
    $fo="Times-BoldItalic";
- } elsif ($p10==31) { 
+ } elsif ($p7==31) {
    $fo="Symbol";
  }
 
-if ($p10>=0) {
-  $font="-font $fo";
+if ($p7 >= 0) {
+  $font = "-font $fo";
 }
-$fps=$p11;
+$cstring1 = &RGB24_to_string($p3_red, $p3_green, $p3_blue);
+$cstring2 = &RGB24_to_string($p4_red, $p4_green, $p4_blue);
+
 </pre>
 
 <loop>
-$cstring1=&RGB24_to_string($p3_red,$p3_green,$p3_blue);
-$cstring2=&RGB24_to_string($p4_red,$p4_green,$p4_blue);
-
-system("$convert_command $out_prefix"."temp$out_ext -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 -draw \"text $p1 $p2 '$p0'\" $out_prefix$out");
-
-$nwidth=$p8; $nheight=$p9;
+if ($frame == $start) {
+  system("$convert_command $out_prefix" . "temp$out_ext -gravity Center -fill $cstring1 -stroke $cstring2 $font -pointsize $p5 " .
+			 "-draw \"text $p1 $p2 '$p0' gravity Center\" $out_prefix$out");
+  $rdyfile = $out;
+}
+else {
+ `cp $rdyfile $out`;
+ }
 </loop>
 
 <post>
@@ -154,10 +151,6 @@ unlink "temp$out_ext";
 </post>
 
 <onchange>
-3|$p4_red=$p3_red;$p4_green=$p3_green;$p4_blue=$p3_blue;
-init|$p1_max=$p8; $p2_max=$p9;
-init|if ($width>0) {$p8=$width}; if ($height>0) {$p9=$height};
-8|$p1_max=$p8;
-9|$p2_max=$p9;
+3|$p4_red=$p3_red; $p4_green=$p3_green; $p4_blue=$p3_blue;
 </onchange>
 

@@ -388,7 +388,8 @@ typedef enum {
 
 typedef enum {
   LIVES_RFX_SOURCE_RFX = 0,
-  LIVES_RFX_SOURCE_WEED
+  LIVES_RFX_SOURCE_WEED,
+  LIVES_RFX_SOURCE_NEWCLIP
 } lives_rfx_source_t;
 
 typedef enum {

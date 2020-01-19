@@ -479,8 +479,9 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES 4096
+#define BUFFER_FILL_BYTES_SMALL 4096
 #define BUFFER_FILL_BYTES_MED 32768
+#define BUFFER_FILL_BYTES_LARGE 262144
 
 static ssize_t file_buffer_flush(int fd) {
   // returns number of bytes written to file io, or error code
@@ -617,9 +618,10 @@ int lives_close_buffered(int fd) {
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   ssize_t res;
   ssize_t delta = 0;
-  size_t bufsize = BUFFER_FILL_BYTES;
+  size_t bufsize = BUFFER_FILL_BYTES_SMALL;
 
   if (fbuff->bufsztype == 1) bufsize = BUFFER_FILL_BYTES_MED;
+  else if (fbuff->bufsztype == 2) bufsize = BUFFER_FILL_BYTES_LARGE;
 
   if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc(bufsize >> 3, 8);
   if (fbuff->reversed) delta = bufsize >> 1;
@@ -744,8 +746,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   if (count <= (BUFFER_FILL_BYTES_MED >> 2)) {
     int bufsztype = fbuff->bufsztype;
-    if (ocount <= (BUFFER_FILL_BYTES >> 2)) fbuff->bufsztype = 0;
-    else fbuff->bufsztype = 1;
+    fbuff->bufsztype = 2;
+    if (count <= (BUFFER_FILL_BYTES_MED >> 2)) fbuff->bufsztype = 1;
+    if (ocount <= (BUFFER_FILL_BYTES_SMALL >> 2)) fbuff->bufsztype = 0;
+
     if (fbuff->bufsztype != bufsztype) {
       lives_freep((void **)&fbuff->buffer);
     }
@@ -826,7 +830,8 @@ ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boole
 
   file_buffer_flush(fd);
   while (count > 0) {
-    size_t bigbsize = 128 * 1024, bytes;
+    size_t bytes;
+    size_t bigbsize = BUFFER_FILL_BYTES_LARGE;
     if (bigbsize > count) bigbsize = count;
     bytes = lives_write(fd, buf + res, bigbsize, allow_fail);
     if (bytes > 0) {
@@ -846,6 +851,8 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
   size_t space_left;
+  int bufsztype = 0;
+  size_t buffsize;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_write_buffered: no file buffer found");
@@ -858,28 +865,64 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   }
 
   if (fbuff->buffer == NULL) {
-    fbuff->buffer = (uint8_t *)lives_malloc(BUFFER_FILL_BYTES);
+    fbuff->bufsztype = 0;
+    buffsize = BUFFER_FILL_BYTES_SMALL;
+    if (count > BUFFER_FILL_BYTES_SMALL >> 2) {
+      fbuff->bufsztype = 1;
+      buffsize = BUFFER_FILL_BYTES_MED;
+    }
+    if (count > BUFFER_FILL_BYTES_MED >> 2) {
+      fbuff->bufsztype = 2;
+      buffsize = BUFFER_FILL_BYTES_LARGE;
+    }
+    fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
     fbuff->ptr = fbuff->buffer;
     fbuff->bytes = 0;
   }
 
   fbuff->allow_fail = allow_fail;
+  if (fbuff->bufsztype == 0)
+    buffsize = BUFFER_FILL_BYTES_SMALL;
+  else if (fbuff->bufsztype == 1)
+    buffsize = BUFFER_FILL_BYTES_MED;
+  else
+    buffsize = BUFFER_FILL_BYTES_LARGE;
 
   // write bytes from fbuff
   while (count) {
-    space_left = BUFFER_FILL_BYTES - fbuff->bytes;
+    space_left = buffsize - fbuff->bytes;
     if (space_left < count) {
       lives_memcpy(fbuff->ptr, buf, space_left);
-      fbuff->bytes = BUFFER_FILL_BYTES;
+      fbuff->bytes = buffsize;
       res = file_buffer_flush(fd);
       retval += res;
-      if (res < BUFFER_FILL_BYTES) return (res < 0 ? res : retval);
-#ifdef HAVE_POSIX_FALLOCATE
-      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
-      posix_fallocate(fbuff->fd, fbuff->offset, BUFFER_FILL_BYTES);
-#endif
+      if (res < buffsize) return (res < 0 ? res : retval);
       count -= space_left;
       buf += space_left;
+
+      bufsztype = fbuff->bufsztype;
+      fbuff->bufsztype = 1;
+      if (count > BUFFER_FILL_BYTES_SMALL >> 2) {
+        fbuff->bufsztype = 1;
+      }
+      if (count > BUFFER_FILL_BYTES_MED >> 2) {
+        fbuff->bufsztype = 2;
+      }
+      if (bufsztype != fbuff->bufsztype) {
+        buffsize = BUFFER_FILL_BYTES_SMALL;
+        if (fbuff->bufsztype == 1) {
+          buffsize = BUFFER_FILL_BYTES_MED;
+        } else if (fbuff->bufsztype == 2) {
+          buffsize = BUFFER_FILL_BYTES_LARGE;
+        }
+        fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
+        fbuff->ptr = fbuff->buffer;
+        fbuff->bytes = 0;
+      }
+#ifdef HAVE_POSIX_FALLOCATE
+      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
+      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
+#endif
     } else {
       lives_memcpy(fbuff->ptr, buf, count);
       retval += count;

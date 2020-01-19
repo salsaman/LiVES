@@ -153,7 +153,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (is_preview) {
     // generators start at 1, even though they have no initial frames
-    cfile->progress_start = cfile->undo_start = rfx->num_in_channels == 0 ? 1 : cfile->start;
+    cfile->progress_start = cfile->undo_start = cfile->start;
     cfile->progress_end = cfile->undo_end = cfile->end;
   } else if (rfx->num_in_channels != 2) {
     cfile->progress_start = cfile->undo_start = cfile->start;
@@ -170,13 +170,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
     if (rfx->num_in_channels == 2) {
       // transition has a few extra bits
-      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %s %d \"%s/%s\"", cfile->handle, rfx->status,
+      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f %s %d \"%s/%s\"", cfile->handle, rfx->status,
                                      cfile->progress_start, cfile->progress_end, cfile->hsize, cfile->vsize,
-                                     get_image_ext_for_type(cfile->img_type), get_image_ext_for_type(clipboard->img_type),
+                                     get_image_ext_for_type(cfile->img_type), cfile->fps,
+                                     get_image_ext_for_type(clipboard->img_type),
                                      clipboard->start, prefs->workdir, clipboard->handle);
     } else {
-      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s", cfile->handle, rfx->status, cfile->progress_start,
-                                     cfile->progress_end, cfile->hsize, cfile->vsize, get_image_ext_for_type(cfile->img_type));
+      pdefault = lives_strdup_printf("%s %d %d %d %d %d %s %f", cfile->handle, rfx->status, cfile->progress_start,
+                                     cfile->progress_end, cfile->hsize, cfile->vsize, get_image_ext_for_type(cfile->img_type), cfile->fps);
     }
     // and append params
     if (is_preview) {
@@ -185,7 +186,6 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     } else cmd = lives_strdup("fxrender");
     fxcommand = lives_strconcat(prefs->backend, " \"", cmd, "_", plugin_name, "\" ", pdefault,
                                 (tmp = param_marshall(rfx, FALSE)), NULL);
-
     lives_free(plugin_name);
     lives_free(cmd);
     lives_free(pdefault);
@@ -478,6 +478,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
       if (!got_no_frames) mainw->current_file = new_file;
     } else {
+      // TODO - use check_clip_intergity()
       char *tfile = make_image_file_name(cfile, cfile->frames, get_image_ext_for_type(cfile->img_type));
 
       if (!lives_file_test(tfile, LIVES_FILE_TEST_EXISTS)) {

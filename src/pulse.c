@@ -1504,7 +1504,6 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_battr.prebuf = -1;
   }
 
-
   pa_mloop_lock();
   if (pulse_server_rate == 0) {
     pa_op = pa_context_get_server_info(pdriver->con, pulse_server_cb, pa_mloop);
@@ -1855,13 +1854,13 @@ err123:
 }
 
 
+/**
+  @brief prepare to play file fileno
+  - set loop mode
+  - check if we need to reconnect
+  - set vals
+*/
 void pulse_aud_pb_ready(int fileno) {
-  // TODO - can we merge with switch_audio_clip() ?
-
-  // prepare to play file fileno
-  // - set loop mode
-  // - check if we need to reconnect
-  // - set vals
   char *tmpfilename = NULL;
   lives_clip_t *sfile = mainw->files[fileno];
   int asigned = !(sfile->signed_endian & AFORM_UNSIGNED);
@@ -1918,7 +1917,6 @@ void pulse_aud_pb_ready(int fileno) {
         if (seek_err) {
           if (pulse_try_reconnect()) pulse_audio_seek_bytes(mainw->pulsed, sfile->aseek_pos, sfile);
         }
-        //mainw->pulsed->in_use = TRUE;
         mainw->rec_aclip = fileno;
         mainw->rec_avel = sfile->pb_fps / sfile->fps;
         mainw->rec_aseek = (double)sfile->aseek_pos / (double)(sfile->arps * sfile->achans * (sfile->asampsize / 8));

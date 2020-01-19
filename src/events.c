@@ -5561,7 +5561,8 @@ void rdetw_spinf_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
 
 
 LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget **spheight, int defheight,
-                               LiVESWidget **spfps, double deffps, boolean add_aspect, LiVESWidget * extra) {
+                               LiVESWidget **spfps, double deffps, LiVESWidget **spframes, int defframes,
+                               boolean add_aspect, LiVESWidget * extra) {
   // add video options to multitrack enter, etc
   LiVESWidget *vbox, *hbox, *layout;
   LiVESWidget *frame = lives_standard_frame_new(_("Video"), 0., FALSE);
@@ -5590,10 +5591,17 @@ LiVESWidget *add_video_options(LiVESWidget **spwidth, int defwidth, LiVESWidget 
   if (add_aspect && CURRENT_CLIP_IS_VALID) {
     // add "aspectratio" widget
     hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
-    add_aspect_ratio_button(LIVES_SPIN_BUTTON(rdet->spinbutton_width), LIVES_SPIN_BUTTON(rdet->spinbutton_height), LIVES_BOX(hbox));
+    add_aspect_ratio_button(LIVES_SPIN_BUTTON(*spwidth),
+                            LIVES_SPIN_BUTTON(*spheight), LIVES_BOX(hbox));
   }
 
   hbox = lives_layout_row_new(LIVES_LAYOUT(layout));
+
+  if (spframes != NULL) {
+    *spframes = lives_standard_spin_button_new
+                (_("_Number of frames"), defframes, 1., 100000, 1., 5., 0, LIVES_BOX(hbox), NULL);
+    hbox = lives_layout_hbox_new(LIVES_LAYOUT(layout));
+  }
 
   *spfps = lives_standard_spin_button_new
            (_("_Frames per second"), deffps, 1., FPS_MAX, 1., 10., 0, LIVES_BOX(hbox), NULL);
@@ -5782,7 +5790,8 @@ render_details *create_render_details(int type) {
   rdet->always_checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("_Always use these values"))), FALSE,
                              LIVES_BOX(rdet->always_hbox),
                              (tmp2 = lives_strdup(
-                                       _("Check this button to always use these values when entering multitrack mode. Choice can be re-enabled from Preferences."))));
+                                       _("Check this button to always use these values when entering multitrack mode. "
+                                         "Choice can be re-enabled from Preferences."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5799,8 +5808,7 @@ render_details *create_render_details(int type) {
   hbox = NULL;
 
   frame = add_video_options(&rdet->spinbutton_width, rdet->width, &rdet->spinbutton_height, rdet->height, &rdet->spinbutton_fps,
-                            rdet->fps,
-                            TRUE, hbox);
+                            rdet->fps, NULL, 0., TRUE, hbox);
   lives_box_pack_start(LIVES_BOX(top_vbox), frame, FALSE, TRUE, 0);
 
   if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);

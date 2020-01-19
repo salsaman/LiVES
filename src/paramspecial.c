@@ -238,7 +238,8 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
       if (framedraw.xstart_param != NULL && framedraw.xstart_param->widgets[0] != NULL &&
           framedraw.ystart_param != NULL && framedraw.ystart_param->widgets[0] != NULL) {
         if (framedraw.stdwidgets == 2 || (framedraw.stdwidgets == 3 && framedraw.scale_param != NULL &&
-                                          framedraw.scale_param->widgets[0] != NULL) || (framedraw.xend_param != NULL && framedraw.xend_param->widgets[0] != NULL &&
+                                          framedraw.scale_param->widgets[0] != NULL) || (framedraw.xend_param != NULL
+                                              && framedraw.xend_param->widgets[0] != NULL &&
                                               framedraw.yend_param != NULL && framedraw.yend_param->widgets[0] != NULL)) {
           if (mainw->multitrack == NULL) {
             framedraw_connect(&framedraw, cfile->hsize, cfile->vsize, rfx); // turn passive preview->active

@@ -214,7 +214,7 @@ if (!$is_scrap) {
     print OUT "if (\$command eq \"get_capabilities\") {\n";
     print OUT "    # capabilities is a bitmap field\n";
     print OUT "    # 0x0001 == slow (hint to GUI)\n";
-    print OUT "    # 0x0002 == may resize (all frames to $nwidth x $nheight)\n";
+    print OUT "    # 0x0002 == may resize (all frames to $width x $height)\n";
     print OUT "    # 0x0004 == block mode generator\n";
     print OUT "    # 0x8000 == reserved\n";
     print OUT "    print \"$properties\\n\";\n";
@@ -302,7 +302,7 @@ if (!$is_scrap) {
 	}
     }
 
-
+    my $i = 0;
     foreach my $param (@params) {
 	unless ($param eq "") {
 	    if (&param_get_type($i) eq "colRGB24") {
@@ -313,16 +313,16 @@ if (!$is_scrap) {
 		print OUT "        exit 1;\n";
 		print OUT "    }\n";
 		print OUT "    \$p$i" . "_red = int(\$p$i / 65536);\n";
-		print OUT "    \$p$i" . "- = \$p$i" . "_red * 65536;\n";
+		print OUT "    \$p$i" . " -= \$p$i" . "_red * 65536;\n";
 		print OUT "    \$p$i" . "_green = int(\$p$i / 256);\n";
-		print OUT "    \$p$i" . "- = \$p$i" . "_green * 256;\n";
-		print OUT "    \$p$i " ."_blue = \$p$i;\n";
+		print OUT "    \$p$i" . " -= \$p$i" . "_green * 256;\n";
+		print OUT "    \$p$i" . "_blue = \$p$i;\n";
 	    }
+	    $i++;
 	}
     }
 
     if ($in_channels == 2) {
-	print OUT "    \$nwidth = \$width;\n\$nheight = \$height;\n\n";
 	print OUT "    if (\$img_ext2 eq \".png\") {\n";
 	print OUT "        \$img_prefix2 = \"PNG32:\";\n";
 	print OUT "    } else {\n";
@@ -332,11 +332,6 @@ if (!$is_scrap) {
     }
 
     print OUT "\n";
-
-    if ($in_channels == 0 && !$is_batch_gen) {
-	# script writer MUST set this themselves
-	print OUT "    \$end = 0;\n\n";
-    }
 
     print OUT "    if (\$img_ext eq \".png\") {\n";
     print OUT "        \$img_prefix = \"PNG32:\";\n";
@@ -383,7 +378,6 @@ if (!$is_scrap) {
 	    print OUT "        &sig_error(\"'convert' is required by this plugin.\", \"Please install imagemagick and try again.\");\n";
 	    print OUT "        exit 1;\n";
 	    print OUT "    }\n\n";
-
 
 	    print OUT "    if (\$img_ext2 eq \".png\") {\n";
 	    print OUT "        \$img_prefix2 = \"PNG32:\";\n";
@@ -465,7 +459,7 @@ if (!$is_scrap) {
 	print OUT "        }\n\n";
 
 	if ($in_channels==0) {
-	    print OUT "        &sig_progress(\$frame,  \$nwidth,  \$nheight,  \$fps,  \$end);\n\n";
+	    print OUT "        &sig_progress(\$frame,  \$width,  \$height,  \$fps,  \$end);\n\n";
 	}
 	else {
 	    print OUT "        &sig_progress(\$frame);\n\n";

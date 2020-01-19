@@ -136,6 +136,7 @@ void make_custom_submenus(void) {
 #if GTK_CHECK_VERSION(3, 0, 0)
 boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
+  if (mainw->is_generating) return TRUE;
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1) &&
                                         (!mainw->ext_playback ||
@@ -153,6 +154,7 @@ boolean expose_sim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
+  if (mainw->is_generating) return TRUE;
   if (LIVES_IS_PLAYING && mainw->fs && (!mainw->sep_win || ((prefs->gui_monitor == prefs->play_monitor ||
                                         capable->nmonitors == 1)  &&
                                         (!mainw->ext_playback ||
@@ -170,6 +172,7 @@ boolean expose_eim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_data) {
   int current_file = mainw->current_file;
+  if (mainw->is_generating) return TRUE;
   if (CURRENT_CLIP_IS_VALID && cfile->cb_src != -1) mainw->current_file = cfile->cb_src;
   if (!mainw->draw_blocked) {
     if (mainw->stop_emmission == NULL) mainw->stop_emmission = widget;
@@ -184,7 +187,6 @@ boolean expose_pim(LiVESWidget *widget, lives_painter_t *cr, livespointer user_d
 
 void set_colours(LiVESWidgetColor *colf, LiVESWidgetColor *colb, LiVESWidgetColor *colf2,
                  LiVESWidgetColor *colb2, LiVESWidgetColor *coli, LiVESWidgetColor *colt) {
-
   lives_widget_set_bg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colb);
   lives_widget_set_fg_color(LIVES_MAIN_WINDOW_WIDGET, LIVES_WIDGET_STATE_NORMAL, colf);
   lives_widget_set_bg_color(mainw->menubar, LIVES_WIDGET_STATE_NORMAL, colb2);

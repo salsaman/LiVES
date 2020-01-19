@@ -42,9 +42,12 @@ static double calc_fd_scale(int width, int height) {
 
 void reset_framedraw_preview(void) {
   lives_widget_set_sensitive(mainw->framedraw_preview, TRUE);
+  lives_signal_handler_block(mainw->framedraw_spinbutton, mainw->fd_spin_func);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start);
   lives_range_set_value(LIVES_RANGE(mainw->framedraw_scale), cfile->start);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, cfile->start);
+  mainw->framedraw_frame = cfile->start;
+  lives_signal_handler_unblock(mainw->framedraw_spinbutton, mainw->fd_spin_func);
 }
 
 
@@ -99,7 +102,6 @@ static void start_preview(LiVESButton *button, lives_rfx_t *rfx) {
 
   // within do_effect() we check and if
   do_effect(rfx, TRUE); // actually start effect processing in the background
-
   load_rfx_preview(rfx);
 
   lives_widget_set_sensitive(mainw->framedraw_spinbutton, TRUE);
@@ -664,6 +666,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   if (strncmp(mainw->msg, "completed", 9)) {
     if (rfx->num_in_channels > 0) {
       mainw->fd_max_frame = atoi(mainw->msg);
+      tot_frames = cfile->end;
     } else {
       int numtok = get_token_count(mainw->msg, '|');
       if (numtok > 4) {
@@ -684,12 +687,12 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
   if (mainw->fd_max_frame > 0) {
+    int maxlen = calc_spin_button_width(1., (double)tot_frames, 0);
+    lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), cfile->start, tot_frames);
+    lives_entry_set_width_chars(LIVES_ENTRY(mainw->framedraw_spinbutton), maxlen);
+    lives_widget_queue_draw(mainw->framedraw_spinbutton);
+    lives_widget_queue_draw(mainw->framedraw_scale);
     if (rfx->num_in_channels == 0) {
-      int maxlen = calc_spin_button_width(1., (double)tot_frames, 0);
-      lives_spin_button_set_range(LIVES_SPIN_BUTTON(mainw->framedraw_spinbutton), 1, tot_frames);
-      lives_entry_set_width_chars(LIVES_ENTRY(mainw->framedraw_spinbutton), maxlen);
-      lives_widget_queue_draw(mainw->framedraw_spinbutton);
-      lives_widget_queue_draw(mainw->framedraw_scale);
       cfile->frames = tot_frames;
     }
 
@@ -769,6 +772,7 @@ void redraw_framedraw_image(weed_plant_t *layer) {
   lives_painter_fill(cr2);
   lives_painter_destroy(cr2);
   lives_painter_to_layer(cr, layer);
+  lives_widget_queue_draw(mainw->framedraw);
 }
 
 

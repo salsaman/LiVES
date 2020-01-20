@@ -4966,7 +4966,8 @@ boolean check_for_disk_space(void) {
     if (wrtable) {
       if ((int64_t)(((double)free_mb - (scrap_mb + ascrap_mb)) / 1000.) < prefs->rec_stop_gb) {
         if (mainw->record && !mainw->record_paused) {
-          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\nRecord stop level can be set in Preferences.\n"),
+          d_print(_("\nRECORDING WAS PAUSED BECAUSE FREE DISK SPACE in %s IS BELOW %d GB !\n"
+                    "Record stop level can be set in Preferences / Recording.\n"),
                   prefs->workdir, prefs->rec_stop_gb);
           on_record_perf_activate(NULL, NULL);
           d_print_urgency(URGENCY_MSG_TIMEOUT, _("RECORDING WAS PAUSED DUE TO LOW DISKSPACE"));

@@ -10704,7 +10704,7 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
     for (j = 0; j < nplanes; j++) {
       vlen = (weed_size_t)((double)height * weed_palette_get_plane_ratio_vertical(pal, j) * (double)rowstrides[j]);
       lives_write_le_buffered(fd, &vlen, 4, TRUE);
-      if (lives_write_buffered_direct(fd, (const char *)pixel_data[j], vlen, FALSE) < vlen) abort();
+      if (lives_write_buffered(fd, (const char *)pixel_data[j], vlen, FALSE) < vlen) abort();
       totsize += 4 + vlen;
     }
     lives_free(rowstrides);

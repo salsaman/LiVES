@@ -481,28 +481,23 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 #define BUFFER_FILL_BYTES_SMALL 4096
 #define BUFFER_FILL_BYTES_MED 32768
-#define BUFFER_FILL_BYTES_LARGE 262144
+#define BUFFER_FILL_BYTES_LARGE 262144  ///< 256 * 1024
 
-static ssize_t file_buffer_flush(int fd) {
+static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
   ssize_t res = 0;
-  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
 
-  if (fbuff == NULL) {
-    // normal non-buffered file+
-    LIVES_DEBUG("file_buffer_flush: no file buffer found");
+  if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
+
+  if (!fbuff->allow_fail && res < fbuff->bytes) {
+    lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
     return res;
   }
 
-  if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
   if (res > 0) {
     fbuff->offset += res;
     fbuff->bytes = 0;
     fbuff->ptr = fbuff->buffer;
-  }
-
-  if (!fbuff->allow_fail && res < fbuff->bytes) {
-    lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
   }
 
   return res;
@@ -595,7 +590,7 @@ int lives_close_buffered(int fd) {
     size_t bytes = fbuff->bytes;
 
     if (bytes > 0) {
-      ret = file_buffer_flush(fd);
+      ret = file_buffer_flush(fbuff);
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
@@ -728,7 +723,6 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   }
 
   // read bytes from fbuff
-  //while (1) {
   if (fbuff->bytes > 0) {
     size_t nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
@@ -767,10 +761,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   } else {
     // larger size -> direct read
     res = lives_read(fbuff->fd, ptr, count, TRUE);
-    if (res < 0) {
-      lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed physical file
-      return res;
-    }
+    if (res < 0) return res;
     if (res < count) fbuff->eof = TRUE;
     fbuff->offset += res;
     count -= res;
@@ -815,31 +806,36 @@ boolean lives_read_buffered_eof(int fd) {
 }
 
 
-ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boolean allow_fail) {
-  lives_file_buffer_t *fbuff;
+static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const char *buf, size_t count, boolean allow_fail) {
   ssize_t res = 0;
-  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
-    LIVES_DEBUG("lives_write_buffered: no file buffer found");
-    return lives_write(fd, buf, count, allow_fail);
-  }
+  size_t bytes = fbuff->bytes;
 
-  if (fbuff->read) {
-    LIVES_ERROR("lives_write_buffered: wrong buffer type");
-    return 0;
+  if (bytes > 0) {
+    res = file_buffer_flush(fbuff);
+    if (!allow_fail && res < bytes) return 0; // this is correct, as flush will have called close again with should_close=FALSE;
   }
+  res = 0;
 
-  file_buffer_flush(fd);
   while (count > 0) {
     size_t bytes;
+#define WRITE_ALL
+#ifdef WRITE_ALL
+    size_t bigbsize = count;
+#else
     size_t bigbsize = BUFFER_FILL_BYTES_LARGE;
+#endif
     if (bigbsize > count) bigbsize = count;
-    bytes = lives_write(fd, buf + res, bigbsize, allow_fail);
-    if (bytes > 0) {
+    bytes = lives_write(fbuff->fd, buf + res, bigbsize, allow_fail);
+    if (bytes == bigbsize) {
       fbuff->offset += bytes;
       count -= bytes;
       res += bytes;
     } else {
       LIVES_ERROR("lives_write_buffered: error in bigblock writer");
+      if (!fbuff->allow_fail) {
+        lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
+        return res;
+      }
       break;
     }
   }
@@ -863,6 +859,8 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
     LIVES_ERROR("lives_write_buffered: wrong buffer type");
     return 0;
   }
+
+  if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
   if (fbuff->buffer == NULL) {
     fbuff->bufsztype = 0;
@@ -894,8 +892,8 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
     if (space_left < count) {
       lives_memcpy(fbuff->ptr, buf, space_left);
       fbuff->bytes = buffsize;
-      res = file_buffer_flush(fd);
-      retval += res;
+      res = file_buffer_flush(fbuff);
+      retval += space_left;
       if (res < buffsize) return (res < 0 ? res : retval);
       count -= space_left;
       buf += space_left;

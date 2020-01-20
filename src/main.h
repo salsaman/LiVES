@@ -1293,7 +1293,6 @@ off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
-ssize_t lives_write_buffered_direct(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);

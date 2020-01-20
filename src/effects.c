@@ -1104,9 +1104,10 @@ boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data
 
 boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
+  int dirn = LIVES_POINTER_TO_INT(user_data);
   // "m" mode key
   if (mainw->rte_keys == -1) return TRUE;
-  rte_key_setmode(0, -1);
+  rte_key_setmode(0, dirn == PREV_MODE_CYCLE ? -2 : -1);
   filter_mutex_lock(mainw->rte_keys);
   mainw->blend_factor = weed_get_blend_factor(mainw->rte_keys);
   filter_mutex_unlock(mainw->rte_keys);

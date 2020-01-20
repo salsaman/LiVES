@@ -41,36 +41,6 @@ boolean midi_open(void);
 void midi_close(void);
 #endif
 
-/* macros */
-#define UNMATCHED -1
-#define START_PLAYBACK 0
-#define STOP_PLAYBACK 1
-#define CLIP_SELECT 2
-#define PLAY_FORWARDS 3
-#define PLAY_BACKWARDS 4
-#define REVERSE_PLAYBACK 5
-#define PLAY_FASTER 6
-#define PLAY_SLOWER 7
-#define TOGGLE_FREEZE 8
-#define SET_FRAMERATE 9
-#define START_RECORDING 10
-#define STOP_RECORDING 11
-#define TOGGLE_RECORDING 12
-#define SWAP_FOREGROUND_BACKGROUND 13
-#define RESET_EFFECT_KEYS 14
-#define ENABLE_EFFECT_KEY 15
-#define DISABLE_EFFECT_KEY 16
-#define TOGGLE_EFFECT_KEY 17
-#define SET_PARAMETER_VALUE 18
-#define NEXT_CLIP_SELECT 19
-#define PREV_CLIP_SELECT 20
-#define SET_FPS_RATIO 21
-#define RETRIGGER_CLIP 22
-#define NEXT_MODE_CYCLE 23
-#define PREV_MODE_CYCLE 24
-#define SET_VPP_PARAMETER_VALUE 25
-#define OSC_NOTIFY 26
-
 /* parameter types */
 #define OMC_PARAM_INT 1
 #define OMC_PARAM_DOUBLE 2
@@ -99,7 +69,7 @@ typedef struct {
 
 typedef struct {
   char *srch; ///< string to match
-  int macro; ///< macro number this is linked to (or -1)
+  int macro; ///< action number this is linked to (or -1) (see mainwindow.h)
 
   int nvars; ///< number of input params
   int *offs0; ///< offs to add to params before scale (pre-bias)

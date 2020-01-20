@@ -2030,7 +2030,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       if (mainw->multitrack == NULL) {
         weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
         deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
-        if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) continue;
+        if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) break;
 
         if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
           char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);

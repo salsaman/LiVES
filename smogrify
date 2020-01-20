@@ -50,7 +50,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.0.3-pre";
+my $version = "3.2.0-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -6120,9 +6120,9 @@ sub get_file_info {
 	}
 	if ($file_exec) {
 	    $guess_type = &file_examine($file);
-	    #if ($DEBUG_FILE_ID) {
+	    if ($DEBUG_FILE_ID) {
 		print STDERR "guessed as $guess_type\n";
-	    #}
+	    }
 	    if ($guess_type eq "audio") {
 		$ptypes = $P_AUDIO;
 		$type = "Audio";
@@ -7062,11 +7062,12 @@ sub open_single_image {
     }
 
     if ($antialias eq "false") {
-	$com = "$smog_convert_command +antialias \"$file\" -scale $hsize"."x"."$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" > $nulfile 2>&1";
+	$com = "$smog_convert_command +antialias \"$file\" -scale $hsize" . "x" .
+	    "$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" > $nulfile 2>&1";
     } else {
-	$com = "$smog_convert_command \"$file\" -resize $hsize"."x"."$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" >$nulfile 2>&1";
+	$com = "$smog_convert_command \"$file\" -resize $hsize" . "x" .
+	    "$vsize\\! $ximg_prefix\"$curworkdir/$name$ximg_ext\" >$nulfile 2>&1";
     }
-    print STDERR "running: $com\n";
 
     $smerr = &smog_system($com);
 
@@ -7083,7 +7084,6 @@ sub open_single_image {
 	    $newname = &mkname($i + $j);
 	    &smog_rename("$curworkdir/$name-$j$ximg_ext", "$curworkdir/$newname$ximg_ext");
 	    $nframes++;
-
 	} else {
 	    $found = 0;
 	}

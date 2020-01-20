@@ -3678,7 +3678,8 @@ void do_keys_window(void) {
   ADD_KEYDEF("x", _("swap background/foreground"));
   ADD_KEYDEF("", "");
   ADD_KEYDEF("k", _("grab keyboard for last activated effect key (affects m, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
-  ADD_KEYDEF("m", _("switch effect mode (when effect has keyboard grab)"));
+  ADD_KEYDEF("m", _("next effect mode (for whichever key has keyboard grab)"));
+  ADD_KEYDEF("M", _("previous effect mode (for whichever key has keyboard grab)"));
   ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1 (similar to k key)"));
   ADD_KEYDEF(_("ctrl-alt-2"), _("grab keyboard for effect key 2"));
   ADD_KEYDEF(_("...etc..."), "");

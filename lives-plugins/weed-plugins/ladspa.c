@@ -128,14 +128,10 @@ static weed_error_t ladspa_init(weed_plant_t *inst) {
       for (int i = 0; i < ninps; i++) {
         weed_plant_t *gui = weed_param_get_gui(in_params[i]);
         if (link == WEED_TRUE) {
-          //if (verbosity == WEED_VERBOSITY_DEBUG) fprintf(stderr, "setting copy to for %p, p %d = %p to %d\n", in_params[i], i, gui,
-          //    i + ninps);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i + ninps);
           gui = weed_param_get_gui(in_params[i + ninps]);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, i);
         } else {
-          //if (verbosity == WEED_VERBOSITY_DEBUG) fprintf(stderr, "unsetting copy to for %p, p %d = %p to %d\n", in_params[i], i, gui,
-          //     i + ninps);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
           gui = weed_param_get_gui(in_params[i + ninps]);
           weed_set_int_value(gui, WEED_LEAF_COPY_VALUE_TO, -1);
@@ -418,8 +414,6 @@ WEED_SETUP_START(200, 200) {
   int vdirval = 0;
   int pnum, wnum;
 
-  int new_stdout = 0, new_stderr = 0;
-
   LADSPA_Descriptor *laddes;
   LADSPA_Properties ladprop;
   LADSPA_PortDescriptor ladpdes;
@@ -460,13 +454,6 @@ WEED_SETUP_START(200, 200) {
 
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
 
-  if (verbosity < WEED_VERBOSITY_DEBUG) {
-    new_stdout = dup(1);
-    new_stderr = dup(2);
-
-    close(1);
-    close(2);
-  }
   weed_set_string_value(plugin_info, WEED_LEAF_PACKAGE_NAME, "LADSPA");
 
   while (1) {
@@ -497,7 +484,8 @@ WEED_SETUP_START(200, 200) {
       snprintf(plugin_name, PATH_MAX, "%s", vdirent->d_name);
       snprintf(plug1, PATH_MAX, "%s/%s", vdir, plugin_name);
 
-      //fprintf(stderr,"checking %s\n",plug1);
+      if (verbosity == WEED_VERBOSITY_DEBUG)
+        fprintf(stderr, "checking %s\n", plug1);
       handle = dlopen(plug1, RTLD_NOW);
       if (handle == NULL) continue;
 
@@ -507,9 +495,7 @@ WEED_SETUP_START(200, 200) {
         continue;
       }
 
-      num_plugins = 0;
-
-      while ((laddes = ((*lad_descriptor_func)(num_plugins))) != NULL) {
+      for (num_plugins = 0; (laddes = ((*lad_descriptor_func)(num_plugins))) != NULL; num_plugins++) {
         if ((lad_instantiate_func = laddes->instantiate) == NULL) {
           continue;
         }
@@ -526,7 +512,6 @@ WEED_SETUP_START(200, 200) {
 
         lad_cleanup_func = laddes->cleanup;
 
-        //fprintf(stderr,"2checking %s : %ld\n",plug1,num_plugins);
         ladprop = laddes->Properties;
         ninps = noutps = ninchs = noutchs = 0;
 
@@ -617,7 +602,8 @@ WEED_SETUP_START(200, 200) {
           out_params[noutps - 1] = NULL;
         } else out_params = NULL;
 
-        //fprintf(stderr,"%s %p %p has inc %d and outc %d\n",laddes->Name,laddes,lad_instantiate_func,ninchs,noutchs);
+        if (verbosity == WEED_VERBOSITY_DEBUG)
+          fprintf(stderr, "%s %p %p has inc %d and outc %d\n", laddes->Name, laddes, lad_instantiate_func, ninchs, noutchs);
 
         if (ninchs > 0) {
           in_chantmpls = (weed_plant_t **)weed_malloc(2 * sizeof(weed_plant_t *));
@@ -644,7 +630,6 @@ WEED_SETUP_START(200, 200) {
               !(ladprop & LADSPA_PROPERTY_INPLACE_BROKEN))
             cflags |= WEED_CHANNEL_CAN_DO_INPLACE;
           weed_chantmpl_set_flags(out_chantmpls[0], cflags);
-
         } else out_chantmpls = NULL;
 
         cnoutps = cninps = 0;
@@ -741,7 +726,6 @@ WEED_SETUP_START(200, 200) {
                 sprintf(rfx_strings[cninps + 2 + stcount], "layout|p%d|", cninps);
                 sprintf(rfx_strings[cninps + oninps + 4 + stcount], "layout|p%d|", cninps + oninps);
               }
-
               cninps++;
             } else {
               // out_param
@@ -811,7 +795,6 @@ WEED_SETUP_START(200, 200) {
                       "plugin_sample_rate", WEED_TRUE);
                 else weed_set_boolean_value(out_params[cnoutps], "plugin_sample_rate", WEED_FALSE);
               }
-
               cnoutps++;
             }
           }
@@ -862,16 +845,11 @@ WEED_SETUP_START(200, 200) {
 
         if (strlen(laddes->Name) > 0) list = add_to_list_sorted(list, filter_class, laddes->Name);
 
-        num_plugins++;
         num_filters++;
-        //fprintf(stderr,"DONE\n");
+        if (verbosity == WEED_VERBOSITY_DEBUG)
+          fprintf(stderr, "DONE\n");
       }
     }
-  }
-
-  if (verbosity < WEED_VERBOSITY_DEBUG) {
-    dup2(new_stdout, 1);
-    dup2(new_stderr, 2);
   }
 
   if (num_filters == 0) {

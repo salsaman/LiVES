@@ -1951,8 +1951,17 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   if (!svary || !is_converter) {
     /// unless its a resize plugin or high quality, we'll restrict op size to max in size (med quality) or min in size (low quality)
     if (pb_quality != PB_QUALITY_HIGH) {
-      if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
-      if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
+      /// if we are going to letterbox, we need to maintain the aspect ratio of the image, else we may end up cutting one
+      ///  dimension only
+      if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
+                                  || (prefs->letterbox && mainw->num_tr_applied == 0) || mainw->multitrack != NULL)) {
+        if (opwidth != 0 && opheight != 0) {
+          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
+        }
+      } else {
+        if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
+        if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
+      }
     }
     opwidth = maxinwidth;
     opheight = maxinheight;
@@ -4383,7 +4392,7 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
   weed_set_string_value(xhost_info, WEED_LEAF_LAYOUT_SCHEMES, "rfx");
 
-  if (fxname != NULL && !strcmp(fxname, "ladspa")) {
+  if (0 && fxname != NULL && !strcmp(fxname, "ladspa")) {
     //  weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)weed_leaf_set_monitor);
     //weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
   } else
@@ -4436,9 +4445,12 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   char cwd[PATH_MAX];
 
-  char *pwd, *tmp, *msg;
+  const char const *frei0r_blacklist[] = {"Timeout indicator", NULL};
+  const char const *ladspa_blacklist[] = {"Mag's Notch Filter", NULL};
+
+  char *pwd, *tmp, *msg, *filtname;
   char *filter_name = NULL, *package_name = NULL;
-  boolean valid;
+  boolean valid, blacklisted;
 
   register int i;
   static int key = -1;
@@ -4499,7 +4511,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   plugin_info = (*setup_fn)(weed_bootstrap);
   if (plugin_info == NULL || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
-    msg = lives_strdup_printf(_("No usable filters found in plugin %s\n"), plugin_path);
+    msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
     lives_free(msg);
     if (plugin_info != NULL) weed_plant_free(plugin_info);
@@ -4578,6 +4590,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   for (fnum = 0; fnum < filters_in_plugin; fnum++) {
     filter = filters[fnum];
+    blacklisted = FALSE;
 
     if (filter == NULL) {
       msg = lives_strdup_printf(_("Plugin %s returned an empty filter !"), plugin_path);
@@ -4586,10 +4599,38 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
       continue;
     }
 
+    filtname = weed_filter_get_name(filter);
+    blacklisted = FALSE;
+
+    if (!strcmp(package_name, "Frei0r: ")) {
+      for (i = 0; frei0r_blacklist[i] != NULL; i++) {
+        if (!strcmp(filtname, frei0r_blacklist[i])) {
+          blacklisted = TRUE;
+          break;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+
+    if (!strcmp(package_name, "LADSPA: ")) {
+      for (i = 0; ladspa_blacklist[i] != NULL; i++) {
+        if (!strcmp(filtname, ladspa_blacklist[i])) {
+          blacklisted = TRUE;
+          break;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+
+    if (blacklisted) {
+      msg = lives_strdup_printf(_("%sskipping blacklisted filter %s\n"), package_name, filtname);
+      fprintf(stderr, "%s", msg);
+      lives_free(msg);
+      continue;
+    }
+
+    filter_name = lives_strdup_printf("%s%s:", package_name, filtname);
+
     // add value returned in host_info_cb
     if (host_info != NULL) weed_set_plantptr_value(filter, WEED_LEAF_HOST_INFO, host_info);
-    filter_name = lives_strdup_printf("%s%s:", package_name, (tmp = weed_get_string_value(filter, WEED_LEAF_NAME, NULL)));
-    lives_free(tmp);
 
     if (!(reason = check_for_lives(filter, idx))) {
       boolean dup = FALSE, pdup = FALSE;
@@ -7227,11 +7268,11 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
 
   weed_instance_ref(inst);
 
-  if ((num_channels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS)) == 0) {
+  out_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_OUT_CHANNELS, &num_channels);
+  if (num_channels  == 0) {
     weed_instance_unref(inst);
     return NULL;
   }
-  out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, NULL);
 
   if ((channel = get_enabled_channel(inst, 0, FALSE)) == NULL) {
     lives_free(out_channels);
@@ -7250,8 +7291,10 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   /// if we have a choice of palettes, try to match with the first filter, if not, with the player
   if (mainw->rte) {
     for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+      if (palette != WEED_PALETTE_END) break;
       if (rte_key_is_enabled(1 + i)) {
         weed_plant_t *instance;
+        if (i == fg_generator_key) continue;
         if ((instance = weed_instance_obtain(i, key_modes[i])) != NULL) {
           if (is_bg && enabled_in_channels(inst, FALSE) < 2) continue;
           weed_plant_t *filter = weed_instance_get_filter(inst, TRUE);
@@ -7268,21 +7311,23 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
                     palette = plist[j];
                     break;
 		    // *INDENT-OFF*
-		  }}}
+		  }}
+	      if (palette != WEED_PALETTE_END) break;
+	    }
             lives_free(plist);
-          }}
-        weed_instance_unref(instance);
-      }}
+          }
+	  weed_instance_unref(instance);
+	}}}
     // *INDENT-ON*
 
-  } else {
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
-      for (i = 0; i < npals; i++) {
-        if (palette_list[i] == mainw->vpp->palette) {
-          palette = palette_list[i];
-          break;
-	  // *INDENT-OFF*
-	}}}}
+    if (palette == WEED_PALETTE_END) {
+      if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY)) {
+        for (i = 0; i < npals; i++) {
+          if (palette_list[i] == mainw->vpp->palette) {
+            palette = palette_list[i];
+            break;
+	    // *INDENT-OFF*
+	  }}}}}
   // *INDENT-ON*
 
   if (palette == WEED_PALETTE_END) {
@@ -7298,7 +7343,6 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (palette == WEED_PALETTE_END) palette = palette_list[0];
 
   lives_free(palette_list);
-
   weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {

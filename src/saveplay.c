@@ -133,15 +133,17 @@ boolean save_clip_values(int which) {
 }
 
 
-boolean read_file_details(const char *file_name, boolean is_audio) {
+boolean read_file_details(const char *file_name, boolean is_audio, boolean is_img) {
   // get preliminary details
 
   // is_audio set to TRUE prevents us from checking for images, and deleting the (existing) first frame
   // therefore it is IMPORTANT to set it when loading new audio for an existing clip !
 
+  // is_img will force unpacking of img into frames and return the count
+
   char *tmp, *com = lives_strdup_printf("%s get_details \"%s\" \"%s\" \"%s\" %d", prefs->backend_sync, cfile->handle,
                                         (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)),
-                                        get_image_ext_for_type(cfile->img_type), mainw->opening_loc ? 3 : is_audio ? 2 : 0);
+                                        get_image_ext_for_type(cfile->img_type), mainw->opening_loc ? 3 : is_audio ? 2 : is_img ? 4 : 0);
   lives_free(tmp);
   lives_popen(com, FALSE, mainw->msg, MAINW_MSG_SIZE);
   lives_free(com);
@@ -280,7 +282,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     mainw->current_file = new_file;
 
     /// probe the file to see what it might be...
-    read_file_details(file_name, FALSE);
+    read_file_details(file_name, FALSE, FALSE);
     lives_rm(cfile->info_file);
     if (mainw->com_failed) return 0;
 
@@ -295,6 +297,23 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     }
 
     cfile->img_type = lives_image_ext_to_type(prefs->image_ext);
+    if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
+      read_file_details(file_name, FALSE, TRUE);
+      add_file_info(cfile->handle, FALSE);
+      if (cfile->frames == 0) {
+        d_print_failed();
+        close_current_file(old_file);
+        mainw->noswitch = FALSE;
+        if (mainw->multitrack != NULL) {
+          mainw->multitrack->pb_start_event = mt_pb_start_event;
+          mainw->multitrack->has_audio_file = mt_has_audio_file;
+        }
+        lives_freep((void **)&mainw->file_open_params);
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        return 0;
+      }
+      goto img_load;
+    }
 
     if (prefs->instant_open && !mainw->opening_loc) {
       // cd to clip directory - so decoder plugins can write temp files
@@ -421,7 +440,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                                     prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, mainw->file_open_params);
 
           lives_free(tmp);
-          g_print("AUDCOM %s\n", com);
+
           cfile->op_dir = lives_filename_from_utf8((tmp = get_dir(file_name)), -1, NULL, NULL, NULL);
           lives_freep((void **)&tmp);
 
@@ -475,7 +494,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
 
           wait_for_bg_audio_sync(mainw->current_file);
           if (mainw->error == 0) add_file_info(cfile->handle, TRUE);
-          g_print("MSG  %d is %s\n", cfile->achans, mainw->msg);
           mainw->error = 0;
           get_total_time(cfile);
 
@@ -622,14 +640,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     // force a resize
     current_file = mainw->current_file;
 
-    if (mainw->multitrack == NULL) {
-      if (LIVES_IS_PLAYING) {
-        do_quick_switch(current_file);
-      } else {
-        switch_to_file((mainw->current_file = (cfile->clip_type != CLIP_TYPE_FILE) ? old_file : current_file), current_file);
-      }
-    }
-
     cfile->opening = TRUE;
     cfile->achans = achans;
     cfile->arate = arate;
@@ -750,6 +760,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   cfile->opening = cfile->opening_audio = cfile->opening_only_audio = FALSE;
   cfile->opening_frames = -1;
   mainw->effects_paused = FALSE;
+
 
 #if defined DEBUG
   g_print("Out of dpd\n");
@@ -892,12 +903,13 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     }
   }
 
-  current_file = mainw->current_file;
-
   if (isubfname != NULL) {
     d_print(_("Loaded subtitle file: %s\n"), isubfname);
     lives_free(isubfname);
   }
+
+img_load:
+  current_file = mainw->current_file;
 
 #ifdef GET_MD5
   g_print("md5sum is %s\n", get_md5sum(file_name));
@@ -918,10 +930,16 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     cfile->is_untitled = TRUE;
   }
 
-  if (cfile->frames == 1 && (!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
+  if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
     if (mainw->img_concat_clip == -1) {
       cfile->img_type = lives_image_type_to_image_type(cfile->type);
       mainw->img_concat_clip = mainw->current_file;
+      add_to_clipmenu();
+      set_main_title(cfile->file_name, 0);
+      cfile->opening = cfile->opening_audio = cfile->opening_only_audio = FALSE;
+      cfile->opening_frames = -1;
+      mainw->effects_paused = FALSE;
+      cfile->is_loaded = TRUE;
     } else if (prefs->concat_images) {
       // insert this image into our image clip, close this file
 
@@ -3709,6 +3727,13 @@ boolean add_file_info(const char *check_handle, boolean aud_only) {
 
   if (cfile->opening) return TRUE;
 
+  if ((!strcmp(cfile->type, LIVES_IMAGE_TYPE_JPEG) || !strcmp(cfile->type, LIVES_IMAGE_TYPE_PNG))) {
+    mesg = lives_strdup(_("Image format detected"));
+    d_print(mesg);
+    lives_free(mesg);
+    return TRUE;
+  }
+
   if (cfile->bpp == 256) {
     mesg1 = lives_strdup_printf(_("Frames=%d type=%s size=%dx%d *bpp=Greyscale* fps=%.3f\nAudio:"), cfile->frames,
                                 cfile->type, cfile->hsize, cfile->vsize, cfile->fps);
@@ -5210,7 +5235,7 @@ void recover_layout_map(int numclips) {
 boolean reload_clip(int fileno, int maxframe) {
   // reload clip -- for CLIP_TYPE_FILE
   // cd to clip directory - so decoder plugins can write temp files
-
+  LiVESList *odeclist;
   lives_clip_t *sfile = mainw->files[fileno];
 
   const lives_clip_data_t *cdata = NULL;
@@ -5233,6 +5258,11 @@ boolean reload_clip(int fileno, int maxframe) {
   lives_chdir(ppath, FALSE);
   lives_free(ppath);
 
+  if (!mainw->decoders_loaded) {
+    mainw->decoder_list = load_decoders();
+    mainw->decoders_loaded = TRUE;
+  }
+  odeclist = lives_list_copy(mainw->decoder_list);  ///< retain original order to restore for freshly opened clips
   retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
   if (retb && strlen(decoder_name)) {
     decoder_plugin_move_to_first(decoder_name);
@@ -5324,6 +5354,8 @@ manual_locate:
       lives_freep((void **)&fake_cdata->URI);
       lives_free(fake_cdata);
       lives_free(orig_filename);
+      lives_list_free(mainw->decoder_list);
+      mainw->decoder_list = odeclist;
       return retb;
     }
 
@@ -5393,7 +5425,8 @@ manual_locate:
 
     if (bad_header) do_header_write_error(fileno);
   }
-
+  lives_list_free(mainw->decoder_list);
+  mainw->decoder_list = odeclist;
   return TRUE;
 }
 

@@ -1282,14 +1282,14 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->playing_file == fileno) {
     if (!mainw->loop) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < first_frame || mainw->aframeno > last_frame) {
+        if (mainw->aframeno < first_frame || mainw->aframeno >= last_frame) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < 1 ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno) > cfile->laudio_time) {
+        if (mainw->aframeno < 1. ||
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1300,14 +1300,14 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) {
     if (!mainw->loop) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < first_frame || mainw->aframeno > last_frame) {
+        if (mainw->aframeno < first_frame || mainw->aframeno >= last_frame) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < 1 ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno) > cfile->laudio_time) {
+        if (mainw->aframeno < 1. ||
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1323,16 +1323,16 @@ void calc_aframeno(int fileno) {
   if (prefs->audio_player == AUD_PLAYER_JACK && ((mainw->jackd != NULL && mainw->jackd->playing_file == fileno) ||
       (mainw->jackd_read != NULL && mainw->jackd_read->playing_file == fileno))) {
     // get seek_pos from jack
-    if (mainw->jackd_read != NULL) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) / cfile->fps + 1.;
-    else mainw->aframeno = lives_jack_get_pos(mainw->jackd) / cfile->fps + 1.;
+    if (mainw->jackd_read != NULL) mainw->aframeno = lives_jack_get_pos(mainw->jackd_read) * cfile->fps + 1.;
+    else mainw->aframeno = lives_jack_get_pos(mainw->jackd) * cfile->fps + 1.;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && ((mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) ||
       (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file == fileno))) {
     // get seek_pos from pulse
-    if (mainw->pulsed_read != NULL) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) / cfile->fps + 1.;
-    else mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) / cfile->fps + 1.;
+    if (mainw->pulsed_read != NULL) mainw->aframeno = lives_pulse_get_pos(mainw->pulsed_read) * cfile->fps + 1.;
+    else mainw->aframeno = lives_pulse_get_pos(mainw->pulsed) * cfile->fps + 1.;
   }
 #endif
 }
@@ -1465,96 +1465,106 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     return 0;
   }
 
-  // get our frame back to within bounds
-
-  nframe -= first_frame;
-
-  if (fps > 0) {
-    dir = 0;
-    if (mainw->ping_pong && clip_can_reverse(fileno)) {
-      dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
-      dir %= 2;
+  if (nframe <= first_frame || nframe >= last_frame) {
+    if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
+      // we check for audio stop here, but the seek may not have happened yet
+      if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
+        mainw->cancelled = CANCEL_AUD_END;
+        nframe = -1;
+        return 0;
+      }
     }
-  } else {
-    dir = 1;
-    if (mainw->ping_pong && clip_can_reverse(fileno)) {
-      nframe -= (last_frame - first_frame);
-      dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
-      dir %= 2;
-      dir++;
+    do_resync = TRUE;
+
+    // get our frame back to within bounds
+
+    nframe -= first_frame;
+
+    if (fps > 0) {
+      dir = 0;
+      if (mainw->ping_pong && clip_can_reverse(fileno)) {
+        dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
+        dir %= 2;
+      }
+    } else {
+      dir = 1;
+      if (mainw->ping_pong && clip_can_reverse(fileno)) {
+        nframe -= (last_frame - first_frame);
+        dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
+        dir %= 2;
+        dir++;
+      }
     }
-  }
 
-  nframe %= (last_frame - first_frame + 1);
+    nframe %= (last_frame - first_frame + 1);
 
-  if (fps < 0) {
-    // backwards
-    if (dir == 1) {
-      // even winding
-      if (!mainw->ping_pong || !clip_can_reverse(fileno)) {
-        // loop
-        if (nframe < 0) nframe += last_frame + 1;
-        else nframe += first_frame;
-        if (nframe > cframe && mainw->playing_file == fileno && mainw->loop_cont && !mainw->loop) {
-          // resync audio at end of loop section (playing backwards)
-          do_resync = TRUE;
+    if (fps < 0) {
+      // backwards
+      if (dir == 1) {
+        // even winding
+        if (!mainw->ping_pong || !clip_can_reverse(fileno)) {
+          // loop
+          if (nframe < 0) nframe += last_frame + 1;
+          else nframe += first_frame;
+          if (nframe > cframe && mainw->playing_file == fileno && mainw->loop_cont && !mainw->loop) {
+            // resync audio at end of loop section (playing backwards)
+            do_resync = TRUE;
+          }
+        } else {
+          nframe += last_frame; // normal
+          if (nframe > last_frame) {
+            nframe = last_frame - (nframe - last_frame);
+            if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                  LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+            else sfile->pb_fps = -sfile->pb_fps;
+          }
         }
       } else {
-        nframe += last_frame; // normal
-        if (nframe > last_frame) {
-          nframe = last_frame - (nframe - last_frame);
+        // odd winding
+        nframe = ABS(nframe) + first_frame;
+        if (mainw->ping_pong && clip_can_reverse(fileno)) {
+          // bounce
           if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
           else sfile->pb_fps = -sfile->pb_fps;
         }
       }
     } else {
-      // odd winding
-      nframe = ABS(nframe) + first_frame;
-      if (mainw->ping_pong && clip_can_reverse(fileno)) {
-        // bounce
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-        else sfile->pb_fps = -sfile->pb_fps;
+      // forwards
+      nframe += first_frame;
+      if (dir == 1) {
+        // odd winding
+        if (mainw->ping_pong && clip_can_reverse(fileno)) {
+          // bounce
+          nframe = last_frame - (nframe - (first_frame - 1));
+          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+          else sfile->pb_fps = -sfile->pb_fps;
+        }
+      } else if (mainw->playing_sel && (!mainw->ping_pong || !clip_can_reverse(fileno))
+                 && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont && !mainw->loop) {
+        // resync audio at start of loop selection
+        if (nframe < first_frame) {
+          nframe = last_frame - (first_frame - nframe) + 1;
+        }
+        do_resync = TRUE;
       }
-    }
-  } else {
-    // forwards
-    nframe += first_frame;
-    if (dir == 1) {
-      // odd winding
-      if (mainw->ping_pong && clip_can_reverse(fileno)) {
-        // bounce
-        nframe = last_frame - (nframe - (first_frame - 1));
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-        else sfile->pb_fps = -sfile->pb_fps;
-      }
-    } else if (mainw->playing_sel && (!mainw->ping_pong || !clip_can_reverse(fileno))
-               && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont && !mainw->loop) {
-      // resync audio at start of loop selection
       if (nframe < first_frame) {
-        nframe = last_frame - (first_frame - nframe) + 1;
+        // scratch or transport backwards
+        if (mainw->ping_pong && clip_can_reverse(fileno)) {
+          nframe = first_frame;
+          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+          else sfile->pb_fps = -sfile->pb_fps;
+        } else nframe = last_frame - nframe;
       }
-      do_resync = TRUE;
-    }
-    if (nframe < first_frame) {
-      // scratch or transport backwards
-      if (mainw->ping_pong && clip_can_reverse(fileno)) {
-        nframe = first_frame;
-        if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-        else sfile->pb_fps = -sfile->pb_fps;
-
-      } else nframe = last_frame - nframe;
     }
   }
-
   if (nframe < first_frame) nframe = first_frame;
   if (nframe > last_frame) nframe = last_frame;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    if (do_resync || (mainw->scratch != SCRATCH_NONE && mainw->playing_file == fileno)) {
+    if ((do_resync || mainw->scratch != SCRATCH_NONE) && mainw->playing_file == fileno) {
       boolean is_jump = FALSE;
       if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
       mainw->scratch = SCRATCH_NONE;

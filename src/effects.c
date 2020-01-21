@@ -1130,7 +1130,7 @@ boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data)
 
 boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
-  int old_file = mainw->current_file;
+  int old_file = mainw->current_file, blend_file = mainw->blend_file;
 
   if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->noswitch || mainw->blend_file == -1 ||
       mainw->blend_file == mainw->current_file || mainw->files[mainw->blend_file] == NULL || mainw->preview ||
@@ -1146,11 +1146,8 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     else mainw->swapped_clip = mainw->pre_src_file;
   } else mainw->swapped_clip = -1;
 
-  do_quick_switch(mainw->blend_file);
-
-  mainw->blend_file = old_file;
-
   rte_swap_fg_bg();
+  do_quick_switch(blend_file); // will set mainw->blend_file
 
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))

@@ -1443,7 +1443,8 @@ int process_one(boolean visible) {
       // calculate the audio 'frame' for non-realtime audio players
       // for realtime players, we did this in calc_new_playback_position()
       if (!is_realtime_aplayer(prefs->audio_player)) {
-        mainw->aframeno = (real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
+        calc_aframeno(mainw->current_file);
+        ///(real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
                                                 cfile->laudio_time * cfile->fps)))) {
           mainw->firstticks = real_ticks;
@@ -1790,7 +1791,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // set initial audio seek position for current file
   if (cfile->achans) {
     mainw->aframeno = calc_frame_from_time4(mainw->current_file,
-                                            cfile->aseek_pos / cfile->arate / cfile->achans / (cfile->asampsize >> 3));
+                                            cfile->aseek_pos / cfile->arps / cfile->achans / (cfile->asampsize >> 3));
   }
   frames = cfile->frames;
   cfile->frames = 0; // allow seek beyond video length

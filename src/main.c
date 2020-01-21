@@ -5821,7 +5821,7 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, dplug->cdata->YUV_subspace);
         }
 
-        if (create_empty_pixel_data(layer, FALSE, TRUE))
+        if (create_empty_pixel_data(layer, TRUE, TRUE))
           pixel_data = weed_get_voidptr_array(layer, WEED_LEAF_PIXEL_DATA, &error);
         else {
           create_blank_layer(layer, image_ext, 4, 4, target_palette);
@@ -8339,6 +8339,10 @@ void load_frame_image(int frame) {
       sched_yield();
       load_end_image(cfile->end);
       sched_yield();
+    }
+
+    if (new_file == mainw->blend_file) {
+      mainw->blend_file = old_file;
     }
 
     // force loading of a frame from the new clip

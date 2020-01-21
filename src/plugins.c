@@ -2005,10 +2005,6 @@ boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette) {
 
 boolean decoder_plugin_move_to_first(const char *name) {
   LiVESList *decoder_plugin, *last_decoder_plugin = NULL;
-  if (!mainw->decoders_loaded) {
-    mainw->decoder_list = load_decoders();
-    mainw->decoders_loaded = TRUE;
-  }
   decoder_plugin = mainw->decoder_list;
   while (decoder_plugin != NULL) {
     if (!strcmp((const char *)(decoder_plugin->data), name)) {
@@ -2157,9 +2153,9 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
 
   if (fake_cdata != NULL) {
     set_cdata_memfuncs((lives_clip_data_t *)fake_cdata);
-    if (prefs->vj_mode) {
-      ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
-    }
+    //if (prefs->vj_mode) {
+    ((lives_clip_data_t *)fake_cdata)->seek_flag = LIVES_SEEK_FAST;
+    //}
   }
 
   while (decoder_plugin != NULL) {

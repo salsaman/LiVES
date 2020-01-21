@@ -433,6 +433,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
   register int ccount = 0;
+  static float rem = 0.;
   int16_t *ptr;
   int16_t *src_end;
 
@@ -441,11 +442,17 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   if (scale < 0.f) {
     src_offset_f = ((float)(nsamples) * (-scale) - 1.f);
     src_offset_i = (int)src_offset_f * nSrcChannels;
+    /* if (rem < 0.) */
+    /*   //src_offset_f -= rem; */
+    /*   } */
+  } else {
+    if (rem > 0.)
+      src_offset_f += rem;
   }
 
   // take care of rounding errors
-  src_end = src + tbytes / sizeof(short) - nSrcChannels;
-  if (fabs(nsamples * scale * 2. * nSrcChannels) > tbytes) scale = (scale > 0. ? (float)tbytes / (float)(
+  src_end = src + tbytes / 2 - nSrcChannels;
+  if ((size_t)(fabs(nsamples * scale * 2. * nSrcChannels)) > tbytes) scale = (scale > 0. ? (float)tbytes / (float)(
           nsamples * nSrcChannels * 2.)
         : (float)tbytes / (float)(-nsamples * nSrcChannels * 2.));
   while (nsamples--) {
@@ -453,7 +460,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       // same number of channels
 
       if (scale == 1.f) {
-        lives_memcpy((void *)dst, (void *)src, tbytes);
+        lives_memcpy((void *)dst, (void *)src, nsamples * 2 * nSrcChannels);
         return;
       }
 
@@ -502,8 +509,9 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       }
     }
     /* advance the the position */
-    src_offset_i = (int)(src_offset_f += scale) * nSrcChannels;
+    src_offset_i = (int)((src_offset_f += scale) + .5) * nSrcChannels;
   }
+  rem = (src_offset_f) - (float)src_offset_i;
 }
 
 
@@ -668,15 +676,17 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-  register float valf, clip = 1., fval, volx = vol;
+  float valf, fval, volx = vol, clip = 1.;
   register short val;
   register unsigned short valu = 0;
 
   while ((nsamps - coffs) > 0) {
     frames_out++;
     for (i = 0; i < chans; i++) {
-      if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip)
-        volx = vol / ((clip = fval));
+      if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
+        clip = fval;
+        volx = vol / clip;
+      }
       valf *= volx;
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);

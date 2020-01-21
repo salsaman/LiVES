@@ -254,8 +254,6 @@ WEED_SETUP_START(200, 200) {
 
   char **rfx_strings = NULL;
 
-  char *blacklist[2] = {"Timeout indicator", NULL};
-
   weed_plant_t **out_chantmpls, **in_chantmpls = NULL;
   weed_plant_t **in_params = NULL, *gui, *pgui;
 
@@ -309,10 +307,7 @@ WEED_SETUP_START(200, 200) {
 
   int is_unstable;
 
-  int blacklisted;
   int num_filters = 0;
-
-  register int i;
 
 #ifdef CAN_GET_DEF
   f0r_instance_t f0r_inst;
@@ -506,18 +501,7 @@ WEED_SETUP_START(200, 200) {
         (*f0r_init)();
         (*f0r_get_plugin_info)(&f0rinfo);
 
-        blacklisted = 0;
-
-        for (i = 0; blacklist[i] != NULL; i++) {
-          if (!strcmp(f0rinfo.name, blacklist[i])) {
-            if (verbosity >= WEED_VERBOSITY_WARN)
-              fprintf(stderr, "Warning, frei0r plugin skipping blacklisted plugin %s\n", f0rinfo.name);
-            blacklisted = 1;
-            break;
-          }
-        }
-
-        if (blacklisted || f0rinfo.frei0r_version != FREI0R_MAJOR_VERSION) {
+        if (f0rinfo.frei0r_version != FREI0R_MAJOR_VERSION) {
           (*f0r_deinit)();
           dlclose(handle);
           handle = NULL;
@@ -675,7 +659,7 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&vald, pnum);
               if (vald != 0. && vald != 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) "
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\n(%f) "
                           "for boolean parameter %s.\nThis plugin may be unstable !\n",
                           f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
@@ -694,7 +678,7 @@ WEED_SETUP_START(200, 200) {
 
               if (vald < 0. || vald > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\n(%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
                           f0rinfo.name, f0rinfo.author, vald, pinfo.name);
                 is_unstable = 1;
@@ -717,9 +701,9 @@ WEED_SETUP_START(200, 200) {
 
               if (valcol.r < 0. || valcol.r > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value red (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\nred (%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
-                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                          f0rinfo.name, f0rinfo.author, valcol.r, pinfo.name);
                 is_unstable = 1;
                 if (valcol.r < 0.) valcol.r = 0.;
                 if (valcol.r > 1.) valcol.r = 1.;
@@ -727,9 +711,9 @@ WEED_SETUP_START(200, 200) {
 
               if (valcol.g < 0. || valcol.g > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value green (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\ngreen (%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
-                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                          f0rinfo.name, f0rinfo.author, valcol.g, pinfo.name);
                 is_unstable = 1;
                 if (valcol.g < 0.) valcol.g = 0.;
                 if (valcol.g > 1.) valcol.g = 1.;
@@ -737,9 +721,9 @@ WEED_SETUP_START(200, 200) {
 
               if (valcol.b < 0. || valcol.b > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value blue (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\nblue (%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
-                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                          f0rinfo.name, f0rinfo.author, valcol.b, pinfo.name);
                 is_unstable = 1;
                 if (valcol.b < 0.) valcol.b = 0.;
                 if (valcol.b > 1.) valcol.b = 1.;
@@ -756,9 +740,9 @@ WEED_SETUP_START(200, 200) {
               f0r_get_param_value(f0r_inst, (void **)&valpos, pnum);
               if (valpos.x < 0. || valpos.x > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\nx-pos (%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
-                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                          f0rinfo.name, f0rinfo.author, valpos.x, pinfo.name);
                 is_unstable = 1;
                 if (valpos.x < 0.) valpos.x = 0.;
                 if (valpos.x > 1.) valpos.x = 1.;
@@ -766,9 +750,9 @@ WEED_SETUP_START(200, 200) {
 
               if (valpos.y < 0. || valpos.y > 1.) {
                 if (verbosity >= WEED_VERBOSITY_WARN)
-                  fprintf(stderr, "Warning, frei0r plugin %s by %s sets bad default value x-pos (%f) for parameter %s.\n"
+                  fprintf(stderr, "Warning, frei0r plugin '%s' by %s sets bad default value\ny-pos (%f) for parameter %s.\n"
                           "This plugin may be unstable !\n",
-                          f0rinfo.name, f0rinfo.author, vald, pinfo.name);
+                          f0rinfo.name, f0rinfo.author, valpos.y, pinfo.name);
                 is_unstable = 1;
                 if (valpos.y < 0.) valpos.y = 0.;
                 if (valpos.y > 1.) valpos.y = 1.;

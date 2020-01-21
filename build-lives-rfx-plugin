@@ -118,7 +118,7 @@ if (!$is_scrap) {
     }
 }
 
-my $builder_version = "3.0.3-pre";
+my $builder_version = "3.2.0-pre";
 
 if (!$is_scrap && $in_channels == 0 && ($properties & 0x0004)) {
     #batch mode generator

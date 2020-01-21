@@ -849,7 +849,7 @@ static int matroska_decode_buffer(uint8_t **buf, int *buf_size,
   *buf_size = pkt_size;
   return 0;
 failed:
-  av_free(pkt_data);
+  free(pkt_data);
   return -1;
 }
 
@@ -888,7 +888,7 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
       return;
     snprintf(line, len, "Dialogue: %s,%d:%02d:%02d.%02d,%d:%02d:%02d.%02d,%s\r\n",
              layer, sh, sm, ss, sc, eh, em, es, ec, ptr);
-    av_free(pkt->data);
+    free(pkt->data);
     pkt->data = (unsigned char *)line;
     pkt->size = strlen(line);
   }
@@ -2161,7 +2161,7 @@ static lives_clip_data_t *init_cdata(void) {
 
   cdata->priv = priv = malloc(sizeof(lives_mkv_priv_t));
 
-  cdata->seek_flag = 0;
+  cdata->seek_flag = LIVES_SEEK_FAST;
 
   priv->ctx = NULL;
   priv->codec = NULL;
@@ -2917,7 +2917,10 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 #ifdef TEST_CACHING
 framedone2:
 #endif
-  if (priv->picture == NULL || pixel_data == NULL) goto cleanup;
+  if (priv->picture == NULL || pixel_data == NULL) {
+    retval = FALSE;
+    goto cleanup;
+  }
 
   // we are allowed to cast away const-ness for
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
@@ -2984,7 +2987,8 @@ framedone2:
       for (i = 0; i < xheight; i++) {
         if (i < btop || i > bbot) {
           // top or bottom border, copy black row
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+              || pal == WEED_PALETTE_YUV444P ||
               pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
             memset(dst, black[p], dstwidth + (bleft + bright)*psize);
             dst += dstwidth + (bleft + bright) * psize;
@@ -2993,18 +2997,20 @@ framedone2:
         }
 
         if (bleft > 0) {
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+              || pal == WEED_PALETTE_YUV444P ||
               pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
             memset(dst, black[p], bleft * psize);
             dst += bleft * psize;
           } else dst += write_black_pixel(dst, pal, bleft, y_black);
         }
 
-        memcpy(dst, src, dstwidth);
+        (*cdata->ext_memcpy)(dst, src, dstwidth);
         dst += dstwidth;
 
         if (bright > 0) {
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P ||
+          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
+              || pal == WEED_PALETTE_YUV444P ||
               pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
             memset(dst, black[p], bright * psize);
             dst += bright * psize;

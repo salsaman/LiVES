@@ -138,7 +138,7 @@ typedef struct {
 #define WEED_VERBOSITY_CRITICAL	-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL
 #define WEED_VERBOSITY_ERROR	      	 0 ///< default choice a (errors which prevent normal operation)
 #define WEED_VERBOSITY_WARN	      	 1 ///< default choice b (errors which adversly affect operation)
-#define WEED_VERBOSITY_INFO		 2 ///< info (any non-debug info)
+#define WEED_VERBOSITY_INFO		 2 ///< info (any additional non-debug info)
 #define WEED_VERBOSITY_DEBUG		 3 ///< output to assist with debugging the plugin / filter
 
 typedef int64_t weed_timecode_t;

@@ -1136,7 +1136,7 @@ boolean d_print_urgency(double timeout_seconds, const char *fmt, ...);
 void do_text_window(const char *title, const char *text);
 
 // saveplay.c
-boolean read_file_details(const char *file_name, boolean only_check_for_audio);
+boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 boolean reload_clip(int fileno, int maxframe);

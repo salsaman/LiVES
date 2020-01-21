@@ -1322,7 +1322,12 @@ if (defined($ARGV[0])) {
 	    $img_ext = "." . $ARGV[3];
 	    my $scan_type = $ARGV[4];
 
-	    $only_first = 1;
+	    if ($scan_type != 4) {
+		$only_first = 1;
+	    }
+	    else {
+		$only_first = 0;
+	    }
 
 	    $curworkdir = "$workdir/$handle";
 
@@ -1335,6 +1340,10 @@ if (defined($ARGV[0])) {
 	    if ($asamps == 32) {
 		# cant handle this yet, so we will resample on open
 		$asamps = 16;
+	    }
+
+	    if ($scan_type == 4) {
+		$count = $frames;
 	    }
 
 	    &smog_chdir($curworkdir);
@@ -2116,7 +2125,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "close") {
-	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !($handle =~ /^fsp/))) {
+	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !&is_specialdir($handle))) {
 		exit 1;
 	    }
 
@@ -6062,7 +6071,7 @@ sub get_file_info {
     # $comment, $title, $author
 
     # $type may be a video format ($id_vid_form) or "Audio" or an image format ("jpeg", "png", etc).
-    my ($file, $scantype, $VERBOSE) = @_; ## 0 = scan_all, 1 = scan_for_open, 2 = scan_audio, 3 = scan_remote
+    my ($file, $scantype, $VERBOSE) = @_; ## 0 = scan_all, 1 = scan_for_open, 2 = scan_audio, 3 = scan_remote, 4 = scan_img
     my $is_remote = 0;
     if ($scan_type == 3) {
 	$is_remote = 1;
@@ -6074,6 +6083,9 @@ sub get_file_info {
     my $ptypes = $P_AUDIO | $P_VIDEO;
     if ($scantype == 0) {
 	$ptypes |= $P_IMAGE;
+    }
+    elsif ($scantype == 4) {
+	$ptypes = $P_IMAGE;
     }
     $count = 0;
     $bpp = 24;
@@ -8892,9 +8904,19 @@ sub get_form_request {
 
 sub get_convert_version {
     my $real_convert_command = (split(" ", $smog_convert_command))[0];
-    my $convert_version = smog_system_direct("$real_convert_command 2>$nulfile | grep -i version");
+    my $convert_version = &smog_system_direct("$real_convert_command 2>$nulfile | grep -i version");
     $convert_version = (split(" ", $convert_version))[2];
     return $convert_version;
+}
+
+
+sub is_specialdir {
+    my $dirname = shift;
+    if (-d $dirname
+	&& ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/ || $dirname =~ /^fsp[0-9]+$/)) {
+	return 1;
+    }
+    return 0;
 }
 
 
@@ -8970,7 +8992,7 @@ sub weed {
 			if (!($opts & 0x01)) {
 			    print STDERR "considering $workdir/$file for removal\n";
 			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
-				|| $file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
+				|| &is_specialdir($file)) {
 				print STDERR "removing it\n";
 				&smog_system("/bin/rm -rf \"$workdir/$file\"");
 			    }
@@ -8995,7 +9017,7 @@ sub weed {
 						print STDERR "     - unspecified reason ???!!?\n";
 					    }}}}
 
-				unless ($file =~ /^scrap[0-9]+$/ || $file =~ /^ascrap[0-9]+$/ || $file =~ /^fsp[0-9]+$/) {
+				unless (&is_specialdir($file)) {
 				    print STDERR "     - directory name does not begin with scrap, ascrap or fsp followed by digits.\n";
 				}
 				print STDERR "smogrify: manual cleanup may be required if this directory is no longer needed\n";

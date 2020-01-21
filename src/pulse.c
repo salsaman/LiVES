@@ -33,6 +33,8 @@ static size_t prb = 0;
 
 static boolean seek_err;
 
+static int lock_count = 0;
+
 ///////////////////////////////////////////////////////////////////
 
 
@@ -44,15 +46,19 @@ LIVES_LOCAL_INLINE int64_t align_ceilng(int64_t val, int mod) {
 LIVES_GLOBAL_INLINE void pa_mloop_lock(void) {
   if (!pa_threaded_mainloop_in_thread(pa_mloop)) {
     pa_threaded_mainloop_lock(pa_mloop);
+    ++lock_count;
   } else {
     LIVES_ERROR("tried to lock pa mainloop within audio thread");
   }
 }
 
 LIVES_GLOBAL_INLINE void pa_mloop_unlock(void) {
-  if (!pa_threaded_mainloop_in_thread(pa_mloop))
-    pa_threaded_mainloop_unlock(pa_mloop);
-  else {
+  if (!pa_threaded_mainloop_in_thread(pa_mloop)) {
+    if (lock_count) {
+      --lock_count;
+      pa_threaded_mainloop_unlock(pa_mloop);
+    }
+  } else {
     LIVES_ERROR("tried to unlock pa mainloop within audio thread");
   }
 }
@@ -150,7 +156,11 @@ retry:
                    "Click Abort to exit from LiVES, Retry to try again,\n"
                    "or Cancel to run LiVES without audio features.\n"
                    "Audio settings can be upodated in Tools/Preferences/Playback.\n"), NULL);
-        if (resp == LIVES_RESPONSE_RETRY) goto retry;
+        if (resp == LIVES_RESPONSE_RETRY) {
+          fprintf(stderr, "Retrying...\n");
+          goto retry;
+        }
+        fprintf(stderr, "Giving up.\n");
         switch_aud_to_none(TRUE);
       } else {
         msg = lives_strdup(_("\nUnable to connect to the pulseaudio server.\n"));
@@ -340,6 +350,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   size_t offs = 0;
   boolean got_cmd = FALSE;
   pa_volume_t pavol;
+
+  //pa_thread_make_realtime(50);
 
   pulsed->real_seek_pos = pulsed->seek_pos;
 
@@ -1757,7 +1769,6 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
   if (frame < 1) frame = 1;
-  g_print("seek to frame %d\n", frame);
   do {
     pmsg = pulse_get_msgq(pulsed);
   } while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pmsg != NULL && pmsg->command != ASERVER_CMD_FILE_SEEK);
@@ -1768,7 +1779,6 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
   }
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
-  g_print("seek bytes %ld\n", seekstart);
   pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;
 }

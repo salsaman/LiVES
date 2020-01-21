@@ -500,7 +500,6 @@ void lives_exit(int signum) {
     if (mainw->start_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->start_image), NULL);
     if (mainw->end_image != NULL) lives_image_set_from_pixbuf(LIVES_IMAGE(mainw->end_image), NULL);
 
-
     if (mainw->frame_layer != NULL) {
       check_layer_ready(mainw->frame_layer);
       weed_layer_free(mainw->frame_layer);
@@ -515,6 +514,8 @@ void lives_exit(int signum) {
     }
   }
 
+  weed_unload_all();
+
 #ifdef KEEP_VALGRIND_HAPPY
   lives_list_free_all(&mainw->current_layouts_map);
 
@@ -522,11 +523,7 @@ void lives_exit(int signum) {
     LiVESList *dummy_list = plugin_request("encoders", prefs->encoder.name, "finalise");
     lives_list_free_all(&dummy_list);
   }
-
-  weed_unload_all();
-
   threaded_dialog_spin(0.);
-
   rfx_free_all();
   threaded_dialog_spin(0.);
 #endif
@@ -534,6 +531,7 @@ void lives_exit(int signum) {
 #ifdef ENABLE_OSC
   if (prefs->osc_udp_started) lives_osc_end();
 #endif
+  mainw->is_ready = FALSE;
 
 #ifdef KEEP_VALGRIND_HAPPY
   pconx_delete_all();
@@ -553,13 +551,10 @@ void lives_exit(int signum) {
 
   lives_freep((void **)&prefs->fxdefsfile);
   lives_freep((void **)&prefs->fxsizesfile);
-
   lives_freep((void **)&prefs->wm);
-
   lives_freep((void **)&mainw->recovery_file);
 
   for (i = 0; i < NUM_LIVES_STRING_CONSTANTS; i++) lives_freep((void **)&mainw->string_constants[i]);
-
   for (i = 0; i < mainw->n_screen_areas; i++) lives_freep((void **)&mainw->screen_areas[i].name);
 
   if (mainw->video_drawable != NULL) {
@@ -581,22 +576,15 @@ void lives_exit(int signum) {
 
   lives_freep((void **)&mainw->old_vhash);
   lives_freep((void **)&mainw->version_hash);
-
-  unload_decoder_plugins();
-
   lives_freep((void **)&mainw->multitrack);
-  mainw->is_ready = FALSE;
-
   lives_freep((void **)&mainw->mgeom);
-
   lives_list_free_all(&prefs->disabled_decoders);
-
   if (mainw->fonts_array != NULL) lives_strfreev(mainw->fonts_array);
-
 #ifdef ENABLE_NLS
   lives_freep((void **)&trString);
 #endif
 #endif
+  unload_decoder_plugins();
 
   tmp = lives_strdup_printf("signal: %d", signum);
   lives_notify(LIVES_OSC_NOTIFY_QUIT, tmp);
@@ -4752,10 +4740,12 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (area == SCREEN_AREA_FOREGROUND) {
-    if (!CURRENT_CLIP_IS_NORMAL || !clip_can_reverse(mainw->current_file)) return TRUE;
+    if (!CURRENT_CLIP_IS_NORMAL
+        || (!clip_can_reverse(mainw->current_file) && cfile->pb_fps > 0.)) return TRUE;
 
     // change play direction
     if (cfile->play_paused) {
+      if (!clip_can_reverse(mainw->current_file) && cfile->freeze_fps > 0.) return TRUE;
       cfile->freeze_fps = -cfile->freeze_fps;
       return TRUE;
     }
@@ -4767,7 +4757,8 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     // make sure this is called, sometimes we switch clips too soon...
     changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), NULL);
   } else if (area == SCREEN_AREA_BACKGROUND) {
-    if (!IS_NORMAL_CLIP(mainw->blend_file) || !clip_can_reverse(mainw->blend_file)) return TRUE;
+    if (!IS_NORMAL_CLIP(mainw->blend_file)
+        || (!clip_can_reverse(mainw->blend_file) && mainw->files[mainw->blend_file]->pb_fps >= 0.)) return TRUE;
     mainw->files[mainw->blend_file]->pb_fps = -mainw->files[mainw->blend_file]->pb_fps;
   }
   return TRUE;
@@ -4777,7 +4768,7 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                                 livespointer area_enum) {
 
-  if (!clip_can_reverse(mainw->current_file)) return TRUE;
+  //if (!clip_can_reverse(mainw->current_file)) return TRUE;
 
   if (!mainw->loop_locked && loop_lock_frame == -1) loop_lock_frame = mainw->actual_frame;
   else {
@@ -4799,12 +4790,15 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
       ofwd = cfile->pb_fps > 0.;
     }
     mainw->loop_cont = TRUE;
-    mainw->ping_pong = TRUE;
+    if (clip_can_reverse(mainw->current_file))
+      mainw->ping_pong = TRUE;
     mainw->loop = FALSE;
     mainw->loop_locked = TRUE;
     loop_lock_frame = -1;
   }
-  return dirchange_callback(group, obj, keyval, mod, area_enum);
+  if (clip_can_reverse(mainw->current_file))
+    return dirchange_callback(group, obj, keyval, mod, area_enum);
+  return TRUE;
 }
 
 
@@ -8133,7 +8127,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   if (!lives_ascii_strncasecmp(a_type, LIVES_FILE_EXT_WAV, 3)) israw = 0;
 
   if (HAS_EXTERNAL_PLAYER) {
-    if (read_file_details(file_name, TRUE)) {
+    if (read_file_details(file_name, TRUE, FALSE)) {
       if (get_token_count(mainw->msg, '|') >= 14) {
         array = lives_strsplit(mainw->msg, "|", -1);
         cfile->arate = atoi(array[9]);

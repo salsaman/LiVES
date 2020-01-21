@@ -50,7 +50,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.2.0-pre";
+my $version = "3.0.3-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -2125,16 +2125,20 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($command eq "close") {
+	    print STDERR "told to close $handle\n";
+	    print STDERR "chex " . (-d $curworkdir) . " AND  " .  (&is_specialdir($handle)) .  " \n";
 	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !&is_specialdir($handle))) {
 		exit 1;
 	    }
-
+	    print STDERR "told222 to close $handle\n";
 	    if (defined(open IN,"< $pidfile")) {
 		close IN;
 		# cancel any processing
 		&smog_system("smogrify stopsubsub \"$handle\"");
 	    }
+	    print STDERR "told222333 to close $handle\n";
 	    if (chdir($curworkdir)) {
+		print STDERR "told222xx to close $curworkdir\n";
 		unlink glob "* .* *.*";
 		&smog_chdir($workdir);
 		rmdir $curworkdir;
@@ -8912,7 +8916,8 @@ sub get_convert_version {
 
 sub is_specialdir {
     my $dirname = shift;
-    if (-d $dirname
+
+    if (-d "$workdir/$dirname"
 	&& ($dirname =~ /^scrap[0-9]+$/ || $dirname =~ /^ascrap[0-9]+$/ || $dirname =~ /^fsp[0-9]+$/)) {
 	return 1;
     }

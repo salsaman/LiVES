@@ -217,6 +217,7 @@ double lives_ce_update_timeline(int frame, double x) {
     if (mainw->prv_link == PRV_PTR && mainw->preview_frame != calc_frame_from_time(mainw->current_file, x)) {
       double pointer_time = cfile->pointer_time;
       cfile->pointer_time = x;
+      if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
       load_preview_image(FALSE);
       cfile->pointer_time = pointer_time;
     }

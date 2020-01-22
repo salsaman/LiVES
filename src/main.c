@@ -5196,6 +5196,7 @@ void load_preview_image(boolean update_always) {
     case PRV_PTR:
       //cf. hrule_reset
       cfile->pointer_time = lives_ce_update_timeline(mainw->preview_frame, 0.);
+      if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
       if (cfile->pointer_time > 0.) {
         lives_widget_set_sensitive(mainw->rewind, TRUE);
         lives_widget_set_sensitive(mainw->trim_to_pstart, CURRENT_CLIP_HAS_AUDIO);

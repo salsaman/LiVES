@@ -4441,6 +4441,7 @@ void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   cfile->pointer_time = lives_ce_update_timeline(0, 0.);
+  cfile->frameno = 1;
   lives_widget_queue_draw_if_visible(mainw->hruler);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
@@ -10078,6 +10079,7 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
+  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10115,6 +10117,7 @@ boolean on_hrule_update(LiVESWidget * widget, LiVESXEventMotion * event, livespo
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double()lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
+  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
   return TRUE;
 }
 
@@ -10131,6 +10134,7 @@ boolean on_hrule_reset(LiVESWidget * widget, LiVESXEventButton  * event, livespo
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
+  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10164,7 +10168,7 @@ boolean on_hrule_set(LiVESWidget * widget, LiVESXEventButton * event, livespoint
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
-
+  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
   return TRUE;
 }
 

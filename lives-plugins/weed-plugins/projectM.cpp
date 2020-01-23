@@ -252,14 +252,18 @@ static int render_frame(_sdata *sdata) {
   glFlush();
 
 #if USE_DBLBUF
+  pthread_mutex_lock(&sdata->frame_mutex);
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
+  pthread_mutex_unlock(&sdata->frame_mutex);
 #ifdef HAVE_SDL2
   SDL_GL_SwapWindow(sdata->win);
 #else
   SDL_GL_SwapBuffers();
 #endif
 #else
+  pthread_mutex_lock(&sdata->frame_mutex);
   glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
+  pthread_mutex_unlock(&sdata->frame_mutex);
 #endif
   return 0;
 }

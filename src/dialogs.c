@@ -1224,8 +1224,9 @@ int process_one(boolean visible) {
   if (!visible) {
     // INTERNAL PLAYER
     if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
-      do_quick_switch(mainw->new_clip);
       mainw->pre_src_file = mainw->new_clip;
+      switch_clip(0, mainw->new_clip, FALSE);
+      //do_quick_switch(mainw->new_clip);
       mainw->new_clip = -1;
     }
 
@@ -1351,7 +1352,9 @@ int process_one(boolean visible) {
               get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
-            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
+            //cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
+            cfile->next_event = process_events(cfile->next_event, FALSE, lives_get_relative_ticks(mainw->origsecs,
+                                               mainw->origusecs));
             if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
             else {
               // see if we need to fill an audio buffer

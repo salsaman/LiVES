@@ -255,7 +255,7 @@ typedef struct {
 } thrd_work_t;
 
 
-typedef LiVESList *lives_thread_t;
+typedef LiVESList lives_thread_t;
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);

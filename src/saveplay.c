@@ -2008,7 +2008,7 @@ void save_file(int clip, int start, int end, const char *filename) {
 /// play the current clip from 'mainw->play_start' to 'mainw->play_end'
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
-
+  LiVESList *cliplist;
   short audio_player = prefs->audio_player;
 
   weed_plant_t *pb_start_event = NULL;
@@ -2995,15 +2995,22 @@ void play_file(void) {
           lives_window_present(LIVES_WINDOW(mainw->play_window));
           lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
           unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
-    /// free the last frame image
-    if (mainw->frame_layer != NULL) {
-      weed_layer_free(mainw->frame_layer);
-      mainw->frame_layer = NULL;
-    }
+  /// free the last frame image
+  if (mainw->frame_layer != NULL) {
+    weed_layer_free(mainw->frame_layer);
+    mainw->frame_layer = NULL;
+  }
+
+  cliplist = mainw->cliplist;
+  while (cliplist != NULL) {
+    int i = LIVES_POINTER_TO_INT(cliplist->data);
+    if (IS_NORMAL_CLIP(i) && mainw->files[i]->clip_type == CLIP_TYPE_FILE)
+      chill_decoder_plugin(i);
+    cliplist = cliplist->next;
   }
 
   if (!mainw->foreign) {

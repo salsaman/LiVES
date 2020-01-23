@@ -4142,7 +4142,8 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   boolean gotit = FALSE;
   char buff[maxlen];
-  buff[0] = 0;
+
+  lives_memset(buff, 0, maxlen);
   while (clist != NULL) {
     if (gotit) {
       if (!strncmp(keystr_end, (char *)clist->data, kelen)) {
@@ -4784,7 +4785,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
-  retstr = (char *)lives_malloc(req_size);
+  retstr = (char *)lives_calloc(req_size, 1);
   req_size = 0; // reuse as a ptr to offset in retstr
   runlen = 0;
   needsnl = FALSE;

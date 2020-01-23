@@ -368,6 +368,21 @@ void sample_silence_stream(int nchans, int nframes) {
 }
 
 
+/* //void normalise(float rms) */
+/*   if (i == 0) { */
+/*     int dlen = weed_layer_get_audio_length(layer); */
+/*     for (ch =0; ch < achans; ch++) { */
+/*       for (smp = 0; smp < dlen; smp ++) { */
+/* 	avg += adata[ch][smp]; */
+/*       } */
+/*       avg /= dlen; */
+/*       for (smp = 0; smp < dlen; smp ++) { */
+/* 	avg += adata[ch][smp]; */
+/*       } */
+/*     }}}       */
+
+
+
 // TODO: going from >1 channels to 1, we should average
 void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {

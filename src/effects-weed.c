@@ -653,21 +653,17 @@ boolean has_video_chans_in(weed_plant_t *filter, boolean count_opt) {
 
 
 boolean has_audio_chans_in(weed_plant_t *filter, boolean count_opt) {
-  int error, nchans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
-  weed_plant_t **in_ctmpls;
-  int i;
-
+  int nchans;
+  weed_plant_t **in_ctmpls = weed_filter_get_in_chantmpls(filter, &nchans);
   if (nchans == 0) return FALSE;
-
-  in_ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
-  for (i = 0; i < nchans; i++) {
+  for (int i = 0; i < nchans; i++) {
     if (!count_opt && weed_chantmpl_is_optional(in_ctmpls[i])) continue;
-    if (weed_get_boolean_value(in_ctmpls[i], WEED_LEAF_IS_AUDIO, &error) == WEED_FALSE) continue;
-    lives_free(in_ctmpls);
-    return TRUE;
+    if (weed_get_boolean_value(in_ctmpls[i], WEED_LEAF_IS_AUDIO, NULL) == WEED_TRUE) {
+      lives_free(in_ctmpls);
+      return TRUE;
+    }
   }
   lives_freep((void **)&in_ctmpls);
-
   return FALSE;
 }
 
@@ -1222,6 +1218,8 @@ lives_filter_error_t weed_reinit_effect(weed_plant_t *inst, boolean reinit_compo
     }
   }
 
+  mainw->blend_palette = WEED_PALETTE_END;
+
 reinit:
 
   filter = weed_instance_get_filter(inst, FALSE);
@@ -1305,6 +1303,7 @@ reinit:
 
   if (key != -1) filter_mutex_unlock(key);
   weed_instance_unref(orig_inst);
+  mainw->blend_palette = WEED_PALETTE_END;
   return filter_error;
 }
 
@@ -1772,7 +1771,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   }
 
   // count the actual layers fed in
-  while (layers[lcount++] != NULL);
+  while (layers[lcount] != NULL) lcount++;
 
   for (k = i = 0; i < num_in_tracks; i++) {
     if (in_tracks[i] < 0) {
@@ -2266,12 +2265,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     channel_rows = weed_channel_get_rowstrides(channel, &nchr);
 
     // check layer rowstrides against previous settings
-    numplanes = weed_leaf_num_elements(layer, WEED_LEAF_ROWSTRIDES);
-    rowstrides = weed_get_int_array(layer, WEED_LEAF_ROWSTRIDES, NULL);
-
+    rowstrides = weed_layer_get_rowstrides(layer, &numplanes);
     rowstrides_changed = rowstrides_differ(numplanes, rowstrides, nchr, channel_rows);
-    lives_freep((void **)&channel_rows);
-    lives_freep((void **)&rowstrides);
+    lives_free(channel_rows);
+    lives_free(rowstrides);
 
     if (rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))
       needs_reinit = TRUE;
@@ -2295,6 +2292,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_layer_copy((weed_layer_t *)channel, layer) == NULL) {
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
+    }
+    if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
+      mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
+                             &mainw->blend_subspace);
+      mainw->blend_width = weed_layer_get_width(layer);
+      mainw->blend_height = weed_layer_get_height(layer);
+      mainw->blend_gamma = weed_layer_get_gamma(layer);
     }
   }
 
@@ -6696,7 +6700,7 @@ deinit2:
   if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NORECORD)) weed_leaf_delete(inst, WEED_LEAF_HOST_NORECORD);
 
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && (prefs->rec_opts & REC_EFFECTS) && !is_gen) {
-    ticks_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
     uint64_t rteval, new_rte;
     pthread_mutex_lock(&mainw->event_list_mutex);
     event_list = append_filter_init_event(mainw->event_list, actual_ticks,
@@ -6871,6 +6875,7 @@ boolean weed_deinit_effect(int hotkey) {
 	    // *INDENT-OFF*
           }}}}}
   // *INDENT-ON*
+  mainw->blend_palette = WEED_PALETTE_END;
 
   // disable param recording, in case the instance is still attached to a param window
   weed_set_boolean_value(instance, WEED_LEAF_HOST_NORECORD, WEED_TRUE);
@@ -7048,7 +7053,7 @@ deinit3:
   if (mainw->record && !mainw->record_paused && LIVES_IS_PLAYING && init_events[hotkey] != NULL &&
       (prefs->rec_opts & REC_EFFECTS) && num_in_chans > 0) {
     uint64_t rteval, new_rte;
-    ticks_t actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+    ticks_t actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
     pthread_mutex_lock(&mainw->event_list_mutex);
     mainw->event_list = append_filter_deinit_event(mainw->event_list, actual_ticks, init_events[hotkey], pchains[hotkey]);
     init_events[hotkey] = NULL;
@@ -8601,7 +8606,7 @@ void rec_param_change(weed_plant_t *inst, int pnum) {
     return;
   }
 
-  actual_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+  actual_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
   pthread_mutex_lock(&mainw->event_list_mutex);
   key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
@@ -9316,6 +9321,7 @@ boolean rte_key_setmode(int key, int newmode) {
   if (mainw->ce_thumbs) ce_thumbs_set_mode_combo(key, newmode);
 
   mainw->osc_block = TRUE;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   // TODO - block template channel changes
 
@@ -9481,6 +9487,7 @@ int rte_switch_keymode(int key, int mode, const char *hashname) {
 void rte_swap_fg_bg(void) {
   int key = fg_generator_key;
   int mode = fg_generator_mode;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   if (key != -1) {
     fg_generator_clip = -1;

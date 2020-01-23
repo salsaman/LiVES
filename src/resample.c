@@ -1432,8 +1432,8 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
     cfile->frames = old_frames;
     cfile->start = ostart;
     cfile->end = oend;
-    load_start_image(cfile->start);
     load_end_image(cfile->end);
+    load_start_image(cfile->start);
     cfile->undo1_dbl = oundo1_dbl;
     sensitize();
     mainw->error = TRUE;

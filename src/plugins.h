@@ -311,6 +311,9 @@ typedef struct {
   /// frame starts at 0 in these functions; height is height of primary plane
   boolean(*get_frame)(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
+  /// free buffers when we arent playing sequentially / on standby
+  boolean(*chill_out)(const lives_clip_data_t *);
+
   /// call this for each cdata before unloading the module
   void (*clip_data_free)(lives_clip_data_t *);
 
@@ -329,6 +332,7 @@ typedef struct {
 } lives_decoder_t;
 
 LiVESList *load_decoders(void);
+boolean chill_decoder_plugin(int fileno);
 boolean decoder_plugin_move_to_first(const char *name);
 const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata);
 void close_decoder_plugin(lives_decoder_t *);

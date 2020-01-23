@@ -2774,8 +2774,8 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     cfile->hsize -= cfile->ohsize;
     switch_to_file((mainw->current_file = 0), current_file);
   } else {
-    if (cfile->start >= cfile->undo_start) load_start_image(cfile->start);
     if (cfile->end <= cfile->undo_end) load_end_image(cfile->end);
+    if (cfile->start >= cfile->undo_start) load_start_image(cfile->start);
   }
 
   d_print_done();
@@ -6083,24 +6083,27 @@ void switch_clip(int type, int newclip, boolean force) {
   if (mainw->current_file < 1 || mainw->multitrack != NULL || mainw->preview || mainw->internal_messaging ||
       (mainw->is_processing && cfile != NULL && cfile->is_loaded) || mainw->cliplist == NULL) return;
 
+  mainw->blend_palette = WEED_PALETTE_END;
+
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
                     && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
     // switch bg clip
     if (newclip != mainw->blend_file) {
       if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
           mainw->blend_file != mainw->current_file) {
+        if (mainw->blend_layer != NULL) check_layer_ready(mainw->blend_layer);
         weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
         if (inst != NULL) {
           mainw->osc_block = TRUE;
           if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_KEY)) {
-            int error;
-            int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, &error);
+            int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
             rte_key_on_off(key + 1, FALSE);
           }
           mainw->new_blend_file = newclip;
           mainw->osc_block = FALSE;
         }
       }
+      //chill_decoder_plugin(mainw->blend_file);
       mainw->blend_file = newclip;
       mainw->whentostop = NEVER_STOP;
       if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) {
@@ -6992,6 +6995,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     // toggle can be overridden by setting user_data non-NULL
     mainw->fs = !mainw->fs;
   }
+  mainw->blend_palette = WEED_PALETTE_END;
 
   // update the button icon
   fs_img = lives_image_new_from_stock(LIVES_LIVES_STOCK_FULLSCREEN,
@@ -7166,6 +7170,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   if (!CURRENT_CLIP_IS_VALID) return;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   if (user_data != NULL) {
     // change the blank window icons
@@ -7265,6 +7270,7 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (mainw->go_away) return;
 
   mainw->sep_win = !mainw->sep_win;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   if (mainw->multitrack != NULL) {
     if (!LIVES_IS_PLAYING) return;

@@ -2322,6 +2322,19 @@ void unload_decoder_plugins(void) {
 }
 
 
+boolean chill_decoder_plugin(int fileno) {
+  lives_clip_t *sfile = mainw->files[fileno];
+  if (IS_NORMAL_CLIP(fileno) && sfile->clip_type == CLIP_TYPE_FILE && sfile->ext_src != NULL) {
+    lives_decoder_t *dplug = (lives_decoder_t *)sfile->ext_src;
+    lives_decoder_sys_t *dpsys = (lives_decoder_sys_t *)dplug->decoder;
+    lives_clip_data_t *cdata = dplug->cdata;
+    if (cdata != NULL)
+      if (dpsys->chill_out != NULL) return (*dpsys->chill_out)(cdata);
+  }
+  return FALSE;
+}
+
+
 lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_decoder_sys_t *dplug;
 
@@ -2369,6 +2382,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 
   // optional
   dplug->module_check_init = (const char *(*)())dlsym(dplug->handle, "module_check_init");
+  dplug->chill_out = (boolean(*)(const lives_clip_data_t *))dlsym(dplug->handle, "chill_out");
   dplug->set_palette = (boolean(*)(lives_clip_data_t *))dlsym(dplug->handle, "set_palette");
   dplug->module_unload = (void (*)())dlsym(dplug->handle, "module_unload");
   dplug->rip_audio = (int64_t (*)(const lives_clip_data_t *, const char *, int64_t, int64_t, unsigned char **))

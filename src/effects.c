@@ -942,7 +942,6 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), tc);
-
   return mainw->blend_layer;
 }
 
@@ -1130,7 +1129,7 @@ boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data)
 
 boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
-  int old_file = mainw->current_file, blend_file = mainw->blend_file;
+  int blend_file = mainw->blend_file;
 
   if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->noswitch || mainw->blend_file == -1 ||
       mainw->blend_file == mainw->current_file || mainw->files[mainw->blend_file] == NULL || mainw->preview ||

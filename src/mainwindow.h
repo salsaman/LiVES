@@ -678,6 +678,13 @@ typedef struct {
 
   int blend_file;
   int last_blend_file;
+  volatile int blend_palette;
+  int blend_width;
+  int blend_height;
+  int blend_clamping;
+  int blend_sampling;
+  int blend_subspace;
+  int blend_gamma;
 
   int scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 

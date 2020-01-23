@@ -1329,7 +1329,6 @@ int lives_cat(const char *from, const char *to, boolean append);
 int lives_echo(const char *text, const char *to, boolean append);
 int lives_ln(const char *from, const char *to);
 
-
 int lives_utf8_strcasecmp(const char *s1, const char *s2);
 int lives_utf8_strcmp(const char *s1, const char *s2);
 LiVESList *lives_list_sort_alpha(LiVESList *list, boolean fwd);

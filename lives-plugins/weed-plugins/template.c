@@ -136,7 +136,7 @@ WEED_DESETUP_END;
 
 WEED_SETUP_START(200, 200) {
   // list the palettes we can use
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32,
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32,
                         WEED_PALETTE_BGRA32, WEED_PALETTE_END
                        };
 

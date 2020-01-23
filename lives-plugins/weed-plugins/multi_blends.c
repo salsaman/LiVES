@@ -219,7 +219,7 @@ static weed_error_t burn_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 WEED_SETUP_START(200, 200) {
   weed_plant_t **clone1, **clone2, **clone3;
 
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), weed_channel_template_init("in channel 1", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};
   weed_plant_t *in_params1[] = {weed_integer_init("amount", "Blend _amount", 128, 0, 255), NULL};

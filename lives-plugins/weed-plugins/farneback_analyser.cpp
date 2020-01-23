@@ -285,7 +285,7 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 
 
 WEED_SETUP_START(200, 200) {
-  int ipalette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+  int ipalette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
                          WEED_PALETTE_YUVA4444P,
                          WEED_PALETTE_YUV444P,
                          WEED_PALETTE_YUV422P,

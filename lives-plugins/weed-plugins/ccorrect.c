@@ -146,7 +146,7 @@ static weed_error_t ccorrect_process(weed_plant_t *inst, weed_timecode_t timesta
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32,
                         WEED_PALETTE_ARGB32, WEED_PALETTE_END
                        };
 

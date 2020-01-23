@@ -195,8 +195,8 @@ static weed_error_t oned_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_RGB24,
-                        WEED_PALETTE_BGR24, WEED_PALETTE_END
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_RGBA32,
+                        WEED_PALETTE_BGRA32, WEED_PALETTE_END
                        };
 
   weed_plant_t *in_params[] = {weed_integer_init("linerate", "_Line rate", 8, 1, 1024),

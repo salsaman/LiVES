@@ -302,7 +302,7 @@ static weed_error_t haip_process(weed_plant_t *inst, weed_timecode_t timestamp) 
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
   weed_plant_t *in_params[] = {weed_integer_init("nwurms", "Number of Wurms", 200, 1, 4092), NULL};
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};

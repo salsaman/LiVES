@@ -27,7 +27,7 @@ static boolean seek_err;
 static jackctl_server_t *jackserver = NULL;
 #endif
 
-#define JACK_READ_BYTES 48000
+#define JACK_READ_BYTES 262144  ///< 256 * 1024
 
 static uint8_t jrbuf[JACK_READ_BYTES * 2];
 
@@ -42,6 +42,10 @@ static boolean jack_playall(livespointer data) {
   return FALSE;
 }
 
+// round int a up to next multiple of int b, unless a is already a multiple of b
+LIVES_LOCAL_INLINE int64_t align_ceilng(int64_t val, int mod) {
+  return (int64_t)((double)(val + mod - 1.) / (double)mod) * (int64_t)mod;
+}
 
 static boolean check_zero_buff(size_t check_size) {
   if (check_size > zero_buff_count) {
@@ -319,11 +323,14 @@ static void jack_set_rec_avals(jack_driver_t *jackd) {
 static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *jackd,
                               size_t in_bytes, size_t nframes, double shrink_factor) {
   // push a cache_buffer for another thread to fill
+  int qnt = afile->achans * (afile->asampsize >> 3);
+  jackd->seek_pos = align_ceilng(jackd->seek_pos, qnt);
 
   if (mainw->ascrap_file > -1 && jackd->playing_file == mainw->ascrap_file) cache_buffer->sequential = TRUE;
   else cache_buffer->sequential = FALSE;
 
   cache_buffer->fileno = jackd->playing_file;
+
   cache_buffer->seek = jackd->seek_pos;
   cache_buffer->bytesize = in_bytes;
 
@@ -597,7 +604,10 @@ static int audio_process(nframes_t nframes, void *arg) {
                                      (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
                                      * afile->achans * (afile->asampsize / 8) : 0)
                                     - jackd->seek_pos;
-                } else jackd->seek_pos += jackd->seek_end;
+                } else {
+                  jackd->seek_pos += jackd->seek_end;
+                  if (jackd->seek_pos > jackd->seek_end - in_bytes) jackd->seek_pos = jackd->seek_end - in_bytes;
+                }
               }
               jackd->real_seek_pos = jackd->seek_pos;
               jack_set_rec_avals(jackd);

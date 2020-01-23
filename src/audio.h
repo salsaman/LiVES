@@ -130,6 +130,7 @@ typedef struct {
   int _cin_interleaf;
   int _cout_interleaf;
   int _casamps; ///< current out_asamps
+  double _shrink_factor;  ///< resampling ratio
 
   volatile boolean die;  ///< set to TRUE to shut down thread
 } lives_audio_buf_t;

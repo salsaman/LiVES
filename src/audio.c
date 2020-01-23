@@ -2487,6 +2487,8 @@ static void *cache_my_audio(void *arg) {
     // read from file and process data
     //lives_printerr("got buffer request !\n");
 
+    ////  for multitrack:
+
 #ifdef ENABLE_JACK
     if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
       mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0;
@@ -2506,6 +2508,8 @@ static void *cache_my_audio(void *arg) {
       cbuffer->is_ready = TRUE;
       continue;
     }
+
+    //// for jack audio, free playback
 
     cbuffer->eof = FALSE;
 
@@ -2692,7 +2696,8 @@ static void *cache_my_audio(void *arg) {
       lives_free(filename);
     }
 
-    if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
+    if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||
+        cbuffer->shrink_factor != cbuffer->_shrink_factor) {
       if (cbuffer->sequential || cbuffer->shrink_factor > 0.) {
 #ifdef HAVE_POSIX_FADVISE
         posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
@@ -2704,12 +2709,15 @@ static void *cache_my_audio(void *arg) {
 #endif
         lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
       }
-      sched_yield();
-      lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
-      sched_yield();
+      if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
+        sched_yield();
+        lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
+        sched_yield();
+      }
     }
 
     cbuffer->_cfileno = cbuffer->fileno;
+    cbuffer->_shrink_factor = cbuffer->shrink_factor;
 
     // prepare file read buffer
 
@@ -2808,6 +2816,7 @@ lives_audio_buf_t *audio_cache_init(void) {
     cache_buffer->_cfileno = -1;
     cache_buffer->_cseek = -1;
     cache_buffer->_fd = -1;
+    cache_buffer->_shrink_factor = 0.;
   }
 
   // init the audio caching thread for rt playback

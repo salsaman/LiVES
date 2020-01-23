@@ -52,6 +52,8 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
   int palette = weed_get_int_value(in_channel, WEED_LEAF_CURRENT_PALETTE, NULL);
   int irowstride = weed_get_int_value(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
   int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL), orowstride2 = orowstride * 2;
+  int *irowstrides = weed_get_int_array(in_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int *orowstrides = weed_get_int_array(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
 
   register int x;
 
@@ -79,7 +81,7 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
   int psize = 3, psize2, psize3, pcpy;
   int widthx;
 
-  int luma_offs = 0;
+  int green_offs = 0;
 
   if (palette == WEED_PALETTE_UYVY || palette == WEED_PALETTE_YUYV) width >>= 1; // 2 pixels per macropixel
 
@@ -89,8 +91,9 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
   if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P || palette == WEED_PALETTE_YUV420P ||
       palette == WEED_PALETTE_YVU420P || palette == WEED_PALETTE_YUV422P) psize = 1;
 
-  if (palette == WEED_PALETTE_ARGB32 || palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 ||
-      palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) luma_offs = 1;
+  if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32 ||
+      palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) green_offs = 1;
+  if (palette == WEED_PALETTE_ARGB32) green_offs = 2;
 
   psize2 = psize * 2;
   psize3 = psize * 3;
@@ -99,6 +102,14 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
 
   src += irowstride;
   dst += orowstride;
+
+
+  if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
+    for (int i = 1; i < 3; i++) {
+      dst_array[i] += orowstrides[i];
+      src_array[i] += irowstrides[i];
+    }
+  }
 
   pcpy = psize;
 
@@ -135,27 +146,27 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
       if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
         // u and v planes
         val2a_u = (src_array[1] + x);
-        val3a_u = (src_array[1] + irowstride + x);
-        val4a_u = (src_array[1] + irowstride2 + x);
+        val3a_u = (src_array[1] + irowstrides[1] + x);
+        val4a_u = (src_array[1] + irowstrides[1] * 2 + x);
 
         val2b_u = (src_array[1] + x + psize);
 
         val2c_u = (src_array[1] + x + psize2);
-        val3c_u = (src_array[1] + irowstride + x + psize2);
-        val4c_u = (src_array[1] + irowstride2 + x + psize2);
+        val3c_u = (src_array[1] + irowstrides[1] + x + psize2);
+        val4c_u = (src_array[1] + irowstrides[1] * 2 + x + psize2);
 
         res1_u = val2a_u;
         res3_u = val2b_u;
         res5_u = val2c_u;
 
-        val3a_v = (src_array[2] + irowstride + x);
-        val4a_v = (src_array[2] + irowstride2 + x);
+        val3a_v = (src_array[2] + irowstrides[2] + x);
+        val4a_v = (src_array[2] + irowstrides[2] * 2 + x);
 
         val2b_v = (src_array[2] + x + psize);
 
         val2c_v = (src_array[2] + x + psize2);
-        val3c_v = (src_array[2] + irowstride + x + psize2);
-        val4c_v = (src_array[2] + irowstride2 + x + psize2);
+        val3c_v = (src_array[2] + irowstrides[2] + x + psize2);
+        val4c_v = (src_array[2] + irowstrides[2] * 2 + x + psize2);
 
         res1_v = val2a_v;
         res3_v = val2b_v;
@@ -176,10 +187,10 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
         m4 = (*(val4a) + * (val4a + 2) + * (val4c) + * (val4c + 2)) >> 2;
       } else {
         // average 2 green values
-        m1 = (*(val1a + luma_offs) + * (val1c + luma_offs)) >> 1; // -1 row
-        m2 = (*(val3a + luma_offs) + * (val3c + luma_offs)) >> 1; // +1 row
-        m3 = (*(val2a + luma_offs) + * (val2c + luma_offs)) >> 1; // +0 row
-        m4 = (*(val4a + luma_offs) + * (val4c + luma_offs)) >> 1; // +2 row
+        m1 = (*(val1a + green_offs) + * (val1c + green_offs)) >> 1; // -1 row
+        m2 = (*(val3a + green_offs) + * (val3c + green_offs)) >> 1; // +1 row
+        m3 = (*(val2a + green_offs) + * (val2c + green_offs)) >> 1; // +0 row
+        m4 = (*(val4a + green_offs) + * (val4c + green_offs)) >> 1; // +2 row
       }
 
       d1 = abs(m1 - m2) + abs(m3 - m4); // diff (-1,+1) + diff (0,+2)
@@ -195,14 +206,14 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
 
         if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
           // apply to u and v planes
-          val4b_u = (src_array[1] + irowstride2 + x + psize);
+          val4b_u = (src_array[1] + irowstrides[1] * 2 + x + psize);
           val2b_u = (src_array[1] + x + psize);
 
           res2_u = mix(val2a_u, val4a_u, pcpy);
           res4_u = mix(val2b_u, val4b_u, pcpy);
           res6_u = mix(val2c_u, val4c_u, pcpy);
 
-          val4b_v = (src_array[2] + irowstride2 + x + psize);
+          val4b_v = (src_array[2] + irowstrides[2] * 2 + x + psize);
           val2b_v = (src_array[2] + x + psize);
 
           res2_v = mix(val2a_v, val4a_v, pcpy);
@@ -217,13 +228,13 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
         res6 = val3c;
 
         if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
-          val3b_u = (src_array[1] + irowstride + x + psize);
+          val3b_u = (src_array[1] + irowstrides[1] + x + psize);
 
           res2_u = val3a_u;
           res4_u = val3b_u;
           res6_u = val3c_u;
 
-          val3b_v = (src_array[2] + irowstride + x + psize);
+          val3b_v = (src_array[2] + irowstrides[2] + x + psize);
 
           res2_v = val3a_v;
           res4_v = val3b_v;
@@ -241,18 +252,18 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
       if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
         // u and v planes
 
-        weed_memcpy(dst_array[1] + x - orowstride, res1_u, pcpy);
+        weed_memcpy(dst_array[1] + x - orowstrides[1], res1_u, pcpy);
         weed_memcpy(dst_array[1] + x, res2_u, pcpy);
-        weed_memcpy(dst_array[1] + x + psize - orowstride, res3_u, pcpy);
+        weed_memcpy(dst_array[1] + x + psize - orowstrides[1], res3_u, pcpy);
         weed_memcpy(dst_array[1] + x + psize, res4_u, pcpy);
-        weed_memcpy(dst_array[1] + x + psize2 - orowstride, res5_u, pcpy);
+        weed_memcpy(dst_array[1] + x + psize2 - orowstrides[1], res5_u, pcpy);
         weed_memcpy(dst_array[1] + x + psize2, res6_u, pcpy);
 
-        weed_memcpy(dst_array[2] + x - orowstride, res1_v, pcpy);
+        weed_memcpy(dst_array[2] + x - orowstrides[2], res1_v, pcpy);
         weed_memcpy(dst_array[2] + x, res2_v, pcpy);
-        weed_memcpy(dst_array[2] + x + psize - orowstride, res3_v, pcpy);
+        weed_memcpy(dst_array[2] + x + psize - orowstrides[2], res3_v, pcpy);
         weed_memcpy(dst_array[2] + x + psize, res4_v, pcpy);
-        weed_memcpy(dst_array[2] + x + psize2 - orowstride, res5_v, pcpy);
+        weed_memcpy(dst_array[2] + x + psize2 - orowstrides[2], res5_v, pcpy);
         weed_memcpy(dst_array[2] + x + psize2, res6_v, pcpy);
       }
 
@@ -279,18 +290,22 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
       }
     }
 
+    if (palette == WEED_PALETTE_YUV444P || palette == WEED_PALETTE_YUVA4444P) {
+      dst_array[1] += orowstrides[1] * 2;
+      dst_array[2] += orowstrides[2] * 2;
+    }
     dst += orowstride2;
   }
 
   if (!inplace) {
     if (palette == WEED_PALETTE_YUV422P || palette == WEED_PALETTE_YUV420P || palette == WEED_PALETTE_YVU420P) {
       // copy chroma planes
-      weed_memcpy(dst_array[1], src_array[1], width >> 1 * height >> (palette == WEED_PALETTE_YUV422P ? 0 : 1));
-      weed_memcpy(dst_array[2], src_array[2], width >> 1 * height >> (palette == WEED_PALETTE_YUV422P ? 0 : 1));
+      weed_memcpy(dst_array[1], src_array[1], orowstrides[1] * height >> (palette == WEED_PALETTE_YUV422P ? 0 : 1));
+      weed_memcpy(dst_array[2], src_array[2], orowstrides[2] * height >> (palette == WEED_PALETTE_YUV422P ? 0 : 1));
 
     } else if (palette == WEED_PALETTE_YUVA4444P) {
       // copy alpha plane
-      weed_memcpy(dst_array[3], src_array[3], width * height);
+      weed_memcpy(dst_array[3], src_array[3], orowstrides[3] * height);
     }
   }
 
@@ -302,7 +317,7 @@ static weed_error_t  deinterlace_process(weed_plant_t *inst, weed_timecode_t tc)
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_BGR24, WEED_PALETTE_RGB24, WEED_PALETTE_YUV888, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV444P, WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_YUV422P, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_YUV888, WEED_PALETTE_RGBA32, WEED_PALETTE_BGRA32, WEED_PALETTE_ARGB32, WEED_PALETTE_YUVA8888, WEED_PALETTE_UYVY, WEED_PALETTE_YUYV, WEED_PALETTE_YUV444P, WEED_PALETTE_YUVA4444P, WEED_PALETTE_YUV420P, WEED_PALETTE_YVU420P, WEED_PALETTE_YUV422P, WEED_PALETTE_END};
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_CAN_DO_INPLACE), NULL};

@@ -475,7 +475,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datai = datai2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_int_array(dst, keyt, num, datai);
@@ -498,7 +498,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datai64 = datai642;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_int64_array(dst, keyt, num, datai64);
@@ -521,7 +521,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datai = datai2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_boolean_array(dst, keyt, num, datai);
@@ -544,7 +544,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datad = datad2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_double_array(dst, keyt, num, datad);
@@ -568,7 +568,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 dataf = dataf2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_funcptr_array(dst, keyt, num, dataf);
@@ -591,7 +591,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datav = datav2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_voidptr_array(dst, keyt, num, datav);
@@ -614,7 +614,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datap = datap2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_plantptr_array(dst, keyt, num, datap);
@@ -639,7 +639,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
                 datac = datac2;
                   num = count;
 		// *INDENT-OFF*
-   }}}}
+ }}}}
 	// *INDENT-ON*
         if (err == WEED_SUCCESS)
           err = weed_set_string_array(dst, keyt, num, datac);

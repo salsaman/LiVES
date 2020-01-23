@@ -162,6 +162,9 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *);
 /// frame starts at 0
 boolean get_frame(const lives_clip_data_t *, int64_t frame, int *rowstrides, int height, void **pixel_data);
 
+/// free buffers when we arent playing sequentially / on standby
+boolean chill_out(const lives_clip_data_t *cdata);
+
 /// free clip data - this should be called for each instance before unloading the module
 void clip_data_free(lives_clip_data_t *);
 

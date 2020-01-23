@@ -1563,6 +1563,21 @@ static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y
 }
 
 
+boolean chill_out(const lives_clip_data_t *cdata) {
+  // free buffers because we are going to chill out for a while
+  // (seriously, host can call this to free any buffers when we arent palying sequentially)
+  if (cdata != NULL) {
+    lives_flv_priv_t *priv = cdata->priv;
+    if (priv != NULL) {
+      if (priv->picture != NULL) av_frame_unref(priv->picture);
+      priv->picture = NULL;
+      if (priv->ctx != NULL) avcodec_flush_buffers(priv->ctx);
+    }
+  }
+  return TRUE;
+}
+
+
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
@@ -1627,6 +1642,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   ////////////////////////////////////////////////////////////////////
 
   if (tframe != priv->last_frame) {
+    if (priv->picture != NULL) av_frame_unref(priv->picture);
+    priv->picture = NULL;
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
       pthread_mutex_lock(&priv->idxc->mutex);
       if ((idx = get_idx_for_pts(cdata, target_pts)) != NULL) {

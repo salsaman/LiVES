@@ -1076,6 +1076,28 @@ int begin_caching(const lives_clip_data_t *cdata, int maxframes) {
 }
 #endif
 
+
+boolean chill_out(const lives_clip_data_t *cdata) {
+  // free buffers because we are going to chill out for a while
+  // (seriously, host can call this to free any buffers when we arent palying sequentially)
+  if (cdata != NULL) {
+    lives_av_priv_t *priv = cdata->priv;
+    if (priv != NULL) {
+      AVStream *s = priv->ic->streams[priv->vstream];
+      if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
+      priv->pFrame = NULL;
+      if (s != NULL) {
+        AVCodecContext *cc = s->codec;
+        if (cc != NULL) {
+          //avcodec_flush_buffers(cc);
+        }
+      }
+    }
+  }
+  return TRUE;
+}
+
+
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 
@@ -1186,14 +1208,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
     fprintf(stderr, "pt a1 %d %ld\n", priv->last_frame, tframe);
 #endif
 
-#ifndef TEST_CACHING
-    if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
-#endif
-    priv->pFrame = NULL;
-
-    if (tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
+    if (priv->pFrame == NULL || tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
       int64_t xtarget_pts;
       // seek to new frame
+      if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
+      priv->pFrame = NULL;
 
       // try to seek straight to keyframe
       if (!(cdata->seek_flag & LIVES_SEEK_FAST) && tframe < priv->last_frame && priv->found_pts != -1
@@ -1284,9 +1303,9 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // otherwise discard this frame
       if (gotFrame) {
         MyPts += (double)AV_TIME_BASE / cdata->fps;
-#ifndef TEST_CACHING
+        //#ifndef TEST_CACHING
         av_frame_unref(priv->pFrame);
-#endif
+        //#endif
         priv->pFrame = NULL;
       }
       loops++;

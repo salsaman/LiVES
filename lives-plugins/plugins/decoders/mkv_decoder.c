@@ -2777,6 +2777,19 @@ static int matroska_read_close(const lives_clip_data_t *cdata) {
 }
 
 
+boolean chill_out(const lives_clip_data_t *cdata) {
+  if (cdata != NULL) {
+    lives_mkv_priv_t *priv = cdata->priv;
+    if (priv != NULL) {
+      if (priv->picture != NULL) av_frame_unref(priv->picture);
+      priv->picture = NULL;
+      avcodec_flush_buffers(priv->ctx);
+    }
+  }
+  return TRUE;
+}
+
+
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
 
@@ -2842,7 +2855,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   }
   ////////////////////////////////////////////////////////////////////
 
-  if (tframe != priv->last_frame) {
+  if (tframe != priv->last_frame || priv->picture == NULL) {
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || (tframe - priv->last_frame > rescan_limit)) {
       pthread_mutex_lock(&priv->idxc->mutex);
       idx = matroska_read_seek(cdata, target_pts);

@@ -379,12 +379,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           LIVES_ERROR("pulsed: error opening");
           LIVES_ERROR(filename);
           pulsed->playing_file = -1;
-        } else {
-#ifdef HAVE_POSIX_FADVISE
-          if (new_file == mainw->ascrap_file) {
-            posix_fadvise(pulsed->fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-          }
-#endif
         }
         lives_free(filename);
       }
@@ -413,14 +407,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         xseek = align_ceilng(xseek, afile->achans * (afile->asampsize >> 3));
         lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek);
         if (pulsed->playing_file == mainw->ascrap_file || afile->pb_fps > 0.) {
-#ifdef HAVE_POSIX_FADVISE
-          posix_fadvise(pulsed->fd, xseek, 0, POSIX_FADV_SEQUENTIAL);
-#endif
           lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
         } else {
-#ifdef HAVE_POSIX_FADVISE
-          posix_fadvise(pulsed->fd, 0, xseek, POSIX_FADV_RANDOM);
-#endif
           lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
         }
       }
@@ -630,14 +618,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->seek_pos = align_ceilng(pulsed->seek_pos, qnt);
             lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
             if (pulsed->playing_file == mainw->ascrap_file || afile->pb_fps > 0.) {
-#ifdef HAVE_POSIX_FADVISE
-              posix_fadvise(pulsed->fd, pulsed->seek_pos, 0, POSIX_FADV_SEQUENTIAL);
-#endif
               lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
             } else {
-#ifdef HAVE_POSIX_FADVISE
-              posix_fadvise(pulsed->fd, 0, pulsed->seek_pos, POSIX_FADV_RANDOM);
-#endif
               lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
             }
           }

@@ -1308,6 +1308,9 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->blend_palette = WEED_PALETTE_END;
   mainw->blend_width = mainw->blend_height = 0;
+
+  mainw->gui_fooey = FALSE;
+
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -5915,7 +5918,29 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         lives_free(fname);
 #endif
         mainw->osc_block = FALSE;
-        if (ret == FALSE) return FALSE;
+        if (!ret) return FALSE;
+      }
+
+#ifdef HAVE_POSIX_FADVISE
+      if (clip_type == CLIP_TYPE_DISK || !is_virtual_frame(clip, frame + 1)) {
+        char *fname = NULL;
+        // advise that we will read the next frame
+        if (sfile->pb_fps > 0.) {
+          if (frame < sfile->frames)
+            fname = make_image_file_name(sfile, frame + 1, image_ext);
+        } else {
+          if (frame > 1)
+            fname = make_image_file_name(sfile, frame - 1, image_ext);
+        }
+        if (fname != NULL) {
+          fd = open(fname, O_RDONLY);
+          if (fd > -1) {
+            posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
+            close(fd);
+          }
+          lives_free(fname);
+        }
+#endif
       }
     }
     break;
@@ -6408,7 +6433,7 @@ void load_frame_image(int frame) {
             if (mainw->jackd->playing_file == mainw->playing_file && !jack_audio_seek_frame(mainw->jackd, frame)) {
               if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frame);
             }
-            if (mainw->record && !mainw->record_paused) {
+            if (mainw->record && !mainw->record_paused && mainw->jackd->playing_file == mainw->playing_file) {
               jack_get_rec_avals(mainw->jackd);
             }
           }
@@ -6420,7 +6445,7 @@ void load_frame_image(int frame) {
             if (mainw->pulsed->playing_file == mainw->playing_file && !pulse_audio_seek_frame(mainw->pulsed, frame)) {
               mainw->cancelled = handle_audio_timeout();
             }
-            if (mainw->record && !mainw->record_paused) {
+            if (mainw->record && !mainw->record_paused && mainw->pulsed->playing_file == mainw->playing_file) {
               pulse_get_rec_avals(mainw->pulsed);
             }
           }

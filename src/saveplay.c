@@ -319,6 +319,12 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       // cd to clip directory - so decoder plugins can write temp files
       char *ppath = lives_build_filename(prefs->workdir, cfile->handle, NULL);
       char *cwd = lives_get_current_dir();
+
+      if (!mainw->decoders_loaded) {
+        mainw->decoder_list = load_decoders();
+        mainw->decoders_loaded = TRUE;
+      }
+
       lives_chdir(ppath, FALSE);
       lives_free(ppath);
 
@@ -2214,7 +2220,8 @@ void play_file(void) {
 
   if (mainw->record) {
     if (mainw->event_list != NULL) event_list_free(mainw->event_list);
-    mainw->event_list = add_filter_init_events(NULL, 0);
+    mainw->event_list = append_marker_event(mainw->event_list, 0, EVENT_MARKER_RECORD_START);
+    add_filter_init_events(mainw->event_list, 0);
   }
 
   if (mainw->double_size && mainw->multitrack == NULL) {
@@ -4964,7 +4971,6 @@ boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
     if (fd < 0) return FALSE;
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-    posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
 #endif
     scrapfile->ext_src = LIVES_INT_TO_POINTER(fd);
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
@@ -5051,7 +5057,6 @@ int save_to_scrap_file(weed_plant_t *layer) {
 
 #ifdef HAVE_POSIX_FADVISE
     posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-    posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED);
 #endif
   } else fd = LIVES_POINTER_TO_INT(scrapfile->ext_src);
 
@@ -5246,35 +5251,32 @@ boolean reload_clip(int fileno, int maxframe) {
   lives_clip_t *sfile = mainw->files[fileno];
 
   const lives_clip_data_t *cdata = NULL;
-
-  char decoder_name[PATH_MAX];
-
-  char *ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
-  char *orig_filename = lives_strdup(sfile->file_name);
-
   lives_clip_data_t *fake_cdata = (lives_clip_data_t *)lives_calloc(sizeof(lives_clip_data_t), 1);
-
-  boolean was_renamed = FALSE, retb = FALSE;
-
-  int response;
-
-  int current_file;
 
   double orig_fps = sfile->fps;
 
-  lives_chdir(ppath, FALSE);
-  lives_free(ppath);
+  char decoder_name[PATH_MAX];
+  char *orig_filename = lives_strdup(sfile->file_name);
+  char *cwd = lives_get_current_dir();
+  char *ppath = lives_build_filename(prefs->workdir, sfile->handle, NULL);
+
+  LiVESResponseType response;
+  boolean was_renamed = FALSE, retb = FALSE;
+  int current_file;
 
   if (!mainw->decoders_loaded) {
     mainw->decoder_list = load_decoders();
     mainw->decoders_loaded = TRUE;
   }
+
   odeclist = lives_list_copy(mainw->decoder_list);  ///< retain original order to restore for freshly opened clips
   retb = get_clip_value(fileno, CLIP_DETAILS_DECODER_NAME, decoder_name, PATH_MAX);
   if (retb && strlen(decoder_name)) {
     decoder_plugin_move_to_first(decoder_name);
   }
   retb = FALSE;
+  lives_chdir(ppath, FALSE);
+  lives_free(ppath);
 
   while (1) {
     threaded_dialog_spin(0.);
@@ -5344,6 +5346,9 @@ manual_locate:
         do_no_decoder_error(sfile->file_name);
       }
 
+      lives_chdir(cwd, FALSE);
+      lives_free(cwd);
+
       // NOT openable, or not found and user cancelled, switch back to original clip
       if (cdata != NULL) {
         check_clip_integrity(fileno, cdata, maxframe);
@@ -5407,6 +5412,8 @@ manual_locate:
   }
 
   lives_free(orig_filename);
+  lives_chdir(cwd, FALSE);
+  lives_free(cwd);
 
   sfile->clip_type = CLIP_TYPE_FILE;
   get_mime_type(sfile->type, 40, cdata);
@@ -5443,7 +5450,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
   char buff[256], *buffptr;
   char *clipdir;
-  char *cwd = lives_get_current_dir();
 
   int retval;
   int clipnum = 0;
@@ -5835,9 +5841,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 recovery_done:
 
   end_threaded_dialog();
-
-  lives_chdir(cwd, FALSE);
-  lives_free(cwd);
 
   mainw->suppress_dprint = FALSE;
   lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);

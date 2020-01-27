@@ -130,7 +130,7 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
           break;
         }
       }
-    } else mainw->keep_pre = FALSE;
+    }
 
     if (!mainw->keep_pre) {
       lives_kill_subprocesses(cfile->handle, TRUE);
@@ -156,11 +156,11 @@ void on_paramwindow_button_clicked(LiVESButton *button, lives_rfx_t *rfx) {
       close_current_file(mainw->pre_src_file);
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack != NULL) mainw->pre_src_file = -1;
-      mainw->keep_pre = FALSE;
       mainw->is_generating = FALSE;
       rfx->source = NULL;
       rfx->source_type = LIVES_RFX_SOURCE_RFX;
     }
+    mainw->keep_pre = FALSE;
   }
 
   if (rfx == NULL) {

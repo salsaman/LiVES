@@ -1044,7 +1044,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
   // TODO - dirsep
 
-  char *plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
+  char *plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
                                        PLUGIN_VID_PLAYBACK,
                                        name);
 
@@ -2027,7 +2027,7 @@ LiVESList *load_decoders(void) {
   lives_decoder_sys_t *dplug;
   char *decplugdir = lives_strdup_printf("%s%s%s", prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_DECODERS);
   LiVESList *dlist = NULL;
-  LiVESList *decoder_plugins_o = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-"DLL_NAME);
+  LiVESList *decoder_plugins_o = get_plugin_list(PLUGIN_DECODERS, TRUE, decplugdir, "-" DLL_NAME);
   LiVESList *decoder_plugins = decoder_plugins_o;
 
   char *blacklist[3] = {
@@ -2244,11 +2244,6 @@ const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, cons
 
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
-  if (!mainw->decoders_loaded) {
-    mainw->decoder_list = load_decoders();
-    mainw->decoders_loaded = TRUE;
-  }
-
   xdisabled = lives_list_copy(disabled);
 
   if (fake_cdata != NULL) {
@@ -2346,7 +2341,7 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
 
   dplug->name = NULL;
 
-  plugname = lives_strdup_printf("%s%s%s"LIVES_DIR_SEP"%s."DLL_NAME, prefs->lib_dir,
+  plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir,
                                  PLUGIN_EXEC_DIR, PLUGIN_DECODERS, plname);
 
   dplug->handle = dlopen(plugname, RTLD_LAZY);

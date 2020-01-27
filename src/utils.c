@@ -31,7 +31,7 @@ typedef struct {
   off_t offset; // file offs
   char *pathname;
   int bufsztype;
-  int seqrdsize;
+  size_t orig_size;
 } lives_file_buffer_t;
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
@@ -107,14 +107,12 @@ LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
 // system calls
 
 LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
-  int fd = open(pathname, flags, mode);
-  return fd;
+  return open(pathname, flags, mode);
 }
 
 
 LIVES_GLOBAL_INLINE int lives_open2(const char *pathname, int flags) {
-  int fd = open(pathname, flags);
-  return fd;
+  return open(pathname, flags);
 }
 
 
@@ -519,7 +517,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->reversed = FALSE;
     fbuff->pathname = lives_strdup(pathname);
     fbuff->bufsztype = 0;
-    fbuff->seqrdsize = 0;
+    fbuff->orig_size = 0;
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
@@ -527,6 +525,8 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
       LIVES_ERROR(msg);
       lives_free(msg);
       lives_close_buffered(fd);
+    } else {
+      if (!isread && !(flags & O_TRUNC)) fbuff->orig_size = get_file_size(fbuff->fd);
     }
     mainw->file_buffers = lives_list_append(mainw->file_buffers, (livespointer)fbuff);
   }
@@ -536,11 +536,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
 
 
 LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
-  int fd = lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
-#ifdef HAVE_POSIX_FADVISE
-  posix_fadvise(fd, 0, 0, POSIX_FADV_SEQUENTIAL);
-#endif
-  return fd;
+  return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
 }
 
 
@@ -561,6 +557,10 @@ LIVES_GLOBAL_INLINE int lives_creat_buffered(const char *pathname, int mode) {
   return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_TRUNC | O_DSYNC, mode, FALSE);
 }
 
+
+int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
+  return lives_open_real_buffered(pathname, O_CREAT | O_WRONLY | O_DSYNC | (append ? O_APPEND : 0), mode, FALSE);
+}
 
 
 int lives_close_buffered(int fd) {
@@ -595,7 +595,7 @@ int lives_close_buffered(int fd) {
     }
 #ifdef HAVE_POSIX_FALLOCATE
     int dummy;
-    (void)(dummy = ftruncate(fbuff->fd, fbuff->offset));
+    (void)(dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
 #endif
   }
 
@@ -619,11 +619,11 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   else if (fbuff->bufsztype == 2) bufsize = BUFFER_FILL_BYTES_LARGE;
 
   if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc(bufsize >> 3, 8);
-  if (fbuff->reversed) delta = bufsize >> 1;
+  if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
   fbuff->offset -= delta;
 
-  lseek(fbuff->fd, fbuff->offset, SEEK_SET);
+  fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
   res = lives_read(fbuff->fd, fbuff->buffer, bufsize, TRUE);
   if (res < 0) {
@@ -638,41 +638,68 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   if (res < bufsize) fbuff->eof = TRUE;
   else fbuff->eof = FALSE;
 
+#ifdef HAVE_POSIX_FADVISE
+  if (fbuff->reversed) {
+    posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
+    posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
+#ifdef _GNU_SOURCE
+    readahead(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize);
+#endif
+  } else {
+    posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
+    posix_fadvise(fbuff->fd, fbuff->offset, bufsize, POSIX_FADV_WILLNEED);
+#ifdef _GNU_SOURCE
+    readahead(fbuff->fd, fbuff->offset, bufsize);
+#endif
+  }
+#endif
+
   return res;
 }
 
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
+  off_t newoffs;
   if (offset > 0) {
     // seek forwards
     if (offset < fbuff->bytes) {
       fbuff->ptr += offset;
       fbuff->bytes -= offset;
-      return fbuff->offset - fbuff->bytes;
+      newoffs =  fbuff->offset - fbuff->bytes;
+    } else {
+      offset -= fbuff->bytes;
+      fbuff->offset += offset;
+      fbuff->bytes = 0;
+      newoffs = fbuff->offset;
     }
-    offset -= fbuff->bytes;
-    fbuff->offset += offset;
-    fbuff->bytes = 0;
-    return fbuff->offset;
+  } else {
+    // seek backwards
+    offset = -offset;
+    if (offset <= fbuff->ptr - fbuff->buffer) {
+      fbuff->ptr -= offset;
+      fbuff->bytes += offset;
+      newoffs = fbuff->offset - fbuff->bytes;
+    } else {
+      offset -= fbuff->ptr - fbuff->buffer;
+
+      fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes) - offset;
+      if (fbuff->offset < 0) fbuff->offset = 0;
+
+      fbuff->bytes = 0;
+
+      fbuff->eof = FALSE;
+      newoffs = fbuff->offset;
+    }
   }
 
-  // seek backwards
-  offset = -offset;
-  if (offset <= fbuff->ptr - fbuff->buffer) {
-    fbuff->ptr -= offset;
-    fbuff->bytes += offset;
-    return fbuff->offset - fbuff->bytes;
-  }
+#ifdef HAVE_POSIX_FADVISE
+  if (fbuff->reversed)
+    posix_fadvise(fbuff->fd, 0, fbuff->offset - fbuff->bytes, POSIX_FADV_RANDOM);
+  else
+    posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
+#endif
 
-  offset -= fbuff->ptr - fbuff->buffer;
-
-  fbuff->offset = fbuff->offset - (fbuff->ptr - fbuff->buffer + fbuff->bytes) - offset;
-  if (fbuff->offset < 0) fbuff->offset = 0;
-
-  fbuff->bytes = 0;
-
-  fbuff->eof = FALSE;
-  return fbuff->offset;
+  return newoffs;
 }
 
 
@@ -760,6 +787,9 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     count -= res;
   } else {
     // larger size -> direct read
+    if (fbuff->buffer == NULL ||  fbuff->ptr == NULL) {
+      fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
+    }
     res = lives_read(fbuff->fd, ptr, count, TRUE);
     if (res < 0) return res;
     if (res < count) fbuff->eof = TRUE;
@@ -799,7 +829,7 @@ boolean lives_read_buffered_eof(int fd) {
   }
 
   if (!fbuff->read) {
-    LIVES_ERROR("lives_read_buffered: wrong buffer type");
+    LIVES_ERROR("lives_read_buffered_eof: wrong buffer type");
     return FALSE;
   }
   return fbuff->eof;
@@ -941,6 +971,32 @@ ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean a
   } else {
     return lives_write_buffered(fd, (char *)buf, count, allow_fail);
   }
+}
+
+
+off_t lives_lseek_buffered_writer(int fd, off_t offset) {
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_lseek_buffered_writer: no file buffer found");
+    return lseek(fd, offset, SEEK_SET);
+  }
+
+  if (fbuff->read) {
+    LIVES_ERROR("lives_lseek_buffered_writer: wrong buffer type");
+    return 0;
+  }
+
+  if (fbuff->bytes > 0) {
+    ssize_t res = file_buffer_flush(fbuff);
+    if (res < 0) return res;
+    if (res  < fbuff->bytes && !fbuff->allow_fail) {
+      fbuff->eof = TRUE;
+      return fbuff->offset;
+    }
+  }
+  fbuff->offset = lseek(fbuff->fd, offset, SEEK_SET);
+  return fbuff->offset;
 }
 
 
@@ -4176,59 +4232,45 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
   switch (what) {
   case CLIP_DETAILS_HEADER_VERSION:
     key = lives_strdup("header_version");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_BPP:
     key = lives_strdup("bpp");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_FPS:
     key = lives_strdup("fps");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_PB_FPS:
     key = lives_strdup("pb_fps");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_WIDTH:
     key = lives_strdup("width");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_HEIGHT:
     key = lives_strdup("height");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_UNIQUE_ID:
     key = lives_strdup("unique_id");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_ARATE:
     key = lives_strdup("audio_rate");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_PB_ARATE:
     key = lives_strdup("pb_audio_rate");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_ACHANS:
     key = lives_strdup("audio_channels");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_ASIGNED:
     key = lives_strdup("audio_signed");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_AENDIAN:
     key = lives_strdup("audio_endian");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_ASAMPS:
     key = lives_strdup("audio_sample_size");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_FRAMES:
     key = lives_strdup("frames");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_TITLE:
     key = lives_strdup("title");
@@ -4244,7 +4286,6 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     break;
   case CLIP_DETAILS_PB_FRAMENO:
     key = lives_strdup("pb_frameno");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   case CLIP_DETAILS_CLIPNAME:
     key = lives_strdup("clipname");
@@ -4260,11 +4301,11 @@ char *clip_detail_to_string(lives_clip_details_t what, size_t *maxlenp) {
     break;
   case CLIP_DETAILS_GAMMA_TYPE:
     key = lives_strdup("gamma_type");
-    if (maxlenp != NULL) *maxlenp = 256;
     break;
   default:
     break;
   }
+  if (maxlenp != NULL && *maxlenp == 0) *maxlenp = 256;
   return key;
 }
 

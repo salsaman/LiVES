@@ -564,11 +564,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   if (last_frame_event == NULL) goto q_done;
 
   if (!allow_gap) offset_tc = get_event_timecode(get_first_frame_event(in_list));
+  else out_tc = get_event_timecode(get_first_frame_event(in_list));
   end_tc = get_event_timecode(last_frame_event) - offset_tc;
   end_tc = q_gint64(end_tc + tl, qfps);
 
   // tl >>2 - make sure we don't round down
-  for (out_tc = 0; out_tc < end_tc || event != NULL; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) {
+  for (; out_tc < end_tc || event != NULL; out_tc = q_gint64(out_tc + tl + (tl >> 2), qfps)) {
     weed_timecode_t stop_tc = out_tc + offset_tc;
     if (out_tc > end_tc) out_tc = end_tc;
 
@@ -595,10 +596,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
         /// update the state until we pass out_tc
         etype = weed_event_get_type(event);
         //g_print("got event type %d at tc %ld, out = %ld\n", etype, in_tc, out_tc);
+
         switch (etype) {
         case WEED_EVENT_HINT_MARKER: {
           int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, NULL);
-          if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
+          if (marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED
+              || marker_type == EVENT_MARKER_RECORD_START) {
             interpolate = FALSE;
             lives_freep((void **)&xaclips);
             lives_freep((void **)&xaseeks);
@@ -610,6 +613,14 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
             init_events = deinit_events = NULL;
             filter_map = NULL;
             recst_tc = get_event_timecode(event);
+          }
+          if ((allow_gap && marker_type == EVENT_MARKER_RECORD_START)
+              || marker_type == EVENT_MARKER_BLOCK_START || marker_type == EVENT_MARKER_BLOCK_UNORDERED) {
+            if (!copy_with_check(event, out_list, out_tc, what, 0)) {
+              event_list_free(out_list);
+              out_list = NULL;
+              goto q_done;
+            }
           }
         }
         break;
@@ -640,6 +651,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
           if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
             // update unadded audio state (natracks) from in_list
+            // TODO: make use of aframe_to_atstate();
             int *aclips;
             double *aseeks;
             int atracks = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);

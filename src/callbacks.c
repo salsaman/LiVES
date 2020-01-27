@@ -2704,7 +2704,8 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
     save_clip_values(mainw->current_file);
   }
 
-  if (cfile->undo_action == UNDO_REC_AUDIO || cfile->undo_action == UNDO_FADE_AUDIO || cfile->undo_action == UNDO_TRIM_AUDIO ||
+  if (cfile->undo_action == UNDO_REC_AUDIO || cfile->undo_action == UNDO_FADE_AUDIO
+      || cfile->undo_action == UNDO_TRIM_AUDIO ||
       cfile->undo_action == UNDO_APPEND_AUDIO) {
     com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
     lives_rm(cfile->info_file);
@@ -9871,14 +9872,8 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
         mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps;
         if (mainw->pulsed->fd >= 0) {
           if (mainw->pulsed->in_arate > 0.) {
-#ifdef HAVE_POSIX_FADVISE
-            posix_fadvise(mainw->pulsed->fd, mainw->pulsed->seek_pos, 0, POSIX_FADV_SEQUENTIAL);
-#endif
             lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, FALSE);
           } else {
-#ifdef HAVE_POSIX_FADVISE
-            posix_fadvise(mainw->pulsed->fd, mainw->pulsed->seek_pos, 0, POSIX_FADV_RANDOM);
-#endif
             lives_buffered_rdonly_set_reversed(mainw->pulsed->fd, TRUE);
           }
         }

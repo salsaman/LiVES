@@ -174,7 +174,7 @@ LiVESResponseType check_workdir_valid(char **pdirname, LiVESDialog *dialog, bool
 
 
 boolean do_workdir_query(void) {
-  int response;
+  LiVESResponseType response;
 
   char *dirname = NULL;
 
@@ -251,7 +251,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
 
   char *txt0, *txt1, *txt2, *txt3, *txt4, *txt5, *txt6, *msg;
 
-  int response;
+  LiVESResponseType response;
 
   if (startup_phase == 2) {
     txt0 = lives_strdup(_("LiVES FAILED TO START YOUR SELECTED AUDIO PLAYER !\n\n"));
@@ -509,7 +509,8 @@ boolean do_startup_tests(boolean tshoot) {
   boolean success, success2, success3, success4;
   boolean imgext_switched = FALSE;
 
-  int response, res;
+  LiVESResponseType response;
+  int res;
   int current_file = mainw->current_file;
 
   int out_fd, info_fd;

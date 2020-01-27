@@ -11065,6 +11065,10 @@ boolean lives_widget_context_update(void) {
     }
 #ifdef GUI_GTK
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
+      if (mainw->gui_fooey) {
+        g_main_context_iteration(NULL, FALSE);
+        continue;
+      }
       GdkEvent *ev = gtk_get_current_event();
       nulleventcount++;
       loops++;
@@ -11078,7 +11082,7 @@ boolean lives_widget_context_update(void) {
           sched_yield();
         }
       }
-      if (loops > 1000) {
+      if (loops > 1000 && !mainw->gui_fooey) {
         fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
                 ev, ev == NULL ? -1 : ev->type, nulleventcount, loops);
         break;

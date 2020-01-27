@@ -1567,6 +1567,8 @@ typedef struct {
   volatile uint32_t loadmeasure;
   volatile int uflow_count;
 
+  boolean gui_fooey; ///< set to TRUE if we expect heavy interface updates (when not playing, please) so we can increase GUI iterations
+
 #define MAX_CBSTORES 8
   int ncbstores;
   lives_clip_t *cbstores[8];

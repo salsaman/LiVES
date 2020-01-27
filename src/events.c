@@ -20,7 +20,7 @@
 //#define DEBUG_EVENTS
 
 static int render_choice;
-
+static weed_timecode_t last_rec_start_tc = -1;
 static void **pchains[FX_KEYS_MAX]; // each pchain is an array of void *, these are parameter changes used for rendering
 ///////////////////////////////////////////////////////
 
@@ -1341,8 +1341,13 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, weed_timecode_t tc, 
 
   weed_set_int_value(event, WEED_LEAF_LIVES_TYPE, marker_type);
 
+  if (marker_type == EVENT_MARKER_RECORD_START) {
+    weed_set_int64_value(event, WEED_LEAF_TCSTART, calc_time_from_frame(mainw->current_file, mainw->play_start)
+                         * TICKS_PER_SECOND_DBL);
+  }
+
 #ifdef DEBUG_EVENTS
-  g_print("adding map event %p at tc %"PRId64"\n", init_events[0], tc);
+  g_print("adding marker event %p at tc %"PRId64"\n", init_events[0], tc);
 #endif
 
   if (get_first_event(event_list) == NULL) {
@@ -2194,7 +2199,8 @@ LiVESWidget *events_rec_dialog(void) {
                        LIVES_GUI_CALLBACK(set_render_choice),
                        LIVES_INT_TO_POINTER(RENDER_CHOICE_PREVIEW));
 
-  if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL && !mainw->recording_recovered) {
+  if (!mainw->clip_switched && CURRENT_CLIP_IS_NORMAL && !mainw->recording_recovered
+      && (last_rec_start_tc == -1 || ((double)last_rec_start_tc / TICKS_PER_SECOND_DBL) < (cfile->frames - 1.) / cfile->fps)) {
     hbox = lives_hbox_new(FALSE, 0);
     lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -2349,7 +2355,12 @@ void event_list_close_gaps(weed_plant_t *event_list) {
         delete_event(event_list, event);
       } else if (marker_type == EVENT_MARKER_RECORD_START) {
         tc_start += tc - rec_end_tc;
-        delete_event(event_list, event);
+        // retain the marker in case we want to render to the same clip
+        //delete_event(event_list, event);
+
+        last_rec_start_tc = tc + weed_get_int64_value(event, WEED_LEAF_TCSTART, NULL);
+        // if rendering to same clip, we will pick up this value and add it to the out frame tc
+        weed_set_int64_value(event, WEED_LEAF_TCDELTA, tc_start + weed_get_int64_value(event, WEED_LEAF_TCSTART, NULL));
       }
     }
     event = next_event;
@@ -3001,7 +3012,7 @@ void get_active_track_list(int *clip_index, int num_tracks, weed_plant_t *filter
         in_tracks = weed_get_int_array(init_events[i], WEED_LEAF_IN_TRACKS, &nintracks);
         for (j = 0; j < nintracks; j++) {
           if (j  >= mainw->num_tracks) break;
-          mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];   // valgrind
+          mainw->active_track_list[in_tracks[j]] = clip_index[in_tracks[j]];
         }
         lives_free(in_tracks);
       }
@@ -3480,8 +3491,8 @@ lives_render_error_t render_events(boolean reset) {
   char oname[PATH_MAX];
   LiVESError *error = NULL;
 
-  weed_timecode_t tc;
-  weed_timecode_t next_tc = 0, next_out_tc;
+  weed_timecode_t tc, next_out_tc;
+  static weed_timecode_t rec_delta_tc;
 
   void *init_event;
 
@@ -3499,14 +3510,13 @@ lives_render_error_t render_events(boolean reset) {
   weed_plant_t **source_params, **in_params;
   weed_plant_t **layers, *layer = NULL;
 
-  register int i;
+  weed_error_t weed_error;
+  LiVESResponseType retval;
 
   int key, idx;
   int hint;
   int layer_palette;
-  int weed_error;
   int num_params, offset = 0;
-  int retval;
   int num_in_count = 0;
   int num_in_channels = 0, num_out_channels = 0;
   int mytrack;
@@ -3538,11 +3548,22 @@ lives_render_error_t render_events(boolean reset) {
   char *key_string, *com, *tmp;
   char *filter_name;
 
+  register int i;
+
   if (reset) {
     LiVESList *list = NULL;
     progress = frame = 1;
+    rec_delta_tc = 0;
     event = cfile->next_event;
-    out_frame = (int)((double)(get_event_timecode(event) / TICKS_PER_SECOND) * cfile->fps + mainw->play_start);
+    if (WEED_EVENT_IS_MARKER(event)) {
+      if (weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, &weed_error) == EVENT_MARKER_RECORD_START) {
+        rec_delta_tc = weed_get_int64_value(event, WEED_LEAF_TCDELTA, NULL);
+      }
+    }
+
+    atime = (double)(get_event_timecode(event) + rec_delta_tc) / TICKS_PER_SECOND_DBL;
+    out_frame = calc_frame_from_time4(mainw->current_file, atime);
+
     if (cfile->frames < out_frame) out_frame = cfile->frames + 1;
     cfile->undo_start = out_frame;
 
@@ -3560,6 +3581,7 @@ lives_render_error_t render_events(boolean reset) {
     mainw->afilter_map = NULL;
     mainw->audio_event = event;
     old_scrap_frame = -1;
+    rec_delta_tc = 0;
 
     natracks = nbtracks = 0;
     if (mainw->multitrack != NULL && mainw->multitrack->audio_vols != NULL) {
@@ -3581,7 +3603,6 @@ lives_render_error_t render_events(boolean reset) {
       natracks = 1;
       chvols[0] = 1.;
     }
-    atime = (double)(out_frame - 1.) / cfile->fps;
     lives_snprintf(nlabel, 128, "%s", _("Rendering audio..."));
     read_write_error = LIVES_RENDER_ERROR_NONE;
     return LIVES_RENDER_READY;
@@ -3590,13 +3611,26 @@ lives_render_error_t render_events(boolean reset) {
   if (mainw->effects_paused) return LIVES_RENDER_EFFECTS_PAUSED;
 
   if (mainw->flush_audio_tc != 0 || event != NULL) {
+    if (event != NULL) hint = get_event_hint(event);
+    else hint = WEED_EVENT_HINT_FRAME;
     if (mainw->flush_audio_tc == 0) {
       is_blank = FALSE;
       eventnext = get_next_event(event);
-      hint = get_event_hint(event);
-    } else hint = WEED_EVENT_HINT_FRAME;
+    } else {
+      if (hint != WEED_EVENT_HINT_MARKER)
+        hint = WEED_EVENT_HINT_FRAME;
+    }
 
     switch (hint) {
+    case WEED_EVENT_HINT_MARKER: {
+      int marker_type = weed_get_int_value(event, WEED_LEAF_LIVES_TYPE, &weed_error);
+      if (marker_type == EVENT_MARKER_RECORD_START) {
+        rec_delta_tc = weed_get_int64_value(event, WEED_LEAF_TCDELTA, NULL);
+        atime = (double)(get_event_timecode(event) + rec_delta_tc) / TICKS_PER_SECOND_DBL;
+        out_frame = calc_frame_from_time4(mainw->current_file, atime);
+      }
+    }
+    break;
     case WEED_EVENT_HINT_FRAME:
       if (mainw->flush_audio_tc == 0) {
         tc = get_event_timecode(event);
@@ -3747,8 +3781,7 @@ lives_render_error_t render_events(boolean reset) {
       } else tc = mainw->flush_audio_tc;
 
       // get tc of next frame event
-      if (next_frame_event != NULL) next_tc = get_event_timecode(next_frame_event);
-      else {
+      if (next_frame_event == NULL) {
         // reached end of event_list
         if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL &&
              mainw->multitrack->opts.render_audp)) &&
@@ -3821,9 +3854,9 @@ lives_render_error_t render_events(boolean reset) {
           if (firstframe) {
             // see if audio needs appending
             if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-              int num_aclips = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
-              int *aclips = weed_get_int_array(event, WEED_LEAF_AUDIO_CLIPS, &weed_error);
-              double *aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, &weed_error);
+              int *aclips;
+              double *aseeks;
+              int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
               if (tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) {
                 cfile->achans = cfile->undo_achans;
                 cfile->arate = cfile->undo_arate;
@@ -3893,31 +3926,28 @@ lives_render_error_t render_events(boolean reset) {
 
         if (pixbuf == NULL) break;
         if (next_frame_event == NULL && is_blank) break; // don't render final blank frame
-        next_out_tc = (weed_timecode_t)((out_frame - mainw->play_start) / cfile->fps *
-                                        TICKS_PER_SECOND_DBL); // calculate tc of next out frame
+        next_out_tc = (weed_timecode_t)(out_frame / cfile->fps
+                                        * TICKS_PER_SECOND_DBL - rec_delta_tc); // calculate tc of next out frame */
 
         if (next_frame_event != NULL) {
+          weed_timecode_t next_tc = get_event_timecode(next_frame_event);
           if (next_tc < next_out_tc || next_tc - next_out_tc < next_out_tc - tc) break;
         } else if (next_out_tc > tc) break;
 
         if (cfile->old_frames > 0) {
           tmp = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
-          lives_snprintf(oname, PATH_MAX, "%s", tmp);
-          lives_free(tmp);
+        } else {
+          tmp = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
         }
+        lives_snprintf(oname, PATH_MAX, "%s", tmp);
+        lives_free(tmp);
+
         // sig_progress...
         lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
-
         if (prefs->ocp == -1) prefs->ocp = get_int_pref(PREF_OPEN_COMPRESSION_PERCENT);
 
-        if (cfile->old_frames == 0) {
-          tmp = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
-          lives_snprintf(oname, PATH_MAX, "%s", tmp);
-          lives_free(tmp);
-        }
-
         do {
-          retval = 0;
+          retval = LIVES_RESPONSE_NONE;
           lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, &error);
 
           if (error != NULL) {
@@ -3928,6 +3958,7 @@ lives_render_error_t render_events(boolean reset) {
           }
         } while (retval == LIVES_RESPONSE_RETRY);
 
+        if (cfile->undo_start == -1) cfile->undo_start = out_frame;
         cfile->undo_end = out_frame;
         if (out_frame > cfile->frames) cfile->frames = out_frame;
         if (out_frame > cfile->end) cfile->end = out_frame;
@@ -3939,6 +3970,7 @@ lives_render_error_t render_events(boolean reset) {
       if (scrap_track != -1) mainw->scrap_pixbuf = pixbuf;
       else if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
       break;
+
     case WEED_EVENT_HINT_FILTER_INIT:
       // effect init
       //  bind the weed_fx to next free key/0
@@ -4102,10 +4134,9 @@ filterinit2:
             if (xevent != deinit && xevent != NULL) {
               weed_set_int_value(xevent, WEED_LEAF_EASE_OUT, easing);
               weed_set_plantptr_value(xevent, WEED_LEAF_PLUGIN_EASING, inst);
-            }
-          }
-        }
-      }
+	      // *INDENT-OFF*
+            }}}}
+	  // *INDENT-ON*
 
       if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
         // handle compound fx
@@ -4513,7 +4544,7 @@ boolean render_to_clip(boolean new_clip) {
   }
 
   if (mainw->event_list != NULL && (mainw->multitrack == NULL || mainw->unordered_blocks)) {
-    weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, FALSE);
+    weed_plant_t *qevent_list = quantise_events(mainw->event_list, cfile->fps, !new_clip);
     if (qevent_list != NULL) {
       event_list_replace_events(mainw->event_list, qevent_list);
       weed_set_double_value(mainw->event_list, WEED_LEAF_FPS, cfile->fps);
@@ -4758,6 +4789,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // TODO *** - needs trans_table, only created in event_list_rectify
   if (add_deinit && !was_paused) mainw->event_list = add_filter_deinit_events(mainw->event_list);
 
+  last_rec_start_tc = -1;
   if (add_deinit) event_list_close_gaps(mainw->event_list);
 
   // need to retain play_start for rendering to same clip
@@ -4870,14 +4902,17 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->unordered_blocks = FALSE;
       break;
     case RENDER_CHOICE_EVENT_LIST:
-      if (count_events(mainw->event_list, prefs->event_window_show_frame_events, 0, 0) > 1000) if (!do_event_list_warning()) {
+      if (count_events(mainw->event_list, prefs->event_window_show_frame_events, 0, 0) > 1000) {
+        if (!do_event_list_warning()) {
           render_choice = RENDER_CHOICE_PREVIEW;
           break;
-        }
+        } else  mainw->gui_fooey = TRUE;
+      }
       elist_dialog = create_event_list_dialog(mainw->event_list, 0, 0);
       lives_dialog_run(LIVES_DIALOG(elist_dialog));
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
       lives_widget_context_update();
+      mainw->gui_fooey = FALSE;
       render_choice = RENDER_CHOICE_PREVIEW;
       break;
     }
@@ -5814,6 +5849,9 @@ render_details *create_render_details(int type) {
   if (type == 1) gtk_widget_set_no_show_all(frame, TRUE);
 
   if (type == 2) {
+    if (mainw->event_list != NULL && weed_plant_has_leaf(mainw->event_list, WEED_LEAF_FPS))
+      lives_widget_set_sensitive(rdet->spinbutton_fps, FALSE);
+
     // add clip name entry
     rdet->clipname_entry = lives_standard_entry_new((tmp = lives_strdup(_("New clip name"))),
                            (tmp2 = get_untitled_name(mainw->untitled_number)),

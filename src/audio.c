@@ -89,7 +89,7 @@ void audio_free_fnames(void) {
   if (!storedfdsset) return;
   for (int i = 0; i < NSTOREDFDS; i++) {
     lives_freep((void **)&storedfnames[i]);
-    if (storedfds[i] > -1) close(storedfds[i]);
+    if (storedfds[i] > -1) lives_close_buffered(storedfds[i]);
     storedfds[i] = -1;
   }
 }
@@ -524,7 +524,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       }
     }
     /* advance the the position */
-    src_offset_i = (int)((src_offset_f += scale) + .5) * nSrcChannels;
+    src_offset_i = (int)((src_offset_f += scale)) * nSrcChannels;
   }
   rem = (src_offset_f) - (float)src_offset_i;
 }
@@ -671,6 +671,8 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 }
 
 
+#define CLIP_DECAY 0.001f
+
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
   // convert float samples back to int
@@ -691,9 +693,10 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-  float valf, fval, volx = vol, clip = 1.;
+  float valf, fval, volx = vol;
   register short val;
   register unsigned short valu = 0;
+  static float clip = 1.;
 
   while ((nsamps - coffs) > 0) {
     frames_out++;
@@ -701,8 +704,14 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
         clip = fval;
         volx = vol / clip;
+      } else {
+        if (volx < vol) volx += (vol - volx) * CLIP_DECAY;
+        if (volx > vol) volx = vol;
+        clip = vol / volx;
       }
+      //g_print("HERE1 %f  %f\n", clip, valf);
       valf *= volx;
+      //g_print("HERE2 %f  %f\n", volx, valf);
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
 
@@ -1011,8 +1020,8 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
   // if ins size < oins_size we just seek to ins_size
   // otherwise we pad from oins_size to ins_size
 
-  uint8_t *zero_buff;
-  size_t sblocksize = SILENCE_BLOCK_SIZE;
+  uint64_t *zero_buff;
+  size_t sblocksize = SILENCE_BLOCK_SIZE >> 3;
   int sbytes = ins_size - oins_size;
   register int i;
 
@@ -1022,32 +1031,23 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
   g_print("sbytes is %d\n", sbytes);
 #endif
   if (sbytes > 0) {
-    lseek64(out_fd, oins_size, SEEK_SET);
-    if (!aunsigned) zero_buff = (uint8_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
-    else {
-      zero_buff = (uint8_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
-      if (asamps > 1) {
-        for (i = 0; i < SILENCE_BLOCK_SIZE; i += 2) {
-          if (big_endian) {
-            lives_memset(zero_buff + i, 0x80, 1);
-            lives_memset(zero_buff + i + 1, 0x00, 1);
-          } else {
-            lives_memset(zero_buff + i, 0x00, 1);
-            lives_memset(zero_buff + i + 1, 0x80, 1);
-          }
-        }
+    lives_lseek_buffered_writer(out_fd, oins_size);
+    zero_buff = (uint64_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
+    if (aunsigned && asamps > 1) {
+      for (i = 0; i < sblocksize; i ++) {
+        zero_buff[i] = 0x8000800080008000;
       }
     }
-
+    sblocksize <<= 3;
     for (i = 0; i < sbytes; i += SILENCE_BLOCK_SIZE) {
       if (sbytes - i < SILENCE_BLOCK_SIZE) sblocksize = sbytes - i;
       mainw->write_failed = FALSE;
-      lives_write(out_fd, zero_buff, sblocksize, TRUE);
+      lives_write_buffered(out_fd, (const char *)zero_buff, sblocksize, TRUE);
       if (mainw->write_failed) retval = FALSE;
     }
     lives_free(zero_buff);
   } else if (sbytes <= 0) {
-    lseek64(out_fd, ins_size, SEEK_SET);
+    lives_lseek_buffered_writer(out_fd, ins_size);
   }
   return retval;
 }
@@ -1083,7 +1083,7 @@ LIVES_LOCAL_INLINE void audio_process_events_to(weed_timecode_t tc) {
     the small chunks are processed and mixed, converted from float back to int, and then written to the outfile
 
     if obuf != NULL we write to obuf instead */
-//#define DEBUG_ARENDER
+#define DEBUG_ARENDER
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
                              double opvol_end, lives_audio_buf_t *obuf) {
@@ -1169,7 +1169,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n", outfilename);
 #endif
-    out_fd = lives_open3(outfilename, O_WRONLY | O_CREAT | O_SYNC, S_IRUSR | S_IWUSR);
+    out_fd = lives_open_buffered_writer(outfilename, S_IRUSR | S_IWUSR, FALSE);
     lives_free(outfilename);
 
     if (out_fd < 0) {
@@ -1251,8 +1251,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (track < NSTOREDFDS && storedfnames[track] != NULL && !strcmp(infilename, storedfnames[track])) {
         in_fd[track] = storedfds[track];
       } else {
-        if (track < NSTOREDFDS && storedfds[track] > -1) close(storedfds[track]);
-        in_fd[track] = lives_open2(infilename, O_RDONLY);
+        if (track < NSTOREDFDS && storedfds[track] > -1) lives_close_buffered(storedfds[track]);
+        in_fd[track] = lives_open_buffered_rdonly(infilename);
         if (in_fd[track] < 0) {
           lives_freep((void **)&mainw->read_failed_file);
           mainw->read_failed_file = lives_strdup(infilename);
@@ -1265,8 +1265,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (in_fd[track] > -1) lseek64(in_fd[track], seekstart[track], SEEK_SET);
-
+      if (in_fd[track] > -1) lives_lseek_buffered_rdonly_absolute(in_fd[track], seekstart[track]);
       lives_free(infilename);
     }
   }
@@ -1287,8 +1286,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       ins_pt *= out_achans * out_arate * out_asamps;
       ins_size = ((int64_t)(ins_pt / out_achans / out_asamps) + .5) * out_achans * out_asamps;
       pad_with_silence(out_fd, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
-      //sync();
-      close(out_fd);
+      lives_close_buffered(out_fd);
     } else {
       for (i = 0; i < out_achans; i++) {
         for (j = obuf->samples_filled; j < obuf->samples_filled + tsamples; j++) {
@@ -1380,12 +1378,19 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       in_buff = (uint8_t *)lives_calloc_safety(tbytes, 1);
 
-      if (zavel < 0. && in_fd[track] > -1) lseek64(in_fd[track], seekstart[track] - tbytes, SEEK_SET);
+      if (in_fd[track] > -1) {
+        if (zavel < 0.) {
+          lives_buffered_rdonly_set_reversed(in_fd[track], TRUE);
+          lives_lseek_buffered_rdonly(in_fd[track], - tbytes);
+        } else {
+          lives_buffered_rdonly_set_reversed(in_fd[track], FALSE);
+        }
+      }
 
       bytes_read = 0;
       mainw->read_failed = FALSE;
 
-      if (in_fd[track] > -1) bytes_read = lives_read(in_fd[track], in_buff, tbytes, TRUE); // ## valgrind
+      if (in_fd[track] > -1) bytes_read = lives_read_buffered(in_fd[track], in_buff, tbytes, TRUE); // ## valgrind
 
       if (bytes_read < 0) bytes_read = 0;
 
@@ -1520,7 +1525,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // convert back to int; use out_scale of 1., since we did our resampling in sample_move_*_d16
         frames_out = sample_move_float_int((void *)finish_buff, chunk_float_buffer, blocksize, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
-        lives_write(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
+        lives_write_buffered(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
         threaded_dialog_spin(0.);
         tot_frames += frames_out;
 #ifdef DEBUG_ARENDER
@@ -1537,7 +1542,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         frames_out = sample_move_float_int((void *)finish_buff, float_buffer, xsamples, 1., out_achans,
                                            out_asamps * 8, out_unsigned, out_reverse_endian, FALSE, opvol);
 
-        lives_write(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
+        lives_write_buffered(out_fd, finish_buff, frames_out * out_asamps * out_achans, TRUE);
 #ifdef DEBUG_ARENDER
         g_print(".");
 #endif
@@ -1568,7 +1573,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   // close files
   for (track = 0; track < nfiles; track++) {
     if (!is_silent[track]) {
-      if (track >= NSTOREDFDS && in_fd[track] > -1) close(in_fd[track]);
+      if (track >= NSTOREDFDS && in_fd[track] > -1) lives_close_buffered(in_fd[track]);
     }
   }
 
@@ -1576,7 +1581,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #ifdef DEBUG_ARENDER
     g_print("fs is %ld\n", get_file_size(out_fd));
 #endif
-    close(out_fd);
+    lives_close_buffered(out_fd);
   }
 
   return tot_frames;
@@ -1960,18 +1965,16 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
 
 static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
   // parse an audio frame, and set the track file, seek and velocity values
-
-  int error, atrack;
-  int num_aclips = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
-  int *aclips = weed_get_int_array(event, WEED_LEAF_AUDIO_CLIPS, &error);
-  double *aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, &error);
+  int num_aclips, atrack;
+  int *aclips;
+  double *aseeks;
   int naudstate = 0;
   lives_audio_track_state_t *atstate = NULL;
 
   register int i;
 
   int btoffs = mainw->multitrack != NULL ? mainw->multitrack->opts.back_audio_tracks : 1;
-
+  num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
   for (i = 0; i < num_aclips; i += 2) {
     if (aclips[i + 1] > 0) { // else ignore
       atrack = aclips[i];
@@ -2215,7 +2218,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   } else chvols[0] = 1.;
 
-  fill_tc = last_tc + (double)(abuf->samp_space) / (double)abuf->arate * TICKS_PER_SECOND_DBL;
+  fill_tc = last_tc + fabs((double)(abuf->samp_space) / (double)abuf->arate * TICKS_PER_SECOND_DBL);
 
   // continue until we have a full buffer
   // if we get an audio frame we render up to that point
@@ -2699,14 +2702,8 @@ static void *cache_my_audio(void *arg) {
     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek ||
         cbuffer->shrink_factor != cbuffer->_shrink_factor) {
       if (cbuffer->sequential || cbuffer->shrink_factor > 0.) {
-#ifdef HAVE_POSIX_FADVISE
-        posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_SEQUENTIAL);
-#endif
         lives_buffered_rdonly_set_reversed(cbuffer->_fd, FALSE);
       } else {
-#ifdef HAVE_POSIX_FADVISE
-        posix_fadvise(cbuffer->_fd, cbuffer->seek, 0, POSIX_FADV_RANDOM);
-#endif
         lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
       }
       if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
@@ -3034,7 +3031,7 @@ boolean apply_rte_audio_init(void) {
   audio_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
   audio_file = lives_get_audio_file_name(mainw->current_file);
 
-  audio_fd = lives_open3(audio_file, O_RDWR | O_CREAT, DEF_FILE_PERMS);
+  audio_fd = lives_open_buffered_writer(audio_file, DEF_FILE_PERMS, TRUE);
 
   if (audio_fd == -1) return FALSE;
 
@@ -3042,7 +3039,7 @@ boolean apply_rte_audio_init(void) {
     off64_t audio_end_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
     pad_with_silence(audio_fd, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
                      cfile->signed_endian & AFORM_BIG_ENDIAN);
-  } else lseek64(audio_fd, audio_pos, SEEK_SET);
+  } else lives_lseek_buffered_writer(audio_fd, audio_pos);
 
   aud_tc = 0;
 
@@ -3051,7 +3048,7 @@ boolean apply_rte_audio_init(void) {
 
 
 void apply_rte_audio_end(boolean del) {
-  close(audio_fd);
+  lives_close_buffered(audio_fd);
   if (del) lives_rm(audio_file);
   lives_free(audio_file);
 }
@@ -3110,7 +3107,7 @@ boolean apply_rte_audio(int nframes) {
 
     mainw->read_failed = FALSE;
 
-    tbytes = lives_read(audio_fd, in_buff, tbytes, FALSE);
+    tbytes = lives_read_buffered(audio_fd, in_buff, tbytes, FALSE);
 
     if (mainw->read_failed) {
       do_read_failed_error_s(audio_file, NULL);
@@ -3201,9 +3198,9 @@ boolean apply_rte_audio(int nframes) {
   if (audio_fd >= 0) {
     // save to file
     mainw->write_failed = FALSE;
-    lseek64(audio_fd, audio_pos, SEEK_SET);
+    lives_lseek_buffered_writer(audio_fd, audio_pos);
     tbytes = onframes * cfile->achans * cfile->asampsize / 8;
-    lives_write(audio_fd, in_buff, tbytes, FALSE);
+    lives_write_buffered(audio_fd, (const char *)in_buff, tbytes, FALSE);
     audio_pos += tbytes;
   }
 

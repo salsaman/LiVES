@@ -74,6 +74,8 @@
 // marker
 #define WEED_LEAF_LIVES_TYPE "lives_type"
 #define WEED_LEAF_TRACKS "tracks"
+#define WEED_LEAF_TCDELTA "tc_delta"
+#define WEED_LEAF_TCSTART "tc_start"
 
 // misc
 #define WEED_LEAF_PTRSIZE "ptrsize" ///< deprecated

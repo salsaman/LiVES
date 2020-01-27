@@ -828,11 +828,11 @@ static void *thrdpool(void *arg) {
       (*mywork->func)(mywork->arg);
       pthread_mutex_lock(&twork_mutex);
       ntasks--;
-      pthread_mutex_unlock(&twork_mutex);
-      mywork->done = myidx + 1;
       pthread_mutex_lock(&mywork->cond_mutex);
       pthread_cond_signal(&mywork->cond);
       pthread_mutex_unlock(&mywork->cond_mutex);
+      mywork->done = myidx + 1;
+      pthread_mutex_unlock(&twork_mutex);
     }
   }
   return NULL;
@@ -921,9 +921,12 @@ int lives_thread_join(lives_thread_t work, void **retval) {
     pthread_mutex_lock(&task->cond_mutex);
     pthread_cond_timedwait(&task->cond, &task->cond_mutex, &ts);
     pthread_mutex_unlock(&task->cond_mutex);
+    sched_yield();
   }
   if (retval != NULL) *retval = task->ret;
+  pthread_mutex_lock(&twork_mutex);
   lives_free(task);
+  pthread_mutex_unlock(&twork_mutex);
   return 0;
 }
 

@@ -2822,15 +2822,12 @@ aud_dialog_t *create_audfade_dialog(int type) {
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
   rb_sel = lives_standard_radio_button_new(_("selection"), &radiobutton_group, LIVES_BOX(hbox), NULL);
-
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb_sel), FALSE);
   audd->is_sel = FALSE;
 
   if ((cfile->end - 1.) / cfile->fps > cfile->laudio_time) {
     // if selection is longer than audio time, we cannot use sel len
     lives_widget_set_sensitive(rb_sel, FALSE);
-  } else {
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(rb_sel), TRUE);
-    rb_aud_sel_pressed(LIVES_BUTTON(rb_sel), (livespointer)audd);
   }
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(rb_sel), LIVES_WIDGET_TOGGLED_SIGNAL,

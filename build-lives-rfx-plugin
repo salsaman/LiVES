@@ -6,6 +6,12 @@
 #usage : build-lives-rfx-plugin <script_file> <output_directory>
 # if <output_directory> is omitted, plugins will be generated in /tmp
 
+# if <script_file> == "-get" then the commandline parameters are interpreted as:
+# build-lives-rfx-plugin -get <section> <file>
+# and we then print the contents of section on stdout
+
+## Note: very little (if any) error checking is performed, although <define> and version must be present.
+
 ########################################################
 # this will auto-generate a LiVES-Perl plugin from the info in $file
 
@@ -27,7 +33,7 @@ if ($ARGV[0] eq "-get") {
     $file = $ARGV[2];
     my @result = &rc_read($section, $file);
     foreach (@result) {
-	print "$_\n";
+	print STDOUT "$_\n";
     }
     exit 0;
 }
@@ -36,14 +42,14 @@ $file = $ARGV[0];
 
 my $define = (&rc_read("define", $file))[0];
 if ($define eq "") {
-    print STDERR "  - <define> section missing from script file.\n";
+    print STDERR "Error  - <define> section missing from script file.\n";
     exit 5;
 }
 
 my $version = substr($define, 1);
 
 unless (&make_ver_hash($version) <= &make_ver_hash($rfx_version)) {
-    print STDERR "\n\n  - Invalid script RFX version $version, this builder is for $rfx_version\n";
+    print STDERR "\n\nError:  - Invalid script RFX version $version, this builder is for $rfx_version\n";
     exit 4;
 }
 
@@ -96,7 +102,7 @@ my @onchange = &rc_read("onchange", $file);
 
 if (@pre || @loop || @post || @onchange) {
     unless ($lang_code eq "240" || hex($lang_code) == 240) {
-	print STDERR "  - Invalid language code for this builder !\n";
+	print STDERR "Error:  - Invalid language code for this builder !\n";
 	exit 3;
     }
 }
@@ -128,6 +134,7 @@ else {
     $is_batch_gen = 0;
 }
 
+## TODO: this is an ugly hack and needs to be removed
 if ($in_channels > 0) {
     push(@requires, "convert");
 }
@@ -347,7 +354,7 @@ if (!$is_scrap) {
     }
 
     if (@pre) {
-	&gen_pre;
+	&gen_array(4, @pre);
     }
 
     print OUT "\n";
@@ -414,7 +421,7 @@ if (!$is_scrap) {
 
     print OUT "##################### the all-important bit #######################\n\n";
 
-    &gen_loop;
+    &gen_array(8, @loop);
 
     print OUT "\n###################################################################\n";
 
@@ -480,7 +487,7 @@ if (!$is_scrap) {
 	print OUT "    \$start = \$ARGV[1];\n";
 	print OUT "    \$end = \$ARGV[2];\n";
 	print OUT "    \$img_ext = \$ARGV[3];\n\n";
-	&gen_post;
+	&gen_array(4, @post);
     }
     print OUT "    exit 0;\n";
     print OUT "}\n";
@@ -586,23 +593,10 @@ sub gen_param_checks {
 }
 
 
-sub gen_pre {
-    foreach (@pre) {
-	print OUT "    $_\n";
-    }
-}
-
-
-sub gen_loop {
-    foreach (@loop) {
-	print OUT "        $_\n";
-    }
-}
-
-
-sub gen_post {
-    foreach (@post) {
-	print OUT "    $_\n";
+sub gen_array {
+    my ($nspaces, @array) = @_;
+    foreach (@array) {
+	print OUT " " x $nspaces . $_ . "\n";
     }
 }
 
@@ -614,7 +608,7 @@ sub rc_read {
     my (@result, $part);
 
     unless (defined(open IN, "$rcfile")) {
-	print "  - Unable to read values from script file,  $rcfile\n";
+	print STDERR "Error:  - Unable to read values from script file,  $rcfile\n";
 	exit 2;
     }
     $part = 0;
@@ -644,7 +638,7 @@ sub gen_onchange {
 	unless ($_ eq "") {
 	    $which = (split(/$delim/))[0];
 	    if ($which > @params || ($which > 0 && $params[$which - 1] eq "")) {
-		print "  - onchange value $which > num parameters.\n";
+		print  STDERR "Error:  - onchange value $which > num parameters.\n";
 		exit 1;
 	    }
 	    if ($pass == 0) {
@@ -674,12 +668,12 @@ sub gen_onchange {
 		    $type = &param_get_type($i);
 		    if ($type eq "colRGB24") {
 			# with RGBA we would also have _alpha
-			print OUT "    \$p$i"."_red = \@ARGV[" . $acount++ . "];\n";
-			print OUT "    \$p$i"."_green = \@ARGV[" . $acount++ . "];\n";
-			print OUT "    \$p$i"."_blue = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i" . "_red = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i" . "_green = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i" . "_blue = \@ARGV[" . $acount++ . "];\n";
 		    }
 		    else {
-			print OUT "    \$p$i"." = \@ARGV[" . $acount++ . "];\n";
+			print OUT "    \$p$i" . " = \@ARGV[" . $acount++ . "];\n";
 			unless ($type eq "bool" || $type eq "string" || $type eq "string_list") {
 			    print OUT "    \$p$i" . "_min = \@ARGV[" . $acount++ . "];\n";
 			    print OUT "    \$p$i" . "_max = \@ARGV[" . $acount++ . "];\n";
@@ -712,9 +706,9 @@ sub gen_onchange {
 			$has_params = 1;
 		    }
 		    if ($type eq "colRGB24") {
-			print OUT "\$p$i"."_red ";
-			print OUT "\$p$i"."_green ";
-			print OUT "\$p$i"."_blue ";
+			print OUT "\$p$i" . "_red ";
+			print OUT "\$p$i" . "_green ";
+			print OUT "\$p$i" . "_blue ";
 		    }
 		    else {
 			if ($type eq "string") {

@@ -3,7 +3,7 @@ LiVES rendered effect plugin script
 This is a tool, as it MAY_RESIZE
 
 <define>
-|1.7
+|1.8.3
 </define>
 
 <name>
@@ -62,35 +62,40 @@ layout|"To maintain original frame size, use the "spin" effect."
 
 # pre loop code
 <pre>
-$cstring=&RGB24_to_string($p5_red,$p5_green,$p5_blue);
-$antialias=&rc_get("antialias");
+$cstring = &RGB24_to_string($p5_red, $p5_green, $p5_blue);
+$antialias = &rc_get("antialias");
+$nwidth = $width;
+$nheight = $height;
 
 if ($p0) {
-    $deg=90;
-    $nheight=$width;
-    $nwidth=$height;
+    $deg = 90;
+    $nheight = $width;
+    $nwidth = $height;
 }
 elsif ($p1) {
-    $deg=-90;
-    $nheight=$width;
-    $nwidth=$height;
+    $deg = -90;
+    $nheight = $width;
+    $nwidth = $height;
 }
 elsif ($p2) {
-    $deg=180;
+    $deg = 180;
 }
 else {
-    $deg=$p3;
+    $deg = $p3;
+    $nwidth = $nheight = 0;
 }
+$width = $nwidth;
+$height = $nheight;
 </pre>
 
 # loop code
 <loop>
 system ("$convert_command $img_prefix$in -background $cstring -rotate $deg $out_prefix$out");
-if ($p4) {
-   $imresact="none";
+if ($width == 0 || $height == 0) {
+   $imresact = "none";
    &get_image_size($out);
-   $nwidth=$hsize;
-   $nheight=$vsize;
+   $width = $hsize;
+   $height = $vsize;
 }
 </loop>
 

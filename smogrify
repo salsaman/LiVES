@@ -4101,10 +4101,14 @@ if (defined($ARGV[0])) {
 	    unlink "$curworkdir/pause";
 	    $command = $1;
 	    $status = $ARGV[2];
+
+	    ## for generators, $start is always 1, $end is target no. of frames to generate
 	    $start = $ARGV[3];
 	    $end = $ARGV[4];
-	    $nwidth = $width = $ARGV[5];
-	    $nheight = $height = $ARGV[6];
+
+	    ## for generators, this is the target frame size, for other fx, it is the current size
+	    $width = $ARGV[5];
+	    $height = $ARGV[6];
 
 	    $img_ext = "." . $ARGV[7];
 	    $img_prefix = &get_img_prefix($img_ext);
@@ -4152,14 +4156,13 @@ if (defined($ARGV[0])) {
 
 	    if ($num_in_channels == 2) {
 		# transitions get some extra params
-		$img_ext2 = "." . $ARGV[7];
+		$img_ext2 = "." . $ARGV[9];
 		$img_prefix2 = &get_img_prefix($img_ext2);
-		splice(@ARGV, 7, 1);
 		if ($USE_WARNINGS) {
 		    no warnings 'once';
 		}
-		$start2 = $ARGV[7]; # defined for plugins
-		$clipboard = $ARGV[8]; # defined for plugins
+		$start2 = $ARGV[10]; # defined for plugins
+		$clipboard = $ARGV[11]; # defined for plugins
 		if ($USE_WARNINGS) {
 		    use warnings 'once';
 		}
@@ -4208,7 +4211,8 @@ if (defined($ARGV[0])) {
 		} else {
 		    $frames = &count_frames(1, $img_ext);
 		}
-		&sig_complete($width, $height, $fps, $frames);
+		## nwidth, nheight set for backwards compat,
+		&sig_complete($width, $height, $fps, $frames, $nwidth, $nheight);
 		exit 0;
 	    } else {
 		# other (non-perl) language
@@ -4218,21 +4222,21 @@ if (defined($ARGV[0])) {
 		my $res_file = "$curworkdir/.rfx_result";
 		my $err;
 
-		#img_ext is also in ARGV, but never mind
-
 		if ($num_in_channels == 2) {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $img_ext2 $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix2 $img_prefix $out_prefix $out_ext " .
+					"@ARGV > \"$res_file\"");
 		}
 		elsif ($num_in_channels == 1) {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_ext $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $img_prefix $out_prefix $out_ext @ARGV > \"$res_file\"");
 		}
 		else {
-		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $out_ext @ARGV > \"$res_file\"");
+		    $err = &smog_system("\"$plugin_name\" process \"$curworkdir\" $out_prefix $out_ext @ARGV > \"$res_file\"");
 		}
+		## TODO - use pipe
 		if (!$err) {
 		    if (defined(open IN, "< $res_file")) {
 			read IN, $size, 128;
-			($nwidth, $nheight) = split(" ", $size);
+			($width, $height) = split(" ", $size);
 			close IN;
 			unlink $res_file;
 		    }
@@ -4254,7 +4258,7 @@ if (defined($ARGV[0])) {
 			exit 1;
 		    }
 		}
-		&sig_complete($nwidth, $nheight);
+		&sig_complete($width, $height);
 		exit 0;
 	    }
 	}
@@ -4330,7 +4334,7 @@ if (defined($ARGV[0])) {
 
     sub check_for_pause {
 	if (-f "$curworkdir/pause") {
-	    smog_system_sync();
+	    &smog_system_sync();
 	}
 	while (-f "$curworkdir/pause") {
 	    sleep 1;
@@ -4887,7 +4891,7 @@ if (defined($ARGV[0])) {
 	    $from = &mkname($i);
 	    $to = &mkname($i + $frames_to_move);
 	    if (-f "$curworkdir/$from$img_ext") {
-		smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext");
+		&smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext");
 	    }
 	    &sig_progress($new_frames - $i);
 	}
@@ -4907,7 +4911,7 @@ if (defined($ARGV[0])) {
 
 		if ($undo_cut == 1) {
 		    if (-f "$fromdir/$from.bak") {
-			smog_rename("$fromdir/$from.bak", "$curworkdir/$to$img_ext");
+			&smog_rename("$fromdir/$from.bak", "$curworkdir/$to$img_ext");
 			return if $panic;
 		    }
 		} else {
@@ -4916,13 +4920,13 @@ if (defined($ARGV[0])) {
 			while (! -f "$fromdir/$from$img_ext2") {
 			    print STDERR "waiting on image $fromdir/$from$img_ext2\n";
 			    sleep 1;
-			    smog_system_sync();
+			    &smog_system_sync();
 			}
 		    }
 		    if ($quick_copy == -1) {
 			$quick_copy = 0;
 			if ($img_ext eq $img_ext2) {
-			    if ($height*$width == 0) {
+			    if ($height * $width == 0) {
 				$quick_copy = 1;
 			    } else {
 				$imresact = "none";
@@ -4934,16 +4938,16 @@ if (defined($ARGV[0])) {
 				}}}}
 
 		    if ($quick_copy == 1) {
-			smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");
+			&smog_copy("$fromdir/$from$img_ext2", "$curworkdir/$to$img_ext");
 			return if $panic;
 		    } else {
 			if ($antialias eq "false") {
 			    $com = "$smog_convert_command +antialias -size $width" .
 				"x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
 				"x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-			    $smerr = smog_system($com);
+			    $smerr = &smog_system($com);
 			    if ($smerr) {
-				sig_system_error("$com", $smerr);
+				&sig_system_error($com, $smerr);
 				$panic = 1;
 				return;
 			    }
@@ -4951,9 +4955,9 @@ if (defined($ARGV[0])) {
 			    $com = "$smog_convert_command -antialias -size $width" .
 				"x$height $img_prefix2\"$fromdir/$from$img_ext2\" -scale $width" .
 				"x$height\\! $img_prefix\"$curworkdir/$to$img_ext\" >$nulfile 2>&1";
-			    $smerr = smog_system($com);
+			    $smerr = &smog_system($com);
 			    if ($smerr) {
-				sig_system_error("$com", $smerr);
+				&sig_system_error($com, $smerr);
 				$panic = 1;
 				return;
 			    }}}}
@@ -5003,16 +5007,16 @@ if (defined($ARGV[0])) {
 	# TODO ****  !!! provide alternate if imagemagick is not available
 
 	if ($antialias eq "false") {
-	    $com = "$smog_convert_command +antialias -size $width"."x$height $input_prefix\"$name$input_ext\" -scale $width"
-		."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	    $com = "$smog_convert_command +antialias -size $width" . "x$height $input_prefix\"$name$input_ext\" -scale $width"
+		. "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
 	} else {
-	    $com = "$smog_convert_command -size $width"."x$height $input_prefix\"$name$input_ext\" -resize $width"
-		."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
+	    $com = "$smog_convert_command -size $width" . "x$height $input_prefix\"$name$input_ext\" -resize $width"
+		. "x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
 	}
 
-	$smerr = smog_system($com);
+	$smerr = &smog_system($com);
 	if ($smerr) {
-	    sig_system_error("$com", $smerr);
+	    &sig_system_error($com, $smerr);
 	    $panic = 1;
 	}
     }
@@ -5035,13 +5039,13 @@ if (defined($ARGV[0])) {
 	$ystart = int(($oheight - $iheight) / 2);
 
 	#must unlink first in case $to is a symlink (when saving selection)
-	unlink "$to";
+	unlink $to;
 
 	$com = "$smog_composite_command -compose plus -dissolve 100 -geometry $iwidth"
-	    ."x$iheight\\!+$xstart\\!+$ystart\\! \"$from\" $blankname \"$to\" >$nulfile 2>&1";
-	$smerr = smog_system($com);
+	    . "x$iheight\\!+$xstart\\!+$ystart\\! \"$from\" $blankname \"$to\" >$nulfile 2>&1";
+	$smerr = &smog_system($com);
 	if ($smerr) {
-	    sig_system_error("$com", $smerr);
+	    &sig_system_error($com, $smerr);
 	    $panic = 1;
 	    return;
 	}
@@ -5142,10 +5146,10 @@ if (defined($ARGV[0])) {
 		."x$nheight\\!+$x\\!+$y\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
 	}
 
-	$smerror = smog_system($com);
+	$smerror = &smog_system($com);
 
 	if ($smerror) {
-	    sig_system_error("$com", $smerror);
+	    &sig_system_error($com, $smerror);
 	    $panic = 1;
 	}
     }

@@ -1,7 +1,7 @@
 Script file generated from LiVES
 
 <define>
-|1.7
+|1.8.3
 </define>
 
 <name>
@@ -9,7 +9,7 @@ trim_frames
 </name>
 
 <version>
-4
+5
 </version>
 
 <author>
@@ -25,13 +25,13 @@ convert
 </requires>
 
 <params>
-xstart|_X Start|num0|0|0|10000|
-ystart|_Y Start|num0|0|0|10000|
-xend|_X End|num0|0|0|10000|
-yend|_Y End|num0|0|0|10000|
+xstart|_X Start|num0|0|0|10000|4|
+ystart|_Y Start|num0|0|0|10000|4|
+xend|_X End|num0|0|0|10000|4|
+yend|_Y End|num0|0|0|10000|4|
 kc|Keep _Centered|bool|0|
-w|_Width|num0|0|0|10000|
-h|_Height|num0|0|0|10000|
+w|_Width|num0|0|0|10000|4|
+h|_Height|num0|0|0|10000|4|
 bord|Add _Border|bool|0|
 offsx|_Offset X|num0|0|0|10000|
 offsy|_Offset Y|num0|0|0|10000|
@@ -58,32 +58,41 @@ special|aspect|5|6|
 </language_code>
 
 <pre>
-$antialias=&rc_get("antialias");
-$resize_ext=$out_ext;
-$resize_prefix=$out_prefix;
-$input_ext=$img_ext;
-$input_prefix=$img_prefix;
-$xwidth=$nwidth=$p2-$p0+1;
-$xheight=$nheight=$p3-$p1+1;
-if ($nwidth<1||$nwidth>$width) {
+$antialias = &rc_get("antialias");
+$resize_ext = $out_ext;
+$resize_prefix = $out_prefix;
+$input_ext = $img_ext;
+$input_prefix = $img_prefix;
+
+$owidth = $width;
+$oheight = $height;
+
+$width = $p2 - $p0 + 1;
+$height = $p3 - $p1 + 1;
+
+if ($width < 1 || $width > $owidth) {
    &sig_error("New width is invalid.");
 }
-if ($nheight<1||$nheight>$height) {
+if ($height < 1 || $height > $oheight) {
    &sig_error("New height is invalid.");
 }
 
+
 if ($p7) {
-    $cstring1=&RGB24_to_string($p10_red,$p10_green,$p10_blue);
-    system("$convert_command -size $p5!x$p6! xc:$cstring1 $img_prefix"."blank$img_ext");
-    $nwidth=$p5;
-    $nheight=$p6;
+    $xwidth = $width;
+    $xheight = $height;
+    $width = $p5;
+    $height = $p6;
+    $cstring1 = &RGB24_to_string($p10_red, $p10_green, $p10_blue);
+    system("$convert_command -size $width\\!x$height\\! xc:$cstring1 $img_prefix" . "blank$img_ext");
 }
 </pre>
 
 <loop>
-&trim_frame($name,$width,$height,$p0,$p1,$nwidth,$nheight);
+&trim_frame($name, $owidth, $oheight, $p0, $p1, $width, $height);
 if ($p7) {	
-    system("$composite_command -compose plus -dissolve 100 -geometry $xwidth!x$xheight!+$p8!+$p9! $out_prefix$out -size $p5!x$p6! $img_prefix"."blank$img_ext $out");
+    system("$composite_command -compose plus -dissolve 100 -geometry $xwidth\\!x$xheight\\!+$p8\\!+$p9\\! $out_prefix$out -size " .
+    "$width\\!x$height\\! $img_prefix" . "blank$img_ext $out");
 }
 </loop>
 

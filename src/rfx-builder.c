@@ -4389,6 +4389,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
     char *plugin_name;
     char *def = NULL;
     char *tmp;
+    char delim[2];
 
     int offset = 0;
 
@@ -4451,19 +4452,22 @@ void add_rfx_effects(lives_rfx_status_t status) {
         lives_free(def);
         continue;
       }
-      lives_memset(def + 1, 0, 1);
 
-      if ((description = plugin_request_common(type, plugin_name, "get_description", def, TRUE)) != NULL &&
-          (props = plugin_request_common(type, plugin_name, "get_capabilities", def, FALSE)) != NULL &&
+      delim[0] = def[0];
+      delim[1] = 0;
+
+      if ((description = plugin_request_common(type, plugin_name, "get_description", delim, TRUE)) != NULL &&
+          (props = plugin_request_common(type, plugin_name, "get_capabilities", delim, FALSE)) != NULL &&
           lives_list_length(description) > 3) {
         rfx = &rendered_fx[rfx_slot_count++];
         rfx->name = lives_strdup(plugin_name);
-        lives_memcpy(rfx->delim, def, 2);
+        lives_memcpy(rfx->delim, delim, 2);
         rfx->menu_text = lives_strdup((char *)lives_list_nth_data(description, 0));
         rfx->action_desc = lives_strdup((char *)lives_list_nth_data(description, 1));
         if (!(rfx->min_frames = atoi((char *)lives_list_nth_data(description, 2)))) rfx->min_frames = 1;
         rfx->num_in_channels = atoi((char *)lives_list_nth_data(description, 3));
         rfx->status = xstatus;
+        lives_snprintf(rfx->rfx_version, 64, "%s", def + 1);
         rfx->props = atoi((char *)lives_list_nth_data(props, 0));
         rfx->num_params = 0;
         rfx->is_template = FALSE;

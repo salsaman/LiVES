@@ -3,7 +3,7 @@ LiVES rendered effect plugin script
 This is a tool, as it MAY_RESIZE
 
 <define>
-|1.7
+|1.8.3
 </define>
 
 <name>
@@ -11,7 +11,7 @@ resize
 </name>
 
 <version>
-1
+2
 </version>
 
 <author>
@@ -30,8 +30,8 @@ convert
 
 # parameters Label|group|type|default|min|max|      (list)
 <params>
-width|_Width|num0|0|0|10000|2|
-height|_Height|num0|0|0|10000|2|
+width|_Width|num0|0|0|10000|4|
+height|_Height|num0|0|0|10000|4|
 </params>
 
 <param_window>
@@ -54,18 +54,18 @@ special|aspect|0|1|
 
 # pre loop code
 <pre>
-$antialias=&rc_get("antialias");
-$resize_ext=$out_ext;
-$resize_prefix=$out_prefix;
-$input_ext=$img_ext;
-$input_prefix=$img_prefix;
-$nwidth=$p0;
-$nheight=$p1;
+$antialias = &rc_get("antialias");
+$resize_ext = $out_ext;
+$resize_prefix = $out_prefix;
+$input_ext = $img_ext;
+$input_prefix = $img_prefix;
+$width = $p0;
+$height = $p1;
 </pre>
 
 # loop code
 <loop>
-&resize_frame($name,$nwidth,$nheight);
+&resize_frame($name, $width, $height);
 </loop>
 
 # post loop code

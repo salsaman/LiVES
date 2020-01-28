@@ -2843,6 +2843,7 @@ void rfx_copy(lives_rfx_t *dest, lives_rfx_t *src, boolean full) {
     // TODO - copy params
   }
 
+  lives_snprintf(dest->rfx_version, 64, "%s", src->rfx_version);
   dest->min_frames = src->min_frames;
   dest->num_in_channels = src->num_in_channels;
   dest->status = src->status;
@@ -3674,6 +3675,7 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
     rfx->action_desc = NULL;
     rfx->gui_strings = NULL;
     rfx->onchange_strings = NULL;
+    lives_snprintf(rfx->rfx_version, 64, "%s", RFX_VERSION);
     rfx->flags = 0;
     rfx->status = RFX_STATUS_SCRAP;
 

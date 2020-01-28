@@ -40,6 +40,10 @@ d1.6 Added string_list parameter type
 1.8.2
 - Add "special|scaledpoint"
 
+1.8.3
+- in LiVES-perl, values of width and height now set in $width, $height rather than $nwidth, $nheight.
+
+
 TODO: 	- split into RFX layout and RFX plugin components (?)
 
 
@@ -646,9 +650,10 @@ image type before merging. The resulting output image should also be of the same
 
 
 
-If the plugin sets the may-resize bit, or is a non-batch-mode generator, the width and height of the frames should be passed back to the host.
-In LiVES-perl this is done by setting $nwidth and $nheight to the width and height in pixels, respectively.
-
+If the plugin sets the may-resize bit, or is a non-batch-mode generator, the width and height of the frames should be
+passed back to the host.
+In LiVES-perl this is done by setting $width and $height to the width and height in pixels, respectively.
+(N.B. prior to 1.8.3 this was $nwidth and $nheight)
 
 
 Plugins with no in channels (generators) may also set $fps to inform the host of the framerate of the 

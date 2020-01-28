@@ -3138,11 +3138,18 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
       set_double_param(param->value, double_val);
     } else {
       int int_value;
+      int int_min, int_max;
       tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
       int_value = atoi(tmp);
       lives_free(tmp);
+      if (param->step_size > 1.)
+        int_value = (int)((double)int_value / param->step_size + .5) * (int)param->step_size;
+      int_min = (int)param->min;
+      int_max = (int)param->max;
+      if (int_value < int_min) int_value = int_min;
+      if (int_value > int_max) int_value = int_max;
+
       if (with_min_max) {
-        int int_min, int_max;
         if (ABS(pnum) > maxlen) return 1;
         tmp = lives_strdup((char *)lives_list_nth_data(plist, pnum++));
         int_min = atoi(tmp);
@@ -3162,9 +3169,9 @@ int set_param_from_list(LiVESList *plist, lives_param_t *param, int pnum, boolea
           lives_signal_handlers_block_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
           lives_spin_button_set_range(LIVES_SPIN_BUTTON(param->widgets[0]), param->min, param->max);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
-          lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
           lives_spin_button_set_value(LIVES_SPIN_BUTTON(param->widgets[0]), (double)int_value);
           lives_spin_button_update(LIVES_SPIN_BUTTON(param->widgets[0]));
+          lives_signal_handlers_unblock_by_func(param->widgets[0], (livespointer)after_param_value_changed, (livespointer)rfx);
         }
       } else set_int_param(param->def, int_value);
       set_int_param(param->value, int_value);

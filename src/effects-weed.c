@@ -2000,7 +2000,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (svary) {
       /// if sizes can vary then we must set the first in channel to op size, because we'll want the first out channel at that size
-      /// otherwise (or if it's a convereter) then we can use layer size
+      /// otherwise (or if it's a converter) then we can use layer size
       if ((filter_flags & WEED_FILTER_IS_CONVERTER) || def_channel != channel) {
         palette = weed_layer_get_palette(layer);
         inwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
@@ -3950,7 +3950,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
   int naudins = 0, naudouts = 0;
   int filter_achans = 0;
   int ctachans;
-
+  //g_print("checking %s\n", weed_filter_get_name(filter));
   // TODO - check seed types
   if (!weed_plant_has_leaf(filter, WEED_LEAF_NAME)) return 1;
   if (!weed_plant_has_leaf(filter, WEED_LEAF_AUTHOR)) return 2;
@@ -4108,8 +4108,7 @@ static int check_for_lives(weed_plant_t *filter, int filter_idx) {
     } else {
       weed_set_boolean_value(filter, WEED_LEAF_HOST_MENU_HIDE, WEED_TRUE);
       if (chans_in_mand == 1 && chans_out_mand == 1) {
-        int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
-        if (filter_flags & (WEED_FILTER_IS_CONVERTER & WEED_FILTER_CHANNEL_SIZES_MAY_VARY)) {
+        if ((flags & WEED_FILTER_IS_CONVERTER) && (flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY)) {
           // this is a candidate for resize
           lives_fx_candidate_t *cand = &mainw->fx_candidates[FX_CANDIDATE_RESIZER];
           cand->list = lives_list_append(cand->list, LIVES_INT_TO_POINTER(filter_idx));

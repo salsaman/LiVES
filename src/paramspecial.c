@@ -465,9 +465,11 @@ void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_d
     int width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double height = (double)width / aspect.ratio;
     lives_signal_handler_block(aspect.height_param->widgets[0], aspect.height_func);
+    aspect.width_param->change_blocked = TRUE;
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]), height);
     lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
     lives_signal_handler_unblock(aspect.height_param->widgets[0], aspect.height_func);
+    aspect.width_param->change_blocked = FALSE;
     height = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
   }
 }
@@ -478,9 +480,11 @@ void after_aspect_height_changed(LiVESToggleButton *spinbutton, livespointer use
     int height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double width = (double)height * aspect.ratio;
     lives_signal_handler_block(aspect.width_param->widgets[0], aspect.width_func);
+    aspect.height_param->change_blocked = TRUE;
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]), width);
     lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
     lives_signal_handler_unblock(aspect.width_param->widgets[0], aspect.width_func);
+    aspect.height_param->change_blocked = FALSE;
     width = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
   }
 }

@@ -370,8 +370,14 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
       cfile->end = cfile->progress_end = cfile->start + atoi(array[4]) - 1;
       if (rfx->props & RFX_PROPS_MAY_RESIZE || rfx->num_in_channels == 0) {
         // get new frame size
-        cfile->hsize = atoi(array[1]);
-        cfile->vsize = atoi(array[2]);
+        uint64_t verhash = make_version_hash(rfx->rfx_version);
+        if (verhash >= 1008003) {
+          cfile->hsize = atoi(array[1]);
+          cfile->vsize = atoi(array[2]);
+        } else {
+          cfile->hsize = atoi(array[5]);
+          cfile->vsize = atoi(array[6]);
+        }
         if (rfx->num_in_channels == 0) {
           cfile->fps = cfile->pb_fps = strtod(array[3], NULL);
           if (cfile->fps == 0.) cfile->fps = cfile->pb_fps = prefs->default_fps;

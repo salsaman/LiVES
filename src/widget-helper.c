@@ -89,6 +89,11 @@ weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
 #endif
 
 
+WIDGET_HELPER_LOCAL_INLINE boolean is_standard_widget(LiVESWidget *widget) {
+  return (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "is_standard")));
+}
+
+
 static void edit_state_cb(LiVESWidgetObject *object, livespointer pspec, livespointer user_data) {
   LiVESWidget *entry = LIVES_WIDGET(object);
   if (lives_entry_get_editable(LIVES_ENTRY(object))) {
@@ -9198,11 +9203,18 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   widget_opts.last_label = NULL;
 
+  if (val > max) val = max;
+  if (val < min) val = max;
+
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
 
+  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
+  lives_spin_button_set_value(LIVES_SPIN_BUTTON(spinbutton), val);
+  lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), "is_standard", LIVES_INT_TO_POINTER(TRUE));
+
   if (tooltip != NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
-  if (dp == 0) lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
 
   maxlen = calc_spin_button_width(min, max, dp);
   lives_entry_set_width_chars(LIVES_ENTRY(spinbutton), maxlen);

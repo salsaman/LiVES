@@ -4379,7 +4379,7 @@ void on_record_perf_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           prefs->audio_src == AUDIO_SRC_INT) {
         if (!mainw->mute) {
           weed_plant_t *last_frame = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(mainw->event_list, last_frame, -1, mainw->rec_aclip, 0., 0.);
+          insert_audio_event_at(last_frame, -1, mainw->rec_aclip, 0., 0.);
         }
       }
 #endif
@@ -7662,7 +7662,7 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (LIVES_IS_PLAYING) {
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
           weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(mainw->event_list, event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+          insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
         }
         mainw->jackd->mute = TRUE;
         mainw->jackd->in_use = TRUE;
@@ -7674,7 +7674,7 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (LIVES_IS_PLAYING) {
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
           weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+          insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
         }
         mainw->pulsed->mute = TRUE;
         mainw->pulsed->in_use = TRUE;
@@ -10450,7 +10450,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
         prefs->audio_src == AUDIO_SRC_INT) {
       if (cfile->play_paused) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(mainw->event_list, event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
+        insert_audio_event_at(event, -1, mainw->jackd->playing_file, 0., 0.); // audio switch off
       } else {
         jack_get_rec_avals(mainw->jackd);
       }
@@ -10468,7 +10468,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
       if (cfile->play_paused) {
         if (!mainw->mute) {
           weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(mainw->event_list, event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+          insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
         }
       } else {
         pulse_get_rec_avals(mainw->pulsed);

@@ -31,7 +31,7 @@ $maxfx = 9; # e.g set to 7 if you want video gens and transitions to persist
 $allow_fxchanges = 1;
 $allow_clipswitch = 1;
 $allow_fgbgswap = 1;
-$allow_dirchange = 0; ## should be automatic, depending on whether current clip has virtual frames or not
+$allow_dirchange = 1;
 
 $play_dir = 0; ## assume forwards
 

@@ -1891,9 +1891,9 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
       if (prefs->pa_restart && !prefs->vj_mode) {
-        char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
-        lives_system(com, TRUE);
-        lives_free(com);
+        /* char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts); */
+        /* lives_system(com, TRUE); */
+        /* lives_free(com); */
       }
 
       if (!lives_pulse_init(prefs->startup_phase)) {
@@ -6400,7 +6400,7 @@ void load_frame_image(int frame) {
           mainw->rec_avel = 1.;
         }
         if (!mainw->mute) {
-          insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+          insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
           mainw->rec_aclip = -1;
         }
       }
@@ -6554,7 +6554,7 @@ void load_frame_image(int frame) {
 
               }
               if (!mainw->mute) {
-                insert_audio_event_at(mainw->event_list, event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
+                insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
                 mainw->rec_aclip = -1;
               }
             }

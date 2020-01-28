@@ -2758,7 +2758,7 @@ void play_file(void) {
     }
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
       weed_plant_t *event = get_last_frame_event(mainw->event_list);
-      insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+      insert_audio_event_at(event, -1, 1, 0., 0.); // audio switch off
     }
   } else {
 #endif
@@ -2806,7 +2806,7 @@ void play_file(void) {
         }
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
           weed_plant_t *event = get_last_frame_event(mainw->event_list);
-          insert_audio_event_at(mainw->event_list, event, -1, 1, 0., 0.); // audio switch off
+          insert_audio_event_at(event, -1, 1, 0., 0.); // audio switch off
         }
       }
     } else {

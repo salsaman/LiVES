@@ -671,7 +671,7 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 }
 
 
-#define CLIP_DECAY 0.001f
+#define CLIP_DECAY 0.00001f
 
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
@@ -1083,7 +1083,7 @@ LIVES_LOCAL_INLINE void audio_process_events_to(weed_timecode_t tc) {
     the small chunks are processed and mixed, converted from float back to int, and then written to the outfile
 
     if obuf != NULL we write to obuf instead */
-#define DEBUG_ARENDER
+//#define DEBUG_ARENDER
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime,
                              weed_timecode_t tc_start, weed_timecode_t tc_end, double *chvol, double opvol_start,
                              double opvol_end, lives_audio_buf_t *obuf) {

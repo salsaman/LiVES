@@ -1189,8 +1189,7 @@ weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc
 }
 
 
-void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int track, int clipnum,
-                           double seek, double vel) {
+void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double seek, double vel) {
   // insert/update audio event at (existing) frame event
   int error;
   int *new_aclips;
@@ -1202,9 +1201,9 @@ void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int tr
   arv = (double)(myround(vel * 10000.)) / 10000.;
 
   if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-    int num_aclips = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
-    int *aclips = weed_get_int_array(event, WEED_LEAF_AUDIO_CLIPS, &error);
-    double *aseeks = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, &error);
+    int *aclips;
+    double *aseeks;
+    int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
 
     for (i = 0; i < num_aclips; i += 2) {
       if (aclips[i] == track) {

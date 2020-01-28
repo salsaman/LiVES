@@ -1490,7 +1490,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
     pa_battr.tlength = LIVES_PA_BUFF_MINREQ;
     pa_battr.minreq = LIVES_PA_BUFF_MINREQ;
-    pa_battr.prebuf = 0;
+    pa_battr.prebuf = -1;
   } else {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
     pa_battr.fragsize = LIVES_PA_BUFF_FRAGSIZE * 4;

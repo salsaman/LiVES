@@ -507,7 +507,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   weed_timecode_t out_tc = 0, offset_tc = 0, in_tc, laud_tc = 0, nx_tc;
   weed_timecode_t end_tc, recst_tc = 0;
 
-  weed_plant_t *out_list;
+  weed_plant_t *out_list, *last_out_frame = NULL;
   weed_plant_t *naudio_event = NULL, *prev_aframe;
   weed_plant_t *frame_event = NULL, *nframe_event = NULL;
   weed_plant_t *last_frame_event;
@@ -922,22 +922,27 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                 if (naclips[i] == paclips[j]) {
                   if (paclips[j + 1] == naclips[i + 1]) {
                     /// velocity should be close to seek_time / clock_time, else this was a jump
+                    double seek;
                     double dt = (double)(out_tc  - ptc) / TICKS_PER_SECOND_DBL;
                     double nvel = (naseeks[i] - paseeks[j]) / dt;
                     if (fabs(nvel / paseeks[j + 1] - 1.) < SKJUMP_THRESH_RATIO) {
-                      paseeks[j + 1] = nvel;
-                      weed_set_double_array(prev_aframe, WEED_LEAF_AUDIO_SEEKS, patracks, paseeks);
+                      /// what we will do here is insert an extra audio event at the previous out_frrame.
+                      /// the seek will be calcluated from old_val, and we will adjust the velocity so we hit the seek value at this frame
+                      dt = (double)(out_tc  - tl - ptc) / TICKS_PER_SECOND_DBL;
+                      seek = paseeks[j] + paseeks[j + 1] * dt;
+                      nvel = (naseeks[i] - seek) / ((double)tl / TICKS_PER_SECOND_DBL);
+                      insert_audio_event_at(last_out_frame, paclips[i], paclips[i + 1], seek, nvel);
                     } else {
                       double zaseek = paseeks[j] + paseeks[j + 1] * dt;
                       if (fabs(naseeks[i] - zaseek) < SKJUMP_THRESH_SECS) {
                         naseeks[i] = zaseek;
                         weed_set_double_array(shortcut, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-                      }
-                    }
-                  }
+			// *INDENT-OFF*
+                      }}}
                   break;
-                }
-              }
+                }}
+	      // *INDENT-ON*
+
               lives_freep((void **)&paclips);
               lives_freep((void **)&paseeks);
               /// if we failed to find the track at prev_aframe, we need to continue searching
@@ -974,6 +979,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);
+        last_out_frame = shortcut;
 
         /// frame insertion done
 

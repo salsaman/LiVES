@@ -11935,7 +11935,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
 
             if (ablock->prev != NULL && ablock->prev->end_event == ablock->start_event) {
               int last_aclip = get_audio_frame_clip(ablock->prev->start_event, track);
-              insert_audio_event_at(mt->event_list, ablock->start_event, track, last_aclip, 0., 0.);
+              insert_audio_event_at(ablock->start_event, track, last_aclip, 0., 0.);
             } else {
               remove_audio_for_track(ablock->start_event, track);
             }
@@ -11962,7 +11962,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
       }
 
       if (ablock != NULL) {
-        insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
+        insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
         ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
       }
 
@@ -12010,7 +12010,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
                               q_gint64(tl_start + (new_start_tc - ablock->offset_start) / avel, mt->fps),
                               get_prev_frame_event(ablock->start_event));
 
-        insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
+        insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
         ablock->offset_start = q_dbl(aseek * TICKS_PER_SECOND_DBL, mt->fps) / TICKS_PER_SECOND_DBL;
       }
       if (block != ablock) {
@@ -12053,7 +12053,7 @@ void in_out_start_changed(LiVESWidget * widget, livespointer user_data) {
       aclip = get_audio_frame_clip(ablock->start_event, track);
       aseek = get_audio_frame_seek(ablock->start_event, track);
       aseek += q_gint64(new_start_tc - orig_start_tc, mt->fps) / TICKS_PER_SECOND_DBL;
-      insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
+      insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
       ablock->offset_start = q_gint64(aseek * TICKS_PER_SECOND_DBL, mt->fps);
     }
     mt->opts.insert_mode = insert_mode;
@@ -12244,7 +12244,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
                            &shortcut);
           ablock->end_event = shortcut;
         } else ablock->end_event = new_end_event;
-        insert_audio_event_at(mt->event_list, ablock->end_event, track, aclip, 0., 0.);
+        insert_audio_event_at(ablock->end_event, track, aclip, 0., 0.);
       }
 
       // move filter_inits right, and deinits left
@@ -12317,7 +12317,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
 
         if (ablock->next == NULL || ablock->next->start_event != ablock->end_event) {
           aclip = get_audio_frame_clip(ablock->start_event, track);
-          insert_audio_event_at(mt->event_list, ablock->end_event, track, aclip, 0., 0.);
+          insert_audio_event_at(ablock->end_event, track, aclip, 0., 0.);
         }
       }
 
@@ -12365,7 +12365,7 @@ void in_out_end_changed(LiVESWidget * widget, livespointer user_data) {
       aseek = get_audio_frame_seek(ablock->start_event, track);
       avel = get_audio_frame_vel(ablock->start_event, track);
       aseek += q_gint64(new_end_tc - orig_end_tc, mt->fps) / TICKS_PER_SECOND_DBL;
-      insert_audio_event_at(mt->event_list, ablock->start_event, track, aclip, aseek, avel);
+      insert_audio_event_at(ablock->start_event, track, aclip, aseek, avel);
       ablock->offset_start = q_gint64(aseek * TICKS_PER_SECOND_DBL, mt->fps);
     }
 
@@ -12440,7 +12440,7 @@ void avel_reverse_toggled(LiVESToggleButton * togglebutton, livespointer user_da
   // update avel and aseek
   aseek_end = aseek + (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) / TICKS_PER_SECOND_DBL *
               (-avel);
-  insert_audio_event_at(mt->event_list, block->start_event, track, aclip, aseek_end, avel);
+  insert_audio_event_at(block->start_event, track, aclip, aseek_end, avel);
 
   if (avel < 0.) set_in_out_spin_ranges(mt, old_in_val * TICKS_PER_SECOND_DBL, old_out_val * TICKS_PER_SECOND_DBL);
   else set_in_out_spin_ranges(mt, old_out_val * TICKS_PER_SECOND_DBL, old_in_val * TICKS_PER_SECOND_DBL);
@@ -12500,7 +12500,7 @@ void avel_spin_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
                                          lives_spin_button_get_value(LIVES_SPIN_BUTTON(mt->spinbutton_out))) * TICKS_PER_SECOND_DBL - start_tc)
                           / new_avel, mt->fps);
 
-    insert_audio_event_at(mt->event_list, block->start_event, track, aclip, aseek, new_avel);
+    insert_audio_event_at(block->start_event, track, aclip, aseek, new_avel);
 
     new_tl_tc = q_gint64(get_event_timecode(block->start_event) + (orig_end_val * TICKS_PER_SECOND_DBL - start_tc) / new_avel,
                          mt->fps);
@@ -12533,7 +12533,7 @@ void avel_spin_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
         block->end_event = get_last_frame_event(mt->event_list);
       }
       if (block->next == NULL || block->next->start_event != block->end_event)
-        insert_audio_event_at(mt->event_list, block->end_event, -1, aclip, 0., 0.);
+        insert_audio_event_at(block->end_event, -1, aclip, 0., 0.);
 
       lives_widget_queue_draw((LiVESWidget *)mt->audio_draws->data);
       new_end_tc = start_tc + (get_event_timecode(block->end_event) - get_event_timecode(block->start_event)) * new_avel;
@@ -12584,10 +12584,10 @@ void avel_spin_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
     if (new_start_event == block->end_event) return;
 
     if (block->prev == NULL || block->start_event != block->prev->end_event) remove_audio_for_track(block->start_event, -1);
-    else insert_audio_event_at(mt->event_list, block->start_event, -1, aclip, 0., 0.);
+    else insert_audio_event_at(block->start_event, -1, aclip, 0., 0.);
     block->start_event = new_start_event;
 
-    insert_audio_event_at(mt->event_list, block->start_event, -1, aclip, aseek, new_avel);
+    insert_audio_event_at(block->start_event, -1, aclip, aseek, new_avel);
 
     lives_widget_queue_draw((LiVESWidget *)mt->audio_draws->data);
 
@@ -14687,7 +14687,7 @@ static void split_block(lives_mt * mt, track_rect * block, weed_timecode_t tc, i
     event = block->end_event;
     new_seek = seek + (get_event_timecode(event) / TICKS_PER_SECOND_DBL - get_event_timecode(start_event) / TICKS_PER_SECOND_DBL) *
                vel;
-    insert_audio_event_at(mt->event_list, event, track, clip, new_seek, vel);
+    insert_audio_event_at(event, track, clip, new_seek, vel);
   }
 
   if (block->ordered ||
@@ -14844,7 +14844,7 @@ static void insgap_inner(lives_mt * mt, int tnum, boolean is_sel, int passnm) {
           lives_free(audio_seeks);
 
           remove_audio_for_track(event, tnum);
-          insert_audio_event_at(mt->event_list, new_event, tnum, aclip, aseek, avel);
+          insert_audio_event_at(new_event, tnum, aclip, aseek, avel);
 
           if (mt->avol_fx != -1) {
             apply_avol_filter(mt);
@@ -14869,7 +14869,7 @@ static void insgap_inner(lives_mt * mt, int tnum, boolean is_sel, int passnm) {
                 if (ablock != NULL) block = ablock;
                 if (block->prev != NULL && block->prev->end_event == event) {
                   // audio block was split, need to add a new "audio off" event
-                  insert_audio_event_at(mt->event_list, event, tnum, aclip, 0., 0.);
+                  insert_audio_event_at(event, tnum, aclip, 0., 0.);
                 }
                 if (mt->avol_fx != -1) {
                   apply_avol_filter(mt);
@@ -16741,7 +16741,7 @@ static void on_delblock_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
     // if first event in block is the end of another block, turn audio off (velocity==0)
     if (block->prev != NULL && block->start_event == block->prev->end_event) {
-      insert_audio_event_at(mt->event_list, block->start_event, track, 1, 0., 0.);
+      insert_audio_event_at(block->start_event, track, 1, 0., 0.);
     }
     // else we'll delete it
     else {
@@ -17911,7 +17911,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
             if (direction == DIRECTION_POSITIVE) {
               aseek = (double)(frame - 1.) / sfile->fps;
 
-              insert_audio_event_at(mt->event_list, shortcut1, track, filenum, aseek, 1.);
+              insert_audio_event_at(shortcut1, track, filenum, aseek, 1.);
               add_block_start_point(aeventbox, last_tc, filenum, offset_start, shortcut1, TRUE);
             } else {
               weed_plant_t *nframe;
@@ -17920,7 +17920,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
                                  &shortcut1);
                 nframe = shortcut1;
               }
-              insert_audio_event_at(mt->event_list, nframe, track, filenum, 0., 0.);
+              insert_audio_event_at(nframe, track, filenum, 0., 0.);
             }
           }
         }
@@ -17955,7 +17955,7 @@ void insert_frames(int filenum, weed_timecode_t offset_start, weed_timecode_t of
         if (shortcut2 == NULL) {
           mt->event_list = insert_blank_frame_event_at(mt->event_list, last_tc, &shortcut1);
         } else shortcut1 = shortcut2;
-        insert_audio_event_at(mt->event_list, shortcut1, track, filenum, 0., 0.);
+        insert_audio_event_at(shortcut1, track, filenum, 0., 0.);
         add_block_end_point(aeventbox, shortcut1);
       }
     } else if (in_block != NULL) {
@@ -18038,9 +18038,9 @@ void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t off
   frame_event = get_frame_event_at(mt->event_list, start_tc, shortcut, TRUE);
 
   if (direction == DIRECTION_POSITIVE) {
-    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_start / TICKS_PER_SECOND_DBL, avel);
+    insert_audio_event_at(frame_event, -1, filenum, offset_start / TICKS_PER_SECOND_DBL, avel);
   } else {
-    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, offset_end / TICKS_PER_SECOND_DBL, avel);
+    insert_audio_event_at(frame_event, -1, filenum, offset_end / TICKS_PER_SECOND_DBL, avel);
     offset_start = offset_start - offset_end + offset_end * mt->insert_avel;
   }
 
@@ -18049,7 +18049,7 @@ void insert_audio(int filenum, weed_timecode_t offset_start, weed_timecode_t off
   if (block == NULL || get_event_timecode(block->start_event) > end_tc) {
     // if no blocks after end point, insert audio off at end point
     frame_event = get_frame_event_at(mt->event_list, end_tc, frame_event, TRUE);
-    insert_audio_event_at(mt->event_list, frame_event, -1, filenum, 0., 0.);
+    insert_audio_event_at(frame_event, -1, filenum, 0., 0.);
     add_block_end_point((LiVESWidget *)mt->audio_draws->data, frame_event);
   } else add_block_end_point((LiVESWidget *)mt->audio_draws->data, block->start_event);
 

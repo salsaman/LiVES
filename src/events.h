@@ -102,8 +102,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, ticks_t tc, int mark
 /** will either insert or replace */
 weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, ticks_t tc, int numframes,
                                     int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
-void insert_audio_event_at(weed_plant_t *event_list, weed_plant_t *event, int track, int clipnum,
-                           double time, double vel);
+void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double time, double vel);
 void remove_audio_for_track(weed_plant_t *event, int track);
 weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, ticks_t tc,
     weed_plant_t **shortcut) WARN_UNUSED;

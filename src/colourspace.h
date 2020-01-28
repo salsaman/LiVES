@@ -45,6 +45,8 @@
 
 #define UV_BIAS 128.
 
+#define MAX_THREADS 65536
+
 /////////////////////////////////////////////
 
 typedef struct {

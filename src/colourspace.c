@@ -43,67 +43,52 @@
 
 #include "main.h"
 
-#ifdef USE_THREADS
+#if USE_THREADS
 #include <pthread.h>
 typedef struct {
-  boolean in_use;
+  volatile boolean in_use;
   int num;
   int offset;
 } swsctx_block;
 
-static LiVESList *ctxblocks = NULL;
-static struct SwsContext **swscale = NULL;
-static int swctx_count = 0;
+static volatile int nb = 0;
+static volatile int swctx_count = 0;
+static swsctx_block bloxx[MAX_THREADS];
+static struct SwsContext *swscalep[MAX_THREADS];
 static pthread_mutex_t ctxcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t ctxalloc_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int sws_getblock(int nreq) {
-  LiVESList *list;
-  swsctx_block *block;
+static swsctx_block *sws_getblock(int nreq) {
+  swsctx_block *block, *bestblock = NULL;
+  int minnum = MAX_THREADS + 1, num;
+  register int i;
 
   pthread_mutex_lock(&ctxcnt_mutex);
-  list = ctxblocks;
-  while (list != NULL) {
-    block = (swsctx_block *)list->data;
-    if (!block->in_use && block->num >= nreq) break;
-    list = list->next;
+
+  for (i = 0; i < nb; i++) {
+    block = &bloxx[i];
+    if (!block->in_use && (num = block->num) >= nreq && num < minnum) {
+      minnum = num;
+      bestblock = block;
+    }
   }
-  if (list != NULL) {
-    block->in_use = TRUE;
-    pthread_mutex_unlock(&ctxcnt_mutex);
-    return block->offset;
+  if (bestblock != NULL) {
+    bestblock->in_use = TRUE;
+  } else {
+    if (swctx_count + nreq > MAX_THREADS) abort();
+    bestblock = &bloxx[nb++];
+    bestblock->in_use = TRUE;
+    bestblock->num = nreq--;
+    bestblock->offset = swctx_count;
+    for (i = nreq; i != 0; i--) swscalep[swctx_count++] = NULL;
   }
 
-  pthread_mutex_lock(&ctxalloc_mutex);
-  swscale = (struct SwsContext **)(lives_realloc(swscale, (swctx_count + nreq) * sizeof(struct SwsContext *)));
-  pthread_mutex_unlock(&ctxalloc_mutex);
-
-  for (int i = swctx_count; i < swctx_count + nreq; i++) swscale[i] = NULL;
-  swctx_count += nreq;
-  block = (swsctx_block *)lives_malloc(sizeof(block));
-  block->in_use = TRUE;
-  block->num = nreq;
-  block->offset = swctx_count - nreq;
-  ctxblocks = lives_list_append(ctxblocks, block);
   pthread_mutex_unlock(&ctxcnt_mutex);
-  return block->offset;
+  return bestblock;
 }
 
 
-static void sws_freeblock(int offset) {
-  LiVESList *list;
-  swsctx_block *block;
-  pthread_mutex_lock(&ctxcnt_mutex);
-  list = ctxblocks;
-  while (list != NULL) {
-    block = (swsctx_block *)list->data;
-    if (block->offset == offset) {
-      block->in_use = FALSE;
-      break;
-    }
-    list = list->next;
-  }
-  pthread_mutex_unlock(&ctxcnt_mutex);
+LIVES_LOCAL_INLINE void sws_freeblock(swsctx_block *block) {
+  block->in_use = FALSE;
 }
 
 
@@ -10826,11 +10811,12 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     int irw[4], orw[4];
 
     int i;
-#ifdef USE_THREADS
+#if USE_THREADS
     lives_sw_params *swparams;
     lives_thread_t threads[prefs->nfx_threads];
-    int nthrds = 1;
+    swsctx_block *ctxblock;
     int offset;
+    int nthrds = 1;
 #endif
     int subspace = WEED_YUV_SUBSPACE_YUV;
     int inplanes, oplanes;
@@ -10908,7 +10894,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       }
     }
 
-#ifdef USE_THREADS
+#if USE_THREADS
     while (nthrds << 1 <= prefs->nfx_threads) {
       if ((height | iheight) & 3) break;
       nthrds <<= 1;
@@ -10935,16 +10921,15 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                 oclamp_hint, 0),
             weed_palette_get_name_full(xopal_hint, oclamp_hint, 0), ipixfmt, opixfmt);
 #endif
-#ifdef USE_THREADS
-    offset = sws_getblock(nthrds);
+#if USE_THREADS
+    ctxblock = sws_getblock(nthrds);
+    offset = ctxblock->offset;
     for (int sl = nthrds - 1; sl >= 0; sl--) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
-      pthread_mutex_lock(&ctxalloc_mutex);
-      swparams[sl].swscale = swscale[sl + offset] = sws_getCachedContext(swscale[sl + offset], iwidth, iheight, ipixfmt, width,
+      swparams[sl].swscale = swscalep[sl + offset] = sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
                              height,
                              opixfmt, flags, NULL, NULL, NULL);
-      pthread_mutex_unlock(&ctxalloc_mutex);
     }
 
     for (int sl = nthrds - 1; sl >= 0; sl--) {
@@ -10956,8 +10941,15 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                      ? SWS_CS_ITU709 : SWS_CS_ITU601), oclamp_hint,  0, 65536, 65536);
         for (i = 0; i < 4; i++) {
-          swparams[sl].ipd[i] = ipd[i] + (size_t)(sl * irw[i] * iheight  * weed_palette_get_plane_ratio_vertical(palette, i));
-          swparams[sl].opd[i] = opd[i] + (size_t)(sl * orw[i] * height  * weed_palette_get_plane_ratio_vertical(opal_hint, i));
+          if (i < inplanes)
+            swparams[sl].ipd[i] = ipd[i] + (size_t)(sl * irw[i] * iheight  * weed_palette_get_plane_ratio_vertical(palette, i));
+          else
+            swparams[sl].ipd[i] = NULL;
+
+          if (i < oplanes)
+            swparams[sl].opd[i] = opd[i] + (size_t)(sl * orw[i] * height  * weed_palette_get_plane_ratio_vertical(opal_hint, i));
+          else
+            swparams[sl].opd[i] = NULL;
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
@@ -10974,7 +10966,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
       } else height += iheight;
     }
 
-    sws_freeblock(offset);
+    sws_freeblock(ctxblock);
     lives_free(swparams);
 
 #else

@@ -290,7 +290,7 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
   ssize_t retval;
   retval = write(fd, buf, count);
 
-  if (retval < count) {
+  if (retval < (ssize_t)count) {
     char *msg = NULL;
     mainw->write_failed = TRUE;
     mainw->write_failed_file = filename_from_fd(mainw->write_failed_file, fd);
@@ -416,7 +416,7 @@ static void do_file_read_error(int fd, ssize_t errval, size_t count) {
 ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
   ssize_t retval = read(fd, buf, count);
 
-  if (retval < count) {
+  if (retval < (ssize_t)count) {
     if (!allow_less || retval < 0) {
       do_file_read_error(fd, retval, count);
       close(fd);
@@ -441,7 +441,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     char xbuf[count];
     ssize_t retval = lives_read(fd, buf, count, allow_less);
-    if (retval < count) return retval;
+    if (retval < (ssize_t)count) return retval;
     reverse_bytes((char *)buf, (const char *)xbuf, count);
     return retval;
   } else {
@@ -587,7 +587,7 @@ int lives_close_buffered(int fd) {
 
   if (!fbuff->read && should_close) {
     boolean allow_fail = fbuff->allow_fail;
-    size_t bytes = fbuff->bytes;
+    ssize_t bytes = fbuff->bytes;
 
     if (bytes > 0) {
       ret = file_buffer_flush(fbuff);
@@ -812,7 +812,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     char xbuf[count];
     ssize_t retval = lives_read_buffered(fd, buf, count, allow_less);
-    if (retval < count) return retval;
+    if (retval < (ssize_t)count) return retval;
     reverse_bytes((char *)buf, (const char *)xbuf, count);
     return retval;
   } else {
@@ -838,7 +838,7 @@ boolean lives_read_buffered_eof(int fd) {
 
 static ssize_t lives_write_buffered_direct(lives_file_buffer_t *fbuff, const char *buf, size_t count, boolean allow_fail) {
   ssize_t res = 0;
-  size_t bytes = fbuff->bytes;
+  ssize_t bytes = fbuff->bytes;
 
   if (bytes > 0) {
     res = file_buffer_flush(fbuff);
@@ -878,7 +878,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   ssize_t retval = 0, res;
   size_t space_left;
   int bufsztype = 0;
-  size_t buffsize;
+  ssize_t buffsize;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_write_buffered: no file buffer found");

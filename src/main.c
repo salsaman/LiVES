@@ -1891,9 +1891,9 @@ static void lives_init(_ign_opts *ign_opts) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
       if (prefs->pa_restart && !prefs->vj_mode) {
-        /* char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts); */
-        /* lives_system(com, TRUE); */
-        /* lives_free(com); */
+        char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+        lives_system(com, TRUE);
+        lives_free(com);
       }
 
       if (!lives_pulse_init(prefs->startup_phase)) {
@@ -5940,8 +5940,8 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
           }
           lives_free(fname);
         }
-#endif
       }
+#endif
     }
     break;
 

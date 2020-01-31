@@ -247,9 +247,8 @@ static void gen_width_changed(LiVESSpinButton *spin, livespointer user_data) {
   int val = lives_spin_button_get_value_as_int(spin);
   int error, old_val = 0;
   int step;
-
+  // value in chantmp in pixels, not macropixels
   if (weed_plant_has_leaf(ctmpl, WEED_LEAF_HOST_WIDTH)) old_val = weed_get_int_value(ctmpl, WEED_LEAF_HOST_WIDTH, &error);
-
   if (val == old_val) return;
   step = 1;
   if (weed_plant_has_leaf(ctmpl, WEED_LEAF_HSTEP)) step = weed_get_int_value(ctmpl, WEED_LEAF_HSTEP, &error);
@@ -673,7 +672,7 @@ static void add_genparams(LiVESWidget *vbox, lives_rfx_t *rfx) {
 LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, lives_rfx_t *rfx) {
   _fx_dialog *fxdialog;
   uint32_t chk_mask;
-  int resp;
+  LiVESResponseType resp;
 
   if (!check_storage_space(mainw->current_file, FALSE)) return;
 
@@ -685,6 +684,7 @@ LIVES_GLOBAL_INLINE void on_render_fx_pre_activate(LiVESMenuItem *menuitem, live
   }
   fxdialog = on_fx_pre_activate(rfx, FALSE, NULL);
   if (fx_dialog != NULL) {
+    if (menuitem == LIVES_MENU_ITEM(mainw->resize_menuitem)) add_resnn_label(LIVES_DIALOG(fxdialog->dialog));
     do {
       resp = lives_dialog_run(LIVES_DIALOG(fxdialog->dialog));
     } while (resp == LIVES_RESPONSE_RETRY);

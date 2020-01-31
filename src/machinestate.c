@@ -369,6 +369,15 @@ LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
   return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
 }
 
+LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {
+  void *np = lives_calloc(nmemb, xsize);
+  if (omemb > nmemb) omemb = nmemb;
+  lives_memcpy(np, p, omemb * xsize);
+  lives_free(p);
+  return np;
+}
+
+
 // slice allocator //// TODO
 
 static memheader_t base;           /* Zero sized block to get us started. */

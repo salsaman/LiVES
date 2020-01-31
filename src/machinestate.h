@@ -147,6 +147,7 @@ typedef void (*unmalloc_and_copy_f)(size_t, void *);
 # define PRIu64		__PRI64_PREFIX "u"
 
 void *lives_calloc_safety(size_t nmemb, size_t xsize);
+void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);
 
 /// disk/storage status values
 typedef enum {

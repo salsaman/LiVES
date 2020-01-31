@@ -241,7 +241,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
     if (mainw->audio_frame_buffer != NULL && prefs->audio_src != AUDIO_SRC_EXT
         && (mainw->event_list == NULL || mainw->record || mainw->record_paused))  {
       // buffer audio for any generators
-      // interlaced, so we paste all to channel 0
+      // interleaved, so we paste all to channel 0
       append_to_audio_buffer16(buff, nsamples * pdriver->out_achans, 0);
       mainw->audio_frame_buffer->samples_filled += nsamples * pdriver->out_achans;
     }

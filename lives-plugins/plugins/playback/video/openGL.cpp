@@ -124,7 +124,6 @@ static pthread_mutex_t cond_mutex;
 static void *render_thread_func(void *data);
 
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
-  fprintf(stderr, "got event type %d\n", event->type);
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
@@ -354,6 +353,7 @@ static void setWindowDecorations(void) {
   Atom WM_HINTS;
   boolean set = FALSE;
 
+  XLockDisplay(dpy);
   WM_HINTS = XInternAtom(dpy, "_MOTIF_WM_HINTS", True);
   if (WM_HINTS != None) {
     XGetWindowProperty(dpy, xWin, WM_HINTS, 0,
@@ -397,6 +397,7 @@ static void setWindowDecorations(void) {
   if (!set) {
     XSetTransientForHint(dpy, xWin, RootWindow(dpy, DefaultScreen(dpy)));
   }
+  XUnlockDisplay(dpy);
 }
 
 
@@ -409,8 +410,9 @@ static void alwaysOnTop() {
 
 static boolean isWindowMapped(void) {
   XWindowAttributes attr;
-
+  XLockDisplay(dpy);
   XGetWindowAttributes(dpy, xWin, &attr);
+  XUnlockDisplay(dpy);
   if (attr.map_state != IsUnmapped) {
     return TRUE;
   } else {
@@ -682,19 +684,23 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     return FALSE;
   }
 
+  XLockDisplay(dpy);
   m_WidthFS = WidthOfScreen(DefaultScreenOfDisplay(dpy));
   m_HeightFS = HeightOfScreen(DefaultScreenOfDisplay(dpy));
 
   XA_WIN_LAYER = XInternAtom(dpy, "_WIN_LAYER", False);
 
   if (!XRenderQueryExtension(dpy, &renderEventBase, &renderErrorBase)) {
+    XUnlockDisplay(dpy);
     fprintf(stderr, "No RENDER extension found!");
     return FALSE;
   }
 
   swa.event_mask = StructureNotifyMask | ButtonPressMask | KeyPressMask | KeyReleaseMask;
 
-  if (!inited) gladLoadGLX(dpy, DefaultScreen(dpy));
+  if (!inited) {
+    gladLoadGLX(dpy, DefaultScreen(dpy));
+  }
 
   if (window_id) {
     XVisualInfo *xvis;
@@ -711,6 +717,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     xvis = XGetVisualInfo(dpy, VisualIDMask, &xvtmpl, &numReturned);
 
     if (numReturned == 0) {
+      XUnlockDisplay(dpy);
       fprintf(stderr, "openGL plugin error: No xvis could be set !\n");
       return FALSE;
     }
@@ -745,15 +752,18 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
     }
 
     if (!fbConfigs) {
+      XUnlockDisplay(dpy);
       fprintf(stderr, "openGL plugin error: No config could be set !\n");
       return FALSE;
     }
 
     /* Create an X colormap and window with a visual matching the first
     ** returned framebuffer config */
+    XLockDisplay(dpy);
     vInfo = glXGetVisualFromFBConfig(dpy, fbConfigs[0]);
 
     if (!vInfo) {
+      XUnlockDisplay(dpy);
       fprintf(stderr, "openGL plugin error: No vInfo could be got !\n");
       return FALSE;
     }
@@ -762,8 +772,9 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
                                    vInfo->visual, AllocNone);
 
     if (!swa.colormap) {
-      fprintf(stderr, "openGL plugin error: No colormap could be set !\n");
       XFree(vInfo);
+      XUnlockDisplay(dpy);
+      fprintf(stderr, "openGL plugin error: No colormap could be set !\n");
       return FALSE;
     }
 
@@ -782,6 +793,7 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
 
     XMapRaised(dpy, xWin);
     if (fullscreen) setFullScreen();
+    XIfEvent(dpy, &event, WaitForNotify, (XPointer) xWin);
 
     /* Create a GLX context for OpenGL rendering */
     context = glXCreateNewContext(dpy, fbConfigs[0], GLX_RGBA_TYPE,
@@ -805,8 +817,11 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   }
 
   glXMakeCurrent(dpy, glxWin, context);
+  XUnlockDisplay(dpy);
 
-  if (!inited) gladLoadGL();
+  if (!inited) {
+    gladLoadGL();
+  }
 
   error = glGetError();
   if (error != GL_NO_ERROR) {
@@ -907,22 +922,33 @@ static void set_priorities(void) {
 
 static int Upload(void) {
   XWindowAttributes attr;
-
   struct timespec now;
 
   int ticks;
-
   int texID;
-
   int window_width, window_height;
 
-  float aspect = (float)imgWidth / (float)imgHeight;
-
-  float scalex = (float)imgWidth / (float)texWidth, scaley = (float)imgHeight / (float)texHeight;
+  float aspect, scalex, scaley;
 
   // scaling for particles
-  float partx = 2. / (float)imgWidth;
-  float party = 2. / (float)imgHeight;
+  float partx, party = 2. / (float)imgHeight;
+
+  pthread_mutex_lock(&rthread_mutex);
+  if (has_new_texture) {
+    ctexture++;
+    if (ctexture == nbuf) ctexture = 0;
+    if (ntextures < nbuf) ntextures++;
+    has_new_texture = FALSE;
+    render_to_gpumem_inner(0, texWidth, texHeight, type, typesize, texturebuf);
+    //set_priorities();
+  }
+  pthread_mutex_unlock(&rthread_mutex);
+
+  aspect = (float)imgWidth / (float)imgHeight;
+  scalex = (float)imgWidth / (float)texWidth;
+  scaley = (float)imgHeight / (float)texHeight;
+  partx = 2. / (float)imgWidth;
+  party = 2. / (float)imgHeight;
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);
@@ -932,18 +958,6 @@ static int Upload(void) {
 
   if (zmode != -1) mode = zmode;
 
-  if (has_new_texture) {
-    ctexture++;
-    if (ctexture == nbuf) ctexture = 0;
-    if (ntextures < nbuf) ntextures++;
-
-    has_new_texture = FALSE;
-
-    render_to_gpumem_inner(0, texWidth, texHeight, type, typesize, texturebuf);
-
-    //set_priorities();
-  }
-
   if (!return_ready && retbuf != NULL) {
     retbuf = buffer_free(retbuf);
   }
@@ -952,8 +966,9 @@ static int Upload(void) {
 
   ////////////////////////////////////////////////////////////
   // modes
-
+  XLockDisplay(dpy);
   XGetWindowAttributes(dpy, xWin, &attr);
+  XUnlockDisplay(dpy);
 
   window_width = attr.width;
   window_height = attr.height;
@@ -1835,7 +1850,7 @@ static int Upload(void) {
   if (retdata != NULL) {
     // copy buffer to retbuf
 
-    //pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex);
+    pthread_mutex_lock(&retthread_mutex);
 
     if (retbuf != NULL) {
       buffer_free(retbuf);
@@ -1843,14 +1858,13 @@ static int Upload(void) {
 
     retbuf = render_to_mainmem(type, window_width, window_height);
     return_ready = TRUE;
-    pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex);
+    pthread_mutex_unlock(&retthread_mutex);
 
     // tell main thread we are ready
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
   }
-  pthread_mutex_unlock(&rthread_mutex);
 
   // time sync
   clock_gettime(CLOCK_MONOTONIC, &now);
@@ -1881,10 +1895,7 @@ static void *render_thread_func(void *data) {
     }
     if (!playing) break;
 
-    pthread_mutex_lock(&rthread_mutex);
     Upload();
-    // unlocked inside Upload
-    //pthread_mutex_unlock(&rthread_mutex);
   }
 
   if (retbuf != NULL) {
@@ -1899,7 +1910,6 @@ static void *render_thread_func(void *data) {
 
 boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
   int i;
-
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
@@ -1915,7 +1925,9 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     XWindowAttributes attr;
     int window_width, window_height, rc = 0;
 
+    XLockDisplay(dpy);
     XGetWindowAttributes(dpy, xWin, &attr);
+    XUnlockDisplay(dpy);
 
     window_width = attr.width;
     window_height = attr.height;
@@ -1943,8 +1955,6 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     texWidth = hsize;
     texHeight = vsize;
 
-    pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
-
     // window size must not change here
 
     // // wait for render thread ready
@@ -1954,7 +1964,10 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     //   pthread_mutex_unlock(&cond_mutex);
     // }
 
-    pthread_mutex_lock(dblbuf ? &retthread_mutex : &rthread_mutex); // lock render thread while we grab data
+    if (dblbuf) {
+      pthread_mutex_lock(&retthread_mutex);
+      pthread_mutex_unlock(&rthread_mutex); // render thread - GO !
+    }
 
     retdata = NULL;
 
@@ -1992,10 +2005,11 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     retdata = NULL;
     pthread_mutex_unlock(&rthread_mutex); // re-enable render thread
   }
+
   pthread_mutex_lock(&cond_mutex);
+  has_new_texture = TRUE;
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
-  has_new_texture = TRUE;
   return TRUE;
 }
 

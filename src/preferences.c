@@ -124,7 +124,7 @@ LiVESList *get_list_pref(const char *key) {
   LiVESList *retlist = NULL;
 
   if (get_string_pref(key, buf, 65535) == LIVES_RESPONSE_NO) return NULL;
-  if (!strlen(buf)) return NULL;
+  if (!(*buf)) return NULL;
 
   nvals = get_token_count(buf, '\n');
   array = lives_strsplit(buf, "\n", nvals);
@@ -149,7 +149,7 @@ LIVES_GLOBAL_INLINE boolean get_boolean_pref(const char *key) {
 LIVES_GLOBAL_INLINE boolean get_boolean_prefd(const char *key, boolean defval) {
   char buffer[16];
   get_string_pref(key, buffer, 16);
-  if (strlen(buffer) == 0) return defval;
+  if (!(*buffer)) return defval;
   if (!strcmp(buffer, "true")) return TRUE;
   return FALSE;
 }
@@ -158,7 +158,7 @@ LIVES_GLOBAL_INLINE boolean get_boolean_prefd(const char *key, boolean defval) {
 LIVES_GLOBAL_INLINE int get_int_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return 0;
+  if (!(*buffer)) return 0;
   return atoi(buffer);
 }
 
@@ -166,7 +166,7 @@ LIVES_GLOBAL_INLINE int get_int_pref(const char *key) {
 LIVES_GLOBAL_INLINE int get_int_prefd(const char *key, int defval) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return defval;
+  if (!(*buffer)) return defval;
   return atoi(buffer);
 }
 
@@ -174,7 +174,7 @@ LIVES_GLOBAL_INLINE int get_int_prefd(const char *key, int defval) {
 LIVES_GLOBAL_INLINE int64_t get_int64_prefd(const char *key, int64_t defval) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return defval;
+  if (!(*buffer)) return defval;
   return atol(buffer);
 }
 
@@ -182,7 +182,7 @@ LIVES_GLOBAL_INLINE int64_t get_int64_prefd(const char *key, int64_t defval) {
 LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return 0.;
+  if (!(*buffer)) return 0.;
   return strtod(buffer, NULL);
 }
 
@@ -190,7 +190,7 @@ LIVES_GLOBAL_INLINE double get_double_pref(const char *key) {
 LIVES_GLOBAL_INLINE double get_double_prefd(const char *key, double defval) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return defval;
+  if (!(*buffer)) return defval;
   return strtod(buffer, NULL);
 }
 
@@ -198,7 +198,7 @@ LIVES_GLOBAL_INLINE double get_double_prefd(const char *key, double defval) {
 LIVES_GLOBAL_INLINE boolean has_pref(const char *key) {
   char buffer[64];
   get_string_pref(key, buffer, 64);
-  if (strlen(buffer) == 0) return FALSE;
+  if (!(*buffer)) return FALSE;
   return TRUE;
 }
 
@@ -209,7 +209,7 @@ boolean get_colour_pref(const char *key, lives_colRGBA64_t *lcol) {
   int ntoks;
 
   if (get_string_pref(key, buffer, 64) == LIVES_RESPONSE_NO) return FALSE;
-  if (strlen(buffer) == 0) return FALSE;
+  if (!(*buffer)) return FALSE;
   if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
   array = lives_strsplit(buffer, " ", 4);
@@ -230,7 +230,7 @@ boolean get_theme_colour_pref(const char *themefile, const char *key, lives_colR
   int ntoks;
 
   if (get_pref_from_file(themefile, key, buffer, 64) == LIVES_RESPONSE_NO) return FALSE;
-  if (strlen(buffer) == 0) return FALSE;
+  if (!(*buffer)) return FALSE;
   if ((ntoks = get_token_count(buffer, ' ')) < 3) return FALSE;
 
   array = lives_strsplit(buffer, " ", 4);
@@ -454,7 +454,7 @@ void set_palette_prefs(void) {
 void set_vpp(boolean set_in_prefs) {
   // Video Playback Plugin
 
-  if (strlen(future_prefs->vpp_name) > 0) {
+  if ((*future_prefs->vpp_name)) {
     if (!lives_utf8_strcasecmp(future_prefs->vpp_name, mainw->string_constants[LIVES_STRING_CONSTANT_NONE])) {
       if (mainw->vpp != NULL) {
         if (mainw->ext_playback) vid_playback_plugin_exit();
@@ -2254,7 +2254,7 @@ void save_future_prefs(void) {
     set_string_pref(PREF_RECENT4, "");
   }
 
-  if (strlen(future_prefs->workdir) > 0) {
+  if ((*future_prefs->workdir)) {
     set_string_pref_priority(PREF_WORKING_DIR, future_prefs->workdir);
     set_string_pref(PREF_WORKING_DIR_OLD, future_prefs->workdir);
   }
@@ -2531,7 +2531,7 @@ static void stream_audio_toggled(LiVESToggleButton *togglebutton, livespointer u
     _vid_playback_plugin *tmpvpp;
     uint32_t orig_acodec = AUDIO_CODEC_NONE;
 
-    if (strlen(future_prefs->vpp_name)) {
+    if ((*future_prefs->vpp_name)) {
       if ((tmpvpp = open_vid_playback_plugin(future_prefs->vpp_name, FALSE)) == NULL) return;
     } else {
       tmpvpp = mainw->vpp;

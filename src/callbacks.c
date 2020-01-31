@@ -7035,17 +7035,6 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         mainw->pwidth = mainw->vpp->fwidth;
         mainw->pheight = mainw->vpp->fheight;
       }
-      if (1) {//!CURRENT_CLIP_IS_NORMAL && (CURRENT_CLIP_HAS_VIDEO || cfile->play_paused) && !mainw->noswitch) {
-        weed_plant_t *frame_layer = mainw->frame_layer;
-        check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-        mainw->frame_layer = NULL;
-        load_frame_image(cfile->frameno);
-        if (mainw->frame_layer != NULL) {
-          check_layer_ready(mainw->frame_layer);
-          weed_layer_free(mainw->frame_layer);
-        }
-        mainw->frame_layer = frame_layer;
-      }
     } else {
       // switch from fullscreen during pb
       if (mainw->sep_win) {
@@ -7081,17 +7070,6 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
         if (mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused)) {
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          if (mainw->play_window != NULL && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
-            weed_plant_t *frame_layer = mainw->frame_layer;
-            check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-            mainw->frame_layer = NULL;
-            load_frame_image(cfile->frameno);
-            if (mainw->frame_layer != NULL) {
-              check_layer_ready(mainw->frame_layer);
-              weed_layer_free(mainw->frame_layer);
-            }
-            mainw->frame_layer = frame_layer;
-          }
         }
       } else {
         // switch FROM fullscreen during pb
@@ -7127,19 +7105,7 @@ void on_full_screen_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
       }
     }
-
-    if ((cfile->frames == 1 || cfile->play_paused) && !mainw->noswitch && mainw->multitrack == NULL &&
-        CURRENT_CLIP_IS_NORMAL) {
-      weed_plant_t *frame_layer = mainw->frame_layer;
-      check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-      mainw->frame_layer = NULL;
-      load_frame_image(cfile->frameno);
-      if (mainw->frame_layer != NULL) {
-        check_layer_ready(mainw->frame_layer);
-        weed_layer_free(mainw->frame_layer);
-      }
-      mainw->frame_layer = frame_layer;
-    }
+    mainw->force_show = TRUE;
   } else {
     // not playing
     if (mainw->multitrack == NULL) {
@@ -7197,37 +7163,13 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->opwx = mainw->opwy = -1;
 
   if ((LIVES_IS_PLAYING && !mainw->fs) || (!LIVES_IS_PLAYING && mainw->play_window != NULL)) {
-    // needed
-    block_expose();
-    do {
-      sched_yield();
-      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-      sched_yield();
-      mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
-      mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
-    } while (mainw->pwidth == 0 || mainw->pheight == 0);
-    unblock_expose();
+    mainw->pwidth = DEF_FRAME_HSIZE - H_RESIZE_ADJUST;
+    mainw->pheight = DEF_FRAME_VSIZE - V_RESIZE_ADJUST;
 
     if (mainw->play_window != NULL) {
       resize_play_window();
       sched_yield();
       if (!mainw->double_size) lives_window_center(LIVES_WINDOW(mainw->play_window));
-      if (cfile->frames == 1 || cfile->play_paused) {
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-
-        if (!(mainw->play_window == NULL) && !mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
-          weed_plant_t *frame_layer = mainw->frame_layer;
-          check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-          mainw->frame_layer = NULL;
-          load_frame_image(cfile->frameno);
-          sched_yield();
-          if (mainw->frame_layer != NULL) {
-            check_layer_ready(mainw->frame_layer);
-            weed_layer_free(mainw->frame_layer);
-          }
-          mainw->frame_layer = frame_layer;
-        }
-      }
     } else {
       // in-frame
       if (mainw->double_size) {
@@ -7250,6 +7192,7 @@ void on_double_size_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 	  // *INDENT-OFF*
         }}}}
   // *INDENT-ON*
+  if (LIVES_IS_PLAYING && !mainw->fs) mainw->force_show = TRUE;
 }
 
 
@@ -7383,25 +7326,6 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           hide_cursor(lives_widget_get_xwindow(mainw->play_window));
           lives_widget_set_app_paintable(mainw->play_window, TRUE);
         }
-        if (CURRENT_CLIP_IS_VALID && (cfile->frames == 1 || cfile->play_paused)) {
-          lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          sched_yield();
-
-          if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window)) &&
-              !mainw->noswitch && mainw->multitrack == NULL && CURRENT_CLIP_IS_NORMAL) {
-            weed_plant_t *frame_layer = mainw->frame_layer;
-            check_layer_ready(mainw->frame_layer);
-            mainw->frame_layer = NULL;
-            sched_yield();
-            load_frame_image(cfile->frameno);
-            sched_yield();
-            if (mainw->frame_layer != NULL) {
-              check_layer_ready(mainw->frame_layer);
-              weed_layer_free(mainw->frame_layer);
-            }
-            mainw->frame_layer = frame_layer;
-          }
-        }
       } else {
         // switch from separate window during playback
         if (mainw->ext_playback) {
@@ -7446,22 +7370,10 @@ void on_sepwin_activate(LiVESMenuItem * menuitem, livespointer user_data) {
         }
 
         hide_cursor(lives_widget_get_xwindow(mainw->playarea));
-        if (CURRENT_CLIP_IS_NORMAL && mainw->multitrack == NULL && (cfile->frames == 1 || cfile->play_paused) &&
-            !mainw->noswitch) {
-          weed_plant_t *frame_layer = mainw->frame_layer;
-          check_layer_ready(mainw->frame_layer);
-          mainw->frame_layer = NULL;
-          sched_yield();
-          load_frame_image(cfile->frameno);
-          sched_yield();
-          if (mainw->frame_layer != NULL) {
-            check_layer_ready(mainw->frame_layer);
-            weed_layer_free(mainw->frame_layer);
-          }
-          mainw->frame_layer = frame_layer;
-	  // *INDENT-OFF*
-        }}}}
+	// *INDENT-OFF*
+      }}}
   // *INDENT-ON*
+  if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
 }
 
 
@@ -10240,7 +10152,6 @@ void on_less_pressed(LiVESButton * button, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
-  if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
   if (mainw->rte_keys != -1) {
@@ -10294,7 +10205,6 @@ void on_more_pressed(LiVESButton * button, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
-  if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
 
   if (mainw->rte_keys != -1) {
@@ -10423,18 +10333,6 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     cfile->play_paused = TRUE;
     cfile->pb_fps = 0.;
     mainw->deltaticks = 0;
-    if (!mainw->noswitch && CURRENT_CLIP_IS_NORMAL) {
-      weed_plant_t *frame_layer;
-      check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-      frame_layer = mainw->frame_layer;
-      mainw->frame_layer = NULL;
-      load_frame_image(cfile->frameno);
-      if (mainw->frame_layer != NULL) {
-        check_layer_ready(mainw->frame_layer);
-        weed_layer_free(mainw->frame_layer);
-      }
-      mainw->frame_layer = frame_layer;
-    }
   }
 
   if (group != NULL) {
@@ -10476,7 +10374,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     }
   }
 #endif
-
+  if (LIVES_IS_PLAYING) mainw->force_show = TRUE;
   return TRUE;
 }
 

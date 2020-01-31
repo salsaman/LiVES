@@ -37,7 +37,6 @@ static ticks_t last_open_check_ticks;
 static ticks_t last_kbd_ticks;
 
 static boolean shown_paused_frames;
-static boolean force_show;
 static boolean td_had_focus;
 
 // how often to we count frames when opening
@@ -1454,11 +1453,11 @@ int process_one(boolean visible) {
         }
       }
 
-      if ((mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
-           mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
+      if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
+                                mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
           (mainw->fixed_fpsd > 0. && (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
           (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd) || force_show) {
+           (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         // time to show a new frame
 
 #ifdef ENABLE_JACK
@@ -1488,7 +1487,7 @@ int process_one(boolean visible) {
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = real_ticks;
         }
-        if (force_show) force_show = FALSE;
+        mainw->force_show = FALSE;
       }
 #ifdef ENABLE_JACK
       // request for another audio buffer - used only during mt render preview
@@ -1541,14 +1540,32 @@ int process_one(boolean visible) {
 
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
-
+    boolean reload = FALSE;
+refresh:
     // a segfault here can indicate memory corruption in an FX plugin
     lives_widget_context_update();  // animate GUI, allow kb timer to run
+    sched_yield();
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
       cancel_process(visible);
       return 1000000 + mainw->cancelled;
     }
+
+    if (mainw->force_show) {
+      mainw->force_show = FALSE;
+      if (!((mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.) || (mainw->fixed_fpsd > 0.))) {
+        reload = TRUE;
+        goto refresh;
+      }
+    }
+
+    if (reload) {
+      reload = FALSE;
+      load_frame_image(cfile->frameno);
+      sched_yield();
+      goto refresh;
+    }
+
     return 0;
   }
   cancel_process(visible);
@@ -1634,7 +1651,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   disp_fraction_done = 0.;
   mainw->last_display_ticks = 0;
   shown_paused_frames = FALSE;
-  force_show = TRUE;
+  mainw->force_show = TRUE;
 
   mainw->cevent_tc = 0;
 
@@ -3529,6 +3546,24 @@ void do_bad_theme_import_error(const char *theme_file) {
 
 boolean do_theme_exists_warn(const char *themename) {
   return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
+}
+
+
+void add_resnn_label(LiVESDialog * dialog) {
+  LiVESWidget *dialog_vbox = lives_dialog_get_content_area(dialog);
+  LiVESWidget *label;
+  LiVESWidget *hsep = lives_standard_hseparator_new();
+  lives_box_pack_first(LIVES_BOX(dialog_vbox), hsep, FALSE, TRUE, 0);
+  lives_widget_show(hsep);
+  widget_opts.justify = LIVES_JUSTIFY_CENTER;
+  label = lives_standard_label_new(_(
+                                     "\n\nResizing of clips is no longer necessary, as LiVES will internally adjust frame sizes as "
+                                     "needed at the appropriate moments.\n\n"
+                                     "However, physicallly reducing the frame size may in some cases lead to improved playback \n"
+                                     "and processing rates.\n\n"));
+  widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
+  lives_box_pack_first(LIVES_BOX(dialog_vbox), label, FALSE, TRUE, 0);
+  lives_widget_show(label);
 }
 
 

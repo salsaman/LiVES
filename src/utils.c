@@ -32,6 +32,7 @@ typedef struct {
   char *pathname;
   int bufsztype;
   size_t orig_size;
+  int nseqreads;
 } lives_file_buffer_t;
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
@@ -227,23 +228,23 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
   }
 
   do {
+    char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
     fp = popen(com, "r");
     if (fp == NULL) {
       err = errno;
     } else {
-      bytes_read = fread(buff, 1, buflen - 1, fp);
+      strg = fgets(buff, buflen, fp);
       err = ferror(fp);
       fclose(fp);
     }
 
-    lives_memset(buff + bytes_read, 0, 1);
-
-    if (bytes_read == 0 && err != 0) {
+    if (err != 0) {
       char *msg = NULL;
       mainw->com_failed = TRUE;
       if (!allow_error) {
-        msg = lives_strdup_printf("lives_popen failed with code %d: %s", err, com);
+        msg = lives_strdup_printf("lives_popen failed after %ld bytes with code %d: %s", strg == NULL ? 0 : lives_strlen(strg), err,
+                                  com);
         LIVES_ERROR(msg);
         response = do_system_failed_error(com, err, NULL, TRUE, NULL);
       }
@@ -440,7 +441,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     char xbuf[count];
-    ssize_t retval = lives_read(fd, buf, count, allow_less);
+    ssize_t retval = lives_read(fd, xbuf, count, allow_less);
     if (retval < (ssize_t)count) return retval;
     reverse_bytes((char *)buf, (const char *)xbuf, count);
     return retval;
@@ -477,9 +478,9 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES_SMALL 4096
-#define BUFFER_FILL_BYTES_MED 32768
-#define BUFFER_FILL_BYTES_LARGE 262144  ///< 256 * 1024
+#define BUFFER_FILL_BYTES_SMALL 256
+#define BUFFER_FILL_BYTES_MED 4096
+#define BUFFER_FILL_BYTES_LARGE 32768
 
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
@@ -518,6 +519,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->pathname = lives_strdup(pathname);
     fbuff->bufsztype = 0;
     fbuff->orig_size = 0;
+    fbuff->nseqreads = 0;
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
@@ -638,16 +640,20 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
   if (res < bufsize) fbuff->eof = TRUE;
   else fbuff->eof = FALSE;
 
-#ifdef HAVE_POSIX_FADVISE
+#if defined HAVE_POSIX_FADVISE || defined _GNU_SOURCE
   if (fbuff->reversed) {
+#if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, 0, fbuff->offset - (bufsize >> 2) * 3, POSIX_FADV_RANDOM);
     posix_fadvise(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize, POSIX_FADV_WILLNEED);
+#endif
 #ifdef _GNU_SOURCE
     readahead(fbuff->fd, fbuff->offset - (bufsize >> 2) * 3, bufsize);
 #endif
   } else {
+#if defined HAVE_POSIX_FADVISE
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
     posix_fadvise(fbuff->fd, fbuff->offset, bufsize, POSIX_FADV_WILLNEED);
+#endif
 #ifdef _GNU_SOURCE
     readahead(fbuff->fd, fbuff->offset, bufsize);
 #endif
@@ -660,6 +666,9 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
   off_t newoffs;
+  if (offset == 0) return fbuff->offset;
+  fbuff->nseqreads = 0;
+
   if (offset > 0) {
     // seek forwards
     if (offset < fbuff->bytes) {
@@ -738,6 +747,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   ssize_t retval = 0, res;
   size_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
+  int bufsztype;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_read_buffered: no file buffer found");
@@ -748,6 +758,8 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     LIVES_ERROR("lives_read_buffered: wrong buffer type");
     return 0;
   }
+
+  bufsztype = fbuff->bufsztype;
 
   // read bytes from fbuff
   if (fbuff->bytes > 0) {
@@ -760,16 +772,16 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->ptr += nbytes;
     ptr += nbytes;
     fbuff->bytes -= nbytes;
-
+    fbuff->nseqreads++;
     if (count == 0) return retval;
     if (fbuff->eof) goto rd_done;
+    if (fbuff->bufsztype == 0)
+      fbuff->bufsztype = 1;
   }
 
-  if (count <= (BUFFER_FILL_BYTES_MED >> 2)) {
-    int bufsztype = fbuff->bufsztype;
-    fbuff->bufsztype = 2;
-    if (count <= (BUFFER_FILL_BYTES_MED >> 2)) fbuff->bufsztype = 1;
-    if (ocount <= (BUFFER_FILL_BYTES_SMALL >> 2)) fbuff->bufsztype = 0;
+  if (count <= (BUFFER_FILL_BYTES_LARGE)) {
+    if (fbuff->nseqreads > 1 || ocount >= (BUFFER_FILL_BYTES_SMALL >> 2)) fbuff->bufsztype = 1;
+    if (ocount >= (BUFFER_FILL_BYTES_MED >> 2)) fbuff->bufsztype = 2;
 
     if (fbuff->bufsztype != bufsztype) {
       lives_freep((void **)&fbuff->buffer);
@@ -777,6 +789,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
     res = file_buffer_fill(fbuff);
     if (res < 0)  return res;
+    fbuff->nseqreads++;
 
     // buffer is sufficient (or eof hit)
     if (res > count) res = count;
@@ -787,6 +800,9 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     count -= res;
   } else {
     // larger size -> direct read
+    if (fbuff->bufsztype != bufsztype) {
+      lives_freep((void **)&fbuff->buffer);
+    }
     if (fbuff->buffer == NULL ||  fbuff->ptr == NULL) {
       fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
     }
@@ -811,7 +827,7 @@ rd_done:
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
     char xbuf[count];
-    ssize_t retval = lives_read_buffered(fd, buf, count, allow_less);
+    ssize_t retval = lives_read_buffered(fd, xbuf, count, allow_less);
     if (retval < (ssize_t)count) return retval;
     reverse_bytes((char *)buf, (const char *)xbuf, count);
     return retval;

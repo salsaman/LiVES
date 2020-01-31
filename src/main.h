@@ -735,7 +735,7 @@ typedef struct {
 
 #define FX_FRAME_PUMP_VAL 50 ///< how many frames to prime the pump for realtime effects and resampler
 
-#define IMG_BUFF_SIZE 4096 ///< chunk size for reading images
+#define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
 
   boolean ratio_fps; ///< if the fps was set by a ratio
 
@@ -1105,6 +1105,7 @@ void do_bad_theme_error(const char *themefile);
 void do_bad_theme_import_error(const char *theme_file);
 boolean do_theme_exists_warn(const char *themename);
 boolean do_layout_recover_dialog(void);
+void add_resnn_label(LiVESDialog *dialog);
 
 int process_one(boolean visible);
 void update_progress(boolean visible);

@@ -8309,6 +8309,14 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *align_horizontal_with(LiVESWidget *thin
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_box_pack_first(LiVESBox *box, LiVESWidget *child, boolean expand, boolean fill,
+    uint32_t padding) {
+  if (lives_box_pack_start(box, child, expand, fill, padding))
+    return lives_box_reorder_child(box, child, 0);
+  return FALSE;
+}
+
+
 void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)

@@ -1053,8 +1053,8 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     end_override_if_activate_output(key);
   }
 
-  if (mainw->current_file > 0 && cfile->play_paused && !mainw->noswitch) {
-    load_frame_image(cfile->frameno);
+  if (LIVES_IS_PLAYING && mainw->current_file > 0 && cfile->play_paused) {
+    mainw->force_show = TRUE;
   }
 
   mainw->fx_is_auto = FALSE;

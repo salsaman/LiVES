@@ -16,8 +16,7 @@ static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 
 LIVES_GLOBAL_INLINE float lives_vol_from_linear(float vol) {
-  vol *= vol;
-  return vol * vol;
+  return (vol * vol) * (vol * vol);
 }
 
 
@@ -295,12 +294,8 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
   lives_clip_t *afile = mainw->files[fnum];
   int64_t bytes;
   off_t apos;
-
-  uint8_t val8;
-  uint8_t val8b;
-
+  uint8_t val8, val8b;
   uint16_t val16;
-
   float val;
 
   bytes = secs * afile->arate * afile->achans * afile->asampsize / 8;
@@ -440,10 +435,12 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
 }
 
 
-/* convert from any number of source channels to any number of destination channels - both interleaved */
-// TODO: going from >1 channels to 1, we should average
+/**
+    @brief convert from any number of source channels to any number of destination channels - both interleaved
+*/
 void sample_move_d16_d16(int16_t *dst, int16_t *src,
                          uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
+  // TODO: going from >1 channels to 1, we should average
   register int nSrcCount, nDstCount;
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
@@ -530,10 +527,12 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 }
 
 
-/* convert from any number of source channels to any number of destination channels - 8 bit output */
-// TODO: going from >1 channels to 1, we should average
+/**
+   @brief convert from any number of source channels to any number of destination channels - 8 bit output
+*/
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) {
+  // TODO: going from >1 channels to 1, we should average
   register int nSrcCount, nDstCount;
   register float src_offset_f = 0.f;
   register int src_offset_i = 0;
@@ -671,20 +670,18 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 }
 
 
-#define CLIP_DECAY 0.00001f
+#define CLIP_DECAY 0.0001f
 
+/**
+   @brief convert float samples back to int
+   interleaved is for the float buffer; output int is always interleaved
+   scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
+   nsamps is number of samples, asamps is sample bit size (8 or 16)
+   output is in holding_buff which can be cast to uint8_t * or uint16_t *
+   returns number of frames out
+*/
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
-  // convert float samples back to int
-  // interleaved is for the float buffer; output int is always interleaved
-
-  // scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
-
-  // nsamps is number of samples, asamps is sample bit size (8 or 16)
-
-  // output is in holding_buff which can be cast to uint8_t * or uint16_t *
-
-  // returns number of frames out
 
   int64_t frames_out = 0l;
   register int i;
@@ -741,6 +738,11 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
 
 // play from memory buffer
 
+/**
+   @brief copy audio data from cache into audio sound buffer
+   - float32 version (e.g. jack)
+   nchans, nsamps. out_arate all refer to player values
+*/
 int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) {
   int samples_out = 0;
 
@@ -842,6 +844,11 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 }
 
 
+/**
+   @brief copy audio data from cache into audio sound buffer
+   - int 16 version (e.g. pulseaudio)
+   nchans, nsamps. out_arate all refer to player values
+*/
 int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) {
   int samples_out = 0;
 
@@ -990,23 +997,16 @@ boolean float_interleave(float *fbuffer, int nsamps, int nchans) {
 }
 
 
-// for pulse audio we use int16, and let it apply the volume
+// for pulse audio we use S16LE interleaved, and the volume is adjusted later
 
 static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer, int nsamps) {
-  int frames_out = 0;
+  int64_t frames_out;
   int chans = abuf->out_achans;
   register size_t offs = abuf->samples_filled * chans;
-  register int i;
-  register float valf;
 
-  while (frames_out < nsamps) {
-    for (i = 0; i < chans; i++) {
-      valf = float_buffer[i][frames_out];
-      abuf->buffer16[0][offs + i] = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
-    }
-    frames_out++;
-    offs += chans;
-  }
+  frames_out = sample_move_float_int(abuf->buffer16[0] + offs, float_buffer, nsamps, 1., chans, 16,
+                                     0, 0, 0, 1.0);
+
   return (size_t)frames_out;
 }
 
@@ -1054,8 +1054,9 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
 
 
 LIVES_LOCAL_INLINE void audio_process_events_to(weed_timecode_t tc) {
-  if (tc > get_event_timecode(mainw->audio_event))
+  if (tc >= get_event_timecode(mainw->audio_event)) {
     get_audio_and_effects_state_at(NULL, mainw->audio_event, tc, LIVES_PREVIEW_TYPE_AUDIO_ONLY, FALSE);
+  }
 }
 
 
@@ -1401,13 +1402,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (zavel < 0.) seekstart[track] -= bytes_read;
 
-      if (bytes_read < tbytes && bytes_read >= 0) {
-        if (zavel > 0) lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
-        else {
-          lives_memmove(in_buff + tbytes - bytes_read, in_buff, bytes_read);
-          lives_memset(in_buff, 0, tbytes - bytes_read);
-        }
-      }
+      if (bytes_read < tbytes && bytes_read >= 0)  lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
 
       nframes = (tbytes / (in_asamps[track]) / in_achans[track] / ABS(zavel) + .001);
 
@@ -1451,11 +1446,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         }
       }
 
-      if (mainw->event_list != NULL && mainw->filter_map != NULL
-          && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
+      if (mainw->event_list != NULL && !(mainw->multitrack == NULL && from_files[0] == mainw->ascrap_file)) {
         // we need to apply all audio effects with output here.
         // even in clipedit mode (for preview/rendering with an event list)
-        // also, we will need to keep updating mainw->filter_map from mainw->event_list,
+        // also, we will need to keep updating mainw->afilter_map from mainw->event_list,
         // as filters may switched on and off during the block
 
         int nbtracks = 0;
@@ -1464,53 +1458,56 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         // filter inits and deinits, and filter maps will update the current fx state
         audio_process_events_to(tc);
 
-        // apply audio filter(s)
-        if (mainw->multitrack != NULL) {
-          /// here we work out the "visibility" of each track at tc (i.e we only get audio from the front track + backing audio)
-          /// any transitions will combine audio from 2 layers (if the pref is set)
-          /// backing audio tracks are always full visible
-          /// the array is used to set the values of the "is_volume_master" parameter of the effect (see the Weed Audio spec.)
-          vis = get_track_visibility_at_tc(mainw->multitrack->event_list, nfiles,
-                                           mainw->multitrack->opts.back_audio_tracks, tc, &shortcut,
-                                           mainw->multitrack->opts.audio_bleedthru);
+        if (mainw->multitrack != NULL || mainw->afilter_map != NULL) {
 
-          /// first track is ascrap_file - flag that no effects should be applied to it, except for the audio mixer
-          /// since effects were already applied to the saved audio
-          if (mainw->ascrap_file > -1 && from_files[0] == mainw->ascrap_file) vis[0] = -vis[0];
+          // apply audio filter(s)
+          if (mainw->multitrack != NULL) {
+            /// here we work out the "visibility" of each track at tc (i.e we only get audio from the front track + backing audio)
+            /// any transitions will combine audio from 2 layers (if the pref is set)
+            /// backing audio tracks are always full visible
+            /// the array is used to set the values of the "is_volume_master" parameter of the effect (see the Weed Audio spec.)
+            vis = get_track_visibility_at_tc(mainw->multitrack->event_list, nfiles,
+                                             mainw->multitrack->opts.back_audio_tracks, tc, &shortcut,
+                                             mainw->multitrack->opts.audio_bleedthru);
 
-          nbtracks = mainw->multitrack->opts.back_audio_tracks;
-        }
+            /// first track is ascrap_file - flag that no effects should be applied to it, except for the audio mixer
+            /// since effects were already applied to the saved audio
+            if (mainw->ascrap_file > -1 && from_files[0] == mainw->ascrap_file) vis[0] = -vis[0];
 
-        /// the audio is now packaged into audio layers, one for each track (file). This makes it easier to remap
-        /// the audio tracks from effect to effect, as layers are interchangeable with filter channels
-        layers = (weed_layer_t **)lives_calloc(nfiles, sizeof(weed_layer_t *));
-        for (x = 0; x < nfiles; x++) {
-          float **adata = (float **)lives_calloc(out_achans, sizeof(float *));
-          layers[x] = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
-          for (y = 0; y < out_achans; y++) {
-            adata[y] = chunk_float_buffer[x * out_achans + y];
+            nbtracks = mainw->multitrack->opts.back_audio_tracks;
           }
 
-          weed_layer_set_audio_data(layers[x], adata, out_arate, out_achans, blocksize);
-          lives_free(adata);
-        }
-
-        /// apply the audo effects
-        weed_apply_audio_effects(mainw->afilter_map, layers, nbtracks, out_achans, blocksize, out_arate, tc, vis);
-        lives_freep((void **)&vis);
-
-        if (layers != NULL) {
-          /// after processing we get the audio data back from the layers
+          /// the audio is now packaged into audio layers, one for each track (file). This makes it easier to remap
+          /// the audio tracks from effect to effect, as layers are interchangeable with filter channels
+          layers = (weed_layer_t **)lives_calloc(nfiles, sizeof(weed_layer_t *));
           for (x = 0; x < nfiles; x++) {
-            float **adata = (weed_layer_get_audio_data(layers[x], NULL));
+            float **adata = (float **)lives_calloc(out_achans, sizeof(float *));
+            layers[x] = weed_layer_new(WEED_LAYER_TYPE_AUDIO);
             for (y = 0; y < out_achans; y++) {
-              chunk_float_buffer[x * out_achans + y] = adata[y];
+              adata[y] = chunk_float_buffer[x * out_achans + y];
             }
+
+            weed_layer_set_audio_data(layers[x], adata, out_arate, out_achans, blocksize);
             lives_free(adata);
-            weed_layer_set_audio_data(layers[x], NULL, 0, 0, 0);
-            weed_layer_free(layers[x]);
           }
-          lives_freep((void **)&layers);
+
+          /// apply the audo effects
+          weed_apply_audio_effects(mainw->afilter_map, layers, nbtracks, out_achans, blocksize, out_arate, tc, vis);
+          lives_freep((void **)&vis);
+
+          if (layers != NULL) {
+            /// after processing we get the audio data back from the layers
+            for (x = 0; x < nfiles; x++) {
+              float **adata = (weed_layer_get_audio_data(layers[x], NULL));
+              for (y = 0; y < out_achans; y++) {
+                chunk_float_buffer[x * out_achans + y] = adata[y];
+              }
+              lives_free(adata);
+              weed_layer_set_audio_data(layers[x], NULL, 0, 0, 0);
+              weed_layer_free(layers[x]);
+            }
+            lives_freep((void **)&layers);
+          }
         }
       }
 
@@ -2006,8 +2003,7 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
    similar to quantise_events(), except we don't produce output frames
 */
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    weed_timecode_t fill_tc,
-    int what_to_get, boolean exact) {
+    weed_timecode_t fill_tc, int what_to_get, boolean exact) {
   // if exact is set, we must rewind back to first active stateful effect,
   // and play forwards from there (not yet implemented - TODO)
   lives_audio_track_state_t *atstate = NULL, *audstate = NULL;
@@ -2036,96 +2032,106 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
   while ((st_event != NULL && event != st_event) || (st_event == NULL && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
-    switch (etype) {
-    case WEED_EVENT_HINT_FILTER_MAP:
-      if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
-        mainw->filter_map = event;
-      if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
-        mainw->afilter_map = event;
-      break;
-    case WEED_EVENT_HINT_FILTER_INIT:
-      deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
-      if (deinit_event == NULL || get_event_timecode(deinit_event) >= fill_tc) {
-        // this effect should be activated
+    if (etype != 1 && etype != 5)
+      switch (etype) {
+      case WEED_EVENT_HINT_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
-          process_events(event, FALSE, get_event_timecode(event));
-        if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+          mainw->filter_map = event;
+        if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY) {
+          mainw->afilter_map = event;
+        }
+        break;
+      case WEED_EVENT_HINT_FILTER_INIT:
+        deinit_event = weed_get_plantptr_value(event, WEED_LEAF_DEINIT_EVENT, NULL);
+        if (deinit_event == NULL || get_event_timecode(deinit_event) >= fill_tc) {
+          // this effect should be activated
+          if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+            process_events(event, FALSE, get_event_timecode(event));
+          if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+            process_events(event, TRUE, get_event_timecode(event));
+          /// TODO: if exact && non-stateless, silently process audio / video until st_event
+        }
+        break;
+      case WEED_EVENT_HINT_FILTER_DEINIT:
+        if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY) {
+          weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
+          if (get_event_timecode(init_event) >= last_tc) break;
           process_events(event, TRUE, get_event_timecode(event));
-        /// TODO: if exact && non-stateless, silently process audio / video until st_event
-      }
-      break;
-    case WEED_EVENT_HINT_PARAM_CHANGE:
-      if (mainw->multitrack == NULL) {
-        weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
-        deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
-        if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) break;
-
-        if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
-          char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
-          int key = atoi(key_string);
-          char *filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, NULL);
-          int idx = weed_get_idx_for_hashname(filter_name, TRUE);
-          weed_event_t *filter = get_weed_filter(idx), *inst;
-          lives_free(filter_name);
-          lives_free(key_string);
-
-          if (!is_pure_audio(filter, FALSE)) {
-            if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY)
-              break;
-          } else {
-            if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_ONLY)
-              break;
-          }
-          if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
-            int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
-            weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
-            weed_leaf_dup(param, event, WEED_LEAF_VALUE);
-          }
         }
-      }
-      break;
-    case WEED_EVENT_HINT_FRAME:
-      if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_ONLY) break;
+        break;
+      case WEED_EVENT_HINT_PARAM_CHANGE:
+        if (mainw->multitrack == NULL) {
+          weed_event_t *init_event = weed_get_voidptr_value((weed_plant_t *)event, WEED_LEAF_INIT_EVENT, NULL);
+          deinit_event = weed_get_plantptr_value(init_event, WEED_LEAF_DEINIT_EVENT, NULL);
+          if (deinit_event != NULL && get_event_timecode(deinit_event) < fill_tc) break;
 
-      if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-        /// update audio state
-        atstate = aframe_to_atstate(event);
-        if (audstate == NULL) audstate = atstate;
-        else {
-          // have an existing audio state, update with current
-          weed_timecode_t delta = get_event_timecode(event) - last_tc;
-          for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
-            if (delta > 0) {
-              // increase seek values up to current frame
-              audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+          if (weed_plant_has_leaf((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG)) {
+            char *key_string = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_HOST_TAG, NULL);
+            int key = atoi(key_string);
+            char *filter_name = weed_get_string_value((weed_plant_t *)init_event, WEED_LEAF_FILTER, NULL);
+            int idx = weed_get_idx_for_hashname(filter_name, TRUE);
+            weed_event_t *filter = get_weed_filter(idx), *inst;
+            lives_free(filter_name);
+            lives_free(key_string);
+
+            if (!is_pure_audio(filter, FALSE)) {
+              if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY)
+                break;
+            } else {
+              if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+                break;
+            }
+            if ((inst = rte_keymode_get_instance(key + 1, 0)) != NULL) {
+              int pnum = weed_get_int_value(event, WEED_LEAF_INDEX, NULL);
+              weed_plant_t *param = weed_inst_in_param(inst, pnum, FALSE, FALSE);
+              weed_leaf_dup(param, event, WEED_LEAF_VALUE);
             }
           }
-          last_tc += delta;
-          for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-          if (nnfiles > nfiles) {
-            audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
-            audstate[nnfiles].afile = -1;
-          }
-
-          for (int i = 0; i < nnfiles; i++) {
-            if (atstate[i].afile > 0) {
-              audstate[i].afile = atstate[i].afile;
-              audstate[i].seek = atstate[i].seek;
-              audstate[i].vel = atstate[i].vel;
-            }
-          }
-          lives_free(atstate);
         }
+        break;
+      case WEED_EVENT_HINT_FRAME:
+        if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_AUDIO) break;
+
+        if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
+          /// update audio state
+          atstate = aframe_to_atstate(event);
+          if (audstate == NULL) audstate = atstate;
+          else {
+            // have an existing audio state, update with current
+            weed_timecode_t delta = get_event_timecode(event) - last_tc;
+            for (nfiles = 0; audstate[nfiles].afile != -1; nfiles++) {
+              if (delta > 0) {
+                // increase seek values up to current frame
+                audstate[nfiles].seek += audstate[nfiles].vel * delta / TICKS_PER_SECOND_DBL;
+              }
+            }
+            last_tc += delta;
+            for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
+            if (nnfiles > nfiles) {
+              audstate = resize_audstate(audstate, nfiles, nnfiles + 1);
+              audstate[nnfiles].afile = -1;
+            }
+
+            for (int i = 0; i < nnfiles; i++) {
+              if (atstate[i].afile > 0) {
+                audstate[i].afile = atstate[i].afile;
+                audstate[i].seek = atstate[i].seek;
+                audstate[i].vel = atstate[i].vel;
+              }
+            }
+            lives_free(atstate);
+          }
+        }
+        break;
+      default:
+        break;
       }
-      break;
-    default:
-      break;
-    }
     nevent = get_next_event(event);
     if (nevent == NULL) break;
     event = nevent;
+    if (what_to_get == LIVES_PREVIEW_TYPE_AUDIO_ONLY && WEED_EVENT_IS_AUDIO_FRAME(event)) break;
   }
-  if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY) {
+  if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO) {
     if (audstate != NULL) {
       weed_timecode_t delta = get_event_timecode(event) - last_tc;
       if (delta > 0) {
@@ -2135,8 +2141,9 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
         }
       }
     }
-    mainw->audio_event = event;
   }
+  if (what_to_get != LIVES_PREVIEW_TYPE_VIDEO_ONLY)
+    mainw->audio_event = event;
   return audstate;
 }
 
@@ -2266,7 +2273,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   }
 
   if (last_tc < fill_tc) {
-    // flush the rest of the audio
+    // fill the rest of the buffer
 
     mainw->read_failed = FALSE;
     lives_freep((void **)&mainw->read_failed_file);

@@ -873,6 +873,8 @@ void lives_label_set_hpadding(LiVESLabel *label, int pad);
 
 LiVESWidget *align_horizontal_with(LiVESWidget *thingtoadd, LiVESWidget *thingtoalignwith);
 
+boolean lives_box_pack_first(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
+
 // this is not the same as a GtkLayout !!
 LiVESWidget *lives_layout_new(LiVESBox *);
 LiVESWidget *lives_layout_hbox_new(LiVESLayout *);

@@ -1191,7 +1191,6 @@ weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, weed_timecode_t tc
 
 void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double seek, double vel) {
   // insert/update audio event at (existing) frame event
-  int error;
   int *new_aclips;
   double *new_aseeks;
   double arv; // vel needs rounding to four dp (i don't know why, but otherwise we get some weird rounding errors)

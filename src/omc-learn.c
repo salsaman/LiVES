@@ -699,7 +699,8 @@ static void omc_macro_row_add_params(lives_omc_match_node_t *mnode, int row, omc
   int mfrom;
   register int i;
 
-  mnode->gtkstore2 = lives_tree_store_new(OMC_NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_OBJECT);
+  mnode->gtkstore2 = lives_tree_store_new(OMC_NUM2_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING,
+                                          LIVES_COL_TYPE_OBJECT);
 
   if (macro.nparams == 0) return;
 
@@ -2271,10 +2272,11 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
             oval0 < mainw->vpp->num_play_params) {
           // auto scale for playback plugin params
 
-          weed_plant_t *ptmpl = weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params, oval0), WEED_LEAF_TEMPLATE,
-                                &error);
+          weed_plant_t *ptmpl = weed_get_plantptr_value((weed_plant_t *)pp_get_param(mainw->vpp->play_params, oval0),
+                                WEED_LEAF_TEMPLATE, &error);
           hint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
-          if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) && weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
+          if ((hint == WEED_HINT_INTEGER || hint == WEED_HINT_FLOAT) &&
+              weed_leaf_num_elements(ptmpl, WEED_LEAF_DEFAULT) == 1) {
             if (hint == WEED_HINT_INTEGER) {
               int omin = mnode->min[j];
               int omax = mnode->max[j];
@@ -2379,7 +2381,8 @@ OSCbuf *omc_learner_decode(int type, int idx, const char *string) {
 
   if (macro == OSC_NOTIFY) {
     char *tmp; // send OSC notificion USER1
-    g_print("sending noti\n");
+    if (prefs->show_dev_opts)
+      g_print("sending noti\n");
     lives_notify(LIVES_OSC_NOTIFY_USER1, (tmp = lives_strdup_printf("%d %f", oval0, oval)));
     lives_free(tmp);
   }

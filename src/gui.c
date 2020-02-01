@@ -4759,6 +4759,7 @@ void splash_init(void) {
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
     lives_window_present(LIVES_WINDOW(mainw->splash_window));
+    if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
     lives_widget_context_update();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);
@@ -4781,6 +4782,7 @@ void splash_msg(const char *msg, double pct) {
   lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(mainw->splash_progress), pct);
 
   lives_widget_queue_draw(mainw->splash_window);
+  if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
   lives_widget_context_update();
 }
@@ -4796,6 +4798,7 @@ void splash_end(void) {
 
   mainw->threaded_dialog = FALSE;
   mainw->splash_window = NULL;
+  if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
   lives_widget_context_update();
 
   if (prefs->startup_interface == STARTUP_MT && prefs->startup_phase == 0 && mainw->multitrack == NULL) {

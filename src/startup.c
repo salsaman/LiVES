@@ -400,7 +400,7 @@ boolean do_audio_choice_dialog(short startup_phase) {
     lives_widget_hide(mainw->recaudio_submenu);
   }
 
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 
   return (response == LIVES_RESPONSE_OK);
 }
@@ -991,6 +991,8 @@ void do_startup_interface_query(void) {
 
   lives_widget_show_all(dialog);
 
+  lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+
   lives_dialog_run(LIVES_DIALOG(dialog));
 
   if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton)))
@@ -999,7 +1001,7 @@ void do_startup_interface_query(void) {
   set_int_pref(PREF_STARTUP_INTERFACE, prefs->startup_interface);
 
   lives_widget_destroy(dialog);
-  lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+  //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
 }
 
 

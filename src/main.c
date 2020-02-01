@@ -1925,7 +1925,6 @@ static void lives_init(_ign_opts *ign_opts) {
 
   if (prefs->startup_phase != 0) {
     splash_end();
-    show_lives();
     set_int_pref(PREF_STARTUP_PHASE, 5);
     prefs->startup_phase = 5;
     do_startup_interface_query();
@@ -2495,7 +2494,7 @@ capability *get_capabilities(void) {
   if (buffer[xs - 1] == '\n') buffer[xs - 1] = 0;
   numtok = get_token_count(buffer, ' ') ;
   if (numtok < 2) return capable;
-  g_print("buffer was %s\n", buffer);
+
   array = lives_strsplit(buffer, " ", numtok);
   if (strcmp(array[0], "smogrify")) {
     lives_strfreev(array);

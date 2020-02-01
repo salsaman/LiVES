@@ -2236,8 +2236,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       weed_timecode_t tc = get_event_timecode(event);
       if (tc >= fill_tc) break;
 
-      tc += (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank_frame(event, FALSE));
-
       mainw->read_failed = FALSE;
       lives_freep((void **)&mainw->read_failed_file);
 
@@ -2252,6 +2250,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
         aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
       }
 
+      tc += (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank_frame(event, FALSE));
       last_tc = tc;
 
       // process audio updates at this frame

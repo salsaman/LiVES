@@ -119,6 +119,7 @@ boolean lives_pulse_init(short startup_phase) {
   ticks_t timeout;
   lives_alarm_t alarm_handle;
   LiVESResponseType resp;
+  boolean retried = FALSE;
 
   if (pa_mloop != NULL) return TRUE;
 
@@ -132,7 +133,7 @@ retry:
 
   pa_state = pa_context_get_state(pcon);
 
-  alarm_handle = lives_alarm_set(prefs->pa_restart ? LIVES_DEFAULT_TIMEOUT : LIVES_SHORT_TIMEOUT);
+  alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pa_state != PA_CONTEXT_READY) {
     sched_yield();
     lives_usleep(prefs->sleep_time);
@@ -146,7 +147,10 @@ retry:
     pa_context_unref(pcon);
     pcon = NULL;
     pulse_shutdown();
-
+    if (!retried) {
+      retried = TRUE;
+      goto retry;
+    }
     LIVES_WARN("Unable to connect to the pulseaudio server");
 
     if (!mainw->foreign) {

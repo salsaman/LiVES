@@ -41,23 +41,24 @@ LiVESList *get_plugin_result(const char *command, const char *delim, boolean all
 }
 
 
-LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name, const char *request) {
+LIVES_GLOBAL_INLINE LiVESList *plugin_request_with_blanks(const char *plugin_type, const char *plugin_name,
+    const char *request) {
   // allow blanks in a list
   return plugin_request_common(plugin_type, plugin_name, request, "|", TRUE);
 }
 
 
-LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request) {
+LIVES_GLOBAL_INLINE LiVESList *plugin_request(const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "|", FALSE);
 }
 
 
-LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request) {
+LIVES_GLOBAL_INLINE LiVESList *plugin_request_by_line(const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, "\n", FALSE);
 }
 
 
-LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name, const char *request) {
+LIVES_GLOBAL_INLINE LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_name, const char *request) {
   return plugin_request_common(plugin_type, plugin_name, request, " ", FALSE);
 }
 
@@ -65,7 +66,6 @@ LiVESList *plugin_request_by_space(const char *plugin_type, const char *plugin_n
 LiVESList *plugin_request_common(const char *plugin_type, const char *plugin_name, const char *request,
                                  const char *delim, boolean allow_blanks) {
   // returns a LiVESList of responses to -request, or NULL on error
-  // by_line says whether we split on '\n' or on '|'
 
   // NOTE: request must not be quoted here, since it contains a list of parameters
   // instead, caller should ensure that any strings in *request are suitably escaped and quoted
@@ -2598,7 +2598,7 @@ void do_rfx_cleanup(lives_rfx_t *rfx) {
 
 void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short status) {
   // create lives_param_t array from plugin supplied values
-  LiVESList *parameter_list;
+  LiVESList *parameter_list, *list;
   int param_idx, i;
   lives_param_t *cparam;
   char **param_array;
@@ -2632,10 +2632,11 @@ void render_fx_get_params(lives_rfx_t *rfx, const char *plugin_name, short statu
   threaded_dialog_spin(0.);
   rfx->num_params = lives_list_length(parameter_list);
   rfx->params = (lives_param_t *)lives_malloc(rfx->num_params * sizeof(lives_param_t));
+  list = parameter_list;
 
   for (param_idx = 0; param_idx < rfx->num_params; param_idx++) {
-    line = (char *)lives_list_nth_data(parameter_list, param_idx);
-
+    line = (char *)list->data;
+    list = list->next;
     len = get_token_count(line, (unsigned int)rfx->delim[0]);
 
     if (len < 3) continue;

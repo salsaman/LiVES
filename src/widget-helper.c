@@ -9212,12 +9212,12 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   widget_opts.last_label = NULL;
 
   if (val > max) val = max;
-  if (val < min) val = max;
+  if (val < min) val = min;
 
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
 
-  lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
+  //lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(spinbutton), val);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), "is_standard", LIVES_INT_TO_POINTER(TRUE));
@@ -9285,6 +9285,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
     lives_widget_apply_theme2(LIVES_WIDGET(spinbutton), LIVES_WIDGET_STATE_NORMAL, TRUE);
     lives_widget_apply_theme_dimmed2(spinbutton, LIVES_WIDGET_STATE_INSENSITIVE, BUTTON_DIM_VAL);
   }
+
   return spinbutton;
 }
 

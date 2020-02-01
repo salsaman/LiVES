@@ -5048,8 +5048,9 @@ double *get_track_visibility_at_tc(weed_plant_t *event_list, int ntracks, int nb
             }
             lives_free(in_params);
             for (j = 0; j < ntracks; j++) {
-              matrix[in_tracks[1] + nbtracks][j] *= trans;
-              matrix[in_tracks[0] + nbtracks][j] *= (1. - trans);
+              /// TODO *** make selectable: linear or non-linear
+              matrix[in_tracks[1] + nbtracks][j] *= lives_vol_from_linear(trans);
+              matrix[in_tracks[0] + nbtracks][j] *= lives_vol_from_linear((1. - trans));
               matrix[out_tracks[0] + nbtracks][j] = matrix[in_tracks[0] + nbtracks][j] + matrix[in_tracks[1] + nbtracks][j];
             }
 

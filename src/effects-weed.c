@@ -1947,7 +1947,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       /// if we are going to letterbox, we need to maintain the aspect ratio of the image, else we may end up cutting one
       ///  dimension only
       if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
-                                  || (prefs->letterbox && mainw->num_tr_applied == 0) || mainw->multitrack != NULL)) {
+                                  || prefs->letterbox || mainw->multitrack != NULL)) {
         if (opwidth != 0 && opheight != 0) {
           calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
         }
@@ -2236,9 +2236,20 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // and opalette
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
-      if (!resize_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp, opalette, oclamping)) {
-        retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-        goto done_video;
+      if (mainw->multitrack != NULL || prefs->letterbox) {
+        int xwidth = inwidth * weed_palette_get_pixels_per_macropixel(cpalette);
+        int xheight = inheight;
+        calc_maxspect(width * weed_palette_get_pixels_per_macropixel(inpalette), height, &xwidth, &xheight);
+        if (!letterbox_layer(layer, xwidth, xheight, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp,
+                             opalette, oclamping)) {
+          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+          goto done_video;
+        }
+      } else {
+        if (!resize_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp, opalette, oclamping)) {
+          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+          goto done_video;
+        }
       }
       sched_yield();
     }

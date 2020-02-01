@@ -212,10 +212,11 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
   // on error we return err as a -ve number
 
   FILE *fp;
-  size_t bytes_read = 0;
+  char xbuff[buflen];
   LiVESResponseType response;
-  int err;
   boolean cnorm = FALSE;
+  ssize_t totlen = 0;
+  int err = 0;
 
   //g_print("doing: %s\n",com);
 
@@ -234,8 +235,14 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     if (fp == NULL) {
       err = errno;
     } else {
-      strg = fgets(buff, buflen, fp);
-      err = ferror(fp);
+      while (1) {
+        strg = fgets(xbuff, buflen - totlen, fp);
+        err = ferror(fp);
+        if (err != 0 || !strg || !(*strg)) break;
+        lives_snprintf(buff + totlen, buflen - totlen, "%s", xbuff);
+        totlen += lives_strlen(xbuff);
+        if (totlen >= buflen - 1) break;
+      }
       fclose(fp);
     }
 
@@ -260,7 +267,7 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
 
   if (cnorm) lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
   if (err != 0) return -ABS(err);
-  return bytes_read;
+  return totlen;
 }
 
 
@@ -517,7 +524,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->offset = 0;
     fbuff->reversed = FALSE;
     fbuff->pathname = lives_strdup(pathname);
-    fbuff->bufsztype = 0;
+    fbuff->bufsztype = isread ? 0 : 1;
     fbuff->orig_size = 0;
     fbuff->nseqreads = 0;
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
@@ -909,28 +916,27 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
   if (fbuff->buffer == NULL) {
-    fbuff->bufsztype = 0;
-    buffsize = BUFFER_FILL_BYTES_SMALL;
-    if (count > BUFFER_FILL_BYTES_SMALL >> 2) {
-      fbuff->bufsztype = 1;
-      buffsize = BUFFER_FILL_BYTES_MED;
-    }
+    fbuff->bufsztype = 1;
     if (count > BUFFER_FILL_BYTES_MED >> 2) {
       fbuff->bufsztype = 2;
       buffsize = BUFFER_FILL_BYTES_LARGE;
     }
-    fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
-    fbuff->ptr = fbuff->buffer;
-    fbuff->bytes = 0;
   }
 
-  fbuff->allow_fail = allow_fail;
   if (fbuff->bufsztype == 0)
     buffsize = BUFFER_FILL_BYTES_SMALL;
   else if (fbuff->bufsztype == 1)
     buffsize = BUFFER_FILL_BYTES_MED;
   else
     buffsize = BUFFER_FILL_BYTES_LARGE;
+
+  if (fbuff->buffer == NULL) {
+    fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
+    fbuff->ptr = fbuff->buffer;
+    fbuff->bytes = 0;
+  }
+
+  fbuff->allow_fail = allow_fail;
 
   // write bytes from fbuff
   while (count) {
@@ -946,17 +952,12 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
       bufsztype = fbuff->bufsztype;
       fbuff->bufsztype = 1;
-      if (count > BUFFER_FILL_BYTES_SMALL >> 2) {
-        fbuff->bufsztype = 1;
-      }
       if (count > BUFFER_FILL_BYTES_MED >> 2) {
         fbuff->bufsztype = 2;
       }
       if (bufsztype != fbuff->bufsztype) {
-        buffsize = BUFFER_FILL_BYTES_SMALL;
-        if (fbuff->bufsztype == 1) {
-          buffsize = BUFFER_FILL_BYTES_MED;
-        } else if (fbuff->bufsztype == 2) {
+        buffsize = BUFFER_FILL_BYTES_MED;
+        if (fbuff->bufsztype == 2) {
           buffsize = BUFFER_FILL_BYTES_LARGE;
         }
         fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);

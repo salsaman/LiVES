@@ -2495,7 +2495,7 @@ capability *get_capabilities(void) {
   if (buffer[xs - 1] == '\n') buffer[xs - 1] = 0;
   numtok = get_token_count(buffer, ' ') ;
   if (numtok < 2) return capable;
-
+  g_print("buffer was %s\n", buffer);
   array = lives_strsplit(buffer, " ", numtok);
   if (strcmp(array[0], "smogrify")) {
     lives_strfreev(array);
@@ -2506,7 +2506,7 @@ capability *get_capabilities(void) {
   capable->smog_version_correct = FALSE;
 
   if (strcmp(array[1], LiVES_VERSION)) {
-    msg = lives_strdup_printf("Version mistmatch: smogrify = %s, LiVES = %s\n", array[1], LiVES_VERSION);
+    msg = lives_strdup_printf("Version mismatch: smogrify = %s, LiVES = %s\n", array[1], LiVES_VERSION);
     LIVES_ERROR(msg);
     lives_free(msg);
     lives_strfreev(array);
@@ -6404,7 +6404,7 @@ void load_frame_image(int frame) {
   if (!mainw->foreign) {
     mainw->actual_frame = cfile->last_frameno = frame;
 
-    if (!mainw->preview_rendering && (!(was_preview = mainw->preview) || mainw->is_rendering)) {
+    if (!mainw->preview_rendering && (!((was_preview = mainw->preview) || mainw->is_rendering))) {
       /////////////////////////////////////////////////////////
 
       // normal play
@@ -7000,7 +7000,7 @@ void load_frame_image(int frame) {
       get_player_size(&opwidth, &opheight);
     }
 
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && (!prefs->letterbox || mainw->num_tr_applied > 0)
+    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox
         && !mainw->multitrack) {
       // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
@@ -7174,7 +7174,7 @@ void load_frame_image(int frame) {
         sched_yield();
       }
 
-      if (mainw->multitrack != NULL || (prefs->letterbox && mainw->num_tr_applied == 0)) {
+      if (mainw->multitrack != NULL || prefs->letterbox) {
         /// letterbox external
         get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
         if (pwidth != lb_width || pheight != lb_height) {
@@ -7332,7 +7332,7 @@ void load_frame_image(int frame) {
 
     interp = get_interp_value(prefs->pb_quality);
 
-    if (mainw->multitrack != NULL || (prefs->letterbox && mainw->num_tr_applied == 0)) {
+    if (mainw->multitrack != NULL || (prefs->letterbox)) {
       /// letterbox internal
       lb_width = cfile->hsize;
       lb_height = cfile->vsize;

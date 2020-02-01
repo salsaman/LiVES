@@ -120,7 +120,10 @@ boolean transcode(int start, int end) {
 
   // keep this, stop it from being freed
   rfx = vppa->rfx;
-  if (rfx == NULL) goto tr_err2;
+  if (rfx == NULL) {
+    lives_widget_destroy(vppa->dialog);
+    goto tr_err2;
+  }
   vppa->keep_rfx = TRUE;
 
   // set the default value in the param window

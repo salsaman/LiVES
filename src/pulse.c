@@ -159,7 +159,7 @@ retry:
                  _("\nUnable to connect to the pulseaudio server.\n"
                    "Click Abort to exit from LiVES, Retry to try again,\n"
                    "or Cancel to run LiVES without audio features.\n"
-                   "Audio settings can be upodated in Tools/Preferences/Playback.\n"), NULL);
+                   "Audio settings can be updated in Tools/Preferences/Playback.\n"), NULL);
         if (resp == LIVES_RESPONSE_RETRY) {
           fprintf(stderr, "Retrying...\n");
           goto retry;

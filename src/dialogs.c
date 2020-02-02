@@ -2932,7 +2932,7 @@ void do_after_crash_warning(void) {
 
 
 void do_after_invalid_warning(void) {
-  do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
+  do_error_dialog_with_check(_("Invalid clips were detected during reload.\nIt is advisable to clean up the disk with\n"
                                "File|Clean up disk space\n"),
                              WARN_MASK_CLEAN_INVALID);
 }
@@ -3559,7 +3559,7 @@ void add_resnn_label(LiVESDialog * dialog) {
   label = lives_standard_label_new(_(
                                      "\n\nResizing of clips is no longer necessary, as LiVES will internally adjust frame sizes as "
                                      "needed at the appropriate moments.\n\n"
-                                     "However, physicallly reducing the frame size may in some cases lead to improved playback \n"
+                                     "However, physically reducing the frame size may in some cases lead to improved playback \n"
                                      "and processing rates.\n\n"));
   widget_opts.justify = LIVES_JUSTIFY_DEFAULT;
   lives_box_pack_first(LIVES_BOX(dialog_vbox), label, FALSE, TRUE, 0);

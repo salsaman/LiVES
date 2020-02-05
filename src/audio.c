@@ -670,45 +670,60 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 }
 
 
-#define CLIP_DECAY 0.0001f
+#define CLIP_DECAY 0.999f
 
 /**
    @brief convert float samples back to int
    interleaved is for the float buffer; output int is always interleaved
    scale is out_sample_rate / in_sample_rate (so 2.0 would play twice as fast, etc.)
-   nsamps is number of samples, asamps is sample bit size (8 or 16)
-   output is in holding_buff which can be cast to uint8_t * or uint16_t *
+   nsamps is number of out samples, asamps is out sample bit size (8 or 16)
+   output is in holding_buff which can be cast to uint8_t *, int16_t *, or uint16_t *
    returns number of frames out
+
+   clipping is applied so that -1.0 <= fval <= 1.0
+   the clipping value is applied linearly to vol (as a divisor), and if not reset it will decay so
+   clip = 1.0 + (clip - 1.0) * CLIP_DECAY each sample
+     --> clip = 1.0 + clip * CLIP_DECAY - CLIP_DECAY
+     --> clip = (clip * CLIP_DECAY) + (1.0 - CLIP_DECAY)
+     --> clip *= CLIP_DECAY; clip += (1.0 - CLIP_DECAY)
 */
 int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, float scale, int chans, int asamps,
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
-
   int64_t frames_out = 0l;
   register int i;
   register int offs = 0, coffs = 0;
-  register float coffs_f = 0.f;
+  static float coffs_f = 0.f;
+  const float add = (1.0 - CLIP_DECAY);
+
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-  float valf, fval, volx = vol;
   register short val;
   register unsigned short valu = 0;
-  static float clip = 1.;
+  static float clip = 1.0;
+  float valf, fval, volx = vol / clip;
+  boolean checklim = FALSE;
+
+  if (clip > 1.0) checklim = TRUE;
 
   while ((nsamps - coffs) > 0) {
     frames_out++;
+    if (checklim) {
+      if (clip > 1.0)  {
+        clip *= CLIP_DECAY;
+        volx = vol / ((clip += add));
+      } else {
+        checklim = FALSE;
+        clip = 1.0;
+      }
+    }
     for (i = 0; i < chans; i++) {
       if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
-        clip = fval;
-        volx = vol / clip;
-      } else {
-        if (volx < vol) volx += (vol - volx) * CLIP_DECAY;
-        if (volx > vol) volx = vol;
-        clip = vol / volx;
+        volx = vol / ((clip = fval));
+        checklim = TRUE;
       }
-      //g_print("HERE1 %f  %f\n", clip, valf);
+
       valf *= volx;
-      //g_print("HERE2 %f  %f\n", volx, valf);
       val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
       if (usigned) valu = (val + SAMPLE_MAX_16BITI);
 
@@ -731,6 +746,14 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
       offs++;
     }
     coffs = (int)(coffs_f += scale);
+  }
+  coffs_f -= (float)coffs;
+  if (prefs->show_dev_opts) {
+    if (frames_out != nsamps) {
+      char *msg = lives_strdup_printf("audio float -> int: buffer mismatch of %ld samples\n", frames_out - nsamps);
+      LIVES_WARN(msg);
+      lives_free(msg);
+    }
   }
   return frames_out;
 }
@@ -1148,7 +1171,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   int64_t frames_out = 0;
   int64_t ins_size = 0l, cur_size;
-  int64_t tsamples = ((double)(tc_end - tc_start) / TICKS_PER_SECOND_DBL * out_arate + .5);
+  int64_t tsamples = ((double)(tc_end - tc_start) / TICKS_PER_SECOND_DBL * (double)out_arate + .5);
   int64_t blocksize, zsamples, xsamples;
   int64_t tot_frames = 0l;
 
@@ -1391,7 +1414,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       bytes_read = 0;
       mainw->read_failed = FALSE;
 
-      if (in_fd[track] > -1) bytes_read = lives_read_buffered(in_fd[track], in_buff, tbytes, TRUE); // ## valgrind
+      if (in_fd[track] > -1) bytes_read = lives_read_buffered(in_fd[track], in_buff, tbytes, TRUE);
 
       if (bytes_read < 0) bytes_read = 0;
 
@@ -1413,6 +1436,12 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       if (in_asamps[track] == 1) {
         sample_move_d8_d16(holding_buff, (uint8_t *)in_buff, nframes, tbytes, zavel, out_achans, in_achans[track], 0);
       } else {
+        if (0 && zavel < 0.) {
+          g_print("rev %p, %ld, %d\n", in_buff, tbytes, in_achans[track] * 2);
+          reverse_buffer(in_buff, tbytes, in_achans[track] * 2);
+          g_print("done\n");
+          zavel = -zavel;
+        }
         sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
                             in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
       }
@@ -2465,7 +2494,7 @@ static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
    read audio from file into cache
    must be done in real time since other threads may be waiting on the cache
 
-   during free playback, this is only used by jack (this far it has proven too complex to implement for pulse, since it uses
+   during free playback, this is only used by jack (thus far it has proven too complex to implement for pulse, since it uses
    variable sized buffers.
 
    This function is also used to cache audio when playing from an event_list. Effects may be applied and the mixer volumes
@@ -2690,8 +2719,10 @@ static void *cache_my_audio(void *arg) {
       if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
 
       if (afile->opening)
-        filename = lives_strdup_printf("%s/%s/audiodump.pcm", prefs->workdir, mainw->files[cbuffer->fileno]->handle);
-      else filename = lives_strdup_printf("%s/%s/audio", prefs->workdir, mainw->files[cbuffer->fileno]->handle);
+        filename = lives_strdup_printf("%s/%s/%s%s", prefs->workdir, mainw->files[cbuffer->fileno]->handle,
+                                       CLIP_TEMP_AUDIO_FILENAME, LIVES_FILE_EXT_PCM);
+      else filename = lives_strdup_printf("%s/%s/%s", prefs->workdir, mainw->files[cbuffer->fileno]->handle,
+                                            CLIP_AUDIO_FILENAME);
 
       cbuffer->_fd = lives_open_buffered_rdonly(filename);
       if (cbuffer->_fd == -1) {

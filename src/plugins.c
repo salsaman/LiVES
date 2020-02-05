@@ -3555,12 +3555,8 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
       lives_snprintf(rfx->delim, 2, "%s", delim);
       lives_free(delim);
 
-      if (!weed_plant_has_leaf(gui, WEED_LEAF_RFX_STRINGS)) continue;
-
-      num_hints = weed_leaf_num_elements(gui, WEED_LEAF_RFX_STRINGS);
-
+      rfx_strings = weed_get_string_array_counted(gui, WEED_LEAF_RFX_STRINGS, &num_hints);
       if (num_hints == 0) continue;
-      rfx_strings = weed_get_string_array(gui, WEED_LEAF_RFX_STRINGS, &error);
 
       for (i = 0; i < num_hints; i++) {
         hints = lives_list_append(hints, rfx_strings[i]);

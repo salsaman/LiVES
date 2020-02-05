@@ -38,13 +38,12 @@
 /// size of silent block in bytes
 #define SILENCE_BLOCK_SIZE 65536
 
-/// chunk size for audio buffer reads
-#define READ_BLOCK_SIZE 4096
+/// buffer size (output samples) for (semi) realtime audio (bytes == XSAMPLES * achans * samp. size)
+/// this is shared across prefs->num_rtaudiobufs buffers (default 4)
+/// used when we have an event_list (i.e multitrack or previewing a recording in CE)
+#define XSAMPLES 327680
 
-/// buffer size for realtime audio
-#define XSAMPLES 128000
-
-#define AUD_WRITTEN_CHECK 100000000 ///< after recording this many bytes we check disk space
+#define AUD_WRITTEN_CHECK 100000000 ///< after recording this many bytes we check disk space (default 100MB)
 
 /////////////////////////////////////
 /// asynch msging

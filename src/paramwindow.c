@@ -1191,16 +1191,18 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
 
   // do param window hints
   if (hints != NULL) {
+    LiVESList *list;
     char *lstring = lives_strconcat("layout", rfx->delim, NULL);
     char *sstring = lives_strconcat("special", rfx->delim, NULL);
     char *istring = lives_strconcat("internal", rfx->delim, NULL);
-    for (i = 0; i < lives_list_length(hints); i++) {
-      if (!strncmp((char *)lives_list_nth_data(hints, i), lstring, 7)) {
-        layout = lives_list_append(layout, lives_strdup((char *)lives_list_nth_data(hints, i) + 7));
-      } else if (!strncmp((char *)lives_list_nth_data(hints, i), istring, 9)) {
-        layout = lives_list_append(layout, lives_strdup((char *)lives_list_nth_data(hints, i) + 9));
-      } else if (!strncmp((char *)lives_list_nth_data(hints, i), sstring, 8)) {
-        add_to_special((char *)lives_list_nth_data(hints, i) + 8, rfx); // add any special actions to the framedraw preview
+    for (list = hints; list != NULL; list = list->next) {
+      char *line = (char *)list->data;
+      if (!lives_strncmp(line, lstring, 7)) {
+        layout = lives_list_append(layout, lives_strdup(line + 7));
+      } else if (!lives_strncmp(line, istring, 9)) {
+        layout = lives_list_append(layout, lives_strdup(line + 9));
+      } else if (!lives_strncmp(line, sstring, 8)) {
+        add_to_special(line + 8, rfx); // add any special actions to the framedraw preview
       }
     }
     lives_list_free_all(&hints);

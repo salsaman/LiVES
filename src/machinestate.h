@@ -1,5 +1,5 @@
-// machinestate.hf
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// machinestate.h
+// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+#define DEF_ALIGN 64
 #define EXTRA_BYTES 64
 
 typedef void *(*malloc_f)(size_t);
@@ -146,6 +147,8 @@ typedef void (*unmalloc_and_copy_f)(size_t, void *);
 # define PRId64		__PRI64_PREFIX "d"
 # define PRIu64		__PRI64_PREFIX "u"
 
+/// TODO: this file should be split into at least: memory functions, thread functions, file utils
+
 void *lives_calloc_safety(size_t nmemb, size_t xsize);
 void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);
 
@@ -158,6 +161,7 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
+///// load testing (experimental - not ready for production)
 #define INIT_LOAD_CHECK_COUNT 100 // initial loops to get started
 #define N_QUICK_CHECKS 3 // how many times we should run with quick checks after that
 #define QUICK_CHECK_TIME .1 // the time in sec.s between quick checks
@@ -172,7 +176,7 @@ typedef enum {
 
 #define WEED_SEED_MEMBLOCK 65536
 
-// internal memory allocator
+// internal memory allocator (not used yet)
 typedef struct memheader {
   unsigned int size;
   struct memheader *next;
@@ -192,6 +196,13 @@ void *_ext_calloc(size_t, size_t);
 
 size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT;
+boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT;
+
+void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void swab8(const void *from, const void *to, size_t granularity) 	GNU_HOT;
+void reverse_bytes(char *buff, size_t count, size_t granularity) 	GNU_HOT GNU_FLATTEN;
+boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
 
 // TODO
 void quick_free(memheader_t *bp);
@@ -241,8 +252,6 @@ uint32_t string_hash(const char *string) GNU_PURE GNU_HOT;
 
 int check_for_bad_ffmpeg(void);
 
-#endif
-
 typedef void *(*lives_funcptr_t)(void *);
 
 typedef struct {
@@ -255,10 +264,11 @@ typedef struct {
   void *ret;
 } thrd_work_t;
 
-
 typedef LiVESList lives_thread_t;
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg);
 int lives_thread_join(lives_thread_t work, void **retval);
+
+#endif

@@ -663,7 +663,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 
   fclose(infofile);
 
-  if (strncmp(mainw->msg, "completed", 9)) {
+  if (lives_strncmp(mainw->msg, "completed", 9)) {
     if (rfx->num_in_channels > 0) {
       mainw->fd_max_frame = atoi(mainw->msg);
       tot_frames = cfile->end;

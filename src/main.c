@@ -163,14 +163,20 @@ void *gtk_thread_wrapper(void *data) {
 #ifdef USE_GLIB
 static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, const char *message,  livespointer data) {
   char *msg;
-
-  if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
+#define SHOW_THEME_ERRORS
+#ifndef SHOW_THEME_ERRORS
+  if (prefs->show_dev_opts) {
+    if (!strncmp(message, "Theme parsing", strlen("Theme parsing"))) return;
+  }
+#endif
 
   //#define TRAP_ERRMSG ""
 #ifdef TRAP_ERRMSG
-  if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
-    fprintf(stderr, "Trapped message %s\n", message);
-    raise(LIVES_SIGSEGV);
+  if (prefs->show_dev_opts) {
+    if (!strncmp(message, TRAP_ERRMSG, strlen(TRAP_ERRMSG))) {
+      fprintf(stderr, "Trapped message %s\n", message);
+      raise(LIVES_SIGTRAP);
+    }
   }
 #endif
 
@@ -184,6 +190,10 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
     if ((level & LIVES_LOG_LEVEL_MASK) == LIVES_LOG_LEVEL_CRITICAL)
       msg = lives_strdup_printf(_("%s Critical error: %s\n"), domain, message);
     else msg = lives_strdup_printf(_("%s Fatal error: %s\n"), domain, message);
+#define BREAK_ON_CRIT
+#ifdef BREAK_ON_CRIT
+    if (prefs->show_dev_opts) raise(LIVES_SIGTRAP);
+#endif
   }
 
   if (mainw->is_ready) {
@@ -193,7 +203,9 @@ static void lives_log_handler(const char *domain, LiVESLogLevelFlags level, cons
   fprintf(stderr, "%s", msg);
   lives_free(msg);
 
+#ifndef IGNORE_FATAL_ERRORS
   if (level & LIVES_LOG_FATAL_MASK) raise(LIVES_SIGSEGV);
+#endif
 }
 
 #endif
@@ -6603,8 +6615,7 @@ void load_frame_image(int frame) {
           frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
         mainw->cancelled = CANCEL_PREVIEW_FINISHED;
         mainw->noswitch = noswitch;
-        lives_freep((void **)&framecount);
-        return;
+        goto lfi_done;
       }
 
       // play preview
@@ -6650,8 +6661,7 @@ void load_frame_image(int frame) {
       // maybe the performance finished and we weren't looping
       if ((mainw->actual_frame < 1 || mainw->actual_frame > cfile->frames) &&
           CURRENT_CLIP_IS_NORMAL && (!mainw->is_rendering || mainw->preview)) {
-        mainw->noswitch = noswitch;
-        lives_freep((void **)&framecount);
+        goto lfi_done;
         return;
       }
     }
@@ -6690,9 +6700,7 @@ void load_frame_image(int frame) {
             mainw->frame_layer = NULL;
             if (mainw->preview_rendering) {
               mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
-              mainw->noswitch = noswitch;
-              lives_freep((void **)&framecount);
-              return;
+              goto lfi_done;
             }
           }
         } else {
@@ -6770,6 +6778,7 @@ void load_frame_image(int frame) {
 
         if (mainw->internal_messaging) {
           // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
+          // DO NOT goto lfi_done, as that will free mainw->frame_layer.
           mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
           lives_freep((void **)&info_file);
@@ -6809,11 +6818,7 @@ void load_frame_image(int frame) {
           if (mainw->cancelled) {
             lives_free(fname_next);
             lives_freep((void **)&info_file);
-            mainw->noswitch = noswitch;
-            lives_freep((void **)&framecount);
-            lives_freep((void **)&info_file);
-            check_layer_ready(mainw->frame_layer);
-            return;
+            goto lfi_done;
           }
           mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
         }
@@ -6830,10 +6835,8 @@ void load_frame_image(int frame) {
         }
 
         if (mainw->frame_layer == NULL && (!mainw->preview || (mainw->multitrack != NULL && !cfile->opening))) {
-          mainw->noswitch = noswitch;
           lives_freep((void **)&info_file);
-          lives_freep((void **)&framecount);
-          return;
+          goto lfi_done;
         }
 
         if (mainw->preview && mainw->frame_layer == NULL && (mainw->event_list == NULL || cfile->opening)) {
@@ -6849,7 +6852,7 @@ void load_frame_image(int frame) {
               if (mainw->read_failed) retval = do_read_failed_error_s_with_retry(info_file, NULL, NULL);
             } while (retval == LIVES_RESPONSE_RETRY);
             fclose(fd);
-            if (!strncmp(mainw->msg, "completed", 9) || !strncmp(mainw->msg, "error", 5)) {
+            if (!lives_strncmp(mainw->msg, "completed", 9) || !strncmp(mainw->msg, "error", 5)) {
               // effect completed whilst we were busy playing a preview
               if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play"));
               lives_widget_set_tooltip_text(mainw->m_playbutton, _("Play"));
@@ -6874,16 +6877,9 @@ void load_frame_image(int frame) {
               mainw->cancelled = CANCEL_KEEP_LOOPING;
             } else mainw->cancelled = CANCEL_NO_MORE_PREVIEW;
             lives_free(fname_next);
-            check_layer_ready(mainw->frame_layer);
-
             // end of playback, so this is no longer needed
-            if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
-            mainw->frame_layer = NULL;
-
-            mainw->noswitch = noswitch;
-            lives_freep((void **)&framecount);
             lives_freep((void **)&info_file);
-            return;
+            goto lfi_done;
           } else if (mainw->preview || cfile->opening) lives_widget_context_update();
         }
       }
@@ -6901,9 +6897,7 @@ void load_frame_image(int frame) {
         weed_layer_free(mainw->frame_layer);
         mainw->frame_layer = NULL;
       }
-      mainw->noswitch = noswitch;
-      lives_freep((void **)&framecount);
-      return;
+      goto lfi_done;
     }
 
     if (was_preview) {
@@ -6984,9 +6978,7 @@ void load_frame_image(int frame) {
 
     if (audio_timed_out == 0) {
       mainw->cancelled = handle_audio_timeout();
-      mainw->noswitch = noswitch;
-      lives_freep((void **)&framecount);
-      return;
+      goto lfi_done;
     }
 
     // save to scrap_file now if we have to
@@ -6999,8 +6991,8 @@ void load_frame_image(int frame) {
       get_player_size(&opwidth, &opheight);
     }
 
-    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && !prefs->letterbox
-        && !mainw->multitrack) {
+    if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) && ((!prefs->letterbox
+        && !mainw->multitrack) || (mainw->multitrack && !prefs->letterbox_mt))) {
       // here we are outputing video through a video playback plugin which can resize: thus we just send whatever we have
       // we need only to convert the palette to whatever was agreed with the plugin when we called set_palette()
       // in plugins.c
@@ -7014,9 +7006,7 @@ void load_frame_image(int frame) {
 
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
       if (!weed_palette_is_valid(layer_palette)) {
-        mainw->noswitch = noswitch;
-        lives_freep((void **)&framecount);
-        return;
+        goto lfi_done;
       }
 
       if (!(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&
@@ -7131,7 +7121,7 @@ void load_frame_image(int frame) {
     get_player_size(&mainw->pwidth, &mainw->pheight);
 
     if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
-                                || (prefs->letterbox && mainw->num_tr_applied == 0) || mainw->multitrack != NULL)) {
+                                || (!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt))) {
       // here we are either: playing through an external video playback plugin which cannot resize
       // - we must resize to whatever width and height we set when we called init_screen() in the plugin
       // i.e. mainw->vpp->fwidth, mainw->vpp fheight
@@ -7173,13 +7163,13 @@ void load_frame_image(int frame) {
         sched_yield();
       }
 
-      if (mainw->multitrack != NULL || prefs->letterbox) {
+      if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
         /// letterbox external
         get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
         if (pwidth != lb_width || pheight != lb_height) {
           boolean orig_frame = (mainw->frame_layer == frame_layer);
           if (orig_frame) frame_layer = weed_layer_copy(NULL, mainw->frame_layer);
-          if (!letterbox_layer(frame_layer, lb_width, lb_height, pwidth, pheight, interp,
+          if (!letterbox_layer(frame_layer, pwidth, pheight, lb_width, lb_height, interp,
                                mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
           sched_yield();
           if (frame_layer == NULL) {
@@ -7331,13 +7321,13 @@ void load_frame_image(int frame) {
 
     interp = get_interp_value(prefs->pb_quality);
 
-    if (mainw->multitrack != NULL || (prefs->letterbox)) {
+    if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
       /// letterbox internal
       lb_width = cfile->hsize;
       lb_height = cfile->vsize;
       get_letterbox_sizes(mainw->frame_layer, &pwidth, &pheight, &lb_width, &lb_height);
       if (pwidth != lb_width || pheight != lb_height) {
-        if (!letterbox_layer(mainw->frame_layer, lb_width, lb_height, mainw->pwidth, mainw->pheight, interp, cpal, 0)) goto lfi_done;
+        if (!letterbox_layer(mainw->frame_layer, mainw->pwidth, mainw->pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;
         resized = TRUE;
         sched_yield();
       }
@@ -7363,12 +7353,8 @@ void load_frame_image(int frame) {
 
     sched_yield();
     pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
-    sched_yield();
     weed_layer_nullify_pixel_data(mainw->frame_layer);
-
-    weed_layer_free(mainw->frame_layer);
-    mainw->frame_layer = NULL;
-    //mainw->noswitch = noswitch;
+    sched_yield();
 
     // internal player, double size or fullscreen, or multitrack
 
@@ -7387,17 +7373,7 @@ void load_frame_image(int frame) {
       unblock_expose();
     } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
 
-    sched_yield();
-    if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
-
-    else if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
-                               capable->nmonitors > 1) ||
-                               (mainw->ext_playback && !(mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))) &&
-             mainw->current_file != mainw->scrap_file)
-      get_play_times();
-
     if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
-    //return;
     success = TRUE;
     goto lfi_done;
   }
@@ -7476,20 +7452,6 @@ lfi_done:
     // we also animate the timeline and frame counters
     // if success is TRUE we may send an OSC FRAME_SYNCH notification
 
-    lives_freep((void **)&framecount);
-
-    if (mainw->frame_layer != NULL) {
-      check_layer_ready(mainw->frame_layer);
-      weed_layer_free(mainw->frame_layer);
-      mainw->frame_layer = NULL;
-    }
-    mainw->noswitch = noswitch;
-
-    if (!mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
-                                         capable->nmonitors > 1)) &&
-        mainw->current_file != mainw->scrap_file) get_play_times();
-    if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
-
     if (success) {
       char *tmp;
       // format is now msg|timecode|fgclip|fgframe|fgfps|
@@ -7497,6 +7459,25 @@ lfi_done:
                    (tmp = lives_strdup_printf("%.8f|%d|%d|%.3f|", (double)mainw->currticks / TICKS_PER_SECOND_DBL,
                                               mainw->current_file, mainw->actual_frame, cfile->pb_fps)));
       lives_free(tmp);
+    }
+
+    lives_freep((void **)&framecount);
+
+    if (mainw->frame_layer != NULL) {
+      check_layer_ready(mainw->frame_layer);
+      weed_layer_free(mainw->frame_layer);
+      mainw->frame_layer = NULL;
+    }
+
+    mainw->noswitch = noswitch;
+
+    if (success) {
+      if (mainw->multitrack == NULL &&
+          !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
+                                           capable->nmonitors > 1)) &&
+          mainw->current_file != mainw->scrap_file) get_play_times();
+
+      if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
     }
 
 #if defined HAVE_POSIX_FADVISE || defined _GNU_SOURCE
@@ -7513,6 +7494,7 @@ lfi_done:
 #endif
     }
 #endif
+
   }
 
 

@@ -3766,7 +3766,14 @@ lives_render_error_t render_events(boolean reset) {
 #else
             layer_palette = WEED_PALETTE_RGB24;
 #endif
-            resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
+            if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
+              int width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
+              int height = weed_layer_get_height(layer);
+              calc_maxspect(cfile->hsize, cfile->vsize, &width, &height);
+              letterbox_layer(layer, cfile->hsize, cfile->vsize, width, height, LIVES_INTERP_BEST, layer_palette, 0);
+            } else {
+              resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
+            }
             convert_layer_palette(layer, layer_palette, 0);
             // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
             gamma_convert_layer(cfile->gamma_type, layer);
@@ -5134,6 +5141,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
   LiVESTreeStore *treestore;
   LiVESTreeIter iter1, iter2, iter3;
+  static size_t inistrlen = 0;
 
   char **string = NULL
                   ;
@@ -5178,6 +5186,8 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
   int ie_idx = 0;
 
   register int i, j;
+
+  if (inistrlen == 0) inistrlen = lives_strlen(WEED_LEAF_INIT_EVENT);
 
   if (prefs->event_window_show_frame_events) rows = count_events(event_list, TRUE, start_tc, end_tc);
   else rows = count_events(event_list, TRUE, start_tc, end_tc) - count_events(event_list, FALSE, start_tc, end_tc);
@@ -5229,7 +5239,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
 
       for (i = 0; propnames[i] != NULL; i++) {
         if (!strcmp(propnames[i], WEED_LEAF_TYPE) || !strcmp(propnames[i], WEED_LEAF_HINT) ||
-            !strcmp(propnames[i], WEED_LEAF_TIMECODE) || !strncmp(propnames[i], "host_", 5)) {
+            !lives_strcmp(propnames[i], WEED_LEAF_TIMECODE) || !strncmp(propnames[i], "host_", 5)) {
           lives_free(propnames[i]);
           continue;
         }
@@ -5348,7 +5358,7 @@ LiVESWidget *create_event_list_dialog(weed_plant_t *event_list, weed_timecode_t 
                 case WEED_SEED_VOIDPTR:
                   if (hint == WEED_EVENT_HINT_FILTER_DEINIT || hint == WEED_EVENT_HINT_FILTER_MAP
                       || hint == WEED_EVENT_HINT_PARAM_CHANGE) {
-                    if (!(strncmp(propnames[i], WEED_LEAF_INIT_EVENT, strlen(WEED_LEAF_INIT_EVENT)))) {
+                    if (!(lives_strncmp(propnames[i], WEED_LEAF_INIT_EVENT, inistrlen))) {
                       ievent = (weed_plant_t *)voidval[j];
                       if (ievent != NULL) {
                         lives_freep((void **)&iname);

@@ -425,6 +425,8 @@ struct _mt {
   LiVESWidget *gens_submenu;
   LiVESWidget *capture;
 
+  LiVESWidget *backup;
+
   LiVESWidget *insa_checkbutton;
   LiVESWidget *snapo_checkbutton;
 

@@ -785,6 +785,7 @@ static void save_mt_autoback(lives_mt *mt) {
   int fd;
 
   mt->auto_changed = FALSE;
+  lives_widget_set_sensitive(mt->backup, FALSE);
   mt_desensitise(mt);
 
   // flush any pending events
@@ -831,6 +832,17 @@ static void save_mt_autoback(lives_mt *mt) {
   tmp = lives_datetime(&otv);
   d_print("Auto backup of timeline at %s\n", tmp);
   lives_free(tmp);
+}
+
+
+static void on_mt_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
+  lives_mt *mt = (lives_mt *)user_data;
+  if (!mt->auto_changed) return;
+  if (mt->idlefunc > 0) {
+    lives_source_remove(mt->idlefunc);
+    mt->idlefunc = 0;
+  }
+  save_mt_autoback(mt);
 }
 
 
@@ -2880,7 +2892,7 @@ static void rerenumber_clips(const char *lfile, weed_plant_t *event_list) {
     for (i = 1; i <= MAX_FILES && mainw->files[i] != NULL; i++) {
       for (lmap = mainw->files[i]->layout_map; lmap != NULL; lmap = lmap->next) {
         // lmap->data starts with layout name
-        if (!strncmp((char *)lmap->data, lfile, strlen(lfile))) {
+        if (!lives_strncmp((char *)lmap->data, lfile, strlen(lfile))) {
           threaded_dialog_spin(0.);
           array = lives_strsplit((char *)lmap->data, "|", -1);
           threaded_dialog_spin(0.);
@@ -3310,7 +3322,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     lb_width = pwidth;
     lb_height = pheight;
 
-    letterbox_layer(mainw->frame_layer, lb_width, lb_height, pwidth, pheight, LIVES_INTERP_BEST,
+    letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height, LIVES_INTERP_BEST,
                     WEED_PALETTE_RGB24, 0);
 
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
@@ -5012,6 +5024,7 @@ void mt_backup(lives_mt * mt, int undo_type, weed_timecode_t tc) {
 
   // top level caller MUST reset this to FALSE !
   mt->did_backup = mt->changed = TRUE;
+  lives_widget_set_sensitive(mt->backup, TRUE);
 
   // ask caller to add the idle func
   if (prefs->mt_auto_back > 0) mt->auto_changed = TRUE;
@@ -6220,7 +6233,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 #if LIVES_HAS_IMAGE_MENU_ITEM
   LiVESWidget *image;
 #endif
-  LiVESWidget *separator;
   LiVESWidget *full_screen;
   LiVESWidget *about;
   LiVESWidget *show_mt_keys;
@@ -6687,9 +6699,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_recent_activate),
                        LIVES_INT_TO_POINTER(4));
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->files_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
   mt->load_set = lives_standard_menu_item_new_with_label(_("_Reload Clip Set..."));
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->load_set);
@@ -6706,9 +6716,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_quit_activate),
                        LIVES_INT_TO_POINTER(1));
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->files_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
   mt->save_event_list = lives_standard_image_menu_item_new_with_label(_("_Save Layout as..."));
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->save_event_list);
@@ -6731,9 +6739,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_sensitive(mt->clear_event_list, mt->event_list != NULL);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->files_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
   mt->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace"));
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->clear_ds);
@@ -6742,9 +6748,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_cleardisk_activate),
                        NULL);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->files_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
   mt->load_vals = lives_standard_check_menu_item_new_with_label(_("_Ignore Width, Height and Audio Values from Loaded Layouts"),
                   mt->ignore_load_vals);
@@ -6753,9 +6757,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->aload_subs = lives_standard_check_menu_item_new_with_label(_("Auto Load _Subtitles with Clips"), prefs->autoload_subs);
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->aload_subs);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->files_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->files_menu));
 
   mt->quit = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_QUIT, mt->accel_group);
   lives_container_add(LIVES_CONTAINER(mt->files_menu), mt->quit);
@@ -6818,9 +6820,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(multitrack_redo),
                        (livespointer)mt);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->edit_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->edit_menu));
 
   mt->clipedit = lives_standard_image_menu_item_new_with_label(_("_CLIP EDITOR"));
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->clipedit);
@@ -6829,9 +6829,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_KEY_e, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->edit_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->edit_menu));
 
   mt->adjust_start_end = lives_standard_image_menu_item_new_with_label(_("_Adjust Selected Clip Start/End Points"));
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->adjust_start_end);
@@ -6889,16 +6887,14 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_widget_set_sensitive(mt->jumpnext, FALSE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->edit_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->edit_menu));
 
   mt->mark_jumpback = lives_standard_image_menu_item_new_with_label(_("_Jump to Previous Timeline Mark"));
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->mark_jumpback);
 
   lives_widget_set_sensitive(mt->mark_jumpback, FALSE);
 
-  lives_widget_add_accelerator(mt->jumpback, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
+  lives_widget_add_accelerator(mt->mark_jumpback, LIVES_WIDGET_ACTIVATE_SIGNAL, mt->accel_group,
                                LIVES_KEY_j, (LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
                                LIVES_ACCEL_VISIBLE);
 
@@ -6916,9 +6912,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), mt->clear_marks);
   lives_widget_set_sensitive(mt->clear_marks, FALSE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->edit_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->edit_menu));
 
   ign_ins_sel = lives_standard_check_menu_item_new_with_label(_("Ignore Selection Limits when Inserting"), mt->opts.ign_ins_sel);
   lives_container_add(LIVES_CONTAINER(mt->edit_menu), ign_ins_sel);
@@ -6977,9 +6971,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_KEY_w, (LiVESXModifierType)0,
                                LIVES_ACCEL_VISIBLE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->play_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->play_menu));
 
   full_screen = lives_standard_check_menu_item_new_with_label(_("_Full Screen"), mainw->fs);
   lives_container_add(LIVES_CONTAINER(mt->play_menu), full_screen);
@@ -7024,9 +7016,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                              LIVES_GUI_CALLBACK(on_move_fx_changed),
                              (livespointer)mt);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->effects_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->effects_menu));
 
   mt->atrans_menuitem = lives_standard_menu_item_new_with_label(_("Select _Autotransition Effect..."));
   lives_container_add(LIVES_CONTAINER(mt->effects_menu), mt->atrans_menuitem);
@@ -7038,9 +7028,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        mt->opts.autocross_audio);
   lives_container_add(LIVES_CONTAINER(mt->effects_menu), mt->ac_audio_check);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->effects_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->effects_menu));
 
   mt->fx_edit = lives_standard_menu_item_new_with_label(_("View/_Edit Selected Effect"));
   lives_container_add(LIVES_CONTAINER(mt->effects_menu), mt->fx_edit);
@@ -7050,9 +7038,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->effects_menu), mt->fx_delete);
   lives_widget_set_sensitive(mt->fx_delete, FALSE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->effects_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->effects_menu));
 
   //// block effects (video / audio) /////
 
@@ -7328,9 +7314,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->rename_track = lives_standard_image_menu_item_new_with_label(_("Rename Current Track"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->rename_track);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   mt->cback_audio = lives_standard_image_menu_item_new_with_label(_("Make _Backing Audio Current Track"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->cback_audio);
@@ -7339,9 +7323,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_KEY_b, LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   mt->add_vid_behind = lives_standard_image_menu_item_new_with_label(_("Add Video Track at _Rear"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->add_vid_behind);
@@ -7357,9 +7339,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_KEY_t, (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),
                                LIVES_ACCEL_VISIBLE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   menuitem = lives_standard_menu_item_new_with_label(_("_Split Current Track at Cursor"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), menuitem);
@@ -7380,9 +7360,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_split_sel_activate),
                        (livespointer)mt);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   mt->ins_gap_sel = lives_standard_image_menu_item_new_with_label(_("Insert Gap in Selected Tracks/Time"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->ins_gap_sel);
@@ -7400,9 +7378,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_insgap_cur_activate),
                        (livespointer)mt);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tracks_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tracks_menu));
 
   mt->remove_gaps = lives_standard_menu_item_new_with_label(_("Close All _Gaps in Selected Tracks/Time"));
   lives_container_add(LIVES_CONTAINER(mt->tracks_menu), mt->remove_gaps);
@@ -7524,9 +7500,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_widget_set_sensitive(mt->rs_to_tc, FALSE);
   lives_widget_set_sensitive(mt->re_to_tc, FALSE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->selection_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->selection_menu));
 
   mt->seldesel_menuitem = lives_standard_menu_item_new_with_label(_("Select/Deselect Block at Current Track/Time"));
   lives_container_add(LIVES_CONTAINER(mt->selection_menu), mt->seldesel_menuitem);
@@ -7554,9 +7528,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(mt_change_vals_activate),
                        (livespointer)mt);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tools_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tools_menu));
 
   mt->gens_submenu = lives_standard_menu_item_new_with_label(_("_Generate"));
   lives_container_add(LIVES_CONTAINER(mt->tools_menu), mt->gens_submenu);
@@ -7573,9 +7545,17 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(on_capture_activate),
                        NULL);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->tools_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->tools_menu));
+
+  mt->backup = lives_standard_image_menu_item_new_with_label(_("_Backup timeline now"));
+  lives_container_add(LIVES_CONTAINER(mt->tools_menu), mt->backup);
+  lives_widget_set_sensitive(mt->backup, FALSE);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->backup), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_mt_backup_activate),
+                       (livespointer)mt);
+
+  lives_menu_add_separator(LIVES_MENU(mt->tools_menu));
 
   menuitem = lives_standard_image_menu_item_new_with_label(_("_Preferences..."));
   lives_container_add(LIVES_CONTAINER(mt->tools_menu), menuitem);
@@ -7672,10 +7652,6 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   show_messages = lives_standard_image_menu_item_new_with_label(_("Show _Messages"));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), show_messages);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->view_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
-
   mt->aparam_separator = lives_standard_menu_item_new();
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->aparam_separator);
   lives_widget_set_sensitive(mt->aparam_separator, FALSE);
@@ -7692,9 +7668,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->change_max_disp = lives_standard_menu_item_new_with_label(_("Maximum Tracks to Display..."));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->change_max_disp);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->view_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->view_menu));
 
   mt->follow_play = lives_standard_check_menu_item_new_with_label(_("Scroll to Follow Playback"), mt->opts.follow_playback);
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->follow_play);
@@ -7724,9 +7698,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                                LIVES_KEY_Minus, (LiVESXModifierType)LIVES_CONTROL_MASK,
                                LIVES_ACCEL_VISIBLE);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->view_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->view_menu));
 
   view_mt_details = lives_standard_menu_item_new_with_label(_("Multitrack _Details"));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), view_mt_details);
@@ -7735,9 +7707,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->show_layout_errors);
   lives_widget_set_sensitive(mt->show_layout_errors, mainw->affected_layouts_map != NULL);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->view_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->view_menu));
 
   mt->view_events = lives_standard_image_menu_item_new_with_label(_("_Event Window"));
   lives_container_add(LIVES_CONTAINER(mt->view_menu), mt->view_events);
@@ -7761,16 +7731,12 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   show_mt_keys = lives_standard_menu_item_new_with_label(_("_Show Multitrack Keys"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), show_mt_keys);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->help_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 
   show_manual = lives_standard_menu_item_new_with_label(_("_Manual (opens in browser)"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), show_manual);
 
-  separator = lives_standard_menu_item_new();
-  lives_container_add(LIVES_CONTAINER(mt->help_menu), separator);
-  lives_widget_set_sensitive(separator, FALSE);
+  lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 
   donate = lives_standard_menu_item_new_with_label(_("_Donate to the Project !"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), donate);
@@ -7787,7 +7753,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   help_translate = lives_standard_menu_item_new_with_label(_("Assist with _Translating"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), help_translate);
 
-  separator = lives_menu_add_separator(LIVES_MENU(mt->help_menu));
+  lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 
   mt->show_devopts = lives_standard_check_menu_item_new_with_label(_("Enable Developer Options"), prefs->show_dev_opts);
   lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mt->show_devopts),  prefs->show_dev_opts);
@@ -7797,7 +7763,7 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                        LIVES_GUI_CALLBACK(toggle_sets_pref),
                        (livespointer)PREF_SHOW_DEVOPTS);
 
-  separator = lives_menu_add_separator(LIVES_MENU(mt->help_menu));
+  lives_menu_add_separator(LIVES_MENU(mt->help_menu));
 
   mt->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), mt->troubleshoot);
@@ -11171,6 +11137,7 @@ boolean on_multitrack_activate(LiVESMenuItem * menuitem, weed_plant_t *event_lis
     lives_snprintf(multi->layout_name, 256, "%s", mainw->stored_layout_name);
     multi->changed = mainw->stored_event_list_changed;
     multi->auto_changed = mainw->stored_event_list_auto_changed;
+    if (multi->auto_changed) lives_widget_set_sensitive(multi->backup, TRUE);
   }
 
   if (mainw->recoverable_layout && multi->event_list == NULL && prefs->startup_interface == STARTUP_CE) {
@@ -19258,6 +19225,7 @@ void on_del_node_clicked(LiVESWidget * button, livespointer user_data) {
   if (!mt->auto_changed) mt->auto_changed = TRUE;
   if (prefs->mt_auto_back > 0) mt->idlefunc = mt_idle_add(mt);
   else if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
+  else lives_widget_set_sensitive(mt->backup, TRUE);
   mt->changed = TRUE;
 }
 
@@ -19518,6 +19486,7 @@ void on_set_pvals_clicked(LiVESWidget * button, livespointer user_data) {
   }
 
   if (!mt->auto_changed) mt->auto_changed = TRUE;
+  else lives_widget_set_sensitive(mt->backup, TRUE);
   if (prefs->mt_auto_back > 0) mt->idlefunc = mt_idle_add(mt);
   else if (prefs->mt_auto_back == 0) mt_auto_backup(mt);
   mt->changed = TRUE;
@@ -19928,7 +19897,7 @@ boolean set_new_set_name(lives_mt * mt) {
 
   if (!mt->auto_changed) mt->auto_changed = TRUE;
   if (prefs->mt_auto_back >= 0) mt_auto_backup(mt);
-
+  else lives_widget_set_sensitive(mt->backup, TRUE);
   return TRUE;
 }
 
@@ -20153,6 +20122,7 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
 
   if (mt != NULL) {
     mt->auto_changed = FALSE;
+    lives_widget_set_sensitive(mt->backup, FALSE);
     mt_sensitise(mt);
   }
 
@@ -22103,7 +22073,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       } while (retval2 == LIVES_RESPONSE_RETRY);
     }
 
-    if (old_set_name != NULL && !strncmp((char *)map->data, changefrom, chlen)) {
+    if (old_set_name != NULL && !lives_strncmp((char *)map->data, changefrom, chlen)) {
       // update entries in mainw->current_layouts_map
       tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);
       if (lives_file_test(tmp, LIVES_FILE_TEST_EXISTS)) {
@@ -22126,7 +22096,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
         map = mainw->files[i]->layout_map;
         while (map != NULL) {
           if (map->data != NULL) {
-            if ((old_set_name != NULL && !strncmp((char *)map->data, changefrom, chlen)) ||
+            if ((old_set_name != NULL && !lives_strncmp((char *)map->data, changefrom, chlen)) ||
                 (old_set_name == NULL && (strstr((char *)map->data, new_set_name) == NULL))) {
 
               char **array = lives_strsplit((char *)map->data, "|", -1);
@@ -22144,16 +22114,14 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
               map->data = tmp;
             }
             map = map->next;
-          }
-        }
-      }
-    }
-  }
+	    // *INDENT-OFF*
+          }}}}}
+  // *INDENT-ON*
 
   // update mainw->affected_layouts_map
   map = mainw->affected_layouts_map;
   while (map != NULL) {
-    if ((old_set_name != NULL && !strncmp((char *)map->data, changefrom, chlen)) ||
+    if ((old_set_name != NULL && !lives_strncmp((char *)map->data, changefrom, chlen)) ||
         (old_set_name == NULL && (strstr((char *)map->data, new_set_name) == NULL))) {
       if (strcmp(mainw->string_constants[LIVES_STRING_CONSTANT_CL], (char *)map->data + chlen)) {
         tmp = lives_build_filename(prefs->workdir, new_set_name, LAYOUTS_DIRNAME, (char *)map->data + chlen, NULL);

@@ -26,6 +26,7 @@
 static LiVESWidget *saved_closebutton;
 static LiVESWidget *saved_applybutton;
 static LiVESWidget *saved_revertbutton;
+static  boolean mt_needs_idlefunc;
 
 static int nmons;
 
@@ -77,7 +78,6 @@ static LiVESResponseType get_pref_inner(const char *filename, const char *key, c
   } else {
     com = lives_strdup_printf("%s get_clip_value \"%s\" - - \"%s\"", prefs->backend_sync, key,
                               filename);
-
   }
 
   lives_popen(com, TRUE, val, maxlen);
@@ -5610,6 +5610,17 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
 void on_preferences_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   LiVESWidget *saved_dialog = (LiVESWidget *)user_data;
+  mt_needs_idlefunc = FALSE;
+
+  if (mainw->multitrack != NULL) {
+    if (mainw->multitrack->idlefunc > 0) {
+      lives_source_remove(mainw->multitrack->idlefunc);
+      mainw->multitrack->idlefunc = 0;
+      mt_needs_idlefunc = TRUE;
+    }
+    mt_desensitise(mainw->multitrack);
+  }
+
 
   if (menuitem != NULL) prefs_current_page = -1;
 
@@ -5649,6 +5660,12 @@ void on_prefs_close_clicked(LiVESButton *button, livespointer user_data) {
       //_("\nLiVES will now shut down. You need to restart it for the directory change to take effect.\nClick OK to continue.\n"));
       _("\nLiVES will now shut down. You need to restart it for the new preferences to take effect.\nClick OK to continue.\n"));
     on_quit_activate(NULL, NULL);
+  }
+  if (mainw->multitrack != NULL) {
+    mt_sensitise(mainw->multitrack);
+    if (mt_needs_idlefunc) {
+      mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
+    }
   }
 }
 

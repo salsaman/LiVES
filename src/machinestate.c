@@ -1,6 +1,6 @@
 // machinestate.c
 // LiVES
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2019 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -217,12 +217,10 @@ boolean load_measure_idle(livespointer data) {
                 if (cstate_count == 0) {
                   cstate = cvar;
                   cstate_count = 1;
-                }
-              }
-            }
-          }
-        }
-      }
+		  // *INDENT-OFF*
+                }}}}}}
+      // *INDENT-ON*
+
       // check for periodic variance
       if (varticks > 0) {
         vardelta = last_check_ticks + delta_ticks - varticks;
@@ -244,11 +242,10 @@ boolean load_measure_idle(livespointer data) {
               xnvarperiod--;
               if (xnvarperiod == 0) {
                 varperiod = vardelta;
-              }
-            }
-          }
-        }
-      }
+		// *INDENT-OFF*
+              }}}}}
+      // *INDENT-ON*
+
       varticks = last_check_ticks + delta_ticks;
     } else {
       if (nchecks > 0 && nchecks != 0) {
@@ -345,32 +342,46 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 void _ext_free(void *p) {
   if (p) lives_free(p);
 }
+
 void *_ext_free_and_return(void *p) {
   _ext_free(p);
   return NULL;
 }
+
 void *_ext_memcpy(void *dest, const void *src, size_t n) {
   return lives_memcpy(dest, src, n);
 }
+
 void *_ext_memset(void *p, int i, size_t n) {
   return lives_memset(p, i, n);
 }
+
 void *_ext_memmove(void *dest, const void *src, size_t n) {
   return lives_memmove(dest, src, n);
 }
+
 void *_ext_realloc(void *p, size_t n) {
   return lives_realloc(p, n);
 }
+
 void *_ext_calloc(size_t nmemb, size_t msize) {
   return lives_calloc(nmemb, msize);
 }
 
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
+  size_t totsize = nmemb * xsize;
+  if (totsize == 0) return NULL;
+  if (xsize < DEF_ALIGN) {
+    xsize = DEF_ALIGN;
+    nmemb = (totsize / xsize) + 1;
+  }
   return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
 }
 
 LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {
-  void *np = lives_calloc(nmemb, xsize);
+  /// realloc from omemb * size to nmemb * size
+  /// memory allocated via calloc, with DEF_ALIGN alignment and EXTRA_BYTES extra padding
+  void *np = lives_calloc_safety(nmemb, xsize);
   if (omemb > nmemb) omemb = nmemb;
   lives_memcpy(np, p, omemb * xsize);
   lives_free(p);
@@ -492,6 +503,7 @@ LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
 
 
 char *get_md5sum(const char *filename) {
+  /// for future use
   char **array;
   char *md5;
   char *com = lives_strdup_printf("%s \"%s\"", EXEC_MD5SUM, filename);
@@ -599,7 +611,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 }
 
 
-char *lives_datetime(struct timeval *tv) {
+char *lives_datetime(struct timeval * tv) {
   char buf[128];
   char *datetime = NULL;
   struct tm *gm = gmtime(&tv->tv_sec);
@@ -751,9 +763,8 @@ int check_for_bad_ffmpeg(void) {
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
-  int64_t d;
   const char *p = s;
-  int64_t *pi = (int64_t *)p;
+  int64_t *pi = (int64_t *)p, d;
   if (s) do {
       if ((const char *)pi == p) {
         do {
@@ -769,7 +780,7 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   return p - s;
 }
 
-
+/// returns FALSE if strings match
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
@@ -780,12 +791,39 @@ LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
           d1 = *(ip1++);
           d2 = *(ip2++);
         } while (d1 == d2 && !hasNulByte(d1));
-        if (!hasNulByte(d2)) return 1;
+        if (!hasNulByte(d2)) return TRUE;
         st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
       }
       if (*st1 != *st2 || !(*st1)) break;
-      st1++;
-      st2++;
+      st1++; st2++;
+    }
+  }
+  return (*st1 != *st2);
+}
+
+/// returns FALSE if strings match
+LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size_t len) {
+  if (!st1 || !st2) return (st1 != st2);
+  else {
+    size_t xlen = len >> 3;
+    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+    while (1) {
+      if (xlen && (const char *)ip1 == st1 && (const char *)ip2 == st2) {
+        do {
+          d1 = *(ip1++);
+          d2 = *(ip2++);
+        } while (d1 == d2 && !hasNulByte(d1) && --xlen);
+        if (xlen) {
+          if (!hasNulByte(d2)) return TRUE;
+          ip1--;
+          ip2--;
+        }
+        st1 = (const char *)ip1; st2 = (const char *)ip2;
+        len -= ((len >> 3) - xlen) << 3;
+      }
+      if (!(len--)) return FALSE;
+      if (*st1 != *st2 || !(*st1)) break;
+      st1++; st2++;
     }
   }
   return (*st1 != *st2);
@@ -793,13 +831,13 @@ LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
 
 
 LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
-  char c;
   uint32_t hash = 5381;
   if (string == NULL) return 0;
-  while ((c = *(string++)) != 0) hash += (hash << 5) + c;
+  for (char c; (c = *(string++)) != 0; hash += (hash << 5) + c);
   return hash;
 }
 
+///////// thread pool ////////////////////////
 
 #define MINPOOLTHREADS 4
 static int npoolthreads;
@@ -939,31 +977,6 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   return 0;
 }
 
-/////////////////////////
-
-/* #define hasNulByte(x) ((x - 0x01010101) & ~x & 0x80808080) */
-/* #define SW (sizeof (int) / sizeof (char)) */
-/* LIVES_GLOBAL_INLINE size_t weed_strlen(const char *s) { */
-/*   const char *p; */
-/*   int d; */
-/*   if (!s) return 0; */
-/*   p = s - 1; */
-/*   do { */
-/*     p++; */
-/*     if ((((int) p) & (SW - 1)) == 0) { */
-/*       do { */
-/*         d  = *((int *) p); */
-/*         p += SW; */
-/*       } while (!hasNulByte(d)); */
-/*       p -= SW; */
-/*     } */
-/*   } while (*p != 0); */
-/*   return p - s; */
-/* } */
-
-
-
-
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
   srandom(seed);
 }
@@ -983,4 +996,194 @@ LIVES_GLOBAL_INLINE int lives_getuid(void) {
 LIVES_GLOBAL_INLINE int lives_getgid(void) {
   return getegid();
 }
+
+static uint16_t swabtab[65536];
+static boolean swabtab_inited = FALSE;
+
+static void init_swabtab(void) {
+  for (int i = 0; i < 256; i++) {
+    int z = i << 8;
+    for (int j = 0; j < 256; j++) {
+      swabtab[z++] = (j << 8) + i;
+    }
+  }
+  swabtab_inited = TRUE;
+}
+
+union split8 {
+  uint64_t u64;
+  uint32_t u32[2];
+};
+
+union split4 {
+  uint32_t u32;
+  uint16_t u16[2];
+};
+
+
+// gran(ularity) may be 1, or 2
+LIVES_GLOBAL_INLINE void swab2(const void *from, const void *to, size_t gran) {
+  uint16_t *s = (uint16_t *)from;
+  uint16_t *d = (uint16_t *)to;
+  if (gran == 2) {
+    uint16_t tmp = *s;
+    *s = *d;
+    *d = tmp;
+    return;
+  }
+  if (!swabtab_inited) init_swabtab();
+  *d = swabtab[*s];
+}
+
+// gran(ularity) may be 1, 2 or 4
+LIVES_GLOBAL_INLINE void swab4(const void *from, const void *to, size_t gran) {
+  union split4 *d = (union split4 *)to, s;
+  uint16_t tmp;
+
+  if (gran > 2) {
+    lives_memcpy((void *)to, from, gran);
+    return;
+  }
+  s.u32 = *(uint32_t *)from;
+  tmp = s.u16[0];
+  if (gran == 2) {
+    d->u16[0] = s.u16[1];
+    d->u16[1] = tmp;
+  } else {
+    swab2(&s.u16[1], &d->u16[0], 1);
+    swab2(&tmp, &d->u16[1], 1);
+  }
+}
+
+
+// gran(ularity) may be 1, 2 or 4
+LIVES_GLOBAL_INLINE void swab8(const void *from, const void *to, size_t gran) {
+  union split8 *d = (union split8 *)to, s;
+  uint32_t tmp;
+  if (gran > 4) {
+    lives_memcpy((void *)to, from, gran);
+    return;
+  }
+  s.u64 = *(uint64_t *)from;
+  tmp = s.u32[0];
+  if (gran == 4) {
+    d->u32[0] = s.u32[1];
+    d->u32[1] = tmp;
+  } else {
+    swab4(&s.u32[1], &d->u32[0], gran);
+    swab4(&tmp, &d->u32[1], gran);
+  }
+}
+
+
+LIVES_GLOBAL_INLINE void reverse_bytes(char *buff, size_t count, size_t gran) {
+  if (count == 2) swab2(buff, buff, 1);
+  if (count == 4) swab4(buff, buff, gran);
+  else if (count == 8) swab8(buff, buff, gran);
+}
+
+
+boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
+  // reverse chunk sized bytes in buff, count must be a multiple of chunk
+  ssize_t start = -1, end;
+  size_t ocount = count - 1;
+
+  if (chunk < 8) {
+    if ((chunk != 4 && chunk != 2 && chunk != 1) || (count % chunk) != 0) return FALSE;
+  } else {
+    if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
+    else {
+      void *tbuff = lives_malloc(chunk);
+      start++;
+      end = ocount -  chunk;
+      while (start + chunk < end) {
+        lives_memcpy(tbuff, &buff[end], chunk);
+        lives_memcpy(&buff[end], &buff[start], chunk);
+        lives_memcpy(&buff[start], tbuff, chunk);
+        start += chunk;
+        end -= chunk;
+      }
+      lives_free(tbuff);
+      return TRUE;
+    }
+  }
+
+  /// halve the number of bytes, since we will work forwards and back to meet in the middle
+  count >>= 1;
+
+  if (!(count & 0x03)) {
+    /// half-count is a multiple of 4, thus count is a multiple of 8.
+    uint64_t *buff8 = (uint64_t *)buff;
+    if ((void *)buff8 == (void *)buff) {
+      end = ocount  >> 3;
+      for (; count >= 8; count -= 8) {
+        /// swap 8 bytes at a time from start and end
+        uint64_t tmp8 = buff8[--end];
+        if (chunk == 8) {
+          buff8[end] = buff8[++start];
+          buff8[start] = tmp8;
+        } else {
+          swab8(&buff8[++start], &buff8[end], chunk);
+          swab8(&tmp8, &buff8[start], chunk);
+        }
+      }
+      if (count == 0) return TRUE;
+      start = (start + 1) << 3;
+      start--;
+    }
+  }
+
+  if (chunk > 4) return FALSE;
+
+  /// remainder should be only 6, 4, or 2 bytes in the middle   with a chunk size of 2 or 4
+
+  if (!(count & 0x01)) {
+    /// half-count is a multiple of 2, thus count is a multiple of 4.
+    uint32_t *buff4 = (uint32_t *)buff;
+    if ((void *)buff4 == (void *)buff) {
+      end = (ocount - start) >> 2;
+      if (start > 0) start >>= 2;
+      for (; count >= 4; count -= 4) {
+        /// swap 4 bytes at a time from start and end
+        uint32_t tmp4 = buff4[--end];
+        if (chunk == 4) {
+          buff4[end] = buff4[++start];
+          buff4[start] = tmp4;
+        } else {
+          swab4(&buff4[++start], &buff4[end], chunk);
+          swab4(&tmp4, &buff4[start], chunk);
+        }
+      }
+      if (count == 0) return TRUE;
+      start = (start + 1) << 2;
+      start--;
+    }
+  }
+
+  /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 2
+  if (chunk > 2) return FALSE;
+
+  if (count > 0) {
+    uint16_t *buff2 = (uint16_t *)buff;
+    if ((void *)buff2 == (void *)buff) {
+      end = (ocount - start) >> 1;
+      for (; count > 0; count -= 2) {
+        /// swap 2 bytes at a time from start and end
+        uint16_t tmp2 = buff2[--end];
+        if (chunk == 2) {
+          buff2[end] = buff2[++start];
+          buff2[start] = tmp2;
+        }
+        /// swap single bytes
+        else {
+          swab2(&buff2[++start], &buff2[end], 1);
+          swab2(&tmp2, &buff2[start], 1);
+        }
+      }
+    }
+  }
+  if (count == 0) return TRUE;
+  return FALSE;
+}
+
 

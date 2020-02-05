@@ -1926,8 +1926,29 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     inwidth = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL) * weed_palette_get_pixels_per_macropixel(palette);
     inheight = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
 
+    if (filter_flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY) svary = TRUE;
+    if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
+
     if (pb_quality != PB_QUALITY_LOW) {
       if (inwidth > maxinwidth) maxinwidth = inwidth;
+      if (!svary &&
+          (!(mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack))) {
+        /// manual adjustment for letterboxing - it just looks better (else we get frames with only a central overlap)
+        /// i.e we don't want frames sticking up over the top. So we shrink / grow the height to match front frame
+        /// whilst retaining aspect ratio.
+        //if (inheight > maxinheight) xmaxinheight = inheight;
+        if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
+        else {
+          calc_maxspect(maxinwidth, maxinheight, &inwidth, &inheight);
+          if (inheight < maxinheight) {
+            inwidth = (int)((double)inwidth * (double)maxinheight / (double)inheight);
+            if (inwidth > maxinwidth) maxinwidth = inwidth;
+            inheight = maxinheight;
+          }
+        }
+        /* if (maxinheight == 4 || inheight < maxinheight) */
+        /*   if (inheight > 4) maxinheight = inheight; */
+      }
       if (inheight > maxinheight) maxinheight = inheight;
     } else {
       if (maxinwidth == 4 || inwidth < maxinwidth)
@@ -1938,23 +1959,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     j++;
   }
 
-  if (filter_flags & WEED_FILTER_CHANNEL_SIZES_MAY_VARY) svary = TRUE;
-  if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
-
   if (!svary || !is_converter) {
-    /// unless its a resize plugin or high quality, we'll restrict op size to max in size (med quality) or min in size (low quality)
     if (pb_quality != PB_QUALITY_HIGH) {
-      /// if we are going to letterbox, we need to maintain the aspect ratio of the image, else we may end up cutting one
-      ///  dimension only
-      if (mainw->ext_playback && (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)
-                                  || prefs->letterbox || mainw->multitrack != NULL)) {
-        if (opwidth != 0 && opheight != 0) {
-          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
-        }
-      } else {
-        if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
-        if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
-      }
+      if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
+      if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
     }
     opwidth = maxinwidth;
     opheight = maxinheight;
@@ -2236,11 +2244,18 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // and opalette
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
-      if (mainw->multitrack != NULL || prefs->letterbox) {
+      if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
         int xwidth = inwidth * weed_palette_get_pixels_per_macropixel(cpalette);
         int xheight = inheight;
         calc_maxspect(width * weed_palette_get_pixels_per_macropixel(inpalette), height, &xwidth, &xheight);
-        if (!letterbox_layer(layer, xwidth, xheight, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp,
+        if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
+          mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
+                                 &mainw->blend_subspace);
+          mainw->blend_width = xwidth;
+          mainw->blend_height = xheight;
+          mainw->blend_gamma = weed_layer_get_gamma(layer);
+        }
+        if (!letterbox_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, xwidth, xheight, interp,
                              opalette, oclamping)) {
           retval = FILTER_ERROR_UNABLE_TO_RESIZE;
           goto done_video;
@@ -2298,12 +2313,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
-    if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
-      mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
-                             &mainw->blend_subspace);
-      mainw->blend_width = weed_layer_get_width(layer);
-      mainw->blend_height = weed_layer_get_height(layer);
-      mainw->blend_gamma = weed_layer_get_gamma(layer);
+    if (!((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack))) {
+      if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
+        mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
+                               &mainw->blend_subspace);
+        mainw->blend_width = weed_layer_get_width(layer);
+        mainw->blend_height = weed_layer_get_height(layer);
+        mainw->blend_gamma = weed_layer_get_gamma(layer);
+      }
     }
   }
 
@@ -4963,7 +4980,7 @@ void weed_load_all(void) {
     for (plugin_idx = 0; plugin_idx < listlen; plugin_idx++) {
       threaded_dialog_spin(0.);
       plugin_name = (char *)lives_list_nth_data(weed_plugin_list, plugin_idx);
-      if (!strncmp(plugin_name + strlen(plugin_name) - strlen(DLL_NAME) - 1, "."DLL_NAME, strlen(DLL_NAME) + 1)) {
+      if (!lives_strncmp(plugin_name + lives_strlen(plugin_name) - strlen(DLL_NAME) - 1, "." DLL_NAME, strlen(DLL_NAME) + 1)) {
         plugin_path = lives_build_filename(dirs[i], plugin_name, NULL);
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);

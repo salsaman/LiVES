@@ -9,6 +9,7 @@
 #include <sys/statvfs.h>
 #ifdef HAVE_LIBEXPLAIN
 #include <libexplain/system.h>
+#include <libexplain/read.h>
 #endif
 #include "main.h"
 #include "support.h"
@@ -18,6 +19,8 @@
 #include "callbacks.h"
 
 static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
+
+static int get_hex_digit(const char c) GNU_CONST;
 
 typedef struct {
   int fd;
@@ -97,14 +100,6 @@ char *filename_from_fd(char *val, int fd) {
 }
 
 
-LIVES_INLINE void reverse_bytes(char *out, const char *in, size_t count) {
-  register int i;
-  for (i = 0; i < count; i++) {
-    out[i] = in[count - i - 1];
-  }
-}
-
-
 // system calls
 
 LIVES_GLOBAL_INLINE int lives_open3(const char *pathname, int flags, mode_t mode) {
@@ -129,10 +124,7 @@ LIVES_GLOBAL_INLINE boolean lives_fsync(int fd) {
 
 
 LIVES_GLOBAL_INLINE void lives_sync(int times) {
-  int i;
-  for (i = 0; i < times; i++) {
-    sync();
-  }
+  for (int i = 0; i < times; i++) sync();
 }
 
 
@@ -334,12 +326,9 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
 
 ssize_t lives_write_le(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
-    char xbuf[count];
-    reverse_bytes(xbuf, (const char *)buf, count);
-    return lives_write(fd, xbuf, count, allow_fail);
-  } else {
-    return lives_write(fd, buf, count, allow_fail);
+    reverse_bytes((char *)buf, count, count);
   }
+  return lives_write(fd, buf, count, allow_fail);
 }
 
 
@@ -404,7 +393,7 @@ void lives_close_all_file_buffers(void) {
 }
 
 
-static void do_file_read_error(int fd, ssize_t errval, size_t count) {
+static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
   char *msg = NULL;
   mainw->read_failed = TRUE;
   mainw->read_failed_file = filename_from_fd(mainw->read_failed_file, fd);
@@ -412,10 +401,16 @@ static void do_file_read_error(int fd, ssize_t errval, size_t count) {
   if (errval >= 0)
     msg = lives_strdup_printf("Read failed %"PRId64" of %"PRIu64" in: %s", (int64_t)errval,
                               (uint64_t)count, mainw->read_failed_file);
-  else
-    msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s", (int64_t)errval,
-                              mainw->read_failed_file);
-
+  else {
+    msg = lives_strdup_printf("Read failed with error %"PRId64" in: %s (%s)", (int64_t)errval,
+                              mainw->read_failed_file,
+#ifdef HAVE_LIBEXPLAIN
+                              buff != NULL ? explain_read(fd, buff, count) : ""
+#else
+                              ""
+#endif
+                             );
+  }
   LIVES_ERROR(msg);
   lives_free(msg);
 }
@@ -426,7 +421,7 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 
   if (retval < (ssize_t)count) {
     if (!allow_less || retval < 0) {
-      do_file_read_error(fd, retval, count);
+      do_file_read_error(fd, retval, buf, count);
       close(fd);
     }
 #ifndef LIVES_NO_DEBUG
@@ -446,15 +441,12 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less) {
 
 
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
+  ssize_t retval = lives_read(fd, buf, count, allow_less);
+  if (retval < (ssize_t)count) return retval;
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
-    char xbuf[count];
-    ssize_t retval = lives_read(fd, xbuf, count, allow_less);
-    if (retval < (ssize_t)count) return retval;
-    reverse_bytes((char *)buf, (const char *)xbuf, count);
-    return retval;
-  } else {
-    return lives_read(fd, buf, count, allow_less);
+    reverse_bytes((char *)buf, count, count);
   }
+  return retval;
 }
 
 //// buffered io ////
@@ -673,7 +665,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff) {
 
 static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, off_t offset) {
   off_t newoffs;
-  if (offset == 0) return fbuff->offset;
+  if (offset == 0) return fbuff->offset - fbuff->bytes;
   fbuff->nseqreads = 0;
 
   if (offset > 0) {
@@ -823,7 +815,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
 rd_done:
   if (!allow_less && count > 0) {
-    do_file_read_error(fd, retval, ocount);
+    do_file_read_error(fd, retval, NULL, ocount);
     lives_close_buffered(fd);
   }
 
@@ -832,15 +824,12 @@ rd_done:
 
 
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less) {
+  ssize_t retval = lives_read_buffered(fd, buf, count, allow_less);
+  if (retval < (ssize_t)count) return retval;
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
-    char xbuf[count];
-    ssize_t retval = lives_read_buffered(fd, xbuf, count, allow_less);
-    if (retval < (ssize_t)count) return retval;
-    reverse_bytes((char *)buf, (const char *)xbuf, count);
-    return retval;
-  } else {
-    return lives_read_buffered(fd, buf, count, allow_less);
+    reverse_bytes((char *)buf, count, count);
   }
+  return retval;
 }
 
 
@@ -982,12 +971,9 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
 ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
-    char xbuf[count];
-    reverse_bytes((char *)xbuf, (const char *)buf, count);
-    return lives_write_buffered(fd, xbuf, count, allow_fail);
-  } else {
-    return lives_write_buffered(fd, (char *)buf, count, allow_fail);
+    reverse_bytes((char *)buf, count, count);
   }
+  return lives_write_buffered(fd, (char *)buf, count, allow_fail);
 }
 
 
@@ -1649,10 +1635,10 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
           mainw->cancelled = CANCEL_AUD_END;
           nframe = -1;
           return 0;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   mainw->scratch = SCRATCH_NONE;
   cframe = nframe;
   nframe = -1;
@@ -2103,7 +2089,7 @@ boolean add_lmap_error(lives_lmap_error_t lerror, const char *name, livespointer
 
   switch (lerror) {
   case LMAP_INFO_SETNAME_CHANGED:
-    if (strlen(name) == 0) name2 = lives_strdup(_("(blank)"));
+    if (!(*name)) name2 = lives_strdup(_("(blank)"));
     else name2 = lives_strdup(name);
     text = lives_strdup_printf
            (_("The set name has been changed from %s to %s. Affected layouts have been updated accordingly\n"),
@@ -2543,7 +2529,7 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
     lives_free(textx);
     return FALSE;
   }
-  if (!strncmp(string + slen - cklen, textx, cklen)) ret = TRUE;
+  if (!lives_strncmp(string + slen - cklen, textx, cklen)) ret = TRUE;
   lives_free(textx);
   return ret;
 }
@@ -2754,10 +2740,9 @@ uint64_t get_version_hash(const char *exe, const char *sep, int piece) {
 
 uint64_t make_version_hash(const char *ver) {
   /// convert a version to uint64_t hash, for comparing
-
+  char **array;
   uint64_t hash;
   int ntok;
-  char **array;
 
   if (ver == NULL) return 0;
 
@@ -2765,17 +2750,12 @@ uint64_t make_version_hash(const char *ver) {
   array = lives_strsplit(ver, ".", ntok);
 
   hash = atoi(array[0]) * VER_MAJOR_MULT;
-
   if (ntok > 1) {
     hash += atoi(array[1]) * VER_MINOR_MULT;
-  }
-
-  if (ntok > 2) {
-    hash += atoi(array[2]) * VER_MICRO_MULT;
+    if (ntok > 2) hash += atoi(array[2]) * VER_MICRO_MULT;
   }
 
   lives_strfreev(array);
-
   return hash;
 }
 
@@ -2791,12 +2771,12 @@ char *repl_workdir(const char *entry, boolean fwd) {
   char *string = lives_strdup(entry);
 
   if (fwd) {
-    if (!strncmp(entry, prefs->workdir, (wdl = lives_strlen(prefs->workdir)))) {
+    if (!lives_strncmp(entry, prefs->workdir, (wdl = lives_strlen(prefs->workdir)))) {
       lives_free(string);
       string = lives_strdup_printf("%s%s", WORKDIR_LITERAL, entry + wdl);
     }
   } else {
-    if (!strncmp(entry, WORKDIR_LITERAL, WORKDIR_LITERAL_LEN)) {
+    if (!lives_strncmp(entry, WORKDIR_LITERAL, WORKDIR_LITERAL_LEN)) {
       lives_free(string);
       string = lives_build_filename(prefs->workdir, entry + WORKDIR_LITERAL_LEN, NULL);
     }
@@ -2862,7 +2842,7 @@ void remove_layout_files(LiVESList * map) {
         // if no more layouts in parent dir, we can delete dir
 
         // ensure that parent dir is below our own working dir
-        if (!strncmp(fname, prefs->workdir, lives_strlen(prefs->workdir))) {
+        if (!lives_strncmp(fname, prefs->workdir, lives_strlen(prefs->workdir))) {
           // is in workdir, safe to remove parents
 
           char *protect_file = lives_build_filename(prefs->workdir, "noremove", NULL);
@@ -2891,15 +2871,15 @@ void remove_layout_files(LiVESList * map) {
               lmap = mainw->files[i]->layout_map;
               while (lmap != NULL) {
                 lmap_next = lmap->next;
-                if (!strncmp((char *)lmap->data, (char *)map->data, maplen)) {
+                if (!lives_strncmp((char *)lmap->data, (char *)map->data, maplen)) {
                   lives_free((livespointer)lmap->data);
                   mainw->files[i]->layout_map = lives_list_delete_link(mainw->files[i]->layout_map, lmap);
                 }
                 lmap = lmap_next;
-              }
-            }
-          }
-        }
+		// *INDENT-OFF*
+              }}}}
+	// *INDENT-ON*
+
       } else {
         // asked to remove the currently loaded layout
 
@@ -3540,10 +3520,7 @@ boolean after_foreign_play(void) {
 
 
 LIVES_GLOBAL_INLINE boolean int_array_contains_value(int *array, int num_elems, int value) {
-  int i;
-  for (i = 0; i < num_elems; i++) {
-    if (array[i] == value) return TRUE;
-  }
+  for (int i = 0; i < num_elems; i++) if (array[i] == value) return TRUE;
   return FALSE;
 }
 
@@ -3960,10 +3937,10 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
   char *file;
 
   if (frames > 0) {
-    if (extra_params == NULL || (strlen(extra_params) == 0)) file = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
+    if (extra_params == NULL || (!(*extra_params))) file = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
     else file = lives_strdup_printf("%s|%.2f|%d\n%s", filename, start, frames, extra_params);
   } else {
-    if (extra_params == NULL || (strlen(extra_params) == 0)) file = lives_strdup(filename);
+    if (extra_params == NULL || (!(*extra_params))) file = lives_strdup(filename);
     else file = lives_strdup_printf("%s\n%s", filename, extra_params);
   }
 
@@ -4024,19 +4001,19 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
   }
 
   mtext = lives_menu_item_get_text(mainw->recent[0]);
-  if (strlen(mtext)) {
+  if (*mtext) {
     lives_widget_show(mainw->recent[0]);
   }
   mtext = lives_menu_item_get_text(mainw->recent[1]);
-  if (strlen(mtext)) {
+  if (*mtext) {
     lives_widget_show(mainw->recent[1]);
   }
   mtext = lives_menu_item_get_text(mainw->recent[2]);
-  if (strlen(mtext)) {
+  if (*mtext) {
     lives_widget_show(mainw->recent[2]);
   }
   mtext = lives_menu_item_get_text(mainw->recent[3]);
-  if (strlen(mtext)) {
+  if (*mtext) {
     lives_widget_show(mainw->recent[3]);
   }
 
@@ -4045,17 +4022,14 @@ void add_to_recent(const char *filename, double start, int frames, const char *e
 
 
 int verhash(char *xv) {
-  char *version;
-  char *s;
-  int major = 0;
-  int minor = 0;
-  int micro = 0;
+  char *version, *s;
+  int major = 0, minor = 0, micro = 0;
 
   if (xv == NULL) return 0;
 
   version = lives_strdup(xv);
 
-  if (!(strlen(version))) {
+  if (!(*version)) {
     lives_free(version);
     return 0;
   }
@@ -4219,14 +4193,14 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
   lives_memset(buff, 0, maxlen);
   while (clist != NULL) {
     if (gotit) {
-      if (!strncmp(keystr_end, (char *)clist->data, kelen)) {
+      if (!lives_strncmp(keystr_end, (char *)clist->data, kelen)) {
         break;
       }
       if (strncmp((char *)clist->data, "|", 1)) lives_strappend(buff, maxlen, (char *)clist->data);
       else {
         if (clist->prev != NULL) clist->prev->next = clist->next;
       }
-    } else if (!strncmp(keystr_start, (char *)clist->data, kslen)) {
+    } else if (!lives_strncmp(keystr_start, (char *)clist->data, kslen)) {
       gotit = TRUE;
     }
     clist = clist->next;
@@ -4775,14 +4749,16 @@ char *subst(const char *string, const char *from, const char *to) {
   // return value should be freed after use
   char *ret = lives_strdup(string), *first;
   char *search = ret;
+  size_t fromlen = lives_strlen(from);
+  size_t tolen = lives_strlen(to);
 
   while ((search = lives_strstr_len(search, -1, from)) != NULL) {
     first = lives_strndup(ret, search - ret);
-    search = lives_strdup(search + strlen(from));
+    search = lives_strdup(search + fromlen);
     lives_free(ret);
     ret = lives_strconcat(first, to, search, NULL);
     lives_free(search);
-    search = ret + strlen(first) + strlen(to);
+    search = ret + strlen(first) + tolen;
     lives_free(first);
   }
   return ret;
@@ -4801,7 +4777,6 @@ char *insert_newlines(const char *text, int maxwidth) {
   size_t runlen = 0;
   size_t req_size = 1; // for the terminating \0
   size_t tlen;
-  size_t nlen = strlen(newline);
 
   int xtoffs;
 
@@ -4825,14 +4800,14 @@ char *insert_newlines(const char *text, int maxwidth) {
       return lives_strdup(text);
     }
 
-    if (!strncmp(text + i, "\n", nlen)) runlen = 0; // is a newline (in any encoding)
+    if (!strncmp(text + i, "\n", 1)) runlen = 0; // is a newline (in any encoding)
     else {
       runlen++;
-      if (needsnl) req_size += nlen; ///< we will insert a nl here
+      if (needsnl) req_size++; ///< we will insert a nl here
     }
 
     if (runlen == maxwidth) {
-      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", nlen))) {
+      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", 1))) {
         // needs a newline
         needsnl = TRUE;
         runlen = 0;
@@ -4852,17 +4827,17 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   for (i = 0; i < tlen; i += xtoffs) {
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
-    if (!strncmp(text + i, "\n", nlen)) runlen = 0; // is a newline (in any encoding)
+    if (!strncmp(text + i, "\n", 1)) runlen = 0; // is a newline (in any encoding)
     else {
       runlen++;
       if (needsnl) {
-        lives_memcpy(retstr + req_size, newline, nlen);
-        req_size += nlen;
+        lives_memcpy(retstr + req_size, newline, 1);
+        req_size++;
       }
     }
 
     if (runlen == maxwidth) {
-      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", nlen))) {
+      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", 1))) {
         // needs a newline
         needsnl = TRUE;
         runlen = 0;
@@ -4879,30 +4854,23 @@ char *insert_newlines(const char *text, int maxwidth) {
 }
 
 
-int hextodec(char *string) {
-  int i;
-  int tot = 0;
-  char test[2];
-
-  lives_memset(test + 1, 0, 1);
-
-  for (i = 0; i < strlen(string); i++) {
-    tot *= 16;
-    lives_memcpy(test, (void *)&string[i], 1);
-    tot += get_hex_digit(test);
+static int get_hex_digit(const char c) {
+  switch (c) {
+  case 'a': case 'A': return 10;
+  case 'b': case 'B': return 11;
+  case 'c': case 'C': return 12;
+  case 'd': case 'D': return 13;
+  case 'e': case 'E': return 14;
+  case 'f': case 'F': return 15;
+  default: return c - 48;
   }
-  return tot;
 }
 
 
-int get_hex_digit(const char *c) {
-  if (!strcmp(c, "a") || !strcmp(c, "A")) return 10;
-  if (!strcmp(c, "b") || !strcmp(c, "B")) return 11;
-  if (!strcmp(c, "c") || !strcmp(c, "C")) return 12;
-  if (!strcmp(c, "d") || !strcmp(c, "D")) return 13;
-  if (!strcmp(c, "e") || !strcmp(c, "E")) return 14;
-  if (!strcmp(c, "f") || !strcmp(c, "F")) return 15;
-  return (atoi(c));
+LIVES_GLOBAL_INLINE int hextodec(const char *string) {
+  int tot = 0;
+  for (char c = *string; c; c = *(++string)) tot = (tot << 4) + get_hex_digit(c);
+  return tot;
 }
 
 
@@ -4911,8 +4879,7 @@ static uint64_t fastrand_val;
 LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
 #define rand_a 1073741789L
 #define rand_c 32749L
-  fastrand_val = rand_a * fastrand_val + rand_c;
-  return fastrand_val;
+  return ((fastrand_val = rand_a * fastrand_val + rand_c));
 }
 
 
@@ -5008,9 +4975,13 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_append_unique(LiVESList * xlist, const
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_move_to_first(LiVESList * list, LiVESList * item) {
   // move item to first in list
-  LiVESList *xlist = lives_list_remove_link(list, item); // item becomes standalone list
-  if (xlist == NULL) return list;
-  return lives_list_concat(item, xlist); // concat rest of list after item
+  LiVESList *xlist = item;
+  if (xlist == list || xlist == NULL) return list;
+  if (xlist->prev != NULL) xlist->prev->next = xlist->next;
+  if (xlist->next != NULL) xlist->next->prev = xlist->prev;
+  xlist->prev = NULL;
+  if ((xlist->next = list) != NULL) list->prev = xlist;
+  return xlist;
 }
 
 
@@ -5021,7 +4992,10 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
   while (xlist != NULL) {
     if (!lives_utf8_strcasecmp((char *)xlist->data, string)) {
       lives_free((livespointer)xlist->data);
-      list = lives_list_delete_link(list, xlist);
+      if (xlist->prev != NULL) xlist->prev->next = xlist->next;
+      if (xlist->next != NULL) xlist->next->prev = xlist->prev;
+      if (list == xlist) list = xlist->next;
+      lives_free(xlist);
       return list;
     }
     xlist = xlist->next;
@@ -5032,15 +5006,12 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
 
 LIVES_GLOBAL_INLINE LiVESList *lives_list_copy_strings(LiVESList * list) {
   // copy a list, copying the strings too
-
   LiVESList *xlist = NULL, *olist = list;
-
   while (olist != NULL) {
-    xlist = lives_list_append(xlist, lives_strdup((char *)olist->data));
+    xlist = lives_list_prepend(xlist, lives_strdup((char *)olist->data));
     olist = olist->next;
   }
-
-  return xlist;
+  return lives_list_reverse(xlist);
 }
 
 
@@ -5049,7 +5020,7 @@ boolean string_lists_differ(LiVESList * alist, LiVESList * blist) {
   // for long lists this would be quicker if we sorted the lists first; however this function
   // is designed to deal with short lists only
 
-  LiVESList *plist;
+  LiVESList *plist, *rlist = blist;
 
   if (lives_list_length(alist) != lives_list_length(blist)) return TRUE; // check the simple case first
 
@@ -5057,16 +5028,18 @@ boolean string_lists_differ(LiVESList * alist, LiVESList * blist) {
 
   plist = alist;
   while (plist != NULL) {
-    LiVESList *qlist = blist;
-    boolean matched = FALSE;
+    LiVESList *qlist = rlist;
+    boolean matched = TRUE;
     while (qlist != NULL) {
       if (!(lives_utf8_strcasecmp((char *)plist->data, (char *)qlist->data))) {
-        matched = TRUE;
+        if (matched) rlist = qlist;
+        else matched = TRUE;
         break;
       }
+      matched = FALSE;
       qlist = qlist->next;
     }
-    if (!matched) return TRUE;
+    if (qlist == NULL) return TRUE;
     plist = plist->next;
   }
 

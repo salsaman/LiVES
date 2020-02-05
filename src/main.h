@@ -564,19 +564,24 @@ typedef enum {
 
 #define CLIP_LEFT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? mainw->files[clip]->laudio_time : 0.))
 
-#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? mainw->files[clip]->raudio_time : 0.) : 0.))
+#define CLIP_RIGHT_AUDIO_TIME(clip) ((double)(IS_VALID_CLIP(clip) ? (mainw->files[clip]->achans > 1 ? \
+								     mainw->files[clip]->raudio_time : 0.) : 0.))
 
-#define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) ? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
+#define CLIP_AUDIO_TIME(clip) ((double)(CLIP_LEFT_AUDIO_TIME(clip) >= CLIP_RIGHT_AUDIO_TIME(clip) \
+					? CLIP_LEFT_AUDIO_TIME(clip) : CLIP_RIGHT_AUDIO_TIME(clip)))
 
-#define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : CLIP_AUDIO_TIME(clip)))
+#define CLIP_TOTAL_TIME(clip) ((double)(CLIP_VIDEO_TIME(clip) > CLIP_AUDIO_TIME(clip) ? CLIP_VIDEO_TIME(clip) : \
+					CLIP_AUDIO_TIME(clip)))
 
-#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK || mainw->files[clip]->clip_type == CLIP_TYPE_FILE) : FALSE)
+#define IS_NORMAL_CLIP(clip) (IS_VALID_CLIP(clip) ? (mainw->files[clip]->clip_type == CLIP_TYPE_DISK \
+						     || mainw->files[clip]->clip_type == CLIP_TYPE_FILE) : FALSE)
 
 #define CURRENT_CLIP_IS_NORMAL IS_NORMAL_CLIP(mainw->current_file)
 
 #define LIVES_IS_PLAYING (mainw != NULL && mainw->playing_file > -1)
 
-#define LIVES_IS_RENDERING (mainw != NULL && ((mainw->multitrack == NULL && mainw->is_rendering) || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)))
+#define LIVES_IS_RENDERING (mainw != NULL && ((mainw->multitrack == NULL && mainw->is_rendering) \
+					      || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)))
 
 #define CURRENT_CLIP_TOTAL_TIME CLIP_TOTAL_TIME(mainw->current_file)
 
@@ -1391,6 +1396,7 @@ char *ensure_extension(const char *fname, const char *ext) WARN_UNUSED;
 void activate_url_inner(const char *link);
 void activate_url(LiVESAboutDialog *about, const char *link, livespointer data);
 void show_manual_section(const char *lang, const char *section);
+void maybe_add_mt_idlefunc(void);
 
 double calc_time_from_frame(int clip, int frame);
 int calc_frame_from_time(int filenum, double time);   ///< nearest frame [1, frames]
@@ -1460,10 +1466,9 @@ LiVESList *get_set_list(const char *dir, boolean utf8);
 char *subst(const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
-int hextodec(char *string);
-int get_hex_digit(const char *c) GNU_CONST;
+int hextodec(const char *string);
 
-uint64_t fastrand(void);
+uint64_t fastrand(void) GNU_PURE;
 void fastsrand(uint64_t seed);
 
 // pangotext.c

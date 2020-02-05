@@ -110,54 +110,6 @@ typedef struct {
 
 #endif
 
-// internal thread fns
-void *convert_rgb_to_uyvy_frame_thread(void *cc_params);
-void *convert_bgr_to_uyvy_frame_thread(void *cc_params);
-void *convert_rgb_to_yuyv_frame_thread(void *cc_params);
-void *convert_bgr_to_yuyv_frame_thread(void *cc_params);
-void *convert_argb_to_uyvy_frame_thread(void *cc_params);
-void *convert_argb_to_yuyv_frame_thread(void *cc_params);
-
-void *convert_rgb_to_yuv_frame_thread(void *cc_params);
-void *convert_bgr_to_yuv_frame_thread(void *cc_params);
-void *convert_argb_to_yuv_frame_thread(void *cc_params);
-void *convert_rgb_to_yuvp_frame_thread(void *cc_params);
-void *convert_bgr_to_yuvp_frame_thread(void *cc_params);
-void *convert_argb_to_yuvp_frame_thread(void *cc_params);
-
-void *convert_uyvy_to_rgb_frame_thread(void *cc_params);
-void *convert_uyvy_to_bgr_frame_thread(void *cc_params);
-void *convert_uyvy_to_argb_frame_thread(void *cc_params);
-void *convert_yuyv_to_rgb_frame_thread(void *cc_params);
-void *convert_yuyv_to_bgr_frame_thread(void *cc_params);
-void *convert_yuyv_to_argb_frame_thread(void *cc_params);
-
-void *convert_yuv_planar_to_rgb_frame_thread(void *cc_params);
-void *convert_yuv_planar_to_bgr_frame_thread(void *cc_params);
-void *convert_yuv_planar_to_argb_frame_thread(void *cc_params);
-
-void *convert_yuv888_to_rgb_frame_thread(void *cc_params);
-void *convert_yuv888_to_bgr_frame_thread(void *cc_params);
-void *convert_yuv888_to_argb_frame_thread(void *cc_params);
-void *convert_yuva8888_to_rgba_frame_thread(void *cc_params);
-void *convert_yuva8888_to_bgra_frame_thread(void *cc_params);
-void *convert_yuva8888_to_argb_frame_thread(void *cc_params);
-
-void *convert_swap3_frame_thread(void *cc_params);
-void *convert_swap4_frame_thread(void *cc_params);
-void *convert_swap3addpost_frame_thread(void *cc_params);
-void *convert_swap3addpre_frame_thread(void *cc_params);
-void *convert_swap3delpost_frame_thread(void *cc_params);
-void *convert_swap3delpre_frame_thread(void *cc_params);
-void *convert_addpre_frame_thread(void *cc_params);
-void *convert_addpost_frame_thread(void *cc_params);
-void *convert_delpre_frame_thread(void *cc_params);
-void *convert_delpost_frame_thread(void *cc_params);
-void *convert_swap3postalpha_frame_thread(void *cc_params);
-void *convert_swapprepost_frame_thread(void *cc_params);
-
-void *convert_swab_frame_thread(void *cc_params);
-
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 typedef weed_plant_t weed_layer_t;
@@ -203,7 +155,7 @@ boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
-boolean letterbox_layer(weed_layer_t *layer, int width, int height, int nwidth, int nheight, LiVESInterpType interp, int tpal,
+boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
                         int tclamp);
 boolean compact_rowstrides(weed_layer_t *);
 

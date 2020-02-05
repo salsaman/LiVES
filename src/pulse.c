@@ -40,7 +40,8 @@ static int lock_count = 0;
 
 // round int a up to next multiple of int b, unless a is already a multiple of b
 LIVES_LOCAL_INLINE int64_t align_ceilng(int64_t val, int mod) {
-  return (int64_t)((double)(val + mod - 1.) / (double)mod) * (int64_t)mod;
+  int64_t lmod = (int64_t)mod;
+  return (int64_t)((val + lmod - 1) / lmod) * lmod;
 }
 
 LIVES_GLOBAL_INLINE void pa_mloop_lock(void) {
@@ -621,6 +622,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             int qnt = afile->achans * (afile->asampsize >> 3);
             pulsed->seek_pos = align_ceilng(pulsed->seek_pos, qnt);
             lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
+            pulsed->real_seek_pos = pulsed->seek_pos;
             if (pulsed->playing_file == mainw->ascrap_file || afile->pb_fps > 0.) {
               lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
             } else {
@@ -628,7 +630,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             }
           }
 
-          if (shrink_factor < 0 && (mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
+          if (shrink_factor < 0. && (mainw->agen_key == 0 || mainw->multitrack != NULL || mainw->preview) && in_bytes > 0) {
             pulsed->aPlayPtr->size = lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data), in_bytes, TRUE);
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data);
           }
@@ -698,6 +700,10 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               sample_move_d8_d16((short *)(pulsed->sound_buffer), (uint8_t *)buffer, numFramesToWrite, in_bytes,
                                  shrink_factor, pulsed->out_achans, pulsed->in_achans, swap_sign ? SWAP_U_TO_S : 0);
             } else {
+              if (shrink_factor < 0.) {
+                reverse_buffer(buffer, in_bytes, pulsed->in_achans * 2);
+                shrink_factor = -shrink_factor;
+              }
               sample_move_d16_d16((short *)pulsed->sound_buffer, (short *)buffer, numFramesToWrite, in_bytes, shrink_factor,
                                   pulsed->out_achans, pulsed->in_achans, pulsed->reverse_endian ? SWAP_X_TO_L : 0,
                                   swap_sign ? SWAP_U_TO_S : 0);

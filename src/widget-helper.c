@@ -10471,11 +10471,11 @@ int lives_utf8_strcmpfunc(livesconstpointer a, livesconstpointer b, livespointer
   int ret;
   char *tmp1, *tmp2;
   if (LIVES_POINTER_TO_INT(fwd))
-    ret = lives_strcmp((tmp1 = lives_utf8_collate_key(a, -1)),
-                       (tmp2 = lives_utf8_collate_key(b, -1)));
+    ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(a, -1)),
+                               (tmp2 = lives_utf8_collate_key(b, -1)));
   else
-    ret = lives_strcmp((tmp1 = lives_utf8_collate_key(b, -1)),
-                       (tmp2 = lives_utf8_collate_key(a, -1)));
+    ret = lives_strcmp_ordered((tmp1 = lives_utf8_collate_key(b, -1)),
+                               (tmp2 = lives_utf8_collate_key(a, -1)));
   lives_free(tmp1);
   lives_free(tmp2);
   return ret;

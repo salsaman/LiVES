@@ -1214,9 +1214,9 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
   lives_memset(fmt_strings, 0, MAX_FMT_STRINGS * FMT_STRING_SIZE);
 
   for (pass = 0; pass < 2; pass++) {
-    // in this mode we do 2 passes: first check if the row is similar to the follwoing row
-    // (ignoring any rows with jusr labels or hseparators)
-    // if so we mark it as layoutable
+    // in this mode we do 2 passes: first check if the row is similar to the following row
+    // (ignoring any rows with just labels or hseparators)
+    // if so we mark it as 'layoutable'
 
     // to compare: make a string with the following vals: paramtype, or label (-2), or fill (-1)
     // following this we compare the strings
@@ -1230,7 +1230,7 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     for (i = 0; list != NULL; i++) {
       line = (char *)list->data;
       list = list->next;
-      //g_print("IDX2 %d %d %d %s\n", pass, i, chk_params, line);
+      g_print("IDX2 %d %d %d %s\n", pass, i, chk_params, line);
 
       layout_mode = FALSE;
       has_box = FALSE;
@@ -1238,8 +1238,8 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
       noslid = FALSE;
       if (i < MAX_FMT_STRINGS - 1) {
         format = fmt_strings[i];
-        if (pass == 1 && !chk_params) {
-          if (fmt_match((char *)fmt_strings[i])) {
+        if (pass == 1 && !chk_params && (i > 0 || list != NULL)) {
+          if (fmt_match((char *)fmt_strings[list == NULL ? i  - 1 : i])) {
             layout_mode = TRUE;
             if (layoutx == NULL) {
               widget_opts.packing_height *= 2;

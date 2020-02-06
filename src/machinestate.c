@@ -762,43 +762,75 @@ int check_for_bad_ffmpeg(void) {
 
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
 
+#define getnulpos(nulmask) ((nulmask & 0x0000000080808080) ? ((nulmask & 0x0000000000008080) ? \
+							      ((nulmask & 0x0000000000000080) ? 0 : 1) : (((nulmask & 0x0000000000800000) ? 2 : 3))) : \
+			    ((nulmask & 0x0000808000000000) ? ((nulmask & 0x0000008000000000) ? 4 : 5) : \
+			     ((nulmask & 0x0080000000000000) ? 6 : 7)))
+
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
-  const char *p = s;
-  int64_t *pi = (int64_t *)p, d;
-  if (s) do {
-      if ((const char *)pi == p) {
-        do {
-          d  = *pi;
-          p += 8;
-          pi++;
-        } while (!hasNulByte(d));
-        p -= 8;
-        if (!(*p)) break;
-        pi = (int64_t *)p;
-      } p++;
-    } while (*p);
-  return p - s;
+  if (!s) return 0;
+  else {
+    const char *p = s;
+    uint64_t *pi = (uint64_t *)p, nulmask;
+    while (*p) {
+      if ((void *)pi == (void *)p) {
+        while (!(nulmask = hasNulByte(*pi))) ++pi;
+        if ((void *)pi - (void *)s + getnulpos(nulmask) != strlen(s)) {
+          g_print("len of %s (%ld) is of course %ld + %d, i.e. %ld %lx   \n", s, strlen(s),
+                  (void *)pi - (void *)s, getnulpos(nulmask), (void *)pi - (void *)s + getnulpos(nulmask), nulmask);
+          return (void *)pi - (void *)s + getnulpos(nulmask) ;
+        }
+      }
+      p++;
+    }
+    return p - s;
+  }
 }
 
 /// returns FALSE if strings match
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
-    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
-      if ((const char *)ip1 == st1 && (const char *)ip2 == st2) {
-        do {
-          d1 = *(ip1++);
-          d2 = *(ip2++);
-        } while (d1 == d2 && !hasNulByte(d1));
-        if (!hasNulByte(d2)) return TRUE;
+      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
+        while (1) {
+          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {
+            if (hasNulByte(d1)) {
+              if (!hasNulByte(d2)) return TRUE;
+              break;
+            }
+          } else {
+            if (!hasNulByte(d1) || !(hasNulByte(d2))) return TRUE;
+            break;
+          }
+        }
         st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
       }
       if (*st1 != *st2 || !(*st1)) break;
       st1++; st2++;
     }
   }
-  return (*st1 != *st2);
+  return (*st2 != 0);
+}
+
+LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
+  if (!st1 || !st2) return (st1 != st2);
+  else {
+    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
+    while (1) {
+      if ((const char *)ip1 == st1 && (const char *)ip2 == st2) {
+        do {
+          d1 = *(ip1++);
+          d2 = *(ip2++);
+        } while (d1 == d2 && !hasNulByte(d1));
+        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
+      }
+      if (*st1 != *st2 || !(*st1)) break;
+      st1++; st2++;
+    }
+  }
+  return (*st1 > *st2) - (*st1 < *st2);
 }
 
 /// returns FALSE if strings match
@@ -806,7 +838,7 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
   if (!st1 || !st2) return (st1 != st2);
   else {
     size_t xlen = len >> 3;
-    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+    uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
       if (xlen && (const char *)ip1 == st1 && (const char *)ip2 == st2) {
         do {
@@ -1086,7 +1118,7 @@ LIVES_GLOBAL_INLINE void reverse_bytes(char *buff, size_t count, size_t gran) {
 boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   // reverse chunk sized bytes in buff, count must be a multiple of chunk
   ssize_t start = -1, end;
-  size_t ocount = count - 1;
+  size_t ocount = count;
 
   if (chunk < 8) {
     if ((chunk != 4 && chunk != 2 && chunk != 1) || (count % chunk) != 0) return FALSE;
@@ -1095,7 +1127,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     else {
       void *tbuff = lives_malloc(chunk);
       start++;
-      end = ocount -  chunk;
+      end = ocount - 1 - chunk;
       while (start + chunk < end) {
         lives_memcpy(tbuff, &buff[end], chunk);
         lives_memcpy(&buff[end], &buff[start], chunk);
@@ -1111,8 +1143,8 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   /// halve the number of bytes, since we will work forwards and back to meet in the middle
   count >>= 1;
 
-  if (!(count & 0x03)) {
-    /// half-count is a multiple of 4, thus count is a multiple of 8.
+  if (count >= 8) {
+    // start by swapping 8 bytes from each end
     uint64_t *buff8 = (uint64_t *)buff;
     if ((void *)buff8 == (void *)buff) {
       end = ocount  >> 3;
@@ -1133,16 +1165,15 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     }
   }
 
-  if (chunk > 4) return FALSE;
+  /// remainder should be only 6, 4, or 2 bytes in the middle
 
-  /// remainder should be only 6, 4, or 2 bytes in the middle   with a chunk size of 2 or 4
-
-  if (!(count & 0x01)) {
-    /// half-count is a multiple of 2, thus count is a multiple of 4.
+  if (count >= 4) {
     uint32_t *buff4 = (uint32_t *)buff;
     if ((void *)buff4 == (void *)buff) {
-      end = (ocount - start) >> 2;
-      if (start > 0) start >>= 2;
+      if (start > 0) {
+        end = (ocount - start) >> 2;
+        start >>= 2;
+      } else end = ocount >> 2;
       for (; count >= 4; count -= 4) {
         /// swap 4 bytes at a time from start and end
         uint32_t tmp4 = buff4[--end];
@@ -1160,13 +1191,16 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     }
   }
 
-  /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 2
-  if (chunk > 2) return FALSE;
+  /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 4 or 2 or 1
+  if (chunk > 4) return FALSE;
 
   if (count > 0) {
     uint16_t *buff2 = (uint16_t *)buff;
     if ((void *)buff2 == (void *)buff) {
-      end = (ocount - start) >> 1;
+      if (start > 0) {
+        end = (ocount - start) >> 1;
+        start >>= 1;
+      } else end = ocount >> 1;
       for (; count > 0; count -= 2) {
         /// swap 2 bytes at a time from start and end
         uint16_t tmp2 = buff2[--end];
@@ -1178,10 +1212,10 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         else {
           swab2(&buff2[++start], &buff2[end], 1);
           swab2(&tmp2, &buff2[start], 1);
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
+
   if (count == 0) return TRUE;
   return FALSE;
 }

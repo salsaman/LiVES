@@ -2731,7 +2731,6 @@ void play_file(void) {
 
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
-
     if (mainw->jackd_read != NULL || mainw->aud_rec_fd != -1)
       jack_rec_audio_end(!(prefs->perm_audio_reader && prefs->audio_src == AUDIO_SRC_EXT), TRUE);
 

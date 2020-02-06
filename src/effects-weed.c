@@ -1,6 +1,6 @@
 // effects-weed.c
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2019 (salsaman+lives@gmail.com)
+// (c) G. Finch 2005 - 2020 (salsaman+lives@gmail.com)
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -4889,16 +4889,13 @@ static void make_fx_defs_menu(int num_weed_compounds) {
 
 void weed_load_all(void) {
   // get list of plugins from directory and create our fx
-  int i, j, plugin_idx, subdir_idx;
-
   LiVESList *weed_plugin_list, *weed_plugin_sublist;
-
+  char **dirs;
   char *lives_weed_plugin_path, *weed_plugin_path, *weed_p_path;
   char *subdir_path, *subdir_name, *plugin_path, *plugin_name;
-  int numdirs;
-  char **dirs;
 
-  int listlen, ncompounds;
+  int numdirs, ncompounds;
+  register int i, j;
 
   num_weed_filters = 0;
   num_weed_dupes = 0;
@@ -4973,39 +4970,39 @@ void weed_load_all(void) {
 
   for (i = 0; i < numdirs; i++) {
     // get list of all files
-    weed_plugin_list = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, dirs[i], NULL);
-    listlen = lives_list_length(weed_plugin_list);
+    LiVESList *list = weed_plugin_list = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, dirs[i], NULL);
 
     // parse twice, first we get the plugins, then 1 level of subdirs
-    for (plugin_idx = 0; plugin_idx < listlen; plugin_idx++) {
+    while (list != NULL) {
+      LiVESList *listnext = list->next;
       threaded_dialog_spin(0.);
-      plugin_name = (char *)lives_list_nth_data(weed_plugin_list, plugin_idx);
+      plugin_name = (char *)list->data;
       if (!lives_strncmp(plugin_name + lives_strlen(plugin_name) - strlen(DLL_NAME) - 1, "." DLL_NAME, strlen(DLL_NAME) + 1)) {
         plugin_path = lives_build_filename(dirs[i], plugin_name, NULL);
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);
         lives_free(plugin_path);
-        weed_plugin_list = lives_list_delete_link(weed_plugin_list, lives_list_nth(weed_plugin_list, plugin_idx));
-        plugin_idx--;
-        listlen--;
+        if (list->prev != NULL) list->prev->next = listnext;
+        else weed_plugin_list = listnext;
+        if (listnext != NULL) listnext->prev = list->prev;
       }
+      list = listnext;
       threaded_dialog_spin(0.);
     }
 
     // get 1 level of subdirs
-    for (subdir_idx = 0; subdir_idx < listlen; subdir_idx++) {
+    for (list = weed_plugin_list; list != NULL; list = list->next) {
       threaded_dialog_spin(0.);
-      subdir_name = (char *)lives_list_nth_data(weed_plugin_list, subdir_idx);
+      subdir_name = (char *)list->data;
       subdir_path = lives_build_filename(dirs[i], subdir_name, NULL);
       if (!lives_file_test(subdir_path, LIVES_FILE_TEST_IS_DIR) || !strcmp(subdir_name, "icons") || !strcmp(subdir_name, "data")) {
         lives_free(subdir_path);
         continue;
       }
 
-      weed_plugin_sublist = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, subdir_path, DLL_NAME);
-
-      for (plugin_idx = 0; plugin_idx < lives_list_length(weed_plugin_sublist); plugin_idx++) {
-        plugin_name = (char *)lives_list_nth_data(weed_plugin_sublist, plugin_idx);
+      for (LiVESList *list2 = weed_plugin_sublist = get_plugin_list(PLUGIN_EFFECTS_WEED, TRUE, subdir_path, DLL_NAME);
+           list2 != NULL; list2 = list2 ->next) {
+        plugin_name = (char *)list2->data;
         plugin_path = lives_build_filename(subdir_path, plugin_name, NULL);
         load_weed_plugin(plugin_name, plugin_path, subdir_path);
         lives_free(plugin_path);
@@ -7213,11 +7210,9 @@ static int unregister_audio_channels(int nchannels) {
 static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
   // this is for filter instances with mixed audio / video inputs/outputs
   // uneffected audio is buffered by the audio thread; here we copy / convert it to a video effect's audio channel
-
-  // for now, skips in the audio are permitted, only the last channel to read is guaranteed all of the audio
-
   // purely audio filters run in the audio thread
-  lives_audio_buf_t *audbuf;
+
+  static lives_audio_buf_t *audbuf;
 
   if (achan != NULL) {
     weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
@@ -7232,8 +7227,13 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
   // lock the buffers
   pthread_mutex_lock(&mainw->abuf_frame_mutex);
 
-  // cast away the (volatile)
-  audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer;
+  if (mainw->afbuffer_clients_read == 0) {
+    /// when the first client reads, we grab the audio frame buffer and swap the other for writing
+    // cast away the (volatile)
+    audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer;
+    if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
+    else mainw->audio_frame_buffer = mainw->afb[0];
+  }
 
   // push read buffer to channel
   if (achan != NULL && audbuf != NULL) {
@@ -7242,11 +7242,7 @@ static boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
   }
 
   if (++mainw->afbuffer_clients_read >= mainw->afbuffer_clients) {
-    // all clients have read the data
-    // swap buffers for writing
-    // TODO: clients which read earlier will miss any data added to the buffer since then
-    if (audbuf == mainw->afb[0]) mainw->audio_frame_buffer = mainw->afb[1];
-    else mainw->audio_frame_buffer = mainw->afb[0];
+    // all clients have read the data, now we can free it
     free_audio_frame_buffer(audbuf);
     mainw->afbuffer_clients_read = 0;
   }

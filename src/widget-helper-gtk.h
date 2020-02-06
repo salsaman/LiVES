@@ -188,7 +188,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_printerr(...) g_printerr(__VA_ARGS__)
 #define lives_strdup_printf(...) g_strdup_printf(__VA_ARGS__)
 #define lives_strdup_vprintf(...) g_strdup_vprintf(__VA_ARGS__)
-#define lives_strndup_printf(...) g_strndup_printf(__VA_ARGS__)
 #define lives_strndup(a, b) g_strndup(a, b)
 #define lives_snprintf(a, b, ...) g_snprintf(a, b, __VA_ARGS__)
 #define lives_strsplit(a, b, c) g_strsplit(a, b, c)
@@ -203,9 +202,6 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_strstr_len(a, b, c) g_strstr_len(a, b, c)
 #define lives_strdelimit(a, b, c) g_strdelimit(a, b, c)
 
-#define LIVES_NORMALIZE_DEFAULT G_NORMALIZE_DEFAULT
-
-#define lives_utf8_normalize(a, b, c) g_utf8_normalize(a, b, c)
 #define lives_utf8_collate(a, b) g_utf8_collate(a, b)
 #define lives_utf8_collate_key(a, b) g_utf8_collate_key(a, b)
 #define lives_utf8_casefold(a, b) g_utf8_casefold(a, b)

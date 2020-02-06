@@ -3875,9 +3875,7 @@ lives_render_error_t render_events(boolean reset) {
                 render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                                      mainw->current_file, xavel, xaseek, q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5),
                                          cfile->fps),
-                                     q_gint64(tc + (weed_timecode_t)((next_frame_event != NULL || is_blank) ? 0
-                                              : TICKS_PER_SECOND_DBL / cfile->fps),
-                                              cfile->fps), chvols, 1., 1., NULL);
+                                     q_gint64(tc, cfile->fps), chvols, 1., 1., NULL);
                 if (mainw->write_failed) {
                   int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file);
                   char *outfilename = lives_get_audio_file_name(outfile);

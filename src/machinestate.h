@@ -197,6 +197,7 @@ void *_ext_calloc(size_t, size_t);
 size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT;
 boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT;
+int lives_strcmp_ordered(const char *st1, const char *st2) GNU_HOT;
 
 void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
 void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;

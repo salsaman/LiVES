@@ -442,31 +442,28 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
                          uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) {
   // TODO: going from >1 channels to 1, we should average
   register int nSrcCount, nDstCount;
-  register float src_offset_f = 0.f;
   register int src_offset_i = 0;
   register int ccount = 0;
   static float rem = 0.;
+  register float src_offset_f = rem;
   int16_t *ptr;
   int16_t *src_end;
 
   if (!nSrcChannels) return;
 
   if (scale < 0.f) {
-    src_offset_f = ((float)(nsamples) * (-scale) - 1.f);
+    src_offset_f = ((float)(nsamples) * (-scale) - 1.f - rem);
     src_offset_i = (int)src_offset_f * nSrcChannels;
-    /* if (rem < 0.) */
-    /*   //src_offset_f -= rem; */
-    /*   } */
-  } else {
-    if (rem > 0.)
-      src_offset_f += rem;
   }
+
 
   // take care of rounding errors
   src_end = src + tbytes / 2 - nSrcChannels;
-  if ((size_t)(fabs(nsamples * scale * 2. * nSrcChannels)) > tbytes) scale = (scale > 0. ? (float)tbytes / (float)(
-          nsamples * nSrcChannels * 2.)
-        : (float)tbytes / (float)(-nsamples * nSrcChannels * 2.));
+
+  if ((size_t)((fabs(scale) * (float)nsamples) + rem) * nSrcChannels * 2 > tbytes)
+    scale = scale > 0. ? ((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples
+            :  -(((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples);
+
   while (nsamples--) {
     if ((nSrcCount = nSrcChannels) == (nDstCount = nDstChannels) && !swap_endian && !swap_sign) {
       // same number of channels
@@ -521,9 +518,10 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
       }
     }
     /* advance the the position */
-    src_offset_i = (int)((src_offset_f += scale)) * nSrcChannels;
+    src_offset_i = (int)((src_offset_f += scale) + .4999) * nSrcChannels;
   }
-  rem = (src_offset_f) - (float)src_offset_i;
+  if (src_offset_f > tbytes) rem = src_offset_f - (float)tbytes;
+  else rem = 0.;
 }
 
 
@@ -1147,7 +1145,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   double ins_pt = tc / TICKS_PER_SECOND_DBL;
   double time = 0.;
   double opvol = opvol_start;
-  double zavel, zavel_max = 0.;
+  double zavel, zzavel, zavel_max = 0.;
 
   boolean out_reverse_endian = FALSE;
   boolean is_fade = FALSE;
@@ -1267,7 +1265,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       seekstart[track] = ((off64_t)(seekstart[track] / in_achans[track] / (in_asamps[track]))) * in_achans[track] * in_asamps[track];
 
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track] / sizeof(float);
-      if (ABS(zavel) > zavel_max) zavel_max = ABS(zavel);
+      if (fabs(zavel) > zavel_max) zavel_max = fabs(zavel);
 
       infilename = lives_get_audio_file_name(from_files[track]);
 
@@ -1390,7 +1388,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// tbytes: how many bytes we want ot read in. This is xsamples * the track velocity.
       /// we add a small random factor here, so half the time we round up, half the time we round down
       /// otherwise we would be gradually losing or gaining samples
-      tbytes = (int)((double)xsamples * ABS(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
+      tbytes = (int)((double)xsamples * fabs(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
                in_asamps[track] * in_achans[track];
 
       if (tbytes <= 0) {
@@ -1427,25 +1425,28 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (bytes_read < tbytes && bytes_read >= 0)  lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
 
-      nframes = (tbytes / (in_asamps[track]) / in_achans[track] / ABS(zavel) + .001);
+      nframes = (tbytes / (in_asamps[track]) / in_achans[track] / fabs(zavel) + .001);
 
       /// convert to float
       /// - first we convert to 16 bit stereo (if it was 8 bit and / or mono) and we resample
       /// input is tbytes bytes at rate * velocity, and we should get out nframes audio frames at out_arate. out_achans
       /// result is in holding_buff
+      zzavel = zavel;
       if (in_asamps[track] == 1) {
+        if (zavel < 0.) {
+          if (reverse_buffer(in_buff, tbytes, in_achans[track]))
+            zavel = -zavel;
+        }
         sample_move_d8_d16(holding_buff, (uint8_t *)in_buff, nframes, tbytes, zavel, out_achans, in_achans[track], 0);
       } else {
-        if (0 && zavel < 0.) {
-          g_print("rev %p, %ld, %d\n", in_buff, tbytes, in_achans[track] * 2);
-          reverse_buffer(in_buff, tbytes, in_achans[track] * 2);
-          g_print("done\n");
-          zavel = -zavel;
+        if (zavel < 0.) {
+          if (reverse_buffer(in_buff, tbytes, in_achans[track] * 2))
+            zavel = -zavel;
         }
         sample_move_d16_d16(holding_buff, (short *)in_buff, nframes, tbytes, zavel, out_achans,
                             in_achans[track], in_reverse_endian[track] ? SWAP_X_TO_L : 0, 0);
       }
-
+      zavel = zzavel;
       lives_free(in_buff);
 
       for (c = 0; c < out_achans; c++) {
@@ -1485,7 +1486,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
         // process events up to current tc:
         // filter inits and deinits, and filter maps will update the current fx state
-        audio_process_events_to(tc);
+        if (tc > 0) audio_process_events_to(tc);
 
         if (mainw->multitrack != NULL || mainw->afilter_map != NULL) {
 
@@ -2000,7 +2001,7 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
   register int i;
 
   int btoffs = mainw->multitrack != NULL ? mainw->multitrack->opts.back_audio_tracks : 1;
-  num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
+  num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks) * 2;
   for (i = 0; i < num_aclips; i += 2) {
     if (aclips[i + 1] > 0) { // else ignore
       atrack = aclips[i];
@@ -2279,7 +2280,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
         aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
       }
 
-      tc += (TICKS_PER_SECOND_DBL / cfile->fps * !is_blank_frame(event, FALSE));
       last_tc = tc;
 
       // process audio updates at this frame
@@ -2794,17 +2794,26 @@ static void *cache_my_audio(void *arg) {
     // resample as we go
     if (cbuffer->in_asamps == 8) {
       // TODO - error on non-interleaved
+      if (cbuffer->shrink_factor < 0.) {
+        if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans))
+          cbuffer->shrink_factor = -cbuffer->shrink_factor;
+      }
       sample_move_d8_d16(cbuffer->buffer16[0], (uint8_t *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize,
                          cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans, 0);
     }
     // 16 bit input samples
     // resample as we go
     else {
+      if (cbuffer->shrink_factor < 0.) {
+        if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans * 2))
+          cbuffer->shrink_factor = -cbuffer->shrink_factor;
+      }
       sample_move_d16_d16(cbuffer->buffer16[0], (short *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize,
                           cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans,
                           cbuffer->swap_endian ? SWAP_X_TO_L : 0, 0);
     }
     sched_yield();
+    cbuffer->shrink_factor = cbuffer->_shrink_factor;
 
     // if our out_asamps is 16, we are done
 
@@ -3181,7 +3190,6 @@ boolean apply_rte_audio(int nframes) {
                                                (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
                                                1.0);
     }
-
   } else {
     // read from plugin. This should already be float.
     get_audio_from_plugin(fltbuf, cfile->achans, cfile->arate, nframes, FALSE);
@@ -3260,17 +3268,12 @@ boolean apply_rte_audio(int nframes) {
   audio will be formatted to the channel requested format
 
   when we have audio effects running, the buffer is constantly fiiled from the audio thread (we have two buffers so that
-  we dont hang the player during read). We keep track of how many audio clients (filters) require audio and
-  only when all reads have been satisfied we swap the read and write buffers (with a mutex lock / unlock)
+  we dont hang the player during read). When the first client reads, the buffers are swapped.
 
   if player is jack, we will have non-interleaved float, if player is pulse, we will have interleaved S16 so we have to convert to float and
   then back again.
 
   (this is currently only used to push audio to generators, since there are currently no filters which allow both video and audio input)
-
-  (Filters which are purely audio are run from the audio thread, since the need to return audio back to the player.
-  This is less than optimal, and likely in the future, a separate thread will be used  to run the audio filters).
-
 */
 boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_audio_buf_t *abuf) {
   float **dst, *src;

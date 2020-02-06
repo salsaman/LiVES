@@ -1064,7 +1064,8 @@ LIVES_GLOBAL_INLINE uint64_t lives_10pow(int pow) {
 
 LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
   double factor = (double)lives_10pow(decimals);
-  return (double)((int)(val * factor + 0.5)) / factor;
+  if (val >= 0.) return (double)((int)(val * factor + 0.5)) / factor;
+  return (double)((int)(val * factor - 0.5)) / factor;
 }
 
 

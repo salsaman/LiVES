@@ -51,7 +51,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.2.0-pre";
+my $version = "3.0.3-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -529,7 +529,7 @@ if (defined($ARGV[0])) {
 	    if (defined(open IN, "< $pidfile")) {
 		read IN, $target_pid, 8;
 		close IN;
-		if ($target_pid eq NULL) {
+		if (!$target_pid) {
 		    exit 1;
 		}
 
@@ -2129,10 +2129,15 @@ if (defined($ARGV[0])) {
 		exit 1;
 	    }
 	    if (defined(open IN, "< $pidfile")) {
+		read IN, $target_pid, 8;
 		close IN;
-		# cancel any processing
-		&smog_system("smogrify stopsubsub \"$handle\"");
+		if ($target_pid) {
+		    my $sig = "KILL";
+		    # cancel any processing
+		    &kill_child_pids($target_pid, $sig);
+		}
 	    }
+
 	    if (&smog_chdir($curworkdir)) {
 		unlink glob "* .* *.*";
 		&smog_chdir($workdir);
@@ -4841,19 +4846,17 @@ if (defined($ARGV[0])) {
 
 
     sub smog_chdir {
-	# CAUTION: return value of 0 is error here
-
+	## return 0 on success
 	my $smdir = shift;
-
 	$smcomret = chdir $smdir;
-
 	if (!$smcomret) {
 	    if ($DEBUG_SMOGRIFY) {
 		print STDERR "smogrify debug - chdir failed ($!): $smdir\n";
 	    }
-	    sig_system_error("Changing to directory \"$smdir\"", $!);
+	    &sig_system_error("Changing to directory \"$smdir\"", $!);
 	    exit 1;
 	}
+	return $smcomret;
     }
 
 
@@ -8389,7 +8392,7 @@ if (defined($ARGV[0])) {
 	}
 
 	## copy new file here ###
-	smog_copy($newrcfile, $xrcfile);
+	&smog_copy($newrcfile, $xrcfile);
 	##################3
 
 	my $rcsize = -s $xrcfile;

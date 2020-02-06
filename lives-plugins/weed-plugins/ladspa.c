@@ -446,7 +446,7 @@ WEED_SETUP_START(200, 200) {
   int ninps, noutps, ninchs, noutchs;
   int oninps, onoutps, oninchs, onoutchs;
   int cninps, cnoutps;
-  int stcount;
+  int stcount, stcount2;
 
   int dual;
 
@@ -567,20 +567,23 @@ WEED_SETUP_START(200, 200) {
           ninps = oninps * 2;
           noutps = onoutps * 2;
 
-          rfx_strings = weed_malloc((ninps + 4 + stcount) * sizeof(char *));
-          for (pnum = 0; pnum < ninps + 4 + stcount; pnum++) {
+          if (ninchs == 0) stcount2 = 3;
+          else stcount2 = 4;
+          rfx_strings = weed_malloc((ninps + stcount2 + stcount) * sizeof(char *));
+          for (pnum = 0; pnum < ninps + stcount2 + stcount; pnum++) {
             rfx_strings[pnum] = (char *)weed_malloc(256);
           }
 
           if (ninchs == 0) {
-            sprintf(rfx_strings[stcount], "layout|\"Left output channel\"|");
+            sprintf(rfx_strings[stcount + 1], "layout|\"Left output channel\"|");
+            sprintf(rfx_strings[oninps + 1 + stcount], "layout|hseparator|");
             sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right output channel\"|");
           } else {
             if (ninchs == 1) sprintf(rfx_strings[stcount + 1], "layout|\"Left/mono channel\"");
             else sprintf(rfx_strings[stcount + 1], "layout|\"Left channel\"");
-            sprintf(rfx_strings[oninps + 2 + stcount], "layout|\"Right channel\"");
+            sprintf(rfx_strings[oninps + 3 + stcount], "layout|\"Right channel\"");
           }
-          sprintf(rfx_strings[oninps + 1 + stcount], "layout|hseparator|");
+          sprintf(rfx_strings[oninps + stcount2 - 2 + stcount], "layout|hseparator|");
         }
 
         if (ninps > 0) {
@@ -724,7 +727,7 @@ WEED_SETUP_START(200, 200) {
                 else weed_set_boolean_value(in_params[cninps + oninps], "plugin_logarithmic", WEED_FALSE);
 
                 sprintf(rfx_strings[cninps + 2 + stcount], "layout|p%d|", cninps);
-                sprintf(rfx_strings[cninps + oninps + 4 + stcount], "layout|p%d|", cninps + oninps);
+                sprintf(rfx_strings[cninps + oninps + stcount2 + stcount], "layout|p%d|", cninps + oninps);
               }
               cninps++;
             } else {
@@ -826,8 +829,13 @@ WEED_SETUP_START(200, 200) {
             weed_set_string_value(gui, "layout_rfx_delim", "|");
 
             // subtract 1 from ninps since we incremented it
-            weed_set_string_array(gui, "layout_rfx_strings", ninps + 3 + stcount, rfx_strings);
-            for (wnum = 0; wnum < ninps + 3 + stcount; wnum++) weed_free(rfx_strings[wnum]);
+
+            weed_set_string_array(gui, "layout_rfx_strings", ninps + stcount2 + stcount - 1, rfx_strings);
+            for (wnum = 0; wnum < ninps + stcount2 + stcount - 1; wnum++) {
+              if (verbosity == WEED_VERBOSITY_DEBUG)
+                fprintf(stderr, "rfx %d: %s\n", wnum, rfx_strings[wnum]);
+              weed_free(rfx_strings[wnum]);
+            }
             weed_free(rfx_strings);
             rfx_strings = NULL;
           }

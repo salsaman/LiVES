@@ -55,9 +55,8 @@ static float calc_angle(float y, float x) {
   return THREE_PI2;
 }
 
-
 static float calc_dist(float x, float y) {
-  return sqrtf((x * x + y * y));
+  return sqrtf(x * x + y * y);
 }
 
 typedef struct {
@@ -128,9 +127,8 @@ static void rotate(float r, float theta, float angle, float *x, float *y) {
   theta += angle;
   if (theta < 0.) theta += TWO_PI;
   else if (theta >= TWO_PI) theta -= TWO_PI;
-
-  *x = r * cos(theta);
-  *y = r * sin(theta);
+  *x = r * cosf(theta);
+  *y = r * sinf(theta);
 }
 
 
@@ -182,8 +180,8 @@ static int put_pixel(void *src, void *dst, int psize, float angle, float theta, 
 
   stheta += angle;
 
-  sx = r * cos(stheta) + .5;
-  sy = r * sin(stheta) + .5;
+  sx = r * cosf(stheta) + .5;
+  sy = r * sinf(stheta) + .5;
 
   if (sy < -hheight || sy >= hheight || sx < -hwidth || sx >= hwidth) {
     return 0;
@@ -229,7 +227,6 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
 
   if (width < height) side = width / 2. / RT32;
   else side = height / 2.;
-
   sfac = log(weed_get_double_value(in_params[0], WEED_LEAF_VALUE, NULL)) / 2.;
 
   angleoffs = weed_get_double_value(in_params[1], WEED_LEAF_VALUE, NULL);
@@ -286,12 +283,12 @@ static weed_error_t kal_process(weed_plant_t *inst, weed_timecode_t timestamp) {
       // rotate point to line up with hex grid
       theta = calc_angle((fi = (float)i), (fj = (float)j)); // get angle of this point from origin
       r = calc_dist(fi, fj); // get dist of point from origin
-      rotate(r, theta, -xangle + ONE_PI2, &a, &b); // since our central hex has rotated by angle, so has the hex grid - so compensate
+      rotate(r, theta, -xangle + ONE_PI2, &a, &b); // since our central hex has rotated by xangle, so has the hex grid - so compensate
 
-      // find hex center and angle to it
+      // find nearest hex center and angle to it
       calc_center(side, a, b, &x, &y);
 
-      // rotate hex center
+      // rotate hex center about itself
       theta = calc_angle(y, x);
       r = calc_dist(x, y);
       rotate(r, theta, xangle - ONE_PI2, &a, &b);
@@ -359,7 +356,7 @@ WEED_SETUP_START(200, 200) {
 
   weed_plant_t *in_chantmpls[] = {weed_channel_template_init("in channel 0", 0), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
-  weed_plant_t *in_params[] = {weed_float_init("szlen", "_Size (log)", 5.62, 1., 10.),
+  weed_plant_t *in_params[] = {weed_float_init("szln", "_Size (log)", 5.62, 2., 10.),
                                weed_float_init(WEED_LEAF_OFFSET, "_Offset angle", 0., 0., 359.),
                                weed_float_init("rotsec", "_Rotations per second", 0.2, 0., 4.),
                                weed_radio_init("acw", "_Anti-clockwise", WEED_TRUE, 1),

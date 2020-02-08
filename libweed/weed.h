@@ -94,13 +94,13 @@ typedef struct _weed_leaf weed_leaf_t;
 #define padbytes 16
 struct _weed_leaf {
   uint32_t	key_hash;
-  volatile weed_leaf_t *next;
+  weed_leaf_t *next;
   const char *key;
   char padding[padbytes];
-  volatile weed_size_t num_elements;
+  weed_size_t num_elements;
   int32_t  seed_type;
   int32_t flags;
-  volatile weed_data_t **data;
+  weed_data_t **data;
   void *private_data;
 };
 #endif

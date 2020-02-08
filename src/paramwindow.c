@@ -1881,11 +1881,10 @@ LiVESSList *add_usrgrp_to_livesgrp(LiVESSList *u2l, LiVESSList *rbgroup, int usr
 
 
 lives_widget_group_t *livesgrp_from_usrgrp(LiVESSList *u2l, int usrgrp) {
-  int i;
   lives_widget_group_t *group;
-
-  for (i = 0; i < lives_slist_length(u2l); i++) {
-    group = (lives_widget_group_t *)lives_slist_nth_data(u2l, i);
+  LiVESSList *list = u2l;
+  for (; list != NULL; list = list->next) {
+    group = (lives_widget_group_t *)list->data;
     if (group->usr_number == usrgrp) return group;
   }
   return NULL;

@@ -9,6 +9,8 @@
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
 
+#define USE_EXTEND
+
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
@@ -21,7 +23,12 @@
 
 // rgb / yuv conversion factors ////////////
 #define FP_BITS 16 /// max fp bits
+
+#ifdef USE_EXTEND
+#define SCALE_FACTOR 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1)
+#else
 #define SCALE_FACTOR (1 << FP_BITS)
+#endif
 
 #define KR_YCBCR 0.299
 #define KB_YCBCR 0.114
@@ -40,8 +47,8 @@
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
 
-#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
-#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX-YUV_CLAMP_MIN)/255.) // unclamped -> clamped
+#define CLAMP_FACTOR_Y ((Y_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
+#define CLAMP_FACTOR_UV ((UV_CLAMP_MAX - YUV_CLAMP_MIN) / 255.) // unclamped -> clamped
 
 #define UV_BIAS 128.
 
@@ -109,6 +116,8 @@ typedef struct {
 } lives_sw_params;
 
 #endif
+
+int32_t round_special(int32_t val);
 
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 

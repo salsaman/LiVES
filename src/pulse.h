@@ -16,8 +16,8 @@
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 #define LIVES_PA_BUFF_MAXLEN 16384
-#define LIVES_PA_BUFF_TARGET 1024
-#define LIVES_PA_BUFF_MINREQ 2048
+#define LIVES_PA_BUFF_TARGET 2048
+#define LIVES_PA_BUFF_MINREQ 1024
 #define LIVES_PA_BUFF_FRAGSIZE 4096
 
 #define PA_SAMPSIZE 16
@@ -37,6 +37,7 @@ typedef struct {
 
   volatile pa_usec_t usec_start;
   volatile pa_usec_t extrausec;
+  double tscale;
 
   int str_idx;
 

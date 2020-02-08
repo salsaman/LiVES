@@ -40,6 +40,10 @@ ticks_t q_gint64(ticks_t in, double fps);
 ticks_t q_gint64_floor(ticks_t in, double fps);
 ticks_t q_dbl(double in, double fps);
 
+size_t quant_asamps(double seek, int arate);
+double quant_aseek(double seek, int arate);
+off_t quant_abytes(double seek, int arate, int achans, int asampsize);
+
 #define SKJUMP_THRESH_RATIO 0.1 /// if fabs(recorded_vel / predicted_vel) < 1.0 +- SKJUMP_THRESH_RATIO then smooth the velocity
 #define SKJUMP_THRESH_SECS 0.1 /// if fabs(rec_seek - predicted_seek) < SKJUMP_THRESH_SECS then smooth the seek time
 

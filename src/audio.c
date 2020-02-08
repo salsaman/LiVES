@@ -9,6 +9,7 @@
 #include "events.h"
 #include "callbacks.h"
 #include "effects.h"
+#include "resample.h"
 #include "support.h"
 
 static char *storedfnames[NSTOREDFDS];
@@ -1123,11 +1124,13 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   weed_layer_t **layers = NULL;
   char *infilename, *outfilename;
   off64_t seekstart[nfiles];
+  off_t seek;
 
   int in_fd[nfiles];
   int in_asamps[nfiles];
   int in_achans[nfiles];
   int in_arate[nfiles];
+  int in_arps[nfiles];
   int in_unsigned[nfiles];
 
   boolean in_reverse_endian[nfiles];
@@ -1251,6 +1254,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     in_asamps[track] = infile->asampsize / 8;
     in_achans[track] = infile->achans;
     in_arate[track] = infile->arate;
+    in_arps[track] = infile->arps;
     in_unsigned[track] = infile->signed_endian & AFORM_UNSIGNED;
     in_bendian = infile->signed_endian & AFORM_BIG_ENDIAN;
 
@@ -1261,10 +1265,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         in_reverse_endian[track] = TRUE;
       else in_reverse_endian[track] = FALSE;
 
-      seekstart[track] = (off64_t)(fromtime[track] * in_arate[track]) * in_achans[track] * in_asamps[track];
-      seekstart[track] = ((off64_t)(seekstart[track] / in_achans[track] / (in_asamps[track]))) * in_achans[track] * in_asamps[track];
-
-      zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track] / sizeof(float);
+      /// this is not the velocity we will use for reading, but we need to estimate how many bytes we will read in
+      /// so we can calculate how many buffers to allocate
+      zavel = avels[track] * (double)in_arate[track] / (double)out_arate * in_asamps[track] * in_achans[track];
       if (fabs(zavel) > zavel_max) zavel_max = fabs(zavel);
 
       infilename = lives_get_audio_file_name(from_files[track]);
@@ -1279,15 +1282,18 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           lives_freep((void **)&mainw->read_failed_file);
           mainw->read_failed_file = lives_strdup(infilename);
           mainw->read_failed = TRUE;
-        }
-
-        if (track < NSTOREDFDS) {
-          storedfds[track] = in_fd[track];
-          storedfnames[track] = lives_strdup(infilename);
+        } else {
+          if (track < NSTOREDFDS) {
+            storedfds[track] = in_fd[track];
+            storedfnames[track] = lives_strdup(infilename);
+          }
         }
       }
-
-      if (in_fd[track] > -1) lives_lseek_buffered_rdonly_absolute(in_fd[track], seekstart[track]);
+      seek = lives_buffered_offset(in_fd[track]);
+      seekstart[track] = quant_abytes(fromtime[track], in_arps[track], in_achans[track], in_asamps[track]);
+      if (fabs(seekstart[track] - seek) > AUD_DIFF_MIN) {
+        lives_lseek_buffered_rdonly_absolute(in_fd[track], seekstart[track]);
+      }
       lives_free(infilename);
     }
   }
@@ -1385,7 +1391,8 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       /// TODO: when previewing / rendering in the clip editor, we should interpolate the velocities between frames
       zavel = avels[track] * (double)in_arate[track] / (double)out_arate;
 
-      /// tbytes: how many bytes we want ot read in. This is xsamples * the track velocity.
+      //g_print("zavel is %f\n", zavel);
+      /// tbytes: how many bytes we want to read in. This is xsamples * the track velocity.
       /// we add a small random factor here, so half the time we round up, half the time we round down
       /// otherwise we would be gradually losing or gaining samples
       tbytes = (int)((double)xsamples * fabs(zavel) + ((double)fastrand() / (double)LIVES_MAXUINT64)) *
@@ -1416,12 +1423,16 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (bytes_read < 0) bytes_read = 0;
 
+      if (in_fd[track] > -1) {
+        if (zavel < 0.) {
+          lives_lseek_buffered_rdonly(in_fd[track], -tbytes);
+        }
+      }
+
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
         if (mainw->read_failed) mainw->read_failed = FALSE;
       }
-
-      if (zavel < 0.) seekstart[track] -= bytes_read;
 
       if (bytes_read < tbytes && bytes_read >= 0)  lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
 
@@ -1993,15 +2004,15 @@ static lives_audio_track_state_t *resize_audstate(lives_audio_track_state_t *ost
 static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
   // parse an audio frame, and set the track file, seek and velocity values
   int num_aclips, atrack;
-  int *aclips;
-  double *aseeks;
+  int *aclips = NULL;
+  double *aseeks = NULL;
   int naudstate = 0;
   lives_audio_track_state_t *atstate = NULL;
 
   register int i;
 
   int btoffs = mainw->multitrack != NULL ? mainw->multitrack->opts.back_audio_tracks : 1;
-  num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks) * 2;
+  num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
   for (i = 0; i < num_aclips; i += 2) {
     if (aclips[i + 1] > 0) { // else ignore
       atrack = aclips[i];
@@ -2016,8 +2027,8 @@ static lives_audio_track_state_t *aframe_to_atstate(weed_plant_t *event) {
     }
   }
 
-  lives_free(aclips);
-  lives_free(aseeks);
+  lives_freep((void **)&aclips);
+  lives_freep((void **)&aseeks);
 
   return atstate;
 }
@@ -2189,16 +2200,17 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // effects are ignored here; they are applied in smaller chunks in render_audio_segment, so that parameter interpolation can be done
 
   lives_audio_track_state_t *atstate = NULL;
-  int nnfiles, i;
   double chvols[MAX_AUDIO_TRACKS]; // TODO - use list
 
-  static weed_timecode_t last_tc;
+  static weed_timecode_t last_tc, tc;
   static weed_timecode_t fill_tc;
   static weed_plant_t *event;
   static int nfiles;
 
   static int *from_files = NULL;
   static double *aseeks = NULL, *avels = NULL;
+
+  register int i;
 
   if (abuf == NULL) return;
 
@@ -2233,9 +2245,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     atstate = get_audio_and_effects_state_at(event_list, event, 0, LIVES_PREVIEW_TYPE_VIDEO_AUDIO, exact);
 
     if (atstate != NULL) {
-      for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-
-      for (i = 0; i < nnfiles; i++) {
+      for (i = 0; atstate[i].afile != -1; i++) {
         if (atstate[i].afile > 0) {
           from_files[i] = atstate[i].afile;
           avels[i] = atstate[i].vel;
@@ -2260,14 +2270,65 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // continue until we have a full buffer
   // if we get an audio frame we render up to that point
   // then we render what is left to fill abuf
-  while (event != NULL && get_event_timecode(event) <= fill_tc) {
+  while (event != NULL && (tc = get_event_timecode(event)) <= fill_tc) {
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
-      weed_timecode_t tc = get_event_timecode(event);
       if (tc >= fill_tc) break;
 
       mainw->read_failed = FALSE;
       lives_freep((void **)&mainw->read_failed_file);
+
+      render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
+
+      // process audio updates at this frame
+      atstate = aframe_to_atstate(event);
+
+      if (atstate != NULL) {
+
+#define SMOOTH_LIMIT 0//TICKS_PER_SECOND / 25
+#define SMOOTH_TC  SMOOTH_LIMIT / 8
+
+        if (tc  - last_tc < SMOOTH_LIMIT && tc - last_tc > SMOOTH_TC * 2) {
+          int j = 0;
+          double *accels = (double *)lives_calloc(nfiles, sizdbl);
+          double smooth_time = (double)SMOOTH_TC / TICKS_PER_SECOND_DBL;
+          double dt = (double)(tc - last_tc) / TICKS_PER_SECOND_DBL;
+          double count = (dt / smooth_time) + 1.;
+          for (i = 0; i < nfiles; i++) {
+            accels[i] = 0.;
+            if (atstate[j].afile < 0) continue;
+            if (atstate[j].afile > 0) {
+              if (atstate[j].afile == from_files[i]) {
+                if (fabs(aseeks[i] + dt * avels[i] - atstate[j].seek) < SKJUMP_THRESH_SECS) {
+                  accels[i] = (atstate[j].vel - avels[i]) / ((dt / smooth_time) * (dt / smooth_time)) / 2.;
+                }
+              }
+            }
+            j++;
+          }
+
+          mainw->read_failed = FALSE;
+          lives_freep((void **)&mainw->read_failed_file);
+
+          while (last_tc < fill_tc && last_tc < tc) {
+            render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, last_tc + SMOOTH_TC, chvols, 1., 1., abuf);
+            for (i = 0; i < nfiles; i++) {
+              // increase seek values
+              aseeks[i] += avels[i] * smooth_time;
+              aseeks[i] = quant_aseek(aseeks[i], mainw->files[from_files[i]]->arps);
+              if ((accels[i] > 0. && avels[i] + accels[i] < atstate[i].vel) || (accels[i] < 0. && avels[i] + accels[i] > atstate[i].vel)) {
+                avels[i] += accels[i];
+              }
+            }
+            count--;
+            last_tc += SMOOTH_TC;
+
+            if (mainw->read_failed) {
+              do_read_failed_error_s(mainw->read_failed_file, NULL);
+            }
+          }
+        }
+      }
 
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
 
@@ -2279,23 +2340,15 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
         // increase seek values
         aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
       }
-
-      last_tc = tc;
-
-      // process audio updates at this frame
-      atstate = aframe_to_atstate(event);
-
       if (atstate != NULL) {
-        for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
-        for (i = 0; i < nnfiles; i++) {
-          if (atstate[i].afile > 0) {
-            from_files[i] = atstate[i].afile;
-            avels[i] = atstate[i].vel;
-            aseeks[i] = atstate[i].seek;
-          }
+        for (i = 0; atstate[i].afile != -1; i++) {
+          from_files[i] = atstate[i].afile;
+          avels[i] = atstate[i].vel;
+          aseeks[i] = atstate[i].seek;
         }
         lives_free(atstate);
       }
+      last_tc = tc;
     }
     event = get_next_audio_frame_event(event);
   }

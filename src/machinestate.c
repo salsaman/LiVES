@@ -7,7 +7,7 @@
 // functions for dealing with externalities
 
 #include <sys/statvfs.h>
-
+#include <malloc.h>
 #include "main.h"
 #include "support.h"
 
@@ -281,18 +281,117 @@ boolean load_measure_idle(livespointer data) {
 }
 
 
+uint64_t autotune_u64(weed_plant_t *tuner, uint64_t val, uint64_t min, uint64_t max, int ntrials, size_t force) {
+  if (tuner) {
+    int trials = weed_get_int_value(tuner, "trials", NULL);
+    int64_t tf = weed_get_int64_value(tuner, "tforce", NULL);
+    if (trials == 0) {
+      weed_set_int_value(tuner, "ntrials", ntrials);
+      weed_set_int64_value(tuner, "min", min);
+      weed_set_int64_value(tuner, "max", max);
+    }
+    weed_set_int_value(tuner, "trials", ++trials);
+    weed_set_int64_value(tuner, "tforce", tf + force);
+    weed_set_int64_value(tuner, "tstart", lives_get_current_ticks());
+  }
+  return val;
+}
+
+uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
+  ticks_t tottime = weed_get_int64_value(*tuner, "tottime", NULL) + lives_get_current_ticks()
+                    - weed_get_int64_value(*tuner, "tstart", NULL);
+  int ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
+  int trials = weed_get_int_value(*tuner, "trials", NULL);
+
+  if (trials >= ntrials) {
+    double tforce = (double)weed_get_int64_value(*tuner, "tforce", NULL);
+    double avforce = (double)tottime / tforce;
+    double cforces, cforcel;
+    int cycs;
+    weed_set_int_value(*tuner, "trials", 0);
+    weed_set_int64_value(*tuner, "tottime", 0);
+    weed_set_int64_value(*tuner, "tforce", 0);
+
+    cforces = weed_get_double_value(*tuner, "smaller", NULL);
+    if (cforces > 0. && cforces < avforce) {
+      weed_set_double_value(*tuner, "larger", avforce);
+      weed_set_double_value(*tuner, "smaller", 0.);
+      return val / 2;
+    }
+    cforcel = weed_get_double_value(*tuner, "larger", NULL);
+    if (cforcel > 0. && cforcel < avforce) {
+      weed_set_double_value(*tuner, "smaller", avforce);
+      weed_set_double_value(*tuner, "larger", 0.);
+      return val * 2;
+    }
+
+    if (cforces == 0.) {
+      int64_t min = weed_get_int64_value(*tuner, "min", NULL);
+      if (val >= min * 2) {
+        weed_set_double_value(*tuner, "larger", avforce);
+        return val / 2;
+      }
+    }
+
+    if (cforcel == 0.) {
+      int64_t max = weed_get_int64_value(*tuner, "max", NULL);
+      if (val <= max / 2) {
+        weed_set_double_value(*tuner, "smaller", avforce);
+        return val * 2;
+      }
+    }
+#define NCYCS 8
+    cycs = weed_get_int_value(*tuner, "cycles", NULL);
+    if (cycs++ < NCYCS) {
+      weed_set_double_value(*tuner, "smaller", 0.);
+      weed_set_double_value(*tuner, "larger", 0.);
+      weed_set_int_value(*tuner, "cycles", cycs);
+      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
+      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
+      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
+      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
+    } else {
+      if (prefs->show_dev_opts)
+        g_print("value of %d tuned to %lu\n", weed_plant_get_type(*tuner), val);
+      weed_plant_free(*tuner);
+      *tuner = NULL;
+    }
+    return val;
+  }
+  weed_set_int64_value(*tuner, "tottime", tottime);
+  return val;
+}
+
+
+
 ////// memory funcs ////
 
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
-#define OIL_MEMCPY_MAX_BYTES 1024 // this can be tuned to provide optimal performance
+#define OIL_MEMCPY_MAX_BYTES 16384 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
-  if (n >= 32 && n <= OIL_MEMCPY_MAX_BYTES) {
+  static size_t maxbytes = OIL_MEMCPY_MAX_BYTES * 2;
+  static weed_plant_t *tuner = NULL;
+  static boolean tuned = FALSE;
+
+  if (!tuned && !tuner) tuner = weed_plant_new(31337);
+
+  maxbytes = autotune_u64(tuner, maxbytes, 32, 1024 * 1024, 16, n);
+  if (n >= 32 && n <= maxbytes / 2) {
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
+    if (tuner) {
+      maxbytes = autotune_u64_end(&tuner, maxbytes);
+      if (!tuner) tuned = TRUE;
+    }
     return dest;
   }
-  return memcpy(dest, src, n);
+  memcpy(dest, src, n);
+  if (tuner) {
+    maxbytes = autotune_u64_end(&tuner, maxbytes);
+    if (!tuner) tuned = TRUE;
+  }
+  return dest;
 }
 #endif
 
@@ -596,11 +695,17 @@ getfserr:
 
 
 LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
+#if _POSIX_TIMERS
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  return (ts.tv_sec - origsecs) * TICKS_PER_SECOND + ts.tv_nsec / 1000 * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+#else
 #ifdef USE_MONOTONIC_TIME
   return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
 #else
   gettimeofday(&tv, NULL);
   return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+#endif
 #endif
 }
 
@@ -761,11 +866,10 @@ int check_for_bad_ffmpeg(void) {
 
 
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
-
-#define getnulpos(nulmask) ((nulmask & 0x0000000080808080) ? ((nulmask & 0x0000000000008080) ? \
-							      ((nulmask & 0x0000000000000080) ? 0 : 1) : (((nulmask & 0x0000000000800000) ? 2 : 3))) : \
-			    ((nulmask & 0x0000808000000000) ? ((nulmask & 0x0000008000000000) ? 4 : 5) : \
-			     ((nulmask & 0x0080000000000000) ? 6 : 7)))
+#define getnulpos(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) :\
+						      (((nulmask & 8388608ul) ? 2 : 3))) : ((nulmask & 141287244169216ul) ? \
+											  ((nulmask & 549755813888ul) ? 4 : 5) : \
+											  ((nulmask & 36028797018963968ul) ? 6 : 7)))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   if (!s) return 0;
@@ -921,6 +1025,7 @@ static void *thrdpool(void *arg) {
 void lives_threadpool_init(void) {
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
+  mallopt(M_ARENA_MAX, npoolthreads + 4);
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
   twork_first = twork_last = NULL;
@@ -1143,7 +1248,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   /// halve the number of bytes, since we will work forwards and back to meet in the middle
   count >>= 1;
 
-  if (count >= 8) {
+  if (count >= 8 && (ocount & 0x07) == 0) {
     // start by swapping 8 bytes from each end
     uint64_t *buff8 = (uint64_t *)buff;
     if ((void *)buff8 == (void *)buff) {
@@ -1159,15 +1264,16 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
           swab8(&tmp8, &buff8[start], chunk);
         }
       }
-      if (count == 0) return TRUE;
+      if (count <= chunk / 2) return TRUE;
       start = (start + 1) << 3;
       start--;
     }
   }
 
   /// remainder should be only 6, 4, or 2 bytes in the middle
+  if (chunk >= 8) return FALSE;
 
-  if (count >= 4) {
+  if (count >= 4 && (ocount & 0x03) == 0) {
     uint32_t *buff4 = (uint32_t *)buff;
     if ((void *)buff4 == (void *)buff) {
       if (start > 0) {
@@ -1185,14 +1291,14 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
           swab4(&tmp4, &buff4[start], chunk);
         }
       }
-      if (count == 0) return TRUE;
+      if (count <= chunk / 2) return TRUE;
       start = (start + 1) << 2;
       start--;
     }
   }
 
   /// remainder should be only 6 or 2 bytes in the middle, with a chunk size of 4 or 2 or 1
-  if (chunk > 4) return FALSE;
+  if (chunk >= 4) return FALSE;
 
   if (count > 0) {
     uint16_t *buff2 = (uint16_t *)buff;
@@ -1201,10 +1307,10 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
         end = (ocount - start) >> 1;
         start >>= 1;
       } else end = ocount >> 1;
-      for (; count > 0; count -= 2) {
+      for (; count >= chunk / 2; count -= 2) {
         /// swap 2 bytes at a time from start and end
         uint16_t tmp2 = buff2[--end];
-        if (chunk == 2) {
+        if (chunk >= 2) {
           buff2[end] = buff2[++start];
           buff2[start] = tmp2;
         }

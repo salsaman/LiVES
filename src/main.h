@@ -330,40 +330,6 @@ typedef struct {
   uint16_t alpha;
 } lives_colRGBA64_t;
 
-#include "widget-helper.h"
-#include "machinestate.h"
-
-#define ALLOW_PNG24
-
-/// this struct is used only when physically resampling frames on the disk
-/// we create an array of these and write them to the disk
-typedef struct {
-  int value;
-  int64_t reltime;
-} resample_event;
-
-typedef struct {
-  // processing / busy dialog
-  LiVESWidget *processing;
-  LiVESWidget *progressbar;
-  LiVESWidget *label;
-  LiVESWidget *label2;
-  LiVESWidget *label3;
-  LiVESWidget *stop_button;
-  LiVESWidget *pause_button;
-  LiVESWidget *preview_button;
-  LiVESWidget *cancel_button;
-  LiVESWidget *scrolledwindow;
-  uint32_t frames_done;
-  boolean is_ready;
-} xprocess;
-
-typedef struct {
-  int afile;
-  double seek;
-  double vel;
-} lives_audio_track_state_t;
-
 #if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
 #include "../libweed/weed.h"
@@ -403,6 +369,41 @@ weed_leaf_set_flags_f _weed_leaf_set_flags;
 weed_leaf_delete_f _weed_leaf_delete;
 
 #include "weed-effects-utils.h"
+
+#include "widget-helper.h"
+#include "machinestate.h"
+
+#define ALLOW_PNG24
+
+/// this struct is used only when physically resampling frames on the disk
+/// we create an array of these and write them to the disk
+typedef struct {
+  int value;
+  int64_t reltime;
+} resample_event;
+
+typedef struct {
+  // processing / busy dialog
+  LiVESWidget *processing;
+  LiVESWidget *progressbar;
+  LiVESWidget *label;
+  LiVESWidget *label2;
+  LiVESWidget *label3;
+  LiVESWidget *stop_button;
+  LiVESWidget *pause_button;
+  LiVESWidget *preview_button;
+  LiVESWidget *cancel_button;
+  LiVESWidget *scrolledwindow;
+  uint32_t frames_done;
+  boolean is_ready;
+} xprocess;
+
+typedef struct {
+  int afile;
+  double seek;
+  double vel;
+} lives_audio_track_state_t;
+
 
 #ifdef IS_LIBLIVES
 #include "liblives.hpp"
@@ -1299,13 +1300,13 @@ void lives_close_all_file_buffers(void);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
+off_t lives_buffered_offset(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
-
 
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
@@ -1575,6 +1576,8 @@ void break_me(void);
 #endif
 
 #endif
+
+#define WEED_STARTUP_TEST 1
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

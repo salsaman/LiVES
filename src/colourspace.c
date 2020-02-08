@@ -121,6 +121,8 @@ static void lives_free_buffer(uint8_t *pixels, livespointer data) {
 }
 
 #define CLAMP0255(a)  ((unsigned char)((((-a) >> 31) & a) | (255 - a) >> 31) )
+#define CLAMP0255f(a)  (a > 255. ? 255.: a < 0. ? 0. : a)
+#define CLAMP0255fi(a)  ((int)(a > 255. ? 255.: a < 0. ? 0. : a))
 
 /* precomputed tables */
 
@@ -228,7 +230,6 @@ static uint8_t cavgrgb[256][256];
 static boolean avg_inited = FALSE;
 
 // pre-post multiply alpha
-
 static int unal[256][256];
 static int al[256][256];
 static int unalcy[256][256];
@@ -331,6 +332,21 @@ static inline void update_gamma_lut(int gamma_from, int gamma_to) {
   current_gamma_to = gamma_to;
 }
 
+
+static inline int32_t spc_rnd(int32_t val) {
+  uint32_t sig = val & 0x80000000;
+  val = ((val >> 3) - (val >> 11)) >> 12;
+  if (val & 1) {
+    if (!sig) val++;
+    else (val--);
+  }
+  return ((val >> 1) | sig);
+}
+
+
+LIVES_GLOBAL_INLINE int32_t round_special(int32_t val) {
+  return spc_rnd(val);
+}
 
 static void init_RGB_to_YUV_tables(void) {
   register int i;
@@ -478,7 +494,6 @@ static void init_RGB_to_YUV_tables(void) {
   conv_RY_inited = TRUE;
 }
 
-
 static void init_YUV_to_RGB_tables(void) {
   register int i;
 
@@ -523,12 +538,10 @@ static void init_YUV_to_RGB_tables(void) {
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR); // 2*(1-Kr)
     G_Crc[i] = myround(-.5 / (1. - KR_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
-                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS)
-                       *
+                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR);
     G_Cbc[i] = myround(-.5 / (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
-                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS)
-                       *
+                       (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR);
     B_Cbc[i] = myround(2. * (1. - KB_YCBCR) * (((UV_CLAMP_MAX - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
@@ -900,7 +913,6 @@ static void *convert_swapprepost_frame_thread(void *cc_params);
 static void *convert_swab_frame_thread(void *cc_params);
 
 static void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
-static void bgr2yuv(uint8_t b0, uint8_t g0, uint8_t r0, uint8_t *y, uint8_t *u, uint8_t *v) GNU_HOT;
 static void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uyvy_macropixel *uyvy) GNU_FLATTEN GNU_HOT;
 static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
@@ -908,7 +920,6 @@ static void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1,
 static void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1,
                      uint8_t r2, uint8_t g2, uint8_t b2, uint8_t r3, uint8_t g3, uint8_t b3, yuv411_macropixel *yuv) GNU_HOT;
 static void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) GNU_HOT;
-static void yuv2bgr(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g, uint8_t *r) GNU_HOT;
 static void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                      uint8_t *r1, uint8_t *g1, uint8_t *b1) GNU_FLATTEN GNU_HOT;
 static void yuyv2rgb(yuyv_macropixel *yuyv, uint8_t *r0, uint8_t *g0, uint8_t *b0,
@@ -922,33 +933,38 @@ static void yuva8888_2_argb(uint8_t *yuva, uint8_t *argb) GNU_FLATTEN GNU_HOT;
 static void uyvy_2_yuv422(uyvy_macropixel *uyvy, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) GNU_HOT;
 static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8_t *v0, uint8_t *y1) GNU_HOT;
 
-#define avg_chroma(x, y) ((uint8_t)(*(cavg + (x << 8) + y)))
+#define avg_chroma(x, y) ((uint8_t)(*(cavg + ((int)x << 8) + (int)y)))
 #define avg_chroma_3_1(x, y) ((uint8_t)(avg_chroma(x, avg_chroma(x, y))))
 #define avg_chroma_1_3(x, y) ((uint8_t)(avg_chroma(avg_chroma(x, y), y)))
 
+#define avg_chromaf(x, y) (spc_rnd(x + y) / 2.)
+#define avg_chroma_3_1f(x, y) ((uint8_t)(avg_chromaf(x, avg_chromaf(x, y))))
+#define avg_chroma_1_3f(x, y) ((uint8_t)(avg_chromaf(avg_chromaf(x, y), y)))
 
 LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
   register short a;
+#ifndef USE_EXTEND
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) a = max_Y;
   *y = a < min_Y ? min_Y : a;
   if ((a = ((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
   *u = a < min_UV ? min_UV : a;
   if ((a = ((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
   *v = a < min_UV ? min_UV : a;
+#else
+  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) a = max_Y;
+  *y = a < min_Y ? min_Y : a;
+  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) a = max_UV;
+  *u = a < min_UV ? min_UV : a;
+  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
+  *v = a < min_UV ? min_UV : a;
+#endif
 }
 
-LIVES_INLINE void bgr2yuv(uint8_t b0, uint8_t g0, uint8_t r0, uint8_t *y, uint8_t *u, uint8_t *v) {
-  register short a;
-  if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) a = max_Y;
-  *y = a < min_Y ? min_Y : a;
-  if ((a = ((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
-  *u = a < min_UV ? min_UV : a;
-  if ((a = ((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
-  *v = a < min_UV ? min_UV : a;
-}
+#define bgr2yuv(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v)
 
 LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
   register short a;
+#ifndef USE_EXTEND
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) uyvy->y0 = max_Y;
   else uyvy->y0 = a < min_Y ? min_Y : a;
   if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) uyvy->y1 = max_Y;
@@ -959,10 +975,23 @@ LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 
   uyvy->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
                             ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
+#else
+  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) uyvy->y0 = max_Y;
+  else uyvy->y0 = a < min_Y ? min_Y : a;
+  if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) uyvy->y1 = max_Y;
+  else uyvy->y1 = a < min_Y ? min_Y : a;
+
+  uyvy->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
+                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
+
+  uyvy->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
+                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+#endif
 }
 
 LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
   register short a;
+#ifndef USE_EXTEND
   if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuyv->y0 = max_Y;
   else yuyv->y0 = a < min_Y ? min_Y : a;
   if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) yuyv->y1 = max_Y;
@@ -973,6 +1002,18 @@ LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 
   yuyv->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
                             ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
+#else
+  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) yuyv->y0 = max_Y;
+  else yuyv->y0 = a < min_Y ? min_Y : a;
+  if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) yuyv->y1 = max_Y;
+  else yuyv->y1 = a < min_Y ? min_Y : a;
+
+  yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
+                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
+
+  yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
+                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+#endif
 }
 
 
@@ -999,16 +1040,18 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 }
 
 LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
+#ifndef USE_EXTEND
   *r = CLAMP0255((int32_t)((RGB_Y[y] + R_Cr[v]) >> FP_BITS));
   *g = CLAMP0255((int32_t)((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS));
   *b = CLAMP0255((int32_t)((RGB_Y[y] + B_Cb[u]) >> FP_BITS));
+#else
+  *r = CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]));
+  *g = CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]));
+  *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
+#endif
 }
 
-LIVES_INLINE void yuv2bgr(uint8_t y, uint8_t u, uint8_t v, uint8_t *b, uint8_t *g, uint8_t *r) {
-  *b = CLAMP0255((int32_t)((RGB_Y[y] + B_Cb[u]) >> FP_BITS));
-  *g = CLAMP0255((int32_t)((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS));
-  *r = CLAMP0255((int32_t)((RGB_Y[y] + R_Cr[v]) >> FP_BITS));
-}
+#define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)
 
 LIVES_INLINE void uyvy2rgb(uyvy_macropixel *uyvy, uint8_t *r0, uint8_t *g0, uint8_t *b0,
                            uint8_t *r1, uint8_t *g1, uint8_t *b1) {

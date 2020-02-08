@@ -8572,6 +8572,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(1));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cols", LIVES_INT_TO_POINTER(0));
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
+  lives_table_set_col_spacings(LIVES_TABLE(layout), 0);
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
   if (LIVES_SHOULD_EXPAND_EXTRA_WIDTH)

@@ -48,6 +48,27 @@ LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
 }
 
 
+/// convert seek time to an integer number of samples
+LIVES_GLOBAL_INLINE size_t quant_asamps(double seek, int arate) {
+  size_t samps = (seek <= 0. || arate <= 0) ? 0 : (size_t)(seek * (double)arate + .99999);
+  return samps;
+}
+
+/// convert seek time to an integer number of samples
+LIVES_GLOBAL_INLINE double quant_aseek(double seek, int arate) {
+  if (arate <= 0) return 0.;
+  else {
+    size_t samps = quant_asamps(seek, arate);
+    return (double)samps / (double)arate;
+  }
+}
+
+LIVES_GLOBAL_INLINE off_t quant_abytes(double seek, int arate, int achans, int asampsize) {
+  size_t samps = quant_asamps(seek, arate);
+  return samps * (size_t)(achans * asampsize);
+}
+
+
 LIVES_GLOBAL_INLINE int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps) {
   int res_frames;
   if (resampled_fps < orig_fps) return ((res_frames = (int)((double)in_frames / orig_fps * resampled_fps)) < 1) ? 1 : res_frames;
@@ -880,7 +901,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           for (i = 0; i < natracks; i += 2) {
             double vel = naseeks[i + 1];
             if (naseeks[i + 1] != 0.) {
+              int in_arate = mainw->files[naclips[i + 1]]->arps;
               naseeks[i] += vel * dt;
+              naseeks[i] = quant_aseek(naseeks[i], in_arate);
             }
           }
 
@@ -921,31 +944,28 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               for (j = 0; j < patracks; j += 2) {
                 if (naclips[i] == paclips[j]) {
                   if (paclips[j + 1] == naclips[i + 1]) {
-                    double seek;
-                    double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
-                    double nvel = (naseeks[i] - paseeks[j]) / dt;
-                    /// velocity should be close to seek_time / clock_time, else this was a jump
-                    if (paseeks[j + 1] * naseeks[i + 1] > 0.
-                        && ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] && nvel <= naseeks[i + 1])
-                            || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1] && nvel >= naseeks[i + 1]))) {
-                      /// what we will do here is insert an extra audio event at the previous out_frrame.
-                      /// the seek will be calcluated from old_val, and we will adjust the velocity so we hit the seek value at this frame
-                      dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
-                      seek = paseeks[j] + paseeks[j + 1] * dt;
-
+                    if (paseeks[j + 1] * naseeks[i + 1] > 0.) {
+                      double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
+                      double dtl = (double)(tl) / TICKS_PER_SECOND_DBL;
+                      /// what we will do here is insert an extra audio event at the previous out_frame.
+                      /// the seek will be calculated from old_val, and we will adjust the velocity so we hit the seek value at this frame
                       // adjust velocity by seek_delta / frame_duration
-                      nvel = paseeks[j + 1] + (naseeks[i] - seek) / (double)tl / TICKS_PER_SECOND_DBL;
-                      seek -= paseeks[j + 1] * (double)tl / TICKS_PER_SECOND_DBL;
-
-                      insert_audio_event_at(last_out_frame, paclips[i], paclips[i + 1], seek, nvel);
-                    } else {
-                      // if velocity change is too great then we may adjust the seek a little instead
-                      double zaseek = paseeks[j] + paseeks[j + 1] * dt;
-                      if (fabs(naseeks[i] - zaseek) < SKJUMP_THRESH_SECS) {
-                        naseeks[i] = zaseek;
-                        weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
-			// *INDENT-OFF*
-                      }}}
+                      int in_arate = mainw->files[naclips[i + 1]]->arps;
+                      double seek = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
+                      double nvel = paseeks[j + 1] + (naseeks[i] - seek) / dtl;
+                      /// velocity should be close to seek_time / clock_time, else this was a jump
+                      if ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] && nvel <= naseeks[i + 1])
+                          || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1] && nvel >= naseeks[i + 1])) {
+                        dt -= dtl;
+                        seek = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
+                        insert_audio_event_at(last_out_frame, paclips[j], paclips[j + 1], seek, nvel);
+                      } else {
+                        // if velocity change is too great then we may adjust the seek a little instead
+                        if (fabs(naseeks[i] - seek) < SKJUMP_THRESH_SECS) {
+                          naseeks[i] = seek;
+                          weed_set_double_array(newframe, WEED_LEAF_AUDIO_SEEKS, natracks, naseeks);
+			  // *INDENT-OFF*
+			}}}}
                   break;
                 }}
 	      // *INDENT-ON*

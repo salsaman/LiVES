@@ -1230,8 +1230,6 @@ boolean make_param_box(LiVESVBox *top_vbox, lives_rfx_t *rfx) {
     for (i = 0; list != NULL; i++) {
       line = (char *)list->data;
       list = list->next;
-      g_print("IDX2 %d %d %d %s\n", pass, i, chk_params, line);
-
       layout_mode = FALSE;
       has_box = FALSE;
       last_label = NULL;

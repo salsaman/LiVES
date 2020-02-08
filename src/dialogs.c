@@ -1256,6 +1256,7 @@ int process_one(boolean visible) {
       ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
       mainw->deltaticks += delta - mainw->currticks;
     }
+
     last_time_source = time_source;
 
 #define ADJUST_AUDIO_RATE
@@ -1584,6 +1585,13 @@ static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
 
 static void reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
+#if _POSIX_TIMERS
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  mainw->origsecs = ts.tv_sec;
+  mainw->origusecs = ts.tv_nsec / 1000;
+#else
+
 #ifdef USE_MONOTONIC_TIME
   mainw->origsecs = 0; // not used
   mainw->origusecs = lives_get_monotonic_time();
@@ -1596,6 +1604,8 @@ static void reset_timebase(void) {
   mainw->origsecs = tv.tv_sec;
   mainw->origusecs = tv.tv_usec;
 #endif
+#endif
+
 #ifdef HAVE_PULSE_AUDIO
   if (mainw->pulsed != NULL) {
     pa_time_reset(mainw->pulsed, 0);

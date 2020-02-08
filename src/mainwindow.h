@@ -28,7 +28,7 @@
 /// > 10**8 is not recommended, since we sometimes store seconds in a double
 #define TICKS_PER_SECOND_DBL ((double)100000000.)   ///< actually microseconds / 100.
 #define TICKS_PER_SECOND (int64_t)100000000 ///< ticks per second
-#define USEC_TO_TICKS (TICKS_PER_SECOND/1000000l) ///< how many TICKS in a microsecond [default 100]
+#define USEC_TO_TICKS (TICKS_PER_SECOND / 1000000l) ///< how many TICKS in a microsecond [default 100]
 
 #define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
 #define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout

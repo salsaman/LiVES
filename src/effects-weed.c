@@ -1618,6 +1618,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   boolean needs_reinit = FALSE, inplace = FALSE;
   boolean all_out_alpha = TRUE; //,all_in_alpha=FALSE;
   boolean is_converter = FALSE, pvary = FALSE, svary = FALSE;
+  boolean resized = FALSE;
+
   int num_palettes, num_in_tracks = 0, num_out_tracks;
   int inwidth, inheight, inpalette, outpalette, opalette, channel_flags, filter_flags = 0;
   int palette, cpalette, def_palette = 0;
@@ -1930,27 +1932,31 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (filter_flags & WEED_FILTER_IS_CONVERTER) is_converter = TRUE;
 
     if (pb_quality != PB_QUALITY_LOW) {
-      if (inwidth > maxinwidth) maxinwidth = inwidth;
+      if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
+      if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
+
       if (!svary &&
           (!(mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack))) {
         /// manual adjustment for letterboxing - it just looks better (else we get frames with only a central overlap)
         /// i.e we don't want frames sticking up over the top. So we shrink / grow the height to match front frame
         /// whilst retaining aspect ratio.
-        //if (inheight > maxinheight) xmaxinheight = inheight;
-        if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
-        else {
-          calc_maxspect(maxinwidth, maxinheight, &inwidth, &inheight);
-          if (inheight < maxinheight) {
-            inwidth = (int)((double)inwidth * (double)maxinheight / (double)inheight);
-            if (inwidth > maxinwidth) maxinwidth = inwidth;
-            inheight = maxinheight;
-          }
+        /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
+        // otherwise, we will aspect ratio it to fit the current max size. Since we know at least one of the dimensions was
+        // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
+        // we want to avoid the situation where frames are letterboxing in both directions, so there must be some frame
+        // whose dimensions define the output size.
+        if (inwidth >= maxinwidth && inheight >= maxinheight) {
+          maxinwidth = inwidth;
+          maxinheight = inheight;
         }
         /* if (maxinheight == 4 || inheight < maxinheight) */
         /*   if (inheight > 4) maxinheight = inheight; */
+      } else {
+        if (inwidth > maxinwidth) maxinwidth = inwidth;
+        if (inheight > maxinheight) maxinheight = inheight;
       }
-      if (inheight > maxinheight) maxinheight = inheight;
     } else {
+      // for low quality we [ick the smallest dimensions
       if (maxinwidth == 4 || inwidth < maxinwidth)
         if (inwidth > 4) maxinwidth = inwidth;
       if (maxinheight == 4 || inheight < maxinheight)
@@ -1961,8 +1967,14 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (!svary || !is_converter) {
     if (pb_quality != PB_QUALITY_HIGH) {
-      if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
-      if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
+      if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
+        if (opwidth < maxinwidth || opheight < maxinheight) {
+          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
+        }
+      } else {
+        if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
+        if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
+      }
     }
     opwidth = maxinwidth;
     opheight = maxinheight;
@@ -2236,6 +2248,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     inwidth = weed_layer_get_width(layer);
     inheight = weed_layer_get_height(layer);
+    resized = FALSE;
 
     // we are comparing the macropixel sizes which is fine because that won't change
     // regardless of the channel / layer palette, but for resize_layer we need the pixel size,
@@ -2244,26 +2257,37 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // and opalette
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
+      int cpixwidth = width * weed_palette_get_pixels_per_macropixel(inpalette);
       if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
         int xwidth = inwidth * weed_palette_get_pixels_per_macropixel(cpalette);
         int xheight = inheight;
-        calc_maxspect(width * weed_palette_get_pixels_per_macropixel(inpalette), height, &xwidth, &xheight);
+        calc_maxspect(cpixwidth, height, &xwidth, &xheight);
+        if (xwidth != cpixwidth || height != xheight) {
+          if (!letterbox_layer(layer, cpixwidth, height, xwidth, xheight, interp, opalette, oclamping)) {
+            retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+            goto done_video;
+          }
+          resized = TRUE;
+          if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
+            mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
+                                   &mainw->blend_subspace);
+            mainw->blend_width = xwidth / weed_palette_get_pixels_per_macropixel(cpalette);
+            mainw->blend_height = xheight;
+            mainw->blend_gamma = weed_layer_get_gamma(layer);
+          }
+        }
+      }
+      if (!resized) {
+        if (!resize_layer(layer, cpixwidth, height, interp, opalette, oclamping)) {
+          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
+          goto done_video;
+        }
         if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                  &mainw->blend_subspace);
-          mainw->blend_width = xwidth;
-          mainw->blend_height = xheight;
+          mainw->blend_width = cpixwidth / weed_palette_get_pixels_per_macropixel(cpalette);
+          mainw->blend_height = height;
           mainw->blend_gamma = weed_layer_get_gamma(layer);
-        }
-        if (!letterbox_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, xwidth, xheight, interp,
-                             opalette, oclamping)) {
-          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-          goto done_video;
-        }
-      } else {
-        if (!resize_layer(layer, width * weed_palette_get_pixels_per_macropixel(inpalette), height, interp, opalette, oclamping)) {
-          retval = FILTER_ERROR_UNABLE_TO_RESIZE;
-          goto done_video;
         }
       }
       sched_yield();
@@ -2313,7 +2337,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       retval = FILTER_ERROR_COPYING_FAILED;
       goto done_video;
     }
-    if (!((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack))) {
+    if (!resized) {
       if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                &mainw->blend_subspace);

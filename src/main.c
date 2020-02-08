@@ -61,6 +61,10 @@
 #include "ce_thumbs.h"
 #include "rfx-builder.h"
 
+#ifdef WEED_STARTUP_TEST
+#include "diagnostics.h"
+#endif
+
 #ifdef ENABLE_OSC
 #include "omc-learn.h"
 #endif
@@ -3413,7 +3417,8 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   _weed_leaf_set_flags = weed_leaf_set_flags;
 
 #ifdef WEED_STARTUP_TEST
-  run_weed_startup_tests();
+  //run_weed_startup_tests();
+  test_palette_conversions();
 #endif
 
   // allow us to set immutable values (plugins can't)
@@ -7891,10 +7896,10 @@ lfi_done:
     if (new_file > 0) {
       lives_ce_update_timeline(0, cfile->pointer_time);
     }
-
+    if (!CURRENT_CLIP_IS_VALID) return;
     //chill_decoder_plugin(mainw->current_file);
 
-    if (cfile->opening || !CURRENT_CLIP_IS_NORMAL) {
+    if (!CURRENT_CLIP_IS_NORMAL || cfile->opening) {
       lives_widget_set_sensitive(mainw->rename, FALSE);
     }
 

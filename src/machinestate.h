@@ -205,6 +205,9 @@ void swab8(const void *from, const void *to, size_t granularity) 	GNU_HOT;
 void reverse_bytes(char *buff, size_t count, size_t granularity) 	GNU_HOT GNU_FLATTEN;
 boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
 
+uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val);
+uint64_t autotune_u64(weed_plant_t *tuner, uint64_t val, uint64_t min, uint64_t max, int ntrials, size_t force);
+
 // TODO
 void quick_free(memheader_t *bp);
 void *quick_malloc(size_t alloc_size) GNU_MALLOC;

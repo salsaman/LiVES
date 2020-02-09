@@ -722,6 +722,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               if (list->prev != NULL) list->prev->next = list->next;
               else init_events = list->next;
               if (list->next != NULL) list->next->prev = list->prev;
+              list->next = list->prev = NULL;
+              lives_list_free(list);
               break;
             }
           }

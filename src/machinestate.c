@@ -281,84 +281,125 @@ boolean load_measure_idle(livespointer data) {
 }
 
 
-uint64_t autotune_u64(weed_plant_t *tuner, uint64_t val, uint64_t min, uint64_t max, int ntrials, size_t force) {
+void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost) {
   if (tuner) {
+    double tc = cost;
     int trials = weed_get_int_value(tuner, "trials", NULL);
-    int64_t tf = weed_get_int64_value(tuner, "tforce", NULL);
     if (trials == 0) {
       weed_set_int_value(tuner, "ntrials", ntrials);
       weed_set_int64_value(tuner, "min", min);
       weed_set_int64_value(tuner, "max", max);
-    }
-    weed_set_int_value(tuner, "trials", ++trials);
-    weed_set_int64_value(tuner, "tforce", tf + force);
+    } else tc += weed_get_double_value(tuner, "tcost", NULL);
+    weed_set_double_value(tuner, "tcost", tc);
     weed_set_int64_value(tuner, "tstart", lives_get_current_ticks());
   }
-  return val;
 }
 
-uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
-  ticks_t tottime = weed_get_int64_value(*tuner, "tottime", NULL) + lives_get_current_ticks()
-                    - weed_get_int64_value(*tuner, "tstart", NULL);
-  int ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
-  int trials = weed_get_int_value(*tuner, "trials", NULL);
-
-  if (trials >= ntrials) {
-    double tforce = (double)weed_get_int64_value(*tuner, "tforce", NULL);
-    double avforce = (double)tottime / tforce;
-    double cforces, cforcel;
-    int cycs;
-    weed_set_int_value(*tuner, "trials", 0);
-    weed_set_int64_value(*tuner, "tottime", 0);
-    weed_set_int64_value(*tuner, "tforce", 0);
-
-    cforces = weed_get_double_value(*tuner, "smaller", NULL);
-    if (cforces > 0. && cforces < avforce) {
-      weed_set_double_value(*tuner, "larger", avforce);
-      weed_set_double_value(*tuner, "smaller", 0.);
-      return val / 2;
-    }
-    cforcel = weed_get_double_value(*tuner, "larger", NULL);
-    if (cforcel > 0. && cforcel < avforce) {
-      weed_set_double_value(*tuner, "smaller", avforce);
-      weed_set_double_value(*tuner, "larger", 0.);
-      return val * 2;
-    }
-
-    if (cforces == 0.) {
-      int64_t min = weed_get_int64_value(*tuner, "min", NULL);
-      if (val >= min * 2) {
-        weed_set_double_value(*tuner, "larger", avforce);
-        return val / 2;
-      }
-    }
-
-    if (cforcel == 0.) {
-      int64_t max = weed_get_int64_value(*tuner, "max", NULL);
-      if (val <= max / 2) {
-        weed_set_double_value(*tuner, "smaller", avforce);
-        return val * 2;
-      }
-    }
 #define NCYCS 8
-    cycs = weed_get_int_value(*tuner, "cycles", NULL);
-    if (cycs++ < NCYCS) {
-      weed_set_double_value(*tuner, "smaller", 0.);
-      weed_set_double_value(*tuner, "larger", 0.);
-      weed_set_int_value(*tuner, "cycles", cycs);
-      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
-      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
-      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
-      if (val < weed_get_int64_value(*tuner, "max", NULL)) val *= 2;
-    } else {
-      if (prefs->show_dev_opts)
-        g_print("value of %d tuned to %lu\n", weed_plant_get_type(*tuner), val);
-      weed_plant_free(*tuner);
-      *tuner = NULL;
+
+uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
+  if (!tuner || !*tuner) return val;
+  else {
+    ticks_t tottime = lives_get_current_ticks();
+    int ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
+    int trials = weed_get_int_value(*tuner, "trials", NULL);
+
+    weed_set_int_value(*tuner, "trials", ++trials);
+    tottime += (weed_get_int64_value(*tuner, "tottime", NULL)) - weed_get_int64_value(*tuner, "tstart", NULL);
+    weed_set_int64_value(*tuner, "tottime", tottime);
+
+    if (trials >= ntrials) {
+      int cycs = weed_get_int_value(*tuner, "cycles", NULL) + 1;
+      if (cycs < NCYCS) {
+        double tcost = (double)weed_get_double_value(*tuner, "tcost", NULL);
+        double totcost = (double)tottime * tcost;
+        double ccosts, ccostl;
+        int64_t min = weed_get_int64_value(*tuner, "min", NULL);
+        int64_t max = weed_get_int64_value(*tuner, "max", NULL);
+        boolean smfirst = FALSE;
+        if (cycs & 1) smfirst = TRUE;
+        weed_set_int_value(*tuner, "cycles", cycs);
+
+        weed_set_int_value(*tuner, "trials", 0);
+        weed_set_int64_value(*tuner, "tottime", 0);
+        weed_set_double_value(*tuner, "tcost", 0);
+
+        if (smfirst) {
+          ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+          if (val > max || (ccosts > 0. && ccosts < totcost)) {
+            weed_set_double_value(*tuner, "larger", totcost);
+            weed_set_double_value(*tuner, "smaller", 0.);
+            if (val <= max) return val / 2;
+            return max;
+          }
+        }
+
+        ccostl = weed_get_double_value(*tuner, "larger", NULL);
+        if (val < min || (ccostl > 0. && ccostl < totcost)) {
+          weed_set_double_value(*tuner, "smaller", totcost);
+          weed_set_double_value(*tuner, "larger", 0.);
+          if (val >= min) return val * 2;
+          return min;
+        }
+
+        if (!smfirst) {
+          ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+          if (val > max || (ccosts > 0. && ccosts < totcost)) {
+            weed_set_double_value(*tuner, "larger", totcost);
+            weed_set_double_value(*tuner, "smaller", 0.);
+            if (val <= max) return val / 2;
+            return max;
+          }
+        }
+
+        if (ccostl == 0.) {
+          if (val <= max / 2) {
+            weed_set_double_value(*tuner, "smaller", totcost);
+            return val * 2;
+          }
+        }
+
+        if (ccosts == 0.) {
+          if (val >= min * 2) {
+            weed_set_double_value(*tuner, "larger", totcost);
+            return val / 2;
+          }
+        }
+
+        if (smfirst) {
+          if (ccostl == 0.) {
+            if (val <= max / 2) {
+              weed_set_double_value(*tuner, "smaller", totcost);
+              return val * 2;
+            }
+          }
+        }
+
+        weed_set_double_value(*tuner, "smaller", 0.);
+        weed_set_double_value(*tuner, "larger", 0.);
+        if (!smfirst) {
+          max >>= 1;
+          if (val < max) val *= 2;
+          if (val < max) val *= 2;
+          if (val < max) val *= 2;
+          if (val < max) val *= 2;
+        } else {
+          min <<= 1;
+          if (val > min) val /= 2;
+          if (val > min) val /= 2;
+          if (val > min) val /= 2;
+          if (val > min) val /= 2;
+        }
+      } else {
+        if (prefs->show_dev_opts)
+          g_print("value of %d tuned to %lu\n", weed_plant_get_type(*tuner), val);
+        weed_plant_free(*tuner);
+        *tuner = NULL;
+      }
+      return val;
     }
-    return val;
+    weed_set_int64_value(*tuner, "tottime", tottime);
   }
-  weed_set_int64_value(*tuner, "tottime", tottime);
   return val;
 }
 
@@ -371,14 +412,15 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
-  static size_t maxbytes = OIL_MEMCPY_MAX_BYTES * 2;
+  static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
   static weed_plant_t *tuner = NULL;
   static boolean tuned = FALSE;
+  if (n == 0) return dest;
 
   if (!tuned && !tuner) tuner = weed_plant_new(31337);
 
-  maxbytes = autotune_u64(tuner, maxbytes, 32, 1024 * 1024, 16, n);
-  if (n >= 32 && n <= maxbytes / 2) {
+  autotune_u64(tuner, 16, 1024 * 1024, 32, 1. / (double)n);
+  if (n >= 32 && n <= maxbytes) {
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
     if (tuner) {
       maxbytes = autotune_u64_end(&tuner, maxbytes);
@@ -980,10 +1022,15 @@ static int npoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
 static int ntasks;
 static boolean threads_die;
+
+static size_t narenas;
+static weed_plant_t *mtuner = NULL;
+static boolean mtuned = FALSE;
 
 static void *thrdpool(void *arg) {
   LiVESList *list;
@@ -1003,12 +1050,31 @@ static void *thrdpool(void *arg) {
       if (twork_first == list) twork_first = NULL;
       twork_last = list->prev;
       if (twork_last != NULL) twork_last->next = NULL;
+      mywork = (thrd_work_t *)list->data;
+
+      if (!pthread_mutex_trylock(&tuner_mutex)) {
+        mywork->flags |= 1;
+        autotune_u64(mtuner, npoolthreads + 4, npoolthreads * 4, 32, (double)narenas);
+      }
+
       pthread_mutex_unlock(&twork_mutex);
 
       list->prev = list->next = NULL;
-      mywork = (thrd_work_t *)list->data;
       mywork->busy = myidx + 1;
       (*mywork->func)(mywork->arg);
+      if (mywork->flags & 1) {
+        if (mtuner) {
+          size_t onarenas = narenas;
+          narenas = autotune_u64_end(&mtuner, narenas);
+          if (!mtuner) mtuned = TRUE;
+          if (narenas != onarenas) {
+            g_print("mallopt %ld\n", narenas);
+            mallopt(M_ARENA_MAX, narenas);
+          }
+        }
+        pthread_mutex_unlock(&tuner_mutex);
+        mywork->flags = 0;
+      }
       pthread_mutex_lock(&twork_mutex);
       ntasks--;
       pthread_mutex_lock(&mywork->cond_mutex);
@@ -1023,9 +1089,11 @@ static void *thrdpool(void *arg) {
 
 
 void lives_threadpool_init(void) {
+  if (!mtuned && !mtuner) mtuner = weed_plant_new(12345);
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
-  mallopt(M_ARENA_MAX, npoolthreads + 4);
+  narenas = npoolthreads + 16;
+  mallopt(M_ARENA_MAX, narenas);
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
   twork_first = twork_last = NULL;

@@ -1140,7 +1140,7 @@ if (defined($ARGV[0])) {
 		    if ($pid eq "" || $pid ne $1) {
 			my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
 			next if ($exe ne "" && &my_basename($exe) eq $exename);
-			unlink "$file";
+			unlink $file;
 		    }
 		}
 	    }
@@ -3135,7 +3135,7 @@ if (defined($ARGV[0])) {
 	    if ($audio_end > 0.) {
 		$audio_in = &clip_audio($audio_start, $audio_end);
 		if ($panic) {
-		    unlink "$pidfile";
+		    unlink $pidfile;
 		    exit 1;
 		}
 	    } else {
@@ -3153,8 +3153,8 @@ if (defined($ARGV[0])) {
 		unlink $audio_in;
 	    }
 
-	    smog_rename("$audio_out", "$nfile");
-	    smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
+	    &smog_rename($audio_out, $nfile);
+	    &smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3291,9 +3291,10 @@ if (defined($ARGV[0])) {
 	    #trim audio to selection
 
 	    # $audio_from is the new clip ("audioclip")
-	    $audio_from = &clip_audio($audio_start, $audio_end);
+	    $clipaudio = $audio_from = &clip_audio($audio_start, $audio_end);
 	    if ($panic) {
 		unlink $pidfile;
+		unlink $clipaudio;
 		exit 1;
 	    }
 
@@ -3319,17 +3320,20 @@ if (defined($ARGV[0])) {
 	    &insert_audio($asamps, $achans, $asigned, $aendian, 1);
 	    if ($panic) {
 		unlink $pidfile;
+		unlink $clipaudio;
 		exit 1;
 	    }
 
 	    #append silence to pad to end
 
-	    &append_silence(0, &align($audio_end*$arate*$align), $asamps, $achans, $asigned, $aendian);
+	    &append_silence(0, &align($audio_end * $arate * $align), $asamps, $achans, $asigned, $aendian);
 	    if ($panic) {
 		unlink $pidfile;
+		unlink $clipaudio;
 		exit 1;
 	    }
 
+	    unlink $clipaudio;
 	    &sig_complete;
 	    exit 0;
 	}
@@ -6353,11 +6357,13 @@ if (defined($ARGV[0])) {
 		    return;
 		}
 		my $threadopts = "--vd-lavc-threads=$threads";
-		$smcom = "$mp_com --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no --ao-pcm-file=\"$audio_out\" $format";
+		$smcom = "$mp_com --really-quiet --no-config --vo=null --no-video --ao=pcm --ao-pcm-waveheader=no " .
+		    "--ao-pcm-file=\"$audio_out\" $format";
 	    }
 	    else {
 		my $threadopts = "-lavdopts o=threads=$threads";
-		$smcom = "$mp_com -really-quiet -noconfig all -vo null -novideo -ao pcm:nowaveheader:file=\"$audio_out\" $format <$nulfile";
+		$smcom = "$mp_com -really-quiet -noconfig all -vo null -vc null -benchmark-novideo -ao pcm:fast:nowaveheader:" .
+		    "file=\"$audio_out\" $format <$nulfile";
 	    }
 	}
 
@@ -6398,7 +6404,7 @@ if (defined($ARGV[0])) {
 		my $threadopts = "-lavdopts o=threads=$threads";
 		$smcom = "$mp_com -noconfig all -really-quiet -demuxer rawaudio -rawaudio " .
 		    "rate=$arate:channels=$achans:samplesize=$aasamps $format -vo null -novideo " .
-		    "-ao pcm:waveheader:$format \"$audio_in\" >$nulfile 2>&1 <$nulfile";
+		    "-ao pcm:fast:waveheader:$format \"$audio_in\" >$nulfile 2>&1 <$nulfile";
 	    }
 	}
 	else {
@@ -6475,14 +6481,14 @@ if (defined($ARGV[0])) {
 	$audio_in = "$curworkdir/audio";
 	$audio_out = "$curworkdir/audioclip";
 
-	unlink "$audio_out";
-	my $smres = smog_system("touch \"$audio_out\"");
+	unlink $audio_out;
+	my $smres = &smog_system("touch \"$audio_out\"");
 	if ($smres) {
-	    $panic = sig_write_error("$audio_out");
+	    $panic = &sig_write_error("$audio_out");
 	    return;
 	}
 
-	smog_system("/bin/chmod 600 \"$audio_out\"");
+	&smog_system("/bin/chmod 600 \"$audio_out\"");
 
 	my $align = $achans * $asamps / 8;
 
@@ -6504,7 +6510,7 @@ if (defined($ARGV[0])) {
 	}
 
 	if ($size > 0) {
-	    unlink "$audio_out";
+	    unlink $audio_out;
 
 	    $fdd_in = $audio_in;
 	    $fdd_out = $audio_out;
@@ -6513,7 +6519,7 @@ if (defined($ARGV[0])) {
 	    return if ($panic);
 	}
 
-	smog_system_sync();
+	&smog_system_sync();
 	$audio_out;
     }
 
@@ -6587,7 +6593,7 @@ if (defined($ARGV[0])) {
 	# 1) copy the end of the audio (after insertion) to a new file [$where to $to_end]
 	# 2) insert silence up to $where (if necessary)
 	# 3) insert the new section [$start to $end at $where]
-	# 4) insert silence up to $where+$end (if necessary)
+	# 4) insert silence up to $where + $end (if necessary)
 	# 5) then put the end back
 
 	#input params:
@@ -6621,15 +6627,15 @@ if (defined($ARGV[0])) {
 	}
 	my $audio_temp = "$curworkdir/audio.temp";
 
-	unlink "$audio_temp";
-	$smres = smog_system("touch \"$audio_temp\"");
+	unlink $audio_temp;
+	$smres = &smog_system("touch \"$audio_temp\"");
 
 	if ($smres) {
-	    $panic = sig_write_error("$audio_temp");
+	    $panic = &sig_write_error("$audio_temp");
 	    return;
 	}
 
-	smog_system("/bin/chmod 600 \"$audio_temp\"");
+	&smog_system("/bin/chmod 600 \"$audio_temp\"");
 
 	$silence = 0;
 	if ($arate < 0) {
@@ -6761,102 +6767,214 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
-	unlink "$audio_temp";
-	smog_system_sync();
+	unlink $audio_temp;
+	&smog_system_sync();
     }
 
 
     sub cut_audio {
 	#what we are going to do:
-	#1) copy up to $start to a new file
-	#2) back up the section to be deleted
-	#3) append the section after $end to the new file
-	#4) copy the new file to the original
-	#$start, $end are in seconds
+	# a)
+	## copy from $start to $end to temp
+	## copy (inline) in original, removing the deleted section
+	## truncate original
+	## on success, rename temp to bak
+	## bytes copied: $start to eof
+	##
+	## optimisations:
+	# if $start == 0, end == 0
+	# rename orig to backup
+	#
+	# $start == 0, $end > 0
+	# rename orig to temp
+	# copy from end to eof to orig
+	# truncate temp
+	#
+	# if end == fsize
+	# copy end to eof to temp
+	# truncate orig
 
-	if ($achans == 0) {
+	return if !$achans;
+
+	my $audio_in = "$curworkdir/audio";
+	my $audio_bak = "$audio_in.bak";
+	my $audio_temp = "$audio_in.temp";
+	$align = $achans * $asamps / 8;
+	my $fsize = &align(-s $audio_in);
+
+	$spos = &align($arate * $align * $start);
+	$epos = &align($arate * $align * $end);
+
+	if ($spos > $fsize) {
+	    $spos = $fsize;
+	}
+
+	if ($epos == 0 || $epos > $fsize) {
+	    $epos = $fsize;
+	}
+
+	if ($spos >= $epos || ($spos == 0 && $epos == $fsize)) {
+	    if (-s $audio_bak) {
+		unlink $audio_bak;
+		if (-s $audio_bak) {
+		    $panic = &sig_write_error($audio_bak);
+		    return;
+		}
+	    }
+	    if ($spos == 0 && $epos == $fsize) {
+		&smog_rename($audio_in, $audio_bak);
+	    }
+	    else {
+		&smog_copy($audio_in, $audio_bak);
+		return if $panic;
+	    }
+
+	    &smog_system_sync();
+	    if (-s $audio_bak != $fsize) {
+		$panic = &sig_write_error($audio_bak);
+	    }
 	    return;
 	}
 
-	my $audio_in = "$curworkdir/audio";
-	my $audio_temp = "$curworkdir/audio.temp";
-	my $audio_bak = "$curworkdir/audio.bak";
-
-	unlink "$audio_temp";
-	unlink "$audio_bak";
-
-	if ($end == 0.) {
-	    #delete all audio
-	    smog_rename("$audio_in","$audio_bak");
-	}
-	else {
-	    $smres = smog_system("touch \"$audio_temp\"");
-	    if ($smres) {
-		$panic = sig_write_error("$audio_temp");
+	if (-s $audio_temp) {
+	    unlink $audio_temp;
+	    &smog_system_sync();
+	    if (-s $audio_temp) {
+		$panic = &sig_write_error($audio_temp);
 		return;
 	    }
-	    &smog_system("/bin/chmod 600 \"$audio_temp\"");
-
-	    $align = $achans * $asamps / 8;
-
-	    # step 1
-	    $spos = &align($arate * $align * $start);
-	    $epos = &align($arate * $align * $end);
-
-	    my $fsize = &align(-s $audio_in);
-
-	    if ($epos > $fsize) {
-		$epos = $fsize;
-	    }
-	    if ($spos > $epos) {
-		$spos = $epos;
-	    }
-
-	    $seekstart = $spos;
-	    my $size = $spos;
-
-	    if ($size > 0) {
-		$fdd_in = $audio_in;
-		$fdd_out = $audio_temp;
-
-		&fast_dd($size, 0, 0);
-		return if $panic;
-	    }
-
-	    #step 2
-	    $size = ($epos - $spos);
-
-	    if ($size > 0) {
-		$fdd_in = $audio_in;
-		$fdd_out = $audio_bak;
-
-		&fast_dd($size, $spos, 0);
-		return if $panic;
-	    }
-
-	    #step 3
-	    $spos = $epos;
-	    $epos = $fsize;
-	    $size = ($epos - $spos);
-
-	    if ($size > 0) {
-		$fdd_in = $audio_in;
-		$fdd_out = $audio_temp;
-
-		&fast_dd($size, $spos, $seekstart);
-		return if $panic;
-	    }
-
-	    # step 4
-	    unlink $audio_in;
-	    &smog_rename( $audio_temp, $audio_in);
 	}
 
-	if (-z $audio_in) {
-	    unlink $audio_in;
-	}
+	if ($spos == 0) {
+	    &smog_rename($audio_in, $audio_temp);
+	    &smog_system_sync();
+	    if (-s $audio_temp != $fsize) {
+		$panic = &sig_write_error($audio_temp);
+	    }
 
+	    $smres = &smog_system("touch \"$audio_in\"");
+	    if ($smres) {
+		$panic = &sig_write_error($audio_in);
+		return;
+	    }
+	    $smres = &smog_system("/bin/chmod 600 \"$audio_in\"");
+	    if ($smres) {
+		$panic = &sig_write_error($audio_in);
+		return;
+	    }
+
+	    $fsize -= $epos;
+	    $fdd_in = $audio_temp;
+	    $fdd_out = $audio_in;
+	    &fast_dd($fsize, $epos, 0);
+	    &smog_system_sync();
+	    if (-s $audio_in != $fsize) {
+		$panic = &sig_write_error($audio_in);
+		return;
+	    }
+	    open my $fh, "+<", $audio_temp or $panic = &sig_write_error($audio_temp);
+	    return if $panic;
+	    truncate $fh, $epos;
+	    close $fh;
+	    &smog_system_sync();
+	    if (-s $audio_temp != $epos) {
+		$panic = &sig_write_error($audio_temp);
+		return;
+	    }
+	}
+	else {
+	    if ($epos == $fsize) {
+		$smres = &smog_system("touch \"$audio_temp\"");
+		if ($smres) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+		$smres = &smog_system("/bin/chmod 600 \"$audio_temp\"");
+		if ($smres) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+		$fdd_in = $audio_in;
+		$fdd_out = $audio_temp;
+		&fast_dd($fsize - $start, $start, 0);
+		&smog_system_sync();
+		if (-s $audio_temp != $fsize - $start) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+		open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
+		return if $panic;
+		truncate $fh, $spos;
+		close $fh;
+		&smog_system_sync();
+		if (-s $audio_in != $spos) {
+		$panic = &sig_write_error($audio_in);
+		return;
+		}
+	    }
+	    else {
+		# step 1
+		$smres = &smog_system("touch \"$audio_temp\"");
+		if ($smres) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+		$smres = &smog_system("/bin/chmod 600 \"$audio_temp\"");
+		if ($smres) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+
+		$fdd_in = $audio_in;
+		$fdd_out = $audio_temp;
+		&fast_dd($epos - $spos, $spos, 0);
+		return if $panic;
+		&smog_system_sync();
+		if (-s $audio_temp != $epos - $spos) {
+		    $panic = &sig_write_error($audio_temp);
+		    return;
+		}
+
+		#step 2
+
+		if ($epos < $fsize) {
+		    $fdd_in = $audio_in;
+		    $fdd_out = $audio_in;
+		    &fast_dd($fsize - $epos, $epos, $spos);
+		    return if $panic;
+		    &smog_system_sync();
+		    if (-s $audio_in != $fsize) {
+			$panic = &sig_write_error($audio_in);
+			return;
+		    }
+		}
+
+		open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
+		return if $panic;
+		$fsize -= $epos - $spos;
+		truncate $fh, $fsize;
+		close $fh;
+		&smog_system_sync();
+		if (-s $audio_in != $fsize) {
+		    $panic = &sig_write_error($audio_in);
+		    return;
+		}
+	    }
+	}
+	if (-s $audio_bak) {
+	    unlink $audio_bak;
+	    &smog_system_sync();
+	    if (-s $audio_bak) {
+		$panic = &sig_write_error($audio_bak);
+		return;
+	    }
+	}
+	$fsize = -s $audio_temp;
+	&smog_rename($audio_temp, $audio_bak);
 	&smog_system_sync();
+	if (-s $audio_bak != $fsize) {
+	    $panic = &sig_write_error($audio_bak);
+	}
     }
 
 
@@ -6882,7 +7000,7 @@ if (defined($ARGV[0])) {
 	unless (-f $audio_file) {
 	    $smres = &smog_system("touch \"$audio_file\"");
 	    if ($smres) {
-		$panic = &sig_write_error("$audio_file");
+		$panic = &sig_write_error($audio_file);
 		return;
 	    }
 	    &smog_system("/bin/chmod 600 \"$audio_file\"");
@@ -7229,7 +7347,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    unless($fromname eq $name) {
-		smog_copy("$curworkdir/$fromname$img_ext", "$curworkdir/$name$img_ext");
+		&smog_copy("$curworkdir/$fromname$img_ext", "$curworkdir/$name$img_ext");
 		return if $panic;
 	    }
 	    &sig_progress($i);
@@ -7415,10 +7533,12 @@ if (defined($ARGV[0])) {
 	}
 
 	if (!$is_mpv) {
-	    $com = "$mplayer_command -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels $achans <$nulfile";
+	    $com = "$mplayer_command -really-quiet \"$file\" -ao pcm:fast:waveheader:file=\"$audio_in\" $format -channels " .
+		"$achans <$nulfile";
 	}
 	else {
-	    $com = "$mplayer_command --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format --audio-channels=$achans";
+	    $com = "$mplayer_command --really-quiet \"$file\" --ao=pcm:waveheader:file=\"$audio_in\" $format " .
+		"--audio-channels=$achans";
 	}
 	my $smerr = &smog_system($com);
 
@@ -8613,63 +8733,59 @@ if (defined($ARGV[0])) {
 
 	return if ($size < 0);
 
-	my $bs = 4096; # block size
+	my $bs = $blksize = (stat IN)[11] || (4096 *64); # block size
 
 	my $fblocks = int($size / $bs);
-	my $rbytes = $size - $fblocks * $bs;
 
 	my ($data, $i);
 
-	my $sizecheck = -s $fdd_in;
-
-	if ($fdd_in ne "/dev/zero" && $size + $skip > $sizecheck) {
-	    if ($DEBUG_SMOGRIFY) {
-		print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n" .
-		    "$fdd_in\n";
-	    }
-	    $size = $sizecheck - $skip;
-	    if ($skip >= $sizecheck) {
-		return;
+	if ($fdd_in ne "/dev/zero") {
+	    my $sizecheck = -s $fdd_in;
+	    if ($size + $skip > $sizecheck) {
+		if ($DEBUG_SMOGRIFY) {
+		    print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n" .
+			"$fdd_in\n";
+		}
+		$size = $sizecheck - $skip;
+		if ($skip >= $sizecheck) {
+		    return;
+		}
 	    }
 	}
 
 	if (! open FFIN, "<", $fdd_in) {
 	    if (-f $fdd_in) {
-		$panic = sig_read_error($fdd_in);
+		$panic = &sig_read_error($fdd_in);
 	    }
 	    return;
 	}
 
-	seek FFIN, $skip, SEEK_START or $panic = sig_read_error($fdd_in);
-	return if $panic;
-
-	my $smres = smog_system("touch $fdd_out");
+	my $smres = &smog_system("touch $fdd_out");
 	if ($smres) {
-	    $panic = sig_write_error($fdd_out);
+	    $panic = &sig_write_error($fdd_out);
 	    return;
 	}
 
-	open FFOUT,"+<", $fdd_out or $panic = sig_write_error($fdd_out);
+	open FFOUT,"+<", $fdd_out or $panic = &sig_write_error($fdd_out);
 	return if $panic;
-	seek FFOUT, $seek, SEEK_START or $panic = sig_write_error($fdd_out);
+	seek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
+	return if $panic;
+	seek FFOUT, $seek, SEEK_START or $panic = &sig_write_error($fdd_out);
 	return if $panic;
 
-	for ($i=0; $i < $fblocks; $i++) {
-	    read FFIN, $data, $bs or $panic = sig_read_error($fdd_in);
-	    return if $panic;
-	    print FFOUT $data or $panic = sig_write_error($fdd_out);
-	    return if $panic;
-	}
-
-	while ($rbytes > 0) {
-	    $bs /= 2;
-	    if ($rbytes >= $bs) {
-		read FFIN, $data, $bs or $panic = sig_read_error($fdd_in);
-		return if $panic;
-		print FFOUT $data or $panic = sig_write_error($fdd_out);
-		return if $panic;
-		$rbytes -= $bs;
+	while ($size > 0) {
+	    if ($size < $bs) {
+		$bs = $size;
 	    }
+	    $len = read FFIN, $data, $bs;
+	    if (!defined $len) {
+		next if $! =~ /^Interrupted/;       # ^Z and fg
+		$panic = &sig_read_error($fdd_in);
+		return if $panic;
+	    }
+	    print FFOUT $data or $panic = &sig_write_error("$fdd_out");
+	    return if $panic;
+	    $size -= $len;
 	}
 
 	close FFOUT;
@@ -8899,6 +9015,12 @@ sub get_convert_version {
     my $convert_version = &smog_system_direct("$real_convert_command 2>$nulfile | grep -i version");
     $convert_version = (split(" ", $convert_version))[2];
     return $convert_version;
+}
+
+
+sub get_convert_version_hash {
+    ## needed for RFX plugins, e.g. colorize
+    &version_hash(&get_convert_version);
 }
 
 

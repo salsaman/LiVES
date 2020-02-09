@@ -1909,10 +1909,12 @@ static void lives_init(_ign_opts *ign_opts) {
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
       splash_msg(_("Starting pulseaudio server..."), SPLASH_LEVEL_LOAD_APLAYER);
 
-      if (prefs->pa_restart && !prefs->vj_mode) {
-        char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
-        lives_system(com, TRUE);
-        lives_free(com);
+      if (!mainw->foreign) {
+        if (prefs->pa_restart && !prefs->vj_mode) {
+          char *com = lives_strdup_printf("%s %s", EXEC_PULSEAUDIO, prefs->pa_start_opts);
+          lives_system(com, TRUE);
+          lives_free(com);
+        }
       }
 
       if (!lives_pulse_init(prefs->startup_phase)) {
@@ -4263,6 +4265,8 @@ void sensitize(void) {
 
   lives_widget_set_sensitive(mainw->record_perf, TRUE);
   lives_widget_set_sensitive(mainw->export_submenu, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO));
+  lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+  lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
   lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
@@ -4270,11 +4274,14 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
-                             && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+                             && CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->trim_to_pstart, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
                              cfile->pointer_time > 0.));
   lives_widget_set_sensitive(mainw->delaudio_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
-  lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
+  lives_widget_set_sensitive(mainw->delsel_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
+                             && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->delall_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO
+                             && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->resample_audio, !CURRENT_CLIP_IS_CLIPBOARD && (CURRENT_CLIP_HAS_AUDIO &&
                              capable->has_sox_sox));
   lives_widget_set_sensitive(mainw->dsize, TRUE);
@@ -4555,6 +4562,7 @@ void procw_desensitize(void) {
   lives_widget_set_sensitive(mainw->select_submenu, FALSE);
   lives_widget_set_sensitive(mainw->toy_tv, FALSE);
   lives_widget_set_sensitive(mainw->autolives, FALSE);
+  lives_widget_set_sensitive(mainw->export_submenu, FALSE);
   lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
   lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
   lives_widget_set_sensitive(mainw->load_cdtrack, FALSE);
@@ -7499,7 +7507,6 @@ lfi_done:
 #endif
     }
 #endif
-
   }
 
 
@@ -7921,14 +7928,15 @@ lfi_done:
       lives_widget_set_sensitive(mainw->export_submenu, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->recaudio_submenu, TRUE);
       lives_widget_set_sensitive(mainw->recaudio_sel, (CURRENT_CLIP_HAS_VIDEO));
-      lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->export_selaudio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->export_allaudio, CURRENT_CLIP_HAS_AUDIO);
       lives_widget_set_sensitive(mainw->append_audio, (CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_submenu, (CURRENT_CLIP_HAS_AUDIO));
-      lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
-                                 && (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->trim_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->trim_to_pstart, (CURRENT_CLIP_HAS_AUDIO && cfile->pointer_time > 0.));
       lives_widget_set_sensitive(mainw->delaudio_submenu, (CURRENT_CLIP_HAS_AUDIO));
-      lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO));
+      lives_widget_set_sensitive(mainw->delsel_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
+      lives_widget_set_sensitive(mainw->delall_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
       lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
       lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
       lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO);

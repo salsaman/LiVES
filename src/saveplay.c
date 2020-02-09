@@ -2473,7 +2473,7 @@ void play_file(void) {
   if (mainw->record) mainw->record_paused = TRUE;
 
   // if recording, set up recorder (jack or pulse)
-  if (!mainw->foreign && !mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0)) &&
+  if (!mainw->preview && (prefs->audio_src == AUDIO_SRC_EXT || (mainw->record && mainw->agen_key != 0)) &&
       ((audio_player == AUD_PLAYER_JACK) ||
        (audio_player == AUD_PLAYER_PULSE))) {
     mainw->rec_samples = -1; // record unlimited
@@ -5189,7 +5189,7 @@ void recover_layout_map(int numclips) {
               else lmap_entry->list = lmap_entry_list_next;
               if (lmap_entry_list_next != NULL) lmap_entry_list_next->prev = lmap_entry_list->prev;
               lives_free((livespointer)lmap_entry_list->data);
-              lives_free(lmap_entry_list);
+              lives_list_free(lmap_entry_list);
             }
             lives_strfreev(array);
             lmap_entry_list = lmap_entry_list_next;
@@ -5201,7 +5201,8 @@ void recover_layout_map(int numclips) {
           if (lmap_node->prev != NULL) lmap_node->prev->next = lmap_node_next;
           else mlist = lmap_node_next;
           if (lmap_node_next != NULL) lmap_node_next->prev = lmap_node->prev;
-
+          lmap_node->prev = lmap_node->next = NULL;
+          lives_list_free(lmap_node);
           /// check for missing frames and audio in layouts
           // TODO: -- needs checking ----
           mask = 0;

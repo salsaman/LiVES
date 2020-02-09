@@ -628,27 +628,25 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   ssize_t res;
   ssize_t delta = 0;
   size_t bufsize = smbytes;
+#ifdef AUTOTUNE
+  size_t obufsize;
+  double cost;
+#endif
 
   if (fbuff->bufsztype == 1) bufsize = medbytes;
   else if (fbuff->bufsztype == 2) bufsize = bigbytes;
 
 #ifdef AUTOTUNE
+  cost = 1. / (double)(min + fbuff->nseqreads > 0 ? bufsize : 0);
   if (fbuff->bufsztype == 0) {
     if (!tuneds && !tuners) tuners = weed_plant_new(31338);
-    smbytes = autotune_u64(tuners, smbytes, 64, 4096, 32, smbytes);
-    bufsize = smbytes;
+    autotune_u64(tuners, 64, 4096, 32, cost);
   } else if (fbuff->bufsztype == 1) {
     if (!tunedm && !tunerm) tunerm = weed_plant_new(31339);
-    bufsize = medbytes;
-    medbytes = autotune_u64(tunerm, medbytes, smbytes * 4, 65536, 8, medbytes);
-    if (medbytes > bufsize) lives_freep((void **)&fbuff->buffer);
-    bufsize = medbytes;
+    autotune_u64(tunerm, smbytes * 4, 65536, 8, cost);
   } else if (fbuff->bufsztype == 2) {
     if (!tunedl && !tunerl) tunerl = weed_plant_new(31340);
-    bufsize = bigbytes;
-    bigbytes = autotune_u64(tunerl, bigbytes, medbytes * 4, 512 * 1024, 8, bigbytes);
-    if (bigbytes > bufsize) lives_freep((void **)&fbuff->buffer);
-    bufsize = bigbytes;
+    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 8, cost);
   }
 #endif
 
@@ -671,21 +669,28 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
 
 #ifdef AUTOTUNE
   if (fbuff->bufsztype == 0) {
+    obufsize = smbytes;
     if (tuners) {
       smbytes = autotune_u64_end(&tuners, smbytes);
       if (!tuners) tuneds = TRUE;
     }
+    bufsize = smbytes;
   } else if (fbuff->bufsztype == 1) {
+    obufsize = medbytes;
     if (tunerm) {
       medbytes = autotune_u64_end(&tunerm, medbytes);
       if (!tunerm) tunedm = TRUE;
     }
+    bufsize = medbytes;
   } else if (fbuff->bufsztype == 2) {
+    obufsize = bigbytes;
     if (tunerl) {
       bigbytes = autotune_u64_end(&tunerl, bigbytes);
       if (!tunerl) tunedl = TRUE;
     }
+    bufsize = bigbytes;
   }
+  if (bufsize > obufsize) fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 3, obufsize >> 3, 8);
 #endif
 
   fbuff->bytes = res - delta;
@@ -804,6 +809,8 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
 
+  if (count == 0) return retval;
+
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
     LIVES_DEBUG("lives_read_buffered: no file buffer found");
     return lives_read(fd, buf, count, allow_less);
@@ -830,15 +837,13 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->nseqreads++;
     if (count == 0) return retval;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
-    if (fbuff->bufsztype == 0)
-      fbuff->bufsztype = 1;
     if (fbuff->reversed) {
       fbuff->offset -= (fbuff->ptr - fbuff->buffer) + count;
     }
   }
 
   if (count <= bigbytes) {
-    if (fbuff->nseqreads > 1 || ocount >= (smbytes >> 2)) fbuff->bufsztype = 1;
+    if (fbuff->nseqreads > 0 || ocount >= (smbytes >> 2)) fbuff->bufsztype = 1;
     if (ocount >= (medbytes >> 2)) fbuff->bufsztype = 2;
 
     res = file_buffer_fill(fbuff, count);
@@ -3547,12 +3552,21 @@ boolean after_foreign_play(void) {
           lives_system(com, FALSE);
 
           cfile->nopreview = TRUE;
+          cfile->keep_without_preview = TRUE;
+          mainw->cancel_type = CANCEL_SOFT;
           if (mainw->com_failed || !do_progress_dialog(TRUE, TRUE, _("Cleaning up clip"))) {
-            // cancelled cleanup
-            new_frames = 0;
-            close_current_file(old_file);
+            if (mainw->cancelled == CANCEL_KEEP) {
+              mainw->cancelled = CANCEL_NONE;
+              d_print_enough(new_frames);
+              cfile->end = cfile->frames = new_frames;
+            } else {
+              // cancelled cleanup
+              new_frames = 0;
+              close_current_file(old_file);
+            }
           }
           lives_free(com);
+          mainw->cancel_type = CANCEL_KILL;
         } else lives_strfreev(array);
       }
       close(capture_fd);
@@ -4202,16 +4216,7 @@ void set_sel_label(LiVESWidget * sel_label) {
 
 
 LIVES_GLOBAL_INLINE void lives_list_free_strings(LiVESList * list) {
-  register int i;
-
-  if (list == NULL) return;
-
-  for (i = 0; i < lives_list_length(list); i++) {
-    if (lives_list_nth_data(list, i) != NULL) {
-      //lives_printerr("free %s\n",list->data);
-      lives_free((livespointer)lives_list_nth_data(list, i));
-    }
-  }
+  for (; list != NULL; list = list->next) lives_freep((void **)&list->data);
 }
 
 
@@ -4249,7 +4254,7 @@ boolean cache_file_contents(const char *filename) {
 
 char *get_val_from_cached_list(const char *key, size_t maxlen) {
   // WARNING - contents may be invalid if the underlying file is updated (e.g with set_*_pref())
-  LiVESList *clist = mainw->cached_list;
+  LiVESList *clist = mainw->cached_list, *clistnext;
   char *keystr_start = lives_strdup_printf("<%s>", key);
   char *keystr_end = lives_strdup_printf("</%s>", key);
   size_t kslen = lives_strlen(keystr_start);
@@ -4261,6 +4266,7 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
 
   lives_memset(buff, 0, maxlen);
   while (clist != NULL) {
+    clistnext = clist->next;
     if (gotit) {
       if (!lives_strncmp(keystr_end, (char *)clist->data, kelen)) {
         break;
@@ -4268,11 +4274,15 @@ char *get_val_from_cached_list(const char *key, size_t maxlen) {
       if (strncmp((char *)clist->data, "|", 1)) lives_strappend(buff, maxlen, (char *)clist->data);
       else {
         if (clist->prev != NULL) clist->prev->next = clist->next;
+        else mainw->cached_list = clistnext;
+        if (clistnext != NULL) clistnext->prev = clist->prev;
+        clist->prev = clist->next = NULL;
+        lives_list_free(clist);
       }
     } else if (!lives_strncmp(keystr_start, (char *)clist->data, kslen)) {
       gotit = TRUE;
     }
-    clist = clist->next;
+    clist = clistnext;
   }
   lives_free(keystr_start);
   lives_free(keystr_end);
@@ -5064,7 +5074,7 @@ LiVESList *lives_list_delete_string(LiVESList * list, const char *string) {
       if (xlist->prev != NULL) xlist->prev->next = xlist->next;
       if (xlist->next != NULL) xlist->next->prev = xlist->prev;
       if (list == xlist) list = xlist->next;
-      lives_free(xlist);
+      lives_list_free(xlist);
       return list;
     }
     xlist = xlist->next;

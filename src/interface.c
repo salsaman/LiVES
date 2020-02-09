@@ -2369,7 +2369,8 @@ _entryw *create_rename_dialog(int type) {
   if (type == 6) {
     okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_GO_FORWARD, _("_Next"),
                LIVES_RESPONSE_OK);
-  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK, NULL, LIVES_RESPONSE_OK);
+  } else okbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(renamew->dialog), LIVES_STOCK_OK,
+                      NULL, LIVES_RESPONSE_OK);
 
   lives_button_grab_default_special(okbutton);
 

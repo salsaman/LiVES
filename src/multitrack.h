@@ -559,7 +559,7 @@ struct _mt {
   LiVESList *undos;
   size_t undo_buffer_used;
   uint8_t *undo_mem;
-  int undo_offset;
+  off_t undo_offset;
   boolean did_backup;
 
   char undo_text[32];

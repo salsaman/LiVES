@@ -300,20 +300,20 @@ typedef GtkOrientation LiVESOrientation;
 #define LIVES_ORIENTATION_HORIZONTAL GTK_ORIENTATION_HORIZONTAL
 #define LIVES_ORIENTATION_VERTICAL   GTK_ORIENTATION_VERTICAL
 
-typedef GdkEvent                          LiVESXEvent;
-typedef GdkXEvent                         LiVESXXEvent;
-typedef GdkEventButton                    LiVESXEventButton;
-typedef GdkEventMotion                    LiVESXEventMotion;
-typedef GdkEventScroll                    LiVESXEventScroll;
-typedef GdkEventExpose                    LiVESXEventExpose;
-typedef GdkEventCrossing                  LiVESXEventCrossing;
-typedef GdkEventConfigure                 LiVESXEventConfigure;
-typedef GdkEventFocus                     LiVESXEventFocus;
-typedef GdkEventKey                       LiVESXEventKey;
-typedef GdkEvent                          LiVESXEventDelete;
-typedef GdkDisplay                        LiVESXDisplay;
-typedef GdkScreen                         LiVESXScreen;
-typedef GdkDevice                         LiVESXDevice;
+typedef GdkEvent                          		LiVESXEvent;
+typedef GdkXEvent                         		LiVESXXEvent;
+typedef GdkEventButton                    	LiVESXEventButton;
+typedef GdkEventMotion                    	LiVESXEventMotion;
+typedef GdkEventScroll                    	LiVESXEventScroll;
+typedef GdkEventExpose                    	LiVESXEventExpose;
+typedef GdkEventCrossing                  	LiVESXEventCrossing;
+typedef GdkEventConfigure                 	LiVESXEventConfigure;
+typedef GdkEventFocus                     	LiVESXEventFocus;
+typedef GdkEventKey                       	LiVESXEventKey;
+typedef GdkEvent                          		LiVESXEventDelete;
+typedef GdkDisplay                        		LiVESXDisplay;
+typedef GdkScreen                         		LiVESXScreen;
+typedef GdkDevice                         		LiVESXDevice;
 
 #define LIVES_KEY_RELEASE GDK_KEY_RELEASE
 #define LIVES_KEY_PRESS GDK_KEY_PRESS

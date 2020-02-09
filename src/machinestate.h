@@ -206,7 +206,7 @@ void reverse_bytes(char *buff, size_t count, size_t granularity) 	GNU_HOT GNU_FL
 boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
 
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val);
-uint64_t autotune_u64(weed_plant_t *tuner, uint64_t val, uint64_t min, uint64_t max, int ntrials, size_t force);
+void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost);
 
 // TODO
 void quick_free(memheader_t *bp);
@@ -265,6 +265,7 @@ typedef struct {
   pthread_mutex_t cond_mutex;
   volatile int busy;
   volatile int done;
+  uint64_t flags;
   void *ret;
 } thrd_work_t;
 

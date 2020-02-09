@@ -921,8 +921,10 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_sensitive(LiVESWidget *widg
 #ifdef GTK_SUBMENU_SENS_BUG
   if (GTK_IS_MENU_ITEM(widget)) {
     LiVESWidget *sub = lives_menu_item_get_submenu(LIVES_MENU_ITEM(widget));
-    if (sub != NULL)
+    if (sub != NULL) {
       lives_container_foreach(LIVES_CONTAINER(sub), _lives_widget_set_sensitive_cb, LIVES_INT_TO_POINTER(state));
+      gtk_widget_set_sensitive(sub, state);
+    }
   }
 #endif
   return TRUE;

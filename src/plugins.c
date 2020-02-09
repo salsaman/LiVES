@@ -456,8 +456,10 @@ void on_vppa_ok_clicked(LiVESButton *button, livespointer user_data) {
   mainw->textwidget_focus = NULL;
 
   if (vpp == mainw->vpp) {
-    if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
-    if (vppw->spinbuttonh != NULL) mainw->vpp->fheight = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
+    if (vppw->spinbuttonw != NULL) mainw->vpp->fwidth
+        = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonw));
+    if (vppw->spinbuttonh != NULL) mainw->vpp->fheight
+        = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(vppw->spinbuttonh));
     if (vppw->apply_fx != NULL) mainw->fx1_bool = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(vppw->apply_fx));
     if (vppw->fps_entry != NULL) fixed_fps = lives_entry_get_text(LIVES_ENTRY(vppw->fps_entry));
     if (vppw->pal_entry != NULL) {

@@ -1251,6 +1251,7 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(export_submenu_menu, FALSE);
 
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->export_submenu), export_submenu_menu);
+  lives_widget_set_sensitive(mainw->export_submenu, FALSE);
 
   mainw->export_selaudio = lives_standard_menu_item_new_with_label(_("Export _Selected Audio..."));
   lives_container_add(LIVES_CONTAINER(export_submenu_menu), mainw->export_selaudio);
@@ -1269,14 +1270,13 @@ void create_LiVES(void) {
   lives_widget_set_sensitive(trimaudio_submenu_menu, FALSE);
 
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->trim_submenu), trimaudio_submenu_menu);
+  lives_widget_set_sensitive(mainw->trim_submenu, FALSE);
 
   mainw->trim_audio = lives_standard_menu_item_new_with_label(_("Trim/Pad Audio to _Selection"));
   lives_container_add(LIVES_CONTAINER(trimaudio_submenu_menu), mainw->trim_audio);
-  lives_widget_set_sensitive(mainw->trim_audio, FALSE);
 
   mainw->trim_to_pstart = lives_standard_menu_item_new_with_label(_("Trim/Pad Audio from Beginning to _Play Start"));
   lives_container_add(LIVES_CONTAINER(trimaudio_submenu_menu), mainw->trim_to_pstart);
-  lives_widget_set_sensitive(mainw->trim_to_pstart, FALSE);
 
   mainw->delaudio_submenu = lives_standard_menu_item_new_with_label(_("_Delete Audio..."));
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->delaudio_submenu);
@@ -1284,7 +1284,7 @@ void create_LiVES(void) {
   delaudio_submenu_menu = lives_menu_new();
 
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->delaudio_submenu), delaudio_submenu_menu);
-  lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
+  //lives_widget_set_sensitive(mainw->delaudio_submenu, FALSE);
 
   mainw->delsel_audio = lives_standard_menu_item_new_with_label(_("Delete _Selected Audio"));
   lives_container_add(LIVES_CONTAINER(delaudio_submenu_menu), mainw->delsel_audio);
@@ -2354,11 +2354,11 @@ void create_LiVES(void) {
                             lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
-  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), GDK_KEY_bottomeftsqbracket,
-			    (LiVESXModifierType)(LIVES_CONTROL_MASK),
-			    (LiVESAccelFlags)0,
-			    lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
-					       LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
+  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), GDK_KEY_braceleft,
+                            (LiVESXModifierType)(LIVES_CONTROL_MASK),
+                            (LiVESAccelFlags)0,
+                            lives_cclosure_new(LIVES_GUI_CALLBACK(dirchange_lock_callback),
+                                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND), NULL));
 
   lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_Space,
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_SHIFT_MASK),

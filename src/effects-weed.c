@@ -5009,6 +5009,8 @@ void weed_load_all(void) {
         if (list->prev != NULL) list->prev->next = listnext;
         else weed_plugin_list = listnext;
         if (listnext != NULL) listnext->prev = list->prev;
+        list->prev = list->next = NULL;
+        lives_list_free(list);
       }
       list = listnext;
       threaded_dialog_spin(0.);

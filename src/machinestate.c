@@ -295,14 +295,16 @@ void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials,
   }
 }
 
-#define NCYCS 8
+#define NCYCS 16
 
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
   if (!tuner || !*tuner) return val;
   else {
     ticks_t tottime = lives_get_current_ticks();
-    int ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
-    int trials = weed_get_int_value(*tuner, "trials", NULL);
+    int ntrials, trials;
+
+    ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
+    trials = weed_get_int_value(*tuner, "trials", NULL);
 
     weed_set_int_value(*tuner, "trials", ++trials);
     tottime += (weed_get_int64_value(*tuner, "tottime", NULL)) - weed_get_int64_value(*tuner, "tstart", NULL);
@@ -317,6 +319,15 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
         int64_t min = weed_get_int64_value(*tuner, "min", NULL);
         int64_t max = weed_get_int64_value(*tuner, "max", NULL);
         boolean smfirst = FALSE;
+        char *key1 = lives_strdup_printf("tottrials_%lu", val);
+        char *key2 = lives_strdup_printf("totcost_%lu", val);
+
+        weed_set_int_value(*tuner, key1, weed_get_int_value(*tuner, key1, NULL) + trials);
+        weed_set_double_value(*tuner, key2, weed_get_double_value(*tuner, key2, NULL) + totcost);
+
+        lives_free(key1);
+        lives_free(key2);
+
         if (cycs & 1) smfirst = TRUE;
         weed_set_int_value(*tuner, "cycles", cycs);
 
@@ -391,10 +402,43 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
           if (val > min) val /= 2;
         }
       } else {
+        weed_size_t nleaves;
+        char **res = weed_plant_list_leaves(*tuner, &nleaves);
+        uint64_t bestval = val, xval;
+        const char *key1 = "totcost_";
+        char *key2;
+        double avcost, costmin = 0.;
+        boolean gotcost = FALSE;
+        int j;
+
+        for (int i = 1; i < nleaves; i++) {
+          if (!strncmp(res[i], key1, 8)) {
+            xval = strtoul((const char *)(res[i] + 8), NULL, 10);
+            key2 = lives_strdup_printf("totrials_%lu", xval);
+            for (j = i + 1; j < nleaves; j++) {
+              if (!strcmp(res[j], key2)) break;
+            }
+            if (j == nleaves) {
+              for (j = 0; j < i; j++) {
+                if (!strcmp(res[j], key2)) break;
+              }
+            }
+            if ((avcost = weed_get_double_value(*tuner, res[i], NULL) / (double)weed_get_int_value(*tuner, res[j], NULL)) < costmin
+                || !gotcost) {
+              costmin = avcost;
+              bestval = xval;
+              gotcost = TRUE;
+            }
+            lives_free(key2);
+          }
+        }
+        val = bestval;
         if (prefs->show_dev_opts)
           g_print("value of %d tuned to %lu\n", weed_plant_get_type(*tuner), val);
         weed_plant_free(*tuner);
         *tuner = NULL;
+        for (j = 0; j < nleaves; lives_free(res[j++]));
+        lives_free(res);
       }
       return val;
     }
@@ -415,23 +459,33 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
   static weed_plant_t *tuner = NULL;
   static boolean tuned = FALSE;
+  static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
+  boolean haslock = FALSE;
   if (n == 0) return dest;
 
   if (!tuned && !tuner) tuner = weed_plant_new(31337);
-
-  autotune_u64(tuner, 16, 1024 * 1024, 32, 1. / (double)n);
+  if (tuner) {
+    if (!pthread_mutex_trylock(&tuner_mutex)) {
+      haslock = TRUE;
+    }
+  }
   if (n >= 32 && n <= maxbytes) {
+    if (haslock) autotune_u64(tuner, 16, 1024 * 1024, 128, 1. / (double)n);
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
-    if (tuner) {
+
+    if (haslock) {
       maxbytes = autotune_u64_end(&tuner, maxbytes);
       if (!tuner) tuned = TRUE;
+      pthread_mutex_unlock(&tuner_mutex);
     }
     return dest;
   }
+  if (haslock) autotune_u64(tuner, 16, 1024 * 1024, 128, -1. / (double)n);
   memcpy(dest, src, n);
-  if (tuner) {
+  if (haslock) {
     maxbytes = autotune_u64_end(&tuner, maxbytes);
     if (!tuner) tuned = TRUE;
+    pthread_mutex_unlock(&tuner_mutex);
   }
   return dest;
 }
@@ -1054,7 +1108,7 @@ static void *thrdpool(void *arg) {
 
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         mywork->flags |= 1;
-        autotune_u64(mtuner, npoolthreads + 4, npoolthreads * 4, 32, (double)narenas);
+        autotune_u64(mtuner, npoolthreads + 4, npoolthreads * 4, 64, (double)narenas);
       }
 
       pthread_mutex_unlock(&twork_mutex);
@@ -1151,6 +1205,7 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
       pthread_mutex_unlock(&tcond_mutex);
     }
     npoolthreads += MINPOOLTHREADS;
+    mtuned = FALSE;
   }
   pthread_mutex_unlock(&twork_mutex);
   pthread_mutex_lock(&tcond_mutex);

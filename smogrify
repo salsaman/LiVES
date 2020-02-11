@@ -28,6 +28,8 @@ if ($USE_WARNINGS) {
     use warnings;
 }
 
+#use feature say;
+
 ##################################################################
 use POSIX qw(locale_h);
 use locale;
@@ -36,9 +38,6 @@ setlocale(LC_NUMERIC, "C");
 # these MUST match with the definition in the GUI
 
 my $rfx_builder_multi = "build-lives-rfx-plugin-multi";
-
-my $umask = 0177;
-# ->        -rw-------
 
 my $GUI_NAME = "LiVES";
 my $MYNAME = $0;
@@ -368,7 +367,7 @@ if (defined($ARGV[0])) {
 
 	    if ($has_rcfile && $recovery_file ne "") {
 		$panic = 0;
-		smog_copy($rcfile, $recrcfile_succeeded);
+		&smog_copy($rcfile, $recrcfile_succeeded);
 		if ($panic || -s $recrcfile_succeeded != -s $rcfile) {
 		    unlink $recrcfile_succeeded;
 		    &startup_error(5, "report", "copyto_succeeded0", "$recrcfile_succeeded:\@:");
@@ -496,7 +495,7 @@ if (defined($ARGV[0])) {
 	    else {
 		# only for backwards compatibility with older LiVES.
 		if (! -e $gui_bootstrap_file) {
-		    open OUT, "> $gui_bootstrap_file" or exit 5;
+		    open OUT, ">", "$gui_bootstrap_file" or exit 5;
 		    print OUT "$version|";
 		    close OUT;
 		}
@@ -526,8 +525,8 @@ if (defined($ARGV[0])) {
 		exit 3;
 	    }
 
-	    if (defined(open IN, "< $pidfile")) {
-		read IN, $target_pid, 8;
+	    if (defined(open IN, "<", $pidfile)) {
+		sysread IN, $target_pid, 8;
 		close IN;
 		if (!$target_pid) {
 		    exit 1;
@@ -536,7 +535,7 @@ if (defined($ARGV[0])) {
 		# make sure pidfile has same group and owner, otherwise exit
 		my @stat = stat($pidfile);
 		if (!($uid == $stat[4] && $gid == $stat[5])) {
-		    die "Smogrify: Unable to stop process $target_pid.\n";
+		    die "smogrify: Unable to stop process $target_pid.\n";
 		}
 		elsif ($command eq "stopsubsub" || $command eq "stop_audio") {
 		    # kill all subprocesses of target_pid, and target_pid
@@ -544,8 +543,8 @@ if (defined($ARGV[0])) {
 		}
 		elsif ($command eq "stopsubsubs") {
 		    # kill all subprocesses of target_pid, but not target_pid
-		    smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
-		    if (-s "$workdir/.pids.$target_pid" && defined(open IN, "$workdir/.pids.$target_pid")) {
+		   &smog_system("pgrep -P $target_pid > \"$workdir/.pids.$target_pid\" 2>/dev/null");
+		    if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
 			while (<IN>) {
 			    my $pid = $_;
 			    chomp($pid);
@@ -559,9 +558,9 @@ if (defined($ARGV[0])) {
 		else {
 		    print "Attempting to stop process ".$target_pid." with $command\n";
 		    if ($sig eq "KILL") {
-			smog_system("kill -$sig $target_pid >/dev/null 2>&1");
+			&smog_system("kill -$sig $target_pid >/dev/null 2>&1");
 		    } else {
-			smog_system("pkill -$sig -P $target_pid");
+			&smog_system("pkill -$sig -P $target_pid");
 			# must not ! >/dev/null 2>&1");
 		    }
 		}
@@ -585,19 +584,16 @@ if (defined($ARGV[0])) {
 		$curworkdir="$workdir/$handle";
 	    } while (-d $curworkdir);
 
-	    umask 0;
 	    unless (mkdir $curworkdir) {
-		sig_system_error("Creating directory \"$curworkdir\"", 0);
+		&sig_system_error("Creating directory \"$curworkdir\"", 0);
 		exit 1;
 	    }
-	    umask $umask;
 
 	    if (defined $ARGV[1]) {
-
 		$key=$ARGV[1];
 		$infofile="$workdir/.info.$key";
-		if (!defined(open OUT, "> $infofile")) {
-		    sig_write_error("$infofile", 0);
+		if (!defined(open OUT, ">", $infofile)) {
+		    &sig_write_error($infofile, 0);
 		    exit 1;
 		}
 		print OUT $handle;
@@ -616,7 +612,7 @@ if (defined($ARGV[0])) {
 	    if (defined($ARGV[1])) {
 		$id = $ARGV[1];
 
-		open OUT, "> /tmp/.smogrify.$id" or exit 1;
+		open OUT, ">", "/tmp/.smogrify.$id" or exit 1;
 		print OUT "$workdir";
 		close OUT;
 	    } else {
@@ -716,7 +712,7 @@ if (defined($ARGV[0])) {
 		sig_write_error("$workdir/$ARGV[1]/pause");
 		exit 1;
 	    }
-	    smog_system("/bin/chmod 600 \"$workdir/$ARGV[1]/pause\"");
+	    chmod 0600, "$workdir/$ARGV[1]/pause";
 	    exit 0;
 	}
 
@@ -792,14 +788,12 @@ if (defined($ARGV[0])) {
 	    $statusfile = "$curworkdir/.status";
 
 	    # check the file is writable
-	    unless (&is_writeable($nfile)) {
+	    unless (&is_writeable($nfile, 0)) {
 		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
 	    $img_ext = &get_img_ext($curworkdir, $frame);
 	    $img_prefix = &get_img_prefix($img_ext);
-
-	    umask 0111;
 
 	    if ($hsize == -1 || $vsize == -1) {
 		$com = "$smog_convert_command $img_prefix\"$curworkdir/$name$img_ext\" \"$nfile\" >$nulfile 2>&1";
@@ -1065,7 +1059,7 @@ if (defined($ARGV[0])) {
 		    #found a lockfile
 		    my $proc = $1;
 		    unless ($proc eq $pid) {
-			my $exe = smog_system_direct("/bin/readlink -n /proc/$proc/exe");  #allowed to fail
+			my $exe = readlink "/proc/$proc/exe";  #allowed to fail
 			if ($exe ne "" && &my_basename($exe) eq $exename) {
 			    # and it's in use
 			    closedir DIR;
@@ -1182,7 +1176,7 @@ if (defined($ARGV[0])) {
 	    &smog_system_sync();
 
 	    if (-d $workdir) {
-		open OUT, "> $infofile";
+		open OUT, ">", $infofile;
 		print OUT $found;
 		close OUT;
 	    }
@@ -1361,7 +1355,6 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	####################################################################
-	umask $umask;
 
 	if (!caller && (!defined($ARGV[1]) || $ARGV[1] eq "")) {
 	    &usage;
@@ -1642,7 +1635,11 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    $extra_params = $ARGV[7];
+	    if (defined($ARGV[7])) {
+		$achans = $ARGV[7];
+	    }
+
+	    $extra_params = $ARGV[8];
 	    $band = "";
 
 	    if ($is_mpv || $extra_params eq "nobandwidth") {
@@ -1846,7 +1843,7 @@ if (defined($ARGV[0])) {
 				"$audcom $aformnew $channs \"$file\" $extra_params";
 			}
 		    }
-
+		    $DEBUG_OPEN = 1;
 		    if ($DEBUG_OPEN) {
 			print STDERR "vid open command for $handle is: $syscomv\n";
 			print STDERR "aud open command for $handle is: $syscoma\n";
@@ -2128,7 +2125,7 @@ if (defined($ARGV[0])) {
 	    if (! -d $curworkdir || (! -f "$curworkdir/header.lives" && !&is_specialdir($handle))) {
 		exit 1;
 	    }
-	    if (defined(open IN, "< $pidfile")) {
+	    if (defined(open IN, "<", $pidfile)) {
 		read IN, $target_pid, 8;
 		close IN;
 		if ($target_pid) {
@@ -2169,7 +2166,7 @@ if (defined($ARGV[0])) {
 	    our $nfile = $ARGV[4];
 
 	    # check the file is writable
-	    unless ($nfile eq "" || &is_writeable($nfile)) {
+	    unless ($nfile eq "" || &is_writeable($nfile, 0)) {
 		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
@@ -2268,7 +2265,7 @@ if (defined($ARGV[0])) {
 
 			#pad to end with silence
 			my $desired_length = $aud_length * $arate * $achans * $asamps / 8;
-			&append_silence(0, $desired_length, $asamps, $achans, $ssigned, $aendian, $audiofile);
+			&append_silence(0, $desired_length, $asamps, $achans, $signed, $aendian, $audiofile);
 			if ($panic) {
 			    unlink $pidfile;
 			    exit 1;
@@ -2308,7 +2305,7 @@ if (defined($ARGV[0])) {
 		my $com;
 		my $fields = "$fps \"$nfile\" $start $end $img_ext $otype $atype $hsize $vsize";
 		$fields .= " $DEBUG_ENCODERS";
-		$fields .= " $arate $achans $asamps $ssigned";
+		$fields .= " $arate $achans $asamps $signed";
 
 		if ($plugin =~ /multi_encoder[0-9]*/) {
 		    $extra_opts="-v";
@@ -2328,7 +2325,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    if (-f ".comment") {
-		open IN,"< .comment";
+		open IN, "< .comment";
 		read IN, $string, 1040;
 		close IN;
 		unlink ".comment";
@@ -2410,7 +2407,7 @@ if (defined($ARGV[0])) {
 		$where = 0.;
 		$from_handle = $handle;
 		$curworkdir = $linksdir;
-
+		$audio_to = "$curworkdir/audio";
 		&insert_audio($asamps, $achans, $asigned, $aendian, 0);
 		if ($panic) {
 		    unlink $pidfile;
@@ -2579,7 +2576,7 @@ if (defined($ARGV[0])) {
 	    &smog_chdir($curworkdir);
 
 	    # check the file is writable
-	    unless (&is_writeable($nfile)) {
+	    unless (&is_writeable($nfile, 0)) {
 		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
@@ -2718,7 +2715,7 @@ if (defined($ARGV[0])) {
 
 	    $blankname = "blank.jpg";
 
-	    if (defined(open IN, "< $event_file")) {
+	    if (defined(open IN, "<", $event_file)) {
 		$fcount = 1;
 		read IN, $val, 4;
 		$pstart = &getint($val);
@@ -3125,7 +3122,7 @@ if (defined($ARGV[0])) {
 	    $nfile = $ARGV[9];
 
 	    # check the file is writable
-	    unless (&is_writeable($nfile)) {
+	    unless (&is_writeable($nfile, 0)) {
 		&sig_error("Unable to open output file !", "$GUI_NAME could not write to $nfile.");
 	    }
 
@@ -3154,7 +3151,6 @@ if (defined($ARGV[0])) {
 	    }
 
 	    &smog_rename($audio_out, $nfile);
-	    &smog_system("/bin/chmod 644 \"$nfile\" >$nulfile 2>&1");
 	    &sig_complete;
 	    exit 0;
 	}
@@ -3202,7 +3198,7 @@ if (defined($ARGV[0])) {
 
 	    &smog_system_sync();
 
-	    unless(-f $audio_in) {
+	    unless (-f $audio_in) {
 		&sig_error("$GUI_NAME was not able to open the file", "$file");
 	    }
 
@@ -3302,8 +3298,12 @@ if (defined($ARGV[0])) {
 	    $acsize = -s $audio_from;
 	    $acsize /= $align * $arate;
 
+	    if (!defined $audio_in) {
+		## TODO - was set in clip_audio !!!
+		$audio_in = "$curworkdir/audio";
+	    }
+
 	    unlink $audio_in;
-	    # audio_in is "audio"
 
 	    $where = $audio_start;
 	    $end = $audio_end - $audio_start;
@@ -3316,7 +3316,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    # insert_audio will insert silence at start, and should recreate "audio" from "audioclip" ($audio_from)
-
+	    $audio_to = $audio_in;
 	    &insert_audio($asamps, $achans, $asigned, $aendian, 1);
 	    if ($panic) {
 		unlink $pidfile;
@@ -3325,7 +3325,6 @@ if (defined($ARGV[0])) {
 	    }
 
 	    #append silence to pad to end
-
 	    &append_silence(0, &align($audio_end * $arate * $align), $asamps, $achans, $asigned, $aendian);
 	    if ($panic) {
 		unlink $pidfile;
@@ -3402,7 +3401,7 @@ if (defined($ARGV[0])) {
 	    &smog_system("xwininfo > \"$curworkdir/tmpinfo\"");
 
 	    &smog_system("grep \"Window id:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
-	    if (defined(open IN, "< $curworkdir/tmpinfo2")) {
+	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
 		read IN, $win_id, 128;
 		close IN;
 	    }
@@ -3411,7 +3410,7 @@ if (defined($ARGV[0])) {
 	    chomp($win_id);
 
 	    &smog_system("grep \"Width:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
-	    if (defined(open IN, "< $curworkdir/tmpinfo2")) {
+	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
 		read IN, $width, 128;
 		close IN;
 	    }
@@ -3420,7 +3419,7 @@ if (defined($ARGV[0])) {
 	    chomp($width);
 
 	    &smog_system("grep \"Height:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
-	    if (defined(open IN, "< $curworkdir/tmpinfo2")) {
+	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
 		read IN, $height, 128;
 		close IN;
 	    }
@@ -3429,7 +3428,7 @@ if (defined($ARGV[0])) {
 	    chomp($height);
 
 	    &smog_system("grep \"Depth:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
-	    if (defined(open IN, "< $curworkdir/tmpinfo2")) {
+	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
 		read IN, $bpp, 128;
 		close IN;
 	    }
@@ -3438,7 +3437,7 @@ if (defined($ARGV[0])) {
 	    chomp($bpp);
 
 	    &smog_system("grep \"Visual:\" \"$curworkdir/tmpinfo\" > \"$curworkdir/tmpinfo2\"");
-	    if (defined(open IN, "< $curworkdir/tmpinfo2")) {
+	    if (defined(open IN, "<", "$curworkdir/tmpinfo2")) {
 		read IN, $visual, 128;
 		close IN;
 	    }
@@ -3494,7 +3493,7 @@ if (defined($ARGV[0])) {
 		    unlink $audio_in;
 		    &smog_rename($audio_out, $audio_in);
 		}
-		elsif($audsize < $aud_end) {
+		elsif ($audsize < $aud_end) {
 		    $audio_out = "$curworkdir/audio.bak";
 		    &smog_rename($audio_in, $audio_out);
 		    &append_silence(0, $aud_end - $audsize, $asamps, $achans, $asigned, $aendian, $audio_in);
@@ -3514,7 +3513,7 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "commit_audio") {
-	    # commit the audio file in either audiodump or audiodump.wav as new audio file
+	    # commit the audio file in either audiodump, audiodump.pcm  or audiodump.wav as new audio file
 
 	    $allow_nonex = 0;
 	    if (defined $ARGV[2]) {
@@ -3535,7 +3534,7 @@ if (defined($ARGV[0])) {
 		# wav format
 		unless(&rc_get("conserve_space") eq "true") {
 		    if (-f $audio_out) {
-			$smres = &smog_rename("$audio_out", "$audio_bak");
+			$smres = &smog_rename($audio_out, $audio_bak);
 		    } else {
 			$smres = &smog_system("touch \"$audio_bak\"");
 			if ($smres) {
@@ -4054,6 +4053,7 @@ if (defined($ARGV[0])) {
 			}
 		    }
 
+		    $audio_to = "$curworkdir/audio";
 		    &insert_audio($asamps, $achans, $asigned, $aendian, $undo_cut);
 		    if (&rc_get("conserve_space") eq "true") {
 			unlink "audio.bak";
@@ -4243,7 +4243,7 @@ if (defined($ARGV[0])) {
 		}
 		## TODO - use pipe
 		if (!$err) {
-		    if (defined(open IN, "< $res_file")) {
+		    if (defined(open IN, "<", $res_file)) {
 			read IN, $size, 128;
 			($width, $height) = split(" ", $size);
 			close IN;
@@ -4251,7 +4251,7 @@ if (defined($ARGV[0])) {
 		    }
 		} else {
 		    my (@err) = "";
-		    if (defined(open IN, "< $res_file")) {
+		    if (defined(open IN, "<", $res_file)) {
 			read IN, $errt, 512;
 			@err = split("\n", $errt);
 			close IN;
@@ -4276,7 +4276,6 @@ if (defined($ARGV[0])) {
 	if ($command eq "import_project") {
 	    $proj_file = $ARGV[2];
 	    &smog_chdir($workdir);
-	    umask 0;
 	    $com = "tar --no-same-owner -xzf \"$proj_file\"";
 	    $smerr = &smog_system($com);
 	    if ($smerr) {
@@ -4363,7 +4362,7 @@ if (defined($ARGV[0])) {
 	    # must not ! >/dev/null 2>&1
 	}
 
-	if (-s "$workdir/.pids.$target_pid" && defined(open IN,"$workdir/.pids.$target_pid")) {
+	if (-s "$workdir/.pids.$target_pid" && defined(open IN, "<", "$workdir/.pids.$target_pid")) {
 	    while (<IN>) {
 		$pid = $_;
 		chomp($pid);
@@ -4379,29 +4378,20 @@ if (defined($ARGV[0])) {
     sub is_writeable {
 	# see if is writable or creatable
 	# but do not actually create the file
-	my $file = shift;
-	my $ret;
-
-	if (! -s $nfile) {
-	    unlink $nfile;
+	my ($file, $leave) = @_;
+	return 1 if -f $file && -w $file;
+	return 0 if -e $file;
+	my $ret = &smog_system("touch \"$file\"");
+	if ($ret) {
+	    unlink $file;
+	    return 0;
 	}
-
-	$exists = -f $nfile;
-	if (!$exists) {
-	    umask 0;
-	    $ret = smog_system("touch \"$nfile\"");
-	    if ($ret) {
-		return !$ret;
-	    }
-	    &smog_system("/bin/chmod o+w \"$nfile\"");
-	    umask $umask;
+	chmod 0600, $file;
+	$ret = -w $file;
+	if (!$leave) {
+	    unlink $file;
 	}
-	&smog_system_sync();
-	$ret = -w $nfile;
-	if (!$exists) {
-	    unlink $nfile;
-	}
-	$ret;
+	return $ret;
     }
 
 
@@ -4574,18 +4564,18 @@ if (defined($ARGV[0])) {
 			    if ($DEBUG_SMOGRIFY) {
 				print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name$img_ext\",\"$curworkdir/$name.bak\"\n";
 			    }
-			    sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
+			    &sig_system_error("Renaming \"$curworkdir/$name$img_ext\" to \"$curworkdir/$name.bak\"");
 			    exit 1;
 			}
 		    }
 		}
-		$smerr = smog_rename("$curworkdir/$name.mgk", "$curworkdir/$name$img_ext");
+		$smerr = &smog_rename("$curworkdir/$name.mgk", "$curworkdir/$name$img_ext");
 		if (!$smerr) {
 		    try_to_recover($start, $i);
 		    if ($DEBUG_SMOGRIFY) {
 			print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name.mgk\",\"$curworkdir/$name$img_ext\"\n";
 		    }
-		    sig_system_error("Renaming \"$curworkdir/$name.mgk\" to \"$curworkdir/$name$img_ext\"");
+		    &sig_system_error("Renaming \"$curworkdir/$name.mgk\" to \"$curworkdir/$name$img_ext\"");
 		    exit 1;
 		}
 	    }
@@ -4594,7 +4584,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 
-	smog_system_sync();
+	&smog_system_sync();
     }
 
 
@@ -4654,9 +4644,9 @@ if (defined($ARGV[0])) {
 	    if (-f "$curworkdir/$name.bak") {
 		if ($param == 0 && -f "$curworkdir/$name$img_ext") {
 		    # file may not exist if we are undoing resample for example
-		    smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.mgk");
+		    &smog_rename("$curworkdir/$name$img_ext", "$curworkdir/$name.mgk");
 		}
-		smog_rename("$curworkdir/$name.bak", "$curworkdir/$name$img_ext");
+		&smog_rename("$curworkdir/$name.bak", "$curworkdir/$name$img_ext");
 	    }
 	    &sig_progress($i);
 	}
@@ -4666,20 +4656,20 @@ if (defined($ARGV[0])) {
     sub undo_audio {
 	if (-f "$curworkdir/audio.orig") {
 	    unlink "$curworkdir/audio";
-	    smog_rename("$curworkdir/audio.orig", "$curworkdir/audio");
+	    &smog_rename("$curworkdir/audio.orig", "$curworkdir/audio");
 	    unlink "$curworkdir/audio.bak";
 	} else {
 	    unlink "$curworkdir/audio.new";
 	    if (-f "$curworkdir/audio") {
-		smog_rename("$curworkdir/audio", "$curworkdir/audio.new");
+		&smog_rename("$curworkdir/audio", "$curworkdir/audio.new");
 	    }
 	    if (-f "$curworkdir/audio.bak") {
-		unlink "$curworkdir/audio";
-		smog_rename("$curworkdir/audio.bak", "$curworkdir/audio");
+	       unlink "$curworkdir/audio";
+		&smog_rename("$curworkdir/audio.bak", "$curworkdir/audio");
 	    }
 	    if (-f "$curworkdir/audio.new") {
 		unlink "$curworkdir/audio.bak";
-		smog_rename("$curworkdir/audio.new", "$curworkdir/audio.bak");
+		&smog_rename("$curworkdir/audio.new", "$curworkdir/audio.bak");
 	    }
 	}
     }
@@ -4687,7 +4677,7 @@ if (defined($ARGV[0])) {
 
     sub backup_audio {
 	&clean_old;
-	smog_copy("$curworkdir/audio", "$curworkdir/audio.bak");
+	&smog_copy("$curworkdir/audio", "$curworkdir/audio.bak");
 	# may set $panic
     }
 
@@ -4726,19 +4716,19 @@ if (defined($ARGV[0])) {
 	    $hasto = -f "$curworkdir/$to$img_ext";
 	    if ($hasfrom) {
 		if ($hasto) {
-		    smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$from.revtemp");
-		    smog_rename("$curworkdir/$to$img_ext", "$curworkdir/$from$img_ext");
+		    &smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$from.revtemp");
+		    &smog_rename("$curworkdir/$to$img_ext", "$curworkdir/$from$img_ext");
 		}
 		&sig_progress($start + ($i - $start) * 2);
 		if ($hasto) {
-		    smog_rename("$curworkdir/$from.revtemp", "$curworkdir/$to$img_ext");
+		    &smog_rename("$curworkdir/$from.revtemp", "$curworkdir/$to$img_ext");
 		} else {
-		    smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext");
+		    &smog_rename("$curworkdir/$from$img_ext", "$curworkdir/$to$img_ext");
 		}
 	    } else {
 		&sig_progress($start + ($i - $start) * 2);
 		if ($hasto) {
-		    smog_rename("$curworkdir/$to$img_ext", "$curworkdir/$from$img_ext");
+		    &smog_rename("$curworkdir/$to$img_ext", "$curworkdir/$from$img_ext");
 		}
 	    }
 	    &sig_progress($start + ($i - $start) * 2 + 1);
@@ -5181,7 +5171,7 @@ if (defined($ARGV[0])) {
 	    $resize_prefix = &get_img_prefix($resize_ext);
 	}
 
-	unless($hsize >= $width &&$vsize >= $height) {
+	unless ($hsize >= $width &&$vsize >= $height) {
 	    #composite over a large enough frame
 	    $size = $hsize;
 	    if ($vsize > $size) {
@@ -6197,13 +6187,14 @@ if (defined($ARGV[0])) {
 	    $fwtype = (split(" ", $type))[0];
 	    #print ("IMG FILT .$count. .$type. .$length. .$fps.\n");
 
-	    if (($ptypes & $P_IMAGE) && $guess_type ne "video" && !($type eq "Audio" && $achans >0 ) && (!$hsize || !$vsize || !$count
-													 ## test for various image types...
-													 || (($type eq "ffpng" || $fwtype eq "PNG" || (($type eq "mjpeg" || $type=="png")
-																		       && $length eq "" && int($fps)==1) || $type eq "gif") && !$count)
-													 || (($type eq "ffmjpeg" || $fwtype eq "MJPEG")
-													     && $count == 1)
-													 || ($fps == 1. && $count == 1 && $id_aud_form eq "" && (int($length) == 1 || !$length)))) {
+	    if (($ptypes & $P_IMAGE) && $guess_type ne "video"
+		&& !($type eq "Audio" && $achans >0 ) && (!$hsize || !$vsize || !$count
+							  ## test for various image types...
+							  || (($type eq "ffpng" || $fwtype eq "PNG" || (($type eq "mjpeg" || $type=="png")
+													&& $length eq "" && int($fps)==1) || $type eq "gif") && !$count)
+							  || (($type eq "ffmjpeg" || $fwtype eq "MJPEG")
+							      && $count == 1)
+							  || ($fps == 1. && $count == 1 && $id_aud_form eq "" && (int($length) == 1 || !$length)))) {
 
 		$origcount = $count;
 		$name = &mkname(1);
@@ -6472,7 +6463,6 @@ if (defined($ARGV[0])) {
 	## needs global: arate, achans, asamps, start, end, curworkdir
 
 	my ($start, $end) = @_;
-	my $smres;
 
 	if ($achans == 0) {
 	    return;
@@ -6481,21 +6471,25 @@ if (defined($ARGV[0])) {
 	$audio_in = "$curworkdir/audio";
 	$audio_out = "$curworkdir/audioclip";
 
-	unlink $audio_out;
-	my $smres = &smog_system("touch \"$audio_out\"");
-	if ($smres) {
-	    $panic = &sig_write_error("$audio_out");
+	if (-s $audio_out) {
+	    unlink $audio_out;
+	    &smog_system_sync();
+	    if (-s $audio_out) {
+		$panic = &sig_write_error($audio_out);
+		return;
+	    }
+	}
+	unless (&is_writeable($audio_out, 1)) {
+	    $panic = &sig_write_error($audio_out);
 	    return;
 	}
-
-	&smog_system("/bin/chmod 600 \"$audio_out\"");
 
 	my $align = $achans * $asamps / 8;
 
 	my $spos = &align($arate * $align * $start);
 	my $epos = &align($arate * $align * $end);
 
-	my $fsize = (-s $audio_in);
+	my $fsize = -s $audio_in;
 
 	if ($epos > $fsize) {
 	    $epos = $fsize;
@@ -6505,18 +6499,17 @@ if (defined($ARGV[0])) {
 	}
 
 	my $size = ($epos - $spos);
-	if ($size > $fsize) {
-	    $size = $fsize;
-	}
 
 	if ($size > 0) {
-	    unlink $audio_out;
-
 	    $fdd_in = $audio_in;
 	    $fdd_out = $audio_out;
-
 	    &fast_dd($size, $spos, 0);
 	    return if ($panic);
+	    &smog_system_sync();
+	    if (-s $audio_out != $size) {
+		$panic = &sig_write_error($audio_out);
+		return;
+	    }
 	}
 
 	&smog_system_sync();
@@ -6568,9 +6561,9 @@ if (defined($ARGV[0])) {
 	    $com = "sox $nodither -t .raw -r $arate -c $achans $osigned -$osamps $oendian \"$audio_in\" -t .raw -r $nrate "
 		."-c $nchans $nsigned $nendian -$nsamps \"$audio_out\">$nulfile 2>&1";
 	}
-	$smerr = smog_system($com);
+	$smerr = &smog_system($com);
 	if ($smerr) {
-	    sig_system_error($com, $smerr);
+	    &sig_system_error($com, $smerr);
 	    $panic = 1;
 	}
     }
@@ -6589,24 +6582,41 @@ if (defined($ARGV[0])) {
 
 
     sub insert_audio {
+	## called from: lin_frames. trim_audio, insert_audio
+
 	#what we are going to do:
 	# 1) copy the end of the audio (after insertion) to a new file [$where to $to_end]
 	# 2) insert silence up to $where (if necessary)
-	# 3) insert the new section [$start to $end at $where]
-	# 4) insert silence up to $where + $end (if necessary)
+	# 3) insert (append / overwrite) the new section [$start to $end at $where]
+	# 4) insert silence up to $where + ($end - $tart) (if necessary)
 	# 5) then put the end back
 
+	## optimisations:
+	# if start is 0, then we rename instead of copy for step 1
+	# when performinh multple insertions, after two insertions we insert from the output file
+	#
+	## if insert gap is >= eof - end, then we can do step 1 inplace and skip step 5
+	#
+
 	#input params:
-	# $where - insertion pt -in seconds
-	# $start, $end - new section - in seconds
+	# $audio_to = name of file to insert into
+	# $where - insertion pt - in seconds
+	# $start, $end - section of from_file to insert - both in seconds
 	# $from_handle - handle of from file
-	# $to_end - size of to file
+	# $times - number of times to insert
 
-	#if $arate<0, we will insert silence from $where to $where+$start-$end
+	#if $arate < 0, we will insert silence from $where to $where + $start - $end
+	# if $undo_cut is non-zero then we are reversing a previous cut. In this case we will insert all of audio.bak
+	# which should contain the cut section
 
-	my ($xxsamps, $xxchans, $xxsigned, $xxendian, $needstemp) = @_;
+	my ($xxsamps, $xxchans, $xxsigned, $xxendian, $undo_cut) = @_;
 
 	if ($achans == 0) {
+	    return;
+	}
+
+	unless (&is_writeable($audio_to, 0)) {
+	    $panic = &sig_write_error($audio_to);
 	    return;
 	}
 
@@ -6627,17 +6637,15 @@ if (defined($ARGV[0])) {
 	}
 	my $audio_temp = "$curworkdir/audio.temp";
 
-	unlink $audio_temp;
-	$smres = &smog_system("touch \"$audio_temp\"");
-
-	if ($smres) {
-	    $panic = &sig_write_error("$audio_temp");
-	    return;
+	if (-s $audio_temp) {
+	    unlink $audio_temp;
+	    if (-s $audio_temp) {
+		$panic = &sig_write_error($audio_temp);
+		return;
+	    }
 	}
 
-	&smog_system("/bin/chmod 600 \"$audio_temp\"");
-
-	$silence = 0;
+	my $silence = 0;
 	if ($arate < 0) {
 	    $silence = 1;
 	    $arate = -$arate;
@@ -6648,25 +6656,65 @@ if (defined($ARGV[0])) {
 	my $ospos = $spos = &align($arate * $align * $start);
 	my $oepos = $epos = &align($arate * $align * $end);
 	my $owpos = $wpos = &align($arate * $align * $where);
+	my $inplace = 0;
+	my $fsize = -s $audio_to;
+	my $needstemp = 1;
 
-	# step 1 - copy end to temp
+	if ($wpos >= $fsize) {
+	    $needstemp = 0;
+	}
+
+	if ($epos - $spos >= $fsize - $wpos) {
+	    $inplace = 1;
+	}
+
 	if ($needstemp) {
-	    my $to_end = -s $audio_to;
-	    my $size = $to_end - $wpos;
-	    if ($size > 0) {
-		$fdd_in = $audio_to;
-		$fdd_out = $audio_temp;
-
-		&fast_dd($size, $wpos, 0);
-		return if ($panic);
+	    if ($where > 0) {
+		# step 1 - copy end to temp
+		my $size = $fsize - $wpos;
+		if ($inplace) {
+		    my $isize = $epos - $spos;
+		    $fdd_in = $audio_to;
+		    $fdd_out = $audio_to;
+		    &fast_dd($size, $wpos, $wpos + $isize);
+		    return if $panic;
+		    $fsize += $size;
+		    if (-s $audio_to != $fsize) {
+			$panic = &sig_write_error($audio_to);
+			return;
+		    }
+		}
+		else {
+		    unless (&is_writeable($audio_temp, 1)) {
+			$panic = &sig_write_error($audio_temp);
+			return;
+		    }
+		    $fdd_in = $audio_to;
+		    $fdd_out = $audio_temp;
+		    &fast_dd($size, $wpos, 0);
+		    return if ($panic);
+		    if (-s $audio_temp != $size) {
+			$panic = &sig_write_error($audio_temp);
+			unlink $audio_temp;
+			return;
+		    }}
+	    }
+	    else {
+		if ($fsize) {
+		    &smog_rename($audio_to, $audio_temp);
+		    &smog_system_sync();
+		    if (-s $audio_temp != $fsize) {
+			$panic = &sig_write_error($audio_temp);
+			return;
+		    }
+		}
 	    }
 	}
 
-	#$audio_file = $audio_to;
-
-	# step 2 - pad with silence to insertion point (if necessary)
-	&append_silence(0, $wpos, $xxsamps, $xxchans, $xxsigned, $xxendian);
-	return if $panic;
+	if ($wpos > $fsize) {
+	    # step 2 - pad with silence to insertion point (if necessary)
+	    &append_silence(0, $wpos, $xxsamps, $xxchans, $xxsigned, $xxendian, $audio_to);
+	}
 
 	####################################################
 	# step 3 - insert new section (possibly multiple times)
@@ -6685,15 +6733,18 @@ if (defined($ARGV[0])) {
 	    $size = $nepos - $nspos;
 	    if ($size > 0) {
 		if ($silence) {
-		    $fsize = -s $audio_to;
-		    $fsize = &align($fsize - $nwpos); #becomes offset
-		    &append_silence($fsize, $nwpos + $size, $xxsamps, $xxchans, $xxsigned, $xxendian);
+		    my $offset = $fsize - $nwpos;
+		    if ($inplace) {
+			## because $fsize grew
+			$offset -= ($epos - $spos);
+		    }
+		    &append_silence($offset, $nwpos + $size, $xxsamps, $xxchans, $xxsigned, $xxendian, $audio_to);
 		    return if $panic;
 		}
 		else {
 		    $fdd_in = $xaudio_from;
 		    $fdd_out = $audio_to;
-		    $afsize = -s $fdd_in;
+		    my $afsize = -s $fdd_in;
 		    if ($size + $nspos > $afsize) {
 			$size = $afsize - $nspos;
 		    }
@@ -6702,11 +6753,12 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    $times_inserted+=$factor;
+	    $times_inserted += $factor;
 	    # step 4, pad with silence if necessary
-	    if (! $silence && (-s $audio_temp || $times_inserted < $times)) {
+	    if (!$silence && (-s $audio_temp || $times_inserted < $times)) {
 		$inserted = $oepos - $nspos;
-		&append_silence(0, $nwpos + $inserted, $xxsamps, $xxchans, $xxsigned, $xxendian);
+		$fsize = -s $audio_to;
+		&append_silence(0, $nwpos + $inserted, $xxsamps, $xxchans, $xxsigned, $xxendian, $audio_to);
 		return if ($panic);
 		unless ($silence_remembered > 0) {
 		    $silence_remembered = $oepos - $nepos;
@@ -6743,26 +6795,13 @@ if (defined($ARGV[0])) {
 	####################################################
 
 	#step 5 - copy end back after insertion
-	if ($needstemp) {
+	if ($needstemp && !$inplace) {
 	    $size = &align(-s $audio_temp);
 	    if ($size > 0) {
 		$fdd_in = $audio_temp;
 		$fdd_out = $audio_to;
 
-		&fast_dd($size, 0 ,$nwpos);
-		return if ($panic);
-	    }
-	}
-	else {
-	    # copy from audio.bak to output
-	    my $audio_bak = "$curworkdir/audio.bak";
-	    $size = -s $audio_bak;
-	    $size = &align($size - $owpos);
-	    if ($size > 0) {
-		$fdd_in = $audio_bak;
-		$fdd_out = $audio_to;
-
-		&fast_dd($size, $owpos, $nwpos);
+		&fast_dd($size, 0, $nwpos);
 		return if ($panic);
 	    }
 	}
@@ -6776,8 +6815,9 @@ if (defined($ARGV[0])) {
 	#what we are going to do:
 	# a)
 	## copy from $start to $end to temp
-	## copy (inline) in original, removing the deleted section
+	## copy (inline) in original, removing (overwriting) the deleted section
 	## truncate original
+	#
 	## on success, rename temp to bak
 	## bytes copied: $start to eof
 	##
@@ -6791,7 +6831,7 @@ if (defined($ARGV[0])) {
 	# truncate temp
 	#
 	# if end == fsize
-	# copy end to eof to temp
+	# copy start to eof to temp
 	# truncate orig
 
 	return if !$achans;
@@ -6852,13 +6892,7 @@ if (defined($ARGV[0])) {
 		$panic = &sig_write_error($audio_temp);
 	    }
 
-	    $smres = &smog_system("touch \"$audio_in\"");
-	    if ($smres) {
-		$panic = &sig_write_error($audio_in);
-		return;
-	    }
-	    $smres = &smog_system("/bin/chmod 600 \"$audio_in\"");
-	    if ($smres) {
+	    unless (&is_writeable($audio_in, 1)) {
 		$panic = &sig_write_error($audio_in);
 		return;
 	    }
@@ -6883,90 +6917,53 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	else {
-	    if ($epos == $fsize) {
-		$smres = &smog_system("touch \"$audio_temp\"");
-		if ($smres) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
-		$smres = &smog_system("/bin/chmod 600 \"$audio_temp\"");
-		if ($smres) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
-		$fdd_in = $audio_in;
-		$fdd_out = $audio_temp;
-		&fast_dd($fsize - $start, $start, 0);
-		&smog_system_sync();
-		if (-s $audio_temp != $fsize - $start) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
-		open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
-		return if $panic;
-		truncate $fh, $spos;
-		close $fh;
-		&smog_system_sync();
-		if (-s $audio_in != $spos) {
-		$panic = &sig_write_error($audio_in);
+	    # step 1
+	    unless (&is_writeable($audio_temp, 1)) {
+		$panic = &sig_write_error($audio_temp);
 		return;
-		}
 	    }
-	    else {
-		# step 1
-		$smres = &smog_system("touch \"$audio_temp\"");
-		if ($smres) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
-		$smres = &smog_system("/bin/chmod 600 \"$audio_temp\"");
-		if ($smres) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
+	    $fdd_in = $audio_in;
+	    $fdd_out = $audio_temp;
+	    &fast_dd($epos - $spos, $spos, 0);
+	    return if $panic;
+	    &smog_system_sync();
+	    if (-s $audio_temp != $epos - $spos) {
+		$panic = &sig_write_error($audio_temp);
+		return;
+	    }
 
+	    #step 2
+
+	    if ($epos < $fsize) {
 		$fdd_in = $audio_in;
-		$fdd_out = $audio_temp;
-		&fast_dd($epos - $spos, $spos, 0);
+		$fdd_out = $audio_in;
+		&fast_dd($fsize - $epos, $epos, $spos);
 		return if $panic;
-		&smog_system_sync();
-		if (-s $audio_temp != $epos - $spos) {
-		    $panic = &sig_write_error($audio_temp);
-		    return;
-		}
-
-		#step 2
-
-		if ($epos < $fsize) {
-		    $fdd_in = $audio_in;
-		    $fdd_out = $audio_in;
-		    &fast_dd($fsize - $epos, $epos, $spos);
-		    return if $panic;
-		    &smog_system_sync();
-		    if (-s $audio_in != $fsize) {
-			$panic = &sig_write_error($audio_in);
-			return;
-		    }
-		}
-
-		open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
-		return if $panic;
-		$fsize -= $epos - $spos;
-		truncate $fh, $fsize;
-		close $fh;
 		&smog_system_sync();
 		if (-s $audio_in != $fsize) {
 		    $panic = &sig_write_error($audio_in);
 		    return;
 		}
 	    }
+
+	    open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
+	    return if $panic;
+	    $fsize -= $epos - $spos;
+	    truncate $fh, $fsize;
+	    close $fh;
+	    &smog_system_sync();
+	    if (-s $audio_in != $fsize) {
+		$panic = &sig_write_error($audio_in);
+		return;
+	    }
 	}
+
 	if (-s $audio_bak) {
 	    unlink $audio_bak;
 	    &smog_system_sync();
 	    if (-s $audio_bak) {
 		$panic = &sig_write_error($audio_bak);
-		return;
+	    return;
 	    }
 	}
 	$fsize = -s $audio_temp;
@@ -6979,6 +6976,7 @@ if (defined($ARGV[0])) {
 
 
     sub align {
+	##TODO: requires global $align or global $achans, $asamps
 	my $guess = shift;
 	# align our audio cuts so we don't end halfway through a sample / channel
 	if (!defined($align)) {
@@ -6991,69 +6989,76 @@ if (defined($ARGV[0])) {
 
     sub append_silence {
 	## neds global curworkdir
-	#pad from end - $offset of $audio_file to byte $end-1 with zeros
+	#pad from eof - $offset of $audio_file to byte $end-1 with zeros
+	## pass in $audio_file or it will use "audio"
+
 	my ($offset, $end, $asamps, $achans, $asigned, $aendian, $audio_file) = @_;
-	if ($audio_file eq "") {
+	if (!$audio_file) {
 	    $audio_file = "$curworkdir/audio";
 	}
 
+	$end = &align($end);
+	my $fsize = -s $audio_file;
+	$fsize = &align($fsize - $offset);
+	my $size = &align($end - $fsize);
+
+	return if !$size;
+
 	unless (-f $audio_file) {
-	    $smres = &smog_system("touch \"$audio_file\"");
-	    if ($smres) {
+	    unless (&is_writeable($audio_file, 1)) {
 		$panic = &sig_write_error($audio_file);
 		return;
 	    }
-	    &smog_system("/bin/chmod 600 \"$audio_file\"");
 	}
 
-	my $gsize = -s $audio_file;
-	my $fsize = &align($gsize - $offset);
-	#insert at $fsize-$offset
-	my $size = &align($end - $fsize);
+	open AUD, "+<", $audio_file or $panic = &sig_write_error($audio_file);
+	return if $panic;
+
+	binmode AUD or $panic = &sig_read_error($fdd_in);
+	return if $panic;
+
+	seek AUD, $fsize, SEEK_SET or $panic = &sig_write_error($audio_file);
+	return if $panic;
+
+	#insert at $fsize - $offset
 	#insert to $end
 
-	if ($size > 0) {
-	    if ($asigned == 1) {
-		$fdd_out = $audio_file;
-		$fdd_in = "/dev/zero";
-		&fast_dd($size, 0, $fsize);
-		return if $panic;
-	    } else {
-		$smres = smog_system("touch \"$audio_file\"");
-		if ($smres) {
-		    $panic = sig_write_error("$audio_file");
-		    return;
-		}
-		open AUD, "+<", "$audio_file" or $panic = sig_write_error("$audio_file");
-		return if $panic;
-		seek AUD, $gsize - $offset, SEEK_SET or $panic = sig_write_error("$audio_file");
-		return if $panic;
-		if ($asamps == 8) {
-		    for ($i = 0; $i < $size; $i++) {
-			print AUD chr(128) or $panic = sig_write_error("$audio_file");
-			return if $panic;
-		    }
+	my $bs = (stat AUD)[11] || 8192; # block size
+	$bs = &align($bs);
+
+	if ($size < $bs) {
+	    $bs = $size;
+	}
+
+	#create 1 block's worth of silence
+	my $p1 = 0;
+	my $p2 = 0;
+
+	if ($asigned == 0) {
+	    $p1 = $p2 = 128;
+	    if ($asamps == 16) {
+		if ($aendian) {
+		    $p1 = 0;
 		} else {
-		    if ($aendian) {
-			for ($i = 0; $i < $size; $i += 2 * $achans) {
-			    for ($j = 0; $j < $achans; $j++) {
-				print AUD chr(0) or $panic = sig_write_error("$audio_file");
-				return if $panic;
-				print AUD chr(128) or $panic = sig_write_error("$audio_file");
-				return if $panic;
-			    }
-			}
-		    } else {
-			for ($i = 0; $i < $size; $i += 2 * $achans) {
-			    for ($j = 0; $j < $achans; $j++) {
-				print AUD chr(128) or $panic = sig_write_error("$audio_file");
-				return if $panic;
-				print AUD chr(0) or $panic = sig_write_error("$audio_file");
-				return if $panic;
-			    }}}}
-		close AUD;
-	    }}
+		    $p2 = 0;
+		}
+	    }
+	}
+
+	my $buff = pack("(C2)*", ($p1, $p2) x ($bs / 2));
+
+	# now write the buffer n times
+	while ($size > 0) {
+	    if ($size < $bs) {
+		$bs = $size;
+		$buff = substr($buff, 0, $bs);
+	    }
+	    print AUD $buff;
+	    $size -= $bs;
+	}
+	close AUD;
     }
+
 
 
     sub open_images {
@@ -7134,8 +7139,8 @@ if (defined($ARGV[0])) {
 
 	my ($i, $file) = @_;
 	my $j;
-	$name = &mkname($i);
 	my $nframes = 0;
+	$name = &mkname($i);
 
 	if ($file =~ /:\/\//) {
 	    return 0;
@@ -7270,13 +7275,16 @@ if (defined($ARGV[0])) {
 	    $imresact = &rc_get("image_resize_action");
 	}
 
-	# imresact can be: default - resize all images to default; bound - use as max size but keep aspect (e.g. for thumbnails); or none: return actual size
+	# imresact can be:
+	# default - resize all images to default
+	# bound - use as max size but keep aspect (e.g. for thumbnails)
+	# none - return actual size
 
 	my $id_cmd = &location("identify");
 
 	unless ($id_cmd eq "") {
 	    my $com = "\"$id_cmd\" \"$file\" 2>$nulfile";
-	    my @info = split / /, smog_system_direct($com);
+	    my @info = split / /, &smog_system_direct($com);
 
 	    if ($?) {
 		# probably not an image then
@@ -7330,7 +7338,7 @@ if (defined($ARGV[0])) {
 	## needs global $curworkdir, $img_ext,  $last ???
 	my $next = 0;
 
-	&smog_chdir("$curworkdir");
+	&smog_chdir($curworkdir);
 
 	for ($i = 1; $i <= $end; $i++) {
 	    my $name = &mkname($i);
@@ -7374,13 +7382,13 @@ if (defined($ARGV[0])) {
 		    $com = "$smog_convert_command -crop $width" .
 			"x$height\\! $img_prefix\"$xname$img_ext\" $img_prefix\"$xname.mgk\" >$nulfile 2>&1";
 		}
-		$smerr = smog_system($com);
+		$smerr = &smog_system($com);
 		if ($smerr) {
-		    sig_system_error("$com", $smerr);
+		    &sig_system_error("$com", $smerr);
 		    $panic = 1;
 		    return;
 		}
-		smog_rename("$xname.mgk", "$xname$img_ext");
+		&smog_rename("$xname.mgk", "$xname$img_ext");
 		return $j;
 	    }
 	}
@@ -7576,6 +7584,16 @@ if (defined($ARGV[0])) {
     ################################################
     # utility subroutines
 
+    sub flush {
+	my $fh = shift;
+	my $ofh = select $fh;
+	$| = 1;                    # Make $fh hot
+	print $fh "";              # print nothing
+	$| = 0;                    # Make $fh buffered
+	select $ofh;
+    }
+
+
     sub get_current_datetime {
 	($Second, $Minute, $Hour, $Day, $Month, $Year,,,) = localtime(time);
 	my $RealMonth = $Month + 1; # Months of the year are not zero-based
@@ -7605,7 +7623,7 @@ if (defined($ARGV[0])) {
     sub getint {
 	# get an int from a file in $endian format
 	my $string = shift;
-	my (@val) = unpack("CCCC",$string); #unpack $string to 4 chars in @val array
+	my (@val) = unpack("CCCC", $string); #unpack $string to 4 chars in @val array
 
 	# TODO - this needs checking !
 
@@ -7729,7 +7747,7 @@ if (defined($ARGV[0])) {
 	return if (-f $statusfile);
 	my $status = "killed";
 
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	select((select(OUT), $| = 1)[0]);
 	print OUT $status;
 	close OUT;
@@ -7743,7 +7761,7 @@ if (defined($ARGV[0])) {
 	return if (! -d "$curworkdir");
 	my $status = "audio_ended|" . join("|", @_);
 
-	open OUT, "> $statusfile.play";
+	open OUT, ">", "$statusfile.play";
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $status;
@@ -7774,7 +7792,7 @@ if (defined($ARGV[0])) {
 	    $status .= "|||ERROR|";
 	}
 
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $status;
@@ -7802,7 +7820,7 @@ if (defined($ARGV[0])) {
 	    $smstatus .= "|$smaddinfo";
 	}
 
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $smstatus;
@@ -7829,7 +7847,7 @@ if (defined($ARGV[0])) {
 	    $smstatus .= "|$smaddinfo";
 	}
 
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $smstatus;
@@ -7863,7 +7881,7 @@ if (defined($ARGV[0])) {
 	    $smstatus .= "|$smaddinfo";
 	}
 
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $smstatus;
@@ -7877,7 +7895,7 @@ if (defined($ARGV[0])) {
 
     sub sig_pid {
 	# write our pid in case we need to be cancelled
-	open OUT, "> $pidfile";
+	open OUT, ">", $pidfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $$;   # process ID
@@ -7900,7 +7918,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	&check_for_pause;
-	open OUT, "> $statusfile";
+	open OUT, ">", $statusfile;
 	# autoflush output
 	select((select(OUT), $| = 1)[0]);
 	print OUT $status;
@@ -8191,7 +8209,7 @@ if (defined($ARGV[0])) {
 	if (-e $newrcfile) {
 	    &startup_error(4, "rc_set_new", "remove_new0", "$newrcfile:\@:");
 	}
-	if (!defined(open OUT,"> $newrcfile")) {
+	if (!defined(open OUT, ">", $newrcfile)) {
 	    &startup_error(4, "rc_set_new", "open_new0", "$newrcfile:\@:");
 	}
 
@@ -8261,7 +8279,7 @@ if (defined($ARGV[0])) {
 	}
 	else {
 	    if ($orcsize) {
-		if (!defined(open IN,"< $xrcfile") && -e $xrcfile) {
+		if (!defined(open IN, "<", $xrcfile) && -e $xrcfile) {
 		    close OUT;
 		    unlink $newrcfile;
 		    &startup_error(3, "rc_get", "rc_set_open_file", "$xrcfile:\@:");
@@ -8490,14 +8508,14 @@ if (defined($ARGV[0])) {
 	    }
 	    if (-s $rcfile) {
 		$panic = 0;
-		smog_copy($rcfile, $recrcfile);
+		&smog_copy($rcfile, $recrcfile);
 		if ($panic || -s $recrcfile != $orcsize) {
 		    unlink $recrcfile;
 		    if (-s $rcfile != $orcsize) {
 			unlink $rcfile;
 			if (-s $newrcfile == $rcfilesize) {
 			    $panic = 0;
-			    smog_copy($newrcfile, $rcfile);
+			    &smog_copy($newrcfile, $rcfile);
 			    if ($panic || -s $rcfile != $rcfilesize) {
 				unlink $rcfile;
 				if (-s $newrcfile != $rcfilesize) {
@@ -8542,7 +8560,7 @@ if (defined($ARGV[0])) {
 	if ($command eq "report") {
 	    if ($gui_bootstrap_file ne "" && $gui_bootstrap_file ne "-") {
 		# backwards compatibility only
-		if (defined(open OUT, "> $gui_bootstrap_file")) {
+		if (defined(open OUT, ">", $gui_bootstrap_file)) {
 		    print OUT "$version|/tmp|||||";
 		    close OUT;
 		}
@@ -8585,7 +8603,7 @@ if (defined($ARGV[0])) {
 	    print STDERR "smogrify: \@ARGV = " . join(" ", @ARGV) . "\n";
 	}
 
-	print "smogrify::error|$func|$detail|$text|\n";
+	print STDOUT "smogrify::error|$func|$detail|$text|\n";
 	exit $err;
     }
 
@@ -8618,7 +8636,7 @@ if (defined($ARGV[0])) {
 
 	$panic = 0;
 	if (! -e $recrcfile_tried) {
-	    smog_copy($xrecrcfile, $recrcfile_tried);
+	    &smog_copy($xrecrcfile, $recrcfile_tried);
 	    if (!$panic && -s $recrcfile_tried == $size) {
 		# $recrcfile succesfully renamed as $recrcfile_tried
 		# good. This is intented to be a one-time recovery
@@ -8639,7 +8657,7 @@ if (defined($ARGV[0])) {
 	    }
 	}
 	#print STDERR "Copy $xrecrcfile to $rcfile\n";
-	smog_copy($xrecrcfile, $rcfile);
+	&smog_copy($xrecrcfile, $rcfile);
 
 	if ($panic || -s $rcfile != $size) {
 	    # copy failed !
@@ -8679,7 +8697,7 @@ if (defined($ARGV[0])) {
 	    return $string;
 	}
 
-	unless (defined(open IN, "< $xrcfile")) {
+	unless (defined(open IN, "<", $xrcfile)) {
 	    &startup_error(3, "rc_get", "open_file0", "$xrcfile:$key:\@:");
 	}
 
@@ -8733,23 +8751,20 @@ if (defined($ARGV[0])) {
 
 	return if ($size < 0);
 
-	my $bs = $blksize = (stat IN)[11] || (4096 *64); # block size
-
-	my $fblocks = int($size / $bs);
-
 	my ($data, $i);
+	my $smres;
+	my ($len, $wlen);
 
-	if ($fdd_in ne "/dev/zero") {
-	    my $sizecheck = -s $fdd_in;
-	    if ($size + $skip > $sizecheck) {
-		if ($DEBUG_SMOGRIFY) {
-		    print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n" .
-			"$fdd_in\n";
-		}
-		$size = $sizecheck - $skip;
-		if ($skip >= $sizecheck) {
-		    return;
-		}
+	my $sizecheck = -s $fdd_in;
+	if ($size + $skip > $sizecheck) {
+	    if ($DEBUG_SMOGRIFY) {
+		print STDERR "smogrify debug - fast_dd was asked to read $size bytes at offset $skip from a $sizecheck byte file\n" .
+		    "$fdd_in\n";
+	    }
+	    $size = $sizecheck - $skip;
+	    if ($skip >= $sizecheck) {
+		$panic = &sig_read_error($fdd_in);
+		return;
 	    }
 	}
 
@@ -8760,36 +8775,110 @@ if (defined($ARGV[0])) {
 	    return;
 	}
 
-	my $smres = &smog_system("touch $fdd_out");
-	if ($smres) {
-	    $panic = &sig_write_error($fdd_out);
+	binmode FFIN or $panic = &sig_read_error($fdd_in);
+	return if $panic;
+
+	my $blocksize = my $bs = (stat FFIN)[11] || 8192; # block size
+	my $use_sys = 0;
+	if ($size < $bs) {
+	    $use_sys = 1;
+	}
+	else {
+	    ## faster to use fixed bs or read whole data ?
+	    ##$blocksize = $size;
+	}
+
+	if ($use_sys) {
+	    sysseek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
+	}
+
+	else {
+	    seek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
+	}
+	if ($panic) {
+	    close FFIN;
 	    return;
 	}
 
-	open FFOUT,"+<", $fdd_out or $panic = &sig_write_error($fdd_out);
-	return if $panic;
-	seek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
-	return if $panic;
-	seek FFOUT, $seek, SEEK_START or $panic = &sig_write_error($fdd_out);
-	return if $panic;
+	unless (&is_writeable($fdd_out, 1)) {
+	    $panic = &sig_write_error($fdd_out);
+	    if (defined FFIN) {
+		close FFIN;
+	    }
+	    return;
+	}
+
+	open FFOUT, "+<", $fdd_out or $panic = &sig_write_error($fdd_out);
+	binmode FFOUT or do {
+	    $panic = &sig_write_error($fdd_out);
+	    if (defined FFIN) {
+		close FFIN;
+	    }
+	    close FFOUT;
+	    return;
+	};
+
+	if ($use_sys) {
+	    sysseek FFOUT, $seek, SEEK_START or $panic = 1;
+	}
+	else {
+	    seek FFOUT, $seek, SEEK_START or $panic = 1;
+	}
+	if ($panic) {
+	    $panic = &sig_write_error($fdd_out);
+	    if (defined FFIN) {
+		close FFIN;
+	    }
+	    close FFOUT;
+	    return;
+	};
 
 	while ($size > 0) {
+	    $bs = $blocksize;
 	    if ($size < $bs) {
 		$bs = $size;
 	    }
-	    $len = read FFIN, $data, $bs;
+
+	    if ($use_sys) {
+		$len = sysread FFIN, $data, $size;
+	    }
+	    else {
+		$len = read FFIN, $data, $bs;
+	    }
 	    if (!defined $len) {
 		next if $! =~ /^Interrupted/;       # ^Z and fg
 		$panic = &sig_read_error($fdd_in);
-		return if $panic;
+		last;
 	    }
-	    print FFOUT $data or $panic = &sig_write_error("$fdd_out");
-	    return if $panic;
+
 	    $size -= $len;
+
+	    while ($len > 0) {
+		if ($len < $bs) {
+		    $bs = $len;
+		}
+
+		if ($use_sys) {
+		    $wlen = syswrite FFOUT, $data, $len;
+		    if (!defined $wlen) {
+			next if $! =~ /^Interrupted/;       # ^Z and fg
+			$panic = &sig_write_error($fdd_out);
+			last;
+		    }
+		    $len -= $wlen;
+		}
+		else {
+		    print FFOUT $data;
+		    $len = 0;
+		}
+	    }
+	    last if $panic;
 	}
 
+	if (defined FFIN) {
+	    close FFIN;
+	}
 	close FFOUT;
-	close FFIN;
     }
 
 

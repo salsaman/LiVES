@@ -2239,6 +2239,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
         restore_frame_index_back(mainw->current_file);
       }
       save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+      showclipimgs();
       if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     }
     if (reset_achans > 0) {
@@ -2265,6 +2266,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     }
 
     reget_afilesize(mainw->current_file);
+    showclipimgs();
 
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2386,6 +2388,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
   if (cfile->undo_action == UNDO_RENDER) {
     cfile->frames = cfile->old_frames;
     save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+    showclipimgs();
     if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2431,6 +2434,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     }
     mainw->ccpd_with_sound = ccpd_with_sound;
     save_clip_value(mainw->current_file, CLIP_DETAILS_FRAMES, &cfile->frames);
+    showclipimgs();
     if (mainw->com_failed || mainw->write_failed) bad_header = TRUE;
     if (bad_header) do_header_write_error(mainw->current_file);
   }
@@ -2620,6 +2624,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
     d_print(com);
     lives_free(com);
     mainw->no_switch_dprint = FALSE;
+    showclipimgs();
   }
 
   if (cfile->end > cfile->frames) {
@@ -6141,13 +6146,12 @@ void switch_clip(int type, int newclip, boolean force) {
       (mainw->is_processing && cfile != NULL && cfile->is_loaded) || mainw->cliplist == NULL) return;
 
   mainw->blend_palette = WEED_PALETTE_END;
-
   if (type == 2 || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0 && type != 1
-                    && !(type == 0 && !IS_NORMAL_CLIP(mainw->blend_file)))) {
+                    && !(!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))) {
     // switch bg clip
     if (newclip != mainw->blend_file) {
-      if (IS_VALID_CLIP(mainw->blend_file) && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR &&
-          mainw->blend_file != mainw->current_file) {
+      if (IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file
+          && mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
         if (mainw->blend_layer != NULL) check_layer_ready(mainw->blend_layer);
         weed_plant_t *inst = mainw->files[mainw->blend_file]->ext_src;
         if (inst != NULL) {
@@ -6156,7 +6160,6 @@ void switch_clip(int type, int newclip, boolean force) {
             int key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL);
             rte_key_on_off(key + 1, FALSE);
           }
-          mainw->new_blend_file = newclip;
           mainw->osc_block = FALSE;
         }
       }
@@ -10537,21 +10540,38 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (!mainw->interactive) return TRUE;
 
-  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (LIVES_IS_PLAYING && mainw->event_list != NULL && !mainw->record)
+      || (mainw->is_processing && cfile->is_loaded) ||
       mainw->cliplist == NULL) return TRUE;
 
   if (clip >= FN_KEYS - 1) {
     // last fn key will clear all
     for (i = 0; i < FN_KEYS - 1; i++) {
-      mainw->clipstore[i] = 0;
+      mainw->clipstore[i][0] = -1;
     }
     return TRUE;
   }
 
-  if (mainw->clipstore[clip] < 1 || mainw->files[mainw->clipstore[clip]] == NULL) {
-    mainw->clipstore[clip] = mainw->current_file;
+  if (!IS_VALID_CLIP(mainw->clipstore[clip][0])) {
+    mainw->clipstore[clip][0] = mainw->current_file;
+    mainw->clipstore[clip][1] = mainw->actual_frame;
   } else {
-    switch_clip(0, mainw->clipstore[clip], FALSE);
+    lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
+    if (LIVES_IS_PLAYING) {
+      sfile->frameno = sfile->last_frameno = mainw->clipstore[clip][1];
+    }
+    switch_clip(0, mainw->clipstore[clip][0], TRUE);
+    if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
+      if (mainw->current_file != mainw->clipstore[clip][0]) {
+        if (mainw->blend_file == -1 && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+            && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
+          // if we are playing the switch is delayed so we need this to resync audio
+          mainw->scratch = SCRATCH_JUMP;
+        }
+      } else {
+        if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno);
+      }
+    }
   }
   return TRUE;
 }

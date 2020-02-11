@@ -440,10 +440,16 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           // plugin returned no audio, try with mplayer / mpv
           mainw->com_failed = FALSE;
 
+          if (probed_achans > MAX_ACHANS) {
+            probed_achans = MAX_ACHANS;
+            d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
+          }
+
           if (mainw->file_open_params == NULL) mainw->file_open_params = lives_strdup("");
-          com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"", prefs->backend, cfile->handle,
+          com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"", prefs->backend, cfile->handle,
                                     (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), -1,
-                                    prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, mainw->file_open_params);
+                                    prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, probed_achans,
+                                    mainw->file_open_params);
 
           lives_free(tmp);
 
@@ -532,7 +538,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
-                d_print(_("Auto trimming %.2f seconds of audio at start..."), cfile->undo2_dbl);
+                d_print(_("Auto trimming %.4f seconds of audio at start..."), cfile->undo2_dbl);
                 if (on_del_audio_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -541,7 +547,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
             if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                 cfile->end = cfile->frames;
-                d_print(_("Auto trimming %.2f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
+                d_print(_("Auto trimming %.4f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
                 if (on_trim_audio_activate(NULL, LIVES_INT_TO_POINTER(0))) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -557,7 +563,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->undo_achans = cfile->achans;
                 cfile->undo_asampsize = cfile->asampsize;
                 cfile->undo_arps = cfile->arps;
-                d_print(_("Auto padding with %.2f seconds of silence at start..."), cfile->undo2_dbl);
+                d_print(_("Auto padding with %f seconds of silence at start..."), cfile->undo2_dbl);
                 if (on_ins_silence_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -570,7 +576,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->undo_achans = cfile->achans;
                 cfile->undo_asampsize = cfile->asampsize;
                 cfile->undo_arps = cfile->arps;
-                d_print(_("Auto padding with %.2f seconds of silence at end..."), cfile->undo2_dbl);
+                d_print(_("Auto padding with %.4f seconds of silence at end..."), cfile->undo2_dbl);
                 if (on_ins_silence_activate(NULL, NULL)) d_print_done();
                 else d_print("\n");
                 cfile->changed = FALSE;
@@ -673,6 +679,11 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       tmp = lives_strconcat(mainw->file_open_params, get_deinterlace_string(), NULL);
       lives_free(mainw->file_open_params);
       mainw->file_open_params = tmp;
+
+      if (cfile->achans > MAX_ACHANS) {
+        cfile->achans = MAX_ACHANS;
+        d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
+      }
 
       com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"", prefs->backend, cfile->handle,
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), withsound,

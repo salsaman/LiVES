@@ -993,7 +993,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->toy_go_wild = FALSE;
 
   for (i = 0; i < FN_KEYS - 1; i++) {
-    mainw->clipstore[i] = 0;
+    mainw->clipstore[i][0] = -1;
   }
 
   mainw->ping_pong = FALSE;
@@ -7588,7 +7588,7 @@ lfi_done:
       cfile->vsize = mainw->def_height - V_RESIZE_ADJUST;
 
       for (i = 0; i < FN_KEYS - 1; i++) {
-        if (mainw->clipstore[i] == mainw->current_file) mainw->clipstore[i] = 0;
+        if (mainw->clipstore[i][0] == mainw->current_file) mainw->clipstore[i][0] = -1;
       }
 
       // this must all be done last...

@@ -871,7 +871,7 @@ typedef struct {
   boolean mouse_blocked;
 
   /// stored clips
-  int clipstore[FN_KEYS - 1];
+  int clipstore[FN_KEYS - 1][2];
 
   /// key function for autorepeat ctrl-arrows
   uint32_t ksnoop;

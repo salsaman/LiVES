@@ -2816,7 +2816,7 @@ static void renumber_clips(void) {
         mainw->files[cclip] = mainw->files[i];
 
         for (j = 0; j < FN_KEYS - 1; j++) {
-          if (mainw->clipstore[j] == i) mainw->clipstore[j] = cclip;
+          if (mainw->clipstore[j][0] == i) mainw->clipstore[j][0] = cclip;
         }
 
         // we need to change the entries in mainw->cliplist

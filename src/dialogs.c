@@ -1225,8 +1225,8 @@ int process_one(boolean visible) {
     if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
       mainw->pre_src_file = mainw->new_clip;
       switch_clip(0, mainw->new_clip, FALSE);
-      //do_quick_switch(mainw->new_clip);
       mainw->new_clip = -1;
+
     }
 
     /* if (prefs->loadchecktime > 0.) { */

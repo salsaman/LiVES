@@ -477,7 +477,8 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES_SMALL 256
+#define BUFFER_FILL_BYTES_SMALL 64
+#define BUFFER_FILL_BYTES_SMALLMED 1024
 #define BUFFER_FILL_BYTES_MED 4096
 #define BUFFER_FILL_BYTES_LARGE 32768
 
@@ -613,6 +614,7 @@ int lives_close_buffered(int fd) {
 
 static size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
 static size_t medbytes = BUFFER_FILL_BYTES_MED;
+static size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
 static size_t smbytes = BUFFER_FILL_BYTES_SMALL;
 #define AUTOTUNE
 #ifdef AUTOTUNE
@@ -620,6 +622,8 @@ static weed_plant_t *tunerl = NULL;
 static boolean tunedl = FALSE;
 static weed_plant_t *tunerm = NULL;
 static boolean tunedm = FALSE;
+static weed_plant_t *tunersm = NULL;
+static boolean tunedsm = FALSE;
 static weed_plant_t *tuners = NULL;
 static boolean tuneds = FALSE;
 #endif
@@ -633,20 +637,24 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   double cost;
 #endif
 
-  if (fbuff->bufsztype == 1) bufsize = medbytes;
-  else if (fbuff->bufsztype == 2) bufsize = bigbytes;
+  if (fbuff->bufsztype == 1) bufsize = smedbytes;
+  else if (fbuff->bufsztype == 2) bufsize = medbytes;
+  else if (fbuff->bufsztype == 3) bufsize = bigbytes;
 
 #ifdef AUTOTUNE
-  cost = 1. / (double)(min + fbuff->nseqreads > 0 ? bufsize : 0);
+  cost = 1. / (double)(min + (fbuff->nseqreads > 0 ? bufsize : 0));
   if (fbuff->bufsztype == 0) {
     if (!tuneds && !tuners) tuners = weed_plant_new(31338);
-    autotune_u64(tuners, 64, 4096, 32, cost);
+    autotune_u64(tuners, 64, 1024, 32, cost);
   } else if (fbuff->bufsztype == 1) {
-    if (!tunedm && !tunerm) tunerm = weed_plant_new(31339);
-    autotune_u64(tunerm, smbytes * 4, 65536, 8, cost);
+    if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
+    autotune_u64(tunersm, smbytes * 4, 16384, 16, cost);
   } else if (fbuff->bufsztype == 2) {
-    if (!tunedl && !tunerl) tunerl = weed_plant_new(31340);
-    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 8, cost);
+    if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
+    autotune_u64(tunerm, smedbytes * 4, 65536, 4, cost);
+  } else if (fbuff->bufsztype == 3) {
+    if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
+    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 4, cost);
   }
 #endif
 
@@ -676,13 +684,20 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
     }
     bufsize = smbytes;
   } else if (fbuff->bufsztype == 1) {
+    obufsize = smedbytes;
+    if (tunersm) {
+      smedbytes = autotune_u64_end(&tunersm, smedbytes);
+      if (!tunersm) tunedsm = TRUE;
+    }
+    bufsize = smedbytes;
+  } else if (fbuff->bufsztype == 2) {
     obufsize = medbytes;
     if (tunerm) {
       medbytes = autotune_u64_end(&tunerm, medbytes);
       if (!tunerm) tunedm = TRUE;
     }
     bufsize = medbytes;
-  } else if (fbuff->bufsztype == 2) {
+  } else {
     obufsize = bigbytes;
     if (tunerl) {
       bigbytes = autotune_u64_end(&tunerl, bigbytes);
@@ -834,17 +849,18 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->ptr += nbytes;
     ptr += nbytes;
     fbuff->bytes -= nbytes;
-    fbuff->nseqreads++;
     if (count == 0) return retval;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
     if (fbuff->reversed) {
       fbuff->offset -= (fbuff->ptr - fbuff->buffer) + count;
     }
+    fbuff->nseqreads++;
   }
 
   if (count <= bigbytes) {
     if (fbuff->nseqreads > 0 || ocount >= (smbytes >> 2)) fbuff->bufsztype = 1;
     if (ocount >= (medbytes >> 2)) fbuff->bufsztype = 2;
+    if (ocount >= (bigbytes >> 2)) fbuff->bufsztype = 3;
 
     res = file_buffer_fill(fbuff, count);
     if (res < 0)  return res;
@@ -966,15 +982,20 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
   if (fbuff->buffer == NULL) {
     fbuff->bufsztype = 1;
-    if (count > BUFFER_FILL_BYTES_MED >> 2) {
+    if (count > BUFFER_FILL_BYTES_SMALLMED >> 2) {
       fbuff->bufsztype = 2;
-      buffsize = BUFFER_FILL_BYTES_LARGE;
+      if (count > BUFFER_FILL_BYTES_MED >> 2) {
+        fbuff->bufsztype = 3;
+        buffsize = BUFFER_FILL_BYTES_LARGE;
+      }
     }
   }
 
   if (fbuff->bufsztype == 0)
     buffsize = BUFFER_FILL_BYTES_SMALL;
   else if (fbuff->bufsztype == 1)
+    buffsize = BUFFER_FILL_BYTES_SMALLMED;
+  else if (fbuff->bufsztype == 2)
     buffsize = BUFFER_FILL_BYTES_MED;
   else
     buffsize = BUFFER_FILL_BYTES_LARGE;
@@ -1000,13 +1021,13 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       buf += space_left;
 
       bufsztype = fbuff->bufsztype;
-      fbuff->bufsztype = 1;
+      fbuff->bufsztype = 2;
       if (count > BUFFER_FILL_BYTES_MED >> 2) {
-        fbuff->bufsztype = 2;
+        fbuff->bufsztype = 3;
       }
       if (bufsztype != fbuff->bufsztype) {
         buffsize = BUFFER_FILL_BYTES_MED;
-        if (fbuff->bufsztype == 2) {
+        if (fbuff->bufsztype == 3) {
           buffsize = BUFFER_FILL_BYTES_LARGE;
         }
         fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
@@ -4826,21 +4847,23 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList * list, boolean f
 char *subst(const char *string, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
-  char *ret = lives_strdup(string), *first;
-  char *search = ret;
+  char *ret = lives_strdup(""), *tmp, *search;
+  char *cptr = (char *)string;
   size_t fromlen = lives_strlen(from);
-  size_t tolen = lives_strlen(to);
 
-  while ((search = lives_strstr_len(search, -1, from)) != NULL) {
-    first = lives_strndup(ret, search - ret);
-    search = lives_strdup(search + fromlen);
+  while ((search = strstr(cptr, from)) != NULL) {
+    char c = (char)(search[0]);
+    search[0] = 0;
+    tmp = lives_strdup_printf("%s%s%s", ret, cptr, to);
+    search[0] = c;
     lives_free(ret);
-    ret = lives_strconcat(first, to, search, NULL);
-    lives_free(search);
-    search = ret + strlen(first) + tolen;
-    lives_free(first);
+    ret = tmp;
+    cptr = search + fromlen;
   }
-  return ret;
+
+  tmp = lives_strdup_printf("%s%s", ret, cptr);
+  lives_free(ret);
+  return tmp;
 }
 
 

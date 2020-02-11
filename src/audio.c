@@ -2300,7 +2300,8 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
             if (atstate[j].afile > 0) {
               if (atstate[j].afile == from_files[i]) {
                 if (fabs(aseeks[i] + dt * avels[i] - atstate[j].seek) < SKJUMP_THRESH_SECS) {
-                  accels[i] = (atstate[j].vel - avels[i]) / ((dt / smooth_time) * (dt / smooth_time)) / 2.;
+                  double dv = atstate[j].vel - avels[i];
+                  accels[i] = dv / dt;
                 }
               }
             }
@@ -2317,7 +2318,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
               aseeks[i] += avels[i] * smooth_time;
               aseeks[i] = quant_aseek(aseeks[i], mainw->files[from_files[i]]->arps);
               if ((accels[i] > 0. && avels[i] + accels[i] < atstate[i].vel) || (accels[i] < 0. && avels[i] + accels[i] > atstate[i].vel)) {
-                avels[i] += accels[i];
+                avels[i] += accels[i] * smooth_time;
               }
             }
             count--;

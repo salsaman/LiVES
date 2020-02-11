@@ -702,8 +702,8 @@ void delete_frames_from_virtual(int sfileno, int start, int end) {
     return;
   }
 
-  lives_memcpy(sfile->frame_index, sfile->frame_index_back, start * 4);
-  lives_memcpy(&sfile->frame_index[end - frames], &sfile->frame_index_back[end], (nframes - end) * 4);
+  lives_memcpy(sfile->frame_index, sfile->frame_index_back, (start - 1) * 4);
+  lives_memcpy(&sfile->frame_index[start - 1], &sfile->frame_index_back[end], (nframes - end) * 4);
 
   sfile->frames = nframes - frames;
   save_frame_index(sfileno);

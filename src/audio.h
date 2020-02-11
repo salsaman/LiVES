@@ -26,6 +26,9 @@
 # define DEFAULT_AUDIO_SIGNED8 (AFORM_UNSIGNED)
 # define DEFAULT_AUDIO_SIGNED16 (!AFORM_UNSIGNED)
 
+/// max number of player channels
+#define MAX_ACHANS 2
+
 // keep first N audio_in filesysten handles open - multitrack only
 #define NSTOREDFDS 16
 

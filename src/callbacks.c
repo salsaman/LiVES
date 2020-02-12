@@ -11898,7 +11898,7 @@ boolean on_ins_silence_activate(LiVESMenuItem * menuitem, livespointer user_data
   cfile->old_laudio_time = cfile->laudio_time;
   cfile->old_raudio_time = cfile->raudio_time;
 
-  // with_sound is 2 (audio only), therfore start, end, where, are in seconds. rate is -ve to indicate silence
+  // with_sound is 2 (audio only), therefore start, end, where, are in seconds. rate is -ve to indicate silence
   com = lives_strdup_printf("%s insert \"%s\" \"%s\" %.8f 0. %.8f \"%s\" 2 0 0 0 0 %d %d %d %d %d 1",
                             prefs->backend, cfile->handle,
                             get_image_ext_for_type(cfile->img_type), start, end - start, cfile->handle, -cfile->arps,

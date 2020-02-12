@@ -69,6 +69,7 @@ boolean save_frame_index(int fileno) {
       }
 
       lives_close_buffered(fd);
+      if (mainw->is_exiting) return TRUE;
 
       if (mainw->write_failed) {
         ///g_print("wrt failed  was %d\n", i - 1);

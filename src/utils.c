@@ -4844,26 +4844,110 @@ LIVES_GLOBAL_INLINE LiVESList *lives_list_sort_alpha(LiVESList * list, boolean f
 }
 
 
-char *subst(const char *string, const char *from, const char *to) {
+#define BSIZE (8)
+#define INITSIZE 32
+
+char *subst(const char *xstring, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
-  char *ret = lives_strdup(""), *tmp, *search;
-  char *cptr = (char *)string;
-  size_t fromlen = lives_strlen(from);
+  char *ret = lives_calloc(INITSIZE, BSIZE);
+  char *buff = lives_calloc(1, BSIZE);
 
-  while ((search = strstr(cptr, from)) != NULL) {
-    char c = (char)(search[0]);
-    search[0] = 0;
-    tmp = lives_strdup_printf("%s%s%s", ret, cptr, to);
-    search[0] = c;
-    lives_free(ret);
-    ret = tmp;
-    cptr = search + fromlen;
+  const size_t fromlen = strlen(from);
+  const size_t tolen = strlen(to);
+  const size_t tolim = BSIZE - tolen;
+
+  size_t match = 0;
+  size_t xtolen = tolen;
+  size_t bufil = 0;
+  size_t retfil = 0;
+  size_t retsize = INITSIZE;
+  size_t retlimit = retsize - BSIZE;
+
+  for (char *cptr = (char *)xstring; *cptr; cptr++) {
+    if (*cptr == from[match++]) {
+      if (match == fromlen) {
+        match = 0;
+        if (bufil > tolim) xtolen = BSIZE - bufil;
+        lives_memcpy(buff + bufil, to, xtolen);
+        if ((bufil += xtolen) == BSIZE) {
+          if (retfil > retlimit) {
+            ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
+            retsize *= 2;
+            retlimit = (retsize - 1) *  BSIZE;
+          }
+          lives_memcpy(ret + retfil, buff, BSIZE);
+          retfil += BSIZE;
+          bufil = 0;
+          if (xtolen < tolen) {
+            lives_memcpy(buff, to + xtolen, tolen - xtolen);
+            bufil += tolen - xtolen;
+            xtolen = tolen;
+          }
+        }
+      }
+      continue;
+    }
+    if (--match > 0) {
+      xtolen = match;
+      if (bufil > BSIZE - match) xtolen = BSIZE - bufil;
+      lives_memcpy(buff + bufil, from, xtolen);
+      if ((bufil += xtolen) == BSIZE) {
+        if (retfil > retlimit) {
+          ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
+          retsize *= 2;
+          retlimit = (retsize - 1) *  BSIZE;
+        }
+        lives_memcpy(ret + retfil, buff, BSIZE);
+        retfil += BSIZE;
+        bufil = 0;
+        if (xtolen < fromlen) {
+          lives_memcpy(buff, from + xtolen, fromlen - xtolen);
+          bufil += fromlen - xtolen;
+          xtolen = tolen;
+        }
+      }
+      match = 0;
+    }
+    buff[bufil] = *cptr;
+    if (++bufil == BSIZE) {
+      if (retfil > retlimit) {
+        ret = lives_recalloc(ret, retsize * 2, retsize, BSIZE);
+        retsize *= 2;
+        retlimit = (retsize - 1) *  BSIZE;
+      }
+      lives_memcpy(ret + retfil, buff, BSIZE);
+      retfil += BSIZE;
+      bufil = 0;
+    }
   }
 
-  tmp = lives_strdup_printf("%s%s", ret, cptr);
-  lives_free(ret);
-  return tmp;
+  if (bufil) {
+    if (retsize > retlimit) {
+      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
+      retsize++;
+    }
+    lives_memcpy(ret + retfil, buff, bufil);
+    retfil += bufil;
+  }
+  if (match) {
+    if (retsize > retlimit) {
+      ret = lives_recalloc(ret, retsize + 1, retsize, BSIZE);
+      retsize++;
+    }
+    lives_memcpy(ret + retsize, from, match);
+    retfil += match;
+  }
+  ret[retfil++] = 0;
+  retsize *= BSIZE;
+
+  if (retsize - retfil > (retsize >> 2)) {
+    char *tmp = lives_malloc(retfil);
+    lives_memcpy(tmp, ret, retfil);
+    lives_free(ret);
+    return tmp;
+  }
+  return ret;
 }
 
 

@@ -3072,6 +3072,7 @@ LiVESList *argv_to_marshalled_list(lives_rfx_t *rfx, int argc, char **argv) {
   otherwise, we do not update the widgets, but we do update the default
 
   for LIVES_PARAM_NUM, setting pnum negative avoids having to send min,max
+  - deprecated, use with_min_max = FALSE
   (other types dont have a min/max anyway)
 
   pnum here is not param number, but rather the offset of the element in plist
@@ -3375,6 +3376,8 @@ void update_visual_params(lives_rfx_t *rfx, boolean update_hidden) {
   int key = -1;
 
   register int i, j;
+
+  if (rfx->source_type != LIVES_RFX_SOURCE_WEED) return;
 
   in_params = weed_instance_get_in_params(inst, &num_params);
   if (num_params == 0) return;

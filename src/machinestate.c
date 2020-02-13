@@ -297,11 +297,94 @@ void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials,
 
 #define NCYCS 16
 
+uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
+  // want some number which is 2**i * 6 ** j
+  uint64_t oval = val;
+  uint64_t min = 0, max = 0, next = 0, xval = 0, xxval = 0;
+  int i = 0, j = 0, k, l;
+
+  while (val > 6 && !(val % 6)) {
+    j++;
+    val /= 6;
+  }
+
+  while (val > 1) {
+    if (val & 1) {
+      if (less) val--;
+      else val++;
+    }
+    i++;
+    val /= 2;
+  }
+  val = 1;
+  for (k = 0; k < i; k++) val *= 2;
+  for (k = 0; k < j; k++) val *= 6;
+
+  if (less) {
+    max = oval;
+    if (i > 0) {
+      i--;
+      val /= 2;
+    } else {
+      if (j > 0) {
+        j--;
+        val /= 6;
+      } else return lim;
+    }
+    if (val < lim) next = lim;
+    else next = val;
+  } else {
+    min = oval;
+    i++;
+    val *= 2;
+    if (val > lim) next = lim;
+    else next = val;
+  }
+  xval = 1;
+  for (k = 0; k < 64; k++) {
+    if (!less && xval >= next) break;
+    if (less && xval >= max) break;
+    xxval = xval;
+    for (l = 0; l < 22; l++) {
+      if (!less) {
+        if (xxval >= next) break;
+        if (xxval > min) next = xxval;
+      } else {
+        if (xxval >= max) break;
+        if (xxval > next) next = xxval;
+      }
+      xxval *= 6;
+    }
+    xval *= 2;
+    if ((less && xval >= max) || (!less && xval >= next)) break;
+  }
+  return next;
+}
+
+
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
   if (!tuner || !*tuner) return val;
   else {
     ticks_t tottime = lives_get_current_ticks();
     int ntrials, trials;
+    int64_t max;
+    int64_t min = weed_get_int64_value(*tuner, "min", NULL);
+
+    if (val < min) {
+      val = min;
+      weed_set_int_value(*tuner, "trials", 0);
+      weed_set_int64_value(*tuner, "tottime", 0);
+      weed_set_double_value(*tuner, "tcost", 0);
+      return val;
+    }
+    max = weed_get_int64_value(*tuner, "max", NULL);
+    if (val > max) {
+      val = max;
+      weed_set_int_value(*tuner, "trials", 0);
+      weed_set_int64_value(*tuner, "tottime", 0);
+      weed_set_double_value(*tuner, "tcost", 0);
+      return val;
+    }
 
     ntrials = weed_get_int_value(*tuner, "ntrials", NULL);
     trials = weed_get_int_value(*tuner, "trials", NULL);
@@ -315,9 +398,8 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
       if (cycs < NCYCS) {
         double tcost = (double)weed_get_double_value(*tuner, "tcost", NULL);
         double totcost = (double)tottime * tcost;
+        double avcost = totcost / (double)(cycs * ntrials);
         double ccosts, ccostl;
-        int64_t min = weed_get_int64_value(*tuner, "min", NULL);
-        int64_t max = weed_get_int64_value(*tuner, "max", NULL);
         boolean smfirst = FALSE;
         char *key1 = lives_strdup_printf("tottrials_%lu", val);
         char *key2 = lives_strdup_printf("totcost_%lu", val);
@@ -336,70 +418,65 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
         weed_set_double_value(*tuner, "tcost", 0);
 
         if (smfirst) {
-          ccosts = weed_get_double_value(*tuner, "smaller", NULL);
-          if (val > max || (ccosts > 0. && ccosts < totcost)) {
-            weed_set_double_value(*tuner, "larger", totcost);
-            weed_set_double_value(*tuner, "smaller", 0.);
-            if (val <= max) return val / 2;
-            return max;
-          }
-        }
-
-        ccostl = weed_get_double_value(*tuner, "larger", NULL);
-        if (val < min || (ccostl > 0. && ccostl < totcost)) {
-          weed_set_double_value(*tuner, "smaller", totcost);
-          weed_set_double_value(*tuner, "larger", 0.);
-          if (val >= min) return val * 2;
-          return min;
-        }
-
-        if (!smfirst) {
-          ccosts = weed_get_double_value(*tuner, "smaller", NULL);
-          if (val > max || (ccosts > 0. && ccosts < totcost)) {
-            weed_set_double_value(*tuner, "larger", totcost);
-            weed_set_double_value(*tuner, "smaller", 0.);
-            if (val <= max) return val / 2;
-            return max;
-          }
-        }
-
-        if (ccostl == 0.) {
-          if (val <= max / 2) {
-            weed_set_double_value(*tuner, "smaller", totcost);
-            return val * 2;
-          }
-        }
-
-        if (ccosts == 0.) {
-          if (val >= min * 2) {
-            weed_set_double_value(*tuner, "larger", totcost);
-            return val / 2;
-          }
-        }
-
-        if (smfirst) {
-          if (ccostl == 0.) {
-            if (val <= max / 2) {
-              weed_set_double_value(*tuner, "smaller", totcost);
-              return val * 2;
+          if (val > max || weed_plant_has_leaf(*tuner, "smaller")) {
+            ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+            if (val > max || (ccosts < avcost)) {
+              weed_set_double_value(*tuner, "larger", avcost);
+              weed_leaf_delete(*tuner, "smaller");
+              if (val > max) return max;
+              return nxtval(val, min, TRUE); // TRUE to get smaller val
             }
           }
         }
 
-        weed_set_double_value(*tuner, "smaller", 0.);
-        weed_set_double_value(*tuner, "larger", 0.);
+        if (val < min || weed_plant_has_leaf(*tuner, "larger")) {
+          ccostl = weed_get_double_value(*tuner, "larger", NULL);
+          if (val < min || (ccostl < avcost)) {
+            weed_set_double_value(*tuner, "smaller", avcost);
+            weed_leaf_delete(*tuner, "larger");
+            if (val < min) return min;
+            return nxtval(val, max, FALSE);
+          }
+        }
+
         if (!smfirst) {
-          max >>= 1;
-          if (val < max) val *= 2;
-          if (val < max) val *= 2;
-          if (val < max) val *= 2;
-          if (val < max) val *= 2;
+          if (val > max || weed_plant_has_leaf(*tuner, "smaller")) {
+            ccosts = weed_get_double_value(*tuner, "smaller", NULL);
+            if (val > max || (ccosts < avcost)) {
+              weed_set_double_value(*tuner, "larger", avcost);
+              weed_leaf_delete(*tuner, "smaller");
+              if (val > max) return max;
+              return nxtval(val, min, TRUE);
+            }
+          }
+
+          if (!weed_plant_has_leaf(*tuner, "larger")) {
+            weed_set_double_value(*tuner, "smaller", avcost);
+            weed_leaf_delete(*tuner, "larger");
+            return nxtval(val, max, FALSE);
+          }
+        }
+
+        if (!weed_plant_has_leaf(*tuner, "smaller")) {
+          weed_set_double_value(*tuner, "larger", avcost);
+          weed_leaf_delete(*tuner, "smaller");
+          return nxtval(val, min, TRUE);
+        }
+
+        if (smfirst) {
+          if (!weed_plant_has_leaf(*tuner, "larger")) {
+            weed_set_double_value(*tuner, "smaller", avcost);
+            weed_leaf_delete(*tuner, "larger");
+            return nxtval(val, max, FALSE);
+          }
+        }
+
+        weed_leaf_delete(*tuner, "smaller");
+        weed_leaf_delete(*tuner, "larger");
+        if (!smfirst) {
+          return nxtval(nxtval(val, max, FALSE), max, FALSE);
         } else {
-          min <<= 1;
-          if (val > min) val /= 2;
-          if (val > min) val /= 2;
-          if (val > min) val /= 2;
-          if (val > min) val /= 2;
+          return nxtval(nxtval(val, min, TRUE), min, TRUE);
         }
       } else {
         weed_size_t nleaves;
@@ -1108,7 +1185,7 @@ static void *thrdpool(void *arg) {
 
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         mywork->flags |= 1;
-        autotune_u64(mtuner, npoolthreads + 4, npoolthreads * 4, 64, (double)narenas);
+        autotune_u64(mtuner, 8, npoolthreads * 4, 64, (double)narenas);
       }
 
       pthread_mutex_unlock(&twork_mutex);
@@ -1146,7 +1223,7 @@ void lives_threadpool_init(void) {
   if (!mtuned && !mtuner) mtuner = weed_plant_new(12345);
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
-  narenas = npoolthreads + 16;
+  narenas = 4;
   mallopt(M_ARENA_MAX, narenas);
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;

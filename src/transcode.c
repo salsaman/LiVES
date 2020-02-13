@@ -236,6 +236,7 @@ boolean transcode(int start, int end) {
   // create a frame layer,
   frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_set_int_value(frame_layer, WEED_LEAF_CLIP, mainw->current_file);
+  weed_layer_set_palette_yuv(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
 
   // need img_ext for pulling the frame
   img_ext = get_image_ext_for_type(cfile->img_type);

@@ -676,7 +676,7 @@ double weed_palette_get_compression_ratio(int pal) {
     pbits = weed_palette_get_bits_per_macropixel(pal) / weed_palette_get_pixels_per_macropixel(pal);
     tbits += pbits * weed_palette_get_plane_ratio_vertical(pal, i) * weed_palette_get_plane_ratio_horizontal(pal, i);
   }
-  if (weed_palette_has_alpha_channel(pal)) return tbits / 32.;
+  if (weed_palette_has_alpha(pal)) return tbits / 32.;
   return tbits / 24.;
 }
 

@@ -685,9 +685,10 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         d_print(_("Forcing audio channels to %d\n"), MAX_ACHANS);
       }
 
-      com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d \"%s\"", prefs->backend, cfile->handle,
+      com = lives_strdup_printf("%s open \"%s\" \"%s\" %d %s:%s %.2f %d %d \"%s\"", prefs->backend, cfile->handle,
                                 (tmp = lives_filename_from_utf8(file_name, -1, NULL, NULL, NULL)), withsound,
-                                prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, mainw->file_open_params);
+                                prefs->image_ext, get_image_ext_for_type(IMG_TYPE_BEST), start, frames, cfile->achans,
+                                mainw->file_open_params);
 
       lives_rm(cfile->info_file);
       lives_system(com, FALSE);
@@ -777,7 +778,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
   cfile->opening = cfile->opening_audio = cfile->opening_only_audio = FALSE;
   cfile->opening_frames = -1;
   mainw->effects_paused = FALSE;
-
 
 #if defined DEBUG
   g_print("Out of dpd\n");

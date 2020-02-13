@@ -386,6 +386,7 @@ enum {
 #define LIVES_FILE_EXT_MGK "mgk"
 #define LIVES_FILE_EXT_PRE "pre"
 #define LIVES_FILE_EXT_NEW "new"
+#define LIVES_FILE_EXT_MAP "map"
 #define LIVES_FILE_EXT_SCRAP "scrap"
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"
@@ -412,20 +413,22 @@ enum {
 #define CLIP_TEMP_AUDIO_FILENAME "audiodump." LIVES_FILE_EXT_PCM
 
 #define WORKDIR_LITERAL "workdir"
-#define WORKDIR_LITERAL_LEN (strlen(WORKDIR_LITERAL))
+#define WORKDIR_LITERAL_LEN 7
+
+#define HEADER_LITERAL "header"
 
 #define THEME_LITERAL "theme"
 #define THEME_SEP_IMG_LITERAL "main"
 #define THEME_FRAME_IMG_LITERAL "frame"
-#define THEME_HEADER "header.theme"
-#define THEME_HEADER_2 "header.theme_gtk2"
+#define THEME_HEADER HEADER_LITERAL "." THEME_LITERAL
+#define THEME_HEADER_2 THEME_HEADER "_gtk2"
 
 #define LIVES_THEME_CAMERA "camera"
 
-#define LIVES_CLIP_HEADER "header.lives"
-#define LIVES_CLIP_HEADER_NEW "header.new"
-#define LIVES_CLIP_HEADER_OLD "header"
-#define LIVES_CLIP_HEADER_OLD2 "header2"
+#define LIVES_CLIP_HEADER HEADER_LITERAL ".lives"
+#define LIVES_CLIP_HEADER_NEW HEADER_LITERAL "." LIVES_FILE_EXT_NEW
+#define LIVES_CLIP_HEADER_OLD HEADER_LITERAL
+#define LIVES_CLIP_HEADER_OLD2 LIVES_CLIP_HEADER_OLD "2"
 
 #define FX_DEFS_FILENAME "fxdefs"
 #define FX_SIZES_FILENAME "fxsizes"
@@ -439,10 +442,9 @@ enum {
 
 #define SET_LOCK_FILENAME "lock"
 
-#define LAYOUT_MAP_FILENAME "layout.map"
-
-#define LAYOUT_NUMBERING_FILENAME "layout_numbering"
 #define LAYOUT_FILENAME "layout"
+#define LAYOUT_MAP_FILENAME LAYOUT_FILENAME "."  LIVES_FILE_EXT_MAP
+#define LAYOUT_NUMBERING_FILENAME LAYOUT_FILENAME "_numbering"
 
 // directory names
 #define LAYOUTS_DIRNAME "layouts"
@@ -1103,6 +1105,7 @@ typedef struct {
 #define PRV_START 1
 #define PRV_END 2
 #define PRV_PTR 3
+#define PRV_DEFAULT PRV_PTR
 
   LiVESWidget *start_image;
   LiVESWidget *end_image;

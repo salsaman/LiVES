@@ -58,7 +58,6 @@ boolean save_frame_index(int fileno) {
   do {
     retval = 0;
     fd = lives_creat_buffered(fname, DEF_FILE_PERMS);
-    //g_print("fd was %d\n", fd);
     if (fd < 0) {
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
     } else {
@@ -283,11 +282,12 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
     for (i = 0; i < sfile->frames; i++) {
       int fr = sfile->frame_index[i];
       if (fr < -1 || (cdata == NULL && fr > sfile->frames - 1)
-          || (cdata != NULL && fr > cdata->nframes - 1)) {
+          || (cdata != NULL && (int64_t)fr > cdata->nframes - 1)) {
         has_missing_frames = TRUE;
         fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
-        if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) sfile->frame_index[i] = -1;
-        else {
+        if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+          sfile->frame_index[i] = -1;
+        } else {
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
           } else {
@@ -350,6 +350,10 @@ mismatch:
   sfile->needs_update = TRUE;
 
   sfile->afilesize = reget_afilesize_inner(fileno);
+
+  if (has_missing_frames && sfile->frame_index != NULL) {
+    save_frame_index(fileno);
+  }
 
   return FALSE;
 }

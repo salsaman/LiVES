@@ -40,6 +40,9 @@ typedef struct {
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
+LIVES_GLOBAL_INLINE uint64_t nearest2pow(uint64_t val) {
+
+}
 
 /**
   @brief: return filename from an open fd, freeing val first
@@ -477,10 +480,10 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES_SMALL 64
+#define BUFFER_FILL_BYTES_SMALL 128
 #define BUFFER_FILL_BYTES_SMALLMED 1024
 #define BUFFER_FILL_BYTES_MED 4096
-#define BUFFER_FILL_BYTES_LARGE 32768
+#define BUFFER_FILL_BYTES_LARGE 65536
 
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
@@ -632,31 +635,10 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   ssize_t res;
   ssize_t delta = 0;
   size_t bufsize = smbytes;
-#ifdef AUTOTUNE
-  size_t obufsize;
-  double cost;
-#endif
 
   if (fbuff->bufsztype == 1) bufsize = smedbytes;
   else if (fbuff->bufsztype == 2) bufsize = medbytes;
   else if (fbuff->bufsztype == 3) bufsize = bigbytes;
-
-#ifdef AUTOTUNE
-  cost = 1. / (double)(min + (fbuff->nseqreads > 0 ? bufsize : 0));
-  if (fbuff->bufsztype == 0) {
-    if (!tuneds && !tuners) tuners = weed_plant_new(31338);
-    autotune_u64(tuners, 64, 1024, 32, cost);
-  } else if (fbuff->bufsztype == 1) {
-    if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
-    autotune_u64(tunersm, smbytes * 4, 16384, 16, cost);
-  } else if (fbuff->bufsztype == 2) {
-    if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
-    autotune_u64(tunerm, smedbytes * 4, 65536, 4, cost);
-  } else if (fbuff->bufsztype == 3) {
-    if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
-    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 4, cost);
-  }
-#endif
 
   if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
@@ -674,39 +656,6 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_read will have closed
     return res;
   }
-
-#ifdef AUTOTUNE
-  if (fbuff->bufsztype == 0) {
-    obufsize = smbytes;
-    if (tuners) {
-      smbytes = autotune_u64_end(&tuners, smbytes);
-      if (!tuners) tuneds = TRUE;
-    }
-    bufsize = smbytes;
-  } else if (fbuff->bufsztype == 1) {
-    obufsize = smedbytes;
-    if (tunersm) {
-      smedbytes = autotune_u64_end(&tunersm, smedbytes);
-      if (!tunersm) tunedsm = TRUE;
-    }
-    bufsize = smedbytes;
-  } else if (fbuff->bufsztype == 2) {
-    obufsize = medbytes;
-    if (tunerm) {
-      medbytes = autotune_u64_end(&tunerm, medbytes);
-      if (!tunerm) tunedm = TRUE;
-    }
-    bufsize = medbytes;
-  } else {
-    obufsize = bigbytes;
-    if (tunerl) {
-      bigbytes = autotune_u64_end(&tunerl, bigbytes);
-      if (!tunerl) tunedl = TRUE;
-    }
-    bufsize = bigbytes;
-  }
-  if (bufsize > obufsize) fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 3, obufsize >> 3, 8);
-#endif
 
   fbuff->bytes = res - delta;
   fbuff->ptr = fbuff->buffer + delta;
@@ -823,6 +772,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   size_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
+#ifdef AUTOTUNE
+  size_t obufsize, bufsize;
+  double cost;
+#endif
 
   if (count == 0) return retval;
 
@@ -838,6 +791,23 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   bufsztype = fbuff->bufsztype;
 
+#ifdef AUTOTUNE
+  cost = 1. / (double)count;
+  if (fbuff->bufsztype == 0) {
+    if (!tuneds && !tuners) tuners = weed_plant_new(31338);
+    autotune_u64(tuners, 8, 512, 32, cost);
+  } else if (fbuff->bufsztype == 1) {
+    if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
+    autotune_u64(tunersm, smbytes * 4, 32768, 8, cost);
+  } else if (fbuff->bufsztype == 2) {
+    if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
+    autotune_u64(tunerm, smedbytes * 4, 65536, 8, cost);
+  } else if (fbuff->bufsztype == 3) {
+    if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
+    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 4, cost);
+  }
+#endif
+
   // read bytes from fbuff
   if (fbuff->bytes > 0) {
     size_t nbytes = fbuff->bytes;
@@ -849,23 +819,28 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->ptr += nbytes;
     ptr += nbytes;
     fbuff->bytes -= nbytes;
-    if (count == 0) return retval;
+    fbuff->nseqreads++;
+    if (count == 0) goto rd_done;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
     if (fbuff->reversed) {
       fbuff->offset -= (fbuff->ptr - fbuff->buffer) + count;
     }
-    fbuff->nseqreads++;
   }
 
   if (count <= bigbytes) {
-    if (fbuff->nseqreads > 0 || ocount >= (smbytes >> 2)) fbuff->bufsztype = 1;
-    if (ocount >= (medbytes >> 2)) fbuff->bufsztype = 2;
-    if (ocount >= (bigbytes >> 2)) fbuff->bufsztype = 3;
+    if (ocount >= (smedbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
+    if (ocount >= (medbytes >> 1) || count > smedbytes) fbuff->bufsztype = 2;
+    if (ocount >= (bigbytes >> 2) || count > medbytes) fbuff->bufsztype = 3;
+
+    if (fbuff->bufsztype != bufsztype) {
+      lives_freep((void **)&fbuff->buffer);
+    }
 
     res = file_buffer_fill(fbuff, count);
-    if (res < 0)  return res;
-    fbuff->nseqreads++;
-
+    if (res < 0)  {
+      retval = res;
+      goto rd_done;
+    }
     // buffer is sufficient (or eof hit)
     if (res > count) res = count;
     lives_memcpy(ptr, fbuff->ptr, res);
@@ -882,7 +857,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
     res = lives_read(fbuff->fd, ptr, count, TRUE);
-    if (res < 0) return res;
+    if (res < 0) {
+      retval = res;
+      goto rd_done;
+    }
     if (res < count) fbuff->eof = TRUE;
     fbuff->offset += res;
     count -= res;
@@ -890,6 +868,56 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   }
 
 rd_done:
+#ifdef AUTOTUNE
+  if (fbuff->bufsztype == 0) {
+    obufsize = smbytes;
+    if (tuners) {
+      smbytes = autotune_u64_end(&tuners, smbytes);
+      if (!tuners) {
+        tuneds = TRUE;
+        smbytes = get_near2pow(smbytes);
+      }
+    }
+    bufsize = smbytes;
+  } else if (fbuff->bufsztype == 1) {
+    obufsize = smedbytes;
+    if (tunersm) {
+      smedbytes = autotune_u64_end(&tunersm, smedbytes);
+      if (!tunersm) {
+        tunedsm = TRUE;
+        smedbytes = get_near2pow(smedbytes);
+      }
+    }
+    bufsize = smedbytes;
+  } else if (fbuff->bufsztype == 2) {
+    obufsize = medbytes;
+    if (tunerm) {
+      medbytes = autotune_u64_end(&tunerm, medbytes);
+      if (!tunerm) {
+        tunedm = TRUE;
+        medbytes = get_near2pow(medbytes);
+      }
+    }
+    bufsize = medbytes;
+  } else {
+    obufsize = bigbytes;
+    if (tunerl) {
+      bigbytes = autotune_u64_end(&tunerl, bigbytes);
+      if (!tunerl) {
+        tunedl = TRUE;
+        bigbytes = get_near2pow(bigbytes);
+      }
+    }
+    bufsize = bigbytes;
+  }
+  bufsize = ((bufsize + 7) >> 3) << 3;
+  if (bufsize > obufsize) {
+    off_t ptroff = fbuff->ptr - fbuff->buffer;
+    fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 3, obufsize >> 3, 8);
+    fbuff->ptr = fbuff->buffer + ptroff;
+  }
+#endif
+
   if (!allow_less && count > 0) {
     do_file_read_error(fd, retval, NULL, ocount);
     lives_close_buffered(fd);
@@ -1163,14 +1191,20 @@ LIVES_GLOBAL_INLINE double lives_fix(double val, int decimals) {
 }
 
 
-LIVES_GLOBAL_INLINE int get_approx_ln(uint32_t x) {
-  x |= (x >> 1);
-  x |= (x >> 2);
-  x |= (x >> 4);
-  x |= (x >> 8);
-  x |= (x >> 16);
-  x++;
-  return x >> 1;
+LIVES_GLOBAL_INLINE uint32_t get_approx_ln(uint32_t x) {
+  x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16);
+  return (++x) >> 1;
+}
+
+LIVES_GLOBAL_INLINE uint64_t get_approx_ln64(uint64_t x) {
+  x |= (x >> 1); x |= (x >> 2); x |= (x >> 4); x |= (x >> 8); x |= (x >> 16); x |= (x >> 32);
+  return (++x) >> 1;
+}
+
+LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
+  uint64_t low = get_approx_ln64(val), high = low * 2;
+  if (high < low || (val - low < high - val)) return low;
+  return high;
 }
 
 
@@ -3023,8 +3057,11 @@ void get_total_time(lives_clip_t *file) {
 
   file->laudio_time = file->raudio_time = file->video_time = 0.;
 
-  if (file->opening && file->frames != 123456789) {
-    if (file->frames * file->fps > 0) {
+  if (file->opening) {
+    int frames;
+    if (file->frames != 123456789) frames = file->frames;
+    else frames = file->opening_frames;
+    if (frames * file->fps > 0) {
       file->video_time = file->frames / file->fps;
     }
     return;

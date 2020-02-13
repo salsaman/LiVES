@@ -9,11 +9,14 @@
 #ifndef HAS_LIVES_COLOURSPACE_H
 #define HAS_LIVES_COLOURSPACE_H
 
+#ifdef USE_16BIT_PCONV
 #define USE_EXTEND
+#endif
 
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
+#define WEED_LEAF_PIXEL_BITS "pixel_bits"
 
 #define DEF_SCREEN_GAMMA 2.2
 

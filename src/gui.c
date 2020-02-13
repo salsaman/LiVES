@@ -2171,15 +2171,16 @@ void create_LiVES(void) {
   mainw->hruler = lives_standard_hruler_new();
   lives_ruler_set_range(LIVES_RULER(mainw->hruler), 0., 1000000., 0., 1000000.);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox5), mainw->hruler);
-  lives_widget_add_events(mainw->eventbox5, LIVES_BUTTON1_MOTION_MASK | LIVES_POINTER_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
-                          LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
+  lives_widget_add_events(mainw->eventbox5, LIVES_BUTTON1_MOTION_MASK | LIVES_POINTER_MOTION_MASK
+                          | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK | LIVES_ENTER_NOTIFY_MASK);
 #endif
 
   lives_widget_set_size_request(mainw->hruler, -1, CE_HRULE_HEIGHT);
 
   mainw->eventbox2 = lives_event_box_new();
   lives_box_pack_start(LIVES_BOX(mainw->top_vbox), mainw->eventbox2, FALSE, TRUE, 0);
-  lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK | LIVES_BUTTON_PRESS_MASK);
+  lives_widget_add_events(mainw->eventbox2, LIVES_BUTTON1_MOTION_MASK | LIVES_BUTTON_RELEASE_MASK |
+                          LIVES_BUTTON_PRESS_MASK);
 
   vbox2 = lives_vbox_new(FALSE, 0);
   lives_container_add(LIVES_CONTAINER(mainw->eventbox2), vbox2);
@@ -3723,7 +3724,7 @@ void make_preview_box(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_ptr), mainw->prv_link == PRV_PTR);
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_ptr), mainw->prv_link == PRV_DEFAULT);
 
   add_hsep_to_box(LIVES_BOX(mainw->preview_controls));
 

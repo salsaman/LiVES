@@ -315,7 +315,9 @@ float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
-int get_approx_ln(uint32_t val) GNU_CONST;
+uint32_t get_approx_ln(uint32_t val) GNU_CONST;
+uint64_t get_approx_ln64(uint64_t x)GNU_CONST;
+uint64_t get_near2pow(uint64_t val);
 
 typedef struct {
   uint16_t red;
@@ -882,6 +884,8 @@ capability *capable;
 #include "jack.h"
 #endif
 
+#define USE_16BIT_PCONV
+
 // common defs for mainwindow (retain this order)
 #include "plugins.h"
 #include "colourspace.h"
@@ -1229,8 +1233,8 @@ void init_track_decoders(void);
 void free_track_decoders(void);
 
 #ifdef USE_LIBPNG
-boolean layer_from_png(FILE *fp, weed_plant_t *layer, boolean prog);
-boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp);
+boolean layer_from_png(int fd, weed_plant_t *layer, int width, int height, int tpalette, boolean prog);
+//boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp);
 #endif
 
 void load_frame_image(int frame);

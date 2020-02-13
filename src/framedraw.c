@@ -543,7 +543,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
   else {
     LiVESPixbuf *pixbuf;
     int palette = weed_layer_get_palette(mainw->fd_layer);
-    if (weed_palette_has_alpha_channel(palette)) {
+    if (weed_palette_has_alpha(palette)) {
       palette = WEED_PALETTE_RGBA32;
     } else {
       palette = WEED_PALETTE_RGB24;

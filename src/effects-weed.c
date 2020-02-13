@@ -43,6 +43,8 @@ struct _procvals {
   weed_plant_t *inst;
   weed_timecode_t tc;
   weed_error_t ret;
+  char padding[DEF_ALIGN - ((sizeof(weed_process_f) - sizeof(weed_plant_t *)
+                             - sizeof(weed_timecode_t) - sizeof(weed_error_t)) % DEF_ALIGN)];
 };
 
 static weed_plantptr_t statsplant = NULL;
@@ -888,7 +890,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
 
   if (palette == best_palette) return palette;
 
-  has_alpha = weed_palette_has_alpha_channel(palette);
+  has_alpha = weed_palette_has_alpha(palette);
   is_rgb = weed_palette_is_rgb(palette);
   is_alpha = weed_palette_is_alpha(palette);
   is_yuv = !is_alpha && !is_rgb;
@@ -907,7 +909,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
       if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) return palette_list[i];
-      if ((is_rgb || mismatch) && (!weed_palette_has_alpha_channel(palette) || best_palette == WEED_PALETTE_RGBAFLOAT ||
+      if ((is_rgb || mismatch) && (!weed_palette_has_alpha(palette) || best_palette == WEED_PALETTE_RGBAFLOAT ||
                                    best_palette == WEED_PALETTE_RGBFLOAT))
         best_palette = palette_list[i];
       break;
@@ -1105,6 +1107,7 @@ static void set_channel_size(weed_plant_t *filter, weed_plant_t *channel, int wi
   if (width < MIN_CHAN_WIDTH) width = MIN_CHAN_WIDTH;
   if (width > MAX_CHAN_WIDTH) width = MAX_CHAN_WIDTH;
 
+  width = (width >> 1) << 1;
   weed_set_int_value(channel, WEED_LEAF_WIDTH, width);
 
   if (check_ctmpl && weed_plant_has_leaf(chantmpl, WEED_LEAF_HEIGHT)) {
@@ -1405,9 +1408,9 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   to_use = ALIGN_CEIL(slices, slices_per_thread) / slices_per_thread;
   if (--to_use < 1) return FILTER_ERROR_DONT_THREAD;
 
-  procvals = (struct _procvals *)lives_malloc(sizeof(struct _procvals) * to_use);
+  procvals = (struct _procvals *)lives_calloc(to_use, sizeof(struct _procvals));
   procvals->ret = WEED_SUCCESS;
-  xinst = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *) * (to_use));
+  xinst = (weed_plant_t **)lives_calloc(to_use, sizeof(weed_plant_t *));
   dthreads = (lives_thread_t *)lives_calloc(to_use, sizeof(lives_thread_t));
 
   for (i = 0; i < nchannels; i++) {
@@ -1980,6 +1983,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     opheight = maxinheight;
   }
 
+  opwidth = (opwidth >> 1) << 1;
+  opheight = (opheight >> 1) << 1;
+
   /// pass 1, we try to set channel sizes to opwidth X opheight
   /// channel may have restrictions (e.g fixed size or step values) so we will set it as near as we can
   /// we won't resize next as we will try to palette convert and resize in one go
@@ -2113,7 +2119,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         int clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
         if (clip == 0 || IS_NORMAL_CLIP(clip)) {
           if (!weed_palette_is_rgb(opalette))
-            opalette = (weed_palette_has_alpha_channel(opalette) ? WEED_PALETTE_RGBA32 : WEED_PALETTE_RGB24);
+            opalette = (weed_palette_has_alpha(opalette) ? WEED_PALETTE_RGBA32 : WEED_PALETTE_RGB24);
           needs_reinit = TRUE;
 	  // *INDENT-OFF*
 	}}}
@@ -2208,7 +2214,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           if (oclamping != iclamping || isampling != osampling || isubspace != osubspace) {
             // we need to reinit due to yuv changes, see if we can switch to RGB
             if ((i == 0 || pvary) && IS_NORMAL_CLIP(clip)) {
-              if (!weed_palette_is_rgb(opalette)) opalette = (weed_palette_has_alpha_channel(opalette) ? WEED_PALETTE_RGBA32
+              if (!weed_palette_is_rgb(opalette)) opalette = (weed_palette_has_alpha(opalette) ? WEED_PALETTE_RGBA32
                     : WEED_PALETTE_RGB24);
               if (opalette != palette) {
                 /// check which of the plugin's allowed palettes is closest to our target palette
@@ -2271,7 +2277,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
             mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                    &mainw->blend_subspace);
-            mainw->blend_width = xwidth / weed_palette_get_pixels_per_macropixel(cpalette);
+            mainw->blend_width = xwidth;
             mainw->blend_height = xheight;
             mainw->blend_gamma = weed_layer_get_gamma(layer);
           }
@@ -2285,7 +2291,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
           mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                  &mainw->blend_subspace);
-          mainw->blend_width = cpixwidth / weed_palette_get_pixels_per_macropixel(cpalette);
+          mainw->blend_width = cpixwidth;
           mainw->blend_height = height;
           mainw->blend_gamma = weed_layer_get_gamma(layer);
         }
@@ -2341,7 +2347,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (mainw->multitrack == NULL && i > 0 && mainw->blend_palette == WEED_PALETTE_END) {
         mainw->blend_palette = weed_layer_get_palette_yuv(layer, &mainw->blend_clamping, &mainw->blend_sampling,
                                &mainw->blend_subspace);
-        mainw->blend_width = weed_layer_get_width(layer);
+        mainw->blend_width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(mainw->blend_palette);
         mainw->blend_height = weed_layer_get_height(layer);
         mainw->blend_gamma = weed_layer_get_gamma(layer);
       }

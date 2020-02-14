@@ -1354,7 +1354,7 @@ int process_one(boolean visible) {
           else {
             //cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
             cfile->next_event = process_events(cfile->next_event, FALSE, lives_get_relative_ticks(mainw->origsecs,
-                                               mainw->origusecs));
+                                               mainw->origusecs) + mainw->offsetticks);
             if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
             else {
               // see if we need to fill an audio buffer

@@ -11057,6 +11057,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     if (ne > 4) {
       // max planes is 4 (YUVA4444P)
       for (j = ne ; j >= 0; lives_freep((void **)&values[j--]));
+      values = NULL;
       type = -11;
       goto done;
     }
@@ -11097,12 +11098,14 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
       if (bytes < 4) {
         for (--j; j >= 0; lives_freep((void **)&values[j--]));
+        values = NULL;
         type = -4;
         goto done;
       }
       //g_print("vlen was %d\n", vlen);
       if (vlen > MAX_FRAME_SIZE) {
         for (--j; j >= 0; lives_freep((void **)&values[j--]));
+        values = NULL;
         type = -11;
         goto done;
       }
@@ -11150,6 +11153,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         bytes = lives_read_le_buffered(fd, &vlen, 4, TRUE);
         if (bytes < 4) {
           for (--i; i >= 0; lives_freep((void **)&values[i--]));
+          values = NULL;
           type = -4;
           goto done;
         }
@@ -11161,6 +11165,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       if (st == WEED_SEED_STRING) {
         if (vlen > MAX_WEED_STRLEN) {
           for (--i; i >= 0; lives_freep((void **)&values[i--]));
+          values = NULL;
           type = -11;
           goto done;
         }
@@ -11183,6 +11188,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
             bytes = lives_read_buffered(fd, values[i], vlen, TRUE);
           if (bytes < vlen) {
             for (--i; i >= 0; lives_freep((void **)&values[i--]));
+            values = NULL;
             type = -4;
             goto done;
           }

@@ -707,12 +707,10 @@ if (defined($ARGV[0])) {
 
 
 	if ($command eq "pause") {
-	    my $smres = smog_system("touch \"$workdir/$ARGV[1]/pause\"");
-	    if ($smres) {
-		sig_write_error("$workdir/$ARGV[1]/pause");
+	    if (!&is_writeable("$workdir/$ARGV[1]/pause\"", 1)) {
+		&sig_write_error("$workdir/$ARGV[1]/pause");
 		exit 1;
 	    }
-	    chmod 0600, "$workdir/$ARGV[1]/pause";
 	    exit 0;
 	}
 
@@ -1843,7 +1841,7 @@ if (defined($ARGV[0])) {
 				"$audcom $aformnew $channs \"$file\" $extra_params";
 			}
 		    }
-		    $DEBUG_OPEN = 1;
+
 		    if ($DEBUG_OPEN) {
 			print STDERR "vid open command for $handle is: $syscomv\n";
 			print STDERR "aud open command for $handle is: $syscoma\n";
@@ -2428,9 +2426,9 @@ if (defined($ARGV[0])) {
 		$from = &mkname($i + $start - 1);
 		if (-f "$curworkdir/$from$img_ext") {
 		    if ($fstype eq "vfat" || $fstype eq "fat32" || $fstype eq "msdos") {
-			$smerr = &smog_system ("/bin/cp -f \"$curworkdir/$from$img_ext\" \"$linksdir/$name$img_ext\"");
-			if ($smerr) {
-			    &sig_system_error("Copying \"$curworkdir/$from$img_ext\" to \"$linksdir/$name$img_ext\"", $smerr);
+			&smog_copy("$curworkdir/$from$img_ext", "$linksdir/$name$img_ext");
+			if ($panic) {
+			    unlink $pidfile;
 			    exit 1;
 			}
 		    }
@@ -3536,8 +3534,7 @@ if (defined($ARGV[0])) {
 		    if (-f $audio_out) {
 			$smres = &smog_rename($audio_out, $audio_bak);
 		    } else {
-			$smres = &smog_system("touch \"$audio_bak\"");
-			if ($smres) {
+			unless (&is_writeable($audio_bak)) {
 			    &sig_write_error($audio_bak);
 			    exit 1;
 			}
@@ -3567,8 +3564,7 @@ if (defined($ARGV[0])) {
 			    $smres = &smog_rename($audio_out, $audio_bak);
 			    #aborts on failure
 			} else {
-			    $smres = &smog_system("touch \"$audio_bak\"");
-			    if ($smres) {
+			    unless (&is_writeable($audio_bak, 0)) {
 				&sig_write_error($audio_bak);
 				exit 1;
 			    }
@@ -3630,7 +3626,7 @@ if (defined($ARGV[0])) {
 	    my $xdfile = "$dfile.$formreq";
 
 	    if ($audchoice ne "") {
-		$bestaudio = "$audchoice";
+		$bestaudio = $audchoice;
 	    }
 	    my $xbestaudio = "";
 
@@ -3662,7 +3658,7 @@ if (defined($ARGV[0])) {
 		    if ($reso eq "audio") {
 			if ($audchoice eq "") {
 			    if ($isbest) {
-				$bestaudio = "$fcode";
+				$bestaudio = $fcode;
 			    }
 			    elsif ($bestaudio eq "") {
 				if ($formreq eq "webm") {
@@ -3804,7 +3800,7 @@ if (defined($ARGV[0])) {
 
 		if ($vidchoice eq "") {
 		    ##print STDERR "SMOG returning sel\n";
-		    &sig_complete("$bestvideo", "$bestaudio");
+		    &sig_complete($bestvideo, $bestaudio);
 		    exit 0;
 		}
 	    }
@@ -3862,6 +3858,7 @@ if (defined($ARGV[0])) {
 	    &sig_complete;
 	    exit 0;
 	}
+
 
 	if ($command eq "cdopen") {
 	    my $cdda2wav_command = &location("cdda2wav");
@@ -4028,8 +4025,12 @@ if (defined($ARGV[0])) {
 		$asamps = $ARGV[14];
 		$asigned = $ARGV[15];
 		$aendian = $ARGV[16];
+		my $xarate = $arate;
+		if ($arate < 0) {
+		    $xarate = -$arate;
+		}
 
-		if ($arate * $achans * $asamps != 0) {
+		if ($xarate * $achans * $asamps != 0) {
 		    if (!$undo_cut) {
 			if ($with_audio < 2) {
 			    $end /= $fps;
@@ -4046,7 +4047,7 @@ if (defined($ARGV[0])) {
 			&smog_system_sync();
 		    } else {
 			$end = -s "$curworkdir/audio.bak";
-			$end /= $arate * $achans * $asamps / 8;
+			$end /= $xarate * $achans * $asamps / 8;
 			$start = 0.;
 			if ($with_audio < 2) {
 			    $where /= $fps;
@@ -4176,9 +4177,8 @@ if (defined($ARGV[0])) {
 		    use warnings 'once';
 		}
 	    }
-
-	    $fps = 0;
-	    $fx_caps = &smog_system_direct("\"$plugin_name\" get_capabilities");
+	    $smcom = "\"$plugin_name\" get_capabilities";
+	    $fx_caps = &smog_system_direct($smcom);
 	    if ($?) {
 		&sig_system_error($smcom, $?);
 		exit 1;
@@ -4386,7 +4386,7 @@ if (defined($ARGV[0])) {
 	    unlink $file;
 	    return 0;
 	}
-	chmod 0600, $file;
+	chmod 0644, $file;
 	$ret = -w $file;
 	if (!$leave) {
 	    unlink $file;
@@ -4458,7 +4458,7 @@ if (defined($ARGV[0])) {
 
 	my $soxv = smog_system_direct("sox -h 2>&1 | grep -i sox:");
 
-	my @soxvvz = split(/\./, (split(" ", $soxv))[2]);
+	my @soxvvz = split(/\./, (split("SoX ", $soxv))[1]);
 	my $soxvv = $soxvvz[0];
 
 	if (substr($soxvv, 0, 1) eq "v") {
@@ -4469,7 +4469,7 @@ if (defined($ARGV[0])) {
 	    $soxvv = 0;
 	}
 	else {
-	    $soxvv = $soxvv * 1000000 + $soxvvz[1] * 1000 + $soxvvz[2];
+	    $soxvv = &version_hash($soxvv);
 	}
 
 	return $soxvv;
@@ -6593,7 +6593,7 @@ if (defined($ARGV[0])) {
 
 	## optimisations:
 	# if start is 0, then we rename instead of copy for step 1
-	# when performinh multple insertions, after two insertions we insert from the output file
+	# when performing multple insertions, after two insertions we insert from the output file
 	#
 	## if insert gap is >= eof - end, then we can do step 1 inplace and skip step 5
 	#
@@ -6604,6 +6604,7 @@ if (defined($ARGV[0])) {
 	# $start, $end - section of from_file to insert - both in seconds
 	# $from_handle - handle of from file
 	# $times - number of times to insert
+	# $arate
 
 	#if $arate < 0, we will insert silence from $where to $where + $start - $end
 	# if $undo_cut is non-zero then we are reversing a previous cut. In this case we will insert all of audio.bak
@@ -6663,9 +6664,10 @@ if (defined($ARGV[0])) {
 	if ($wpos >= $fsize) {
 	    $needstemp = 0;
 	}
-
-	if ($epos - $spos >= $fsize - $wpos) {
-	    $inplace = 1;
+	else {
+	    if ($epos - $spos >= $fsize - $wpos) {
+		$inplace = 1;
+	    }
 	}
 
 	if ($needstemp) {
@@ -6749,7 +6751,7 @@ if (defined($ARGV[0])) {
 			$size = $afsize - $nspos;
 		    }
 		    &fast_dd($size, $nspos, $nwpos);
-		    return if ($panic);
+		    return if $panic;
 		}
 	    }
 
@@ -6759,7 +6761,7 @@ if (defined($ARGV[0])) {
 		$inserted = $oepos - $nspos;
 		$fsize = -s $audio_to;
 		&append_silence(0, $nwpos + $inserted, $xxsamps, $xxchans, $xxsigned, $xxendian, $audio_to);
-		return if ($panic);
+		return if $panic;
 		unless ($silence_remembered > 0) {
 		    $silence_remembered = $oepos - $nepos;
 		}
@@ -6802,7 +6804,7 @@ if (defined($ARGV[0])) {
 		$fdd_out = $audio_to;
 
 		&fast_dd($size, 0, $nwpos);
-		return if ($panic);
+		return if $panic;
 	    }
 	}
 
@@ -6844,10 +6846,6 @@ if (defined($ARGV[0])) {
 
 	$spos = &align($arate * $align * $start);
 	$epos = &align($arate * $align * $end);
-
-	if ($spos > $fsize) {
-	    $spos = $fsize;
-	}
 
 	if ($epos == 0 || $epos > $fsize) {
 	    $epos = $fsize;
@@ -7017,8 +7015,10 @@ if (defined($ARGV[0])) {
 	binmode AUD or $panic = &sig_read_error($fdd_in);
 	return if $panic;
 
-	seek AUD, $fsize, SEEK_SET or $panic = &sig_write_error($audio_file);
-	return if $panic;
+	if ($fsize > 0) {
+	    seek AUD, $fsize, SEEK_SET or $panic = &sig_write_error($audio_file);
+	    return if $panic;
+	}
 
 	#insert at $fsize - $offset
 	#insert to $end
@@ -7058,7 +7058,6 @@ if (defined($ARGV[0])) {
 	}
 	close AUD;
     }
-
 
 
     sub open_images {
@@ -7377,10 +7376,10 @@ if (defined($ARGV[0])) {
 
 		if ($hsize < $width || $vsize < $height) {
 		    $com = "$smog_convert_command -resize $width" .
-			"x$height\\!+0\\!+0\\! $img_prefix\"$xname$img_ext\" $img_prefix\"$xname.mgk\" >$nulfile 2>&1";
+			"x$height\\!+0\\!+0\\! $img_prefix$xname$img_ext $img_prefix$xname.mgk >$nulfile 2>&1";
 		} else {
 		    $com = "$smog_convert_command -crop $width" .
-			"x$height\\! $img_prefix\"$xname$img_ext\" $img_prefix\"$xname.mgk\" >$nulfile 2>&1";
+			"x$height\\! $img_prefix$xname$img_ext $img_prefix$xname.mgk >$nulfile 2>&1";
 		}
 		$smerr = &smog_system($com);
 		if ($smerr) {
@@ -8788,16 +8787,17 @@ if (defined($ARGV[0])) {
 	    ##$blocksize = $size;
 	}
 
-	if ($use_sys) {
-	    sysseek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
-	}
-
-	else {
-	    seek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
-	}
-	if ($panic) {
-	    close FFIN;
-	    return;
+	if ($skip > 0) {
+	    if ($use_sys) {
+		sysseek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
+	    }
+	    else {
+		seek FFIN, $skip, SEEK_START or $panic = &sig_read_error($fdd_in);
+	    }
+	    if ($panic) {
+		close FFIN;
+		return;
+	    }
 	}
 
 	unless (&is_writeable($fdd_out, 1)) {
@@ -8818,21 +8818,22 @@ if (defined($ARGV[0])) {
 	    return;
 	};
 
-	if ($use_sys) {
-	    sysseek FFOUT, $seek, SEEK_START or $panic = 1;
-	}
-	else {
-	    seek FFOUT, $seek, SEEK_START or $panic = 1;
-	}
-	if ($panic) {
-	    $panic = &sig_write_error($fdd_out);
-	    if (defined FFIN) {
-		close FFIN;
+	if ($seek > 0) {
+	    if ($use_sys) {
+		sysseek FFOUT, $seek, SEEK_START or $panic = 1;
 	    }
-	    close FFOUT;
-	    return;
-	};
-
+	    else {
+		seek FFOUT, $seek, SEEK_START or $panic = 1;
+	    }
+	    if ($panic) {
+		$panic = &sig_write_error($fdd_out);
+		if (defined FFIN) {
+		    close FFIN;
+		}
+		close FFOUT;
+		return;
+	    }
+	}
 	while ($size > 0) {
 	    $bs = $blocksize;
 	    if ($size < $bs) {
@@ -8961,7 +8962,7 @@ sub rc_get_default {
 
 sub get_fs_type {
     my $dir = shift;
-    my @res = split /\n/, smog_system_direct("df -T");
+    my @res = split /\n/, &smog_system_direct("df -T");
 
     my $xfstype = "Unknown";
 
@@ -9080,7 +9081,7 @@ sub version_hash {
 	use warnings 'numeric';
     }
     my $ver_hash = ($ver_major * 1000 + $ver_minor) * 1000 + $ver_micro;
-    $ver_hash;
+    return $ver_hash;
 }
 
 

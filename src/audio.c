@@ -2073,7 +2073,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
 
   while ((st_event != NULL && event != st_event) || (st_event == NULL && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
-    if (etype != 1 && etype != 5)
+    if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != 1 && etype != 5)) {
       switch (etype) {
       case WEED_EVENT_HINT_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
@@ -2167,6 +2167,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
       default:
         break;
       }
+    }
     nevent = get_next_event(event);
     if (nevent == NULL) break;
     event = nevent;

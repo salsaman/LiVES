@@ -181,9 +181,8 @@ int get_audio_frame_clip(weed_plant_t *event, int track) {
 double get_audio_frame_vel(weed_plant_t *event, int track) {
   // vel of 0. is OFF
   // warning - check for the clip >0 first
-  int *aclips;
-
-  double *aseeks, avel = 1.;
+  int *aclips = NULL;
+  double *aseeks = NULL, avel = 1.;
 
   int error;
   int numaclips;
@@ -200,17 +199,16 @@ double get_audio_frame_vel(weed_plant_t *event, int track) {
       break;
     }
   }
-  lives_free(aclips);
-  lives_free(aseeks);
+  lives_freep((void **)&aseeks);
+  lives_freep((void **)&aclips);
   return avel;
 }
 
 
 double get_audio_frame_seek(weed_plant_t *event, int track) {
   // warning - check for the clip >0 first
-  int *aclips;
-
-  double *aseeks, aseek = 0.;
+  int *aclips = NULL;
+  double *aseeks = NULL, aseek = 0.;
 
   int numaclips;
   int error;
@@ -226,8 +224,8 @@ double get_audio_frame_seek(weed_plant_t *event, int track) {
       break;
     }
   }
-  lives_free(aclips);
-  lives_free(aseeks);
+  lives_freep((void **)&aseeks);
+  lives_freep((void **)&aclips);
   return aseek;
 }
 
@@ -1200,8 +1198,8 @@ void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double s
   arv = (double)(myround(vel * 10000.)) / 10000.;
 
   if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-    int *aclips;
-    double *aseeks;
+    int *aclips = NULL;
+    double *aseeks = NULL;
     int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
 
     for (i = 0; i < num_aclips; i += 2) {
@@ -1225,8 +1223,8 @@ void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double s
           weed_set_double_array(event, WEED_LEAF_AUDIO_SEEKS, num_aclips - 2, new_aseeks);
           lives_free(new_aclips);
           lives_free(new_aseeks);
-          lives_free(aseeks);
-          lives_free(aclips);
+          lives_freep((void **)&aseeks);
+          lives_freep((void **)&aclips);
           return;
         }
 
@@ -1237,13 +1235,17 @@ void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double s
 
         weed_set_int_array(event, WEED_LEAF_AUDIO_CLIPS, num_aclips, aclips);
         weed_set_double_array(event, WEED_LEAF_AUDIO_SEEKS, num_aclips, aseeks);
-        lives_free(aseeks);
-        lives_free(aclips);
+        lives_freep((void **)&aseeks);
+        lives_freep((void **)&aclips);
         return;
       }
     }
 
-    if (clipnum <= 0) return;
+    if (clipnum <= 0) {
+      lives_freep((void **)&aseeks);
+      lives_freep((void **)&aclips);
+      return;
+    }
 
     // append
     new_aclips = (int *)lives_malloc((num_aclips + 2) * sizint);
@@ -1262,8 +1264,8 @@ void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double s
     lives_free(new_aclips);
     lives_free(new_aseeks);
 
-    lives_free(aseeks);
-    lives_free(aclips);
+    lives_freep((void **)&aseeks);
+    lives_freep((void **)&aclips);
     return;
   }
   // create new values
@@ -3109,8 +3111,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         stored_avel = aseeks[1];
       }
 
-      lives_free(aclips);
-      lives_free(aseeks);
+      lives_freep((void **)&aseeks);
+      lives_freep((void **)&aclips);
     }
 
     if ((next_frame_event = get_next_frame_event(next_event)) != NULL) {
@@ -3859,8 +3861,8 @@ lives_render_error_t render_events(boolean reset) {
           if (firstframe) {
             // see if audio needs appending
             if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-              int *aclips;
-              double *aseeks;
+              int *aclips = NULL;
+              double *aseeks = NULL;
               int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
               if (tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) {
                 cfile->achans = cfile->undo_achans;
@@ -3918,8 +3920,8 @@ lives_render_error_t render_events(boolean reset) {
                   xavel[mytrack] = aseeks[i + 1];
                 }
               }
-              lives_free(aclips);
-              lives_free(aseeks);
+              lives_freep((void **)&aseeks);
+              lives_freep((void **)&aclips);
             }
             firstframe = FALSE;
           }
@@ -4252,6 +4254,7 @@ boolean start_render_effect_events(weed_plant_t *event_list) {
 
   mainw->is_rendering = mainw->internal_messaging = TRUE;
   cfile->next_event = get_first_event(event_list);
+  mainw->struggling = FALSE;
 
   mainw->progress_fn = &render_events;
   mainw->progress_fn(TRUE);

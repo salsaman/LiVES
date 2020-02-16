@@ -50,7 +50,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.0.3-pre";
+my $version = "3.2.0-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -758,7 +758,7 @@ if (defined($ARGV[0])) {
 	    $curworkdir = "$workdir/$handle";
 	    $statusfile = "$curworkdir/.status";
 	    &smog_chdir($curworkdir);
-	    &backup_audio;
+	    &backup_audio(1);
 	    if ($panic) {
 		exit 1;
 	    }
@@ -1097,7 +1097,7 @@ if (defined($ARGV[0])) {
 		    } else {
 			# check to make sure pid is not a running instance
 			if ($exename ne "" && ($pid eq "" || $pid ne $1)) {
-			    my $exe = &smog_system_direct("/bin/readlink -n /proc/$1/exe");
+			    my $exe = readlink "/proc/$1/exe";
 			    next if ($exe ne "" && &my_basename($exe) eq $exename);
 			}
 			$output = (split /\./, $file)[-1];
@@ -1130,7 +1130,7 @@ if (defined($ARGV[0])) {
 		    $file =~ /^recorded-layout\.$uid\.$gid\.(.*)/ ||
 		    $file =~ /^layout_numbering\.$uid\.$gid\.(.*)/) {
 		    if ($pid eq "" || $pid ne $1) {
-			my $exe = smog_system_direct("/bin/readlink -n /proc/$1/exe");
+			my $exe = readlink "/proc/$1/exe";
 			next if ($exe ne "" && &my_basename($exe) eq $exename);
 			unlink $file;
 		    }
@@ -3203,7 +3203,7 @@ if (defined($ARGV[0])) {
 	    $audio_out = "audio.new";
 
 	    ## TODO: resample in the conversion if possible
-	    &convert_audio_to_raw;
+	    &convert_audio_to_raw;  ## audiodump.wav -> audio.new
 	    if ($panic) {
 		unlink $pidfile;
 		exit 1;
@@ -3236,7 +3236,7 @@ if (defined($ARGV[0])) {
 
 	    unless(&rc_get("conserve_space") eq "true") {
 		&smog_rename($audio_out, "keep_$audio_out");
-		&backup_audio;
+		&backup_audio(0);
 		if ($panic) {
 		    unlink "keep_$audio_out";
 		    unlink $pidfile;
@@ -3245,16 +3245,23 @@ if (defined($ARGV[0])) {
 		&smog_rename("keep_$audio_out", $audio_out);
 	    }
 
-	    # cat audio audio.new -> audiodump
-	    $smerr = &smog_system("/bin/cat \"$curworkdir/audio\" \"$audio_out\" > \"$curworkdir/audiodump\"");
+	    # append audio audio.new -> audiodump
+	    $fdd_in = "$curworkdir/audio";
+	    $fdd_out = "$curworkdir/audiodump";
+	    $size = -s $fdd_in;
+	    &fast_dd($size, 0, 0);
+	    return if ($panic);
 
-	    if ($smerr) {
-		&sig_system_error("Creating \"$curworkdir\audiodump\"", $smerr);
-		exit 1;
-	    }
+
+	    $fdd_in = "$curworkdir/audio,new";
+	    $fdd_out = "$curworkdir/audiodump";
+	    $size = -s $fdd_in;
+	    &fast_dd($size, 0, -s $fdd_out);
+	    return if ($panic);
 
 	    unlink $audio_out;
 	    #audio.new
+
 	    $fsize = -s "$curworkdir/audiodump";
 	    &sig_complete($fsize);
 	    exit 0;
@@ -3272,15 +3279,6 @@ if (defined($ARGV[0])) {
 	    $aendian = $ARGV[8];
 
 	    &smog_chdir($curworkdir);
-
-	    unless(&rc_get("conserve_space") eq "true") {
-		&backup_audio;
-		#audio -> audio.bak
-		if ($panic) {
-		    unlink $pidfile;
-		    exit 1;
-		}
-	    }
 
 	    #trim audio to selection
 
@@ -3301,7 +3299,7 @@ if (defined($ARGV[0])) {
 		$audio_in = "$curworkdir/audio";
 	    }
 
-	    unlink $audio_in;
+	    &smog_rename($audio_in, $audio_in . ".bak");
 
 	    $where = $audio_start;
 	    $end = $audio_end - $audio_start;
@@ -3323,6 +3321,8 @@ if (defined($ARGV[0])) {
 	    }
 
 	    #append silence to pad to end
+	    print STDERR "filling audio to $audio_end\n";
+
 	    &append_silence(0, &align($audio_end * $arate * $align), $asamps, $achans, $asigned, $aendian);
 	    if ($panic) {
 		unlink $pidfile;
@@ -3500,7 +3500,13 @@ if (defined($ARGV[0])) {
 			exit 1;
 		    }
 
-		    &smog_system("/bin/cat \"$audio_out\">>\"$audio_in\"");
+		    $fdd_in = $audio_out;
+		    $fdd_out = $audio_in;
+		    $size = -s $fdd_in;
+		    $wpos = -s $fdd_out;
+		    &fast_dd($size, 0, $wpos);
+		    return if ($panic);
+
 		    unlink $audio_out;
 		}
 	    }
@@ -4676,9 +4682,43 @@ if (defined($ARGV[0])) {
 
 
     sub backup_audio {
-	&clean_old;
-	&smog_copy("$curworkdir/audio", "$curworkdir/audio.bak");
-	# may set $panic
+	my $mstcopy = shift;
+	my $audio = "$curworkdir/audio";
+
+	return if (! -f $audio);
+
+	my $audio_bak = "$curworkdir/audio.bak";
+
+	unless ($mstcopy) {
+	    if (-f $audio_bak) {
+		unlink $audio_bak;
+		if (-f $audio_bak) {
+		    $panic = &sig_write_error($audio_bak);
+		    return;
+		}
+	    }
+	}
+
+	if (!&is_writeable($audio_bak)) {
+	    $panic = 1;
+	    return;
+	}
+
+	my $fsize = -s  $audio;
+	unless ($mstcopy) {
+	    &smog_rename($audio. $audio_bak);
+	}
+	else {
+	    &clean_old;
+	    &smog_copy($audio. $audio_bak);
+	    return if $panic;
+	}
+
+	if (-s $audio_bak != $fsize) {
+	    $panic = &sig_write_error($audio_bak);
+	    $panic = 1;
+	    return;
+	}
     }
 
 
@@ -4770,7 +4810,7 @@ if (defined($ARGV[0])) {
 
 
     sub smog_system_sync {
-	smog_system("sync") x 3;
+	&smog_system("sync") x 3;
     }
 
 
@@ -4808,13 +4848,13 @@ if (defined($ARGV[0])) {
 	# CAUTION: return value of 0 is error here
 
 	my ($smfrom, $smto) = @_;
-	my $smcomret = rename "$smfrom", "$smto";
+	my $smcomret = rename $smfrom, $smto;
 
 	if ($smcomret == 0) {
 	    if ($DEBUG_SMOGRIFY) {
 		print STDERR "smogrify debug - rename failed ($!): $smfrom $smto\n";
 	    }
-	    sig_system_error("Renaming \"$smfrom\" to \"$smto\"", $!);
+	    &sig_system_error("Renaming \"$smfrom\" to \"$smto\"", $!);
 	    exit 1;
 	}
 
@@ -4832,7 +4872,7 @@ if (defined($ARGV[0])) {
 	    if ($DEBUG_SMOGRIFY) {
 		print STDERR "smogrify debug - copy failed ($!): $smfrom $smto\n";
 	    }
-	    $panic = sig_system_error("Copying $smcomret \"$smfrom\" to \"$smto\"", $!);
+	    $panic = &sig_system_error("Copying $smcomret \"$smfrom\" to \"$smto\"", $!);
 	}
 
 	$smcomret;
@@ -5111,10 +5151,10 @@ if (defined($ARGV[0])) {
 		."x$nheight\\!+$left\\!+$top\\! -resize $width"."x$height\\! $resize_prefix\"$name$resize_ext\" >$nulfile 2>&1";
 	}
 
-	$smerror = smog_system($com);
+	$smerror = &smog_system($com);
 
 	if ($smerror) {
-	    sig_system_error("$com", $smerror);
+	    &sig_system_error($com, $smerror);
 	    $panic = 1;
 	}
     }
@@ -6505,14 +6545,12 @@ if (defined($ARGV[0])) {
 	    $fdd_out = $audio_out;
 	    &fast_dd($size, $spos, 0);
 	    return if ($panic);
-	    &smog_system_sync();
 	    if (-s $audio_out != $size) {
 		$panic = &sig_write_error($audio_out);
 		return;
 	    }
 	}
 
-	&smog_system_sync();
 	$audio_out;
     }
 
@@ -6904,7 +6942,7 @@ if (defined($ARGV[0])) {
 		$panic = &sig_write_error($audio_in);
 		return;
 	    }
-	    open my $fh, "+<", $audio_temp or $panic = &sig_write_error($audio_temp);
+	    open my $fh, ">>", $audio_temp or $panic = &sig_write_error($audio_temp);
 	    return if $panic;
 	    truncate $fh, $epos;
 	    close $fh;
@@ -6944,7 +6982,7 @@ if (defined($ARGV[0])) {
 		}
 	    }
 
-	    open my $fh, "+<", $audio_in or $panic = &sig_write_error($audio_in);
+	    open my $fh, ">>", $audio_in or $panic = &sig_write_error($audio_in);
 	    return if $panic;
 	    $fsize -= $epos - $spos;
 	    truncate $fh, $fsize;
@@ -7049,6 +7087,7 @@ if (defined($ARGV[0])) {
 
 	# now write the buffer n times
 	while ($size > 0) {
+	    print STDERR "size rem is $size\n";
 	    if ($size < $bs) {
 		$bs = $size;
 		$buff = substr($buff, 0, $bs);
@@ -8747,8 +8786,12 @@ if (defined($ARGV[0])) {
 	# copy size bytes from $fdd_in to $fdd_out - skip $skip bytes in input and $seek bytes in output
 	# no truncation is done
 	my ($size, $skip, $seek) = @_;
-
-	return if ($size < 0);
+	my $nobs = 1;
+	if ($size < 0) {
+	    $size = -$size;
+	    $nobs = 0;
+	}
+	return if ($size <= 0);
 
 	my ($data, $i);
 	my $smres;
@@ -8777,14 +8820,17 @@ if (defined($ARGV[0])) {
 	binmode FFIN or $panic = &sig_read_error($fdd_in);
 	return if $panic;
 
-	my $blocksize = my $bs = (stat FFIN)[11] || 8192; # block size
+	my $blocksize = my $bs = (stat FFIN)[11];
 	my $use_sys = 0;
+
 	if ($size < $bs) {
 	    $use_sys = 1;
 	}
 	else {
-	    ## faster to use fixed bs or read whole data ?
-	    ##$blocksize = $size;
+	    if ($nobs) {
+		## faster to use fixed bs or read whole data ?
+		$bs = $blocksize = $size;
+	    }
 	}
 
 	if ($skip > 0) {
@@ -8871,6 +8917,7 @@ if (defined($ARGV[0])) {
 		else {
 		    print FFOUT $data;
 		    $len = 0;
+		    &flush(FFOUT);
 		}
 	    }
 	    last if $panic;

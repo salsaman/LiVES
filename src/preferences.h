@@ -32,6 +32,8 @@ typedef struct {
 #define PB_QUALITY_MED 2  ///< default
 #define PB_QUALITY_HIGH 3
 
+  boolean pbq_adaptive;
+
   _encoder encoder; ///< from main.h
 
   short audio_player;
@@ -511,6 +513,7 @@ typedef struct {
   LiVESWidget *cdplay_entry;
   LiVESWidget *spinbutton_def_fps;
   LiVESWidget *pbq_combo;
+  LiVESWidget *pbq_adaptive;
   LiVESWidget *ofmt_combo;
   LiVESWidget *audp_combo;
   LiVESWidget *pa_gens;
@@ -716,6 +719,7 @@ typedef struct {
 
   int audio_src;
   uint32_t audio_opts;
+  short pb_quality;
 
   int nfx_threads;
 
@@ -950,6 +954,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_LETTERBOX "letterbox_ce"
 #define PREF_LETTERBOXMT "letterbox_mt"
 #define PREF_PARESTART "pa_restart"
+#define PREF_PBQ_ADAPTIVE "pb_quality_adaptive"
 
 ////////// double values
 #define PREF_MT_DEF_FPS "mt_def_fps"

@@ -2715,7 +2715,7 @@ void create_LiVES(void) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->letter), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(toggle_sets_pref),
-                       &prefs->letterbox);
+                       PREF_LETTERBOX);
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->aload_subs), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_boolean_toggled),
                        &prefs->autoload_subs);
@@ -4491,7 +4491,10 @@ void kill_play_window(void) {
 }
 
 
-/** brief calculate sizes for letterboxing
+#define ASPECT_DIFF_LMT 0.01625f  // (fabs) ratio differences in aspect ratios within this limit considered irrelevant
+
+/**
+   @brief calculate sizes for letterboxing
 
     if the player can resize, then we only need to consider the aspect ratio.
     we will embed the image in a black rectangle to give it the same aspect ratio
@@ -4499,50 +4502,52 @@ void kill_play_window(void) {
     so here we check: if we keep the same height, and then set the width to the player a.r, does it increase ?
     if so then our outer rectangle will be wider, othewise it will be higher (or the same, in which case we dont do anything)
     - if either dimension ends up larger, then our outer rectangle is the player size, and we scale the inner image down so both
-    width and height fit */
-void get_letterbox_sizes(weed_layer_t *frame_layer, int *pwidth, int *pheight, int *lb_width, int *lb_height) {
-  int layer_palette = weed_layer_get_palette(frame_layer);
-  double frame_aspect, player_aspect;
+    width and height fit
 
-  if (mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
-    *pwidth = *lb_width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(layer_palette);
-    *pheight = *lb_height = weed_layer_get_height(frame_layer);
-    frame_aspect = (double) * lb_width / (double) * lb_height;
-    player_aspect = (double)mainw->vpp->fwidth / (double)mainw->vpp->fheight;
-    // *pwidth, *pheight are the outer dimensions, *lb_width, *lb_height are inner, widths are in pixels
-    if (frame_aspect > player_aspect) {
-      // width is relatively larger, so the height will need padding
-      if (*lb_width > mainw->vpp->fwidth) {
-        *lb_width = mainw->vpp->fwidth;
-        *lb_height = *lb_width / frame_aspect;
-        *lb_height = (*lb_height >> 2) << 2;
-      }
-      *pwidth = *lb_width;
-      *pheight = *pwidth / player_aspect;
-      *pheight = (*pheight >> 2) << 2;
+    widths should be in pixels (not macropixels)
+*/
+void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale) {
+  float frame_aspect, player_aspect;
+
+  if (!player_can_upscale) {
+    calc_maxspect(*pwidth, *pheight, lb_width, lb_height);
+    return;
+  }
+  frame_aspect = (float) * lb_width / (float) * lb_height;
+  player_aspect = (float) * pwidth / (float) * pheight;
+  if (fabs(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
+    if (*lb_width > *pwidth) *lb_width = *pwidth;
+    if (*lb_height > *pheight) *lb_height = *pheight;
+    if (*pwidth > *lb_width) *pwidth = *lb_width;
+    if (*pheight > *lb_height) *pheight = *lb_height;
+    return;
+  }
+
+  // *pwidth, *pheight are the outer dimensions, *lb_width, *lb_height are inner, widths are in pixels
+  if (frame_aspect > player_aspect) {
+    // width is relatively larger, so the height will need padding
+    if (*lb_width > *pwidth) {
+      /// inner frame needs scaling down
+      *lb_width = *pwidth;
+      *lb_height = (float) * lb_width / frame_aspect + .5;
+      *lb_height = (*lb_height >> 1) << 1;
+      return;
     } else {
-      // width needs padding
-      if (*lb_height > mainw->vpp->fheight) {
-        *lb_height = mainw->vpp->fheight;
-        *lb_width = *lb_height * frame_aspect;
-        *lb_width = (*lb_width >> 2) << 2;
-      }
-      *pheight = *lb_height;
-      *pwidth = *pheight * player_aspect;
-      *pwidth = (*pwidth >> 2) << 2;
+      /// inner frame size OK, we will shrink wrap the outer frame
+      *pwidth = *lb_width;
+      *pheight = (float) * pwidth / player_aspect + .5;
+      *pheight = (*pheight >> 1) << 1;
     }
+    return;
+  }
+  if (*lb_height > *pheight) {
+    *lb_height = *pheight;
+    *lb_width = (float) * lb_height * frame_aspect + .5;;
+    *lb_width = (*lb_width >> 2) << 2;
   } else {
-    // if the player cant resize then the outer rectangle is the player size, and the inner rectangle should touch
-    // either top/bottom or left/right, whilst keeping the frame aspect
-    *pwidth = mainw->pwidth;
-    *pheight = mainw->pheight;
-    calc_maxspect(mainw->pwidth, mainw->pheight, lb_width, lb_height);
+    *pheight = *lb_height;
+    *pwidth = (float) * pheight * player_aspect + .5;
     *pwidth = (*pwidth >> 2) << 2;
-    *pheight = (*pheight >> 2) << 2;
-    *lb_width = ((*lb_width + 3) >> 2) << 2;
-    if (lb_width > pwidth) lb_width = pwidth;
-    *lb_height = ((*lb_height + 3) >> 2) << 2;
-    if (lb_height > pheight) lb_height = pheight;
   }
 }
 

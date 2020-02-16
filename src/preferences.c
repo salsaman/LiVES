@@ -720,6 +720,20 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
+  if (!strcmp(prefidx, PREF_LETTERBOX)) {
+    if (prefs->letterbox == newval) goto fail2;
+    prefs->letterbox = newval;
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb), newval);
+    goto success2;
+  }
+
+  if (!strcmp(prefidx, PREF_PBQ_ADAPTIVE)) {
+    if (prefs->pbq_adaptive == newval) goto fail2;
+    prefs->pbq_adaptive = newval;
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pbq_adaptive), newval);
+    goto success2;
+  }
+
   if (!strcmp(prefidx, PREF_VJMODE)) {
     if (future_prefs->vj_mode == newval) goto fail2;
     if (mainw != NULL && mainw->vj_mode  != NULL)
@@ -1188,6 +1202,7 @@ boolean apply_prefs(boolean skip_warn) {
   LiVESWidgetColor colf, colb, colf2, colb2, coli, colt, col, coltcfg, coltcbg;
   lives_colRGBA64_t lcol;
 
+  boolean pbq_adap = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->pbq_adaptive));
   int pbq = PB_QUALITY_MED;
   int idx;
 
@@ -1887,9 +1902,11 @@ boolean apply_prefs(boolean skip_warn) {
   lives_free(pb_quality);
 
   if (pbq != prefs->pb_quality) {
-    prefs->pb_quality = pbq;
+    future_prefs->pb_quality = prefs->pb_quality = pbq;
     set_int_pref(PREF_PB_QUALITY, pbq);
   }
+
+  pref_factory_bool(PREF_PBQ_ADAPTIVE, pbq_adap, TRUE);
 
   // video open command
   if (lives_strcmp(prefs->video_open_command, video_open_command)) {
@@ -3468,6 +3485,19 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_container_add(LIVES_CONTAINER(frame), vbox);
   lives_container_set_border_width(LIVES_CONTAINER(vbox), widget_opts.border_width);
 
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  prefsw->pbq_adaptive =
+    lives_standard_check_button_new(
+      (tmp = lives_strdup_printf(_("_Enable adaptive quality (%s)"),
+                                 mainw->string_constants[LIVES_STRING_CONSTANT_RECOMMENDED])),
+      prefs->pbq_adaptive, LIVES_BOX(hbox),
+      (tmp2 = lives_strdup(_(
+                             "Allows the quality to be adjusted automatically, prioritising smooth playback"))));
+  lives_free(tmp);
+  lives_free(tmp2);
+
   prefsw->pbq_list = NULL;
   // TRANSLATORS: video quality, max len 50
   prefsw->pbq_list = lives_list_append(prefsw->pbq_list, lives_strdup(_("Low - can improve performance on slower machines")));
@@ -3477,14 +3507,14 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->pbq_list = lives_list_append(prefsw->pbq_list, lives_strdup(_("High - can improve quality on very fast machines")));
 
   widget_opts.expand = LIVES_EXPAND_EXTRA;
-  prefsw->pbq_combo = lives_standard_combo_new((tmp = lives_strdup(_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(vbox),
+  prefsw->pbq_combo = lives_standard_combo_new((tmp = lives_strdup(_("Preview _quality"))), prefsw->pbq_list, LIVES_BOX(hbox),
                       (tmp2 = lives_strdup(_("The preview quality for video playback - affects resizing"))));
   widget_opts.expand = LIVES_EXPAND_DEFAULT;
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  switch (prefs->pb_quality) {
+  switch (future_prefs->pb_quality) {
   case PB_QUALITY_HIGH:
     lives_combo_set_active_index(LIVES_COMBO(prefsw->pbq_combo), 2);
     break;
@@ -5036,7 +5066,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                               prefs->midi_check_rate, 1., 2000., 1., 10., 0,
                               LIVES_BOX(hbox),
                               (tmp2 = lives_strdup(
-                                        _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, but may slow down playback."))));
+                                        _("Number of MIDI checks per keyboard tick. Increasing this may improve MIDI responsiveness, "
+                                          "but may slow down playback."))));
 
   lives_free(tmp);
   lives_free(tmp2);
@@ -5090,7 +5121,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   if (saved_dialog == NULL) {
     widget_opts.expand |= LIVES_EXPAND_EXTRA_WIDTH;
     // Preferences 'Revert' button
-    prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog), LIVES_STOCK_REVERT_TO_SAVED, NULL,
+    prefsw->revertbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(prefsw->prefs_dialog),
+                           LIVES_STOCK_REVERT_TO_SAVED, NULL,
                            LIVES_RESPONSE_CANCEL);
     lives_widget_show(prefsw->revertbutton);
 
@@ -5251,7 +5283,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->mt_enter_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mt_enter_defs), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+  lives_signal_connect(LIVES_GUI_OBJECT(mt_enter_defs), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_render_prompt), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
@@ -5300,9 +5333,11 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_ocp), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jpeg), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->jpeg), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(png), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
+  lives_signal_connect(LIVES_GUI_OBJECT(png), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_instant_open), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
@@ -5315,11 +5350,16 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_concat_images), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
+
+  ACTIVE(checkbutton_lb, TOGGLED);
+  ACTIVE(pbq_adaptive, TOGGLED);
+
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pbq_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->checkbutton_show_stats), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+  lives_signal_connect(LIVES_GUI_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->audp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
@@ -5334,7 +5374,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rframes), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rfps), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(apply_button_set_enabled),
+  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->rfps), LIVES_WIDGET_TOGGLED_SIGNAL,
+                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->reffects), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);

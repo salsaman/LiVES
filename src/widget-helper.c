@@ -525,6 +525,15 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_line_to(lives_painter_t *cr, d
 }
 
 
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_close_path(lives_painter_t *cr) {
+#ifdef LIVES_PAINTER_IS_CAIRO
+  cairo_close_path(cr);
+  return TRUE;
+#endif
+  return FALSE;
+}
+
+
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_painter_rectangle(lives_painter_t *cr, double x, double y, double width,
     double height) {
 #ifdef LIVES_PAINTER_IS_CAIRO

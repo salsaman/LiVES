@@ -40,10 +40,6 @@ typedef struct {
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
 
-LIVES_GLOBAL_INLINE uint64_t nearest2pow(uint64_t val) {
-
-}
-
 /**
   @brief: return filename from an open fd, freeing val first
 
@@ -480,7 +476,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES_SMALL 128
+#define BUFFER_FILL_BYTES_SMALL 216
 #define BUFFER_FILL_BYTES_SMALLMED 1024
 #define BUFFER_FILL_BYTES_MED 4096
 #define BUFFER_FILL_BYTES_LARGE 65536
@@ -646,7 +642,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   if (fbuff->buffer != NULL && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
     lives_freep((void **)&fbuff->buffer);
   }
-  if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 3, 8);
+  if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
 
   fbuff->offset -= delta;
   fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
@@ -732,6 +728,8 @@ static off_t _lives_lseek_buffered_rdonly_relative(lives_file_buffer_t *fbuff, o
     posix_fadvise(fbuff->fd, fbuff->offset, 0, POSIX_FADV_SEQUENTIAL);
 #endif
 
+  lseek(fbuff->fd, fbuff->offset, SEEK_SET);
+
   return newoffs;
 }
 
@@ -795,7 +793,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   cost = 1. / (double)count;
   if (fbuff->bufsztype == 0) {
     if (!tuneds && !tuners) tuners = weed_plant_new(31338);
-    autotune_u64(tuners, 8, 512, 32, cost);
+    autotune_u64(tuners, 8, 512, 64, cost);
   } else if (fbuff->bufsztype == 1) {
     if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
     autotune_u64(tunersm, smbytes * 4, 32768, 8, cost);
@@ -875,7 +873,7 @@ rd_done:
       smbytes = autotune_u64_end(&tuners, smbytes);
       if (!tuners) {
         tuneds = TRUE;
-        smbytes = get_near2pow(smbytes);
+        //smbytes = get_near2pow(smbytes);
       }
     }
     bufsize = smbytes;
@@ -910,10 +908,10 @@ rd_done:
     }
     bufsize = bigbytes;
   }
-  bufsize = ((bufsize + 7) >> 3) << 3;
   if (bufsize > obufsize) {
-    off_t ptroff = fbuff->ptr - fbuff->buffer;
-    fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 3, obufsize >> 3, 8);
+    off_t ptroff = 0;
+    if (fbuff->buffer)  ptroff = fbuff->ptr - fbuff->buffer;
+    fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 1, obufsize >> 1, 2);
     fbuff->ptr = fbuff->buffer + ptroff;
   }
 #endif

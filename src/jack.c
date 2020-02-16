@@ -563,7 +563,7 @@ static int audio_process(nframes_t nframes, void *arg) {
         if ((shrink_factor = (float)in_frames / (float)jackFramesAvailable) >= 0.f) {
           jackd->seek_pos += in_bytes;
           if (jackd->playing_file != mainw->ascrap_file) {
-            if (eof || (jackd->seek_pos >= jackd->seek_end && jackd->playing_file != mainw->ascrap_file && !afile->opening)) {
+            if (eof || (jackd->seek_pos >= jackd->seek_end && !afile->opening)) {
               if (jackd->loop == AUDIO_LOOP_NONE) {
                 if (*jackd->whentostop == STOP_ON_AUD_END) {
                   *jackd->cancelled = CANCEL_AUD_END;

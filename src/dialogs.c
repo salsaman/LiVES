@@ -1243,7 +1243,7 @@ int process_one(boolean visible) {
     //   and we synch video with that; however, the soundcard time only updates when samples are played -
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
-
+    //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     time_source = LIVES_TIME_SOURCE_NONE;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
     if (mainw->currticks == -1) {
@@ -1478,8 +1478,18 @@ int process_one(boolean visible) {
           cfile->aseek_pos = nullaudio_get_seek_pos();
         }
 #endif
+        if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
+                                 mainw->preview_rendering || (mainw->multitrack != NULL &&
+                                     !mainw->multitrack->is_rendering))) {
+          if (prefs->pbq_adaptive) {
+            update_dfr(ABS(cfile->frameno - cfile->last_frameno) - 1, TRUE);
+            update_dfr(1, FALSE);
+          }
+        }
+
         // load and display the new frame
         load_frame_image(cfile->frameno);
+        //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
@@ -1533,6 +1543,7 @@ int process_one(boolean visible) {
   }
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
+    boolean reload = FALSE;
     if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1] != NULL) {
       // the audio thread wants to update the parameter window
       mainw->vrfx_update = NULL;
@@ -1541,7 +1552,6 @@ int process_one(boolean visible) {
 
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
-    boolean reload = FALSE;
 refresh:
     // a segfault here can indicate memory corruption in an FX plugin
     lives_widget_context_update();  // animate GUI, allow kb timer to run
@@ -1554,7 +1564,7 @@ refresh:
 
     if (mainw->force_show) {
       mainw->force_show = FALSE;
-      if (!((mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.) || (mainw->fixed_fpsd > 0.))) {
+      if (!visible && !((mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.) || (mainw->fixed_fpsd > 0.))) {
         reload = TRUE;
         goto refresh;
       }
@@ -1661,7 +1671,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   disp_fraction_done = 0.;
   mainw->last_display_ticks = 0;
   shown_paused_frames = FALSE;
-  mainw->force_show = TRUE;
+
+  if (!visible) mainw->force_show = TRUE;
+  else mainw->force_show = FALSE;
 
   mainw->cevent_tc = 0;
 

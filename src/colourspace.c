@@ -946,77 +946,78 @@ static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8
 
 LIVES_INLINE void rgb2yuv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t *y, uint8_t *u, uint8_t *v) {
   register short a;
-#ifndef USE_EXTEND
-  if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) a = max_Y;
-  *y = a < min_Y ? min_Y : a;
-  if ((a = ((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
-  *u = a < min_UV ? min_UV : a;
-  if ((a = ((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
-  *v = a < min_UV ? min_UV : a;
-#else
-  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) a = max_Y;
-  *y = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) a = max_UV;
-  *u = a < min_UV ? min_UV : a;
-  if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
-  *v = a < min_UV ? min_UV : a;
-#endif
+  if (mainw->struggling & 1) {
+    if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) a = max_Y;
+    *y = a < min_Y ? min_Y : a;
+    if ((a = ((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
+    *u = a < min_UV ? min_UV : a;
+    if ((a = ((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS)) > max_UV) a = max_UV;
+    *v = a < min_UV ? min_UV : a;
+  } else {
+    if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) a = max_Y;
+    *y = a < min_Y ? min_Y : a;
+    if ((a = spc_rnd(Cb_R[r0] + Cb_G[g0] + Cb_B[b0])) > max_UV) a = max_UV;
+    *u = a < min_UV ? min_UV : a;
+    if ((a = spc_rnd(Cr_R[r0] + Cr_G[g0] + Cr_B[b0])) > max_UV) a = max_UV;
+    *v = a < min_UV ? min_UV : a;
+  }
 }
 
 #define bgr2yuv(b0, g0, r0, y, u, v) rgb2yuv(r0, g0, b0, y, u, v)
 
 LIVES_INLINE void rgb2uyvy(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, uyvy_macropixel *uyvy) {
   register short a;
-#ifndef USE_EXTEND
-  if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) uyvy->y0 = max_Y;
-  else uyvy->y0 = a < min_Y ? min_Y : a;
-  if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) uyvy->y1 = max_Y;
-  else uyvy->y1 = a < min_Y ? min_Y : a;
+  if (mainw->struggling & 1) {
+    if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) uyvy->y0 = max_Y;
+    else uyvy->y0 = a < min_Y ? min_Y : a;
+    if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) uyvy->y1 = max_Y;
+    else uyvy->y1 = a < min_Y ? min_Y : a;
 
-  uyvy->u0 = avg_chroma_3_1(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
-                            ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
+    uyvy->u0 = avg_chroma_3_1(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
+                              ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
 
-  uyvy->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
-                            ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
-#else
-  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) uyvy->y0 = max_Y;
-  else uyvy->y0 = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) uyvy->y1 = max_Y;
-  else uyvy->y1 = a < min_Y ? min_Y : a;
+    uyvy->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
+                              ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
 
-  uyvy->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
-                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
+  } else {
+    if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) uyvy->y0 = max_Y;
+    else uyvy->y0 = a < min_Y ? min_Y : a;
+    if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) uyvy->y1 = max_Y;
+    else uyvy->y1 = a < min_Y ? min_Y : a;
 
-  uyvy->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
-                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
-#endif
+    uyvy->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
+                               Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
+
+    uyvy->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
+                               Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+  }
 }
 
 LIVES_INLINE void rgb2yuyv(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8_t b1, yuyv_macropixel *yuyv) {
   register short a;
-#ifndef USE_EXTEND
-  if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuyv->y0 = max_Y;
-  else yuyv->y0 = a < min_Y ? min_Y : a;
-  if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) yuyv->y1 = max_Y;
-  else yuyv->y1 = a < min_Y ? min_Y : a;
+  if (mainw->struggling & 1) {
+    if ((a = ((Y_R[r0] + Y_G[g0] + Y_B[b0]) >> FP_BITS)) > max_Y) yuyv->y0 = max_Y;
+    else yuyv->y0 = a < min_Y ? min_Y : a;
+    if ((a = ((Y_R[r1] + Y_G[g1] + Y_B[b1]) >> FP_BITS)) > max_Y) yuyv->y1 = max_Y;
+    else yuyv->y1 = a < min_Y ? min_Y : a;
 
-  yuyv->u0 = avg_chroma_3_1(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
-                            ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
+    yuyv->u0 = avg_chroma_3_1(((Cb_R[r0] + Cb_G[g0] + Cb_B[b0]) >> FP_BITS),
+                              ((Cb_R[r1] + Cb_G[g1] + Cb_B[b1]) >> FP_BITS));
 
-  yuyv->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
-                            ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
-#else
-  if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) yuyv->y0 = max_Y;
-  else yuyv->y0 = a < min_Y ? min_Y : a;
-  if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) yuyv->y1 = max_Y;
-  else yuyv->y1 = a < min_Y ? min_Y : a;
+    yuyv->v0 = avg_chroma_1_3(((Cr_R[r0] + Cr_G[g0] + Cr_B[b0]) >> FP_BITS),
+                              ((Cr_R[r1] + Cr_G[g1] + Cr_B[b1]) >> FP_BITS));
+  } else {
+    if ((a = spc_rnd(Y_R[r0] + Y_G[g0] + Y_B[b0])) > max_Y) yuyv->y0 = max_Y;
+    else yuyv->y0 = a < min_Y ? min_Y : a;
+    if ((a = spc_rnd(Y_R[r1] + Y_G[g1] + Y_B[b1])) > max_Y) yuyv->y1 = max_Y;
+    else yuyv->y1 = a < min_Y ? min_Y : a;
 
-  yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
-                             Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
+    yuyv->u0 = avg_chroma_3_1f(Cb_R[r0] + Cb_G[g0] + Cb_B[b0],
+                               Cb_R[r1] + Cb_G[g1] + Cb_B[b1]);
 
-  yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
-                             Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
-#endif
+    yuyv->v0 = avg_chroma_1_3f(Cr_R[r0] + Cr_G[g0] + Cr_B[b0],
+                               Cr_R[r1] + Cr_G[g1] + Cr_B[b1]);
+  }
 }
 
 
@@ -1099,15 +1100,15 @@ LIVES_INLINE void rgb2_411(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8
 }
 
 LIVES_INLINE void yuv2rgb(uint8_t y, uint8_t u, uint8_t v, uint8_t *r, uint8_t *g, uint8_t *b) {
-#ifndef USE_EXTEND
-  *r = CLAMP0255((int32_t)((RGB_Y[y] + R_Cr[v]) >> FP_BITS));
-  *g = CLAMP0255((int32_t)((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS));
-  *b = CLAMP0255((int32_t)((RGB_Y[y] + B_Cb[u]) >> FP_BITS));
-#else
-  *r = CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]));
-  *g = CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]));
-  *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
-#endif
+  if (mainw->struggling & 1) {
+    *r = CLAMP0255((int32_t)((RGB_Y[y] + R_Cr[v]) >> FP_BITS));
+    *g = CLAMP0255((int32_t)((RGB_Y[y] + G_Cb[u] + G_Cr[v]) >> FP_BITS));
+    *b = CLAMP0255((int32_t)((RGB_Y[y] + B_Cb[u]) >> FP_BITS));
+  } else {
+    *r = CLAMP0255f(spc_rnd(RGB_Y[y] + R_Cr[v]));
+    *g = CLAMP0255f(spc_rnd(RGB_Y[y] + G_Cb[u] + G_Cr[v]));
+    *b = CLAMP0255f(spc_rnd(RGB_Y[y] + B_Cb[u]));
+  }
 }
 
 #define yuv2bgr(y, u, v, b, g, r) yuv2rgb(y, u, v, r, g, b)

@@ -261,7 +261,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     lives_free(fname);
 
     lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+    lives_widget_context_update();
 
     if (frames == 0) {
       com = lives_strdup_printf(_("Opening %s"), file_name);
@@ -534,7 +534,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               cfile->video_time += extra_frames / cfile->fps;
               load_end_image(cfile->end);
             }
-            if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
+            if (cfile->laudio_time > cfile->video_time + 0.001 && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
@@ -544,7 +544,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->changed = FALSE;
               }
             }
-            if (cfile->laudio_time > cfile->video_time && cfile->frames > 0) {
+            if (cfile->laudio_time > cfile->video_time + 0.001 && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                 cfile->end = cfile->frames;
                 d_print(_("Auto trimming %.4f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
@@ -2890,7 +2890,6 @@ void play_file(void) {
     } else com = lives_strdup("");
 #endif
 
-
     if (com != NULL) {
       lives_system(com, TRUE);
       lives_free(com);
@@ -2942,6 +2941,7 @@ void play_file(void) {
   }
 
   disable_record();
+  prefs->pb_quality = future_prefs->pb_quality;
 
   if (mainw->multitrack == NULL) {
     if (mainw->faded || mainw->fs) {

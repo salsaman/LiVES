@@ -91,7 +91,8 @@ struct _weed_data {
 #define HAVE_WEED_LEAF_T
 typedef struct _weed_leaf weed_leaf_t;
 #ifdef __LIBWEED__
-#define padbytes 16
+#define CACHE_SIZE 64
+#define padbytes (CACHE_SIZE - ((16+sizeof(weed_leaf_t *)+sizeof(char *)+sizeof(weed_data_t **)+sizeof(void *)) % CACHE_SIZE))
 struct _weed_leaf {
   uint32_t	key_hash;
   weed_leaf_t *next;

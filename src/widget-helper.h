@@ -162,6 +162,7 @@ boolean lives_painter_rectangle(lives_painter_t *, double x, double y, double wi
 boolean lives_painter_arc(lives_painter_t *, double xc, double yc, double radius, double angle1, double angle2);
 boolean lives_painter_line_to(lives_painter_t *, double x, double y);
 boolean lives_painter_move_to(lives_painter_t *, double x, double y);
+boolean lives_painter_close_path(lives_painter_t *);
 
 boolean lives_painter_set_operator(lives_painter_t *, lives_painter_operator_t);
 

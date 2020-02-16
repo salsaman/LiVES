@@ -11026,6 +11026,9 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   }
   if (st < 64 && (st != WEED_SEED_INT && st != WEED_SEED_BOOLEAN && st != WEED_SEED_DOUBLE && st != WEED_SEED_INT64 &&
                   st != WEED_SEED_STRING && st != WEED_SEED_VOIDPTR && st != WEED_SEED_PLANTPTR)) {
+    if (prefs->show_dev_opts) {
+      g_printerr("unknown seed type %d %s\n", st, mykey);
+    }
     type = -6;
     goto done;
   }

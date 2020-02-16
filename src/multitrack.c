@@ -16063,6 +16063,8 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   mt_desensitise(mt);
 
+  /// disable playback optimisations
+  mainw->struggling = FALSE;
   mainw->event_list = mt->event_list;
 
   mt->is_rendering = TRUE; // use this to test for rendering from mt (not mainw->is_rendering)

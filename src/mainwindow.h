@@ -1574,6 +1574,8 @@ typedef struct {
 
   boolean gui_fooey; ///< set to TRUE if we expect heavy interface updates (when not playing, please) so we can increase GUI iterations
 
+  int struggling;
+
 #define MAX_CBSTORES 8
   int ncbstores;
   lives_clip_t *cbstores[8];

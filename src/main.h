@@ -1275,7 +1275,7 @@ void splash_end(void);
 void splash_msg(const char *msg, double pct);
 void resize_widgets_for_monitor(boolean get_play_times);
 void reset_message_area(void);
-void get_letterbox_sizes(weed_layer_t *frame_layer, int *pwidth, int *pheight, int *lb_width, int *lb_height);
+void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_height, boolean player_can_upscale);
 
 #if GTK_CHECK_VERSION(3, 0, 0)
 void calibrate_sepwin_size(void);
@@ -1580,8 +1580,6 @@ void break_me(void);
 #endif
 
 #endif
-
-#define WEED_STARTUP_TEST 1
 
 #endif // #ifndef HAS_LIVES_MAIN_H
 

@@ -567,7 +567,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             } else pulsed->aPlayPtr->size = in_bytes;
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data);
             pulsed->seek_pos += in_bytes;
-            if (pulsed->seek_pos >= pulsed->seek_end && pulsed->playing_file != mainw->ascrap_file && !afile->opening) {
+            if (pulsed->seek_pos >= pulsed->seek_end && !afile->opening) {
               if (pulsed->loop == AUDIO_LOOP_NONE) {
                 if (*pulsed->whentostop == STOP_ON_AUD_END) {
                   *pulsed->cancelled = CANCEL_AUD_END;

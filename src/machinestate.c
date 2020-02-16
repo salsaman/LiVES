@@ -281,6 +281,82 @@ boolean load_measure_idle(livespointer data) {
 }
 
 
+struct _decomp {
+  uint64_t value;
+  int i, j;
+};
+
+struct _decomp_tab {
+  uint64_t value;
+  int i, j;
+  struct _decomp_tab *lower,  *higher;
+};
+
+static struct _decomp_tab nxttbl[64][25];
+static boolean nxttab_inited = FALSE;
+
+void make_nxttab(void) {
+  LiVESList *preplist = NULL, *dccl, *dccl_last = NULL;
+  uint64_t val6 = 1ul, val;
+  struct _decomp *dcc;
+  int max2pow, xi, xj;
+  if (nxttab_inited) return;
+  for (int j = 0; j < 25; j++) {
+    val = val6;
+    max2pow = 64 - ((j * 10 + 7) >> 2);
+    dccl = preplist;
+    for (int i = 0; i < max2pow; i++) {
+      dcc = (struct _decomp *)lives_malloc(sizeof(struct _decomp));
+      dcc->value = val;
+      dcc->i = i;
+      dcc->j = j;
+      if (preplist == NULL) dccl = preplist = lives_list_append(preplist, dcc);
+      else {
+        LiVESList *dccl2 = lives_list_append(NULL, (livespointer)dcc);
+        for (; dccl != NULL; dccl = dccl->next) {
+          dcc = (struct _decomp *)dccl->data;
+          if (dcc->value > val) break;
+          dccl_last = dccl;
+        }
+        if (!dccl) {
+          dccl_last->next = dccl2;
+          dccl2->prev = dccl_last;
+          dccl2->next = NULL;
+          dccl = dccl2;
+        } else {
+          dccl2->next = dccl;
+          dccl2->prev = dccl->prev;
+          if (dccl->prev != NULL) dccl->prev->next = dccl2;
+          else preplist = dccl2;
+          dccl->prev = dccl2;
+        }
+      }
+      val *= 2;
+    }
+    val6 *= 6;
+  }
+  for (dccl = preplist; dccl != NULL; dccl = dccl->next) {
+    dcc = (struct _decomp *)dccl->data;
+    xi = dcc->i;
+    xj = dcc->j;
+    nxttbl[xi][xj].value = dcc->value;
+    nxttbl[xi][xj].i = xi;
+    nxttbl[xi][xj].j = xj;
+    if (dccl->prev != NULL) {
+      dcc = (struct _decomp *)dccl->prev->data;
+      nxttbl[xi][xj].lower = &(nxttbl[dcc->i][dcc->j]);
+    } else nxttbl[xi][xj].lower = NULL;
+    if (dccl->next != NULL) {
+      dcc = (struct _decomp *)dccl->next->data;
+      nxttbl[xi][xj].higher = &(nxttbl[dcc->i][dcc->j]);
+    } else nxttbl[xi][xj].higher = NULL;
+  }
+  lives_list_free_all(&preplist);
+  nxttab_inited = TRUE;
+}
+
+
+
 void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost) {
   if (tuner) {
     double tc = cost;
@@ -297,68 +373,52 @@ void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials,
 
 #define NCYCS 16
 
+
 uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
-  // want some number which is 2**i * 6 ** j
+  // to avoid only checking powers of 2, we want some number which is (2 ** i) * (6 ** j)
+  // which gives a nice range of results
   uint64_t oval = val;
-  uint64_t min = 0, max = 0, next = 0, xval = 0, xxval = 0;
-  int i = 0, j = 0, k, l;
-
-  while (val > 6 && !(val % 6)) {
-    j++;
-    val /= 6;
+  int i = 0, j = 0;
+  if (!nxttab_inited) make_nxttab();
+  /// decompose val into i, j
+  /// divide by 6 until val mod 6 is non zero
+  if (val & 1) {
+    if (less) val--;
+    else val++;
   }
-
-  while (val > 1) {
+  for (; !(val % 6) && val > 0; j++, val /= 6);
+  /// divide by 2 until we reach 1; if the result of a division is odd we add or subtract 1
+  for (; val > 1; i++, val /= 2) {
     if (val & 1) {
       if (less) val--;
       else val++;
     }
-    i++;
-    val /= 2;
   }
-  val = 1;
-  for (k = 0; k < i; k++) val *= 2;
-  for (k = 0; k < j; k++) val *= 6;
-
+  val = nxttbl[i][j].value;
   if (less) {
-    max = oval;
-    if (i > 0) {
-      i--;
-      val /= 2;
+    if (val == oval) {
+      if (nxttbl[i][j].lower) val = nxttbl[i][j].lower->value;
     } else {
-      if (j > 0) {
-        j--;
-        val /= 6;
-      } else return lim;
-    }
-    if (val < lim) next = lim;
-    else next = val;
-  } else {
-    min = oval;
-    i++;
-    val *= 2;
-    if (val > lim) next = lim;
-    else next = val;
-  }
-  xval = 1;
-  for (k = 0; k < 64; k++) {
-    if (!less && xval >= next) break;
-    if (less && xval >= max) break;
-    xxval = xval;
-    for (l = 0; l < 22; l++) {
-      if (!less) {
-        if (xxval >= next) break;
-        if (xxval > min) next = xxval;
-      } else {
-        if (xxval >= max) break;
-        if (xxval > next) next = xxval;
+      while (nxttbl[i][j].higher->value < oval) {
+        int xi = nxttbl[i][j].higher->i;
+        val = nxttbl[i][j].value;
+        j = nxttbl[i][j].higher->j;
+        i = xi;
       }
-      xxval *= 6;
     }
-    xval *= 2;
-    if ((less && xval >= max) || (!less && xval >= next)) break;
+    return val > lim ? val : lim;
   }
-  return next;
+  if (val == oval) {
+    if (nxttbl[i][j].higher) val = nxttbl[i][j].higher->value;
+  } else {
+    while (nxttbl[i][j].lower && nxttbl[i][j].lower->value > oval) {
+      int xi = nxttbl[i][j].lower->i;
+      j = nxttbl[i][j].lower->j;
+      i = xi;
+      val = nxttbl[i][j].value;
+    }
+  }
+  return val < lim ? val : lim;
 }
 
 
@@ -529,7 +589,7 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 ////// memory funcs ////
 
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
-#define OIL_MEMCPY_MAX_BYTES 16384 // this can be tuned to provide optimal performance
+#define OIL_MEMCPY_MAX_BYTES 12288 // this can be tuned to provide optimal performance
 
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
@@ -1147,21 +1207,23 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
 }
 
 ///////// thread pool ////////////////////////
-
+#define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
 static int npoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
-static int ntasks;
+static volatile int ntasks;
 static boolean threads_die;
 
+#ifdef TUNE_MALLOPT
 static size_t narenas;
 static weed_plant_t *mtuner = NULL;
 static boolean mtuned = FALSE;
+static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 static void *thrdpool(void *arg) {
   LiVESList *list;
@@ -1182,30 +1244,38 @@ static void *thrdpool(void *arg) {
       twork_last = list->prev;
       if (twork_last != NULL) twork_last->next = NULL;
       mywork = (thrd_work_t *)list->data;
-
+#ifdef TUNE_MALLOPT
       if (!pthread_mutex_trylock(&tuner_mutex)) {
-        mywork->flags |= 1;
-        autotune_u64(mtuner, 8, npoolthreads * 4, 64, (double)narenas);
+        if (mtuner) {
+          mywork->flags |= 1;
+          autotune_u64(mtuner, 8, npoolthreads * 4, 64, (double)narenas);
+        }
       }
+#endif
 
       pthread_mutex_unlock(&twork_mutex);
-
       list->prev = list->next = NULL;
       mywork->busy = myidx + 1;
       (*mywork->func)(mywork->arg);
+
+#ifdef TUNE_MALLOPT
       if (mywork->flags & 1) {
         if (mtuner) {
           size_t onarenas = narenas;
           narenas = autotune_u64_end(&mtuner, narenas);
           if (!mtuner) mtuned = TRUE;
           if (narenas != onarenas) {
-            g_print("mallopt %ld\n", narenas);
+            if (prefs->show_dev_opts) {
+              g_printerr("mallopt %ld\n", narenas);
+            }
             mallopt(M_ARENA_MAX, narenas);
           }
         }
         pthread_mutex_unlock(&tuner_mutex);
         mywork->flags = 0;
       }
+#endif
+
       pthread_mutex_lock(&twork_mutex);
       ntasks--;
       pthread_mutex_lock(&mywork->cond_mutex);
@@ -1220,11 +1290,13 @@ static void *thrdpool(void *arg) {
 
 
 void lives_threadpool_init(void) {
-  if (!mtuned && !mtuner) mtuner = weed_plant_new(12345);
   npoolthreads = MINPOOLTHREADS;
   if (prefs->nfx_threads > npoolthreads) npoolthreads = prefs->nfx_threads;
-  narenas = 4;
+#ifdef TUNE_MALLOPT
+  narenas = npoolthreads * 2;
   mallopt(M_ARENA_MAX, narenas);
+  if (!mtuned && !mtuner) mtuner = weed_plant_new(12345);
+#endif
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
   threads_die = FALSE;
   twork_first = twork_last = NULL;
@@ -1282,7 +1354,12 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
       pthread_mutex_unlock(&tcond_mutex);
     }
     npoolthreads += MINPOOLTHREADS;
-    mtuned = FALSE;
+#ifdef TUNE_MALLOPT
+    if (!mtuner) {
+      mtuner = weed_plant_new(12345);
+      mtuned = FALSE;
+    }
+#endif
   }
   pthread_mutex_unlock(&twork_mutex);
   pthread_mutex_lock(&tcond_mutex);
@@ -1526,4 +1603,85 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
   return FALSE;
 }
 
+
+/// dropped frames handling
+static uint8_t dframes[DF_STATSMAX];
+static int dfstatslen = 0;
+
+static int pop_framestate(void) {
+  int ret = 0;
+  while (dfstatslen >= DF_STATSMAX - 1) {
+    ret += dframes[0];
+    dfstatslen--;
+    lives_memmove(dframes, dframes + 1, dfstatslen);
+    return ret;
+  }
+  return 0;
+}
+
+
+void update_dfr(int nframes, boolean dropped) {
+  static boolean inited = FALSE;
+  static int dfcount = 0;
+  static int nsuccess = 0;
+
+  if (!inited) {
+    lives_memset(dframes, 0, DF_STATSMAX);
+    inited = TRUE;
+  }
+
+  if (!nframes) return;
+
+  if (dropped)  {
+    dfcount += nframes;
+    nsuccess = 0;
+  } else nsuccess++;
+
+  while (nframes-- > 0) {
+    if (dfstatslen == DF_STATSMAX - 1) {
+      dfcount -= pop_framestate();
+    }
+    dframes[dfstatslen] = dropped ? 1 : 0;
+    dfstatslen++;
+  }
+
+  if (dfcount >= DF_LIMIT || (mainw->struggling && dfcount > 0)) {
+    if (!mainw->struggling) mainw->struggling = 1;
+    if (dfcount >= DF_LIMIT_HIGH || mainw->struggling == 3  || mainw->struggling == 2) {
+      if (dfcount >= DF_LIMIT_HIGH) {
+        mainw->struggling = 3;
+        if (prefs->pb_quality == PB_QUALITY_HIGH) {
+          prefs->pb_quality = PB_QUALITY_MED;
+        } else if (prefs->pb_quality == PB_QUALITY_MED) {
+          prefs->pb_quality = PB_QUALITY_LOW;
+	  // *INDENT-OFF*
+	}}}}
+// *INDENT-ON*
+  else {
+    if (!mainw->struggling && nsuccess >= DF_STATSMAX) {
+      if (prefs->pb_quality == PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_HIGH;
+      else if (prefs->pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_MED;
+      nsuccess = 0;
+    }
+
+    if (mainw->struggling == 3) {
+      mainw->struggling = 2;
+      nsuccess = 0;
+    }
+    if (mainw->struggling == 2 && nsuccess >= DF_STATSMAX) {
+      mainw->struggling = 5;
+      nsuccess = 0;
+    }
+    if (mainw->struggling >= 5 && nsuccess >= DF_STATSMAX) {
+      mainw->struggling = 0;
+      nsuccess = 0;
+    }
+    if (mainw->struggling == 1) {
+      prefs->pb_quality = future_prefs->pb_quality;
+      mainw->struggling = 5;
+      nsuccess = 0;
+    }
+  }
+  //g_print("STRG %d and %d\n", mainw->struggling, nsuccess);
+}
 

@@ -257,6 +257,16 @@ uint32_t string_hash(const char *string) GNU_PURE GNU_HOT;
 
 int check_for_bad_ffmpeg(void);
 
+/// dropped frames handling
+
+#define DF_STATSMAX 128
+#define DF_LIMIT 2
+#define DF_LIMIT_HIGH 64
+
+void update_dfr(int nframes, boolean dropped);
+
+//// threadpool API
+
 typedef void *(*lives_funcptr_t)(void *);
 
 typedef struct {

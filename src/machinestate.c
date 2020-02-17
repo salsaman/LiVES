@@ -1223,6 +1223,7 @@ static size_t narenas;
 static weed_plant_t *mtuner = NULL;
 static boolean mtuned = FALSE;
 static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define MALLOPT_WAIT_MAX 30
 #endif
 
 static void *thrdpool(void *arg) {
@@ -1265,10 +1266,14 @@ static void *thrdpool(void *arg) {
           narenas = autotune_u64_end(&mtuner, narenas);
           if (!mtuner) mtuned = TRUE;
           if (narenas != onarenas) {
-            if (prefs->show_dev_opts) {
-              g_printerr("mallopt %ld\n", narenas);
-            }
-            mallopt(M_ARENA_MAX, narenas);
+            struct timespec ts;
+            clock_gettime(CLOCK_REALTIME, &ts);
+            ts.tv_sec += MALLOPT_WAIT_MAX;
+            if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
+              if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
+              lives_invalidate_all_file_buffers();
+              pthread_rwlock_unlock(&mainw->mallopt_lock);
+            } else narenas = onarenas;
           }
         }
         pthread_mutex_unlock(&tuner_mutex);
@@ -1682,6 +1687,13 @@ void update_dfr(int nframes, boolean dropped) {
       nsuccess = 0;
     }
   }
+
+  if (!mainw->struggling && nsuccess > DF_STATSMAX * 8) {
+    if (prefs->pb_quality == PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_HIGH;
+    if (prefs->pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_MED;
+    nsuccess = 0;
+  }
+
   //g_print("STRG %d and %d\n", mainw->struggling, nsuccess);
 }
 

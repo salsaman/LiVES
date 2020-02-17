@@ -1307,6 +1307,7 @@ typedef struct {
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t gamma_lut_mutex; ///< lock gamme lookup table
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
+  pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates
   //pthread_mutex_t frame_index_mutex; /// access to current file frame_index
 
   volatile lives_rfx_t *vrfx_update;

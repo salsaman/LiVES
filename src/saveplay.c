@@ -4591,6 +4591,26 @@ void open_set_file(int clipnum) {
 }
 
 
+void reload_subs(int fileno) {
+  lives_clip_t *sfile;
+  char *subfname;
+  if (!IS_VALID_CLIP(fileno)) return;
+
+  sfile = mainw->files[fileno];
+  subfname = lives_build_filename(prefs->workdir, sfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SRT, NULL);
+  if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
+    subtitles_init(sfile, subfname, SUBTITLE_TYPE_SRT);
+  } else {
+    lives_free(subfname);
+    subfname = lives_build_filename(prefs->workdir, sfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SUB, NULL);
+    if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
+      subtitles_init(sfile, subfname, SUBTITLE_TYPE_SUB);
+    }
+  }
+  lives_free(subfname);
+}
+
+
 ulong restore_file(const char *file_name) {
   char *com = lives_strdup("dummy");
   char *mesg, *mesg1, *tmp;
@@ -4600,8 +4620,6 @@ ulong restore_file(const char *file_name) {
   int old_file = mainw->current_file, current_file;
   int new_file = mainw->first_free_file;
   boolean not_cancelled;
-
-  char *subfname;
 
   // create a new file
   if (!get_new_handle(new_file, fname)) {
@@ -4697,17 +4715,7 @@ ulong restore_file(const char *file_name) {
   cfile->changed = FALSE;
 
   if (prefs->autoload_subs) {
-    subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SRT, NULL);
-    if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
-      subtitles_init(cfile, subfname, SUBTITLE_TYPE_SRT);
-    } else {
-      lives_free(subfname);
-      subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SUB, NULL);
-      if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
-        subtitles_init(cfile, subfname, SUBTITLE_TYPE_SUB);
-      }
-    }
-    lives_free(subfname);
+    reload_subs(mainw->current_file);
   }
 
   lives_snprintf(cfile->type, 40, "Frames");
@@ -5452,6 +5460,9 @@ manual_locate:
   }
   lives_list_free(mainw->decoder_list);
   mainw->decoder_list = odeclist;
+  if (prefs->autoload_subs) {
+    reload_subs(fileno);
+  }
   return TRUE;
 }
 

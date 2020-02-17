@@ -201,7 +201,10 @@ void lives_exit(int signum) {
   }
 
   if (mainw->is_ready) {
-    lives_close_all_file_buffers();
+    if (!pthread_rwlock_trywrlock(&mainw->mallopt_lock)) {
+      lives_invalidate_all_file_buffers();
+      pthread_rwlock_unlock(&mainw->mallopt_lock);
+    }
 
     if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
       //lives_source_remove(mainw->multitrack->idlefunc);
@@ -399,14 +402,15 @@ void lives_exit(int signum) {
             // or just clean them up -
             // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
             if (!prefs->vj_mode) {
+              // TODO: can we speed this up ? - maybe just move the files to a trash directory and then delete it on exit
               com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, mainw->files[i]->handle);
               lives_system(com, FALSE);
               threaded_dialog_spin(0.);
               lives_free(com);
             }
-            if (mainw->files[i]->frame_index != NULL) {
-              save_frame_index(i);
-            }
+            /* if (mainw->files[i]->frame_index != NULL) { */
+            /*   save_frame_index(i); */
+            /* } */
             lives_freep((void **)&mainw->files[i]->op_dir);
 	    // *INDENT-OFF*
           }}}}
@@ -5421,7 +5425,6 @@ boolean reload_set(const char *set_name) {
   char *msg;
   char *com;
   char *ordfile;
-  char *subfname;
   char vid_open_dir[PATH_MAX];
   char *cwd;
   char *handle = NULL;
@@ -5713,17 +5716,7 @@ boolean reload_set(const char *set_name) {
     }
 
     if (prefs->autoload_subs) {
-      subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SRT, NULL);
-      if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
-        subtitles_init(cfile, subfname, SUBTITLE_TYPE_SRT);
-      } else {
-        lives_free(subfname);
-        subfname = lives_build_filename(prefs->workdir, cfile->handle, SUBS_FILENAME "." LIVES_FILE_EXT_SUB, NULL);
-        if (lives_file_test(subfname, LIVES_FILE_TEST_EXISTS)) {
-          subtitles_init(cfile, subfname, SUBTITLE_TYPE_SUB);
-        }
-      }
-      lives_free(subfname);
+      reload_subs(mainw->current_file);
       threaded_dialog_spin(0.);
     }
 

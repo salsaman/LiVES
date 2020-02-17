@@ -57,6 +57,7 @@ boolean save_frame_index(int fileno) {
 
   do {
     retval = 0;
+    pthread_rwlock_rdlock(&mainw->mallopt_lock);
     fd = lives_creat_buffered(fname, DEF_FILE_PERMS);
     if (fd < 0) {
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
@@ -68,6 +69,8 @@ boolean save_frame_index(int fileno) {
       }
 
       lives_close_buffered(fd);
+      pthread_rwlock_unlock(&mainw->mallopt_lock);
+
       if (mainw->is_exiting) return TRUE;
 
       if (mainw->write_failed) {

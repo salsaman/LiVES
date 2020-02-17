@@ -595,9 +595,9 @@ static boolean pre_init(void) {
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
-  prefs->nfx_threads = get_int_pref(PREF_NFX_THREADS);
-  if (prefs->nfx_threads == 0) prefs->nfx_threads = capable->ncpus;
-  future_prefs->nfx_threads = prefs->nfx_threads;
+  future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
+
+  lives_threadpool_init();
 
   // get some prefs we need to set menu options
   future_prefs->vj_mode = prefs->vj_mode = get_boolean_prefd(PREF_VJMODE, FALSE);
@@ -637,6 +637,9 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
   pthread_mutex_init(&mainw->gamma_lut_mutex, NULL);
   pthread_mutex_init(&mainw->exit_mutex, NULL);
+
+  // rwlocks
+  pthread_rwlock_init(&mainw->mallopt_lock, NULL);
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     pthread_mutex_init(&mainw->fx_mutex[i], NULL);
@@ -4041,8 +4044,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // get capabilities and if OK set some initial prefs
   theme_error = pre_init();
 
-  lives_threadpool_init();
-
   lives_memset(start_file, 0, 1);
 
   mainw->libthread = gtk_thread;
@@ -5865,6 +5866,8 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
       return layer;
     }
 
+    if (sfile->subt->text == NULL) return layer;
+
     size = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error) / 32;
 
     col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
@@ -5875,13 +5878,8 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
       gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
     }
 
-    if (sfile->subt->text != NULL) {
-      char *tmp;
-      layer = render_text_to_layer(layer, (tmp = lives_strdup_printf(" %s ", sfile->subt->text)), sfont, size,
-                                   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, TRUE, 0.);
-      lives_free(tmp);
-    }
-
+    layer = render_text_to_layer(layer, sfile->subt->text, sfont, size,
+                                 LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, TRUE, 0.);
     return layer;
   }
 

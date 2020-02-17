@@ -591,7 +591,7 @@ typedef enum {
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == 0)
 
 /// corresponds to one clip in the GUI
-typedef struct {
+typedef struct _lives_clip_t {
   // basic info (saved during backup)
   int bpp; ///< bits per pixel of the image frames, 24 or 32
   double fps;  /// framerate of the clip
@@ -933,7 +933,7 @@ typedef enum {
   CLIP_DETAILS_DECODER_NAME,
   CLIP_DETAILS_GAMMA_TYPE,
   CLIP_DETAILS_MD5SUM, // for future use
-  CLIP_DETAILS_RESERVED1,
+  CLIP_DETAILS_SUBFILE,
   CLIP_DETAILS_RESERVED2,
   CLIP_DETAILS_RESERVED3,
   CLIP_DETAILS_RESERVED4,
@@ -1173,6 +1173,7 @@ boolean rewrite_recovery_file(void);
 boolean check_for_recovery_files(boolean auto_recover);
 void recover_layout_map(int numclips);
 const char *get_deinterlace_string(void);
+void reload_subs(int fileno);
 
 // saveplay.c backup
 void backup_file(int clip, int start, int end, const char *filename);
@@ -1300,7 +1301,7 @@ int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_creat_buffered(const char *pathname, int mode);
 int lives_close_buffered(int fd);
-void lives_close_all_file_buffers(void);
+void lives_invalidate_all_file_buffers(void);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
@@ -1475,14 +1476,6 @@ int hextodec(const char *string);
 
 uint64_t fastrand(void) GNU_PURE;
 void fastsrand(uint64_t seed);
-
-// pangotext.c
-boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);
-void subtitles_free(lives_clip_t *sfile);
-boolean get_srt_text(lives_clip_t *sfile, double xtime);
-boolean get_sub_text(lives_clip_t *sfile, double xtime);
-boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
-boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 #include "osc_notify.h"
 

@@ -198,6 +198,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     lives_widget_object_unref(ctx);
     return NULL;
   }
+  lives_widget_object_ref_sink(layout);
 
   readytext = lives_strdup("");
 
@@ -226,6 +227,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     needs_newline = TRUE;
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
     layout = lingo_layout_new(ctx);
+    lives_widget_object_ref_sink(layout);
     lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h);
 
@@ -259,6 +261,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #endif
         if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
+        lives_widget_object_ref_sink(layout);
         lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h);
@@ -300,6 +303,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
         // check width again, just looking at new part
         if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
         layout = lingo_layout_new(ctx);
+        lives_widget_object_ref_sink(layout);
         lingo_layout_set_text(layout, tmp, -1);
         lingo_layout_get_size(layout, &pw, NULL);
         w = pw / LINGO_SCALE;
@@ -446,7 +450,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
     pango_layout_set_font_description(layout, font);
   }
-  pango_layout_set_markup(layout, text, -1);
+  // SRT
+  pango_layout_set_markup(layout, g_convert(text, -1, "UTF-8", "ISO-8859-15", NULL, NULL, NULL), -1);
 #endif
 
 #ifdef GUI_QT
@@ -687,6 +692,7 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
 
   curr = sfile->subt->current;
 
+  // continue showing existing text
   if (curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
     return (TRUE);
 
@@ -702,18 +708,22 @@ boolean get_srt_text(lives_clip_t *sfile, double xtime) {
   else
     index_ptr = index_prev = index = sfile->subt->index;
 
+
   while (index_ptr) {
+    //g_print("gst2555, %f\n", index_ptr->start_time);
+    /// TODO:
     if (index_ptr->start_time > xtime) {
       lives_freep((void **)&sfile->subt->text);
       sfile->subt->current = NULL;
-      return (TRUE);
+      return TRUE;
     }
     if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
       lives_freep((void **)&sfile->subt->text);
       sfile->subt->text = srt_read_text(sfile->subt->tfile, sfile->subt->current);
-      return (TRUE);
+      return TRUE;
     }
+    //g_print("gst2555, %f\n", index_ptr->start_time);
     index_prev = index_ptr;
     index_ptr = (lives_subtitle_t *)index_ptr->next;
   }
@@ -831,7 +841,7 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
   curr = sfile->subt->current;
 
   if (curr && (curr->start_time <= xtime) && (curr->end_time >= xtime))
-    return (TRUE);
+    return TRUE;
 
   if (sfile->subt->last_time != -1. && xtime > sfile->subt->last_time) {
     // past end of subtitles
@@ -849,13 +859,13 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
     if (index_ptr->start_time > xtime) {
       lives_freep((void **)&sfile->subt->text);
       sfile->subt->current = NULL;
-      return (TRUE);
+      return TRUE;
     }
     if (index_ptr->end_time >= xtime) {
       sfile->subt->current = index_ptr;
       lives_freep((void **)&sfile->subt->text);
       sfile->subt->text = sub_read_text(sfile->subt->tfile, sfile->subt->current);
-      return (TRUE);
+      return TRUE;
     }
     index_prev = index_ptr;
     index_ptr = (lives_subtitle_t *)index_ptr->next;
@@ -928,7 +938,6 @@ boolean get_sub_text(lives_clip_t *sfile, double xtime) {
 
         if (!strlen(data)) break;
       } // end while
-
       if (node) {
         if (node->start_time > xtime) {
           lives_freep((void **)&sfile->subt->text);

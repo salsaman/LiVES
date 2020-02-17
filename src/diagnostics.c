@@ -6,6 +6,9 @@
 
 #include "diagnostics.h"
 
+#ifdef WEED_STARTUP_TEST
+
+
 ticks_t timerinfo;
 
 static void show_timer_info(void) {
@@ -13,8 +16,6 @@ static void show_timer_info(void) {
           ((double)lives_get_current_ticks() - (double)timerinfo) / TICKS_PER_SECOND_DBL);
   timerinfo = lives_get_current_ticks();
 }
-
-#ifdef WEED_STARTUP_TEST
 
 int run_weed_startup_tests(void) {
   weed_plant_t *plant;

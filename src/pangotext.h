@@ -35,7 +35,6 @@ typedef struct _lives_subtitle_t {
   xlives_subtitle_t *next;
 } lives_subtitle_t;
 
-
 typedef struct {
   lives_subtitle_type_t type;
   FILE *tfile;
@@ -46,13 +45,11 @@ typedef struct {
   int offset; ///< offset in frames (default 0)
 } lives_subtitles_t;
 
-
 typedef enum {
   LIVES_TEXT_MODE_FOREGROUND_ONLY,
   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
   LIVES_TEXT_MODE_BACKGROUND_ONLY
 } lives_text_mode_t;
-
 
 char **get_font_list(void);
 
@@ -70,6 +67,17 @@ void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_tex
                              lives_colRGBA64_t *bg, int dwidth, int dheight, double x_bg, double y_bg, double x_text, double y_text);
 
 LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWidget *widget, int *linecount);
+
+/// subtitles
+
+typedef struct _lives_clip_t lives_clip_t;
+
+boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);
+void subtitles_free(lives_clip_t *sfile);
+boolean get_srt_text(lives_clip_t *sfile, double xtime);
+boolean get_sub_text(lives_clip_t *sfile, double xtime);
+boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
+boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 
 #endif
 

@@ -261,7 +261,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
   double scalex;
   double ptrtime;
 
-  float sig;
   double y = 0.;
 
   int start;

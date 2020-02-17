@@ -23,19 +23,20 @@ static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 static int get_hex_digit(const char c) GNU_CONST;
 
 typedef struct {
-  int fd;
   ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
-  boolean eof;
   uint8_t *ptr;   /// read point in buffer
-  uint8_t *buffer;   /// ptr to data
-  boolean read;
-  boolean allow_fail;
-  boolean reversed;
-  off_t offset; // file offs
-  char *pathname;
+  uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
+  off_t offset; // file offs (of END of block)
+  int fd;
   int bufsztype;
-  size_t orig_size;
+  boolean eof;
+  boolean read;
+  boolean reversed;
   int nseqreads;
+  boolean allow_fail;
+  boolean invalid;
+  size_t orig_size;
+  char *pathname;
 } lives_file_buffer_t;
 
 static lives_file_buffer_t *find_in_file_buffers(int fd);
@@ -382,15 +383,6 @@ static lives_file_buffer_t *find_in_file_buffers(int fd) {
 }
 
 
-void lives_close_all_file_buffers(void) {
-  lives_file_buffer_t *fbuff;
-
-  while (mainw->file_buffers != NULL) {
-    fbuff = (lives_file_buffer_t *)mainw->file_buffers->data;
-    lives_close_buffered(fbuff->fd);
-  }
-}
-
 
 static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
   char *msg = NULL;
@@ -502,6 +494,23 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
 }
 
 
+void lives_invalidate_all_file_buffers(void) {
+  lives_file_buffer_t *fbuff;
+  LiVESList *fbuffer = mainw->file_buffers;
+  for (; fbuffer != NULL; fbuffer = fbuffer->next) {
+    fbuff = (lives_file_buffer_t *)fbuffer->data;
+    // if a writer, flush
+    if (!fbuff->read) {
+      file_buffer_flush(fbuff);
+      fbuff->buffer = NULL;
+    } else {
+      fbuff->invalid = TRUE;
+    }
+  }
+}
+
+
+
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
   lives_file_buffer_t *fbuff, *xbuff;
   int fd = lives_open3(pathname, flags, mode);
@@ -509,6 +518,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff = (lives_file_buffer_t *)lives_malloc(sizeof(lives_file_buffer_t));
     fbuff->fd = fd;
     fbuff->bytes = 0;
+    fbuff->invalid = FALSE;
     fbuff->eof = FALSE;
     fbuff->ptr = NULL;
     fbuff->buffer = NULL;
@@ -605,7 +615,7 @@ int lives_close_buffered(int fd) {
   lives_free(fbuff->pathname);
 
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
-  if (fbuff->buffer != NULL) lives_free(fbuff->buffer);
+  if (fbuff->buffer != NULL && !fbuff->invalid) lives_free(fbuff->buffer);
   lives_free(fbuff);
   return ret;
 }
@@ -811,7 +821,22 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     size_t nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
     // use up buffer
+
+    pthread_rwlock_rdlock(&mainw->mallopt_lock);
+    if (fbuff->invalid) {
+      if (mainw->is_exiting) {
+        pthread_rwlock_unlock(&mainw->mallopt_lock);
+        return retval;
+      }
+      fbuff->buffer = NULL;
+      fbuff->offset -= fbuff->bytes;
+      file_buffer_fill(fbuff, fbuff->bytes);
+      fbuff->invalid = FALSE;
+    }
+
     lives_memcpy(ptr, fbuff->ptr, nbytes);
+    pthread_rwlock_unlock(&mainw->mallopt_lock);
+
     retval += nbytes;
     count -= nbytes;
     fbuff->ptr += nbytes;
@@ -830,18 +855,30 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     if (ocount >= (medbytes >> 1) || count > smedbytes) fbuff->bufsztype = 2;
     if (ocount >= (bigbytes >> 2) || count > medbytes) fbuff->bufsztype = 3;
 
-    if (fbuff->bufsztype != bufsztype) {
-      lives_freep((void **)&fbuff->buffer);
+    pthread_rwlock_rdlock(&mainw->mallopt_lock);
+    if (fbuff->invalid) {
+      if (mainw->is_exiting) {
+        pthread_rwlock_unlock(&mainw->mallopt_lock);
+        return retval;
+      }
+      fbuff->buffer = NULL;
+      fbuff->invalid = FALSE;
+    } else {
+      if (fbuff->bufsztype != bufsztype) {
+        lives_freep((void **)&fbuff->buffer);
+      }
     }
 
     res = file_buffer_fill(fbuff, count);
     if (res < 0)  {
+      pthread_rwlock_unlock(&mainw->mallopt_lock);
       retval = res;
       goto rd_done;
     }
     // buffer is sufficient (or eof hit)
     if (res > count) res = count;
     lives_memcpy(ptr, fbuff->ptr, res);
+    pthread_rwlock_unlock(&mainw->mallopt_lock);
     retval += res;
     fbuff->ptr += res;
     fbuff->bytes -= res;
@@ -849,7 +886,14 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   } else {
     // larger size -> direct read
     if (fbuff->bufsztype != bufsztype) {
-      lives_freep((void **)&fbuff->buffer);
+      pthread_rwlock_rdlock(&mainw->mallopt_lock);
+      if (fbuff->invalid) {
+        fbuff->buffer = NULL;
+        fbuff->invalid = FALSE;
+      } else {
+        lives_freep((void **)&fbuff->buffer);
+      }
+      pthread_rwlock_unlock(&mainw->mallopt_lock);
     }
 
     fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
@@ -911,7 +955,14 @@ rd_done:
   if (bufsize > obufsize) {
     off_t ptroff = 0;
     if (fbuff->buffer)  ptroff = fbuff->ptr - fbuff->buffer;
-    fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 1, obufsize >> 1, 2);
+    pthread_rwlock_rdlock(&mainw->mallopt_lock);
+    if (!fbuff->invalid)
+      fbuff->buffer = (uint8_t *)lives_recalloc(fbuff->buffer, bufsize >> 1, obufsize >> 1, 2);
+    else {
+      fbuff->buffer = (uint8_t *)lives_calloc(bufsize >> 1, 2);
+      fbuff->invalid = FALSE;
+    }
+    pthread_rwlock_unlock(&mainw->mallopt_lock);
     fbuff->ptr = fbuff->buffer + ptroff;
   }
 #endif

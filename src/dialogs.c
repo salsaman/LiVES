@@ -30,9 +30,9 @@ static double audio_start;
 static boolean accelerators_swapped;
 static int frames_done;
 static double disp_fraction_done;
-static double est_time;
 static ticks_t proc_start_ticks;
 static ticks_t last_open_check_ticks;
+static ticks_t spare_cycles;
 
 static ticks_t last_kbd_ticks;
 
@@ -1113,17 +1113,15 @@ static void disp_fraction(double fraction_done, double timesofar, xprocess *proc
   char *prog_label;
   double est_time;
 
-  const char *stretch = "                                         ";
-
   if (fraction_done > 1.) fraction_done = 1.;
   if (fraction_done < 0.) fraction_done = 0.;
 
-  if (fraction_done > disp_fraction_done) lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar), fraction_done);
+  if (fraction_done > disp_fraction_done + .0001)
+    lives_progress_bar_set_fraction(LIVES_PROGRESS_BAR(proc->progressbar), fraction_done);
 
   est_time = timesofar / fraction_done - timesofar;
-  prog_label = lives_strdup_printf(_("\n%s%d%% done. Time remaining: %u sec%s\n"), stretch, (int)(fraction_done * 100.),
-                                   (uint32_t)(est_time + .5),
-                                   stretch);
+  prog_label = lives_strdup_printf(_("\n%d%% done. Time remaining: %u sec\n"), (int)(fraction_done * 100.),
+                                   (uint32_t)(est_time + .5));
   if (LIVES_IS_LABEL(proc->label3)) lives_label_set_text(LIVES_LABEL(proc->label3), prog_label);
   lives_free(prog_label);
 
@@ -1159,6 +1157,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
 
 void update_progress(boolean visible) {
   double fraction_done, timesofar;
+  static double est_time = 0.;
   char *prog_label;
 
   if (cfile->opening && cfile->clip_type == CLIP_TYPE_DISK && !cfile->opening_only_audio &&
@@ -1437,8 +1436,12 @@ int process_one(boolean visible) {
           display_ready = FALSE;
 #endif
         }
-      } else pthread_mutex_unlock(&mainw->audio_resync_mutex);
+      } else {
+        pthread_mutex_unlock(&mainw->audio_resync_mutex);
+        spare_cycles++;
+      }
     }
+
     real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 
     // play next frame
@@ -1483,7 +1486,7 @@ int process_one(boolean visible) {
                                      !mainw->multitrack->is_rendering))) {
           if (prefs->pbq_adaptive) {
             update_dfr(ABS(cfile->frameno - cfile->last_frameno) - 1, TRUE);
-            update_dfr(1, FALSE);
+            if (spare_cycles) update_dfr(1, FALSE);
           }
         }
 
@@ -1499,6 +1502,7 @@ int process_one(boolean visible) {
           else mainw->last_display_ticks = real_ticks;
         }
         mainw->force_show = FALSE;
+        spare_cycles = 0ul;
       }
 #ifdef ENABLE_JACK
       // request for another audio buffer - used only during mt render preview
@@ -1791,7 +1795,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   //////////////////////////
 
   if (visible) {
-    est_time = -1.;
     proc_start_ticks = lives_get_current_ticks();
   } else {
     // video playback

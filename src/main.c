@@ -1341,7 +1341,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   prefs->pause_effect_during_preview = FALSE;
 
-  prefs->pb_quality = get_int_prefd(PREF_PB_QUALITY, PB_QUALITY_MED);
+  future_prefs->pb_quality = prefs->pb_quality = get_int_prefd(PREF_PB_QUALITY, PB_QUALITY_MED);
   if (prefs->pb_quality != PB_QUALITY_LOW && prefs->pb_quality != PB_QUALITY_HIGH &&
       prefs->pb_quality != PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_MED;
 
@@ -5853,18 +5853,9 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     // round to 2 dp
     xtime = (double)((int)(xtime * 100. + .5)) / 100.;
 
-    if (xtime < 0. || (sfile->subt->last_time > -1. && xtime > sfile->subt->last_time)) return layer;
+    if (xtime < 0.) return layer;
 
-    switch (sfile->subt->type) {
-    case SUBTITLE_TYPE_SRT:
-      get_srt_text(sfile, xtime);
-      break;
-    case SUBTITLE_TYPE_SUB:
-      get_sub_text(sfile, xtime);
-      break;
-    default:
-      return layer;
-    }
+    get_subt_text(sfile, xtime);
 
     if (sfile->subt->text == NULL) return layer;
 
@@ -5873,7 +5864,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
     col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
 
-    if (prefs->apply_gamma) {
+    if (prefs->apply_gamma && !mainw->struggling) {
       // make it look nicer by dimming relative to luma
       gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
     }
@@ -7538,8 +7529,10 @@ align:
         lives_painter_destroy(cr);
 
         unblock_expose();
-      } else set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
-
+      } else {
+        clear_widget_bg(mainw->play_image);
+        set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
+      }
       if (pixbuf != NULL) lives_widget_object_unref(pixbuf);
       success = TRUE;
       goto lfi_done;
@@ -8401,7 +8394,7 @@ lfi_done:
 
       // calling this function directly is now deprecated in favour of switch_clip()
       boolean osc_block;
-      int old_file = mainw->current_file;
+      int old_file = mainw->current_file, area = 0;
 
       if (mainw->current_file < 1 || mainw->files[new_file] == NULL) return;
 
@@ -8452,8 +8445,13 @@ lfi_done:
       mainw->switch_during_pb = TRUE;
       mainw->clip_switched = TRUE;
       chill_decoder_plugin(mainw->current_file);
-
+      if (CURRENT_CLIP_IS_VALID && mainw->struggling) area = cfile->hsize * cfile->vsize;
       mainw->current_file = new_file;
+      if (CURRENT_CLIP_IS_VALID && mainw->struggling)
+        if (cfile->hsize * cfile->vsize < area) {
+          clear_dfr();
+        }
+
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->laudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
       lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
 

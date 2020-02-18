@@ -201,6 +201,7 @@ typedef int lives_pgid_t;
 #define LIVES_DEVICEMAP_DIR "devicemaps"
 #define LIVES_DEF_WORK_NAME "livesprojects"
 #define LIVES_RESOURCES_DIR "resources"
+#define LIVES_TRASH_DIR "._Trash"
 
 #define LIVES_DEVICE_DIR "/dev/"
 

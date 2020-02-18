@@ -264,6 +264,7 @@ int check_for_bad_ffmpeg(void);
 #define DF_LIMIT_HIGH 64
 
 void update_dfr(int nframes, boolean dropped);
+void clear_dfr(void);
 
 //// threadpool API
 

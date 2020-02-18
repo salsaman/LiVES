@@ -16051,9 +16051,9 @@ boolean on_render_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_NONE;
       com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
-      lives_system(com, FALSE);
+      lives_popen(com, TRUE, mainw->msg, MAINW_MSG_SIZE);
       lives_free(com);
-      check_backend_return(cfile, NULL);
+      handle_backend_errors(FALSE, get_transient_full());
       if (mainw->error) return FALSE;
     }
     mt->has_audio_file = TRUE;

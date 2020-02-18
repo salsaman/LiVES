@@ -1272,6 +1272,7 @@ static void *thrdpool(void *arg) {
             if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
               if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
               lives_invalidate_all_file_buffers();
+              mallopt(M_ARENA_MAX, narenas);
               pthread_rwlock_unlock(&mainw->mallopt_lock);
             } else narenas = onarenas;
           }
@@ -1612,6 +1613,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
 /// dropped frames handling
 static uint8_t dframes[DF_STATSMAX];
 static int dfstatslen = 0;
+static boolean inited = FALSE;
 
 static int pop_framestate(void) {
   int ret = 0;
@@ -1625,14 +1627,22 @@ static int pop_framestate(void) {
 }
 
 
+void clear_dfr(void) {
+  mainw->struggling = 0;
+  prefs->pb_quality = future_prefs->pb_quality;
+  inited = FALSE;
+}
+
+
 void update_dfr(int nframes, boolean dropped) {
-  static boolean inited = FALSE;
   static int dfcount = 0;
   static int nsuccess = 0;
 
   if (!inited) {
     lives_memset(dframes, 0, DF_STATSMAX);
     inited = TRUE;
+    dfcount = 0;
+    nsuccess = 0;
   }
 
   if (!nframes) return;
@@ -1651,44 +1661,36 @@ void update_dfr(int nframes, boolean dropped) {
   }
 
   if (dfcount >= DF_LIMIT || (mainw->struggling && dfcount > 0)) {
-    if (!mainw->struggling) mainw->struggling = 1;
-    if (dfcount >= DF_LIMIT_HIGH || mainw->struggling == 3  || mainw->struggling == 2) {
+    if (prefs->pb_quality > future_prefs->pb_quality) {
+      prefs->pb_quality = future_prefs->pb_quality;
+      nsuccess = 0;
+      return;
+    }
+    if (!mainw->struggling) {
+      mainw->struggling = 1;
+      nsuccess = 0;
+      return;
+    }
+    if (dfcount >= DF_LIMIT_HIGH || mainw->struggling == 3) {
       if (dfcount >= DF_LIMIT_HIGH) {
         mainw->struggling = 3;
-        if (prefs->pb_quality == PB_QUALITY_HIGH) {
+        nsuccess = 0;
+        if (future_prefs->pb_quality == PB_QUALITY_HIGH) {
           prefs->pb_quality = PB_QUALITY_MED;
-        } else if (prefs->pb_quality == PB_QUALITY_MED) {
+        } else if (future_prefs->pb_quality == PB_QUALITY_MED) {
           prefs->pb_quality = PB_QUALITY_LOW;
 	  // *INDENT-OFF*
 	}}}}
 // *INDENT-ON*
   else {
-    if (!mainw->struggling && nsuccess >= DF_STATSMAX) {
-      if (prefs->pb_quality == PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_HIGH;
-      else if (prefs->pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_MED;
-      nsuccess = 0;
-    }
-
-    if (mainw->struggling == 3) {
-      mainw->struggling = 2;
-      nsuccess = 0;
-    }
-    if (mainw->struggling == 2 && nsuccess >= DF_STATSMAX) {
-      mainw->struggling = 5;
-      nsuccess = 0;
-    }
-    if (mainw->struggling >= 5 && nsuccess >= DF_STATSMAX) {
-      mainw->struggling = 0;
-      nsuccess = 0;
-    }
-    if (mainw->struggling == 1) {
+    if (mainw->struggling == 3 && nsuccess >= DF_STATSMAX) {
       prefs->pb_quality = future_prefs->pb_quality;
-      mainw->struggling = 5;
+      mainw->struggling = 1;
       nsuccess = 0;
     }
   }
 
-  if (!mainw->struggling && nsuccess > DF_STATSMAX * 8) {
+  if (!mainw->struggling && nsuccess > DF_LIMIT_HIGH) {
     if (prefs->pb_quality == PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_HIGH;
     if (prefs->pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_MED;
     nsuccess = 0;

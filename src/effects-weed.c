@@ -7077,6 +7077,9 @@ deinit3:
 
   if (was_transition && !is_modeswitch) {
     if (mainw->num_tr_applied < 1) {
+      if (CURRENT_CLIP_IS_VALID && mainw->struggling) {
+        clear_dfr();
+      }
       if (bg_gen_to_start != -1) bg_gen_to_start = -1;
       if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
           mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {

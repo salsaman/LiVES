@@ -34,7 +34,7 @@ typedef struct {
   boolean reversed;
   int nseqreads;
   boolean allow_fail;
-  boolean invalid;
+  volatile boolean invalid;
   size_t orig_size;
   char *pathname;
 } lives_file_buffer_t;
@@ -812,7 +812,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     autotune_u64(tunerm, smedbytes * 4, 65536, 8, cost);
   } else if (fbuff->bufsztype == 3) {
     if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
-    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 4, cost);
+    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 8, cost);
   }
 #endif
 
@@ -832,6 +832,15 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       fbuff->offset -= fbuff->bytes;
       file_buffer_fill(fbuff, fbuff->bytes);
       fbuff->invalid = FALSE;
+      /// TODO: make func
+      if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) {
+        mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4);
+        ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data;
+      } else if (ptr == (uint8_t *)audio_cache_get_buffer()) {
+        lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr;
+        ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize);
+      }
+      if (!ptr) return 0;
     }
 
     lives_memcpy(ptr, fbuff->ptr, nbytes);
@@ -863,6 +872,15 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       }
       fbuff->buffer = NULL;
       fbuff->invalid = FALSE;
+      /// TODO: make func
+      if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) {
+        mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4);
+        ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data;
+      } else if (ptr == (uint8_t *)audio_cache_get_buffer()) {
+        lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr;
+        ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize);
+      }
+      if (!ptr) return 0;
     } else {
       if (fbuff->bufsztype != bufsztype) {
         lives_freep((void **)&fbuff->buffer);
@@ -894,6 +912,15 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
         lives_freep((void **)&fbuff->buffer);
       }
       pthread_rwlock_unlock(&mainw->mallopt_lock);
+      /// TODO: make func
+      if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) {
+        mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4);
+        ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data;
+      } else if (ptr == (uint8_t *)audio_cache_get_buffer()) {
+        lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr;
+        ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize);
+      }
+      if (!ptr) return 0;
     }
 
     fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
@@ -1517,7 +1544,7 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->playing_file == fileno) {
-    if (!mainw->loop) {
+    if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
         if (mainw->aframeno < first_frame || mainw->aframeno >= last_frame) {
           return FALSE;
@@ -1526,7 +1553,7 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
     } else {
       if (!mainw->loop_cont) {
         if (mainw->aframeno < 1. ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time) {
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time - 0.0001) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1535,16 +1562,16 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) {
-    if (!mainw->loop) {
+    if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < first_frame || mainw->aframeno >= last_frame) {
+        if (mainw->aframeno < first_frame || mainw->aframeno + 1 >= last_frame) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
         if (mainw->aframeno < 1. ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time) {
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time - .0001) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1705,11 +1732,15 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   if (nframe <= first_frame || nframe >= last_frame) {
     if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
       // we check for audio stop here, but the seek may not have happened yet
-      if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
+      int aframe = mainw->aframeno;
+      if (nframe >= last_frame) mainw->aframeno++;
+      if (!check_for_audio_stop(fileno, first_frame + 10, last_frame - 10)) {
+        mainw->aframeno = aframe;
         mainw->cancelled = CANCEL_AUD_END;
         nframe = -1;
         return 0;
       }
+      mainw->aframeno = aframe;
     }
     do_resync = TRUE;
 

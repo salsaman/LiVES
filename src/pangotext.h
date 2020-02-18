@@ -39,10 +39,11 @@ typedef struct {
   lives_subtitle_type_t type;
   FILE *tfile;
   char *text;
-  double last_time;
-  lives_subtitle_t *index;
   lives_subtitle_t *current; ///< pointer to current entry in index
+  lives_subtitle_t *first;
+  lives_subtitle_t *last;
   int offset; ///< offset in frames (default 0)
+  double last_time;
 } lives_subtitles_t;
 
 typedef enum {
@@ -70,12 +71,13 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 
 /// subtitles
 
+#define SRT_DEF_CHARSET "Windows-1252"
+
 typedef struct _lives_clip_t lives_clip_t;
 
 boolean subtitles_init(lives_clip_t *sfile, char *fname, lives_subtitle_type_t);
 void subtitles_free(lives_clip_t *sfile);
-boolean get_srt_text(lives_clip_t *sfile, double xtime);
-boolean get_sub_text(lives_clip_t *sfile, double xtime);
+boolean get_subt_text(lives_clip_t *sfile, double xtime);
 boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 boolean save_srt_subtitles(lives_clip_t *sfile, double start_time, double end_time, double offset_time, const char *filename);
 

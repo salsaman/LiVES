@@ -278,7 +278,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       withsound = 0;
     }
 
-    mainw->noswitch = TRUE;
+    //mainw->noswitch = TRUE;
     mainw->current_file = new_file;
 
     /// probe the file to see what it might be...
@@ -2295,7 +2295,7 @@ void play_file(void) {
         /// needed
         if (mainw->multitrack == NULL) {
           block_expose();
-          mainw->noswitch = TRUE;
+          //mainw->noswitch = TRUE;
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
           mainw->noswitch = FALSE;
           unblock_expose();
@@ -3201,15 +3201,15 @@ void play_file(void) {
     /// the screen grew too much...remaximise it
     lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    mainw->noswitch = TRUE;
+    //mainw->noswitch = TRUE;
     lives_widget_context_update();
-    mainw->noswitch = FALSE;
+    //mainw->noswitch = FALSE;
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    mainw->noswitch = TRUE;
+    //mainw->noswitch = TRUE;
     lives_widget_context_update();
     mainw->noswitch = FALSE;
   }
@@ -3843,7 +3843,7 @@ void wait_for_stop(const char *stop_command) {
   boolean sent_second_stop = FALSE;
 
   // send another stop if necessary
-  mainw->noswitch = TRUE;
+  //mainw->noswitch = TRUE;
   while (!(infofile = fopen(cfile->info_file, "r"))) {
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_usleep(prefs->sleep_time);
@@ -3859,7 +3859,7 @@ void wait_for_stop(const char *stop_command) {
       break;
     }
   }
-  mainw->noswitch = FALSE;
+  //mainw->noswitch = FALSE;
   if (infofile) fclose(infofile);
 }
 

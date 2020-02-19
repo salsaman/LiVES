@@ -11071,6 +11071,7 @@ boolean lives_widget_context_update(void) {
   int loops = 0;
 
   if (mainw->no_context_update) return FALSE;
+  mainw->noswitch = TRUE;
 
   if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
 #ifdef GUI_GTK
@@ -11161,7 +11162,7 @@ boolean lives_widget_context_update(void) {
   /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
   /*   } */
   /* } */
-
+  mainw->noswitch = FALSE;
   return TRUE;
 }
 

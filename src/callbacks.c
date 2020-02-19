@@ -150,7 +150,7 @@ static void cleanup_set_dir(const char *set_name) {
 
 void lives_exit(int signum) {
   char *cwd, *tmp, *com;
-
+  boolean empty_trash = FALSE;
   register int i;
 
   if (mainw == NULL) _exit(0);
@@ -359,6 +359,7 @@ void lives_exit(int signum) {
           lives_free(ppath);
           threaded_dialog_spin(0.);
           close_decoder_plugin((lives_decoder_t *)mainw->files[i]->ext_src);
+          lives_chdir(cwd, FALSE);
           mainw->files[i]->ext_src = NULL;
           threaded_dialog_spin(0.);
         }
@@ -366,55 +367,54 @@ void lives_exit(int signum) {
         cfile->layout_map = NULL;
       }
 
-      lives_chdir(cwd, FALSE);
-      lives_free(cwd);
-
-      // TODO check why repeating this (A)
-
-      for (i = 0; i <= MAX_FILES; i++) {
-        if (mainw->files[i] != NULL) {
-          if ((!mainw->leave_files && !prefs->crash_recovery && !(*mainw->set_name)) ||
-              (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
-              (i == mainw->scrap_file && !mainw->leave_recovery) ||
-              (i == mainw->ascrap_file && !mainw->leave_recovery) ||
-              (mainw->multitrack != NULL && i == mainw->multitrack->render_file)) {
-            // close all open clips, except for ones we want to retain
+      if (mainw->files[i] != NULL) {
+        if ((!mainw->leave_files && !prefs->crash_recovery && !(*mainw->set_name)) ||
+            (!mainw->only_close && (i == 0 || !IS_NORMAL_CLIP(i))) ||
+            (i == mainw->scrap_file && !mainw->leave_recovery) ||
+            (i == mainw->ascrap_file && !mainw->leave_recovery) ||
+            (mainw->multitrack != NULL && i == mainw->multitrack->render_file)) {
+          // close all open clips, except for ones we want to retain
 #ifdef HAVE_YUV4MPEG
-            if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
-              lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
-              lives_free(mainw->files[i]->ext_src);
-            }
+          if (mainw->files[i]->clip_type == CLIP_TYPE_YUV4MPEG) {
+            lives_yuv_stream_stop_read((lives_yuv4m_t *)mainw->files[i]->ext_src);
+            lives_free(mainw->files[i]->ext_src);
+          }
 #endif
 #ifdef HAVE_UNICAP
-            if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
-              lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
-              lives_free(mainw->files[i]->ext_src);
-            }
+          if (mainw->files[i]->clip_type == CLIP_TYPE_VIDEODEV) {
+            lives_vdev_free((lives_vdev_t *)mainw->files[i]->ext_src);
+            lives_free(mainw->files[i]->ext_src);
+          }
 #endif
-            threaded_dialog_spin(0.);
-            lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
-            com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+          threaded_dialog_spin(0.);
+          lives_kill_subprocesses(mainw->files[i]->handle, TRUE);
+          com = lives_strdup_printf("%s close \"%s\"", prefs->backend, mainw->files[i]->handle);
+          lives_system(com, FALSE);
+          lives_free(com);
+          threaded_dialog_spin(0.);
+        } else {
+          threaded_dialog_spin(0.);
+          // or just clean them up -
+          // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
+          if (!prefs->vj_mode) {
+            empty_trash = TRUE;
+            com = lives_strdup_printf("%s clear_tmp_files \"%s\" %s", prefs->backend_sync, mainw->files[i]->handle, LIVES_TRASH_DIR);
             lives_system(com, FALSE);
+            threaded_dialog_spin(0.);
             lives_free(com);
-            threaded_dialog_spin(0.);
-          } else {
-            threaded_dialog_spin(0.);
-            // or just clean them up -
-            // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
-            if (!prefs->vj_mode) {
-              // TODO: can we speed this up ? - maybe just move the files to a trash directory and then delete it on exit
-              com = lives_strdup_printf("%s clear_tmp_files \"%s\"", prefs->backend_sync, mainw->files[i]->handle);
-              lives_system(com, FALSE);
-              threaded_dialog_spin(0.);
-              lives_free(com);
-            }
-            /* if (mainw->files[i]->frame_index != NULL) { */
-            /*   save_frame_index(i); */
-            /* } */
-            lives_freep((void **)&mainw->files[i]->op_dir);
-	    // *INDENT-OFF*
-          }}}}
-    // *INDENT-ON*
+          }
+          lives_freep((void **)&mainw->files[i]->op_dir);
+        }
+      }
+      // *INDENT-ON*
+    }
+    if (empty_trash) {
+      com = lives_strdup_printf("%s empty_trash \"%s\"", prefs->backend, LIVES_TRASH_DIR);
+      lives_system(com, FALSE);
+      lives_free(com);
+    }
+
+    lives_free(cwd);
 
     if (!mainw->leave_files && (*mainw->set_name) && !mainw->leave_recovery) {
       char *set_layout_dir = lives_build_filename(prefs->workdir, mainw->set_name, LAYOUTS_DIRNAME, NULL);
@@ -468,7 +468,6 @@ void lives_exit(int signum) {
         unlock_set_file(mainw->set_name);
       }
 
-      // (B)
       mainw->suppress_dprint = FALSE;
       if (mainw->multitrack == NULL) resize(1);
       mainw->was_set = FALSE;
@@ -613,7 +612,7 @@ void lives_exit(int signum) {
 #endif
 #endif
 
-void on_filesel_button_clicked(LiVESButton * button, livespointer user_data) {
+void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   LiVESWidget *tentry = LIVES_WIDGET(user_data);
 
   lives_rfx_t *rfx;
@@ -782,7 +781,7 @@ static boolean read_file_details_generic(char *fname) {
 }
 
 
-void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_open_sel_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // OPEN A FILE
   LiVESWidget *chooser;
   char **array;
@@ -883,7 +882,7 @@ void on_open_sel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_open_vcd_activate(LiVESMenuItem * menuitem, livespointer device_type) {
+void on_open_vcd_activate(LiVESMenuItem *menuitem, livespointer device_type) {
   LiVESWidget *vcdtrack_dialog;
   int type = LIVES_POINTER_TO_INT(device_type);
   mt_needs_idlefunc = FALSE;
@@ -908,7 +907,7 @@ void on_open_vcd_activate(LiVESMenuItem * menuitem, livespointer device_type) {
 }
 
 
-void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // need non-instant opening (for now)
   mt_needs_idlefunc = FALSE;
 
@@ -933,7 +932,7 @@ void on_open_loc_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_remote_clip_request_t *req;
   mt_needs_idlefunc = FALSE;
 
@@ -964,7 +963,7 @@ void on_open_utube_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_recent_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char file[PATH_MAX];
   double start = 0.;
   int end = 0, pno;
@@ -1016,7 +1015,7 @@ void on_recent_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_location_select(LiVESButton * button, livespointer user_data) {
+void on_location_select(LiVESButton *button, livespointer user_data) {
   lives_snprintf(file_name, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(locw->entry)));
   lives_widget_destroy(locw->dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -1226,7 +1225,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
 }
 
 
-void on_stop_clicked(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_stop_clicked(LiVESMenuItem *menuitem, livespointer user_data) {
   // 'enough' button for open, open location, and record audio
 
 #ifdef ENABLE_JACK
@@ -1260,7 +1259,7 @@ void on_stop_clicked(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_save_as_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (cfile->frames == 0) {
     on_export_audio_activate(NULL, NULL);
     return;
@@ -1270,14 +1269,14 @@ void on_save_as_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 #ifdef LIBAV_TRANSCODE
-void on_transcode_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_transcode_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (mainw->current_file < 1 || mainw->files[mainw->current_file] == NULL) return;
   transcode(cfile->start, cfile->end);
 }
 #endif
 
 
-void on_save_selection_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_save_selection_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   save_file(mainw->current_file, cfile->start, cfile->end, NULL);
 }
 
@@ -1293,7 +1292,7 @@ static void check_remove_layout_files(void) {
 }
 
 
-void on_close_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_close_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *warn, *extra;
   boolean lmap_errors = FALSE, acurrent = FALSE, only_current = FALSE;
   mt_needs_idlefunc = FALSE;
@@ -1402,7 +1401,7 @@ close_done:
 }
 
 
-void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_import_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *filt[] = {"*."LIVES_FILE_EXT_PROJECT, NULL};
   char *proj_file = choose_file(NULL, NULL, filt, LIVES_FILE_CHOOSER_ACTION_OPEN, NULL, NULL);
@@ -1491,7 +1490,7 @@ void on_import_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_export_proj_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_PROJECT, NULL};
   char *def_file;
   char *proj_file;
@@ -1567,7 +1566,7 @@ void on_export_proj_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_export_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_export_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   lives_colRGBA64_t lcol;
 
   char *filt[] = {"*."LIVES_FILE_EXT_TAR_GZ, NULL};
@@ -1744,7 +1743,7 @@ void on_export_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 }
 
 
-void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_import_theme_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_TAR_GZ, NULL};
   char tname[128];
 
@@ -1870,7 +1869,7 @@ void on_import_theme_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 }
 
 
-void on_backup_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_backup_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_BACKUP, NULL};
   char *file_name;
   char *defname, *text;
@@ -1895,7 +1894,7 @@ void on_backup_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_restore_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_restore_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *filt[] = {"*."LIVES_FILE_EXT_BACKUP, NULL};
   char *file_name, *text;
 
@@ -1951,7 +1950,7 @@ void mt_memory_free(void) {
 }
 
 
-void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *msg, *tmp;
 
   boolean has_layout_map = FALSE;
@@ -2113,7 +2112,7 @@ void on_quit_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 
 // TODO - split into undo.c
-void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
+void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
   char *com, *tmp;
 
   boolean bad_header = FALSE;
@@ -2667,7 +2666,7 @@ void on_undo_activate(LiVESWidget * menuitem, livespointer user_data) {
 }
 
 
-void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
+void on_redo_activate(LiVESWidget *menuitem, livespointer user_data) {
   char *com;
 
   int ostart = cfile->start;
@@ -2855,7 +2854,7 @@ void on_redo_activate(LiVESWidget * menuitem, livespointer user_data) {
 
 //////////////////////////////////////////////////
 
-void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
 
   int current_file = mainw->current_file;
@@ -2981,7 +2980,7 @@ void on_copy_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_cut_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_cut_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   uint32_t chk_mask = 0;
   int current_file = mainw->current_file;
 
@@ -3013,7 +3012,7 @@ void on_cut_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   char *com;
   char *msg;
   int old_file = mainw->current_file, current_file;
@@ -3131,7 +3130,7 @@ void on_paste_as_new_activate(LiVESMenuItem * menuitem, livespointer user_data) 
 }
 
 
-void on_insert_pre_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void on_insert_pre_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   insertw = create_insert_dialog();
 
   lives_widget_show_all(insertw->insert_dialog);
@@ -3142,7 +3141,7 @@ void on_insert_pre_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
-void on_insert_activate(LiVESButton * button, livespointer user_data) {
+void on_insert_activate(LiVESButton *button, livespointer user_data) {
   double times_to_insert;
   double audio_stretch;
 
@@ -4260,9 +4259,8 @@ void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     if (cfile->play_paused) cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
     lives_ce_update_timeline(0, cfile->pointer_time);
-    mainw->noswitch = FALSE;
   } else {
-    // TODO: non-function, needs more.
+    // TODO: non-functional yet, needs more.
     cfile->play_paused = TRUE;
     mainw->cancelled = CANCEL_USER;
   }
@@ -4300,7 +4298,6 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // in case we are rendering and previewing, in case we now have audio
   if (mainw->preview && mainw->is_rendering && mainw->is_processing) reget_afilesize(mainw->current_file);
-  mainw->noswitch = FALSE;
   if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
     handle_audio_timeout();
     mainw->cancelled = CANCEL_ERROR;
@@ -4338,7 +4335,6 @@ void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     mainw->current_file = current_file;
     close_current_file(0);
   }
-  mainw->noswitch = FALSE;
   if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
     handle_audio_timeout();
     mainw->cancelled = CANCEL_ERROR;
@@ -5989,8 +5985,6 @@ void on_vj_reset_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       if (!do_header_write_error(i)) break;
     } else clip_list = clip_list->next;
   }
-
-  mainw->noswitch = FALSE; // just in case...
 
   end_threaded_dialog();
 }
@@ -8064,8 +8058,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
     return;
   }
 
-  mainw->noswitch = TRUE;
-
   cfile->undo_arate = cfile->arate;
   cfile->undo_achans = cfile->achans;
   cfile->undo_asampsize = cfile->asampsize;
@@ -8104,7 +8096,7 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   } else {
     lives_free(a_type);
     do_audio_import_error();
-    mainw->noswitch = FALSE;
+
     if (mainw->multitrack != NULL) {
       mt_sensitise(mainw->multitrack);
       maybe_add_mt_idlefunc();
@@ -8163,7 +8155,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
       maybe_add_mt_idlefunc();
     }
     reget_afilesize(mainw->current_file);
-    mainw->noswitch = FALSE;
     unbuffer_lmap_errors(FALSE);
     return;
   }
@@ -8201,7 +8192,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
       maybe_add_mt_idlefunc();
     }
     reget_afilesize(mainw->current_file);
-    mainw->noswitch = FALSE;
     if (mainw->error) d_print_failed();
     unbuffer_lmap_errors(FALSE);
     return;
@@ -8253,7 +8243,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
       maybe_add_mt_idlefunc();
     }
     reget_afilesize(mainw->current_file);
-    mainw->noswitch = FALSE;
     unbuffer_lmap_errors(FALSE);
     return;
   }
@@ -8287,7 +8276,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
       maybe_add_mt_idlefunc();
     }
     reget_afilesize(mainw->current_file);
-    mainw->noswitch = FALSE;
     unbuffer_lmap_errors(FALSE);
     return;
   }
@@ -8332,7 +8320,6 @@ void on_open_new_audio_clicked(LiVESFileChooser * chooser, livespointer user_dat
   if (mainw->multitrack == NULL) {
     switch_to_file(mainw->current_file, mainw->current_file);
   }
-  mainw->noswitch = FALSE;
 
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 
@@ -8422,8 +8409,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
     cfile->hsize = DEF_FRAME_HSIZE;
     cfile->vsize = DEF_FRAME_VSIZE;
   } else {
-    mainw->noswitch = TRUE;
-
     cfile->undo_arate = cfile->arate;
     cfile->undo_achans = cfile->achans;
     cfile->undo_asampsize = cfile->asampsize;
@@ -8447,7 +8432,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
 
     sensitize();
     reget_afilesize(mainw->current_file);
-    mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
     unbuffer_lmap_errors(FALSE);
     return;
@@ -8478,7 +8462,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
       reget_afilesize(mainw->current_file);
     }
 
-    mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
 
     if (mainw->error) {
@@ -8517,7 +8500,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
       reget_afilesize(mainw->current_file);
     }
 
-    mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
     unbuffer_lmap_errors(FALSE);
     return;
@@ -8559,7 +8541,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
       reget_afilesize(mainw->current_file);
     }
 
-    mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
     unbuffer_lmap_errors(FALSE);
     return;
@@ -8586,7 +8567,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
 
     reget_afilesize(mainw->current_file);
 
-    mainw->noswitch = FALSE;
     if (was_new) close_current_file(0);
     unbuffer_lmap_errors(FALSE);
     return;
@@ -8627,7 +8607,6 @@ void on_load_cdtrack_ok_clicked(LiVESButton * button, livespointer user_data) {
   }
 
   lives_widget_set_sensitive(mainw->loop_video, TRUE);
-  mainw->noswitch = FALSE;
 
   lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
 
@@ -10547,22 +10526,41 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (!IS_VALID_CLIP(mainw->clipstore[clip][0])) {
     mainw->clipstore[clip][0] = mainw->current_file;
-    mainw->clipstore[clip][1] = mainw->actual_frame;
+    if (LIVES_IS_PLAYING) {
+      mainw->clipstore[clip][1] = mainw->actual_frame;
+    } else {
+      int frame = calc_frame_from_time4(mainw->current_file, cfile->pointer_time);
+      if (frame <= cfile->frames) mainw->clipstore[clip][1] = frame;
+      else mainw->clipstore[clip][1] = 1;
+    }
   } else {
     lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
     if (LIVES_IS_PLAYING) {
       sfile->frameno = sfile->last_frameno = mainw->clipstore[clip][1];
     }
     switch_clip(0, mainw->clipstore[clip][0], TRUE);
-    if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
-      if (mainw->current_file != mainw->clipstore[clip][0]) {
-        if (mainw->blend_file == -1 && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-            && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
-          // if we are playing the switch is delayed so we need this to resync audio
-          mainw->scratch = SCRATCH_JUMP;
+    if (!LIVES_IS_PLAYING) {
+      double ptrtime = cfile->pointer_time;
+      int curfile = mainw->current_file;
+      cfile->pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
+      on_playall_activate(NULL, NULL);
+      if (IS_VALID_CLIP(curfile)) {
+        mainw->files[curfile]->pointer_time = ptrtime;
+        if (mainw->current_file == curfile)
+          lives_ce_update_timeline(0, cfile->pointer_time);
+      }
+    } else {
+      if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
+        if (mainw->current_file != mainw->clipstore[clip][0]) {
+          if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))
+              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
+            // if we are playing the switch is delayed so we need this to resync audio
+            mainw->scratch = SCRATCH_JUMP;
+          }
+        } else {
+          if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno);
         }
-      } else {
-        if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno);
       }
     }
   }

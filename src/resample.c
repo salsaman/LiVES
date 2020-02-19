@@ -1178,7 +1178,6 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
     }
 
     lives_widget_destroy(resaudw->dialog);
-    mainw->noswitch = TRUE;
     lives_widget_context_update();
     mainw->noswitch = noswitch;
     lives_free(resaudw);

@@ -853,6 +853,7 @@ static boolean pre_init(void) {
     mainw->ccpd_with_sound = FALSE;
     prefs->sepwin_type = SEPWIN_TYPE_NON_STICKY;
     prefs->letterbox = FALSE;
+    prefs->autoload_subs = FALSE;
   }
 
 #ifdef GUI_GTK
@@ -4678,7 +4679,6 @@ void load_start_image(int frame) {
 
   LiVESInterpType interp;
   boolean expose = FALSE;
-  boolean noswitch = mainw->noswitch;
   int rwidth, rheight, width, height;
 
   if (!prefs->show_gui) return;
@@ -4878,7 +4878,6 @@ void load_start_image(int frame) {
   while (FALSE);
 #endif
   threaded_dialog_spin(0.);
-  mainw->noswitch = noswitch;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -4894,7 +4893,6 @@ void load_end_image(int frame) {
   weed_plant_t *layer;
   weed_timecode_t tc;
   int rwidth, rheight, width, height;
-  boolean noswitch = mainw->noswitch;
   boolean expose = FALSE;
   LiVESInterpType interp;
 
@@ -5024,8 +5022,6 @@ void load_end_image(int frame) {
     return;
   }
 
-  mainw->noswitch = TRUE;
-
   do {
     threaded_dialog_spin(0.);
     width = cfile->hsize;
@@ -5094,7 +5090,6 @@ void load_end_image(int frame) {
   while (FALSE);
 #endif
   threaded_dialog_spin(0.);
-  mainw->noswitch = noswitch;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
   lives_signal_handlers_unblock_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
@@ -6598,7 +6593,7 @@ align:
           framecount = lives_strdup_printf("%9d/%d", mainw->actual_frame, cfile->frames);
         }
 
-        mainw->noswitch = TRUE;
+        //mainw->noswitch = TRUE;
 
         /////////////////////////////////////////////////
 
@@ -6752,7 +6747,6 @@ align:
         if (cfile->proc_ptr != NULL && cfile->proc_ptr->frames_done > 0 &&
             frame >= (cfile->proc_ptr->frames_done - cfile->progress_start + cfile->start)) {
           mainw->cancelled = CANCEL_PREVIEW_FINISHED;
-          mainw->noswitch = noswitch;
           goto lfi_done;
         }
 
@@ -7314,8 +7308,13 @@ align:
           lb_width = weed_layer_get_width(mainw->frame_layer) *
                      weed_palette_get_pixels_per_macropixel(layer_palette);
           lb_height = weed_layer_get_height(mainw->frame_layer);
-          pwidth = mainw->vpp->fwidth;
-          pheight = mainw->vpp->fheight;
+          if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+            pwidth = mainw->vpp->fwidth;
+            pheight = mainw->vpp->fheight;
+          } else {
+            pwidth = mainw->vpp->fwidth;
+            pheight = mainw->vpp->fheight;
+          }
           get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height, (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0);
           if (pwidth != lb_width || pheight != lb_height) {
             boolean orig_frame = (mainw->frame_layer == frame_layer);
@@ -7329,10 +7328,18 @@ align:
             }
           }
         }
+        if (!(mainw->vpp->capabilities & VPP_CAN_RESIZE)) {
+          pwidth = mainw->vpp->fwidth;
+          pheight = mainw->vpp->fheight;
+        } else {
+          pwidth = mainw->vpp->fwidth;
+          pheight = mainw->vpp->fheight;
+        }
+
         if ((((weed_layer_get_width(mainw->frame_layer) *
-               weed_palette_get_pixels_per_macropixel(layer_palette)) ^ mainw->vpp->fwidth) >> 2) ||
-            ((weed_layer_get_height(mainw->frame_layer) ^ mainw->vpp->fheight) >> 1)) {
-          if (!resize_layer(frame_layer, mainw->vpp->fwidth, mainw->vpp->fheight, interp,
+               weed_palette_get_pixels_per_macropixel(layer_palette)) ^ pwidth) >> 2) ||
+            ((weed_layer_get_height(mainw->frame_layer) ^ pheight) >> 1)) {
+          if (!resize_layer(frame_layer, pwidth, pheight, interp,
                             mainw->vpp->palette, mainw->vpp->YUV_clamping)) goto lfi_done;
           sched_yield();
         }
@@ -7476,23 +7483,23 @@ align:
 
       if ((mainw->multitrack && prefs->letterbox_mt) || (!mainw->multitrack && prefs->letterbox)) {
         /// letterbox internal
-        pwidth = mainw->pwidth;
-        pheight = mainw->pheight;
+        pwidth = opwidth;
+        pheight = opheight;
         lb_width = weed_layer_get_width(mainw->frame_layer) *
                    weed_palette_get_pixels_per_macropixel(layer_palette);
         lb_height = weed_layer_get_height(mainw->frame_layer);
         get_letterbox_sizes(&pwidth, &pheight, &lb_width, &lb_height,
                             mainw->ext_playback && (mainw->vpp->capabilities & VPP_CAN_RESIZE) != 0);
         if (pwidth != lb_width || pheight != lb_height) {
-          if (!letterbox_layer(mainw->frame_layer, mainw->pwidth, mainw->pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;
+          if (!letterbox_layer(mainw->frame_layer, pwidth, pheight, lb_width, lb_height, interp, cpal, 0)) goto lfi_done;
           sched_yield();
         }
       }
 
       if ((((weed_layer_get_width(mainw->frame_layer) *
-             weed_palette_get_pixels_per_macropixel(layer_palette)) ^ mainw->pwidth) >> 2) ||
-          ((weed_layer_get_height(mainw->frame_layer) ^ mainw->pheight) >> 1)) {
-        if (!resize_layer(mainw->frame_layer, mainw->pwidth, mainw->pheight, interp, cpal, 0)) goto lfi_done;
+             weed_palette_get_pixels_per_macropixel(layer_palette)) ^ opwidth) >> 2) ||
+          ((weed_layer_get_height(mainw->frame_layer) ^ opheight) >> 1)) {
+        if (!resize_layer(mainw->frame_layer, opwidth, opheight, interp, cpal, 0)) goto lfi_done;
         sched_yield();
       }
 
@@ -8398,14 +8405,21 @@ lfi_done:
 
       if (mainw->current_file < 1 || mainw->files[new_file] == NULL) return;
 
-      if (mainw->noswitch || mainw->multitrack != NULL
+      if (mainw->multitrack != NULL
           || (mainw->record && !mainw->record_paused && !(prefs->rec_opts & REC_CLIPS)) ||
           mainw->foreign || (mainw->preview && !mainw->is_rendering)) return;
+
 
       if (!LIVES_IS_PLAYING) {
         switch_to_file(mainw->current_file, new_file);
         return;
       }
+
+      if (mainw->noswitch) {
+        mainw->new_clip = new_file;
+        return;
+      }
+
       mainw->blend_palette = WEED_PALETTE_END;
 
       if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL &&

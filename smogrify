@@ -27,7 +27,8 @@ my $USE_WARNINGS = 1;
 if ($USE_WARNINGS) {
     use warnings;
 }
-
+use File::Copy;
+use File::Find;
 #use feature say;
 
 ##################################################################
@@ -50,7 +51,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.2.0-pre";
+my $version = "3.0.3-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -110,6 +111,8 @@ my $handle;
 my $statusfile;
 my $configdir = "";
 my $mplay_command = "";
+
+my $TRASH = "._trash";
 
 ###################################################################
 
@@ -723,10 +726,20 @@ if (defined($ARGV[0])) {
 
 	if ($command eq "clear_tmp_files") {
 	    $handle = $ARGV[1];
+	    if (defined $ARGV[2]) {
+		$TRASH = $ARGV[2];
+	    }
 	    #clear old backups (e.g. when saving a set)
 	    $curworkdir = "$workdir/$handle";
-	    &clean_old;
-	    &sig_complete;
+	    my $trashdir = "$workdir/$TRASH";
+	    if (! -d $trashdir) {
+		$com = "/bin/mkdir -p \"$trashdir\"";
+		my $smerr = &smog_system($com);
+		if ($smerr) {
+		    $trashdir = "";
+		}
+	    }
+	    &clean_old($trashdir);
 	    exit 0;
 	}
 
@@ -737,7 +750,6 @@ if (defined($ARGV[0])) {
 	    #clear old backups (e.g. when saving a set)
 	    $curworkdir = "$workdir/$handle";
 	    unlink glob "$curworkdir/*.pre";
-	    &sig_complete;
 	    exit 0;
 	}
 
@@ -1354,6 +1366,36 @@ if (defined($ARGV[0])) {
 	}
 	####################################################################
 
+	if ($command eq "empty_trash") {
+	    if (defined $ARGV[1]) {
+		$TRASH = $ARGV[1];
+	    }
+	    my $trashdir = "$workdir/$TRASH";
+	    my $trashdir_del = $trashdir . "_del";
+	    if (-d $trashdir_del) {
+		&smog_system("/bin/rm -rf $trashdir_del");
+	    }
+	    exit 0 if ! -e $trashdir;
+	    unless (-d $trashdir && -w $trashdir) {
+		exit 1;
+	    }
+	    unless (-d $trashdir_del) {
+		&smog_rename($trashdir, $trashdir_del);
+		if (-d $trashdir_del) {
+		    &smog_system("/bin/rm -rf $trashdir_del");
+		}
+	    }
+	    elsif (-d $trashdir) {
+		&smog_chdir($trashdir);
+		&smog_system("/bin/rm -rf * .*");
+	    }
+	    unless (-d $trashdir) {
+		$com = "/bin/mkdir -p \"$trashdir\"";
+		&smog_system($com);
+	    }
+	    exit 0;
+	}
+
 	if (!caller && (!defined($ARGV[1]) || $ARGV[1] eq "")) {
 	    &usage;
 	    exit 1;
@@ -1363,17 +1405,13 @@ if (defined($ARGV[0])) {
 	$curworkdir = "$workdir/$handle";
 	$statusfile = "$curworkdir/.status";
 
-	if ($command eq "play" || $command eq "play_opening_preview") {
-	    $pidfile = "$curworkdir/.pidpb";
-	} else {
-	    $pidfile = "$curworkdir/.pid";
-	}
-
 	unless ($command eq "close" || $command eq "play_opening_preview") {
+	    if ($command eq "play_opening_preview") {
+		$pidfile = "$curworkdir/.pidpb";
+	    } else {
+		$pidfile = "$curworkdir/.pid";
+	    }
 	    # tell the world our pid
-	    my $handle = $ARGV[1];
-	    my $curworkdir = "$workdir/$handle";
-	    $pidfile = "$curworkdir/.pid";
 	    &sig_pid;
 	}
 
@@ -4577,7 +4615,7 @@ if (defined($ARGV[0])) {
 		}
 		$smerr = &smog_rename("$curworkdir/$name.mgk", "$curworkdir/$name$img_ext");
 		if (!$smerr) {
-		    try_to_recover($start, $i);
+		    &try_to_recover($start, $i);
 		    if ($DEBUG_SMOGRIFY) {
 			print STDERR "smogrify debug - rename failed ($!): \"$curworkdir/$name.mgk\",\"$curworkdir/$name$img_ext\"\n";
 		    }
@@ -4880,7 +4918,7 @@ if (defined($ARGV[0])) {
 
 
     sub smog_chdir {
-	## return 0 on success
+	## return TRUE on success
 	my $smdir = shift;
 	$smcomret = chdir $smdir;
 	if (!$smcomret) {
@@ -7742,15 +7780,29 @@ if (defined($ARGV[0])) {
 
     sub clean_old {
 	# clear away any old backup files, etc.
+	my $trashdir = shift;
 	return if (! -d "$workdir/$handle" || ! -f "$workdir/$handle/header.lives");
 	&smog_chdir("$workdir/$handle");
 	if ($notify) {
 	    print STDERR "smogrify: removing *.mgk    *.bak    *.pre    *.tmp    pause    audio.*    audiodump*   audioclip\n";
 	    print STDERR "smogrify: from directory $workdir/$handle\n";
 	}
-	unlink glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
+	my @files = glob "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
+	my $use_trash = 0;
+	if ($trashdir && -d $trashdir && -w $trashdir) {
+	    $use_trash = 1;
+	}
+	foreach my $xfile (@files) {
+	    if ($use_trash) {
+		move ($xfile, "$trashdir/$xfile");
+	    }
+	    else {
+		unlink $xfile;
+	    }
+	}
 	&smog_system_sync();
     }
+
 
 
     sub sig_complete {
@@ -9202,7 +9254,6 @@ sub weed {
 	print STDERR "\n\n\n\nsmogrify: migrating contents of $workdir to $new_work\n";
     }
     #print STDERR "smogrify: size of directory at start is $start_total bytes\n";
-    use File::Find;
     opendir DIR, $workdir;
     while ($file = readdir(DIR)) {
         unless ($file =~ /^\./) {

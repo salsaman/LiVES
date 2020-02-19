@@ -3191,9 +3191,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
         mainw->files[new_file]->frameno = mainw->frame_index[i - 1];
         if (new_file != mainw->scrap_file) {
           // switch to a new file
-          mainw->noswitch = FALSE;
           do_quick_switch(new_file);
-          mainw->noswitch = TRUE;
           cfile->next_event = return_event;
           return_event = NULL;
         } else {

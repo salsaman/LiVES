@@ -10,9 +10,6 @@ void run_weed_startup_tests(void) {
   void *ptra[4];
   char *s[4];
 
-
-
-
   // run some tests..
   plant = weed_plant_new(WEED_PLANT_HOST_INFO);
   fprintf(stderr, "plant is %p\n", plant);

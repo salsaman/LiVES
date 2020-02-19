@@ -406,7 +406,6 @@ void lives_exit(int signum) {
           lives_freep((void **)&mainw->files[i]->op_dir);
         }
       }
-      // *INDENT-ON*
     }
     if (empty_trash) {
       com = lives_strdup_printf("%s empty_trash \"%s\"", prefs->backend, LIVES_TRASH_DIR);

@@ -115,7 +115,8 @@ endif
 
 if DISABLE_GSLICE
 if !NEED_LOCAL_WEED
-libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
+#libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
+libweed_LDADD = $(libdir)/libweed/libweed.la $(libdir)/libweed/libweed-utils.la
 libweed_CFLAGS = @WEED_CFLAGS@
 else
 libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
@@ -133,6 +134,10 @@ endif
 
 if NEED_LOCAL_WEED_COMPAT
 libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
+endif
+
+if ENABLE_DIAGNOSTICS
+diag_SOURCES = diagnostics.c diagnostics.h
 endif
 
 if HAVE_PULSE_AUDIO
@@ -210,6 +215,7 @@ lives_exe_SOURCES = \
 	pangotext.c pangotext.h \
 	machinestate.c machinestate.h \
 	weed-effects-utils.c weed-effects-utils.h \
+	$(diag_SOURCES) \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \

@@ -74,13 +74,13 @@ libweed_la_CFLAGS = -fvisibility=hidden $(extra_cflags) @TURBO_CFLAGS@
 
 shared_LDFLAGS = -shared --tag=disable-static
 
-libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION)
 
 libweed_gslice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS) -DUSE_GSLICE
 libweed_gslice_la_LDFLAGS = @GLIB_LIBS@ $(libweed_la_LDFLAGS)
 
 libweed_utils_la_CFLAGS = $(extra_cflags)
-libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION) $(shared_LDFLAGS)
+libweed_utils_la_LDFLAGS = $(extra_ldflags) -version-info $(WEED_SO_VERSION)
 
 #libweed_plugin_utils_la_CFLAGS =
 #libweed_plugin_utils_la_LDFLAGS = -version-info $(WEED_PSO_VERSION) -static

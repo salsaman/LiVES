@@ -6507,6 +6507,7 @@ align:
     int retval;
     int layer_palette, cpal;
 
+    static int old_pwidth = 0, old_pheight = 0;
     int opwidth = 0, opheight = 0;
     int pwidth, pheight;
     int lb_width = 0, lb_height = 0;
@@ -7537,7 +7538,12 @@ align:
 
         unblock_expose();
       } else {
-        clear_widget_bg(mainw->play_image);
+	pwidth = lives_widget_get_allocation_width(mainw->play_image);
+	pheight = lives_widget_get_allocation_height(mainw->play_image);
+	if (pwidth < old_pwidth || pheight < old_pheight)
+	  clear_widget_bg(mainw->play_image);
+	old_pwidth = pwidth;
+	old_pheight = pheight;
         set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
       }
       if (pixbuf != NULL) lives_widget_object_unref(pixbuf);

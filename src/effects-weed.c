@@ -4494,8 +4494,8 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
 
   char cwd[PATH_MAX];
 
-  const char const *frei0r_blacklist[] = {"Timeout indicator", NULL};
-  const char const *ladspa_blacklist[] = {"Mag's Notch Filter", NULL};
+  const char *frei0r_blacklist[] = {"Timeout indicator", NULL};
+  const char *ladspa_blacklist[] = {"Mag's Notch Filter", NULL};
 
   char *pwd, *tmp, *msg, *filtname;
   char *filter_name = NULL, *package_name = NULL;

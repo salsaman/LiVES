@@ -1373,7 +1373,7 @@ if (defined($ARGV[0])) {
 	    my $trashdir = "$workdir/$TRASH";
 	    my $trashdir_del = $trashdir . "_del";
 	    if (-d $trashdir_del) {
-		&smog_system("/bin/rm -rf $trashdir_del");
+		&smog_system("/bin/rm -rf \"$trashdir_del\"");
 	    }
 	    exit 0 if ! -e $trashdir;
 	    unless (-d $trashdir && -w $trashdir) {
@@ -1382,7 +1382,7 @@ if (defined($ARGV[0])) {
 	    unless (-d $trashdir_del) {
 		&smog_rename($trashdir, $trashdir_del);
 		if (-d $trashdir_del) {
-		    &smog_system("/bin/rm -rf $trashdir_del");
+		    &smog_system("/bin/rm -rf \"$trashdir_del\"");
 		}
 	    }
 	    elsif (-d $trashdir) {

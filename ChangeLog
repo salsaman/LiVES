@@ -1,8 +1,9 @@
-Version 3.0.3
--------------
+Version 3.2.0
+------------------
 Rewrite inital startup, optimising it and making it more robust.
 Configuration directory can now be specified from the commandline (-configdir)
 Implement auto gamma correction, (sRGB, Linear, experimental rec bt.709). Conversion is done via the new threadpool.
+Implement threading for swscale; also using the threadpool.
 Update the plugin architecture (libweed) to version 2.0, update the specs. for Weed, Weed Effects, Weed Audio Effects.
 Optimised memory functions, colourspace conversions and frame decoding.
 Optimise communication with commandline plugins using popen().
@@ -11,14 +12,15 @@ Implement a thread pool with generic worker threads, eliminating time consumed b
 Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
 Audio effects now have automatic clipping prevention, using a dynamic volume adjustment.
 Fix data connections window so it shows the correct out parameter.
+Use a variable block size for buffered read / writes, optimisations for reading files in reverse order.
 Correct bugs in letterboxing, make it the default player mode.
-Fix new crashes with rendered effects generators.
+Fix new crashes with rendered effects generators, streamline their code and API.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Crash recovery now recovers performance recording if LiVES crashes before or during rendering.
 Crash recovery now restores the config file from backup if the original is damaged / missing.
 Improvements to RFX script builder tool.
 Improvements to Fileselector preview / Selection opener.
-Improvements to effects previews.
+Improvements to rendered effects previews.
 Improvements to "targeted_zoom" effect in multitrack; add "scaledpoint" layout element in RFX windows.
 New "auto-layout" mode to improve the appearance of all parameter windows.
 Visual tweaks for Preferences window.
@@ -27,10 +29,10 @@ Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
 Multitrack parameter window now also has a "Reset to Defaults" button.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
-Smooth out playback by interpolating sample counts between soundcard timing updates.
-Reduce audio underflows by temporarily slowing the video loop when they occur,
+Smooth out playback by interpolating using sample counts between soundcard timing updates.
+Reduce pulseaudio underflows by using a slightly larger block size.
 Smooth out ctr-up, ctrl-down, ctrl-left and ctrl-right (Trickplay) keys during playback.
-Add ctrl-shift-space loop locking in clip editor (trickplay).
+Add ctrl-alt-space loop locking in clip editor (trickplay).
 Add keys a / A (audio track lock / unlock) for clip editor playback.
 Added two more keyboard effect keys (ctrl-minus and ctrl-equals). Effects on these keys are NOT affected by ctrl-0 (all effects off).
 Ensure audio is always rendered when it should be after recording.
@@ -38,7 +40,7 @@ Fix minor error in YUV unclamped -> RGB palette conversions.
 Fix rowstrides error in YUV(A) non-planar to planar conversions.
 Fix rowstride alignment issues for YUV420 frames.
 Improvements to chroma supersampling e.g yuv420 - > rgb or yuv420 - > yuv444
-Workaround since swscale apparently cannot handle YUV888 or YUVA8888 palettes, we pretend they are RGB / RGBA.
+Workaround since swscale apparently cannot handle YUV888 or YUVA8888 palettes (we pretend they are RGB / RGBA).
 Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
 Permit switching audio source (internal / external) with no clips loaded (bugfix).
 Rewrite the event_list quantizer, resulting in smoother rendering of recorded clips.
@@ -50,18 +52,19 @@ Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash) a
 on each startup (was also causing hangs on startup).
 Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
 Optimise combo boxes with long lists; categorise filter types in rte window.
-Master audio volume is now maintained between sessions.
+Master audio volume is now maintained between sessions, and the value is calculated using a power function rather than llinear.
 Volume level of previews in file open dialog is now set depending on master volume.
 Fix label layouts for RFX windows.
 Add more preferences to the prefs window.
 Fix breakage in realtime audio effects.
+Various string handling optimisations.
 "Paste as new" now has an 'Enough' button when pullling frames from the clipboard, so it can be partially pasted.
 When switching clips with an active transition, if the background clip is a non-normal clip (e.g generator or webcam), the
 	foreground clip will be switched as if there were no transition active
-Double size playback in separate window now expands as much as comfortably possible.
-Scale size is always show in separate window (except during playback).
+'Double' size viewing in separate window now expands as much as comfortably possible.
+Scale size is always shown now in separate window (except during playback).
 Frame number now defaults to pointer position when opening the seperate window.
-Seperate  window in multitrack can now appear undecorated.
+Seperate window in multitrack can now appear undecorated.
 Enable colour selection for 'blurzoom' effect, improve the effect appearance.
 Implement "easing out" for some selected effects.
 Improved appearance for 'fireTV' effect.
@@ -69,10 +72,12 @@ Improved appearance for 'fireTV' effect.
 Change the 'RGBDelay' and 'YUVDelay' effects to use less memory.
 Video effect plugins can now "ease out" rather than switching off immediately
 Improve a/v sync when changing playback direction.
+Disk space cleanup now shows debug info in the console, and lists unremoved directories.
 Add preference to disable / enable tooltips in the interface windows.
-Add option to overlay the timecode when previewing in multitrack.
+Add option to overlay the timecode when previewing in multitrack (on by default).
 Add ability to overlay critical messages on the playback window (on screen display).
 Add menu options jump to next mark / jump to previous mark in multitrack.
+Fix mouse selections so it selects right to the final frame.
 Separated player window now positions itself above the effect mapper window by default.
 Added menu options "VJ / restart in vj mode", add "Help / Show Developer Options"
 Various minor fixes and interface tweaks.

@@ -1271,7 +1271,7 @@ static void *thrdpool(void *arg) {
             ts.tv_sec += MALLOPT_WAIT_MAX;
             if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
               if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
-              lives_invalidate_all_file_buffers();
+              //lives_invalidate_all_file_buffers();
               mallopt(M_ARENA_MAX, narenas);
               pthread_rwlock_unlock(&mainw->mallopt_lock);
             } else narenas = onarenas;

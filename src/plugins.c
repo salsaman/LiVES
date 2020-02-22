@@ -3648,7 +3648,9 @@ char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx
       lives_free(string);
       if (mainw->write_failed) {
         retval = do_write_failed_error_s_with_retry(rfxfile, NULL, NULL);
-        if (retval == LIVES_RESPONSE_CANCEL) return NULL;
+        if (retval == LIVES_RESPONSE_CANCEL) {
+          return NULL;
+        }
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);

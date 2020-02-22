@@ -4691,6 +4691,7 @@ void load_start_image(int frame) {
                                          (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY))))) return;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
+  // TRY: g_clear_signal_handler(&expose_sim_func, mainw->start_image);
   lives_signal_handlers_block_by_func(mainw->start_image, (livespointer)expose_sim, NULL);
   lives_signal_handlers_block_by_func(mainw->end_image, (livespointer)expose_eim, NULL);
   //lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
@@ -5401,12 +5402,18 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     bsize = fread(ibuff, 1, 8, fp);
     is_png = !png_sig_cmp(ibuff, 0, bsize);
 #endif
-    if (!is_png) return FALSE;
+    if (!is_png) {
+      fclose(fp);
+      return FALSE;
+    }
 
     png_ptr = png_ptrs[i] = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                             (png_voidp)NULL, NULL, NULL);
 
-    if (!png_ptr) return FALSE;
+    if (!png_ptr) {
+      fclose(fp);
+      return FALSE;
+    }
 
 #if defined(PNG_LIBPNG_VER) && (PNG_LIBPNG_VER >= 10200)
     if (!png_flagstate) png_init(png_ptr);
@@ -5418,6 +5425,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     if (!info_ptr) {
       png_destroy_read_struct(&png_ptr,
                               (png_infopp)NULL, (png_infopp)NULL);
+      fclose(fp);
       return FALSE;
     }
 
@@ -5425,6 +5433,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
       // libpng will longjump to here on error
       png_destroy_read_struct(&png_ptr, &info_ptr,
                               (png_infopp)NULL);
+      fclose(fp);
       return FALSE;
     }
 
@@ -5485,7 +5494,6 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 #endif
     }
 
-
     if (tpalette != WEED_PALETTE_END) {
       if (weed_palette_has_alpha(tpalette)) {
         // if target has alpha, add a channel
@@ -5541,6 +5549,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
       if (!create_empty_pixel_data(layer, FALSE, TRUE)) {
         create_blank_layer(layer, LIVES_FILE_EXT_PNG, 4, 4, weed_layer_get_palette(layer));
+        fclose(fp);
         return FALSE;
       }
 
@@ -5587,7 +5596,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
       // 16 bit conversion
       convert_layer_palette_full(layer, tpalette, clamping, sampling, subspace);
     }
-
+    fclose(fp);
     return TRUE;
   }
 
@@ -5609,13 +5618,19 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, (png_voidp)NULL, NULL, NULL);
 
-    if (!png_ptr) return FALSE;
+    if (!png_ptr) {
+      fclose(fp);
+      return FALSE;
+    }
 
     info_ptr = png_create_info_struct(png_ptr);
 
     if (!info_ptr) {
       png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
-      return FALSE;
+      {
+        fclose(fp);
+        return FALSE;
+      }
     }
 
     if (setjmp(png_jmpbuf(png_ptr))) {
@@ -5801,7 +5816,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 #endif
 
     pixbuf = lives_pixbuf_new_from_file_at_scale(fname, width > 0 ? width : -1, height > 0 ? height : -1, FALSE, gerror);
-    if (fd >= 9 && (fd == stored_fd || fd == new_stored_fd)) {
+    if (fd >= 0 && (fd == stored_fd || fd == new_stored_fd)) {
       if (fd == new_stored_fd) stored_fd_frame = new_stored_fd = stored_fd_clip = -1;
       else if (fd == stored_fd) stored_fd_frame = stored_fd = stored_fd_clip = -1;
       close(fd);
@@ -7538,12 +7553,12 @@ align:
 
         unblock_expose();
       } else {
-	pwidth = lives_widget_get_allocation_width(mainw->play_image);
-	pheight = lives_widget_get_allocation_height(mainw->play_image);
-	if (pwidth < old_pwidth || pheight < old_pheight)
-	  clear_widget_bg(mainw->play_image);
-	old_pwidth = pwidth;
-	old_pheight = pheight;
+        pwidth = lives_widget_get_allocation_width(mainw->play_image);
+        pheight = lives_widget_get_allocation_height(mainw->play_image);
+        if (pwidth < old_pwidth || pheight < old_pheight)
+          clear_widget_bg(mainw->play_image);
+        old_pwidth = pwidth;
+        old_pheight = pheight;
         set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->play_image), pixbuf, NULL);
       }
       if (pixbuf != NULL) lives_widget_object_unref(pixbuf);

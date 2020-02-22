@@ -1731,9 +1731,9 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
   do {
-    //pa_mloop_lock();
+    pa_mloop_lock();
     err = pa_stream_get_time(pulsed->pstream, &usec);
-    //pa_mloop_unlock();
+    pa_mloop_unlock();
     sched_yield();
     lives_usleep(100);
     sched_yield();

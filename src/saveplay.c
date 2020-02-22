@@ -554,7 +554,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               }
             }
             if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
-                && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time) {
+                && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + 0.001) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;

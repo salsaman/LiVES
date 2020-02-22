@@ -17,6 +17,32 @@ static void set_child_colour_internal(LiVESWidget *, livespointer set_allx);
 static void set_child_alt_colour_internal(LiVESWidget *, livespointer set_allx);
 static void default_changed_cb(LiVESWidgetObject *, livespointer pspec, livespointer user_data);
 
+/// internal data keys
+#define STD_KEY "_wh_is_standard"
+#define TTIPS_KEY "_wh_lives_tooltips"
+#define ROWS_KEY "_wh_rows"
+#define COLS_KEY "_wh_cols"
+#define CDEF_KEY "_wh_current_default"
+#define DEFBUTTON_KEY "_wh_default_button"
+#define EXP_LIST_KEY "_wh_expansion_list"
+#define LROW_KEY "_wh_layout_row"
+#define EXPANSION_KEY "_wh_expansion"
+#define JUST_KEY "_wh_justification"
+#define WADDED_KEY "_wh_widgets_added"
+#define LAYOUT_KEY "_wh_layout"
+#define NWIDTH_KEY "_wh_normal_width"
+#define FBUTT_KEY "_wh_first_button"
+#define HASDEF_KEY "_wh_has_default"
+#define ISLOCKED_KEY "_wh_is_locked"
+#define WIDTH_KEY "_wh_width"
+#define HEIGHT_KEY "_wh_height"
+#define CBUTTON_KEY "_wh_cbutton"
+#define SPRED_KEY "_wh_sp_red"
+#define SPGREEN_KEY "_wh_sp_green"
+#define SPBLUE_KEY "_wh_sp_blue"
+#define SPALPHA_KEY "_wh_sp_alpha"
+
+
 #if 0
 weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
   int nprops;
@@ -90,7 +116,17 @@ weed_plant_t *LiVESWidgetObject_to_weed_plant(LiVESWidgetObject *o) {
 
 
 WIDGET_HELPER_LOCAL_INLINE boolean is_standard_widget(LiVESWidget *widget) {
-  return (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "is_standard")));
+  livespointer val;
+  if ((val = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), STD_KEY)) == NULL) return FALSE;
+  return (LIVES_POINTER_TO_INT(val));
+}
+
+WIDGET_HELPER_LOCAL_INLINE void set_standard_widget(LiVESWidget *widget, boolean is) {
+  if (is) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(TRUE));
+  else {
+    if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), STD_KEY) != NULL)
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), STD_KEY, LIVES_INT_TO_POINTER(FALSE));
+  }
 }
 
 
@@ -4156,7 +4192,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_button_set_label(LiVESButton *button, 
   gtk_button_set_use_underline(button, widget_opts.mnemonic_label);
   lives_free(labeltext);
 #if !GTK_CHECK_VERSION(3, 0, 0)
-  if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "is_standard")))
+  if (is_standard_widget(button))
     default_changed_cb(LIVES_WIDGET_OBJECT(button), NULL, NULL);
 #endif
   return TRUE;
@@ -4447,9 +4483,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_check_button_new_with_label(const
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_tooltip_text(LiVESWidget *widget, const char *tip_text) {
   if (!prefs->show_tooltips) {
     if (tip_text != NULL)
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), "lives_tooltips", (livespointer)(lives_strdup(tip_text)));
+      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
     else
-      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), "lives_tooltips", (livespointer)(lives_strdup(tip_text)));
+      lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, (livespointer)(lives_strdup(tip_text)));
     return TRUE;
   }
 #ifdef GUI_GTK
@@ -5098,6 +5134,7 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESAdjustment *lives_spin_button_set_adjustment(Li
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_spin_button_set_value(LiVESSpinButton *button, double value) {
+  if (is_standard_widget(LIVES_WIDGET(button))) value = lives_spin_button_get_snapval(button, value);
 #ifdef GUI_GTK
   gtk_spin_button_set_value(button, value);
   return TRUE;
@@ -7705,8 +7742,8 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_table_new(uint32_t rows, uint32_t
     gtk_grid_insert_column(grid, 0);
   }
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), "rows", LIVES_INT_TO_POINTER(rows));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), "cols", LIVES_INT_TO_POINTER(cols));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), ROWS_KEY, LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(grid), COLS_KEY, LIVES_INT_TO_POINTER(cols));
   table = (LiVESWidget *)grid;
 #else
   table = gtk_table_new(rows, cols, homogeneous);
@@ -7784,16 +7821,16 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_table_resize(LiVESTable *table, uint32
 #if LIVES_TABLE_IS_GRID  // required for grid remove row
   register int i;
 
-  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), "rows")); i < rows; i++) {
+  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), ROWS_KEY)); i < rows; i++) {
     lives_grid_insert_row(table, i);
   }
 
-  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), "cols")); i < cols; i++) {
+  for (i = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(table), COLS_KEY)); i < cols; i++) {
     gtk_grid_insert_column(table, i);
   }
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), "rows", LIVES_INT_TO_POINTER(rows));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), "cols", LIVES_INT_TO_POINTER(cols));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), ROWS_KEY, LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(table), COLS_KEY, LIVES_INT_TO_POINTER(cols));
 #else
   gtk_table_resize(table, rows, cols);
 #endif
@@ -8331,7 +8368,7 @@ void lives_tooltips_copy(LiVESWidget *dest, LiVESWidget *source) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
   boolean mustfree = TRUE;
-  char *text = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(source), "lives_tooltips");
+  char *text = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(source), TTIPS_KEY);
   if (text == NULL) text = gtk_widget_get_tooltip_text(source);
   else mustfree = FALSE;
   lives_widget_set_tooltip_text(dest, text);
@@ -8461,16 +8498,16 @@ static void button_state_changed_cb(LiVESWidget *widget, LiVESWidgetState state,
   widget_opts.apply_theme = TRUE;
   if (lives_widget_is_sensitive(widget) && (state & LIVES_WIDGET_STATE_FOCUSED)) {
     lives_widget_grab_default(widget);
-    lives_widget_object_set_data(toplevel, "current_default", widget);
+    lives_widget_object_set_data(toplevel, CDEF_KEY, widget);
     if (!(state & (LIVES_WIDGET_STATE_PRELIGHT))) set_child_colour(widget, TRUE);
     else set_child_alt_colour(widget, TRUE);
   } else {
     set_child_alt_colour(widget, TRUE);
-    if (lives_widget_object_get_data(toplevel, "current_default") == widget)
-      lives_widget_object_set_data(toplevel, "current_default", NULL);
-    if (lives_widget_object_get_data(toplevel, "current_default") == NULL) {
+    if (lives_widget_object_get_data(toplevel, CDEF_KEY) == widget)
+      lives_widget_object_set_data(toplevel, CDEF_KEY, NULL);
+    if (lives_widget_object_get_data(toplevel, CDEF_KEY) == NULL) {
       // if no buttons are focused, default returns to default default
-      LiVESWidget *deflt = lives_widget_object_get_data(toplevel, "default_button");
+      LiVESWidget *deflt = lives_widget_object_get_data(toplevel, DEFBUTTON_KEY);
       if (deflt != NULL) {
         lives_widget_grab_default(deflt);
         set_child_colour(deflt, TRUE);
@@ -8490,7 +8527,7 @@ boolean lives_button_grab_default_special(LiVESWidget *button) {
   if (!lives_widget_set_can_focus_and_default(button)) return FALSE;
   if (!lives_widget_grab_default(button)) return FALSE;
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(button)), "default_button", button);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lives_widget_get_toplevel(button)), DEFBUTTON_KEY, button);
 
   return TRUE;
 }
@@ -8506,36 +8543,36 @@ WIDGET_HELPER_LOCAL_INLINE void lives_layout_attach(LiVESLayout *layout, LiVESWi
 
 
 static LiVESWidget *lives_layout_expansion_row_new(LiVESLayout *layout, LiVESWidget *widget) {
-  LiVESList *xwidgets = (LiVESList *)lives_widget_object_steal_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
+  LiVESList *xwidgets = (LiVESList *)lives_widget_object_steal_data(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY);
   LiVESWidget *box = lives_layout_row_new(layout);
-  int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
-  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
+  int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), COLS_KEY));
+  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY));
   lives_widget_object_ref(LIVES_WIDGET_OBJECT(box));
   lives_widget_unparent(box);
   lives_layout_attach(layout, box, 0, columns, rows - 1);
   lives_widget_object_unref(LIVES_WIDGET_OBJECT(box));
   if (widget != NULL) lives_layout_pack(LIVES_HBOX(box), widget);
   xwidgets = lives_list_prepend(xwidgets, box);
-  lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "layout_row", LIVES_INT_TO_POINTER(rows) - 1);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "expansion", LIVES_INT_TO_POINTER(widget_opts.expand));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), "justification", LIVES_INT_TO_POINTER(widget_opts.justify));
+  lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), LROW_KEY, LIVES_INT_TO_POINTER(rows) - 1);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), EXPANSION_KEY, LIVES_INT_TO_POINTER(widget_opts.expand));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(box), JUST_KEY, LIVES_INT_TO_POINTER(widget_opts.justify));
   if (widget != NULL) return widget;
   return box;
 }
 
 
 static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
-  LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
+  LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY);
   lives_table_resize(LIVES_TABLE(layout), rows, columns);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(rows));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cols", LIVES_INT_TO_POINTER(columns));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY, LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), COLS_KEY, LIVES_INT_TO_POINTER(columns));
   while (xwidgets != NULL) {
     LiVESWidget *widget = (LiVESWidget *)xwidgets->data;
-    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout_row"));
-    int expansion = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "expansion"));
+    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), LROW_KEY));
+    int expansion = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), EXPANSION_KEY));
     LiVESJustification justification = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget),
-                                       "justification"));
+                                       JUST_KEY));
     int woe = widget_opts.expand;
     LiVESJustification woj = widget_opts.justify;
     lives_widget_object_ref(widget);
@@ -8553,14 +8590,14 @@ static boolean lives_layout_resize(LiVESLayout *layout, int rows, int columns) {
 
 
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_pack(LiVESHBox *box, LiVESWidget *widget) {
-  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
+  LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), LAYOUT_KEY);
   if (layout != NULL) {
-    LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "expansion_list");
-    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows")) - 1;
+    LiVESList *xwidgets = (LiVESList *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY);
+    int row = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY)) - 1;
     // remove any expansion widgets on this row
     if (xwidgets != NULL) {
-      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xwidgets->data), "layout_row")) == row) {
-        lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), "expansion_list", xwidgets);
+      if (LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(xwidgets->data), LROW_KEY)) == row) {
+        lives_widget_object_set_data_list(LIVES_WIDGET_OBJECT(layout), EXP_LIST_KEY, xwidgets);
       }
     }
   }
@@ -8579,9 +8616,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_new(LiVESBox *box) {
     lives_box_pack_start(box, layout, LIVES_SHOULD_EXPAND_EXTRA_WIDTH, TRUE,
                          LIVES_SHOULD_EXPAND_WIDTH ? widget_opts.packing_width : 0);
   }
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(1));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "cols", LIVES_INT_TO_POINTER(0));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY, LIVES_INT_TO_POINTER(1));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), COLS_KEY, LIVES_INT_TO_POINTER(0));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY, LIVES_INT_TO_POINTER(0));
   lives_table_set_col_spacings(LIVES_TABLE(layout), 0);
   if (LIVES_SHOULD_EXPAND_HEIGHT)
     lives_table_set_row_spacings(LIVES_TABLE(layout), widget_opts.packing_height);
@@ -8603,21 +8640,22 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_layout_hbox_new(LiVESLayout *layo
   LiVESWidget *widget = alignment;
   lives_container_add(LIVES_CONTAINER(alignment), hbox);
 #endif
-  int nadded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "widgets_added"));
-  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows"));
-  int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "cols"));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
+
+  int nadded = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY));
+  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY));
+  int columns = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), COLS_KEY));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
   if (++nadded > columns) lives_layout_resize(layout, rows, nadded);
   lives_layout_attach(layout, widget, nadded - 1, nadded, rows - 1);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(nadded));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY, LIVES_INT_TO_POINTER(nadded));
   return hbox;
 }
 
 
 WIDGET_HELPER_GLOBAL_INLINE int lives_layout_add_row(LiVESLayout *layout) {
-  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), "rows")) + 1;
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "rows", LIVES_INT_TO_POINTER(rows));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), "widgets_added", LIVES_INT_TO_POINTER(0));
+  int rows = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY)) + 1;
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), ROWS_KEY, LIVES_INT_TO_POINTER(rows));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(layout), WADDED_KEY, LIVES_INT_TO_POINTER(0));
   return rows;
 }
 
@@ -9222,16 +9260,13 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
 
   widget_opts.last_label = NULL;
 
-  if (val > max) val = max;
-  if (val < min) val = min;
-
   adj = lives_adjustment_new(val, min, max, step, page, 0.);
   spinbutton = lives_spin_button_new(adj, 1, dp);
 
-  //lives_spin_button_set_snap_to_ticks(LIVES_SPIN_BUTTON(spinbutton), TRUE);
+  val = lives_spin_button_get_snapval(LIVES_SPIN_BUTTON(spinbutton), val);
   lives_spin_button_set_value(LIVES_SPIN_BUTTON(spinbutton), val);
   lives_spin_button_update(LIVES_SPIN_BUTTON(spinbutton));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton), "is_standard", LIVES_INT_TO_POINTER(TRUE));
+  set_standard_widget(spinbutton, TRUE);
 
   if (tooltip != NULL) lives_widget_set_tooltip_text(spinbutton, tooltip);
 
@@ -9252,7 +9287,7 @@ LiVESWidget *lives_standard_spin_button_new(const char *labeltext, double val, d
   }
 
   if (box != NULL) {
-    LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
+    LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), LAYOUT_KEY);
     int packing_width = 0;
 
     if (labeltext != NULL) {
@@ -9341,7 +9376,7 @@ LiVESWidget *lives_standard_combo_new(const char *labeltext, LiVESList *list, Li
                                combo);
 
   if (box != NULL) {
-    LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), "layout");
+    LiVESWidget *layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(box), LAYOUT_KEY);
     int packing_width = 0;
 
     if (labeltext != NULL) {
@@ -9528,9 +9563,9 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char 
 
   if (dialog != NULL) lives_dialog_add_action_widget(dialog, button, response_id);
   lives_widget_set_size_request(button, bwidth, -1);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "normal_width", LIVES_INT_TO_POINTER(bwidth));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), NWIDTH_KEY, LIVES_INT_TO_POINTER(bwidth));
   if (widget_opts.apply_theme) {
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "is_standard", LIVES_INT_TO_POINTER((int)TRUE));
+    set_standard_widget(button, TRUE);
 #if !GTK_CHECK_VERSION(3, 0, 0)
     set_child_alt_colour(button, TRUE);
 #endif
@@ -9544,12 +9579,12 @@ LiVESWidget *lives_dialog_add_button_from_stock(LiVESDialog *dialog, const char 
     button_state_changed_cb(button, lives_widget_get_state(button), NULL);
   }
   if (dialog != NULL) {
-    if ((first_button = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dialog), "first_button")) == NULL) {
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dialog), "first_button", (livespointer)button);
+    if ((first_button = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(dialog), FBUTT_KEY)) == NULL) {
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(dialog), FBUTT_KEY, (livespointer)button);
       lives_button_center(button);
     } else {
       lives_button_uncenter(first_button, LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(first_button),
-                            "normal_width")));
+                            NWIDTH_KEY)));
     }
   }
   return button;
@@ -9574,12 +9609,12 @@ WIDGET_HELPER_LOCAL_INLINE void dlg_focus_changed(LiVESContainer *c, LiVESWidget
       LiVESWidget *toplevel = lives_widget_get_toplevel(widget);
       LiVESWidget *button;
       if (!LIVES_IS_WIDGET(toplevel)) return;
-      button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), "default_button");
+      button = lives_widget_object_get_data(LIVES_WIDGET_OBJECT(toplevel), DEFBUTTON_KEY);
       if (button != NULL && lives_widget_is_sensitive(button)) {
         boolean woat = widget_opts.apply_theme;
         widget_opts.apply_theme = TRUE;
         // default button gets the default
-        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), "current_default", NULL);
+        lives_widget_object_set_data(LIVES_WIDGET_OBJECT(toplevel), CDEF_KEY, NULL);
         lives_widget_grab_default(button);
         set_child_alt_colour(button, TRUE);
         widget_opts.apply_theme = woat;
@@ -9963,8 +9998,8 @@ LiVESWidget *lives_standard_text_view_new(const char *text, LiVESTextBuffer *tbu
 WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir) {
   LiVESWidget *fbutton = fbutton = lives_standard_button_new();
   LiVESWidget *image = lives_image_new_from_stock(LIVES_STOCK_OPEN, LIVES_ICON_SIZE_BUTTON);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), "is_dir", LIVES_INT_TO_POINTER(is_dir));
-  if (def_dir != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), "def_dir", (livespointer)def_dir);
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), ISDIR_KEY, LIVES_INT_TO_POINTER(is_dir));
+  if (def_dir != NULL) lives_widget_object_set_data(LIVES_WIDGET_OBJECT(fbutton), DEFDIR_KEY, (livespointer)def_dir);
   lives_container_add(LIVES_CONTAINER(fbutton), image);
   return fbutton;
 }
@@ -9978,7 +10013,7 @@ static void lives_widget_destroy_if_image(LiVESWidget *widget, livespointer user
 
 
 WIDGET_HELPER_GLOBAL_INLINE boolean lives_lock_button_get_locked(LiVESButton *button) {
-  return (boolean)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "is_locked"));
+  return (boolean)LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISLOCKED_KEY));
 }
 
 
@@ -9986,13 +10021,14 @@ static void _on_lock_button_clicked(LiVESButton *button, livespointer user_data)
   LiVESWidget *image;
   boolean apply_theme = (boolean)LIVES_POINTER_TO_INT(user_data);
 
-  int locked = !(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "is_locked")));
-  int width = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "width"));
-  int height = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "height"));
+  int locked = !(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISLOCKED_KEY)));
+  int width = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), WIDTH_KEY));
+  int height = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), HEIGHT_KEY));
 
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), "is_locked", LIVES_INT_TO_POINTER(locked));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(button), ISLOCKED_KEY, LIVES_INT_TO_POINTER(locked));
   lives_container_foreach(LIVES_CONTAINER(button), (LiVESWidgetCallback)lives_widget_destroy_if_image, NULL);
-  if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH,
+  if (locked) image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_LOCKED, LIVES_ICON_SIZE_CUSTOM,
+                        LOCK_BUTTON_WIDTH,
                         LOCK_BUTTON_HEIGHT);
   else image = lives_image_new_from_stock_at_size(LIVES_LIVES_STOCK_UNLOCKED, LIVES_ICON_SIZE_CUSTOM, LOCK_BUTTON_WIDTH,
                  LOCK_BUTTON_HEIGHT);
@@ -10024,9 +10060,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean 
   prettify_button(lockbutton);
   lives_widget_set_size_request(lockbutton, width, height);
   if (tooltip != NULL) lives_widget_set_tooltip_text(lockbutton, tooltip);
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), "is_locked", LIVES_INT_TO_POINTER(!is_locked));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), "width", LIVES_INT_TO_POINTER(width));
-  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), "height", LIVES_INT_TO_POINTER(height));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), ISLOCKED_KEY, LIVES_INT_TO_POINTER(!is_locked));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), WIDTH_KEY, LIVES_INT_TO_POINTER(width));
+  lives_widget_object_set_data(LIVES_WIDGET_OBJECT(lockbutton), HEIGHT_KEY, LIVES_INT_TO_POINTER(height));
   lives_signal_connect(lockbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(_on_lock_button_clicked), NULL);
   _on_lock_button_clicked(LIVES_BUTTON(lockbutton), LIVES_INT_TO_POINTER(widget_opts.apply_theme));
   return lockbutton;
@@ -10036,10 +10072,10 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESWidget *lives_standard_lock_button_new(boolean 
 static void on_pwcolselx(LiVESButton *button, lives_rfx_t *rfx) {
   LiVESWidgetColor selected;
 
-  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "sp_red");
-  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "sp_green");
-  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "sp_blue");
-  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "sp_alpha");
+  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), SPRED_KEY);
+  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), SPGREEN_KEY);
+  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), SPBLUE_KEY);
+  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), SPALPHA_KEY);
 
   int r, g, b, a;
 
@@ -10077,11 +10113,11 @@ static void on_pwcolselx(LiVESButton *button, lives_rfx_t *rfx) {
 static void after_param_red_changedx(LiVESSpinButton *spinbutton, livespointer udata) {
   LiVESWidgetColor colr;
 
-  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "cbutton");
-  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_green");
-  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_blue");
+  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), CBUTTON_KEY);
+  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPGREEN_KEY);
+  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPBLUE_KEY);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
-  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha");
+  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPALPHA_KEY);
 #endif
 
   int new_red = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
@@ -10105,11 +10141,11 @@ static void after_param_red_changedx(LiVESSpinButton *spinbutton, livespointer u
 static void after_param_green_changedx(LiVESSpinButton *spinbutton, livespointer udata) {
   LiVESWidgetColor colr;
 
-  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "cbutton");
-  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_red");
-  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_blue");
+  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), CBUTTON_KEY);
+  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPRED_KEY);
+  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPBLUE_KEY);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
-  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha");
+  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPALPHA_KEY);
 #endif
 
   int new_green = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
@@ -10133,11 +10169,11 @@ static void after_param_green_changedx(LiVESSpinButton *spinbutton, livespointer
 static void after_param_blue_changedx(LiVESSpinButton *spinbutton, livespointer udata) {
   LiVESWidgetColor colr;
 
-  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "cbutton");
-  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_green");
-  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_red");
+  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), CBUTTON_KEY);
+  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPGREEN_KEY);
+  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPRED_KEY);
 #if LIVES_WIDGET_COLOR_HAS_ALPHA
-  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha");
+  LiVESWidget *sp_alpha = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPALPHA_KEY);
 #endif
 
   int new_blue = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
@@ -10161,10 +10197,10 @@ static void after_param_blue_changedx(LiVESSpinButton *spinbutton, livespointer 
 static void after_param_alpha_changedx(LiVESSpinButton *spinbutton, livespointer udata) {
   LiVESWidgetColor colr;
 
-  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), "cbutton");
-  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_green");
-  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_blue");
-  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), "sp_red");
+  LiVESWidget *cbutton = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(spinbutton), CBUTTON_KEY);
+  LiVESWidget *sp_green = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPGREEN_KEY);
+  LiVESWidget *sp_blue = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPBLUE_KEY);
+  LiVESWidget *sp_red = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(cbutton), SPRED_KEY);
 
   int new_alpha = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
   int old_red = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(sp_red));
@@ -10204,7 +10240,7 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
   if (box != NULL) {
     parent = lives_widget_get_parent(LIVES_WIDGET(box));
     if (parent != NULL && LIVES_IS_TABLE(parent) &&
-        lives_widget_object_get_data(LIVES_WIDGET_OBJECT(parent), "widgets_added") != NULL) {
+        lives_widget_object_get_data(LIVES_WIDGET_OBJECT(parent), WADDED_KEY) != NULL) {
       parent_is_layout = TRUE;
       lives_table_set_column_homogeneous(LIVES_TABLE(parent), FALSE);
       hbox = LIVES_WIDGET(box);
@@ -10261,14 +10297,14 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (sb_red != NULL) {
-      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
       spinbutton_red = lives_standard_spin_button_new((tmp = lives_strdup(_("_Red"))), rgba->red / 255., 0., 255., 1., 1., 0,
                        (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The red value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), "cbutton", cbutton);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_red), CBUTTON_KEY, cbutton);
       *sb_red = spinbutton_red;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_red), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_param_red_changedx),
@@ -10281,14 +10317,14 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (sb_green != NULL) {
-      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
       spinbutton_green = lives_standard_spin_button_new((tmp = lives_strdup(_("_Green"))), rgba->green / 255., 0., 255., 1., 1., 0,
                          (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The green value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), "cbutton", cbutton);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_green), CBUTTON_KEY, cbutton);
       *sb_green = spinbutton_green;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_green), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_param_green_changedx),
@@ -10301,14 +10337,14 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (sb_blue != NULL) {
-      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
       spinbutton_blue = lives_standard_spin_button_new((tmp = lives_strdup(_("_Blue"))), rgba->blue / 255., 0., 255., 1., 1., 0,
                         (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The blue value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), "cbutton", cbutton);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_blue), CBUTTON_KEY, cbutton);
       *sb_blue = spinbutton_blue;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_blue), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_param_blue_changedx),
@@ -10321,14 +10357,14 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
 
     if (use_alpha && sb_alpha != NULL) {
-      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), "layout");
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", NULL);
+      layout = (LiVESWidget *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, NULL);
       spinbutton_alpha = lives_standard_spin_button_new((tmp = lives_strdup(_("_Alpha"))), rgba->alpha / 255., 0., 255., 1., 1., 0,
                          (LiVESBox *)hbox, (tmp2 = lives_strdup(_("The alpha value (0 - 255)"))));
       lives_free(tmp);
       lives_free(tmp2);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), "layout", layout);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_alpha), "cbutton", cbutton);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(hbox), LAYOUT_KEY, layout);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(spinbutton_alpha), CBUTTON_KEY, cbutton);
       *sb_alpha = spinbutton_alpha;
       lives_signal_connect(LIVES_GUI_OBJECT(spinbutton_alpha), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                            LIVES_GUI_CALLBACK(after_param_alpha_changedx),
@@ -10346,10 +10382,10 @@ LiVESWidget *lives_standard_color_button_new(LiVESBox *box, const char *name, bo
     }
     lives_box_pack_start(LIVES_BOX(hbox), cbutton, TRUE, FALSE, packing_width * 2.);
 
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_red", spinbutton_red);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_green", spinbutton_green);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_blue", spinbutton_blue);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), "sp_alpha", spinbutton_alpha);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPRED_KEY, spinbutton_red);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPGREEN_KEY, spinbutton_green);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPBLUE_KEY, spinbutton_blue);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(cbutton), SPALPHA_KEY, spinbutton_alpha);
 
     lives_widget_set_show_hide_parent(cbutton);
 
@@ -10507,12 +10543,12 @@ LiVESList *add_sorted_list_to_menu(LiVESMenu *menu, LiVESList *menu_list) {
   LiVESList **seclist;
   LiVESList *xmenu_list = menu_list = lives_menu_list_sort_alpha(menu_list, TRUE);
   while (menu_list != NULL) {
-    if (!(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "hidden")))) {
+    if (!(LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), HIDDEN_KEY)))) {
       lives_container_add(LIVES_CONTAINER(menu), (LiVESWidget *)menu_list->data);
     }
-    if ((seclist = (LiVESList **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), "secondary_list")) != NULL)
+    if ((seclist = (LiVESList **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data), SECLIST_KEY)) != NULL)
       * seclist = lives_list_prepend(*seclist, lives_widget_object_get_data(LIVES_WIDGET_OBJECT(menu_list->data),
-                                     "secondary_list_value"));
+                                     SECLIST_VAL_KEY));
     menu_list = menu_list->next;
   }
   return xmenu_list;
@@ -10735,6 +10771,71 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_unparent(LiVESWidget *widget) {
 }
 
 
+
+static void _toggle_if_condmet(LiVESWidget *tbut, livespointer widget, boolean cond) {
+  char *keyval;
+  int *condx;
+
+  if (!cond) {
+    keyval = lives_strdup_printf("%p_insens_cond", widget);
+    condx = (int *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tbut), keyval);
+    if (condx && *condx != 0) cond = TRUE;
+  } else {
+    keyval = lives_strdup_printf("%p_sens_cond", widget);
+    condx = (int *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(tbut), keyval);
+    if (condx && *condx <= 0) cond = FALSE;
+  }
+  lives_free(keyval);
+  lives_widget_set_sensitive(LIVES_WIDGET(widget), cond);
+}
+
+static void toggle_set_sensitive(LiVESWidget *tbut, livespointer widget) {
+  _toggle_if_condmet(tbut, widget, lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)));
+}
+
+static void toggle_set_insensitive(LiVESWidget *tbut, livespointer widget) {
+  _toggle_if_condmet(tbut, widget, !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(tbut)));
+}
+
+static void togglevar_cb(LiVESToggleButton *tbut, boolean *var) {
+  if (var) *var = !(*var);
+}
+
+// togglebutton functions
+
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
+    livespointer condsens, livespointer condinsens, boolean invert) {
+  if (condsens) {
+    /// set sensitive only if *condsens > 0
+    char *keyval = lives_strdup_printf("%p_sens_cond", widget);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condsens);
+  }
+
+  if (condinsens) {
+    /// set insensitive only if *condinsens == 0
+    char *keyval = lives_strdup_printf("%p_insens_cond", widget);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(tb), keyval, condinsens);
+  }
+
+  if (!invert) {
+    lives_signal_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_sensitive),
+                         (livespointer)widget);
+    toggle_set_sensitive(LIVES_WIDGET(tb), (livespointer)widget);
+  } else {
+    lives_signal_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_insensitive),
+                         (livespointer)widget);
+    toggle_set_insensitive(LIVES_WIDGET(tb), (livespointer)widget);
+  }
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert) {
+  return toggle_sets_sensitive_cond(tb, widget, NULL, NULL, invert);
+}
+
+
+// widget callback sets togglebutton active
 boolean widget_act_toggle(LiVESWidget *widget, LiVESToggleButton *togglebutton) {
   if (!lives_widget_is_sensitive(LIVES_WIDGET(togglebutton))) return FALSE;
   lives_toggle_button_set_active(togglebutton, TRUE);
@@ -10742,6 +10843,7 @@ boolean widget_act_toggle(LiVESWidget *widget, LiVESToggleButton *togglebutton) 
 }
 
 
+// widget callback sets togglebutton inactive
 boolean widget_inact_toggle(LiVESWidget *widget, LiVESToggleButton *togglebutton) {
   if (!lives_widget_is_sensitive(LIVES_WIDGET(togglebutton))) return FALSE;
   lives_toggle_button_set_active(togglebutton, FALSE);
@@ -10754,20 +10856,37 @@ boolean label_act_toggle(LiVESWidget *widget, LiVESXEventButton *event, LiVESTog
 }
 
 
+// set callback so that togglebutton controls var
+WIDGET_HELPER_GLOBAL_INLINE boolean toggle_toggles_var(LiVESToggleButton *tbut, boolean *var, boolean invert) {
+  if (invert) lives_toggle_button_set_active(tbut, !(*var));
+  else lives_toggle_button_set_active(tbut, *var);
+  lives_signal_connect_after(LIVES_GUI_OBJECT(tbut), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(togglevar_cb),
+                             (livespointer)var);
+  return TRUE;
+}
+
+
+WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_toggle(LiVESToggleButton *tbutton) {
+  if (lives_toggle_button_get_active(tbutton)) return lives_toggle_button_set_active(tbutton, FALSE);
+  else return lives_toggle_button_set_active(tbutton, TRUE);
+}
+
+
 static void _set_tooltips_state(LiVESWidget *widget, livespointer state) {
 #ifdef GUI_GTK
 #if GTK_CHECK_VERSION(2, 12, 0)
   char *ttip;
   if (LIVES_POINTER_TO_INT(state)) {
     // enable
-    ttip = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "lives_tooltips");
+    ttip = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY);
     if (ttip != NULL) {
       lives_widget_set_tooltip_text(widget, ttip);
-      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "lives_tooltips", NULL);
+      lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, NULL);
     }
   } else {
     ttip = gtk_widget_get_tooltip_text(widget);
-    lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), "lives_tooltips", ttip);
+    lives_widget_object_set_data_auto(LIVES_WIDGET_OBJECT(widget), TTIPS_KEY, ttip);
     lives_widget_set_tooltip_text(widget, NULL);
   }
   if (LIVES_IS_CONTAINER(widget)) {
@@ -10790,9 +10909,27 @@ WIDGET_HELPER_GLOBAL_INLINE boolean set_tooltips_state(LiVESWidget *widget, bool
 }
 
 
-WIDGET_HELPER_GLOBAL_INLINE boolean lives_toggle_button_toggle(LiVESToggleButton *tbutton) {
-  if (lives_toggle_button_get_active(tbutton)) return lives_toggle_button_set_active(tbutton, FALSE);
-  else return lives_toggle_button_set_active(tbutton, TRUE);
+WIDGET_HELPER_GLOBAL_INLINE double lives_spin_button_get_snapval(LiVESSpinButton *button, double val) {
+  double stepval, min, max, nval, stepfix;
+  int digs = gtk_spin_button_get_digits(button);
+  boolean wrap = gtk_spin_button_get_wrap(button);
+  double tenpow = (double)lives_10pow(digs);
+  gtk_spin_button_get_increments(button, &stepval, NULL);
+  gtk_spin_button_get_range(button, &min, &max);
+  stepfix = tenpow / stepval;
+  if (val >= 0.)
+    nval = (double)((int64_t)(val * stepfix + .5)) / stepfix;
+  else
+    nval = (double)((int64_t)(val * stepfix  - .5)) / stepfix;
+  if (nval < min) {
+    if (wrap) while (nval < min) nval += (max - min);
+    else nval = min;
+  }
+  if (nval > max) {
+    if (wrap) while (nval > max) nval -= (max - min);
+    else nval = max;
+  }
+  return nval;
 }
 
 

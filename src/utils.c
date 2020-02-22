@@ -776,17 +776,17 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
 
 /// reallocate the source buffer if mallopt() has been called
 static uint8_t *revalidate_buffers(uint8_t *ptr) {
-#ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) {
-    mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4);
-    ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data;
-  } else
-#endif
+/* #ifdef HAVE_PULSE_AUDIO */
+/*   if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) { */
+/*     mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4); */
+/*     ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data; */
+/*   } else */
+/* #endif */
 
-    if (ptr == (uint8_t *)audio_cache_get_buffer()) {
-      lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr;
-      ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize);
-    }
+/*     if (ptr == (uint8_t *)audio_cache_get_buffer()) { */
+/*       lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr; */
+/*       ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize); */
+/*     } */
 
   return ptr;
 }
@@ -850,8 +850,8 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       fbuff->offset -= fbuff->bytes;
       file_buffer_fill(fbuff, fbuff->bytes);
       fbuff->invalid = FALSE;
-      ptr = revalidate_buffers(ptr);
-      if (!ptr) return 0;
+      //ptr = revalidate_buffers(ptr);
+      //if (!ptr) return 0;
     }
 
     lives_memcpy(ptr, fbuff->ptr, nbytes);
@@ -881,10 +881,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
         pthread_rwlock_unlock(&mainw->mallopt_lock);
         return retval;
       }
-      fbuff->buffer = NULL;
-      fbuff->invalid = FALSE;
-      ptr = revalidate_buffers(ptr);
-      if (!ptr) return 0;
+      /* fbuff->buffer = NULL; */
+      /* fbuff->invalid = FALSE; */
+      /* ptr = revalidate_buffers(ptr); */
+      /* if (!ptr) return 0; */
     } else {
       if (fbuff->bufsztype != bufsztype) {
         lives_freep((void **)&fbuff->buffer);
@@ -916,8 +916,8 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
         lives_freep((void **)&fbuff->buffer);
       }
       pthread_rwlock_unlock(&mainw->mallopt_lock);
-      ptr = revalidate_buffers(ptr);
-      if (!ptr) return 0;
+      //ptr = revalidate_buffers(ptr);
+      //if (!ptr) return 0;
     }
 
     fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);

@@ -1314,7 +1314,8 @@ boolean apply_prefs(boolean skip_warn) {
   int mt_def_achans = atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_achans)));
   int mt_def_asamps = atoi(lives_entry_get_text(LIVES_ENTRY(resaudw->entry_asamps)));
   int mt_def_signed_endian = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_unsigned)) *
-                             AFORM_UNSIGNED + lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend)) * AFORM_BIG_ENDIAN;
+                             AFORM_UNSIGNED + lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(resaudw->rb_bigend))
+                             * AFORM_BIG_ENDIAN;
   int mt_undo_buf = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_mt_undo_buf));
 
   boolean mt_exit_render = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_mt_exit_render));
@@ -2772,32 +2773,6 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data) {
 }
 
 
-// toggle sets other widget sensitive/insensitive
-static void toggle_set_sensitive(LiVESWidget *widget, livespointer func_data) {
-  lives_widget_set_sensitive(LIVES_WIDGET(func_data), lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
-}
-
-
-// toggle sets other widget insensitive/sensitive
-static void toggle_set_insensitive(LiVESWidget *widget, livespointer func_data) {
-  lives_widget_set_sensitive(LIVES_WIDGET(func_data), !lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(widget)));
-}
-
-
-static void toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget) {
-  lives_signal_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_sensitive),
-                       (livespointer)widget);
-  toggle_set_sensitive(LIVES_WIDGET(tb), (livespointer)widget);
-}
-
-
-static void toggle_sets_insensitive(LiVESToggleButton *tb, LiVESWidget *widget) {
-  lives_signal_connect(LIVES_GUI_OBJECT(tb), LIVES_WIDGET_TOGGLED_SIGNAL, LIVES_GUI_CALLBACK(toggle_set_insensitive),
-                       (livespointer)widget);
-  toggle_set_insensitive(LIVES_WIDGET(tb), (livespointer)widget);
-}
-
-
 static void spinbutton_crit_ds_value_changed(LiVESSpinButton *crit_ds, livespointer user_data) {
   double myval = lives_spin_button_get_value(crit_ds);
   lives_spin_button_set_range(LIVES_SPIN_BUTTON(prefsw->spinbutton_warn_ds), myval, DS_WARN_CRIT_MAX);
@@ -3184,7 +3159,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   prefsw->msgs_unlimited = lives_standard_check_button_new(_("_Unlimited"),
                            prefs->max_messages < 0, LIVES_BOX(hbox), NULL);
 
-  toggle_sets_insensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->msgs_unlimited), prefsw->nmessages_spin, TRUE);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->nmessages_spin), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                        LIVES_GUI_CALLBACK(widget_inact_toggle), prefsw->msgs_unlimited);
   ACTIVE(msgs_unlimited, TOGGLED);
@@ -3363,7 +3338,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        LIVES_GUI_CALLBACK(on_decplug_advanced_clicked),
                        NULL);
 
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open), advbutton);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_instant_open), advbutton, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_decoding), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3695,7 +3670,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                 prefs->pa_start_opts, -1, PATH_MAX * 2,
                                 LIVES_BOX(hbox), NULL);
   ACTIVE(audio_command_entry, CHANGED);
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_parestart), prefsw->audio_command_entry, FALSE);
 #endif
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -3730,8 +3705,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), future_prefs->audio_src == AUDIO_SRC_EXT);
   add_fill_to_box(LIVES_BOX(hbox));
 
-  toggle_sets_insensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aclips);
-  toggle_sets_insensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_afollow);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_aclips, TRUE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->rextaudio), prefsw->checkbutton_afollow, TRUE);
 
   if (mainw->playing_file > 0 && mainw->record) {
     lives_widget_set_sensitive(prefsw->rextaudio, FALSE);
@@ -4016,7 +3991,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                    0,
                                    LIVES_BOX(hbox), NULL);
 
-  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), prefsw->spinbutton_nfx_threads);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads), prefsw->spinbutton_nfx_threads, FALSE);
 
   add_fill_to_box(LIVES_BOX(hbox));
   add_fill_to_box(LIVES_BOX(hbox));

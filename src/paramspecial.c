@@ -275,9 +275,11 @@ void check_for_special(lives_rfx_t *rfx, lives_param_t *param, LiVESBox *pbox) {
 
       aspect.no_reset = TRUE;
 
-      // TODO: fix the width and height
-      aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH, ASPECT_BUTTON_HEIGHT, _("Maintain aspect ratio"));
-      lives_signal_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL, LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
+      aspect.lockbutton = lives_standard_lock_button_new(TRUE, ASPECT_BUTTON_WIDTH,
+                          ASPECT_BUTTON_HEIGHT, _("Maintain aspect ratio"));
+      lives_signal_connect(aspect.lockbutton, LIVES_WIDGET_CLICKED_SIGNAL,
+                           LIVES_GUI_CALLBACK(reset_aspect), (livespointer)&aspect);
+
       reset_aspect(LIVES_BUTTON(aspect.lockbutton), &aspect);
 
       if (widget_opts.mnemonic_label) {
@@ -464,13 +466,14 @@ void after_aspect_width_changed(LiVESSpinButton *spinbutton, livespointer user_d
   if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
     int width = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double height = (double)width / aspect.ratio;
-    lives_signal_handler_block(aspect.height_param->widgets[0], aspect.height_func);
+    LiVESWidget *spbutton = aspect.height_param->widgets[0];
+    lives_signal_handler_block(spbutton, aspect.height_func);
     aspect.width_param->change_blocked = TRUE;
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]), height);
-    lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
-    lives_signal_handler_unblock(aspect.height_param->widgets[0], aspect.height_func);
+    height = lives_spin_button_get_snapval(LIVES_SPIN_BUTTON(spbutton), height);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(spbutton), height);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(spbutton));
+    lives_signal_handler_unblock(spbutton, aspect.height_func);
     aspect.width_param->change_blocked = FALSE;
-    height = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.height_param->widgets[0]));
   }
 }
 
@@ -479,13 +482,14 @@ void after_aspect_height_changed(LiVESToggleButton *spinbutton, livespointer use
   if (lives_lock_button_get_locked(LIVES_BUTTON(aspect.lockbutton))) {
     int height = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(spinbutton));
     double width = (double)height * aspect.ratio;
-    lives_signal_handler_block(aspect.width_param->widgets[0], aspect.width_func);
+    LiVESWidget *spbutton = aspect.width_param->widgets[0];
+    lives_signal_handler_block(spbutton, aspect.width_func);
     aspect.height_param->change_blocked = TRUE;
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]), width);
-    lives_spin_button_update(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
-    lives_signal_handler_unblock(aspect.width_param->widgets[0], aspect.width_func);
+    width = lives_spin_button_get_snapval(LIVES_SPIN_BUTTON(spbutton), width);
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(spbutton), width);
+    lives_spin_button_update(LIVES_SPIN_BUTTON(spbutton));
+    lives_signal_handler_unblock(spbutton, aspect.width_func);
     aspect.height_param->change_blocked = FALSE;
-    width = lives_spin_button_get_value(LIVES_SPIN_BUTTON(aspect.width_param->widgets[0]));
   }
 }
 

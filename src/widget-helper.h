@@ -570,6 +570,11 @@ boolean lives_toggle_tool_button_get_active(LiVESToggleToolButton *);
 boolean lives_toggle_tool_button_set_active(LiVESToggleToolButton *, boolean active);
 
 int lives_utf8_strcmpfunc(livesconstpointer, livesconstpointer, livespointer fwd);
+
+/// additional data keys for the following function
+#define HIDDEN_KEY "hidden"
+#define SECLIST_KEY "secondary_list"
+#define SECLIST_VAL_KEY "secondary_list_value"
 LiVESList *add_sorted_list_to_menu(LiVESMenu *, LiVESList *);
 
 boolean lives_has_icon(const char *stock_id, LiVESIconSize size);
@@ -957,6 +962,9 @@ LiVESWidget *lives_standard_expander_new(const char *labeltext, LiVESBox *parent
 
 LiVESWidget *lives_volume_button_new(LiVESOrientation orientation, LiVESAdjustment *, double volume);
 
+/// additional data elements which can be read
+#define ISDIR_KEY "is_dir"
+#define DEFDIR_KEY "def_dir"
 LiVESWidget *lives_standard_file_button_new(boolean is_dir, const char *def_dir);
 
 LiVESWidget *lives_standard_color_button_new(LiVESBox *parent, const char *name, boolean use_alpha, lives_colRGBA64_t *rgba,
@@ -1041,6 +1049,8 @@ boolean lives_spin_button_configure(LiVESSpinButton *, double value, double lowe
 
 size_t calc_spin_button_width(double min, double max, int dp);
 
+double lives_spin_button_get_snapval(LiVESSpinButton *button, double val);
+
 int get_box_child_index(LiVESBox *, LiVESWidget *child);
 
 boolean lives_box_pack_top(LiVESBox *, LiVESWidget *child, boolean expand, boolean fill, uint32_t padding);
@@ -1050,12 +1060,20 @@ boolean lives_container_child_set_shrinkable(LiVESContainer *, LiVESWidget *chil
 
 boolean set_submenu_colours(LiVESMenu *, LiVESWidgetColor *colf, LiVESWidgetColor *colb);
 
+/// set callbacks
+boolean toggle_sets_sensitive(LiVESToggleButton *tb, LiVESWidget *widget, boolean invert);
+boolean toggle_sets_sensitive_cond(LiVESToggleButton *tb, LiVESWidget *widget,
+                                   livespointer condsens, livespointer condinsens, boolean invert);
+boolean toggle_toggles_var(LiVESToggleButton *tbut, boolean *var, boolean invert);
+
+// callbacks
 boolean label_act_toggle(LiVESWidget *, LiVESXEventButton *, LiVESToggleButton *);
 boolean widget_act_toggle(LiVESWidget *, LiVESToggleButton *);
 boolean widget_inact_toggle(LiVESWidget *, LiVESToggleButton *);
-boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
 boolean toggle_button_toggle(LiVESToggleButton *);
+
+boolean label_act_lockbutton(LiVESWidget *, LiVESXEventButton *, LiVESButton *);
 
 void funkify_dialog(LiVESWidget *dialog);
 EXPOSE_FN_PROTOTYPE(draw_cool_toggle);

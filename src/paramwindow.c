@@ -349,11 +349,6 @@ static void after_transaudio_toggled(LiVESToggleButton *togglebutton, livespoint
 }
 
 
-static void gen_cb_toggled(LiVESToggleButton *tbut, livespointer rfx) {
-  mainw->gen_to_clipboard = !mainw->gen_to_clipboard;
-}
-
-
 void transition_add_in_out(LiVESBox *vbox, lives_rfx_t *rfx, boolean add_audio_check) {
   // add in/out radios for multitrack transitions
   LiVESWidget *radiobutton_in;
@@ -624,11 +619,7 @@ static void add_gen_to(LiVESBox *vbox, lives_rfx_t *rfx) {
   hseparator = lives_hseparator_new();
   lives_box_pack_start(vbox, hseparator, FALSE, FALSE, 0);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), !mainw->gen_to_clipboard);
-
-  lives_signal_connect_after(LIVES_GUI_OBJECT(radiobutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                             LIVES_GUI_CALLBACK(gen_cb_toggled),
-                             (livespointer)rfx);
+  toggle_toggles_var(LIVES_TOGGLE_BUTTON(radiobutton), &mainw->gen_to_clipboard, TRUE);
 }
 
 

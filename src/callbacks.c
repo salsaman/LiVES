@@ -629,8 +629,8 @@ void on_filesel_button_clicked(LiVESButton *button, livespointer user_data) {
   int filesel_type = LIVES_FILE_SELECTION_UNDEFINED;
 
   if (button != NULL) {
-    def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "def_dir");
-    is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "is_dir"));
+    def_dir = (char *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), DEFDIR_KEY);
+    is_dir = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), ISDIR_KEY));
     filt = (char **)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filter");
     if (lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filesel_type") != NULL) {
       filesel_type = LIVES_POINTER_TO_INT(lives_widget_object_get_data(LIVES_WIDGET_OBJECT(button), "filesel_type"));
@@ -3214,8 +3214,8 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
 
   // fit video to audio if requested
   if (mainw->fx1_bool && (cfile->asampsize * cfile->arate * cfile->achans != 0)) {
-    // "insert to fit audio" : number of inserts is (audio_time - video_time) / clipboard_time
-    times_to_insert = (cfile->laudio_time - cfile->frames > 0 ? (double)cfile->frames / cfile->fps : 0.) / ((
+    // "insert to fit audio" : number of inserts is (audio_time - sel_end_time) / clipboard_time
+    times_to_insert = (cfile->laudio_time - (cfile->frames > 0 ? (double)cfile->end / cfile->fps : 0.)) / ((
                         double)clipboard->frames / clipboard->fps);
   }
 
@@ -4739,21 +4739,6 @@ void on_insertwsound_toggled(LiVESToggleButton * togglebutton, livespointer user
     lives_widget_set_sensitive(insertw->fit_checkbutton, CURRENT_CLIP_HAS_AUDIO);
   }
   mainw->fx2_bool = !mainw->fx2_bool;
-}
-
-
-void on_insfitaudio_toggled(LiVESToggleButton * togglebutton, livespointer user_data) {
-  mainw->fx1_bool = !mainw->fx1_bool;
-
-  if (lives_toggle_button_get_active(togglebutton)) {
-    lives_widget_set_sensitive(insertw->with_sound, FALSE);
-    lives_widget_set_sensitive(insertw->without_sound, FALSE);
-    lives_widget_set_sensitive(insertw->spinbutton_times, FALSE);
-  } else {
-    lives_widget_set_sensitive(insertw->with_sound, clipboard->achans > 0);
-    lives_widget_set_sensitive(insertw->without_sound, clipboard->achans > 0);
-    lives_widget_set_sensitive(insertw->spinbutton_times, TRUE);
-  }
 }
 
 
@@ -9801,16 +9786,15 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   if (new_fps * cfile->pb_fps < 0.) {
     // update the current frame number, we will rebase our time on this
-    ticks_t new_ticks, xnew_ticks, delta;
+    ticks_t new_ticks;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
-    xnew_ticks = new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
+    mainw->startticks -= mainw->deltaticks;
+    new_ticks = mainw->currticks;
+    mainw->deltaticks = 0;
     pthread_mutex_lock(&mainw->audio_resync_mutex);
     cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     mainw->startticks = new_ticks;
-    // delta is the fractional frame part
-    delta = xnew_ticks - new_ticks;
-    // but it was in the opposite direction
-    mainw->deltaticks -= delta * 2;
+    //mainw->deltaticks = (mainw->startticks - mainw->currticks);
     pthread_mutex_unlock(&mainw->audio_resync_mutex);
   }
 
@@ -9851,14 +9835,14 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 #endif
   }
 
-  if (cfile->play_paused) {
+  if (cfile->play_paused && new_fps != 0.) {
     cfile->freeze_fps = new_fps;
     // unfreeze the clip at the new (non-zero) fps rate
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
   }
 
-  if (cfile->pb_fps == 0.) {
+  if (cfile->pb_fps == 0. && !cfile->play_paused) {
     // freeze the clip
     freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
     return;
@@ -10333,10 +10317,18 @@ void on_back_pressed(LiVESButton * button, livespointer user_data) {
 void on_forward_pressed(LiVESButton * button, livespointer user_data) {
   int type = 0;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_NORMAL) return;
-  if (!LIVES_IS_PLAYING || mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
+  if (mainw->internal_messaging || (mainw->is_processing && cfile->is_loaded)) return;
 
   if (mainw->record && !(prefs->rec_opts & REC_FRAMES)) return;
   if (cfile->next_event != NULL) return;
+
+  if (!LIVES_IS_PLAYING) {
+    if (cfile->pointer_time < CURRENT_CLIP_TOTAL_TIME) {
+      cfile->pointer_time++;
+      lives_ce_update_timeline(0, cfile->pointer_time);
+    }
+    return;
+  }
 
   if (user_data != NULL) {
     type = LIVES_POINTER_TO_INT(user_data);
@@ -10350,6 +10342,10 @@ void on_forward_pressed(LiVESButton * button, livespointer user_data) {
 boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                         livespointer user_data) {
   weed_timecode_t tc;
+  static boolean norecurse = FALSE;
+
+  if (norecurse) return TRUE;
+
   if (mainw->multitrack != NULL && (LIVES_IS_PLAYING || mainw->multitrack->is_paused)) {
     on_playall_activate(NULL, NULL);
     return TRUE;
@@ -10363,6 +10359,7 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
 
   if (cfile->play_paused) {
     cfile->pb_fps = cfile->freeze_fps;
+    //mainw->deltaticks -= mainw->currticks - mainw->timeout_ticks;
     if (cfile->pb_fps != 0.) mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
     else mainw->period = INT_MAX;
     cfile->play_paused = FALSE;
@@ -10385,11 +10382,14 @@ boolean freeze_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32
     cfile->freeze_fps = cfile->pb_fps;
     cfile->play_paused = TRUE;
     cfile->pb_fps = 0.;
-    mainw->deltaticks = 0;
+    mainw->timeout_ticks = mainw->currticks;
   }
 
   if (group != NULL) {
+    norecurse = TRUE;
+    g_print("SET spin to %f\n", cfile->pb_fps);
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
+    norecurse = FALSE;
   }
 
 #ifdef ENABLE_JACK

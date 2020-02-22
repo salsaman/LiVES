@@ -4888,9 +4888,9 @@ static void make_fx_defs_menu(int num_weed_compounds) {
     lives_free(string);
     lives_free(filter_type);
 
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "hidden", LIVES_INT_TO_POINTER((int)hidden));
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "secondary_list", &weed_fx_sorted_list);
-    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), "secondary_list_value", LIVES_INT_TO_POINTER(i));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), HIDDEN_KEY, LIVES_INT_TO_POINTER((int)hidden));
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), SECLIST_KEY, &weed_fx_sorted_list);
+    lives_widget_object_set_data(LIVES_WIDGET_OBJECT(menuitem), SECLIST_VAL_KEY, LIVES_INT_TO_POINTER(i));
 
     if (pkg != NULL) pkg_menu_list = lives_list_prepend(pkg_menu_list, (livespointer)menuitem);
     else {

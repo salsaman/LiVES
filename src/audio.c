@@ -2958,6 +2958,9 @@ void audio_cache_end(void) {
 
     if (cache_buffer->_filebuffer != NULL) lives_free(cache_buffer->_filebuffer);
   }
+
+  if (cache_buffer->_fd != -1) lives_close_buffered(cache_buffer->_fd);
+
   // make this threadsafe (kind of)
   xcache_buffer = cache_buffer;
   cache_buffer = NULL;

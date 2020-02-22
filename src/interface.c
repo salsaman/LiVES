@@ -1895,6 +1895,7 @@ _insertw *create_insert_dialog(void) {
   LiVESWidget *vseparator;
   LiVESWidget *cancelbutton;
   LiVESWidget *okbutton;
+  LiVESWidget *label;
 
   LiVESSList *radiobutton1_group = NULL;
   LiVESSList *radiobutton2_group = NULL;
@@ -1930,10 +1931,12 @@ _insertw *create_insert_dialog(void) {
 
   lives_box_pack_start(LIVES_BOX(hbox1), hbox, FALSE, FALSE, widget_opts.packing_width);
 
-  insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), FALSE, LIVES_BOX(hbox), NULL);
-
-  lives_widget_set_sensitive(LIVES_WIDGET(insertw->fit_checkbutton), cfile->achans > 0 && clipboard->achans == 0);
-
+  if (cfile->frames == 0)
+    insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert to fit audio"), mainw->fx1_bool, LIVES_BOX(hbox), NULL);
+  else
+    insertw->fit_checkbutton = lives_standard_check_button_new(_("_Insert from selection end to audio end"),
+                               mainw->fx1_bool, LIVES_BOX(hbox), NULL);
+  label = widget_opts.last_label;
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   table = lives_table_new(2, 3, FALSE);
@@ -1954,9 +1957,9 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  if (cfile->frames == 0) {
-    lives_widget_set_sensitive(radiobutton, FALSE);
-  }
+  if (cfile->frames == 0) lives_widget_set_sensitive(radiobutton, FALSE);
+
+  toggle_sets_sensitive_cond(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), radiobutton, &cfile->frames, NULL, TRUE);
 
   hbox = lives_hbox_new(FALSE, 0);
 
@@ -1968,6 +1971,8 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(radiobutton), insertw->fit_checkbutton, FALSE);
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), radiobutton, TRUE);
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton), mainw->insert_after);
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -1983,22 +1988,17 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
 
-  if (cfile->achans == 0 && clipboard->achans == 0) lives_widget_set_sensitive(insertw->with_sound, FALSE);
-
   hbox = lives_hbox_new(FALSE, 0);
 
   insertw->without_sound = lives_standard_radio_button_new(_("Insert with_out sound"),
                            &radiobutton2_group, LIVES_BOX(hbox), NULL);
 
-  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->without_sound),
-                                 !((cfile->achans > 0 || clipboard->achans > 0) && mainw->ccpd_with_sound));
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(insertw->with_sound),
+                                 (cfile->achans > 0 || clipboard->achans > 0) && mainw->ccpd_with_sound);
 
   lives_table_attach(LIVES_TABLE(table), hbox, 2, 3, 1, 2,
                      (LiVESAttachOptions)(LIVES_FILL),
                      (LiVESAttachOptions)(0), 0, 0);
-
-  lives_widget_set_sensitive(insertw->with_sound, clipboard->achans > 0 || cfile->achans > 0);
-  lives_widget_set_sensitive(insertw->without_sound, clipboard->achans > 0 || cfile->achans > 0);
 
   vseparator = lives_vseparator_new();
   lives_table_attach(LIVES_TABLE(table), vseparator, 1, 2, 0, 1,
@@ -2011,6 +2011,16 @@ _insertw *create_insert_dialog(void) {
                      (LiVESAttachOptions)(LIVES_FILL), 0, 0);
 
   add_fill_to_box(LIVES_BOX(dialog_vbox));
+
+  if (cfile->achans == 0 || (double)cfile->end / cfile->fps >= cfile->laudio_time - 0.0001) {
+    lives_widget_set_no_show_all(insertw->fit_checkbutton, TRUE);
+    lives_widget_set_no_show_all(label, TRUE);
+  } else {
+    toggle_toggles_var(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), &mainw->fx1_bool, FALSE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), insertw->spinbutton_times, TRUE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), insertw->with_sound, TRUE);
+    toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(insertw->fit_checkbutton), insertw->without_sound, TRUE);
+  }
 
   cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(insertw->insert_dialog), LIVES_STOCK_CANCEL, NULL,
                  LIVES_RESPONSE_CANCEL);
@@ -2028,12 +2038,6 @@ _insertw *create_insert_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
                        insertw);
-  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_insert_activate),
-                       NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(insertw->fit_checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_insfitaudio_toggled),
-                       NULL);
 
   lives_signal_connect_after(LIVES_GUI_OBJECT(insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),

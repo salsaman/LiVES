@@ -77,7 +77,7 @@ void load_theme_images(void) {
 
   if (error != NULL) {
     palette->style = STYLE_PLAIN;
-    g_print("writing error\n");
+    LIVES_ERROR("Theme Error !");
     lives_snprintf(prefs->theme, 64, "%%ERROR%%");
     lives_error_free(error);
   } else {
@@ -86,7 +86,8 @@ void load_theme_images(void) {
       width = lives_pixbuf_get_width(pixbuf);
       height = lives_pixbuf_get_height(pixbuf);
 
-      if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT, &width, &height);
+      if (width > IMSEP_MAX_WIDTH || height > IMSEP_MAX_HEIGHT) calc_maxspect(IMSEP_MAX_WIDTH, IMSEP_MAX_HEIGHT,
+            &width, &height);
 
       if (prefs->screen_scale < 1.) {
         width *= prefs->screen_scale;

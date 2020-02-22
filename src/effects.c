@@ -1053,7 +1053,7 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     end_override_if_activate_output(key);
   }
 
-  if (LIVES_IS_PLAYING && mainw->current_file > 0 && cfile->play_paused) {
+  if (LIVES_IS_PLAYING && CURRENT_CLIP_IS_VALID && cfile->play_paused) {
     mainw->force_show = TRUE;
   }
 
@@ -1137,7 +1137,7 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
-  if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->noswitch || mainw->blend_file == -1 ||
+  if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->blend_file == -1 ||
       mainw->blend_file == mainw->current_file || mainw->files[mainw->blend_file] == NULL || mainw->preview ||
       mainw->noswitch || (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;

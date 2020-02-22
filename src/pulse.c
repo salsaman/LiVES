@@ -414,7 +414,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
         }
       }
-      pulsed->real_seek_pos = pulsed->seek_pos = xseek;
+      if (msg->tc) {
+        xseek += (lives_get_current_ticks() - msg->tc) / TICKS_PER_SECOND_DBL * afile->arps * afile->achans * afile->asampsize / 8;
+        xseek = align_ceilng(xseek, afile->achans * (afile->asampsize >> 3));
+        lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek);
+      }
+      pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek;
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
       pulsed->in_use = TRUE;
       break;
@@ -1763,16 +1768,18 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
-  return pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  //return (double)pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  return (double)lives_buffered_offset(pulsed->fd) / (double)(afile->arps * afile->achans * afile->asampsize / 8);
 }
 
 
-boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
+boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
-  int64_t seekstart;
   volatile aserver_message_t *pmsg;
   ticks_t timeout;
+  int64_t seekstart;
+  double delta, thresh;
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
 
   if (frame < 1) frame = 1;
@@ -1784,9 +1791,15 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, int frame) {
     if (timeout == 0) LIVES_WARN("PA connect timed out");
     return FALSE;
   }
+
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
-  seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
-  pulse_audio_seek_bytes(pulsed, seekstart, afile);
+  seekstart = (int64_t)((double)(frame - 1.) / (double)(afile->fps) * (double)afile->arps) * afile->achans *
+              (afile->asampsize / 8);
+  delta = (double)(seekstart - lives_buffered_offset(pulsed->fd)) / (double)(afile->arps * afile->achans *
+          (afile->asampsize / 8));
+  thresh = 1. / (double)afile->fps;
+  if (delta >= thresh || delta <= -thresh)
+    pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;
 }
 

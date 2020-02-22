@@ -17,6 +17,7 @@
 #define afile mainw->files[jackd->playing_file]
 
 static jack_client_t *jack_transport_client;
+static lives_audio_buf_t *cache_buffer = NULL;
 
 static unsigned char *zero_buff = NULL;
 static size_t zero_buff_count = 0;
@@ -401,7 +402,6 @@ static int audio_process(nframes_t nframes, void *arg) {
   boolean from_memory = FALSE;
   boolean wait_cache_buffer = FALSE;
   boolean pl_error = FALSE; ///< flag tells if we had an error during plugin processing
-  lives_audio_buf_t *cache_buffer = NULL;
   size_t nbytes, rbytes;
 
   register int i;
@@ -1691,13 +1691,14 @@ double lives_jack_get_pos(jack_driver_t *jackd) {
 }
 
 
-boolean jack_audio_seek_frame(jack_driver_t *jackd, int frame) {
+boolean jack_audio_seek_frame(jack_driver_t *jackd, double frame) {
   // seek to frame "frame" in current audio file
   // position will be adjusted to (floor) nearest sample
 
   volatile aserver_message_t *jmsg;
   int64_t seekstart;
   ticks_t timeout;
+  double thresh = 0., delta = 0.;
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
 
   if (alarm_handle == ALL_USED) return FALSE;
@@ -1713,7 +1714,13 @@ boolean jack_audio_seek_frame(jack_driver_t *jackd, int frame) {
   }
   if (frame > afile->frames && afile->frames != 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / afile->fps * afile->arps) * afile->achans * (afile->asampsize / 8);
-  jack_audio_seek_bytes(jackd, seekstart, afile);
+  if (cache_buffer) {
+    delta = (double)(seekstart - lives_buffered_offset(cache_buffer->_fd)) / (double)(afile->arps * afile->achans *
+            (afile->asampsize / 8));
+    thresh = 1. / (double)afile->fps;
+  }
+  if (delta >= thresh || delta <= -thresh)
+    jack_audio_seek_bytes(jackd, seekstart, afile);
   return TRUE;
 }
 

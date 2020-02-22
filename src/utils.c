@@ -774,24 +774,6 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
 }
 
 
-/// reallocate the source buffer if mallopt() has been called
-static uint8_t *revalidate_buffers(uint8_t *ptr) {
-/* #ifdef HAVE_PULSE_AUDIO */
-/*   if (mainw->pulsed != NULL && ptr == mainw->pulsed->aPlayPtr->data) { */
-/*     mainw->pulsed->aPlayPtr->data = lives_calloc_safety(mainw->pulsed->aPlayPtr->max_size / 4 + 1, 4); */
-/*     ptr = (uint8_t *)mainw->pulsed->aPlayPtr->data; */
-/*   } else */
-/* #endif */
-
-/*     if (ptr == (uint8_t *)audio_cache_get_buffer()) { */
-/*       lives_audio_buf_t *cbuffer = (lives_audio_buf_t *)ptr; */
-/*       ptr = cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize); */
-/*     } */
-
-  return ptr;
-}
-
-
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less) {
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
@@ -1599,7 +1581,7 @@ void calc_aframeno(int fileno) {
 }
 
 
-int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
+int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // returns a frame number (floor) using sfile->last_frameno and ntc-otc
   // takes into account looping modes
 
@@ -1632,7 +1614,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   static int nframe = -1;
 
-  int first_frame, last_frame;
+  int64_t first_frame, last_frame;
 
   boolean do_resync = FALSE;
 
@@ -1666,7 +1648,7 @@ int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   *ntc = otc + dtc;
 
   // nframe is our new frame
-  nframe = cframe + myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
+  nframe = cframe + (int64_t)myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
   if (nframe == cframe || mainw->foreign) {
     cframe = nframe;
     nframe = -1;

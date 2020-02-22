@@ -6498,7 +6498,7 @@ boolean weed_init_effect(int hotkey) {
 
     if (mainw->current_file > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR &&
         (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
-      if (mainw->noswitch || mainw->is_processing || mainw->preview) {
+      if (mainw->is_processing || mainw->preview) {
         mainw->error = TRUE;
         filter_mutex_unlock(hotkey);
         return FALSE; // stopping fg gen will cause clip to switch
@@ -6538,7 +6538,7 @@ boolean weed_init_effect(int hotkey) {
         fg_generator_key = hotkey;
         fg_generator_mode = key_modes[hotkey];
         gen_start = TRUE;
-      } else if (!fg_modeswitch && mainw->num_tr_applied == 0 && (mainw->noswitch || mainw->is_processing || mainw->preview))  {
+      } else if (!fg_modeswitch && mainw->num_tr_applied == 0 && (mainw->is_processing || mainw->preview))  {
         mainw->error = TRUE;
         filter_mutex_unlock(hotkey);
         return FALSE;
@@ -7546,12 +7546,15 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   // create a virtual clip
   int new_file = 0;
   boolean is_bg = FALSE;
+  boolean noswitch = mainw->noswitch;
 
   //weed_instance_ref(inst);
   //filter_mutex_lock(key);
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
+    mainw->noswitch = FALSE;
     close_current_file(0);
+    mainw->noswitch = noswitch;
     old_file = -1;
   }
 
@@ -7629,7 +7632,9 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if ((num_channels = weed_leaf_num_elements(inst, WEED_LEAF_OUT_CHANNELS)) == 0) {
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
+    mainw->noswitch = FALSE;
     close_current_file(mainw->pre_src_file);
+    mainw->noswitch = noswitch;
     return 4;
   }
   out_channels = weed_get_plantptr_array(inst, WEED_LEAF_OUT_CHANNELS, &error);
@@ -7637,7 +7642,9 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     lives_free(out_channels);
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
+    mainw->noswitch = FALSE;
     close_current_file(mainw->pre_src_file);
+    mainw->noswitch = noswitch;
     return 5;
   }
   lives_free(out_channels);
@@ -7719,15 +7726,18 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       if (mainw->current_file == -1) mainw->current_file = new_file;
 
       if (new_file != old_file) {
+        //mainw->new_clip = new_file;
+
         filter_mutex_unlock(key); // else we get stuck pulling a frame
         do_quick_switch(new_file);
         filter_mutex_lock(key);
+        mainw->force_show = TRUE;
 
         // switch audio clip
-        if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-            && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) {
-          switch_audio_clip(new_file, TRUE);
-        }
+        /* if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) */
+        /*     && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) { */
+        /*   switch_audio_clip(new_file, TRUE); */
+        /* } */
 
         if (mainw->files[mainw->new_blend_file] != NULL) mainw->blend_file = mainw->new_blend_file;
         if (!is_bg && blend_file != -1 && mainw->files[blend_file] != NULL) mainw->blend_file = blend_file;
@@ -7739,11 +7749,11 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       //if (old_file==-1) mainw->whentostop=STOP_ON_VID_END;
     } else {
       if (mainw->current_file == -1) {
-        mainw->current_file = new_file;
-        if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-            && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) {
-          switch_audio_clip(new_file, TRUE);
-        }
+        /* mainw->current_file = new_file; */
+        /* if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) */
+        /*     && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || prefs->audio_src == AUDIO_SRC_EXT))) { */
+        /*   switch_audio_clip(new_file, TRUE); */
+        /* } */
       } else mainw->blend_file = new_file;
       if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                                || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))
@@ -7790,6 +7800,7 @@ void weed_generator_end(weed_plant_t *inst) {
   lives_whentostop_t wts = mainw->whentostop;
   boolean is_bg = FALSE;
   boolean clip_switched = mainw->clip_switched;
+  boolean noswitch = mainw->noswitch;
   int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
 
   if (inst == NULL) {
@@ -7882,7 +7893,9 @@ void weed_generator_end(weed_plant_t *inst) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
+      mainw->noswitch = FALSE;
       close_current_file(mainw->pre_src_file);
+      mainw->noswitch = noswitch;
     }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {
@@ -7891,8 +7904,12 @@ void weed_generator_end(weed_plant_t *inst) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
-      if (cfile->achans == 0)
+      if (cfile->achans == 0) {
+        boolean noswitch = mainw->noswitch;
+        mainw->noswitch = FALSE;
         close_current_file(mainw->pre_src_file);
+        mainw->noswitch = noswitch;
+      }
     }
     if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
   }

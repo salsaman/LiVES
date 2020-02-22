@@ -59,6 +59,7 @@
 /* message passing structure */
 typedef struct _aserver_message_t {
   volatile int command;
+  ticks_t tc;
   volatile char *data;
   volatile struct _aserver_message_t *next;
 } aserver_message_t;
@@ -206,7 +207,7 @@ void pulse_rec_audio_end(boolean close_dev, boolean close_fd);
 void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_plant_t *st_event, boolean exact);
 void wake_audio_thread(void);
 
-boolean resync_audio(int frameno);
+boolean resync_audio(double frameno);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
     weed_timecode_t fill_tc, int what_to_get, boolean exact);

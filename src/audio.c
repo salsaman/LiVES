@@ -2477,7 +2477,7 @@ void free_pulse_audio_buffers(void) {
    this is only active if "audio follows video rate/fps changes" is set
    and various other conditions are met.
 */
-boolean resync_audio(int frameno) {
+boolean resync_audio(double frameno) {
   if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
 
   // if recording external audio, we are intrinsically in sync

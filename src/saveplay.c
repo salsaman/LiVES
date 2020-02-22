@@ -2201,6 +2201,7 @@ void play_file(void) {
     cfile->pb_fps = -cfile->pb_fps;
     cfile->frameno = mainw->play_end;
   }
+  cfile->last_frameno = cfile->frameno;
   mainw->reverse_pb = FALSE;
 
   mainw->swapped_clip = -1;
@@ -2216,7 +2217,7 @@ void play_file(void) {
 
   if (mainw->num_tr_applied > 0 && !mainw->preview && mainw->blend_file > -1) {
     /// reset frame counter for blend_file
-    mainw->files[mainw->blend_file]->frameno = 1;
+    mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->last_frameno = 1;
     mainw->files[mainw->blend_file]->aseek_pos = 0;
   }
 
@@ -3440,7 +3441,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
   cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
-  cfile->frameno = cfile->last_frameno = 0;
+  cfile->frameno = cfile->last_frameno = 1;
   cfile->proc_ptr = NULL;
   cfile->progress_start = cfile->progress_end = 0;
   cfile->play_paused = cfile->nokeep = FALSE;
@@ -5776,9 +5777,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       last_good_file = mainw->current_file;
 
-      if (cfile->achans) cfile->aseek_pos = (int64_t)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate *
-                                              cfile->achans * (cfile->asampsize / 8));
-
       if (cfile->needs_update || cfile->needs_silent_update) {
         if (cfile->needs_update) do_clip_divergence_error(mainw->current_file);
         save_clip_values(mainw->current_file);
@@ -5794,6 +5792,13 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       cfile->changed = TRUE;
       lives_rm(cfile->info_file);
       set_main_title(cfile->name, 0);
+
+      if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
+      if (cfile->achans) {
+        cfile->aseek_pos = (long)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                           (cfile->asampsize / 8);
+        if (cfile->aseek_pos > cfile->laudio_time) cfile->aseek_pos = 0.;
+      }
 
       if (mainw->multitrack == NULL) {
         resize(1);

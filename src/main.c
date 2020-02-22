@@ -8359,6 +8359,7 @@ lfi_done:
             pulse_message.data = lives_strdup_printf("%d", new_file);
 
             pulse_message2.command = ASERVER_CMD_FILE_SEEK;
+            //pulse_message2.tc = mainw->currticks;
             pulse_message.next = &pulse_message2;
             pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
             pulse_message2.next = NULL;

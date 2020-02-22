@@ -1221,11 +1221,13 @@ int process_one(boolean visible) {
 
   if (!visible) {
     // INTERNAL PLAYER
-    if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
-      mainw->pre_src_file = mainw->new_clip;
-      switch_clip(0, mainw->new_clip, FALSE);
-      mainw->new_clip = -1;
 
+    if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
+      do_quick_switch(mainw->new_clip);
+      mainw->force_show = TRUE;
+      mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+      mainw->deltaticks = 0;
+      mainw->new_clip = -1;
     }
 
     /* if (prefs->loadchecktime > 0.) { */
@@ -1457,6 +1459,24 @@ int process_one(boolean visible) {
         }
       }
 
+#ifdef ENABLE_JACK
+      // note the audio seek position
+      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+        cfile->aseek_pos = mainw->jackd->seek_pos;
+      }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+      // note the audio seek position
+      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+        cfile->aseek_pos = mainw->pulsed->seek_pos;
+      }
+#endif
+#if 0
+      if (prefs->audio_player == AUD_PLAYER_NONE) {
+        cfile->aseek_pos = nullaudio_get_seek_pos();
+      }
+#endif
+
       if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
                                 mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
           (mainw->fixed_fpsd > 0. && (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
@@ -1464,23 +1484,6 @@ int process_one(boolean visible) {
            (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         // time to show a new frame
 
-#ifdef ENABLE_JACK
-        // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-          cfile->aseek_pos = mainw->jackd->seek_pos;
-        }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-        // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-          cfile->aseek_pos = mainw->pulsed->seek_pos;
-        }
-#endif
-#if 0
-        if (prefs->audio_player == AUD_PLAYER_NONE) {
-          cfile->aseek_pos = nullaudio_get_seek_pos();
-        }
-#endif
         if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
                                  mainw->preview_rendering || (mainw->multitrack != NULL &&
                                      !mainw->multitrack->is_rendering))) {

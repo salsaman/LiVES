@@ -151,7 +151,7 @@ void pa_mloop_unlock(void);
 
 //////////////////////
 
-boolean pulse_audio_seek_frame(pulse_driver_t *, int frame);  ///< seek to (video) frame
+boolean pulse_audio_seek_frame(pulse_driver_t *, double frame);  ///< seek to (video) frame
 
 void pulse_get_rec_avals(pulse_driver_t *);
 

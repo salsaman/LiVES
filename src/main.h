@@ -1455,7 +1455,7 @@ LiVESPixbuf *lives_pixbuf_new_blank(int width, int height, int palette);
 const char *lives_strappend(const char *string, int len, const char *newbit);
 const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 void find_when_to_stop(void);
-int calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
+int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc);
 void calc_aframeno(int fileno);
 void minimise_aspect_delta(double allowed_aspect, int hblock, int vblock, int hsize, int vsize, int *width, int *height);
 LiVESInterpType get_interp_value(short quality);

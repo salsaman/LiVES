@@ -1891,10 +1891,13 @@ static void *render_thread_func(void *data) {
     while (!has_new_texture && playing) {
       pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
+      if (!playing) {
+        rthread_ready = FALSE;
+        pthread_mutex_unlock(&cond_mutex);
+        break;
+      }
       pthread_mutex_unlock(&cond_mutex);
     }
-    if (!playing) break;
-
     Upload();
   }
 
@@ -2074,10 +2077,12 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   playing = FALSE;
 
   pthread_mutex_lock(&cond_mutex);
-  pthread_cond_signal(&cond);
-  pthread_mutex_unlock(&cond_mutex);
-
-  pthread_join(rthread, NULL);
+  /// render thread can exi when we set playing == FALSE. so we need to check for that here else we can hang in pthread_cond_signal (!)
+  if (rthread_ready) {
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+    pthread_join(rthread, NULL);
+  } else pthread_mutex_unlock(&cond_mutex);
 
   if (texturebuf != NULL) {
     if (weed_free)
@@ -2086,6 +2091,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
 
   free(textures);
 
+  XLockDisplay(dpy);
   if (!is_ext) {
     XUnmapWindow(dpy, xWin);
     XDestroyWindow(dpy, xWin);
@@ -2096,6 +2102,7 @@ void exit_screen(int16_t mouse_x, int16_t mouse_y) {
   pthread_mutex_lock(&dpy_mutex);
   glXMakeContextCurrent(dpy, 0, 0, 0);
   glXDestroyContext(dpy, context);
+  XUnlockDisplay(dpy);
   XCloseDisplay(dpy);
   dpy = NULL;
   pthread_mutex_unlock(&dpy_mutex);

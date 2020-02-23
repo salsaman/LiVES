@@ -588,9 +588,16 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 #endif
 
   // override defaults
-  vStream->time_base = (AVRational) {
-    1, target_fps
-  };
+  if (fabs(target_fps * 100100. - (double)((int)(target_fps + .5) * 100000)) < 1.) {
+    vStream->time_base = (AVRational) {
+      1001, (int)(target_fps + .5) * 1000
+    };
+  } else {
+    vStream->time_base = (AVRational) {
+      1000, (int)(target_fps + .5) * 1000
+    };
+  }
+
   vStream->codec->time_base = vStream->time_base;
 
   vStream->codec->width = width;

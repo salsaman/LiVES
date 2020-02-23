@@ -4873,9 +4873,6 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
     resync_audio(cfile->frameno + (mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps);
-    g_print("here %d %ld + %ld - %ld\n", cfile->frameno, mainw->currticks, mainw->deltaticks, mainw->startticks);
-
-    //resync_audio(cfile->frameno + xyzzy);
   }
 
   // change play direction

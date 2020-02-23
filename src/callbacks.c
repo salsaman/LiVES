@@ -10568,6 +10568,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
           if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno);
 	  // *INDENT-OFF*
         }}}}
+  // *INDENT-ON*
 
   return TRUE;
 }

@@ -423,10 +423,6 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (jackd->playing_file != new_file) {
         jackd->playing_file = new_file;
       }
-      jackd->num_input_channels = afile->achans;
-      jackd->sample_in_rate = afile->arate;
-      jackd->bytes_per_channel = afile->asampsize / 8;
-      jackd->seek_pos = jackd->real_seek_pos = 0;
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
@@ -435,6 +431,11 @@ static int audio_process(nframes_t nframes, void *arg) {
     case ASERVER_CMD_FILE_SEEK:
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
+      if (msg->tc) {
+        xseek += (lives_get_current_ticks() - msg->tc) / TICKS_PER_SECOND_DBL * afile->arps * afile->achans * afile->asampsize / 8;
+        xseek = align_ceilng(xseek, afile->achans * (afile->asampsize >> 3));
+        msg->tc = 0;
+      }
       jackd->seek_pos = jackd->real_seek_pos = xseek;
       jackd->in_use = TRUE;
       break;
@@ -1759,6 +1760,7 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t 
   if (seekstart < 0) seekstart = 0;
   if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
   jack_message2.command = ASERVER_CMD_FILE_SEEK;
+  jack_message2.tc = lives_get_current_ticks();
   jack_message2.next = NULL;
   jack_message2.data = lives_strdup_printf("%"PRId64, seekstart);
   if (jackd->msgq == NULL) jackd->msgq = &jack_message2;

@@ -5792,7 +5792,6 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
 #ifdef USE_LIBPNG
     {
-      FILE *fp;
       boolean ret;
       int fd;
 
@@ -6245,6 +6244,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     weed_plant_t *layer;
     weed_timecode_t tc;
     const char *img_ext;
+    int width, height;
   } pft_priv_data;
 
 
@@ -6253,6 +6253,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     weed_plant_t *layer = data->layer;
     weed_timecode_t tc = data->tc;
     const char *img_ext = data->img_ext;
+    int width = data->width, height = data->height;
     lives_free(in);
 
     /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
@@ -6273,13 +6274,13 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
           gamma_convert_layer(mainw->blend_gamma, layer);
       }
     } else {
-      pull_frame_at_size(layer, img_ext, tc, 0, 0, WEED_PALETTE_END);
+      pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_END);
     }
     return NULL;
   }
 
 
-  void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc) {
+  void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc, int width, int height) {
     // pull a frame from an external source into a layer
     // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
 
@@ -6298,6 +6299,8 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     weed_set_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, (void *)frame_thread);
     in->img_ext = img_ext;
     in->layer = layer;
+    in->width = width;
+    in->height = height;
     in->tc = tc;
 
     lives_thread_create(frame_thread, NULL, pft_thread, (void *)in);
@@ -6905,7 +6908,7 @@ align:
                 img_ext = get_image_ext_for_type(mainw->files[nclip]->img_type);
                 // set alt src in layer
                 weed_set_voidptr_value(layers[i], WEED_LEAF_HOST_DECODER, (void *)mainw->track_decoders[i]);
-                pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks);
+                pull_frame_threaded(layers[i], img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
               } else {
                 weed_layer_pixel_data_free(layers[i]);
               }
@@ -6955,7 +6958,7 @@ align:
               }
               sched_yield();
             } else {
-              pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
+              pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
             }
           }
           //g_print("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -8260,6 +8263,7 @@ lfi_done:
           jack_message2.command = ASERVER_CMD_FILE_SEEK;
           jack_message.next = &jack_message2;
           jack_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
+          jack_message2.tc = 0;
           jack_message2.next = NULL;
 
           mainw->jackd->msgq = &jack_message;
@@ -8359,7 +8363,7 @@ lfi_done:
             pulse_message.data = lives_strdup_printf("%d", new_file);
 
             pulse_message2.command = ASERVER_CMD_FILE_SEEK;
-            //pulse_message2.tc = mainw->currticks;
+            pulse_message2.tc = 0;
             pulse_message.next = &pulse_message2;
             pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
             pulse_message2.next = NULL;
@@ -8464,18 +8468,6 @@ lfi_done:
         unlock_loop_lock();
       }
 
-      // switch audio clip
-      if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-          && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                      || prefs->audio_src == AUDIO_SRC_EXT))) {
-        switch_audio_clip(new_file, TRUE);
-      }
-
-      if (!mainw->fs && !mainw->faded) {
-        redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);
-        sched_yield();
-      }
-
       mainw->whentostop = NEVER_STOP;
 
       mainw->switch_during_pb = TRUE;
@@ -8571,6 +8563,18 @@ lfi_done:
       mainw->switch_during_pb = FALSE;
       mainw->osc_block = osc_block;
       sched_yield();
+
+      // switch audio clip
+      if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+          && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
+                                      || prefs->audio_src == AUDIO_SRC_EXT))) {
+        switch_audio_clip(new_file, TRUE);
+      }
+
+      if (!mainw->fs && !mainw->faded) {
+        redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);
+        sched_yield();
+      }
     }
 
 

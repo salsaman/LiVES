@@ -91,6 +91,8 @@ boolean transcode(int start, int end) {
   int resp;
   int asigned = 0, aendian = 0;
   int nsamps;
+  int interp = LIVES_INTERP_FAST; /// TODO - get quality setting
+  int width, height, pwidth, pheight;
 
   register int i = 0, j;
 
@@ -217,10 +219,9 @@ boolean transcode(int start, int end) {
         }
         if (cfile->asampsize == 8) {
           sbuff = (short *)lives_malloc((int)(spf + 1.) * cfile->achans * 2); // one extra sample to allow for rounding
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   if (!(*vpp->init_screen)(vpp->fwidth, vpp->fheight, FALSE, 0, vpp->extra_argc, vpp->extra_argv)) {
     error = TRUE;
@@ -249,6 +250,14 @@ boolean transcode(int start, int end) {
 
   needs_dprint = TRUE;
 
+  width = pwidth = vpp->fwidth;
+  height = pheight = vpp->fheight;
+  if (prefs->letterbox) {
+    width = cfile->hsize;
+    height = cfile->vsize;
+    get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
+  }
+
   // encoding loop
   for (i = start; i <= end; i++) {
     // set the frame number to pull
@@ -257,7 +266,7 @@ boolean transcode(int start, int end) {
     // - pull next frame (thread)
     pull_frame_threaded(frame_layer, img_ext,
                         (weed_timecode_t)(currticks = q_gint64((i - start) / cfile->fps * TICKS_PER_SECOND_DBL,
-                                          cfile->fps)));
+                                          cfile->fps)), width, height);
 
     if (mainw->fx1_bool) {
       frame_layer = on_rte_apply(frame_layer, cfile->hsize, cfile->vsize, (weed_timecode_t)currticks);
@@ -328,6 +337,18 @@ boolean transcode(int start, int end) {
     // get frame, send it
     //if (deinterlace) weed_leaf_set(frame_layer, WEED_LEAF_HOST_DEINTERLACE, WEED_TRUE);
     check_layer_ready(frame_layer); // ensure all threads are complete. optionally deinterlace, optionally overlay subtitles.
+    width = weed_layer_get_width(frame_layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(frame_layer));
+    height = weed_layer_get_height(frame_layer);
+
+    if (prefs->letterbox && (pwidth != width || pheight != height)) {
+      get_letterbox_sizes(&pwidth, &pheight, &width, &height, (mainw->vpp->capabilities & VPP_CAN_RESIZE));
+      if (!letterbox_layer(frame_layer, pwidth, pheight, width, height, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
+    }
+
+    if (((width ^ pwidth) >> 2) || ((height ^ pheight) >> 1)) {
+      if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
+    }
+
     gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
     convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
     gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);

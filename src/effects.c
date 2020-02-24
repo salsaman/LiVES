@@ -947,7 +947,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   blend_tc = ntc;
 
   mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), tc);
+  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), tc, 0, 0);
   return mainw->blend_layer;
 }
 

@@ -415,9 +415,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         }
       }
       if (msg->tc) {
-        xseek += (lives_get_current_ticks() - msg->tc) / TICKS_PER_SECOND_DBL * afile->arps * afile->achans * afile->asampsize / 8;
+        xseek += (lives_get_current_ticks() - msg->tc) / TICKS_PER_SECOND_DBL
+                 * pulsed->in_arate * afile->achans * afile->asampsize / 8;
         xseek = align_ceilng(xseek, afile->achans * (afile->asampsize >> 3));
         lives_lseek_buffered_rdonly_absolute(pulsed->fd, xseek);
+        msg->tc = 0;
       }
       pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek;
       pa_stream_trigger(pulsed->pstream, NULL, NULL);
@@ -1834,6 +1836,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
   pulse_message2.command = ASERVER_CMD_FILE_SEEK;
   pulse_message2.next = NULL;
   pulse_message2.data = lives_strdup_printf("%"PRId64, seekstart);
+  pulse_message2.tc = lives_get_current_ticks();
   if (pulsed->msgq == NULL) pulsed->msgq = &pulse_message2;
   else pulsed->msgq->next = &pulse_message2;
   return seekstart;

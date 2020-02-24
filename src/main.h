@@ -1221,7 +1221,7 @@ void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 
 boolean pull_frame(weed_plant_t *layer, const char *image_ext, ticks_t tc);
-void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, ticks_t tc);
+void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, ticks_t tc, int width, int height);
 void check_layer_ready(weed_plant_t *layer);
 boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);

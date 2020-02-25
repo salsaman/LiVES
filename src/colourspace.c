@@ -77,7 +77,7 @@ static swsctx_block *sws_getblock(int nreq) {
     if (swctx_count + nreq > MAX_THREADS) abort();
     bestblock = &bloxx[nb++];
     bestblock->in_use = TRUE;
-    bestblock->num = nreq--;
+    bestblock->num = nreq;
     bestblock->offset = swctx_count;
     for (i = nreq; i != 0; i--) swscalep[swctx_count++] = NULL;
   }
@@ -280,12 +280,13 @@ static inline void update_gamma_lut(int gamma_from, int gamma_to) {
     switch (gamma_to) {
     // simple power law transformation
     case WEED_GAMMA_MONITOR:
-      //if (fwd)
+      if (gamma_from == WEED_GAMMA_SRGB) {
+        a = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+      } else if (gamma_from == WEED_GAMMA_BT709) {
+        x = (a <= 0.081) ? a / 4.5 : powf((a + 0.099) / 1.099, 1. / 0.45);
+      }
       x = powf(a, inv_gamma);
-      //else
-      //x = powf(a, gamma);
       break;
-
     // rec 709 gamma
     case WEED_GAMMA_BT709:
       switch (gamma_from) {
@@ -319,6 +320,8 @@ static inline void update_gamma_lut(int gamma_from, int gamma_to) {
       else {
         if (gamma_from == WEED_GAMMA_SRGB)
           x = (a <= 0.04045) ? a / 12.92 : powf((a + 0.055) / 1.055, 2.4);
+        else if (gamma_from == WEED_GAMMA_MONITOR)
+          x = powf(a, prefs->screen_gamma);
       }
       break;
 
@@ -462,7 +465,6 @@ static void init_RGB_to_YUV_tables(void) {
                         * CLAMP_FACTOR_UV * SCALE_FACTOR);
     HCr_Bc[i] = myround(-fac * KB_BT709 * (double)i
                         * CLAMP_FACTOR_UV * SCALE_FACTOR);
-
   }
 
   for (i = 0; i < 256; i++) {
@@ -501,10 +503,10 @@ static void init_YUV_to_RGB_tables(void) {
   // These values are for what I call YUV_SUBSPACE_YCBCR
 
   /* clip Y values under 16 */
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) {
     RGB_Yc[i] = 0;
   }
-  for (; i < Y_CLAMP_MAX; i++) {
+  for (; i < Y_CLAMP_MAXI; i++) {
     RGB_Yc[i] = myround(((double)i - YUV_CLAMP_MIN) / (Y_CLAMP_MAX - YUV_CLAMP_MIN) * 255. * SCALE_FACTOR);
   }
   /* clip Y values above 235 */
@@ -513,13 +515,13 @@ static void init_YUV_to_RGB_tables(void) {
   }
 
   /* clip Cb/Cr values below 16 */
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) {
     R_Crc[i] = 0;
     G_Crc[i] = 0;
     G_Cbc[i] = 0;
     B_Cbc[i] = 0;
   }
-  for (; i < UV_CLAMP_MAX; i++) {
+  for (; i < UV_CLAMP_MAXI; i++) {
     R_Crc[i] = myround(2. * (1. - KR_YCBCR) * ((((double)i - YUV_CLAMP_MIN) /
                        (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                        SCALE_FACTOR); // 2*(1-Kr)
@@ -564,10 +566,10 @@ static void init_YUV_to_RGB_tables(void) {
   // These values are for what I call YUV_SUBSPACE_BT709
 
   /* clip Y values under 16 */
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) {
     HRGB_Yc[i] = 0;
   }
-  for (; i < Y_CLAMP_MAX; i++) {
+  for (; i < Y_CLAMP_MAXI; i++) {
     HRGB_Yc[i] = myround(((double)i - YUV_CLAMP_MIN) / (Y_CLAMP_MAX - YUV_CLAMP_MIN) * 255. * SCALE_FACTOR);
   }
   /* clip Y values above 235 */
@@ -576,13 +578,13 @@ static void init_YUV_to_RGB_tables(void) {
   }
 
   /* clip Cb/Cr values below 16 */
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) {
     HR_Crc[i] = 0;
     HG_Crc[i] = 0;
     HG_Cbc[i] = 0;
     HB_Cbc[i] = 0;
   }
-  for (; i < UV_CLAMP_MAX; i++) {
+  for (; i < UV_CLAMP_MAXI; i++) {
     HR_Crc[i] = myround(2. * (1. - KR_BT709) * ((((double)i - YUV_CLAMP_MIN) /
                         (UV_CLAMP_MAX - YUV_CLAMP_MIN) * 255.) - UV_BIAS) *
                         SCALE_FACTOR); // 2*(1-Kr)
@@ -623,20 +625,20 @@ static void init_YUV_to_YUV_tables(void) {
   register int i;
 
   // init clamped -> unclamped, same subspace
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i <= YUV_CLAMP_MINI; i++) {
     Yclamped_to_Yunclamped[i] = 0;
   }
-  for (; i < Y_CLAMP_MAX; i++) {
+  for (; i < Y_CLAMP_MAXI; i++) {
     Yclamped_to_Yunclamped[i] = myround((i - YUV_CLAMP_MIN) * 255. / (Y_CLAMP_MAX - YUV_CLAMP_MIN));
   }
   for (; i < 256; i++) {
     Yclamped_to_Yunclamped[i] = 255;
   }
 
-  for (i = 0; i < YUV_CLAMP_MIN; i++) {
+  for (i = 0; i < YUV_CLAMP_MINI; i++) {
     UVclamped_to_UVunclamped[i] = 0;
   }
-  for (; i < UV_CLAMP_MAX; i++) {
+  for (; i < UV_CLAMP_MAXI; i++) {
     UVclamped_to_UVunclamped[i] = myround((i - YUV_CLAMP_MIN) * 255. / (UV_CLAMP_MAX - YUV_CLAMP_MIN));
   }
   for (; i < 256; i++) {
@@ -3041,7 +3043,7 @@ static void convert_rgb_to_yuv420_frame(uint8_t *rgbdata, int hsize, int vsize, 
                                         uint8_t **dest, boolean is_422, boolean has_alpha, int subspace, int clamping) {
   // for odd sized widths, cut the rightmost pixel
   // TODO - handle different out sampling types
-  uint16_t *rgbdata16;
+  uint16_t *rgbdata16 = NULL;
   uint8_t *y, *Cb, *Cr;
   uyvy_macropixel u;
   boolean chroma_row = TRUE;
@@ -8700,7 +8702,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   if (weed_palette_is_rgb(inpl) && !weed_palette_is_rgb(outpl)) {
     if (prefs->apply_gamma) {
       // gamma correction
-      if (prefs->btgamma && osubspace == WEED_YUV_SUBSPACE_BT709) {
+      if (osubspace == WEED_YUV_SUBSPACE_BT709) {
         gamma_convert_layer(WEED_GAMMA_BT709, layer);
       } else gamma_convert_layer(WEED_GAMMA_SRGB, layer);
     }
@@ -10224,8 +10226,10 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   } else {
     weed_set_int_value(layer, WEED_LEAF_YUV_CLAMPING, oclamping);
     if (weed_palette_is_rgb(inpl)) {
-      // TODO - bt709
-      weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_YCBCR);
+      if (weed_layer_get_gamma(layer) == WEED_GAMMA_BT709)
+        weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
+      else
+        weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_YCBCR);
     }
     if (!weed_plant_has_leaf(layer, WEED_LEAF_YUV_SAMPLING)) weed_set_int_value(layer,
           WEED_LEAF_YUV_SAMPLING, WEED_YUV_SAMPLING_DEFAULT);
@@ -10493,7 +10497,7 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
 
 
 
-LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
+LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
   // create a gdkpixbuf from a weed layer
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
 
@@ -10537,8 +10541,13 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
         // force conversion to RGB24 or RGBA32
         xpalette = WEED_PALETTE_END;
       } else {
-        gamma_convert_layer(WEED_GAMMA_SRGB, layer);
+        sched_yield();
+        if (fordisplay)
+          gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
+        else
+          gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
+      sched_yield();
     }
     switch (xpalette) {
     case WEED_PALETTE_RGB24:
@@ -10610,6 +10619,7 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette) {
       pixel_data += irowstride;
     }
     weed_layer_pixel_data_free(layer);
+    sched_yield();
   }
 
   return pixbuf;
@@ -11020,6 +11030,13 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     out_pixel_data = weed_layer_get_pixel_data(layer, &oplanes);
     orowstrides = weed_layer_get_rowstrides(layer, NULL);
 
+    if (weed_palette_is_rgb(palette)) {
+      if (new_gamma_type == WEED_GAMMA_BT709) subspace = WEED_YUV_SUBSPACE_BT709;
+    } else if (weed_palette_is_yuv(palette)) {
+      if (new_gamma_type == WEED_GAMMA_BT709 || weed_layer_get_yuv_subspace(old_layer) == WEED_YUV_SUBSPACE_BT709)
+        subspace = WEED_YUV_SUBSPACE_BT709;
+    }
+
     for (i = 0; i < 4; i++) {
       // swscale always likes 4 elements, even if fewer planes are used
       if (i < oplanes) {
@@ -11061,6 +11078,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #if USE_THREADS
     ctxblock = sws_getblock(nthrds);
     offset = ctxblock->offset;
+    sched_yield();
     for (int sl = nthrds - 1; sl >= 0; sl--) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
@@ -11110,6 +11128,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight, (uint8_t *const *)opd, orw);
   }
 #endif
+    sched_yield();
 #ifdef DEBUG_RESIZE
     g_print("after resize with swscale: layer size %d X %d, palette %s (assumed succesful)\n", width, height,
             weed_palette_get_name_full(opal_hint, oclamp_hint, 0));
@@ -11154,8 +11173,8 @@ case WEED_PALETTE_RGBA32:
 case WEED_PALETTE_BGRA32:
 
   // create a new pixbuf
-  gamma_convert_layer(cfile->gamma_type, layer);
-  pixbuf = layer_to_pixbuf(layer, FALSE);
+  //gamma_convert_layer(cfile->gamma_type, layer);
+  pixbuf = layer_to_pixbuf(layer, FALSE, FALSE);
 
   threaded_dialog_spin(0.);
   new_pixbuf = lives_pixbuf_scale_simple(pixbuf, width, height, interp);

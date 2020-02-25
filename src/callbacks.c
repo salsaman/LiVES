@@ -4923,7 +4923,6 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
     list_index = lives_list_find(mainw->cliplist,
                                  LIVES_INT_TO_POINTER(mainw->swapped_clip == -1 ? mainw->current_file : mainw->swapped_clip));
   }
-
   mainw->swapped_clip = -1;
 
   num_clips = lives_list_length(mainw->cliplist);
@@ -10498,7 +10497,9 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   } else return FALSE;
 
   avsync -= (mainw->actual_frame - 1.) / cfile->fps
-            + (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
+            + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)
+                       + mainw->deltaticks - mainw->startticks)
+            / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;

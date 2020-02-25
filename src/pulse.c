@@ -486,7 +486,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     }
 
     // time interpolation
-    pulsed->extrausec += (float)nbytes / (float)(pulsed->out_arate * pulsed->out_achans * pulsed->out_asamps) * 1000000.;
+    pulsed->extrausec += (double)nbytes / (double)(pulsed->out_arate * pulsed->out_achans * pulsed->out_asamps) * 1000000.;
 
     if (LIVES_LIKELY(pulseFramesAvailable > 0 && (pulsed->read_abuf > -1 ||
                      (pulsed->aPlayPtr != NULL
@@ -1176,7 +1176,7 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
   }
 
   // time interpolation
-  pulsed->extrausec += (float)rbytes / (float)(pulsed->in_arate * pulsed->in_achans * pulsed->in_asamps) * 1000000000.;
+  pulsed->extrausec += (double)rbytes / (double)(pulsed->in_arate * pulsed->in_achans * pulsed->in_asamps) * 1000000.;
 
   pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
 
@@ -1753,11 +1753,11 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   if (timeout == 0) return -1;
   retusec = usec;
   if (last_usec > 0 && usec <= last_usec) {
-    retusec += pulsed->extrausec * pulsed->tscale;
+    retusec += (double)pulsed->extrausec * pulsed->tscale;
   } else {
     if (pulsed->extrausec > 0) {
       pulsed->tscale += (usec - last_usec) / pulsed->extrausec;
-      pulsed->tscale /= 2;
+      pulsed->tscale /= 2.;
       pulsed->extrausec = 0;
     }
   }
@@ -1771,7 +1771,8 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
   //return (double)pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-  return (double)lives_buffered_offset(pulsed->fd) / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  return (double)(lives_buffered_offset(pulsed->fd))
+         / (double)(afile->arps * afile->achans * afile->asampsize / 8);
 }
 
 
@@ -1836,7 +1837,7 @@ int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip
   pulse_message2.command = ASERVER_CMD_FILE_SEEK;
   pulse_message2.next = NULL;
   pulse_message2.data = lives_strdup_printf("%"PRId64, seekstart);
-  pulse_message2.tc = lives_get_current_ticks();
+  pulse_message2.tc = 0;
   if (pulsed->msgq == NULL) pulsed->msgq = &pulse_message2;
   else pulsed->msgq->next = &pulse_message2;
   return seekstart;

@@ -1431,6 +1431,8 @@ int process_one(boolean visible) {
 
       if (new_ticks != mainw->startticks) {
         mainw->startticks = new_ticks;
+        mainw->startticks -= mainw->deltaticks;
+        mainw->deltaticks = 0;
         pthread_mutex_unlock(&mainw->audio_resync_mutex);
         if (display_ready) {
           show_frame = TRUE;

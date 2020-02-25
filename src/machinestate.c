@@ -1672,20 +1672,24 @@ void update_dfr(int nframes, boolean dropped) {
       return;
     }
     if (dfcount >= DF_LIMIT_HIGH || mainw->struggling == 3) {
-      if (dfcount >= DF_LIMIT_HIGH) {
-        mainw->struggling = 3;
-        nsuccess = 0;
-        if (future_prefs->pb_quality == PB_QUALITY_HIGH) {
-          prefs->pb_quality = PB_QUALITY_MED;
-        } else if (future_prefs->pb_quality == PB_QUALITY_MED) {
-          prefs->pb_quality = PB_QUALITY_LOW;
-	  // *INDENT-OFF*
-	}}}}
+      mainw->struggling = 5;
+      nsuccess = 0;
+      if (future_prefs->pb_quality == PB_QUALITY_HIGH) {
+        prefs->pb_quality = PB_QUALITY_MED;
+      } else if (future_prefs->pb_quality == PB_QUALITY_MED) {
+        prefs->pb_quality = PB_QUALITY_LOW;
+	// *INDENT-OFF*
+      }}}
 // *INDENT-ON*
   else {
     if (mainw->struggling == 3 && nsuccess >= DF_STATSMAX) {
       prefs->pb_quality = future_prefs->pb_quality;
       mainw->struggling = 1;
+      nsuccess = 0;
+    }
+    if (mainw->struggling == 5 && nsuccess >= DF_STATSMAX) {
+      prefs->pb_quality = future_prefs->pb_quality;
+      mainw->struggling = 3;
       nsuccess = 0;
     }
   }

@@ -650,8 +650,7 @@ lives_render_error_t realfx_progress(boolean reset) {
         layer_palette = WEED_PALETTE_RGBA32;
       }
 
-      gamma_convert_layer(cfile->gamma_type, layer);
-      pixbuf = layer_to_pixbuf(layer, TRUE);
+      pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
       weed_plant_free(layer);
 
       tmp = make_image_file_name(cfile, i, LIVES_FILE_EXT_MGK);
@@ -941,8 +940,31 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 
   blend_file->last_frameno = blend_file->frameno;
 
-  if (!cfile->play_paused)
+  if (!cfile->play_paused) {
     blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
+    if (blend_file->achans > 0 && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+      int winding;
+      blend_file->aseek_pos += (blend_file->frameno - blend_file->last_frameno)
+                               * SIGNED_DIVIDE(blend_file->arate, blend_file->pb_fps) *
+                               blend_file->achans * blend_file->asampsize / 8;
+      if (blend_file->aseek_pos < 0 || blend_file->aseek_pos > blend_file->afilesize) {
+        if (blend_file->aseek_pos < 0) {
+          winding = 1;
+          blend_file->aseek_pos = -blend_file->aseek_pos;
+        }
+        if (!mainw->ping_pong) {
+          blend_file->aseek_pos %= blend_file->afilesize;
+          if (winding) blend_file->aseek_pos = blend_file->afilesize - blend_file->aseek_pos;
+        } else {
+          if (winding) winding = 0; // start with fwd winding
+          else winding = 1; // star with rev winding
+          winding += (int)(blend_file->aseek_pos / blend_file->afilesize);
+          blend_file->aseek_pos %= blend_file->afilesize;
+          if (winding & 1) {
+            blend_file->aseek_pos = blend_file->afilesize - blend_file->aseek_pos;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
 
   blend_tc = ntc;
 
@@ -955,7 +977,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 // keypresses
 // TODO - we should mutex lock mainw->rte
 
-boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
@@ -1062,13 +1084,13 @@ boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
 }
 
 
-boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean rte_on_off_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
@@ -1092,7 +1114,7 @@ boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
@@ -1100,14 +1122,14 @@ boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32
 }
 
 
-boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   grabkeys_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
   int dirn = LIVES_POINTER_TO_INT(user_data);
   // "m" mode key
@@ -1120,7 +1142,7 @@ boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_
 }
 
 
-boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data) {
+boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data) {
   int key_mode = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
   int key = (int)(key_mode / modes);
@@ -1133,13 +1155,13 @@ boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data)
 }
 
 
-boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
   if (mainw->playing_file < 1 || mainw->num_tr_applied == 0 || mainw->blend_file == -1 ||
       mainw->blend_file == mainw->current_file || mainw->files[mainw->blend_file] == NULL || mainw->preview ||
-      mainw->noswitch || (mainw->is_processing && cfile->is_loaded)) {
+      (mainw->is_processing && cfile->is_loaded)) {
     return TRUE;
   }
 
@@ -1152,7 +1174,9 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
   } else mainw->swapped_clip = -1;
 
   rte_swap_fg_bg();
-  do_quick_switch(blend_file); // will set mainw->blend_file
+
+  mainw->new_clip = blend_file;
+  //do_quick_switch(blend_file); // will set mainw->blend_file
 
   if (mainw->ce_thumbs && (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND
                            || mainw->active_sa_clips == SCREEN_AREA_FOREGROUND))

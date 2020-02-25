@@ -17,6 +17,8 @@
 #include "cvirtual.h"
 #include "interface.h"
 
+#define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
+
 boolean save_clip_values(int which) {
   char *lives_header_new;
 
@@ -534,7 +536,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               cfile->video_time += extra_frames / cfile->fps;
               load_end_image(cfile->end);
             }
-            if (cfile->laudio_time > cfile->video_time + 0.001 && cfile->frames > 0) {
+            if (cfile->laudio_time > cfile->video_time + AV_TRACK_MIN_DIFF && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = cfile->laudio_time - cfile->video_time;
@@ -544,7 +546,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
                 cfile->changed = FALSE;
               }
             }
-            if (cfile->laudio_time > cfile->video_time + 0.001 && cfile->frames > 0) {
+            if (cfile->laudio_time > cfile->video_time + AV_TRACK_MIN_DIFF && cfile->frames > 0) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_TRIM_END) {
                 cfile->end = cfile->frames;
                 d_print(_("Auto trimming %.4f seconds of audio at end..."), cfile->laudio_time - cfile->video_time);
@@ -554,7 +556,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
               }
             }
             if (!mainw->effects_paused && cfile->afilesize > 0 && cfile->achans > 0
-                && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + 0.001) {
+                && CLIP_TOTAL_TIME(mainw->current_file) > cfile->laudio_time + AV_TRACK_MIN_DIFF) {
               if (cdata->sync_hint & SYNC_HINT_AUDIO_PAD_START) {
                 cfile->undo1_dbl = 0.;
                 cfile->undo2_dbl = CLIP_TOTAL_TIME(mainw->current_file) - cfile->laudio_time;
@@ -3925,7 +3927,7 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
     resize_layer(mainw->frame_layer, sfile->hsize, sfile->vsize, LIVES_INTERP_BEST, WEED_PALETTE_RGB24, 0);
     convert_layer_palette(mainw->frame_layer, WEED_PALETTE_RGB24, 0);
     weed_set_int_value(mainw->frame_layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
-    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
+    pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, FALSE);
     weed_plant_free(mainw->frame_layer);
     mainw->frame_layer = NULL;
 
@@ -4247,6 +4249,7 @@ boolean read_headers(const char *file_name) {
           retval = TRUE;
           cfile->frameno = 1;
         }
+        if (cfile->frameno <= 0) cfile->last_frameno = cfile->frameno = 1;
       }
       if (retval) {
         detail = CLIP_DETAILS_WIDTH;
@@ -5794,12 +5797,6 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       set_main_title(cfile->name, 0);
 
       if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
-      if (cfile->achans) {
-        cfile->aseek_pos = (long)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate) * cfile->achans *
-                           (cfile->asampsize / 8);
-        if (cfile->aseek_pos > cfile->laudio_time) cfile->aseek_pos = 0.;
-      }
-
       if (mainw->multitrack == NULL) {
         resize(1);
         lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);
@@ -5828,6 +5825,12 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       }
 
       threaded_dialog_spin(0.);
+
+      if (cfile->achans) {
+        cfile->aseek_pos = (long)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                           (cfile->asampsize / 8);
+        if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+      }
 
       if (mainw->current_file != -1)
         if (strlen(mainw->set_name) > 0) recover_layout_map(mainw->current_file);

@@ -555,8 +555,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
                  LIVES_INTERP_BEST,
                  palette, 0);
     convert_layer_palette(mainw->fd_layer, palette, 0);
-    gamma_convert_layer(cfile->gamma_type, mainw->fd_layer);
-    pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE);
+    pixbuf = layer_to_pixbuf(mainw->fd_layer, TRUE, TRUE);
     weed_layer_nullify_pixel_data(mainw->fd_layer);
     weed_layer_free(mainw->fd_layer);
     mainw->fd_layer = NULL;

@@ -4786,8 +4786,7 @@ void load_start_image(int frame) {
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
         return;
       }
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      start_pixbuf = layer_to_pixbuf(layer, TRUE);
+      start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
     weed_layer_free(layer);
 
@@ -4849,11 +4848,7 @@ void load_start_image(int frame) {
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
         return;
       }
-      sched_yield();
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      sched_yield();
-      start_pixbuf = layer_to_pixbuf(layer, TRUE);
-      sched_yield();
+      start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
     weed_plant_free(layer);
 
@@ -4996,12 +4991,12 @@ void load_end_image(int frame) {
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, cfile->hsize, cfile->vsize,
                            WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
+      sched_yield();
       if (!resize_layer(layer, cfile->hsize, cfile->vsize, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
         return;
       }
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      end_pixbuf = layer_to_pixbuf(layer, TRUE);
+      end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
     weed_plant_free(layer);
 
@@ -5060,10 +5055,7 @@ void load_end_image(int frame) {
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
         return;
       }
-      sched_yield();
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      sched_yield();
-      end_pixbuf = layer_to_pixbuf(layer, TRUE);
+      end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
       sched_yield();
     }
 
@@ -5216,8 +5208,7 @@ void load_preview_image(boolean update_always) {
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
         return;
       }
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      pixbuf = layer_to_pixbuf(layer, TRUE);
+      pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
     weed_plant_free(layer);
   }
@@ -6042,7 +6033,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
           lives_free(pixel_data);
           lives_free(rowstrides);
           if (res) {
-            if (prefs->apply_gamma && prefs->btgamma) {
+            if (prefs->apply_gamma && mainw->struggling <= 1) {
               if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
                 weed_layer_set_gamma(layer, dplug->cdata->frame_gamma);
               } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
@@ -6056,10 +6047,14 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
                                          dplug->cdata->YUV_clamping,
                                          dplug->cdata->YUV_sampling,
                                          dplug->cdata->YUV_subspace);
-              /* if (prefs->apply_gamma && prefs->btgamma */
-              /*     && weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) { */
-              /*   weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709); */
-              /* } */
+              if (prefs->apply_gamma && mainw->struggling <= 1) {
+                if (weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
+                  weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
+                }
+                if (weed_get_int_value(layer, WEED_LEAF_YUV_SUBSPACE, NULL) == WEED_YUV_SUBSPACE_BT709) {
+                  weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_BT709);
+                }
+              }
             }
             // deinterlace
             if (sfile->deinterlace || (prefs->auto_deint && dplug->cdata->interlace != LIVES_INTERLACE_NONE)) {
@@ -6309,7 +6304,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
 
   LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, weed_timecode_t tc,
-                                         int width, int height, LiVESInterpType interp) {
+                                         int width, int height, LiVESInterpType interp, boolean fordisp) {
     // return a correctly sized (Gdk)Pixbuf (RGB24 for jpeg, RGB24 / RGBA32 for png) for the given clip and frame
     // tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
     // image_ext is used if the source is an image file (eg. "jpg" or "png")
@@ -6328,8 +6323,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 #endif
 
     if (pull_frame_at_size(layer, image_ext, tc, width, height, palette)) {
-      gamma_convert_layer(WEED_GAMMA_SRGB, layer);
-      pixbuf = layer_to_pixbuf(layer, TRUE);
+      pixbuf = layer_to_pixbuf(layer, TRUE, fordisp);
     }
     weed_plant_free(layer);
     if (pixbuf != NULL && ((width != 0 && lives_pixbuf_get_width(pixbuf) != width)
@@ -6348,7 +6342,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
 
   LIVES_GLOBAL_INLINE LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, weed_timecode_t tc) {
-    return pull_lives_pixbuf_at_size(clip, frame, image_ext, tc, 0, 0, LIVES_INTERP_NORMAL);
+    return pull_lives_pixbuf_at_size(clip, frame, image_ext, tc, 0, 0, LIVES_INTERP_NORMAL, FALSE);
   }
 
 
@@ -7232,7 +7226,9 @@ align:
             if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
               gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
             else {
-              gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+              /// TODO - convert to screen gamma for displaying
+              gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+              //gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
             }
           }
           sched_yield();
@@ -7431,8 +7427,11 @@ align:
           if (weed_palette_is_rgb(mainw->vpp->palette)) {
             if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
               gamma_convert_layer(WEED_GAMMA_LINEAR, frame_layer);
-            else
-              gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+            else {
+              /// TODO - convert to screen gamma for displaying
+              gamma_convert_layer(WEED_GAMMA_MONITOR, frame_layer);
+              //gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
+            }
           }
           sched_yield();
         }
@@ -7524,10 +7523,6 @@ align:
 
       if (!convert_layer_palette(mainw->frame_layer, cpal, 0)) goto lfi_done;
 
-      sched_yield();
-      gamma_convert_layer(WEED_GAMMA_SRGB, mainw->frame_layer);
-      sched_yield();
-
       if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
         if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
           mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
@@ -7536,7 +7531,7 @@ align:
       }
 
       sched_yield();
-      pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
+      pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       weed_layer_nullify_pixel_data(mainw->frame_layer);
       sched_yield();
 
@@ -7544,6 +7539,7 @@ align:
 
       if (mainw->play_window != NULL && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
         lives_painter_t *cr = lives_painter_create_from_widget(mainw->play_window);
+
         block_expose();
 
         lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);

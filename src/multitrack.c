@@ -443,7 +443,7 @@ LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame
         }
       }
       thumbnail = pull_lives_pixbuf_at_size(file, frame, get_image_ext_for_type(sfile->img_type), tc,
-                                            width, height, LIVES_INTERP_BEST);
+                                            width, height, LIVES_INTERP_BEST, TRUE);
     } else {
       pixbuf = lives_pixbuf_new_from_stock_at_size(LIVES_LIVES_STOCK_AUDIO, LIVES_ICON_SIZE_CUSTOM, width, height);
       if (error != NULL || pixbuf == NULL) {
@@ -3330,7 +3330,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
     if (mt->framedraw != NULL) mt_framedraw(mt, mainw->frame_layer); // framedraw will free the frame_layer itself
     else {
       if (pixbuf == NULL) {
-        pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE);
+        pixbuf = layer_to_pixbuf(mainw->frame_layer, TRUE, TRUE);
       }
 #if GTK_CHECK_VERSION(3, 0, 0)
       // set frame_pixbuf, this gets painted in in expose_event

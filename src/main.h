@@ -1226,7 +1226,7 @@ void check_layer_ready(weed_plant_t *layer);
 boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
-                                       int width, int height, LiVESInterpType interp);
+                                       int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
 boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr);

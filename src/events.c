@@ -3777,7 +3777,7 @@ lives_render_error_t render_events(boolean reset) {
             convert_layer_palette(layer, layer_palette, 0);
             // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
             gamma_convert_layer(cfile->gamma_type, layer);
-            pixbuf = layer_to_pixbuf(layer, TRUE);
+            pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
             weed_layer_free(layer);
           }
           mainw->blend_file = blend_file;

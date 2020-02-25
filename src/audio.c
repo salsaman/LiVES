@@ -62,7 +62,7 @@ LIVES_GLOBAL_INLINE char *get_audio_file_name(int fnum, boolean opening) {
     if (IS_VALID_CLIP(fnum))
       fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_TEMP_AUDIO_FILENAME, NULL);
     else
-      fname = lives_build_filename(prefs->workdir, mainw->files[fnum]->handle, CLIP_TEMP_AUDIO_FILENAME, NULL);
+      fname = lives_build_filename(prefs->workdir, CLIP_TEMP_AUDIO_FILENAME, NULL);
   }
   return fname;
 }
@@ -2774,11 +2774,7 @@ static void *cache_my_audio(void *arg) {
 
       if (cbuffer->_fd != -1) lives_close_buffered(cbuffer->_fd);
 
-      if (afile->opening)
-        filename = lives_strdup_printf("%s/%s/%s%s", prefs->workdir, mainw->files[cbuffer->fileno]->handle,
-                                       CLIP_TEMP_AUDIO_FILENAME, LIVES_FILE_EXT_PCM);
-      else filename = lives_strdup_printf("%s/%s/%s", prefs->workdir, mainw->files[cbuffer->fileno]->handle,
-                                            CLIP_AUDIO_FILENAME);
+      filename = get_audio_file_name(cbuffer->fileno, afile->opening);
 
       cbuffer->_fd = lives_open_buffered_rdonly(filename);
       if (cbuffer->_fd == -1) {

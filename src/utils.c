@@ -1650,6 +1650,8 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // nframe is our new frame
   nframe = cframe + (int64_t)myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
   if (nframe == cframe || mainw->foreign) {
+    if (!mainw->foreign && mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record) &&
+        prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(nframe);
     cframe = nframe;
     nframe = -1;
     mainw->scratch = SCRATCH_NONE;

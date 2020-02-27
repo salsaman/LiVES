@@ -1038,6 +1038,33 @@ const weed_plant_t *pp_get_chan(weed_plant_t **pparams, int idx) {
 }
 
 
+boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer) {
+  int *pal_list, i = 0;
+  if (vpp->get_palette_list != NULL && (pal_list = (*vpp->get_palette_list)()) != NULL) {
+    int palette = weed_layer_get_palette(layer);
+    for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
+      if (pal_list[i] == palette) break;
+    }
+    if (pal_list[i] == palette) {
+      if (!(*vpp->set_palette)(palette)) {
+        return FALSE;
+      }
+      vpp->palette = palette;
+      if (weed_palette_is_yuv(palette) && vpp->get_yuv_palette_clamping != NULL) {
+        int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
+        int lclamping = weed_layer_get_yuv_clamping(layer);
+        for (i = 0; yuv_clamping_types[i] != -1; i++) {
+          if (yuv_clamping_types[i] == lclamping) {
+            if ((*vpp->set_yuv_palette_clamping)(lclamping))
+              vpp->YUV_clamping = lclamping;
+            break;
+	    // *INDENT-OFF*
+	  }}}}}
+  // *INDENT-ON*
+  return FALSE;
+}
+
+
 _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use) {
   // this is called on startup or when the user selects a new playback plugin
 
@@ -1365,7 +1392,7 @@ void vid_playback_plugin_exit(void) {
 }
 
 
-int64_t get_best_audio(_vid_playback_plugin *vpp) {
+int64_t get_best_audio(_vid_playback_plugin * vpp) {
   // find best audio from video plugin list, matching with audiostream plugins
 
   // i.e. cross-check video list with astreamer list
@@ -1931,7 +1958,7 @@ boolean check_encoder_restrictions(boolean get_extension, boolean user_audio, bo
 }
 
 
-LiVESList *filter_encoders_by_img_ext(LiVESList *encoders, const char *img_ext) {
+LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext) {
   LiVESList *encoder_capabilities = NULL;
   LiVESList *list = encoders, *listnext;
   int caps;
@@ -2137,7 +2164,7 @@ lives_decoder_t *clone_decoder(int fileno) {
 }
 
 
-static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
+static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disabled, const lives_clip_data_t *fake_cdata) {
   // here we test each decoder in turn to see if it can open "file_name"
 
   // if we are reopening a clip, then fake cdata is a partially initialised cdata, but with only the frame count and fps set
@@ -2210,7 +2237,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList *disabled
 }
 
 
-const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList *disabled, const lives_clip_data_t *fake_cdata) {
+const lives_clip_data_t *get_decoder_cdata(int fileno, LiVESList * disabled, const lives_clip_data_t *fake_cdata) {
   // pass file to each decoder (demuxer) plugin in turn, until we find one that can parse
   // the file
   // NULL is returned if no decoder plugin recognises the file - then we
@@ -2427,7 +2454,7 @@ void get_mime_type(char *text, int maxlen, const lives_clip_data_t *cdata) {
 }
 
 
-static void dpa_ok_clicked(LiVESButton *button, livespointer user_data) {
+static void dpa_ok_clicked(LiVESButton * button, livespointer user_data) {
   lives_general_button_clicked(button, NULL);
 
   if (prefsw != NULL) {
@@ -2443,7 +2470,7 @@ static void dpa_ok_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void dpa_cancel_clicked(LiVESButton *button, livespointer user_data) {
+static void dpa_cancel_clicked(LiVESButton * button, livespointer user_data) {
   lives_general_button_clicked(button, NULL);
 
   if (prefsw != NULL) {
@@ -2455,7 +2482,7 @@ static void dpa_cancel_clicked(LiVESButton *button, livespointer user_data) {
 }
 
 
-static void on_dpa_cb_toggled(LiVESToggleButton *button, const char *decname) {
+static void on_dpa_cb_toggled(LiVESToggleButton * button, const char *decname) {
   if (!lives_toggle_button_get_active(button))
     // unchecked is disabled
     future_prefs->disabled_decoders_new = lives_list_append(future_prefs->disabled_decoders_new, lives_strdup(decname));
@@ -2464,7 +2491,7 @@ static void on_dpa_cb_toggled(LiVESToggleButton *button, const char *decname) {
 }
 
 
-void on_decplug_advanced_clicked(LiVESButton *button, livespointer user_data) {
+void on_decplug_advanced_clicked(LiVESButton * button, livespointer user_data) {
   LiVESList *decoder_plugin;
 
   LiVESWidget *hbox;
@@ -3607,7 +3634,7 @@ LiVESList *get_external_window_hints(lives_rfx_t *rfx) {
     in this case, vbox should be packed in its own dialog window, which should then be run
 
     called from plugins.c (vpp opts) and saveplay.c (encoder opts) */
-char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx) {
+char *plugin_run_param_window(const char *scrap_text, LiVESVBox * vbox, lives_rfx_t **ret_rfx) {
   FILE *sfile;
 
   lives_rfx_t *rfx = (lives_rfx_t *)lives_malloc(sizeof(lives_rfx_t));

@@ -11247,9 +11247,7 @@ boolean lives_widget_context_update(void) {
           /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
           /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
-          sched_yield();
           lives_usleep(100);
-          sched_yield();
         }
       }
       if (loops > 1000 && !mainw->gui_fooey) {
@@ -11282,7 +11280,7 @@ boolean lives_widget_context_update(void) {
       /* 	lm_needs_idlefunc = TRUE; */
       /* } */
       g_main_context_iteration(NULL, FALSE);
-      sched_yield();
+      //sched_yield();
       //pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif

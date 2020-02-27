@@ -4516,7 +4516,7 @@ void get_letterbox_sizes(int *pwidth, int *pheight, int *lb_width, int *lb_heigh
   }
   frame_aspect = (float) * lb_width / (float) * lb_height;
   player_aspect = (float) * pwidth / (float) * pheight;
-  if (fabs(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
+  if (fabsf(1. - frame_aspect / player_aspect) < ASPECT_DIFF_LMT) {
     if (*lb_width > *pwidth) *lb_width = *pwidth;
     if (*lb_height > *pheight) *lb_height = *pheight;
     if (*pwidth > *lb_width) *pwidth = *lb_width;

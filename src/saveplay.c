@@ -2409,6 +2409,7 @@ void play_file(void) {
   mainw->actual_frame = 0;
 
   mainw->currticks = 0;
+  mainw->struggling = 0;
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
@@ -2425,6 +2426,7 @@ void play_file(void) {
       else
         cfile->aseek_pos = (long)(cfile->pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
     }
+    if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
     // start up our audio player (jack or pulse)
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -2715,6 +2717,10 @@ void play_file(void) {
   mainw->rte_textparm = NULL;
   mainw->playing_file = -1;
   mainw->abufs_to_fill = 0;
+
+  if (prefs->allow_easing && mainw->multitrack == NULL) {
+    deinit_easing_effects();
+  }
 
   /// we need to deinit generators BEFORE exiting the playback plugin, else the generator can grab window manager
   /// events when we restart the plugin, leaving it hanging waiting for a response which never arrives
@@ -3010,13 +3016,13 @@ void play_file(void) {
         //mainw->noswitch = TRUE;
 
         lives_widget_context_update();
-
-        if (prefs->show_playwin) {
-          lives_window_present(LIVES_WINDOW(mainw->play_window));
-          lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
-          unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
+        if (mainw->play_window != NULL) {
+          if (prefs->show_playwin) {
+            lives_window_present(LIVES_WINDOW(mainw->play_window));
+            lives_xwindow_raise(lives_widget_get_xwindow(mainw->play_window));
+            unhide_cursor(lives_widget_get_xwindow(mainw->play_window));
 	  // *INDENT-OFF*
-        }}}}
+	  }}}}}
   // *INDENT-ON*
 
   /// free the last frame image

@@ -349,8 +349,8 @@ boolean transcode(int start, int end) {
       if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
     }
 
-    gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
-    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace);
+    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace,
+                               WEED_GAMMA_SRGB);
     gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
     error = send_layer(frame_layer, vpp, currticks);
 

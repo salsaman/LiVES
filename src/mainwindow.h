@@ -579,7 +579,8 @@ typedef struct {
   int ptr_y;
 
   double fps_measure; ///< show fps stats after playback
-
+  double fps_mini_measure; ///< show fps stats during playback
+  ticks_t fps_mini_ticks;
   // flags
   boolean save_with_sound;
   boolean ccpd_with_sound;
@@ -1305,9 +1306,8 @@ typedef struct {
   pthread_mutex_t audio_filewriteend_mutex; ///< sync for ending writing audio to file
   pthread_mutex_t audio_resync_mutex; ///< sync for audio
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
-  pthread_mutex_t gamma_lut_mutex; ///< lock gamme lookup table
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
-  pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates
+  pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)
   //pthread_mutex_t frame_index_mutex; /// access to current file frame_index
 
   volatile lives_rfx_t *vrfx_update;
@@ -1576,6 +1576,8 @@ typedef struct {
   boolean gui_fooey; ///< set to TRUE if we expect heavy interface updates (when not playing, please) so we can increase GUI iterations
 
   int struggling;
+
+  boolean memok;
 
 #define MAX_CBSTORES 8
   int ncbstores;

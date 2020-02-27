@@ -185,13 +185,11 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->cache_buffer_mutex);
     pthread_mutex_trylock(&mainw->audio_filewriteend_mutex);
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
-    pthread_mutex_trylock(&mainw->gamma_lut_mutex);
-    pthread_mutex_unlock(&mainw->gamma_lut_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
 
-    if (prefs->crash_recovery && mainw->record) {
+    if (mainw->memok && prefs->crash_recovery && mainw->record) {
       backup_recording(NULL, NULL);
     }
 
@@ -289,10 +287,12 @@ void lives_exit(int signum) {
 
     if (mainw->vpp != NULL && !mainw->only_close) {
       if (!mainw->leave_recovery) {
-        if (mainw->write_vpp_file) {
-          // save video playback plugin parameters
-          char *vpp_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "vpp_defaults", NULL);
-          save_vpp_defaults(mainw->vpp, vpp_file);
+        if (mainw->memok) {
+          if (mainw->write_vpp_file) {
+            // save video playback plugin parameters
+            char *vpp_file = lives_build_filename(prefs->configdir, LIVES_CONFIG_DIR, "vpp_defaults", NULL);
+            save_vpp_defaults(mainw->vpp, vpp_file);
+          }
         }
       }
       close_vid_playback_plugin(mainw->vpp);
@@ -394,6 +394,10 @@ void lives_exit(int signum) {
           threaded_dialog_spin(0.);
         } else {
           threaded_dialog_spin(0.);
+          if (mainw->memok) {
+            cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+            save_clip_value(mainw->current_file, CLIP_DETAILS_PB_FRAMENO, &cfile->frameno);
+          }
           // or just clean them up -
           // remove the following: "*.mgk *.bak *.pre *.tmp pause audio.* audiodump* audioclip";
           if (!prefs->vj_mode) {
@@ -3065,13 +3069,34 @@ void on_paste_as_new_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   d_print(_("Pasting %d frames to new clip %s..."), cfile->frames, cfile->name);
   mainw->no_switch_dprint = FALSE;
 
-  com = lives_strdup_printf("%s insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
-                            prefs->backend, cfile->handle,
-                            get_image_ext_for_type(cfile->img_type), clipboard->frames, clipboard->handle,
-                            mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans,
-                            clipboard->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
-                            !(cfile->signed_endian & AFORM_BIG_ENDIAN));
+  if (clipboard->achans > 0 && clipboard->arate > 0) {
+    com = lives_strdup_printf("%s insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f %d %d %d %d %d",
+                              prefs->backend, cfile->handle,
+                              get_image_ext_for_type(cfile->img_type), clipboard->frames, clipboard->handle,
+                              mainw->ccpd_with_sound, clipboard->fps, clipboard->arate, clipboard->achans,
+                              clipboard->asampsize, !(cfile->signed_endian & AFORM_UNSIGNED),
+                              !(cfile->signed_endian & AFORM_BIG_ENDIAN));
+  } else {
+    com = lives_strdup_printf("%s insert \"%s\" \"%s\" 0 1 %d \"%s\" %d 0 0 0 %.3f 0 0 0 0 0",
+                              prefs->backend, cfile->handle,
+                              get_image_ext_for_type(cfile->img_type), clipboard->frames, clipboard->handle,
+                              FALSE, clipboard->fps);
 
+    if (clipboard->achans > 0 && clipboard->arate < 0) {
+      int zero = 0;
+      double chvols = 1.;
+      double avels = -1.;
+      double aseeks = (double)clipboard->afilesize / (double)(-clipboard->arate * clipboard->asampsize / 8 * clipboard->achans);
+      ticks_t tc = (ticks_t)(aseeks * TICKS_PER_SECOND_DBL);
+      cfile->arate = clipboard->arate = -clipboard->arate;
+      cfile->arps = clipboard->arps;
+      cfile->achans = clipboard->achans;
+      cfile->asampsize = clipboard->asampsize;
+      cfile->afilesize = clipboard->afilesize;
+      cfile->signed_endian = clipboard->signed_endian;
+      render_audio_segment(1, &zero, mainw->current_file, &avels, &aseeks, 0, tc, &chvols, 1., 1., NULL);
+    }
+  }
   mainw->com_failed = FALSE;
   lives_system(com, FALSE);
   lives_free(com);
@@ -3310,33 +3335,60 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
           // pb rate != real rate - stretch to pb rate and resample
           if ((audio_stretch = (double)clipboard->arps / (double)clipboard->arate *
                                (double)cfile->arate / (double)cfile->arps) != 1.) {
-            lives_rm(clipboard->info_file);
-            com = lives_strdup_printf("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",
-                                      prefs->backend,
-                                      clipboard->handle, clipboard->arps, clipboard->achans, clipboard->asampsize,
-                                      clipboard_signed, clipboard_endian, cfile->arps, clipboard->achans,
-                                      clipboard->asampsize, clipboard_signed, clipboard_endian, audio_stretch);
-            mainw->com_failed = FALSE;
-            lives_system(com, FALSE);
-            lives_free(com);
+            if (audio_stretch < 0.) {
+              // clipboard audio should be reversed
+              // we will create a temp handle, copy the audio, and then render it back reversed
+              if (!get_temp_handle(-1)) {
+                d_print_failed();
+                return;
+              } else {
+                char *fnameto = lives_get_audio_file_name(mainw->current_file);
+                char *fnamefrom = lives_get_audio_file_name(0);
+                int zero = 0;
+                double chvols = 1.;
+                double avels = -1.;
+                double aseeks = (double)clipboard->afilesize / (double)(-clipboard->arate * clipboard->asampsize / 8 * clipboard->achans);
+                ticks_t tc = (ticks_t)(aseeks * TICKS_PER_SECOND_DBL);
+                render_audio_segment(1, &zero, mainw->current_file, &avels, &aseeks, 0, tc, &chvols, 1., 1., NULL);
+                reget_afilesize(0);
+                reget_afilesize(mainw->current_file);
+                if (cfile->afilesize == clipboard->afilesize) {
+                  lives_mv(fnameto, fnamefrom);
+                }
+                close_temp_handle(current_file);
+                clipboard->arate = -clipboard->arate;
+                lives_free(fnamefrom);
+                lives_free(fnameto);
+              }
+            } else {
+              lives_rm(clipboard->info_file);
+              com = lives_strdup_printf("%s resample_audio \"%s\" %d %d %d %d %d %d %d %d %d %d %.4f",
+                                        prefs->backend,
+                                        clipboard->handle, clipboard->arps, clipboard->achans, clipboard->asampsize,
+                                        clipboard_signed, clipboard_endian, cfile->arps, clipboard->achans,
+                                        clipboard->asampsize, clipboard_signed, clipboard_endian, audio_stretch);
+              mainw->com_failed = FALSE;
+              lives_system(com, FALSE);
+              lives_free(com);
 
-            if (mainw->com_failed) {
-              unbuffer_lmap_errors(FALSE);
-              return;
+              if (mainw->com_failed) {
+                unbuffer_lmap_errors(FALSE);
+                return;
+              }
+
+              mainw->current_file = 0;
+              mainw->error = FALSE;
+              do_progress_dialog(TRUE, FALSE, _("Resampling clipboard audio"));
+              mainw->current_file = current_file;
+              if (mainw->error) {
+                d_print_failed();
+                unbuffer_lmap_errors(FALSE);
+                return;
+              }
+
+              // not really, but we pretend...
+              clipboard->arps = cfile->arps;
             }
-
-            mainw->current_file = 0;
-            mainw->error = FALSE;
-            do_progress_dialog(TRUE, FALSE, _("Resampling clipboard audio"));
-            mainw->current_file = current_file;
-            if (mainw->error) {
-              d_print_failed();
-              unbuffer_lmap_errors(FALSE);
-              return;
-            }
-
-            // not really, but we pretend...
-            clipboard->arps = cfile->arps;
           }
         }
 
@@ -4507,6 +4559,7 @@ void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   cfile->pointer_time = lives_ce_update_timeline(0, 0.);
   cfile->frameno = 1;
+  cfile->aseek_pos = 0;
   lives_widget_queue_draw_if_visible(mainw->hruler);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
@@ -4872,7 +4925,17 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio(cfile->frameno + (mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps);
+    g_print("VALLL %f %f %f %f %f\n", (double)cfile->frameno,
+            (double)(mainw->currticks + mainw->deltaticks - mainw->startticks),
+            (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps,
+            (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps
+            * (cfile->pb_fps > 0. ? 1. : -1.), (double)cfile->frameno
+            + (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps
+            * (cfile->pb_fps > 0. ? 1. : -1.));
+
+    resync_audio((double)cfile->frameno
+                 + (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps
+                 * (cfile->pb_fps > 0. ? 1. : -1.));
   }
 
   // change play direction
@@ -7834,7 +7897,8 @@ void on_rev_clipboard_activate(LiVESMenuItem * menuitem, livespointer user_data)
     if (clipboard->frame_index != NULL) reverse_frame_index(0);
     d_print_done();
   }
-
+  clipboard->arate = -clipboard->arate;
+  clipboard->aseek_pos = clipboard->afilesize;
   mainw->current_file = current_file;
   sensitize();
 }
@@ -9814,9 +9878,9 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
             && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
           jack_get_rec_avals(mainw->jackd);
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+    // *INDENT-ON*
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
@@ -9833,11 +9897,14 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
         if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)
             && mainw->agen_key == 0 && !mainw->agen_needs_reinit) {
           pulse_get_rec_avals(mainw->pulsed);
-        }
-      }
-    }
+	  // *INDENT-OFF*
+        }}}
+    // *INDENT-ON*
 #endif
   }
+
+  mainw->fps_mini_measure = 0;
+  mainw->fps_mini_ticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
   if (cfile->play_paused && new_fps != 0.) {
     cfile->freeze_fps = new_fps;
@@ -10472,6 +10539,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   double avsync;
+  double fpm;
 
   int last_dprint_file;
 
@@ -10503,8 +10571,12 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;
-  d_print_urgency(2.0, _("Audio is ahead of video by %.4f secs.\nat frame %d, with fps %.3f\n"),
-                  avsync, mainw->actual_frame, cfile->pb_fps);
+  /* fpm = mainw->fps_mini_measure / ((lives_get_relative_ticks(mainw->origsecs, mainw->origusecs) */
+  /* 				    - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL); */
+  fpm = mainw->fps_mini_measure / ((lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)
+                                    - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL);
+  d_print_urgency(2.0, _("Audio is ahead of video by %.4f secs.\nat frame %d / %d, with fps %.3f (%.3f)\n"),
+                  avsync, mainw->actual_frame, cfile->frames, fpm, cfile->pb_fps);
   mainw->no_switch_dprint = FALSE;
   mainw->last_dprint_file = last_dprint_file;
   return TRUE;

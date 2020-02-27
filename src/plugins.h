@@ -135,6 +135,8 @@ int64_t get_best_audio(_vid_playback_plugin *);
 void save_vpp_defaults(_vid_playback_plugin *, char *file);
 void load_vpp_defaults(_vid_playback_plugin *, char *file);
 
+boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer);
+
 #define DEFAULT_VPP "openGL"
 
 #define DEF_VPP_HSIZE 1024

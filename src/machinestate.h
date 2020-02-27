@@ -259,9 +259,9 @@ int check_for_bad_ffmpeg(void);
 
 /// dropped frames handling
 
-#define DF_STATSMAX 128
-#define DF_LIMIT 2
-#define DF_LIMIT_HIGH 64
+#define DF_STATSMAX 64
+#define DF_LIMIT (DF_STATSMAX >> 4)
+#define DF_LIMIT_HIGH (DF_STATSMAX >> 2)
 
 void update_dfr(int nframes, boolean dropped);
 void clear_dfr(void);

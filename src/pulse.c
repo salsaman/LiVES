@@ -540,7 +540,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
 
           /// expand the buffer if necessary
-          if (LIVES_UNLIKELY((in_bytes > pulsed->aPlayPtr->max_size && !(*pulsed->cancelled) && fabs(shrink_factor) <= 100.f))) {
+          if (LIVES_UNLIKELY((in_bytes > pulsed->aPlayPtr->max_size && !(*pulsed->cancelled) && fabsf(shrink_factor) <= 100.f))) {
             boolean update_sbuffer = FALSE;
             if (pulsed->sound_buffer == pulsed->aPlayPtr->data) update_sbuffer = TRUE;
             if (pulsed->aPlayPtr->data != NULL) lives_free((void *)(pulsed->aPlayPtr->data));
@@ -683,7 +683,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           //// buffer is just a ref to pulsed->aPlayPtr->data
           buffer = (uint8_t *)pulsed->aPlayPtr->data;
           ////
-          numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable / fabs(shrink_factor) + .001)); // VALGRIND
+          numFramesToWrite = MIN(pulseFramesAvailable, (inputFramesAvailable / fabsf(shrink_factor) + .001)); // VALGRIND
 
 #ifdef DEBUG_PULSE
           lives_printerr("inputFramesAvailable after conversion %ld\n", (uint64_t)((double)inputFramesAvailable / shrink_factor + .001));
@@ -1798,8 +1798,7 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
   if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
   seekstart = (int64_t)((double)(frame - 1.) / (double)(afile->fps) * (double)afile->arps) * afile->achans *
               (afile->asampsize / 8);
-  delta = (double)(seekstart - lives_buffered_offset(pulsed->fd)) / (double)(afile->arps * afile->achans *
-          (afile->asampsize / 8));
+  delta = (double)(seekstart - lives_pulse_get_pos(pulsed));
   thresh = 1. / (double)afile->fps;
   if (delta >= thresh || delta <= -thresh)
     pulse_audio_seek_bytes(pulsed, seekstart, afile);

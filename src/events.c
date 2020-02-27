@@ -5821,7 +5821,7 @@ render_details *create_render_details(int type) {
     dbw = widget_opts.border_width;
     widget_opts.border_width = 0;
     // need to set a large enough default here
-    scrollw = lives_standard_scrolled_window_new(width * .8, height * 1., top_vbox);
+    scrollw = lives_standard_scrolled_window_new(width * .8, height * .6, top_vbox);
     widget_opts.border_width = dbw;
     lives_box_pack_start(LIVES_BOX(dialog_vbox), scrollw, FALSE, TRUE, 0);
   } else lives_box_pack_start(LIVES_BOX(dialog_vbox), top_vbox, FALSE, TRUE, 0);

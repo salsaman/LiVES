@@ -2038,7 +2038,9 @@ _insertw *create_insert_dialog(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
                        LIVES_GUI_CALLBACK(lives_general_button_clicked),
                        insertw);
-
+  lives_signal_connect(LIVES_GUI_OBJECT(okbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_insert_activate),
+                       NULL);
   lives_signal_connect_after(LIVES_GUI_OBJECT(insertw->spinbutton_times), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
                              LIVES_GUI_CALLBACK(on_spin_value_changed),
                              LIVES_INT_TO_POINTER(1));

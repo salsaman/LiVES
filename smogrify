@@ -7124,7 +7124,6 @@ if (defined($ARGV[0])) {
 
 	# now write the buffer n times
 	while ($size > 0) {
-	    print STDERR "size rem is $size\n";
 	    if ($size < $bs) {
 		$bs = $size;
 		$buff = substr($buff, 0, $bs);

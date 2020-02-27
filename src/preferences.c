@@ -546,10 +546,10 @@ static void set_workdir_label_text(LiVESLabel *label, const char *dir) {
 boolean pref_factory_string(const char *prefidx, const char *newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_AUDIO_PLAYER)) {
+  if (!lives_strcmp(prefidx, PREF_AUDIO_PLAYER)) {
     const char *audio_player = newval;
 
-    if (!(strcmp(audio_player, AUDIO_PLAYER_NONE)) && prefs->audio_player != AUD_PLAYER_NONE) {
+    if (!(lives_strcmp(audio_player, AUDIO_PLAYER_NONE)) && prefs->audio_player != AUD_PLAYER_NONE) {
       // switch to none
       switch_aud_to_none(permanent);
 #if 0
@@ -558,7 +558,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 #endif
       update_all_host_info(); // let fx plugins know about the change
       goto success1;
-    } else if (!(strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
+    } else if (!(lives_strcmp(audio_player, AUDIO_PLAYER_SOX)) && prefs->audio_player != AUD_PLAYER_SOX) {
       // switch to sox
       if (switch_aud_to_sox(permanent)) goto success1;
       // revert text
@@ -570,7 +570,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     }
 
 #ifdef ENABLE_JACK
-    if (!(strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
+    if (!(lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) && prefs->audio_player != AUD_PLAYER_JACK) {
       // switch to jack
       if (!capable->has_jackd) {
         do_blocking_error_dialogf(_("\nUnable to switch audio players to %s\n%s must be installed first.\nSee %s\n"),
@@ -579,7 +579,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
                                   JACK_URL);
         goto fail1;
       } else {
-        if (prefs->audio_player == AUD_PLAYER_JACK && strcmp(audio_player, AUDIO_PLAYER_JACK)) {
+        if (prefs->audio_player == AUD_PLAYER_JACK && lives_strcmp(audio_player, AUDIO_PLAYER_JACK)) {
           do_blocking_error_dialogf(_("\nSwitching audio players requires restart (%s must not be running)\n"), EXEC_JACKD);
           // revert text
           if (prefsw != NULL) {
@@ -612,7 +612,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-    if ((!strcmp(audio_player, AUDIO_PLAYER_PULSE) || !strcmp(audio_player, AUDIO_PLAYER_PULSE_AUDIO)) &&
+    if ((!lives_strcmp(audio_player, AUDIO_PLAYER_PULSE) || !lives_strcmp(audio_player, AUDIO_PLAYER_PULSE_AUDIO)) &&
         prefs->audio_player != AUD_PLAYER_PULSE) {
       // switch to pulseaudio
       if (!capable->has_pulse_audio) {
@@ -650,8 +650,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 
 #ifdef HAVE_PULSE_AUDIO
-  if (!strcmp(prefidx, PREF_PASTARTOPTS)) {
-    if (strcmp(newval, prefs->pa_start_opts)) {
+  if (!lives_strcmp(prefidx, PREF_PASTARTOPTS)) {
+    if (lives_strcmp(newval, prefs->pa_start_opts)) {
       lives_snprintf(prefs->pa_start_opts, 255, "%s", newval);
       if (permanent) set_string_pref(PREF_PASTARTOPTS, newval);
       goto success1;
@@ -660,8 +660,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
   }
 #endif
 
-  if (!strcmp(prefidx, PREF_OMC_JS_FNAME)) {
-    if (strcmp(newval, prefs->omc_js_fname)) {
+  if (!lives_strcmp(prefidx, PREF_OMC_JS_FNAME)) {
+    if (lives_strcmp(newval, prefs->omc_js_fname)) {
       lives_snprintf(prefs->omc_js_fname, PATH_MAX, "%s", newval);
       if (permanent) set_utf8_pref(PREF_OMC_JS_FNAME, newval);
       goto success1;
@@ -669,8 +669,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
-  if (!strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
-    if (strcmp(newval, prefs->omc_midi_fname)) {
+  if (!lives_strcmp(prefidx, PREF_OMC_MIDI_FNAME)) {
+    if (lives_strcmp(newval, prefs->omc_midi_fname)) {
       lives_snprintf(prefs->omc_midi_fname, PATH_MAX, "%s", newval);
       if (permanent) set_utf8_pref(PREF_OMC_MIDI_FNAME, newval);
       goto success1;
@@ -678,7 +678,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
     goto fail1;
   }
 
-  if (!strcmp(prefidx, PREF_MIDI_RCV_CHANNEL)) {
+  if (!lives_strcmp(prefidx, PREF_MIDI_RCV_CHANNEL)) {
     if (strlen(newval) > 2) {
       if (prefs->midi_rcv_channel != -1) {
         prefs->midi_rcv_channel = -1;
@@ -713,28 +713,42 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_MSG_PBDIS)) {
+  if (!lives_strcmp(prefidx, PREF_MSG_PBDIS)) {
     if (prefs->msgs_pbdis == newval) goto fail2;
     prefs->msgs_pbdis = newval;
     if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->msgs_pbdis), newval);
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_LETTERBOX)) {
+  if (!lives_strcmp(prefidx, PREF_SRGB_GAMMA)) {
+    if (prefs->gamma_srgb == newval) goto fail2;
+    prefs->gamma_srgb = newval;
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb), newval);
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_LETTERBOX)) {
     if (prefs->letterbox == newval) goto fail2;
     prefs->letterbox = newval;
     if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb), newval);
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_PBQ_ADAPTIVE)) {
+  if (!lives_strcmp(prefidx, PREF_LETTERBOXMT)) {
+    if (prefs->letterbox_mt == newval) goto fail2;
+    prefs->letterbox_mt = newval;
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt), newval);
+    goto success2;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_PBQ_ADAPTIVE)) {
     if (prefs->pbq_adaptive == newval) goto fail2;
     prefs->pbq_adaptive = newval;
     if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->pbq_adaptive), newval);
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_VJMODE)) {
+  if (!lives_strcmp(prefidx, PREF_VJMODE)) {
     if (future_prefs->vj_mode == newval) goto fail2;
     if (mainw != NULL && mainw->vj_mode  != NULL)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->vj_mode), newval);
@@ -742,7 +756,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_SHOW_DEVOPTS)) {
+  if (!lives_strcmp(prefidx, PREF_SHOW_DEVOPTS)) {
     if (prefs->show_dev_opts == newval) goto fail2;
     if (mainw != NULL && mainw->show_devopts !=  NULL)
       lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->show_devopts), newval);
@@ -750,7 +764,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_REC_EXT_AUDIO)) {
+  if (!lives_strcmp(prefidx, PREF_REC_EXT_AUDIO)) {
     boolean success = FALSE;
     boolean rec_ext_audio = newval;
     if (rec_ext_audio && prefs->audio_src == AUDIO_SRC_INT) {
@@ -822,7 +836,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto fail2;
   }
 
-  if (!strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
+  if (!lives_strcmp(prefidx, PREF_MT_EXIT_RENDER)) {
     if (prefs->mt_exit_render == newval) goto fail2;
     prefs->mt_exit_render = newval;
     if (prefsw != NULL)
@@ -830,7 +844,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
+  if (!lives_strcmp(prefidx, PREF_PUSH_AUDIO_TO_GENS)) {
     if (prefs->push_audio_to_gens == newval) goto fail2;
     prefs->push_audio_to_gens = newval;
     if (prefsw != NULL)
@@ -839,7 +853,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   }
 
 #ifdef HAVE_PULSE_AUDIO
-  if (!strcmp(prefidx, PREF_PARESTART)) {
+  if (!lives_strcmp(prefidx, PREF_PARESTART)) {
     if (prefs->pa_restart == newval) goto fail2;
     prefs->pa_restart = newval;
     if (prefsw != NULL)
@@ -848,7 +862,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
   }
 #endif
 
-  if (!strcmp(prefidx, PREF_SHOW_ASRC)) {
+  if (!lives_strcmp(prefidx, PREF_SHOW_ASRC)) {
     if (prefs->show_asrc == newval) goto fail2;
     prefs->show_asrc = newval;
     if (prefsw != NULL)
@@ -869,7 +883,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_SHOW_TOOLTIPS)) {
+  if (!lives_strcmp(prefidx, PREF_SHOW_TOOLTIPS)) {
     if (prefs->show_tooltips == newval) goto fail2;
     else {
       if (newval) prefs->show_tooltips = newval;
@@ -889,7 +903,7 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_HFBWNP)) {
+  if (!lives_strcmp(prefidx, PREF_HFBWNP)) {
     if (prefs->hfbwnp == newval) goto fail2;
     prefs->hfbwnp = newval;
     if (prefsw != NULL)
@@ -909,13 +923,13 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_AR_CLIPSET)) {
+  if (!lives_strcmp(prefidx, PREF_AR_CLIPSET)) {
     if (prefs->ar_clipset == newval) goto fail2;
     prefs->ar_clipset = newval;
     goto success2;
   }
 
-  if (!strcmp(prefidx, PREF_AR_LAYOUT)) {
+  if (!lives_strcmp(prefidx, PREF_AR_LAYOUT)) {
     if (prefs->ar_layout == newval) goto fail2;
     prefs->ar_layout = newval;
     goto success2;
@@ -958,7 +972,7 @@ boolean pref_factory_color_button(lives_colRGBA64_t *pcol, LiVESColorButton *cbu
 boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_MT_AUTO_BACK)) {
+  if (!lives_strcmp(prefidx, PREF_MT_AUTO_BACK)) {
     if (newval == prefs->mt_auto_back) goto fail3;
     if (mainw->multitrack != NULL) {
       if (newval <= 0 && prefs->mt_auto_back > 0) {
@@ -979,7 +993,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     goto success3;
   }
 
-  if (!strcmp(prefidx, PREF_MAX_MSGS)) {
+  if (!lives_strcmp(prefidx, PREF_MAX_MSGS)) {
     if (newval == prefs->max_messages) goto fail3;
     if (newval < mainw->n_messages && newval >= 0) {
       free_n_msgs(mainw->n_messages - newval);
@@ -990,7 +1004,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     goto success3;
   }
 
-  if (!strcmp(prefidx, PREF_SEPWIN_TYPE)) {
+  if (!lives_strcmp(prefidx, PREF_SEPWIN_TYPE)) {
     if (prefs->sepwin_type == newval) goto fail3;
     prefs->sepwin_type = newval;
     if (newval == SEPWIN_TYPE_STICKY) {
@@ -1017,7 +1031,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     goto success3;
   }
 
-  if (!strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
+  if (!lives_strcmp(prefidx, PREF_MIDI_CHECK_RATE)) {
     if (newval != prefs->midi_check_rate) {
       prefs->midi_check_rate = newval;
       goto success3;
@@ -1025,7 +1039,7 @@ boolean pref_factory_int(const char *prefidx, int newval, boolean permanent) {
     goto fail3;
   }
 
-  if (!strcmp(prefidx, PREF_MIDI_RPT)) {
+  if (!lives_strcmp(prefidx, PREF_MIDI_RPT)) {
     if (newval != prefs->midi_rpt) {
       prefs->midi_rpt = newval;
       goto success3;
@@ -1052,7 +1066,7 @@ boolean pref_factory_string_choice(const char *prefidx, LiVESList *list, const c
   int idx = lives_list_strcmp_index(list, (livesconstpointer)strval, TRUE);
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
+  if (!lives_strcmp(prefidx, PREF_MSG_TEXTSIZE)) {
     if (idx == prefs->msg_textsize) goto fail4;
     prefs->msg_textsize = idx;
     if (prefs->show_msg_area) {
@@ -1078,7 +1092,7 @@ success4:
 boolean pref_factory_float(const char *prefidx, float newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_MASTER_VOLUME)) {
+  if (!lives_strcmp(prefidx, PREF_MASTER_VOLUME)) {
     char *ttip;
     if ((LIVES_IS_PLAYING && future_prefs->volume == newval) || (!LIVES_IS_PLAYING && prefs->volume == (double)newval)) goto fail5;
     future_prefs->volume = newval;
@@ -1096,9 +1110,15 @@ boolean pref_factory_float(const char *prefidx, float newval, boolean permanent)
     goto success5;
   }
 
-  if (!strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
+  if (!lives_strcmp(prefidx, PREF_AHOLD_THRESHOLD)) {
     if (prefs->ahold_threshold == newval) goto fail5;
     prefs->ahold_threshold = newval;
+    goto success5;
+  }
+
+  if (!lives_strcmp(prefidx, PREF_SCREEN_GAMMA)) {
+    if (prefs->screen_gamma == newval) goto fail5;
+    prefs->screen_gamma = newval;
     goto success5;
   }
 
@@ -1119,7 +1139,7 @@ success5:
 boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval, boolean permanent) {
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
-  if (!strcmp(prefidx, PREF_AUDIO_OPTS)) {
+  if (!lives_strcmp(prefidx, PREF_AUDIO_OPTS)) {
     if (newval && !(prefs->audio_opts & bitfield)) prefs->audio_opts &= bitfield;
     else if (!newval && (prefs->audio_opts & bitfield)) prefs->audio_opts ^= bitfield;
     else goto fail6;
@@ -1139,7 +1159,7 @@ boolean pref_factory_bitmapped(const char *prefidx, int bitfield, boolean newval
     goto success6;
   }
 
-  if (!strcmp(prefidx, PREF_OMC_DEV_OPTS)) {
+  if (!lives_strcmp(prefidx, PREF_OMC_DEV_OPTS)) {
     if (newval && !(prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts &= bitfield;
     else if (!newval && (prefs->omc_dev_opts & bitfield)) prefs->omc_dev_opts ^= bitfield;
     else goto fail6;
@@ -1215,6 +1235,11 @@ boolean apply_prefs(boolean skip_warn) {
   boolean antialias = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_antialias));
   boolean fx_threads = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_threads));
 
+  boolean lbox = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lb));
+  boolean lboxmt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_lbmt));
+  boolean srgb = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb));
+  double gamma = lives_spin_button_get_value(LIVES_SPIN_BUTTON(prefsw->spinbutton_gamma));
+
   int nfx_threads = lives_spin_button_get_value_as_int(LIVES_SPIN_BUTTON(prefsw->spinbutton_nfx_threads));
 
   boolean stop_screensaver = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->stop_screensaver_check));
@@ -1264,7 +1289,8 @@ boolean apply_prefs(boolean skip_warn) {
   boolean warn_layout_ashift = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_ashift));
   boolean warn_layout_aalt = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_aalt));
   boolean warn_layout_popup = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_popup));
-  boolean warn_mt_backup_space = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
+  boolean warn_mt_backup_space
+    = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_mt_backup_space));
   boolean warn_after_crash = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_after_crash));
   boolean warn_no_pulse = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_no_pulse));
   boolean warn_layout_wipe = lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_warn_layout_wipe));
@@ -1605,6 +1631,12 @@ boolean apply_prefs(boolean skip_warn) {
   }
 
   pref_factory_bool(PREF_MSG_PBDIS, msgs_pbdis, TRUE);
+
+  pref_factory_bool(PREF_LETTERBOX, lbox, TRUE);
+  pref_factory_bool(PREF_LETTERBOXMT, lboxmt, TRUE);
+
+  pref_factory_bool(PREF_SRGB_GAMMA, srgb, TRUE);
+  pref_factory_float(PREF_SCREEN_GAMMA, gamma, TRUE);
 
   ulist = get_textsizes_list();
   pref_factory_string_choice(PREF_MSG_TEXTSIZE, ulist, msgtextsize, TRUE);
@@ -3511,11 +3543,24 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
 
   prefsw->checkbutton_lb = lives_standard_check_button_new(_("In Clip Edit Mode"),
                            prefs->letterbox, LIVES_BOX(hbox), NULL);
-  lives_widget_set_sensitive(prefsw->checkbutton_lb, FALSE); /// TODO !!
 
   prefsw->checkbutton_lbmt = lives_standard_check_button_new(_("In Multitrack Mode"),
                              prefs->letterbox_mt, LIVES_BOX(hbox), NULL);
-  lives_widget_set_sensitive(prefsw->checkbutton_lbmt, FALSE);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  label = lives_standard_label_new(_("Monitor gamma setting:"));
+  lives_box_pack_start(LIVES_BOX(hbox), label, FALSE, FALSE, widget_opts.packing_width);
+
+  prefsw->checkbutton_srgb = lives_standard_check_button_new(_("sRGB"),
+                             prefs->gamma_srgb, LIVES_BOX(hbox), NULL);
+
+  prefsw->spinbutton_gamma = lives_standard_spin_button_new(_("Inverse power law"),
+                             prefs->screen_gamma, 1.2, 3.0, .01, .1, 2,
+                             LIVES_BOX(hbox), NULL);
+
+  toggle_sets_sensitive(LIVES_TOGGLE_BUTTON(prefsw->checkbutton_srgb), prefsw->spinbutton_gamma, TRUE);
 
   add_hsep_to_box(LIVES_BOX(vbox));
 
@@ -3547,8 +3592,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   }
   lives_list_free_all(&vid_playback_plugins);
 
-  lives_signal_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL, LIVES_GUI_CALLBACK(after_vpp_changed),
-                             (livespointer) advbutton);
+  lives_signal_connect_after(LIVES_WIDGET_OBJECT(pp_combo), LIVES_WIDGET_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(after_vpp_changed), (livespointer) advbutton);
 
   prefsw->checkbutton_stream_audio =
     lives_standard_check_button_new((tmp = lives_strdup(_("Stream audio"))),
@@ -3962,8 +4007,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
 
   prefsw->checkbutton_apply_gamma = lives_standard_check_button_new(_("Automatic gamma correction (requires restart)"),
-                                    prefs->apply_gamma,
-                                    LIVES_BOX(hbox), _("Experimental"));
+                                    prefs->apply_gamma, LIVES_BOX(hbox), (tmp = lives_strdup(_("Also affects the monitor gamma !! (for now...)"))));
+  lives_free(tmp);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(prefsw->vbox_right_effects), hbox, FALSE, FALSE, widget_opts.packing_height);
@@ -3972,7 +4017,8 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                                 ((tmp = lives_strdup(_("Number of _real time effect keys"))), prefs->rte_keys_virtual, FX_KEYS_PHYSICAL,
                                  FX_KEYS_MAX_VIRTUAL, 1., 1., 0, LIVES_BOX(hbox),
                                  (tmp2 = lives_strdup(
-                                     _("The number of \"virtual\" real time effect keys. They can be controlled through the real time effects window, or via network (OSC)."))));
+                                     _("The number of \"virtual\" real time effect keys. "
+                                       "They can be controlled through the real time effects window, or via network (OSC)."))));
   lives_free(tmp);
   lives_free(tmp2);
 
@@ -5327,6 +5373,9 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
                        NULL);
 
   ACTIVE(checkbutton_lb, TOGGLED);
+  ACTIVE(checkbutton_lbmt, TOGGLED);
+  ACTIVE(checkbutton_srgb, TOGGLED);
+  ACTIVE(spinbutton_gamma, VALUE_CHANGED);
   ACTIVE(pbq_adaptive, TOGGLED);
 
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->pbq_combo), LIVES_WIDGET_CHANGED_SIGNAL,

@@ -320,6 +320,7 @@ char *get_weed_display_string(weed_plant_t *inst, int pnum);
 weed_plant_t *add_filter_deinit_events(weed_plant_t *event_list);
 weed_plant_t *add_filter_init_events(weed_plant_t *event_list, ticks_t tc);
 void deinit_render_effects(void);
+void deinit_easing_effects(void);
 
 boolean write_filter_defaults(int fd, int idx);
 boolean read_filter_defaults(int fd);

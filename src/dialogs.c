@@ -1203,7 +1203,7 @@ void update_progress(boolean visible) {
     }
   }
 }
-
+static int nd = 0, ns = 0;
 
 int process_one(boolean visible) {
   ticks_t new_ticks;
@@ -1228,6 +1228,7 @@ int process_one(boolean visible) {
       mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
       mainw->deltaticks = 0;
       mainw->new_clip = -1;
+      nd = ns = 0;
     }
 
     /* if (prefs->loadchecktime > 0.) { */
@@ -1312,7 +1313,8 @@ int process_one(boolean visible) {
           }
         }
         // fps is synched to external source, so we adjust the audio rate to fit
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
+        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs,
+                             mainw->origusecs) + mainw->offsetticks)) < 2. &&
             audio_stretch > 0.5) {
           // if audio_stretch is > 1. it means that audio is playing too fast
           // < 1. it is playing too slow
@@ -1445,9 +1447,7 @@ int process_one(boolean visible) {
         spare_cycles++;
       }
     }
-
-    real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-
+    real_ticks = -1;
     // play next frame
     if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
       // calculate the audio 'frame' for non-realtime audio players
@@ -1457,6 +1457,7 @@ int process_one(boolean visible) {
         ///(real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
         if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
                                                 cfile->laudio_time * cfile->fps)))) {
+          real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
           mainw->firstticks = real_ticks;
         }
       }
@@ -1480,24 +1481,43 @@ int process_one(boolean visible) {
 #endif
 
       if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
-                                mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) ||
-          (mainw->fixed_fpsd > 0. && (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->fixed_fpsd) ||
-          (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-           (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
+                                mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))) {
+        show_frame = TRUE;
+      } else {
+        if (mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)) {
+          ticks_t dticks;
+          real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+          dticks = (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL;
+          if ((mainw->fixed_fpsd > 0. && (dticks >= 1. / mainw->fixed_fpsd)) ||
+              (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
+               dticks >= 1. / mainw->vpp->fixed_fpsd)) {
+            show_frame = TRUE;
+          }
+        }
+      }
+      if (show_frame) {
         // time to show a new frame
-
         if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
                                  mainw->preview_rendering || (mainw->multitrack != NULL &&
                                      !mainw->multitrack->is_rendering))) {
           if (prefs->pbq_adaptive) {
-            update_dfr(ABS(cfile->frameno - cfile->last_frameno) - 1, TRUE);
-            if (spare_cycles) update_dfr(1, FALSE);
+            int dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
+            if (dropped > 0) {
+              update_dfr(dropped, TRUE);
+              nd += dropped;
+            }
+            update_dfr(spare_cycles, FALSE);
+            ns++;
+#if SHOW_TIMINGS
+            g_print("dropped = %d (%f), %d scyc = %ld\n", dropped, (double)nd / (double)ns, mainw->struggling, spare_cycles);
+#endif
           }
         }
 
         // load and display the new frame
         load_frame_image(cfile->frameno);
         //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+        if (real_ticks == -1) real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
         else {
           if (mainw->vpp != NULL && mainw->ext_playback && mainw->vpp->fixed_fpsd > 0.)
@@ -1564,7 +1584,6 @@ int process_one(boolean visible) {
 refresh:
     // a segfault here can indicate memory corruption in an FX plugin
     lives_widget_context_update();  // animate GUI, allow kb timer to run
-    sched_yield();
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
       cancel_process(visible);
@@ -1640,6 +1659,8 @@ static void reset_timebase(void) {
     jack_time_reset(mainw->jackd_read, 0);
   }
 #endif
+  mainw->fps_mini_measure = 0;
+  mainw->fps_mini_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
 }
 
 
@@ -1650,7 +1671,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // visible is set for processing (progress dialog is visible)
   // or unset for video playback (progress dialog is not shown)
-
+  nd = ns = 0;
   FILE *infofile = NULL;
   char *mytext = NULL;
 
@@ -1697,7 +1718,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   if (prefs->show_player_stats) {
-    mainw->fps_measure = 0.;
+    mainw->fps_measure = mainw->fps_mini_measure = 0.;
   }
 
   mainw->cancelled = CANCEL_NONE;
@@ -1942,7 +1963,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
       if ((visible && !mainw->internal_messaging) || (LIVES_IS_PLAYING && cfile->play_paused)) lives_usleep(prefs->sleep_time);
 
-      sched_yield();
+      //sched_yield();
 
       // normal playback, wth realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;

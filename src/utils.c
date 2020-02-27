@@ -5216,9 +5216,9 @@ boolean lives_make_writeable_dir(const char *newdir) {
 
 
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
-  if (quality == PB_QUALITY_HIGH) return LIVES_INTERP_BEST;
+  if (mainw->struggling || quality == PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
-  return LIVES_INTERP_FAST;
+  return LIVES_INTERP_BEST;
 }
 
 

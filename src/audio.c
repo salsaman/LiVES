@@ -461,7 +461,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
   // take care of rounding errors
   src_end = src + tbytes / 2 - nSrcChannels;
 
-  if ((size_t)((fabs(scale) * (float)nsamples) + rem) * nSrcChannels * 2 > tbytes)
+  if ((size_t)((fabsf(scale) * (float)nsamples) + rem) * nSrcChannels * 2 > tbytes)
     scale = scale > 0. ? ((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples
             :  -(((float)(tbytes  / nSrcChannels / 2) - rem) / (float)nsamples);
 
@@ -612,7 +612,7 @@ float sample_move_d16_float(float *dst, short *src, uint64_t nsamples, uint64_t 
 #ifdef ENABLE_OIL
   xp = 1. / svolp;
   xn = 1. / svoln;
-  xa = 2.*vol / (SAMPLE_MAX_16BIT_P + SAMPLE_MAX_16BIT_N);
+  xa = 2. * vol / (SAMPLE_MAX_16BIT_P + SAMPLE_MAX_16BIT_N);
 #endif
 
   while (nsamples--) { // valgrind
@@ -669,7 +669,7 @@ void sample_move_float_float(float *dst, float *src, uint64_t nsamples, float sc
 }
 
 
-#define CLIP_DECAY 0.999f
+#define CLIP_DECAY ((double)16535. / (double)16536.)
 
 /**
    @brief convert float samples back to int
@@ -690,60 +690,75 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
                               int usigned, boolean rev_endian, boolean interleaved, float vol) {
   int64_t frames_out = 0l;
   register int i;
-  register int offs = 0, coffs = 0;
+  register int offs = 0, coffs = 0, lcoffs = -1;
   static float coffs_f = 0.f;
-  const float add = (1.0 - CLIP_DECAY);
+  const double add = (1.0 - CLIP_DECAY);
 
   short *hbuffs = (short *)holding_buff;
   unsigned short *hbuffu = (unsigned short *)holding_buff;
   unsigned char *hbuffc = (unsigned char *)holding_buff;
-  register short val;
-  register unsigned short valu = 0;
+  short val[chans];
+  unsigned short valu[chans];
   static float clip = 1.0;
-  float valf, fval, volx = vol / clip;
+  float ovalf[chans], valf[chans], fval;
+  double volx = (double)vol, ovolx = -1.;
   boolean checklim = FALSE;
+
+  asamps >>= 3;
 
   if (clip > 1.0) checklim = TRUE;
 
-  while ((nsamps - coffs) > 0) {
+  while ((nsamps - frames_out) > 0) {
     frames_out++;
     if (checklim) {
       if (clip > 1.0)  {
-        clip *= CLIP_DECAY;
-        volx = vol / ((clip += add));
+        clip = (float)((double)clip * CLIP_DECAY + add);
+        volx = ((double)vol / (double)clip);
       } else {
         checklim = FALSE;
         clip = 1.0;
+        volx = (double)vol;
       }
     }
+
     for (i = 0; i < chans; i++) {
-      if ((fval = fabs((valf = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
-        volx = vol / ((clip = fval));
-        checklim = TRUE;
+      if (coffs != lcoffs) {
+        if ((fval = fabsf((ovalf[i] = *(float_buffer[i] + (interleaved ? (coffs * chans) : coffs))))) > clip) {
+          clip = fval;
+          checklim = TRUE;
+          volx = ((double)vol / (double)clip);
+          i = -1;
+          continue;
+        }
+      }
+      if (volx != ovolx || coffs != lcoffs) {
+        valf[i] = ovalf[i] * volx;
+        if (valf[i] > vol) valf[i] = vol;
+        else if (valf[i] < -vol) valf[i] = -vol;
+        ovolx = volx;
+        val[i] = (short)(valf[i] * (valf[i] > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
+        if (usigned) valu[i] = (val[i] + SAMPLE_MAX_16BITI);
       }
 
-      valf *= volx;
-      val = (short)(valf * (valf > 0. ? SAMPLE_MAX_16BIT_P : SAMPLE_MAX_16BIT_N));
-      if (usigned) valu = (val + SAMPLE_MAX_16BITI);
-
-      if (asamps == 16) {
+      if (asamps == 2) {
         if (!rev_endian) {
-          if (usigned) *(hbuffu + offs) = valu;
-          else *(hbuffs + offs) = val;
+          if (usigned) *(hbuffu + offs) = valu[i];
+          else *(hbuffs + offs) = val[i];
         } else {
           if (usigned) {
-            *(hbuffc + offs) = valu & 0x00FF;
-            *(hbuffc + (++offs)) = (valu & 0xFF00) >> 8;
+            *(hbuffc + offs) = valu[i] & 0x00FF;
+            *(hbuffc + (++offs)) = (valu[i] & 0xFF00) >> 8;
           } else {
-            *(hbuffc + offs) = val & 0x00FF;
-            *(hbuffc + (++offs)) = (val & 0xFF00) >> 8;
+            *(hbuffc + offs) = val[i] & 0x00FF;
+            *(hbuffc + (++offs)) = (val[i] & 0xFF00) >> 8;
           }
         }
       } else {
-        *(hbuffc + offs) = (unsigned char)((float)val / 256.);
+        *(hbuffc + offs) = (unsigned char)(valu[i] >> 8);
       }
       offs++;
     }
+    lcoffs = coffs;
     coffs = (int)(coffs_f += scale);
   }
   coffs_f -= (float)coffs;
@@ -2489,7 +2504,7 @@ boolean resync_audio(double frameno) {
 
   // also can't resync if the playing file has no audio, or prefs dont allow it
   if (cfile->achans == 0
-      || (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) && (0
+      || (0
 #ifdef HAVE_PULSE_AUDIO
           || (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL
               && mainw->current_file != mainw->pulsed->playing_file)
@@ -2499,7 +2514,7 @@ boolean resync_audio(double frameno) {
           (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL
            && mainw->current_file != mainw->jackd->playing_file) ||
 #endif
-          0)))
+          0))
     return FALSE;
 
 #ifdef ENABLE_JACK

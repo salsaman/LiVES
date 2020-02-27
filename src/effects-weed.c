@@ -2084,6 +2084,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     after resizing we convert the palette if necessary
   */
   for (i = 0; i < num_in_tracks; i++) {
+    int tgamma = WEED_GAMMA_UNKNOWN;
     if (i > 0) def_palette = weed_channel_get_palette(def_channel);
 
     channel = get_enabled_channel(inst, i, FALSE);
@@ -2302,8 +2303,17 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // check palette again in case it changed during resize
     cpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
 
+    if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
+      // apply gamma conversion if plugin requested it
+      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
+        tgamma = WEED_GAMMA_LINEAR;
+      else {
+        tgamma = cfile->gamma_type;
+      }
+    }
+
     if (cpalette != opalette) {
-      if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace)) {
+      if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace, tgamma)) {
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         goto done_video;
       }
@@ -2323,13 +2333,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (rowstrides_changed && (channel_flags & WEED_CHANNEL_REINIT_ON_ROWSTRIDES_CHANGE))
       needs_reinit = TRUE;
 
-    if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
-      // apply gamma conversion if plugin requested it
-      if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-        gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
-      else {
-        gamma_convert_layer(cfile->gamma_type, layer);
-      }
+    if (tgamma != WEED_GAMMA_UNKNOWN) {
+      gamma_convert_layer(tgamma, layer);
       sched_yield();
     }
 
@@ -3408,7 +3413,11 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
                 weed_instance_unref(instance);
                 filter_mutex_lock(i);
                 weed_deinit_effect(i);
-                if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+                if (mainw->rte & new_rte) {
+                  mainw->rte ^= new_rte;
+                  if (rte_window != NULL) rtew_set_keych(i, FALSE);
+                  if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+                }
                 filter_mutex_unlock(i);
                 continue;
 		// *INDENT-OFF*
@@ -3469,7 +3478,11 @@ apply_inst3:
               uint64_t new_rte = GU641 << (i);
               filter_mutex_lock(i);
               weed_instance_unref(orig_inst);
-              if (mainw->rte & new_rte) mainw->rte ^= new_rte;
+              if (mainw->rte & new_rte) {
+                mainw->rte ^= new_rte;
+                if (rte_window != NULL) rtew_set_keych(i, FALSE);
+                if (mainw->ce_thumbs) ce_thumbs_set_keych(i, FALSE);
+              }
               weed_deinit_effect(i);
               filter_mutex_unlock(i);
               continue;
@@ -6904,21 +6917,23 @@ boolean weed_deinit_effect(int hotkey) {
   // adds a ref
   if ((instance = weed_instance_obtain(hotkey, key_modes[hotkey])) == NULL) return TRUE;
 
-  if (hotkey < FX_KEYS_MAX_VIRTUAL) {
+  if (LIVES_IS_PLAYING && hotkey < FX_KEYS_MAX_VIRTUAL) {
     if (prefs->allow_easing) {
       // if it's a user key and the plugin supports easing out, we'll do that instead
       if (!weed_plant_has_leaf(instance, WEED_LEAF_EASE_OUT)) {
-        if ((easing = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
-          int myease = cfile->pb_fps * 2.;
-          if (easing <= myease) {
-            weed_set_int_value(instance, WEED_LEAF_EASE_OUT, myease);
-            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, myease);
-            weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, 0);
-            weed_instance_unref(instance);
-            return FALSE;
-	    // *INDENT-OFF*
-          }}}}}
-  // *INDENT-ON*
+        uint64_t new_rte = GU641 << (hotkey);
+        if (mainw->rte & new_rte) {
+          if ((easing = weed_get_int_value(instance, WEED_LEAF_PLUGIN_EASING, NULL)) > 0) {
+            int myease = cfile->pb_fps * 2.;
+            if (easing <= myease) {
+              weed_set_int_value(instance, WEED_LEAF_EASE_OUT, myease);
+              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT, myease);
+              weed_set_int_value(instance, WEED_LEAF_HOST_EASE_OUT_COUNT, 0);
+              weed_instance_unref(instance);
+              return FALSE;
+	      // *INDENT-OFF*
+	    }}}}}}
+    // *INDENT-ON*
   mainw->blend_palette = WEED_PALETTE_END;
 
   // disable param recording, in case the instance is still attached to a param window
@@ -7108,7 +7123,11 @@ deinit3:
     pchains[hotkey] = NULL;
     rteval = mainw->rte;
     new_rte = GU641 << (hotkey);
-    if (rteval & new_rte) rteval ^= new_rte;
+    if (rteval & new_rte) {
+      rteval ^= new_rte;
+      if (rte_window != NULL) rtew_set_keych(hotkey, FALSE);
+      if (mainw->ce_thumbs) ce_thumbs_set_keych(hotkey, FALSE);
+    }
     create_filter_map(rteval); // we create filter_map event_t * array with ordered effects
     mainw->event_list = append_filter_map_event(mainw->event_list, actual_ticks, filter_map);
     pthread_mutex_unlock(&mainw->event_list_mutex);
@@ -7134,16 +7153,40 @@ void deinit_render_effects(void) {
       if (mainw->multitrack != NULL && mainw->multitrack->is_rendering && pchains[i] != NULL) {
         lives_free(pchains[i]);
         pchains[i] = NULL;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
+}
+
+
+/**
+   @brief switch off effects in easing out state after playback ends
+   during playback, some effects don't deinit right awy, instead they ease out
+   if plyback ends while they are in the easing out state they won't get deinited, so we need
+   to take care of that
+   @see weed_deinit_all()
+*/
+void deinit_easing_effects(void) {
+  weed_plant_t *instance;
+  register int i;
+
+  for (i = 0; i < FX_KEYS_MAX_VIRTUAL; i++) {
+    if ((instance = key_to_instance[i][key_modes[i]]) != NULL) {
+      if (weed_plant_has_leaf(instance, WEED_LEAF_EASE_OUT)) {
+        // no mutex needed since we are rendering. and since we arent playing it will get deinited now
+        weed_deinit_effect(i);
+        /// if recording, the deinit_event won't be recorded, since we are not playing now,
+        /// this will be handled in deal_with_render_choice() so it need not concern us
+	  // *INDENT-OFF*
+	}}}
+  // *INDENT-ON*
 }
 
 
 /**
    @brief deinit all effects (except generators* during playback)
    this is called on ctrl-0 or on shutdown
-   background generators will be killed because their transition will be deinited
+     background generators will be killed because their transition will be deinited
 */
 void weed_deinit_all(boolean shutdown) {
   int i;

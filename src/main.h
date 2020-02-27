@@ -888,8 +888,8 @@ capability *capable;
 #define USE_16BIT_PCONV
 
 // common defs for mainwindow (retain this order)
-#include "plugins.h"
 #include "colourspace.h"
+#include "plugins.h"
 #include "paramspecial.h"
 #include "multitrack.h"
 #include "mainwindow.h"

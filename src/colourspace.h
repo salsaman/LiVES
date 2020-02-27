@@ -28,7 +28,7 @@
 #define FP_BITS 16 /// max fp bits
 
 #ifdef USE_EXTEND
-#define SCALE_FACTOR 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1)
+#define SCALE_FACTOR 65793. /// (2 ^ 24 - 1) / (2 ^ 8 - 1), also 0xFF * SCALE_FACTOR = 0xFFFFFF
 #else
 #define SCALE_FACTOR (1 << FP_BITS)
 #endif
@@ -46,6 +46,7 @@
 #define YUV_CLAMP_MINI 16
 
 #define Y_CLAMP_MAX 235.
+#define Y_CLAMP_MAXI 235
 
 #define UV_CLAMP_MAX 240.
 #define UV_CLAMP_MAXI 240
@@ -101,6 +102,7 @@ typedef struct {
   int in_sampling;
   int out_sampling;
   boolean alpha_first;
+  void *lut;
   int thread_id;
 } lives_cc_params;
 
@@ -163,7 +165,7 @@ boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t ali
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
-boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace);
+boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
@@ -187,7 +189,7 @@ boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);
 void lives_pixbuf_set_opaque(LiVESPixbuf *pixbuf);
 
-LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette);
+LiVESPixbuf *layer_to_pixbuf(weed_layer_t *, boolean realpalette, boolean fordisp);
 boolean pixbuf_to_layer(weed_layer_t *, LiVESPixbuf *) WARN_UNUSED;
 
 // layer info

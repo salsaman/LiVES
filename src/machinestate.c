@@ -1380,11 +1380,11 @@ int lives_thread_join(lives_thread_t work, void **retval) {
   thrd_work_t *task = (thrd_work_t *)work.data;
   while (!task->busy) {
     sched_yield();
-    lives_usleep(100);
+    lives_usleep(1000);
   }
   while (!task->done) {
     clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_nsec += 100000;
+    ts.tv_nsec += 1000000;
     pthread_mutex_lock(&task->cond_mutex);
     pthread_cond_timedwait(&task->cond, &task->cond_mutex, &ts);
     pthread_mutex_unlock(&task->cond_mutex);
@@ -1611,19 +1611,17 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
 
 
 /// dropped frames handling
-static uint8_t dframes[DF_STATSMAX];
+static int16_t dframes[DF_STATSMAX];
 static int dfstatslen = 0;
 static boolean inited = FALSE;
 
 static int pop_framestate(void) {
-  int ret = 0;
-  while (dfstatslen >= DF_STATSMAX - 1) {
-    ret += dframes[0];
-    dfstatslen--;
-    lives_memmove(dframes, dframes + 1, dfstatslen);
-    return ret;
+  int ret = dframes[0];
+  dfstatslen--;
+  for (int i = 0; i < dfstatslen; i++) {
+    dframes[i] = dframes[i + 1];
   }
-  return 0;
+  return ret;
 }
 
 
@@ -1637,9 +1635,11 @@ void clear_dfr(void) {
 void update_dfr(int nframes, boolean dropped) {
   static int dfcount = 0;
   static int nsuccess = 0;
+  int spcycles;
+  int happiness;
 
   if (!inited) {
-    lives_memset(dframes, 0, DF_STATSMAX);
+    lives_memset(dframes, 0, sizeof(dframes));
     inited = TRUE;
     dfcount = 0;
     nsuccess = 0;
@@ -1650,56 +1650,59 @@ void update_dfr(int nframes, boolean dropped) {
   if (dropped)  {
     dfcount += nframes;
     nsuccess = 0;
-  } else nsuccess++;
+    spcycles = -1;
+  } else {
+    spcycles = nframes;
+    if (spcycles > 32767) spcycles = 32767;
+    nsuccess += spcycles;
+    nframes = 1;
+  }
 
   while (nframes-- > 0) {
-    if (dfstatslen == DF_STATSMAX - 1) {
-      dfcount -= pop_framestate();
+    if (dfstatslen == DF_STATSMAX) {
+      int res = pop_framestate();
+      if (res > 0) dfcount -= res;
+      else nsuccess += res;
     }
-    dframes[dfstatslen] = dropped ? 1 : 0;
+    dframes[dfstatslen] = -spcycles;
     dfstatslen++;
   }
 
-  if (dfcount >= DF_LIMIT || (mainw->struggling && dfcount > 0)) {
+  if (!dfcount) {
+    happiness = nsuccess / dfstatslen;
+  } else {
+    happiness = -dfcount;
+  }
+
+  if (happiness > 0) {
+    if (mainw->struggling) {
+      mainw->struggling--;
+    } else {
+      if (prefs->pb_quality > PB_QUALITY_HIGH) prefs->pb_quality--;
+    }
+  }
+
+  if (happiness < DF_LIMIT) {
     if (prefs->pb_quality > future_prefs->pb_quality) {
       prefs->pb_quality = future_prefs->pb_quality;
-      nsuccess = 0;
       return;
     }
     if (!mainw->struggling) {
       mainw->struggling = 1;
-      nsuccess = 0;
       return;
     }
-    if (dfcount >= DF_LIMIT_HIGH || mainw->struggling == 3) {
-      mainw->struggling = 5;
-      nsuccess = 0;
-      if (future_prefs->pb_quality == PB_QUALITY_HIGH) {
-        prefs->pb_quality = PB_QUALITY_MED;
-      } else if (future_prefs->pb_quality == PB_QUALITY_MED) {
+    if (happiness < DF_LIMIT_HIGH || (mainw->struggling && (happiness < DF_LIMIT))) {
+      if (mainw->struggling < DF_STATSMAX) mainw->struggling++;
+      if (mainw->struggling > DF_LIMIT_HIGH) {
         prefs->pb_quality = PB_QUALITY_LOW;
+      } else {
+        if (future_prefs->pb_quality < PB_QUALITY_LOW) {
+          if (prefs->pb_quality <= future_prefs->pb_quality)
+            prefs->pb_quality = future_prefs->pb_quality + 1;
+        } else prefs->pb_quality = PB_QUALITY_LOW;
 	// *INDENT-OFF*
       }}}
-// *INDENT-ON*
-  else {
-    if (mainw->struggling == 3 && nsuccess >= DF_STATSMAX) {
-      prefs->pb_quality = future_prefs->pb_quality;
-      mainw->struggling = 1;
-      nsuccess = 0;
-    }
-    if (mainw->struggling == 5 && nsuccess >= DF_STATSMAX) {
-      prefs->pb_quality = future_prefs->pb_quality;
-      mainw->struggling = 3;
-      nsuccess = 0;
-    }
-  }
-
-  if (!mainw->struggling && nsuccess > DF_LIMIT_HIGH) {
-    if (prefs->pb_quality == PB_QUALITY_MED) prefs->pb_quality = PB_QUALITY_HIGH;
-    if (prefs->pb_quality == PB_QUALITY_LOW) prefs->pb_quality = PB_QUALITY_MED;
-    nsuccess = 0;
-  }
-
-  //g_print("STRG %d and %d\n", mainw->struggling, nsuccess);
+  // *INDENT-ON*
+  //g_print("STRG %d and %d %d\n", mainw->struggling, happiness, dfcount);
 }
 

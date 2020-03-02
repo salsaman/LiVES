@@ -6699,7 +6699,8 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
             bg_frame = 0;
           }
 
-          actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+          //actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+          actual_ticks = mainw->startticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
           if (mainw->record_starting) {
             // mark record start

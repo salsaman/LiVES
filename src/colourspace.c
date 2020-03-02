@@ -363,10 +363,10 @@ static inline int32_t spc_rnd(int32_t val) {
 
   // if we are adding several factors we can do the conversion after the addition
 
-  if (mainw->effort > 1) {
+  if (mainw->effort > EFFORT_LIMIT_MED) {
     return val >> FP_BITS;
   }
-  if (mainw->effort == 1) {
+  if (mainw->effort > 0) {
     uint32_t sig = val & 0x80000000;
     val = (val - (val >> 8));
     return ((val >> 16) | sig);
@@ -6239,10 +6239,11 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
   if ((irowstride == width * 3) && (orowstride == irowstride)) {
     // quick version
 #ifdef ENABLE_OIL
-    if (!gamma_lut)
+    if (!gamma_lut) {
       oil_rgb2bgr(dest, src, width * height);
-    else {
-#else
+      return;
+    }
+#endif
     for (; src < end; src += 3) {
       if (!gamma_lut) {
         *(dest++) = src[2]; // red
@@ -6254,10 +6255,6 @@ static void convert_swap3_frame(uint8_t *src, int width, int height, int irowstr
         *(dest++) = gamma_lut[src[0]]; // blue
       }
     }
-#endif
-#ifdef ENABLE_OIL
-    }
-#endif
   } else {
     int width3 = width * 3;
     orowstride -= width3;
@@ -6662,8 +6659,11 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
   if ((irowstride == width * 3) && (orowstride == width * 4)) {
     // quick version
 #ifdef ENABLE_OIL
-    oil_rgb2rgba(dest, src, width * height);
-#else
+    if (!gamma_lut) {
+      oil_rgb2rgba(dest, src, width * height);
+      return;
+    }
+#endif
     for (; src < end; src += 3) {
       if (!gamma_lut) {
         lives_memcpy(dest, src, 3);
@@ -6675,7 +6675,6 @@ static void convert_addpost_frame(uint8_t *src, int width, int height, int irows
       }
       *(dest++) = 255; // alpha
     }
-#endif
   } else {
     int width3 = width * 3;
     orowstride -= width * 4;
@@ -7098,7 +7097,7 @@ static void *convert_swap3delpre_frame_thread(void *data) {
 
 
 static void convert_swapprepost_frame(uint8_t *src, int width, int height, int irowstride, int orowstride,
-                                      uint8_t *dest, boolean alpha_first, int thread_id) {
+                                      uint8_t *dest, int thread_id) {
   // swap first and last bytes in a 4 byte palette
   uint8_t *end = src + height * irowstride;
   register int i;
@@ -7126,9 +7125,6 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
 
         ccparams[i].irowstrides[0] = irowstride;
         ccparams[i].orowstrides[0] = orowstride;
-
-        ccparams[i].alpha_first = alpha_first;
-
         ccparams[i].thread_id = i;
 
         if (i == 0) convert_swapprepost_frame_thread(&ccparams[i]);
@@ -7146,23 +7142,34 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
     return;
   }
 
+
+  uint64_t *uup = (uint64_t *)src;
+  if ((void *)uup == (void *)src) {
+    uint64_t uu;
+    int width8 = width >> 3;
+    orowstride -= width * 4;
+    for (; src < end; src += irowstride) {
+      for (i = 0; i < width8; i++) {
+        uu = ((*uup & 0xFF000000FF000000) >> 24);
+        uu |= ((*uup & 0x00FFFFFF00FFFFFF) << 8);
+        lives_memcpy(dest, &uu, 8);
+        dest += 8;
+        uup++;
+      }
+      dest += orowstride;
+    }
+    return;
+  }
+
   if (src == dest) {
     uint8_t tmp;
     int width4 = width << 2;
     orowstride -= width4;
     for (; src < end; src += irowstride) {
-      if (alpha_first) {
-        for (i = 0; i < width4; i += 4) {
-          tmp = dest[i];
-          lives_memmove(&dest[i], &dest[i + 1], 3);
-          dest[i + 3] = tmp;
-        }
-      } else {
-        for (i = 0; i < width4; i += 4) {
-          tmp = dest[i + 3];
-          lives_memmove(&dest[i + 1], &dest[i], 3);
-          dest[i] = tmp;
-        }
+      for (i = 0; i < width4; i += 4) {
+        tmp = dest[i];
+        lives_memmove(&dest[i], &dest[i + 1], 3);
+        dest[i + 3] = tmp;
       }
       dest += orowstride;
     }
@@ -7172,18 +7179,10 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
     int width4 = width << 2;
     orowstride -= width4;
     for (; src < end; src += irowstride) {
-      if (alpha_first) {
-        for (i = 0; i < width4; i += 4) {
-          tmp = src[i];
-          lives_memcpy(&dest[i], &src[i + 1], 3);
-          dest[i + 3] = tmp;
-        }
-      } else {
-        for (i = 0; i < width4; i += 4) {
-          tmp = dest[i + 3];
-          lives_memcpy(&dest[i + 1], &src[i], 3);
-          dest[i] = tmp;
-        }
+      for (i = 0; i < width4; i += 4) {
+        tmp = src[i];
+        lives_memcpy(&dest[i], &src[i + 1], 3);
+        dest[i + 3] = tmp;
       }
       dest += orowstride;
     }
@@ -7194,7 +7193,7 @@ static void convert_swapprepost_frame(uint8_t *src, int width, int height, int i
 static void *convert_swapprepost_frame_thread(void *data) {
   lives_cc_params *ccparams = (lives_cc_params *)data;
   convert_swapprepost_frame((uint8_t *)ccparams->src, ccparams->hsize, ccparams->vsize, ccparams->irowstrides[0],
-                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->alpha_first, ccparams->thread_id);
+                            ccparams->orowstrides[0], (uint8_t *)ccparams->dest, ccparams->thread_id);
   return NULL;
 }
 
@@ -9046,7 +9045,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       convert_swap3postalpha_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
       break;
     case WEED_PALETTE_ARGB32:
-      convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, FALSE, -USE_THREADS);
+      convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
       break;
     case WEED_PALETTE_UYVY8888:
       weed_set_int_value(layer, WEED_LEAF_WIDTH, width >> 1);
@@ -9329,7 +9328,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
       convert_delpre_frame(gusrc, width, height, irowstride, orowstride, gudest, -USE_THREADS);
       break;
     case WEED_PALETTE_RGBA32:
-      convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, TRUE, -USE_THREADS);
+      convert_swapprepost_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
       break;
     case WEED_PALETTE_BGRA32:
       convert_swap4_frame(gusrc, width, height, irowstride, irowstride, gusrc, -USE_THREADS);
@@ -10694,8 +10693,6 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
             ccparams[i].vsize = dheight;
             ccparams[i].psize = psize;
             ccparams[i].orowstrides[0] = orowstride;
-            if (pal == WEED_PALETTE_ARGB32) ccparams[i].alpha_first = TRUE;
-            else ccparams[i].alpha_first = FALSE;
             ccparams[i].lut = (void *)gamma_lut;
             ccparams[i].thread_id = i;
             if (i == 0) gamma_convert_layer_thread(&ccparams[i]);

@@ -2291,18 +2291,9 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // continue until we have a full buffer
   // if we get an audio frame we render up to that point
   // then we render what is left to fill abuf
-  while (event != NULL) {
-    tc = get_event_timecode(event);
-    //if (tc > 100000000) tc -= 100000000;
-    g_print("VALZZ %ld and %ld %ld\n", last_tc, tc, fill_tc);
-    if (tc >= fill_tc) {
-      g_print("will not fit, render to end\n");
-      break;
-    }
+  while (event != NULL && (tc = get_event_timecode(event)) < fill_tc) {
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
-      g_print("will fit\n");
-
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
 
       for (i = 0; i < nfiles; i++) {
@@ -2311,7 +2302,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
       }
 
       last_tc = tc;
-      g_print("last tc is now %ld\n", last_tc);
       // process audio updates at this frame
       atstate = aframe_to_atstate(event);
 
@@ -2333,7 +2323,6 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 
   if (last_tc < fill_tc) {
     // fill the rest of the buffer
-    g_print("filling from %ld to %ld\n", last_tc, fill_tc);
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i = 0; i < nfiles; i++) {
       // increase seek values

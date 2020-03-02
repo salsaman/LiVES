@@ -1359,7 +1359,8 @@ int process_one(boolean visible) {
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
             ticks_t ldt = mainw->last_display_ticks;
-            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
+            cfile->next_event = process_events(cfile->next_event, FALSE, lives_get_relative_ticks(mainw->origsecs,
+                                               mainw->origusecs) + mainw->offsetticks);
             if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
             else if (mainw->last_display_ticks != ldt) {
               update_effort(spare_cycles + 1, FALSE);

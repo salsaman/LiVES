@@ -330,6 +330,22 @@ const int *get_palette_list(void) {
 }
 
 
+static int get_size_for_type(int type) {
+  switch (type) {
+  case GL_RGBA:
+  case GL_BGRA:
+  case GL_SRGB8_ALPHA8:
+    return 4;
+  case GL_RGB:
+  case GL_BGR:
+  case GL_SRGB8:
+    return 3;
+  default:
+    assert(0);
+  }
+}
+
+
 boolean set_palette(int palette) {
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_RGB24 ||
       palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
@@ -478,22 +494,6 @@ static void setFullScreen(void) {
   XResizeWindow(dpy, xWin, m_WidthFS, m_HeightFS);
 
   alwaysOnTop();
-}
-
-
-static int get_size_for_type(int type) {
-  switch (type) {
-  case GL_RGBA:
-  case GL_BGRA:
-  case GL_SRGB8_ALPHA8:
-    return 4;
-  case GL_RGB:
-  case GL_BGR:
-  case GL_SRGB8:
-    return 3;
-  default:
-    assert(0);
-  }
 }
 
 

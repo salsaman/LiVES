@@ -2921,7 +2921,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
         retval = FALSE;
         goto cleanup;
       }
-    } while (nextframe < tframe);
+    } while (nextframe <= tframe);
 
     /////////////////////////////////////////////////////
   }

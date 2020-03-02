@@ -204,8 +204,13 @@ double lives_ce_update_timeline(int frame, double x) {
   cfile->pointer_time = x;
 
   cfile->frameno = cfile->last_frameno = frame;
-  if (cfile->achans)
-    cfile->aseek_pos = cfile->real_pointer_time;
+
+  if (cfile->achans) {
+    cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
+                                 (cfile->asampsize / 8));
+    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+  }
+
 
 #ifndef ENABLE_GIW_3
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);

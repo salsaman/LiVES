@@ -2337,11 +2337,8 @@ void event_list_close_gaps(weed_plant_t *event_list) {
 
   /// start gap time, subtracted from all timecodes
   tc_offs = get_event_timecode(event);
-  g_print("tcs is %ld %ld\n", tc_offs, tc_delta);
 
   event = get_first_event(event_list);
-
-  g_print("tcs is %ld %ld\n", tc_start, tc_delta);
 
   while (event != NULL) {
     next_event = get_next_event(event);
@@ -2371,7 +2368,6 @@ void event_list_close_gaps(weed_plant_t *event_list) {
 
     /// subtract delta to close gaps, we already subtracted tc_offs
     tc -= tc_delta;
-    g_print("tc2 is %ld %ld %ld\n", tc_start, tc, tc_delta);
     weed_set_int64_value(event, WEED_LEAF_TIMECODE, tc);
     event = next_event;
   }

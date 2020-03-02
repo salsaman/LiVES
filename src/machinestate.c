@@ -1636,6 +1636,7 @@ static int pop_flowstate(void) {
 
 void reset_effort(void) {
   prefs->pb_quality = future_prefs->pb_quality;
+  mainw->blend_palette = WEED_PALETTE_END;
   lives_memset(theflow, 0, sizeof(theflow));
   inited = TRUE;
   badthingcount = goodthingcount = 0;
@@ -1676,38 +1677,50 @@ void update_effort(int nthings, boolean badthings) {
   }
 
   if (!badthings) {
-    mainw->effort = goodthingcount;
+    mainw->effort = -goodthingcount;
   } else {
-    mainw->effort = -badthingcount;
+    mainw->effort = badthingcount;
   }
 
-  if (mainw->effort > 0) {
+  if (mainw->effort < 0) {
     if (struggling) {
-      struggling -= ((mainw->effort | 16) >> 4);
+      struggling += ((mainw->effort | 16) >> 4);
       if (struggling < 0) struggling = 0;
     } else {
-      if (prefs->pb_quality < PB_QUALITY_HIGH) prefs->pb_quality++;
+      if (prefs->pb_quality < PB_QUALITY_HIGH) {
+        prefs->pb_quality++;
+        mainw->blend_palette = WEED_PALETTE_END;
+      }
     }
   }
 
-  if (mainw->effort < -EFFORT_LIMIT_LOW) {
+  if (mainw->effort > EFFORT_LIMIT_LOW) {
     if (prefs->pb_quality > future_prefs->pb_quality) {
       prefs->pb_quality = future_prefs->pb_quality;
+      mainw->blend_palette = WEED_PALETTE_END;
       return;
     }
     if (!struggling) {
       struggling = 1;
       return;
     }
-    if (mainw->effort < -EFFORT_LIMIT_MED || (struggling && (mainw->effort < -EFFORT_LIMIT_LOW))) {
+    if (mainw->effort > EFFORT_LIMIT_MED || (struggling && (mainw->effort > -EFFORT_LIMIT_LOW))) {
       if (struggling < EFFORT_RANGE_MAX) struggling++;
       if (struggling > EFFORT_LIMIT_MED) {
-        prefs->pb_quality = PB_QUALITY_LOW;
+        if (prefs->pb_quality > PB_QUALITY_LOW) {
+          prefs->pb_quality = PB_QUALITY_LOW;
+          mainw->blend_palette = WEED_PALETTE_END;
+        }
       } else {
         if (future_prefs->pb_quality > PB_QUALITY_LOW) {
-          if (prefs->pb_quality >= future_prefs->pb_quality)
+          if (prefs->pb_quality >= future_prefs->pb_quality) {
             prefs->pb_quality = future_prefs->pb_quality - 1;
-        } else prefs->pb_quality = PB_QUALITY_LOW;
+            mainw->blend_palette = WEED_PALETTE_END;
+          }
+        } else if (prefs->pb_quality > PB_QUALITY_LOW) {
+          prefs->pb_quality = PB_QUALITY_LOW;
+          mainw->blend_palette = WEED_PALETTE_END;
+        }
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*

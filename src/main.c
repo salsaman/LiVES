@@ -8292,9 +8292,11 @@ lfi_done:
     if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL) {
-        if (!activate) mainw->jackd->in_use = FALSE;
+        if (mainw->jackd->playing_file == new_file ||
+            (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
+             && mainw->jackd->playing_file != mainw->playing_file)) return FALSE;
 
-        if (mainw->jackd->playing_file == new_file) return FALSE;
+        if (!activate) mainw->jackd->in_use = FALSE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
@@ -8331,8 +8333,6 @@ lfi_done:
         mainw->jackd->in_use = FALSE;
         return FALSE;
       }
-
-      if (activate) mainw->jackd->in_use = TRUE;
 
       if (CLIP_HAS_AUDIO(new_file)) {
         int asigned = !(mainw->files[new_file]->signed_endian & AFORM_UNSIGNED);
@@ -8397,7 +8397,11 @@ lfi_done:
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
       if (mainw->pulsed != NULL) {
-        if (mainw->pulsed->playing_file == new_file) return FALSE;
+        if (mainw->pulsed->playing_file == new_file ||
+            (IS_VALID_CLIP(mainw->playing_file) && mainw->files[mainw->playing_file]->achans > 0
+             && mainw->pulsed->playing_file != mainw->playing_file)) return FALSE;
+
+        if (!activate) mainw->pulsed->in_use = FALSE;
 
         alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
         while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
@@ -8576,6 +8580,7 @@ lfi_done:
     mainw->clip_switched = TRUE;
     chill_decoder_plugin(mainw->current_file);
     if (CURRENT_CLIP_IS_VALID && mainw->effort > 0) area = cfile->hsize * cfile->vsize;
+
     mainw->current_file = new_file;
 
     if (CURRENT_CLIP_IS_VALID && mainw->effort > 0)
@@ -8609,6 +8614,13 @@ lfi_done:
 
     if (!cfile->frameno && cfile->frames) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
     cfile->last_frameno = cfile->frameno;
+
+    // switch audio clip
+    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
+                                    || prefs->audio_src == AUDIO_SRC_EXT))) {
+      switch_audio_clip(new_file, TRUE);
+    }
 
     mainw->playing_file = new_file;
 
@@ -8661,13 +8673,6 @@ lfi_done:
 
     mainw->switch_during_pb = FALSE;
     mainw->osc_block = osc_block;
-
-    // switch audio clip
-    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                    || prefs->audio_src == AUDIO_SRC_EXT))) {
-      switch_audio_clip(new_file, TRUE);
-    }
 
     if (!mainw->fs && !mainw->faded) {
       redraw_timer_bars(0., mainw->files[new_file]->laudio_time, 0);

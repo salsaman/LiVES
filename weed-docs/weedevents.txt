@@ -39,10 +39,13 @@ Added WEED_AUDIO_LITTLE_ENDIAN and WEED_AUDIO_BIG_ENDIAN symbols.
 15/10/2019
 Added optional "author", "title", "comments", "created_version" and "edited_version" leaves.
 
-(C) Gabriel "Salsaman" Finch 2005 - 2019
+27/02/2020
+"frames" changed from int to int64. "hint" changed to "event_type"
+
+(C) Gabriel "Salsaman" Finch 2005 - 2020
 
 == WEED_EVENT_API_VERSION ==
-This is defined as 120 for this version of the specification. This
+This is defined as 121 for this version of the specification. This
 number will be increased for future revisions of the spec. if a
 function or a symbol is changed or added.
 
@@ -71,7 +74,7 @@ event list for all tracks/channels.
 '''Mandatory leaves''':[[BR]]
  
  * "weed_event_api_version" : WEED_SEED_INT : API version of this
-   spec. (currently 120) [as of version 120]
+   spec. (currently 121) [as of version 121]
 
  * "fps" : WEED_SEED_DOUBLE : framerate of timeline; all events in the
    timeline MUST be quantised to this rate. An "fps" of 0 indicates
@@ -95,7 +98,7 @@ event list for all tracks/channels.
  * "height" : WEED_SEED_INT : frame height in pixels (must be >0)
 
  * "audio_channels" : WEED_SEED_INT : number of audio channels. 0
-   to force no audio. Must be >=0
+   to force no audio. Must be >=0   [TODO: add channel layoput
 
  * "audio_rate" : WEED_SEED_INT : audio rate in Hz, must be >0 if "audio_channels" > 0
 
@@ -133,8 +136,8 @@ event list for all tracks/channels.
 
 '''Mandatory leaves''':[[BR]]
 
- * "hint"	  : WEED_SEED_INT : hint denoting the event type [see
-   below, Event Hints]
+ * "event_type"	  : WEED_SEED_INT : the event type [see
+   below, Event Types]
 
  * "timecode"	  : WEED_SEED_INT64 : the timecode of the event
 
@@ -156,26 +159,26 @@ should be:
 
  * Marker events can exist anywhere in the event_list.
 
-== EVENT HINTS ==
+== EVENT TYPES ==
 
-The "hint" is a mandatory WEED_SEED_INT leaf of every event; the defined values are:
+The "event_type" is a mandatory WEED_SEED_INT leaf of every event; the defined values are:
 
- * WEED_EVENT_HINT_UNDEFINED
- * WEED_EVENT_HINT_FRAME
- * WEED_EVENT_HINT_FILTER_INIT
- * WEED_EVENT_HINT_FILTER_DEINIT
- * WEED_EVENT_HINT_FILTER_MAP
- * WEED_EVENT_HINT_PARAM_CHANGE
- * WEED_EVENT_HINT_MARKER
+ * WEED_EVENT_TYPE_UNDEFINED
+ * WEED_EVENT_TYPE_FRAME
+ * WEED_EVENT_TYPE_FILTER_INIT
+ * WEED_EVENT_TYPE_FILTER_DEINIT
+ * WEED_EVENT_TYPE_FILTER_MAP
+ * WEED_EVENT_TYPE_PARAM_CHANGE
+ * WEED_EVENT_TYPE_MARKER
 
-Depending on the "hint" parameter seed type additional leaves are:
+Depending on the "event_type" parameter seed type additional leaves are:
 
-=== WEED_EVENT_HINT_UNDEFINED ===
-This is not actually a true event type, but for example a function can return this as the hint value for a NULL event.
+=== WEED_EVENT_TYPE_UNDEFINED ===
+This is not actually a true event type, but for example a function can return this as the event_type value for a NULL event.
 As of API version 110.
 
 
-=== WEED_EVENT_HINT_FRAME ===
+=== WEED_EVENT_TYPE_FRAME ===
 A FRAME event can contain video and/or audio.
 
 The video part of a FRAME represents a stack of clip/frame pairs. Number of elements for "clips" and "frames" MUST be equal.
@@ -183,7 +186,7 @@ The video part of a FRAME represents a stack of clip/frame pairs. Number of elem
 Mandatory leaves for all frames:
 
  * "clips" : WEED_SEED_INT : array of clips (clip number >=1)  [clip <=0 means no frame/blank frame at that position]
- * "frames" : WEED_SEED_INT : array of frames (frame number >=1) [frame <=0 means a blank frame at that position]
+ * "frames" : WEED_SEED_INT64 : array of frames (frame number >=1) [frame <=0 means a blank frame at that position]
 
  "clips"==-1, "frames"==0 is strongly suggested for a blank frame.
 
@@ -240,7 +243,7 @@ may be necessary to add an additional blank frame.
 
 
 
-=== WEED_EVENT_HINT_FILTER_INIT ===
+=== WEED_EVENT_TYPE_FILTER_INIT ===
     This event is used to init a filter instance.
 
  * "filter" : WEED_SEED_STRING :the HASHNAME of a Weed filter [See the main Weed
@@ -274,17 +277,18 @@ may be necessary to add an additional blank frame.
      "filter" has no out channels : [an out track of -1 represents a
      separated audio track - see the WEED audio extension]
 
- * "event_id" : WEED_SEED_INT64 : used to refer to this filter_init by filter_map, filter_deinit and param_change events. Must be unique in the event_list.
+ * "event_id" : WEED_SEED_INT64 : used to refer to this filter_init by filter_map, filter_deinit and param_change events.
+   Must be unique in the event_list.
 
 
-=== WEED_EVENT_HINT_FILTER_DEINIT ===
+=== WEED_EVENT_TYPE_FILTER_DEINIT ===
     This event deinits a filter instance.
 
  * "init_event" : WEED_SEED_INT64 : refers to the "event_id" of FILTER_INIT which must occur earlier in the event_list. 
  Each FILTER_INIT event must have exactly one corresponding FILTER_DEINIT.
 
 
-=== WEED_EVENT_HINT_FILTER_MAP ===
+=== WEED_EVENT_TYPE_FILTER_MAP ===
    This event type defines the order in which filters are applied to any
    subsequent FRAME events.
 
@@ -292,7 +296,7 @@ may be necessary to add an additional blank frame.
    event's timecode. The associated FILTER_DEINITs must have "timecode" >= this event's timecode.
 
 
-=== WEED_EVENT_HINT_PARAM_CHANGE ===
+=== WEED_EVENT_TYPE_PARAM_CHANGE ===
     Parameters are assumed to be smoothly interpolated from one value
     to the next. In order to implement an instantaneous change, the
     filter should either do its own interpolation, or the old value
@@ -303,7 +307,8 @@ may be necessary to add an additional blank frame.
 
  * "index" : WEED_SEED_INT : 0 based index of in_parameter numbers
 
- * "value" : WEED_SEED_* : "value" of the in_parameter at "timecode". The type must be the same as the type of the in_parameter "value".
+ * "value" : WEED_SEED_* : "value" of the in_parameter at "timecode".
+ The type must be the same as the type of the in_parameter "value".
  The number of elements must be valid for the in_parameter "value".
 
 
@@ -324,7 +329,7 @@ Optional leaves
 	      WEED_FALSE. Extra elements in "ignore" are ignored.
 
 
-=== WEED_EVENT_HINT_MARKER ===
+=== WEED_EVENT_TYPE_MARKER ===
 
 This is a host specfic marker event. Leaves can vary from host to
 host. Markers which are not recognised should be removed from the event_list.
@@ -374,23 +379,19 @@ Format shall be little endian for all types (except string).
 == definitions ==
 The weed-events.h header currently contains the following definitions:
 
-#define WEED_EVENT_API_VERSION_100
-#define WEED_EVENT_API_VERSION_110
-#define WEED_EVENT_API_VERSION_120
-
-#define WEED_EVENT_API_VERSION 120
+#define WEED_EVENT_API_VERSION 121
 
 
 Summary:
 
-== EVENT_HINTS ==
+== EVENT_TYPES ==
 
- * WEED_EVENT_HINT_FRAME
- * WEED_EVENT_HINT_FILTER_INIT
- * WEED_EVENT_HINT_FILTER_DEINIT
- * WEED_EVENT_HINT_FILTER_MAP
- * WEED_EVENT_HINT_PARAM_CHANGE
- * WEED_EVENT_HINT_MARKER
+ * WEED_EVENT_TYPE_FRAME
+ * WEED_EVENT_TYPE_FILTER_INIT
+ * WEED_EVENT_TYPE_FILTER_DEINIT
+ * WEED_EVENT_TYPE_FILTER_MAP
+ * WEED_EVENT_TYPE_PARAM_CHANGE
+ * WEED_EVENT_TYPE_MARKER
 
 
 

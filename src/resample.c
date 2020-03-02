@@ -544,7 +544,8 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
   char *what;
 
   boolean interpolate = TRUE;
-  int *clips = NULL, *naclips = NULL, *frames = NULL, *nclips = NULL, *nframes = NULL;
+  int *clips = NULL, *naclips = NULL, *nclips = NULL;
+  int64_t  *frames = NULL,  *nframes = NULL;
   int *xaclips = NULL;
 
   int tracks, ntracks = 0, natracks = 0, xatracks = 0;
@@ -838,7 +839,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               for (i = 0; i < tracks; i++) {
                 if (i >= ntracks) break;
                 if (clips[i] == nclips[i]) {
-                  frames[i] = (int)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
+                  frames[i] = (int64_t)((double)frames[i] + (double)(nframes[i] - frames[i]) * ratio);
                 }
               }
             }
@@ -1407,10 +1408,10 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   what = lives_strdup(_("creating the event list for resampling"));
 
   if (cfile->event_list == NULL) {
-    for (i = 1; i <= cfile->frames; i++) {
+    for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i++) {
       do {
         response = LIVES_RESPONSE_OK;
-        new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i);
+        new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i64);
         if (new_event_list == NULL) {
           response = do_memory_error_dialog(what, 0);
         }

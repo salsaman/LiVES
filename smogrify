@@ -9292,31 +9292,42 @@ sub weed {
 			print STDERR "smogrify: file does not contain set.* file, assuming it is not in a set\n";
 			if (!($opts & 0x01)) {
 			    print STDERR "considering $workdir/$file for removal\n";
-			    if (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
-				|| &is_specialdir($file)) {
+			    my $has_hdrs = 0;
+			    unless ($opts & 0x20) {
+				@files = glob("$workdir/$file/header*");
+				if (@files) {
+				    $has_hdrs = 1;
+				}
+			    }
+			    if (!$has_hdrs && (-f "$workdir/$file/order" || (int($file) > 65535 && $file =~ /^[0-9]{5,}$/)
+				|| &is_specialdir($file))) {
 				print STDERR "removing it\n";
 				&smog_system("/bin/rm -rf \"$workdir/$file\"");
 			    }
 			    else {
 				print STDERR "leaving it because: \n";
-				if (! -f "$workdir/$file/order") {
-				    print STDERR "    - $workdir/$file/order does not exist\n";
+				if ($has_hdrs) {
+				    print STDERR "    - $workdir/$file/ contains header* and we need to check first\n";
 				}
-				unless (int($file) > 65535 && $file =~ /^[0-9]{5,}$/) {
-				    unless (int($file > 0)) {
-					print STDERR "     - directory name contains non digit\n";
+				else {
+				    if (! -f "$workdir/$file/order") {
+					print STDERR "    - $workdir/$file/order does not exist\n";
 				    }
-				    else {
-					unless ($file =~ /^[0-9]{5,}$/) {
-					    print STDERR "     - directory name $file contains fewer than 5 digits\n";
+				    unless (int($file) > 65535 && $file =~ /^[0-9]{5,}$/) {
+					unless (int($file > 0)) {
+					    print STDERR "     - directory name contains non digit\n";
 					}
 					else {
-					    unless (int($file) > 65535) {
-						print STDERR "     - directory name < 65536\n";
+					    unless ($file =~ /^[0-9]{5,}$/) {
+						print STDERR "     - directory name $file contains fewer than 5 digits\n";
 					    }
 					    else {
-						print STDERR "     - unspecified reason ???!!?\n";
-					    }}}}
+						unless (int($file) > 65535) {
+						    print STDERR "     - directory name < 65536\n";
+						}
+						else {
+						    print STDERR "     - unspecified reason ???!!?\n";
+						}}}}}
 
 				unless (&is_specialdir($file)) {
 				    print STDERR "     - directory name does not begin with scrap, ascrap or fsp followed by digits.\n";

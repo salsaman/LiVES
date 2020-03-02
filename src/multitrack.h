@@ -124,11 +124,6 @@ typedef enum {
 } lives_mt_poly_state_t;
 
 typedef enum {
-  DIRECTION_NEGATIVE,
-  DIRECTION_POSITIVE
-} lives_direction_t;
-
-typedef enum {
   MT_LAST_FX_NONE = 0,
   MT_LAST_FX_BLOCK,
   MT_LAST_FX_REGION
@@ -863,15 +858,10 @@ boolean on_timeline_press(LiVESWidget *, LiVESXEventButton *, livespointer mt);
 boolean on_timeline_release(LiVESWidget *, LiVESXEventButton *, livespointer mt);
 boolean on_timeline_update(LiVESWidget *, LiVESXEventMotion *, livespointer mt);
 void draw_region(lives_mt *mt);
-void tc_to_rs(LiVESMenuItem *, livespointer mt);
-void tc_to_re(LiVESMenuItem *, livespointer mt);
-void rs_to_tc(LiVESMenuItem *, livespointer mt);
-void re_to_tc(LiVESMenuItem *, livespointer mt);
 
 boolean mt_mark_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data);
 
-void multitrack_clear_marks(LiVESMenuItem *, livespointer mt);
 void mt_show_current_frame(lives_mt *, boolean return_layer);  ///< preview the current frame
 void mt_clear_timeline(lives_mt *mt);
 
@@ -935,7 +925,7 @@ boolean used_in_current_layout(lives_mt *, int file);
 
 boolean set_new_set_name(lives_mt *);
 
-LiVESPixbuf *make_thumb(lives_mt *, int file, int width, int height, int frame, boolean noblanks);
+LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame, LiVESInterpType interp, boolean noblanks);
 
 // event_list utilities
 boolean compare_filter_maps(weed_plant_t *fm1, weed_plant_t *fm2,

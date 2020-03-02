@@ -178,6 +178,7 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 
 /* plant types */
 #define WEED_PLANT_UNKNOWN 0
+#define WEED_PLANT_GENERIC 16384
 
 /* Weed errors */
 #define WEED_SUCCESS 					0

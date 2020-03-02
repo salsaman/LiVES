@@ -2217,12 +2217,6 @@ void play_file(void) {
 
   if (mainw->blend_file != -1 && mainw->files[mainw->blend_file] == NULL) mainw->blend_file = -1;
 
-  if (mainw->num_tr_applied > 0 && !mainw->preview && mainw->blend_file > -1) {
-    /// reset frame counter for blend_file
-    mainw->files[mainw->blend_file]->frameno = mainw->files[mainw->blend_file]->last_frameno = 1;
-    mainw->files[mainw->blend_file]->aseek_pos = 0;
-  }
-
   lives_widget_set_sensitive(mainw->m_stopbutton, TRUE);
   mainw->playing_file = mainw->current_file;
 
@@ -2234,8 +2228,9 @@ void play_file(void) {
 
   if (mainw->record) {
     if (mainw->event_list != NULL) event_list_free(mainw->event_list);
-    mainw->event_list = append_marker_event(mainw->event_list, 0, EVENT_MARKER_RECORD_START);
-    add_filter_init_events(mainw->event_list, 0);
+    /* mainw->event_list = append_marker_event(mainw->event_list, 0, EVENT_MARKER_RECORD_START); */
+    /* add_filter_init_events(mainw->event_list, 0); */
+    mainw->record_starting = TRUE;
   }
 
   if (mainw->double_size && mainw->multitrack == NULL) {
@@ -2409,7 +2404,7 @@ void play_file(void) {
   mainw->actual_frame = 0;
 
   mainw->currticks = 0;
-  mainw->struggling = 0;
+  mainw->effort = -EFFORT_RANGE_MAX;
 
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
@@ -2417,16 +2412,16 @@ void play_file(void) {
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    if (mainw->playing_sel) {
-      cfile->aseek_pos = (long)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
-                         (cfile->asampsize / 8);
-    } else {
-      if (cfile->real_pointer_time > cfile->pointer_time)
-        cfile->aseek_pos = (long)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
-      else
-        cfile->aseek_pos = (long)(cfile->pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    if (cfile->achans > 0) {
+      cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+      if (mainw->playing_sel) {
+        off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                       (cfile->asampsize / 8);
+        if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
+      }
+      if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+      if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
     }
-    if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
     // start up our audio player (jack or pulse)
     if (audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -2624,9 +2619,11 @@ void play_file(void) {
             /// fill our audio buffers now
             /// this will also get our effects state
             if (mainw->multitrack != NULL) mainw->pulsed->abufs[0]->arate = cfile->arate;
+            else mainw->pulsed->abufs[0]->arate = mainw->pulsed->out_arate;
             fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
             for (i = 1; i < prefs->num_rtaudiobufs; i++) {
               if (mainw->multitrack != NULL) mainw->pulsed->abufs[i]->arate = cfile->arate;
+              else mainw->pulsed->abufs[1]->arate = mainw->pulsed->out_arate;
               fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);
             }
 
@@ -2653,6 +2650,7 @@ void play_file(void) {
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
           mainw->jackd->read_abuf = -1;
+          mainw->jackd->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
@@ -2661,6 +2659,7 @@ void play_file(void) {
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
           mainw->pulsed->read_abuf = -1;
+          mainw->pulsed->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
@@ -2683,6 +2682,7 @@ void play_file(void) {
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
           mainw->jackd->read_abuf = -1;
+          mainw->jackd->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
@@ -2691,6 +2691,7 @@ void play_file(void) {
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
           mainw->pulsed->read_abuf = -1;
+          mainw->pulsed->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         }
 #endif
@@ -2707,6 +2708,7 @@ void play_file(void) {
           mainw->multitrack->pb_start_event = mainw->multitrack->pb_loop_event;
         }
       }
+      mainw->effort = 0;
       if (mainw->multitrack != NULL) pb_start_event = mainw->multitrack->pb_start_event;
     } while (mainw->multitrack != NULL && (mainw->loop_cont || mainw->scratch != SCRATCH_NONE) &&
              (mainw->cancelled == CANCEL_NONE || mainw->cancelled == CANCEL_EVENT_LIST_END));
@@ -3449,7 +3451,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
   cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
-  cfile->frameno = cfile->last_frameno = 1;
+  cfile->frameno = cfile->last_frameno = cfile->saved_frameno = 1;
   cfile->proc_ptr = NULL;
   cfile->progress_start = cfile->progress_end = 0;
   cfile->play_paused = cfile->nokeep = FALSE;
@@ -4255,7 +4257,7 @@ boolean read_headers(const char *file_name) {
           retval = TRUE;
           cfile->frameno = 1;
         }
-        if (cfile->frameno <= 0) cfile->last_frameno = cfile->frameno = 1;
+        if (cfile->frameno <= 0) cfile->frameno = 1;
       }
       if (retval) {
         detail = CLIP_DETAILS_WIDTH;
@@ -4748,6 +4750,20 @@ ulong restore_file(const char *file_name) {
 
   // set new bpp
   cfile->bpp = (cfile->img_type == IMG_TYPE_JPEG) ? 24 : 32;
+
+  cfile->saved_frameno = cfile->frameno;
+  if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
+  cfile->last_frameno = cfile->frameno;
+  cfile->pointer_time = cfile->real_pointer_time = calc_time_from_frame(mainw->current_file, cfile->frameno);
+  if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+    cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+  if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
+
+  if (cfile->achans) {
+    cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
+                                 (cfile->asampsize / 8));
+    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+  }
 
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
@@ -5477,8 +5493,8 @@ manual_locate:
 }
 
 
-static boolean recover_files(char *recovery_file, boolean auto_recover) {
-  FILE *rfile;
+boolean recover_files(char *recovery_file, boolean auto_recover) {
+  FILE *rfile = NULL;
 
   char buff[256], *buffptr;
   char *clipdir;
@@ -5486,7 +5502,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   int retval;
   int clipnum = 0;
   int maxframe;
-  int last_good_file = -1;
+  int last_good_file = -1, ngoodclips;
 
   boolean is_scrap;
   boolean is_ascrap;
@@ -5530,17 +5546,19 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
     }
   }
 
-  do {
-    retval = 0;
-    rfile = fopen(recovery_file, "r");
-    if (!rfile) {
-      retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno), NULL);
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        retb = FALSE;
-        goto recovery_done;
+  if (recovery_file) {
+    do {
+      retval = 0;
+      rfile = fopen(recovery_file, "r");
+      if (!rfile) {
+        retval = do_read_failed_error_s_with_retry(recovery_file, lives_strerror(errno), NULL);
+        if (retval == LIVES_RESPONSE_CANCEL) {
+          retb = FALSE;
+          goto recovery_done;
+        }
       }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
+    } while (retval == LIVES_RESPONSE_RETRY);
+  }
 
   do_threaded_dialog(_("Recovering files"), FALSE);
   d_print(_("Recovering files..."));
@@ -5560,29 +5578,36 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
     mainw->read_failed = FALSE;
 
-    if (lives_fgets(buff, 256, rfile) == NULL) {
-      reset_clipmenu();
-      threaded_dialog_spin(0.);
-
-      mainw->suppress_dprint = FALSE;
-
-      if (mainw->read_failed) {
-        d_print_failed();
-        do_read_failed_error_s(recovery_file, NULL);
-      } else {
-        if (is_ready) d_print_done();
+    if (recovery_file) {
+      if (lives_fgets(buff, 256, rfile) == NULL) {
+        reset_clipmenu();
+        threaded_dialog_spin(0.);
+        mainw->suppress_dprint = FALSE;
+        if (mainw->read_failed) {
+          d_print_failed();
+          do_read_failed_error_s(recovery_file, NULL);
+        } else d_print_done();
+        break;
       }
-      break;
+    } else {
+      if (!mainw->recovery_list) {
+        reset_clipmenu();
+        mainw->suppress_dprint = FALSE;
+        d_print_done();
+        break;
+      }
+      lives_snprintf(buff, 256, "%s", (char *)mainw->recovery_list->data);
+      mainw->recovery_list = mainw->recovery_list->next;
     }
 
     if (buff[strlen(buff) - 1] == '\n')
-      lives_memset(buff + strlen(buff) - strlen("\n"), 0, 1);
+      buff[strlen(buff) - 1] = 0;
 
-    if (!strcmp(buff + strlen(buff) - 1, "*")) {
+    if (buff[strlen(buff) - 1] == '*') {
       boolean crash_recovery = prefs->crash_recovery;
       LiVESResponseType resp;
       // set to be opened
-      lives_memset(buff + strlen(buff) - 1 - strlen(LIVES_DIR_SEP), 0, 1);
+      buff[strlen(buff) - 1 - strlen(LIVES_DIR_SEP)] = 0;
       do {
         resp = LIVES_RESPONSE_OK;
         if (!is_legal_set_name(buff, TRUE)) {
@@ -5832,9 +5857,16 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
 
       threaded_dialog_spin(0.);
 
+      if (cfile->frameno > cfile->frames && cfile->frameno > 1) cfile->frameno = cfile->frames;
+      cfile->last_frameno = cfile->frameno;
+      cfile->pointer_time = cfile->real_pointer_time = calc_time_from_frame(mainw->current_file, cfile->frameno);
+      if (cfile->real_pointer_time > CLIP_TOTAL_TIME(mainw->current_file))
+        cfile->real_pointer_time = CLIP_TOTAL_TIME(mainw->current_file);
+      if (cfile->pointer_time > cfile->video_time) cfile->pointer_time = 0.;
+
       if (cfile->achans) {
-        cfile->aseek_pos = (long)((double)(cfile->frameno - 1.) / cfile->fps * cfile->arate) * cfile->achans *
-                           (cfile->asampsize / 8);
+        cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
+                                     (cfile->asampsize / 8));
         if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
       }
 
@@ -5844,6 +5876,13 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
       lives_notify(LIVES_OSC_NOTIFY_CLIP_OPENED, "");
     }
   }
+
+  ngoodclips = lives_list_length(mainw->cliplist);
+  if (!ngoodclips) {
+    d_print(_("No clips were recovered.\n"));
+  }
+  d_print(P_("%d clip was recovered ", "%d clips were recovered ", ngoodclips), ngoodclips);
+  d_print(_("from the previous session.\n"));
 
   if (mainw->multitrack == NULL) { // TODO check if we can do this in mt too
     int start_file = mainw->current_file;
@@ -5864,6 +5903,7 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
           if (start_file != mainw->scrap_file && start_file != mainw->ascrap_file) break;
       }
     }
+
     if (start_file != mainw->current_file) {
       rec_cleanup = TRUE;
       switch_to_file(mainw->current_file, start_file);
@@ -5872,7 +5912,8 @@ static boolean recover_files(char *recovery_file, boolean auto_recover) {
   } else {
     mt_clip_select(mainw->multitrack, TRUE); // scroll clip on screen
   }
-  fclose(rfile);
+
+  if (recovery_file) fclose(rfile);
 
 recovery_done:
 
@@ -6049,6 +6090,9 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   mainw->com_failed = FALSE;
 
+  /// CRITICAL: make sure this gets called even on system failure and abort
+  mainw->abort_hook_func = (lives_funcptr_t)rewrite_recovery_file;
+
   // check for layout recovery file
   recovery_file = lives_strdup_printf("%s/%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, luid, lgid, recpid,
                                       LIVES_FILE_EXT_LAYOUT);
@@ -6084,8 +6128,8 @@ boolean check_for_recovery_files(boolean auto_recover) {
       xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
       lives_mv(recording_numbering_file, xfile);
       lives_free(xfile);
+      mainw->recording_recovered = TRUE;
     }
-    mainw->recording_recovered = TRUE;
   }
 
   if (found) {
@@ -6140,6 +6184,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
 
   if (mainw->recording_recovered) {
     xfile = lives_strdup_printf("%s/keep_recorded-layout.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
+    /// may fail -> abort
     lives_mv(xfile, recording_file);
     lives_free(xfile);
     xfile = lives_strdup_printf("%s/keep_recorded-layout_numbering.%d.%d.%d", prefs->workdir, luid, lgid, lpid);
@@ -6153,6 +6198,7 @@ boolean check_for_recovery_files(boolean auto_recover) {
   lives_free(recording_numbering_file);
 
   rewrite_recovery_file();
+  mainw->abort_hook_func = NULL;
 
   if (!mainw->recoverable_layout && !mainw->recording_recovered) {
     if (mainw->invalid_clips && (prefs->warning_mask ^ (WARN_MASK_CLEAN_AFTER_CRASH | WARN_MASK_CLEAN_INVALID))

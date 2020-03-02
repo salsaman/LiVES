@@ -1,6 +1,6 @@
 // dialogs.c
 // LiVES (lives-exe)
-// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -15,7 +15,6 @@
 #include "interface.h"
 #include "support.h"
 #include "cvirtual.h"
-#include "audio.h" // for fill_abuffer_from
 #include "resample.h"
 #include "rte_window.h"
 #include "paramwindow.h"
@@ -23,6 +22,8 @@
 #include "callbacks.h"
 
 extern void reset_frame_and_clip_index(void);
+
+#define ANIM_LIMIT 100000
 
 // processing
 static uint64_t event_start;
@@ -32,8 +33,8 @@ static int frames_done;
 static double disp_fraction_done;
 static ticks_t proc_start_ticks;
 static ticks_t last_open_check_ticks;
+static ticks_t last_anim_ticks;
 static ticks_t spare_cycles;
-
 static ticks_t last_kbd_ticks;
 
 static boolean shown_paused_frames;
@@ -503,11 +504,13 @@ static LiVESResponseType _do_abort_cancel_retry_dialog(const char *text, LiVESWi
               lives_kill_subprocesses(cfile->handle, TRUE);
             }
           }
+          if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
           LIVES_FATAL("Aborted");
           lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
           exit(1);
         }
       } else {
+        if (mainw->abort_hook_func)(*mainw->abort_hook_func)(NULL);
         LIVES_FATAL("Aborted");
         lives_notify(LIVES_OSC_NOTIFY_QUIT, mytext);
         exit(0);
@@ -1099,11 +1102,9 @@ static void cancel_process(boolean visible) {
     /// ????
     mainw->is_processing = TRUE;
   }
-  sched_yield();
   if (visible && mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && ((mainw->cancelled != CANCEL_NO_MORE_PREVIEW
       && mainw->cancelled != CANCEL_PREVIEW_FINISHED && mainw->cancelled != CANCEL_USER) || !cfile->opening)) {
     lives_rm(cfile->info_file);
-    sched_yield();
   }
 }
 
@@ -1206,30 +1207,28 @@ void update_progress(boolean visible) {
 static int nd = 0, ns = 0;
 
 int process_one(boolean visible) {
-  ticks_t new_ticks;
-  ticks_t real_ticks;
-
-  lives_time_source_t time_source;
-  boolean show_frame;
-
-  lives_rfx_t *xrfx;
-
-#ifdef RT_AUDIO
-  double audio_stretch;
-  ticks_t audio_ticks = 0;
-#endif
-
   if (!visible) {
     // INTERNAL PLAYER
+    short scratch = mainw->scratch;
+    ticks_t new_ticks;
+    ticks_t real_ticks;
+    lives_time_source_t time_source;
+    boolean show_frame;
+
+#ifdef RT_AUDIO
+    double audio_stretch;
+    ticks_t audio_ticks = 0;
+#endif
 
     if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
       do_quick_switch(mainw->new_clip);
       mainw->force_show = TRUE;
-      mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
-      mainw->deltaticks = 0;
       mainw->new_clip = -1;
+#if SHOW_TIMINGS
       nd = ns = 0;
+#endif
     }
+
 
     /* if (prefs->loadchecktime > 0.) { */
     /*   load_measure_idle(NULL); */
@@ -1246,6 +1245,7 @@ int process_one(boolean visible) {
     //   so, between updates we interpolate with the system clock and then adjust when we get a new value
     //   from the card
     //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+
     time_source = LIVES_TIME_SOURCE_NONE;
     mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
     if (mainw->currticks == -1) {
@@ -1254,12 +1254,15 @@ int process_one(boolean visible) {
       return mainw->cancelled;
     }
     if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {
-      // time source changed, make sure there is no discontinuity by adjusting deltaticks
-      ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source);
-      mainw->deltaticks += delta - mainw->currticks;
+      // time source changed: this should pnly happen rarely (eg. playback start)
+      // make sure there is no discontinuity by adjusting origsecs / origusecs
+      ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source) - mainw->currticks;
+      mainw->adjticks += delta;
+      mainw->currticks += delta;
     }
 
     last_time_source = time_source;
+    //if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
 
 #define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
@@ -1355,26 +1358,22 @@ int process_one(boolean visible) {
               get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
-            //cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks);
-            cfile->next_event = process_events(cfile->next_event, FALSE, lives_get_relative_ticks(mainw->origsecs,
-                                               mainw->origusecs) + mainw->offsetticks);
+            ticks_t ldt = mainw->last_display_ticks;
+            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
             if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
-            else {
-              // see if we need to fill an audio buffer
-#ifdef ENABLE_JACK
-              if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
-                wake_audio_thread();
-              }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-              if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
-                wake_audio_thread();
-              }
-#endif
-	      // *INDENT-OFF*
-            }}}}
-      // *INDENT-ON*
+            else if (mainw->last_display_ticks != ldt) {
+              update_effort(spare_cycles + 1, FALSE);
+              spare_cycles = 0;
+            }
+          }
+        } else spare_cycles++;
+      }
 
+      if (mainw->currticks - last_anim_ticks > ANIM_LIMIT) {
+        // a segfault here can indicate memory corruption in an FX plugin
+        lives_widget_context_update();  // animate GUI, allow kb timer to run
+        last_anim_ticks = mainw->currticks;
+      }
       lives_widget_context_update(); // animate GUI, allow kb timer to run
 
       if (mainw->cancelled == CANCEL_NONE) return 0;
@@ -1465,18 +1464,24 @@ int process_one(boolean visible) {
 #ifdef ENABLE_JACK
       // note the audio seek position
       if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-        cfile->aseek_pos = mainw->jackd->seek_pos;
+        int aplay_file = mainw->jackd->playing_file;
+        if (IS_VALID_CLIP(aplay_file))
+          mainw->files[aplay_file]->aseek_pos = mainw->jackd->seek_pos;
       }
 #endif
 #ifdef HAVE_PULSE_AUDIO
       // note the audio seek position
       if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-        cfile->aseek_pos = mainw->pulsed->seek_pos;
+        int aplay_file = mainw->pulsed->playing_file;
+        if (IS_VALID_CLIP(aplay_file))
+          mainw->files[aplay_file]->aseek_pos = mainw->pulsed->seek_pos;
       }
 #endif
 #if 0
       if (prefs->audio_player == AUD_PLAYER_NONE) {
-        cfile->aseek_pos = nullaudio_get_seek_pos();
+        aplay_file = mainw->nullaudio->playing_file;
+        if (IS_VALID_CLIP(aplay_file))
+          mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
       }
 #endif
 
@@ -1500,13 +1505,13 @@ int process_one(boolean visible) {
         if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
                                  mainw->preview_rendering || (mainw->multitrack != NULL &&
                                      !mainw->multitrack->is_rendering))) {
-          if (prefs->pbq_adaptive) {
+          if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
             int dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
             if (dropped > 0) {
-              update_dfr(dropped, TRUE);
+              update_effort(dropped, TRUE);
               nd += dropped;
             }
-            update_dfr(spare_cycles, FALSE);
+            update_effort(spare_cycles + 1, FALSE);
             ns++;
 #if SHOW_TIMINGS
             g_print("dropped = %d (%f), %d scyc = %ld\n", dropped, (double)nd / (double)ns, mainw->struggling, spare_cycles);
@@ -1529,18 +1534,6 @@ int process_one(boolean visible) {
         mainw->force_show = FALSE;
         spare_cycles = 0ul;
       }
-#ifdef ENABLE_JACK
-      // request for another audio buffer - used only during mt render preview
-      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->abufs_to_fill > 0) {
-        fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      // request for another audio buffer - used only during mt render preview
-      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->abufs_to_fill > 0) {
-        fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE);
-      }
-#endif
     }
     // paused
     if (LIVES_UNLIKELY(cfile->play_paused)) {
@@ -1573,6 +1566,8 @@ int process_one(boolean visible) {
 
   if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
     boolean reload = FALSE;
+    lives_rfx_t *xrfx;
+
     if ((xrfx = (lives_rfx_t *)mainw->vrfx_update) != NULL && fx_dialog[1] != NULL) {
       // the audio thread wants to update the parameter window
       mainw->vrfx_update = NULL;
@@ -1582,8 +1577,11 @@ int process_one(boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 refresh:
-    // a segfault here can indicate memory corruption in an FX plugin
-    lives_widget_context_update();  // animate GUI, allow kb timer to run
+    if (mainw->currticks - last_anim_ticks > ANIM_LIMIT) {
+      // a segfault here can indicate memory corruption in an FX plugin
+      lives_widget_context_update();  // animate GUI, allow kb timer to run
+      last_anim_ticks = mainw->currticks;
+    }
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
       cancel_process(visible);
@@ -1601,7 +1599,6 @@ refresh:
     if (reload) {
       reload = FALSE;
       load_frame_image(cfile->frameno);
-      sched_yield();
       goto refresh;
     }
 
@@ -1615,7 +1612,7 @@ refresh:
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
-static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
+static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
   display_ready = TRUE;
 }
 #endif
@@ -1718,7 +1715,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   if (prefs->show_player_stats) {
-    mainw->fps_measure = mainw->fps_mini_measure = 0.;
+    mainw->fps_measure = mainw->fps_mini_measure = 1.;
   }
 
   mainw->cancelled = CANCEL_NONE;
@@ -1935,6 +1932,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (mainw->record) mainw->record_paused = FALSE;
 
+  if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
+    /// reset dropped frame count etc
+    process_events(NULL, FALSE, 0);
+  }
+
+  last_anim_ticks = 0;
+  reset_effort();
+  if (!visible) {
+    mainw->adjticks = 0;
+    mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  }
+
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
   while (1) {
@@ -1962,8 +1971,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
       }
 
       if ((visible && !mainw->internal_messaging) || (LIVES_IS_PLAYING && cfile->play_paused)) lives_usleep(prefs->sleep_time);
-
-      //sched_yield();
 
       // normal playback, wth realtime audio player
       if (!visible && (mainw->whentostop != STOP_ON_AUD_END || is_realtime_aplayer(prefs->audio_player))) continue;
@@ -1994,6 +2001,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         got_err = TRUE;
         goto finish;
       }
+
+      // a segfault here can indicate memory corruption in an FX plugin
+      lives_widget_context_update();  // animate GUI, allow kb timer to run
 
       // display progress fraction or pulse bar
       if (*(mainw->msg) && (frames_done = atoi(mainw->msg)) > 0)
@@ -2038,7 +2048,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         if (mainw->preview_box != NULL) lives_widget_set_tooltip_text(mainw->p_playbutton, _("Preview"));
         lives_widget_set_tooltip_text(mainw->m_playbutton, _("Preview"));
         lives_widget_remove_accelerator(mainw->playall, mainw->accel_group, LIVES_KEY_p, (LiVESXModifierType)0);
-        lives_widget_add_accelerator(cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL, mainw->accel_group, LIVES_KEY_p,
+        lives_widget_add_accelerator(cfile->proc_ptr->preview_button, LIVES_WIDGET_CLICKED_SIGNAL,
+                                     mainw->accel_group, LIVES_KEY_p,
                                      (LiVESXModifierType)0, (LiVESAccelFlags)0);
         accelerators_swapped = TRUE;
       }
@@ -2830,7 +2841,7 @@ void do_jack_noopen_warn2(void) {
 }
 #endif
 
-void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
+void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
@@ -3113,14 +3124,19 @@ void end_threaded_dialog(void) {
 }
 
 
-void response_ok(LiVESButton * button, livespointer user_data) {
+void response_ok(LiVESButton *button, livespointer user_data) {
   lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow * transient) {
+    LiVESWindow *transient) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
+  // in all other cases we abort (exit) here.
+  // if abort_hook_func() fails with a syserror, we don't show the abort / retry dialog, and we return LIVES_RESPONSE_NONE
+  // from the inner call (otherwise we could get stuck in an infinite recursion)
+  static boolean norecurse = FALSE;
+
   char *msg, *tmp, *emsg, *msgx;
   char *bit;
   char *retstr = lives_strdup_printf("%d", retval >> 8);
@@ -3166,7 +3182,12 @@ LiVESResponseType do_system_failed_error(const char *com, int retval, const char
 
   msgx = insert_newlines(msg, MAX_MSG_WIDTH_CHARS);
   if (can_retry) {
-    response = do_abort_retry_dialog(msgx, transient);
+    if (!norecurse) {
+      /// we must not fail during the abort hook
+      norecurse = TRUE;
+      response = do_abort_retry_dialog(msgx, transient);
+      norecurse = FALSE;
+    }
   } else {
     do_error_dialog(msgx);
   }
@@ -3250,7 +3271,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3304,7 +3325,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 }
 
 
-LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3437,7 +3458,7 @@ boolean do_abort_check(void) {
 }
 
 
-void do_encoder_img_fmt_error(render_details * rdet) {
+void do_encoder_img_fmt_error(render_details *rdet) {
   char *msg = lives_strdup_printf(
                 _("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
                 prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
@@ -3600,7 +3621,7 @@ boolean do_theme_exists_warn(const char *themename) {
 }
 
 
-void add_resnn_label(LiVESDialog * dialog) {
+void add_resnn_label(LiVESDialog *dialog) {
   LiVESWidget *dialog_vbox = lives_dialog_get_content_area(dialog);
   LiVESWidget *label;
   LiVESWidget *hsep = lives_standard_hseparator_new();

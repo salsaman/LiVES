@@ -2297,7 +2297,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           mainw->blend_gamma = weed_layer_get_gamma(layer);
         }
       }
-      sched_yield();
     }
 
     // check palette again in case it changed during resize
@@ -2317,7 +2316,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
         goto done_video;
       }
-      sched_yield();
     }
 
     /// check if the plugin needs reinit
@@ -2335,7 +2333,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       gamma_convert_layer(tgamma, layer);
-      sched_yield();
     }
 
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
@@ -2470,7 +2467,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
       }
-      sched_yield();
 
       if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
         weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
@@ -2513,7 +2509,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if ((retval = weed_reinit_effect(inst, FALSE)) == FILTER_ERROR_COULD_NOT_REINIT) {
       goto done_video;
     }
-    sched_yield();
   }
 
   if (prefs->apply_gamma) {
@@ -2533,7 +2528,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc, key);
-  sched_yield();
 
   /// do gamma correction of any integer RGB(A) parameters
   /// convert in and out parameters to SRGB
@@ -3547,9 +3541,7 @@ apply_inst3:
 
   if (output == -1) {
     // blank frame - e.g. for multitrack
-    weed_plant_t *layer = weed_layer_create(opwidth > 4 ? opwidth : 4, opheight > 4 ? opheight : 4, NULL, WEED_PALETTE_RGB24);
-    create_empty_pixel_data(layer, TRUE, TRUE);
-    return layer;
+    return create_blank_layer(NULL, NULL, opwidth, opheight, WEED_PALETTE_END);
   }
 
   layer = layers[output];
@@ -3563,11 +3555,7 @@ apply_inst3:
                                       tc, filter_map, clip, weed_get_int_value(layer, WEED_LEAF_FRAME, NULL));
       LIVES_WARN(msg);
       lives_free(msg);
-      weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, mainw->files[clip]->img_type == IMG_TYPE_JPEG ?
-                         WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32);
-      weed_set_int_value(layer, WEED_LEAF_WIDTH, opwidth);
-      weed_set_int_value(layer, WEED_LEAF_HEIGHT, opheight);
-      create_empty_pixel_data(layer, TRUE, TRUE);
+      create_blank_layer(layer, get_image_ext_for_type(mainw->files[clip]->img_type), opwidth, opheight, WEED_PALETTE_END);
     }
 
   return layer;
@@ -7092,8 +7080,8 @@ deinit3:
 
   if (was_transition && !is_modeswitch) {
     if (mainw->num_tr_applied < 1) {
-      if (CURRENT_CLIP_IS_VALID && mainw->struggling) {
-        clear_dfr();
+      if (CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
+        reset_effort();
       }
       if (bg_gen_to_start != -1) bg_gen_to_start = -1;
       if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
@@ -10994,27 +10982,31 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
   return 0;
 }
 
+/**
+   @brief deserialise a weed leaf
+   returns "type" on succes or a -ve error code on failure
 
+   WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
+
+   if the input 'type' is 0 (WEED_PLANT_UNKNOWN) then it is set to 'type', unless an error occurs
+
+   if check_key set to TRUE - check that we read the correct key seed_type and n_elements
+
+   return values:
+    -1 : check_key key mismatch
+    -2 : "type" leaf was not an INT
+    -3 : "type" leaf has invalid element count
+    -4 : short read
+    -5 : memory allocation error
+    -6 : unknown seed_type
+    -7 : plant "type" mismatch
+    -8 : 'type' was < 0
+    -9 : key length mismatch
+   - 10 : key length too long
+   - 11 : data length too long
+*/
 static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, unsigned char **mem,
                                  boolean check_key) {
-  // returns "type" on succes or a -ve error code on failure
-
-  // WEED_LEAF_HOST_DEFAULT and WEED_LEAF_TYPE sets key; otherwise we leave it as NULL to get the next
-
-  // if check_key set to TRUE - check that we read the correct key seed_type and n_elements
-
-  // return values:
-  // -1 : check_key key mismatch
-  // -2 : "type" leaf was not an INT
-  // -3 : "type" leaf has invalid element count
-  // -4 : short read
-  // -5 : memory allocation error
-  // -6 : unknown seed_type
-  // -7 : plant "type" mismatch
-  // -9 : key length mismatch
-  // - 10 : key length too long
-  // - 11 : data length too long
-
   void **values = NULL;
 
   ssize_t bytes;
@@ -11271,6 +11263,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   if (!strcmp(key, WEED_LEAF_TYPE)) {
     type = *(int32_t *)(values[0]);
+    if (type < 0) return -8;
   }
   if (plant != NULL) {
     if (values == NULL) {
@@ -11378,7 +11371,6 @@ realign:
       bugfd = -1;
     } else {
       if ((bytes = lives_read_le_buffered(fd, &numleaves, 4, TRUE)) < 4) {
-        mainw->read_failed = FALSE; // we are allowed to EOF here
         bugfd = -1;
         return NULL;
       }
@@ -11469,8 +11461,6 @@ boolean write_filter_defaults(int fd, int idx) {
     }
   }
 
-  mainw->write_failed = FALSE;
-
   for (i = 0; i < num_params; i++) {
     if (weed_plant_has_leaf(ptmpls[i], WEED_LEAF_HOST_DEFAULT)) {
       if (!wrote_hashname) {
@@ -11491,7 +11481,8 @@ boolean write_filter_defaults(int fd, int idx) {
 
   lives_freep((void **)&ptmpls);
 
-  if (mainw->write_failed) {
+  if (mainw->write_failed == fd + 1) {
+    mainw->write_failed = 0;
     return FALSE;
   }
   return TRUE;
@@ -11508,24 +11499,19 @@ boolean read_filter_defaults(int fd) {
   int i, error, pnum;
   int num_params = 0;
   int ntoread;
-
+  boolean read_failed = FALSE;
   boolean found = FALSE;
 
   char *tmp;
 
-  mainw->read_failed = FALSE;
 
   while (1) {
     if (lives_read_le_buffered(fd, &vleni, 4, TRUE) < 4) {
-      // we are allowed to EOF here
-      mainw->read_failed = FALSE;
       break;
     }
 
     // some files erroneously used a vlen of 8
     if (lives_read_le_buffered(fd, &vlenz, 4, TRUE) < 4) {
-      // we are allowed to EOF here
-      mainw->read_failed = FALSE;
       break;
     }
 
@@ -11585,19 +11571,20 @@ boolean read_filter_defaults(int fd) {
       }
 
       if (pnum < num_params) {
-        weed_leaf_deserialise(fd, ptmpls[pnum], WEED_LEAF_HOST_DEFAULT, NULL, FALSE);
+        if (weed_leaf_deserialise(fd, ptmpls[pnum], WEED_LEAF_HOST_DEFAULT, NULL, FALSE) < 0) {
+        }
       } else {
         weed_plant_t *dummyplant = weed_plant_new(WEED_PLANT_UNKNOWN);
-        weed_leaf_deserialise(fd, dummyplant, WEED_LEAF_HOST_DEFAULT, NULL, FALSE);
-        weed_plant_free(dummyplant);
-      }
-      if (mainw->read_failed) {
-        break;
+        if (weed_leaf_deserialise(fd, dummyplant, WEED_LEAF_HOST_DEFAULT, NULL, FALSE) < 0) {
+          weed_plant_free(dummyplant);
+          read_failed = TRUE;
+          break;
+        }
       }
       if (ptmpls != NULL && weed_paramtmpl_value_irrelevant(ptmpls[pnum]))
         weed_leaf_delete(ptmpls[pnum], WEED_LEAF_HOST_DEFAULT);
     }
-    if (mainw->read_failed) {
+    if (read_failed) {
       if (ptmpls != NULL) lives_free(ptmpls);
       break;
     }
@@ -11606,12 +11593,16 @@ boolean read_filter_defaults(int fd) {
     lives_read_buffered(fd, buf, strlen("\n"), TRUE);
     lives_free(buf);
     if (ptmpls != NULL) lives_free(ptmpls);
-    if (mainw->read_failed) {
+    if (mainw->read_failed == fd + 1) {
       break;
     }
   }
 
-  if (mainw->read_failed) return FALSE;
+  if (mainw->read_failed == fd + 1) {
+    mainw->read_failed = 0;
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -11635,8 +11626,6 @@ boolean write_generator_sizes(int fd, int idx) {
   if (num_channels == 0) return TRUE;
 
   ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
-
-  mainw->write_failed = FALSE;
 
   for (i = 0; i < num_channels; i++) {
     if (weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_WIDTH) || weed_plant_has_leaf(ctmpls[i], WEED_LEAF_HOST_HEIGHT) ||
@@ -11667,7 +11656,8 @@ boolean write_generator_sizes(int fd, int idx) {
   }
   if (wrote_hashname) lives_write_buffered(fd, "\n", 1, TRUE);
 
-  if (mainw->write_failed) {
+  if (mainw->write_failed == fd + 1) {
+    mainw->write_failed = 0;
     return FALSE;
   }
   return TRUE;
@@ -11688,19 +11678,13 @@ boolean read_generator_sizes(int fd) {
   int vleni, vlenz;
   int i, num_chans = 0, cnum;
 
-  mainw->read_failed = FALSE;
-
   while (1) {
     if (lives_read_le_buffered(fd, &vleni, 4, TRUE) < 4) {
-      // we are allowed to EOF here
-      mainw->read_failed = FALSE;
       break;
     }
 
     // some files erroneously used a vlen of 8
     if (lives_read_le_buffered(fd, &vlenz, 4, TRUE) < 4) {
-      // we are allowed to EOF here
-      mainw->read_failed = FALSE;
       break;
     }
 
@@ -11787,19 +11771,22 @@ boolean read_generator_sizes(int fd) {
 
     lives_freep((void **)&ctmpls);
 
-    if (mainw->read_failed) {
+    if (mainw->read_failed == fd + 1) {
       break;
     }
     buf = (char *)lives_malloc(strlen("\n"));
     lives_read_buffered(fd, buf, strlen("\n"), TRUE);
     lives_free(buf);
 
-    if (mainw->read_failed) {
+    if (mainw->read_failed == fd + 1) {
       break;
     }
   }
 
-  if (mainw->read_failed) return FALSE;
+  if (mainw->read_failed == fd + 1) {
+    mainw->read_failed = 0;
+    return FALSE;
+  }
   return TRUE;
 }
 
@@ -11810,7 +11797,7 @@ void reset_frame_and_clip_index(void) {
     mainw->clip_index[0] = -1;
   }
   if (mainw->frame_index == NULL) {
-    mainw->frame_index = (int *)lives_malloc(sizint);
+    mainw->frame_index = (int64_t *)lives_malloc(8);
     mainw->frame_index[0] = 0;
   }
 }
@@ -11833,8 +11820,6 @@ boolean read_key_defaults(int fd, int nparams, int key, int mode, int ver) {
   weed_timecode_t tc;
 
   boolean ret = FALSE;
-
-  mainw->read_failed = FALSE;
 
   if (key >= 0) {
     idx = key_to_fx[key][mode];
@@ -11921,7 +11906,8 @@ err123:
     lives_free(key_defs);
   }
 
-  if (ret < 0 || mainw->read_failed) {
+  if (ret < 0 || mainw->read_failed == fd + 1) {
+    mainw->read_failed = 0;
     return FALSE;
   }
 
@@ -11974,7 +11960,10 @@ void write_key_defaults(int fd, int key, int mode) {
   lives_write_le_buffered(fd, &nparams, 4, TRUE);
 
   for (int i = 0; i < nparams; i++) {
-    if (mainw->write_failed) break;
+    if (mainw->write_failed == fd + 1) {
+      mainw->write_failed = 0;
+      break;
+    }
     weed_leaf_serialise(fd, key_defs[i], WEED_LEAF_VALUE, FALSE, NULL);
   }
 }

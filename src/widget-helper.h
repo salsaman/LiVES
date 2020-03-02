@@ -1112,6 +1112,11 @@ boolean lives_widget_destroy_with(LiVESWidget *widget, LiVESWidget *dieplease);
 #define LIVES_JUSTIFY_DEFAULT (widget_opts.default_justify)
 
 typedef enum {
+  LIVES_DIRECTION_BACKWARD,
+  LIVES_DIRECTION_FORWARD
+} lives_direction_t;
+
+typedef enum {
   LIVES_CURSOR_NORMAL = 0, ///< must be zero
   LIVES_CURSOR_BUSY,
   LIVES_CURSOR_CENTER_PTR,

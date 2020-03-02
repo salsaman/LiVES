@@ -1,6 +1,6 @@
 // utils.c
 // LiVES
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -22,24 +22,6 @@ static boolean  omute,  osepwin,  ofs,  ofaded,  odouble;
 
 static int get_hex_digit(const char c) GNU_CONST;
 
-typedef struct {
-  ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
-  uint8_t *ptr;   /// read point in buffer
-  uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
-  off_t offset; // file offs (of END of block)
-  int fd;
-  int bufsztype;
-  boolean eof;
-  boolean read;
-  boolean reversed;
-  int nseqreads;
-  boolean allow_fail;
-  volatile boolean invalid;
-  size_t orig_size;
-  char *pathname;
-} lives_file_buffer_t;
-
-static lives_file_buffer_t *find_in_file_buffers(int fd);
 
 /**
   @brief: return filename from an open fd, freeing val first
@@ -292,7 +274,8 @@ ssize_t lives_write(int fd, const void *buf, size_t count, boolean allow_fail) {
 
   if (retval < (ssize_t)count) {
     char *msg = NULL;
-    mainw->write_failed = TRUE;
+    /// TODO ****: this needs to be threadsafe
+    mainw->write_failed = fd + 1;
     mainw->write_failed_file = filename_from_fd(mainw->write_failed_file, fd);
     if (retval >= 0)
       msg = lives_strdup_printf("Write failed %"PRIu64" of %"PRIu64" in: %s", (uint64_t)retval,
@@ -351,7 +334,7 @@ char *lives_fgets(char *s, int size, FILE *stream) {
   retval = fgets(s, size, stream);
 
   if (retval == NULL && ferror(stream)) {
-    mainw->read_failed = TRUE;
+    mainw->read_failed = fileno(stream) + 1;
   }
 
   return retval;
@@ -362,14 +345,14 @@ size_t lives_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
   size_t bytes_read = fread(ptr, size, nmemb, stream);
 
   if (ferror(stream)) {
-    mainw->read_failed = TRUE;
+    mainw->read_failed = fileno(stream) + 1;
   }
 
   return bytes_read;
 }
 
 
-static lives_file_buffer_t *find_in_file_buffers(int fd) {
+lives_file_buffer_t *find_in_file_buffers(int fd) {
   lives_file_buffer_t *fbuff;
   LiVESList *fblist = mainw->file_buffers;
 
@@ -386,7 +369,7 @@ static lives_file_buffer_t *find_in_file_buffers(int fd) {
 
 static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
   char *msg = NULL;
-  mainw->read_failed = TRUE;
+  mainw->read_failed = fd + 1;
   mainw->read_failed_file = filename_from_fd(mainw->read_failed_file, fd);
 
   if (errval >= 0)
@@ -500,7 +483,7 @@ void lives_invalidate_all_file_buffers(void) {
   for (; fbuffer != NULL; fbuffer = fbuffer->next) {
     fbuff = (lives_file_buffer_t *)fbuffer->data;
     // if a writer, flush
-    if (!fbuff->read) {
+    if (!fbuff->read && mainw->memok) {
       file_buffer_flush(fbuff);
       fbuff->buffer = NULL;
     } else {
@@ -515,20 +498,22 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
   lives_file_buffer_t *fbuff, *xbuff;
   int fd = lives_open3(pathname, flags, mode);
   if (fd >= 0) {
-    fbuff = (lives_file_buffer_t *)lives_malloc(sizeof(lives_file_buffer_t));
+    fbuff = (lives_file_buffer_t *)lives_calloc(sizeof(lives_file_buffer_t) >> 2, 4);
     fbuff->fd = fd;
-    fbuff->bytes = 0;
-    fbuff->invalid = FALSE;
-    fbuff->eof = FALSE;
-    fbuff->ptr = NULL;
-    fbuff->buffer = NULL;
     fbuff->read = isread;
-    fbuff->offset = 0;
-    fbuff->reversed = FALSE;
     fbuff->pathname = lives_strdup(pathname);
     fbuff->bufsztype = isread ? 0 : 1;
-    fbuff->orig_size = 0;
-    fbuff->nseqreads = 0;
+
+    /* fbuff->bytes = 0; */
+    /* fbuff->invalid = FALSE; */
+    /* fbuff->eof = FALSE; */
+    /* fbuff->ptr = NULL; */
+    /* fbuff->buffer = NULL; */
+    /* fbuff->offset = 0; */
+    /* fbuff->reversed = FALSE; */
+    /* fbuff->orig_size = 0; */
+    /* fbuff->nseqreads = 0; */
+
     if ((xbuff = find_in_file_buffers(fd)) != NULL) {
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
@@ -539,7 +524,9 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     } else {
       if (!isread && !(flags & O_TRUNC)) fbuff->orig_size = get_file_size(fbuff->fd);
     }
-    mainw->file_buffers = lives_list_append(mainw->file_buffers, (livespointer)fbuff);
+    pthread_mutex_lock(&mainw->fbuffer_mutex);
+    mainw->file_buffers = lives_list_prepend(mainw->file_buffers, (livespointer)fbuff);
+    pthread_mutex_unlock(&mainw->fbuffer_mutex);
   }
 
   return fd;
@@ -614,7 +601,9 @@ int lives_close_buffered(int fd) {
 
   lives_free(fbuff->pathname);
 
+  pthread_mutex_lock(&mainw->fbuffer_mutex);
   mainw->file_buffers = lives_list_remove(mainw->file_buffers, (livesconstpointer)fbuff);
+  pthread_mutex_unlock(&mainw->fbuffer_mutex);
   if (fbuff->buffer != NULL && !fbuff->invalid) lives_free(fbuff->buffer);
   lives_free(fbuff);
   return ret;
@@ -652,8 +641,9 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   if (fbuff->buffer != NULL && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
     lives_freep((void **)&fbuff->buffer);
   }
-  if (fbuff->buffer == NULL) fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
-
+  if (fbuff->buffer == NULL) {
+    fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
+  }
   fbuff->offset -= delta;
   fbuff->offset = lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 
@@ -666,7 +656,6 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   fbuff->bytes = res - delta;
   fbuff->ptr = fbuff->buffer + delta;
   fbuff->offset += res;
-
   if (res < bufsize) fbuff->eof = TRUE;
   else fbuff->eof = FALSE;
 
@@ -800,21 +789,24 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   bufsztype = fbuff->bufsztype;
 
 #ifdef AUTOTUNE
-  cost = 1. / (double)count;
+  cost = 1. / (1. + (double)fbuff->nseqreads);
   if (fbuff->bufsztype == 0) {
     if (!tuneds && !tuners) tuners = weed_plant_new(31338);
     autotune_u64(tuners, 8, 512, 64, cost);
   } else if (fbuff->bufsztype == 1) {
     if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
-    autotune_u64(tunersm, smbytes * 4, 32768, 8, cost);
+    autotune_u64(tunersm, smbytes * 4, 32768, 16, cost);
   } else if (fbuff->bufsztype == 2) {
     if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
-    autotune_u64(tunerm, smedbytes * 4, 65536, 8, cost);
+    autotune_u64(tunerm, smedbytes * 4, 65536, 32, cost);
   } else if (fbuff->bufsztype == 3) {
     if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
-    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 8, cost);
+    autotune_u64(tunerl, medbytes * 4, 512 * 1024, 256, cost);
   }
 #endif
+
+  fbuff->totreads++;
+  fbuff->totbytes += count;
 
   // read bytes from fbuff
   if (fbuff->bytes > 0) {
@@ -847,12 +839,14 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     fbuff->nseqreads++;
     if (count == 0) goto rd_done;
     if (fbuff->eof && !fbuff->reversed) goto rd_done;
+    fbuff->nseqreads--;
     if (fbuff->reversed) {
       fbuff->offset -= (fbuff->ptr - fbuff->buffer) + count;
     }
   }
 
   if (count <= bigbytes) {
+    fbuff->bufsztype = 0;
     if (ocount >= (smedbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
     if (ocount >= (medbytes >> 1) || count > smedbytes) fbuff->bufsztype = 2;
     if (ocount >= (bigbytes >> 2) || count > medbytes) fbuff->bufsztype = 3;
@@ -873,6 +867,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       }
     }
 
+    if (fbuff->bufsztype != bufsztype) fbuff->nseqreads = 0;
     res = file_buffer_fill(fbuff, count);
     if (res < 0)  {
       pthread_rwlock_unlock(&mainw->mallopt_lock);
@@ -1272,7 +1267,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
     if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
-    return lives_get_relative_ticks(origsecs, origusecs);
+    return lives_get_relative_ticks(origsecs, origusecs) + mainw->adjticks;
   }
 
   if (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE) {
@@ -1281,7 +1276,7 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
         (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
       // calculate the time from jack transport
       if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_EXTERNAL;
-      return jack_transport_get_time() * TICKS_PER_SECOND_DBL;
+      return jack_transport_get_time() * TICKS_PER_SECOND_DBL + mainw->adjticks;
     }
 #endif
   }
@@ -1308,8 +1303,8 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
            (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL && mainw->jackd_read->in_use))) {
         if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          return lives_jack_get_time(mainw->jackd_read);
-        return lives_jack_get_time(mainw->jackd);
+          return lives_jack_get_time(mainw->jackd_read) + mainw->adjticks;
+        return lives_jack_get_time(mainw->jackd) + mainw->adjticks;
       }
 #endif
 
@@ -1321,14 +1316,14 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
         if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
           return lives_pulse_get_time(mainw->pulsed_read);
-        return lives_pulse_get_time(mainw->pulsed);
+        return lives_pulse_get_time(mainw->pulsed) + mainw->adjticks;
       }
 #endif
     }
   }
 
   if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
-  return lives_get_relative_ticks(origsecs, origusecs);
+  return lives_get_relative_ticks(origsecs, origusecs) + mainw->adjticks;
 }
 
 
@@ -1606,19 +1601,16 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // note we also calculate the audio "frame" and position for realtime audio players
   // this is done so we can check here if audio limits stopped playback
 
-  int64_t dtc = *ntc - otc;
-  lives_clip_t *sfile = mainw->files[fileno];
-
-  int dir = 0;
-  int cframe;
-
   static int nframe = -1;
 
-  int64_t first_frame, last_frame;
-
-  boolean do_resync = FALSE;
-
+  ticks_t dtc = *ntc - otc;
+  int64_t first_frame, last_frame, selrange;
+  lives_clip_t *sfile = mainw->files[fileno];
   double fps;
+  boolean do_resync = FALSE;
+  lives_direction_t dir;
+  int cframe;
+  int aplay_file = fileno;
 
   if (sfile == NULL) {
     mainw->scratch = SCRATCH_NONE;
@@ -1626,7 +1618,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     return 0;
   }
 
-  if (nframe != -1) return nframe; // prevent infinite loops if we "bounce" off one end or another
+  if (nframe != -1) return nframe; // prevent infinite loops if we "bounce" off one end or another (dirchange_callback())
 
   fps = sfile->pb_fps;
 
@@ -1638,6 +1630,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     *ntc = otc;
     if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
     mainw->scratch = SCRATCH_NONE;
+    nframe = -1;
     return cframe;
   }
 
@@ -1647,36 +1640,39 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // ntc is the time when the frame should have been played
   *ntc = otc + dtc;
 
-  // nframe is our new frame
+  // xnframe is our new frame
   nframe = cframe + (int64_t)myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
   if (nframe == cframe || mainw->foreign) {
-    if (!mainw->foreign && mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record) &&
-        prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(nframe);
+    if (!mainw->foreign && fileno == mainw->playing_file &&
+        mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record) &&
+        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) resync_audio(nframe);
+    if (fileno == mainw->playing_file) {
+      mainw->scratch = SCRATCH_NONE;
+    }
     cframe = nframe;
     nframe = -1;
-    mainw->scratch = SCRATCH_NONE;
     return cframe;
   }
 
-  // calculate audio "frame" from the number of samples played
-  if (prefs->audio_src == AUDIO_SRC_INT && mainw->playing_file == fileno) {
-    calc_aframeno(fileno);
-  }
+  last_frame = sfile->frames;
+  first_frame = 1;
 
-  if (mainw->playing_file == fileno && !mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
-    last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
-    if (last_frame > sfile->frames) last_frame = sfile->frames;
-    first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
-    if (first_frame > sfile->frames) first_frame = sfile->frames;
-  } else {
-    last_frame = sfile->frames;
-    first_frame = 1;
-  }
+  if (fileno == mainw->playing_file) {
+    // calculate audio "frame" from the number of samples played
+    if (prefs->audio_src == AUDIO_SRC_INT) {
+      calc_aframeno(fileno);
+    }
 
-  if (mainw->playing_file == fileno) {
-    if (prefs->noframedrop) {
+    if (!mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
+      last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
+      if (last_frame > sfile->frames) last_frame = sfile->frames;
+      first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
+      if (first_frame > sfile->frames) first_frame = sfile->frames;
+    }
+
+    if (sfile->frames > 1 && prefs->noframedrop) {
       // if noframedrop is set, we may not skip any frames
-      // - the usual situation is that we are allowed to skip frames
+      // - the usual situation is that we are allowed to drop late frames
       if (nframe > cframe) nframe = cframe + 1;
       else if (nframe < cframe) nframe = cframe - 1;
     }
@@ -1691,145 +1687,159 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       }
     }
 
-    // check if audio stopped playback
-#ifdef RT_AUDIO
-    if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0 && sfile->frames > 0) {
-      if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
-        mainw->cancelled = CANCEL_AUD_END;
-        mainw->scratch = SCRATCH_NONE;
-        nframe = -1;
-        return 0;
+    if (nframe <= first_frame || nframe >= last_frame) {
+      if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
+        // we check for audio stop here, but the seek may not have happened yet
+        int aframe = mainw->aframeno;
+        // need to be a bit lax about the audio end, else the video can loop and drag the audio round wiht it
+        // rather than stopping as it should do
+        if (nframe >= last_frame) mainw->aframeno++;
+        if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
+          mainw->aframeno = aframe;
+          mainw->cancelled = CANCEL_AUD_END;
+          mainw->scratch = SCRATCH_NONE;
+          nframe = -1;
+          return 0;
+        }
+        mainw->aframeno = aframe;
       }
+      do_resync = TRUE;
     }
-#endif
   }
 
   if (sfile->frames == 0) {
-    mainw->scratch = SCRATCH_NONE;
+    if (fileno == mainw->playing_file) {
+      mainw->scratch = SCRATCH_NONE;
+    }
     nframe = -1;
     return 0;
   }
 
+  if (sfile->achans > 0) {
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      if (mainw->pulsed != NULL) aplay_file = mainw->pulsed->playing_file;
+    }
+#endif
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      if (mainw->jackd != NULL) aplay_file = mainw->jackd->playing_file;
+    }
+#endif
+    if (!IS_VALID_CLIP(aplay_file)) aplay_file = fileno;
+    if (fileno != aplay_file) {
+      sfile->aseek_pos += (off64_t)(fabs((double)(nframe - sfile->last_frameno))) * SIGNED_DIVIDE(sfile->arate, sfile->pb_fps) *
+                          sfile->achans * sfile->asampsize / 8;
+    }
+  }
+
   if (nframe <= first_frame || nframe >= last_frame) {
-    if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
-      // we check for audio stop here, but the seek may not have happened yet
-      int aframe = mainw->aframeno;
-      if (nframe >= last_frame) mainw->aframeno++;
-      if (!check_for_audio_stop(fileno, first_frame + 10, last_frame - 10)) {
-        mainw->aframeno = aframe;
-        mainw->cancelled = CANCEL_AUD_END;
-        nframe = -1;
-        return 0;
-      }
-      mainw->aframeno = aframe;
-    }
-    do_resync = TRUE;
-
-    // get our frame back to within bounds
-
+    // get our frame back to within bounds:
+    // in ping-pong mode, an even winding means we bounce off the boundary and reverse,
+    // fwd -> reverse from end boundary;  backwards -> fwd, from start boundary
+    // odd winding, fwd -> fwd, count from start; back -> rev. count from end
+    //
+    // note a) if we add 1 to the reversed winding it becomes equivalent to fwd winding
+    // note b) in non-ping-pong mode, fwd is always odd winding, back is always even
+    /// so, define: BACK = 0, FWD = 1
+    // then:
+    selrange = (1 + last_frame - first_frame);
+    dir = LIVES_DIRECTION_FORWARD;
     nframe -= first_frame;
-
-    if (fps > 0) {
-      dir = 0;
-      if (mainw->ping_pong && clip_can_reverse(fileno)) {
-        dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
-        dir %= 2;
-      }
-    } else {
-      dir = 1;
-      if (mainw->ping_pong && clip_can_reverse(fileno)) {
-        nframe -= (last_frame - first_frame);
-        dir = (int)((double)nframe / (double)(last_frame - first_frame + 1));
-        dir %= 2;
-        dir++;
+    if (clip_can_reverse(fileno)) {
+      if (fps < 0.) dir = LIVES_DIRECTION_BACKWARD; // 0, even
+      if (mainw->ping_pong) {
+        dir += (int)((double)nframe / (double)selrange);
+        dir ^= 1;
       }
     }
 
-    nframe %= (last_frame - first_frame + 1);
-
-    if (fps < 0) {
-      // backwards
-      if (dir == 1) {
-        // even winding
-        if (!mainw->ping_pong || !clip_can_reverse(fileno)) {
-          // loop
-          if (nframe < 0) nframe += last_frame + 1;
-          else nframe += first_frame;
-          if (nframe > cframe && mainw->playing_file == fileno && mainw->loop_cont && !mainw->loop) {
-            // resync audio at end of loop section (playing backwards)
-            do_resync = TRUE;
-          }
-        } else {
-          nframe += last_frame; // normal
-          if (nframe > last_frame) {
-            nframe = last_frame - (nframe - last_frame);
-            if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                  LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-            else sfile->pb_fps = -sfile->pb_fps;
-          }
-        }
+    nframe %= selrange;
+    if (dir == LIVES_DIRECTION_FORWARD) {
+      if (fps < 0.) {
+        nframe = first_frame - nframe;
+        if (fileno == mainw->playing_file) {
+          dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+        } else sfile->pb_fps = -sfile->pb_fps;
       } else {
-        // odd winding
-        nframe = ABS(nframe) + first_frame;
-        if (mainw->ping_pong && clip_can_reverse(fileno)) {
-          // bounce
-          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-          else sfile->pb_fps = -sfile->pb_fps;
-        }
+        nframe += first_frame;
+        if (fileno == mainw->playing_file) {
+          // resync audio at end of loop section (playing backwards)
+          do_resync = TRUE;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+
+    else {
+      // reversing
+      if (fps > 0.) {
+        nframe = last_frame - nframe;
+        if (fileno == mainw->playing_file) {
+          dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
+                             LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+        } else sfile->pb_fps = -sfile->pb_fps;
+      } else {
+        nframe += last_frame;
+        if (fileno == mainw->playing_file) {
+          // resync audio at end of loop section (playing backwards)
+          do_resync = TRUE;
+	  // *INDENT-OFF*
+	}}}
+    // *INDENT-ON*
+
+
+    if (fileno == mainw->playing_file) {
+      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+        if (do_resync || mainw->scratch != SCRATCH_NONE) {
+          boolean is_jump = FALSE;
+          if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
+          resync_audio(nframe);
+          if (is_jump) mainw->video_seek_ready = TRUE;
+          if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
+            // we check for audio stop here, but the seek may not have happened yet
+            if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
+              mainw->cancelled = CANCEL_AUD_END;
+              nframe = -1;
+              return 0;
+	      // *INDENT-OFF*
+	    }}}}
+      // *INDENT-ON*
+      mainw->scratch = SCRATCH_NONE;
+    }
+    sfile->last_frameno = nframe;
+  }
+
+  if (fileno != aplay_file) {
+    /// set audio seek, but not for the playing file (which is set by the actual player)
+    sfile->aseek_pos += (off64_t)(fabs((double)(nframe - sfile->last_frameno))) * SIGNED_DIVIDE(sfile->arate, sfile->pb_fps) *
+                        sfile->achans * sfile->asampsize / 8;
+    dir = LIVES_DIRECTION_FORWARD;
+
+    if (clip_can_reverse(fileno)) {
+      if (sfile->arate < 0) dir = LIVES_DIRECTION_BACKWARD; // 0, even
+      if (mainw->ping_pong) {
+        dir += (int)(sfile->aseek_pos / sfile->afilesize);
+        dir ^= 1;
+      }
+    }
+
+    sfile->aseek_pos %= sfile->afilesize;
+    if (dir == LIVES_DIRECTION_FORWARD) {
+      if (sfile->arate < 0) {
+        sfile->aseek_pos = -sfile->aseek_pos;
+        sfile->arate = -sfile->arate;
       }
     } else {
-      // forwards
-      nframe += first_frame;
-      if (dir == 1) {
-        // odd winding
-        if (mainw->ping_pong && clip_can_reverse(fileno)) {
-          // bounce
-          nframe = last_frame - (nframe - (first_frame - 1));
-          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-          else sfile->pb_fps = -sfile->pb_fps;
-        }
-      } else if (mainw->playing_sel && (!mainw->ping_pong || !clip_can_reverse(fileno))
-                 && mainw->playing_file == fileno && nframe < cframe && mainw->loop_cont && !mainw->loop) {
-        // resync audio at start of loop selection
-        if (nframe < first_frame) {
-          nframe = last_frame - (first_frame - nframe) + 1;
-        }
-        do_resync = TRUE;
-      }
-      if (nframe < first_frame) {
-        // scratch or transport backwards
-        if (mainw->ping_pong && clip_can_reverse(fileno)) {
-          nframe = first_frame;
-          if (mainw->playing_file == fileno) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
-                LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
-          else sfile->pb_fps = -sfile->pb_fps;
-        } else nframe = last_frame - nframe;
+      if (sfile->arate > 0) {
+        sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
+        sfile->arate = -sfile->arate;
+      } else {
+        sfile->aseek_pos += sfile->afilesize;
       }
     }
   }
-  if (nframe < first_frame) nframe = first_frame;
-  if (nframe > last_frame) nframe = last_frame;
 
-  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    if ((do_resync || mainw->scratch != SCRATCH_NONE) && mainw->playing_file == fileno) {
-      boolean is_jump = FALSE;
-      if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
-      mainw->scratch = SCRATCH_NONE;
-      resync_audio(nframe);
-      if (is_jump) mainw->video_seek_ready = TRUE;
-      if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
-        // we check for audio stop here, but the seek may not have happened yet
-        if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
-          mainw->cancelled = CANCEL_AUD_END;
-          nframe = -1;
-          return 0;
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
-  mainw->scratch = SCRATCH_NONE;
   cframe = nframe;
   nframe = -1;
   return cframe;
@@ -2687,17 +2697,19 @@ int get_frame_count(int idx, int start) {
 }
 
 
-void get_frames_sizes(int fileno, int frame) {
+boolean get_frames_sizes(int fileno, int frame) {
   // get the actual physical frame size
 
   lives_clip_t *sfile = mainw->files[fileno];
-  LiVESPixbuf *pixbuf;
-
-  if ((pixbuf = pull_lives_pixbuf(fileno, frame, get_image_ext_for_type(mainw->files[fileno]->img_type), 0))) {
+  LiVESPixbuf *pixbuf = pull_lives_pixbuf_at_size(fileno, frame, get_image_ext_for_type(sfile->img_type),
+                        0, 0, 0, LIVES_INTERP_FAST, FALSE);
+  if (pixbuf != NULL) {
     sfile->hsize = lives_pixbuf_get_width(pixbuf);
     sfile->vsize = lives_pixbuf_get_height(pixbuf);
     lives_widget_object_unref(pixbuf);
+    return TRUE;
   }
+  return FALSE;
 }
 
 
@@ -3162,7 +3174,8 @@ void find_when_to_stop(void) {
   else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop = STOP_ON_VID_END;
   else if (!mainw->preview && (mainw->loop_cont)) mainw->whentostop = NEVER_STOP;
-  else if (!CURRENT_CLIP_HAS_VIDEO || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering && (mainw->audio_end / cfile->fps)
+  else if (!CURRENT_CLIP_HAS_VIDEO || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering
+                                       && (mainw->audio_end / cfile->fps)
                                        < MAX(cfile->laudio_time, cfile->raudio_time) &&
                                        calc_time_from_frame(mainw->current_file, mainw->play_start) < cfile->laudio_time))
     mainw->whentostop = STOP_ON_AUD_END;
@@ -4541,7 +4554,7 @@ boolean get_clip_value(int which, lives_clip_details_t what, void *retval, size_
     return FALSE;
   }
 
-  mainw->read_failed = FALSE;
+  mainw->read_failed = 0;
 
   if (mainw->cached_list != NULL) {
     val = get_val_from_cached_list(key, maxlen);
@@ -5054,13 +5067,11 @@ char *insert_newlines(const char *text, int maxwidth) {
   // does not take into account for example utf8 multi byte chars
 
   wchar_t utfsym;
-
-  char newline[] = "\n";
   char *retstr;
 
   size_t runlen = 0;
   size_t req_size = 1; // for the terminating \0
-  size_t tlen;
+  size_t tlen, align = 1;
 
   int xtoffs;
 
@@ -5084,14 +5095,14 @@ char *insert_newlines(const char *text, int maxwidth) {
       return lives_strdup(text);
     }
 
-    if (!strncmp(text + i, "\n", 1)) runlen = 0; // is a newline (in any encoding)
+    if (*(text + i) == '\n') runlen = 0; // is a newline (in any encoding)
     else {
       runlen++;
       if (needsnl) req_size++; ///< we will insert a nl here
     }
 
     if (runlen == maxwidth) {
-      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", 1))) {
+      if (i < tlen - 1 && (*(text + i + 1) != '\n')) {
         // needs a newline
         needsnl = TRUE;
         runlen = 0;
@@ -5102,7 +5113,13 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
-  retstr = (char *)lives_calloc(req_size, 1);
+  if (!(req_size & 1)) {
+    if (req_size & 2) align = 2;
+    else if (req_size & 4) align = 4;
+    else if (req_size & 8) align = 8;
+  }
+
+  retstr = (char *)lives_calloc(req_size / align, align);
   req_size = 0; // reuse as a ptr to offset in retstr
   runlen = 0;
   needsnl = FALSE;
@@ -5111,17 +5128,17 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   for (i = 0; i < tlen; i += xtoffs) {
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
-    if (!strncmp(text + i, "\n", 1)) runlen = 0; // is a newline (in any encoding)
+    if (*(text + i) == '\n') runlen = 0; // is a newline (in any encoding)
     else {
       runlen++;
       if (needsnl) {
-        lives_memcpy(retstr + req_size, newline, 1);
+        *(retstr + req_size) = '\n';
         req_size++;
       }
     }
 
     if (runlen == maxwidth) {
-      if (i < tlen - 1 && (strncmp(text + i + 1, "\n", 1))) {
+      if (i < tlen - 1 && (*(text + i + 1) != '\n')) {
         // needs a newline
         needsnl = TRUE;
         runlen = 0;
@@ -5129,10 +5146,9 @@ char *insert_newlines(const char *text, int maxwidth) {
     } else needsnl = FALSE;
     lives_memcpy(retstr + req_size, &utfsym, xtoffs);
     req_size += xtoffs;
-
   }
 
-  lives_memset(retstr + req_size, 0, 1);
+  *(retstr + req_size) = 0;
 
   return retstr;
 }
@@ -5216,7 +5232,9 @@ boolean lives_make_writeable_dir(const char *newdir) {
 
 
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
-  if (mainw->struggling || quality == PB_QUALITY_LOW) return LIVES_INTERP_FAST;
+  if ((mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
+    return LIVES_INTERP_BEST;
+  if (quality == PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
 }

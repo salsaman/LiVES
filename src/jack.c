@@ -1688,7 +1688,11 @@ ticks_t lives_jack_get_time(jack_driver_t *jackd) {
 
 double lives_jack_get_pos(jack_driver_t *jackd) {
   // get current time position (seconds) in audio file
-  return jackd->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  if (mainw->jackd->playing_file > -1)
+    return jackd->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  // from memory
+  return (double)jackd->frames_written / (double)jackd->sample_out_rate;
+
 }
 
 

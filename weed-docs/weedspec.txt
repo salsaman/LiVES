@@ -734,7 +734,12 @@ weed_error_t is typedefed as (int32_t)
 
 == Plant types ==
 
-weed.h defines only a single plant type, WEED_PLANT_UNKNOWN, with value 0.
+For convenience, weed.h defines the following plant types:
+
+WEED_PLANT_UNKNOWN, with value 0.
+WEED_PLANT_GENERIC, with value 16384
+
+Plant types >= 16384 are available for custom plant types..
 
 
 ==== Other symbols ====
@@ -2133,7 +2138,7 @@ value for the parameter. The host should not change any other leaves.
 * "name" : WEED_SEED_STRING  : name of the parameter, MUST be unique across the in_parameters/out_parameters
 
 
- * "hint" : WEED_SEED_INT : subdivides parameters into different types  [see below]
+ * "param_type" : WEED_SEED_INT : subdivides parameters into different types  [see below]
 
 
 * "default" :           suggested default value(s) of the parameter :
@@ -2172,7 +2177,7 @@ value for the parameter. The host should not change any other leaves.
    of another in_parameter : hint to the host that if the "value" of this parameter is changed, then the
    "value" of the parameter pointed to should be set the same by the host.
 
-  Both parameters source and target MUST have the same HINT and seed_type. 
+  Both parameters source and target MUST have the same PARAM_TYPE and seed_type. 
 
     - if the source parameter has variable size, then this is only valid if the target parameter also has the flag bit set
 
@@ -2221,20 +2226,20 @@ value for the parameter. The host should not change any other leaves.
 
 
 
-==== PARAMETER HINTS ====
+==== PARAMETER TYPES ====
 
-The "hint" is a mandatory WEED_SEED_INT leaf of every parameter; the defined values are:
+The "param_type" is a mandatory WEED_SEED_INT leaf of every parameter; the defined values are:
 
- * WEED_HINT_UNSPECIFIED
- * WEED_HINT_INTEGER
- * WEED_HINT_FLOAT
- * WEED_HINT_TEXT
- * WEED_HINT_SWITCH
- * WEED_HINT_COLOR
+ * WEED_PARAM_UNSPECIFIED
+ * WEED_PARAM_INTEGER
+ * WEED_PARAM_FLOAT
+ * WEED_PARAM_TEXT
+ * WEED_PARAM_SWITCH
+ * WEED_PARAM_COLOR
 
-Depending on the "hint" parameter seed type additional leaves are:
+Depending on the "param_type" parameter seed type additional leaves are:
 
- * WEED_HINT_UNSPECIFIED
+ * WEED_PARAM_UNSPECIFIED
    Parameter is of an unknown type. Plugins should never use this
    by choice, it is intended only for wrapper plugins which may need to
    enumerate out of scope parameter types. These parameter types MUST have at least "name" set, and may optionally
@@ -2244,7 +2249,7 @@ Depending on the "hint" parameter seed type additional leaves are:
    to the host not to display the parameter in user interfaces.
 
 
- * WEED_HINT_INTEGER
+ * WEED_PARAM_INTEGER
 
 "value" and "default" are constrained by min and max: min <= value <= max
 The "default" leaf can only be of seed type WEED_SEED_INT. "default"
@@ -2278,7 +2283,7 @@ may have any number of elements  > 0.
 
 
 
- * WEED_HINT_FLOAT
+ * WEED_PARAM_FLOAT
 
 "value" and "default" are constrained by min and max: min <= value <= max
 
@@ -2309,13 +2314,13 @@ The "default" leaf can only be of seed type WEED_SEED_DOUBLE. "default" may have
 
 
 
- * WEED_HINT_TEXT
+ * WEED_PARAM_TEXT
 A string type parameter. The "default" leaf can only be of seed type WEED_SEED_STRING.
 
 
 
 
- * WEED_HINT_SWITCH 
+ * WEED_PARAM_SWITCH 
 Indicates a boolean type parameter. The "default" leaf can only be of seed type WEED_SEED_BOOLEAN.
 
 
@@ -2331,7 +2336,7 @@ Indicates a boolean type parameter. The "default" leaf can only be of seed type 
 
 
 
- * WEED_HINT_COLOR
+ * WEED_PARAM_COLOR
 
 Indicates a colour type parameter. Colors are represented as a list of elements of type WEED_SEED_DOUBLE or WEED_SEED_INT.
 Depending on the seed_type of "default" / "new_default", the host knows the seed type of "value".
@@ -2723,7 +2728,7 @@ rely on setting "copy_value_to" to force the host to set indentical
     underscore as a mnemonic accelerator
 
  * "decimals" : WEED_SEED_INT : number of decimals to be displayed for a FLOAT or
-   COLOR (FLOAT) hint. For other types this will be ignored.
+   COLOR (FLOAT) types. For other types this will be ignored.
    This is only a suggestion for display, the actual value may contain more digits after the decimal point.
 
  * "step_size" : seed type matches type of "default" : step value for
@@ -2732,7 +2737,7 @@ rely on setting "copy_value_to" to force the host to set indentical
    is an integer multiple of "step_size".
 
  * "maxchars" : WEED_SEED_INT : max display length in (utf-8) chars for a
-   STRING hint. For other hints, this will be ignored. A value < 1 should
+   TEXT type. For other param types, this will be ignored. A value < 1 should
    also be ignored. This is only a hint for display, there is no guarantee that the actual value will not be greater in length.
 
  * "wrap" : WEED_SEED_BOOLEAN : only valid for INT and FLOAT types
@@ -2837,7 +2842,7 @@ This is explained in more detail below, along with an explanation of the counter
 * "copy_value_to" : WEED_SEED_INT : index (0 means first in parameter, 1 means second, etc.)
 
    if the "value" of this in_parameter is changed, then the "value" of the in_parameter pointed to (by index) should be
-   set equivalently by the host. Note that this is only hint for creating user friendly interfaces. There is no guarantee that
+   set equivalently by the host. Note that this is only a hint for creating user friendly interfaces. There is no guarantee that
    the host will comply with this hint.
 
    This functionality can be disabled by the plugin by setting the  value < 0, or by setting it to point to itself.
@@ -3506,30 +3511,30 @@ Flag bits >= 30 are free to use for custom flags.
 
 
 
-==== Weed parameter hints ====
+==== Weed parameter types ====
 
- * WEED_HINT_UNSPECIFIED  0
+ * WEED_PARAM_UNSPECIFIED  0
    Parameter is of an unknown type. Plugins should never use this
    by choice, it is intended for wrapper plugins which may need to
    enumerate out of scope parameter types. These parameter types may or may not
    have "min" and "max". They should have at least "name", and if possible "default" leaves, even if the seed_type is only set.
 
- * WEED_HINT_INTEGER  1
+ * WEED_PARAM_INTEGER  1
 
- * WEED_HINT_FLOAT  2
+ * WEED_PARAM_FLOAT  2
 
- * WEED_HINT_TEXT  3
+ * WEED_PARAM_TEXT  3
 
- * WEED_HINT_SWITCH  4
+ * WEED_PARAM_SWITCH  4
 
- * WEED_HINT_COLOR  5
+ * WEED_PARAM_COLOR  5
 
-Parameter hints >= 1024 are reserved for custom parameters.
+Parameter types >= 1024 are reserved for custom parameter types.
 
 
 
 ==== Weed colorspaces ====
- // Used for WEED_HINT_COLOR parameters.
+ // Used for WEED_PARAM_COLOR parameters.
 
  * WEED_COLORSPACE_RGB  1
 
@@ -3741,7 +3746,7 @@ an (R, G, B) value of (55, 55, 55). This colour space is used since it is much b
 values, and for mixing (adding) and multiplying colour values perceptually. Thus all colour "pixel_data" values for RGB(A) will
 be supplied by the host or generated by the plugin using this colour space ('transfer function' to be more precise).
 
-In addition to the "pixel_data" values, the R, G, B VALUEs of any WEED_HINT_COLOR type parameters will be maintained to this
+In addition to the "pixel_data" values, the R, G, B VALUEs of any WEED_PARAM_COLOR type parameters will be maintained to this
 colour space by the host, although they mau be displayed differently to the user.
 
 So for example if the user entered (127, 127, 127) for a colour value in the GUI, then the plugin would
@@ -4097,9 +4102,9 @@ static int ext_set_param(ext_context *ctx, int index, int nvalues, void *values)
 
 static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues, void *values) {
 	weed_size_t vsize = 0;
-	int hint = weed_param_get_hint(param);
+	int ptype = weed_param_get_type(param);
 
-         if (hint == WEED_HINT_COLOR) {
+         if (ptype == WEED_PARAM_COLOR) {
 	   	 if (weed_param_get_cspace(param) == WEED_COLORSPACE_RGBA) vsize = 4; 
     		else vsize = 3;
 	}
@@ -4338,7 +4343,7 @@ weed_plant_t *weed_channel_set_audio_data(weed_plant_t *channel, float **data, i
 // paramtmpls
 weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramtmpl);
 int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl);
-int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl);
+int weed_paramtmpl_get_type(weed_plant_t *paramtmpl);
 int weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
 int weed_paramtmpl_default_size(weed_plant_t *paramtmpl);
@@ -4350,7 +4355,7 @@ int weed_paramtmpl_hints_hidden(weed_plant_t *param);
 int weed_param_is_hidden(weed_plant_t *param);
 weed_plant_t *weed_param_get_gui(weed_plant_t *param);
 weed_plant_t *weed_param_get_template(weed_plant_t *param);
-int weed_param_get_hint(weed_plant_t *paraml);
+int weed_param_get_type(weed_plant_t *paraml);
 int weed_param_has_variable_size(weed_plant_t *param);
 int weed_param_get_default_size(weed_plant_t *param);
 int weed_param_does_wrap(weed_plant_t *paramtmpl);

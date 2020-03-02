@@ -363,10 +363,10 @@ static inline int32_t spc_rnd(int32_t val) {
 
   // if we are adding several factors we can do the conversion after the addition
 
-  if (mainw->struggling > 1) {
+  if (mainw->effort > 1) {
     return val >> FP_BITS;
   }
-  if (mainw->struggling == 1) {
+  if (mainw->effort == 1) {
     uint32_t sig = val & 0x80000000;
     val = (val - (val >> 8));
     return ((val >> 16) | sig);
@@ -977,7 +977,7 @@ static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8
 #define avg_chroma_3_1(x, y) ((uint8_t)(avg_chroma(x, avg_chroma(x, y))))
 #define avg_chroma_1_3(x, y) ((uint8_t)(avg_chroma(avg_chroma(x, y), y)))
 
-#define avg_chromaf(x, y) (mainw->struggling > 0 ? avg_chroma(x, y) : (uint8_t)((float)(spc_rnd(((x) << 2) + ((y) << 2))) / 8. + .5))
+#define avg_chromaf(x, y) (mainw->effort > 0 ? avg_chroma(x, y) : (uint8_t)((float)(spc_rnd(((x) << 2) + ((y) << 2))) / 8. + .5))
 #define avg_chroma_3_1f(x, y) ((uint8_t)(avg_chromaf(x, avg_chromaf(x, y))))
 #define avg_chroma_1_3f(x, y) ((uint8_t)(avg_chromaf(avg_chromaf(x, y), y)))
 
@@ -7832,9 +7832,9 @@ LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int
    to guard against accidental overwrites
 */
 boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean may_contig) {
-  int palette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
-  int width = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
+  int palette = weed_layer_get_palette(layer);
+  int width = weed_layer_get_width(layer);
+  int height = weed_layer_get_height(layer);
   int rowstride, *rowstrides;
 
   int clamping = WEED_YUV_CLAMPING_CLAMPED;
@@ -7853,6 +7853,8 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   // max is 128 min is 32,  and it must be a power of 2 (i.e 32, 64, 128)
   int sbits = 7, al, r;
   int rowstride_alignment;
+
+  if (width <= 0 || height <= 0) return FALSE;
 
   if (mainw->rowstride_alignment < ALIGN_DEF) mainw->rowstride_alignment = ALIGN_DEF;
   rowstride_alignment = mainw->rowstride_alignment;
@@ -8296,27 +8298,25 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
    if targette palette is WEED_PALETTE_END then default will be set depending on image_ext
    if this is "jpg" then it will be RGB24, otherwise RGBA32
    finally we create the pixel data for layer */
-void create_blank_layer(weed_layer_t *layer, const char *image_ext, int width, int height, int target_palette) {
-
-  // TODO - see if this is useful elsewhere
-  if ((width == 0 || height == 0) && weed_plant_has_leaf(layer, WEED_LEAF_WIDTH)
-      && weed_plant_has_leaf(layer, WEED_LEAF_HEIGHT)) {
-    width = weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
-    height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
+weed_layer_t *create_blank_layer(weed_layer_t *layer, const char *image_ext, int width, int height, int target_palette) {
+  if (!layer) layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+  else {
+    if (width == 0) width = weed_layer_get_width(layer);
+    if (height == 0) height = weed_layer_get_height(layer);
   }
   if (width == 0) width = DEF_FRAME_HSIZE_UNSCALED;
   if (height == 0) height = DEF_FRAME_VSIZE_UNSCALED;
-  weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
-  weed_set_int_value(layer, WEED_LEAF_HEIGHT, height);
+  weed_layer_set_size(layer, width, height);
   if (!weed_plant_has_leaf(layer, WEED_LEAF_CURRENT_PALETTE)) {
-    if (target_palette != WEED_PALETTE_END) weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, target_palette);
+    if (target_palette != WEED_PALETTE_END) weed_layer_set_palette(layer, target_palette);
     else {
-      if (image_ext == NULL || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
-        weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGB24);
-      else weed_set_int_value(layer, WEED_LEAF_CURRENT_PALETTE, WEED_PALETTE_RGBA32);
+      if (!image_ext || !strcmp(image_ext, LIVES_FILE_EXT_JPG))
+        weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
+      else weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
     }
   }
   if (!create_empty_pixel_data(layer, TRUE, TRUE)) weed_layer_nullify_pixel_data(layer);
+  return layer;
 }
 
 
@@ -8912,7 +8912,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     if (weed_palette_is_rgb(inpl) && !weed_palette_is_rgb(outpl)) {
       if (!can_inline_gamma(inpl, outpl)) {
         gamma_convert_layer(new_gamma_type, layer);
-        //sched_yield();
         new_gamma_type = WEED_GAMMA_UNKNOWN;
       }
     }
@@ -10764,13 +10763,11 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
         // force conversion to RGB24 or RGBA32
         xpalette = WEED_PALETTE_END;
       } else {
-        //sched_yield();
         if (fordisplay && !prefs->gamma_srgb)
           gamma_convert_layer(WEED_GAMMA_MONITOR, layer);
         else
           gamma_convert_layer(WEED_GAMMA_SRGB, layer);
       }
-      //sched_yield();
     }
     switch (xpalette) {
     case WEED_PALETTE_RGB24:
@@ -10842,7 +10839,6 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
       pixel_data += irowstride;
     }
     weed_layer_pixel_data_free(layer);
-    //sched_yield();
   }
 
   return pixbuf;
@@ -10969,6 +10965,10 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 
 static void *swscale_threadfunc(void *arg) {
   lives_sw_params *swparams = (lives_sw_params *)arg;
+  if (swparams->layer) {
+    int last = swparams->iheight * (swparams->thread_id + 1), scan;
+    while ((scan = weed_get_int_value(swparams->layer, "progscan", NULL)) > 0 && scan - 2 < last) lives_usleep(10);
+  }
   swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
   return NULL;
@@ -11007,6 +11007,9 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
   boolean resolved = FALSE;
   int xpalette, xopal_hint;
 #endif
+  boolean progscan = FALSE;
+
+  if (weed_plant_has_leaf(layer, "progscan")) progscan = TRUE;
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width, height);
@@ -11301,19 +11304,18 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #if USE_THREADS
     ctxblock = sws_getblock(nthrds);
     offset = ctxblock->offset;
-    //sched_yield();
-    for (int sl = nthrds - 1; sl >= 0; sl--) {
+    for (int sl = 0; sl < nthrds; sl++) {
       swparams[sl].thread_id = sl;
       swparams[sl].iheight = iheight;
       swparams[sl].swscale = swscalep[sl + offset] = sws_getCachedContext(swscalep[sl + offset], iwidth, iheight, ipixfmt, width,
                              height,
                              opixfmt, flags, NULL, NULL, NULL);
-    }
 
-    for (int sl = nthrds - 1; sl >= 0; sl--) {
       if (swparams[sl].swscale == NULL) {
         LIVES_DEBUG("swscale is NULL !!");
       } else {
+        if (progscan) swparams[sl].layer = layer;
+        else swparams[sl].layer = NULL;
         sws_setColorspaceDetails(swparams[sl].swscale, sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
                                  ? SWS_CS_ITU709 : SWS_CS_ITU601) , iclamping,
                                  sws_getCoefficients((subspace == WEED_YUV_SUBSPACE_BT709)
@@ -11331,15 +11333,15 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
         }
         swparams[sl].irw = irw;
         swparams[sl].orw = orw;
-        if (sl != 0) lives_thread_create(&threads[sl], NULL, swscale_threadfunc, &swparams[sl]);
+        if (sl < nthrds - 1) lives_thread_create(&threads[sl], NULL, swscale_threadfunc, &swparams[sl]);
         else swscale_threadfunc(&swparams[sl]);
       }
     }
     iheight = height;
-    height = 0;
-    for (int sl = 0; sl < nthrds; sl++) {
+    // height = 0;
+    for (int sl = 0; sl < nthrds - 1; sl++) {
       if (swparams[sl].swscale != NULL) {
-        if (sl != 0) lives_thread_join(threads[sl], NULL);
+        lives_thread_join(threads[sl], NULL);
         height += swparams[sl].ret;
       } else height += iheight;
     }
@@ -11351,7 +11353,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     height = sws_scale(swscale, (const uint8_t *const *)ipd, irw, 0, iheight, (uint8_t *const *)opd, orw);
   }
 #endif
-    //sched_yield();
+
 #ifdef DEBUG_RESIZE
     g_print("after resize with swscale: layer size %d X %d, palette %s (assumed succesful)\n", width, height,
             weed_palette_get_name_full(opal_hint, oclamp_hint, 0));

@@ -925,7 +925,6 @@ deint1:
 
 weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   static weed_timecode_t blend_tc = 0;
-
   lives_clip_t *blend_file;
   weed_timecode_t ntc = tc;
 
@@ -935,41 +934,18 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   if (mainw->blend_file != mainw->last_blend_file) {
     // mainw->last_blend_file is set to -1 on playback start
     mainw->last_blend_file = mainw->blend_file;
+    blend_file->last_frameno = blend_file->frameno;
     blend_tc = tc;
   }
 
-  blend_file->last_frameno = blend_file->frameno;
-
   if (!cfile->play_paused) {
     blend_file->frameno = calc_new_playback_position(mainw->blend_file, blend_tc, (ticks_t *)&ntc);
-    if (blend_file->achans > 0 && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
-      int winding;
-      blend_file->aseek_pos += (blend_file->frameno - blend_file->last_frameno)
-                               * SIGNED_DIVIDE(blend_file->arate, blend_file->pb_fps) *
-                               blend_file->achans * blend_file->asampsize / 8;
-      if (blend_file->aseek_pos < 0 || blend_file->aseek_pos > blend_file->afilesize) {
-        if (blend_file->aseek_pos < 0) {
-          winding = 1;
-          blend_file->aseek_pos = -blend_file->aseek_pos;
-        }
-        if (!mainw->ping_pong) {
-          blend_file->aseek_pos %= blend_file->afilesize;
-          if (winding) blend_file->aseek_pos = blend_file->afilesize - blend_file->aseek_pos;
-        } else {
-          if (winding) winding = 0; // start with fwd winding
-          else winding = 1; // star with rev winding
-          winding += (int)(blend_file->aseek_pos / blend_file->afilesize);
-          blend_file->aseek_pos %= blend_file->afilesize;
-          if (winding & 1) {
-            blend_file->aseek_pos = blend_file->afilesize - blend_file->aseek_pos;
-	    // *INDENT-OFF*
-	  }}}}}
-  // *INDENT-ON*
-
-  blend_tc = ntc;
+    blend_file->last_frameno = blend_file->frameno;
+    blend_tc = ntc;
+  }
 
   mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
-  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), tc, 0, 0);
+  pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }
 
@@ -977,7 +953,7 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
 // keypresses
 // TODO - we should mutex lock mainw->rte
 
-boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean rte_on_off_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   // this is the callback which happens when a rte is keyed
   // key is 1 based, but if < 0 then this indicates auto mode (set via data connection)
@@ -1084,13 +1060,13 @@ boolean rte_on_off_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, ui
 }
 
 
-boolean rte_on_off_callback_hook(LiVESToggleButton * button, livespointer user_data) {
+boolean rte_on_off_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean grabkeys_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // assign the keys to the last key-grabbable effect
   int fx = LIVES_POINTER_TO_INT(user_data);
@@ -1114,7 +1090,7 @@ boolean grabkeys_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean textparm_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer user_data) {
   // keyboard linked to first string parameter, until TAB is pressed
   mainw->rte_textparm = get_textparm();
@@ -1122,14 +1098,14 @@ boolean textparm_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-boolean grabkeys_callback_hook(LiVESToggleButton * button, livespointer user_data) {
+boolean grabkeys_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   if (!lives_toggle_button_get_active(button)) return TRUE;
   grabkeys_callback(NULL, NULL, 0, (LiVESXModifierType)0, user_data);
   return TRUE;
 }
 
 
-boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean rtemode_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                          livespointer user_data) {
   int dirn = LIVES_POINTER_TO_INT(user_data);
   // "m" mode key
@@ -1142,7 +1118,7 @@ boolean rtemode_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint3
 }
 
 
-boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data) {
+boolean rtemode_callback_hook(LiVESToggleButton *button, livespointer user_data) {
   int key_mode = LIVES_POINTER_TO_INT(user_data);
   int modes = rte_getmodespk();
   int key = (int)(key_mode / modes);
@@ -1155,7 +1131,7 @@ boolean rtemode_callback_hook(LiVESToggleButton * button, livespointer user_data
 }
 
 
-boolean swap_fg_bg_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
+boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                             livespointer user_data) {
   int blend_file = mainw->blend_file;
 
@@ -1204,7 +1180,7 @@ LIVES_GLOBAL_INLINE int rte_getmodespk(void) {
 LIVES_GLOBAL_INLINE boolean rte_key_toggle(int key) {
   // key is 1 based, or < 0 for auto mode
   rte_on_off_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(key));
-  if (key < 0) key = -key;
+
   return rte_key_is_enabled(key);
 }
 

@@ -306,7 +306,7 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
 
   if (afd == -1) {
     // deal with read errors after drawing a whole block
-    mainw->read_failed = TRUE;
+    mainw->read_failed = -2;
     return 0.;
   }
 
@@ -856,17 +856,16 @@ int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_ara
 
     if (nsamps > 0) {
       // buffer was consumed, move on to next buffer
-
       pthread_mutex_lock(&mainw->abuf_mutex);
-      // request main thread to fill another buffer
+      // request caching thread to fill another buffer
       mainw->abufs_to_fill++;
       if (mainw->jackd->read_abuf < 0) {
         // playback ended while we were processing
         pthread_mutex_unlock(&mainw->abuf_mutex);
         return samples_out;
       }
-
       mainw->jackd->read_abuf++;
+      wake_audio_thread();
 
       if (mainw->jackd->read_abuf >= prefs->num_rtaudiobufs) mainw->jackd->read_abuf = 0;
 
@@ -972,7 +971,9 @@ int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arat
       }
 
       mainw->pulsed->read_abuf++;
+      wake_audio_thread();
       if (mainw->pulsed->read_abuf >= prefs->num_rtaudiobufs) mainw->pulsed->read_abuf = 0;
+
       abuf = mainw->pulsed->abufs[mainw->pulsed->read_abuf];
       pthread_mutex_unlock(&mainw->abuf_mutex);
     }
@@ -1078,9 +1079,11 @@ static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size,
     sblocksize <<= 3;
     for (i = 0; i < sbytes; i += SILENCE_BLOCK_SIZE) {
       if (sbytes - i < SILENCE_BLOCK_SIZE) sblocksize = sbytes - i;
-      mainw->write_failed = FALSE;
       lives_write_buffered(out_fd, (const char *)zero_buff, sblocksize, TRUE);
-      if (mainw->write_failed) retval = FALSE;
+      if (mainw->write_failed == out_fd + 1) {
+        mainw->write_failed = 0;
+        retval = FALSE;
+      }
     }
     lives_free(zero_buff);
   } else if (sbytes <= 0) {
@@ -1215,7 +1218,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     if (out_fd < 0) {
       lives_freep((void **)&mainw->write_failed_file);
       mainw->write_failed_file = lives_strdup(outfilename);
-      mainw->write_failed = TRUE;
+      mainw->write_failed = -2;
       return 0l;
     }
 
@@ -1296,7 +1299,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
         if (in_fd[track] < 0) {
           lives_freep((void **)&mainw->read_failed_file);
           mainw->read_failed_file = lives_strdup(infilename);
-          mainw->read_failed = TRUE;
+          mainw->read_failed = -2;
         } else {
           if (track < NSTOREDFDS) {
             storedfds[track] = in_fd[track];
@@ -1432,7 +1435,6 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       bytes_read = 0;
-      mainw->read_failed = FALSE;
 
       if (in_fd[track] > -1) bytes_read = lives_read_buffered(in_fd[track], in_buff, tbytes, TRUE);
 
@@ -1446,7 +1448,9 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
-        if (mainw->read_failed) mainw->read_failed = FALSE;
+        if (mainw->read_failed == in_fd[track] + 1) {
+          mainw->read_failed = 0;
+        }
       }
 
       if (bytes_read < tbytes && bytes_read >= 0)  lives_memset(in_buff + bytes_read, 0, tbytes - bytes_read);
@@ -1644,18 +1648,19 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 void aud_fade(int fileno, double startt, double endt, double startv, double endv) {
   double vel = 1., vol = 1.;
 
-  mainw->read_failed = mainw->write_failed = FALSE;
   render_audio_segment(1, &fileno, fileno, &vel, &startt, (weed_timecode_t)(startt * TICKS_PER_SECOND_DBL),
                        (weed_timecode_t)(endt * TICKS_PER_SECOND_DBL), &vol, startv, endv, NULL);
 
   if (mainw->write_failed) {
     char *outfilename = lives_get_audio_file_name(fileno);
+    mainw->write_failed = 0;
     do_write_failed_error_s(outfilename, NULL);
     lives_free(outfilename);
   }
 
   if (mainw->read_failed) {
     char *infilename = lives_get_audio_file_name(fileno);
+    mainw->read_failed = 0;
     do_read_failed_error_s(infilename, NULL);
     lives_free(infilename);
   }
@@ -2286,96 +2291,49 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   // continue until we have a full buffer
   // if we get an audio frame we render up to that point
   // then we render what is left to fill abuf
-  while (event != NULL && (tc = get_event_timecode(event)) <= fill_tc) {
+  while (event != NULL) {
+    tc = get_event_timecode(event);
+    //if (tc > 100000000) tc -= 100000000;
+    g_print("VALZZ %ld and %ld %ld\n", last_tc, tc, fill_tc);
+    if (tc >= fill_tc) {
+      g_print("will not fit, render to end\n");
+      break;
+    }
     if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
       // got next audio frame
-      if (tc >= fill_tc) break;
-
-      mainw->read_failed = FALSE;
-      lives_freep((void **)&mainw->read_failed_file);
+      g_print("will fit\n");
 
       render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
-
-      // process audio updates at this frame
-      atstate = aframe_to_atstate(event);
-
-      if (atstate != NULL) {
-
-#define SMOOTH_LIMIT 0//TICKS_PER_SECOND / 25
-#define SMOOTH_TC  SMOOTH_LIMIT / 8
-
-        if (tc  - last_tc < SMOOTH_LIMIT && tc - last_tc > SMOOTH_TC * 2) {
-          int j = 0;
-          double *accels = (double *)lives_calloc(nfiles, sizdbl);
-          double smooth_time = (double)SMOOTH_TC / TICKS_PER_SECOND_DBL;
-          double dt = (double)(tc - last_tc) / TICKS_PER_SECOND_DBL;
-          double count = (dt / smooth_time) + 1.;
-          for (i = 0; i < nfiles; i++) {
-            accels[i] = 0.;
-            if (atstate[j].afile < 0) continue;
-            if (atstate[j].afile > 0) {
-              if (atstate[j].afile == from_files[i]) {
-                if (fabs(aseeks[i] + dt * avels[i] - atstate[j].seek) < SKJUMP_THRESH_SECS) {
-                  double dv = atstate[j].vel - avels[i];
-                  accels[i] = dv / dt;
-                }
-              }
-            }
-            j++;
-          }
-
-          mainw->read_failed = FALSE;
-          lives_freep((void **)&mainw->read_failed_file);
-
-          while (last_tc < fill_tc && last_tc < tc) {
-            render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, last_tc + SMOOTH_TC, chvols, 1., 1., abuf);
-            for (i = 0; i < nfiles; i++) {
-              // increase seek values
-              aseeks[i] += avels[i] * smooth_time;
-              aseeks[i] = quant_aseek(aseeks[i], mainw->files[from_files[i]]->arps);
-              if ((accels[i] > 0. && avels[i] + accels[i] < atstate[i].vel) || (accels[i] < 0. && avels[i] + accels[i] > atstate[i].vel)) {
-                avels[i] += accels[i] * smooth_time;
-              }
-            }
-            count--;
-            last_tc += SMOOTH_TC;
-
-            if (mainw->read_failed) {
-              do_read_failed_error_s(mainw->read_failed_file, NULL);
-            }
-          }
-        }
-      }
-
-      render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, tc, chvols, 1., 1., abuf);
-
-      if (mainw->read_failed) {
-        do_read_failed_error_s(mainw->read_failed_file, NULL);
-      }
 
       for (i = 0; i < nfiles; i++) {
         // increase seek values
         aseeks[i] += avels[i] * (tc - last_tc) / TICKS_PER_SECOND_DBL;
       }
+
+      last_tc = tc;
+      g_print("last tc is now %ld\n", last_tc);
+      // process audio updates at this frame
+      atstate = aframe_to_atstate(event);
+
       if (atstate != NULL) {
-        for (i = 0; atstate[i].afile != -1; i++) {
-          from_files[i] = atstate[i].afile;
-          avels[i] = atstate[i].vel;
-          aseeks[i] = atstate[i].seek;
+        int nnfiles;
+        for (nnfiles = 0; atstate[nnfiles].afile != -1; nnfiles++);
+        for (i = 0; i < nnfiles; i++) {
+          if (atstate[i].afile > 0) {
+            from_files[i] = atstate[i].afile;
+            avels[i] = atstate[i].vel;
+            aseeks[i] = atstate[i].seek;
+          }
         }
         lives_free(atstate);
       }
-      last_tc = tc;
     }
     event = get_next_audio_frame_event(event);
   }
 
   if (last_tc < fill_tc) {
     // fill the rest of the buffer
-
-    mainw->read_failed = FALSE;
-    lives_freep((void **)&mainw->read_failed_file);
-
+    g_print("filling from %ld to %ld\n", last_tc, fill_tc);
     render_audio_segment(nfiles, from_files, -1, avels, aseeks, last_tc, fill_tc, chvols, 1., 1., abuf);
     for (i = 0; i < nfiles; i++) {
       // increase seek values
@@ -2384,6 +2342,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
   }
 
   if (mainw->read_failed) {
+    mainw->read_failed = 0;
     do_read_failed_error_s(mainw->read_failed_file, NULL);
   }
 
@@ -2578,7 +2537,7 @@ static void *cache_my_audio(void *arg) {
 
   while (!cbuffer->die) {
     // wait for request from client (setting cbuffer->is_ready or cbuffer->die)
-    while (cbuffer->is_ready && !cbuffer->die) {
+    while (cbuffer->is_ready && !cbuffer->die && mainw->abufs_to_fill <= 0) {
       pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
       pthread_mutex_unlock(&cond_mutex);
@@ -2811,9 +2770,7 @@ static void *cache_my_audio(void *arg) {
         lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE);
       }
       if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) {
-        sched_yield();
         lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek);
-        sched_yield();
       }
     }
 
@@ -2835,7 +2792,6 @@ static void *cache_my_audio(void *arg) {
 
     // read from file
     cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE);
-    sched_yield();
 
     if (cbuffer->_cbytesize < 0) {
       // there is not much we can do if we get a read error, since we are running in a realtime thread here
@@ -2879,7 +2835,6 @@ static void *cache_my_audio(void *arg) {
                           cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans,
                           cbuffer->swap_endian ? SWAP_X_TO_L : 0, 0);
     }
-    sched_yield();
     cbuffer->shrink_factor = cbuffer->_shrink_factor;
 
     // if our out_asamps is 16, we are done
@@ -3221,11 +3176,10 @@ boolean apply_rte_audio(int nframes) {
   if (mainw->agen_key == 0) {
     // read from audio_fd
 
-    mainw->read_failed = FALSE;
-
     tbytes = lives_read_buffered(audio_fd, in_buff, tbytes, FALSE);
 
     if (mainw->read_failed) {
+      mainw->read_failed = 0;
       do_read_failed_error_s(audio_file, NULL);
       lives_freep((void **)&mainw->read_failed_file);
       lives_free(fltbuf);
@@ -3312,7 +3266,6 @@ boolean apply_rte_audio(int nframes) {
 
   if (audio_fd >= 0) {
     // save to file
-    mainw->write_failed = FALSE;
     lives_lseek_buffered_writer(audio_fd, audio_pos);
     tbytes = onframes * cfile->achans * cfile->asampsize / 8;
     lives_write_buffered(audio_fd, (const char *)in_buff, tbytes, FALSE);
@@ -3322,7 +3275,8 @@ boolean apply_rte_audio(int nframes) {
   if (shortbuf != (short *)in_buff) lives_free(shortbuf);
   lives_free(in_buff);
 
-  if (mainw->write_failed) {
+  if (mainw->write_failed == audio_fd + 1) {
+    mainw->write_failed = 0;
     do_write_failed_error_s(audio_file, NULL);
     return FALSE;
   }

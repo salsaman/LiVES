@@ -336,7 +336,7 @@ enum {
   LIVES_STRING_CONSTANT_NONE,
   LIVES_STRING_CONSTANT_RECOMMENDED,
   LIVES_STRING_CONSTANT_DISABLED,
-  LIVES_STRING_CONSTANT_CL,
+  LIVES_STRING_CONSTANT_CL,  ///< "the current layout"
   LIVES_STRING_CONSTANT_BUILTIN,
   LIVES_STRING_CONSTANT_CUSTOM,
   LIVES_STRING_CONSTANT_TEST,
@@ -762,6 +762,7 @@ typedef struct {
   ticks_t offsetticks; ///< offset for multitrack playback start
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t deltaticks; ///< deltaticks for scratching
+  ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
@@ -862,6 +863,8 @@ typedef struct {
   ulong fsp_func; ///< fileselector preview expose (for image thumbnails)
   ulong sw_func; ///< scrolledwindow expose func
   ulong vj_mode_func;
+
+  lives_funcptr_t abort_hook_func;
 
   // for jack transport
   boolean jack_can_stop;
@@ -1236,7 +1239,7 @@ typedef struct {
 
   int num_tracks;
   int *clip_index;
-  int *frame_index;
+  int64_t *frame_index;
 
   LiVESWidget *resize_menuitem;
 
@@ -1278,6 +1281,7 @@ typedef struct {
   /// immediately (to be) affected layout maps
   LiVESList *xlays;
 
+  LiVESList *recovery_list;
   char *recovery_file;  ///< the filename of our recover file
   boolean leave_recovery;
 
@@ -1308,7 +1312,7 @@ typedef struct {
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)
-  //pthread_mutex_t frame_index_mutex; /// access to current file frame_index
+  pthread_mutex_t fbuffer_mutex; /// append / remove wirh file_buffer list
 
   volatile lives_rfx_t *vrfx_update;
 
@@ -1449,9 +1453,10 @@ typedef struct {
 
   boolean aplayer_broken;
 
+  /// TODO ***: these all need to be per thread
   boolean com_failed;
-  boolean write_failed;
-  boolean read_failed;
+  int write_failed;
+  int read_failed;
   boolean chdir_failed;
 
   boolean add_clear_ds_button;
@@ -1468,6 +1473,7 @@ typedef struct {
   int ce_frame_height;
   int ce_frame_width;
 
+  /// TODO: need to be per-thread
   char *read_failed_file;
   char *write_failed_file;
   char *bad_aud_file;
@@ -1481,6 +1487,7 @@ typedef struct {
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
 
+  /// TOD: need to be per thread
   int rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int rowstride_alignment_hint;
 
@@ -1513,13 +1520,13 @@ typedef struct {
 
   volatile lives_audio_buf_t *audio_frame_buffer; ///< used for buffering / feeding audio to video generators
   lives_audio_buf_t *afb[2]; ///< used for buffering / feeding audio to video generators
-  int afbuffer_clients;
-  int afbuffer_clients_read;
+  int afbuffer_clients; /// # of registered clients for the audio frame buffer
+  int afbuffer_clients_read; /// current read count. When this reaches abuffer_clients, we swap the read / write buffers
 
-  pthread_t *libthread;
-  ulong id;
+  pthread_t *libthread;  /// GUI thread for liblives
+  ulong id; /// ???
 
-  boolean interactive;
+  boolean interactive; /// if set to FALSE then interaction via the GUI (mouse / keypresses) should be disabled. Mainly for liblives.
 
   int fc_buttonresponse;
 
@@ -1532,9 +1539,9 @@ typedef struct {
 
   LiVESPixbuf *scrap_pixbuf;
 
-  volatile LiVESWidget *stop_emmission;
+  volatile LiVESWidget *stop_emmission; /// handling for GUI exposure signals
 
-  boolean no_context_update;
+  boolean no_context_update; ///< may be set temporarily to block wodget context updates
 
   weed_plant_t *msg_list;
   int n_messages;
@@ -1545,15 +1552,13 @@ typedef struct {
 
   ticks_t flush_audio_tc;
 
-  // mainw window resizing
+  // main window resizing, no longer very important
   int assumed_width;
   int assumed_height;
-
 #define DEF_IDLE_MAX 1
-
   int idlemax;
 
-  boolean reconfig;
+  boolean reconfig; ///< set to TRUE if a monitor / screen size change is detected
 
   boolean ignore_screen_size;
 
@@ -1568,17 +1573,28 @@ typedef struct {
   char *version_hash;
   char *old_vhash;
 
+  /// experimental values, primarily for testing
   volatile uint32_t loadmeasure;
   volatile int uflow_count;
 
-  boolean force_show;
+  boolean force_show; /// if set to TRUE during playback then a new frame (or possibly the current one) will be displayed ASAP
 
   boolean gui_fooey; ///< set to TRUE if we expect heavy interface updates (when not playing, please) so we can increase GUI iterations
 
-  int struggling;
+  ///< a roughly calibrated value that ranges from -64 (lightly loaded) -> +64 (heavily loaded)
+  /// (currently only active during playback), i.e higher values represent more machine load
+  /// some functions may change their behaviour according to this value if prefs->pbq_adaptive is FALSE then such changes
+  /// should be minimal; if TRUE then more profound changes are permitted
+#define EFFORT_RANGE_MAX 64
+#define EFFORT_LIMIT_LOW (EFFORT_RANGE_MAX >> 4)    ///< default 4
+#define EFFORT_LIMIT_MED (EFFORT_RANGE_MAX >> 2)  ///< default 32
 
-  boolean memok;
+  int effort;
 
+  boolean memok; ///< set to FALSE if a segfault is received
+
+  /// this is not really used yet, but the idea is that in future the clipboard may be reproduced in various
+  /// sizes / palettes / gamma functions, so instead of having to transform it each time we can cache various versions
 #define MAX_CBSTORES 8
   int ncbstores;
   lives_clip_t *cbstores[8];

@@ -58,6 +58,8 @@
 
 #define MAX_THREADS 65536
 
+typedef weed_plant_t weed_layer_t;
+
 /////////////////////////////////////////////
 
 typedef struct {
@@ -110,6 +112,7 @@ typedef struct {
 #include <libswscale/swscale.h>
 
 typedef struct {
+  weed_layer_t *layer;
   int thread_id;
   int iheight;
   struct SwsContext *swscale;
@@ -126,7 +129,6 @@ int32_t round_special(int32_t val);
 
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
-typedef weed_plant_t weed_layer_t;
 
 #define WEED_PLANT_LAYER 128
 
@@ -139,7 +141,7 @@ typedef weed_plant_t weed_layer_t;
 
 // create / destroy / copy layers
 weed_layer_t *weed_layer_new(int layer_type);
-void create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
+weed_layer_t *create_blank_layer(weed_layer_t *, const char *image_ext, int width, int height, int target_palette);
 weed_layer_t *weed_layer_create(int width, int height, int *rowstrides, int current_palette);
 weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int current_palette,
                                      int YUV_clamping, int YUV_sampling, int YUV_subspace, int gamma_type);

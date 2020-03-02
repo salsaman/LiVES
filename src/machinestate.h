@@ -235,7 +235,7 @@ char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
 uint64_t get_fs_free(const char *dir);
 
-ticks_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs);
+ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(struct timeval *tv);
 
@@ -257,14 +257,8 @@ uint32_t string_hash(const char *string) GNU_PURE GNU_HOT;
 
 int check_for_bad_ffmpeg(void);
 
-/// dropped frames handling
-
-#define DF_STATSMAX 64
-#define DF_LIMIT (DF_STATSMAX >> 4)
-#define DF_LIMIT_HIGH (DF_STATSMAX >> 2)
-
-void update_dfr(int nframes, boolean dropped);
-void clear_dfr(void);
+void update_effort(int nthings, boolean badthings);
+void reset_effort(void);
 
 //// threadpool API
 

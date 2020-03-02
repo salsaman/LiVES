@@ -376,7 +376,7 @@ void start_ce_thumb_mode(void) {
     }
 
     // make a small thumbnail, add it to the clips box
-    thumbnail = make_thumb(NULL, i, width, height, mainw->files[i]->start, TRUE);
+    thumbnail = make_thumb(NULL, i, width, height, mainw->files[i]->start, LIVES_INTERP_NORMAL, TRUE);
 
     clip_boxes[count] = lives_event_box_new();
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(clip_boxes[count]), "clipno", LIVES_INT_TO_POINTER(i));

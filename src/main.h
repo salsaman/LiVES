@@ -686,6 +686,7 @@ typedef struct _lives_clip_t {
   // current and last played index frames for internal player
   int frameno;
   int last_frameno;
+  int saved_frameno;
 
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
@@ -748,7 +749,7 @@ typedef struct _lives_clip_t {
 
   boolean ratio_fps; ///< if the fps was set by a ratio
 
-  volatile int64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
+  volatile off64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
   // decoder data
 
@@ -1172,6 +1173,7 @@ boolean save_clip_values(int which_file);
 void add_to_recovery_file(const char *handle);
 boolean rewrite_recovery_file(void);
 boolean check_for_recovery_files(boolean auto_recover);
+boolean recover_files(char *recovery_file, boolean auto_recover);
 void recover_layout_map(int numclips);
 const char *get_deinterlace_string(void);
 void reload_subs(int fileno);
@@ -1298,6 +1300,27 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
 
 // buffered io
+typedef struct {
+  ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
+  uint8_t *ptr;   /// read point in buffer
+  uint8_t *buffer;   /// ptr to data  (ptr - buffer + bytes) gives the read size
+  off_t offset; // file offs (of END of block)
+  int fd;
+  int bufsztype;
+  boolean eof;
+  boolean read;
+  boolean reversed;
+  int nseqreads;
+  int totreads;
+  int64_t totbytes;
+  boolean allow_fail;
+  volatile boolean invalid;
+  size_t orig_size;
+  char *pathname;
+} lives_file_buffer_t;
+
+lives_file_buffer_t *find_in_file_buffers(int fd);
+
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
 int lives_creat_buffered(const char *pathname, int mode);
@@ -1313,6 +1336,7 @@ ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boo
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
+lives_file_buffer_t *get_file_buffer(int fd);
 
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);
@@ -1434,7 +1458,7 @@ boolean get_clip_value(int which, lives_clip_details_t, void *retval, size_t max
 boolean save_clip_value(int which, lives_clip_details_t, void *val);
 boolean check_frame_count(int idx, boolean last_chkd);
 int get_frame_count(int idx, int xsize);
-void get_frames_sizes(int fileno, int frame_to_test);
+boolean get_frames_sizes(int fileno, int frame_to_test);
 int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps);
 boolean int_array_contains_value(int *array, int num_elems, int value);
 boolean check_for_lock_file(const char *set_name, int type);

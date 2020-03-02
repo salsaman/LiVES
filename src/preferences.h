@@ -346,9 +346,10 @@ typedef struct {
 #define LIVES_CDISK_REMOVE_ORPHAN_LAYOUTS (1<<2)
 #define LIVES_CDISK_LEAVE_MARKER_FILES (1<<3)
 #define LIVES_CDISK_LEAVE_MISC_FILES (1<<4)
+#define LIVES_CDISK_REMOVE_ORPHAN_CLIPS (1<<5)
 
-#define LIVES_CDISK_REMOVE_LOCK_FILES (1<<5) ///< not yet implemented - TODO
-#define LIVES_CDISK_REBUILD_ORDER_FILES (1<<6) ///< not yet implemented - TODO
+#define LIVES_CDISK_REMOVE_LOCK_FILES (1<<16) ///< not yet implemented - TODO
+#define LIVES_CDISK_REBUILD_ORDER_FILES (1<<17) ///< not yet implemented - TODO
 
   uint32_t clear_disk_opts;
 

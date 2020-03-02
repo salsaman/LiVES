@@ -57,23 +57,24 @@ boolean save_frame_index(int fileno) {
 
   do {
     retval = 0;
-    pthread_rwlock_rdlock(&mainw->mallopt_lock);
     fd = lives_creat_buffered(fname, DEF_FILE_PERMS);
     if (fd < 0) {
       retval = do_write_failed_error_s_with_retry(fname, lives_strerror(errno), NULL);
     } else {
-      mainw->write_failed = FALSE;
       for (i = 0; i < sfile->frames; i++) {
         lives_write_le_buffered(fd, &sfile->frame_index[i], 4, TRUE);
-        if (mainw->write_failed) break;
+        if (mainw->write_failed == fd + 1) {
+          mainw->write_failed = 0;
+          break;
+        }
       }
 
       lives_close_buffered(fd);
-      pthread_rwlock_unlock(&mainw->mallopt_lock);
 
       if (mainw->is_exiting) return TRUE;
 
-      if (mainw->write_failed) {
+      if (mainw->write_failed == fd + 1) {
+        mainw->write_failed = 0;
         ///g_print("wrt failed  was %d\n", i - 1);
         retval = do_write_failed_error_s_with_retry(fname, NULL, NULL);
       } else {
@@ -569,7 +570,8 @@ static void restore_gamma_cb(int gamma_type) {
     if (clipboard->frame_index[i] == -1) {
       progress++;
       clipboard = ocb;
-      pixbuf = pull_lives_pixbuf(0, i, get_image_ext_for_type(ocb->img_type), 0);
+      pixbuf = pull_lives_pixbuf_at_size(0, i, get_image_ext_for_type(ocb->img_type),
+                                         0, 0, 0, LIVES_INTERP_BEST, FALSE);
       clipboard = ncb;
       if (!save_decoded(0, i, pixbuf, FALSE, progress)) {
         mainw->current_file = 0;

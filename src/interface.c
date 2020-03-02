@@ -168,7 +168,7 @@ void show_playbar_labels(int clipno) {
 
 double lives_ce_update_timeline(int frame, double x) {
   // update clip editor timeline
-
+  // sets real_pointer_time and pointer_time
   // if frame == 0 then x must be a time value
 
   // returns the pointer time (quantised to frame)
@@ -194,10 +194,18 @@ double lives_ce_update_timeline(int frame, double x) {
   if (x < 0.) x = 0.;
 
   if (frame == 0) frame = calc_frame_from_time4(mainw->current_file, x);
-  cfile->real_pointer_time = x;
 
   x = calc_time_from_frame(mainw->current_file, frame);
   if (x > CLIP_TOTAL_TIME(mainw->current_file)) x = CLIP_TOTAL_TIME(mainw->current_file);
+  cfile->real_pointer_time = x;
+
+  if (frame > cfile->frames) frame = cfile->frames;
+  x = calc_time_from_frame(mainw->current_file, frame);
+  cfile->pointer_time = x;
+
+  cfile->frameno = cfile->last_frameno = frame;
+  if (cfile->achans)
+    cfile->aseek_pos = cfile->real_pointer_time;
 
 #ifndef ENABLE_GIW_3
   lives_ruler_set_value(LIVES_RULER(mainw->hruler), x);
@@ -214,12 +222,11 @@ double lives_ce_update_timeline(int frame, double x) {
   }
 
   if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded && mainw->multitrack == NULL) {
-    if (mainw->prv_link == PRV_PTR && mainw->preview_frame != calc_frame_from_time(mainw->current_file, x)) {
-      double pointer_time = cfile->pointer_time;
-      cfile->pointer_time = x;
-      if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
-      load_preview_image(FALSE);
-      cfile->pointer_time = pointer_time;
+    if (mainw->prv_link == PRV_PTR && mainw->preview_frame != frame) {
+      if (cfile->frames > 0) {
+        cfile->frameno = frame;
+        load_preview_image(FALSE);
+      }
     }
   }
 
@@ -232,12 +239,10 @@ double lives_ce_update_timeline(int frame, double x) {
   lives_widget_queue_draw(mainw->eventbox2);
   show_playbar_labels(mainw->current_file);
 
-  cfile->pointer_time = x;
-
   update_timer_bars(0, 0, 0, 0, 0);
 
   last_current_file = mainw->current_file;
-  return x;
+  return cfile->pointer_time;
 }
 
 
@@ -3489,6 +3494,20 @@ LiVESWidget *create_cleardisk_advanced_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
 
+  checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Check for lost clips"))),
+                !(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS), LIVES_BOX(hbox),
+                (tmp2 = lives_strdup(_("Allow attempted recovery of potential lost clips before deleting them."))));
+
+  lives_free(tmp);
+  lives_free(tmp2);
+
+  lives_signal_connect_after(LIVES_GUI_OBJECT(checkbutton), LIVES_WIDGET_TOGGLED_SIGNAL,
+                             LIVES_GUI_CALLBACK(flip_cdisk_bit),
+                             LIVES_INT_TO_POINTER(LIVES_CDISK_REMOVE_ORPHAN_CLIPS));
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, TRUE, widget_opts.packing_height);
+
   checkbutton = lives_standard_check_button_new((tmp = lives_strdup(_("Delete _Orphaned Clips"))),
                 !(prefs->clear_disk_opts & LIVES_CDISK_LEAVE_ORPHAN_SETS), LIVES_BOX(hbox),
                 (tmp2 = lives_strdup(_("Delete any clips which are not currently loaded or part of a set"))));
@@ -4042,6 +4061,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   boolean onlyfree = TRUE;
 
+  static boolean firsttime = TRUE;
+
   if (!capable->has_youtube_dl) {
     get_location(EXEC_YOUTUBE_DL, string, 256);
     if (strlen(string)) capable->has_youtube_dl = TRUE;
@@ -4074,7 +4095,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   add_spring_to_box(LIVES_BOX(hbox), 0);
 
   msg = lives_strdup_printf(_("<--- Auto update %s ? (will require authorization.)"), EXEC_YOUTUBE_DL);
-  checkbutton_update = lives_standard_check_button_new(msg, FALSE, LIVES_BOX(hbox), NULL);
+  checkbutton_update = lives_standard_check_button_new(msg, firsttime, LIVES_BOX(hbox), NULL);
   lives_free(msg);
 
   if (!capable->has_ssh_askpass) {
@@ -4362,7 +4383,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_widget_destroy(dialog);
   lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-
+  firsttime = FALSE;
   return req;
 }
 

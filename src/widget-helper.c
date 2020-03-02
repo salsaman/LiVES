@@ -11265,6 +11265,7 @@ boolean lives_widget_context_update(void) {
           if (ev != NULL)
             g_print("last was %d\n", ev->type);
         }
+        //if (ev != NULL && ev->type == 8) nulleventcount = 0;
         break;
       }
       if (ev != NULL) {

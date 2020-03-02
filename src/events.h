@@ -75,7 +75,6 @@
 #define WEED_LEAF_LIVES_TYPE "lives_type"
 #define WEED_LEAF_TRACKS "tracks"
 #define WEED_LEAF_TCDELTA "tc_delta"
-#define WEED_LEAF_TCSTART "tc_start"
 
 // misc
 #define WEED_LEAF_PTRSIZE "ptrsize" ///< deprecated
@@ -89,7 +88,7 @@
 #define AUD_DIFF_MIN 0.1  ///< ignore audio seek differences < than this (seconds)
 
 weed_plant_t *append_frame_event(weed_plant_t *event_list, ticks_t tc, int numframes,
-                                 int *clips, int *frames) WARN_UNUSED;
+                                 int *clips, int64_t *frames) WARN_UNUSED;
 weed_plant_t *append_filter_init_event(weed_plant_t *event_list, ticks_t tc,
                                        int filter_idx, int num_in_tracks, int key, weed_plant_t *inst) WARN_UNUSED;
 weed_plant_t *append_filter_deinit_event(weed_plant_t *event_list, ticks_t tc,
@@ -101,7 +100,7 @@ weed_plant_t *append_marker_event(weed_plant_t *event_list, ticks_t tc, int mark
 
 /** will either insert or replace */
 weed_plant_t *insert_frame_event_at(weed_plant_t *event_list, ticks_t tc, int numframes,
-                                    int *clips, int *frames, weed_plant_t **shortcut) WARN_UNUSED;
+                                    int *clips, int64_t *frames, weed_plant_t **shortcut) WARN_UNUSED;
 void insert_audio_event_at(weed_plant_t *event, int track, int clipnum, double time, double vel);
 void remove_audio_for_track(weed_plant_t *event, int track);
 weed_plant_t *insert_blank_frame_event_at(weed_plant_t *event_list, ticks_t tc,
@@ -124,7 +123,7 @@ int weed_event_get_type(weed_event_t *event);
 weed_timecode_t weed_event_set_timecode(weed_event_t *, weed_timecode_t tc);
 weed_timecode_t weed_event_get_timecode(weed_event_t *);
 
-int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int **frames); // returns ntracks
+int weed_frame_event_get_tracks(weed_event_t *event,  int **clips, int64_t **frames); // returns ntracks
 int weed_frame_event_get_audio_tracks(weed_event_t *event,  int **aclips, double **aseeks); // returns natracks
 
 /// replace events in event_list with events in new_event_list

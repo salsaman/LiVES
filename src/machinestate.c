@@ -572,6 +572,11 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
         val = bestval;
         if (prefs->show_dev_opts)
           g_print("value of %d tuned to %lu\n", weed_plant_get_type(*tuner), val);
+        // TODO: store value so we can recalibrate again later
+        //tuned = (struct tuna *)lives_malloc(sizeof(tuna));
+        //tuna->wptpp = tuner;
+        //tuna->id = weed_get_in
+        //lives_list_prepend(tunables, tuned);
         weed_plant_free(*tuner);
         *tuner = NULL;
         for (j = 0; j < nleaves; lives_free(res[j++]));
@@ -927,17 +932,17 @@ getfserr:
 }
 
 
-LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(int64_t origsecs, int64_t origusecs) {
+LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs) {
 #if _POSIX_TIMERS
   struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
-  return (ts.tv_sec - origsecs) * TICKS_PER_SECOND + ts.tv_nsec / 1000 * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+  return (ts.tv_sec - origsecs) * TICKS_PER_SECOND + ts.tv_nsec / 10  - orignsecs / 10;
 #else
 #ifdef USE_MONOTONIC_TIME
-  return (lives_get_monotonic_time() - origusecs) * USEC_TO_TICKS;
+  return (lives_get_monotonic_time() - orignsecs) / 10;
 #else
   gettimeofday(&tv, NULL);
-  return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - origusecs * USEC_TO_TICKS;
+  return TICKS_PER_SECOND * (tv.tv_sec - origsecs) + tv.tv_usec * USEC_TO_TICKS - orignsecs / 10;
 #endif
 #endif
 }
@@ -1249,7 +1254,8 @@ static void *thrdpool(void *arg) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         if (mtuner) {
           mywork->flags |= 1;
-          autotune_u64(mtuner, 8, npoolthreads * 4, 64, (double)narenas);
+          autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
+                       + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
         }
       }
 #endif
@@ -1610,99 +1616,101 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
 }
 
 
-/// dropped frames handling
-static int16_t dframes[DF_STATSMAX];
-static int dfstatslen = 0;
+/// estimate the machine load
+static int16_t theflow[EFFORT_RANGE_MAX];
+static int flowlen = 0;
 static boolean inited = FALSE;
+static int struggling = 0;
+static int badthingcount = 0;
+static int goodthingcount = 0;
 
-static int pop_framestate(void) {
-  int ret = dframes[0];
-  dfstatslen--;
-  for (int i = 0; i < dfstatslen; i++) {
-    dframes[i] = dframes[i + 1];
+static int pop_flowstate(void) {
+  int ret = theflow[0];
+  flowlen--;
+  for (int i = 0; i < flowlen; i++) {
+    theflow[i] = theflow[i + 1];
   }
   return ret;
 }
 
 
-void clear_dfr(void) {
-  mainw->struggling = 0;
+void reset_effort(void) {
   prefs->pb_quality = future_prefs->pb_quality;
-  inited = FALSE;
+  lives_memset(theflow, 0, sizeof(theflow));
+  inited = TRUE;
+  badthingcount = goodthingcount = 0;
+  struggling = 0;
+  if ((mainw->is_rendering || (mainw->multitrack != NULL
+                               && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
+    mainw->effort = -EFFORT_RANGE_MAX;
+  else mainw->effort = 0;
 }
 
 
-void update_dfr(int nframes, boolean dropped) {
-  static int dfcount = 0;
-  static int nsuccess = 0;
+void update_effort(int nthings, boolean badthings) {
   int spcycles;
-  int happiness;
 
-  if (!inited) {
-    lives_memset(dframes, 0, sizeof(dframes));
-    inited = TRUE;
-    dfcount = 0;
-    nsuccess = 0;
-  }
+  if (!inited) reset_effort();
+  if (!nthings) return;
 
-  if (!nframes) return;
-
-  if (dropped)  {
-    dfcount += nframes;
-    nsuccess = 0;
+  if (badthings)  {
+    badthingcount += nthings;
+    goodthingcount = 0;
     spcycles = -1;
   } else {
-    spcycles = nframes;
-    if (spcycles > 32767) spcycles = 32767;
-    nsuccess += spcycles;
-    nframes = 1;
+    spcycles = nthings;
+    if (spcycles > EFFORT_RANGE_MAX) spcycles = EFFORT_RANGE_MAX;
+    goodthingcount += spcycles;
+    if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
+    nthings = 1;
   }
 
-  while (nframes-- > 0) {
-    if (dfstatslen == DF_STATSMAX) {
-      int res = pop_framestate();
-      if (res > 0) dfcount -= res;
-      else nsuccess += res;
+  while (nthings-- > 0) {
+    if (flowlen >= EFFORT_RANGE_MAX) {
+      int res = pop_flowstate();
+      if (res > 0) badthingcount -= res;
+      else goodthingcount -= res;
     }
-    dframes[dfstatslen] = -spcycles;
-    dfstatslen++;
+    theflow[flowlen] = -spcycles;
+    flowlen++;
   }
 
-  if (!dfcount) {
-    happiness = nsuccess / dfstatslen;
+  if (!badthings) {
+    mainw->effort = goodthingcount;
   } else {
-    happiness = -dfcount;
+    mainw->effort = -badthingcount;
   }
 
-  if (happiness > 0) {
-    if (mainw->struggling) {
-      mainw->struggling--;
+  if (mainw->effort > 0) {
+    if (struggling) {
+      struggling -= ((mainw->effort | 16) >> 4);
+      if (struggling < 0) struggling = 0;
     } else {
-      if (prefs->pb_quality > PB_QUALITY_HIGH) prefs->pb_quality--;
+      if (prefs->pb_quality < PB_QUALITY_HIGH) prefs->pb_quality++;
     }
   }
 
-  if (happiness < DF_LIMIT) {
+  if (mainw->effort < -EFFORT_LIMIT_LOW) {
     if (prefs->pb_quality > future_prefs->pb_quality) {
       prefs->pb_quality = future_prefs->pb_quality;
       return;
     }
-    if (!mainw->struggling) {
-      mainw->struggling = 1;
+    if (!struggling) {
+      struggling = 1;
       return;
     }
-    if (happiness < DF_LIMIT_HIGH || (mainw->struggling && (happiness < DF_LIMIT))) {
-      if (mainw->struggling < DF_STATSMAX) mainw->struggling++;
-      if (mainw->struggling > DF_LIMIT_HIGH) {
+    if (mainw->effort < -EFFORT_LIMIT_MED || (struggling && (mainw->effort < -EFFORT_LIMIT_LOW))) {
+      if (struggling < EFFORT_RANGE_MAX) struggling++;
+      if (struggling > EFFORT_LIMIT_MED) {
         prefs->pb_quality = PB_QUALITY_LOW;
       } else {
-        if (future_prefs->pb_quality < PB_QUALITY_LOW) {
-          if (prefs->pb_quality <= future_prefs->pb_quality)
-            prefs->pb_quality = future_prefs->pb_quality + 1;
+        if (future_prefs->pb_quality > PB_QUALITY_LOW) {
+          if (prefs->pb_quality >= future_prefs->pb_quality)
+            prefs->pb_quality = future_prefs->pb_quality - 1;
         } else prefs->pb_quality = PB_QUALITY_LOW;
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
-  //g_print("STRG %d and %d %d\n", mainw->struggling, happiness, dfcount);
+  //g_print("STRG %d and %d %d %d\n", struggling, mainw->effort, dfcount, prefs->pb_quality);
 }
 

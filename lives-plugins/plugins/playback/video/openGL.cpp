@@ -335,6 +335,13 @@ boolean set_palette(int palette) {
       palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
     render_fn = &render_frame_rgba;
     mypalette = palette;
+
+    type = GL_RGBA;
+    if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
+    else if (mypalette == WEED_PALETTE_BGR24) type = GL_BGR;
+    else if (mypalette == WEED_PALETTE_BGRA32) type = GL_BGRA;
+
+    typesize = get_size_for_type(type);
     return TRUE;
   }
   // invalid palette
@@ -1914,6 +1921,8 @@ static void *render_thread_func(void *data) {
 boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
   int i;
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
+  static int otypesize = typesize;
+
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   imgWidth = hsize;
@@ -1935,7 +1944,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     window_width = attr.width;
     window_height = attr.height;
 
-    size_t twidth = window_width * typesize;
+    size_t twidth = window_width * otypesize;
     uint8_t *dst, *src;
 
     if (texturebuf != NULL) {
@@ -1987,7 +1996,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     has_new_texture = TRUE;
     pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
   } else {
-    if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL) {
+    if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL || typesize != otypesize) {
       if (texturebuf != NULL) {
         weed_free((void *)texturebuf);
       }
@@ -2013,6 +2022,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
   has_new_texture = TRUE;
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
+  otypesize = typesize;
   return TRUE;
 }
 

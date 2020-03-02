@@ -258,6 +258,7 @@ static void sample_silence_pulse(pulse_driver_t *pdriver, size_t nbytes, size_t 
     pa_stream_write(pdriver->pstream, buff, xbytes, NULL, 0, PA_SEEK_RELATIVE);
 #endif
     nbytes -= xbytes;
+    pdriver->extrausec += (double)xbytes / (double)(pdriver->out_arate * pdriver->out_achans * pdriver->out_asamps) * 1000000.;
   }
 }
 
@@ -475,6 +476,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3), xbytes);
 
       if (!pulsed->is_paused) pulsed->frames_written += nsamples;
+
       if (pulsed->seek_pos < 0. && pulsed->playing_file > -1 && afile != NULL) {
         pulsed->seek_pos += nsamples * afile->achans * afile->asampsize / 8;
         if (pulsed->seek_pos >= 0) pulse_audio_seek_bytes(pulsed, pulsed->seek_pos, afile);
@@ -484,9 +486,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
       return;
     }
-
-    // time interpolation
-    pulsed->extrausec += (double)nbytes / (double)(pulsed->out_arate * pulsed->out_achans * pulsed->out_asamps) * 1000000.;
 
     if (LIVES_LIKELY(pulseFramesAvailable > 0 && (pulsed->read_abuf > -1 ||
                      (pulsed->aPlayPtr != NULL
@@ -999,6 +998,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #else
       pa_stream_write(pulsed->pstream, shortbuffer, xbytes, NULL, 0, PA_SEEK_RELATIVE);
 #endif
+      pulsed->extrausec += (double)xbytes / (double)(pulsed->out_arate * pulsed->out_achans * pulsed->out_asamps) * 1000000.;
     } else {
       sample_silence_pulse(pulsed, xbytes, xbytes);
       if (!pulsed->is_paused) pulsed->frames_written += xbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
@@ -1154,6 +1154,8 @@ static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *a
     pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes);
     if (rbytes > 0) pa_stream_drop(pulsed->pstream);
     prb = 0;
+    if (pulsed->in_use)
+      pulsed->extrausec += (double)rbytes / (double)(pulsed->in_arate * pulsed->in_achans * pulsed->in_asamps) * 1000000.;
     return;
   }
 
@@ -1694,6 +1696,7 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *pulsed) {
   return pulsed->msgq;
 }
 
+static pa_usec_t last_usec = 0;
 
 void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pa_usec_t usec;
@@ -1715,6 +1718,7 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   mainw->deltaticks = mainw->startticks = 0;
   pulsed->extrausec = 0;
   pulsed->tscale = 1.;
+  last_usec = 0;
 }
 
 
@@ -1722,7 +1726,6 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
   pa_usec_t usec, retusec;
-  static pa_usec_t last_usec = 0;
   ticks_t timeout;
   lives_alarm_t alarm_handle;
   int err;
@@ -1753,11 +1756,13 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   if (timeout == 0) return -1;
   retusec = usec;
   if (last_usec > 0 && usec <= last_usec) {
-    retusec += (double)pulsed->extrausec * pulsed->tscale;
+    retusec += (pa_usec_t)((double)pulsed->extrausec * pulsed->tscale + .5);
   } else {
     if (pulsed->extrausec > 0) {
-      pulsed->tscale += (usec - last_usec) / pulsed->extrausec;
-      pulsed->tscale /= 2.;
+      if (last_usec > 0) {
+        pulsed->tscale += (double)(usec - last_usec) / (double)pulsed->extrausec;
+        pulsed->tscale /= 2.;
+      }
       pulsed->extrausec = 0;
     }
   }
@@ -1771,8 +1776,11 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
 double lives_pulse_get_pos(pulse_driver_t *pulsed) {
   // get current time position (seconds) in audio file
   //return (double)pulsed->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-  return (double)(lives_buffered_offset(pulsed->fd))
-         / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  if (mainw->pulsed->playing_file > -1)
+    return (double)(lives_buffered_offset(pulsed->fd))
+           / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+  // from memory
+  return (double)pulsed->frames_written / (double)pulsed->out_arate;
 }
 
 

@@ -1379,10 +1379,7 @@ static void draw_aparams(lives_mt * mt, LiVESWidget * eventbox, lives_painter_t 
   lives_painter_set_line_width(cr, 1.);
   lives_painter_set_source_rgb_from_lives_widget_color(cr, &palette->black);
 
-  if (weed_plant_has_leaf(init_event, WEED_LEAF_IN_PARAMETERS)) {
-    if (weed_leaf_num_elements(init_event, WEED_LEAF_IN_PARAMETERS) > 0)
-      pchainx = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, &error);
-  }
+  pchainx = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, &error);
 
   //lives_painter_set_operator (cr, LIVES_PAINTER_OPERATOR_DEST_OVER);
   for (i = startpos; i < startx + width; i++) {
@@ -1746,21 +1743,16 @@ static int track_to_channel(weed_plant_t *ievent, int track) {
 
   // note that a track could be mapped to multiple channels; we return only the first instance we find
 
-  int error, ntracks = weed_leaf_num_elements(ievent, WEED_LEAF_IN_TRACKS);
   int *in_tracks;
   int *carray = NULL;
-  int nc = 0, rpts;
+  int nc = 0, rpts, ntracks;
 
   register int i;
 
   if (ntracks == 0) return -1;
 
-  in_tracks = weed_get_int_array(ievent, WEED_LEAF_IN_TRACKS, &error);
-
-  if (weed_plant_has_leaf(ievent, WEED_LEAF_IN_COUNT)) {
-    // account for repeated channels
-    carray = weed_get_int_array_counted(ievent, WEED_LEAF_IN_COUNT, &nc);
-  }
+  in_tracks = weed_get_int_array_counted(ievent, WEED_LEAF_IN_TRACKS, &ntracks);
+  carray = weed_get_int_array_counted(ievent, WEED_LEAF_IN_COUNT, &nc);
 
   for (i = 0; i < ntracks; i++) {
     rpts = nc < i ? 1 : carray[i];
@@ -9115,10 +9107,11 @@ static double *update_layout_map_audio(weed_plant_t *event_list) {
   while (event != NULL) {
     if (WEED_EVENT_IS_FRAME(event)) {
       if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
-        int numatracks = weed_leaf_num_elements(event, WEED_LEAF_AUDIO_CLIPS);
-        int i, error;
-        int *aclip_index = weed_get_int_array(event, WEED_LEAF_AUDIO_CLIPS, &error);
-        double *aseek_index = weed_get_double_array(event, WEED_LEAF_AUDIO_SEEKS, &error);
+        int numatracks;
+        int *aclip_index;
+        double *aseek_index;
+        register int i;
+        numatracks = weed_frame_event_get_audio_tracks(event, &aclip_index, &aseek_index);
         for (i = 0; i < numatracks; i += 2) {
           if (aclip_index[i + 1] > 0) {
             atrack = aclip_index[i];
@@ -14722,13 +14715,13 @@ static void insgap_inner(lives_mt * mt, int tnum, boolean is_sel, int passnm) {
 
           remove_frame_from_event(mt->event_list, event, tnum);
 
-          xnumclips = numclips = weed_leaf_num_elements(new_event, WEED_LEAF_CLIPS);
+          clips = weed_get_int_array_counted(new_event, WEED_LEAF_CLIPS, &numclips);
+          xnumclips = numclips;
           if (numclips < tnum + 1) xnumclips = tnum + 1;
 
           new_clips = (int *)lives_malloc(xnumclips * sizint);
           new_frames = (int64_t *)lives_malloc(xnumclips * 8);
 
-          clips = weed_get_int_array(new_event, WEED_LEAF_CLIPS, NULL);
           frames = weed_get_int64_array(new_event, WEED_LEAF_FRAMES, NULL);
 
           for (i = 0; i < xnumclips; i++) {
@@ -14846,8 +14839,7 @@ static void insgap_inner(lives_mt * mt, int tnum, boolean is_sel, int passnm) {
         }
 
         // see if all of this filter`s in_tracks were moved
-        nintracks = weed_leaf_num_elements(init_event, WEED_LEAF_IN_TRACKS);
-        in_tracks = weed_get_int_array(init_event, WEED_LEAF_IN_TRACKS, NULL);
+        in_tracks = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &nintracks);
 
         if (!is_sel) {
           if ((nintracks == 1 && in_tracks[0] != mt->current_track) || (nintracks == 2 && in_tracks[0] != mt->current_track &&
@@ -15816,8 +15808,7 @@ void on_mt_delfx_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   start_tc = get_event_timecode(init_event);
   end_tc = get_event_timecode(deinit_event) + TICKS_PER_SECOND_DBL / mt->fps;
 
-  numtracks = weed_leaf_num_elements(init_event, WEED_LEAF_IN_TRACKS);
-  tracks = weed_get_int_array(init_event, WEED_LEAF_IN_TRACKS, &error);
+  tracks = weed_get_int_array_counted(init_event, WEED_LEAF_IN_TRACKS, &numtracks);
 
   numtracks = enabled_in_channels(get_weed_filter(mt->current_fx), TRUE); // count repeated channels
   switch (numtracks) {
@@ -16359,8 +16350,7 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
       if (mt->opts.move_effects && mt->moving_block) {
         // move effects
 
-        if (weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT) && weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) &&
-            weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) == 1
+        if (weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT) && weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS) == 1
             && weed_get_int_value(event, WEED_LEAF_IN_TRACKS, &error) == track) {
           // this effect has a deinit_event, it has one in_track, which is this one
 
@@ -16373,8 +16363,8 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
               weed_set_int_value(event, WEED_LEAF_IN_TRACKS, new_track); // update the in_track to the new one
 
               if (weed_plant_has_leaf(event, WEED_LEAF_OUT_TRACKS)) {
-                int *out_tracks = weed_get_int_array(event, WEED_LEAF_OUT_TRACKS, &error);
-                int num_tracks = weed_leaf_num_elements(event, WEED_LEAF_OUT_TRACKS);
+                int num_tracks;
+                int *out_tracks = weed_get_int_array_counted(event, WEED_LEAF_OUT_TRACKS, &num_tracks);
                 for (i = 0; i < num_tracks; i++) {
                   // update the out_track to the new one
                   if (out_tracks[i] == track) out_tracks[i] = new_track;
@@ -16403,15 +16393,13 @@ void update_filter_events(lives_mt * mt, weed_plant_t *first_event, weed_timecod
               }
               // add this effect to our list of moved_events, so we don't end up moving it multiple times
               moved_events = lives_list_prepend(moved_events, event);
-            }
-          }
-        }
-      }
+	      // *INDENT-OFF*
+            }}}}
+      // *INDENT-ON*
 
       if (lives_list_index(moved_events, event) == -1 && event != mt->avol_init_event) {
         if (weed_plant_has_leaf(event, WEED_LEAF_DEINIT_EVENT) && weed_plant_has_leaf(event, WEED_LEAF_IN_TRACKS) &&
             (nins = weed_leaf_num_elements(event, WEED_LEAF_IN_TRACKS)) <= 2) {
-
           int *in_tracks = weed_get_int_array(event, WEED_LEAF_IN_TRACKS, &error);
           if (in_tracks[0] == track || (nins == 2 && in_tracks[1] == track)) {
             // if the event wasnt moved (either because user chose not to, or block was deleted, or it had 2 tracks)
@@ -19229,14 +19217,12 @@ void mt_fixup_events(lives_mt * mt, weed_plant_t *old_event, weed_plant_t *new_e
 
 
 static void combine_ign(weed_plant_t *xnew, weed_plant_t *xold) {
-  int num, numo, *nign, *oign, i, error;
+  int num, numo, *nign, *oign, i;
 
   // combine WEED_LEAF_IGNORE values using NAND
-  if (!weed_plant_has_leaf(xold, WEED_LEAF_IGNORE)) return;
-  num = weed_leaf_num_elements(xnew, WEED_LEAF_IGNORE);
-  numo = weed_leaf_num_elements(xnew, WEED_LEAF_IGNORE);
-  oign = weed_get_boolean_array(xold, WEED_LEAF_IGNORE, &error);
-  nign = weed_get_boolean_array(xnew, WEED_LEAF_IGNORE, &error);
+  oign = weed_get_boolean_array_counted(xold, WEED_LEAF_IGNORE, &numo);
+  if (!numo) return;
+  nign = weed_get_boolean_array_counted(xnew, WEED_LEAF_IGNORE, &num);
   for (i = 0; i < num; i++) if (i >= numo || oign[i] == WEED_FALSE) nign[i] = WEED_FALSE;
   weed_set_boolean_array(xnew, WEED_LEAF_IGNORE, num, nign);
   lives_free(oign);
@@ -19271,8 +19257,8 @@ static void add_to_pchain(weed_plant_t *event_list, weed_plant_t *init_event, we
   if (last_event != NULL) weed_set_voidptr_value(last_event, WEED_LEAF_NEXT_CHANGE, pchange);
   else {
     // update "in_params" for init_event
-    int numin = weed_leaf_num_elements(init_event, WEED_LEAF_IN_PARAMETERS);
-    void **in_params = weed_get_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, &error);
+    int numin;
+    void **in_params = weed_get_voidptr_array_counted(init_event, WEED_LEAF_IN_PARAMETERS, &numin);
     in_params[index] = pchain[index] = (void *)pchange;
     weed_set_voidptr_array(init_event, WEED_LEAF_IN_PARAMETERS, numin, in_params);
     lives_free(in_params);
@@ -19883,7 +19869,7 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
 
   lives_mt *mt = (lives_mt *)user_data;
 
-  char *filt[] = {"*."LIVES_FILE_EXT_LAYOUT, NULL};
+  char *filt[] = {"*." LIVES_FILE_EXT_LAYOUT, NULL};
 
   int *layout_map;
 
@@ -20194,8 +20180,7 @@ void move_init_in_filter_map(lives_mt * mt, weed_plant_t *event_list, weed_plant
       event = get_next_event(event);
       continue;
     }
-    init_events = weed_get_voidptr_array(event, WEED_LEAF_INIT_EVENTS, &error);
-    num_inits = weed_leaf_num_elements(event, WEED_LEAF_INIT_EVENTS);
+    init_events = weed_get_voidptr_array_counted(event, WEED_LEAF_INIT_EVENTS, &num_inits);
     if (events_before == NULL && events_after == NULL) {
       j = 0;
       for (i = 0; i < num_inits; i++) {
@@ -21509,7 +21494,7 @@ char *get_eload_filename(lives_mt * mt, boolean allow_auto_reload) {
   boolean needs_idlefunc = FALSE;
   boolean did_backup = mt->did_backup;
 
-  char *filt[] = {"*."LIVES_FILE_EXT_LAYOUT, NULL};
+  char *filt[] = {"*." LIVES_FILE_EXT_LAYOUT, NULL};
 
   char *eload_dir;
   char *eload_file;

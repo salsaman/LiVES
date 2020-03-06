@@ -824,9 +824,9 @@ void redraw_timer_bars(double oldx, double newx, int which) {
     lives_widget_object_set_data(LIVES_WIDGET_OBJECT(mainw->raudio_draw), "drawn", LIVES_INT_TO_POINTER(0)); // force redrawing
   }
   if (newx > oldx) {
-    update_timer_bars(ROUND_I(oldx * scalex), 0, ROUND_I((newx - oldx) * scalex), 0, which);
+    update_timer_bars(ROUND_I(oldx * scalex - .5), 0, ROUND_I((newx - oldx) * scalex + .5), 0, which);
   } else {
-    update_timer_bars(ROUND_I(newx * scalex), 0, ROUND_I((oldx - newx) * scalex), 0, which);
+    update_timer_bars(ROUND_I(newx * scalex - .5), 0, ROUND_I((oldx - newx) * scalex + .5), 0, which);
   }
 }
 
@@ -3590,7 +3590,8 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
     if (LINGO_IS_LAYOUT(layout)) {
       lingo_painter_show_layout(cr, layout);
     }
-    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+    lives_widget_object_unref(layout);
+    //if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
   }
 
   lives_painter_fill(cr);
@@ -4664,7 +4665,10 @@ static boolean msg_area_scroll_to(LiVESWidget * widget, int msgno, boolean recom
   //g_print("GET  LINGO xx %d %d\n", width, height);
 
   layout = (LingoLayout *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(widget), "layout");
-  if (layout != NULL && LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+  if (layout != NULL) {
+    lingo_layout_set_text(layout, "", -1);
+    lives_widget_object_unref(layout);
+  }
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(widget), "layout", NULL);
 
   if (width < LAYOUT_SIZE_MIN || height < LAYOUT_SIZE_MIN) return FALSE;

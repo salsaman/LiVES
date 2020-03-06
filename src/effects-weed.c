@@ -322,28 +322,21 @@ lives_fx_cat_t weed_filter_subcategorise(weed_plant_t *pl, lives_fx_cat_t catego
 
 int num_alpha_channels(weed_plant_t *filter, boolean out) {
   // get number of alpha channels (in or out) for filter; including optional
-
   weed_plant_t **ctmpls;
-
-  int count = 0;
-  int nchans, error;
-
+  int count = 0, nchans;
   register int i;
 
   if (out) {
     if (!weed_plant_has_leaf(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES)) return FALSE;
-    nchans = weed_leaf_num_elements(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES);
+    ctmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &nchans);
     if (nchans == 0) return FALSE;
-    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, &error);
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
     }
   } else {
-    if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES)) return FALSE;
-    nchans = weed_leaf_num_elements(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES);
+    ctmpls = weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &nchans);
     if (nchans == 0) return FALSE;
-    ctmpls = weed_get_plantptr_array(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, &error);
     for (i = 0; i < nchans; i++) {
       if (has_non_alpha_palette(ctmpls[i], filter)) continue;
       count++;
@@ -984,7 +977,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
 
 static boolean get_fixed_channel_size(weed_plant_t *template, int *width, int *height) {
   weed_size_t nwidths = weed_leaf_num_elements(template, WEED_LEAF_WIDTH);
-  weed_size_t nheights = weed_leaf_num_elements(template, WEED_LEAF_WIDTH);
+  weed_size_t nheights = weed_leaf_num_elements(template, WEED_LEAF_HEIGHT);
   int *heights, *widths;
   int defined = 0;
   int oheight = 0, owidth = 0;
@@ -1059,10 +1052,10 @@ static boolean get_fixed_channel_size(weed_plant_t *template, int *width, int *h
     function is called with dummy values when we first create the channels, and then with real values before we process a frame
 */
 static void set_channel_size(weed_plant_t *filter, weed_plant_t *channel, int width, int height) {
-  weed_plant_t *chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
+  weed_plant_t *chantmpl = weed_channel_get_template(channel);
   boolean check_ctmpl = FALSE;
   int max, min;
-  int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
+  int filter_flags = weed_filter_get_flags(filter);
 
   if (width < MIN_CHAN_WIDTH) width = MIN_CHAN_WIDTH;
   if (width > MAX_CHAN_WIDTH) width = MAX_CHAN_WIDTH;
@@ -1178,10 +1171,7 @@ char *cd_to_plugin_dir(weed_plant_t *filter) {
 
 
 LIVES_GLOBAL_INLINE weed_plant_t *get_next_compound_inst(weed_plant_t *inst) {
-  int error;
-  if (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE))
-    return weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
-  return NULL;
+  return weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, NULL);
 }
 
 
@@ -4485,11 +4475,16 @@ static void gen_hashnames(int i, int j) {
 
 
 static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
+#if defined TEST_ISOL && defined LM_ID_NEWLM
+  static Lmid_t lmid = LM_ID_NEWLM;
+  static boolean have_lmid = FALSE;
+  Lmid_t new_lmid;
+#endif
   weed_setup_f setup_fn;
   weed_plant_t *plugin_info = NULL, **filters = NULL, *filter = NULL;
   weed_plant_t *host_info;
   void *handle;
-
+  int dlflags = RTLD_NOW | RTLD_LOCAL;
   int reason, idx = num_weed_filters;
   int filters_in_plugin, fnum, j;
 
@@ -4503,12 +4498,12 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   boolean valid, blacklisted;
 
   register int i;
-  static int key = -1;
+
+#ifdef RTLD_DEEPBIND
+  dlflags |= RTLD_DEEPBIND;
+#endif
 
   pwd = getcwd(cwd, PATH_MAX);
-
-  key++;
-
   mainw->chdir_failed = FALSE;
 
   // walk list and create fx structures
@@ -4517,18 +4512,32 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   lives_printerr("Checking plugin %s\n", plugin_path);
 #endif
 
-  if ((handle = dlopen(plugin_path, RTLD_LAZY))) {
-    dlerror(); // clear existing errors
+#if defined TEST_ISOL && defined LM_ID_NEWLM
+  if (!have_lmid) {
+    handle = dlmopen(LM_ID_NEWLM, plugin_path, dlflags);
   } else {
-    tmp = dlerror();
-    if (tmp == NULL) tmp = lives_strdup("NULL");
-    msg = lives_strdup_printf(_("Unable to load plugin %s\nError was: %s\n"), plugin_path, tmp);
-    lives_free(tmp);
+    handle = dlmopen(lmid, plugin_path, dlflags);
+  }
+  if (handle) {
+    dlerror(); // clear existing errors
+    if (!have_lmid) {
+      have_lmid = TRUE;
+      dlinfo(handle, RTLD_DI_LMID, &new_lmid);
+      dlerror(); // clear existing errors
+      lmid = new_lmid;
+    }
+  }
+#else
+  if ((handle = dlopen(plugin_path, dlflags))) {
+    dlerror(); // clear existing errors
+  }
+#endif
+  else {
+    msg = lives_strdup_printf(_("Unable to load plugin %s\nError was: %s\n"), plugin_path, dlerror());
     LIVES_WARN(msg);
     lives_free(msg);
     return;
   }
-
   if ((setup_fn = (weed_setup_f)dlsym(handle, "weed_setup")) == NULL) {
     msg = lives_strdup_printf(_("Error: plugin %s has no weed_setup() function.\n"), plugin_path);
     LIVES_ERROR(msg);
@@ -4560,6 +4569,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
   fxname = strip_ext(plugin_name);
 
   plugin_info = (*setup_fn)(weed_bootstrap);
+
   if (plugin_info == NULL || (filters_in_plugin = check_weed_plugin_info(plugin_info)) < 1) {
     msg = lives_strdup_printf(_("No usable filters found in plugin:\n%s\n"), plugin_path);
     LIVES_INFO(msg);
@@ -4570,6 +4580,7 @@ static void load_weed_plugin(char *plugin_name, char *plugin_path, char *dir) {
     lives_freep((void **)&fxname);
     return;
   }
+
   lives_freep((void **)&fxname);
   valid = FALSE;
   if (expected_pi != NULL && plugin_info != expected_pi) suspect = TRUE;
@@ -5013,6 +5024,7 @@ void weed_load_all(void) {
         load_weed_plugin(plugin_name, plugin_path, dirs[i]);
         lives_freep((void **)&plugin_name);
         lives_free(plugin_path);
+        list->data = NULL;
         if (list->prev != NULL) list->prev->next = listnext;
         else weed_plugin_list = listnext;
         if (listnext != NULL) listnext->prev = list->prev;
@@ -6497,7 +6509,7 @@ boolean weed_init_effect(int hotkey) {
       mainw->blend_file = -1;
     }
 
-    if (mainw->current_file > 0 && cfile->clip_type == CLIP_TYPE_GENERATOR &&
+    if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR &&
         (fg_modeswitch || (is_gen && outc_count > 0 && mainw->num_tr_applied == 0)) && !is_audio_gen && !all_out_alpha) {
       if (mainw->is_processing || mainw->preview) {
         mainw->error = TRUE;

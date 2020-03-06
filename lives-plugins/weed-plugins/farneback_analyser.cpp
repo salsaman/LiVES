@@ -158,6 +158,9 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   case WEED_PALETTE_RGB24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
     cvtColor(srcMat, *cvgrey, CV_RGB2GRAY); // may segfault here, not sure what causes it. Bug in opencv 2.4 ?
+    // This used to work at one point.
+    // the only thing I can see is that the plugin complains about not finding _ZN2cv6String10deallocateEv
+    // which seems odd since we are doing only matrix transforms and nothing with strings.
     break;
   case WEED_PALETTE_BGR24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
@@ -246,7 +249,7 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
 
       prevImg (y,x) = nextImg ( y + flow (y,x)[1], x + flow (y,x)[0])
 
-      since we are mainly interested int nextImg, we store: -flow
+      since we are mainly interested in nextImg, we store: -flow
       e.g.
 
       nextImg (y,x) = prevImg ( y - flow (y,x)[1], x - flow (y,x)[0])

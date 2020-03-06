@@ -270,6 +270,7 @@ typedef struct {
   boolean force_single_monitor;
 
   boolean show_urgency_msgs;
+  boolean render_overlay;
 
   int midi_check_rate;
   int midi_rpt;

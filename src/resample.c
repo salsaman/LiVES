@@ -1389,7 +1389,6 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   int old_frames;
   int ostart = cfile->start;
   int oend = cfile->end;
-  int i;
 
   mainw->error = FALSE;
 
@@ -1408,7 +1407,7 @@ void on_resample_vid_ok(LiVESButton * button, LiVESEntry * entry) {
   what = lives_strdup(_("creating the event list for resampling"));
 
   if (cfile->event_list == NULL) {
-    for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i++) {
+    for (int64_t i64 = 1; i64 <= (int64_t)cfile->frames; i64++) {
       do {
         response = LIVES_RESPONSE_OK;
         new_event_list = append_frame_event(new_event_list, in_time, 1, &(mainw->current_file), &i64);

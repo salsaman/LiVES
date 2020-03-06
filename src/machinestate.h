@@ -239,6 +239,12 @@ ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(struct timeval *tv);
 
+#define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / 1000000000; \
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * 1000000000; while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+
+#define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
+    ts.tv_nsec = 1000; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+
 int check_dev_busy(char *devstr);
 
 uint64_t get_file_size(int fd);
@@ -267,19 +273,36 @@ typedef void *(*lives_funcptr_t)(void *);
 typedef struct {
   lives_funcptr_t func;
   void *arg;
-  pthread_cond_t cond;
-  pthread_mutex_t cond_mutex;
-  volatile int busy;
-  volatile int done;
   uint64_t flags;
+  volatile int done;
   void *ret;
 } thrd_work_t;
 
+#define WEED_PLANT_THREAD_INFO 55555
+
+#define WEED_LEAF_NOTIFY "notify"
+#define WEED_LEAF_DONE "done"
+#define WEED_LEAF_THREADFUNC "tfunction"
+
+#define _WEED_LEAF_THREAD_PARAM(n) "thrd_param" n
+#define WEED_LEAF_THREAD_PARAM0 _WEED_LEAF_THREAD_PARAM("0")
+#define WEED_LEAF_THREAD_PARAM1 _WEED_LEAF_THREAD_PARAM("1")
+#define WEED_LEAF_THREAD_PARAM2 _WEED_LEAF_THREAD_PARAM("2")
+
+#define LIVES_THRDFLAG_AUTODELETE (1 << 0)
+#define LIVES_THRDFLAG_TUNING (1 << 1)
+
 typedef LiVESList lives_thread_t;
+typedef uint64_t lives_thread_attr_t;
+
+#define LIVES_THRDATTR_AUTODELETE (1 << 0)
+#define LIVES_THRDATTR_PRIORITY (1 << 1)
 
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
-int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg);
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg);
 int lives_thread_join(lives_thread_t work, void **retval);
+
+boolean run_as_thread(weed_plant_t *info);
 
 #endif

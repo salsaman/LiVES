@@ -1051,42 +1051,75 @@ static size_t chunk_to_int16_abuf(lives_audio_buf_t *abuf, float **float_buffer,
 
 //#define DEBUG_ARENDER
 
-static boolean pad_with_silence(int out_fd, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
-                                boolean big_endian) {
+boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
+                         boolean big_endian) {
+  // asamps is sample size in BYTES
   // fill to ins_pt with zeros (or 0x80.. for unsigned)
   // oins_size is the current file length, ins_size is the point where we want append to (both in bytes)
   // if ins size < oins_size we just seek to ins_size
   // otherwise we pad from oins_size to ins_size
 
-  uint64_t *zero_buff;
-  size_t sblocksize = SILENCE_BLOCK_SIZE >> 3;
-  int sbytes = ins_size - oins_size;
+  static uint64_t *zero_buff = NULL;
+  static int oasamps = 0;
+  static int ounsigned = 0;
+  static int orevendian = 0;
+  size_t sbytes;
+  size_t sblocksize = SILENCE_BLOCK_SIZE;
   register int i;
 
   boolean retval = TRUE;
+  boolean revendian = FALSE;
+
+  if (ins_size <= oins_size) return FALSE;
+  sbytes = ins_size - oins_size;
 
 #ifdef DEBUG_ARENDER
   g_print("sbytes is %d\n", sbytes);
 #endif
   if (sbytes > 0) {
-    lives_lseek_buffered_writer(out_fd, oins_size);
-    zero_buff = (uint64_t *)lives_calloc_safety(SILENCE_BLOCK_SIZE >> 3, 8);
-    if (aunsigned && asamps > 1) {
-      for (i = 0; i < sblocksize; i ++) {
-        zero_buff[i] = 0x8000800080008000;
+    if ((big_endian && capable->byte_order == LIVES_LITTLE_ENDIAN)
+        || (!big_endian && capable->byte_order == LIVES_LITTLE_ENDIAN)) revendian = TRUE;
+    if (out_fd >= 0) lives_lseek_buffered_writer(out_fd, oins_size);
+    else {
+      if (!buff) return FALSE;
+      buff += oins_size;
+    }
+    if (zero_buff) {
+      if (ounsigned != aunsigned || oasamps != asamps || orevendian != revendian) {
+        lives_free(zero_buff);
+        zero_buff = NULL;
       }
     }
-    sblocksize <<= 3;
+    if (!zero_buff) {
+      sblocksize >>= 3;
+      zero_buff = (uint64_t *)lives_calloc_safety(sblocksize, 8);
+      if (aunsigned) {
+        if (asamps > 1) {
+          uint64_t theval = (revendian ? 0x0080008000800080ul : 0x8000800080008000ul);
+          for (i = 0; i < sblocksize; i ++) {
+            zero_buff[i] = theval;
+          }
+        } else lives_memset(zero_buff, 0x80, SILENCE_BLOCK_SIZE);
+      }
+      sblocksize <<= 3;
+      ounsigned = aunsigned;
+      oasamps = asamps;
+      orevendian = revendian;
+    }
     for (i = 0; i < sbytes; i += SILENCE_BLOCK_SIZE) {
       if (sbytes - i < SILENCE_BLOCK_SIZE) sblocksize = sbytes - i;
-      lives_write_buffered(out_fd, (const char *)zero_buff, sblocksize, TRUE);
-      if (mainw->write_failed == out_fd + 1) {
-        mainw->write_failed = 0;
-        retval = FALSE;
+      if (out_fd >= 0) {
+        lives_write_buffered(out_fd, (const char *)zero_buff, sblocksize, TRUE);
+        if (mainw->write_failed == out_fd + 1) {
+          mainw->write_failed = 0;
+          retval = FALSE;
+        }
+      } else {
+        lives_memcpy(buff, zero_buff, sblocksize);
+        buff += sblocksize;
       }
     }
-    lives_free(zero_buff);
-  } else if (sbytes <= 0) {
+  } else if (out_fd >= 0) {
     lives_lseek_buffered_writer(out_fd, ins_size);
   }
   return retval;
@@ -1186,7 +1219,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
   int c, x, y;
   int out_fd = -1;
 
-  register int i, j;
+  register int i;
 
   int64_t frames_out = 0;
   int64_t ins_size = 0l, cur_size;
@@ -1234,10 +1267,10 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     else out_reverse_endian = FALSE;
 
     // fill to ins_pt with zeros
-    pad_with_silence(out_fd, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
+    pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
 
     if (opvol_start == opvol_end && opvol_start == 0.) {
-      close(out_fd);
+      lives_close_buffered(out_fd);
       return tsamples;
     }
   } else {
@@ -1331,23 +1364,17 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       ins_pt = tc_end / TICKS_PER_SECOND_DBL;
       ins_pt *= out_achans * out_arate * out_asamps;
       ins_size = ((int64_t)(ins_pt / out_achans / out_asamps) + .5) * out_achans * out_asamps;
-      pad_with_silence(out_fd, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
+      pad_with_silence(out_fd, NULL, oins_size, ins_size, out_asamps, out_unsigned, out_bendian);
       lives_close_buffered(out_fd);
     } else {
       for (i = 0; i < out_achans; i++) {
-        for (j = obuf->samples_filled; j < obuf->samples_filled + tsamples; j++) {
-          if (prefs->audio_player == AUD_PLAYER_JACK) {
-            obuf->bufferf[i][j] = 0.;
-          } else {
-            if (!out_unsigned) obuf->buffer16[0][j * out_achans + i] = 0x00;
-            else {
-              if (out_bendian) {
-                lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2], 0x80, 1);
-                lives_memset(&obuf->buffer16_8[0][(j * out_achans + i) * 2 + 1], 0x00, 1);
-              } else obuf->buffer16[0][j * out_achans + i] = 0x0080;
-	      // *INDENT-OFF*
-            }}}}
-	  // *INDENT-ON*
+        if (prefs->audio_player == AUD_PLAYER_JACK) {
+          lives_memset((void *)obuf->bufferf[i] + obuf->samples_filled * sizeof(float), 0, tsamples * sizeof(float));
+        } else {
+          pad_with_silence(-1, (void *)obuf->buffer16[0], obuf->samples_filled * out_asamps * out_achans,
+                           (obuf->samples_filled + tsamples) * out_asamps * out_achans, out_asamps, out_unsigned, out_bendian);
+        }
+      }
       obuf->samples_filled += tsamples;
     }
 
@@ -3097,7 +3124,7 @@ boolean apply_rte_audio_init(void) {
 
   if (audio_pos > cfile->afilesize) {
     off64_t audio_end_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
-    pad_with_silence(audio_fd, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
+    pad_with_silence(audio_fd, NULL, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
                      cfile->signed_endian & AFORM_BIG_ENDIAN);
   } else lives_lseek_buffered_writer(audio_fd, audio_pos);
 

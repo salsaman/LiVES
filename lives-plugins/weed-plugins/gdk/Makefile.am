@@ -5,10 +5,10 @@ LIBS =
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
 if IS_DARWIN
-shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
+shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static -lm
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -no-undefined -module -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -no-undefined -module -avoid-version --tag=disable-static -lm
 shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
 

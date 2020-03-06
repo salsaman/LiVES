@@ -306,8 +306,8 @@ void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
     mainw->rec_aseek = (double)jackd->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
-    mainw->rec_avel = 1.;
-    mainw->rec_avel = SIGNED_DIVIDE((double)jackd->sample_in_rate, (double)afile->arate);
+    mainw->rec_avel = (afile->adirection == LIVES_DIRECTION_FORWARD ? fabsf((double)jackd->sample_in_rate / (double)afile->arps)
+                       : -fabsf((double)jackd->sample_in_rate / (double)afile->arps));
   }
 }
 
@@ -575,6 +575,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
                     || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
+                  afile->adirection = !afile->adirection;
                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end);
                 } else {
                   if (mainw->playing_sel) {
@@ -600,6 +601,7 @@ static int audio_process(nframes_t nframes, void *arg) {
                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file)
                     || clip_can_reverse(mainw->playing_file))) {
                   jackd->sample_in_rate = -jackd->sample_in_rate;
+                  afile->adirection = !afile->adirection;
                   shrink_factor = -shrink_factor;
                   jackd->seek_pos = (mainw->playing_sel ?
                                      (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)

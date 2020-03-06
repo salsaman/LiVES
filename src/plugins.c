@@ -1076,16 +1076,21 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   char *plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
                                        PLUGIN_VID_PLAYBACK,
                                        name);
-
-  void *handle = dlopen(plugname, RTLD_LAZY);
+  int dlflags = RTLD_NOW | RTLD_LOCAL;
+  void *handle;
   boolean OK = TRUE;
   char *msg, *tmp;
   char **array;
   const char *fps_list;
   const char *pl_error;
-  int i;
   int *palette_list;
   _vid_playback_plugin *vpp;
+
+#ifdef RTLD_DEEPBIND
+  dlflags |= RTLD_DEEPBIND;
+#endif
+
+  handle = dlopen(plugname, dlflags);
 
   if (handle == NULL) {
     char *msg = lives_strdup_printf(_("\n\nFailed to open playback plugin %s\nError was %s\n"), plugname, dlerror());
@@ -1235,12 +1240,12 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   if (future_prefs->vpp_argv != NULL) {
     vpp->extra_argc = future_prefs->vpp_argc;
     vpp->extra_argv = (char **)lives_malloc((vpp->extra_argc + 1) * (sizeof(char *)));
-    for (i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
+    for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(future_prefs->vpp_argv[i]);
   } else {
     if (!in_use && mainw->vpp != NULL && !(strcmp(name, mainw->vpp->name))) {
       vpp->extra_argc = mainw->vpp->extra_argc;
       vpp->extra_argv = (char **)lives_malloc((mainw->vpp->extra_argc + 1) * (sizeof(char *)));
-      for (i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
+      for (register int i = 0; i <= vpp->extra_argc; i++) vpp->extra_argv[i] = lives_strdup(mainw->vpp->extra_argv[i]);
     } else {
       vpp->extra_argc = 0;
       vpp->extra_argv = (char **)lives_malloc(sizeof(char *));
@@ -1291,6 +1296,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
 
   // create vpp->play_params
   if (vpp->play_paramtmpls != NULL) {
+    register int i;
     weed_plant_t *ptmpl;
     for (i = 0; (ptmpl = (weed_plant_t *)vpp->play_paramtmpls[i]) != NULL; i++) {
       vpp->play_params = (weed_plant_t **)lives_realloc(vpp->play_params, (i + 2) * sizeof(weed_plant_t *));
@@ -2361,10 +2367,10 @@ boolean chill_decoder_plugin(int fileno) {
 
 lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   lives_decoder_sys_t *dplug;
-
   char *plugname;
   boolean OK = TRUE;
   const char *err;
+  int dlflags = RTLD_NOW | RTLD_LOCAL;
 
   dplug = (lives_decoder_sys_t *)lives_malloc(sizeof(lives_decoder_sys_t));
 
@@ -2373,7 +2379,11 @@ lives_decoder_sys_t *open_decoder_plugin(const char *plname) {
   plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir,
                                  PLUGIN_EXEC_DIR, PLUGIN_DECODERS, plname);
 
-  dplug->handle = dlopen(plugname, RTLD_LAZY);
+#ifdef RTLD_DEEPBIND
+  dlflags |= RTLD_DEEPBIND;
+#endif
+
+  dplug->handle = dlopen(plugname, dlflags);
   lives_free(plugname);
 
   if (dplug->handle == NULL) {

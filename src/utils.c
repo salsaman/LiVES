@@ -202,6 +202,8 @@ ssize_t lives_popen(const char *com, boolean allow_error, char *buff, size_t buf
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   }
 
+  lives_memset(buff, 0, 1);
+
   do {
     char *strg = NULL;
     response = LIVES_RESPONSE_NONE;
@@ -451,11 +453,6 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
 
-#define BUFFER_FILL_BYTES_SMALL 216
-#define BUFFER_FILL_BYTES_SMALLMED 1024
-#define BUFFER_FILL_BYTES_MED 4096
-#define BUFFER_FILL_BYTES_LARGE 65536
-
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
   ssize_t res = 0;
@@ -518,6 +515,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
       char *msg = lives_strdup_printf("Duplicate fd (%d) in file buffers !\n%s was not removed, and\n%s will be added.", fd,
                                       xbuff->pathname,
                                       fbuff->pathname);
+      break_me();
       LIVES_ERROR(msg);
       lives_free(msg);
       lives_close_buffered(fd);
@@ -847,9 +845,9 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   if (count <= bigbytes) {
     fbuff->bufsztype = 0;
-    if (ocount >= (smedbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
-    if (ocount >= (medbytes >> 1) || count > smedbytes) fbuff->bufsztype = 2;
-    if (ocount >= (bigbytes >> 2) || count > medbytes) fbuff->bufsztype = 3;
+    if (ocount >= (smbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
+    if (ocount >= (smedbytes >> 2) || count > smedbytes) fbuff->bufsztype = 2;
+    if (ocount >= (medbytes >> 1) || count > medbytes) fbuff->bufsztype = 3;
 
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
     if (fbuff->invalid) {
@@ -918,7 +916,6 @@ rd_done:
       smbytes = autotune_u64_end(&tuners, smbytes);
       if (!tuners) {
         tuneds = TRUE;
-        //smbytes = get_near2pow(smbytes);
       }
     }
     bufsize = smbytes;
@@ -1058,38 +1055,54 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
   if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
-  if (fbuff->buffer == NULL) {
-    fbuff->bufsztype = 1;
-    if (count > BUFFER_FILL_BYTES_SMALLMED >> 2) {
-      fbuff->bufsztype = 2;
-      if (count > BUFFER_FILL_BYTES_MED >> 2) {
-        fbuff->bufsztype = 3;
-        buffsize = BUFFER_FILL_BYTES_LARGE;
-      }
-    }
-  }
-
-  if (fbuff->bufsztype == 0)
-    buffsize = BUFFER_FILL_BYTES_SMALL;
-  else if (fbuff->bufsztype == 1)
-    buffsize = BUFFER_FILL_BYTES_SMALLMED;
-  else if (fbuff->bufsztype == 2)
-    buffsize = BUFFER_FILL_BYTES_MED;
-  else
-    buffsize = BUFFER_FILL_BYTES_LARGE;
-
-  if (fbuff->buffer == NULL) {
-    fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
-    fbuff->ptr = fbuff->buffer;
-    fbuff->bytes = 0;
-  }
+  if (count >= BUFFER_FILL_BYTES_BIGMED >> 1)
+    bufsztype = 4;
+  else if (count >= BUFFER_FILL_BYTES_MED >> 1)
+    bufsztype = 3;
+  else if (count >= BUFFER_FILL_BYTES_SMALLMED >> 2)
+    bufsztype = 2;
+  else if (count >= BUFFER_FILL_BYTES_SMALL >> 2)
+    bufsztype = 1;
 
   fbuff->allow_fail = allow_fail;
 
-  // write bytes from fbuff
+  // write bytes to fbuff
   while (count) {
+    if (fbuff->buffer == NULL) fbuff->bufsztype = bufsztype;
+
+    if (fbuff->bufsztype == 0)
+      buffsize = BUFFER_FILL_BYTES_SMALL;
+    else if (fbuff->bufsztype == 1)
+      buffsize = BUFFER_FILL_BYTES_SMALLMED;
+    else if (fbuff->bufsztype == 2)
+      buffsize = BUFFER_FILL_BYTES_MED;
+    else if (fbuff->bufsztype == 3)
+      buffsize = BUFFER_FILL_BYTES_BIGMED;
+    else
+      buffsize = BUFFER_FILL_BYTES_LARGE;
+
+    if (fbuff->buffer == NULL) {
+      fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
+      fbuff->ptr = fbuff->buffer;
+      fbuff->bytes = 0;
+#ifdef HAVE_POSIX_FALLOCATE
+      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
+      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
+#endif
+    }
+
     space_left = buffsize - fbuff->bytes;
-    if (space_left < count) {
+    if (space_left >= count) {
+      lives_memcpy(fbuff->ptr, buf, count);
+      retval += count;
+      fbuff->ptr += count;
+      fbuff->bytes += count;
+      count = 0;
+      if (fbuff->bytes == buffsize) {
+        res = file_buffer_flush(fbuff);
+        if (res < buffsize) return (res < 0 ? res : retval);
+      }
+    } else {
       lives_memcpy(fbuff->ptr, buf, space_left);
       fbuff->bytes = buffsize;
       res = file_buffer_flush(fbuff);
@@ -1097,31 +1110,10 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       if (res < buffsize) return (res < 0 ? res : retval);
       count -= space_left;
       buf += space_left;
-
-      bufsztype = fbuff->bufsztype;
-      fbuff->bufsztype = 2;
-      if (count > BUFFER_FILL_BYTES_MED >> 2) {
-        fbuff->bufsztype = 3;
+      if (fbuff->bufsztype != bufsztype) {
+        lives_free(fbuff->buffer);
+        fbuff->buffer = NULL;
       }
-      if (bufsztype != fbuff->bufsztype) {
-        buffsize = BUFFER_FILL_BYTES_MED;
-        if (fbuff->bufsztype == 3) {
-          buffsize = BUFFER_FILL_BYTES_LARGE;
-        }
-        fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
-        fbuff->ptr = fbuff->buffer;
-        fbuff->bytes = 0;
-      }
-#ifdef HAVE_POSIX_FALLOCATE
-      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
-      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
-#endif
-    } else {
-      lives_memcpy(fbuff->ptr, buf, count);
-      retval += count;
-      fbuff->ptr += count;
-      fbuff->bytes += count;
-      count = 0;
     }
   }
   return retval;
@@ -1602,7 +1594,8 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // this is done so we can check here if audio limits stopped playback
 
   static int nframe = -1;
-
+  static ticks_t last_ntc = 0;
+  ticks_t ddtc = *ntc - last_ntc;
   ticks_t dtc = *ntc - otc;
   int64_t first_frame, last_frame, selrange;
   lives_clip_t *sfile = mainw->files[fileno];
@@ -1623,6 +1616,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   fps = sfile->pb_fps;
 
   if (!LIVES_IS_PLAYING) fps = sfile->fps;
+  else if (fps == 0. && mainw->scratch != SCRATCH_NONE) fps = sfile->fps;
 
   cframe = sfile->last_frameno;
 
@@ -1637,11 +1631,44 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // dtc is delta ticks, quantise this to the frame rate and round down
   dtc = q_gint64_floor(dtc, fps);
 
-  // ntc is the time when the frame should have been played
+  // ntc is the time when the next frame should have been played; this is rounded down so if l.t. 1 frame nothing happens
+  /// and the player does nothing
   *ntc = otc + dtc;
 
-  // xnframe is our new frame
+  // nframe is our new frame
   nframe = cframe + (int64_t)myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
+
+  /// if we are scratching we do the following:
+  /// the time since the last call is considered to have happened at an increased fps (fwd or back)
+  /// we recalculate the frame at ntc as if we were at the faster framerate.
+
+  if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
+    mainw->deltaticks -= ddtc;
+    if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= ddtc * 4;
+    else mainw->deltaticks += ddtc * 4;
+  }
+
+  if (nframe != cframe) {
+    double delval = (double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps;
+    if (delval < -1. || delval > 1.) {
+      /// the frame number changed, but we will recalulate the value using mainw->deltaticks
+      int64_t xnframe = cframe + (int64_t)myround((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps);
+      if (xnframe != nframe) {
+        nframe = xnframe;
+
+        /// retain the fractional part for next time
+        mainw->deltaticks -= (double)(nframe - cframe) / fps * TICKS_PER_SECOND_DBL;
+
+        if (nframe != cframe) do_resync = TRUE;
+      }
+    }
+  }
+
+  if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK)
+    mainw->scratch = SCRATCH_NONE;
+
+  last_ntc = *ntc;
+
   if (nframe == cframe || mainw->foreign) {
     if (!mainw->foreign && fileno == mainw->playing_file &&
         mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record) &&
@@ -1786,28 +1813,30 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
           do_resync = TRUE;
 	  // *INDENT-OFF*
 	}}}
-    // *INDENT-ON*
-
-
-    if (fileno == mainw->playing_file) {
-      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-        if (do_resync || mainw->scratch != SCRATCH_NONE) {
-          boolean is_jump = FALSE;
-          if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
-          resync_audio(nframe);
-          if (is_jump) mainw->video_seek_ready = TRUE;
-          if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
-            // we check for audio stop here, but the seek may not have happened yet
-            if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
-              mainw->cancelled = CANCEL_AUD_END;
-              nframe = -1;
-              return 0;
-	      // *INDENT-OFF*
-	    }}}}
-      // *INDENT-ON*
-      mainw->scratch = SCRATCH_NONE;
-    }
     sfile->last_frameno = nframe;
+  }
+  // *INDENT-ON*
+
+  if (nframe < first_frame) nframe = first_frame;
+  if (nframe > last_frame) nframe = last_frame;
+
+  if (fileno == mainw->playing_file) {
+    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+      if (do_resync || mainw->scratch != SCRATCH_NONE) {
+        boolean is_jump = FALSE;
+        if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
+        resync_audio(nframe);
+        if (is_jump) mainw->video_seek_ready = TRUE;
+        if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
+          // we check for audio stop here, but the seek may not have happened yet
+          if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
+            mainw->cancelled = CANCEL_AUD_END;
+            nframe = -1;
+            return 0;
+	    // *INDENT-OFF*
+	  }}}
+      // *INDENT-ON*
+    }
   }
 
   if (fileno != aplay_file) {
@@ -1840,6 +1869,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     }
   }
 
+  mainw->scratch = SCRATCH_NONE;
   cframe = nframe;
   nframe = -1;
   return cframe;
@@ -2475,18 +2505,26 @@ void clear_lmap_errors(void) {
   }
 }
 
+/**
+   @brief check for set lock file
+   do this via the back-end (smogrify)
+   this allows for the locking scheme to be more flexible
 
+   smogrify indicates a lock very simply by by writing > 0 bytes to stdout
+   we read this via popen
+
+   type == 0 for load, type == 1 for save
+
+*/
 boolean check_for_lock_file(const char *set_name, int type) {
-  // check for lock file
-  // do this via the back-end (smogrify)
-  // this allows for the locking scheme to be more flexible
+  char *com;
 
-  // smogrify indicates a lock very simply by by writing >0 bytes to stdout
-  // we redirect the output to info_file and read it
+  if (type == 1 && !lives_strcmp(set_name, mainw->set_name)) return TRUE;
 
-  char *msg = NULL;
-  char *com = lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d", prefs->backend_sync, set_name, capable->myname,
-                                  capable->mainpid);
+  com = lives_strdup_printf("%s check_for_lock \"%s\" \"%s\" %d", prefs->backend_sync, set_name, capable->myname,
+                            capable->mainpid);
+
+  clear_mainw_msg();
 
   threaded_dialog_spin(0.);
   mainw->com_failed = FALSE;
@@ -2498,20 +2536,13 @@ boolean check_for_lock_file(const char *set_name, int type) {
 
   if (*(mainw->msg)) {
     if (type == 0) {
-      if (mainw->recovering_files) {
-        return do_set_locked_warning(set_name);
-      }
-      msg = lives_strdup_printf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
+      if (mainw->recovering_files) return do_set_locked_warning(set_name);
       threaded_dialog_spin(0.);
-      do_error_dialog(msg);
+      do_error_dialogf(_("Set %s\ncannot be opened, as it is in use\nby another copy of LiVES.\n"), set_name);
       threaded_dialog_spin(0.);
     } else if (type == 1) {
-      msg = lives_strdup_printf
-            (_("\nThe set %s is currently in use by another copy of LiVES.\nPlease choose another set name.\n"), set_name);
-      if (!mainw->osc_auto) do_blocking_error_dialog(msg);
-    }
-    if (msg != NULL) {
-      lives_free(msg);
+      if (!mainw->osc_auto) do_blocking_error_dialogf(_("\nThe set %s is currently in use by another copy of LiVES.\n"
+            "Please choose another set name.\n"), set_name);
     }
     return FALSE;
   }
@@ -4962,7 +4993,8 @@ char *subst(const char *xstring, const char *from, const char *to) {
   // return a string with all occurrences of from replaced with to
   // return value should be freed after use
   char *ret = lives_calloc(INITSIZE, BSIZE);
-  char *buff = lives_calloc(1, BSIZE);
+  uint64_t ubuff = 0;
+  char *buff;
 
   const size_t fromlen = strlen(from);
   const size_t tolen = strlen(to);
@@ -4974,6 +5006,8 @@ char *subst(const char *xstring, const char *from, const char *to) {
   size_t retfil = 0;
   size_t retsize = INITSIZE;
   size_t retlimit = retsize - BSIZE;
+
+  buff = (char *)&ubuff;
 
   for (char *cptr = (char *)xstring; *cptr; cptr++) {
     if (*cptr == from[match++]) {

@@ -39,6 +39,9 @@ static ticks_t last_kbd_ticks;
 
 static boolean shown_paused_frames;
 static boolean td_had_focus;
+static boolean cleanup_preload;
+static boolean init_timers = TRUE;
+static int dropped;
 
 // how often to we count frames when opening
 #define OPEN_CHECK_TICKS (TICKS_PER_SECOND/10l)
@@ -50,6 +53,19 @@ static int64_t sttime;
 static xprocess *procw = NULL;
 
 static lives_time_source_t last_time_source;
+
+static int cache_hits = 0, cache_misses = 0;
+static double jitter = 0.;
+
+const char *get_cache_stats(void) {
+  static char buff[1024];
+  lives_snprintf(buff, 1024, "Totals for current clip (%d):\n[preload caches = %d, hits = %d, "
+                 "misses = %d,\nhit : miss ratio = %.3f%%\nframe jitter = %.3f milliseconds.",
+                 mainw->playing_file, cache_hits + cache_misses, cache_hits, cache_misses, cache_hits > 0
+                 ? (double)cache_hits / (double)(cache_hits + cache_misses) * 100. : 0., jitter * 1000.);
+  return buff;
+}
+
 
 void on_warn_mask_toggled(LiVESToggleButton *togglebutton, livespointer user_data) {
   LiVESWidget *tbutton;
@@ -1153,6 +1169,7 @@ static void progbar_pulse_or_fraction(lives_clip_t *sfile, int frames_done) {
       if (!mainw->is_rendering)  progress_speed = 2.;
     }
   }
+  lives_widget_context_update();
 }
 
 
@@ -1199,7 +1216,7 @@ void update_progress(boolean visible) {
       if (progress_count == 0) check_storage_space(mainw->current_file, TRUE);
       // display progress fraction or pulse bar
       progbar_pulse_or_fraction(cfile, cfile->proc_ptr->frames_done);
-      sched_yield();
+      //sched_yield();
       lives_usleep(prefs->sleep_time);
     }
   }
@@ -1221,9 +1238,13 @@ int process_one(boolean visible) {
 #endif
 
     if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
+      cleanup_preload = TRUE;
+      if (prefs->show_dev_opts) g_print("%s", get_cache_stats());
       do_quick_switch(mainw->new_clip);
+      cache_hits = cache_misses = 0;
       mainw->force_show = TRUE;
       mainw->new_clip = -1;
+      dropped = 0;
 #if SHOW_TIMINGS
       nd = ns = 0;
 #endif
@@ -1253,16 +1274,24 @@ int process_one(boolean visible) {
       mainw->cancelled = CANCEL_ERROR;
       return mainw->cancelled;
     }
-    if (last_time_source != LIVES_TIME_SOURCE_NONE && time_source != last_time_source) {
+    if (init_timers) {
+      init_timers = FALSE;
+      mainw->startticks = last_anim_ticks = mainw->fps_mini_ticks = mainw->currticks;
+    }
+
+    if (time_source != last_time_source) {
       // time source changed: this should pnly happen rarely (eg. playback start)
       // make sure there is no discontinuity by adjusting origsecs / origusecs
       ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source) - mainw->currticks;
       mainw->adjticks += delta;
       mainw->currticks += delta;
+      mainw->fps_mini_ticks += delta;
+      last_anim_ticks += delta;
     }
 
     last_time_source = time_source;
-    //if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
+    if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
+    if (last_anim_ticks > mainw->currticks) last_anim_ticks = mainw->currticks;
 
 #define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
@@ -1303,38 +1332,38 @@ int process_one(boolean visible) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
-          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
-          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
-           mainw->offsetticks || audio_ticks == -1)) {
-        if (audio_ticks == -1) {
-          if (mainw->cancelled == CANCEL_NONE) {
-            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-            else mainw->cancelled = CANCEL_AUDIO_ERROR;
-            return mainw->cancelled;
-          }
-        }
-        // fps is synched to external source, so we adjust the audio rate to fit
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs,
-                             mainw->origusecs) + mainw->offsetticks)) < 2. &&
-            audio_stretch > 0.5) {
-          // if audio_stretch is > 1. it means that audio is playing too fast
-          // < 1. it is playing too slow
+      /* if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && */
+      /*     cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) && */
+      /*     (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && */
+      /*     ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) > */
+      /*      mainw->offsetticks || audio_ticks == -1)) { */
+      /*   if (audio_ticks == -1) { */
+      /*     if (mainw->cancelled == CANCEL_NONE) { */
+      /*       if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE; */
+      /*       else mainw->cancelled = CANCEL_AUDIO_ERROR; */
+      /*       return mainw->cancelled; */
+      /*     } */
+      /*   } */
+      /*   // fps is synched to external source, so we adjust the audio rate to fit */
+      /*   if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs, */
+      /*                        mainw->origusecs) + mainw->offsetticks)) < 2. && */
+      /*       audio_stretch > 0.5) { */
+      /*     // if audio_stretch is > 1. it means that audio is playing too fast */
+      /*     // < 1. it is playing too slow */
 
-          // if too fast we increase the apparent sample rate so that it gets downsampled more
-          // if too slow we decrease the apparent sample rate so that it gets upsampled more
+      /*     // if too fast we increase the apparent sample rate so that it gets downsampled more */
+      /*     // if too slow we decrease the apparent sample rate so that it gets upsampled more */
 
-          if (mainw->multitrack == NULL) {
-            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-              if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch;
-              else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch;
-            } else mainw->pulsed->in_arate = cfile->arate * audio_stretch;
-          } else {
-            if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch;
-          }
-        }
-      }
+      /*     if (mainw->multitrack == NULL) { */
+      /*       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) { */
+      /*         if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch; */
+      /*         else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch; */
+      /*       } else mainw->pulsed->in_arate = cfile->arate * audio_stretch; */
+      /*     } else { */
+      /*       if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch; */
+      /*     } */
+      /*   } */
+      //}
 #endif
     }
 #endif
@@ -1359,8 +1388,7 @@ int process_one(boolean visible) {
               mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
           else {
             ticks_t ldt = mainw->last_display_ticks;
-            cfile->next_event = process_events(cfile->next_event, FALSE, lives_get_relative_ticks(mainw->origsecs,
-                                               mainw->origusecs) + mainw->offsetticks);
+            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
             if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
             else if (mainw->last_display_ticks != ldt) {
               update_effort(spare_cycles + 1, FALSE);
@@ -1370,12 +1398,7 @@ int process_one(boolean visible) {
         } else spare_cycles++;
       }
 
-      if (mainw->currticks - last_anim_ticks > ANIM_LIMIT) {
-        // a segfault here can indicate memory corruption in an FX plugin
-        lives_widget_context_update();  // animate GUI, allow kb timer to run
-        last_anim_ticks = mainw->currticks;
-      }
-      lives_widget_context_update(); // animate GUI, allow kb timer to run
+      lives_widget_context_update();
 
       if (mainw->cancelled == CANCEL_NONE) return 0;
       cancel_process(visible);
@@ -1393,7 +1416,7 @@ int process_one(boolean visible) {
       last_kbd_ticks = mainw->currticks;
     }
 
-    new_ticks = mainw->currticks + mainw->deltaticks; // deltaticks are set by scratch and other methods
+    new_ticks = mainw->currticks;
     cfile->last_frameno = cfile->frameno;
 
     show_frame = FALSE;
@@ -1408,33 +1431,15 @@ int process_one(boolean visible) {
       // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
       // which will be <= the current time
       // and cfile->frameno is set to the frame to show
-      double opbfps = cfile->pb_fps;
-      short scratch = mainw->scratch; // this gets reset in calc_new_playback_position()
-
-      if (scratch == SCRATCH_BACK) {
-        // scratch backwards: we temporarily play backwards at a quicker value
-        new_ticks += KEY_RPT_INTERVAL * prefs->scratchback_amount;
-        cfile->pb_fps = -cfile->pb_fps;
-      }
-      if (scratch == SCRATCH_FWD) {
-        // scratch forwards: simpler; we just add to mainw->deltaticks
-        new_ticks += (ticks_t)KEY_RPT_INTERVAL * (ticks_t)prefs->scratchfwd_amount;
-        mainw->deltaticks += (ticks_t)KEY_RPT_INTERVAL * (ticks_t)prefs->scratchfwd_amount;
-      }
 
       pthread_mutex_lock(&mainw->audio_resync_mutex);
       cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
 
-      if (scratch == SCRATCH_BACK) {
-        // reset framerate to the proper value now
-        if (cfile->pb_fps * opbfps > 0.) cfile->pb_fps = -opbfps;
-        cfile->pb_fps = opbfps;
-      }
-
       if (new_ticks != mainw->startticks) {
+        if (prefs->show_dev_opts) {
+          jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
+        }
         mainw->startticks = new_ticks;
-        mainw->startticks -= mainw->deltaticks;
-        mainw->deltaticks = 0;
         pthread_mutex_unlock(&mainw->audio_resync_mutex);
         if (display_ready) {
           show_frame = TRUE;
@@ -1444,7 +1449,6 @@ int process_one(boolean visible) {
         }
       } else {
         pthread_mutex_unlock(&mainw->audio_resync_mutex);
-        spare_cycles++;
       }
     }
     real_ticks = -1;
@@ -1461,30 +1465,6 @@ int process_one(boolean visible) {
           mainw->firstticks = real_ticks;
         }
       }
-
-#ifdef ENABLE_JACK
-      // note the audio seek position
-      if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-        int aplay_file = mainw->jackd->playing_file;
-        if (IS_VALID_CLIP(aplay_file))
-          mainw->files[aplay_file]->aseek_pos = mainw->jackd->seek_pos;
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      // note the audio seek position
-      if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-        int aplay_file = mainw->pulsed->playing_file;
-        if (IS_VALID_CLIP(aplay_file))
-          mainw->files[aplay_file]->aseek_pos = mainw->pulsed->seek_pos;
-      }
-#endif
-#if 0
-      if (prefs->audio_player == AUD_PLAYER_NONE) {
-        aplay_file = mainw->nullaudio->playing_file;
-        if (IS_VALID_CLIP(aplay_file))
-          mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
-      }
-#endif
 
       if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
                                 mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))) {
@@ -1506,8 +1486,8 @@ int process_one(boolean visible) {
         if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
                                  mainw->preview_rendering || (mainw->multitrack != NULL &&
                                      !mainw->multitrack->is_rendering))) {
+          dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
           if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-            int dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
             if (dropped > 0) {
               update_effort(dropped, TRUE);
               nd += dropped;
@@ -1520,8 +1500,53 @@ int process_one(boolean visible) {
           }
         }
 
+        /// note the audio seek position at the current frame. We will use this when switching clips
+#ifdef ENABLE_JACK
+        // note the audio seek position
+        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+          int aplay_file = mainw->jackd->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = mainw->jackd->seek_pos;
+        }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+        // note the audio seek position
+        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+          int aplay_file = mainw->pulsed->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = mainw->pulsed->seek_pos;
+        }
+#endif
+#if 0
+        if (prefs->audio_player == AUD_PLAYER_NONE) {
+          aplay_file = mainw->nullaudio->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
+        }
+#endif
+        if (mainw->pred_clip == -1) {
+          mainw->frame_layer_preload = NULL;
+          cleanup_preload = FALSE;
+        } else if (cleanup_preload) {
+          check_layer_ready(mainw->frame_layer_preload);
+          weed_layer_free(mainw->frame_layer_preload);
+          mainw->frame_layer_preload = NULL;
+          cleanup_preload = FALSE;
+        }
+
+        if (mainw->frame_layer_preload) cache_hits++;
+
         // load and display the new frame
         load_frame_image(cfile->frameno);
+        mainw->fps_mini_measure++;
+
+        if (mainw->frame_layer_preload) {
+          if (mainw->frame_layer_preload) cache_hits--;
+          cache_misses++;
+          if (mainw->pred_clip != -1) cleanup_preload = TRUE;
+          else mainw->frame_layer_preload = NULL;
+        }
+
         //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (real_ticks == -1) real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = real_ticks;
@@ -1534,15 +1559,33 @@ int process_one(boolean visible) {
         }
         mainw->force_show = FALSE;
         spare_cycles = 0ul;
-      }
+      } else spare_cycles++;
     }
     // paused
     if (LIVES_UNLIKELY(cfile->play_paused)) {
       pthread_mutex_lock(&mainw->audio_resync_mutex);
-      mainw->startticks = mainw->currticks + mainw->deltaticks;
+      mainw->startticks = mainw->currticks;
       pthread_mutex_unlock(&mainw->audio_resync_mutex);
-    }
-  }
+    } else if (spare_cycles) {
+      if (!mainw->frame_layer_preload) {
+        if (!mainw->preview && IS_NORMAL_CLIP(mainw->playing_file)) {
+          lives_clip_t *sfile = mainw->files[mainw->playing_file];
+          mainw->pred_clip = mainw->playing_file;
+          if (sfile->pb_fps > 0.)
+            mainw->pred_frame = sfile->frameno + dropped + 1;
+          else
+            mainw->pred_frame = sfile->frameno - dropped - 1;
+          if (mainw->pred_frame > 0 && mainw->pred_frame < sfile->frames) {
+            mainw->frame_layer_preload = weed_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
+            if (!pull_frame_at_size(mainw->frame_layer_preload, get_image_ext_for_type(sfile->img_type),
+                                    (weed_timecode_t)mainw->currticks,
+                                    sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {
+              if (mainw->frame_layer_preload != NULL) {
+                weed_layer_free(mainw->frame_layer_preload);
+                mainw->pred_clip = -1;
+		// *INDENT-OFF*
+	      }}}}}}}
+  // *INDENT-ON*
 
   if (visible) {
     if (cfile->proc_ptr == NULL) {
@@ -1578,11 +1621,10 @@ int process_one(boolean visible) {
     // the audio thread wants to update the parameter scroll(s)
     if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 refresh:
-    if (mainw->currticks - last_anim_ticks > ANIM_LIMIT) {
-      // a segfault here can indicate memory corruption in an FX plugin
-      lives_widget_context_update();  // animate GUI, allow kb timer to run
-      last_anim_ticks = mainw->currticks;
-    }
+
+    // a segfault here can indicate memory corruption in an FX plugin
+    lives_widget_context_update();  // animate GUI, allow kb timer to run
+    //last_anim_ticks = mainw->currticks;
 
     if (LIVES_UNLIKELY(mainw->cancelled != CANCEL_NONE)) {
       cancel_process(visible);
@@ -1613,7 +1655,7 @@ refresh:
 #ifdef USE_GDK_FRAME_CLOCK
 static boolean using_gdk_frame_clock;
 static GdkFrameClock *gclock;
-static void clock_upd(GdkFrameClock *clock, gpointer user_data) {
+static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
   display_ready = TRUE;
 }
 #endif
@@ -1700,9 +1742,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   mainw->last_display_ticks = 0;
   shown_paused_frames = FALSE;
 
-  if (!visible) mainw->force_show = TRUE;
-  else mainw->force_show = FALSE;
-
   mainw->cevent_tc = 0;
 
   progress_count = 0;
@@ -1713,7 +1752,9 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (!visible) {
     reset_frame_and_clip_index();
-  }
+    mainw->force_show = TRUE;
+    cleanup_preload = FALSE;
+  } else mainw->force_show = FALSE;
 
   if (prefs->show_player_stats) {
     mainw->fps_measure = mainw->fps_mini_measure = 1.;
@@ -1762,14 +1803,18 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   if (cfile->next_event != NULL) event_start = get_event_timecode(cfile->next_event);
 
+  /// INIT here
+  cache_hits = cache_misses = 0;
+  dropped = 0;
+  init_timers = TRUE;
+
   // mainw->origsecs, mainw->origusecs is our base for quantising
   // (and is constant for each playback session)
 
   // firstticks is to do with the audio "frame" for sox, mplayer
   // startticks is the ticks value of the last frame played
 
-  mainw->startticks = mainw->currticks = mainw->offsetticks = 0;
-  last_open_check_ticks = 0;
+  last_open_check_ticks = mainw->offsetticks = mainw->deltaticks = mainw->adjticks = 0;
 
 #ifdef ENABLE_JACK
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT && prefs->audio_player == AUD_PLAYER_JACK &&
@@ -1844,9 +1889,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     }
 #endif
     cfile->last_frameno = cfile->frameno = mainw->play_start;
-
-    // deltaticks is used for scratching (forwards and back)
-    mainw->deltaticks = 0;
   }
 
   if (!mainw->playing_sel) mainw->play_start = 1;
@@ -1938,12 +1980,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     process_events(NULL, FALSE, 0);
   }
 
-  last_anim_ticks = 0;
   reset_effort();
-  if (!visible) {
-    mainw->adjticks = 0;
-    mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
-  }
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function
@@ -1970,6 +2007,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         // we are generating audio from a plugin and it needs reinit - we do it in this thread so as not to hold up the player thread
         reinit_audio_gen();
       }
+
+      if (visible) lives_widget_context_update();
 
       if ((visible && !mainw->internal_messaging) || (LIVES_IS_PLAYING && cfile->play_paused)) lives_usleep(prefs->sleep_time);
 
@@ -2003,8 +2042,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
         goto finish;
       }
 
-      // a segfault here can indicate memory corruption in an FX plugin
-      lives_widget_context_update();  // animate GUI, allow kb timer to run
+      lives_widget_context_update();
 
       // display progress fraction or pulse bar
       if (*(mainw->msg) && (frames_done = atoi(mainw->msg)) > 0)
@@ -2842,7 +2880,7 @@ void do_jack_noopen_warn2(void) {
 }
 #endif
 
-void do_mt_backup_space_error(lives_mt *mt, int memreq_mb) {
+void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
@@ -3125,13 +3163,13 @@ void end_threaded_dialog(void) {
 }
 
 
-void response_ok(LiVESButton *button, livespointer user_data) {
+void response_ok(LiVESButton * button, livespointer user_data) {
   lives_dialog_response(LIVES_DIALOG(lives_widget_get_toplevel(LIVES_WIDGET(button))), LIVES_RESPONSE_OK);
 }
 
 
 LiVESResponseType do_system_failed_error(const char *com, int retval, const char *addinfo, boolean can_retry,
-    LiVESWindow *transient) {
+    LiVESWindow * transient) {
   // if can_retry is set, we can return LIVES_RESPONSE_RETRY
   // in all other cases we abort (exit) here.
   // if abort_hook_func() fails with a syserror, we don't show the abort / retry dialog, and we return LIVES_RESPONSE_NONE
@@ -3272,7 +3310,7 @@ void do_read_failed_error_s(const char *s, const char *addinfo) {
 }
 
 
-LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
+LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3326,7 +3364,7 @@ LiVESResponseType do_write_failed_error_s_with_retry(const char *fname, const ch
 }
 
 
-LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow *transient) {
+LiVESResponseType do_read_failed_error_s_with_retry(const char *fname, const char *errtext, LiVESWindow * transient) {
   // err can be errno from open/fopen etc.
 
   // return same as do_abort_cancel_retry_dialog() - LIVES_RESPONSE_CANCEL or LIVES_RESPONSE_RETRY (both non-zero)
@@ -3459,7 +3497,7 @@ boolean do_abort_check(void) {
 }
 
 
-void do_encoder_img_fmt_error(render_details *rdet) {
+void do_encoder_img_fmt_error(render_details * rdet) {
   char *msg = lives_strdup_printf(
                 _("\nThe %s cannot encode clips with image type %s.\nPlease select another encoder from the list.\n"),
                 prefs->encoder.name, get_image_ext_for_type(cfile->img_type));
@@ -3622,7 +3660,7 @@ boolean do_theme_exists_warn(const char *themename) {
 }
 
 
-void add_resnn_label(LiVESDialog *dialog) {
+void add_resnn_label(LiVESDialog * dialog) {
   LiVESWidget *dialog_vbox = lives_dialog_get_content_area(dialog);
   LiVESWidget *label;
   LiVESWidget *hsep = lives_standard_hseparator_new();

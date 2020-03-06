@@ -225,9 +225,9 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
     if (testtext != NULL) lives_free(testtext);
     testtext = lives_strdup_printf("%s%s%s", newtext, needs_newline ? "\n" : "", readytext);
     needs_newline = TRUE;
-    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+    lingo_layout_set_text(layout, "", -1);
+    g_object_unref(layout);
     layout = lingo_layout_new(ctx);
-    lives_widget_object_ref_sink(layout);
     lingo_layout_set_text(layout, testtext, -1);
     lingo_layout_get_size(layout, &w, &h);
 
@@ -259,9 +259,9 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #ifdef DEBUG_MSGS
         g_print("Testing with:%s:\n", testtext);
 #endif
-        if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+        lingo_layout_set_text(layout, "", -1);
+        g_object_unref(layout);
         layout = lingo_layout_new(ctx);
-        lives_widget_object_ref_sink(layout);
         lingo_layout_set_width(layout, width * LINGO_SCALE);
         lingo_layout_set_text(layout, testtext, -1);
         lingo_layout_get_size(layout, NULL, &h);
@@ -301,7 +301,8 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 #endif
         if (tmp == NULL) break;
         // check width again, just looking at new part
-        if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+        lingo_layout_set_text(layout, "", -1);
+        g_object_unref(layout);
         layout = lingo_layout_new(ctx);
         lives_widget_object_ref_sink(layout);
         lingo_layout_set_text(layout, tmp, -1);

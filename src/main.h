@@ -598,10 +598,10 @@ typedef struct _lives_clip_t {
   double fps;  /// framerate of the clip
   int hsize; ///< frame width (horizontal) in pixels (NOT macropixels !)
   int vsize; ///< frame height (vertical) in pixels
-  int arps; ///< audio physical sample rate (the actual physical sample rate of the medium)
+  int arps; ///< audio physical sample rate (i.e the "normal" sample rate of the clip when played at 1,0 X velocity)
   uint32_t signed_endian; ///< bitfield
 
-  int arate; ///< current audio playback rate (may vary from arps), can even be 0 or negative
+  int arate; ///< current audio playback rate (varies if the clip rate is changed)
   uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
   int achans; ///< number of audio channels (0, 1 or 2)
   int asampsize; ///< audio sample size in bits (8 or 16)
@@ -656,6 +656,7 @@ typedef struct _lives_clip_t {
   double freeze_fps; ///< pb_fps for paused / frozen clips
   boolean play_paused;
   boolean was_in_set;
+  int adirection; ///< audio play directiion during playback. Normally this is eithr forwards or the same as pb_fps, but it may vary
 
   //opening/restoring status
   boolean opening;
@@ -1016,6 +1017,7 @@ LiVESResponseType do_header_missing_detail_error(int clip, lives_clip_details_t 
 void do_chdir_failed_error(const char *dir);
 LiVESResponseType handle_backend_errors(boolean can_retry, LiVESWindow *transient);
 boolean check_backend_return(lives_clip_t *sfile, LiVESWindow *transient);
+const char *get_cache_stats(void);
 
 /** warn about disk space */
 char *ds_critical_msg(const char *dir, uint64_t dsval);
@@ -1233,6 +1235,16 @@ LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks
 
 boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr);
 
+typedef struct {
+  LiVESPixbuf *pixbuf;
+  LiVESError *error;
+  char *fname;
+  int img_type;
+  int compression;
+} savethread_priv_t;
+
+void *lives_pixbuf_save_threaded(void *saveargs);
+
 void init_track_decoders(void);
 void free_track_decoders(void);
 
@@ -1300,6 +1312,14 @@ ssize_t lives_read(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
 
 // buffered io
+
+/// fixed values only for write buffers (must be multiples of 16)
+#define BUFFER_FILL_BYTES_SMALL 64   /// 1 -> 16 bytes
+#define BUFFER_FILL_BYTES_SMALLMED 1024 /// 17 - 256 bytes
+#define BUFFER_FILL_BYTES_MED 4096  /// 257 -> 2048 bytes
+#define BUFFER_FILL_BYTES_BIGMED 16386  /// 2049 - 8192 bytes
+#define BUFFER_FILL_BYTES_LARGE 65536
+
 typedef struct {
   ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
   uint8_t *ptr;   /// read point in buffer

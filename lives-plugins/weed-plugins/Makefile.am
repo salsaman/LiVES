@@ -10,11 +10,11 @@ SUBDIRS = gdk cairo # supercollider experimental
 fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
 if IS_DARWIN
-shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static
+shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static -lm
 
 shared_cflags = -fno-common
 else
-shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static
+shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static -lm
 
 
 ## --whole-archive is supposed to work, but doesn't....

@@ -1093,6 +1093,9 @@ typedef struct {
   LiVESWidget *play_image;
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
+  weed_plant_t *frame_layer_preload;
+  int64_t pred_frame;
+  int pred_clip;
   weed_plant_t *blend_layer;
   LiVESWidget *plug;
 
@@ -1586,8 +1589,10 @@ typedef struct {
   /// some functions may change their behaviour according to this value if prefs->pbq_adaptive is FALSE then such changes
   /// should be minimal; if TRUE then more profound changes are permitted
 #define EFFORT_RANGE_MAX 64
-#define EFFORT_LIMIT_LOW (EFFORT_RANGE_MAX >> 4)    ///< default 4
+#define EFFORT_LIMIT_LOW (EFFORT_RANGE_MAX >> 3)    ///< default 8
 #define EFFORT_LIMIT_MED (EFFORT_RANGE_MAX >> 2)  ///< default 32
+
+  boolean lockstats;
 
   int effort;
 

@@ -2036,6 +2036,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
           else set_string_pref(PREF_AR_CLIPSET, "");
           mainw->no_exit = FALSE;
           mainw->leave_recovery = FALSE;
+
           on_save_set_activate(NULL, (tmp = U82F(set_name)));
           lives_free(tmp);
 
@@ -4928,9 +4929,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio((double)cfile->frameno
-                 + (double)(mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps
-                 * (cfile->pb_fps > 0. ? 1. : -1.));
+    g_print("RESYN to %d\n", cfile->frameno);
+    resync_audio((double)cfile->frameno);
   }
 
   // change play direction
@@ -5046,6 +5046,122 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
+static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boolean * got_new_handle) {
+  char *ordfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
+  char *ordfile_new = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME "." LIVES_FILE_EXT_NEW, NULL);
+  char *cwd = lives_get_current_dir();
+  char *new_dir;
+  char *dfile, *ord_entry;
+  char buff[PATH_MAX] = {0};
+  char new_handle[256] = {0};
+  LiVESResponseType retval;
+  LiVESList *cliplist;
+  int ord_fd, i;
+
+  do {
+    // create the orderfile which lists all the clips in order
+    retval = LIVES_RESPONSE_NONE;
+    if (!is_append) ord_fd = creat(ordfile_new, DEF_FILE_PERMS);
+    else {
+      lives_cp(ordfile, ordfile_new);
+      ord_fd = open(ordfile_new, O_CREAT | O_WRONLY | O_APPEND, DEF_FILE_PERMS);
+    }
+
+    if (ord_fd < 0) {
+      retval = do_write_failed_error_s_with_retry(ordfile, lives_strerror(errno), NULL);
+      if (retval == LIVES_RESPONSE_CANCEL) {
+        lives_free(ordfile);
+        lives_free(ordfile_new);
+        lives_chdir(cwd, FALSE);
+        lives_free(cwd);
+        return retval;
+      }
+    }
+
+    else {
+      char *oldval, *newval;
+
+      for (cliplist = mainw->cliplist; cliplist != NULL; cliplist = cliplist->next) {
+        if (mainw->write_failed) break;
+        threaded_dialog_spin(0.);
+        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+
+        i = LIVES_POINTER_TO_INT(cliplist->data);
+        if (IS_NORMAL_CLIP(i) && i != mainw->scrap_file && i != mainw->ascrap_file) {
+          lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
+          get_basename(buff);
+          if (*buff) {
+            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, buff);
+          } else {
+            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
+          }
+
+          if (strcmp(new_handle, mainw->files[i]->handle)) {
+            if (!add) continue;
+
+            new_dir = lives_build_filename(prefs->workdir, new_handle, NULL);
+            if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
+              // get a new unique handle
+              get_temp_handle(i);
+              lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
+            }
+            lives_free(new_dir);
+
+            // move the files
+            mainw->com_failed = FALSE;
+
+            oldval = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
+            newval = lives_build_path(prefs->workdir, new_handle, NULL);
+
+            lives_mv(oldval, newval);
+            lives_free(oldval);
+            lives_free(newval);
+
+            if (mainw->com_failed) {
+              close(ord_fd);
+              end_threaded_dialog();
+              lives_free(ordfile);
+              lives_free(ordfile_new);
+              lives_chdir(cwd, FALSE);
+              lives_free(cwd);
+              return FALSE;
+            }
+
+            *got_new_handle = TRUE;
+
+            lives_snprintf(mainw->files[i]->handle, 256, "%s", new_handle);
+            dfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, LIVES_STATUS_FILE_NAME, NULL);
+            lives_snprintf(mainw->files[i]->info_file, PATH_MAX, "%s", dfile);
+            lives_free(dfile);
+          }
+
+          ord_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
+          lives_write(ord_fd, ord_entry, strlen(ord_entry), FALSE);
+          lives_free(ord_entry);
+        }
+      }
+
+      if (mainw->write_failed == ord_fd) {
+        mainw->write_failed = 0;
+        retval = do_write_failed_error_s_with_retry(ordfile, NULL, NULL);
+      }
+    }
+  } while (retval == LIVES_RESPONSE_RETRY);
+
+  close(ord_fd);
+
+  if (retval == LIVES_RESPONSE_CANCEL) lives_rm(ordfile_new);
+  else  lives_cp(ordfile_new, ordfile);
+
+  lives_free(ordfile);
+  lives_free(ordfile_new);
+
+  lives_chdir(cwd, FALSE);
+  lives_free(cwd);
+  return retval;
+}
+
+
 boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // here is where we save clipsets
@@ -5058,31 +5174,20 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   // TODO - caller to do end_threaded_dialog()
 
-  LiVESList *cliplist;
-
-  char new_handle[256] = {0};
   char new_set_name[MAX_SET_NAME_LEN] = {0};
-  char buff[PATH_MAX] = {0};
 
   char *old_set = lives_strdup(mainw->set_name);
   char *layout_map_file, *layout_map_dir, *new_clips_dir, *current_clips_dir;
   //char *tmp;
   char *text;
-  char *new_dir;
-  char *cwd;
-  char *ordfile;
-  char *ord_entry;
   char *tmp;
-  char *dfile, *osetn, *nsetn;
+  char *osetn, *nsetn, *dfile;
 
   boolean is_append = FALSE; // we will overwrite the target layout.map file
   boolean response;
   boolean got_new_handle = FALSE;
 
-  int ord_fd;
   int retval;
-
-  register int i;
 
   if (mainw->cliplist == NULL) return FALSE;
 
@@ -5192,105 +5297,10 @@ boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
   lives_free(current_clips_dir);
 
-  ordfile = lives_build_filename(prefs->workdir, mainw->set_name, CLIP_ORDER_FILENAME, NULL);
+  if (mainw->scrap_file > -1) close_scrap_file(TRUE);
+  if (mainw->ascrap_file > -1) close_ascrap_file(TRUE);
 
-  cwd = lives_get_current_dir();
-
-  do {
-    // create the orderfile which lists all the clips in order
-    retval = 0;
-    if (!is_append) ord_fd = creat(ordfile, DEF_FILE_PERMS);
-    else ord_fd = open(ordfile, O_CREAT | O_WRONLY | O_APPEND, DEF_FILE_PERMS);
-
-    if (ord_fd < 0) {
-      retval = do_write_failed_error_s_with_retry(ordfile, lives_strerror(errno), NULL);
-      if (retval == LIVES_RESPONSE_CANCEL) {
-        end_threaded_dialog();
-        lives_free(ordfile);
-        lives_chdir(cwd, FALSE);
-        lives_free(cwd);
-        return FALSE;
-      }
-    }
-
-    else {
-      char *oldval, *newval;
-
-      if (mainw->scrap_file > -1) close_scrap_file(TRUE);
-      if (mainw->ascrap_file > -1) close_ascrap_file(TRUE);
-
-      mainw->write_failed = FALSE;
-      cliplist = mainw->cliplist;
-
-      while (cliplist != NULL) {
-        if (mainw->write_failed) break;
-        threaded_dialog_spin(0.);
-        lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-
-        i = LIVES_POINTER_TO_INT(cliplist->data);
-        if (IS_NORMAL_CLIP(i)) {
-          lives_snprintf(buff, PATH_MAX, "%s", mainw->files[i]->handle);
-          get_basename(buff);
-          if (strlen(buff)) {
-            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, buff);
-          } else {
-            lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
-          }
-          if (strcmp(new_handle, mainw->files[i]->handle)) {
-            new_dir = lives_build_filename(prefs->workdir, new_handle, NULL);
-            if (lives_file_test(new_dir, LIVES_FILE_TEST_IS_DIR)) {
-              // get a new unique handle
-              get_temp_handle(i);
-              lives_snprintf(new_handle, 256, "%s/%s/%s", mainw->set_name, CLIPS_DIRNAME, mainw->files[i]->handle);
-            }
-            lives_free(new_dir);
-
-            // move the files
-            mainw->com_failed = FALSE;
-
-            oldval = lives_build_path(prefs->workdir, mainw->files[i]->handle, NULL);
-            newval = lives_build_path(prefs->workdir, new_handle, NULL);
-
-            lives_mv(oldval, newval);
-            lives_free(oldval);
-            lives_free(newval);
-
-            if (mainw->com_failed) {
-              close(ord_fd);
-              end_threaded_dialog();
-              lives_free(ordfile);
-              lives_chdir(cwd, FALSE);
-              lives_free(cwd);
-              return FALSE;
-            }
-
-            got_new_handle = TRUE;
-
-            lives_snprintf(mainw->files[i]->handle, 256, "%s", new_handle);
-            dfile = lives_build_filename(prefs->workdir, mainw->files[i]->handle, LIVES_STATUS_FILE_NAME, NULL);
-            lives_snprintf(mainw->files[i]->info_file, PATH_MAX, "%s", dfile);
-            lives_free(dfile);
-          }
-
-          ord_entry = lives_strdup_printf("%s\n", mainw->files[i]->handle);
-          lives_write(ord_fd, ord_entry, strlen(ord_entry), FALSE);
-          lives_free(ord_entry);
-        }
-
-        cliplist = cliplist->next;
-      }
-
-      if (mainw->write_failed) {
-        retval = do_write_failed_error_s_with_retry(ordfile, NULL, NULL);
-      }
-    }
-  } while (retval == LIVES_RESPONSE_RETRY);
-
-  close(ord_fd);
-  lives_free(ordfile);
-
-  lives_chdir(cwd, FALSE);
-  lives_free(cwd);
+  retval = rewrite_orderfile(is_append, TRUE, &got_new_handle);
 
   if (retval == LIVES_RESPONSE_CANCEL) {
     end_threaded_dialog();
@@ -5462,12 +5472,12 @@ boolean reload_set(const char *set_name) {
   char *msg;
   char *com;
   char *ordfile;
-  char vid_open_dir[PATH_MAX];
   char *cwd;
   char *handle = NULL;
 
   boolean added_recovery = FALSE;
   boolean keep_threaded_dialog = FALSE;
+  boolean hadbad = FALSE;
 
   int last_file = -1, new_file = -1;
   int current_file = mainw->current_file;
@@ -5517,8 +5527,6 @@ boolean reload_set(const char *set_name) {
 
   mainw->suppress_dprint = TRUE;
   mainw->read_failed = FALSE;
-
-  lives_snprintf(vid_open_dir, PATH_MAX, "%s", mainw->vid_load_dir);
 
   // lock the set
   lock_set_file(set_name);
@@ -5570,6 +5578,8 @@ boolean reload_set(const char *set_name) {
         recover_layout_map(MAX_FILES);
 
         // TODO - check for missing frames and audio in layouts
+
+        if (hadbad) rewrite_orderfile(FALSE, FALSE, NULL);
 
         d_print(_("%d clips and %d layouts were recovered from set (%s).\n"),
                 clipnum, lives_list_length(mainw->current_layouts_map), (tmp = F2U8(set_name)));
@@ -5657,6 +5667,12 @@ boolean reload_set(const char *set_name) {
 
     // get file details
     if (!read_headers(".")) {
+      /// set clip failed to load, we need to do something with it else it will keep trying to reload each time.
+      /// for now we shall just move it out of the set
+      lives_free(mainw->files[mainw->current_file]);
+      mainw->files[mainw->current_file] = NULL;
+      if (mainw->first_free_file > mainw->current_file) mainw->first_free_file = mainw->current_file;
+      hadbad = TRUE;
       continue;
     }
 
@@ -5822,12 +5838,21 @@ static void recover_lost_clips(LiVESList * reclist) {
   // recover files
   mainw->recovery_list = reclist;
   recover_files(NULL, TRUE);
+
+  if (!CURRENT_CLIP_IS_VALID) {
+    int start_file;
+    for (start_file = MAX_FILES; start_file > 0; start_file--) {
+      if (IS_VALID_CLIP(start_file)
+          && (mainw->files[start_file]->frames > 0 || mainw->files[start_file]->afilesize > 0)) break;
+    }
+    switch_to_file(-1, start_file);
+  }
 }
 
 
 void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   // recover disk space
-  LiVESList *left_list = NULL;
+  LiVESList *left_list = NULL, *recvlist = NULL;
   int64_t bytes = 0, fspace = -1;
   int64_t ds_warn_level = mainw->next_ds_warn_level;
 
@@ -5835,7 +5860,6 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   char *com, *msg, *tmp;
   char *extra = lives_strdup("");
 
-  boolean try_recover = FALSE;
   int current_file = mainw->current_file;
   int marker_fd;
   int retval = 0;
@@ -5870,6 +5894,8 @@ void on_cleardisk_activate(LiVESWidget * widget, livespointer user_data) {
   }
   lives_free(extra);
 
+  if (CURRENT_CLIP_IS_VALID) cfile->cb_src = current_file;
+
 remall:
 
   d_print(_("Cleaning up disk space..."));
@@ -5880,8 +5906,6 @@ remall:
     prefs->clear_disk_opts = orig_opts;
     return;
   }
-
-  cfile->cb_src = current_file;
 
   if (mainw->multitrack != NULL) {
     if (mainw->multitrack->idlefunc > 0) {
@@ -5950,29 +5974,34 @@ remall:
         } else {
           LiVESList *list;
           if (!(prefs->clear_disk_opts & LIVES_CDISK_REMOVE_ORPHAN_CLIPS)) {
-            char *snumh = lives_strdup("");
-            char *lives_header = lives_strdup("");
+            char *snumh = NULL;
+            char *lives_header = NULL;
             for (list = left_list->next; list != NULL; list = list->next) {
               char *handle = (char *)list->data;
               int numh = atoi(handle);
               if (numh > 65535) {
-                lives_free(snumh);
+                lives_freep((void **)&snumh);
                 snumh = lives_strdup_printf("%d", numh);
                 if (!strcmp(snumh, handle)) {
-                  lives_free(lives_header);
+                  lives_freep((void **)&lives_header);
                   lives_header = lives_build_filename(prefs->workdir, handle, LIVES_CLIP_HEADER, NULL);
-                  if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) break;
-                  lives_free(lives_header);
-                  lives_header = lives_build_filename(prefs->workdir, handle, LIVES_CLIP_HEADER_OLD, NULL);
-                  if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) break;
-                }
-              }
-            }
-            lives_free(snumh);
-            lives_free(lives_header);
-            if (list) try_recover = TRUE;
+                  if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
+                    recvlist = lives_list_prepend(recvlist, snumh);
+                    snumh = NULL;
+                  } else {
+                    lives_freep((void **)&lives_header);
+                    lives_header = lives_build_filename(prefs->workdir, handle, LIVES_CLIP_HEADER_OLD, NULL);
+                    if (lives_file_test(lives_header, LIVES_FILE_TEST_EXISTS)) {
+                      recvlist = lives_list_prepend(recvlist, snumh);
+                      snumh = NULL;
+		      // *INDENT-OFF*
+		    }}}}}
+	    // *INDENT-ON*
+
+            lives_freep((void **)&snumh);
+            lives_freep((void **)&lives_header);
           }
-          if (!try_recover) {
+          if (!recvlist) {
             lives_free(left_list->data);
             left_list->data = lives_strdup(_("The following directories may be removed manually if not required:\n"));
             for (list = left_list->next; list != NULL; list = list->next) {
@@ -6000,12 +6029,13 @@ remall:
       }
     }
   }
-  if (try_recover) {
+  if (recvlist) {
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-    recover_lost_clips(left_list->next);
     lives_list_free_all(&left_list);
+    recover_lost_clips(recvlist);
+    lives_list_free_all(&recvlist);
     prefs->clear_disk_opts |= LIVES_CDISK_REMOVE_ORPHAN_CLIPS;
-    try_recover = FALSE;
+    current_file = mainw->current_file;
     goto remall;
   }
 
@@ -6315,9 +6345,9 @@ void switch_clip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
           lives_check_menu_item_get_active(LIVES_CHECK_MENU_ITEM(mainw->files[i]->menuentry))) {
         switch_clip(0, i, FALSE);
         return;
-      }
-    }
-  }
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-ON*
 }
 
 
@@ -9157,6 +9187,7 @@ void update_sel_menu(void) {
 
 void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   int start, ostart;
+  boolean rdrw_bars = TRUE;
   static volatile boolean updated = FALSE;
 
   if (updated) return;
@@ -9177,15 +9208,22 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
   cfile->start = start;
 
   if (mainw->selwidth_locked) {
-    cfile->end += cfile->start - ostart;
-    if (cfile->end > cfile->frames) {
+    /// must not update cfile->end directly, otherwise the selection colour won'r be updates
+    int new_end = cfile->end + cfile->start - ostart;
+    mainw->selwidth_locked = FALSE;
+    if (new_end > cfile->frames) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start - cfile->end + cfile->frames);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->frames);
+      lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_end));
     } else {
-      mainw->selwidth_locked = FALSE;
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end);
-      load_end_image(cfile->end);
-      mainw->selwidth_locked = TRUE;
+      if (cfile->start < ostart && cfile->fps > 0.) {
+        redraw_timer_bars((double)(cfile->start - 1.) / cfile->fps, (double)ostart / cfile->fps, 0);
+        rdrw_bars = FALSE;
+      }
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), new_end);
+      lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_end));
     }
+    mainw->selwidth_locked = TRUE;
   }
   update_sel_menu();
   load_start_image(cfile->start);
@@ -9194,7 +9232,12 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
     lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->start);
   }
   set_sel_label(mainw->sel_label);
-  if (cfile->fps > 0.) redraw_timer_bars((double)(ostart - 1.) / cfile->fps, (double)(cfile->start - 1.) / cfile->fps, 0);
+  if (rdrw_bars && cfile->fps > 0.) {
+    if (cfile->start < ostart)
+      redraw_timer_bars((double)(cfile->start - 1.) / cfile->fps, (double)ostart / cfile->fps, 0);
+    else
+      redraw_timer_bars((double)(ostart - 1.) / cfile->fps, (double)cfile->start / cfile->fps, 0);
+  }
 
   if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
     if (mainw->prv_link == PRV_START && mainw->preview_frame != cfile->start)
@@ -9207,6 +9250,7 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
 
 void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer user_data) {
   int end, oend;
+  boolean rdrw_bars = TRUE;
   static volatile boolean updated = FALSE;
 
   if (updated) return;
@@ -9228,15 +9272,21 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
   cfile->end = end;
 
   if (mainw->selwidth_locked) {
-    cfile->start += cfile->end - oend;
-    if (cfile->start < 1) {
+    int new_start = cfile->start + cfile->end - oend;
+    mainw->selwidth_locked = FALSE;
+    if (new_start < 1) {
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_end), cfile->end - cfile->start + 1);
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), 1);
+      lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_start));
     } else {
-      mainw->selwidth_locked = FALSE;
-      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
-      load_start_image(cfile->start);
-      mainw->selwidth_locked = TRUE;
+      lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), new_start);
+      if (cfile->end > oend && cfile->fps > 0.) {
+        redraw_timer_bars((double)oend / cfile->fps, (double)(cfile->end + 1) / cfile->fps, 0);
+        rdrw_bars = FALSE;
+      }
+      lives_spin_button_update(LIVES_SPIN_BUTTON(mainw->spinbutton_start));
     }
+    mainw->selwidth_locked = TRUE;
   }
   update_sel_menu();
   load_end_image(cfile->end);
@@ -9246,8 +9296,11 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
   }
 
   set_sel_label(mainw->sel_label);
-  if (cfile->fps > 0.) {
-    redraw_timer_bars((double)(oend) / cfile->fps, (double)(cfile->end) / cfile->fps, 0);
+  if (rdrw_bars && cfile->fps > 0.) {
+    if (cfile->end > oend)
+      redraw_timer_bars((double)oend / cfile->fps, (double)(cfile->end + 1) / cfile->fps, 0);
+    else
+      redraw_timer_bars((double)cfile->end / cfile->fps, (double)(oend + 1) / cfile->fps, 0);
   }
 
   if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
@@ -9916,6 +9969,12 @@ void vj_mode_toggled(LiVESCheckMenuItem * menuitem, livespointer user_data) {
 }
 
 
+/**
+   This is a super important function : almost everything related to velocity direction
+   changes during playback should ensurre this function is called.
+   For example it user_data is non-NULL, will also set the audio player rate / direction.
+   Even if the clip is frozen, we still update the freeze fps so that when it is unfrozen it starts with the correct velocity.
+*/
 void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data) {
   /// user_data non-NULL to force audio rate update
   double new_fps;
@@ -9932,7 +9991,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 
   mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
-  if (new_fps != cfile->pb_fps && new_fps > .001 && !cfile->play_paused) {
+  if (new_fps != cfile->pb_fps && fabs(new_fps) > .001 && !cfile->play_paused) {
     /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
     /// we could end up jumping several frames
     ticks_t delta_ticks;
@@ -9946,6 +10005,8 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
+    if (new_fps >= 0.) cfile->adirection = LIVES_DIRECTION_FORWARD;
+    else cfile->adirection = LIVES_DIRECTION_BACKWARD;
     // update our audio player
 #ifdef ENABLE_JACK
     if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -9978,9 +10039,6 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
     // *INDENT-ON*
 #endif
   }
-
-  mainw->fps_mini_measure = 1.;
-  mainw->fps_mini_ticks = mainw->currticks;
 
   if (cfile->play_paused && new_fps != 0.) {
     cfile->freeze_fps = new_fps;
@@ -10615,7 +10673,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (switch_audio_clip(mainw->current_file, TRUE)) {
     if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
       mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
-      resync_audio(cfile->frameno + (mainw->currticks + mainw->deltaticks - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->fps);
+      resync_audio(cfile->frameno);
       changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(TRUE));
     }
   }
@@ -10624,15 +10682,17 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 
 
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
-                           livespointer clip_number) {
+                           livespointer keybd) {
   double avsync;
   double fpm;
-
   int last_dprint_file;
 
   if (mainw->playing_file < 0) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
   if (!CURRENT_CLIP_HAS_AUDIO || !CURRENT_CLIP_HAS_VIDEO) return FALSE;
+  if (prefs->show_dev_opts)
+    if (!keybd) mainw->lockstats = !mainw->lockstats;
+  if (!mainw->lockstats) return FALSE;
 
   if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
@@ -10652,17 +10712,27 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   } else return FALSE;
 
   avsync -= (mainw->actual_frame - 1.) / cfile->fps
-            + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)
-                       + mainw->deltaticks - mainw->startticks)
+            + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)  - mainw->startticks)
             / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;
   /* fpm = mainw->fps_mini_measure / ((lives_get_relative_ticks(mainw->origsecs, mainw->origusecs) */
   /* 				    - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL); */
-  fpm = mainw->fps_mini_measure / ((double)(100 + mainw->startticks - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL);
-  d_print_urgency(2.0, _("Audio is ahead of video by %.4f secs.\nat frame %d / %d, with fps %.3f (%.3f)\n"),
-                  avsync, mainw->actual_frame, cfile->frames, fpm, cfile->pb_fps);
+  if (!prefs->show_dev_opts) {
+    d_print_urgency(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
+                    mainw->actual_frame, cfile->frames);
+  } else {
+    fpm = mainw->fps_mini_measure / ((double)(100 + mainw->currticks - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL);
+    lives_freep((void **)&mainw->urgency_msg);
+    mainw->urgency_msg = lives_strdup_printf(
+                           _("Audio is ahead of video by %.4f secs.\nat frame %d / %d, with fps %.3f (target: %.3f)\n"
+                             "Current effort = %d / %d, quality = %d\n%s"),
+                           avsync, mainw->actual_frame, cfile->frames, fpm, cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
+                           prefs->pb_quality, get_cache_stats());
+    /* d_print_urgency(2.0, tmp); */
+    /* 		    lives_free(tmp); */
+  }
   mainw->no_switch_dprint = FALSE;
   mainw->last_dprint_file = last_dprint_file;
   return TRUE;

@@ -1,303 +1,217 @@
-## Process this file with automake to produce Makefile.in
+## Process this with automake to create Makefile.in
+
+LIBS =
 
 AUTOMAKE_OPTIONS = subdir-objects
 
-gtk_def =
+#NOTE - install-exec-local MUST go in the first subdir ONLY !!
+SUBDIRS = gdk cairo # supercollider experimental
 
-if ENABLE_OSC
-osc_CPPFLAGS = -I "$(top_srcdir)/libOSC"
-endif
+fxpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
 
 if IS_DARWIN
-darwin_CPPFLAGS = -I /sw/include
-darwin_CFLAGS = -DIS_DARWIN=1
-endif
+shared_ldflags = -dynamiclib -module -avoid-version --tag=disable-static -lm
 
-if IS_IRIX
-irix_CFLAGS = -DIS_IRIX=1
-endif
-
-if IS_LINUX_GNU
-linux_CFLAGS = -DIS_LINUX_GNU=1
-endif
-
-if IS_LINUX_MUSL
-linux_CFLAGS = -DIS_LINUX_MUSL=1
-endif
-
-if IS_SOLARIS
-solaris_CFLAGS = -DIS_SOLARIS=1
-endif
-
-gtk_LIBFLAGS = @GTK_LIBS_NODYNAMIC@ -pthread
-
-AM_CPPFLAGS = \
-	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
-	-DLIVES_DIR=\""$(livesdir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(datadir)/locale"\" \
-	-I $(top_srcdir) \
-	$(osc_CPPFLAGS) \
-	@MJPEGTOOLS_CFLAGS@ \
-	@UNICAP_CFLAGS@ \
-	@GTK_CFLAGS@ \
-	@X11_CFLAGS@ \
-	$(darwin_CPPFLAGS) @TURBO_CFLAGS@
-
-bin_PROGRAMS = lives-exe
-
-if HAVE_MJPEGTOOLS
-yuv4mpeg_SOURCES = lives-yuv4mpeg.c lives-yuv4mpeg.h
-yuv4mpeg_CFLAGS = -DHAVE_YUV4MPEG=1
-endif
-
-if HAVE_UNICAP
-unicap_SOURCES = videodev.c videodev.h
-unicap_CFLAGS = -DHAVE_UNICAP=1
-endif
-
-if ENABLE_OSC
-osc_SOURCES = osc.c osc.h omc-learn.c omc-learn.h osc_notify.h
-osc_LDADD = $(top_builddir)/libOSC/.libs/libOSC.a $(top_builddir)/libOSC/client/.libs/libOSC_client.a -lm
-#osc_shared_LDADD = $(top_builddir)/libOSC/.libs/libOSC.so $(top_builddir)/libOSC/client/.libs/libOSC_client.so -lm
-osc_CFLAGS = -DENABLE_OSC=1
-endif
-
-if ENABLE_LDVGRAB
-ldvgrab_SOURCES = ldvgrab.c ldvgrab.h ldvcallbacks.c ldvcallbacks.h ldvinterface.c ldvinterface.h
-ldvgrab_CFLAGS = -DHAVE_LDVGRAB=1 -I libavc1394/avc1394.h -I libraw1394/raw1394.h -I libraw1394/rom1394.h
-ldvgrab_LDADD = -lavc1394 -lraw1394 -lrom1394
-endif
-
-if ENABLE_JACK
-jack_CFLAGS = -DENABLE_JACK
-jack_SOURCES = jack.c jack.h
-jack_LDADD = -ljack
-
-if ENABLE_JACK_TRANSPORT
-jack_CFLAGS += -DENABLE_JACK_TRANSPORT
-endif
-endif
-
-if ENABLE_LIBOIL
-if IS_MINGW
-oil_LIBFLAGS = @OIL_LIBS@
+shared_cflags = -fno-common
 else
-oil_LIBFLAGS = @OIL_LIBS@ -loil-0.3
+shared_ldflags = -shared -fPIC -DPIC -module -avoid-version --tag=disable-static -lm
+
+
+## --whole-archive is supposed to work, but doesn't....
+#shared_cflags = -fPIC -DPIC -Wno-unused-function -Wl,--whole-archive $(libdir)/libweed-plugin-utils.a -Wl,--no-whole-archive
+
+shared_cflags = -fPIC -DPIC -Wno-unused-function
 endif
-oil_CFLAGS = @OIL_CFLAGS@ -DENABLE_OIL=1
+
+if NEED_LOCAL_WEED
+shared_cflags += -DNEED_LOCAL_WEED
+endif
+
+if NEED_LOCAL_WEED_PLUGIN
+shared_cflags += -DNEED_LOCAL_WEED_PLUGIN
+endif
+
+if HAVE_SDL2
+CFLAGS_SDL = @SDL2_CFLAGS@ -DHAVE_SDL2
+LDFLAGS_SDL = @SDL2_LIBS@
 
 else
 
-if ENABLE_LIBORC
-if IS_MINGW
-oil_LIBFLAGS = @ORC_LIBS@
+if HAVE_X11
+if HAVE_SDL1
+CFLAGS_SDL = @SDL_CFLAGS@ @X11_CFLAGS@
+LDFLAGS_SDL = @SDL_LIBS@ @X11_LIBS@
+
 else
-oil_LIBFLAGS = @ORC_LIBS@ -lorc-0.4
-endif
-oil_CFLAGS = @ORC_CFLAGS@ -DENABLE_ORC=1
-endif
-endif
 
-if HAVE_ALSA
-alsa_LDADD = @ALSA_LIBS@
-alsa_CFLAGS = @ALSA_CFLAGS@ -DALSA_MIDI=1
+if FORCE_SDL
+CFLAGS_SDL = -I $(SDL_PREFIX) @X11_CFLAGS@
+LDFLAGS_SDL = -lSDL @X11_LIBS@
+HAVE_SDL_ANYVERSION = true
 endif
-
-if HAVE_WAYLAND
-wayland_LDADD = @WAYLAND_LIBS@
-wayland_CFLAGS = @WAYLAND_CFLAGS@ -DHAVE_WAYLAND=1
 endif
-
-if HAVE_LIBEXPLAIN
-libexplain_LDADD = @LIBEXPLAIN_LIBS@
-libexplain_CFLAGS = @LIBEXPLAIN_CFLAGS@ -DHAVE_LIBEXPLAIN=1
-endif
-
-if DISABLE_GSLICE
-if !NEED_LOCAL_WEED
-#libweed_LDADD = @WEED_LIBS@ @WEED_UTILS_LIBS@
-libweed_LDADD = $(libdir)/libweed/libweed.la $(libdir)/libweed/libweed-utils.la
-libweed_CFLAGS = @WEED_CFLAGS@
-else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed.la $(abs_top_srcdir)/libweed/libweed-utils.la
-libweed_CFLAGS = -DNEED_LOCAL_WEED=1
 endif
 else
-if !NEED_LOCAL_WEED
-libweed_LDADD = @WEED_GSLICE_LIBS@ @WEED_UTILS_LIBS@
-libweed_CFLAGS = @WEED_CFLAGS@
-else
-libweed_LDADD = $(abs_top_srcdir)/libweed/libweed_gslice.la $(abs_top_srcdir)/libweed/libweed-utils.la
-libweed_CFLAGS = -DNEED_LOCAL_WEED=1
+HAVE_SDL_ANYVERSION = false
 endif
+
+
+AM_LDFLAGS = $(shared_ldflags)
+
+weed_CFLAGS =
+
+if NEED_LOCAL_WEED
+weed_CFLAGS += -DNEED_LOCAL_WEED
+endif
+
+if NEED_LOCAL_WEED_PLUGIN
+weed_CFLAGS += -DNEED_LOCAL_WEED_PLUGIN
 endif
 
 if NEED_LOCAL_WEED_COMPAT
-libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
+weed_CFLAGS += -DNEED_LOCAL_WEED_COMPAT
 endif
 
-if ENABLE_DIAGNOSTICS
-diag_SOURCES = diagnostics.c diagnostics.h
+AM_CFLAGS = $(shared_cflags) $(weed_CFLAGS) -ffast-math -Wall  @TURBO_CFLAGS@ -fno-math-errno
+AM_CPPFLAGS = $(AM_CFLAGS)
+
+if HAVE_LIBVISUAL
+libvis_libs = libvis.la
+libvis_la_LDFLAGS = @LIBVISUAL_LIBS@ -lpthread $(AM_LDFLAGS)
+libvis_la_CFLAGS =  @LIBVISUAL_CFLAGS@ $(AM_CFLAGS)
+libvispluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/libvisual"
+libvispluginslib_LTLIBRARIES = $(libvis_libs)
 endif
 
-if HAVE_PULSE_AUDIO
-pulse_LDADD = @PULSE_LIBS@
-pulse_CFLAGS = @PULSE_LIBS@ -DHAVE_PULSE_AUDIO=1
-pulse_SOURCES = pulse.c pulse.h
-if HAVE_PA_STREAM_BEGIN_WRITE
-pulse_CFLAGS += -DHAVE_PA_STREAM_BEGIN_WRITE=1
-endif
-endif
-
-if HAVE_LIBPNG
-png_LDADD = @PNG_LIBS@
-png_CFLAGS = @PNG_CFLAGS@ -DUSE_LIBPNG=1
+if HAVE_FREI0R
+frei0r_libs = frei0r.la
+frei0r_la_LDFLAGS = -ldl $(AM_LDFLAGS)
+frei0r_la_CFLAGS = $(AM_CFLAGS)
+frei0rpluginslibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed/frei0r"
+frei0rpluginslib_LTLIBRARIES = $(frei0r_libs)
 endif
 
-if HAVE_SWSCALE
-if HAVE_AVCODEC
-if HAVE_AVUTIL
-if HAVE_SWSCALE
-swscale_LDADD = @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
-swscale_CFLAGS = @LIBSWSCALE_CFLAGS@ @LIBAVUTIL_CFLAGS@ -DUSE_SWSCALE=1
-if HAVE_SWRESAMPLE
-transcode_SOURCES = transcode.c transcode.h
-transcode_CFLAGS = -DLIBAV_TRANSCODE=1
-endif
-endif
-endif
-endif
-endif
+if HAVE_OPENCV
+farneback_analyser_libs = farneback_analyser.la
+farneback_analyser_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_video -lopencv_imgproc
+farneback_analyser_la_CPPFLAGS = $(AM_CPPFLAGS)
+farneback_analyser_la_SOURCES = farneback_analyser.cpp
 
-if ENABLE_GIW
-giw_SOURCES = giw/giwknob.c giw/giwknob.h giw/giwvslider.c giw/giwvslider.h giw/giwled.c giw/giwled.h giw/giwtimeline.c giw/giwtimeline.h
-giw_LDADD = -lm
-giw_CFLAGS = -DENABLE_GIW=1
-endif
-
-lives_exe_SOURCES = \
-	widget-helper.c widget-helper.h \
-	widget-helper-gtk.h widget-helper-qt.h \
-	main.c\
-	support.c support.h \
-	effects.c\
-	plugins.c plugins.h\
-	effects-weed.c effects-weed.h\
-	effects-data.c effects-data.h \
-	framedraw.c framedraw.h\
-	interface.c interface.h \
-	paramspecial.c paramspecial.h\
-	paramwindow.c paramwindow.h\
-	rfx-builder.c rfx-builder.h\
-	$(yuv4mpeg_SOURCES)\
-	preferences.c preferences.h\
-	rte_window.c rte_window.h\
-	gui.c \
-	ce_thumbs.c ce_thumbs.h \
-	htmsocket.c htmsocket.h \
-	merge.c merge.h \
-	dialogs.c saveplay.c \
-	audio.c audio.h \
-	events.c events.h \
-	resample.c resample.h \
-	$(osc_SOURCES) \
-	callbacks.c callbacks.h \
-	colourspace.c colourspace.h\
-	keyboard.c keyboard.h\
-	utils.c \
-        main.h \
-        mainwindow.h \
-        effects.h \
-	multitrack.h multitrack.c \
-	stream.h stream.c \
-	cvirtual.c cvirtual.h \
-	startup.c startup.h \
-	pangotext.c pangotext.h \
-	machinestate.c machinestate.h \
-	weed-effects-utils.c weed-effects-utils.h \
-	$(diag_SOURCES) \
-	$(transcode_SOURCES) \
-	$(unicap_SOURCES) \
-	$(jack_SOURCES) \
-	$(pulse_SOURCES) \
-	$(ldvgrab_SOURCES) \
-	$(giw_SOURCES)
-
-lives_exe_LDFLAGS = $(gtk_LIBFLAGS) -shared $(oil_LIBFLAGS)
-
-lives_exe_LDADD = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ $(osc_LDADD) $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) $(libweed_LDADD) \
-	 $(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(libexplain_LDADD)
-
-AM_CFLAGS = -Wstrict-aliasing=0 -Wall $(yuv4mpeg_CFLAGS) $(ldvgrab_CFLAGS) $(dvgrab_CFLAGS) \
-	$(oil_CFLAGS) $(wayland_CFLAGS) $(transcode_CFLAGS) \
-	$(darwin_CFLAGS) $(irix_CFLAGS) $(linux_CFLAGS) $(solaris_CFLAGS) $(osc_CFLAGS) $(alsa_CFLAGS) $(png_CFLAGS) $(swscale_CFLAGS) \
-	$(jack_CFLAGS) $(pulse_CFLAGS) $(libexplain_CFLAGS) $(giw_CFLAGS) $(unicap_CFLAGS) $(libweed_CFLAGS) $(libweed_compat_CFLAGS) \
-	-DLIVES_LIBDIR=\""$(libdir)"\" $(gtk_def) @TURBO_CFLAGS@
-
-if HAVE_AVFORMAT
-if HAVE_AVCODEC
-if HAVE_AVUTIL
-AM_CFLAGS += -DHAVE_WEBM=1
-endif
-endif
-endif
-
-if HAVE_LINUX_JOYSTICK_H
-AM_CFLAGS += -DHAVE_LINUX_JOYSTICK_H=1
-endif
-
-if HAVE_PRCTL
-AM_CFLAGS += -DHAVE_PRCTL=1
-endif
-
-if ENABLE_PROFILING
-AM_CFLAGS += -pg
-endif
-
-AM_CXXFLAGS = $(AM_CFLAGS)
-
-if BUILD_LIBLIVES
-
-liblives_libs = liblives.la
-lib_LTLIBRARIES = $(liblives_libs)
-
-liblives_la_SOURCES = $(lives_exe_SOURCES) liblives.cpp liblives.hpp lbindings.c lbindings.h 
-
-liblives_la_CFLAGS = -fvisibility=hidden
-if IS_DARWIN
-liblives_la_LIBFLAGS = -dynamiclib -module
-liblives_la_CFLAGS += -fno-common
+if ENABLE_TOONZ
+toonz_libs = toonz.la
+toonz_la_LDFLAGS = $(AM_LDFLAGS) $(OPENCV_LIBS_ONLY_L) -lopencv_core -lopencv_imgproc
+toonz_la_CPPFLAGS = $(AM_CPPFLAGS) -std=c++11
+toonz_la_SOURCES = toonz.cpp
 else
-liblives_la_LIBFLAGS = -fPIC -DPIC -module
-liblives_la_CFLAGS += -shared -fPIC -DPIC
+toonz_libs =
 endif
 
-liblivesdir = $(libdir)
-
-extra_LDFLAGS = @X11_LIBS@ $(wayland_LDADD) @MJPEGTOOLS_LIBS@ \
-        $(jack_LDADD) $(ldvgrab_LDADD) \
-	$(alsa_LDADD) $(pulse_LDADD) $(png_LDADD) $(swscale_LDADD) $(pthread_LDADD) \
-	$(giw_LDADD) $(v4l1_LDADD) @UNICAP_LIBS@ $(gtk_LIBFLAGS) $(oil_LIBFLAGS)
-
-#if NEED_SCRIPTING_LIBS
-#if !NEED_LOCAL_WEED
-#libweed_scripting_LDADD = -lweed_gslice -lweed-utils
-#libweed_scripting_CFLAGS = @WEED_CFLAGS@
-#else
-#libweed_scripting_LDADD = $(abs_top_srcdir)/libweed/libweed_slice.la $(abs_top_srcdir)/libweed/libweed-utils.la
-#libweed_scripting_CFLAGS = @WEED_CFLAGS@ -D__LIBWED__ -DNEED_LOCAL_WEED=1
-#endif
-#endif
-
-liblives_la_LDFLAGS = $(extra_LDFLAGS) -lOSC
-liblives_la_CFLAGS += $(AM_CFLAGS) -Wno-unused-function
-
-install-exec-local:
-	$(MKDIR_P) "$(DESTDIR)$(includedir)/liblives/"
-	cp -f "$(srcdir)/liblives.hpp" "$(DESTDIR)$(includedir)/liblives/"
-
-uninstall-local:
-	rm -rf "$(includedir)/liblives"
-
+opencvlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+opencvlib_LTLIBRARIES = $(farneback_analyser_libs) $(toonz_libs)
 endif
+
+if HAVE_FFTW3F
+audio_fft_libs = audio_fft.la beat_detector.la
+audio_fft_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
+audio_fft_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
+beat_detector_la_LDFLAGS = $(FFTW3F_LIBS) $(AM_LDFLAGS)
+beat_detector_la_CFLAGS = $(FFTW3F_CFLAGS) $(AM_CFLAGS)
+audio_fftlibdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+audio_fftlib_LTLIBRARIES = $(audio_fft_libs)
+endif
+
+if HAVE_LADSPA
+ladspa_libs = ladspa.la
+ladspa_la_LDFLAGS = $(AM_LDFLAGS)
+ladspa_la_CFLAGS = $(AM_CFLAGS)
+ladspadir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+ladspa_LTLIBRARIES = $(ladspa_libs)
+endif
+
+if HAVE_LIBFREENECT
+freenect_libs = freenect.la
+freenect_la_LDFLAGS = $(LIBFREENECT_LIBS) -lpthread $(AM_LDFLAGS)
+freenect_la_CFLAGS = $(LIBFREENECT_CFLAGS) $(AM_CFLAGS)
+freenectdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+freenect_LTLIBRARIES = $(freenect_libs)
+endif
+
+if HAVE_OPENGL
+if HAVE_SDL_ANYVERSION
+if HAVE_PROJECTM
+projectM_libs = projectM.la
+projectM_la_LDFLAGS = $(AM_LDFLAGS) $(LDFLAGS_SDL) $(LIBPROJECTM_LIBS) -lpthread @X11_LIBS@ @GL_LIBS@
+projectM_la_CPPFLAGS = $(LIBPROJECTM_CFLAGS) $(CFLAGS_SDL) \
+	-DPROJECTM_PREFIX=\"`pkg-config --variable=libdir libprojectM`/libprojectM\" $(AM_CPPFLAGS) \
+	 @X11_CFLAGS@ @GL_CFLAGS@
+projectMdir = "$(libdir)/$(PACKAGE)/plugins/effects/realtime/weed"
+projectM_la_SOURCES = projectM.cpp projectM-getConfigFilename.cpp projectM-getConfigFilename.h projectM-ConfigFile.h
+projectM_LTLIBRARIES = $(projectM_libs)
+endif
+endif
+endif
+
+fxpluginslib_LTLIBRARIES = RGBdelay.la \
+	alpha_means.la \
+	alpha_visualizer.la \
+	alien_overlay.la \
+	audio_transition.la \
+	audio_volume.la \
+	bump2d.la \
+	blurzoom.la \
+	blank_frame_detector.la \
+	$(opencv_LIBS) \
+	ccorrect.la \
+	colorkey.la \
+	comic.la \
+	data_processor.la \
+	data_unpacker.la \
+	deinterlace.la \
+	edge.la \
+	fg_bg_removal.la \
+	fireTV.la \
+	fourKlives.la \
+	haip.la \
+	kaleidoscope.la \
+	layout_blends.la \
+	lifeTV.la \
+	livetext.la \
+	log_sig.la \
+	mirrors.la \
+	multi_blends.la \
+	multi_transitions.la \
+	negate.la \
+	nn_programmer.la \
+	noise.la \
+	onedTV.la \
+	palette_test.la\
+	plasma.la \
+	posterise.la \
+	randomiser.la \
+	revTV.la \
+	rippleTV.la \
+	rotozoom.la \
+	shift.la \
+	simple_blend.la \
+	slide_over.la \
+	softlight.la \
+	targeted_zoom.la \
+	textfun.la \
+	tone_gen.la \
+	tvpic.la \
+	vertigo.la \
+	warpTV.la \
+	xeffect.la
+
+EXTRA_DIST=data icons syna.h weed-utils-code.c weed-plugin-utils.c
+
+install-data-local:
+	$(MKDIR_P) "$(DESTDIR)$(fxpluginslibdir)"
+	cp -rf data/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/data/"
+	cp -rf icons/ "$(DESTDIR)$(fxpluginslibdir)" && chmod -Rf a+r "$(DESTDIR)$(fxpluginslibdir)/icons/"
+	$(MAKE) -i install-data-local-remove-vcs-files
+
+install-data-local-remove-vcs-files:
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/data/".gitignore
+	rm -rf "$(DESTDIR)$(fxpluginslibdir)/icons/".gitignore
+

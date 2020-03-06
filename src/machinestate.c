@@ -10,6 +10,7 @@
 #include <malloc.h>
 #include "main.h"
 #include "support.h"
+#include "callbacks.h"
 
 void init_random() {
   ssize_t randres = -1;
@@ -45,241 +46,7 @@ void init_random() {
 }
 
 
-/// load measuring function - TODO ----
-
-boolean load_measure_idle(livespointer data) {
-#ifdef LOADCHECK
-
-  // function is called as an idlefunc, and we count how many calls per second
-  // to give an estimate of machine load
-
-  // measured values: 161 - 215, avg 154 - 181
-
-  static int64_t load_count = -1; // count the fn calls until we reach load_check_count
-  static int64_t load_check_count = INIT_LOAD_CHECK_COUNT;
-  static int64_t tchecks = 0;
-  static ticks_t last_check_ticks = 0; // last time we checked
-  static ticks_t total_check = 0; // sum of all deltas
-  static int nchecks = 0; // how many times checked
-  static int nchecks_counted = 0; // how many valid checks counted
-
-  static double low_avg = 1000000000.;
-  static double high_avg = 0.;
-
-  static int varcount = 0; // count of variant values within varratio, reset by vardecay
-  static int vardecay = 10, xvardecay = 0; // how many sequential non-variant counts to reset varcount
-  double varratio = .9; // ratio of variant to last variant to increment varcount
-  static double cstate = -1.; // new state set by similar variant values within a limit
-  static double cstate_count = 0;
-  int cstate_limit = 4; // number of consecutive variant values within varratio to set cstate
-  int cstate_reset = 10; // number of variants at cstate to reset avg
-  static double vardelta = 0.; // delta time between variant and last variant
-  static ticks_t varperiod = 0; // periodic variance
-  int nvarperiod = 2; // number of variant deltas to reset varperiod
-  static int xnvarperiod = 0;
-  double perratio = .9;
-  static ticks_t varticks = 0;
-  boolean spike = FALSE;
-  static double lvariance = 0.;
-  static double xlvariance = 0.;
-  static double hload = 0.;
-  static double lload = 100000000.;
-  static double rescale = 1.;
-  int64_t timelimit = 0;
-  static int64_t ntimer = -1;
-  static boolean add_idle = TRUE;
-  double tpi;
-
-  char *msg;
-  ticks_t delta_ticks;
-  double check_time = TARGET_CHECK_TIME; // adjust load_check_count so we check this number of secs.
-  double variance;
-  static int phase = 0;
-
-  sched_yield();
-
-  if (mainw->loadmeasure == 0) return FALSE; // was not added so we shouldn't be here
-  if (prefs->loadchecktime <= 0.) return FALSE; // function disabled
-
-  if (ntimer > -1 && mainw->loadmeasure_phase == 2) {
-    if (++ntimer < timelimit) {
-      // during playback, the timer doesnt run so we need to simulate it
-      return TRUE;
-    }
-    ntimer = 0;
-  }
-
-  if (mainw->loadmeasure_phase == 1) {
-    // continuous checking uses 100% cpu, so we need to pause it
-    mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL);
-    mainw->loadmeasure_phase = 2; // timer wait phase
-    return FALSE;
-  }
-
-  if (mainw->loadmeasure_phase == 2) {
-    // timer fired mode
-    last_check_ticks = lives_get_current_ticks();
-    mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL);
-    mainw->loadmeasure_phase = 0;
-    return FALSE;
-  }
-
-  // idlecount mode
-
-  // count idle calls until we reach load_check_count
-  if (++load_count < load_check_count) return TRUE;
-
-  g_print("idlephase finished\n");
-
-  // check once per QUICK_CHECK_TIME until we reach TARGET_CHECK_TIME, then once per TARGET_CHECK_TIME seconds
-  if (total_check < TARGET_CHECK_TIME || nchecks < N_QUICK_CHECKS - 1) check_time = QUICK_CHECK_TIME;
-
-  tpi = capable->time_per_idle;
-
-  delta_ticks = lives_get_current_ticks() - last_check_ticks;
-  g_print("delta_ticks was %ld\n", delta_ticks);
-
-  if (delta_ticks < 100) {
-    // too quick, run more idleloops
-    load_check_count *= 2;
-    return TRUE;
-  }
-
-  // reset to timer
-  mainw->loadmeasure = lives_timer_add(ME_DELAY, load_measure_idle, NULL);
-  add_idle = TRUE;
-
-  //load_count /= rescale;
-  tchecks += (int64_t)load_count;
-  total_check += delta_ticks;
-
-  capable->time_per_idle = (double)delta_ticks / (double)load_count / TICKS_PER_SECOND_DBL;
-
-  fprintf(stderr, "%.3f %ld %ld\n", capable->time_per_idle, delta_ticks, load_count);
-
-  if (capable->time_per_idle > 0.) {
-    int64_t nload_check_count;
-    nload_check_count = 1. + check_time / capable->time_per_idle;
-    load_check_count = nload_check_count;
-    if (nload_check_count > 1.5 * load_check_count) load_check_count = 1.5 * load_check_count;
-  }
-  if (nchecks > N_QUICK_CHECKS - 1) {
-    // variance tells us the ratio of delta time to the current target time
-    // if this is very large or small we ignore this check. For example when playing the, idlefunc is not called so time
-    // passes without any checking, producing false results.
-    variance = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
-    if (variance < .8) {
-      rescale = variance;
-      check_time = 1;
-      return TRUE;
-    }
-    if (variance > VAR_MAX || variance < VAR_MIN) {
-      double load_value = LOAD_SCALING / (double)load_count * check_time;
-      double tvar = (double)delta_ticks / (check_time * TICKS_PER_SECOND_DBL);
-      double cvar = (double)delta_ticks / (double)load_count / (tpi * TICKS_PER_SECOND_DBL);
-      if (xlvariance > 0. && variance < xlvariance && variance * xlvariance > .95) {
-        LIVES_INFO("Spike value detected");
-        spike = TRUE;
-      }
-      if (variance > lvariance) {
-        xlvariance = variance;
-      } else xlvariance = 0.;
-      lvariance = variance;
-      msg = lives_strdup_printf("Load value is %.3f, avg is %3.f, total loops = %ld\nVariance was %.3f, so ignoring this value."
-                                "time variance was %f and count variance was %f",
-                                load_value, capable->avg_load, tchecks, variance, tvar, cvar);
-      LIVES_INFO(msg);
-      g_free(msg);
-      if (spike) {
-        if (varcount > 0) varcount--;
-      } else {
-        varcount++;
-        xvardecay = 0;
-        if (varcount > cstate_limit) {
-          if (cstate == -1.) {
-            cstate = cvar;
-            cstate_count = 1;
-          } else {
-            if ((cvar > cstate && cstate / cvar > varratio) || (cvar < cstate && cvar / cstate > varratio)) {
-              cstate_count++;
-              if (cstate_count >= cstate_reset) {
-                // reset avg
-                nchecks_counted = 0;
-                capable->avg_load = load_value;
-                cstate_count = 0;
-                varcount = 0;
-                cstate = -1;
-                LIVES_INFO("Load average was reset.");
-              } else {
-                if (cstate_count > 0) {
-                  cstate_count--;
-                }
-                if (cstate_count == 0) {
-                  cstate = cvar;
-                  cstate_count = 1;
-		  // *INDENT-OFF*
-                }}}}}}
-      // *INDENT-ON*
-
-      // check for periodic variance
-      if (varticks > 0) {
-        vardelta = last_check_ticks + delta_ticks - varticks;
-        if (varperiod == 0) {
-          varperiod = vardelta;
-          xnvarperiod = nvarperiod;
-        } else {
-          if ((varperiod > vardelta && (double)vardelta / (double)varperiod > perratio) ||
-              (vardelta <= varperiod && (double)vardelta / (double)varperiod > perratio)) {
-            xnvarperiod++;
-            if (spike) nvarperiod++;
-            if (xnvarperiod == 6) {
-              msg = lives_strdup_printf("Possible periodic variance with time %.3f\n", varperiod / TICKS_PER_SECOND_DBL);
-              LIVES_INFO(msg);
-              lives_free(msg);
-            }
-          } else {
-            if (xnvarperiod > 0) {
-              xnvarperiod--;
-              if (xnvarperiod == 0) {
-                varperiod = vardelta;
-		// *INDENT-OFF*
-              }}}}}
-      // *INDENT-ON*
-
-      varticks = last_check_ticks + delta_ticks;
-    } else {
-      if (nchecks > 0 && nchecks != 0) {
-        varcount--;
-        xvardecay++;
-        if (xvardecay >= vardecay) {
-          cstate = -1.;
-          cstate_count = 0;
-          varcount = 0;
-        }
-        capable->load_value = LOAD_SCALING / (double)load_count * check_time;
-        if (capable->load_value < lload) lload = capable->load_value;
-        if (capable->load_value > hload) hload = capable->load_value;
-        capable->avg_load = (capable->avg_load * (double)nchecks_counted + capable->load_value) / (double)(nchecks_counted + 1.);
-        msg = lives_strdup_printf("Load value is %.3f (%.3f - %.3f), avg is %3.f (%.3f - %.3f), total loops = %ld, variance was %.3f",
-                                  capable->load_value, lload, hload, capable->avg_load, low_avg, high_avg, tchecks, variance);
-        LIVES_INFO(msg);
-        g_free(msg);
-        nchecks_counted++;
-        //if (nchecks_counted > 6) {
-        if (capable->avg_load > high_avg) high_avg = capable->avg_load;
-        if (capable->avg_load < low_avg) low_avg = capable->avg_load;
-        //}
-      }
-    }
-  }
-  load_count = 0;
-  last_check_ticks += delta_ticks;
-  nchecks++;
-
-#endif
-  return FALSE;
-}
-
+//// AUTO-TUNING ///////
 
 struct _decomp {
   uint64_t value;
@@ -611,8 +378,21 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
       haslock = TRUE;
     }
   }
-  if (n >= 32 && n <= maxbytes) {
-    if (haslock) autotune_u64(tuner, 16, 1024 * 1024, 128, 1. / (double)n);
+
+  if (maxbytes > 0 ? n <= maxbytes : n >= -maxbytes) {
+    /// autotuning: first of all we provide the tuning parameters:
+    /// (opaque) weed_plant_t *tuner, (int64_t)min range, (int64_t)max range, (int)ntrials,(double) cost
+    /// the tuner will time from here until autotune_end and multiply the cost by the time
+    /// we also reveal the value of the variable in autotune_end
+    /// the tuner will run this ntrials times, then select a new value for the variable which is returned
+    /// the costs for each value are totalled and averaged and finally the value with the lowest average cost / time is selected
+    /// in this case what we are tuning is the bytesize threshold to select between one memory allocation function and another
+    /// the cost in both cases is defined is 1.0 / n where n is the block size.
+    /// The cost is the same for both functions - since time is also a factor
+    /// the value should simply be the one with the lowest time per byte
+    /// obviously this is very simplistic since there are many other costs than simply the malloc time
+    /// however, it is a simple matter to adjust the cost calculation
+    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, 1. / (double)n);
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
 
     if (haslock) {
@@ -622,7 +402,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
     }
     return dest;
   }
-  if (haslock) autotune_u64(tuner, 16, 1024 * 1024, 128, -1. / (double)n);
+  if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, -1. / (double)n);
   memcpy(dest, src, n);
   if (haslock) {
     maxbytes = autotune_u64_end(&tuner, maxbytes);
@@ -661,6 +441,7 @@ livespointer proxy_realloc(livespointer ptr, size_t new_size) {
 void *_ext_malloc(size_t n) {
   return (n == 0 ? NULL : lives_malloc(n));
 }
+
 void *_ext_malloc_and_copy(size_t bsize, const void *block) {
   if (!block || bsize == 0) return NULL;
 #ifdef lives_malloc_and_copy
@@ -668,6 +449,7 @@ void *_ext_malloc_and_copy(size_t bsize, const void *block) {
 #endif
   return (_cpy_if_nonnull(malloc(bsize), block, bsize));
 }
+
 void _ext_unmalloc_and_copy(size_t bsize, void *p) {
   if (!p || bsize == 0) return;
 #ifdef lives_unmalloc_and_copy
@@ -676,6 +458,7 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
   _ext_free(p);
 #endif
 }
+
 void _ext_free(void *p) {
   if (p) lives_free(p);
 }
@@ -954,7 +737,7 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_current_ticks(void) {
 }
 
 
-char *lives_datetime(struct timeval * tv) {
+char *lives_datetime(struct timeval *tv) {
   char buf[128];
   char *datetime = NULL;
   struct tm *gm = gmtime(&tv->tv_sec);
@@ -1212,7 +995,7 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
 }
 
 ///////// thread pool ////////////////////////
-#define TUNE_MALLOPT 1
+//#define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
 static int npoolthreads;
 static pthread_t **poolthrds;
@@ -1249,24 +1032,24 @@ static void *thrdpool(void *arg) {
       if (twork_first == list) twork_first = NULL;
       twork_last = list->prev;
       if (twork_last != NULL) twork_last->next = NULL;
+      pthread_mutex_unlock(&twork_mutex);
+
       mywork = (thrd_work_t *)list->data;
+
 #ifdef TUNE_MALLOPT
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         if (mtuner) {
-          mywork->flags |= 1;
+          mywork->flags |= LIVES_THRDFLAG_TUNING;
           autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
                        + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
         }
       }
 #endif
 
-      pthread_mutex_unlock(&twork_mutex);
-      list->prev = list->next = NULL;
-      mywork->busy = myidx + 1;
       (*mywork->func)(mywork->arg);
 
 #ifdef TUNE_MALLOPT
-      if (mywork->flags & 1) {
+      if (mywork->flags & LIVES_THRDFLAG_TUNING) {
         if (mtuner) {
           size_t onarenas = narenas;
           narenas = autotune_u64_end(&mtuner, narenas);
@@ -1290,11 +1073,13 @@ static void *thrdpool(void *arg) {
 
       pthread_mutex_lock(&twork_mutex);
       ntasks--;
-      pthread_mutex_lock(&mywork->cond_mutex);
-      pthread_cond_signal(&mywork->cond);
-      pthread_mutex_unlock(&mywork->cond_mutex);
-      mywork->done = myidx + 1;
       pthread_mutex_unlock(&twork_mutex);
+      if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
+        lives_free(mywork);
+        lives_free(list);
+      } else {
+        mywork->done = myidx + 1;
+      }
     }
   }
   return NULL;
@@ -1320,6 +1105,49 @@ void lives_threadpool_init(void) {
 }
 
 
+void *_plant_thread_func(void *args) {
+  weed_plant_t *info = (weed_plant_t *)args;
+  weed_funcptr_t func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
+  if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM0)) {
+    (*func)();
+    weed_plant_free(info);
+    return NULL;
+  }
+  switch (weed_leaf_seed_type(info, WEED_LEAF_THREAD_PARAM0)) {
+  case WEED_SEED_VOIDPTR:
+    if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM1)) {
+      (*func)(weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM0, NULL));
+      break;
+    }
+    switch (weed_leaf_seed_type(info, WEED_LEAF_THREAD_PARAM1)) {
+    case WEED_SEED_VOIDPTR:
+      if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM2)) {
+        (*func)(weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM0, NULL),
+                weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, NULL));
+        break;
+      }
+    // etc.
+    default:
+      break;
+    }
+  default:
+    break;
+  }
+  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL)) weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
+  else weed_plant_free(info);
+  return NULL;
+}
+
+
+boolean run_as_thread(weed_plant_t *info) {
+  /// run any function as a thread
+  lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+  lives_thread_attr_t attr = LIVES_THRDATTR_AUTODELETE;
+  lives_thread_create(thread, &attr, _plant_thread_func, (void *)info);
+  return TRUE;
+}
+
+
 void lives_threadpool_finish(void) {
   threads_die = TRUE;
   pthread_mutex_lock(&tcond_mutex);
@@ -1341,22 +1169,33 @@ void lives_threadpool_finish(void) {
 }
 
 
-int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func, void *arg) {
+int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg) {
   LiVESList *list = (LiVESList *)thread;
-  thrd_work_t *work;
-  list->data = work = (thrd_work_t *)lives_calloc(1, sizeof(thrd_work_t));
+  thrd_work_t *work = (thrd_work_t *)lives_calloc(1, sizeof(thrd_work_t));
+  if (!thread) list = (LiVESList *)lives_calloc(1, sizeof(LiVESList));
+  list->data = work;
   list->prev = NULL;
   work->func = func;
   work->arg = arg;
-  pthread_cond_init(&work->cond, NULL);
-  pthread_mutex_init(&work->cond_mutex, NULL);
+  if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE))) work->flags |= LIVES_THRDFLAG_AUTODELETE;
 
   pthread_mutex_lock(&twork_mutex);
-  if (twork_first != NULL) twork_first->prev = list;
-  list->next = twork_first;
-  twork_first = list;
-  if (twork_last == NULL) twork_last = list;
+  if (twork_first == NULL) {
+    twork_first = twork_last = list;
+  } else {
+    if (!attr || !(*attr & LIVES_THRDATTR_PRIORITY)) {
+      twork_first->prev = list;
+      list->next = twork_first;
+      twork_first = list;
+    } else {
+      twork_last->next = list;
+      list->prev = twork_last;
+      twork_last = list;
+    }
+  }
   if (++ntasks > npoolthreads) {
+    pthread_mutex_unlock(&twork_mutex);
+
     poolthrds = (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
@@ -1372,8 +1211,7 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
       mtuned = FALSE;
     }
 #endif
-  }
-  pthread_mutex_unlock(&twork_mutex);
+  } else pthread_mutex_unlock(&twork_mutex);
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
@@ -1382,25 +1220,19 @@ int lives_thread_create(lives_thread_t *thread, void *attr, lives_funcptr_t func
 
 
 int lives_thread_join(lives_thread_t work, void **retval) {
-  struct timespec ts;
   thrd_work_t *task = (thrd_work_t *)work.data;
-  while (!task->busy) {
-    sched_yield();
-    lives_usleep(1000);
+  int nthrd = 0;
+  if (task->flags & LIVES_THRDFLAG_AUTODELETE) {
+    LIVES_FATAL("lives_thread_join() called on an autodelete thread");
+    return 0;
   }
-  while (!task->done) {
-    clock_gettime(CLOCK_REALTIME, &ts);
-    ts.tv_nsec += 1000000;
-    pthread_mutex_lock(&task->cond_mutex);
-    pthread_cond_timedwait(&task->cond, &task->cond_mutex, &ts);
-    pthread_mutex_unlock(&task->cond_mutex);
-    sched_yield();
-  }
-  if (retval != NULL) *retval = task->ret;
-  pthread_mutex_lock(&twork_mutex);
+
+  lives_nanosleep_until_nonzero(task->done);
+  nthrd = task->done;
+
+  if (retval) *retval = task->ret;
   lives_free(task);
-  pthread_mutex_unlock(&twork_mutex);
-  return 0;
+  return nthrd;
 }
 
 LIVES_GLOBAL_INLINE void lives_srandom(unsigned int seed) {
@@ -1653,14 +1485,14 @@ void update_effort(int nthings, boolean badthings) {
 
   if (!inited) reset_effort();
   if (!nthings) return;
-
+  //g_print("VALS %d %d %d %d %d\n", nthings, badthings, mainw->effort, badthingcount, goodthingcount);
   if (badthings)  {
     badthingcount += nthings;
     goodthingcount = 0;
     spcycles = -1;
   } else {
     spcycles = nthings;
-    if (spcycles > EFFORT_RANGE_MAX) spcycles = EFFORT_RANGE_MAX;
+    if (spcycles + goodthingcount > EFFORT_RANGE_MAX) spcycles = EFFORT_RANGE_MAX - goodthingcount;
     goodthingcount += spcycles;
     if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
     nthings = 1;
@@ -1668,28 +1500,40 @@ void update_effort(int nthings, boolean badthings) {
 
   while (nthings-- > 0) {
     if (flowlen >= EFFORT_RANGE_MAX) {
+      /// +1 for each badthing, so when it pops out we subtract it
       int res = pop_flowstate();
       if (res > 0) badthingcount -= res;
-      else goodthingcount -= res;
+      else goodthingcount += res;
+      //g_print("vals %d %d %d  ", res, badthingcount, goodthingcount);
     }
+    /// - all the good things, so when it pops out we add it (i.e subtract the value)
     theflow[flowlen] = -spcycles;
     flowlen++;
   }
 
-  if (!badthings) {
+  if (!badthingcount) {
+    /// no badthings, good
+    if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
     mainw->effort = -goodthingcount;
   } else {
+    if (badthingcount > EFFORT_RANGE_MAX) badthingcount = EFFORT_RANGE_MAX;
     mainw->effort = badthingcount;
   }
+  //g_print("vals2 %d %d %d\n", mainw->effort, badthingcount, goodthingcount);
 
   if (mainw->effort < 0) {
     if (struggling) {
       struggling += ((mainw->effort | 16) >> 4);
       if (struggling < 0) struggling = 0;
     } else {
-      if (prefs->pb_quality < PB_QUALITY_HIGH) {
-        prefs->pb_quality++;
-        mainw->blend_palette = WEED_PALETTE_END;
+      if (mainw->effort < -EFFORT_LIMIT_MED) {
+        if (prefs->pb_quality < PB_QUALITY_HIGH) {
+          prefs->pb_quality++;
+          mainw->blend_palette = WEED_PALETTE_END;
+        } else if (prefs->pb_quality < PB_QUALITY_MED) {
+          prefs->pb_quality++;
+          mainw->blend_palette = WEED_PALETTE_END;
+        }
       }
     }
   }
@@ -1704,21 +1548,25 @@ void update_effort(int nthings, boolean badthings) {
       struggling = 1;
       return;
     }
-    if (mainw->effort > EFFORT_LIMIT_MED || (struggling && (mainw->effort > -EFFORT_LIMIT_LOW))) {
+    if (mainw->effort > EFFORT_LIMIT_MED || (struggling && (mainw->effort > EFFORT_LIMIT_LOW))) {
       if (struggling < EFFORT_RANGE_MAX) struggling++;
-      if (struggling > EFFORT_LIMIT_MED) {
+      if (struggling == EFFORT_RANGE_MAX) {
         if (prefs->pb_quality > PB_QUALITY_LOW) {
-          prefs->pb_quality = PB_QUALITY_LOW;
+          prefs->pb_quality--;
           mainw->blend_palette = WEED_PALETTE_END;
         }
-      } else {
-        if (future_prefs->pb_quality > PB_QUALITY_LOW) {
-          if (prefs->pb_quality >= future_prefs->pb_quality) {
-            prefs->pb_quality = future_prefs->pb_quality - 1;
+        if (mainw->effort > EFFORT_LIMIT_MED) {
+          if (prefs->pb_quality > PB_QUALITY_LOW) {
+            prefs->pb_quality--;
             mainw->blend_palette = WEED_PALETTE_END;
           }
-        } else if (prefs->pb_quality > PB_QUALITY_LOW) {
-          prefs->pb_quality = PB_QUALITY_LOW;
+        }
+      } else {
+        if (prefs->pb_quality > future_prefs->pb_quality) {
+          prefs->pb_quality = future_prefs->pb_quality;
+          mainw->blend_palette = WEED_PALETTE_END;
+        } else if (future_prefs->pb_quality > PB_QUALITY_LOW) {
+          prefs->pb_quality = future_prefs->pb_quality - 1;
           mainw->blend_palette = WEED_PALETTE_END;
         }
 	// *INDENT-OFF*

@@ -51,7 +51,7 @@ my $MYNAME = $0;
 # Do not change these except for testing !
 
 my $background = 1;
-my $version = "3.0.3-pre";
+my $version = "3.2.0-pre";
 #my $dyneversion="LIVES-20091209";
 
 ###################################################################
@@ -4743,11 +4743,11 @@ if (defined($ARGV[0])) {
 
 	my $fsize = -s  $audio;
 	unless ($mstcopy) {
-	    &smog_rename($audio. $audio_bak);
+	    &smog_rename($audio, $audio_bak);
 	}
 	else {
 	    &clean_old;
-	    &smog_copy($audio. $audio_bak);
+	    &smog_copy($audio, $audio_bak);
 	    return if $panic;
 	}
 
@@ -9270,9 +9270,11 @@ sub weed {
                         unless ($opts & 0x02) {
                             unless (-f "$workdir/$file/noprune") {
 				print STDERR "smogrify: removing unnecessary files from $workdir/$file\n";
+				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
                                 &smog_chdir("$workdir/$file");
 				&prune;
 				print STDERR "smogrify: removing lock.* files from $workdir/$file\n";
+				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
 				unlink glob "$workdir/$file/lock.*";
                                 &smog_chdir($workdir);
                             }
@@ -9291,6 +9293,7 @@ sub weed {
                     if (!$in_set) {
 			print STDERR "smogrify: file does not contain set.* file, assuming it is not in a set\n";
 			if (!($opts & 0x01)) {
+			    print STDERR "\nsmogrify: option 0x01 is not set, so\n";
 			    print STDERR "considering $workdir/$file for removal\n";
 			    my $has_hdrs = 0;
 			    unless ($opts & 0x20) {
@@ -9341,6 +9344,7 @@ sub weed {
 			    print STDERR "smogrify: $file contains set.* file, assuming it is in a set\n";
                             unless (-f "$workdir/$file/noprune") {
 				print STDERR "smogrify: removing unnecessary files from directory\n";
+				print STDERR "\nsmogrify: (can be overriden with option 0x02)\n";
                                 &smog_chdir("$workdir/$file");
 				&prune;
 				&smog_chdir($workdir);
@@ -9362,6 +9366,7 @@ sub weed {
                 unless ($opts & 0x08) {
 		    if (-d "$workdir/$file") {
 			print STDERR "smogrify: removing temporary marker files set. and noprune from $workdir/$file\n";
+			print STDERR "\nsmogrify: (can be overriden with option 0x08)\n";
 			unlink "$workdir/$file/set.";
 			unlink "$workdir/$file/noprune";
 		    }
@@ -9381,13 +9386,22 @@ sub weed {
 	# clean up a few extra remnants
 	&smog_chdir($workdir);
 	print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.* and keep_layout* from $workdir\n";
+	print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
+	unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*";
+
+	print STDERR "\nsmogrify: removing rfx.* .smogplugin.* .smogval.* .rfx.* .info.* and keep_layout* from $workdir\n";
+	print STDERR "\nsmogrify: (can be overriden with option 0x10)\n";
 	unlink glob "rfx.* .smogplugin.* .smogval.* keep_layout* .rfx* .info.*";
 	unless (!defined($new_work) || $new_work eq "") {
 	    print STDERR "smogrify: removing firew* encoder_log_* and stream.* from $workdir\n";
 	    unlink glob "firew.* encoder_log_* stream.*";
 	}
     }
-
+    unless ($opts & 0x40) {
+	print STDERR "\nsmogrify: removing stale recovery files recorded-layout* from $workdir\n";
+	print STDERR "\nsmogrify: (can be overriden with option 0x40)\n";
+	unlink glob "recorded-layout*";
+    }
     # total disk space at end
 
     #my $end_total = (split / /, (smog_system_direct("du -sb .")))[0];
@@ -9396,7 +9410,11 @@ sub weed {
 
     # return disk space recovered
     #return $start_total - $end_total;
-        return @left;
+    if (@left) {
+	print STDERR "leaving the following files for manual removal\n";
+	print STDERR join("\n", @left);
+    }
+    return @left;
 }
 
 

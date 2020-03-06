@@ -2953,6 +2953,7 @@ void play_file(void) {
 
   disable_record();
   prefs->pb_quality = future_prefs->pb_quality;
+  mainw->lockstats = FALSE;
 
   if (mainw->multitrack == NULL) {
     if (mainw->faded || mainw->fs) {
@@ -3038,6 +3039,7 @@ void play_file(void) {
     int i = LIVES_POINTER_TO_INT(cliplist->data);
     if (IS_NORMAL_CLIP(i) && mainw->files[i]->clip_type == CLIP_TYPE_FILE)
       chill_decoder_plugin(i);
+    mainw->files[i]->adirection = LIVES_DIRECTION_FORWARD;
     cliplist = cliplist->next;
   }
 
@@ -3062,6 +3064,13 @@ void play_file(void) {
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), freeze_closure);
   lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), bg_freeze_closure);
   if (needsadone) d_print_done();
+
+  if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
+    g_print("PRED miss\n");
+    check_layer_ready(mainw->frame_layer_preload);
+    weed_layer_free(mainw->frame_layer_preload);
+  }
+  mainw->frame_layer_preload = NULL;
 
   if (prefs->show_player_stats) {
     if (mainw->fps_measure > 0.) {
@@ -3434,6 +3443,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->arps = 0;
   cfile->afilesize = 0l;
   cfile->asampsize = 0;
+  cfile->adirection = LIVES_DIRECTION_FORWARD;
   cfile->undoable = FALSE;
   cfile->redoable = FALSE;
   cfile->changed = FALSE;
@@ -5882,7 +5892,10 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
     d_print(_("No clips were recovered.\n"));
   }
   d_print(P_("%d clip was recovered ", "%d clips were recovered ", ngoodclips), ngoodclips);
-  d_print(_("from the previous session.\n"));
+  if (recovery_file)
+    d_print(_("from the previous session.\n"));
+  else
+    d_print(_("from previous sessions.\n"));
 
   if (mainw->multitrack == NULL) { // TODO check if we can do this in mt too
     int start_file = mainw->current_file;
@@ -5990,7 +6003,7 @@ boolean rewrite_recovery_file(void) {
         } else if (i == mainw->ascrap_file) {
           recovery_entry = lives_strdup_printf("ascrap|%s\n", sfile->handle);
         } else {
-          if (sfile->was_in_set && strlen(mainw->set_name) > 0) {
+          if (sfile->was_in_set && *mainw->set_name) {
             if (!wrote_set_entry) {
               recovery_entry = lives_build_filename(mainw->set_name, "*\n", NULL);
               wrote_set_entry = TRUE;

@@ -8854,16 +8854,21 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
     lives_printerr("not converting palette\n");
 #endif
     if (!weed_palette_is_yuv(inpl) || (isampling == osampling &&
-                                       (isubspace == osubspace || (osubspace != WEED_YUV_SUBSPACE_BT709)))) return TRUE;
-    if (inpl == WEED_PALETTE_YUV420P && ((isampling == WEED_YUV_SAMPLING_JPEG && osampling == WEED_YUV_SAMPLING_MPEG) ||
-                                         (isampling == WEED_YUV_SAMPLING_MPEG && osampling == WEED_YUV_SAMPLING_JPEG))) {
-      switch_yuv_sampling(layer);
-    } else {
-      char *tmp2 = lives_strdup_printf("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
-                                       isampling, osampling, isubspace, osubspace, inpl);
-      LIVES_DEBUG(tmp2);
-      lives_free(tmp2);
+                                       (isubspace == osubspace || (osubspace != WEED_YUV_SUBSPACE_BT709)))) {
+      lives_free(istrides);
       return TRUE;
+      if (inpl == WEED_PALETTE_YUV420P && ((isampling == WEED_YUV_SAMPLING_JPEG
+                                            && osampling == WEED_YUV_SAMPLING_MPEG) ||
+                                           (isampling == WEED_YUV_SAMPLING_MPEG && osampling == WEED_YUV_SAMPLING_JPEG))) {
+        switch_yuv_sampling(layer);
+      } else {
+        char *tmp2 = lives_strdup_printf("Switch sampling types (%d %d) or subspace(%d %d): (%d) conversion not yet written !\n",
+                                         isampling, osampling, isubspace, osubspace, inpl);
+        LIVES_DEBUG(tmp2);
+        lives_free(tmp2);
+        lives_free(istrides);
+        return TRUE;
+      }
     }
   }
 
@@ -10464,7 +10469,6 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   return TRUE;
 
 memfail:
-  lives_free(istrides);
   weed_layer_set_palette(layer, inpl);
   weed_layer_set_size(layer, width, height);
   if (gusrc != NULL) {
@@ -10474,6 +10478,7 @@ memfail:
     weed_layer_set_pixel_data(layer, (void **)gusrc_array, nplanes);
     weed_layer_set_rowstrides(layer, istrides, nplanes);
   }
+  lives_free(istrides);
   return FALSE;
 }
 
@@ -10567,14 +10572,13 @@ void gamma_conv_params(int gamma_type, weed_layer_t *inst, boolean is_in) {
     int phint, pcspace, ptype, nvals, qvals;
     int nparms, i, j, k, error;
 
-    if (inst == NULL || !weed_plant_has_leaf(inst, type) || (nparms = weed_leaf_num_elements(inst, type)) == 0) return;
-
-    params = weed_get_plantptr_array(inst, type, &error);
+    if (inst == NULL) return;
+    params = weed_get_plantptr_array_counted(inst, type, &nparms);
+    if (!nparms) return;
 
     for (i = 0; i < nparms; i++) {
       param = params[i];
-      if (!weed_plant_has_leaf(param, WEED_LEAF_VALUE)
-          || (nvals = weed_leaf_num_elements(param, WEED_LEAF_VALUE)) == 0) continue;
+      if (!(nvals = weed_leaf_num_elements(param, WEED_LEAF_VALUE))) continue;
       ptmpl = weed_get_plantptr_value(param, WEED_LEAF_TEMPLATE, &error);
       phint = weed_get_int_value(ptmpl, WEED_LEAF_HINT, &error);
       if (phint != WEED_HINT_COLOR) continue;
@@ -10959,12 +10963,12 @@ boolean compact_rowstrides(weed_layer_t *layer) {
 }
 
 
-
 static void *swscale_threadfunc(void *arg) {
   lives_sw_params *swparams = (lives_sw_params *)arg;
   if (swparams->layer) {
     int last = swparams->iheight * (swparams->thread_id + 1), scan;
-    while ((scan = weed_get_int_value(swparams->layer, "progscan", NULL)) > 0 && scan - 2 < last) lives_usleep(10);
+    while ((scan = weed_get_int_value(swparams->layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan - 2 < last)
+      lives_nanosleep(1000);
   }
   swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);

@@ -11234,6 +11234,7 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
+    g_main_context_acquire(g_main_context_get_thread_default());
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
         g_main_context_iteration(NULL, FALSE);
@@ -11247,7 +11248,7 @@ boolean lives_widget_context_update(void) {
           /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
           /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
-          lives_usleep(100);
+          lives_nanosleep(100000);
         }
       }
       if (loops > 1000 && !mainw->gui_fooey) {
@@ -11265,7 +11266,7 @@ boolean lives_widget_context_update(void) {
           if (ev != NULL)
             g_print("last was %d\n", ev->type);
         }
-        //if (ev != NULL && ev->type == 8) nulleventcount = 0;
+        if (ev != NULL && ev->type == 8) nulleventcount = 0;
         break;
       }
       if (ev != NULL) {
@@ -11298,6 +11299,7 @@ boolean lives_widget_context_update(void) {
   /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
   /*   } */
   /* } */
+  g_main_context_release(g_main_context_get_thread_default());
   mainw->noswitch = FALSE;
   return TRUE;
 }

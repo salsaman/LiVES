@@ -186,6 +186,8 @@ boolean weed_palette_is_painter_palette(int pal);
 lives_painter_t *layer_to_lives_painter(weed_layer_t *);
 boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
 
+#define WEED_LEAF_PROGSCAN "progscan"
+
 // pixbuf functions
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)
 boolean lives_pixbuf_is_all_black(LiVESPixbuf *pixbuf);

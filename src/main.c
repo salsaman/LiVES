@@ -1347,6 +1347,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->pred_clip = 0;
 
   mainw->lockstats = FALSE;
+
+  mainw->audio_stretch = 1.0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -3414,7 +3416,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifndef IS_LIBLIVES
   // start up the Weed system
-  werr = weed_init(WEED_API_VERSION);
+  werr = weed_init(WEED_ABI_VERSION, 0);
   if (werr != WEED_SUCCESS) {
     LIVES_FATAL("Failed to init Weed");
     lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
@@ -5567,18 +5569,16 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     }
   }
 
-  if (!png_get_interlace_type(png_ptr, info_ptr)) {
-    boolean presize = FALSE;
-    if (0 && twidth * theight != 0 && (twidth != width || theight != height)) {
-      weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
-      reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality), tpalette, weed_layer_get_yuv_clamping(layer));
-      presize = TRUE;
-    }
+  if (twidth * theight != 0 && (twidth != width || theight != height) && !png_get_interlace_type(png_ptr, info_ptr)) {
+    weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
+    reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality), tpalette, weed_layer_get_yuv_clamping(layer));
     for (int j = 0; j < height; j++) {
       png_read_row(png_ptr, row_ptrs[j], NULL);
-      if (presize) weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
+      pthread_rwlock_wrlock(&mainw->progscan_lock);
+      weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
+      pthread_rwlock_unlock(&mainw->progscan_lock);
     }
-    if (presize) weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
+    weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
   } else {
     png_read_image(png_ptr, row_ptrs);
   }
@@ -6539,18 +6539,22 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 	  render_text_overlay(layer, mainw->urgency_msg);
 	  if (prefs->render_overlay && mainw->record && !mainw->record_paused) {
 	    weed_plant_t *event = get_last_event(mainw->event_list);
-	    if (WEED_EVENT_IS_FRAME(event)) weed_set_string_value(event, "overlay_text", mainw->urgency_msg);
+	    if (WEED_EVENT_IS_FRAME(event)) weed_set_string_value(event, WEED_LEAF_OVERLAY_TEXT, mainw->urgency_msg);
 	  }
 	}
 	return TRUE;
       }
       else {
-	ticks_t timeout = lives_alarm_check(LIVES_URGENCY_ALARM);
-	if (timeout == 0) lives_freep((void **)&mainw->urgency_msg);
-	else {
-	  render_text_overlay(layer, mainw->urgency_msg);
-	  return TRUE;
+	if (!mainw->preview_rendering) {
+	  ticks_t timeout = lives_alarm_check(LIVES_URGENCY_ALARM);
+	  if (timeout == 0) {
+	    lives_freep((void **)&mainw->urgency_msg);
+	    return FALSE;
+	  }
 	}
+	render_text_overlay(layer, mainw->urgency_msg);
+	if (mainw->preview_rendering) lives_freep((void **)&mainw->urgency_msg);
+	return TRUE;
       }
     }
     return FALSE;
@@ -7731,7 +7735,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
         do {
           // TODO ***: add a timeout here
           if (gerror != NULL) lives_error_free(gerror);
-          lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, &gerror);
+          lives_pixbuf_save(pixbuf, fname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &gerror);
         } while (gerror != NULL);
 
         lives_painter_set_source_pixbuf(cr, pixbuf, 0, 0);
@@ -7811,20 +7815,29 @@ lfi_done:
 
   /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
 
-  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr) {
-    int fd;
+  boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, int width, int height,
+                            LiVESError **gerrorptr) {
     ticks_t timeout;
     lives_alarm_t alarm_handle;
-    // CALLER should check for errors
+    boolean retval = TRUE;
+    int fd;
 
+    // CALLER should check for errors
     // fname should be in local charset
+
+    if (!LIVES_IS_PIXBUF(pixbuf)) {
+      /// invalid pixbef, we will save a blank image
+      const char *img_ext = get_image_ext_for_type(imgtype);
+      weed_layer_t  *layer = create_blank_layer(NULL, img_ext, width, height, WEED_PALETTE_END);
+      pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
+      weed_layer_free(layer);
+      retval = FALSE;
+    }
 
     fd = lives_open3(fname, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
     alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
     while (flock(fd, LOCK_EX) && (timeout = lives_alarm_check(alarm_handle)) > 0) {
-      lives_widget_context_update();
-      sched_yield();
-      lives_usleep(prefs->sleep_time);
+      lives_nanosleep(1000);
     }
     lives_alarm_clear(alarm_handle);
     if (timeout == 0) return FALSE;
@@ -7840,12 +7853,14 @@ lfi_done:
       lives_free(qstr);
     } else if (imgtype == IMG_TYPE_PNG) {
       char *cstr = lives_strdup_printf("%d", (int)((100. - (double)quality + 5.) / 10.));
+      if (LIVES_IS_PIXBUF(pixbuf)) {
 #ifdef GUI_GTK
-      gdk_pixbuf_save(pixbuf, fname, LIVES_IMAGE_TYPE_PNG, gerrorptr, "compression", cstr, NULL);
+        gdk_pixbuf_save(pixbuf, fname, LIVES_IMAGE_TYPE_PNG, gerrorptr, "compression", cstr, NULL);
 #endif
 #ifdef GUI_QT
-      qt_png_save(pixbuf, fname, gerrorptr, (int)((100. - (double)quality + 5.) / 10.));
+        qt_png_save(pixbuf, fname, gerrorptr, (int)((100. - (double)quality + 5.) / 10.));
 #endif
+      } else retval = FALSE;
       lives_free(cstr);
     } else {
       //gdk_pixbuf_save_to_callback(...);
@@ -7853,13 +7868,14 @@ lfi_done:
 
     close(fd);
     if (*gerrorptr != NULL) return FALSE;
-    return TRUE;
+    return retval;
   }
 
 
   void  *lives_pixbuf_save_threaded(void *args) {
     savethread_priv_t *saveargs = (savethread_priv_t *)args;
-    lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, &saveargs->error);
+    lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, saveargs->width,
+                      saveargs->height, &saveargs->error);
     return saveargs;
   }
 
@@ -8323,11 +8339,11 @@ lfi_done:
     lives_alarm_t alarm_handle;
     weed_plant_t *event;
 
-    if (CLIP_HAS_AUDIO(new_file)) {
-      mainw->files[new_file]->aseek_pos += (off64_t)((double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                                           * mainw->files[new_file]->arate) * mainw->files[new_file]->achans
-                                           * mainw->files[new_file]->asampsize / 8;
-    }
+    /* if (CLIP_HAS_AUDIO(new_file)) { */
+    /*   mainw->files[new_file]->aseek_pos += (off64_t)((double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL */
+    /*                                        * mainw->files[new_file]->arate) * mainw->files[new_file]->achans */
+    /*                                        * mainw->files[new_file]->asampsize / 8; */
+    /* } */
     if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL) {
@@ -8407,7 +8423,7 @@ lfi_done:
         jack_message2.command = ASERVER_CMD_FILE_SEEK;
         jack_message.next = &jack_message2;
         jack_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
-        jack_message2.tc = mainw->startticks;
+        if (LIVES_IS_PLAYING && !mainw->preview) jack_message2.tc = lives_get_current_ticks();
         jack_message2.next = NULL;
 
         mainw->jackd->msgq = &jack_message;
@@ -8422,7 +8438,7 @@ lfi_done:
                                 / (double)mainw->files[new_file]->arps);
 
       } else {
-        mainw->rec_aclip = mainw->jackd->playing_file;
+        mainw->rec_aclip = mainw->playing_file;
         mainw->rec_avel = 0.;
         mainw->rec_aseek = 0.;
       }
@@ -8461,8 +8477,7 @@ lfi_done:
           alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
           while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
             // wait for seek
-            sched_yield();
-            lives_usleep(prefs->sleep_time);
+            lives_nanosleep(1000);
           }
           lives_alarm_clear(alarm_handle);
           if (timeout == 0)  {
@@ -8511,7 +8526,7 @@ lfi_done:
           pulse_message.data = lives_strdup_printf("%d", new_file);
 
           pulse_message2.command = ASERVER_CMD_FILE_SEEK;
-          if (LIVES_IS_PLAYING) pulse_message2.tc = mainw->startticks;
+          if (LIVES_IS_PLAYING && !mainw->preview) pulse_message2.tc = lives_get_current_ticks();
           pulse_message.next = &pulse_message2;
           pulse_message2.data = lives_strdup_printf("%"PRId64, mainw->files[new_file]->aseek_pos);
           pulse_message2.next = NULL;
@@ -8525,13 +8540,10 @@ lfi_done:
                                            / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                   / (double)mainw->files[new_file]->arps);
         } else {
-          mainw->rec_aclip = mainw->pulsed->playing_file;
+          mainw->rec_aclip = mainw->playing_file;
           mainw->rec_avel = 0.;
           mainw->rec_aseek = 0.;
         }
-        event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
-        mainw->rec_aclip = -1;
       }
 #endif
     }
@@ -8614,16 +8626,39 @@ lfi_done:
 
     mainw->switch_during_pb = TRUE;
     mainw->clip_switched = TRUE;
-    chill_decoder_plugin(mainw->current_file);
 
-    if (CURRENT_CLIP_IS_VALID && mainw->effort > 0) area = cfile->hsize * cfile->vsize * cfile->pb_fps;
+    if (CURRENT_CLIP_IS_VALID) {
+      chill_decoder_plugin(mainw->current_file);
+
+      if (mainw->files[new_file]->pb_fps != cfile->pb_fps && fabs(mainw->files[new_file]->pb_fps) > .001
+          && !mainw->files[new_file]->play_paused) {
+        /// we must scale the frame delta, since e.g if we were a halfway through the frame and the fps increased,
+        /// we could end up jumping several frames
+        ticks_t delta_ticks = (mainw->currticks - mainw->startticks);
+        delta_ticks = (ticks_t)((double)delta_ticks + fabs(cfile->pb_fps / mainw->files[new_file]->pb_fps));
+        /// the time we would shown the last frame at using the new fps
+        mainw->startticks = mainw->currticks - (delta_ticks >> 1);
+      } else mainw->startticks = mainw->currticks;
+
+      if (mainw->effort > 0) area = cfile->hsize * cfile->vsize * cfile->pb_fps;
+    }
 
     mainw->current_file = new_file;
 
-    if (CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
+    if (area > 0 && CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
       if (cfile->hsize * cfile->vsize * cfile->pb_fps < area) {
         reset_effort();
       }
+    }
+
+    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), mainw->files[new_file]->pb_fps);
+    changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
+
+    // switch audio clip
+    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
+                                    || prefs->audio_src == AUDIO_SRC_EXT))) {
+      switch_audio_clip(new_file, TRUE);
     }
 
     mainw->deltaticks = 0;
@@ -8649,23 +8684,12 @@ lfi_done:
     // selection bounds)
     mainw->playing_sel = FALSE;
 
-    lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), cfile->pb_fps);
-    changed_fps_during_pb(LIVES_SPIN_BUTTON(mainw->spinbutton_pb_fps), LIVES_INT_TO_POINTER(1));
-
     if (!cfile->frameno && cfile->frames) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
     cfile->last_frameno = cfile->frameno;
-
-    // switch audio clip
-    if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit
-                                    || prefs->audio_src == AUDIO_SRC_EXT))) {
-      switch_audio_clip(new_file, TRUE);
-    }
 
     mainw->playing_file = new_file;
 
     cfile->next_event = NULL;
-    mainw->startticks = mainw->currticks;
 
 #if GTK_CHECK_VERSION(3, 0, 0)
     if (LIVES_IS_PLAYING && mainw->play_window == NULL && (!IS_VALID_CLIP(old_file)

@@ -11235,6 +11235,7 @@ boolean lives_widget_context_update(void) {
     }
 #ifdef GUI_GTK
     g_main_context_acquire(g_main_context_get_thread_default());
+    g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
         g_main_context_iteration(NULL, FALSE);
@@ -11248,7 +11249,7 @@ boolean lives_widget_context_update(void) {
           /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
           /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
-          lives_nanosleep(100000);
+          lives_nanosleep(10000);
         }
       }
       if (loops > 1000 && !mainw->gui_fooey) {
@@ -11257,17 +11258,19 @@ boolean lives_widget_context_update(void) {
         break;
       }
       //if (!(nulleventcount ^ 7)) mainw->uflow_count++;
-      if (nulleventcount > MAX_NULL_EVENTS && !mainw->gui_fooey) {
+      if (nulleventcount > MAX_NULL_EVENTS) {
         // there are various reasons we can get here:
         // - user is holding down a key (e.g. "s") during playback (MAX_NULL_EVENTS is set sufficiently high that a single key press
         // should not trigger this)
-        if (prefs->show_dev_opts) {
-          g_print("too many X events !\n");
-          if (ev != NULL)
-            g_print("last was %d\n", ev->type);
+        if (mainw->gui_fooey || (ev != NULL && ev->type == 8)) nulleventcount = 0;
+        else {
+          if (prefs->show_dev_opts) {
+            g_print("too many X events !\n");
+            if (ev != NULL)
+              g_print("last was %d\n", ev->type);
+          }
+          break;
         }
-        if (ev != NULL && ev->type == 8) nulleventcount = 0;
-        break;
       }
       if (ev != NULL) {
         //g_print("got ev type %d, nev is %d\n", ev->type, nulleventcount);
@@ -11275,21 +11278,14 @@ boolean lives_widget_context_update(void) {
             ev->type != GDK_KEY_PRESS && ev->type != GDK_KEY_RELEASE)
           nulleventcount = 0;
       }
-      //if (pthread_mutex_trylock(&mainw->gtk_mutex)) break;
-      /* if (!mainw->loadmeasure_reset) { */
-      /* 	lives_source_remove(mainw->loadmeasure); */
-      /* 	mainw->loadmeasure = 0; */
-      /* 	lm_needs_idlefunc = TRUE; */
-      /* } */
       g_main_context_iteration(NULL, FALSE);
-      //sched_yield();
-      //pthread_mutex_unlock(&mainw->gtk_mutex);
     }
 #endif
     if (!mainw->is_exiting && LIVES_IS_PLAYING && loops > 2) {
-      lives_usleep(100);
+      lives_nanosleep(100000);
     }
   }
+  g_main_context_iteration(NULL, FALSE);
   if (!mainw->is_exiting && mt_needs_idlefunc) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
@@ -11299,7 +11295,7 @@ boolean lives_widget_context_update(void) {
   /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
   /*   } */
   /* } */
-  g_main_context_release(g_main_context_get_thread_default());
+  // g_main_context_release(g_main_context_get_thread_default());
   mainw->noswitch = FALSE;
   return TRUE;
 }

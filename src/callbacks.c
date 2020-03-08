@@ -4929,8 +4929,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    g_print("RESYN to %d\n", cfile->frameno);
-    resync_audio((double)cfile->frameno);
+    resync_audio((double)cfile->frameno + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)
+                 - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->pb_fps);
   }
 
   // change play direction
@@ -10234,7 +10234,8 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
   cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
-  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (LIVES_IS_PLAYING) mainw->scratch = SCRATCH_JUMP;
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10711,8 +10712,9 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 #endif
   } else return FALSE;
 
-  avsync -= (mainw->actual_frame - 1.) / cfile->fps
-            + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)  - mainw->startticks)
+
+  avsync -= (cfile->frameno - 1.) / cfile->fps
+            + (double)(mainw->currticks  - mainw->startticks)
             / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
 
   last_dprint_file = mainw->last_dprint_file;

@@ -48,12 +48,13 @@ extern "C"
 
 /* API / ABI version * 200 */
 #define WEED_ABI_VERSION 		200
-#define WEED_ABI_VERSION_200  	// do not remove this, even in higher versions
 #define WEED_API_VERSION 		WEED_ABI_VERSION
-#define WEED_API_VERSION_200  	WEED_ABI_VERSION_200 // do not remove this, even in higher versions
 
 #define WEED_TRUE	1
 #define WEED_FALSE	0
+
+#define WEED_ABI_CHECK_VERSION(version) (WEED_ABI_VERSION  >= version)
+#define WEED_API_CHECK_VERSION(version) WEED_ABI_CHECK_VERSION(version)
 
 #ifdef __LIBWEED__
 #define  __WEED_FN_DEF__ extern
@@ -91,16 +92,17 @@ struct _weed_data {
 #define HAVE_WEED_LEAF_T
 typedef struct _weed_leaf weed_leaf_t;
 #ifdef __LIBWEED__
-#define CACHE_SIZE 64
-#define padbytes (CACHE_SIZE - ((16+sizeof(weed_leaf_t *)+sizeof(char *)+sizeof(weed_data_t **)+sizeof(void *)) % CACHE_SIZE))
+#define _CACHE_SIZE_ 64 /// altering _CACHE_SIZE_ requires recompiling libweed
+#define _DATA_SIZE_ (12+sizeof(weed_size_t) +sizeof(weed_leaf_t *)+sizeof(char *)+sizeof(weed_data_t **)+sizeof(void *))
+/* N.B. padbytes are not wasted, they may be used to store key names provided they fit */
+#define padbytes ((_CACHE_SIZE_ - _DATA_SIZE_) % _CACHE_SIZE_)
 struct _weed_leaf {
   uint32_t	key_hash;
   weed_leaf_t *next;
   const char *key;
   char padding[padbytes];
   weed_size_t num_elements;
-  int32_t  seed_type;
-  int32_t flags;
+  int32_t  seed_type, flags;
   weed_data_t **data;
   void *private_data;
 };
@@ -146,8 +148,17 @@ __WEED_FN_DEF__ weed_leaf_set_flags_f weed_leaf_set_flags;
 __WEED_FN_DEF__ weed_leaf_set_private_data_f weed_leaf_set_private_data;
 __WEED_FN_DEF__ weed_leaf_get_private_data_f weed_leaf_get_private_data;
 
+/// flagbit may be set during development to avoid spurious error warnings in valgrind etc.
+/// may have a minor detrimental affect on performance
+#define WEED_INIT_STD_STRINGFUNCS		(1<<0)
+
+/// set this flagbit to enable potential backported bugfixes which may theoretically impact existing behaviour
+#define WEED_INIT_ALLBUGFIXES			(1<<1)
+
+int32_t weed_get_abi_version(void);
+
 #ifndef __LIBWEED__
-weed_error_t weed_init(int32_t abi);
+weed_error_t weed_init(int32_t abi, uint64_t init_flags);
 #endif
 #endif
 
@@ -178,7 +189,8 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 
 /* plant types */
 #define WEED_PLANT_UNKNOWN 0
-#define WEED_PLANT_GENERIC 16384
+#define WEED_PLANT_FIRST_CUSTOM 16384
+#define WEED_PLANT_GENERIC (WEED_PLANT_FIRST_CUSTOM - 1)  ///< "don't care" value, if UNKNOWN cannot be used
 
 /* Weed errors */
 #define WEED_SUCCESS 					0
@@ -190,6 +202,8 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_ERROR_UNDELETABLE		6
 #define WEED_ERROR_CONCURRENCY		7
 #define WEED_ERROR_BADVERSION		8
+
+#define WEED_ERROR_FIRST_CUSTOM		1024
 
 /* Seed types */
 #define WEED_SEED_INVALID 0 // the "seed_type" of a non-existent leaf
@@ -206,23 +220,26 @@ __WEED_FN_DEF__ weed_memmove_f weed_memmove;
 #define WEED_SEED_VOIDPTR		65 // weed_voidptr_t
 #define WEED_SEED_PLANTPTR	66 // weed_plant_t *
 
+#define WEED_SEED_FIRST_CUSTOM	1024
+
 /* flag bits */
 #define WEED_FLAG_UNDELETABLE		(1 << 0)  // leaf value may be altered but it cannot be deleted
 #define WEED_FLAG_IMMUTABLE		(1 << 1)  // leaf value may not be changed, but it may be deleted
-#define WEED_FLAG_RESERVED_0		(1 << 2)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_1		(1 << 3)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_2		(1 << 4)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_3		(1 << 5)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_4		(1 << 6)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_5		(1 << 7)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_6		(1 << 8)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_7		(1 << 9)  // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_8		(1 << 10) // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_9		(1 << 11) // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_10 	(1 << 12) // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_11 	(1 << 13) // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_12 	(1 << 14) // reserved for future use by Weed
-#define WEED_FLAG_RESERVED_13 	(1 << 15) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_13		(1 << 2)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_12		(1 << 3)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_11		(1 << 4)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_10		(1 << 5)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_9		(1 << 6)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_8		(1 << 7)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_7		(1 << 8)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_6		(1 << 9)  // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_5		(1 << 10) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_4		(1 << 11) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_3	 	(1 << 12) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_2	 	(1 << 13) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_1	 	(1 << 14) // reserved for future use by Weed
+#define WEED_FLAG_RESERVED_0	 	(1 << 15) // reserved for future use by Weed
+#define WEED_FLAG_FIRST_CUSTOM	(1 << 16) // bits 16 - 31 left for custom use
 
 /* mandatory leaf for all WEED_PLANTs, WEED_SEED_INT */
 #define WEED_LEAF_TYPE				"type"

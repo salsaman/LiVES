@@ -225,9 +225,11 @@ The fundament types are defined along with some error numbers and so on.
 Level 1: an application #includes weed.h and uses the built-in type definitions weed_data_t, weed_leaf_t, weed_plant_t.
 
 The application may now use the a reference implementation of libweed for all of the core functions. An application wishing to use
-libweed just needs to call weed_init(int32_t api_level) to get the correct version of the functions for that api version.
-In most cases it suffices to just call weed_init(WEED_API_VERSION) and check that the returned value is not WEED_ERROR_BADVERSION.
+libweed just needs to call weed_init(abi_level, init_flags) to get the correct version of the functions for that abi version.
+In most cases it suffices to just call weed_init(WEED_ABI_VERSION, 0)
+and check that the returned value is not WEED_ERROR_BADVERSION.
 
+- weed_get_abi_version() may be called first to get the ABI level the library was compiled with.
 
 
 Level 2:
@@ -293,7 +295,7 @@ Plant types 1 - 64 are reserved for the Weed Effects system.
 Plant types 128 - 255 are reserved for the Weed Layers system (in development)
 Plant types  256 - 511 are reserved for the Weed Events system (see Weed Event spec.)
 
-Plant types >= 1024 are free for custom use.
+Plant types >= 16384 are free for custom use.
 
 
 
@@ -315,7 +317,7 @@ Each leaf has at least:
 
  * a bitmap ''flags'' field (int32_t)
 
-(to be added in a future ABI version [ >= 200]:
+ABI 200+:
 
  * a void * "private_data"
 
@@ -352,7 +354,8 @@ Weed provides the following 'fundamental' types:
  * WEED_SEED_PLANTPTR   [66]  : a pointer to another weed plant.
    			   
 
-Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
+WEED_SEED_FIRST_CUSTOM	[1024]
+Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
 
 
 
@@ -389,7 +392,7 @@ Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t[num_elems])
     for WEED_SEED_VOIDPTR, (void *)(weed_voidptr_t[num_elems])
     for WEED_SEED_PLANTPTR, (void *)(((weed_voidptr_t)(weed_plant_t *))[num_elems])
-    custom types (seed_type >= 65536) would be similar to WEED_SEED_PLANTPTR, but with a different seed_type.
+    custom types (seed_type >= 1024) would be similar to WEED_SEED_PLANTPTR, but with a different seed_type.
 
     The values array is assumed to be of the correct size and type.
 
@@ -431,11 +434,10 @@ Types >= 65536 are reserved for custom use. Custom seeds MUST be pointer types.
     For WEED_SEED_INT64 it should be (void *)(int64_t *)
     For WEED_SEED_STRING, a (void *)(char **),
     for WEED_SEED_FUNCPTR, (void *)(weed_funcptr_t *),
-
     for WEED_SEED_VOIDPTR (void *)(weed_voidptr_t *),
     for WEED_SEED_PLANTPTR (void *)(*((weed_voidptr_t)(weed_plant_t *)))
 
-    custom types (>= 65536) would be similar to WEED_SEED_PLANTPTR but with a different seed_type.
+    custom types (>= 1024) would be similar to WEED_SEED_PLANTPTR but with a different seed_type.
 
     If if the leaf does not exist, or plant is NULL, WEED_ERROR_NOSUCH_LEAF is returned.
     If key is NULL or zero length, it is equivalent to getting the "type" leaf.
@@ -659,7 +661,7 @@ The combination of immutable and undeletable flag bits is designed so that Weed 
 changing readonly values or freeing plants which are still referenced by the host.
 
 
-Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits may be freely used by applications.
+Flag bits 0 - 15 are reserved for use by the Weed library. The remaining flag bits (16 - 31) may be freely used by applications.
 
 
 
@@ -700,8 +702,8 @@ Errors are listed here in order of precedence from highest to lowest.
     returned from weed_init() if the host specifies an api version that the library cannot support.
 
 
-
-Error numbers >= 65536 are reserved for custom errors.
+* WEED_ERROR_FIRST_CUSTOM		1024
+Indicates that error numbers >= 1024 are reserved for custom errors.
 
 
 
@@ -737,7 +739,8 @@ weed_error_t is typedefed as (int32_t)
 For convenience, weed.h defines the following plant types:
 
 WEED_PLANT_UNKNOWN, with value 0.
-WEED_PLANT_GENERIC, with value 16384
+WEED_PLANT_GENERIC, with value 16383
+WEED_PLANT_FIRST_CUSTOM, with value 16384
 
 Plant types >= 16384 are available for custom plant types..
 
@@ -748,13 +751,13 @@ WEED_TRUE is #defined as 1 in the header.
 
 WEED_FALSE is #defined as 0 in the header.
 
-WEED_API_VERSION is #defined as 200 in the header.
-
-WEED_API_VERSION_200 is also #defined in the header.
-
 WEED_ABI_VERSION is #defined as 200 in the header.
 
-WEED_ABI_VERSION_200 is also #defined in the header.
+WEED_API_VERSION is a synonym for WEED_ABI_VERSION
+
+WEED_ABI_CHECKVERSION(version) returns WEED_TRUE if version <= WEED_ABI_VERSION, otherwise WEED_FALSE
+
+WEED_API_CHECKVERSION(version) is a synonym for WEED_ABI_CHECKVERSION(version)
 
 WEED_VOIDPTR_SIZE is #defined as (sizeof(void *))
 
@@ -816,30 +819,58 @@ Some uses of Weed (e.g for effects plugins or events may require further headers
 
 
 
+== weed_get_abi_version() ==
+
+   int32_t weed_get_abi_version(void)
+
+Prior to calling weed_init(), weed_get_abi_version will return the Weed ABI version used to compile libweed.
+When calling weed_init(), the ABI version selected should be no higher than this, else WEED_ERROR_BADVERSION will be returned.
+If the minimum version which the host supports is higher than this, then the implementation of libweed in question may not be used.
+
+After a succesful call to weed_init(), this function returns the ABI version which was specified in that function.
 
 
+== weed_init() ==
 
+   Prior to calling any other Weed functions in the reference libweed, a program (host, but not a plugin) must call:
 
-== Weed_init() ==
+ * weed_error_t weed_init(int32_t api_version, uint64_t flags)
 
-   Prior to calling any other Weed functions in the reference libwee, a program (host, but not a plugin) must call:
+     The application passes in the ABI version it wants to use. The function will set function
+     pointers to the correct ABI versions of the core functions. Usually the program would use WEED_ABI_VERSION defined in
+     weed.h. All ABI versions >= 200 are guaranteed to be supported in every future version of the library.
 
- * weed_error_t weed_init(int32_t api_version)
-
-     The application passes in the API / ABI version it wants to use. The function will set function
-     pointers to the correct API versions of the core functions. Usually the program would use WEED_API_VERSION defined in
-     weed.h. All API versions >= 200 are guaranteed to be supported in every future version of the library.
-
-     If the host selects an API version < 100 or > the highest version the library supports, WEED_ERROR_BADVERSION will
+     If the host selects an ABI version < 100 or > the highest version the library supports, WEED_ERROR_BADVERSION will
      be returned, otherwise WEED_SUCCESS is returned.
 
-     Defects discovered in libweed which cause a deviation from this spec. will be backwards ported to prior API versions,
-     provided they do not affect the behaviour of applications in a dettrimental manner.
+     A call to weed_get_abi_version() prior to calling weed_init() will return the highest ABI version the library supports, as
+     detailed above.
 
-     If an error is discovered in the spec, the spec. will be corrected, and if necessary, the code amended.
+Flags:
+	as of Weed ABI version 200, the current flag bits are defined for the flags passed to weed_init().
 
-     If a code amendment is likely to affect the behaviour of existing programs, then a system will be devised for
-     applications wishing to use the old API with the fix applied to specify that.
+	WEED_INIT_FLAG_STD_STRINGFUNCS		(1<<0) ::
+	may be set during development to avoid spurious error warnings in valgrind etc.
+	may have a minor detrimental affect on performanc
+
+	WEED_INIT_FLAG_ALLBUGFIXES			(1<<1)
+	set this flagbit to enable potential backported bugfixes which may theoretically impact existing behaviour, as explained below
+
+
+ == BUGFIXES ==
+
+     Bugfixes for defects discovered in libweed will be backwards ported to prior ABI versions,
+     provided they do not adversly affect the behaviour of existing applications
+
+     If an error is discovered in the spec, the documentation will be corrected, and if necessary, the code amended to reflect this.
+
+     If a code amendment is likely to affect the behaviour of existing programs in an adverse way - for example if programs
+     rely on the old buggy implementation to function correctly, then the ABI version will be increased and the bugfix applied in the
+     new ABI version. Such amendments will only be applied in prior ABI versions if WEED_INIT_FLAGS_ALLBUGFIXES is set
+     in the flags when calling weed_init().
+     Use of this flagbit allows a host to use the bugfixed version without updating the ABI version and thus continue using existing plugins.
+     There is a chance that this  may cause problems with older plugins in cases where they rely on the buggy implementation to function
+     correctly. The ideal is thus for both host and plugins to upgrade, but in practice this may not be possible.
 
 
 
@@ -982,10 +1013,9 @@ e.g.
 
 === thread concurrency ====
 
-The for portabilty, the library does not implement any kind of mutex locking. A future version of the spec will add private data to the
-leaves, and this feature could be used to implement a private mutex locking scheme,
-wrapping the standard functions in a layer which stores a mutex pointer in the private data.
+For portabilty, the standerd library does not implement any kind of mutex locking.
 
+** a fully threadsafe version is planned - see below
 
 In general the following rules should be observed:
 - two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
@@ -1024,11 +1054,34 @@ calling weed_leaf_delete() or weed_plant_free() simultaneously with any other fu
 Don't do it !!
 
 
+To avoid potential problems, it is recommended NOT to update a leaf whilst there is the possiblity that another thread is
+reading it.
 
 
 
 
 
+Fully threadsafe version:
+- the fully threadsafe version will utilise the leaf "private data" to hold a pthread rwlock.
+
+- any read operations will first obtain a read lock on the plant (i.e the "type" leaf)
+- once a leaf is located, either a read or write lock on the leaf is obtained and the plant read lock is then released
+
+- reading a leaf value, number of elements, seed_type or flags will require a read lock on the leaf
+- updating a leaf value or flags will require first obtaining a write lock on the leaf
+
+- adding a leaf will require a write lock on the plant (type leaf)
+
+- deleting a leaf will require both a write lock on the plant, and write lock on the leaf. Once both are obtained, the leaf write lock
+  will be relinquished and the leaf deleted.
+
+- since freeing a plant implies first deleting all of the leaves, no extra locks are required for this. However since deleting the final
+  "type" leaf necessitates first releasing its write lock, this is not entirely thread safe. It is therefore left to the application to implement
+  some kind of refcounting system if this is a possible occurance.
+
+- getting or setting the private_data of a leaf will return an error (WEED_ERROR_CONCURRENCY).
+
+- an extra dependency on libpthread is added.
 
 
 
@@ -3382,7 +3435,7 @@ Explanation of flag bit combinations:
 
 
 
-Flag bits >=30 are free to use for custom flags.
+Flag bits >= 30 are free to use for custom flags.
 
 
 

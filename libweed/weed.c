@@ -28,7 +28,7 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) G. Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2020 */
 
 // implementation of libweed with or without glib's slice allocator
 
@@ -88,7 +88,11 @@
 #endif
 #endif
 
-EXPORTED weed_error_t weed_init(int32_t abi);
+static int stdstringfuncs = 0;
+static int32_t _abi_ = WEED_ABI_VERSION;
+
+EXPORTED int32_t weed_get_abi_version(void);
+EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags);
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) GNU_FLATTEN;
 static weed_error_t _weed_plant_free(weed_plant_t *) GNU_FLATTEN;
@@ -140,16 +144,22 @@ static uint32_t weed_hash(const char *) GNU_PURE;
 #define weed_strdup(oldstring, size) (oldstring == NULL ? (char *)NULL : size < padbytes ? memcpy(leaf->padding, key, size + 1) : \
 				(char *)(weed_malloc_and_copy(weed_strlen(oldstring) + 1, oldstring)))
 
+EXPORTED int32_t weed_get_abi_version(void) {
+  return _abi_;
+}
 
-EXPORTED weed_error_t weed_init(int32_t abi) {
+EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
   // this is called by the host in order for it to set its version of the functions
 
   // *the plugin should never call this, instead the plugin functions are passed to the plugin
   // from the host in the "host_info" plant*
 
   if (abi < 0 || abi > WEED_ABI_VERSION) return WEED_ERROR_BADVERSION;
+  _abi_ = abi;
 
-  if (abi < 200) {
+  if (init_flags & WEED_INIT_STD_STRINGFUNCS) stdstringfuncs = 1;
+
+  if (_abi_ < 200) {
     weed_leaf_get = _weed_leaf_get;
     weed_leaf_delete = _weed_leaf_delete;
     weed_plant_free = _weed_plant_free;
@@ -184,6 +194,7 @@ EXPORTED weed_error_t weed_init(int32_t abi) {
 static inline weed_size_t weed_strlen(const char *s) {
   if (!s) return 0;
   else {
+    if (stdstringfuncs) return strlen(s);
     const char *p = s;
     int64_t *pi = (int64_t *)p;
     while (*p) {
@@ -201,24 +212,27 @@ static inline weed_size_t weed_strlen(const char *s) {
 static inline int weed_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
-    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
-    while (1) {
-      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-        while (1) {
-          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {
-            if (hasNulByte(d1)) {
-              if (!hasNulByte(d2)) return 1;
+    if (stdstringfuncs) return strcmp(st1, st2);
+    else {
+      int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+      while (1) {
+        if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
+          while (1) {
+            if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {
+              if (hasNulByte(d1)) {
+                if (!hasNulByte(d2)) return 1;
+                break;
+              }
+            } else {
+              if (!hasNulByte(d1) || !(hasNulByte(d2))) return 1;
               break;
             }
-          } else {
-            if (!hasNulByte(d1) || !(hasNulByte(d2))) return 1;
-            break;
           }
+          st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
         }
-        st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
+        if (*st1 != *st2 || !(*st1)) break;
+        st1++; st2++;
       }
-      if (*st1 != *st2 || !(*st1)) break;
-      st1++; st2++;
     }
   }
   return (*st2 != 0);
@@ -233,9 +247,7 @@ static inline uint32_t weed_hash(const char *string) {
   return hash;
 }
 
-
 #define weed_seed_is_ptr(seed_type) (seed_type >= 64 ? 1 : 0)
-
 
 #define weed_seed_get_size(seed_type, size) (seed_type == WEED_SEED_FUNCPTR ? WEED_FUNCPTR_SIZE : \
 					      weed_seed_is_ptr(seed_type) ? WEED_VOIDPTR_SIZE : \
@@ -243,7 +255,6 @@ static inline uint32_t weed_hash(const char *string) {
 					      seed_type == WEED_SEED_DOUBLE ? 8 : \
 					      seed_type == WEED_SEED_INT64 ? 8 : \
 					      seed_type == WEED_SEED_STRING ? size : 0)
-
 
 static inline void *weed_data_free(weed_data_t **data, weed_size_t num_valid_elems, weed_size_t num_elems, int32_t seed_type) {
   register uint32_t i;
@@ -318,15 +329,17 @@ static inline void weed_leaf_free(weed_leaf_t *leaf) {
 static inline weed_leaf_t *weed_leaf_new(const char *key, int32_t seed_type, uint32_t hash) {
   weed_leaf_t *leaf;
   if ((leaf = weed_malloc_sizeof(weed_leaf_t)) == NULL) return NULL;
+  leaf->key_hash = hash;
+  leaf->next = NULL;
   if ((leaf->key = weed_strdup(key, weed_strlen(key))) == NULL) {
     weed_unmalloc_sizeof(weed_leaf_t, leaf);
     return NULL;
   }
-  leaf->key_hash = hash;
+  leaf->num_elements = 0;
   leaf->seed_type = seed_type;
+  leaf->flags = 0;
   leaf->data = NULL;
-  leaf->next = NULL;
-  leaf->num_elements = (weed_size_t)(leaf->flags = 0);
+  leaf->private_data = NULL;
   return leaf;
 }
 

@@ -3066,7 +3066,6 @@ void play_file(void) {
   if (needsadone) d_print_done();
 
   if (mainw->frame_layer_preload && mainw->pred_clip != -1) {
-    g_print("PRED miss\n");
     check_layer_ready(mainw->frame_layer_preload);
     weed_layer_free(mainw->frame_layer_preload);
   }
@@ -3370,30 +3369,31 @@ boolean get_temp_handle(int index) {
 }
 
 
-lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
-  // set default values for a clip (in memory)
-  //
-  // if new_file == -1 we create (malloc) a new clip and switch to it
-  // - setting its handle to "handle" (reload / crash recovery)
-  //
-  // if new_file != -1 the parameter "handle" is ignored, and we switch to new_file, without mallocing anything
-  // - "handle" in the clip must have been set already (called from get_new_handle() and get_temp_handle())
-  // -- get_new_handle() will set name and fliename and switch back to original clip.
-  //
-  // default values are then set for the clip
-  // - a "unique_id" is assigned via lives_random()
-  // - type is set to CLIP_TYPE_DISK
-  // - img_type is set depending on prefs->image_type
-  // - frames is set to 0
-  //    etc.
-  //
-  // - loaded is set = to is_loaded
-  //
-  // WARNING: on success, returns the clip, and changes the value of
-  // mainw->current_file !!  returns NULL if: new_file is out of range
-  // or points to a NULL clip; new_file is -1 and all free clips are
-  // in use (unlikely), or malloc fails.
+/**
+   @brief set default values for a clip (in memory)
 
+   if new_file == -1 we create (malloc) a new clip and switch to it
+   - setting its handle to "handle" (reload / crash recovery)
+
+   if new_file != -1 the parameter "handle" is ignored, and we switch to new_file, without mallocing anything
+   - "handle" in the clip must have been set already (called from get_new_handle() and get_temp_handle())
+   -- get_new_handle() will set name and fliename and switch back to original clip.
+
+   default values are then set for the clip
+   - a "unique_id" is assigned via lives_random()
+   - type is set to CLIP_TYPE_DISK
+   - img_type is set depending on prefs->image_type
+   - frames is set to 0
+   etc.
+
+   - loaded is set = to is_loaded
+
+   WARNING: on success, returns the clip, and changes the value of
+   mainw->current_file !!  returns NULL if: new_file is out of range
+   or points to a NULL clip; new_file is -1 and all free clips are
+   in use (unlikely), or malloc fails.
+*/
+lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) {
   lives_clip_t *sfile;
   char *stfile;
 
@@ -3951,8 +3951,8 @@ boolean save_frame_inner(int clip, int frame, const char *file_name, int width, 
 
     do {
       retval = 0;
-      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, &gerr);
-      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, &gerr);
+      if (sfile->img_type == IMG_TYPE_JPEG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_JPEG, 100, sfile->hsize, sfile->vsize, &gerr);
+      else if (sfile->img_type == IMG_TYPE_PNG) lives_pixbuf_save(pixbuf, tmp, IMG_TYPE_PNG, 100, sfile->hsize, sfile->vsize, &gerr);
 
       if (gerr != NULL) {
         retval = do_write_failed_error_s_with_retry(full_file_name, gerr->message, NULL);
@@ -5146,10 +5146,7 @@ int save_to_scrap_file(weed_plant_t *layer) {
     lives_free(framecount);
   }
 
-  lives_fsync(fd); // try to sync file access, to make saving smoother
-
   check_for_disk_space();
-
   return scrapfile->frames;
 }
 

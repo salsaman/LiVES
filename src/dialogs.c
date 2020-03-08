@@ -1233,23 +1233,9 @@ int process_one(boolean visible) {
     boolean show_frame;
 
 #ifdef RT_AUDIO
-    double audio_stretch;
+    double audio_stretch = 1.0;
     ticks_t audio_ticks = 0;
 #endif
-
-    if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
-      cleanup_preload = TRUE;
-      if (prefs->show_dev_opts) g_print("%s", get_cache_stats());
-      do_quick_switch(mainw->new_clip);
-      cache_hits = cache_misses = 0;
-      mainw->force_show = TRUE;
-      mainw->new_clip = -1;
-      dropped = 0;
-#if SHOW_TIMINGS
-      nd = ns = 0;
-#endif
-    }
-
 
     /* if (prefs->loadchecktime > 0.) { */
     /*   load_measure_idle(NULL); */
@@ -1293,6 +1279,8 @@ int process_one(boolean visible) {
     if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
     if (last_anim_ticks > mainw->currticks) last_anim_ticks = mainw->currticks;
 
+    mainw->audio_stretch = 1.0;
+
 #define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
     // adjust audio rate slightly if we are behind or ahead
@@ -1318,55 +1306,56 @@ int process_one(boolean visible) {
 
           // if too fast we increase the apparent sample rate so that it gets downsampled more
           // if too slow we decrease the apparent sample rate so that it gets upsampled more
-
-          if (mainw->multitrack == NULL) {
-            if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-              if (!cfile->play_paused) mainw->jackd->sample_in_rate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch;
-              else mainw->jackd->sample_in_rate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch;
-            } else mainw->jackd->sample_in_rate = cfile->arate * audio_stretch;
-          } else {
-            if (mainw->jackd->read_abuf > -1) mainw->jackd->abufs[mainw->jackd->read_abuf]->arate = cfile->arate * audio_stretch;
-          }
+          mainw->audio_stretch = audio_stretch;
         }
       }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      /* if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && */
-      /*     cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) && */
-      /*     (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && */
-      /*     ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) > */
-      /*      mainw->offsetticks || audio_ticks == -1)) { */
-      /*   if (audio_ticks == -1) { */
-      /*     if (mainw->cancelled == CANCEL_NONE) { */
-      /*       if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE; */
-      /*       else mainw->cancelled = CANCEL_AUDIO_ERROR; */
-      /*       return mainw->cancelled; */
-      /*     } */
-      /*   } */
-      /*   // fps is synched to external source, so we adjust the audio rate to fit */
-      /*   if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs, */
-      /*                        mainw->origusecs) + mainw->offsetticks)) < 2. && */
-      /*       audio_stretch > 0.5) { */
-      /*     // if audio_stretch is > 1. it means that audio is playing too fast */
-      /*     // < 1. it is playing too slow */
+      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
+          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
+          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
+           mainw->offsetticks || audio_ticks == -1)) {
+        if (audio_ticks == -1) {
+          if (mainw->cancelled == CANCEL_NONE) {
+            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+            else mainw->cancelled = CANCEL_AUDIO_ERROR;
+            return mainw->cancelled;
+          }
+        }
+        // fps is synched to external source, so we adjust the audio rate to fit
+        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs,
+                             mainw->origusecs) + mainw->offsetticks)) < 2. &&
+            audio_stretch > 0.5) {
+          // if audio_stretch is > 1. it means that audio is playing too fast
+          // < 1. it is playing too slow
 
-      /*     // if too fast we increase the apparent sample rate so that it gets downsampled more */
-      /*     // if too slow we decrease the apparent sample rate so that it gets upsampled more */
-
-      /*     if (mainw->multitrack == NULL) { */
-      /*       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) { */
-      /*         if (!cfile->play_paused) mainw->pulsed->in_arate = cfile->arate * cfile->pb_fps / cfile->fps * audio_stretch; */
-      /*         else mainw->pulsed->in_arate = cfile->arate * cfile->freeze_fps / cfile->fps * audio_stretch; */
-      /*       } else mainw->pulsed->in_arate = cfile->arate * audio_stretch; */
-      /*     } else { */
-      /*       if (mainw->pulsed->read_abuf > -1) mainw->pulsed->abufs[mainw->pulsed->read_abuf]->arate = cfile->arate * audio_stretch; */
-      /*     } */
-      /*   } */
-      //}
+          // if too fast we increase the apparent sample rate so that it gets downsampled more
+          // if too slow we decrease the apparent sample rate so that it gets upsampled more
+          mainw->audio_stretch = audio_stretch;
+        }
+      }
 #endif
     }
 #endif
+
+    //mainw->audio_stretch = 1.0;
+
+    if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
+      //mainw->startticks = mainw->currticks;
+      mainw->scratch = SCRATCH_NONE;
+      mainw->deltaticks = 0;
+      do_quick_switch(mainw->new_clip);
+      cache_hits = cache_misses = 0;
+      mainw->force_show = TRUE;
+      mainw->new_clip = -1;
+      dropped = 0;
+      mainw->audio_stretch = 8.0;
+#if SHOW_TIMINGS
+      nd = ns = 0;
+#endif
+    }
 
     // playing back an event_list
     // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
@@ -1500,30 +1489,6 @@ int process_one(boolean visible) {
           }
         }
 
-        /// note the audio seek position at the current frame. We will use this when switching clips
-#ifdef ENABLE_JACK
-        // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
-          int aplay_file = mainw->jackd->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
-            mainw->files[aplay_file]->aseek_pos = mainw->jackd->seek_pos;
-        }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-        // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
-          int aplay_file = mainw->pulsed->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
-            mainw->files[aplay_file]->aseek_pos = mainw->pulsed->seek_pos;
-        }
-#endif
-#if 0
-        if (prefs->audio_player == AUD_PLAYER_NONE) {
-          aplay_file = mainw->nullaudio->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
-            mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
-        }
-#endif
         if (mainw->pred_clip == -1) {
           mainw->frame_layer_preload = NULL;
           cleanup_preload = FALSE;
@@ -1546,6 +1511,33 @@ int process_one(boolean visible) {
           if (mainw->pred_clip != -1) cleanup_preload = TRUE;
           else mainw->frame_layer_preload = NULL;
         }
+
+        /// note the audio seek position at the current frame. We will use this when switching clips
+#ifdef ENABLE_JACK
+        // note the audio seek position
+        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+          int aplay_file = mainw->jackd->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = mainw->jackd->real_seek_pos;
+        }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+        // note the audio seek position
+        if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+          int aplay_file = mainw->pulsed->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = mainw->pulsed->real_seek_pos
+                                                  - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+                                                  * cfile->arate * cfile->achans * cfile->asampsize / 8 - 2048;
+        }
+#endif
+#if 0
+        if (prefs->audio_player == AUD_PLAYER_NONE) {
+          aplay_file = mainw->nullaudio->playing_file;
+          if (IS_VALID_CLIP(aplay_file))
+            mainw->files[aplay_file]->aseek_pos = nullaudio_get_seek_pos();
+        }
+#endif
 
         //g_print("lfi done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
         if (real_ticks == -1) real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);

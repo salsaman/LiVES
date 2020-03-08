@@ -489,24 +489,28 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
 
 LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const char *text) {
-  lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
-  lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
-  int size = weed_layer_get_width(layer) / 32;
-  const char *font = "Sans";
-  boolean fake_gamma = FALSE;
-  if (prefs->apply_gamma) {
-    // leave as linear gamma maybe
-    if (weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
-      // stops it getting converted
-      weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
-      fake_gamma = TRUE;
-    }
-  }
+  if (!text) return layer;
+  else {
+    lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
+    lives_colRGBA64_t col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
+    int size = weed_layer_get_width(layer) / 32;
+    const char *font = "Sans";
+    boolean fake_gamma = FALSE;
 
-  layer =  render_text_to_layer(layer, text, font, size,
-                                LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, FALSE, 0.1);
-  if (fake_gamma)
-    weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+    if (prefs->apply_gamma) {
+      // leave as linear gamma maybe
+      if (weed_layer_get_gamma(layer) == WEED_GAMMA_LINEAR) {
+        // stops it getting converted
+        weed_layer_set_gamma(layer, WEED_GAMMA_SRGB);
+        fake_gamma = TRUE;
+      }
+    }
+
+    layer =  render_text_to_layer(layer, text, font, size,
+                                  LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND, &col_white, &col_black_a, TRUE, FALSE, 0.1);
+    if (fake_gamma)
+      weed_set_int_value(layer, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+  }
   return layer;
 }
 

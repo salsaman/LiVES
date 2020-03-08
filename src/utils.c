@@ -368,6 +368,19 @@ lives_file_buffer_t *find_in_file_buffers(int fd) {
 }
 
 
+lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname) {
+  lives_file_buffer_t *fbuff;
+  LiVESList *fblist = mainw->file_buffers;
+
+  while (fblist != NULL) {
+    fbuff = (lives_file_buffer_t *)fblist->data;
+    if (!lives_strcmp(fbuff->pathname, pathname)) return fbuff;
+    fblist = fblist->next;
+  }
+
+  return NULL;
+}
+
 
 static void do_file_read_error(int fd, ssize_t errval, void *buff, size_t count) {
   char *msg = NULL;
@@ -458,6 +471,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   ssize_t res = 0;
 
   if (fbuff->buffer != NULL) res = lives_write(fbuff->fd, fbuff->buffer, fbuff->bytes, fbuff->allow_fail);
+  //g_print("writing %ld bytes to %d\n", fbuff->bytes, fbuff->fd);
 
   if (!fbuff->allow_fail && res < fbuff->bytes) {
     lives_close_buffered(-fbuff->fd); // use -fd as lives_write will have closed
@@ -469,6 +483,7 @@ static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
     fbuff->bytes = 0;
     fbuff->ptr = fbuff->buffer;
   }
+  //g_print("writer offs at %ld bytes to %d\n", fbuff->offset, fbuff->fd);
 
   return res;
 }
@@ -493,7 +508,15 @@ void lives_invalidate_all_file_buffers(void) {
 
 static int lives_open_real_buffered(const char *pathname, int flags, int mode, boolean isread) {
   lives_file_buffer_t *fbuff, *xbuff;
-  int fd = lives_open3(pathname, flags, mode);
+  boolean is_append = FALSE;
+  int fd;
+
+  if (flags & O_APPEND) {
+    is_append = TRUE;
+    flags &= ~O_APPEND;
+  }
+
+  fd = lives_open3(pathname, flags, mode);
   if (fd >= 0) {
     fbuff = (lives_file_buffer_t *)lives_calloc(sizeof(lives_file_buffer_t) >> 2, 4);
     fbuff->fd = fd;
@@ -520,7 +543,10 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
       lives_free(msg);
       lives_close_buffered(fd);
     } else {
-      if (!isread && !(flags & O_TRUNC)) fbuff->orig_size = get_file_size(fbuff->fd);
+      if (!isread && !(flags & O_TRUNC)) {
+        if (is_append) fbuff->offset = fbuff->orig_size = lseek(fd, 0, SEEK_END);
+        else fbuff->orig_size = get_file_size(fd);
+      }
     }
     pthread_mutex_lock(&mainw->fbuffer_mutex);
     mainw->file_buffers = lives_list_prepend(mainw->file_buffers, (livespointer)fbuff);
@@ -592,6 +618,7 @@ int lives_close_buffered(int fd) {
 #ifdef HAVE_POSIX_FALLOCATE
     int dummy;
     (void)(dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
+    //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd);
 #endif
   }
 
@@ -639,7 +666,7 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   if (fbuff->buffer != NULL && bufsize > fbuff->ptr - fbuff->buffer + fbuff->bytes) {
     lives_freep((void **)&fbuff->buffer);
   }
-  if (fbuff->buffer == NULL) {
+  if (fbuff->buffer == NULL || fbuff->ptr == NULL) {
     fbuff->buffer = (uint8_t *)lives_calloc_safety(bufsize >> 1, 2);
   }
   fbuff->offset -= delta;
@@ -752,7 +779,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
     return lseek(fd, offset, SEEK_SET);
   }
 
-  if (fbuff->ptr == NULL) {
+  if (fbuff->ptr == NULL || fbuff->buffer == NULL) {
     fbuff->offset = offset;
     return fbuff->offset;
   }
@@ -824,6 +851,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
       fbuff->invalid = FALSE;
       //ptr = revalidate_buffers(ptr);
       //if (!ptr) return 0;
+    }
+
+    if (fbuff->buffer == NULL || fbuff->ptr == NULL) {
+      file_buffer_fill(fbuff, nbytes);
     }
 
     lives_memcpy(ptr, fbuff->ptr, nbytes);
@@ -1085,9 +1116,12 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       fbuff->buffer = (uint8_t *)lives_calloc(buffsize >> 4, 16);
       fbuff->ptr = fbuff->buffer;
       fbuff->bytes = 0;
+
 #ifdef HAVE_POSIX_FALLOCATE
       // pre-allocate space for next buffer, we need to ftruncate this when closing the file
+      //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
       posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
+      lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 #endif
     }
 
@@ -1378,6 +1412,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
 
   // alarm time was never set !
   if (alarm->lastcheck == 0) {
+    break_me();
     LIVES_WARN("Alarm time not set");
     return 0;
   }

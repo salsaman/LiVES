@@ -29,7 +29,7 @@
    Carlo Prelz - http://www2.fluido.as:8080/
 */
 
-/* (C) G. Finch, 2005 - 2019 */
+/* (C) G. Finch, 2005 - 2020 */
 
 #include <string.h>
 #include <stdlib.h>
@@ -865,7 +865,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
   static weed_leaf_get_flags_f wlgf;
   static weed_leaf_set_f wls;
   static weed_malloc_f weedmalloc;
-#ifdef WEED_ABI_VERSION_200
+#if WEED_ABI_CHECK_VERSION(200)
   static weed_realloc_f weedrealloc;
   static weed_calloc_f weedcalloc;
   static weed_memmove_f weedmemmove;
@@ -879,7 +879,11 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
   int host_set_host_info = WEED_FALSE;
 
   /* versions here are just default values, we will set them again later, after possibly calling the host_info_callback function */
+#if WEED_ABI_CHECK_VERSION(200)
+  int32_t host_weed_abi_version = weed_get_abi_version();
+#else
   int32_t host_weed_abi_version = WEED_ABI_VERSION;
+#endif
   int32_t host_filter_api_version = WEED_FILTER_API_VERSION;
 
   int32_t plugin_weed_abi_version = plugin_min_weed_abi_version;
@@ -889,6 +893,8 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
   weed_plant_t *plugin_info = NULL;
 
   weed_error_t err;
+
+  if (host_weed_abi_version > WEED_ABI_VERSION) return NULL;
 
   *value = _weed_default_get; // value is a pointer to fn. ptr
   if (*value == NULL) return NULL;
@@ -925,7 +931,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
   weedmemcpy = memcpy;
   weedmemset = memset;
 
-#ifdef WEED_ABI_VERSION_200
+#if WEED_ABI_CHECK_VERSION(200)
   // added for plugins in Weed ABI 200
   weedrealloc = realloc;
   weedmemmove = memmove;
@@ -969,7 +975,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
     }
   }
 
-#ifdef WEED_ABI_VERSION_200
+#if WEED_ABI_CHECK_VERSION(200)
   if (plugin_max_weed_abi_version >= 200) {
     if (weedmemmove != NULL) {
       if (weed_set_funcptr_value(host_info, WEED_LEAF_MEMMOVE_FUNC, (weed_funcptr_t)weedmemmove) != WEED_SUCCESS) {
@@ -1191,7 +1197,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
       }
     }
 
-#ifdef WEED_ABI_VERSION_200
+#if WEED_ABI_CHECK_VERSION(200)
     if (plugin_weed_abi_version >= 200) {
       if (!weed_plant_has_leaf(host_info, WEED_LEAF_MEMMOVE_FUNC)) {
         if (weedmemmove == NULL) {
@@ -1332,7 +1338,7 @@ weed_plant_t *weed_bootstrap(weed_default_getter_f * value,
     }
   }
 
-#ifdef WEED_ABI_VERSION_200
+#if WEED_ABI_CHECK_VERSION(200)
   // readjust the ABI depending on the weed_abi_version selected by the host
 
   if (plugin_weed_abi_version < 200) {

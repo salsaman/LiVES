@@ -778,6 +778,13 @@ boolean check_dev_busy(char *devstr) {
 uint64_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
+  lives_file_buffer_t *fbuff;
+  if ((fbuff = find_in_file_buffers(fd)) != NULL) {
+    if (!fbuff->read) {
+      /// because of padding bytes...
+      return (uint64_t)(fbuff->offset + fbuff->bytes);
+    }
+  }
   fstat(fd, &filestat);
   return (uint64_t)(filestat.st_size);
 }
@@ -786,7 +793,15 @@ uint64_t get_file_size(int fd) {
 uint64_t sget_file_size(const char *name) {
   // get the size of file fd
   struct stat filestat;
+  lives_file_buffer_t *fbuff;
   int fd;
+
+  if ((fbuff = find_in_file_buffers_by_pathname(name)) != NULL) {
+    if (!fbuff->read) {
+      /// because of padding bytes...
+      return (uint64_t)(fbuff->offset + fbuff->bytes);
+    }
+  }
 
   if ((fd = open(name, O_RDONLY)) == -1) {
     return (uint32_t)0;

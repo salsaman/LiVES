@@ -10806,25 +10806,64 @@ static size_t weed_leaf_serialise(int fd, weed_plant_t *plant, const char *key, 
   totsize += 8;
 
   // for pixel_data we do special handling
-  // instead of writing size == 8 (4 bytes) and a voidptr (8 bytes)
-  // we write each plane's bytesize and the contents
+  // older LiVES versions wrote the bytesize (4 bytes, then the data
   if (mem == NULL && !lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
-    int error;
-    int *rowstrides = weed_get_int_array(plant, WEED_LEAF_ROWSTRIDES, &error);
-    int pal = weed_get_int_value(plant, WEED_LEAF_CURRENT_PALETTE, &error);
-    int height = weed_get_int_value(plant, WEED_LEAF_HEIGHT, &error);
-    int nplanes = weed_palette_get_nplanes(pal);
-    uint8_t **pixel_data = (uint8_t **)weed_get_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, &error);
-    // TODO *** write pal, height and rowstrides first, to allow realignment on load
+    weed_layer_t *layer = (weed_layer_t *)plant;
+    int nplanes;
+    int *rowstrides = weed_layer_get_rowstrides(layer, &nplanes);
+    int pal = weed_layer_get_palette(layer);
+    int width = weed_layer_get_width(layer);
+    int height = weed_layer_get_height(layer);
+    int ival = 0;
+    boolean contig = FALSE;
+    size_t padding = 0;
+    size_t pdsize = 0;
+
+    uint8_t **pixel_data = (uint8_t **)weed_layer_get_pixel_data(layer, NULL);
+    /// new style: we will write 4 bytes 0, then possibly further padding bytes,
+    /// following this, a 4 byte identifier: 0x57454544, and 4 bytes version *little endian. The current version is 0x01000000
+    /// this is then followed by 4 bytes nplanes, 4 bytes palette, 4 bytes width, 4 bytes height.
+    /// width is in macropixel size - for UYVY and YUYV each macropixel is 4 bytes and maps to 2 screen pixels
+    /// then for each plane: rowstride 4 bytes, data size 8 bytes (the data size is plane height * rowstride + padding)
+    /// finally the pixel data
+    lives_write_le_buffered(fd, &ival, 4, TRUE);
+    ival = 0x44454557;
+    lives_write_le_buffered(fd, &ival, 4, TRUE);
+    ival = 1; /// version
+    lives_write_le_buffered(fd, &ival, 4, TRUE);
+    lives_write_le_buffered(fd, &nplanes, 4, TRUE);
+    lives_write_le_buffered(fd, &pal, 4, TRUE);
+    lives_write_le_buffered(fd, &width, 4, TRUE);
+    lives_write_le_buffered(fd, &height, 4, TRUE);
+
+    totsize += 28;
+
+    if (weed_get_boolean_value(layer, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, NULL) == WEED_TRUE) {
+      contig = TRUE;
+    }
+    padding = 0;
     for (j = 0; j < nplanes; j++) {
       vlen = (weed_size_t)((double)height * weed_palette_get_plane_ratio_vertical(pal, j) * (double)rowstrides[j]);
-      lives_write_le_buffered(fd, &vlen, 4, TRUE);
-      if (lives_write_buffered(fd, (const char *)pixel_data[j], vlen, FALSE) < vlen) abort();
-      totsize += 4 + vlen;
+      if (contig && j < nplanes - 1) padding = pixel_data[j + 1] - pixel_data[j] - vlen;
+      vlen += padding;
+      lives_write_le_buffered(fd, &rowstrides[j], 4, TRUE);
+      lives_write_le_buffered(fd, &vlen, 8, TRUE);
+      pdsize += vlen;
+      totsize += 12;
+    }
+    if (!contig) {
+      for (j = 0; j < nplanes; j++) {
+        vlen = (weed_size_t)((double)height * weed_palette_get_plane_ratio_vertical(pal, j) * (double)rowstrides[j]);
+        lives_write_buffered(fd, (const char *)pixel_data[j], vlen, TRUE);
+        totsize += vlen;
+      }
+    } else {
+      lives_write_buffered(fd, (const char *)pixel_data[0], pdsize, TRUE);
+      totsize += pdsize;
     }
     lives_free(rowstrides);
     lives_free(pixel_data);
-  } else {
+  }  else {
     // for each element, write the data size followed by the data
     for (j = 0; j < ne; j++) {
       vlen = (weed_size_t)weed_leaf_element_size(plant, key, j);
@@ -11016,6 +11055,7 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
     -9 : key length mismatch
    - 10 : key length too long
    - 11 : data length too long
+    -12 : data length too short
 */
 static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, unsigned char **mem,
                                  boolean check_key) {
@@ -11029,6 +11069,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
 
   weed_size_t len;
   weed_size_t vlen;
+  //weed_size_t vlen64;
+  weed_size_t vlen64_tot = 0;
 
   char *mykey = NULL;
   char *msg;
@@ -11051,8 +11093,10 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
       *mem += 4;
     }
 
-    if (check_key && len != lives_strlen(key)) return -9;
-    //g_print("len was %d\n", len);
+    if (check_key && len != lives_strlen(key)) {
+      g_print("len for %s was %d\n", key, len);
+      return -9;
+    }
     if (len > MAX_WEED_STRLEN) return -10;
 
     mykey = (char *)lives_malloc((size_t)len + 1);
@@ -11172,45 +11216,109 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         type = -4;
         goto done;
       }
-      //g_print("vlen was %d\n", vlen);
-      if (vlen > MAX_FRAME_SIZE) {
-        for (--j; j >= 0; lives_freep((void **)&values[j--]));
-        values = NULL;
-        type = -11;
-        goto done;
-      }
-      if (rs != NULL && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
-        int xrs, xw, xh, psize = pixel_size(pal);
-        xrs = vlen / height;
-        xw = xrs / psize;
-        xh = vlen / xrs;
 
-        LIVES_WARN("invalid frame size recovering layer");
-        msg = lives_strdup_printf(" for plane %d, size is %d. Should be %d. Will adjust rs to %d, width to %d "
-                                  "and height to %d\n", j, vlen, rs[j] * height, xrs, xw, xh);
-        LIVES_WARN(msg);
-        lives_free(msg);
-        weed_layer_set_width(plant, (float)xw / weed_palette_get_plane_ratio_horizontal(pal, j));
-        weed_layer_set_height(plant, (float)xh / weed_palette_get_plane_ratio_vertical(pal, j));
-        rs[j] = xrs;
-        weed_layer_set_rowstrides(plant, rs, nplanes);
-      }
+      if (j == 0 && vlen == 0) {
+        int id;
+        bytes = lives_read_le_buffered(fd, &id, 4, TRUE);
+        if (id == 0x44454557) {
+          weed_layer_t *layer = (weed_layer_t *)plant;
+          int ver;
+          uint64_t *vlen64 = lives_calloc(nplanes, 8);
+          //size_t vlen64_tot = 0;
+          int *rs = lives_calloc(nplanes, sizint);
 
-      values[j] = lives_calloc(ALIGN_CEIL(vlen + EXTRA_BYTES, 16) / 16, 16);
-      if (values[j] == NULL) {
-        msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
-        LIVES_ERROR(msg);
-        lives_free(msg);
-        for (--j; j >= 0; j--) lives_free(values[j]);
-        weed_set_voidptr_value(plant, WEED_LEAF_PIXEL_DATA, NULL);
-        type = -5;
-        goto done;
-      }
-      if (lives_read_buffered(fd, values[j], vlen, TRUE) != vlen) {
+          bytes = lives_read_le_buffered(fd, &ver, 4, TRUE);
+          bytes = lives_read_le_buffered(fd, &nplanes, 4, TRUE);
+          bytes = lives_read_le_buffered(fd, &pal, 4, TRUE);
+          weed_layer_set_palette(layer, pal);
+          bytes = lives_read_le_buffered(fd, &width, 4, TRUE);
+          bytes = lives_read_le_buffered(fd, &height, 4, TRUE);
+          weed_layer_set_size(layer, width, height);
+          vlen64 = lives_calloc(nplanes, 8);
+          rs = lives_calloc(nplanes, 4);
+          for (int p = 0; p < nplanes; p++) {
+            bytes = lives_read_le_buffered(fd, &rs[p], 4, TRUE);
+            bytes = lives_read_le_buffered(fd, &vlen64[p], 8, TRUE);
+            vlen64_tot += vlen64[p];
+          }
+          weed_layer_set_rowstrides(layer, rs, nplanes);
+
+          lives_free(rs);
+
+          values[0] = lives_calloc(ALIGN_CEIL(vlen64_tot + EXTRA_BYTES, 16) / 16, 16);
+
+          if (values[0] == NULL) {
+            msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
+            LIVES_ERROR(msg);
+            lives_free(msg);
+            lives_free(vlen64);
+            weed_set_voidptr_value(plant, WEED_LEAF_PIXEL_DATA, NULL);
+            type = -5;
+            goto done;
+          }
+
+          if (lives_read_buffered(fd, values[0], vlen64_tot, TRUE) != vlen64_tot) {
+            ///// do something
+            lives_free(values[0]);
+            lives_free(values);
+            values = NULL;
+            lives_free(vlen64);
+            type = -4;
+            goto done;
+          }
+          for (i = 1; i < nplanes; i++) {
+            values[i] = values[i - 1] + vlen64[i];
+          }
+          if (nplanes > 1)
+            weed_set_boolean_value(plant, WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS, WEED_TRUE);
+          lives_free(vlen64);
+        } else {
+          /// size 0, bad ID
+          values = NULL;
+          type = -12;
+          goto done;
+        }
+      } else {
+        //g_print("vlen was %d\n", vlen);
+        if (vlen > MAX_FRAME_SIZE) {
+          for (--j; j >= 0; lives_freep((void **)&values[j--]));
+          values = NULL;
+          type = -11;
+          goto done;
+        }
+        if (rs != NULL && vlen != rs[j] * height * weed_palette_get_plane_ratio_vertical(pal, j)) {
+          int xrs, xw, xh, psize = pixel_size(pal);
+          xrs = vlen / height;
+          xw = xrs / psize;
+          xh = vlen / xrs;
+
+          LIVES_WARN("invalid frame size recovering layer");
+          msg = lives_strdup_printf(" for plane %d, size is %d. Should be %d. Will adjust rs to %d, width to %d "
+                                    "and height to %d\n", j, vlen, rs[j] * height, xrs, xw, xh);
+          LIVES_WARN(msg);
+          lives_free(msg);
+          weed_layer_set_width(plant, (float)xw / weed_palette_get_plane_ratio_horizontal(pal, j));
+          weed_layer_set_height(plant, (float)xh / weed_palette_get_plane_ratio_vertical(pal, j));
+          rs[j] = xrs;
+          weed_layer_set_rowstrides(plant, rs, nplanes);
+        }
+
+        values[j] = lives_calloc(ALIGN_CEIL(vlen + EXTRA_BYTES, 16) / 16, 16);
+        if (values[j] == NULL) {
+          msg = lives_strdup_printf("Could not allocate %d bytes for deserialised frame", vlen);
+          LIVES_ERROR(msg);
+          lives_free(msg);
+          for (--j; j >= 0; j--) lives_free(values[j]);
+          weed_set_voidptr_value(plant, WEED_LEAF_PIXEL_DATA, NULL);
+          type = -5;
+          goto done;
+        }
+        if (lives_read_buffered(fd, values[j], vlen, TRUE) != vlen) {
 
 
+        }
+        if (j >= nplanes) lives_free(values[j]);
       }
-      if (j >= nplanes) lives_free(values[j]);
     }
     if (plant != NULL) {
       weed_set_voidptr_array(plant, WEED_LEAF_PIXEL_DATA, nplanes, values);
@@ -11245,6 +11353,7 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
           if (st >= 64) {
             values[i] = NULL;
           } else {
+            values = NULL;
             type = -4;
             goto done;
           }

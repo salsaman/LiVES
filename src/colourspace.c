@@ -10723,6 +10723,8 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
   // create a gdkpixbuf from a weed layer
   // layer "pixel_data" is then either copied to the pixbuf pixels, or the contents shared with the pixbuf and array value set to NULL
+  // layer may safely be passed to weed_layer_free() since if the pixel data is shared then it will be set to NULL in the layer.
+  // pixbuf should be unreffed after use as per normal
 
   LiVESPixbuf *pixbuf;
 
@@ -10751,6 +10753,10 @@ LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean f
   }
 
   // otherwise we need to steal or copy the pixel_data
+
+  if (weed_layer_get_pixel_data_packed(layer) == NULL) {
+    layer = create_blank_layer(layer, NULL, 0, 0, WEED_PALETTE_END);
+  }
 
   do {
     width = weed_layer_get_width(layer);

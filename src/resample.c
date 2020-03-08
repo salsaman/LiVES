@@ -862,9 +862,9 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           return NULL;
         }
         if (weed_plant_has_leaf(frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET)) {
-          weed_set_int64_value(newframe, WEED_LEAF_HOST_SCRAP_FILE_OFFSET,
-                               weed_get_int64_value(frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, NULL));
+          weed_leaf_dup(newframe, frame_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET);
         }
+        weed_leaf_dup(newframe, frame_event, WEED_LEAF_OVERLAY_TEXT);
 
         lives_freep((void **)&frames);
         lives_freep((void **)&clips);
@@ -916,11 +916,11 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           /// the timecode of each audio frame is adjusted to the quantised time, and we update the seek position accordingly
           /// however, when playing back, any velocity change will come slightly later than when recorded; thus
           /// the player seek pos will be slightly off.
-          /// To remedy this we can very slightly adjust the velocity at the prior audio frame, so that the seek is correct when
+          /// To remedy this we can very slightly adjust the velocity at the prior frame, so that the seek is correct when
           /// arriving at the current audio frame
           ///
 
-          prev_aframe = get_prev_audio_frame_event(newframe);
+          prev_aframe = get_prev_frame_event(newframe);
           for (i = 0; i < natracks; i += 2) {
             boolean gottrack = FALSE;
             for (k = 0; k < xatracks; k += 2) {
@@ -947,6 +947,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
               for (j = 0; j < patracks; j += 2) {
                 if (naclips[i] == paclips[j]) {
                   if (paclips[j + 1] == naclips[i + 1]) {
+                    if (prev_aframe == last_out_frame) {
+                      prev_aframe = NULL;
+                      break;
+                    }
                     if (paseeks[j + 1] * naseeks[i + 1] > 0.) {
                       double dt = (double)(out_tc - ptc) / TICKS_PER_SECOND_DBL;
                       double dtl = (double)(tl) / TICKS_PER_SECOND_DBL;
@@ -954,8 +958,10 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
                       /// the seek will be calculated from old_val, and we will adjust the velocity so we hit the seek value at this frame
                       // adjust velocity by seek_delta / frame_duration
                       int in_arate = mainw->files[naclips[i + 1]]->arps;
+
                       double seek = quant_aseek(paseeks[j] + paseeks[j + 1] * dt, in_arate);
                       double nvel = paseeks[j + 1] + (naseeks[i] - seek) / dtl;
+
                       /// velocity should be close to seek_time / clock_time, else this was a jump
                       if ((paseeks[j + 1] < naseeks[i + 1] && nvel > paseeks[j + 1] && nvel <= naseeks[i + 1])
                           || (paseeks[j + 1] > naseeks[i + 1] && nvel < paseeks[j + 1] && nvel >= naseeks[i + 1])) {

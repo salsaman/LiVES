@@ -1233,7 +1233,8 @@ LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ex
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
 LiVESPixbuf *pull_lives_pixbuf(int clip, int frame, const char *image_ext, ticks_t tc);
 
-boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality, LiVESError **gerrorptr);
+boolean lives_pixbuf_save(LiVESPixbuf *pixbuf, char *fname, lives_image_type_t imgtype, int quality,
+                          int width, int height, LiVESError **gerrorptr);
 
 typedef struct {
   LiVESPixbuf *pixbuf;
@@ -1241,6 +1242,7 @@ typedef struct {
   char *fname;
   int img_type;
   int compression;
+  int width, height;
 } savethread_priv_t;
 
 void *lives_pixbuf_save_threaded(void *saveargs);
@@ -1340,6 +1342,7 @@ typedef struct {
 } lives_file_buffer_t;
 
 lives_file_buffer_t *find_in_file_buffers(int fd);
+lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);
 
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);

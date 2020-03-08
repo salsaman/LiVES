@@ -767,6 +767,8 @@ typedef struct {
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
 
+  double audio_stretch;
+
   int size_warn; ///< warn the user that incorrectly sized frames were found
 
   /// set to TRUE during frame load/display operation. If TRUE we should not switch clips,
@@ -1315,6 +1317,7 @@ typedef struct {
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)
+  pthread_rwlock_t progscan_lock; ///< inter-thread image linescan lock
   pthread_mutex_t fbuffer_mutex; /// append / remove wirh file_buffer list
 
   volatile lives_rfx_t *vrfx_update;

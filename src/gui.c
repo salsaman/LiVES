@@ -1928,6 +1928,7 @@ void create_LiVES(void) {
 
   vbox4 = lives_vbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(vbox99), vbox4, FALSE, TRUE, 0);
+  lives_widget_set_vexpand(vbox4, FALSE);
 
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->eventbox), LIVES_WIDGET_SCROLL_EVENT,
                        LIVES_GUI_CALLBACK(on_mouse_scroll),

@@ -890,14 +890,14 @@ void draw_little_bars(double ptrtime, int which) {
 
     if (cfile->frames > 0 && (which == 0 || which == 1)) {
       if (mainw->video_drawable != NULL) {
-        bar_height = CE_VIDBAR_HEIGHT;
+        bar_height = CE_VIDBAR_HEIGHT * 10;
 
         allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
 
         if (LIVES_IS_PLAYING) {
           if (offset > 0.) {
-            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
           }
           if (offset < allocwidth) {
             lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);

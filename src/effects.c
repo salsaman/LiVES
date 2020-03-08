@@ -659,7 +659,7 @@ lives_render_error_t realfx_progress(boolean reset) {
 
       do {
         retval = 0;
-        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, &error);
+        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100, cfile->hsize, cfile->vsize, &error);
 
         if (error != NULL) {
           retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);

@@ -3153,8 +3153,8 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       update_effort(dframes, TRUE);
       dframes = 0;
 
-      if (!mainw->urgency_msg && weed_plant_has_leaf(next_event, "overlay_text")) {
-        mainw->urgency_msg = weed_get_string_value(next_event, "overlay_text", NULL);
+      if (!mainw->urgency_msg && weed_plant_has_leaf(next_event, WEED_LEAF_OVERLAY_TEXT)) {
+        mainw->urgency_msg = weed_get_string_value(next_event, WEED_LEAF_OVERLAY_TEXT, NULL);
       }
 
       if (new_file != mainw->current_file) {
@@ -3501,7 +3501,7 @@ lives_render_error_t render_events(boolean reset) {
   static weed_timecode_t rec_delta_tc, atc;
   static weed_plant_t *event, *eventnext;
 
-  weed_timecode_t tc, next_out_tc, dtc;
+  weed_timecode_t tc, next_out_tc, dtc = atc;
   void *init_event;
 
   LiVESPixbuf *pixbuf = NULL;
@@ -3536,11 +3536,9 @@ lives_render_error_t render_events(boolean reset) {
   static int frame;
   static int64_t old_scrap_frame;
   static int natracks, nbtracks;
-
   int blend_file = mainw->blend_file;
 
   boolean is_blank = TRUE;
-  boolean firstframe = TRUE;
   boolean completed = FALSE;
 
   static double chvols[MAX_AUDIO_TRACKS];
@@ -3624,6 +3622,7 @@ lives_render_error_t render_events(boolean reset) {
     /// alt label text for when we are rendering audio parts
     lives_snprintf(nlabel, 128, "%s", _("Rendering audio..."));
     read_write_error = LIVES_RENDER_ERROR_NONE;
+    audio_free_fnames();
     return LIVES_RENDER_READY;
   }
 
@@ -3800,10 +3799,14 @@ lives_render_error_t render_events(boolean reset) {
               resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
             }
             convert_layer_palette(layer, layer_palette, 0);
+            if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
+              char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
+              render_text_overlay(layer, texto);
+              lives_free(texto);
+            }
             // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
             gamma_convert_layer(cfile->gamma_type, layer);
             pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
-            weed_layer_nullify_pixel_data(layer);
             weed_layer_free(layer);
           }
           mainw->blend_file = blend_file;
@@ -3811,17 +3814,14 @@ lives_render_error_t render_events(boolean reset) {
         next_frame_event = get_next_frame_event(event);
       } else tc = mainw->flush_audio_tc;
 
-      if (next_frame_event == NULL) break_me();
-
       if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL &&
            mainw->multitrack->opts.render_audp))
           && (next_frame_event == NULL || WEED_EVENT_IS_AUDIO_FRAME(event)
               || (mainw->flush_audio_tc != 0 && tc > mainw->flush_audio_tc)) && tc > atc) {
-        boolean has_audio = FALSE;
-
-        for (i = 0; i < MAX_AUDIO_TRACKS; i++) {
+        int auditracks;
+        for (auditracks = 0; auditracks < MAX_AUDIO_TRACKS; auditracks++) {
           // see if we have any audio to render
-          if (xavel[i] != 0.) has_audio = TRUE;
+          if (xavel[auditracks] != 0.) break;
         }
 
         cfile->achans = cfile->undo_achans;
@@ -3834,9 +3834,12 @@ lives_render_error_t render_events(boolean reset) {
         lives_freep((void **)&mainw->read_failed_file);
 
         if (mainw->flush_audio_tc != 0) dtc = mainw->flush_audio_tc;
-        else dtc = q_gint64(tc + rec_delta_tc, cfile->fps); // calculate tc of next out frame */
+        else {
+          //weed_timecode_t ntc = get_event_timecode(get_next_audio_frame_event(event));
+          dtc = q_gint64(tc + rec_delta_tc, cfile->fps);
+        }
 
-        if (has_audio) {
+        if (auditracks < MAX_AUDIO_TRACKS) {
           // render audio
           render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file :
                                mainw->current_file, xavel, xaseek, atc, dtc, chvols, 1., 1., NULL);
@@ -3866,7 +3869,7 @@ lives_render_error_t render_events(boolean reset) {
       }
 
       if (mainw->flush_audio_tc != 0) {
-        double deltatime = (double)(q_gint64(dtc - atc,  cfile->fps)) / TICKS_PER_SECOND_DBL;
+        double deltatime = (double)(q_gint64(mainw->flush_audio_tc - atc,  cfile->fps)) / TICKS_PER_SECOND_DBL;
 
         for (i = 0; i < natracks; i++) {
           if (xaclips[i] > 0) {
@@ -3882,7 +3885,7 @@ lives_render_error_t render_events(boolean reset) {
       /*   if ((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL */
       /* 							     && mainw->multitrack->opts.render_audp)) { */
 
-      if (WEED_EVENT_IS_AUDIO_FRAME(event)) {
+      else {
         int *aclips = NULL;
         double *aseeks = NULL;
         int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
@@ -3922,11 +3925,10 @@ lives_render_error_t render_events(boolean reset) {
             xaseek[i] += deltatime * xavel[i];
           }
         }
-        //atime += deltatime;
 
         for (i = 0; i < num_aclips; i += 2) {
           if (aclips[i + 1] > 0) { // clipnum
-            double mult = 1.;
+            double mult = 0.1;
             mytrack = aclips[i] + nbtracks;
             if (mytrack < 0) mytrack = 0;
             //g_print("del was %f\n", xaseek[mytrack] - aseeks[i]);
@@ -3959,6 +3961,8 @@ lives_render_error_t render_events(boolean reset) {
         saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
         saveargs->img_type = cfile->img_type;
         saveargs->compression = 100 - prefs->ocp;
+        saveargs->width = cfile->hsize;
+        saveargs->height = cfile->vsize;
         saver_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
       } else {
         lives_thread_join(*saver_thread, NULL);
@@ -3970,10 +3974,12 @@ lives_render_error_t render_events(boolean reset) {
             read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
             break;
           }
-          lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, &saveargs->error);
+          lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                            saveargs->width, saveargs->height, &saveargs->error);
         }
 
-        if (saveargs->pixbuf != NULL && saveargs->pixbuf != mainw->scrap_pixbuf && saveargs->pixbuf != pixbuf) {
+        if (saveargs->pixbuf != NULL && saveargs->pixbuf != mainw->scrap_pixbuf
+            && scrap_track == -1 && saveargs->pixbuf != pixbuf) {
           lives_widget_object_unref(saveargs->pixbuf);
           saveargs->pixbuf = NULL;
         }
@@ -4230,6 +4236,30 @@ filterinit2:
     }
     event = eventnext;
   } else {
+    /* if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL && */
+    /* 								mainw->multitrack->opts.render_audp)) */
+    /* 	&& (next_frame_event == NULL || WEED_EVENT_IS_AUDIO_FRAME(event) */
+    /* 	    || (mainw->flush_audio_tc != 0 && tc > mainw->flush_audio_tc)) && tc > atc) { */
+    /*   boolean has_audio = FALSE; */
+
+    /*   for (i = 0; i < MAX_AUDIO_TRACKS; i++) { */
+    /* 	// see if we have any audio to render */
+    /* 	if (xavel[i] != 0.) has_audio = TRUE; */
+    /*   } */
+
+    /*   if (has_audio) { */
+    /* 	// render audio */
+    /* 	  g_print("ra2 %f to %f\n", atc / TICKS_PER_SECOND_DBL, tc / TICKS_PER_SECOND_DBL); */
+    /* 	render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file : */
+    /* 			     mainw->current_file, xavel, xaseek, atc, tc, chvols, 1., 1., NULL); */
+    /*   } else { */
+    /* 	  g_print("rs2 %f to %f\n", atc / TICKS_PER_SECOND_DBL, tc / TICKS_PER_SECOND_DBL); */
+    /* 	// render silence */
+    /* 	render_audio_segment(1, NULL, mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file, */
+    /* 			     NULL, NULL, atc, tc, chvols, 0., 0., NULL); */
+    /*   } */
+    /* } */
+
     if (saver_thread) {
       lives_thread_join(*saver_thread, NULL);
       while (saveargs->error != NULL) {
@@ -4237,7 +4267,8 @@ filterinit2:
         lives_error_free(saveargs->error);
         saveargs->error = NULL;
         if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
-        else lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, &saveargs->error);
+        else lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression,
+                                 saveargs->width, saveargs->height, &saveargs->error);
       }
       if (saveargs->pixbuf != NULL) {
         lives_widget_object_unref(saveargs->pixbuf);

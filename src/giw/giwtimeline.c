@@ -274,7 +274,7 @@ GtkWidget *giw_timeline_new_with_adjustment(GtkOrientation orientation, gdouble 
   timeline = (GiwTimeline *)g_object_new(GIW_TYPE_TIMELINE,
                                          "orientation", orientation,
                                          NULL);
-  giw_timeline_set_adjustment(timeline, (GtkAdjustment *) gtk_adjustment_new(value, lower, upper, 1.0, 1.0, 1.0));
+  giw_timeline_set_adjustment(timeline, (GtkAdjustment *) gtk_adjustment_new(value, lower, upper, 1.0, 1.0, 0.0));
   giw_timeline_set_max_size(timeline, max_size);
 
   return GTK_WIDGET(timeline);

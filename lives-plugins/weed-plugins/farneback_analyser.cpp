@@ -157,26 +157,26 @@ static weed_error_t farneback_process(weed_plant_t *inst, weed_timecode_t tc) {
   switch (palette) {
   case WEED_PALETTE_RGB24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_RGB2GRAY); // may segfault here, not sure what causes it. Bug in opencv 2.4 ?
+    cvtColor(srcMat, *cvgrey, COLOR_RGB2GRAY); // may segfault here, not sure what causes it. Bug in opencv 2.4 ?
     break;
   case WEED_PALETTE_BGR24:
     srcMat = Mat(height, width, CV_8UC3, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_BGR2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_BGR2GRAY);
     break;
   case WEED_PALETTE_RGBA32:
     srcMat = Mat(height, width, CV_8UC4, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_RGB2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_RGB2GRAY);
     break;
   case WEED_PALETTE_BGRA32:
     srcMat = Mat(height, width, CV_8UC4, src, irow);
-    cvtColor(srcMat, *cvgrey, CV_BGR2GRAY);
+    cvtColor(srcMat, *cvgrey, COLOR_BGR2GRAY);
     break;
   case WEED_PALETTE_ARGB32: {
     int from_to[] = {0, 3, 1, 0, 2, 1, 3, 2}; // convert argb to rgba
     srcMat = Mat(height, width, CV_8UC4, src, irow);
     mixMat = Mat(height, width, CV_8UC4);
     mixChannels(&srcMat, 1, &mixMat, 1, from_to, 4);
-    cvtColor(mixMat, *cvgrey, CV_RGB2GRAY);
+    cvtColor(mixMat, *cvgrey, COLOR_RGB2GRAY);
   }
   break;
   case WEED_PALETTE_YUVA4444P:

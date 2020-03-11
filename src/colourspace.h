@@ -207,9 +207,9 @@ int weed_layer_get_yuv_subspace(weed_layer_t *);
 uint8_t *weed_layer_get_pixel_data_packed(weed_layer_t *);
 void **weed_layer_get_pixel_data(weed_layer_t *, int *nplanes);
 float **weed_layer_get_audio_data(weed_layer_t *, int *naudchans);
-int weed_layer_get_audio_rate(weed_plant_t *layer);
-int weed_layer_get_naudchans(weed_plant_t *layer);
-int weed_layer_get_audio_length(weed_plant_t *layer);
+int weed_layer_get_audio_rate(weed_layer_t *layer);
+int weed_layer_get_naudchans(weed_layer_t *layer);
+int weed_layer_get_audio_length(weed_layer_t *layer);
 int *weed_layer_get_rowstrides(weed_layer_t *, int *nplanes);
 int weed_layer_get_rowstride(weed_layer_t *); ///< for packed palettes
 int weed_layer_get_width(weed_layer_t *);

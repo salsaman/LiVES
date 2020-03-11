@@ -488,7 +488,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const char *text) {
+LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_layer_t *layer, const char *text) {
   if (!text) return layer;
   else {
     lives_colRGBA64_t col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
@@ -515,7 +515,7 @@ LIVES_GLOBAL_INLINE weed_plant_t *render_text_overlay(weed_plant_t *layer, const
 }
 
 
-weed_plant_t *render_text_to_layer(weed_plant_t *layer, const char *text, const char *fontname,
+weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const char *fontname,
                                    double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
                                    boolean center, boolean rising, double top) {
   // render text to layer and return a new layer, which may have a new "rowstrides", "width" and/or "current_palette"

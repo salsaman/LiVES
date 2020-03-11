@@ -36,7 +36,9 @@ static ticks_t last_open_check_ticks;
 static ticks_t last_anim_ticks;
 static ticks_t spare_cycles;
 static ticks_t last_kbd_ticks;
+static int getahead = -1, bungle_frames;
 
+static boolean recalc_bungle_frames = 0;
 static boolean shown_paused_frames;
 static boolean td_had_focus;
 static boolean cleanup_preload;
@@ -59,10 +61,9 @@ static double jitter = 0.;
 
 const char *get_cache_stats(void) {
   static char buff[1024];
-  lives_snprintf(buff, 1024, "Totals for current clip (%d):\n[preload caches = %d, hits = %d, "
-                 "misses = %d,\nhit : miss ratio = %.3f%%\nframe jitter = %.3f milliseconds.",
-                 mainw->playing_file, cache_hits + cache_misses, cache_hits, cache_misses, cache_hits > 0
-                 ? (double)cache_hits / (double)(cache_hits + cache_misses) * 100. : 0., jitter * 1000.);
+  lives_snprintf(buff, 1024, "preload caches = %d, hits = %d, "
+                 "misses = %d,\nframe jitter = %.3f milliseconds.",
+                 cache_hits + cache_misses, cache_hits, cache_misses, jitter * 1000.);
   return buff;
 }
 
@@ -1221,315 +1222,434 @@ void update_progress(boolean visible) {
     }
   }
 }
-static int nd = 0, ns = 0;
+
 
 int process_one(boolean visible) {
-  if (!visible) {
-    // INTERNAL PLAYER
-    short scratch = mainw->scratch;
-    ticks_t new_ticks;
-    ticks_t real_ticks;
-    lives_time_source_t time_source;
-    boolean show_frame;
+  // INTERNAL PLAYER
+  short scratch = mainw->scratch;
+  ticks_t new_ticks;
+  ticks_t real_ticks;
+  lives_time_source_t time_source;
+  boolean show_frame;
 
 #ifdef RT_AUDIO
-    double audio_stretch = 1.0;
-    ticks_t audio_ticks = 0;
+  double audio_stretch = 1.0;
+  ticks_t audio_ticks = 0;
 #endif
 
-    /* if (prefs->loadchecktime > 0.) { */
-    /*   load_measure_idle(NULL); */
-    /* } */
-    // get current time
+  // time is obtained as follows:
+  // -  if there is an external transport or clock active, we take our time from that
+  // -  else if we have a fixed output framerate (e.g. we are streaming) we take our time from
+  //         the system clock
+  //  in these cases we adjust our audio rate slightly to keep in synch with video
+  // - otherwise, we take the time from soundcard by counting samples played (the normal case),
+  //   and we synch video with that; however, the soundcard time only updates when samples are played -
+  //   so, between updates we interpolate with the system clock and then adjust when we get a new value
+  //   from the card
+  //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    // time is obtained as follows:
-    // -  if there is an external transport or clock active, we take our time from that
-    // -  else if we have a fixed output framerate (e.g. we are streaming) we take our time from
-    //         the system clock
-    //  in these cases we adjust our audio rate slightly to keep in synch with video
-    // - otherwise, we take the time from soundcard by counting samples played (the normal case),
-    //   and we synch video with that; however, the soundcard time only updates when samples are played -
-    //   so, between updates we interpolate with the system clock and then adjust when we get a new value
-    //   from the card
-    //g_print("process_one @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+  time_source = LIVES_TIME_SOURCE_NONE;
+  mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
+  if (mainw->currticks == -1) {
+    if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
+    mainw->cancelled = CANCEL_ERROR;
+    return mainw->cancelled;
+  }
+  if (init_timers) {
+    init_timers = FALSE;
+    mainw->startticks = last_anim_ticks = mainw->fps_mini_ticks = mainw->currticks;
+    mainw->fps_mini_measure = 0;
+  }
 
-    time_source = LIVES_TIME_SOURCE_NONE;
-    mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &time_source);
-    if (mainw->currticks == -1) {
-      if (time_source == LIVES_TIME_SOURCE_SOUNDCARD) handle_audio_timeout();
-      mainw->cancelled = CANCEL_ERROR;
-      return mainw->cancelled;
-    }
-    if (init_timers) {
-      init_timers = FALSE;
-      mainw->startticks = last_anim_ticks = mainw->fps_mini_ticks = mainw->currticks;
-    }
+  if (time_source != last_time_source) {
+    // time source changed: this should pnly happen rarely (eg. playback start)
+    // make sure there is no discontinuity by adjusting origsecs / origusecs
+    ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source) - mainw->currticks;
+    mainw->adjticks += delta;
+    mainw->currticks += delta;
+    mainw->fps_mini_ticks += delta;
+    last_anim_ticks += delta;
+  }
 
-    if (time_source != last_time_source) {
-      // time source changed: this should pnly happen rarely (eg. playback start)
-      // make sure there is no discontinuity by adjusting origsecs / origusecs
-      ticks_t delta = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, &last_time_source) - mainw->currticks;
-      mainw->adjticks += delta;
-      mainw->currticks += delta;
-      mainw->fps_mini_ticks += delta;
-      last_anim_ticks += delta;
-    }
+  last_time_source = time_source;
+  if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
+  if (last_anim_ticks > mainw->currticks) last_anim_ticks = mainw->currticks;
 
-    last_time_source = time_source;
-    if (mainw->startticks > mainw->currticks) mainw->startticks = mainw->currticks;
-    if (last_anim_ticks > mainw->currticks) last_anim_ticks = mainw->currticks;
-
-    mainw->audio_stretch = 1.0;
+  mainw->audio_stretch = 1.0;
 
 #define ADJUST_AUDIO_RATE
 #ifdef ADJUST_AUDIO_RATE
-    // adjust audio rate slightly if we are behind or ahead
-    // shouldn't need this since normally we sync video to soundcard
-    // - unless we are controlled externally (e.g. jack transport) or system clock is forced
-    if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
+  // adjust audio rate slightly if we are behind or ahead
+  // shouldn't need this since normally we sync video to soundcard
+  // - unless we are controlled externally (e.g. jack transport) or system clock is forced
+  if (time_source != LIVES_TIME_SOURCE_SOUNDCARD) {
 #ifdef ENABLE_JACK
-      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
-          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
-              mainw->offsetticks || audio_ticks == -1)) {
-        if (audio_ticks == -1) {
-          if (mainw->cancelled == CANCEL_NONE) {
-            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-            else mainw->cancelled = CANCEL_AUDIO_ERROR;
-            return mainw->cancelled;
-          }
-        }
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
-            audio_stretch > 0.5) {
-          // if audio_stretch is > 1. it means that audio is playing too fast
-          // < 1. it is playing too slow
-
-          // if too fast we increase the apparent sample rate so that it gets downsampled more
-          // if too slow we decrease the apparent sample rate so that it gets upsampled more
-          mainw->audio_stretch = audio_stretch;
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
+        cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+        (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 && ((audio_ticks = lives_jack_get_time(mainw->jackd)) >
+            mainw->offsetticks || audio_ticks == -1)) {
+      if (audio_ticks == -1) {
+        if (mainw->cancelled == CANCEL_NONE) {
+          if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+          else mainw->cancelled = CANCEL_AUDIO_ERROR;
+          return mainw->cancelled;
         }
       }
+      if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(mainw->currticks - mainw->offsetticks)) < 2. &&
+          audio_stretch > 0.5) {
+        // if audio_stretch is > 1. it means that audio is playing too fast
+        // < 1. it is playing too slow
+
+        // if too fast we increase the apparent sample rate so that it gets downsampled more
+        // if too slow we decrease the apparent sample rate so that it gets upsampled more
+        mainw->audio_stretch = audio_stretch;
+      }
+    }
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
-          cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
-          (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
-          ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
-           mainw->offsetticks || audio_ticks == -1)) {
-        if (audio_ticks == -1) {
-          if (mainw->cancelled == CANCEL_NONE) {
-            if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
-            else mainw->cancelled = CANCEL_AUDIO_ERROR;
-            return mainw->cancelled;
-          }
-        }
-        // fps is synched to external source, so we adjust the audio rate to fit
-        if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs,
-                             mainw->origusecs) + mainw->offsetticks)) < 2. &&
-            audio_stretch > 0.5) {
-          // if audio_stretch is > 1. it means that audio is playing too fast
-          // < 1. it is playing too slow
-
-          // if too fast we increase the apparent sample rate so that it gets downsampled more
-          // if too slow we decrease the apparent sample rate so that it gets upsampled more
-          mainw->audio_stretch = audio_stretch;
+    if (prefs->audio_src == AUDIO_SRC_INT && prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL &&
+        cfile->achans > 0 && (!mainw->is_rendering || (mainw->multitrack != NULL && !mainw->multitrack->is_rendering)) &&
+        (mainw->currticks - mainw->offsetticks) > TICKS_PER_SECOND * 10 &&
+        ((audio_ticks = lives_pulse_get_time(mainw->pulsed)) >
+         mainw->offsetticks || audio_ticks == -1)) {
+      if (audio_ticks == -1) {
+        if (mainw->cancelled == CANCEL_NONE) {
+          if (cfile != NULL && !cfile->is_loaded) mainw->cancelled = CANCEL_NO_PROPOGATE;
+          else mainw->cancelled = CANCEL_AUDIO_ERROR;
+          return mainw->cancelled;
         }
       }
-#endif
+      // fps is synched to external source, so we adjust the audio rate to fit
+      if ((audio_stretch = (double)(audio_ticks - mainw->offsetticks) / (double)(lives_get_relative_ticks(mainw->origsecs,
+                           mainw->origusecs) + mainw->offsetticks)) < 2. &&
+          audio_stretch > 0.5) {
+        // if audio_stretch is > 1. it means that audio is playing too fast
+        // < 1. it is playing too slow
+
+        // if too fast we increase the apparent sample rate so that it gets downsampled more
+        // if too slow we decrease the apparent sample rate so that it gets upsampled more
+        mainw->audio_stretch = audio_stretch;
+      }
     }
 #endif
-
-    //mainw->audio_stretch = 1.0;
-
-    if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
-      //mainw->startticks = mainw->currticks;
-      mainw->scratch = SCRATCH_NONE;
-      mainw->deltaticks = 0;
-      do_quick_switch(mainw->new_clip);
-      cache_hits = cache_misses = 0;
-      mainw->force_show = TRUE;
-      mainw->new_clip = -1;
-      dropped = 0;
-      mainw->audio_stretch = 8.0;
-#if SHOW_TIMINGS
-      nd = ns = 0;
+  }
 #endif
-    }
 
-    // playing back an event_list
-    // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
-    if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
-      // playing an event_list
-      if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
+  /// switch compensation allows us to five a brief impulse to the audio when switching
+  // this may be adjusted for accuracy
+#define SWITCH_COMPENSATION 4.0
+
+  if (LIVES_UNLIKELY(mainw->new_clip != -1)) {
+    mainw->scratch = SCRATCH_NONE;
+    mainw->deltaticks = 0;
+    do_quick_switch(mainw->new_clip);
+    cache_hits = cache_misses = 0;
+    mainw->force_show = TRUE;
+    mainw->new_clip = -1;
+    dropped = 0;
+    cleanup_preload = TRUE;
+    // TODO: add a few to bungle_frames because of decoder unchi\lling
+    if (prefs->show_dev_opts) {
+      mainw->fps_mini_ticks = mainw->currticks;
+      mainw->fps_mini_measure = 0;
+    }
+    mainw->audio_stretch = SWITCH_COMPENSATION;
+    mainw->actual_frame = 0;
+  }
+
+  // playing back an event_list
+  // here we need to add mainw->offsetticks, to get the correct position whe playing back in multitrack
+  if (cfile->proc_ptr == NULL && cfile->next_event != NULL) {
+    // playing an event_list
+    if (mainw->scratch != SCRATCH_NONE && mainw->multitrack != NULL) {
 #ifdef ENABLE_JACK_TRANSPORT
-        // handle transport jump in multitrack : end current playback and restart it from the new position
-        ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
-        mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
-        if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
+      // handle transport jump in multitrack : end current playback and restart it from the new position
+      // TODO: retest this and enable in the clip_editor
+      ticks_t transtc = q_gint64(jack_transport_get_time() * TICKS_PER_SECOND_DBL, cfile->fps);
+      mainw->multitrack->pb_start_event = get_frame_event_at(mainw->multitrack->event_list, transtc, NULL, TRUE);
+      if (mainw->cancelled == CANCEL_NONE) mainw->cancelled = CANCEL_EVENT_LIST_END;
 #endif
-      } else {
-        if (mainw->multitrack != NULL) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
-        if (mainw->currticks >= event_start) {
-          // see if we are playing a selection and reached the end
-          if (mainw->multitrack != NULL && mainw->multitrack->playing_sel &&
-              get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
-              mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
-          else {
-            ticks_t ldt = mainw->last_display_ticks;
-            cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
-            if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
-            else if (mainw->last_display_ticks != ldt) {
-              update_effort(spare_cycles + 1, FALSE);
-              spare_cycles = 0;
-            }
-          }
-        } else spare_cycles++;
-      }
-
-      lives_widget_context_update();
-
-      if (mainw->cancelled == CANCEL_NONE) return 0;
-      cancel_process(visible);
-      return mainw->cancelled;
-    }
-
-    // free playback
-
-    if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
-      // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
-      // this is to avoid the keyboard repeat delay (dammit !) so we get smooth trickplay
-      // BUT we need a timer sufficiently large so it isn't triggered on every loop, to produce a constant repeat rate
-      // but not so large so it doesn't get triggered enough
-      if (last_kbd_ticks > 0) handle_cached_keys();
-      last_kbd_ticks = mainw->currticks;
-    }
-
-    new_ticks = mainw->currticks;
-    cfile->last_frameno = cfile->frameno;
-
-    show_frame = FALSE;
-
-    if (cfile->pb_fps != 0.) {
-      // on calling:
-      // mainw->startticks is the timecode of the last frame shown
-      // new_ticks is the (adjusted) current time
-      // cfile->last_frameno, cfile->pb_fps (if playing) or cfile->fps (if not) are also used in the calculation
-      // as well as selection bounds and loop mode settings (if appropriate)
-      //
-      // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
-      // which will be <= the current time
-      // and cfile->frameno is set to the frame to show
-
-      pthread_mutex_lock(&mainw->audio_resync_mutex);
-      cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
-
-      if (new_ticks != mainw->startticks) {
-        if (prefs->show_dev_opts) {
-          jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
-        }
-        mainw->startticks = new_ticks;
-        pthread_mutex_unlock(&mainw->audio_resync_mutex);
-        if (display_ready) {
-          show_frame = TRUE;
-#ifdef USE_GDK_FRAME_CLOCK
-          display_ready = FALSE;
-#endif
-        }
-      } else {
-        pthread_mutex_unlock(&mainw->audio_resync_mutex);
-      }
-    }
-    real_ticks = -1;
-    // play next frame
-    if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
-      // calculate the audio 'frame' for non-realtime audio players
-      // for realtime players, we did this in calc_new_playback_position()
-      if (!is_realtime_aplayer(prefs->audio_player)) {
-        calc_aframeno(mainw->current_file);
-        ///(real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
-        if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
-                                                cfile->laudio_time * cfile->fps)))) {
-          real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-          mainw->firstticks = real_ticks;
-        }
-      }
-
-      if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
-                                mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))) {
-        show_frame = TRUE;
-      } else {
-        if (mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)) {
-          ticks_t dticks;
-          real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
-          dticks = (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL;
-          if ((mainw->fixed_fpsd > 0. && (dticks >= 1. / mainw->fixed_fpsd)) ||
-              (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
-               dticks >= 1. / mainw->vpp->fixed_fpsd)) {
-            show_frame = TRUE;
-          }
-        }
-      }
-      if (show_frame) {
-        // time to show a new frame
-        if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
-                                 mainw->preview_rendering || (mainw->multitrack != NULL &&
-                                     !mainw->multitrack->is_rendering))) {
-          dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
-          if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-            if (dropped > 0) {
-              update_effort(dropped, TRUE);
-              nd += dropped;
-            }
+    } else {
+      if (mainw->multitrack != NULL) mainw->currticks += mainw->offsetticks; // add the offset of playback start time
+      if (mainw->currticks >= event_start) {
+        // see if we are playing a selection and reached the end
+        if (mainw->multitrack != NULL && mainw->multitrack->playing_sel &&
+            get_event_timecode(cfile->next_event) / TICKS_PER_SECOND_DBL >=
+            mainw->multitrack->region_end) mainw->cancelled = CANCEL_EVENT_LIST_END;
+        else {
+          ticks_t ldt = mainw->last_display_ticks;
+          cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
+          if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
+          else if (mainw->last_display_ticks != ldt) {
             update_effort(spare_cycles + 1, FALSE);
-            ns++;
-#if SHOW_TIMINGS
-            g_print("dropped = %d (%f), %d scyc = %ld\n", dropped, (double)nd / (double)ns, mainw->struggling, spare_cycles);
-#endif
+            spare_cycles = 0;
           }
         }
+      } else spare_cycles++;
+    }
 
-        if (mainw->pred_clip == -1) {
-          mainw->frame_layer_preload = NULL;
-          cleanup_preload = FALSE;
-        } else if (cleanup_preload) {
+    lives_widget_context_update();
+
+    if (mainw->cancelled == CANCEL_NONE) return 0;
+    cancel_process(visible);
+    return mainw->cancelled;
+  }
+
+  // free playback
+
+  if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
+    // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
+    // this is to avoid the keyboard repeat delay (dammit !) so we get smooth trickplay
+    // BUT we need a timer sufficiently large so it isn't triggered on every loop, to produce a constant repeat rate
+    // but not so large so it doesn't get triggered enough
+    if (last_kbd_ticks > 0) handle_cached_keys();
+    last_kbd_ticks = mainw->currticks;
+  }
+
+  new_ticks = mainw->currticks;
+  if (getahead < 0) {
+    cfile->last_frameno = cfile->frameno;
+  }
+
+  show_frame = FALSE;
+
+  if (cfile->pb_fps != 0.) {
+    // calc_new_playback_postion returns a frame request based on the player mode and the time delta
+    //
+    // mainw->startticks is the timecode of the last frame shown
+    // new_ticks is the (adjusted) current time
+    // cfile->last_frameno, cfile->pb_fps (if playing) or cfile->fps (if not) are also used in the calculation
+    // as well as selection bounds and loop mode settings (if appropriate)
+    //
+    // on return, new_ticks is set to either mainw->starticks or the timecode of the next frame to show
+    // which will be <= the current time
+    // and cfile->frameno is set to the frame to show
+
+    pthread_mutex_lock(&mainw->audio_resync_mutex);
+
+    cfile->frameno = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
+
+    if (new_ticks != mainw->startticks) {
+      if (prefs->show_dev_opts) {
+        jitter = (double)(mainw->currticks - new_ticks) / TICKS_PER_SECOND_DBL;
+      }
+      pthread_mutex_unlock(&mainw->audio_resync_mutex);
+      if (getahead < 0) mainw->startticks = new_ticks;
+      else {
+        if (recalc_bungle_frames) {
+          /// we want to avoid the condition where we are constantly seeking ahead and because the seek may take a while
+          /// to happen, we immediately need to seek again. This will cause the video stream to 'judder'. So to try to avoid this
+          /// we will do an an extra jump forwads which hopefully will five the player a chance to catch up
+          /// - in this mode, instead of showing the reqiested frame we will do the following:
+          /// - if we have a cached frame,. we will show that; otherwise we will advance the frame by 1 from the last frame.
+          /// - following this we will cache the "getahead" frame. The player will the render the getahead frame and keep reshowing u
+          /// - until the time catches up. A future update will implement a more flexible caching system which will allow the possibility
+          /// of caching further frames..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exaclty
+          /// on the player's frame. 'getahead' is the target frame.
+          int delta = (getahead - cfile->frameno) * sig(cfile->pb_fps);
+#ifdef SHOW_CACHE_PREDICTIONS
+          g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d ", mainw->effort, getahead, cfile->frameno, requested_frame,
+                  bungle_frames, bungle_frames - getahead + requested_frame);
+          if (delta < 0) g_print(" !!!!!\n");
+          if (delta == 0) g_print(" EXACT\n");
+          if (delta > 0) g_print(" >>>>\n");
+#endif
+          if (delta > 0) bungle_frames -= (delta + 1) / 2 - 1;
+          else if (delta < 0) bungle_frames = delta < -2 ? bungle_frames * 2 + 1 : bungle_frames - getahead + cfile->frameno + 1;
+        }
+        recalc_bungle_frames = FALSE;
+      }
+      if (display_ready) {
+        show_frame = TRUE;
+#ifdef USE_GDK_FRAME_CLOCK
+        display_ready = FALSE;
+#endif
+      }
+    } else {
+      pthread_mutex_unlock(&mainw->audio_resync_mutex);
+    }
+  }
+  real_ticks = -1;
+  // play next frame
+  if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
+    // calculate the audio 'frame' for non-realtime audio players
+    // for realtime players, we did this in calc_new_playback_position()
+    if (!is_realtime_aplayer(prefs->audio_player)) {
+      // mainw->aframeno now calulated in calc_new_playback_position()
+      ///(real_ticks - mainw->firstticks) / TICKS_PER_SECOND_DBL * cfile->fps + audio_start;
+      if (LIVES_UNLIKELY(mainw->loop_cont && (mainw->aframeno > (mainw->audio_end ? mainw->audio_end :
+                                              cfile->laudio_time * cfile->fps)))) {
+        real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+        mainw->firstticks = real_ticks;
+      }
+    }
+
+    if (mainw->force_show || (mainw->fixed_fpsd <= 0. && show_frame && (mainw->vpp == NULL ||
+                              mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback))) {
+      show_frame = TRUE;
+    } else {
+      if (mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)) {
+        ticks_t dticks;
+        real_ticks = lives_get_relative_ticks(mainw->origsecs, mainw->origusecs);
+        dticks = (real_ticks - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL;
+        if ((mainw->fixed_fpsd > 0. && (dticks >= 1. / mainw->fixed_fpsd)) ||
+            (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback &&
+             dticks >= 1. / mainw->vpp->fixed_fpsd)) {
+          show_frame = TRUE;
+        }
+      }
+    }
+    if (show_frame) {
+      // time to show a new frame
+      int requested_frame = cfile->frameno;
+
+      if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
+                               mainw->preview_rendering || (mainw->multitrack != NULL &&
+                                   !mainw->multitrack->is_rendering))) {
+        if (getahead > -1) dropped = 0;
+        else {
+          dropped = ABS(cfile->frameno - cfile->last_frameno) - 1;
+          if (dropped < 0) dropped = 0;
+        }
+        if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
+          if (dropped > 0) {
+            update_effort(dropped, TRUE);
+          }
+          update_effort(spare_cycles + 1, FALSE);
+
+          if (getahead > -1) {
+            if (cfile->frameno >= getahead) {
+              getahead = -1;
+              mainw->startticks = new_ticks;
+              cfile->last_frameno = cfile->frameno;
+              if (mainw->pred_frame < 0) mainw->pred_frame = -mainw->pred_frame;
+            } else cfile->frameno = getahead;
+          } else {
+            if (cfile->clip_type == CLIP_TYPE_FILE && dropped > 2 && getahead < 0
+                && is_virtual_frame(mainw->current_file, cfile->frameno)
+                && ((cfile->pb_fps < 0. && !clip_can_reverse(mainw->current_file))
+                    || abs(cfile->frameno - cfile->last_vframe_played) > 1)) {
+              int tmp = cfile->frameno;
+
+#ifdef SHOW_CACHE_PREDICTIONS
+              lives_clip_data_t *cdata = ((lives_decoder_t *)cfile->ext_src)->cdata;
+              if (cdata != NULL)
+                g_print("decoder: seek flags = %d, jump_limit = %d, max_fps = %.4f\n", cdata->seek_flag,
+                        cdata->jump_limit, cdata->max_fps);
+              if (is_virtual_frame(mainw->current_file, mainw->actual_frame))
+                g_print("vframe jump was %d\n", mainw->actual_frame -
+#endif
+                        if (bungle_frames == -1) bungle_frames = 1;
+                        getahead = cfile->frameno + (bungle_frames * sig(cfile->pb_fps));
+                        if (getahead < 1 || getahead > cfile->frames) getahead = -1;
+                  else {
+                    cfile->frameno = cfile->last_frameno + sig(cfile->pb_fps);
+                      cfile->last_frameno = tmp;
+                      recalc_bungle_frames = TRUE;
+                    }
+            }
+          }
+#ifdef SHOW_CACHE_PREDICTIONS
+          g_print("dropped = %d (%f), %d scyc = %ld\n", dropped, (double)nd / (double)ns, mainw->effort, spare_cycles);
+#endif
+        }
+      }
+
+      if (mainw->pred_clip == -1) {
+        /// failed load, just reset
+        mainw->frame_layer_preload = NULL;
+        cleanup_preload = FALSE;
+      } else if (cleanup_preload) {
+        if (is_layer_ready(mainw->frame_layer_preload)) {
           check_layer_ready(mainw->frame_layer_preload);
           weed_layer_free(mainw->frame_layer_preload);
           mainw->frame_layer_preload = NULL;
           cleanup_preload = FALSE;
         }
+      }
 
-        if (mainw->frame_layer_preload) cache_hits++;
+      if (mainw->frame_layer_preload) {
+        if (mainw->pred_frame > 0) {
+          if (mainw->pred_clip == mainw->current_file) {
+            if (mainw->pred_frame == cfile->frameno) cache_hits++;
+            else {
+              if ((cfile->frameno > cfile->last_frameno && mainw->pred_frame > cfile->last_frameno
+                   && mainw->pred_frame < cfile->frameno)
+                  || (cfile->frameno > cfile->last_frameno && mainw->pred_frame > cfile->last_frameno
+                      && mainw->pred_frame < cfile->frameno)) {
+                cfile->frameno = mainw->pred_frame;
+                cache_hits++;
+              } else {
+                cache_misses++;
+                cleanup_preload = TRUE;
+		  // *INDENT-OFF*
+		}}}
+	    else {
+	      cache_misses++;
+	      cleanup_preload = TRUE;
+	    }}}
+	  // *INDENT-OFF*
+
+	if (mainw->actual_frame > 0 && is_virtual_frame(mainw->current_file, mainw->actual_frame))
+	  cfile->last_vframe_played = mainw->actual_frame;
 
         // load and display the new frame
-        load_frame_image(cfile->frameno);
-        mainw->fps_mini_measure++;
+	load_frame_image(cfile->frameno);
+
+	if (prefs->show_dev_opts) mainw->fps_mini_measure++;
 
         if (mainw->frame_layer_preload) {
-          if (mainw->frame_layer_preload) cache_hits--;
-          cache_misses++;
-          if (mainw->pred_clip != -1) cleanup_preload = TRUE;
-          else mainw->frame_layer_preload = NULL;
-        }
+	   if (mainw->pred_frame > 0) {
+	     if (mainw->pred_clip != -1) {
+	       if (mainw->pred_frame == cfile->frameno || mainw->pred_clip != mainw->current_file) cleanup_preload = TRUE;
+	     }
+	     else mainw->frame_layer_preload = NULL;
+	   }
+	}
 
-        /// note the audio seek position at the current frame. We will use this when switching clips
+	cfile->frameno = requested_frame;
+
+	/// if we had a 'getahead' frame then we may reset the frame position back to the prior frame. This allows us to recalculate
+	/// the frame position until we reach the getahead position. Otherwise we advance to the curent (requested) frame.
+	if (getahead > -1) {
+	  if ((cfile->pb_fps > 0. && getahead < requested_frame) || (cfile->pb_fps < 0. && getahead > requested_frame))
+	    cfile->frameno = cfile->last_frameno;
+	  else {
+	    mainw->startticks = new_ticks;
+	    cfile->last_frameno = cfile->frameno;
+	  }
+
+	/// note the audio seek position at the current frame. We will use this when switching clips
+	/// we don;t know if the last audio buffer has been played or not yet, so we compensate by subtracting half the buffer length
 #ifdef ENABLE_JACK
-        // note the audio seek position
-        if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+	// note the audio seek position
+	if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
           int aplay_file = mainw->jackd->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
-            mainw->files[aplay_file]->aseek_pos = mainw->jackd->real_seek_pos;
-        }
+          if (IS_VALID_CLIP(aplay_file)) {
+	    int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
+            mainw->files[aplay_file]->aseek_pos = mainw->jackd->real_seek_pos
+	      - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+	      * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8
+	      - (jack_get_buffsize(mainw->jackd) >= 0
+		 ? jack_get_buffsize(mainw->jackd) : 0) / 2;
+	    mainw->files[aplay_file]->aseek_pos = ALIGN_CEIL64((int64_t)mainw->files[aplay_file]->aseek_pos, qnt);
+	  }
+	}
 #endif
 #ifdef HAVE_PULSE_AUDIO
         // note the audio seek position
         if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
           int aplay_file = mainw->pulsed->playing_file;
-          if (IS_VALID_CLIP(aplay_file))
+          if (IS_VALID_CLIP(aplay_file)) {
+	    int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
             mainw->files[aplay_file]->aseek_pos = mainw->pulsed->real_seek_pos
-                                                  - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                                                  * cfile->arate * cfile->achans * cfile->asampsize / 8 - 2048;
-        }
+	      - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+	      * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8
+	      - (pulse_get_buffsize(mainw->pulsed) >= 0 ? pulse_get_buffsize(mainw->pulsed) / 2 : 0);
+	    mainw->files[aplay_file]->aseek_pos = ALIGN_CEIL64((int64_t)mainw->files[aplay_file]->aseek_pos, qnt);
+	  }
+	}
 #endif
 #if 0
         if (prefs->audio_player == AUD_PLAYER_NONE) {
@@ -1549,7 +1669,9 @@ int process_one(boolean visible) {
             mainw->last_display_ticks += TICKS_PER_SECOND_DBL / mainw->fixed_fpsd;
           else mainw->last_display_ticks = real_ticks;
         }
-        mainw->force_show = FALSE;
+
+	/// finally we will reset the "spare cycle" count, or increase it if we didnt show a frame
+	mainw->force_show = FALSE;
         spare_cycles = 0ul;
       } else spare_cycles++;
     }
@@ -1558,15 +1680,31 @@ int process_one(boolean visible) {
       pthread_mutex_lock(&mainw->audio_resync_mutex);
       mainw->startticks = mainw->currticks;
       pthread_mutex_unlock(&mainw->audio_resync_mutex);
-    } else if (spare_cycles) {
+    } else if (spare_cycles || (getahead > -1 && mainw->pred_frame != -getahead)) {
+      if (cleanup_preload) {
+	if (mainw->frame_layer_preload) {
+	  if (getahead > -1 || is_layer_ready(mainw->frame_layer_preload)) {
+	    check_layer_ready(mainw->frame_layer_preload);
+	    weed_layer_free(mainw->frame_layer_preload);
+	    mainw->frame_layer_preload = NULL;
+	    mainw->pred_frame = 0;
+	    mainw->pred_clip = 0;
+	    cleanup_preload = FALSE;
+	  }
+	}
+      }
       if (!mainw->frame_layer_preload) {
-        if (!mainw->preview && IS_NORMAL_CLIP(mainw->playing_file)) {
+	mainw->frame_layer_preload_final = FALSE;
+        if (!mainw->preview && cfile->clip_type == CLIP_TYPE_FILE) {
           lives_clip_t *sfile = mainw->files[mainw->playing_file];
           mainw->pred_clip = mainw->playing_file;
-          if (sfile->pb_fps > 0.)
-            mainw->pred_frame = sfile->frameno + dropped + 1;
-          else
-            mainw->pred_frame = sfile->frameno - dropped - 1;
+	  if (getahead > -1) mainw->pred_frame = getahead;
+	  else {
+	    if (sfile->pb_fps > 0.)
+	      mainw->pred_frame = sfile->frameno + dropped + 1;
+	    else
+	      mainw->pred_frame = sfile->frameno - dropped - 1;
+	  }
           if (mainw->pred_frame > 0 && mainw->pred_frame < sfile->frames) {
             mainw->frame_layer_preload = weed_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
             if (!pull_frame_at_size(mainw->frame_layer_preload, get_image_ext_for_type(sfile->img_type),
@@ -1575,8 +1713,17 @@ int process_one(boolean visible) {
               if (mainw->frame_layer_preload != NULL) {
                 weed_layer_free(mainw->frame_layer_preload);
                 mainw->pred_clip = -1;
-		// *INDENT-OFF*
-	      }}}}}}}
+	      }
+	    }
+	    else {
+	      mainw->force_show = TRUE;
+#ifdef SHOW_CACHE_PREDICTIONS
+	      g_print("mwflp is %p %ld %d\n", mainw->frame_layer_preload, mainw->pred_frame, mainw->pred_clip);
+#endif
+	      mainw->pred_frame = -getahead;
+	    }
+	    // *INDENT-OFF*
+	  }}}}}
   // *INDENT-ON*
 
   if (visible) {
@@ -1703,7 +1850,6 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
 
   // visible is set for processing (progress dialog is visible)
   // or unset for video playback (progress dialog is not shown)
-  nd = ns = 0;
   FILE *infofile = NULL;
   char *mytext = NULL;
 
@@ -1973,6 +2119,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   reset_effort();
+  getahead = -1;
+  bungle_frames = -1;
+  recalc_bungle_frames = FALSE;
+  spare_cycles = 0ul;
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function

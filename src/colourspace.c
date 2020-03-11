@@ -10974,7 +10974,7 @@ static void *swscale_threadfunc(void *arg) {
   if (swparams->layer) {
     int last = swparams->iheight * (swparams->thread_id + 1), scan;
     while ((scan = weed_get_int_value(swparams->layer, WEED_LEAF_PROGSCAN, NULL)) > 0 && scan - 2 < last)
-      lives_nanosleep(1000);
+      lives_nanosleep(100);
   }
   swparams->ret = sws_scale(swparams->swscale, (const uint8_t *const *)swparams->ipd, swparams->irw,
                             0, swparams->iheight, (uint8_t *const *)swparams->opd, swparams->orw);
@@ -12148,46 +12148,46 @@ void *weed_layer_free(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data(weed_plant_t *layer, int *nplanes) {
+LIVES_GLOBAL_INLINE void **weed_layer_get_pixel_data(weed_layer_t *layer, int *nplanes) {
   if (nplanes) *nplanes = 0;
   if (layer == NULL)  return NULL;
   return weed_get_voidptr_array_counted(layer, WEED_LEAF_PIXEL_DATA, nplanes);
 }
 
 
-LIVES_GLOBAL_INLINE uint8_t *weed_layer_get_pixel_data_packed(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE uint8_t *weed_layer_get_pixel_data_packed(weed_layer_t *layer) {
   if (layer == NULL)  return NULL;
   return (uint8_t *)weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_plant_t *layer, int *naudchans) {
+LIVES_GLOBAL_INLINE float **weed_layer_get_audio_data(weed_layer_t *layer, int *naudchans) {
   if (naudchans) *naudchans = 0;
   if (layer == NULL)  return NULL;
   return (float **)weed_get_voidptr_array_counted(layer, WEED_LEAF_AUDIO_DATA, naudchans);
 }
 
 
-LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_plant_t *layer, int *nplanes) {
+LIVES_GLOBAL_INLINE int *weed_layer_get_rowstrides(weed_layer_t *layer, int *nplanes) {
   if (nplanes) *nplanes = 0;
   if (layer == NULL)  return NULL;
   return weed_get_int_array_counted(layer, WEED_LEAF_ROWSTRIDES, nplanes);
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_rowstride(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_rowstride(weed_layer_t *layer) {
   if (layer == NULL)  return 0;
   return weed_get_int_value(layer, WEED_LEAF_ROWSTRIDES, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_width(weed_layer_t *layer) {
   if (layer == NULL)  return -1;
   return weed_get_int_value(layer, WEED_LEAF_WIDTH, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_height(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_height(weed_layer_t *layer) {
   if (layer == NULL)  return -1;
   return weed_get_int_value(layer, WEED_LEAF_HEIGHT, NULL);
 }
@@ -12226,19 +12226,19 @@ LIVES_GLOBAL_INLINE int weed_layer_get_palette_yuv(weed_layer_t *layer, int *cla
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_rate(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_RATE, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_naudchans(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_CHANNELS, NULL);
 }
 
 
-LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_plant_t *layer) {
+LIVES_GLOBAL_INLINE int weed_layer_get_audio_length(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
   return weed_get_int_value(layer, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
 }

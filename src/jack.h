@@ -151,10 +151,11 @@ size_t jack_flush_read_data(size_t rbytes, void *data);
 
 // utils
 volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
-void jack_time_reset(jack_driver_t *jackd, int64_t offset);
+void jack_time_reset(jack_driver_t *, int64_t offset);
 ticks_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 seconds
 boolean jack_audio_seek_frame(jack_driver_t *, double frame);  ///< seek to (video) frame
 int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes, lives_clip_t *sfile);  ///< seek to byte position
+size_t jack_get_buffsize(jack_driver_t *);
 
 void jack_get_rec_avals(jack_driver_t *);
 

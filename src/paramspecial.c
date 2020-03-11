@@ -615,7 +615,7 @@ void setmergealign(void) {
 }
 
 
-LiVESPixbuf *mt_framedraw(lives_mt *mt, weed_plant_t *layer) {
+LiVESPixbuf *mt_framedraw(lives_mt *mt, weed_layer_t *layer) {
   LiVESPixbuf *pixbuf = NULL;
 
   if (framedraw.added) {

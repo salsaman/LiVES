@@ -82,7 +82,7 @@ weed_plant_t *get_blend_layer(ticks_t tc);
 
 weed_plant_t *on_rte_apply(weed_plant_t *main_layer, int opwidth, int opheight, ticks_t tc);
 
-void deinterlace_frame(weed_plant_t *layer, ticks_t tc);
+void deinterlace_frame(weed_layer_t *layer, ticks_t tc);
 
 // rte keys state
 void rte_keymodes_backup(int nkeys);

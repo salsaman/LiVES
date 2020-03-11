@@ -321,6 +321,12 @@ static void jack_set_rec_avals(jack_driver_t *jackd) {
 }
 
 
+size_t jack_get_buffsize(jack_driver_t *jackd) {
+  if (cache_buffer != NULL) return cache_buffer->bytesize;
+  return 0;
+}
+
+
 static void push_cache_buffer(lives_audio_buf_t *cache_buffer, jack_driver_t *jackd,
                               size_t in_bytes, size_t nframes, double shrink_factor) {
   // push a cache_buffer for another thread to fill

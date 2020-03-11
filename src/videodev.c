@@ -87,7 +87,7 @@ static void new_frame_cb(unicap_event_t event, unicap_handle_t handle,
 }
 
 
-boolean weed_layer_set_from_lvdev(weed_plant_t *layer, lives_clip_t *sfile, double timeoutsecs) {
+boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs) {
   lives_vdev_t *ldev = (lives_vdev_t *)sfile->ext_src;
   unicap_data_buffer_t *returned_buffer = NULL;
   void **pixel_data;

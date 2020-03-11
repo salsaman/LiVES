@@ -83,6 +83,9 @@
 
 typedef int64_t ticks_t;
 
+typedef int frames_t; // nb. will chenge to int64_t at some future point
+typedef int frames64_t; // will become the new standard
+
 #define ENABLE_OSC2
 
 #ifndef GUI_QT
@@ -275,35 +278,43 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
-#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) ? fname : fname : fname : NULL))
+#define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) \
+					       ? fname : fname : fname : NULL))
 
 // math macros / functions
 
+#define squared(a) ((a) * (a))
+
+#define sig(a) ((a) < 0. ? -1.0 : 1.0)
+
 // round to nearest integer
-#define ROUND_I(a) ((int)((double)a + .5))
+#define ROUND_I(a) ((int)((double)(a) + .5))
 
 // clamp a between 0 and b; both values rounded to nearest int
-#define NORMAL_CLAMP(a, b) (ROUND_I(a)  < 0 ? 0 : ROUND_I(a) > ROUND_I(b) ? ROUND_I(b) : ROUND_I(a))
+#define NORMAL_CLAMP(a, b) (ROUND_I((a))  < 0 ? 0 : ROUND_I((a)) > ROUND_I((b)) ? ROUND_I((b)) : ROUND_I((a)))
 
 // clamp a between 1 and b; both values rounded to nearest int; if rounded value of a is <= 0, return rounded b
-#define UTIL_CLAMP(a, b) (NORMAL_CLAMP(a, b) <= 0 ? ROUND_I(b) : ROUND_I(a))
+#define UTIL_CLAMP(a, b) (NORMAL_CLAMP((a), (b)) <= 0 ? ROUND_I((b)) : ROUND_I((a)))
 
 // round a up double / float a to  next multiple of int b
-#define CEIL(a, b) ((int)(((double)a + (double)b - .000000001) / ((double)b)) * b)
+#define CEIL(a, b) ((int)(((double)(a) + (double)(b) - .000000001) / ((double)(b))) * (b))
 
 // round int a up to next multiple of int b, unless a is already a multiple of b
-#define ALIGN_CEIL(a, b) (((int)((a + b - 1.) / b)) * b)
+#define ALIGN_CEIL(a, b) (((int)(((a) + (b) - 1.) / (b))) * (b))
+
+// round int a up to next multiple of int b, unless a is already a multiple of b
+#define ALIGN_CEIL64(a, b) ((((int64_t)(a) + (int64_t)(b) - 1) / (int64_t)(b)) * (int64_t)(b))
 
 // round float / double a down to nearest multiple of int b
-#define FLOOR(a, b) ((int)(((double)a - .000000001) / ((double)b)) * b)
+#define FLOOR(a, b) ((int)(((double)(a) - .000000001) / ((double)(b))) * (b))
 
 // floating point division, maintains the sign of the dividend, regardless of the sign of the divisor
-#define SIGNED_DIVIDE(a, b) (a < 0. ? -fabs(a / b) : fabs(a / b))
+#define SIGNED_DIVIDE(a, b) ((a) < 0. ? -fabs((a) / (b)) : fabs((a) / (b)))
 
 // using signed ints, the first part will be 1 iff -a < b, the second iff a > b, equivalent to abs(a) > b
-#define ABS_THRESH(a, b) (((a + b) >> 31) | ((b - a) >> 31))
+#define ABS_THRESH(a, b) (((a) + (b)) >> 31) | (((b) - (a)) >> 31)
 
-#define myround(n) (n >= 0. ? (int)(n + 0.5) : (int)(n - 0.5))
+#define myround(n) ((n) >= 0. ? (int)((n) + 0.5) : (int)((n) - 0.5))
 
 #ifdef NEED_ENDIAN_TEST
 #undef NEED_ENDIAN_TEST
@@ -314,11 +325,10 @@ static int32_t testint = 0x12345678;
 // utils.c math functions
 float LEFloat_to_BEFloat(float f) GNU_CONST;
 uint64_t lives_10pow(int pow) GNU_CONST;
-uint64_t lives_10pow(int pow) GNU_CONST;
 double lives_fix(double val, int decimals) GNU_CONST;
 uint32_t get_approx_ln(uint32_t val) GNU_CONST;
 uint64_t get_approx_ln64(uint64_t x)GNU_CONST;
-uint64_t get_near2pow(uint64_t val);
+uint64_t get_near2pow(uint64_t val) GNU_CONST;
 
 typedef struct {
   uint16_t red;
@@ -376,6 +386,9 @@ weed_leaf_delete_f _weed_leaf_delete;
 #include "widget-helper.h"
 #include "machinestate.h"
 
+boolean weed_threadsafe;
+int weed_abi_version;
+
 #define ALLOW_PNG24
 
 /// this struct is used only when physically resampling frames on the disk
@@ -397,7 +410,7 @@ typedef struct {
   LiVESWidget *preview_button;
   LiVESWidget *cancel_button;
   LiVESWidget *scrolledwindow;
-  uint32_t frames_done;
+  frames_t frames_done;
   boolean is_ready;
 } xprocess;
 
@@ -546,6 +559,7 @@ typedef enum {
   LIVES_INTERLACE_TOP_FIRST = 2
 } lives_interlace_t;
 
+#include "colourspace.h"
 #include "pangotext.h"
 
 #define WEED_LEAF_HOST_DEINTERLACE "host_deint" // frame needs deinterlacing
@@ -607,7 +621,7 @@ typedef struct _lives_clip_t {
   int asampsize; ///< audio sample size in bits (8 or 16)
 
   /////////////////
-  int frames;  ///< number of video frames
+  frames_t frames;  ///< number of video frames
 
   int gamma_type;
 
@@ -634,18 +648,18 @@ typedef struct _lives_clip_t {
   int ovsize;
   int64_t f_size;
   int64_t afilesize;
-  int old_frames; ///< for deordering, etc.
+  frames_t old_frames; ///< for deordering, etc.
   char file_name[PATH_MAX]; ///< input file
   char info_file[PATH_MAX];
   char name[CLIP_NAME_MAXLEN];  ///< the display name
   char save_file_name[PATH_MAX];
   char type[64];
-  int start;
-  int end;
-  int insert_start;
-  int insert_end;
-  int progress_start;
-  int progress_end;
+  frames_t start;
+  frames_t end;
+  frames_t insert_start;
+  frames_t insert_end;
+  frames_t progress_start;
+  frames_t progress_end;
   boolean changed;
   LiVESWidget *menuentry;
   ulong menuentry_func;
@@ -656,7 +670,8 @@ typedef struct _lives_clip_t {
   double freeze_fps; ///< pb_fps for paused / frozen clips
   boolean play_paused;
   boolean was_in_set;
-  int adirection; ///< audio play directiion during playback. Normally this is eithr forwards or the same as pb_fps, but it may vary
+  lives_direction_t
+  adirection; ///< audio play directiion during playback. Normally eithr forwards or the same as pb_fps, but it may vary
 
   //opening/restoring status
   boolean opening;
@@ -665,7 +680,7 @@ typedef struct _lives_clip_t {
   boolean opening_loc;
   boolean restoring;
   boolean is_loaded;  ///< should we continue loading if we come back to this clip
-  int opening_frames;
+  frames_t opening_frames;
 
   /// don't show preview/pause buttons on processing
   boolean nopreview;
@@ -685,9 +700,9 @@ typedef struct _lives_clip_t {
   double old_raudio_time;
 
   // current and last played index frames for internal player
-  int frameno;
-  int last_frameno;
-  int saved_frameno;
+  frames_t frameno;
+  frames_t last_frameno;
+  frames_t saved_frameno;
 
   /////////////////////////////////////////////////////////////
   // see resample.c for new events system
@@ -705,8 +720,8 @@ typedef struct _lives_clip_t {
   ///undo
   lives_undo_t undo_action;
 
-  int undo_start;
-  int undo_end;
+  frames_t undo_start;
+  frames_t undo_end;
   char undo_text[32];
   char redo_text[32];
   boolean undoable;
@@ -738,11 +753,11 @@ typedef struct _lives_clip_t {
   /// >0 means corresponding frame within original clip
   /// -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
   /// size must be >= frames, MUST be contiguous in memory
-  int *frame_index;
+  frames_t *frame_index;
 
-  int *frame_index_back; ///< for undo
+  frames_t *frame_index_back; ///< for undo
 
-  int fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
+  frames_t fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
 #define FX_FRAME_PUMP_VAL 50 ///< how many frames to prime the pump for realtime effects and resampler
 
@@ -760,8 +775,10 @@ typedef struct _lives_clip_t {
 
   lives_image_type_t img_type;
 
+  frames_t last_vframe_played;
+
   /// layout map for the current layout
-  int stored_layout_frame;
+  frames_t stored_layout_frame;
   int stored_layout_idx;
   double stored_layout_audio;
   double stored_layout_fps;
@@ -769,7 +786,7 @@ typedef struct _lives_clip_t {
   lives_subtitles_t *subt;
 
   char *op_dir;
-  uint64_t op_ds_warn_level; ///< current disk space warning level for any output directory
+  uint64_t op_ds_warn_level; ///< current disk space warning level for any output direcditory
 
   boolean no_proc_sys_errors; ///< skip system error dialogs in processing
   boolean no_proc_read_errors; ///< skip read error dialogs in processing
@@ -890,7 +907,6 @@ capability *capable;
 #define USE_16BIT_PCONV
 
 // common defs for mainwindow (retain this order)
-#include "colourspace.h"
 #include "plugins.h"
 #include "paramspecial.h"
 #include "multitrack.h"
@@ -1195,8 +1211,8 @@ void open_set_file(int clipnum);
 // saveplay.c scrap file
 boolean open_scrap_file(void);
 boolean open_ascrap_file(void);
-int save_to_scrap_file(weed_plant_t *layer);
-boolean load_from_scrap_file(weed_plant_t *layer, int frame);
+int save_to_scrap_file(weed_layer_t *layer);
+boolean load_from_scrap_file(weed_layer_t *layer, int frame);
 void close_ascrap_file(boolean remove);
 void close_scrap_file(boolean remove);
 void add_to_ascrap_mb(uint64_t bytes);
@@ -1224,10 +1240,12 @@ void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 
-boolean pull_frame(weed_plant_t *layer, const char *image_ext, ticks_t tc);
-void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, ticks_t tc, int width, int height);
-void check_layer_ready(weed_plant_t *layer);
-boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, ticks_t tc,
+#define is_layer_ready(layer) (weed_get_boolean_value((layer), "thread_processing", NULL) == WEED_FALSE)
+
+boolean pull_frame(weed_layer_t *layer, const char *image_ext, ticks_t tc);
+void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, ticks_t tc, int width, int height);
+boolean check_layer_ready(weed_layer_t *layer);
+boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, ticks_t tc,
                            int width, int height, int target_palette);
 LiVESPixbuf *pull_lives_pixbuf_at_size(int clip, int frame, const char *image_ext, ticks_t tc,
                                        int width, int height, LiVESInterpType interp, boolean fordisp);
@@ -1251,8 +1269,8 @@ void init_track_decoders(void);
 void free_track_decoders(void);
 
 #ifdef USE_LIBPNG
-boolean layer_from_png(int fd, weed_plant_t *layer, int width, int height, int tpalette, boolean prog);
-//boolean save_to_png(FILE *fp, weed_plant_t *layer, int comp);
+boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int tpalette, boolean prog);
+//boolean save_to_png(FILE *fp, weed_layer_t *layer, int comp);
 #endif
 
 void load_frame_image(int frame);
@@ -1532,8 +1550,6 @@ void fastsrand(uint64_t seed);
 #define CLIPBOARD_FILE 0
 #define clipboard mainw->files[CLIPBOARD_FILE]
 
-#define PREFS_TIMEOUT 10000000 ///< 10 seconds
-
 #define LIVES_TV_CHANNEL1 "http://www.serverwillprovide.com/sorteal/livestvclips/livestv.ogm"
 
 const char *dummychar;
@@ -1593,7 +1609,7 @@ void break_me(void);
 
 #ifdef _lives_malloc
 #undef  lives_malloc
-#define lives_malloc _lives_malloc
+#define lives_malloc _test_malloc
 #endif
 #ifdef _lives_realloc
 #undef  lives_realloc
@@ -1601,7 +1617,7 @@ void break_me(void);
 #endif
 #ifdef _lives_free
 #undef  lives_free
-#define lives_free _lives_free
+#define lives_free _test_free
 #endif
 #ifdef _lives_memcpy
 #undef  lives_memcpy
@@ -1620,6 +1636,12 @@ void break_me(void);
 #define lives_calloc _lives_calloc
 #endif
 
+#endif
+
+#define VALGRIND_ON
+#ifdef VALGRIND_ON
+#define QUICK_EXIT
+#define STD_STRINGFUNCS
 #endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H

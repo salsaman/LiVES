@@ -586,7 +586,7 @@ lives_render_error_t realfx_progress(boolean reset) {
 
   ticks_t frameticks;
 
-  weed_plant_t *layer;
+  weed_layer_t *layer;
 
   char *com, *tmp;
 
@@ -819,7 +819,7 @@ void on_realfx_activate(LiVESMenuItem *menuitem, livespointer rfx) {
 }
 
 
-weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
+weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_timecode_t tc) {
   // apply realtime effects to a layer
   // mainw->filter_map is used as a guide
   // mainw->pchains holds the parameter values for interpolation
@@ -873,7 +873,7 @@ weed_plant_t *on_rte_apply(weed_plant_t *layer, int opwidth, int opheight, weed_
 }
 
 
-void deinterlace_frame(weed_plant_t *layer, weed_timecode_t tc) {
+void deinterlace_frame(weed_layer_t *layer, weed_timecode_t tc) {
   weed_plant_t **layers;
 
   weed_plant_t *deint_filter, *deint_instance, *next_inst, *init_event, *orig_instance;

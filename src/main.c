@@ -1,3 +1,4 @@
+
 // main.c
 // LiVES (lives-exe)
 // (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
@@ -239,9 +240,15 @@ void defer_sigint(int signum) {
   return;
 }
 
-
+#define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
+#ifdef QUICK_EXIT
+  shoatend();
+  fprintf(stderr, "shoatt end");
+  fflush(stderr);
+  //exit(signum);
+#endif
   if (mainw != NULL) {
     if (LIVES_MAIN_WINDOW_WIDGET != NULL) {
       if (mainw->foreign) {
@@ -282,7 +289,7 @@ void catch_sigint(int signum) {
       }
 
       if (mainw->was_set) {
-        fprintf(stderr, "%s", _("Preserving set.\n"));
+        if (mainw->memok) fprintf(stderr, "%s", _("Preserving set.\n"));
       }
 
       mainw->leave_recovery = mainw->leave_files = TRUE;
@@ -1349,6 +1356,10 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->lockstats = FALSE;
 
   mainw->audio_stretch = 1.0;
+
+  mainw->frame_layer_preload_final = FALSE;
+
+  mainw->play_sequence = 0;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -3337,6 +3348,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   boolean toolong = FALSE;
   char *tmp, *dir, *msg;
   pthread_mutexattr_t mattr;
+#ifndef IS_LIBLIVES
+  weed_plant_t *test_plant;
+#endif
 
 #ifdef GUI_QT
   qapp = new QApplication(argc, argv);
@@ -3416,7 +3430,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
 #ifndef IS_LIBLIVES
   // start up the Weed system
-  werr = weed_init(WEED_ABI_VERSION, 0);
+  weed_abi_version = weed_get_abi_version();
+  if (weed_abi_version > WEED_ABI_VERSION) weed_abi_version = WEED_ABI_VERSION;
+#ifdef STD_STRINGFUNCS
+  werr = weed_init(weed_abi_version, WEED_INIT_STD_STRINGFUNCS);
+#else
+  werr = weed_init(weed_abi_version, 0);
+#endif
   if (werr != WEED_SUCCESS) {
     LIVES_FATAL("Failed to init Weed");
     lives_notify(LIVES_OSC_NOTIFY_QUIT, msg);
@@ -3452,6 +3472,13 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
+
+  weed_threadsafe = FALSE;
+  test_plant = weed_plant_new(0);
+  if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
+    weed_threadsafe = TRUE;
+  else weed_threadsafe = FALSE;
+  weed_plant_free(test_plant);
 
   widget_helper_init();
 
@@ -4681,7 +4708,7 @@ LIVES_GLOBAL_INLINE void showclipimgs(void) {
 void load_start_image(int frame) {
   LiVESPixbuf *start_pixbuf = NULL;
 
-  weed_plant_t *layer;
+  weed_layer_t *layer;
 
   weed_timecode_t tc;
 
@@ -4856,7 +4883,7 @@ void load_start_image(int frame) {
       }
       start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
-    weed_plant_free(layer);
+    weed_layer_free(layer);
 
     if (LIVES_IS_PIXBUF(start_pixbuf)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->start_image), start_pixbuf, NULL);
@@ -4891,7 +4918,7 @@ void load_start_image(int frame) {
 
 void load_end_image(int frame) {
   LiVESPixbuf *end_pixbuf = NULL;
-  weed_plant_t *layer;
+  weed_layer_t *layer;
   weed_timecode_t tc;
   int rwidth, rheight, width, height;
   boolean expose = FALSE;
@@ -5002,7 +5029,7 @@ void load_end_image(int frame) {
       }
       end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
-    weed_plant_free(layer);
+    weed_layer_free(layer);
 
     if (LIVES_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), end_pixbuf, NULL);
@@ -5190,7 +5217,7 @@ void load_preview_image(boolean update_always) {
   if (mainw->preview_frame < 1 || mainw->preview_frame > cfile->frames) {
     pixbuf = lives_pixbuf_scale_simple(mainw->imframe, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST);
   } else {
-    weed_plant_t *layer = weed_layer_new_for_frame(mainw->current_file, mainw->preview_frame);
+    weed_layer_t *layer = weed_layer_new_for_frame(mainw->current_file, mainw->preview_frame);
     weed_timecode_t tc = ((mainw->preview_frame - 1.)) / cfile->fps * TICKS_PER_SECOND;
 
     // if we are not playing, and it would be slow to seek to the frame, convert it to an image
@@ -5351,6 +5378,7 @@ typedef struct {
 static void *res_thrdfunc(void *arg) {
   resl_priv_data *priv = (resl_priv_data *)arg;
   resize_layer(priv->layer, priv->width, priv->height, priv->interp, priv->pal, priv->clamp);
+  weed_leaf_delete(priv->layer, "res_thread");
   return NULL;
 }
 
@@ -5370,7 +5398,7 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
 }
 
 
-boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int tpalette, boolean prog) {
+boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int tpalette, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
   unsigned char ibuff[8];
@@ -5569,14 +5597,13 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
     }
   }
 
-  if (twidth * theight != 0 && (twidth != width || theight != height) && !png_get_interlace_type(png_ptr, info_ptr)) {
+  if (weed_threadsafe && twidth * theight != 0 && (twidth != width || theight != height) &&
+      !png_get_interlace_type(png_ptr, info_ptr)) {
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 1);
     reslayer_thread(layer, twidth, theight, get_interp_value(prefs->pb_quality), tpalette, weed_layer_get_yuv_clamping(layer));
     for (int j = 0; j < height; j++) {
       png_read_row(png_ptr, row_ptrs[j], NULL);
-      pthread_rwlock_wrlock(&mainw->progscan_lock);
       weed_set_int_value(layer, WEED_LEAF_PROGSCAN, j + 2);
-      pthread_rwlock_unlock(&mainw->progscan_lock);
     }
     weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
   } else {
@@ -5592,11 +5619,16 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
   if (is16bit) {
     int clamping, sampling, subspace;
+    lives_thread_t *resl_thrd;
     weed_layer_get_palette_yuv(layer, &clamping, &sampling, &subspace);
     weed_set_int_value(layer, WEED_LEAF_PIXEL_BITS, 16);
     if (weed_palette_has_alpha(tpalette)) tpalette = WEED_PALETTE_YUVA4444P;
     else {
       if (tpalette != WEED_PALETTE_YUV420P) tpalette = WEED_PALETTE_YUV444P;
+    }
+    if ((resl_thrd = weed_get_voidptr_value(layer, "res_thread", NULL)) != NULL) {
+      lives_thread_join(*resl_thrd, NULL);
+      weed_leaf_delete(layer, "res_thread");
     }
     // convert RGBA -> YUVA4444P or RGB -> 444P or 420
     // 16 bit conversion
@@ -5610,7 +5642,7 @@ boolean layer_from_png(int fd, weed_plant_t *layer, int twidth, int theight, int
 
 
 // unused
-boolean save_to_png(FILE * fp, weed_plant_t *layer, int comp) {
+boolean save_to_png(FILE * fp, weed_layer_t *layer, int comp) {
   // comp is 0 (none) - 9 (full)
   png_structp png_ptr;
   png_infop info_ptr;
@@ -5720,10 +5752,9 @@ boolean save_to_png(FILE * fp, weed_plant_t *layer, int comp) {
 #endif
 
 
-static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, const char *fname, int width,
+static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, const char *fname, int width,
     int height, int tpalette, const char *img_ext) {
   LiVESPixbuf *pixbuf = NULL;
-
   LiVESError *gerror = NULL;
 
 #ifndef NO_PROG_LOAD
@@ -5886,7 +5917,7 @@ static boolean weed_layer_create_from_file_progressive(weed_plant_t *layer, cons
 }
 
 
-static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, weed_plant_t *layer) {
+static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, weed_layer_t *layer) {
   // render subtitles from whatever (.srt or .sub) file
   // uses default values for colours, fonts, size, etc.
 
@@ -5925,7 +5956,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
 }
 
 
-boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height,
+boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_timecode_t tc, int width, int height,
                            int target_palette) {
   // pull a frame from an external source into a layer
   // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
@@ -6122,7 +6153,12 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
         if (height * width == 0) {
           ret = weed_layer_create_from_file_progressive(layer, fname, 0, 0, target_palette, image_ext);
         } else {
+          lives_thread_t *resl_thrd;
           ret = weed_layer_create_from_file_progressive(layer, fname, width, height, target_palette, image_ext);
+          if ((resl_thrd = weed_get_voidptr_value(layer, "res_thread", NULL)) != NULL) {
+            lives_thread_join(*resl_thrd, NULL);
+            weed_leaf_delete(layer, "res_thread");
+          }
         }
         lives_free(fname);
 
@@ -6239,25 +6275,45 @@ boolean pull_frame_at_size(weed_plant_t *layer, const char *image_ext, weed_time
 }
 
 
-/** pull a frame from an external source into a layer
+/**
+   @brief pull a frame from an external source into a layer
     the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
     tc is used instead of WEED_LEAF_FRAME for some sources (e.g. generator plugins)
     image_ext is used if the source is an image file (eg. "jpg" or "png")
 */
-LIVES_GLOBAL_INLINE boolean pull_frame(weed_plant_t *layer, const char *image_ext, weed_timecode_t tc) {
+LIVES_GLOBAL_INLINE boolean pull_frame(weed_layer_t *layer, const char *image_ext, weed_timecode_t tc) {
   return pull_frame_at_size(layer, image_ext, tc, 0, 0, WEED_PALETTE_END);
 }
 
 
-/** block until layer pixel_data is ready. We may also deinterlace and overlay subs here
+/**
+    @brief block until layer pixel_data is ready.
+    This function should always be called for threaded layers, prior to freeing the layer, reading it's  properites, pixel data,
+    resizing etc.
+
+    We may also deinterlace and overlay subs here
+    for the blend layer, we may also resize, convert palette, apply gamma in preparation for combining with the main layer
+
     if effects were applied then the frame_layer can depend on other layers, however
     these wil have been checked already when the effects were applied
+
+    see also MACRO: is_layer_ready(layer) which can be called first to avoid the block, e.g.
+
+    while (!is_layer_ready(layer)) {
+    	do_something_else();
+    }
+    check_layer_ready(layer); // won't block
+
+    This function must be called at some point for every threaded frame, otherwise thread resources will be leaked.
+
+    N.B. the name if this function is not the best, it will probably get renamed in th future to something like
+    finish_layer.
 */
-void check_layer_ready(weed_plant_t *layer) {
+boolean check_layer_ready(weed_layer_t *layer) {
   int clip, frame;
   lives_clip_t *sfile;
 
-  if (layer == NULL) return;
+  if (layer == NULL) return FALSE;
   if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_PTHREAD)) {
     lives_thread_t *frame_thread = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
     lives_thread_join(*frame_thread, NULL);
@@ -6276,18 +6332,18 @@ void check_layer_ready(weed_plant_t *layer) {
 
     if (clip != -1) {
       sfile = mainw->files[clip];
-
       // render subtitles from file
       if (prefs->show_subtitles && sfile->subt != NULL && sfile->subt->tfile != NULL) {
         double xtime = (double)(frame - 1) / sfile->fps;
         layer = render_subs_from_file(sfile, xtime, layer);
 	  // *INDENT-OFF*
       }}}
+  return TRUE;
 }
 
 
 typedef struct {
-   weed_plant_t *layer;
+   weed_layer_t *layer;
    weed_timecode_t tc;
    const char *img_ext;
    int width, height;
@@ -6296,11 +6352,10 @@ typedef struct {
 
 static void *pft_thread(void *in) {
   pft_priv_data *data = (pft_priv_data *)in;
-    weed_plant_t *layer = data->layer;
+    weed_layer_t *layer = data->layer;
     weed_timecode_t tc = data->tc;
     const char *img_ext = data->img_ext;
     int width = data->width, height = data->height;
-    lives_thread_t *resl_thrd;
     lives_free(in);
 
     /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
@@ -6310,9 +6365,6 @@ static void *pft_thread(void *in) {
       if (mainw->blend_palette != WEED_PALETTE_END) {
         short interp = get_interp_value(prefs->pb_quality);
         pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
-	if ((resl_thrd = weed_get_voidptr_value(layer, "res_thread", NULL)) != NULL)
-	  lives_thread_join(*resl_thrd, NULL);
-
 	resize_layer(layer, mainw->blend_width,
 		     mainw->blend_height, interp, mainw->blend_palette, mainw->blend_clamping);
       }
@@ -6327,14 +6379,13 @@ static void *pft_thread(void *in) {
       if (tgamma != WEED_GAMMA_UNKNOWN) gamma_convert_layer(mainw->blend_gamma, layer);
     } else {
       pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_END);
-      if ((resl_thrd = weed_get_voidptr_value(layer, "res_thread", NULL)) != NULL)
-	lives_thread_join(*resl_thrd, NULL);
     }
+    weed_leaf_delete(layer, "thread_processing");
     return NULL;
 }
 
 
-void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode_t tc, int width, int height) {
+void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode_t tc, int width, int height) {
     // pull a frame from an external source into a layer
     // the WEED_LEAF_CLIP and WEED_LEAF_FRAME leaves must be set in layer
 
@@ -6351,6 +6402,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
     weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
     weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
     weed_set_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, (void *)frame_thread);
+    weed_set_boolean_value(layer, "thread_processing", WEED_TRUE);
     in->img_ext = img_ext;
     in->layer = layer;
     in->width = width;
@@ -6370,7 +6422,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
     // pixbuf will be sized to width x height pixels using interp
 
     LiVESPixbuf *pixbuf = NULL;
-    weed_plant_t *layer = weed_layer_new_for_frame(clip, frame);
+    weed_layer_t *layer = weed_layer_new_for_frame(clip, frame);
     int palette;
 
 #ifndef ALLOW_PNG24
@@ -6530,7 +6582,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
   }
 
 
-  static boolean check_for_urgency_msg(weed_plant_t *layer) {
+  static boolean check_for_urgency_msg(weed_layer_t *layer) {
     if (mainw->urgency_msg != NULL || mainw->lockstats) {
       if (mainw->lockstats) {
 	lives_freep((void **)&mainw->urgency_msg);
@@ -6637,7 +6689,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
     }
 
     if (!mainw->foreign) {
-      mainw->actual_frame = cfile->last_frameno = frame;
+      mainw->actual_frame = frame;
 
       if (!mainw->preview_rendering && (!((was_preview = mainw->preview) || mainw->is_rendering))) {
         /////////////////////////////////////////////////////////
@@ -6717,7 +6769,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
             bg_frame = 0;
           }
 
-          actual_ticks = mainw->startticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+          actual_ticks = mainw->currticks;//lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
           if (mainw->record_starting) {
             // mark record start
@@ -6928,10 +6980,12 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
       do {
         if (mainw->frame_layer != NULL) {
           // free the old mainw->frame_layer
-          check_layer_ready(mainw->frame_layer); // ensure all threads are complete
-          weed_layer_free(mainw->frame_layer);
-          mainw->frame_layer = NULL;
-        }
+	  if (mainw->frame_layer != mainw->frame_layer_preload) {
+	    check_layer_ready(mainw->frame_layer); // ensure all threads are complete
+	    weed_layer_free(mainw->frame_layer);
+	    mainw->frame_layer = NULL;
+	  }
+	}
 
         if (mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) {
           // here if we are rendering from multitrack, previewing a recording, or applying realtime effects to a selection
@@ -7037,8 +7091,11 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
             if (!pull_frame_at_size(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks,
                                     cfile->hsize, cfile->vsize, WEED_PALETTE_END)) {
 
-              if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
-              mainw->frame_layer = NULL;
+              if (mainw->frame_layer != NULL) {
+                if (mainw->frame_layer != mainw->frame_layer_preload)
+                  weed_layer_free(mainw->frame_layer);
+                mainw->frame_layer = NULL;
+              }
 
               if (cfile->opening && cfile->img_type == IMG_TYPE_PNG && sget_file_size(fname_next) == 0) {
                 if (++bad_frame_count > BFC_LIMIT) {
@@ -7048,12 +7105,24 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
               }
             }
           } else {
+            boolean got_preload = FALSE;
             if (mainw->frame_layer_preload && mainw->pred_clip == mainw->playing_file
-                && mainw->pred_frame == mainw->actual_frame) {
-              mainw->frame_layer = mainw->frame_layer_preload;
-              mainw->frame_layer_preload = NULL;
+                && is_layer_ready(mainw->frame_layer_preload)) {
+              int delta = (abs(mainw->pred_frame) - mainw->actual_frame) * sig(cfile->pb_fps);
+              g_print("THANKS for %p,! %d %ld should be %d, right  -- ", mainw->frame_layer_preload, mainw->pred_clip,
+                      mainw->pred_frame, mainw->actual_frame);
+              if (delta == 0) {
+                if (mainw->frame_layer_preload_final || check_layer_ready(mainw->frame_layer_preload)) {
+                  g_print("YAH !\n");
+                  got_preload = TRUE;
+                  mainw->frame_layer = mainw->frame_layer_preload;
+                  if (mainw->pred_frame > 0) mainw->frame_layer_preload_final = FALSE;
+                }
+              }
+              if (delta < mainw->actual_frame) g_print("    TOO LATE !!!\n");
+              if (delta > mainw->actual_frame) g_print("    waiting...\n");
             }
-            pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+            if (!got_preload) pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
           }
         }
         //g_print("pull_frame done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
@@ -7140,12 +7209,11 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 
     if (LIVES_UNLIKELY((mainw->frame_layer == NULL) || mainw->cancelled > 0)) {
       // NULL frame or user cancelled
-      check_layer_ready(mainw->frame_layer);
       if (mainw->frame_layer != NULL) {
-        /* if (mainw->record && !mainw->record_paused && mainw->scrap_file != -1 && fg_file == mainw->scrap_file) { */
-        /*   save_to_scrap_file(mainw->frame_layer); */
-        /* } */
-        weed_layer_free(mainw->frame_layer);
+        if (mainw->frame_layer != mainw->frame_layer_preload) {
+          check_layer_ready(mainw->frame_layer);
+          weed_layer_free(mainw->frame_layer);
+        } else mainw->frame_layer_preload_final = TRUE;
         mainw->frame_layer = NULL;
       }
       goto lfi_done;
@@ -7167,35 +7235,29 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
     // Finally we may want to end up with a GkdPixbuf (unless the playback plugin is VPP_DISPLAY_LOCAL
     // and we are in full screen mode).
 
-    /* if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL) && */
-    /*     !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview)) && !(mainw->multitrack != NULL && cfile->opening)) { */
-    /*   boolean size_ok = FALSE;//  -- TODO */
-    /*   if (is_virtual_frame(mainw->current_file, mainw->actual_frame) || !CURRENT_CLIP_IS_NORMAL) { */
-    /*     size_ok = TRUE; */
-    /*   } else { */
-    /*     /\* check_layer_ready(mainw->frame_layer); *\/ */
-    /*     /\* if ((weed_get_int_value(mainw->frame_layer, WEED_LEAF_HEIGHT, &weed_error) == cfile->vsize) && *\/ */
-    /*     /\*     (weed_get_int_value(mainw->frame_layer, WEED_LEAF_WIDTH, &weed_error)* *\/ */
-    /*     /\*      weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer))) == cfile->hsize) { *\/ */
-    /*     size_ok = TRUE; */
-    /*     //} */
-    /*   } */
+    if ((mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL) &&
+        !(mainw->is_rendering && !(cfile->proc_ptr != NULL && mainw->preview))
+        && !(mainw->multitrack != NULL && cfile->opening)) {
+      if (CURRENT_CLIP_IS_NORMAL && !is_virtual_frame(mainw->current_file, mainw->actual_frame)
+          && !mainw->frame_layer_preload_final &&
+          is_layer_ready(mainw->frame_layer) &&
+          (weed_layer_get_height(mainw->frame_layer) != cfile->vsize ||
+           weed_layer_get_width(mainw->frame_layer) *
+           weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer))
+           != cfile->hsize)) {
+        if (!mainw->resizing && !cfile->opening) {
+          // warn the user after playback that badly sized frames were found
+          mainw->size_warn = mainw->current_file;
+        }
+      } else {
+        if (!mainw->frame_layer_preload_final) {
+          if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL))
+              && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
+            mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
+	    // *INDENT-OFF*
+	  }}}}
+    // *INDENT-ON*
 
-    /// don't check the size here, since it requires calling check_layer_ready(), which defeats the entire purpose of threading the frames
-
-    //if (size_ok) {
-    if (1) {
-      if ((mainw->rte != 0 || (mainw->is_rendering && mainw->event_list == NULL)) && (mainw->current_file != mainw->scrap_file ||
-          mainw->multitrack != NULL)) {
-        mainw->frame_layer = on_rte_apply(mainw->frame_layer, opwidth, opheight, (weed_timecode_t)mainw->currticks);
-      }
-    } else {
-      if (!mainw->resizing && !cfile->opening) {
-        // warn the user after playback that badly sized frames were found
-        mainw->size_warn = mainw->current_file;
-      }
-    }
-    //}
     //g_print("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     ////////////////////////
@@ -7259,6 +7321,11 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
       weed_plant_t *frame_layer = NULL;
       weed_plant_t *return_layer = NULL;
       int ovpppalette = mainw->vpp->palette;
+
+      if (mainw->frame_layer_preload_final) {
+        frame_layer = mainw->frame_layer_preload;
+        goto render_frame;
+      }
 
       check_layer_ready(mainw->frame_layer);
 
@@ -7349,7 +7416,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
         gamma_convert_layer(tgamma, frame_layer);
       }
       //g_print("gamma conv done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-
+render_frame:
       if (return_layer != NULL) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
       pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
       if (!(*mainw->vpp->render_frame)(weed_layer_get_width(frame_layer),
@@ -7366,7 +7433,7 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
 
       lives_free(pd_array);
 
-      if (frame_layer != mainw->frame_layer) {
+      if (frame_layer != mainw->frame_layer && frame_layer != mainw->frame_layer_preload) {
         weed_layer_free(frame_layer);
       }
 
@@ -7748,7 +7815,6 @@ void pull_frame_threaded(weed_plant_t *layer, const char *img_ext, weed_timecode
         do_error_dialog(_("LiVES was unable to capture this image\n\n"));
         mainw->cancelled = CANCEL_CAPTURE_ERROR;
       }
-
       if (frame == mainw->rec_vid_frames) mainw->cancelled = CANCEL_KEEP;
     }
 
@@ -7774,8 +7840,11 @@ lfi_done:
     lives_freep((void **)&framecount);
 
     if (mainw->frame_layer != NULL) {
-      check_layer_ready(mainw->frame_layer);
-      weed_layer_free(mainw->frame_layer);
+      if (mainw->frame_layer != mainw->frame_layer_preload) {
+        check_layer_ready(mainw->frame_layer);
+        ///mainw->frame_layer_postload = mainw->frame_layer;
+        weed_layer_free(mainw->frame_layer);
+      }
       mainw->frame_layer = NULL;
     }
 
@@ -7786,7 +7855,6 @@ lfi_done:
           !mainw->faded && (!mainw->fs || (prefs->gui_monitor != prefs->play_monitor && prefs->play_monitor != 0 &&
                                            capable->nmonitors > 1)) &&
           mainw->current_file != mainw->scrap_file) get_play_times();
-
       if (mainw->multitrack != NULL && !cfile->opening) animate_multitrack(mainw->multitrack);
     }
 
@@ -7813,8 +7881,9 @@ lfi_done:
   }
 
 
-  /** Save a pixbuf to a file using the specified imgtype and the specified quality/compression value */
-
+  /**
+      @brief Save a pixbuf to a file using the specified imgtype and the specified quality/compression value
+  */
   boolean lives_pixbuf_save(LiVESPixbuf * pixbuf, char *fname, lives_image_type_t imgtype, int quality, int width, int height,
                             LiVESError **gerrorptr) {
     ticks_t timeout;
@@ -7871,14 +7940,16 @@ lfi_done:
     return retval;
   }
 
-
+  /**
+     @brief save frame to pixbuf in a thread.
+     The renderer uses this now so that it can be saving the current output frame at the same time as it prepares the following frame
+  */
   void  *lives_pixbuf_save_threaded(void *args) {
     savethread_priv_t *saveargs = (savethread_priv_t *)args;
     lives_pixbuf_save(saveargs->pixbuf, saveargs->fname, saveargs->img_type, saveargs->compression, saveargs->width,
                       saveargs->height, &saveargs->error);
     return saveargs;
   }
-
 
 
   void close_current_file(int file_to_switch_to) {
@@ -8339,11 +8410,6 @@ lfi_done:
     lives_alarm_t alarm_handle;
     weed_plant_t *event;
 
-    /* if (CLIP_HAS_AUDIO(new_file)) { */
-    /*   mainw->files[new_file]->aseek_pos += (off64_t)((double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL */
-    /*                                        * mainw->files[new_file]->arate) * mainw->files[new_file]->achans */
-    /*                                        * mainw->files[new_file]->asampsize / 8; */
-    /* } */
     if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
       if (mainw->jackd != NULL) {
@@ -8579,8 +8645,10 @@ lfi_done:
 
   void do_quick_switch(int new_file) {
     // handle clip switching during playback
-
     // calling this function directly is now deprecated in favour of switch_clip()
+
+    //
+
     boolean osc_block;
     int old_file = mainw->current_file, area = 0;
 

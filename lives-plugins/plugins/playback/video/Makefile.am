@@ -38,8 +38,8 @@ if HAVE_OPENGL
 if HAVE_GLU
 openGL_libs = openGL.la
 openGL_la_SOURCES = openGL.cpp glad.cpp glad_glx.cpp
-openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLU_CFLAGS@
-openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLU_LIBS@
+openGL_la_CPPFLAGS = $(shared_cflags) $(weed_cflags) @X11_CFLAGS@ @XRENDER_CFLAGS@ @GL_CFLAGS@ @GLU_CFLAGS@ -pthread
+openGL_la_LDFLAGS = $(shared_ldflags) @X11_LIBS@ @XRENDER_LIBS@ @GL_LIBS@ @GLU_LIBS@ -pthread
 
 if NEED_LOCAL_WEED
 openGL_la_CPPFLAGS += -DNEED_LOCAL_WEED

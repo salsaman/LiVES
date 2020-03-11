@@ -1076,7 +1076,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   char *plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
                                        PLUGIN_VID_PLAYBACK,
                                        name);
-  int dlflags = RTLD_NOW | RTLD_LOCAL;
+  int dlflags = RTLD_NOW | RTLD_GLOBAL;
   void *handle;
   boolean OK = TRUE;
   char *msg, *tmp;
@@ -1086,9 +1086,9 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   int *palette_list;
   _vid_playback_plugin *vpp;
 
-#ifdef RTLD_DEEPBIND
-  dlflags |= RTLD_DEEPBIND;
-#endif
+  /* #ifdef RTLD_DEEPBIND */
+  /*   dlflags |= RTLD_DEEPBIND; */
+  /* #endif */
 
   handle = dlopen(plugname, dlflags);
 
@@ -3526,9 +3526,7 @@ lives_rfx_t *weed_to_rfx(weed_plant_t *plant, boolean show_reinits) {
   rfx->status = RFX_STATUS_WEED;
   rfx->props = 0;
   rfx->menuitem = NULL;
-  if (!weed_plant_has_leaf(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES) ||
-      weed_get_plantptr_value(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, &error) == NULL) rfx->num_params = 0;
-  else rfx->num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
+  rfx->num_params = weed_leaf_num_elements(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES);
   if (rfx->num_params > 0) rfx->params = weed_params_to_rfx(rfx->num_params, inst, show_reinits);
   else rfx->params = NULL;
   rfx->source = (void *)inst;

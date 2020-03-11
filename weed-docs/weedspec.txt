@@ -1015,7 +1015,8 @@ e.g.
 
 For portabilty, the standerd library does not implement any kind of mutex locking.
 
-** a fully threadsafe version is planned - see below
+** a fully threadsafe version is currently in test phase (see below). This does, however introduce a dependency on libpthread.
+
 
 In general the following rules should be observed:
 - two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
@@ -1061,27 +1062,67 @@ reading it.
 
 
 
-Fully threadsafe version:
-- the fully threadsafe version will utilise the leaf "private data" to hold a pthread rwlock.
+== THREADSAFE VERSION ==
+A  fully threadsafe version of libweed is currently being tested.
+This version requires compilation with libpthread. It utilizes the leaf "private data" to point to an allocted pthread rwlock.
 
-- any read operations will first obtain a read lock on the plant (i.e the "type" leaf)
-- once a leaf is located, either a read or write lock on the leaf is obtained and the plant read lock is then released
+The implementation details are as follows:
 
-- reading a leaf value, number of elements, seed_type or flags will require a read lock on the leaf
-- updating a leaf value or flags will require first obtaining a write lock on the leaf
+- any read operations will first obtain a read lock on the plant
+(when referring to 'plant' here, it should be understood to mean the manfatory "type" leaf; 'leaf' in this context means
+any of the other leaves)
 
-- adding a leaf will require a write lock on the plant (type leaf)
+- once a leaf is located, either a read or write lock on the leaf is obtained and the plant read lock is subsequently released
 
-- deleting a leaf will require both a write lock on the plant, and write lock on the leaf. Once both are obtained, the leaf write lock
-  will be relinquished and the leaf deleted.
+- reading a leaf value, number of elements, seed_type or flags requires a read lock on the leaf
+- updating a leaf value or flags requires first obtaining a write lock on the leaf
 
-- since freeing a plant implies first deleting all of the leaves, no extra locks are required for this. However since deleting the final
-  "type" leaf necessitates first releasing its write lock, this is not entirely thread safe. It is therefore left to the application to implement
-  some kind of refcounting system if this is a possible occurance.
+- listing the plant leaves requires a plant read lock
 
-- getting or setting the private_data of a leaf will return an error (WEED_ERROR_CONCURRENCY).
+- adding a new leaf requires a write lock on the plant (type leaf)
 
-- an extra dependency on libpthread is added.
+- deleting a leaf requires both a write lock on the plant, and write lock on the leaf. Once both are obtained, the leaf write lock
+  is relinquished and the leaf deleted.
+
+- freeing a plant requires a write lock on the plant, and then a write lock on each leaf.
+
+- getting or setting the private_data of a leaf will return an error (WEED_ERROR_CONCURRENCY). This can be used to test for the
+  presence of the thread safety feature: e.g:
+
+  int threadsafe = 0;
+  weed_plant_t *test = weed_plant_new(0);
+  if (weed_leaf_get_private_data(test, WEED_LEAF_TYPE) == WEED_ERROR_CONCURRENCY) threadsafe = 1;
+  weed_plant_free(test);
+
+
+
+--- deadlocks ---
+There is no possibility of a dealock in this system. Consider:
+- a thread holding a read lock can only lock out another thread which wants a write lock
+- a thread holding a write lock can lock out threads wanting read or write locks
+
+There are only a limited number of circumstances in which write locks are required:
+1 - adding a new leaf (plant write lock) - the thread holding this lock may update the plant structure, however this will not
+     affect the individual leaves. No firther locks are required, therefore it cannot dealock.
+
+2 - updating a leaf (plant read lock -> leaf write lock) :: theoretically a dealock could occur if a thread holding a write lock on
+      a leaf required a write lock on the plant. However, since the order is always plant lock -> leaf lock, this cannot occur.
+
+
+3 - deleting a leaf (plant write lock leaf write lock). Similar to 2) any thread holding a leaf write lock will already have a plant write lock
+    or will unlock the leaf after updating it.
+
+
+4 - freeing a plant (plant write lock leaf write locks). Again. any leaf holding a leaf write lock will already have a plant write lock, or not
+     need one.
+
+In other words there are no situations where a thread holding a lock which blocks another thread can itself
+be blocked by the second thread needing one of the first threads locks.
+Either the second thread would already have obtained that lock and the first thread would have been locked out,
+or else it will perform its read /write operation and then unlock all if its locks, thus allowing the first thread to proceed.
+
+
+
 
 
 

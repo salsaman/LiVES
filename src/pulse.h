@@ -1,6 +1,6 @@
 // pulse.h
 // LiVES (lives-exe)
-// (c) G. Finch 2005 - 2019
+// (c) G. Finch 2005 - 2020
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -101,7 +101,7 @@ typedef struct {
   lives_audio_buf_t **abufs;
   volatile int read_abuf;
 
-  uint64_t chunk_size;
+  size_t chunk_size;
 
   double volume_linear; ///< TODO: use perchannel volume[]
 
@@ -138,13 +138,16 @@ boolean pulse_try_reconnect(void);
 // utils
 volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
 
-int64_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip_t *sfile);
+int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes, lives_clip_t *);
 
-void pa_time_reset(pulse_driver_t *pulsed, int64_t offset);
+void pa_time_reset(pulse_driver_t *, int64_t offset);
 
 ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
 double lives_pulse_get_pos(pulse_driver_t *);
+
+size_t pulse_get_buffsize(pulse_driver_t *);
+
 
 void pa_mloop_lock(void);
 void pa_mloop_unlock(void);

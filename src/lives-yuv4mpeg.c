@@ -251,7 +251,7 @@ void lives_yuv_stream_stop_read(lives_yuv4m_t *yuv4mpeg) {
 }
 
 
-void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *sfile) {
+void weed_layer_set_from_yuv4m(weed_layer_t *layer, lives_clip_t *sfile) {
   lives_yuv4m_t *yuv4mpeg = (lives_yuv4m_t *)(sfile->ext_src);
 
   y4data thread_data;

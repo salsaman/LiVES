@@ -11249,7 +11249,7 @@ boolean lives_widget_context_update(void) {
           /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
           /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
-          lives_nanosleep(10000);
+          lives_nanosleep(1000);
         }
       }
       if (loops > 1000 && !mainw->gui_fooey) {

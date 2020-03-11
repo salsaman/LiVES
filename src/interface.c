@@ -204,7 +204,6 @@ double lives_ce_update_timeline(int frame, double x) {
   cfile->pointer_time = x;
 
   cfile->frameno = cfile->last_frameno = frame;
-
   if (cfile->achans) {
     cfile->aseek_pos = (off64_t)((double)(cfile->real_pointer_time * cfile->arate) * cfile->achans *
                                  (cfile->asampsize / 8));

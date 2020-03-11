@@ -669,7 +669,7 @@ void lives2lives_read_stream(const char *host, int port) {
 }
 
 
-void weed_layer_set_from_lives2lives(weed_plant_t *layer, int clip, lives_vstream_t *lstream) {
+void weed_layer_set_from_lives2lives(weed_layer_t *layer, int clip, lives_vstream_t *lstream) {
   static ticks_t last_delta_ticks = 0;
   ticks_t currticks;
 

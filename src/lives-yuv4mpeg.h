@@ -31,7 +31,7 @@ typedef struct {
   boolean ready;
 } lives_yuv4m_t;
 
-void weed_layer_set_from_yuv4m(weed_plant_t *layer, lives_clip_t *);
+void weed_layer_set_from_yuv4m(weed_layer_t *layer, lives_clip_t *);
 
 // callbacks
 void on_open_yuv4m_activate(LiVESMenuItem *, livespointer);

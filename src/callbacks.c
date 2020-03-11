@@ -10682,10 +10682,18 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
+#define STATS_TC (1 * TICKS_PER_SECOND)
+
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer keybd) {
-  double avsync;
-  double fpm;
+  double avsync = 1.0;
+  static double inst_fps = 0.;
+  static double tick_ratio = 0.;
+  static int last_play_sequence = -1;
+  static ticks_t last_clock_tc = 0;
+  static ticks_t last_curr_tc = 0;
+  static ticks_t last_mini_ticks = 0;
+  static frames_t last_mm = 0;
   int last_dprint_file;
 
   if (mainw->playing_file < 0) return FALSE;
@@ -10712,29 +10720,49 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 #endif
   } else return FALSE;
 
-
   avsync -= (cfile->frameno - 1.) / cfile->fps
             + (double)(mainw->currticks  - mainw->startticks)
             / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;
-  /* fpm = mainw->fps_mini_measure / ((lives_get_relative_ticks(mainw->origsecs, mainw->origusecs) */
-  /* 				    - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL); */
+
   if (!prefs->show_dev_opts) {
     d_print_urgency(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
-                    mainw->actual_frame, cfile->frames);
+                    mainw->actual_frame, cfile->frames, cfile->pb_fps);
   } else {
-    fpm = mainw->fps_mini_measure / ((double)(100 + mainw->currticks - mainw->fps_mini_ticks) / TICKS_PER_SECOND_DBL);
-    lives_freep((void **)&mainw->urgency_msg);
-    mainw->urgency_msg = lives_strdup_printf(
-                           _("Audio is ahead of video by %.4f secs.\nat frame %d / %d, with fps %.3f (target: %.3f)\n"
-                             "Current effort = %d / %d, quality = %d\n%s"),
-                           avsync, mainw->actual_frame, cfile->frames, fpm, cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
-                           prefs->pb_quality, get_cache_stats());
-    /* d_print_urgency(2.0, tmp); */
-    /* 		    lives_free(tmp); */
+    if (mainw->play_sequence > last_play_sequence) {
+      last_clock_tc = lives_get_current_ticks();
+      last_curr_tc = mainw->currticks;
+      last_play_sequence = mainw->play_sequence;
+      inst_fps = cfile->pb_fps;
+      tick_ratio = 1.;
+    } else {
+      if (mainw->currticks > last_curr_tc + STATS_TC) {
+        ticks_t clock_ticks = lives_get_current_ticks();
+        if (clock_ticks > last_clock_tc) {
+          tick_ratio = (double)(mainw->currticks - last_curr_tc) / (double)(clock_ticks - last_clock_tc);
+        }
+        if (mainw->fps_mini_ticks == last_mini_ticks) {
+          inst_fps = (double)(mainw->fps_mini_measure - last_mm) / ((double)(mainw->currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+        }
+        last_clock_tc = clock_ticks;
+        last_curr_tc = mainw->currticks;
+        last_mini_ticks = mainw->fps_mini_ticks;
+        last_mm = mainw->fps_mini_measure;
+      }
+      lives_freep((void **)&mainw->urgency_msg);
+      mainw->urgency_msg
+        = lives_strdup_printf(
+            _("Audio is %s video by %.4f secs.\nat frame %d / %d, with fps %.3f (target: %.3f)\n"
+              "Current effort = %d / %d, quality = %d (%s)\n%s\nClock ratio = %.5f"),
+            (avsync >= 0. ? "ahead of" : "behind"), avsync, mainw->actual_frame, cfile->frames,
+            inst_fps, cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
+            prefs->pb_quality, prefs->pb_quality == 1 ? "Low" : prefs->pb_quality == 2 ? "Med" : "High",
+            get_cache_stats(), tick_ratio);
+    }
   }
+
   mainw->no_switch_dprint = FALSE;
   mainw->last_dprint_file = last_dprint_file;
   return TRUE;

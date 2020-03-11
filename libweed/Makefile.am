@@ -76,6 +76,11 @@ shared_LDFLAGS = -shared --tag=disable-static
 
 libweed_la_LDFLAGS = -version-info $(WEED_SO_VERSION)
 
+#if BUILD_THREADSAFE
+libweed_la_LDFLAGS += -pthread
+libweed_la_CFLAGS += -pthread -D_BUILD_THREADSAFE_
+#endif
+
 libweed_gslice_la_CFLAGS = @GLIB_CFLAGS@ $(libweed_la_CFLAGS) -DUSE_GSLICE
 libweed_gslice_la_LDFLAGS = @GLIB_LIBS@ $(libweed_la_LDFLAGS)
 

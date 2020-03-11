@@ -363,6 +363,36 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 #define OIL_MEMCPY_MAX_BYTES 12288 // this can be tuned to provide optimal performance
 
+LiVESList *mblocks = NULL;
+
+void *test_malloc(size_t size) {
+  void *ptr = malloc(size);
+  mblocks = lives_list_prepend(mblocks, ptr);
+  return ptr;
+}
+
+void test_free(void *ptr) {
+  LiVESList *list;
+  for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) {
+    if ((void *)mblocks->data == ptr) {
+      if (list->data == ptr) {
+        if (list->prev) list->prev->next = list->next;
+        else mblocks = list;
+        if (list->next) list->next->prev = list->prev;
+      }
+    }
+  }
+}
+
+void shoatend(void) {
+  LiVESList *list;
+  for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) {
+    g_print("%p in list\n", list->data);
+  }
+}
+
+
+
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
   static size_t maxbytes = OIL_MEMCPY_MAX_BYTES;
@@ -910,6 +940,9 @@ int check_for_bad_ffmpeg(void) {
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   if (!s) return 0;
   else {
+#ifdef STD_STRINGFUNCS
+    return strlen(s);
+#else
     const char *p = s;
     uint64_t *pi = (uint64_t *)p, nulmask;
     while (*p) {
@@ -924,6 +957,7 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
       p++;
     }
     return p - s;
+#endif
   }
 }
 
@@ -931,6 +965,9 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
 LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
+#ifdef STD_STRINGFUNCS
+    return strcmp(st1, st2);
+#endif
     uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
       if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
@@ -957,6 +994,9 @@ LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
 LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
   else {
+#ifdef STD_STRINGFUNCS
+    return strcmp(st1, st2);
+#endif
     uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
       if ((const char *)ip1 == st1 && (const char *)ip2 == st2) {
@@ -977,6 +1017,9 @@ LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
 LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size_t len) {
   if (!st1 || !st2) return (st1 != st2);
   else {
+#ifdef STD_STRINGFUNCS
+    return strncmp(st1, st2, len);
+#endif
     size_t xlen = len >> 3;
     uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
@@ -1029,9 +1072,76 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MALLOPT_WAIT_MAX 30
 #endif
 
-static void *thrdpool(void *arg) {
+
+
+boolean do_something_useful(uint64_t myidx) {
+  /// yes, why don't you lend a hand instead of just lying around nanosleeping...
+  /// any thread is welcome, it's not just here for the pool threads you know.
   LiVESList *list;
   thrd_work_t *mywork;
+
+  pthread_mutex_lock(&twork_mutex);
+  if ((list = twork_last) == NULL) {
+    pthread_mutex_unlock(&twork_mutex);
+    return FALSE;
+  }
+
+  if (twork_first == list) twork_first = NULL;
+  twork_last = list->prev;
+  if (twork_last != NULL) twork_last->next = NULL;
+  pthread_mutex_unlock(&twork_mutex);
+
+  mywork = (thrd_work_t *)list->data;
+
+#ifdef TUNE_MALLOPT
+  if (!pthread_mutex_trylock(&tuner_mutex)) {
+    if (mtuner) {
+      mywork->flags |= LIVES_THRDFLAG_TUNING;
+      autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
+                   + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
+    }
+  }
+#endif
+
+  (*mywork->func)(mywork->arg);
+
+#ifdef TUNE_MALLOPT
+  if (mywork->flags & LIVES_THRDFLAG_TUNING) {
+    if (mtuner) {
+      size_t onarenas = narenas;
+      narenas = autotune_u64_end(&mtuner, narenas);
+      if (!mtuner) mtuned = TRUE;
+      if (narenas != onarenas) {
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += MALLOPT_WAIT_MAX;
+        if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
+          if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
+          //lives_invalidate_all_file_buffers();
+          mallopt(M_ARENA_MAX, narenas);
+          pthread_rwlock_unlock(&mainw->mallopt_lock);
+        } else narenas = onarenas;
+      }
+    }
+    pthread_mutex_unlock(&tuner_mutex);
+    mywork->flags = 0;
+  }
+#endif
+
+  pthread_mutex_lock(&twork_mutex);
+  ntasks--;
+  pthread_mutex_unlock(&twork_mutex);
+  if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
+    lives_free(mywork);
+    lives_free(list);
+  } else {
+    mywork->done = myidx + 1;
+  }
+  return TRUE;
+}
+
+
+static void *thrdpool(void *arg) {
   int myidx = LIVES_POINTER_TO_INT(arg);
   while (!threads_die) {
     pthread_mutex_lock(&tcond_mutex);
@@ -1039,62 +1149,7 @@ static void *thrdpool(void *arg) {
     pthread_mutex_unlock(&tcond_mutex);
     if (threads_die) break;
     while (!threads_die) {
-      pthread_mutex_lock(&twork_mutex);
-      if ((list = twork_last) == NULL) {
-        pthread_mutex_unlock(&twork_mutex);
-        break;
-      }
-      if (twork_first == list) twork_first = NULL;
-      twork_last = list->prev;
-      if (twork_last != NULL) twork_last->next = NULL;
-      pthread_mutex_unlock(&twork_mutex);
-
-      mywork = (thrd_work_t *)list->data;
-
-#ifdef TUNE_MALLOPT
-      if (!pthread_mutex_trylock(&tuner_mutex)) {
-        if (mtuner) {
-          mywork->flags |= LIVES_THRDFLAG_TUNING;
-          autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
-                       + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
-        }
-      }
-#endif
-
-      (*mywork->func)(mywork->arg);
-
-#ifdef TUNE_MALLOPT
-      if (mywork->flags & LIVES_THRDFLAG_TUNING) {
-        if (mtuner) {
-          size_t onarenas = narenas;
-          narenas = autotune_u64_end(&mtuner, narenas);
-          if (!mtuner) mtuned = TRUE;
-          if (narenas != onarenas) {
-            struct timespec ts;
-            clock_gettime(CLOCK_REALTIME, &ts);
-            ts.tv_sec += MALLOPT_WAIT_MAX;
-            if (!pthread_rwlock_timedwrlock(&mainw->mallopt_lock, &ts)) {
-              if (prefs->show_dev_opts) g_printerr("mallopt %ld\n", narenas);
-              //lives_invalidate_all_file_buffers();
-              mallopt(M_ARENA_MAX, narenas);
-              pthread_rwlock_unlock(&mainw->mallopt_lock);
-            } else narenas = onarenas;
-          }
-        }
-        pthread_mutex_unlock(&tuner_mutex);
-        mywork->flags = 0;
-      }
-#endif
-
-      pthread_mutex_lock(&twork_mutex);
-      ntasks--;
-      pthread_mutex_unlock(&twork_mutex);
-      if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
-        lives_free(mywork);
-        lives_free(list);
-      } else {
-        mywork->done = myidx + 1;
-      }
+      do_something_useful(myidx);
     }
   }
   return NULL;
@@ -1242,7 +1297,10 @@ int lives_thread_join(lives_thread_t work, void **retval) {
     return 0;
   }
 
-  lives_nanosleep_until_nonzero(task->done);
+  while (!task->done) {
+    lives_nanosleep(1000);
+  }
+  //lives_nanosleep_until_nonzero(task->done);
   nthrd = task->done;
 
   if (retval) *retval = task->ret;

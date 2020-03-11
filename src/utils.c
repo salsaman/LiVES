@@ -449,6 +449,8 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 // read x bytes : fbuff->ptr increases by x, fbuff->bytes decreases by x
 // if fbuff->bytes is < x, then we concat fbuff->bytes, refill buffer from file, concat remaining bytes
 // on read: fbuff->ptr = fbuff->buffer. fbuff->offset += bytes read, fbuff->bytes = bytes read
+// if fbuff->reversed is set then we seek to a position offset - 3 / 4 buffsize, fbuff->ptr = fbuff->buffer + 3 / 4 buffsz, bytes = 1 / 4 buffsz
+
 
 // on seek (read only):
 // forward: seek by +z: if z < fbuff->bytes : fbuff->ptr += z, fbuff->bytes -= z
@@ -457,14 +459,21 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less) {
 // backward: if fbuff->ptr - z >= fbuff->buffer : fbuff->ptr -= z, fbuff->bytes += z
 // fbuff->ptr - z < fbuff->buffer:  z -= (fbuff->ptr - fbuff->buffer) : fbuff->offset -= (fbuff->bytes + z) : Fill buffer
 
-// seek absolute: current vitual posn is fbuff->offset - fbuff->bytes : subtract this from absolute posn
+// seek absolute: current viritual posn is fbuff->offset - fbuff->bytes : subtract this from absolute posn
 
 // return value is: fbuff->offset - fbuff->bytes ?
 
-// when writing we simply fill up the buffer until it full, then flush the buffer to file io
+// when writing we simply fill up the buffer until full, then flush the buffer to file io
 // buffer is finally flushed when we close the file (or we call file_buffer_flush)
 
 // in this case fbuff->bytes holds the number of bytes written to fbuff->buffer, fbuff->offset contains the offset in the underlying fil
+
+// in append mode, seek is first tthe end of the file. In creat mode any existing file is truncated and overwritten.
+
+// in write mode, if we have fallocate, then we preallocate the buffer size on disk.
+// When the file is closed we truncate any remaining bytes. Thus CAUTION because the file size as read directly will include the
+// padding bytes, and thus appending directly to the file will write after the padding.bytes, and either be overwritten or truncated.
+// in this case the correct size can be obtained from
 
 static ssize_t file_buffer_flush(lives_file_buffer_t *fbuff) {
   // returns number of bytes written to file io, or error code
@@ -1178,7 +1187,7 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset) {
   if (fbuff->bytes > 0) {
     ssize_t res = file_buffer_flush(fbuff);
     if (res < 0) return res;
-    if (res  < fbuff->bytes && !fbuff->allow_fail) {
+    if (res < fbuff->bytes && !fbuff->allow_fail) {
       fbuff->eof = TRUE;
       return fbuff->offset;
     }
@@ -1547,14 +1556,15 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < first_frame || mainw->aframeno >= last_frame) {
+        if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
+            || mainw->aframeno + 0.0001 >= (double)last_frame - 0.0001) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < 1. ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time - 0.0001) {
+        if (mainw->aframeno < 0.9999 ||
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001) >= cfile->laudio_time - 0.0001) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1565,14 +1575,15 @@ static boolean check_for_audio_stop(int fileno, int first_frame, int last_frame)
   if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->playing_file == fileno) {
     if (!mainw->loop || mainw->playing_sel) {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < first_frame || mainw->aframeno + 1 >= last_frame) {
+        if (mainw->aframeno - 0.0001 < (double)first_frame + 0.0001
+            || mainw->aframeno + 1.0001 >= (double)last_frame - 0.0001) {
           return FALSE;
         }
       }
     } else {
       if (!mainw->loop_cont) {
-        if (mainw->aframeno < 1. ||
-            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.) >= cfile->laudio_time - .0001) {
+        if (mainw->aframeno < 0.9999 ||
+            calc_time_from_frame(mainw->current_file, mainw->aframeno + 1.0001) >= cfile->laudio_time - 0.0001) {
           return FALSE;
 	  // *INDENT-OFF*
         }}}}
@@ -1628,154 +1639,22 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   // note we also calculate the audio "frame" and position for realtime audio players
   // this is done so we can check here if audio limits stopped playback
 
-  static int nframe = -1;
+  static boolean norecurse = FALSE;
   static ticks_t last_ntc = 0;
+
   ticks_t ddtc = *ntc - last_ntc;
   ticks_t dtc = *ntc - otc;
   int64_t first_frame, last_frame, selrange;
   lives_clip_t *sfile = mainw->files[fileno];
   double fps;
-  boolean do_resync = FALSE;
   lives_direction_t dir;
-  int cframe;
+  int cframe, nframe, nloops;
   int aplay_file = fileno;
 
-  if (sfile == NULL) {
-    mainw->scratch = SCRATCH_NONE;
-    nframe = -1;
-    return 0;
-  }
-
-  if (nframe != -1) return nframe; // prevent infinite loops if we "bounce" off one end or another (dirchange_callback())
-
-  fps = sfile->pb_fps;
-
-  if (!LIVES_IS_PLAYING) fps = sfile->fps;
-  else if (fps == 0. && mainw->scratch != SCRATCH_NONE) fps = sfile->fps;
+  if (sfile == NULL) return 0;
 
   cframe = sfile->last_frameno;
-
-  if (fps == 0.) {
-    *ntc = otc;
-    if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
-    mainw->scratch = SCRATCH_NONE;
-    nframe = -1;
-    return cframe;
-  }
-
-  // dtc is delta ticks, quantise this to the frame rate and round down
-  dtc = q_gint64_floor(dtc, fps);
-
-  // ntc is the time when the next frame should have been played; this is rounded down so if l.t. 1 frame nothing happens
-  /// and the player does nothing
-  *ntc = otc + dtc;
-
-  // nframe is our new frame
-  nframe = cframe + (int64_t)myround((double)dtc / TICKS_PER_SECOND_DBL * fps);
-
-  /// if we are scratching we do the following:
-  /// the time since the last call is considered to have happened at an increased fps (fwd or back)
-  /// we recalculate the frame at ntc as if we were at the faster framerate.
-
-  if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
-    mainw->deltaticks -= ddtc;
-    if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= ddtc * 4;
-    else mainw->deltaticks += ddtc * 4;
-  }
-
-  if (nframe != cframe) {
-    double delval = (double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps;
-    if (delval < -1. || delval > 1.) {
-      /// the frame number changed, but we will recalulate the value using mainw->deltaticks
-      int64_t xnframe = cframe + (int64_t)myround((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps);
-      if (xnframe != nframe) {
-        nframe = xnframe;
-
-        /// retain the fractional part for next time
-        mainw->deltaticks -= (double)(nframe - cframe) / fps * TICKS_PER_SECOND_DBL;
-
-        if (nframe != cframe) do_resync = TRUE;
-      }
-    }
-  }
-
-  if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK)
-    mainw->scratch = SCRATCH_NONE;
-
-  last_ntc = *ntc;
-
-  if (nframe == cframe || mainw->foreign) {
-    if (!mainw->foreign && fileno == mainw->playing_file &&
-        mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record) &&
-        (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) resync_audio(nframe);
-    if (fileno == mainw->playing_file) {
-      mainw->scratch = SCRATCH_NONE;
-    }
-    cframe = nframe;
-    nframe = -1;
-    return cframe;
-  }
-
-  last_frame = sfile->frames;
-  first_frame = 1;
-
-  if (fileno == mainw->playing_file) {
-    // calculate audio "frame" from the number of samples played
-    if (prefs->audio_src == AUDIO_SRC_INT) {
-      calc_aframeno(fileno);
-    }
-
-    if (!mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
-      last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
-      if (last_frame > sfile->frames) last_frame = sfile->frames;
-      first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
-      if (first_frame > sfile->frames) first_frame = sfile->frames;
-    }
-
-    if (sfile->frames > 1 && prefs->noframedrop) {
-      // if noframedrop is set, we may not skip any frames
-      // - the usual situation is that we are allowed to drop late frames
-      if (nframe > cframe) nframe = cframe + 1;
-      else if (nframe < cframe) nframe = cframe - 1;
-    }
-
-    // check if video stopped playback
-    if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
-      if (mainw->whentostop == STOP_ON_VID_END) {
-        mainw->cancelled = CANCEL_VID_END;
-        mainw->scratch = SCRATCH_NONE;
-        nframe = -1;
-        return 0;
-      }
-    }
-
-    if (nframe <= first_frame || nframe >= last_frame) {
-      if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
-        // we check for audio stop here, but the seek may not have happened yet
-        int aframe = mainw->aframeno;
-        // need to be a bit lax about the audio end, else the video can loop and drag the audio round wiht it
-        // rather than stopping as it should do
-        if (nframe >= last_frame) mainw->aframeno++;
-        if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
-          mainw->aframeno = aframe;
-          mainw->cancelled = CANCEL_AUD_END;
-          mainw->scratch = SCRATCH_NONE;
-          nframe = -1;
-          return 0;
-        }
-        mainw->aframeno = aframe;
-      }
-      do_resync = TRUE;
-    }
-  }
-
-  if (sfile->frames == 0) {
-    if (fileno == mainw->playing_file) {
-      mainw->scratch = SCRATCH_NONE;
-    }
-    nframe = -1;
-    return 0;
-  }
+  if (norecurse) return cframe;
 
   if (sfile->achans > 0) {
 #ifdef HAVE_PULSE_AUDIO
@@ -1788,126 +1667,234 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       if (mainw->jackd != NULL) aplay_file = mainw->jackd->playing_file;
     }
 #endif
-    if (!IS_VALID_CLIP(aplay_file)) aplay_file = fileno;
-    if (fileno != aplay_file) {
-      sfile->aseek_pos += (off64_t)(fabs((double)(nframe - sfile->last_frameno))) * SIGNED_DIVIDE(sfile->arate, sfile->pb_fps) *
-                          sfile->achans * sfile->asampsize / 8;
-    }
+    if (!IS_VALID_CLIP(aplay_file)) aplay_file = -1;
+    else {
+      if (fileno != aplay_file) {
+        off64_t aseek_pos_delta = (off64_t)((double)dtc / TICKS_PER_SECOND_DBL * (double)(sfile->arate))
+                                  * sfile->achans * sfile->asampsize / 8;
+        if (sfile->adirection == LIVES_DIRECTION_FORWARD) sfile->aseek_pos += aseek_pos_delta;
+        else sfile->aseek_pos -= aseek_pos_delta;
+        if (sfile->aseek_pos < 0 || sfile->aseek_pos > sfile->afilesize) {
+          nloops = sfile->aseek_pos / sfile->afilesize;
+          if (mainw->ping_pong && (sfile->adirection == LIVES_DIRECTION_BACKWARD || clip_can_reverse(fileno))) {
+            sfile->adirection += nloops;
+            sfile->adirection &= 1;
+            if (sfile->adirection == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
+              sfile->adirection = LIVES_DIRECTION_FORWARD;
+          }
+          sfile->aseek_pos -= nloops * sfile->afilesize;
+          if (sfile->adirection == LIVES_DIRECTION_BACKWARD) sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
+  if (sfile->frames == 0) {
+    if (fileno == mainw->playing_file) mainw->scratch = SCRATCH_NONE;
+    return 0;
   }
 
-  if (nframe <= first_frame || nframe >= last_frame) {
-    // get our frame back to within bounds:
-    // in ping-pong mode, an even winding means we bounce off the boundary and reverse,
-    // fwd -> reverse from end boundary;  backwards -> fwd, from start boundary
-    // odd winding, fwd -> fwd, count from start; back -> rev. count from end
-    //
-    // note a) if we add 1 to the reversed winding it becomes equivalent to fwd winding
-    // note b) in non-ping-pong mode, fwd is always odd winding, back is always even
-    /// so, define: BACK = 0, FWD = 1
-    // then:
-    selrange = (1 + last_frame - first_frame);
-    dir = LIVES_DIRECTION_FORWARD;
-    nframe -= first_frame;
-    if (clip_can_reverse(fileno)) {
-      if (fps < 0.) dir = LIVES_DIRECTION_BACKWARD; // 0, even
-      if (mainw->ping_pong) {
-        dir += (int)((double)nframe / (double)selrange);
-        dir ^= 1;
+  fps = sfile->pb_fps;
+  if (!LIVES_IS_PLAYING || (fps < 0.001 && fps > -0.001 && mainw->scratch != SCRATCH_NONE)) fps = sfile->fps;
+
+  if (fps < 0.001 && fps > -0.001) {
+    *ntc = otc;
+    if (fileno == mainw->playing_file) {
+      mainw->scratch = SCRATCH_NONE;
+      if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
+    }
+    return cframe;
+  }
+
+  // dtc is delta ticks, quantise this to the frame rate and round down
+  dtc = q_gint64_floor(dtc, fps);
+
+  // ntc is the time when the next frame should have been played; this is rounded down so if l.t. 1 frame nothing happens
+  /// and the player does nothing
+  *ntc = otc + dtc;
+
+  // nframe is our new frame
+  if (dtc >= 0)
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
+  else
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
+
+  if (fileno == mainw->playing_file) {
+    /// if we are scratching we do the following:
+    /// the time since the last call is considered to have happened at an increased fps (fwd or back)
+    /// we recalculate the frame at ntc as if we were at the faster framerate.
+
+    if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
+      if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= dtc * 4;
+      else mainw->deltaticks += ddtc * 4;
+    }
+
+    if (nframe != cframe) {
+      int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps);
+      if (delval <= -1 || delval >= 1) {
+        /// the frame number changed, but we will recalulate the value using mainw->deltaticks
+        int64_t xnframe = cframe + (int64_t)delval;
+        if (xnframe != nframe) {
+          nframe = xnframe;
+          /// retain the fractional part for next time
+          mainw->deltaticks -= (ticks_t)((double)delval / fps * TICKS_PER_SECOND_DBL);
+          if (nframe != cframe) mainw->scratch = SCRATCH_JUMP;
+          else mainw->scratch = SCRATCH_NONE;
+        }
+      }
+    }
+    last_ntc = *ntc;
+  }
+
+  last_frame = sfile->frames;
+  first_frame = 1;
+
+  if (fileno == mainw->playing_file) {
+    // calculate audio "frame" from the number of samples played
+    if (prefs->audio_src == AUDIO_SRC_INT) calc_aframeno(fileno);
+
+    if (nframe == cframe || mainw->foreign) {
+      if (!mainw->foreign && fileno == mainw->playing_file &&
+          mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record || mainw->record_paused) &&
+          (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) resync_audio(nframe);
+      mainw->scratch = SCRATCH_NONE;
+      return nframe;
+    }
+
+    if (!mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
+      last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
+      if (last_frame > sfile->frames) last_frame = sfile->frames;
+      first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
+      if (first_frame > sfile->frames) first_frame = sfile->frames;
+    }
+
+    if (sfile->frames > 1 && prefs->noframedrop && mainw->scratch != SCRATCH_JUMP) {
+      // if noframedrop is set, we may not skip any frames
+      // - the usual situation is that we are allowed to drop late frames
+      // in this mode we may be forced to play at a reduced framerate
+      if (nframe > cframe + 1) {
+        // update this so the player can calculate 'dropped' frames correctly
+        cfile->last_frameno -= (nframe - cframe - 1);
+        nframe = cframe + 1;
+      } else if (nframe < cframe - 1) {
+        cfile->last_frameno += (cframe - 1 - nframe);
+        nframe = cframe - 1;
       }
     }
 
-    nframe %= selrange;
+    // check if video stopped playback
+    if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
+      if (mainw->whentostop == STOP_ON_VID_END) {
+        mainw->cancelled = CANCEL_VID_END;
+        mainw->scratch = SCRATCH_NONE;
+        return 0;
+      }
+    }
+  }
+
+  while (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
+    // get our frame back to within bounds:
+    // define even parity (0) as backwards, odd parity (1) as forwards
+    // we subtract the lower bound from the new frame, and divide the result by the selection length, rounding towards zero. (nloops)
+    // in ping mode this is then added to the original direction, and the resulting parity gives the new direction
+    // the remainder after doing the division is then either added to the selection start (forwards)
+    /// or subtracted from the selection end (backwards) [if we started backwards then the boundary crossing will be with the
+    // lower bound and nloops and the remainder will be negative, so we subtract and add the negatvie value instead]
+    // we must also set
+
+    if (fileno == mainw->playing_file) {
+      // we need to set this for later in the function
+      mainw->scratch = SCRATCH_JUMP;
+    }
+
+    if (fps < 0.) dir = LIVES_DIRECTION_BACKWARD; // 0, and even parity
+    else dir = LIVES_DIRECTION_FORWARD; // 1, and odd parity
+
+    if (dir == LIVES_DIRECTION_FORWARD && nframe < first_frame) {
+      // if FWD and before lower bound, just jump to lower bound
+      nframe = first_frame;
+      sfile->last_frameno = first_frame;
+      break;
+    }
+
+    if (dir == LIVES_DIRECTION_BACKWARD && nframe  > last_frame) {
+      // if BACK and after upper bound, just jump to upper bound
+      nframe = last_frame;
+      sfile->last_frameno = last_frame;
+      break;
+    }
+
+    nframe -= first_frame;
+    selrange = (1 + last_frame - first_frame);
+    nloops = nframe / selrange;
+    if (mainw->ping_pong && (dir == LIVES_DIRECTION_BACKWARD || (clip_can_reverse(fileno)))) {
+      dir += nloops;
+      dir &= 1;
+      if (sfile->adirection == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
+        sfile->adirection = LIVES_DIRECTION_FORWARD;
+    }
+
+    nframe -= nloops * selrange;
+
     if (dir == LIVES_DIRECTION_FORWARD) {
       if (fps < 0.) {
+        // backwards -> forwards, nframe is negative
         nframe = first_frame - nframe;
         if (fileno == mainw->playing_file) {
+          /// must set norecurse, otherwise we can end up in an infinite loop since dirchange_callback calls this function
+          norecurse = TRUE;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+          norecurse = FALSE;
         } else sfile->pb_fps = -sfile->pb_fps;
       } else {
+        // forwards -> forwards, nframe is positive
         nframe += first_frame;
-        if (fileno == mainw->playing_file) {
-          // resync audio at end of loop section (playing backwards)
-          do_resync = TRUE;
-	  // *INDENT-OFF*
-	}}}
-    // *INDENT-ON*
+      }
+    }
 
     else {
-      // reversing
       if (fps > 0.) {
+        // forwards -> backwards, nframe is positive
         nframe = last_frame - nframe;
         if (fileno == mainw->playing_file) {
+          norecurse = TRUE;
           dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0,
                              LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+          norecurse = FALSE;
         } else sfile->pb_fps = -sfile->pb_fps;
       } else {
+        // backwards -> backwards, nframe is negative
         nframe += last_frame;
-        if (fileno == mainw->playing_file) {
-          // resync audio at end of loop section (playing backwards)
-          do_resync = TRUE;
-	  // *INDENT-OFF*
-	}}}
-    sfile->last_frameno = nframe;
+	// *INDENT-OFF*
+      }}
+    break;
   }
   // *INDENT-ON*
 
-  if (nframe < first_frame) nframe = first_frame;
-  if (nframe > last_frame) nframe = last_frame;
+
+  if (fileno == mainw->playing_file && prefs->audio_src == AUDIO_SRC_INT && fileno == aplay_file && sfile->achans > 0
+      && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) && mainw->scratch != SCRATCH_NONE) {
+    if (mainw->whentostop == STOP_ON_AUD_END) {
+      // check if audio stopped playback. The audio player will also be checking this, BUT: we have to check here too
+      // before doing any resync, otherwise the video can loop and if the audio is then resynced it may never reach the end
+      calc_aframeno(fileno);
+      if (!check_for_audio_stop(fileno, first_frame + 1, last_frame - 1)) {
+        mainw->cancelled = CANCEL_AUD_END;
+        mainw->scratch = SCRATCH_NONE;
+        return 0;
+      }
+      resync_audio(nframe);
+      if (mainw->scratch == SCRATCH_JUMP) mainw->video_seek_ready = TRUE;
+    }
+  }
 
   if (fileno == mainw->playing_file) {
-    if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-      if (do_resync || mainw->scratch != SCRATCH_NONE) {
-        boolean is_jump = FALSE;
-        if (mainw->scratch == SCRATCH_JUMP) is_jump = TRUE;
-        resync_audio(nframe);
-        if (is_jump) mainw->video_seek_ready = TRUE;
-        if (mainw->whentostop == STOP_ON_AUD_END && sfile->achans > 0) {
-          // we check for audio stop here, but the seek may not have happened yet
-          if (!check_for_audio_stop(fileno, first_frame, last_frame)) {
-            mainw->cancelled = CANCEL_AUD_END;
-            nframe = -1;
-            return 0;
-	    // *INDENT-OFF*
-	  }}}
-      // *INDENT-ON*
+    if (mainw->scratch != SCRATCH_NONE) {
+      sfile->last_frameno = nframe;
+      mainw->scratch = SCRATCH_NONE;
     }
   }
-
-  if (fileno != aplay_file) {
-    /// set audio seek, but not for the playing file (which is set by the actual player)
-    sfile->aseek_pos += (off64_t)(fabs((double)(nframe - sfile->last_frameno))) * SIGNED_DIVIDE(sfile->arate, sfile->pb_fps) *
-                        sfile->achans * sfile->asampsize / 8;
-    dir = LIVES_DIRECTION_FORWARD;
-
-    if (clip_can_reverse(fileno)) {
-      if (sfile->arate < 0) dir = LIVES_DIRECTION_BACKWARD; // 0, even
-      if (mainw->ping_pong) {
-        dir += (int)(sfile->aseek_pos / sfile->afilesize);
-        dir ^= 1;
-      }
-    }
-
-    sfile->aseek_pos %= sfile->afilesize;
-    if (dir == LIVES_DIRECTION_FORWARD) {
-      if (sfile->arate < 0) {
-        sfile->aseek_pos = -sfile->aseek_pos;
-        sfile->arate = -sfile->arate;
-      }
-    } else {
-      if (sfile->arate > 0) {
-        sfile->aseek_pos = sfile->afilesize - sfile->aseek_pos;
-        sfile->arate = -sfile->arate;
-      } else {
-        sfile->aseek_pos += sfile->afilesize;
-      }
-    }
-  }
-
-  mainw->scratch = SCRATCH_NONE;
-  cframe = nframe;
-  nframe = -1;
-  return cframe;
+  return nframe;
 }
 
 

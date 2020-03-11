@@ -176,6 +176,11 @@ typedef enum {
 
 #define WEED_SEED_MEMBLOCK 65536
 
+void shoatend(void);
+
+
+
+
 // internal memory allocator (not used yet)
 typedef struct memheader {
   unsigned int size;
@@ -243,7 +248,7 @@ char *lives_datetime(struct timeval *tv);
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * 1000000000; while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
 
 #define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
-    ts.tv_nsec = 1000; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+    ts.tv_nsec = 1001; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
 
 int check_dev_busy(char *devstr);
 

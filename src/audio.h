@@ -226,7 +226,7 @@ void free_pulse_audio_buffers(void);
 
 void audio_free_fnames(void);
 
-boolean is_realtime_aplayer(int ptype);
+#define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE))
 
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);
@@ -255,7 +255,7 @@ const char *audio_player_get_display_name(const char *aplayer);
 
 lives_cancel_t handle_audio_timeout(void);
 
-float lives_vol_from_linear(float vol);
-float lives_vol_to_linear(float vol);
+#define lives_vol_from_linear(vol) ((float)squared(squared((vol))))
+#define lives_vol_to_linear(vol) (sqrtf(sqrtf((vol))))
 
 #endif

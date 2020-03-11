@@ -354,7 +354,7 @@ void widget_add_framedraw(LiVESVBox *box, int start, int end, boolean add_previe
 }
 
 
-weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_plant_t *layer) {
+weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_layer_t *layer) {
   // overlay framedrawing on a layer
   // if layer is NULL then we reload the frame from current file into mainw->fd_layer_orig
   // if called from multitrack then the preview layer is passed in via mt_framedraw()
@@ -579,7 +579,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_p
 
 void load_rfx_preview(lives_rfx_t *rfx) {
   // load a preview of an rfx (rendered effect) in clip editor
-  weed_plant_t *layer;
+  weed_layer_t *layer;
   FILE *infofile = NULL;
 
   ticks_t timeout;
@@ -724,7 +724,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
 }
 
 
-void redraw_framedraw_image(weed_plant_t *layer) {
+void redraw_framedraw_image(weed_layer_t *layer) {
   // layer should be mainw->fd_frame
   // size layer, convert palette
   // create a pixbuf

@@ -3496,8 +3496,15 @@ static char *set_proc_label(xprocess * proc, const char *label, boolean copy_old
    LIVES_RENDER_ERROR_READ_AUDIO
 */
 lives_render_error_t render_events(boolean reset) {
+#define SAVE_THREAD
+#ifdef SAVE_THREAD
   static savethread_priv_t *saveargs = NULL;
   static lives_thread_t *saver_thread = NULL;
+#else
+  char oname[PATH_MAX];
+  char *tmp;
+  LiVESError *error;
+#endif
   static weed_timecode_t rec_delta_tc, atc;
   static weed_plant_t *event, *eventnext;
 
@@ -3682,7 +3689,9 @@ lives_render_error_t render_events(boolean reset) {
               pixbuf = mainw->scrap_pixbuf;
             } else {
               if (mainw->scrap_pixbuf != NULL) {
+#ifndef SAVE_THREAD
                 lives_widget_object_unref(mainw->scrap_pixbuf);
+#endif
                 mainw->scrap_pixbuf = NULL;
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
@@ -3834,10 +3843,7 @@ lives_render_error_t render_events(boolean reset) {
         lives_freep((void **)&mainw->read_failed_file);
 
         if (mainw->flush_audio_tc != 0) dtc = mainw->flush_audio_tc;
-        else {
-          //weed_timecode_t ntc = get_event_timecode(get_next_audio_frame_event(event));
-          dtc = q_gint64(tc + rec_delta_tc, cfile->fps);
-        }
+        else dtc = q_gint64(tc + rec_delta_tc, cfile->fps);
 
         if (auditracks < MAX_AUDIO_TRACKS) {
           // render audio
@@ -3879,44 +3885,10 @@ lives_render_error_t render_events(boolean reset) {
 
         if (read_write_error) return read_write_error;
         return LIVES_RENDER_COMPLETE;
-      }
-
-      /* while (1) { */
-      /*   if ((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL */
-      /* 							     && mainw->multitrack->opts.render_audp)) { */
-
-      else {
+      } else {
         int *aclips = NULL;
         double *aseeks = NULL;
         int num_aclips = weed_frame_event_get_audio_tracks(event, &aclips, &aseeks);
-        // see if audio needs appending
-        /* if (tc > q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), cfile->fps)) { */
-        /*   cfile->achans = cfile->undo_achans; */
-        /*   cfile->arate = cfile->undo_arate; */
-        /*   cfile->arps = cfile->undo_arps; */
-        /*   cfile->asampsize = cfile->undo_asampsize; */
-
-        /*   blabel = set_proc_label(cfile->proc_ptr, nlabel, TRUE); */
-
-        /*   mainw->read_failed = mainw->write_failed = FALSE; */
-        /*   lives_freep((void **)&mainw->read_failed_file); */
-        /*   render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file : */
-        /*                        mainw->current_file, xavel, xaseek, q_gint64((weed_timecode_t)(atime * TICKS_PER_SECOND_DBL + .5), */
-        /*                            cfile->fps), */
-        /*                        q_gint64(tc, cfile->fps), chvols, 1., 1., NULL); */
-
-        /* 	if (mainw->write_failed) { */
-        /*     int outfile = (mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file); */
-        /*     char *outfilename = lives_get_audio_file_name(outfile); */
-        /*     do_write_failed_error_s(outfilename, NULL); */
-        /*     lives_free(outfilename); */
-        /*     read_write_error = LIVES_RENDER_ERROR_WRITE_AUDIO; */
-        /*   } */
-
-        /*   if (mainw->read_failed) { */
-        /*     do_read_failed_error_s(mainw->read_failed_file, NULL); */
-        /*     read_write_error = LIVES_RENDER_ERROR_READ_AUDIO; */
-        /*   } */
 
         deltatime = (double)(q_gint64(dtc - atc, cfile->fps)) / TICKS_PER_SECOND_DBL;
 
@@ -3957,6 +3929,28 @@ lives_render_error_t render_events(boolean reset) {
         if (next_tc < next_out_tc || next_tc - next_out_tc < next_out_tc - tc) break;
       } else if (next_out_tc > tc) break;
 
+#ifndef SAVE_THREAD
+      if (cfile->old_frames > 0) {
+        tmp = make_image_file_name(cfile, out_frame, LIVES_FILE_EXT_MGK);
+      } else {
+        tmp = make_image_file_name(cfile, out_frame, get_image_ext_for_type(cfile->img_type));
+      }
+      lives_snprintf(oname, PATH_MAX, "%s", tmp);
+      lives_free(tmp);
+
+      do {
+        retval = LIVES_RESPONSE_NONE;
+        lives_pixbuf_save(pixbuf, oname, cfile->img_type, 100 - prefs->ocp, cfile->hsize, cfile->vsize, &error);
+
+        if (error != NULL) {
+          retval = do_write_failed_error_s_with_retry(oname, error->message, NULL);
+          lives_error_free(error);
+          error = NULL;
+          if (retval != LIVES_RESPONSE_RETRY) read_write_error = LIVES_RENDER_ERROR_WRITE_FRAME;
+        }
+      } while (retval == LIVES_RESPONSE_RETRY);
+
+#else
       if (!saver_thread) {
         saveargs = (savethread_priv_t *)lives_calloc(1, sizeof(savethread_priv_t));
         saveargs->img_type = cfile->img_type;
@@ -3978,12 +3972,12 @@ lives_render_error_t render_events(boolean reset) {
                             saveargs->width, saveargs->height, &saveargs->error);
         }
 
-        if (saveargs->pixbuf != NULL && saveargs->pixbuf != mainw->scrap_pixbuf
-            && scrap_track == -1 && saveargs->pixbuf != pixbuf) {
+        if (saveargs->pixbuf != NULL && saveargs->pixbuf != pixbuf) {
           lives_widget_object_unref(saveargs->pixbuf);
           saveargs->pixbuf = NULL;
         }
         lives_free(saveargs->fname);
+        saveargs->fname = NULL;
       }
 
       if (cfile->old_frames > 0) {
@@ -3994,6 +3988,7 @@ lives_render_error_t render_events(boolean reset) {
 
       saveargs->pixbuf = pixbuf;
       lives_thread_create(saver_thread, NULL, lives_pixbuf_save_threaded, saveargs);
+#endif
 
       // sig_progress...
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "%d", progress++);
@@ -4236,30 +4231,7 @@ filterinit2:
     }
     event = eventnext;
   } else {
-    /* if (((mainw->multitrack == NULL && prefs->render_audio) || (mainw->multitrack != NULL && */
-    /* 								mainw->multitrack->opts.render_audp)) */
-    /* 	&& (next_frame_event == NULL || WEED_EVENT_IS_AUDIO_FRAME(event) */
-    /* 	    || (mainw->flush_audio_tc != 0 && tc > mainw->flush_audio_tc)) && tc > atc) { */
-    /*   boolean has_audio = FALSE; */
-
-    /*   for (i = 0; i < MAX_AUDIO_TRACKS; i++) { */
-    /* 	// see if we have any audio to render */
-    /* 	if (xavel[i] != 0.) has_audio = TRUE; */
-    /*   } */
-
-    /*   if (has_audio) { */
-    /* 	// render audio */
-    /* 	  g_print("ra2 %f to %f\n", atc / TICKS_PER_SECOND_DBL, tc / TICKS_PER_SECOND_DBL); */
-    /* 	render_audio_segment(natracks, xaclips, mainw->multitrack != NULL ? mainw->multitrack->render_file : */
-    /* 			     mainw->current_file, xavel, xaseek, atc, tc, chvols, 1., 1., NULL); */
-    /*   } else { */
-    /* 	  g_print("rs2 %f to %f\n", atc / TICKS_PER_SECOND_DBL, tc / TICKS_PER_SECOND_DBL); */
-    /* 	// render silence */
-    /* 	render_audio_segment(1, NULL, mainw->multitrack != NULL ? mainw->multitrack->render_file : mainw->current_file, */
-    /* 			     NULL, NULL, atc, tc, chvols, 0., 0., NULL); */
-    /*   } */
-    /* } */
-
+#ifdef SAVE_THREAD
     if (saver_thread) {
       lives_thread_join(*saver_thread, NULL);
       while (saveargs->error != NULL) {
@@ -4274,12 +4246,13 @@ filterinit2:
         lives_widget_object_unref(saveargs->pixbuf);
         if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
       }
-      //lives_freep((void **)saveargs->fname);
+      lives_freep((void **)&saveargs->fname);
       lives_free(saveargs);
       lives_free(saver_thread);
       saver_thread = NULL;
       saveargs = NULL;
     }
+#endif
 
     if (cfile->old_frames == 0) cfile->undo_start = cfile->undo_end = 0;
     if (mainw->multitrack == NULL || !mainw->multitrack->pr_audio) {
@@ -4945,7 +4918,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (info) {
-        while (weed_get_boolean_value(info, WEED_LEAF_DONE, NULL) == WEED_FALSE) lives_nanosleep(1000);
+        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
         weed_plant_free(info);
         info = NULL;
       }
@@ -4967,7 +4940,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     case RENDER_CHOICE_SAME_CLIP:
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
       if (info) {
-        while (weed_get_boolean_value(info, WEED_LEAF_DONE, NULL) == WEED_FALSE) lives_nanosleep(1000);
+        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
         weed_plant_free(info);
         info = NULL;
       }
@@ -4993,7 +4966,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->unordered_blocks = TRUE;
       pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
       if (info) {
-        while (weed_get_boolean_value(info, WEED_LEAF_DONE, NULL) == WEED_FALSE) lives_nanosleep(1000);
+        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
         weed_plant_free(info);
         info = NULL;
       }
@@ -5030,7 +5003,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
   if (info) {
-    while (weed_get_boolean_value(info, WEED_LEAF_DONE, NULL) == WEED_FALSE) lives_nanosleep(1000);
+    lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
     weed_plant_free(info);
   }
 

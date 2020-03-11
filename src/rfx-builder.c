@@ -4362,6 +4362,7 @@ void add_rfx_effects(lives_rfx_status_t status) {
     rendered_fx[0].action_desc = lives_strdup(_("Applying Current Real Time Effects to"));
 
     rendered_fx[0].props = 0;
+    rendered_fx[0].rfx_version[0] = 0;
     rendered_fx[0].num_params = 0;
     rendered_fx[0].num_in_channels = 1;
     rendered_fx[0].menuitem = NULL;

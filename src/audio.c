@@ -16,20 +16,6 @@ static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 
-LIVES_GLOBAL_INLINE float lives_vol_from_linear(float vol) {
-  return (vol * vol) * (vol * vol);
-}
-
-
-LIVES_GLOBAL_INLINE float lives_vol_to_linear(float vol) {
-  return sqrtf(sqrtf(vol));
-}
-
-
-LIVES_GLOBAL_INLINE boolean is_realtime_aplayer(int ptype) {
-  return (ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE);
-}
-
 
 static void audio_reset_stored_fnames(void) {
   int i;
@@ -2507,7 +2493,6 @@ boolean resync_audio(double frameno) {
         jack_get_rec_avals(mainw->jackd);
       }
     }
-
     return TRUE;
   }
 #endif
@@ -3154,7 +3139,7 @@ boolean apply_rte_audio(int nframes) {
   // - send to rte audio effects
   // - convert back to s16 or s8
   // - save to audio_fd
-  weed_plant_t *layer;
+  weed_layer_t *layer;
   size_t tbytes;
   uint8_t *in_buff;
   float **fltbuf, *fltbufni = NULL;

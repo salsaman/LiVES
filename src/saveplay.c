@@ -2578,6 +2578,7 @@ void play_file(void) {
     //play until stopped or a stream finishes
     do {
       mainw->cancelled = CANCEL_NONE;
+      mainw->play_sequence++;
 
       if (mainw->event_list != NULL && !mainw->record) {
         if (pb_start_event == NULL) pb_start_event = get_first_event(mainw->event_list);
@@ -3461,6 +3462,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->restoring = cfile->opening_loc = cfile->nopreview = FALSE;
   cfile->video_time = cfile->laudio_time = cfile->raudio_time = 0.;
   cfile->freeze_fps = 0.;
+  cfile->last_vframe_played = 0;
   cfile->frameno = cfile->last_frameno = cfile->saved_frameno = 1;
   cfile->proc_ptr = NULL;
   cfile->progress_start = cfile->progress_end = 0;
@@ -5004,7 +5006,7 @@ boolean open_ascrap_file(void) {
 }
 
 
-boolean load_from_scrap_file(weed_plant_t *layer, int frame) {
+boolean load_from_scrap_file(weed_layer_t *layer, int frame) {
   // load raw frame data from scrap file
 
   // this will also set cfile width and height - for letterboxing etc.
@@ -5072,7 +5074,7 @@ boolean check_for_disk_space(void) {
 }
 
 
-int save_to_scrap_file(weed_plant_t *layer) {
+int save_to_scrap_file(weed_layer_t *layer) {
   // returns frame number
   // dump the raw layer (frame) data to disk
 

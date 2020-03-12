@@ -343,7 +343,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
   ssize_t pad_bytes = 0;
   uint8_t *buffer;
   uint64_t nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
-  size_t offs = 0, xbytes = pa_stream_writable_size(pstream);
+  off_t offs = 0;
+  size_t xbytes = pa_stream_writable_size(pstream);
   int64_t seek, xseek;
   pa_volume_t pavol;
   char *filename;
@@ -631,8 +632,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 pulsed->in_use = FALSE;
               } else {
                 int qnt = afile->achans * (afile->asampsize >> 3);
-                if (pulsed->loop == AUDIO_LOOP_PINGPONG && ((pulsed->playing_file != mainw->playing_file)
-                    || clip_can_reverse(mainw->playing_file))) {
+                if (pulsed->loop == AUDIO_LOOP_PINGPONG && (afile->pb_fps < 0. || clip_can_reverse(pulsed->playing_file))) {
                   pulsed->in_arate = -pulsed->in_arate;
                   afile->adirection = !afile->adirection;
                   /// TODO - we should really read the first few bytes, however we dont yet support partial buffer reversals
@@ -665,9 +665,9 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           else if (pulsed->playing_file != mainw->ascrap_file && shrink_factor  < 0.f) {
             /// reversed playback
             int qnt = afile->achans * (afile->asampsize >> 3);
-            size_t seek_start = (mainw->playing_sel ?
-                                 (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
-                                 * afile->achans * (afile->asampsize / 8) : 0);
+            off_t seek_start = (mainw->playing_sel ?
+                                (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                * afile->achans * (afile->asampsize / 8) : 0);
             seek_start = ALIGN_CEIL64(seek_start - qnt, qnt);
             if (pad_bytes > 0) pad_bytes = 0;
             else {
@@ -705,8 +705,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 pulsed->aPlayPtr->size += pad_bytes;
 
                 /// bounce or loop round
-                if (pulsed->loop == AUDIO_LOOP_PINGPONG && ((pulsed->playing_file != mainw->playing_file)
-                    || clip_can_reverse(mainw->playing_file))) {
+                if (pulsed->loop == AUDIO_LOOP_PINGPONG) {
                   /// TODO - we should really read the first few bytes, however we dont yet support partial buffer reversals
                   pulsed->in_arate = -pulsed->in_arate;
                   afile->adirection = !afile->adirection;
@@ -1907,7 +1906,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
         if (pulsed->extrausec < 0) pulsed->extrausec = 0;
       } else if (usec > 0) pulsed->extrausec = 0;
       if (usec + pulsed->extrausec == last_usec + last_extra)
-        paclock += usec - last_usec;
+        paclock += (usec - last_usec) / pulsed->tscale;
       else
         paclock = usec + pulsed->extrausec;// * pulsed->tscale;
     }

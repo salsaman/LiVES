@@ -1053,13 +1053,14 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
 }
 
 ///////// thread pool ////////////////////////
-//#define TUNE_MALLOPT 1
+#define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
 static int npoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t tcond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t twork_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t twork_count_mutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *twork_first, *twork_last; /// FIFO list of tasks
 static volatile int ntasks;
 static boolean threads_die;
@@ -1076,7 +1077,6 @@ static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 boolean do_something_useful(uint64_t myidx) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
-  /// any thread is welcome, it's not just here for the pool threads you know.
   LiVESList *list;
   thrd_work_t *mywork;
 
@@ -1128,9 +1128,9 @@ boolean do_something_useful(uint64_t myidx) {
   }
 #endif
 
-  pthread_mutex_lock(&twork_mutex);
+  pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
-  pthread_mutex_unlock(&twork_mutex);
+  pthread_mutex_unlock(&twork_count_mutex);
   if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
     lives_free(mywork);
     lives_free(list);
@@ -1148,9 +1148,7 @@ static void *thrdpool(void *arg) {
     pthread_cond_wait(&tcond, &tcond_mutex);
     pthread_mutex_unlock(&tcond_mutex);
     if (threads_die) break;
-    while (!threads_die) {
-      do_something_useful(myidx);
-    }
+    do_something_useful((uint64_t)myidx);
   }
   return NULL;
 }
@@ -1175,34 +1173,41 @@ void lives_threadpool_init(void) {
 }
 
 
+#define GETARG(type, n) weed_get_##type##_value(info, "thrd_param" n, NULL)
+
 void *_plant_thread_func(void *args) {
   weed_plant_t *info = (weed_plant_t *)args;
   weed_funcptr_t func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
-  if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM0)) {
-    (*func)();
-    weed_plant_free(info);
-    return NULL;
-  }
-  switch (weed_leaf_seed_type(info, WEED_LEAF_THREAD_PARAM0)) {
-  case WEED_SEED_VOIDPTR:
-    if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM1)) {
-      (*func)(weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM0, NULL));
-      break;
-    }
-    switch (weed_leaf_seed_type(info, WEED_LEAF_THREAD_PARAM1)) {
-    case WEED_SEED_VOIDPTR:
-      if (!weed_plant_has_leaf(info, WEED_LEAF_THREAD_PARAM2)) {
-        (*func)(weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM0, NULL),
-                weed_get_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, NULL));
-        break;
+  uint64_t funcsig = 0;
+  int nargs;
+  for (nargs = 0; nargs < 16; nargs++) {
+    char *lname = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, nargs);
+    int st = weed_leaf_seed_type(info, lname);
+    lives_free(lname);
+    if (!st) break;
+    funcsig <<= 4;
+    if (st < 12) funcsig |= st; // 1 == int, 2 == double, 3 == boolean (int), 4 == char *, 5 == int64_t
+    else {
+      switch (st) {
+      case WEED_SEED_FUNCPTR: funcsig |= 0XC; break;
+      case WEED_SEED_VOIDPTR: funcsig |= 0XD; break;
+      case WEED_SEED_PLANTPTR: funcsig |= 0XE; break;
+      default: funcsig |= 0XF; break;
       }
-    // etc.
-    default:
-      break;
     }
-  default:
-    break;
   }
+
+  switch (funcsig) {
+  case 0: (*func)(); break;
+  case 0xDD: // void *. void *
+    (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1"));
+    break;
+  case 0xE3: // weed_plant_t *, boolean
+    (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1"));
+    break;
+  default: break;
+  }
+
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL)) weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
   else weed_plant_free(info);
   return NULL;
@@ -1263,9 +1268,17 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
       twork_last = list;
     }
   }
-  if (++ntasks > npoolthreads) {
-    pthread_mutex_unlock(&twork_mutex);
-
+  pthread_mutex_unlock(&twork_mutex);
+  pthread_mutex_lock(&twork_count_mutex);
+  ntasks++;
+  pthread_mutex_unlock(&twork_count_mutex);
+  pthread_mutex_lock(&tcond_mutex);
+  pthread_cond_signal(&tcond);
+  pthread_mutex_unlock(&tcond_mutex);
+  if (ntasks > npoolthreads) {
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_broadcast(&tcond);
+    pthread_mutex_unlock(&tcond_mutex);
     poolthrds = (pthread_t **)lives_realloc(poolthrds, (npoolthreads + MINPOOLTHREADS) * sizeof(pthread_t *));
     for (int i = npoolthreads; i < npoolthreads + MINPOOLTHREADS; i++) {
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
@@ -1281,26 +1294,20 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
       mtuned = FALSE;
     }
 #endif
-  } else pthread_mutex_unlock(&twork_mutex);
-  pthread_mutex_lock(&tcond_mutex);
-  pthread_cond_signal(&tcond);
-  pthread_mutex_unlock(&tcond_mutex);
+  }
   return 0;
 }
 
 
-int lives_thread_join(lives_thread_t work, void **retval) {
+uint64_t lives_thread_join(lives_thread_t work, void **retval) {
   thrd_work_t *task = (thrd_work_t *)work.data;
-  int nthrd = 0;
+  uint64_t nthrd = 0;
   if (task->flags & LIVES_THRDFLAG_AUTODELETE) {
     LIVES_FATAL("lives_thread_join() called on an autodelete thread");
     return 0;
   }
 
-  while (!task->done) {
-    lives_nanosleep(1000);
-  }
-  //lives_nanosleep_until_nonzero(task->done);
+  lives_nanosleep_until_nonzero(task->done);
   nthrd = task->done;
 
   if (retval) *retval = task->ret;
@@ -1595,18 +1602,16 @@ void update_effort(int nthings, boolean badthings) {
   //g_print("vals2 %d %d %d\n", mainw->effort, badthingcount, goodthingcount);
 
   if (mainw->effort < 0) {
-    if (struggling) {
-      struggling += ((mainw->effort | 16) >> 4);
-      if (struggling < 0) struggling = 0;
-    } else {
-      if (mainw->effort < -EFFORT_LIMIT_MED) {
-        if (prefs->pb_quality < PB_QUALITY_HIGH) {
-          prefs->pb_quality++;
-          mainw->blend_palette = WEED_PALETTE_END;
-        } else if (prefs->pb_quality < PB_QUALITY_MED) {
-          prefs->pb_quality++;
-          mainw->blend_palette = WEED_PALETTE_END;
-        }
+    if (struggling > -EFFORT_RANGE_MAX) {
+      struggling--;
+    }
+    if (mainw->effort < -EFFORT_LIMIT_MED) {
+      if (struggling == -EFFORT_RANGE_MAX && prefs->pb_quality < PB_QUALITY_HIGH) {
+        prefs->pb_quality++;
+        mainw->blend_palette = WEED_PALETTE_END;
+      } else if (struggling < -EFFORT_LIMIT_MED && prefs->pb_quality < PB_QUALITY_MED) {
+        prefs->pb_quality++;
+        mainw->blend_palette = WEED_PALETTE_END;
       }
     }
   }

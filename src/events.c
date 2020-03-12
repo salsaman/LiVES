@@ -3098,7 +3098,7 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
       int nclips = mainw->num_tracks;
       for (i = 0; i < nclips; i++) {
         if (mainw->clip_index[i] == mainw->scrap_file) {
-          int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, & error);
+          int64_t offs = weed_get_int64_value(next_event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &error);
           if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
           lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src), offs);
         }
@@ -3113,7 +3113,6 @@ weed_plant_t *process_events(weed_plant_t *next_event, boolean process_audio, we
            (curr_tc - mainw->last_display_ticks) / TICKS_PER_SECOND_DBL >= 1. / mainw->vpp->fixed_fpsd)) {
         mainw->pchains = pchains;
         update_effort(dframes, TRUE);
-        dframes = 0;
         load_frame_image(cfile->frameno);
         if (mainw->last_display_ticks == 0) mainw->last_display_ticks = curr_tc;
         else {

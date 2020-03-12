@@ -760,7 +760,7 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
-  mainw->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace"));
+  mainw->clear_ds = lives_standard_menu_item_new_with_label(_("Clean _up Diskspace / Recover Missing Clips"));
   lives_container_add(LIVES_CONTAINER(mainw->files_menu), mainw->clear_ds);
 
   mainw->quit = lives_standard_image_menu_item_new_from_stock(LIVES_STOCK_LABEL_QUIT, mainw->accel_group);

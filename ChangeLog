@@ -2,22 +2,31 @@ Version 3.2.0
 ------------------
 Rewrite inital startup, optimising it and making it more robust.
 Configuration directory can now be specified from the commandline (-configdir)
-Implement auto gamma correction, (sRGB, Linear, experimental rec bt.709). Conversion is done via the new threadpool.
+Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
+Implement auto gamma correction, (sRGB, Linear, bt.709). Conversion is done via the threadpool.
 Implement threading for swscale; also using the threadpool.
 Update the plugin architecture (libweed) to version 2.0, update the specs. for Weed, Weed Effects, Weed Audio Effects.
+libweed is now totally threadsafe.
+Some performance critical parameters are now tuned automatically using a time - cost minimisation function.
+Use a variable block size for buffered read / writes, optimisations for reading files in reverse order, and the read buffer sizes are
+	now set using the auto tuning system.
 Optimised memory functions, colourspace conversions and frame decoding.
 Optimise communication with commandline plugins using popen().
+Clean up diskspace now checks for and can optionally recover missing clips.
+The playback engine now implements an intelligent predictive pre-caching systen.
+Preview quality can now be set to "adaptive", allowing the quality to vary depending on the player engine load.
+A / V sync drift has been reduced to a maximum of 1 frame
 Fix screen / window sizing issues.
-Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
 Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
 Audio effects now have automatic clipping prevention, using a dynamic volume adjustment.
 Fix data connections window so it shows the correct out parameter.
-Use a variable block size for buffered read / writes, optimisations for reading files in reverse order.
 Correct bugs in letterboxing, make it the default player mode.
 Fix new crashes with rendered effects generators, streamline their code and API.
 Fix for multi_encoder3 looking for wrong (python2) sub encoders.
 Crash recovery now recovers performance recording if LiVES crashes before or during rendering.
 Crash recovery now restores the config file from backup if the original is damaged / missing.
+Clicking on the timeline during playback in Clip Editor now sets the current playback position.
+The playback start position for each clip is now reained between sessions.
 Improvements to RFX script builder tool.
 Improvements to Fileselector preview / Selection opener.
 Improvements to rendered effects previews.
@@ -25,8 +34,10 @@ Improvements to "targeted_zoom" effect in multitrack; add "scaledpoint" layout e
 New "auto-layout" mode to improve the appearance of all parameter windows.
 Visual tweaks for Preferences window.
 Fix mkv_decoder so it can decode webm clips.
+Decoder plugins now free their internal buffers when not in use, resulting in lower memory consumption.
 Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
+Bookmark keys (F1 - F11) now record / set the frame position as well as the clip.
 Multitrack parameter window now also has a "Reset to Defaults" button.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
 Smooth out playback by interpolating using sample counts between soundcard timing updates.
@@ -44,13 +55,15 @@ Workaround since swscale apparently cannot handle YUV888 or YUVA8888 palettes (w
 Optimised RGB <-> BGR, and RGBA <-> BGRA <-> ARGB palette conversions.
 Permit switching audio source (internal / external) with no clips loaded (bugfix).
 Rewrite the event_list quantizer, resulting in smoother rendering of recorded clips.
-Ignore seek differences below a predefined limit (default .01 seconds) when rendering recorded audio,
-	resulting in flawless rendering of audio at variable velocities.
+Ignore seek differences below a predefined limit (default 1.0 / fps seconds) when rendering recorded audio,
+	resulting in almost flawless rendering of audio at variable velocities. In addition the quantiser will attempt to smooth out
+	audio rate changes.
 Fix refcounting bugs with realtime effect parameter windows, and with generators which trigger playback.
-Fix recursive mutex issues with the audio_resync mutex and the audio buffer fill mutex.
+Fix recursive mutex issues with the audio buffer fill mutex.
 Remove mutex deadlocks on shutdown (was blocking pulseaudio player on a crash) and create a new main loop for pulse
-on each startup (was also causing hangs on startup).
-Prevent audio rate from changing erroneously when "audio follows clip changes" is disabled.
+	on each startup (was also causing hangs on startup).
+Separate velocity adjustment (ctrl-up / ctrl-down) from fx parameter adjustment (ctrl-alt-up / ctrl-alt-down)
+Prevent audio rate from changing erroneously when the audio player is not playing the same clip as the video player.
 Optimise combo boxes with long lists; categorise filter types in rte window.
 Master audio volume is now maintained between sessions, and the value is calculated using a power function rather than llinear.
 Volume level of previews in file open dialog is now set depending on master volume.
@@ -78,6 +91,8 @@ Add option to overlay the timecode when previewing in multitrack (on by default)
 Add ability to overlay critical messages on the playback window (on screen display).
 Add menu options jump to next mark / jump to previous mark in multitrack.
 Fix mouse selections so it selects right to the final frame.
+The playback pointer can also be set to to the final frame rather than 1 second before the timeline end (bugfix).
+ctrl-left and ctrl-right keys now alter the time by +- 1 second in clip editor when not playing.
 Separated player window now positions itself above the effect mapper window by default.
 Added menu options "VJ / restart in vj mode", add "Help / Show Developer Options"
 Various minor fixes and interface tweaks.

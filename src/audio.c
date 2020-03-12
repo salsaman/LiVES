@@ -2460,7 +2460,6 @@ void free_pulse_audio_buffers(void) {
 */
 boolean resync_audio(double frameno) {
   if (!(prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) return FALSE;
-
   // if recording external audio, we are intrinsically in sync
   if (mainw->record && prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
 

@@ -15,6 +15,8 @@ void lives_notify(int msgnumber, const char *msgstring);
 
 void lives_notify_int(int msgnumber, int msgint);
 
+double get_inst_fps(void);
+
 void lock_set_file(const char *set_name);
 void unlock_set_file(const char *set_name);
 
@@ -140,7 +142,7 @@ void on_ok_file_open_clicked(LiVESFileChooser *, LiVESSList *fnames);
 
 void on_location_select(LiVESButton *, livespointer);
 
-void on_utube_select(lives_remote_clip_request_t *req);
+lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req);
 
 void on_opensel_range_ok_clicked(LiVESButton *, livespointer);
 

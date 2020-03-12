@@ -168,7 +168,6 @@ void lives_exit(int signum) {
     while (!pthread_mutex_unlock(&mainw->gtk_mutex));
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
-    while (!pthread_mutex_unlock(&mainw->audio_resync_mutex));
 
     // non-recursive
     pthread_mutex_trylock(&mainw->abuf_frame_mutex);
@@ -939,7 +938,8 @@ void on_open_loc_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
 
 void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  lives_remote_clip_request_t *req;
+  lives_remote_clip_request_t *req = NULL, *req2;
+
   mt_needs_idlefunc = FALSE;
 
   if (mainw->multitrack != NULL) {
@@ -955,7 +955,7 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
   do {
     mainw->cancelled = CANCEL_NONE;
-    req = run_youtube_dialog();
+    req = run_youtube_dialog(req);
     if (req == NULL) {
       if (mainw->multitrack != NULL) {
         mt_sensitise(mainw->multitrack);
@@ -963,8 +963,15 @@ void on_open_utube_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       }
       return;
     }
-    on_utube_select(req);
-    lives_free(req);
+    req2 = on_utube_select(req);
+#ifndef ALLOW_NONFREE_CODECS
+    req2 = NULL;
+#endif
+    if (req2 != NULL && mainw->cancelled == CANCEL_RETRY) req = req2;
+    else {
+      lives_free(req);
+      req = NULL;
+    }
   } while (mainw->cancelled == CANCEL_RETRY);
 }
 
@@ -1044,14 +1051,17 @@ void on_location_select(LiVESButton *button, livespointer user_data) {
 }
 
 
-void on_utube_select(lives_remote_clip_request_t *req) {
+//ret updated req if fmt sel. needs change
+lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
   char *com, *dfile, *full_dfile;
+  lives_remote_clip_request_t *reqout = NULL;
+  boolean hasnone = FALSE, hasalts = FALSE;
   int current_file = mainw->current_file;
 
   if (!CURRENT_CLIP_IS_VALID) {
     if (!get_temp_handle(-1)) {
       d_print_failed();
-      return;
+      return NULL;
     }
   }
 
@@ -1064,12 +1074,12 @@ void on_utube_select(lives_remote_clip_request_t *req) {
   while (1) {
     lives_rm(cfile->info_file);
 
-    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d", prefs->backend,
+    com = lives_strdup_printf("%s download_clip \"%s\" \"%s\" \"%s\" \"%s\" %d %d %d %f \"%s\" \"%s\" %d %d", prefs->backend,
                               cfile->handle,
                               req->URI,
                               dfile, req->format, req->desired_width, req->desired_height, req->matchsize, req->desired_fps,
                               req->vidchoice, req->audchoice,
-                              req->do_update);
+                              req->do_update, prefs->show_dev_opts);
 
     mainw->com_failed = FALSE;
     mainw->error = FALSE;
@@ -1087,7 +1097,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
-      return;
+      return NULL;
     }
 
     if (strlen(req->vidchoice)) break;
@@ -1113,24 +1123,46 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
-      return;
+      return NULL;
     }
 
     if (!(*mainw->msg)) {
+      hasnone = TRUE;
+    }
+#ifdef ALLOW_NONFREE_CODECS
+    else if (!lives_strncmp(mainw->msg, "completed|altfmts", 17)) {
+      hasalts = TRUE;
+    }
+#endif
+
+    if (hasnone || hasalts) {
       lives_free(dfile);
       d_print_failed();
       if (!IS_VALID_CLIP(current_file)) {
         close_temp_handle(-1);
       }
-      do_blocking_error_dialog(
-        _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
-          "the latest youtube-dl installed.\n"));
+      if (hasnone) {
+        do_blocking_error_dialog(
+          _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
+            "the latest youtube-dl installed.\n"));
+      } else {
+#ifdef ALLOW_NONFREE_CODECS
+        if (do_yesno_dialog(
+              _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an allternate "
+                "format selction ?"))) {
+          mainw->error = FALSE;
+          mainw->cancelled = CANCEL_RETRY;
+          req->allownf = TRUE;
+          reqout = req;
+#endif
+        }
+      }
       mainw->no_switch_dprint = FALSE;
       if (mainw->multitrack != NULL) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
-      return;
+      return reqout;
     }
 
     if (req->matchsize == LIVES_MATCH_CHOICE && strlen(req->vidchoice) == 0)  {
@@ -1145,7 +1177,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
           mt_sensitise(mainw->multitrack);
           maybe_add_mt_idlefunc();
         }
-        return;
+        return NULL;
       }
       // we try again, this time with req->vidchoice set
       req->matchsize = LIVES_MATCH_SPECIFIED;
@@ -1203,7 +1235,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
         mt_sensitise(mainw->multitrack);
         maybe_add_mt_idlefunc();
       }
-      return;
+      return NULL;
     }
   }
 
@@ -1228,6 +1260,7 @@ void on_utube_select(lives_remote_clip_request_t *req) {
     mt_sensitise(mainw->multitrack);
     maybe_add_mt_idlefunc();
   }
+  return NULL;
 }
 
 
@@ -5838,6 +5871,7 @@ static void recover_lost_clips(LiVESList * reclist) {
   // recover files
   mainw->recovery_list = reclist;
   recover_files(NULL, TRUE);
+  if (prefs->crash_recovery) rewrite_recovery_file();
 
   if (!CURRENT_CLIP_IS_VALID) {
     int start_file;
@@ -9543,6 +9577,7 @@ EXPOSE_FN_DECL(expose_raud_event, widget, user_data) {
 }
 EXPOSE_FN_END
 
+
 boolean config_event2(LiVESWidget * widget, LiVESXEventConfigure * event, livespointer user_data) {
   mainw->msg_area_configed = TRUE;
   return FALSE;
@@ -10682,12 +10717,19 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-#define STATS_TC (1 * TICKS_PER_SECOND)
+#define STATS_TC (TICKS_PER_SECOND_DBL / 2.)
+static double inst_fps = 0.;
+
+double get_inst_fps(void) {
+  mainw->lockstats = TRUE;
+  show_sync_callback(NULL, NULL, 0, 0, LIVES_INT_TO_POINTER(1));
+  return inst_fps;
+}
+
 
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer keybd) {
   double avsync = 1.0;
-  static double inst_fps = 0.;
   static double tick_ratio = 0.;
   static int last_play_sequence = -1;
   static ticks_t last_clock_tc = 0;
@@ -10720,9 +10762,9 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 #endif
   } else return FALSE;
 
-  avsync -= (cfile->frameno - 1.) / cfile->fps
+  avsync -= (double)(cfile->frameno - 1.) / cfile->fps
             + (double)(mainw->currticks  - mainw->startticks)
-            / TICKS_PER_SECOND_DBL * (cfile->pb_fps > 0. ? 1. : -1.);
+            / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
 
   last_dprint_file = mainw->last_dprint_file;
   mainw->no_switch_dprint = TRUE;
@@ -10756,8 +10798,8 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
         = lives_strdup_printf(
             _("Audio is %s video by %.4f secs.\nat frame %d / %d, with fps %.3f (target: %.3f)\n"
               "Current effort = %d / %d, quality = %d (%s)\n%s\nClock ratio = %.5f"),
-            (avsync >= 0. ? "ahead of" : "behind"), avsync, mainw->actual_frame, cfile->frames,
-            inst_fps, cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
+            (avsync >= 0. ? "ahead of" : "behind"), fabsf(avsync), mainw->actual_frame, cfile->frames,
+            inst_fps * sig(cfile->pb_fps), cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
             prefs->pb_quality, prefs->pb_quality == 1 ? "Low" : prefs->pb_quality == 2 ? "Med" : "High",
             get_cache_stats(), tick_ratio);
     }

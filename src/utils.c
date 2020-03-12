@@ -625,9 +625,9 @@ int lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    int dummy;
-    (void)(dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)));
-    //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd);
+    /* int dummy; */
+    /* (void)(dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size))); */
+    /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
 #endif
   }
 
@@ -888,6 +888,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     if (ocount >= (smbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
     if (ocount >= (smedbytes >> 2) || count > smedbytes) fbuff->bufsztype = 2;
     if (ocount >= (medbytes >> 1) || count > medbytes) fbuff->bufsztype = 3;
+    if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
 
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
     if (fbuff->invalid) {
@@ -895,8 +896,8 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
         pthread_rwlock_unlock(&mainw->mallopt_lock);
         return retval;
       }
-      /* fbuff->buffer = NULL; */
-      /* fbuff->invalid = FALSE; */
+      fbuff->buffer = NULL;
+      fbuff->invalid = FALSE;
       /* ptr = revalidate_buffers(ptr); */
       /* if (!ptr) return 0; */
     } else {
@@ -1126,12 +1127,12 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       fbuff->ptr = fbuff->buffer;
       fbuff->bytes = 0;
 
-#ifdef HAVE_POSIX_FALLOCATE
-      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
-      //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
-      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
-      lseek(fbuff->fd, fbuff->offset, SEEK_SET);
-#endif
+      /* #ifdef HAVE_POSIX_FALLOCATE */
+      /*       // pre-allocate space for next buffer, we need to ftruncate this when closing the file */
+      /*       //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize); */
+      /*       posix_fallocate(fbuff->fd, fbuff->offset, buffsize); */
+      /*       lseek(fbuff->fd, fbuff->offset, SEEK_SET); */
+      /* #endif */
     }
 
     space_left = buffsize - fbuff->bytes;
@@ -1713,7 +1714,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   *ntc = otc + dtc;
 
   // nframe is our new frame
-  if (dtc >= 0)
+  if (fps >= 0)
     nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
   else
     nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
@@ -1724,12 +1725,16 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     /// we recalculate the frame at ntc as if we were at the faster framerate.
 
     if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
-      if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= dtc * 4;
-      else mainw->deltaticks += ddtc * 4;
+      if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
+            * USEC_TO_TICKS / 40000000;
+      else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
+                                  * USEC_TO_TICKS / 40000000;
+      // dtc is delta ticks, quantise this to the frame rate and round down
+      mainw->deltaticks = q_gint64_floor(mainw->deltaticks, fps * 4);
     }
 
     if (nframe != cframe) {
-      int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps);
+      int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps + .5);
       if (delval <= -1 || delval >= 1) {
         /// the frame number changed, but we will recalulate the value using mainw->deltaticks
         int64_t xnframe = cframe + (int64_t)delval;

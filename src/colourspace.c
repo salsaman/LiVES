@@ -6580,7 +6580,6 @@ static void convert_swap3postalpha_frame(uint8_t *src, int width, int height, in
     return;
   }
 
-
   irowstride -= width << 2;
   orowstride -= width << 2;
 
@@ -8376,6 +8375,18 @@ LIVES_GLOBAL_INLINE int weed_layer_get_flags(weed_layer_t *layer) {
 }
 
 
+LIVES_GLOBAL_INLINE int lives_layer_get_clip(weed_layer_t *layer) {
+  if (layer == NULL || !WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
+}
+
+
+LIVES_GLOBAL_INLINE frames_t lives_layer_get_frame(weed_layer_t *layer) {
+  if (layer == NULL || !WEED_IS_LAYER(layer)) return 0;
+  return weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
+}
+
+
 LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_width(weed_layer_t *layer, int width) {
   if (layer == NULL || !WEED_IS_LAYER(layer)) return NULL;
   weed_set_int_value(layer, WEED_LEAF_WIDTH, width);
@@ -8485,6 +8496,8 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_new_for_frame(int clip, int frame) 
   // create a layer ready to receive a frame from a clip
   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
   weed_set_int_value(layer, WEED_LEAF_CLIP, clip);
+
+  // TODO -> int64
   weed_set_int_value(layer, WEED_LEAF_FRAME, frame);
   return layer;
 }
@@ -8795,7 +8808,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   boolean contig = FALSE;
   int iclamping;
 
-  if (layer == NULL) return FALSE;
+  if (layer == NULL || weed_layer_get_pixel_data_packed(layer) == NULL) return FALSE;
 
   inpl = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, &error);
 

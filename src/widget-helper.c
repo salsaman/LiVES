@@ -1279,9 +1279,9 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESResponseType lives_dialog_run(LiVESDialog *dial
   if (LIVES_IS_WINDOW(LIVES_MAIN_WINDOW_WIDGET)) {
     if (prefs->show_msg_area) {
       // TODO
-      lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-      lives_widget_grab_focus(mainw->msg_area);
-      gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
+      //lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+      //lives_widget_grab_focus(mainw->msg_area);
+      //gtk_window_set_focus(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), mainw->msg_area);
     }
   }
   mainw->gui_fooey = FALSE;
@@ -11251,6 +11251,7 @@ boolean lives_widget_context_update(void) {
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
           lives_nanosleep(1000);
         }
+        if (loops > 8) break;
       }
       if (loops > 1000 && !mainw->gui_fooey) {
         fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",
@@ -11282,7 +11283,7 @@ boolean lives_widget_context_update(void) {
     }
 #endif
     if (!mainw->is_exiting && LIVES_IS_PLAYING && loops > 2) {
-      lives_nanosleep(100000);
+      lives_nanosleep(10000);
     }
   }
   g_main_context_iteration(NULL, FALSE);
@@ -11290,12 +11291,6 @@ boolean lives_widget_context_update(void) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  /* if (!mainw->is_exiting && lm_needs_idlefunc) { */
-  /*   if (prefs->loadchecktime > 0.) { */
-  /*     mainw->loadmeasure = lives_idle_add_full(G_PRIORITY_LOW, load_measure_idle, NULL, NULL); */
-  /*   } */
-  /* } */
-  // g_main_context_release(g_main_context_get_thread_default());
   mainw->noswitch = FALSE;
   return TRUE;
 }

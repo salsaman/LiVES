@@ -1273,6 +1273,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int width, int height, int t
 //boolean save_to_png(FILE *fp, weed_layer_t *layer, int comp);
 #endif
 
+void wait_for_cleaner(void);
 void load_frame_image(int frame);
 void sensitize(void);
 void desensitize(void);
@@ -1638,7 +1639,7 @@ void break_me(void);
 
 #endif
 
-#define VALGRIND_ON
+//#define VALGRIND_ON
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

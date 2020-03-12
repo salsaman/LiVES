@@ -715,9 +715,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (which == 0) {
     // playback cursors
-    if (LIVES_IS_PLAYING) {
-      draw_little_bars((mainw->actual_frame - 1.) / cfile->fps, 0);
-    }
+    /* if (LIVES_IS_PLAYING) { */
+    /*   draw_little_bars((cfile->frameno - 1.) / cfile->fps, 0); */
+    /* } */
 
     if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {
       if (CURRENT_CLIP_TOTAL_TIME > 0.) {
@@ -738,7 +738,9 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         lives_ruler_set_upper(LIVES_RULER(mainw->hruler), CURRENT_CLIP_TOTAL_TIME);
         lives_widget_queue_draw(mainw->hruler);
 
-        draw_little_bars(cfile->pointer_time, 0);
+        draw_little_bars(cfile->pointer_time, 1);
+        draw_little_bars(cfile->real_pointer_time, 2);
+        draw_little_bars(cfile->real_pointer_time, 3);
 
         if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
           if (mainw->preview_box == NULL) {
@@ -762,14 +764,14 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
       ptrtime = -1.;
       if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = (double)mainw->jackd->seek_pos /
+        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = lives_jack_get_pos(mainw->jackd) /
               cfile->arate / cfile->achans / cfile->asampsize * 8;
 #endif
       }
 
       if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
-        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = (double)mainw->pulsed->seek_pos /
+        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = lives_pulse_get_pos(mainw->pulsed) /
               cfile->arate / cfile->achans / cfile->asampsize * 8;
 #endif
       }
@@ -778,16 +780,35 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         draw_little_bars(ptrtime, 3);
         which = 1;
       }
-      ptrtime = (mainw->actual_frame - .5) / cfile->fps;
+      ptrtime = ((double)(cfile->frameno - 1.) + ((double)(mainw->currticks - mainw->startticks)
+                 / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps)))
+                / cfile->fps;
       if (ptrtime < 0.) ptrtime = 0.;
       draw_little_bars(ptrtime, which);
       which = 0;
     }
-    lives_widget_queue_draw_if_visible(mainw->vidbar);
+    //lives_widget_queue_draw_if_visible(mainw->vidbar);
     lives_widget_queue_draw_if_visible(mainw->hruler);
   } else {
     if (LIVES_IS_PLAYING) {
-      ptrtime = (mainw->actual_frame - .5) / cfile->fps;
+      ptrtime = 0.;
+      if (which == 1)
+        ptrtime = (cfile->frameno + (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps))
+                  / cfile->fps;
+      else if (prefs->audio_player == AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+        if (mainw->jackd != NULL && mainw->jackd->in_use) ptrtime = lives_jack_get_pos(mainw->jackd) /
+              cfile->arate / cfile->achans / cfile->asampsize * 8;
+#endif
+      }
+
+      if (prefs->audio_player == AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+        if (mainw->pulsed != NULL && mainw->pulsed->in_use) ptrtime = lives_pulse_get_pos(mainw->pulsed) /
+              cfile->arate / cfile->achans / cfile->asampsize * 8;
+#endif
+      }
+
       if (ptrtime < 0.) ptrtime = 0.;
       draw_little_bars(ptrtime, which);
     }
@@ -889,7 +910,7 @@ void draw_little_bars(double ptrtime, int which) {
 
     if (cfile->frames > 0 && (which == 0 || which == 1)) {
       if (mainw->video_drawable != NULL) {
-        bar_height = CE_VIDBAR_HEIGHT * 10;
+        bar_height = CE_VIDBAR_HEIGHT;
 
         allocheight = (double)lives_widget_get_allocation_height(mainw->vidbar) + bar_height + widget_opts.packing_height * 2.5;
         allocy = lives_widget_get_allocation_y(mainw->vidbar) - widget_opts.packing_height;
@@ -948,7 +969,7 @@ void draw_little_bars(double ptrtime, int which) {
 
         if (LIVES_IS_PLAYING) {
           if (offset > 0.) {
-            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+            lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
           }
           if (offset < allocwidth) {
             lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
@@ -978,7 +999,7 @@ void draw_little_bars(double ptrtime, int which) {
 
           if (LIVES_IS_PLAYING) {
             if (offset > 0.) {
-              lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset, allocheight + .5);
+              lives_widget_queue_draw_area(mainw->eventbox2, 0, allocy, offset - 1, allocheight + .5);
             }
             if (offset < allocwidth) {
               lives_widget_queue_draw_area(mainw->eventbox2, offset + 1, allocy, allocwidth - offset - 1., allocheight + .5);
@@ -4023,8 +4044,7 @@ static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
 // update youtube-dl
 // advanced :: audio selection / save subs / sub language [TODO]
 
-lives_remote_clip_request_t *run_youtube_dialog(void) {
-  lives_remote_clip_request_t *req;
+lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req) {
   LiVESWidget *dialog_vbox;
   LiVESWidget *label;
   LiVESWidget *ext_label;
@@ -4063,9 +4083,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   char string[256];
 
   int response;
-
-  boolean onlyfree = TRUE;
-
+  boolean only_free = TRUE;
   static boolean firsttime = TRUE;
 
   if (!capable->has_youtube_dl) {
@@ -4076,6 +4094,10 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
       return NULL;
     }
   }
+
+#ifdef ALLOW_NONFREE_CODECS
+  if (req) only_free = !req->allownf;
+#endif
 
   title = lives_strdup(_("Open Online Clip"));
 
@@ -4126,7 +4148,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  url_entry = lives_standard_entry_new(_("Clip URL : "), "", LONG_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
+  url_entry = lives_standard_entry_new(_("Clip URL : "), req ? req->URI : "", LONG_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 1);
@@ -4145,10 +4167,12 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_free(tmp);
   lives_free(tmp2);
 
+  toggle_toggles_var(LIVES_TOGGLE_BUTTON(radiobutton_free), &only_free, FALSE);
   add_fill_to_box(LIVES_BOX(hbox));
 
 #endif
-  name_entry = lives_standard_entry_new(_("_File Name : "), "", SHORT_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
+  name_entry = lives_standard_entry_new(_("_File Name : "), req ? req->fname : "",
+                                        SHORT_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
 
@@ -4165,20 +4189,23 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
                         &radiobutton_group,
                         LIVES_BOX(hbox),
                         (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
+
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_nonfree), !only_free);
+
   lives_free(tmp);
   lives_free(tmp2);
 
   lives_signal_connect(LIVES_GUI_OBJECT(radiobutton_nonfree), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(on_freedom_toggled),
                        (livespointer)ext_label);
+
 #endif
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
 
-  dir_entry = lives_standard_direntry_new(_("_Directory to save to: "), mainw->vid_dl_dir,
+  dir_entry = lives_standard_direntry_new(_("_Directory to save to: "), req ? req->save_dir : mainw->vid_dl_dir,
                                           LONG_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
-
   add_hsep_to_box(LIVES_BOX(dialog_vbox));
 
   hbox = lives_hbox_new(FALSE, 0);
@@ -4329,7 +4356,8 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
       continue;
     }
 
-    fname  = ensure_extension(lives_entry_get_text(LIVES_ENTRY(name_entry)), onlyfree ? LIVES_FILE_EXT_WEBM : LIVES_FILE_EXT_MP4);
+    fname = ensure_extension(lives_entry_get_text(LIVES_ENTRY(name_entry)), only_free ? LIVES_FILE_EXT_WEBM
+                             : LIVES_FILE_EXT_MP4);
     lives_snprintf(dirname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(dir_entry)));
     ensure_isdir(dirname);
     dfile = lives_build_filename(dirname, fname, NULL);
@@ -4344,15 +4372,18 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
 
   lives_snprintf(mainw->vid_dl_dir, PATH_MAX, "%s", dirname);
 
-  req = (lives_remote_clip_request_t *)lives_malloc(sizeof(lives_remote_clip_request_t));
   if (req == NULL) {
-    lives_widget_destroy(dialog);
-    lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-    lives_free(url);
-    lives_free(dfile);
-    LIVES_ERROR("Could not alloc memory for remote clip request");
-    mainw->error = TRUE;
-    return NULL;
+    req = (lives_remote_clip_request_t *)lives_malloc(sizeof(lives_remote_clip_request_t));
+    if (req == NULL) {
+      lives_widget_destroy(dialog);
+      lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
+      lives_free(url);
+      lives_free(dfile);
+      LIVES_ERROR("Could not alloc memory for remote clip request");
+      mainw->error = TRUE;
+      return NULL;
+    }
+    req->allownf = !only_free;
   }
 
   mainw->error = FALSE;
@@ -4364,7 +4395,7 @@ lives_remote_clip_request_t *run_youtube_dialog(void) {
   lives_snprintf(req->save_dir, PATH_MAX, "%s", dirname);
   lives_snprintf(req->fname, PATH_MAX, "%s", lives_entry_get_text(LIVES_ENTRY(name_entry)));
 #ifdef ALLOW_NONFREE_CODECS
-  if (lives_toggle_button_get_active(LIVES_TOGGLE_BUTTON(radiobutton_free)))
+  if (!req->allownf)
     lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_WEBM);
   else
     lives_snprintf(req->format, 256, "%s", LIVES_FILE_EXT_MP4);

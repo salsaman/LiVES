@@ -224,14 +224,13 @@ typedef struct {
   float desired_fps;  // unused for now
   lives_size_match_t matchsize;
   boolean do_update;
+  boolean allownf;
   char vidchoice[512];
   char audchoice[512];
-
   // TODO: add audio bitrate ?, audio_lang, get_sub, sub_format, sub_language, etc.
-
 } lives_remote_clip_request_t;
 
-lives_remote_clip_request_t *run_youtube_dialog(void);
+lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req);
 boolean youtube_select_format(lives_remote_clip_request_t *);
 
 #endif

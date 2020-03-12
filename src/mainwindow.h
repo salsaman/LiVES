@@ -42,7 +42,7 @@
 #define DEF_FPSCHANGE_AMOUNT 30000
 
 /// forward/back scratch value (TODO: make pref)
-#define DEF_SCRATCHBACK_AMOUNT 160000
+#define DEF_SCRATCHBACK_AMOUNT 80000
 #define DEF_SCRATCHFWD_AMOUNT 80000
 
 /// adjustment amount for effect parameter via keyboard (TODO: make pref)
@@ -1315,7 +1315,6 @@ typedef struct {
   pthread_mutex_t vpp_stream_mutex; ///< prevent from writing audio when stream is closing
   pthread_mutex_t cache_buffer_mutex; ///< sync for jack playback termination
   pthread_mutex_t audio_filewriteend_mutex; ///< sync for ending writing audio to file
-  pthread_mutex_t audio_resync_mutex; ///< sync for audio
   pthread_mutex_t instance_ref_mutex; ///< refcounting for instances
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)

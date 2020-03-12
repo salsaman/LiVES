@@ -1,6 +1,6 @@
 // projectM.c
 // weed plugin
-// (c) G. Finch (salsaman) 2014 - 2016
+// (c) G. Finch (salsaman) 2014 - 2020
 //
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -413,13 +413,13 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     _sdata *sd;
     weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
     weed_plant_t **iparams = weed_get_in_params(inst, NULL);
-
     copies++;
 
     if (!inited) {
       int rc = 0;
       int width = weed_channel_get_width(out_channel);
       int height = weed_channel_get_height(out_channel);
+      int count = 0;
 
       sd = (_sdata *)weed_malloc(sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;

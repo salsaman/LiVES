@@ -218,6 +218,10 @@ int weed_layer_get_palette(weed_layer_t *);
 int weed_layer_get_gamma(weed_layer_t *);
 int weed_layer_get_flags(weed_layer_t *);
 
+// lives specific
+int lives_layer_get_clip(weed_layer_t *);
+frames_t lives_layer_get_frame(weed_layer_t *);
+
 // weed_layer_get_rowstride
 
 /// functions all return the input layer for convenience; no checking for valid values is done

@@ -11045,12 +11045,18 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
   char *mykey = NULL;
   char *msg;
 
+  boolean check_ptrs = FALSE;
   int32_t st; // seed type
   int32_t ne; // num elems
   int32_t type = 0;
   int error;
 
   register int i, j;
+
+  if (key == NULL && check_key) {
+    check_ptrs = TRUE;
+    check_key = FALSE;
+  }
 
   if (key == NULL || check_key) {
     // key length
@@ -11092,7 +11098,6 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     if (key == NULL) key = mykey;
     else {
       lives_freep((void **)&mykey);
-      mykey = NULL;
     }
   }
 
@@ -11408,19 +11413,32 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
         break;
       default:
         if (plant != NULL) {
-          if (mem == NULL && prefs->force64bit) {
-            // force pointers to uint64_t
-            uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
-            for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
-            weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
-            lives_freep((void **)&voids);
-          } else {
-            void **voids = (void **)lives_malloc(ne * sizeof(void *));
-            for (j = 0; j < ne; j++) voids[j] = values[j];
-            weed_leaf_set(plant, key, st, ne, (void *)voids);
-            lives_freep((void **)&voids);
-	    // *INDENT-OFF*
-	  }}}}}
+          boolean add_leaf = TRUE;
+          if (check_ptrs) {
+            switch (weed_plant_get_type(plant)) {
+            case WEED_PLANT_LAYER:
+              if (lives_strcmp(key, WEED_LEAF_PIXEL_DATA)) {
+                add_leaf = FALSE;
+              }
+              break;
+            default:
+              break;
+            }
+          }
+          if (add_leaf) {
+            if (mem == NULL && prefs->force64bit) {
+              // force pointers to uint64_t
+              uint64_t *voids = (uint64_t *)lives_malloc(ne * sizeof(uint64_t));
+              for (j = 0; j < ne; j++) voids[j] = (uint64_t)(*(void **)values[j]);
+              weed_leaf_set(plant, key, WEED_SEED_INT64, ne, (void *)voids);
+              lives_freep((void **)&voids);
+            } else {
+              void **voids = (void **)lives_malloc(ne * sizeof(void *));
+              for (j = 0; j < ne; j++) voids[j] = values[j];
+              weed_leaf_set(plant, key, st, ne, (void *)voids);
+              lives_freep((void **)&voids);
+	      // *INDENT-OFF*
+	    }}}}}}
   // *INDENT-ON*
 
 done:
@@ -11442,6 +11460,7 @@ weed_plant_t *weed_plant_deserialise(int fd, unsigned char **mem, weed_plant_t *
   int err;
   int32_t type = WEED_PLANT_UNKNOWN;
   boolean newd = FALSE, retried = FALSE;
+  boolean block_unk_ptrs = FALSE;
   int bugfd = -1;
 
 realign:
@@ -11501,8 +11520,12 @@ realign:
 
   numleaves--;
 
+  /// if key is NULL and check_key is TRUE, we will limit whay voidptr leaves can be added. This is necessary for layers
+  /// since voidptrs which may be loaded can mess up the layer handling
+  if (type == WEED_PLANT_LAYER) block_unk_ptrs = TRUE;
+
   while (numleaves--) {
-    if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, FALSE)) != 0) {
+    if ((err = weed_leaf_deserialise(fd, plant, NULL, mem, block_unk_ptrs)) != 0) {
       if (err != -5) {  // all except malloc error
         char *badfname = filename_from_fd(NULL, fd);
         char *msg = lives_strdup_printf("Data mismatch (%d) reading from\n%s", err, badfname != NULL ? badfname : "unknown file");

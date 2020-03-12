@@ -248,7 +248,7 @@ char *lives_datetime(struct timeval *tv);
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * 1000000000; while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
 
 #define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
-    ts.tv_nsec = 1001; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+    ts.tv_nsec = 100; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
 
 int check_dev_busy(char *devstr);
 
@@ -279,7 +279,7 @@ typedef struct {
   lives_funcptr_t func;
   void *arg;
   uint64_t flags;
-  volatile int done;
+  volatile uint64_t done;
   void *ret;
 } thrd_work_t;
 
@@ -289,7 +289,8 @@ typedef struct {
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
 
-#define _WEED_LEAF_THREAD_PARAM(n) "thrd_param" n
+#define WEED_LEAF_THREAD_PARAM "thrd_param"
+#define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
 #define WEED_LEAF_THREAD_PARAM0 _WEED_LEAF_THREAD_PARAM("0")
 #define WEED_LEAF_THREAD_PARAM1 _WEED_LEAF_THREAD_PARAM("1")
 #define WEED_LEAF_THREAD_PARAM2 _WEED_LEAF_THREAD_PARAM("2")
@@ -306,7 +307,7 @@ typedef uint64_t lives_thread_attr_t;
 void lives_threadpool_init(void);
 void lives_threadpool_finish(void);
 int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg);
-int lives_thread_join(lives_thread_t work, void **retval);
+uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 boolean run_as_thread(weed_plant_t *info);
 

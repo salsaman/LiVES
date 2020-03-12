@@ -268,17 +268,29 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
       lives_free(fname);
       last_real_frame = i;
       has_missing_frames = TRUE;
+      if (prefs->show_dev_opts) {
+        g_printerr("clip %s is missing image frame %d\n", sfile->handle, i + 1);
+      }
     }
   }
 
   if (cdata != NULL) {
     // check frame count
     if (maxframe > cdata->nframes || has_missing_frames) {
+      if (prefs->show_dev_opts) {
+        if (maxframe > cdata->nframes) {
+          g_printerr("frame count mismatch for clip %d,  %s, maxframe is %d, decoder claims only %ld\nRescaning...",
+                     fileno, sfile->handle, maxframe, cdata-> nframes);
+        }
+      }
+
       has_missing_frames = TRUE;
       sfile->frames = scan_frames(sfile, cdata->nframes, last_real_frame);
+      if (prefs->show_dev_opts) {
+        g_printerr("rescan counted %d frames\n.", sfile->frames);
+      }
     }
   }
-
 
   if (sfile->frame_index != NULL) {
     int lgoodframe = -1, goodidx;
@@ -287,15 +299,27 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
       int fr = sfile->frame_index[i];
       if (fr < -1 || (cdata == NULL && fr > sfile->frames - 1)
           || (cdata != NULL && (int64_t)fr > cdata->nframes - 1)) {
+        if (prefs->show_dev_opts) {
+          g_printerr("bad frame index %d, points to %d.....", i, fr);
+        }
         has_missing_frames = TRUE;
         fname = make_image_file_name(sfile, i + 1, LIVES_FILE_EXT_PNG);
         if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
           sfile->frame_index[i] = -1;
+          if (prefs->show_dev_opts) {
+            g_printerr("relinked to image frame %d\n", i + 1);
+          }
         } else {
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
+            if (prefs->show_dev_opts) {
+              g_printerr("relinked to clip frame %d\n", lgoodframe + 1 - goodidx);
+            }
           } else {
             sfile->frame_index[i] = i;
+            if (prefs->show_dev_opts) {
+              g_printerr("reset to clip frame %d\n", i);
+            }
           }
           if (sfile->frame_index[i] >= cdata->nframes) sfile->frame_index[i] = cdata->nframes - 1;
         }
@@ -327,15 +351,27 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
       }
     }
 
-    if (sfile->hsize != hsize || sfile->vsize != vsize) goto mismatch;
+    if (sfile->hsize != hsize || sfile->vsize != vsize) {
+      if (prefs->show_dev_opts) {
+        g_printerr("incorrect frame size %d X %d, corrected to %d X %d\n", hsize, vsize, sfile->hsize, sfile->vsize);
+      }
+      goto mismatch;
+    }
   }
-
   if (has_missing_frames) goto mismatch;
 
-  if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) goto mismatch;
-
-  if (sfile->img_type != empirical_img_type) sfile->img_type = empirical_img_type;
-
+  if (cdata != NULL && (fabs(sfile->fps - (double)cdata->fps) > prefs->fps_tolerance)) {
+    if (prefs->show_dev_opts) {
+      g_printerr("fps mismtach, claimed %f, cdata said %f\n", sfile->fps, cdata->fps);
+    }
+    goto mismatch;
+  }
+  if (sfile->img_type != empirical_img_type) {
+    if (prefs->show_dev_opts) {
+      g_printerr("corrected image type from %d to %d\n", sfile->img_type, empirical_img_type);
+    }
+    sfile->img_type = empirical_img_type;
+  }
   /*
     // ignore since we may have resampled audio
     if (sfile->achans != cdata->achans || sfile->arps != cdata->arate || sfile->asampsize != cdata->asamps ||

@@ -625,8 +625,8 @@ int lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    /* int dummy; */
-    /* (void)(dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size))); */
+    int dummy =  ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size));
+    (void)dummy;
     /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
 #endif
   }
@@ -1127,12 +1127,12 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       fbuff->ptr = fbuff->buffer;
       fbuff->bytes = 0;
 
-      /* #ifdef HAVE_POSIX_FALLOCATE */
-      /*       // pre-allocate space for next buffer, we need to ftruncate this when closing the file */
-      /*       //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize); */
-      /*       posix_fallocate(fbuff->fd, fbuff->offset, buffsize); */
-      /*       lseek(fbuff->fd, fbuff->offset, SEEK_SET); */
-      /* #endif */
+#ifdef HAVE_POSIX_FALLOCATE
+      // pre-allocate space for next buffer, we need to ftruncate this when closing the file
+      //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
+      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
+      lseek(fbuff->fd, fbuff->offset, SEEK_SET);
+#endif
     }
 
     space_left = buffsize - fbuff->bytes;

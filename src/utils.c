@@ -50,7 +50,6 @@ static int get_hex_digit(const char c) GNU_CONST;
 
 **/
 char *filename_from_fd(char *val, int fd) {
-
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
   if (fbuff != NULL) {
     return lives_strdup(fbuff->pathname);
@@ -539,7 +538,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     /* fbuff->ptr = NULL; */
     /* fbuff->buffer = NULL; */
     /* fbuff->offset = 0; */
-    /* fbuff->reversed = FALSE; */
+    /* fbuff->flags = 0 */
     /* fbuff->orig_size = 0; */
     /* fbuff->nseqreads = 0; */
 
@@ -565,9 +564,62 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
   return fd;
 }
 
+static size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
+static size_t medbytes = BUFFER_FILL_BYTES_MED;
+static size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
+static size_t smbytes = BUFFER_FILL_BYTES_SMALL;
+#define AUTOTUNE
+#ifdef AUTOTUNE
+static weed_plant_t *tunerl = NULL;
+static boolean tunedl = FALSE;
+static weed_plant_t *tunerm = NULL;
+static boolean tunedm = FALSE;
+static weed_plant_t *tunersm = NULL;
+static boolean tunedsm = FALSE;
+static weed_plant_t *tuners = NULL;
+static boolean tuneds = FALSE;
+#endif
+
 
 LIVES_GLOBAL_INLINE int lives_open_buffered_rdonly(const char *pathname) {
   return lives_open_real_buffered(pathname, O_RDONLY, 0, TRUE);
+}
+
+
+boolean _lives_buffered_rdonly_slurp(int fd) {
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+  size_t fsize = get_file_size(fd), bufsize, ofsize = fsize;
+  ssize_t res;
+  lives_freep((void **)&fbuff->buffer);
+  fbuff->buffer = fbuff->ptr = lives_calloc(fsize, 1);
+  g_printerr("slurp for %d, %s with size %ld\n", fd, fbuff->pathname, fsize);
+  while (fbuff->offset != ofsize
+        ) {
+    if (fsize >= bigbytes) bufsize = bigbytes;
+    else if (fsize >= medbytes) bufsize = medbytes;
+    else if (fsize >= smedbytes) bufsize = smedbytes;
+    else bufsize = fsize;
+    res = lives_read(fbuff->fd, fbuff->buffer + fbuff->offset, bufsize, TRUE);
+    g_printerr("slurp for %d, %s with size %ld, read %lu bytes, remain\n", fd, fbuff->pathname, res, fsize);
+    if (res < 0) return FALSE;
+    if (res > (ssize_t)fsize) res = fsize;
+    fbuff->offset += res;
+    fsize -= res;
+    g_printerr("slurp %d oof %ld %ld remain %lu  \n", fd, fbuff->offset, fsize, ofsize);
+  }
+  fbuff->eof = TRUE;
+  return TRUE;
+}
+
+
+void lives_buffered_rdonly_slurp(int fd) {
+  lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
+  weed_plant_t *info = weed_plant_new(WEED_PLANT_THREAD_INFO);
+  fbuff->slurping = TRUE;
+  fbuff->bytes = fbuff->offset = 0;
+  weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, _lives_buffered_rdonly_slurp);
+  weed_set_int_value(info, WEED_LEAF_THREAD_PARAM0, fd);
+  run_as_thread(info);
 }
 
 
@@ -642,23 +694,6 @@ int lives_close_buffered(int fd) {
   lives_free(fbuff);
   return ret;
 }
-
-
-static size_t bigbytes = BUFFER_FILL_BYTES_LARGE;
-static size_t medbytes = BUFFER_FILL_BYTES_MED;
-static size_t smedbytes = BUFFER_FILL_BYTES_SMALLMED;
-static size_t smbytes = BUFFER_FILL_BYTES_SMALL;
-#define AUTOTUNE
-#ifdef AUTOTUNE
-static weed_plant_t *tunerl = NULL;
-static boolean tunedl = FALSE;
-static weed_plant_t *tunerm = NULL;
-static boolean tunedm = FALSE;
-static weed_plant_t *tunersm = NULL;
-static boolean tunedsm = FALSE;
-static weed_plant_t *tuners = NULL;
-static boolean tuneds = FALSE;
-#endif
 
 static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   ssize_t res;
@@ -846,6 +881,12 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   if (fbuff->bytes > 0) {
     size_t nbytes = fbuff->bytes;
     if (nbytes > count) nbytes = count;
+    else if (fbuff->slurping) {
+      while ((nbytes = fbuff->offset - fbuff->bytes) < count) lives_nanosleep(1000);
+      if (nbytes > count) nbytes = count;
+      fbuff->bytes += nbytes;
+    }
+
     // use up buffer
 
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
@@ -1131,7 +1172,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       // pre-allocate space for next buffer, we need to ftruncate this when closing the file
       //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
       posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
-      lseek(fbuff->fd, fbuff->offset, SEEK_SET);
+      //lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 #endif
     }
 

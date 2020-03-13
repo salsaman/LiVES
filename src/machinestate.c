@@ -541,35 +541,35 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
 
 // slice allocator //// TODO
 
-static memheader_t base;           /* Zero sized block to get us started. */
-static memheader_t *freep = &base; /* Points to first free block of memory. */
-static memheader_t *usedp;         /* Points to first used block of memory. */
+/* static memheader_t base;           /\* Zero sized block to get us started. *\/ */
+/* static memheader_t *freep = &base; /\* Points to first free block of memory. *\/ */
+/* static memheader_t *usedp;         /\* Points to first used block of memory. *\/ */
 
 /*
    Scan the free list and look for a place to put the block. Basically, we're
    looking for any block the to be freed block might have been partitioned from.
 */
-void quick_free(memheader_t *bp) {
-  memheader_t *p;
+/* void quick_free(memheader_t *bp) { */
+/*   memheader_t *p; */
 
-  for (p = freep; !(bp > p && bp < p->next); p = p->next)
-    if (p >= p->next && (bp > p || bp < p->next))
-      break;
+/*   for (p = freep; !(bp > p && bp < p->next); p = p->next) */
+/*     if (p >= p->next && (bp > p || bp < p->next)) */
+/*       break; */
 
-  if (bp + bp->size == p->next) {
-    bp->size += p->next->size;
-    bp->next = p->next->next;
-  } else
-    bp->next = p->next;
+/*   if (bp + bp->size == p->next) { */
+/*     bp->size += p->next->size; */
+/*     bp->next = p->next->next; */
+/*   } else */
+/*     bp->next = p->next; */
 
-  if (p + p->size == bp) {
-    p->size += bp->size;
-    p->next = bp->next;
-  } else
-    p->next = bp;
+/*   if (p + p->size == bp) { */
+/*     p->size += bp->size; */
+/*     p->next = bp->next; */
+/*   } else */
+/*     p->next = bp; */
 
-  freep = p;
-}
+/*   freep = p; */
+/* } */
 
 
 #define MIN_ALLOC_SIZE 4096     /* We allocate blocks in page sized chunks. */
@@ -577,63 +577,84 @@ void quick_free(memheader_t *bp) {
 /*
    Request more memory from the kernel.
 */
-static memheader_t *morecore(size_t num_units) {
-  void *vp;
-  memheader_t *up;
+/* static memheader_t *morecore(size_t num_units) { */
+/*   void *vp; */
+/*   memheader_t *up; */
 
-  if (num_units > MIN_ALLOC_SIZE)
-    num_units = MIN_ALLOC_SIZE / sizeof(memheader_t);
+/*   if (num_units > MIN_ALLOC_SIZE) */
+/*     num_units = MIN_ALLOC_SIZE / sizeof(memheader_t); */
 
-  if ((vp = sbrk(num_units * sizeof(memheader_t))) == (void *) - 1)
-    return NULL;
+/*   if ((vp = sbrk(num_units * sizeof(memheader_t))) == (void *) - 1) */
+/*     return NULL; */
 
-  up = (memheader_t *) vp;
-  up->size = num_units;
-  quick_free(up); // add to freelist
-  return freep;
-}
+/*   up = (memheader_t *) vp; */
+/*   up->size = num_units; */
+/*   quick_free(up); // add to freelist */
+/*   return freep; */
+/* } */
 
 
-/*
-   Find a chunk from the free list and put it in the used list.
-*/
+/* /\* */
+/*    Find a chunk from the free list and put it in the used list. */
+/* *\/ */
+
+/* static void *memblock; */
+
+/* void make_mem_tree(size_t blocksize, size_t gran) { */
+/* int nnodes = blocksize / gran / 2; */
+/* void *ptr; */
+/* ptr = memblock = lives_malloc(blocksize); */
+/* for (i = 0; i < nnodes; i+=2) { */
+/*   nodel = memnode_new(ptr, NULL, NULL, gran); */
+/*   ptr += 2 * gran; */
+/*   noder = memnode_new(ptr, NULL. NULL, gran); */
+/*   ptr += 2 * gran; */
+/*   nodeup = memnode_new(NULL, nodel. noder, gran); */
+/*   if (i > 0 && (i & 2) == 2) { */
+/*     weed_set_voidptr_value(plant0, "ptr", nodeup); */
+/*   } */
+/*   else { */
+/*     nodeup = memnode_new(NULL, weed_get_voidptr_value(plant0, "ptr", nodeup), nodeyp, gran * 2); */
+/*     if (i > 0 && (i & 8) */
+
+
+/*   nodell = make_memnode(gran, ptr); */
+/*   /\* ptr += gran * 4; *\/ */
+/*   /\* noderr = make_memnode(gran, ptr); *\/ */
+/*   /\* ptr += gran * 4; *\/ */
+/*   /\* nodelll = memnode_new(NULL, nodell. noderr, gran * 2);  *\/ */
+/*   /\* nodell = make_memnode(gran, ptr); *\/ */
+/*   /\* ptr += gran * 4; *\/ */
+/*   /\* noderr = make_memnode(gran, ptr); *\/ */
+/*   /\* ptr += gran * 4; *\/ */
+/*   /\* noderrr = memnode_new(NULL, nodell. noderr, gran * 2);  *\/ */
+
+//}
+
+
+
 LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
-  size_t num_units;
-  memheader_t *p, *prevp;
+  /// there will be a block of size M.
+  /// there will be n leaf nodes. The block is subdivided.into n equally sized  sub-blocks of size m
+  // Each leaf has a pointer   and 2 sizes, sleft and sright
+  /// if a request (bsize) arrives: if bsize <= sleft, and its a left requst, sleft is set to zero and ptr is returned
+  // else, if bsize <= sright, and it's a right requrst. sright is set to zero and ptr + m returned
+  // else, if bsize <= sleft + sright, amd iits a left reqest both sleft and sright are set to zero and pleft is returned
+  // else OOM is returned
+  //
+  // above the lead node is the first tree proper layer. each tree node has 2 pointers and 3 sizes
+  // pleft, pright, sleft, smid, sright. set to values When a request (bsize) arrives:
+  // if bsize <= sleft, a ;eft requst for bsize is sent to to node left, sleft is set to zero, and the ptr.from lleaf returned
+  // else if bsize <= srigth, a right req for bsize is sent to lright, sright is set to zero and the ptr from lright returned
+  // else if bsize <= srmid, a left req for bsize / 2 is sent to l;;eft, a left req for bsize /2 to ltight, smid set to zero and ptr from left return
+  // else if bsize <= sleft + smid, a left req of 2 / 3 bsize is snet ot lleft, a left req of bsize / 3 sent to lright and ptr from lleft ret
+  // else if bsize <= smid + srigtht, r req of bsize / 3sent to lleft, 2./ 3 bsize ent to lright
+  // else if bsize <= sleft + smid _sright, left req of bsize / 2 sent to lleft, left req of bsize / 2 to right, ptr from left ret.
+  /// else OOM
 
-  num_units = (alloc_size + sizeof(memheader_t) - 1) / sizeof(memheader_t) + 1;
-  prevp = freep;
-
-  for (p = prevp->next;; prevp = p, p = p->next) {
-    if (p->size >= num_units) { /* Big enough. */
-      if (p->size == num_units) /* Exact size. */
-        prevp->next = p->next;
-      else {
-        p->size -= num_units;
-        p += p->size;
-        p->size = num_units;
-      }
-
-      freep = prevp;
-
-      /* Add to p to the used list. */
-      if (usedp == NULL)
-        usedp = p->next = p;
-      else {
-        p->next = usedp->next;
-        usedp->next = p;
-      }
-      p->align = align;
-      return (void *)(p + 1);
-    }
-    if (p == freep) { /* Not enough memory. */
-      p = morecore(num_units);
-      if (p == NULL) /* Request for more memory failed. */
-        return NULL;
-    }
-  }
+  /// next level up nodes point to level + 1. sleft = sleft + smid / 2.   } smid etc.
+  return NULL;
 }
-
 
 /* void *quick_malloc(size_t alloc_size) { */
 /*   return _quick_malloc(alloc_size, 1); */
@@ -808,39 +829,30 @@ boolean check_dev_busy(char *devstr) {
 uint64_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
+  uint64_t fsize;
   lives_file_buffer_t *fbuff;
+  fstat(fd, &filestat);
+  fsize = (uint64_t)(filestat.st_size);
+  g_printerr("fssize for %d is %ld\n", fd, fsize);
   if ((fbuff = find_in_file_buffers(fd)) != NULL) {
     if (!fbuff->read) {
       /// because of padding bytes...
-      return (uint64_t)(fbuff->offset + fbuff->bytes);
+      uint64_t f2size;
+      if ((f2size = (uint64_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
     }
   }
-  fstat(fd, &filestat);
-  return (uint64_t)(filestat.st_size);
+  return fsize;
 }
 
 
-uint64_t sget_file_size(const char *name) {
+size_t sget_file_size(const char *name) {
   // get the size of file fd
-  struct stat filestat;
-  lives_file_buffer_t *fbuff;
   int fd;
-
-  if ((fbuff = find_in_file_buffers_by_pathname(name)) != NULL) {
-    if (!fbuff->read) {
-      /// because of padding bytes...
-      return (uint64_t)(fbuff->offset + fbuff->bytes);
-    }
-  }
-
-  if ((fd = open(name, O_RDONLY)) == -1) {
-    return (uint32_t)0;
-  }
-
-  fstat(fd, &filestat);
+  size_t fsize;
+  if ((fd = open(name, O_RDONLY)) == -1) return 0;
+  fsize = get_file_size(fd);
   close(fd);
-
-  return (uint64_t)(filestat.st_size);
+  return fsize;
 }
 
 
@@ -1199,6 +1211,9 @@ void *_plant_thread_func(void *args) {
 
   switch (funcsig) {
   case 0: (*func)(); break;
+  case 0x01: // int
+    (*func)(GETARG(int, "0"));
+    break;
   case 0xDD: // void *. void *
     (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1"));
     break;

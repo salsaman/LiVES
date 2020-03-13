@@ -5607,7 +5607,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   } else {
     png_read_image(png_ptr, row_ptrs);
   }
-  png_read_end(png_ptr, NULL);
+  //png_read_end(png_ptr, NULL);
 
   // end read
 
@@ -5767,6 +5767,7 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 #endif
 #ifdef PNG_BIO
   fd = lives_open_buffered_rdonly(fname);
+  //lives_buffered_rdonly_slurp(fd);
 #else
   fd = lives_open2(fname, O_RDONLY);
 #endif
@@ -5828,17 +5829,10 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 #ifdef USE_LIBPNG
   {
     boolean ret;
-    int fd;
-
-    if (stored_fd_frame != -1 && stored_fd_frame == weed_get_int_value(layer, WEED_LEAF_FRAME, NULL) &&
-        stored_fd_clip == weed_get_int_value(layer, WEED_LEAF_CLIP, NULL)) {
-      if (new_stored_fd != -1) fd = new_stored_fd;
-      else fd = stored_fd;
-    }
 #ifdef PNG_BIO
-    else fd = lives_open_buffered_rdonly(fname);
+    int fd = lives_open_buffered_rdonly(fname);
 #else
-    else fd = lives_open2(fname, O_RDONLY);
+    int fd = lives_open2(fname, O_RDONLY);
 #endif
 
     if (fd < 0) return FALSE;
@@ -6585,7 +6579,11 @@ static void do_cleanup(weed_layer_t *layer, int success) {
     //mainw->noswitch = noswitch;
 
 #ifdef PNG_BIO
-  if (old_fd >= 0) lives_close_buffered(old_fd);
+    if (old_fd >= 0) {
+      lives_file_buffer_t *fbuff = find_in_file_buffers(old_fd);
+      if (while (!fbuff->eof) lives_nanosleep(1000);
+      lives_close_buffered(old_fd);
+    }
 #else
   if (old_fd >= 0) close(old_fd);
 #endif

@@ -1408,7 +1408,7 @@ int process_one(boolean visible) {
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
 #define DROPFRAME_TRIGGER 5
-#define JUMPFRAME_TRIGGER 8 // we should retain cdata->jump_limit from the initial file open
+#define JUMPFRAME_TRIGGER 16 // we should retain cdata->jump_limit from the initial file open
 
   if (LIVES_IS_PLAYING) sfile = mainw->files[mainw->playing_file];
 

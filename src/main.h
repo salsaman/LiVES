@@ -1351,6 +1351,7 @@ typedef struct {
   boolean eof;
   boolean read;
   boolean reversed;
+  boolean slurping;
   int nseqreads;
   int totreads;
   int64_t totbytes;
@@ -1379,6 +1380,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
 lives_file_buffer_t *get_file_buffer(int fd);
+void lives_buffered_rdonly_slurp(int fd);
 
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);

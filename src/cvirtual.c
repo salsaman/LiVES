@@ -313,7 +313,7 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int max
           if (lgoodframe != -1) {
             sfile->frame_index[i] = lgoodframe + i - goodidx;
             if (prefs->show_dev_opts) {
-              g_printerr("relinked to clip frame %d\n", lgoodframe + 1 - goodidx);
+              g_printerr("relinked to clip frame %d\n", lgoodframe + i - goodidx);
             }
           } else {
             sfile->frame_index[i] = i;

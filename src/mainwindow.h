@@ -371,6 +371,7 @@ enum {
 #define EXEC_AUTOLIVES_PL "autolives.pl"
 #define EXEC_MD5SUM "md5sum"
 #define EXEC_WMCTRL "wmctrl"
+#define EXEC_GZIP "gzip"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
@@ -396,7 +397,9 @@ enum {
 #define LIVES_FILE_EXT_BACKUP "lv1"
 #define LIVES_FILE_EXT_PROJECT "lv2"
 
-#define LIVES_FILE_EXT_TAR_GZ "tar.gz"
+#define LIVES_FILE_EXT_TAR "tar"
+#define LIVES_FILE_EXT_GZIP "gz"
+#define LIVES_FILE_EXT_TAR_GZ LIVES_FILE_EXT_TAR "."LIVES_FILE_EXT_GZIP
 
 #define LIVES_FILE_EXT_SRT "srt"
 #define LIVES_FILE_EXT_SUB "sub"
@@ -768,7 +771,6 @@ typedef struct {
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
-  boolean frame_layer_preload_final; /// frame loaded from cache has fx appliead already: don't re-apply
   int play_sequence; ///< incremented for each playback
 
   double audio_stretch;
@@ -1100,7 +1102,7 @@ typedef struct {
   LiVESWidget *play_window;
   weed_plant_t *frame_layer;
   weed_plant_t *frame_layer_preload;
-  int64_t pred_frame;
+  frames64_t pred_frame;
   int pred_clip;
   weed_plant_t *blend_layer;
   LiVESWidget *plug;

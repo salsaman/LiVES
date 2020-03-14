@@ -1,3 +1,4 @@
+
 // utils.c
 // LiVES
 // (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
@@ -530,7 +531,7 @@ static int lives_open_real_buffered(const char *pathname, int flags, int mode, b
     fbuff->fd = fd;
     fbuff->read = isread;
     fbuff->pathname = lives_strdup(pathname);
-    fbuff->bufsztype = isread ? 0 : 1;
+    fbuff->bufsztype = isread ? BUFF_SIZE_READ_SMALL : BUFF_SIZE_WRITE_SMALL;
 
     /* fbuff->bytes = 0; */
     /* fbuff->invalid = FALSE; */
@@ -705,9 +706,9 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   ssize_t delta = 0;
   size_t bufsize = smbytes;
 
-  if (fbuff->bufsztype == 1) bufsize = smedbytes;
-  else if (fbuff->bufsztype == 2) bufsize = medbytes;
-  else if (fbuff->bufsztype == 3) bufsize = bigbytes;
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) bufsize = smedbytes;
+  else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) bufsize = medbytes;
+  else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) bufsize = bigbytes;
 
   if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
@@ -863,22 +864,22 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
 #ifdef AUTOTUNE
   cost = 1. / (1. + (double)fbuff->nseqreads);
-  if (fbuff->bufsztype == 0) {
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
     if (!tuneds && !tuners) tuners = weed_plant_new(31338);
     autotune_u64(tuners, 8, 512, 64, cost);
-  } else if (fbuff->bufsztype == 1) {
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
     if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
     autotune_u64(tunersm, smbytes * 4, 32768, 16, cost);
-  } else if (fbuff->bufsztype == 2) {
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
     if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
     autotune_u64(tunerm, smedbytes * 4, 65536, 32, cost);
-  } else if (fbuff->bufsztype == 3) {
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
     if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
     autotune_u64(tunerl, medbytes * 4, 512 * 1024, 256, cost);
   }
 #endif
 
-  fbuff->totreads++;
+  fbuff->totops++;
   fbuff->totbytes += count;
 
   // read bytes from fbuff
@@ -928,10 +929,10 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   /// buffer used up
 
   if (count <= bigbytes) {
-    fbuff->bufsztype = 0;
-    if (ocount >= (smbytes >> 2) || count > smbytes) fbuff->bufsztype = 1;
-    if (ocount >= (smedbytes >> 2) || count > smedbytes) fbuff->bufsztype = 2;
-    if (ocount >= (medbytes >> 1) || count > medbytes) fbuff->bufsztype = 3;
+    fbuff->bufsztype = BUFF_SIZE_READ_SMALL;
+    if (ocount >= (smbytes >> 2) || count > smbytes) fbuff->bufsztype = BUFF_SIZE_READ_SMALLMED;
+    if (ocount >= (smedbytes >> 2) || count > smedbytes) fbuff->bufsztype = BUFF_SIZE_READ_MED;
+    if (ocount >= (medbytes >> 1) || count > medbytes) fbuff->bufsztype = BUFF_SIZE_READ_LARGE;
     if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
 
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
@@ -992,14 +993,14 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
 rd_done:
 #ifdef AUTOTUNE
-  if (fbuff->bufsztype == 0) {
+  if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
     if (tuners) {
       smbytes = autotune_u64_end(&tuners, smbytes);
       if (!tuners) {
         tuneds = TRUE;
       }
     }
-  } else if (fbuff->bufsztype == 1) {
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
     if (tunersm) {
       smedbytes = autotune_u64_end(&tunersm, smedbytes);
       if (!tunersm) {
@@ -1007,7 +1008,7 @@ rd_done:
         smedbytes = get_near2pow(smedbytes);
       }
     }
-  } else if (fbuff->bufsztype == 2) {
+  } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
     if (tunerm) {
       medbytes = autotune_u64_end(&tunerm, medbytes);
       if (!tunerm) {
@@ -1102,7 +1103,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   lives_file_buffer_t *fbuff;
   ssize_t retval = 0, res;
   size_t space_left;
-  int bufsztype = 0;
+  int bufsztype = BUFF_SIZE_WRITE_SMALL;
   ssize_t buffsize;
 
   if ((fbuff = find_in_file_buffers(fd)) == NULL) {
@@ -1117,14 +1118,19 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 
   if (count > BUFFER_FILL_BYTES_LARGE) return lives_write_buffered_direct(fbuff, buf, count, allow_fail);
 
+  fbuff->totops++;
+  fbuff->totbytes += count;
+
   if (count >= BUFFER_FILL_BYTES_BIGMED >> 1)
-    bufsztype = 4;
+    bufsztype = BUFF_SIZE_WRITE_LARGE;
   else if (count >= BUFFER_FILL_BYTES_MED >> 1)
-    bufsztype = 3;
-  else if (count >= BUFFER_FILL_BYTES_SMALLMED >> 2)
-    bufsztype = 2;
-  else if (count >= BUFFER_FILL_BYTES_SMALL >> 2)
-    bufsztype = 1;
+    bufsztype = BUFF_SIZE_WRITE_BIGMED;
+  else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALLMED)
+    bufsztype = BUFF_SIZE_WRITE_MED;
+  else if (fbuff->totbytes >= BUFFER_FILL_BYTES_SMALL)
+    bufsztype = BUFF_SIZE_WRITE_SMALLMED;
+
+  if (bufsztype < fbuff->bufsztype) bufsztype = fbuff->bufsztype;
 
   fbuff->allow_fail = allow_fail;
 
@@ -1132,13 +1138,13 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
   while (count) {
     if (fbuff->buffer == NULL) fbuff->bufsztype = bufsztype;
 
-    if (fbuff->bufsztype == 0)
+    if (fbuff->bufsztype == BUFF_SIZE_WRITE_SMALL)
       buffsize = BUFFER_FILL_BYTES_SMALL;
-    else if (fbuff->bufsztype == 1)
+    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_SMALLMED)
       buffsize = BUFFER_FILL_BYTES_SMALLMED;
-    else if (fbuff->bufsztype == 2)
+    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_MED)
       buffsize = BUFFER_FILL_BYTES_MED;
-    else if (fbuff->bufsztype == 3)
+    else if (fbuff->bufsztype == BUFF_SIZE_WRITE_BIGMED)
       buffsize = BUFFER_FILL_BYTES_BIGMED;
     else
       buffsize = BUFFER_FILL_BYTES_LARGE;
@@ -1155,18 +1161,15 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
       lseek(fbuff->fd, fbuff->offset, SEEK_SET);
 #endif
     }
+
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
     space_left = buffsize - fbuff->bytes;
-    if (space_left >= count) {
+    if (space_left > count) {
       lives_memcpy(fbuff->ptr, buf, count);
       retval += count;
       fbuff->ptr += count;
       fbuff->bytes += count;
       count = 0;
-      if (fbuff->bytes == buffsize) {
-        res = file_buffer_flush(fbuff);
-        if (res < buffsize) return (res < 0 ? res : retval);
-      }
     } else {
       lives_memcpy(fbuff->ptr, buf, space_left);
       fbuff->bytes = buffsize;
@@ -4091,7 +4094,7 @@ boolean check_dir_access(const char *dir) {
   if (!lives_file_test(dir, LIVES_FILE_TEST_IS_DIR)) return FALSE;
 
   testfile = lives_build_filename(dir, "livestst-XXXXXX", NULL);
-  fp = mkstemp(testfile);
+  fp = g_mkstemp(testfile);
   if (fp == -1) {
     lives_free(testfile);
     if (!exists) {
@@ -5316,6 +5319,7 @@ boolean lives_make_writeable_dir(const char *newdir) {
 LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
   if ((mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
+  if (mainw->multitrack != NULL) return LIVES_INTERP_FAST;
   if (quality == PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;

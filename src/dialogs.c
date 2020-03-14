@@ -1231,6 +1231,7 @@ int process_one(boolean visible) {
   ticks_t real_ticks;
   lives_time_source_t time_source;
   static frames_t last_req_frame = 0;
+  static int last_pwidth = 0, last_pheight = 0;
   frames_t requested_frame = 0;
   boolean show_frame = FALSE;
   lives_clip_t *sfile = cfile;
@@ -1404,14 +1405,13 @@ int process_one(boolean visible) {
 
   // free playback
 
-  //#define SHOW_CACHE_PREDICTIONS
+
+#define ENABLE_PRECACHE
+#define SHOW_CACHE_PREDICTIONS
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
 #define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 2 // we should retain cdata->jump_limit from the initial file open
-
-  //#define DROPFRAME_TRIGGER 1000000
-  //#define JUMPFRAME_TRIGGER 1000000
 
   if (LIVES_IS_PLAYING) sfile = mainw->files[mainw->playing_file];
 
@@ -1534,6 +1534,7 @@ int process_one(boolean visible) {
           if (dropped > 0) update_effort(dropped, TRUE);
           update_effort(spare_cycles + 1, FALSE);
 
+#ifdef ENABLE_PRECACHE
           if (getahead > -1) {
             if ((sfile->pb_fps > 0. && sfile->frameno >= getahead) || (sfile->pb_fps < 0. && sfile->frameno <= getahead)) {
               getahead = -1;
@@ -1571,9 +1572,12 @@ int process_one(boolean visible) {
                      || dropped > DROPFRAME_TRIGGER)) {
                   getahead = test_getahead;
 		// *INDENT-OFF*
-		}}}}}
+		}}}}
+#endif
+	}
 	// *INDENT-ON*
 
+#ifdef ENABLE_PRECACHE
         if (mainw->pred_clip == -1) {
           /// failed load, just reset
           mainw->frame_layer_preload = NULL;
@@ -1594,7 +1598,7 @@ int process_one(boolean visible) {
                   pframe < sfile->frameno && pframe >= sfile->frameno - dropped) ||
                  (sfile->pb_fps < 0. && pframe < sfile->last_frameno &&
                   pframe > sfile->frameno && pframe <= sfile->frameno + dropped))
-                && (mainw->frame_layer_preload_final || is_layer_ready(mainw->frame_layer_preload)))
+                && is_layer_ready(mainw->frame_layer_preload))
               sfile->frameno = pframe;
             if (mainw->pred_frame == sfile->frameno || getahead > -1) cache_hits++;
             else {
@@ -1609,7 +1613,9 @@ int process_one(boolean visible) {
 
         if (sfile->clip_type == CLIP_TYPE_FILE && is_virtual_frame(mainw->playing_file, sfile->frameno))
           sfile->last_vframe_played = sfile->frameno;
+#endif
       }
+
 
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
@@ -1626,6 +1632,12 @@ int process_one(boolean visible) {
             check_layer_ready(mainw->frame_layer_preload);
           mainw->record_frame = requested_frame;
         }
+        if (mainw->pwidth != last_pwidth || mainw->pheight != last_pheight) {
+          mainw->pred_frame = 0;
+          cleanup_preload = TRUE;
+        }
+        last_pwidth = mainw->pwidth;
+        last_pheight = mainw->pheight;
         load_frame_image(sfile->frameno);
         mainw->actual_frame = sfile->frameno;
         if (prefs->show_dev_opts) mainw->fps_mini_measure++;
@@ -1702,6 +1714,7 @@ int process_one(boolean visible) {
     } else spare_cycles++;
   }
 
+#ifdef ENABLE_PRECACHE
   if (cleanup_preload) {
     if (mainw->frame_layer_preload) {
       if (getahead > -1 || is_layer_ready(mainw->frame_layer_preload)) {
@@ -1715,6 +1728,7 @@ int process_one(boolean visible) {
       }
     }
   }
+#endif
 
   // paused
   if (LIVES_UNLIKELY(sfile->play_paused)) {
@@ -1724,8 +1738,8 @@ int process_one(boolean visible) {
 #ifdef SHOW_CACHE_PREDICTIONS
     //g_print("PRELOADING (%d %d %lu):", sfile->frameno, dropped, spare_cycles);
 #endif
+#ifdef ENABLE_PRECACHE
     if (!mainw->frame_layer_preload) {
-      mainw->frame_layer_preload_final = FALSE;
       if (!mainw->preview) {
         mainw->pred_clip = mainw->playing_file;
         if (getahead > -1) mainw->pred_frame = getahead;
@@ -1762,6 +1776,7 @@ int process_one(boolean visible) {
 	  }}}}
 #ifdef SHOW_CACHE_PREDICTIONS
     //g_print("frame %ld already in cache\n", mainw->pred_frame);
+#endif
 #endif
   }
   // *INDENT-ON*
@@ -2166,6 +2181,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   }
 
   reset_effort();
+  if (mainw->multitrack && !mainw->multitrack->is_rendering) mainw->effort = EFFORT_RANGE_MAX;
   getahead = -1;
   bungle_frames = -1;
   recalc_bungle_frames = FALSE;

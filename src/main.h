@@ -839,6 +839,7 @@ typedef struct {
   boolean has_pulse_audio;
   boolean has_xwininfo;
   boolean has_gdb;
+  boolean has_gzip;
   boolean has_gconftool_2;
   boolean has_xdg_screensaver;
   boolean has_wmctrl;
@@ -1341,6 +1342,17 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
 #define BUFFER_FILL_BYTES_BIGMED 16386  /// 2049 - 8192 bytes
 #define BUFFER_FILL_BYTES_LARGE 65536
 
+#define BUFF_SIZE_READ_SMALL 0
+#define BUFF_SIZE_READ_SMALLMED 1
+#define BUFF_SIZE_READ_MED 2
+#define BUFF_SIZE_READ_LARGE 3
+
+#define BUFF_SIZE_WRITE_SMALL 0
+#define BUFF_SIZE_WRITE_SMALLMED 1
+#define BUFF_SIZE_WRITE_MED 2
+#define BUFF_SIZE_WRITE_BIGMED 3
+#define BUFF_SIZE_WRITE_LARGE 4
+
 typedef struct {
   ssize_t bytes;  /// buffer size for write, bytes left to read in case of read
   uint8_t *ptr;   /// read point in buffer
@@ -1353,7 +1365,7 @@ typedef struct {
   boolean reversed;
   boolean slurping;
   int nseqreads;
-  int totreads;
+  int totops;
   int64_t totbytes;
   boolean allow_fail;
   volatile boolean invalid;

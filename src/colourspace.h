@@ -88,9 +88,10 @@ typedef struct {
 typedef struct {
   void *src;
   void *srcp[4];
-  int hsize;
-  int vsize;
-  int psize;
+  size_t hsize;
+  size_t vsize;
+  size_t psize;
+  size_t xoffset;
   int irowstrides[4];
   int orowstrides[4];
   void *dest;
@@ -167,6 +168,7 @@ void weed_layer_pixel_data_free(weed_layer_t *);
 void alpha_unpremult(weed_layer_t *, boolean un);
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
+boolean gamma_convert_sub_layer(int gamma_type, weed_layer_t *, int x, int y, int width, int height);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);

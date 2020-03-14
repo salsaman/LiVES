@@ -7810,14 +7810,17 @@ static void switch_yuv_clamping_and_subspace(weed_layer_t *layer, int oclamping,
    psize is sizeof(bpix), width, height and rowstride are the dimensions of the target plane
 */
 LIVES_INLINE void fill_plane(uint8_t *ptr, int psize, int width, int height, int rowstride, unsigned char *bpix) {
-  int i, j;
-  rowstride -= width * psize;
-  for (i = 0; i < height; i++) {
-    for (j = 0; j < width; j++) {
-      lives_memcpy(ptr, bpix, psize);
-      ptr += psize;
-    }
+  register int i, j;
+  uint8_t *ptr2 = ptr;
+  for (j = width; j > 0; j--) {
+    lives_memcpy(ptr2, bpix, psize);
+    ptr2 += psize;
+  }
+  ptr2 += rowstride - width * psize;
+  for (i = height - 1; i > 0; i--) {
+    lives_memcpy(ptr2, ptr, rowstride);
     ptr += rowstride;
+    ptr2 += rowstride;
   }
 }
 
@@ -7900,6 +7903,27 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
   }
 
   switch (palette) {
+  case WEED_PALETTE_RGBA32:
+  case WEED_PALETTE_BGRA32:
+  case WEED_PALETTE_ARGB32:
+    rowstride = width * 4;
+    if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
+    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
+    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
+    if (pixel_data == NULL) return FALSE;
+    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
+    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
+    if (black_fill) {
+      if (palette == WEED_PALETTE_ARGB32) {
+        black[3] = black[0];
+        black[0] = 255;
+      }
+      fill_plane(pixel_data, 4, width, height, rowstride, black);
+    }
+    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
+    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
+    break;
+
   case WEED_PALETTE_RGB24:
   case WEED_PALETTE_BGR24:
     rowstride = width * 3;
@@ -7947,27 +7971,6 @@ boolean create_empty_pixel_data(weed_layer_t *layer, boolean black_fill, boolean
       yuv_black[2] = yuv_black[0];
       black[3] = yuv_black[1];
       fill_plane(pixel_data, 4, width, height, rowstride, yuv_black);
-    }
-    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
-    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
-    break;
-
-  case WEED_PALETTE_RGBA32:
-  case WEED_PALETTE_BGRA32:
-  case WEED_PALETTE_ARGB32:
-    rowstride = width * 4;
-    if (!compact) rowstride = ALIGN_CEIL(rowstride, rowstride_alignment);
-    framesize = ALIGN_CEIL(rowstride * height, ALIGN_SIZE) + EXTRA_BYTES;
-    pixel_data = (uint8_t *)lives_calloc(framesize >> SHIFTVAL, ALIGN_SIZE);
-    if (pixel_data == NULL) return FALSE;
-    weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
-    weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
-    if (black_fill) {
-      if (palette == WEED_PALETTE_ARGB32) {
-        black[3] = black[0];
-        black[0] = 255;
-      }
-      fill_plane(pixel_data, 4, width, height, rowstride, black);
     }
     weed_set_int_value(layer, WEED_LEAF_ROWSTRIDES, rowstride);
     weed_set_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, pixel_data);
@@ -8843,7 +8846,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
-  //#define DEBUG_PCONV
+  //  #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -10667,13 +10670,13 @@ static void *gamma_convert_layer_thread(void *data) {
   uint8_t *end = pixels + ccparams->vsize * rowstride;
   int psize = ccparams->psize, px = 3;
   int widthx = ccparams->hsize * psize;
-  int start = 0;
+  int start = ccparams->xoffset;
   uint8_t *gamma_lut = ccparams->lut;
   if (!gamma_lut) return NULL;
 
   if (psize < px) px = psize;
 
-  if (ccparams->alpha_first) start = 1;
+  if (ccparams->alpha_first) start += 1;
   for (; pixels < end; pixels += rowstride) {
     for (int j = start; j < widthx; j += psize) {
       for (int k = 0; k < px; k++) pixels[j + k] = gamma_lut[pixels[j + k]];
@@ -10687,7 +10690,7 @@ static void *gamma_convert_layer_thread(void *data) {
    @brief alter the transfer function of a Weed layer, from current value to gamma_type
 
 */
-boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
+boolean gamma_convert_sub_layer(int gamma_type, weed_layer_t *layer, int x, int y, int width, int height) {
   if (!prefs->apply_gamma) return TRUE;
   else {
     // convert layer from current gamma to target
@@ -10699,17 +10702,17 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
       else {
         lives_thread_t threads[prefs->nfx_threads];
         int nfx_threads = prefs->nfx_threads;
-        int width = weed_layer_get_width(layer);
         uint8_t *pixels = weed_layer_get_pixel_data_packed(layer);
         uint8_t *gamma_lut;
-        int height = weed_layer_get_height(layer);
         int orowstride = weed_layer_get_rowstride(layer);
         int nthreads = 1;
         int dheight;
         int psize = pixel_size(pal);
         lives_cc_params *ccparams = (lives_cc_params *)lives_malloc(nfx_threads * sizeof(lives_cc_params));
         int xdheight = CEIL((double)height / (double)nfx_threads, 4);
-        uint8_t *end = pixels + height * orowstride;
+        uint8_t *end = pixels + (y + height) * orowstride;
+
+        pixels += y * orowstride;
 
         gamma_lut = create_gamma_lut(lgamma_type, gamma_type);
 
@@ -10719,6 +10722,7 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
           if ((pixels + dheight * i * orowstride) < end) {
             ccparams[i].src = pixels + dheight * i * orowstride;
             ccparams[i].hsize = width;
+            ccparams[i].xoffset = x * psize;
 
             if (dheight * (i + 1) > (height - 4)) {
               dheight = height - (dheight * i);
@@ -10747,6 +10751,12 @@ boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
   // *INDENT-ON*
 }
 
+
+LIVES_GLOBAL_INLINE boolean gamma_convert_layer(int gamma_type, weed_layer_t *layer) {
+  int width = weed_layer_get_width(layer);
+  int height = weed_layer_get_height(layer);
+  return gamma_convert_sub_layer(gamma_type, layer, 0, 0, width, height);
+}
 
 
 LiVESPixbuf *layer_to_pixbuf(weed_layer_t *layer, boolean realpalette, boolean fordisplay) {
@@ -11060,7 +11070,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //#define DEBUG_RESIZE
+  //  #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,

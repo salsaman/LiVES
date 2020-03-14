@@ -974,6 +974,21 @@ boolean mt_load_recovery_layout(lives_mt *mt) {
     if (lives_file_test(aload_file, LIVES_FILE_TEST_EXISTS)) {
       lives_mv(aload_file, uldir);
     }
+    if (!capable->has_gzip) capable->has_gzip = has_executable(EXEC_GZIP);
+    if (capable->has_gzip) {
+      char *cwd = lives_get_current_dir();
+      mainw->chdir_failed = FALSE;
+      lives_chdir(uldir, TRUE);
+      if (mainw->chdir_failed) mainw->chdir_failed = FALSE;
+      else {
+        char *com = lives_strdup_printf("%s * 2>%s", EXEC_GZIP, LIVES_DEVNULL);
+        lives_system(com, TRUE);
+        lives_free(com);
+        lives_chdir(cwd, FALSE);
+      }
+      lives_free(cwd);
+    }
+
     if (mt != NULL) {
       mt->fps = prefs->mt_def_fps;
     }
@@ -9219,7 +9234,6 @@ boolean multitrack_delete(lives_mt * mt, boolean save_layout) {
     } else mainw->recording_recovered = FALSE;
   } else {
     if (mt->event_list != NULL) {
-
       save_event_list_inner(mt, -1, mt->event_list, NULL); // set width, height, fps etc.
       add_markers(mt, mt->event_list, FALSE);
 
@@ -20023,7 +20037,6 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
     retval = TRUE;
 
     fd = lives_create_buffered(esave_file, DEF_FILE_PERMS);
-
     if (fd >= 0) {
       do_threaded_dialog(_("Saving layout"), FALSE);
 
@@ -21612,6 +21625,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
     lives_free(eload_name);
     return NULL;
   }
+  lives_buffered_rdonly_slurp(fd, 0);
 
   if (mt != NULL) {
     event_list_free_undos(mt);
@@ -21629,14 +21643,13 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
     mt_desensitise(mt);
   }
 
-  mainw->read_failed = FALSE;
-
   do {
     retval = 0;
     if ((event_list = load_event_list_inner(mt, fd, mt != NULL, &num_events, NULL, NULL)) == NULL) {
       lives_close_buffered(fd);
 
-      if (mainw->read_failed) {
+      if (mainw->read_failed == fd + 1) {
+        mainw->read_failed = 0;
         if (mt != NULL) retval = do_read_failed_error_s_with_retry(eload_name, NULL, NULL);
         mainw->read_failed = FALSE;
       }
@@ -22017,6 +22030,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
       do {
         retval2 = 0;
         if ((fd = lives_open_buffered_rdonly((char *)map->data)) > -1) {
+          lives_buffered_rdonly_slurp(fd, 0);
           if ((event_list = load_event_list_inner(NULL, fd, FALSE, NULL, NULL, NULL)) != NULL) {
             lives_close_buffered(fd);
             // adjust the value of WEED_LEAF_NEEDS_SET to new_set_name

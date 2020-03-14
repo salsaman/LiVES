@@ -527,7 +527,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
-
+  int gamma = weed_layer_get_gamma(layer);
   // do cairo and pango things
 
   cr = layer_to_lives_painter(layer);
@@ -540,6 +540,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   //lives_painter_paint(cr);
 
   lives_painter_to_layer(cr, layer);
+  weed_layer_set_gamma(layer, gamma);
 
   if (layout) lives_widget_object_unref(layout);
 

@@ -2074,6 +2074,8 @@ void play_file(void) {
 
   mainw->rec_aclip = -1;
 
+  init_conversions(LIVES_INTENTION_PLAY);
+
   if (mainw->pre_src_file == -2) mainw->pre_src_file = mainw->current_file;
   mainw->pre_src_audio_file = mainw->current_file;
 
@@ -5104,7 +5106,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     lives_mkdir_with_parents(dirname, capable->umask);
     lives_free(dirname);
 
-    fd = lives_creat_buffered(oname, S_IRUSR | S_IWUSR);
+    fd = lives_create_buffered(oname, S_IRUSR | S_IWUSR);
     lives_free(oname);
 
     if (fd < 0) return scrapfile->frames;

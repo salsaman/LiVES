@@ -3581,6 +3581,9 @@ lives_render_error_t render_events(boolean reset) {
     atime = (double)(atc + rec_delta_tc) / TICKS_PER_SECOND_DBL;
     out_frame = calc_frame_from_time4(mainw->current_file, atime);
 
+    /// set the highest quality palette conversions
+    init_conversions(LIVES_INTENTION_RENDER);
+
     /// set the 'effort' to as low as possible; if using adaptive quality this ensures we render at the highest settings
     mainw->effort = -EFFORT_RANGE_MAX;
 
@@ -4748,7 +4751,7 @@ boolean backup_recording(char **esave_file, char **asave_file) {
   *esave_file = lives_strdup_printf("%s/recorded-%s.%d.%d.%d.%s", prefs->workdir, LAYOUT_FILENAME, lives_getuid(), lives_getgid(),
                                     capable->mainpid, LIVES_FILE_EXT_LAYOUT);
   mainw->write_failed = FALSE;
-  fd = lives_creat_buffered(*esave_file, DEF_FILE_PERMS);
+  fd = lives_create_buffered(*esave_file, DEF_FILE_PERMS);
   if (fd >= 0) {
     save_event_list_inner(NULL, fd, mainw->event_list, NULL);
     lives_close_buffered(fd);
@@ -4765,7 +4768,7 @@ boolean backup_recording(char **esave_file, char **asave_file) {
                                     lives_getgid(),
                                     capable->mainpid);
 
-  fd = lives_creat_buffered(*asave_file, DEF_FILE_PERMS);
+  fd = lives_create_buffered(*asave_file, DEF_FILE_PERMS);
   if (fd >= 0) {
     while (!mainw->write_failed && clist != NULL) {
       i = LIVES_POINTER_TO_INT(clist->data);

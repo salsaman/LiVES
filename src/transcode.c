@@ -26,16 +26,6 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
   void **pd_array;
   boolean error = FALSE;
 
-  // convert to the plugin's palette
-  convert_layer_palette(layer, vpp->palette, vpp->YUV_clamping);
-
-  if (weed_palette_is_rgb(mainw->vpp->palette)) {
-    if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
-      gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
-    else
-      gamma_convert_layer(cfile->gamma_type, layer);
-  }
-
   // vid plugin expects compacted rowstrides (i.e. no padding/alignment after pixel row)
   compact_rowstrides(layer);
 
@@ -50,6 +40,7 @@ boolean send_layer(weed_layer_t *layer, _vid_playback_plugin *vpp, int64_t timec
 
     lives_free(pd_array);
   }
+  weed_layer_free(layer);
   return error;
 }
 
@@ -58,7 +49,7 @@ boolean transcode(int start, int end) {
   _vid_playback_plugin *vpp, *ovpp;
   _vppaw *vppa;
   weed_plant_t *frame_layer = NULL;
-
+  weed_plant_t *info = NULL;
   lives_rfx_t *rfx = NULL;
 
   void *abuff = NULL;
@@ -93,6 +84,7 @@ boolean transcode(int start, int end) {
   int nsamps;
   int interp = LIVES_INTERP_FAST; /// TODO - get quality setting
   int width, height, pwidth, pheight;
+  int tgamma = WEED_GAMMA_SRGB;
 
   register int i = 0, j;
 
@@ -349,13 +341,39 @@ boolean transcode(int start, int end) {
       if (!resize_layer(frame_layer, pwidth, pheight, interp, vpp->palette, vpp->YUV_clamping)) goto tr_err;
     }
 
-    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace,
-                               WEED_GAMMA_SRGB);
-    gamma_convert_layer(WEED_GAMMA_SRGB, frame_layer);
-    error = send_layer(frame_layer, vpp, currticks);
+    if (weed_palette_is_rgb(mainw->vpp->palette)) {
+      if (mainw->vpp->capabilities & VPP_LINEAR_GAMMA)
+        tgamma = WEED_GAMMA_LINEAR;
+    } else {
+      if (vpp->YUV_subspace == WEED_YUV_SUBSPACE_BT709)
+        tgamma = WEED_GAMMA_BT709;
+    }
 
+    convert_layer_palette_full(frame_layer, vpp->palette, vpp->YUV_clamping, vpp->YUV_sampling, vpp->YUV_subspace, tgamma);
+
+    gamma_convert_layer(tgamma, frame_layer);
+
+    if (!info) info = weed_plant_new(WEED_PLANT_THREAD_INFO);
+    else {
+      lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, "return_value"));
+      error = weed_get_boolean_value(info, "error_return", NULL);
+    }
+    if (!error) {
+      weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
+      weed_layer_copy(copy_frame_layer, frame_layer);
+      weed_layer_nullify_pixel_data(frame_layer);
+      weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, send_layer);
+      weed_set_plantptr_value(info, WEED_LEAF_THREAD_PARAM0, copy_frame_layer);
+      weed_set_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, vpp);
+      weed_set_int64_value(info, WEED_LEAF_THREAD_PARAM2, currticks);
+      weed_leaf_set(info, "return_value", WEED_SEED_BOOLEAN, 0, NULL);
+      run_as_thread(info);
+    }
+
+    //error = send_layer(frame_layer, vpp, currticks);
     // free pixel_data, but keep same layer around
-    weed_layer_pixel_data_free(frame_layer);
+    //weed_layer_pixel_data_free(frame_layer);
+    // nullify pixel>data, thread will free
 
     if (error) goto tr_err;
 
@@ -373,6 +391,13 @@ tr_err:
   mainw->cancel_type = CANCEL_KILL;
 
   mainw->fx1_bool = fx1_bool;
+
+  if (info) {
+    // do b4 exit_screen
+    lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, "return_value"));
+    error = weed_get_boolean_value(info, "return_value", NULL);
+    weed_plant_free(info);
+  }
 
   // flush streams, write headers, plugin cleanup
   if (vpp != NULL && vpp->exit_screen != NULL) {

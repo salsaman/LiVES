@@ -33,7 +33,7 @@ static size_t prb = 0;
 
 static boolean seek_err;
 
-static int lock_count = 0;
+static volatile int lock_count = 0;
 
 ///////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ LIVES_GLOBAL_INLINE void pa_mloop_lock(void) {
 
 LIVES_GLOBAL_INLINE void pa_mloop_unlock(void) {
   if (!pa_threaded_mainloop_in_thread(pa_mloop)) {
-    if (lock_count) {
+    if (lock_count > 0) {
       --lock_count;
       pa_threaded_mainloop_unlock(pa_mloop);
     }
@@ -415,8 +415,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       if (mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) {
         ticks_t tc = 0, tc2 = 0;
         xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
-
-        if (msg->tc != 0 && LIVES_IS_PLAYING) {
+        if (LIVES_IS_PLAYING) {
           tc2 = lives_get_current_ticks();
         }
 
@@ -425,9 +424,12 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
         /* 						      / afile->fps + (double)(mainw->currticks - mainw->startticks) */
         /* 							/ TICKS_PER_SECOND_DBL) * (double)afile->arate * 4.)); */
 
-        if (msg->tc != 0 && LIVES_IS_PLAYING) {
+        if (LIVES_IS_PLAYING) {
           tc = lives_get_current_ticks();
           tc2 = tc - tc2;
+          if (msg->tc == 0) {
+            tc = 0;
+          }
           //g_print("xseek vals is %ld %ld %ld %d\n", xseek, mainw->currticks, msg->tc, pulsed->in_arate);
           xseek += ((double)(tc - msg->tc + tc2 * .5) / TICKS_PER_SECOND_DBL)
                    * pulsed->tscale * pulsed->in_arate * afile->achans * afile->asampsize / 8;
@@ -474,7 +476,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     uint64_t inputFramesAvailable = 0;
     uint64_t numFramesToWrite = 0;
     double in_framesd = 9.;
-
 #ifdef DEBUG_PULSE
     int64_t in_frames = 0;
 #endif
@@ -482,6 +483,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     /** the ratio of samples in : samples out - may be negative. This is NOT the same as the velocity as it incluides a resampling factor */
     float shrink_factor = 1.f;
     int swap_sign;
+    int qnt = 1;
+    if (IS_VALID_CLIP(pulsed->playing_file)) qnt = afile->achans * (afile->asampsize >> 3);
 
 #ifdef DEBUG_PULSE
     lives_printerr("playing... pulseFramesAvailable = %ld\n", pulseFramesAvailable);
@@ -497,7 +500,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             || pulsed->is_paused || (mainw->pulsed_read != NULL && mainw->pulsed_read->playing_file != -1))) {
 
       if (pulsed->seek_pos < 0 && IS_VALID_CLIP(pulsed->playing_file) && pulsed->in_arate > 0) {
-        int qnt = afile->achans * (afile->asampsize >> 3);
         pulsed->seek_pos += (double)(pulsed->in_arate / pulsed->out_arate) * nsamples * qnt;
         pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
         if (pulsed->seek_pos > 0) {
@@ -507,7 +509,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       }
 
       if (IS_VALID_CLIP(pulsed->playing_file) && !mainw->multitrack && pulsed->seek_pos > afile->afilesize && pulsed->in_arate < 0) {
-        int qnt = afile->achans * (afile->asampsize >> 3);
         pulsed->seek_pos += (pulsed->in_arate / pulsed->out_arate) * nsamples * pulsed->in_achans * pulsed->in_asamps / 8;
         pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
         if (pulsed->seek_pos < afile->afilesize) {
@@ -610,7 +611,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               lives_buffered_rdonly_set_reversed(pulsed->fd, FALSE);
               if (pad_bytes < 0) pad_bytes = 0;
               else {
-                int qnt = afile->achans * (afile->asampsize >> 3);
                 pad_bytes *= shrink_factor;
                 pad_bytes = ALIGN_CEIL64(pad_bytes - qnt, qnt);
               }
@@ -631,7 +631,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                 in_bytes = 0;
                 pulsed->in_use = FALSE;
               } else {
-                int qnt = afile->achans * (afile->asampsize >> 3);
                 if (pulsed->loop == AUDIO_LOOP_PINGPONG && (afile->pb_fps < 0. || clip_can_reverse(pulsed->playing_file))) {
                   pulsed->in_arate = -pulsed->in_arate;
                   afile->adirection = !afile->adirection;
@@ -652,19 +651,21 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
                       lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
                       pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
                                                 + pulsed->aPlayPtr->size, in_bytes - pulsed->aPlayPtr->size, TRUE);
-                      pulsed->seek_pos = lives_buffered_offset(pulsed->fd);
+                      pulsed->real_seek_pos = pulsed->seek_pos = lives_buffered_offset(pulsed->fd);
                     }
                   } while (pulsed->aPlayPtr->size < in_bytes);
                 }
               }
-              if (mainw->record && !mainw->record_paused)
+              pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
+              pulsed->real_seek_pos = pulsed->seek_pos;
+              if (mainw->record && !mainw->record_paused) {
                 pulse_set_rec_avals(pulsed);
+              }
             }
           }
 
           else if (pulsed->playing_file != mainw->ascrap_file && shrink_factor  < 0.f) {
             /// reversed playback
-            int qnt = afile->achans * (afile->asampsize >> 3);
             off_t seek_start = (mainw->playing_sel ?
                                 (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
                                 * afile->achans * (afile->asampsize / 8) : 0);
@@ -730,7 +731,6 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
               } else {
                 lives_buffered_rdonly_set_reversed(pulsed->fd, TRUE);
                 if (pulsed->aPlayPtr->size < in_bytes) {
-                  int qnt = afile->achans * (afile->asampsize >> 3);
                   pulsed->real_seek_pos = pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos, qnt);
                   lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
                   pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data)
@@ -1773,18 +1773,25 @@ void pulse_driver_uncork(pulse_driver_t *pdriver) {
 
 void pulse_driver_cork(pulse_driver_t *pdriver) {
   pa_operation *paop;
+  ticks_t timeout;
+  lives_alarm_t alarm_handle;
 
   if (pdriver->is_corked) {
     //g_print("IS CORKED\n");
     return;
   }
 
-  pa_mloop_lock();
-  paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
-  while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING)
-    pa_threaded_mainloop_wait(pa_mloop);
-  pa_operation_unref(paop);
-  pa_mloop_unlock();
+  do {
+    alarm_handle = lives_alarm_set(LIVES_SHORTEST_TIMEOUT);
+    pa_mloop_lock();
+    paop = pa_stream_cork(pdriver->pstream, 1, corked_cb, pdriver);
+    while (pa_operation_get_state(paop) == PA_OPERATION_RUNNING && (timeout = lives_alarm_check(alarm_handle)) > 0) {
+      pa_threaded_mainloop_wait(pa_mloop);
+    }
+    pa_operation_unref(paop);
+    pa_mloop_unlock();
+    lives_alarm_clear(alarm_handle);
+  } while (!timeout);
 
   pa_mloop_lock();
   paop = pa_stream_flush(pdriver->pstream, NULL, NULL);
@@ -1902,13 +1909,14 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
             tscaleu = tscalex = 0.;
           }
         }
+        // res: 0
         pulsed->extrausec -= (usec - last_usec);
-        if (pulsed->extrausec < 0) pulsed->extrausec = 0;
+        //if (pulsed->extrausec < 0) pulsed->extrausec = 0;
       } else if (usec > 0) pulsed->extrausec = 0;
       if (usec + pulsed->extrausec == last_usec + last_extra)
         paclock += (usec - last_usec) / pulsed->tscale;
       else
-        paclock = usec + pulsed->extrausec;// * pulsed->tscale;
+        paclock = usec + pulsed->extrausec;
     }
     //g_print("tscxx is %f, ret is %ld %ld and %ld ext is %ld\n", pulsed->tscale, paclock, usec, last_usec, pulsed->extrausec);
     //retusec = pulsed->usec_start + (double)(usec - pulsed->usec_start) / pulsed->tscale;

@@ -9892,6 +9892,8 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
         mainw->files[current_file]->next_event = cfile->next_event;
         cfile->next_event = NULL;
         mainw->current_file = current_file;
+        init_conversions(LIVES_INTENTION_RENDER);
+        mainw->effort = -EFFORT_RANGE_MAX;
       } else if (mainw->multitrack == NULL) {
         switch_to_file((mainw->current_file = 0), current_file);
       }
@@ -10717,7 +10719,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-#define STATS_TC (TICKS_PER_SECOND_DBL / 2.)
+#define STATS_TC (TICKS_PER_SECOND_DBL)
 static double inst_fps = 0.;
 
 double get_inst_fps(void) {

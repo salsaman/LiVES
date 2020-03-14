@@ -127,6 +127,8 @@ typedef struct {
 
 int32_t round_special(int32_t val);
 
+void init_conversions(int intent);
+
 /////////////////////////////////////// LAYERS ///////////////////////////////////////
 
 

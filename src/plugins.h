@@ -73,6 +73,7 @@ typedef struct {
 #define LIVES_INTENTION_PLAY               	1
 #define LIVES_INTENTION_STREAM          	2
 #define LIVES_INTENTION_TRANSCODE    	3
+#define LIVES_INTENTION_RENDER		    	4
 
   const char *(*get_init_rfx)(int intention);
 

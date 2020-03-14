@@ -9,14 +9,14 @@
 #ifndef HAS_LIVES_CVIRTUAL_H
 #define HAS_LIVES_CVIRTUAL_H
 
-void create_frame_index(int fileno, boolean init, int start_offset, int nframes);
+void create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes);
 boolean save_frame_index(int fileno);
-int load_frame_index(int fileno) WARN_UNUSED;
-boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, int maxframe);
+frames_t load_frame_index(int fileno) WARN_UNUSED;
+boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe);
 
-boolean virtual_to_images(int sfileno, int sframe, int eframe, boolean update_progress, LiVESPixbuf **pbr);
-void delete_frames_from_virtual(int sfileno, int start, int end);
-void insert_images_in_virtual(int sfileno, int where, int frames, int *frame_index, int start);
+boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean update_progress, LiVESPixbuf **pbr);
+void delete_frames_from_virtual(int sfileno, frames_t start, frames_t end);
+void insert_images_in_virtual(int sfileno, frames_t where, frames_t frames, frames_t *frame_index, frames_t start);
 void del_frame_index(lives_clip_t *);
 void reverse_frame_index(int sfileno);
 
@@ -25,19 +25,19 @@ boolean realize_all_frames(int clipno, const char *msg, boolean enough);
 /*
    @brief remove rendered (real) frames from region oldsframe -> oldframes, when they are virtual in current frame_index
 */
-void clean_images_from_virtual(lives_clip_t *, int oldsframe, int oldframes);
-int *frame_index_copy(int *findex, int nframes, int offset);
+void clean_images_from_virtual(lives_clip_t *, frames_t oldsframe, frames_t oldframes);
+int *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset);
 
-int first_virtual_frame(int fileno, int start, int end);
-boolean check_if_non_virtual(int fileno, int start, int end);
+frames_t first_virtual_frame(int fileno, frames_t start, frames_t end);
+boolean check_if_non_virtual(int fileno, frames_t start, frames_t end);
 
 void restore_frame_index_back(int sfileno);
 
-boolean is_virtual_frame(int sfileno, int frame);
+boolean is_virtual_frame(int sfileno, frames_t frame);
 
-int count_virtual_frames(int *findex, int start, int end);
+frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end);
 
-void insert_blank_frames(int sfileno, int nframes, int after, int palette);
+void insert_blank_frames(int sfileno, frames_t nframes, frames_t after, int palette);
 
 boolean pull_frame_idle(livespointer data); // decode frames in an idle func
 

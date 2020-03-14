@@ -84,7 +84,7 @@
 typedef int64_t ticks_t;
 
 typedef int frames_t; // nb. will chenge to int64_t at some future point
-typedef int frames64_t; // will become the new standard
+typedef int64_t frames64_t; // will become the new standard
 
 #define ENABLE_OSC2
 
@@ -1366,7 +1366,7 @@ lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);
 
 int lives_open_buffered_rdonly(const char *pathname);
 int lives_open_buffered_writer(const char *pathname, int mode, boolean append);
-int lives_creat_buffered(const char *pathname, int mode);
+int lives_create_buffered(const char *pathname, int mode);
 int lives_close_buffered(int fd);
 void lives_invalidate_all_file_buffers(void);
 off_t lives_lseek_buffered_writer(int fd, off_t offset);
@@ -1380,7 +1380,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);
 boolean lives_read_buffered_eof(int fd);
 lives_file_buffer_t *get_file_buffer(int fd);
-void lives_buffered_rdonly_slurp(int fd);
+void lives_buffered_rdonly_slurp(int fd, off_t skip);
 
 int lives_chdir(const char *path, boolean allow_fail);
 int lives_fputs(const char *s, FILE *stream);

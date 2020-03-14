@@ -746,10 +746,12 @@ typedef struct {
   boolean no_switch_dprint;
 
   /// actual frame being displayed
-  int actual_frame;
+  frames_t actual_frame;
 
   /// and the audio 'frame' for when we are looping
   double aframeno;
+
+  frames_t record_frame; /// frame number to insert in recording
 
   // ticks are measured in 1/TICKS_PER_SECOND_DBL of a second (by defalt a tick is 10 nano seconds)
 
@@ -1246,7 +1248,7 @@ typedef struct {
 
   int num_tracks;
   int *clip_index;
-  int64_t *frame_index;
+  frames64_t *frame_index;
 
   LiVESWidget *resize_menuitem;
 
@@ -1335,7 +1337,7 @@ typedef struct {
   double rec_end_time;
   int64_t rec_samples;
   double rec_fps;
-  int rec_vid_frames;
+  frames_t rec_vid_frames;
   int rec_arate;
   int rec_achans;
   int rec_asamps;
@@ -1350,7 +1352,7 @@ typedef struct {
   char *disabled_string;  ///< localised text saying "disabled !", for playback plugin name, etc.
   char *cl_string; ///< localised text saying "*The current layout*", for layout warnings
 
-  int opening_frames; ///< count of frames so far opened, updated after preview (currently)
+  frames_t opening_frames; ///< count of frames so far opened, updated after preview (currently)
 
   boolean show_procd; ///< override showing of "processing..." dialog
 

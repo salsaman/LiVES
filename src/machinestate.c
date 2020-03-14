@@ -402,10 +402,12 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   boolean haslock = FALSE;
   if (n == 0) return dest;
 
-  if (!tuned && !tuner) tuner = weed_plant_new(31337);
-  if (tuner) {
-    if (!pthread_mutex_trylock(&tuner_mutex)) {
-      haslock = TRUE;
+  if (!mainw->multitrack) {
+    if (!tuned && !tuner) tuner = weed_plant_new(31337);
+    if (tuner) {
+      if (!pthread_mutex_trylock(&tuner_mutex)) {
+        haslock = TRUE;
+      }
     }
   }
 
@@ -422,7 +424,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
     /// the value should simply be the one with the lowest time per byte
     /// obviously this is very simplistic since there are many other costs than simply the malloc time
     /// however, it is a simple matter to adjust the cost calculation
-    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 128, 1. / (double)n);
+    if (haslock) autotune_u64(tuner, -1024 * 1024, 1024 * 1024, 32, 1. / (double)n);
     orc_memcpy((uint8_t *)dest, (const uint8_t *)src, n);
 
     if (haslock) {
@@ -826,19 +828,19 @@ boolean check_dev_busy(char *devstr) {
 }
 
 
-uint64_t get_file_size(int fd) {
+size_t get_file_size(int fd) {
   // get the size of file fd
   struct stat filestat;
-  uint64_t fsize;
+  size_t fsize;
   lives_file_buffer_t *fbuff;
   fstat(fd, &filestat);
   fsize = (uint64_t)(filestat.st_size);
-  g_printerr("fssize for %d is %ld\n", fd, fsize);
+  //g_printerr("fssize for %d is %ld\n", fd, fsize);
   if ((fbuff = find_in_file_buffers(fd)) != NULL) {
     if (!fbuff->read) {
       /// because of padding bytes...
-      uint64_t f2size;
-      if ((f2size = (uint64_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
+      size_t f2size;
+      if ((f2size = (size_t)(fbuff->offset + fbuff->bytes)) > fsize) return f2size;
     }
   }
   return fsize;
@@ -1187,11 +1189,23 @@ void lives_threadpool_init(void) {
 
 #define GETARG(type, n) weed_get_##type##_value(info, "thrd_param" n, NULL)
 
+typedef boolean(*funcptr_bool_t)();
+
+
 void *_plant_thread_func(void *args) {
   weed_plant_t *info = (weed_plant_t *)args;
-  weed_funcptr_t func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
+  weed_funcptr_t func = NULL;
+  funcptr_bool_t funcb = NULL;
   uint64_t funcsig = 0;
-  int nargs;
+  int nargs, ret_type;
+
+  ret_type = weed_leaf_seed_type(info, "return_value");
+  switch (ret_type) {
+  case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  default:
+    func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  }
+
   for (nargs = 0; nargs < 16; nargs++) {
     char *lname = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, nargs);
     int st = weed_leaf_seed_type(info, lname);
@@ -1209,22 +1223,29 @@ void *_plant_thread_func(void *args) {
     }
   }
 
+
   switch (funcsig) {
   case 0: (*func)(); break;
   case 0x01: // int
-    (*func)(GETARG(int, "0"));
-    break;
+    (*func)(GETARG(int, "0")); break;
+  case 0x15: // int, int64
+    (*func)(GETARG(int, "0"), GETARG(int64, "1")); break;
   case 0xDD: // void *. void *
-    (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1"));
-    break;
+    (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1")); break;
   case 0xE3: // weed_plant_t *, boolean
-    (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1"));
-    break;
+    (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1")); break;
+  case 0xED5: // weed_plant_t *, void *, int64
+    if (ret_type == WEED_SEED_BOOLEAN) {
+      weed_set_boolean_value(info, "return_value", (*funcb)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")));
+      break;
+    }
+    (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
   default: break;
+    /// etc for all 8 ** 16 + 8 ** 15 + ... param combinations * (8 + 1) return types ~= 2.9 * 10 ** 15
   }
 
   if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL)) weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
-  else weed_plant_free(info);
+  else if (!ret_type) weed_plant_free(info);
   return NULL;
 }
 

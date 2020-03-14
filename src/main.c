@@ -130,7 +130,6 @@ static int initial_startup_phase = 0;
 static boolean needs_workdir = FALSE;
 static boolean user_configdir = FALSE;
 
-static int old_fd = -1;
 ////////////////////
 
 #ifdef GUI_GTK
@@ -1359,6 +1358,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->frame_layer_preload_final = FALSE;
 
   mainw->play_sequence = 0;
+
+  mainw->record_frame = -1;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -5399,11 +5400,9 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
 boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int tpalette, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
-  unsigned char ibuff[8];
 
-#ifdef PNG_BIO
-  size_t bsize = lives_read_buffered(fd, ibuff, 8, TRUE);
-#else
+#ifndef PNG_BIO
+  unsigned char ibuff[8];
   FILE *fp = fdopen(fd, "rb");
   size_t bsize = fread(ibuff, 1, 8, fp);
 #endif
@@ -5412,7 +5411,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
   unsigned char *ptr;
 
   boolean is16bit = FALSE;
-  boolean is_png = !png_sig_cmp(ibuff, 0, bsize);
+  boolean is_png = TRUE;
 
   int width, height;
   int color_type, bit_depth;
@@ -5454,6 +5453,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   if (setjmp(png_jmpbuf(png_ptr))) {
     // libpng will longjump to here on error
+    weed_set_int_value(layer, WEED_LEAF_PROGSCAN, 0);
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 #ifndef PNG_BIO
     fclose(fp);
@@ -5463,10 +5463,12 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
 #ifdef PNG_BIO
   png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
+  png_set_sig_bytes(png_ptr, 8);
 #else
   png_init_io(png_ptr, fp);
-#endif
   png_set_sig_bytes(png_ptr, bsize);
+#endif
+
 
   // read header info
   png_read_info(png_ptr, info_ptr);
@@ -5754,6 +5756,9 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
     int height, int tpalette, const char *img_ext) {
   LiVESPixbuf *pixbuf = NULL;
   LiVESError *gerror = NULL;
+  boolean ret = TRUE;
+  boolean is_png = FALSE;
+  int fd = -1;
 
 #ifndef NO_PROG_LOAD
 #ifdef GUI_GTK
@@ -5761,13 +5766,16 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 #endif
   uint8_t ibuff[IMG_BUFF_SIZE];
   size_t bsize;
-  int fd;
-#ifdef THRD_PNG_TEST
-  xfname = fname;
-#endif
+
+  if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
+
 #ifdef PNG_BIO
   fd = lives_open_buffered_rdonly(fname);
-  //lives_buffered_rdonly_slurp(fd);
+#ifndef VALGRIND_ON
+  if (is_png) lives_buffered_rdonly_slurp(fd, 8);
+  else
+    lives_buffered_rdonly_slurp(fd, 0);
+#endif
 #else
   fd = lives_open2(fname, O_RDONLY);
 #endif
@@ -5783,11 +5791,9 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) {
 #ifdef USE_LIBPNG
-    boolean ret;
     tpalette = weed_layer_get_palette(layer);
     ret = layer_from_png(fd, layer, width, height, tpalette, TRUE);
-    old_fd = fd;
-    return ret;
+    goto fndone;
 #endif
 
 #ifdef GUI_GTK
@@ -5809,15 +5815,15 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
     if ((bsize = lives_read_buffered(fd, ibuff, IMG_BUFF_SIZE, TRUE)) <= 0) break;
 #endif
     if (!gdk_pixbuf_loader_write(pbload, ibuff, bsize, &gerror)) {
-      old_fd = fd;
-      return FALSE;
+      ret = FALSE;
+      goto fndone;
     }
   }
 
-  old_fd = fd;
-
-  if (!gdk_pixbuf_loader_close(pbload, &gerror)) return FALSE;
-
+  if (!gdk_pixbuf_loader_close(pbload, &gerror)) {
+    ret = FALSE;
+    goto fndone;
+  }
   pixbuf = gdk_pixbuf_loader_get_pixbuf(pbload);
   lives_widget_object_ref(pixbuf);
   if (pbload != NULL) lives_widget_object_unref(pbload);
@@ -5828,11 +5834,10 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 
 #ifdef USE_LIBPNG
   {
-    boolean ret;
 #ifdef PNG_BIO
-    int fd = lives_open_buffered_rdonly(fname);
+    fd = lives_open_buffered_rdonly(fname);
 #else
-    int fd = lives_open2(fname, O_RDONLY);
+    fd = lives_open2(fname, O_RDONLY);
 #endif
 
     if (fd < 0) return FALSE;
@@ -5844,13 +5849,11 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 #endif
     tpalette = weed_layer_get_palette(layer);
     ret = layer_from_png(fd, layer, width, height, tpalette, FALSE);
-    old_fd = fd;
-    return ret;
+    goto fndone;
   }
 #endif
 
   pixbuf = lives_pixbuf_new_from_file_at_scale(fname, width > 0 ? width : -1, height > 0 ? height : -1, FALSE, gerror);
-  if (fd >= 0) old_fd = fd;
 #endif
 
   if (gerror != NULL) {
@@ -5859,7 +5862,10 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
     pixbuf = NULL;
   }
 
-  if (pixbuf == NULL) return FALSE;
+  if (pixbuf == NULL) {
+    ret = FALSE;
+    goto fndone;
+  }
 
   if (lives_pixbuf_get_has_alpha(pixbuf)) {
     /* unfortunately gdk pixbuf loader does not preserve the original alpha channel, instead it adds its own.
@@ -5872,7 +5878,16 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
     lives_widget_object_unref(pixbuf);
   }
 
-  return TRUE;
+fndone:
+#ifdef PNG_BIO
+  if (fd >= 0) {
+    lives_close_buffered(fd);
+  }
+#else
+  if (fd >= 0) close(fd);
+#endif
+
+  return ret;
 }
 
 
@@ -6577,17 +6592,6 @@ static void do_cleanup(weed_layer_t *layer, int success) {
     }
 
     //mainw->noswitch = noswitch;
-
-#ifdef PNG_BIO
-    if (old_fd >= 0) {
-      lives_file_buffer_t *fbuff = find_in_file_buffers(old_fd);
-      if (while (!fbuff->eof) lives_nanosleep(1000);
-      lives_close_buffered(old_fd);
-    }
-#else
-  if (old_fd >= 0) close(old_fd);
-#endif
-  old_fd = -1;
 }
 
 static weed_plant_t *cleaner = NULL;
@@ -6730,7 +6734,7 @@ void load_frame_image(int frame) {
         // record performance
         if ((mainw->record && !mainw->record_paused) || mainw->record_starting) {
           ticks_t actual_ticks;
-          int fg_frame = mainw->actual_frame;
+          int fg_frame = mainw->record_frame;
           int bg_file = IS_VALID_CLIP(mainw->blend_file) && mainw->blend_file != mainw->current_file
 	    ? mainw->blend_file : -1;
           int bg_frame = bg_file > 0 && bg_file != mainw->current_file ? mainw->files[bg_file]->frameno : 0;

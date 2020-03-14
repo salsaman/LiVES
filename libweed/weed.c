@@ -95,9 +95,7 @@
 #define rw_readlock(obj) do {if ((obj)) pthread_rwlock_rdlock((pthread_rwlock_t *)(((weed_leaf_t *)(obj))->private_data));} while (0)
 #define return_unlock(obj, val) do {typeof((val)) myval = (val); rw_unlock((obj)); return ((myval));} while (0)
 #define rw_swaplock(obj1, obj2) do {if ((obj1) != (obj2)) {rw_readlock((obj1)); rw_unlock((obj2));}} while (0)
-#define rw_changelock(obj) do {rw_unlock((obj)); rw_writelock((obj));} while (0)
-#define rw_swaplock_write(obj1, obj2) do {if ((obj1) != (obj2)) {rw_writelock((obj1)); rw_unlock((obj2));} \
-    else rw_changelock((obj1));} while (0)
+#define rw_swaplock_write(obj1, obj2) do {if ((obj1) != (obj2)) {rw_writelock((obj1)); rw_unlock((obj2));}} while (0)
 #else
 #define rw_unlock(obj)
 #define rw_writelock(obj)
@@ -105,7 +103,6 @@
 #define return_unlock(obj, val) return ((val))
 #define rw_swaplock(obj1, obj2)
 #define rw_swaplock_write(obj1, obj2)
-#define rw_changelock(obj)
 #endif
 
 static int stdstringfuncs = 0;
@@ -323,18 +320,19 @@ static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, u
   return leaf;
 }
 
-static inline void weed_leaf_free(weed_leaf_t *leaf) {
+static inline void *weed_leaf_free(weed_leaf_t *leaf) {
 #ifdef _BUILD_THREADSAFE_
   pthread_rwlock_t *rwlock = (pthread_rwlock_t *)leaf->private_data;
 #endif
-  weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
-  if (leaf->key != leaf->padding)
-    weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
+  if (leaf->data) weed_data_free((void *)leaf->data, leaf->num_elements, leaf->num_elements, leaf->seed_type);
+  if (leaf->key != leaf->padding) weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
 #ifdef _BUILD_THREADSAFE_
-  pthread_rwlock_unlock(rwlock);
+  pthread_rwlock_unlock(rwlock); pthread_rwlock_rdlock(rwlock); pthread_rwlock_unlock(rwlock);
+  pthread_rwlock_wrlock(rwlock); pthread_rwlock_unlock(rwlock);
   weed_unmalloc_sizeof(pthread_rwlock_t, rwlock);
 #endif
   weed_unmalloc_sizeof(weed_leaf_t, leaf);
+  return NULL;
 }
 
 static inline weed_leaf_t *weed_leaf_new(const char *key, int32_t seed_type, uint32_t hash) {
@@ -383,10 +381,7 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
       weed_leaf_free(leaf);
     }
   }
-  if (plant->next == NULL) {
-    weed_leaf_free(plant);
-    return WEED_SUCCESS;
-  }
+  if (plant->next == NULL) return_unlock(plant, WEED_SUCCESS);
   return_unlock(plant, WEED_ERROR_UNDELETABLE);
 }
 
@@ -430,7 +425,7 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, i
   weed_leaf_t *leaf;
   rw_readlock(plant);
   if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
-  rw_swaplock(leaf, plant);
+  rw_swaplock_write(leaf, plant);
   leaf->flags = flags;
   return_unlock(leaf, WEED_SUCCESS);
 }
@@ -448,13 +443,8 @@ static weed_error_t _weed_leaf_set_private_data(weed_plant_t *plant, const char 
 
 static weed_plant_t *_weed_plant_new(int32_t plant_type) {
   weed_leaf_t *leaf;
-  if ((leaf = weed_leaf_new(WEED_LEAF_TYPE, WEED_SEED_INT, WEED_MAGIC_HASH)) == NULL) return NULL;
-
-  if ((leaf->data = weed_data_new(WEED_SEED_INT, 1, &plant_type)) == NULL) {
-    weed_unmalloc_and_copy(weed_strlen(leaf->key) + 1, (void *)leaf->key);
-    weed_unmalloc_sizeof(weed_leaf_t, leaf);
-    return NULL;
-  }
+  if (!(leaf = weed_leaf_new(WEED_LEAF_TYPE, WEED_SEED_INT, WEED_MAGIC_HASH))) return NULL;
+  if (!(leaf->data = weed_data_new(WEED_SEED_INT, 1, &plant_type))) return weed_leaf_free(leaf);
   leaf->num_elements = 1;
   leaf->flags = WEED_FLAG_IMMUTABLE;
   return leaf;
@@ -492,16 +482,8 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, int32_t
 
   if (plant == NULL) return WEED_ERROR_NOSUCH_LEAF;
   if (IS_VALID_SEED_TYPE(seed_type) == WEED_FALSE) return WEED_ERROR_WRONG_SEED_TYPE;
-  rw_readlock(plant);
+  rw_writelock(plant);
   leaf = weed_find_leaf(plant, key, &hash);
-#ifdef _BUILD_THREADSAFE_
-  if (leaf == NULL) {
-    isnew = WEED_TRUE;
-    rw_changelock(plant);
-    // check it's still NULL after switching the lock
-    leaf = weed_find_leaf(plant, key, &hash);
-  }
-#endif
 
   if (leaf == NULL) {
     if ((leaf = weed_leaf_new(key, seed_type, hash)) == NULL) return_unlock(plant, WEED_ERROR_MEMORY_ALLOCATION);

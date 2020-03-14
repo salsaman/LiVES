@@ -11251,7 +11251,7 @@ boolean lives_widget_context_update(void) {
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
           lives_nanosleep(1000);
         }
-        if (loops > 8) break;
+        if (!mainw->multitrack && loops > 8) break;
       }
       if (loops > 1000 && !mainw->gui_fooey) {
         fprintf(stderr, "Looping on event type: evt is %p, %d %d %d\nPlease report this so I can fix it.",

@@ -406,7 +406,8 @@ boolean save_event_list_inner(lives_mt *mt, int fd, weed_plant_t *event_list, un
 }
 
 
-LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, int frame, LiVESInterpType interp, boolean noblanks) {
+LiVESPixbuf *make_thumb(lives_mt *mt, int file, int width, int height, frames_t frame, LiVESInterpType interp,
+                        boolean noblanks) {
   LiVESPixbuf *thumbnail = NULL, *pixbuf;
   LiVESError *error = NULL;
 
@@ -663,7 +664,7 @@ boolean write_backup_layout_numbering(lives_mt *mt) {
                                          capable->mainpid);
   LiVESList *clist = mainw->cliplist;
 
-  fd = lives_creat_buffered(asave_file, DEF_FILE_PERMS);
+  fd = lives_create_buffered(asave_file, DEF_FILE_PERMS);
   lives_free(asave_file);
 
   mainw->write_failed = FALSE;
@@ -795,7 +796,7 @@ static void save_mt_autoback(lives_mt *mt) {
     retval2 = 0;
     mainw->write_failed = FALSE;
 
-    fd = lives_creat_buffered(asave_file, DEF_FILE_PERMS);
+    fd = lives_create_buffered(asave_file, DEF_FILE_PERMS);
     if (fd >= 0) {
       add_markers(mt, mt->event_list, FALSE);
       do_threaded_dialog(_("Auto backup"), FALSE);
@@ -1169,7 +1170,7 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
           if (i + width >= 0) {
             // create a small thumb
             framenum = get_frame_event_frame(event, track);
-
+            if (framenum < 1 || framenum > mainw->files[filenum]->frames) continue;
             if (thumbnail != NULL) lives_widget_object_unref(thumbnail);
             thumbnail = NULL;
 
@@ -17428,7 +17429,8 @@ boolean multitrack_insert(LiVESMenuItem * menuitem, livespointer user_data) {
 
   block = (track_rect *)lives_widget_object_get_data(LIVES_WIDGET_OBJECT(eventbox), "block_last");
 
-  if (block != NULL && (mt->opts.grav_mode == GRAV_MODE_LEFT || (block->next != NULL && mt->opts.grav_mode == GRAV_MODE_RIGHT)) &&
+  if (block != NULL && (mt->opts.grav_mode == GRAV_MODE_LEFT || (block->next != NULL
+                        && mt->opts.grav_mode == GRAV_MODE_RIGHT)) &&
       !(did_backup || mt->moving_block)) {
     double oldr_start = mt->region_start;
     double oldr_end = mt->region_end;
@@ -19650,7 +19652,7 @@ void save_layout_map(int *lmap, double * lmap_audio, const char *file, const cha
 
   do {
     retval = 0;
-    if (write_to_file) fd = lives_creat_buffered(map_name, DEF_FILE_PERMS);
+    if (write_to_file) fd = lives_create_buffered(map_name, DEF_FILE_PERMS);
 
     if (fd == -1) {
       retval = do_write_failed_error_s_with_retry(map_name, lives_strerror(errno), NULL);
@@ -20020,7 +20022,7 @@ boolean on_save_event_list_activate(LiVESMenuItem * menuitem, livespointer user_
     retval2 = 0;
     retval = TRUE;
 
-    fd = lives_creat_buffered(esave_file, DEF_FILE_PERMS);
+    fd = lives_create_buffered(esave_file, DEF_FILE_PERMS);
 
     if (fd >= 0) {
       do_threaded_dialog(_("Saving layout"), FALSE);
@@ -21709,7 +21711,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
           retval = TRUE;
 
           // resave with corrections/updates
-          fd = lives_creat_buffered(eload_file, DEF_FILE_PERMS);
+          fd = lives_create_buffered(eload_file, DEF_FILE_PERMS);
           if (fd >= 0) {
             retval = save_event_list_inner(NULL, fd, event_list, NULL);
             lives_close_buffered(fd);
@@ -22025,7 +22027,7 @@ void migrate_layouts(const char *old_set_name, const char *new_set_name) {
 
             do {
               retval2 = 0;
-              fd = lives_creat_buffered((char *)map->data, DEF_FILE_PERMS);
+              fd = lives_create_buffered((char *)map->data, DEF_FILE_PERMS);
               if (fd >= 0) {
                 retval = save_event_list_inner(NULL, fd, event_list, NULL);
               }

@@ -177,20 +177,17 @@ static boolean save_keymap2_file(char *kfname) {
 
   do {
     retval = 0;
-    kfd = lives_creat_buffered(kfname, DEF_FILE_PERMS);
+    kfd = lives_create_buffered(kfname, DEF_FILE_PERMS);
     if (kfd == -1) {
       retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno), LIVES_WINDOW(rte_window));
     } else {
-      mainw->write_failed = FALSE;
-
       lives_write_le_buffered(kfd, &version, 4, TRUE);
-
       for (i = 1; i <= prefs->rte_keys_virtual; i++) {
-        if (mainw->write_failed) break;
+        if (mainw->write_failed == kfd + 1) break;
         for (j = 0; j < modes; j++) {
           if (rte_keymode_valid(i, j, TRUE)) {
             lives_write_le_buffered(kfd, &i, 4, TRUE);
-            if (mainw->write_failed) break;
+            if (mainw->write_failed == kfd + 1) break;
             // TODO: use newer version with separator
             hashname = lives_strdup_printf("Weed%s",
                                            (tmp = make_weed_hashname(rte_keymode_get_filter_idx(i, j), TRUE, FALSE, 0, FALSE)));
@@ -206,9 +203,9 @@ static boolean save_keymap2_file(char *kfname) {
 
       lives_close_buffered(kfd);
 
-      if (mainw->write_failed) {
+      if (mainw->write_failed == kfd + 1) {
+        mainw->write_failed = 0;
         retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
-        mainw->write_failed = FALSE;
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -234,7 +231,7 @@ static boolean save_keymap3_file(char *kfname) {
 
   do {
     retval = 0;
-    kfd = lives_creat_buffered(kfname, DEF_FILE_PERMS);
+    kfd = lives_create_buffered(kfname, DEF_FILE_PERMS);
     if (kfd == -1) {
       retval = do_write_failed_error_s_with_retry(kfname, lives_strerror(errno), LIVES_WINDOW(rte_window));
     } else {
@@ -328,7 +325,7 @@ static boolean save_keymap3_file(char *kfname) {
         }
 
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed) goto write_failed1;
+        if (mainw->write_failed == kfd + 1) goto write_failed1;
 
         pconx = mainw->pconx;
         while (pconx != NULL) {
@@ -336,10 +333,10 @@ static boolean save_keymap3_file(char *kfname) {
           j = 0;
 
           lives_write_le_buffered(kfd, &pconx->okey, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (mainw->write_failed == kfd + 1) goto write_failed1;
 
           lives_write_le_buffered(kfd, &pconx->omode, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (mainw->write_failed == kfd + 1) goto write_failed1;
 
           // TODO: use newer version with separator
           hashname =
@@ -351,15 +348,15 @@ static boolean save_keymap3_file(char *kfname) {
 
           nparams = pconx->nparams;
           lives_write_le_buffered(kfd, &nparams, 4, TRUE);
-          if (mainw->write_failed) goto write_failed1;
+          if (mainw->write_failed == kfd + 1) goto write_failed1;
 
           for (i = 0; i < nparams; i++) {
             lives_write_le_buffered(kfd, &pconx->params[i], 4, TRUE);
-            if (mainw->write_failed) goto write_failed1;
+            if (mainw->write_failed == kfd + 1) goto write_failed1;
 
             nconns = pconx->nconns[i];
             lives_write_le_buffered(kfd, &nconns, 4, TRUE);
-            if (mainw->write_failed) goto write_failed1;
+            if (mainw->write_failed == kfd + 1) goto write_failed1;
 
             totcons += nconns;
 
@@ -368,7 +365,7 @@ static boolean save_keymap3_file(char *kfname) {
               if (mainw->write_failed) goto write_failed1;
 
               lives_write_le_buffered(kfd, &pconx->imode[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (mainw->write_failed == kfd + 1) goto write_failed1;
 
               // TODO: use newer version with separator
               hashname =
@@ -379,10 +376,10 @@ static boolean save_keymap3_file(char *kfname) {
               lives_free(hashname);
 
               lives_write_le_buffered(kfd, &pconx->ipnum[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (mainw->write_failed == kfd + 1) goto write_failed1;
 
               lives_write_le_buffered(kfd, &pconx->autoscale[j], 4, TRUE);
-              if (mainw->write_failed) goto write_failed1;
+              if (mainw->write_failed == kfd + 1) goto write_failed1;
 
               j++;
             }
@@ -392,15 +389,15 @@ static boolean save_keymap3_file(char *kfname) {
         }
       } else {
         lives_write_le_buffered(kfd, &count, 4, TRUE);
-        if (mainw->write_failed) goto write_failed1;
+        if (mainw->write_failed == kfd + 1) goto write_failed1;
       }
 
 write_failed1:
       lives_close_buffered(kfd);
 
-      if (mainw->write_failed) {
+      if (mainw->write_failed == kfd + 1) {
+        mainw->write_failed = 0;
         retval = do_write_failed_error_s_with_retry(kfname, NULL, LIVES_WINDOW(rte_window));
-        mainw->write_failed = FALSE;
       }
     }
   } while (retval == LIVES_RESPONSE_RETRY);
@@ -461,7 +458,6 @@ static boolean on_save_keymap_clicked(LiVESButton *button, livespointer user_dat
       retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
-      mainw->write_failed = FALSE;
       lives_fputs("LiVES keymap file version 4\n", kfile);
 
       if (!update) {
@@ -540,18 +536,18 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
   do {
     do_threaded_dialog(_("Saving real time effect defaults..."), FALSE);
     retval = LIVES_RESPONSE_NONE;
-    if ((fd = lives_creat_buffered(prefs->fxdefsfile, DEF_FILE_PERMS)) == -1) {
+    if ((fd = lives_create_buffered(prefs->fxdefsfile, DEF_FILE_PERMS)) == -1) {
       end_threaded_dialog();
       msg = lives_strdup_printf(_("\n\nUnable to write defaults file\n%s\nError code %d\n"), prefs->fxdefsfile, errno);
       retval = do_abort_cancel_retry_dialog(msg, LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
       msg = lives_strdup_printf("%s\n", FX_DEFS_VERSIONSTRING_1_1);
-      mainw->write_failed = FALSE;
       lives_write_buffered(fd, msg, lives_strlen(msg), TRUE);
       lives_free(msg);
 
-      if (mainw->write_failed) {
+      if (mainw->write_failed == fd + 1) {
+        mainw->write_failed = 0;
         end_threaded_dialog();
         retval = do_write_failed_error_s_with_retry(prefs->fxdefsfile, NULL, LIVES_WINDOW(rte_window));
       } else {
@@ -577,16 +573,16 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   do {
     retval = LIVES_RESPONSE_NONE;
-    if ((fd = lives_creat_buffered(prefs->fxsizesfile, DEF_FILE_PERMS)) == -1) {
+    if ((fd = lives_create_buffered(prefs->fxsizesfile, DEF_FILE_PERMS)) == -1) {
       end_threaded_dialog();
       retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, lives_strerror(errno), LIVES_WINDOW(rte_window));
       lives_free(msg);
     } else {
       msg = lives_strdup_printf("%s\n", FX_SIZES_VERSIONSTRING_2);
-      mainw->write_failed = FALSE;
       lives_write_buffered(fd, msg, lives_strlen(msg), TRUE);
       lives_free(msg);
-      if (mainw->write_failed) {
+      if (mainw->write_failed == fd + 1) {
+        mainw->write_failed = 0;
         end_threaded_dialog();
         retval = do_write_failed_error_s_with_retry(prefs->fxsizesfile, NULL, LIVES_WINDOW(rte_window));
       } else {
@@ -605,7 +601,6 @@ void on_save_rte_defs_activate(LiVESMenuItem *menuitem, livespointer user_data) 
 
   if (retval == LIVES_RESPONSE_CANCEL) {
     d_print_file_error_failed();
-    mainw->write_failed = FALSE;
     return;
   }
 

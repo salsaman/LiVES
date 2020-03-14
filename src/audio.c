@@ -1449,6 +1449,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
           lives_lseek_buffered_rdonly(in_fd[track], - tbytes);
         } else {
           lives_buffered_rdonly_set_reversed(in_fd[track], FALSE);
+          //lives_buffered_rdonly_slurp(in_fd[track], seekstart[track]);
         }
       }
 
@@ -2348,7 +2349,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     }
   }
 
-  if (mainw->read_failed) {
+  if (mainw->read_failed > 0) {
     mainw->read_failed = 0;
     do_read_failed_error_s(mainw->read_failed_file, NULL);
   }
@@ -3183,7 +3184,7 @@ boolean apply_rte_audio(int nframes) {
 
     tbytes = lives_read_buffered(audio_fd, in_buff, tbytes, FALSE);
 
-    if (mainw->read_failed) {
+    if (mainw->read_failed == audio_fd + 1) {
       mainw->read_failed = 0;
       do_read_failed_error_s(audio_file, NULL);
       lives_freep((void **)&mainw->read_failed_file);

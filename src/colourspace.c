@@ -274,6 +274,8 @@ static inline uint8_t *create_gamma_lut(int gamma_from, int gamma_to) {
     inv_gamma = 1. / (float)prefs->screen_gamma;
   }
 
+  gamma_lut[0] = 0;
+
   for (i = 1; i < 256; ++i) {
     if (gamma_from == gamma_to) {
       gamma_lut[i] = i;
@@ -977,7 +979,21 @@ static void yuyv_2_yuv422(yuyv_macropixel *yuyv, uint8_t *y0, uint8_t *u0, uint8
 #define avg_chroma_3_1(x, y) ((uint8_t)(avg_chroma(x, avg_chroma(x, y))))
 #define avg_chroma_1_3(x, y) ((uint8_t)(avg_chroma(avg_chroma(x, y), y)))
 
-#define avg_chromaf(x, y) (mainw->effort > 0 ? avg_chroma(x, y) : (uint8_t)((float)(spc_rnd(((x) << 2) + ((y) << 2))) / 8. + .5))
+static uint8_t (*avg_chromaf)(uint8_t x, uint8_t y);
+
+static uint8_t avg_chromaf_high(uint8_t x, uint8_t y) {
+  return (((float)(spc_rnd(((x) << 2) + ((y) << 2)))) / 8. + .5);
+}
+
+static uint8_t avg_chromaf_fast(uint8_t x, uint8_t y) {
+  return avg_chroma(x, y);
+}
+
+void init_conversions(int intent) {
+  if (intent == LIVES_INTENTION_RENDER || intent == LIVES_INTENTION_TRANSCODE) avg_chromaf = avg_chromaf_high;
+  else avg_chromaf = avg_chromaf_fast;
+}
+
 #define avg_chroma_3_1f(x, y) ((uint8_t)(avg_chromaf(x, avg_chromaf(x, y))))
 #define avg_chroma_1_3f(x, y) ((uint8_t)(avg_chromaf(avg_chromaf(x, y), y)))
 
@@ -11029,7 +11045,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
 #endif
   boolean progscan = FALSE;
 
-  if (weed_plant_has_leaf(layer, "progscan")) progscan = TRUE;
+  if (weed_get_int_value(layer, WEED_LEAF_PROGSCAN, NULL)) progscan = TRUE;
 
   if (!weed_plant_has_leaf(layer, WEED_LEAF_PIXEL_DATA)) {
     weed_layer_set_size(layer, width, height);

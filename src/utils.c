@@ -1751,9 +1751,9 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
     if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK) {
       if (mainw->scratch == SCRATCH_BACK) mainw->deltaticks -= ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-            * USEC_TO_TICKS / 40000000;
+            * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
       else mainw->deltaticks += ddtc * KEY_RPT_INTERVAL * prefs->scratchback_amount
-                                  * USEC_TO_TICKS / 40000000;
+                                  * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
       // dtc is delta ticks, quantise this to the frame rate and round down
       mainw->deltaticks = q_gint64_floor(mainw->deltaticks, fps * 4);
     }
@@ -1791,13 +1791,13 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     }
 
     if (!mainw->clip_switched && mainw->scratch == SCRATCH_NONE) {
-      last_frame = (mainw->playing_sel && !mainw->is_rendering) ? sfile->end : mainw->play_end;
+      last_frame = mainw->playing_sel ? sfile->end : mainw->play_end;
       if (last_frame > sfile->frames) last_frame = sfile->frames;
       first_frame = mainw->playing_sel ? sfile->start : mainw->loop_video ? mainw->play_start : 1;
       if (first_frame > sfile->frames) first_frame = sfile->frames;
     }
 
-    if (sfile->frames > 1 && prefs->noframedrop && mainw->scratch != SCRATCH_JUMP) {
+    if (sfile->frames > 1 && prefs->noframedrop && mainw->scratch == SCRATCH_NONE) {
       // if noframedrop is set, we may not skip any frames
       // - the usual situation is that we are allowed to drop late frames
       // in this mode we may be forced to play at a reduced framerate
@@ -1808,15 +1808,6 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       } else if (nframe < cframe - 1) {
         cfile->last_frameno += (cframe - 1 - nframe);
         nframe = cframe - 1;
-      }
-    }
-
-    // check if video stopped playback
-    if (IS_NORMAL_CLIP(fileno) && (nframe < first_frame || nframe > last_frame)) {
-      if (mainw->whentostop == STOP_ON_VID_END) {
-        mainw->cancelled = CANCEL_VID_END;
-        mainw->scratch = SCRATCH_NONE;
-        return 0;
       }
     }
   }
@@ -1832,6 +1823,12 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     // we must also set
 
     if (fileno == mainw->playing_file) {
+      // check if video stopped playback
+      if (mainw->whentostop == STOP_ON_VID_END) {
+        mainw->cancelled = CANCEL_VID_END;
+        mainw->scratch = SCRATCH_NONE;
+        return 0;
+      }
       // we need to set this for later in the function
       mainw->scratch = SCRATCH_JUMP;
     }
@@ -1855,12 +1852,13 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
     nframe -= first_frame;
     selrange = (1 + last_frame - first_frame);
+    if (nframe < 0) nframe = selrange - nframe;
     nloops = nframe / selrange;
     if (mainw->ping_pong && (dir == LIVES_DIRECTION_BACKWARD || (clip_can_reverse(fileno)))) {
       dir += nloops;
       dir &= 1;
-      if (sfile->adirection == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
-        sfile->adirection = LIVES_DIRECTION_FORWARD;
+      if (dir == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
+        dir = LIVES_DIRECTION_FORWARD;
     }
 
     nframe -= nloops * selrange;

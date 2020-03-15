@@ -1959,14 +1959,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
   if (!svary || !is_converter) {
     if (pb_quality != PB_QUALITY_HIGH) {
-      if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-        if (opwidth < maxinwidth || opheight < maxinheight) {
-          calc_maxspect(opwidth, opheight, &maxinwidth, &maxinheight);
-        }
-      } else {
-        if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
-        if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
-      }
+      if (opwidth < maxinwidth && opwidth != 0) maxinwidth = opwidth;
+      if (opheight < maxinheight && opheight != 0) maxinheight = opheight;
     }
     opwidth = maxinwidth;
     opheight = maxinheight;

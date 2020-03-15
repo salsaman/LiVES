@@ -365,10 +365,10 @@ static inline int32_t spc_rnd(int32_t val) {
 
   // if we are adding several factors we can do the conversion after the addition
 
-  if (mainw->effort > EFFORT_LIMIT_MED) {
+  if (prefs->pb_quality == PB_QUALITY_LOW) {
     return val >> FP_BITS;
   }
-  if (mainw->effort > 0) {
+  if (prefs->pb_quality == PB_QUALITY_MED) {
     uint32_t sig = val & 0x80000000;
     val = (val - (val >> 8));
     return ((val >> 16) | sig);
@@ -11764,7 +11764,11 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
     }
     break;
   }
-  /// do not nullify, as we want to free old pixel_data
+  if (mainw->frame_layer != NULL && weed_layer_get_pixel_data_packed(mainw->frame_layer) == pixel_data[0]) {
+    /// retain pixel_data if it belongs to mainw->frame_layer
+    weed_layer_nullify_pixel_data(old_layer);
+  }
+  /// otherwise do not nullify, as we want to free old pixel_data
   weed_layer_free(old_layer);
   lives_free(pixel_data);
   lives_free(new_pixel_data);

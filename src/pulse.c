@@ -546,10 +546,15 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 
           if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(pulsed->playing_file)) {
             if (mainw->playing_sel) {
-              pulsed->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps)
+              pulsed->seek_end = (int64_t)((double)(afile->end - 1.) / afile->fps * afile->arps)
                                  * afile->achans * (afile->asampsize / 8);
               if (pulsed->seek_end > afile->afilesize) pulsed->seek_end = afile->afilesize;
-            } else pulsed->seek_end = afile->afilesize;
+            } else {
+              if (!mainw->loop_video) pulsed->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps)
+                    * afile->achans * (afile->asampsize / 8);
+              else pulsed->seek_end = afile->afilesize;
+            }
+            if (pulsed->seek_end > afile->afilesize) pulsed->seek_end = afile->afilesize;
           }
           if (pulsed->seek_end == 0 || ((pulsed->playing_file == mainw->ascrap_file && !mainw->preview) && playfile >= -1
                                         && mainw->files[playfile] != NULL && mainw->files[playfile]->achans > 0)) {
@@ -621,8 +626,11 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             pulsed->sound_buffer = (void *)(pulsed->aPlayPtr->data);
             pulsed->seek_pos += in_bytes - pad_bytes;
             if (pulsed->seek_pos >= pulsed->seek_end && !afile->opening) {
-              pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data) + pulsed->aPlayPtr->size,
-                                        pulsed->seek_end - pulsed->real_seek_pos, TRUE);
+              ssize_t rem = pulsed->seek_end - pulsed->real_seek_pos;
+              if (pulsed->aPlayPtr->size + rem > in_bytes) rem = in_bytes - pulsed->aPlayPtr->size;
+              if (rem > 0)
+                pulsed->aPlayPtr->size += lives_read_buffered(pulsed->fd, (void *)(pulsed->aPlayPtr->data) + pulsed->aPlayPtr->size,
+                                          pulsed->seek_end - pulsed->real_seek_pos, TRUE);
 
               if (pulsed->loop == AUDIO_LOOP_NONE) {
                 if (*pulsed->whentostop == STOP_ON_AUD_END) {
@@ -667,7 +675,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
           else if (pulsed->playing_file != mainw->ascrap_file && shrink_factor  < 0.f) {
             /// reversed playback
             off_t seek_start = (mainw->playing_sel ?
-                                (int64_t)((double)(mainw->play_start - 1.) / afile->fps * afile->arps)
+                                (int64_t)((double)(afile->start - 1.) / afile->fps * afile->arps)
                                 * afile->achans * (afile->asampsize / 8) : 0);
             seek_start = ALIGN_CEIL64(seek_start - qnt, qnt);
             if (pad_bytes > 0) pad_bytes = 0;

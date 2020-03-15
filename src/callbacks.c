@@ -4837,7 +4837,7 @@ static int loop_lock_frame = -1;
 static boolean oloop;
 static boolean oloop_cont;
 static boolean oping_pong;
-static boolean ofwd;
+static lives_direction_t ofwd;
 
 void unlock_loop_lock(void) {
   mainw->loop = oloop;
@@ -4858,6 +4858,7 @@ boolean clip_can_reverse(int clipno) {
       || !IS_VALID_CLIP(clipno) || mainw->preview) return FALSE;
   else {
     lives_clip_t *sfile = mainw->files[clipno];
+    if (sfile->clip_type == CLIP_TYPE_DISK) return TRUE;
     if (sfile->next_event != NULL) return FALSE;
     if (sfile->clip_type == CLIP_TYPE_FILE) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
@@ -4874,8 +4875,8 @@ boolean dirchange_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
 
   if (!(mod & LIVES_ALT_MASK) && (mod & LIVES_CONTROL_MASK) && mainw->loop_locked) {
     boolean do_ret = FALSE;
-    if (!clip_can_reverse(mainw->current_file) || !mainw->ping_pong || ((cfile->pb_fps >= 0. && ofwd)
-        || (cfile->pb_fps < 0. && !ofwd))) do_ret = TRUE;
+    if (!clip_can_reverse(mainw->current_file) || !mainw->ping_pong || ((cfile->pb_fps >= 0. && ofwd == LIVES_DIRECTION_FORWARD)
+        || (cfile->pb_fps < 0. && ofwd == LIVES_DIRECTION_BACKWARD))) do_ret = TRUE;
     unlock_loop_lock();
     if (do_ret) return TRUE;
   }
@@ -4928,7 +4929,9 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
       oloop = mainw->loop;
       oloop_cont = mainw->loop_cont;
       oping_pong = mainw->ping_pong;
-      ofwd = cfile->pb_fps > 0.;
+      /// store original direction so when we unlock loop lock we come out with original
+      /// this is reversed because we already had one reversal
+      ofwd = cfile->pb_fps < 0. ? LIVES_DIRECTION_FORWARD : LIVES_DIRECTION_BACKWARD;
     }
     mainw->loop_cont = TRUE;
     if (clip_can_reverse(mainw->current_file))
@@ -4956,6 +4959,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     mainw->files[mainw->blend_file]->pb_fps = mainw->files[mainw->blend_file]->fps;
     return TRUE;
   }
+
+  mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
   if (mainw->loop_locked) {
     dirchange_callback(group, obj, keyval, LIVES_CONTROL_MASK, SCREEN_AREA_FOREGROUND);
@@ -10846,9 +10851,11 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
     if (LIVES_IS_PLAYING) {
       sfile->frameno = sfile->last_frameno = mainw->clipstore[clip][1];
-      mainw->currticks = mainw->startticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
     }
-    switch_clip(0, mainw->clipstore[clip][0], TRUE);
+    if ((LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->playing_file)
+        || (!LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->current_file)) {
+      switch_clip(0, mainw->clipstore[clip][0], TRUE);
+    }
     if (!LIVES_IS_PLAYING) {
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);

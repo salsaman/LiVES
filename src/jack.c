@@ -995,9 +995,9 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
   //seek_ready=mainw->video_seek_ready;
   seek_ready = TRUE;
 
-  if (mainw->playing_file != -1 && prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
+  if (LIVES_IS_PLAYING && prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
     // trigger audio resync
-    if (mainw->scratch == SCRATCH_NONE) mainw->scratch = SCRATCH_JUMP;
+    mainw->scratch = SCRATCH_JUMP;
   }
 
   // reset for next seek (???)

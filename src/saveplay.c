@@ -2209,6 +2209,7 @@ void play_file(void) {
   mainw->reverse_pb = FALSE;
 
   mainw->swapped_clip = -1;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   cfile->play_paused = FALSE;
   mainw->period = TICKS_PER_SECOND_DBL / cfile->pb_fps;
@@ -2957,6 +2958,7 @@ void play_file(void) {
   disable_record();
   prefs->pb_quality = future_prefs->pb_quality;
   mainw->lockstats = FALSE;
+  mainw->blend_palette = WEED_PALETTE_END;
 
   if (mainw->multitrack == NULL) {
     if (mainw->faded || mainw->fs) {

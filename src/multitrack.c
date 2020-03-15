@@ -21625,6 +21625,7 @@ weed_plant_t *load_event_list(lives_mt * mt, char *eload_file) {
     lives_free(eload_name);
     return NULL;
   }
+
   lives_buffered_rdonly_slurp(fd, 0);
 
   if (mt != NULL) {

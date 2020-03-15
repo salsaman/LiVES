@@ -1223,7 +1223,6 @@ void *_plant_thread_func(void *args) {
     }
   }
 
-
   switch (funcsig) {
   case 0: (*func)(); break;
   case 0x01: // int

@@ -809,6 +809,7 @@ typedef struct {
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
 #define SCRATCH_JUMP 2
+#define SCRATCH_JUMP_NORESYNC 3
 
   /// internal fx
   boolean internal_messaging;

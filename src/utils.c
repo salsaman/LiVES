@@ -618,8 +618,9 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
 
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  weed_plant_t *info = weed_plant_new(WEED_PLANT_THREAD_INFO);
-  if (fbuff->slurping) return;
+  weed_plant_t *info;
+  if (!fbuff || fbuff->slurping) return;
+  info = weed_plant_new(WEED_PLANT_THREAD_INFO);
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
   weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, _lives_buffered_rdonly_slurp);
@@ -1778,13 +1779,19 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
       int delval = (ticks_t)((double)mainw->deltaticks / TICKS_PER_SECOND_DBL * fps + .5);
       if (delval <= -1 || delval >= 1) {
         /// the frame number changed, but we will recalulate the value using mainw->deltaticks
-        int64_t xnframe = cframe + (int64_t)delval;
+        frames64_t xnframe = cframe + (int64_t)delval;
+        frames64_t dframes = xnframe - nframe;
+
         if (xnframe != nframe) {
           nframe = xnframe;
           /// retain the fractional part for next time
           mainw->deltaticks -= (ticks_t)((double)delval / fps * TICKS_PER_SECOND_DBL);
-          if (nframe != cframe) mainw->scratch = SCRATCH_JUMP;
-          else mainw->scratch = SCRATCH_NONE;
+          if (nframe != cframe) {
+            sfile->last_frameno += dframes;
+            if (fps < 0. && mainw->scratch == SCRATCH_FWD) sfile->last_frameno--;
+            if (fps > 0. &&  mainw->scratch == SCRATCH_BACK) sfile->last_frameno++;
+            mainw->scratch = SCRATCH_JUMP_NORESYNC;
+          } else mainw->scratch = SCRATCH_NONE;
         }
       }
     }
@@ -1801,8 +1808,10 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     if (nframe == cframe || mainw->foreign) {
       if (!mainw->foreign && fileno == mainw->playing_file &&
           mainw->scratch == SCRATCH_JUMP && (mainw->event_list == NULL || mainw->record || mainw->record_paused) &&
-          (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) resync_audio(nframe);
-      mainw->scratch = SCRATCH_NONE;
+          (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
+        resync_audio(nframe);
+        mainw->scratch = SCRATCH_JUMP_NORESYNC;
+      }
       return nframe;
     }
 
@@ -1917,7 +1926,8 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
 
   if (fileno == mainw->playing_file && prefs->audio_src == AUDIO_SRC_INT && fileno == aplay_file && sfile->achans > 0
-      && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) && mainw->scratch != SCRATCH_NONE) {
+      && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
+      && (mainw->scratch != SCRATCH_NONE && mainw->scratch != SCRATCH_JUMP_NORESYNC)) {
     if (mainw->whentostop == STOP_ON_AUD_END) {
       // check if audio stopped playback. The audio player will also be checking this, BUT: we have to check here too
       // before doing any resync, otherwise the video can loop and if the audio is then resynced it may never reach the end
@@ -1928,14 +1938,17 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
         return 0;
       }
       resync_audio(nframe);
-      if (mainw->scratch == SCRATCH_JUMP) mainw->video_seek_ready = TRUE;
+      if (mainw->scratch == SCRATCH_JUMP) {
+        mainw->video_seek_ready = TRUE;   /// ????
+        mainw->scratch = SCRATCH_JUMP_NORESYNC;
+      }
     }
   }
-
   if (fileno == mainw->playing_file) {
     if (mainw->scratch != SCRATCH_NONE) {
+      g_print("SCR is %d\n", mainw->scratch);
       sfile->last_frameno = nframe;
-      mainw->scratch = SCRATCH_NONE;
+      mainw->scratch = SCRATCH_JUMP_NORESYNC;
     }
   }
   return nframe;

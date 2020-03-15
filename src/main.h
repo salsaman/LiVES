@@ -1653,7 +1653,7 @@ void break_me(void);
 
 #endif
 
-#define VALGRIND_ON
+//#define VALGRIND_ON
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

@@ -3683,7 +3683,6 @@ lives_render_error_t render_events(boolean reset) {
               if (scrap_track == -1) scrap_track = i;
             }
           }
-
           if (scrap_track != -1) {
             int64_t offs;
             // do not apply fx, just pull frame
@@ -3708,9 +3707,7 @@ lives_render_error_t render_events(boolean reset) {
             }
           } else {
             int oclip, nclip;
-
             layers = (weed_plant_t **)lives_malloc((mainw->num_tracks + 1) * sizeof(weed_plant_t *));
-
             // get list of active tracks from mainw->filter map
             get_active_track_list(mainw->clip_index, mainw->num_tracks, mainw->filter_map);
             for (i = 0; i < mainw->num_tracks; i++) {
@@ -3789,9 +3786,13 @@ lives_render_error_t render_events(boolean reset) {
           }
 
           if (layer != NULL) {
+            int lpal, width, height;
+            boolean was_lbox = FALSE;
             check_layer_ready(layer);
+            width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
+            height = weed_layer_get_height(layer);
+            lpal = layer_palette = weed_layer_get_palette(layer);
 #ifndef ALLOW_PNG24
-            layer_palette = weed_layer_get_palette(layer);
             if (cfile->img_type == IMG_TYPE_JPEG && layer_palette != WEED_PALETTE_RGB24
                 && layer_palette != WEED_PALETTE_RGBA32)
               layer_palette = WEED_PALETTE_RGB24;
@@ -3802,21 +3803,30 @@ lives_render_error_t render_events(boolean reset) {
             layer_palette = WEED_PALETTE_RGB24;
 #endif
             if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-              int width = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(layer));
-              int height = weed_layer_get_height(layer);
               calc_maxspect(cfile->hsize, cfile->vsize, &width, &height);
+              if (layer_palette != lpal && (cfile->hsize > width || cfile->vsize > height)) {
+                convert_layer_palette(layer, layer_palette, 0);
+              }
               letterbox_layer(layer, cfile->hsize, cfile->vsize, width, height, LIVES_INTERP_BEST, layer_palette, 0);
+              was_lbox = TRUE;
             } else {
               resize_layer(layer, cfile->hsize, cfile->vsize, LIVES_INTERP_BEST, layer_palette, 0);
             }
+
             convert_layer_palette(layer, layer_palette, 0);
+
+            // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
+            if (!was_lbox)
+              gamma_convert_layer(cfile->gamma_type, layer);
+            else
+              gamma_convert_sub_layer(cfile->gamma_type, layer, (cfile->hsize - width) / 2, (cfile->vsize - height) / 2,
+                                      width, height);
+
             if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
               char *texto = weed_get_string_value(event, WEED_LEAF_OVERLAY_TEXT, NULL);
               render_text_overlay(layer, texto);
               lives_free(texto);
             }
-            // we have a choice here, we can either render with the same gamma tf as cfile, or force it to sRGB
-            gamma_convert_layer(cfile->gamma_type, layer);
             pixbuf = layer_to_pixbuf(layer, TRUE, FALSE);
             weed_layer_free(layer);
           }
@@ -3989,6 +3999,7 @@ lives_render_error_t render_events(boolean reset) {
       }
 
       saveargs->pixbuf = pixbuf;
+
       lives_thread_create(saver_thread, NULL, lives_pixbuf_save_threaded, saveargs);
 #endif
 

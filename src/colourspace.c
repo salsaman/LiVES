@@ -11500,8 +11500,11 @@ boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width,
   if (nwidth < width) nwidth = width;
   if (nheight < height) nheight = height;
 
-  /// no letterboxing needed - return
-  if (nheight == height && nwidth == width) return TRUE;
+  /// no letterboxing needed - resize and return
+  if (nheight == height && nwidth == width) {
+    resize_layer(layer, width, height, interp, tpal, tclamp);
+    return TRUE;
+  }
 
   pal = weed_layer_get_palette(layer);
   lwidth = weed_layer_get_width(layer) * weed_palette_get_pixels_per_macropixel(pal);

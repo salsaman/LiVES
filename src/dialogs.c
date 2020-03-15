@@ -1223,10 +1223,10 @@ void update_progress(boolean visible) {
   }
 }
 
+static short scratch = SCRATCH_NONE;
 
 int process_one(boolean visible) {
   // INTERNAL PLAYER
-  short scratch = mainw->scratch;
   ticks_t new_ticks;
   ticks_t real_ticks = -1;
   lives_time_source_t time_source;
@@ -1364,7 +1364,7 @@ int process_one(boolean visible) {
       mainw->fps_mini_measure = 0;
     }
     mainw->audio_stretch = SWITCH_COMPENSATION;
-    mainw->scratch = SCRATCH_JUMP_NORESYNC;
+    scratch = SCRATCH_JUMP_NORESYNC;
   }
 
   // playing back an event_list
@@ -1413,8 +1413,8 @@ int process_one(boolean visible) {
 #define TEST_TRIGGER 999999
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
-#define DROPFRAME_TRIGGER 4
-#define JUMPFRAME_TRIGGER 6 // we should retain cdata->jump_limit from the initial file open
+#define DROPFRAME_TRIGGER 3
+#define JUMPFRAME_TRIGGER 9999 // we should retain cdata->jump_limit from the initial file open
 
   if (LIVES_IS_PLAYING) sfile = mainw->files[mainw->playing_file];
 
@@ -1446,6 +1446,7 @@ int process_one(boolean visible) {
 
     sfile->frameno = requested_frame = calc_new_playback_position(mainw->current_file, mainw->startticks, &new_ticks);
     if (mainw->scratch != SCRATCH_NONE) scratch  = mainw->scratch;
+    mainw->scratch = SCRATCH_NONE;
 
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
@@ -1756,6 +1757,7 @@ int process_one(boolean visible) {
       mainw->force_show = FALSE;
       /// set this in case we switch
       sfile->frameno = requested_frame;
+      scratch = SCRATCH_NONE;
     } else spare_cycles++;
   }
 
@@ -1781,7 +1783,7 @@ int process_one(boolean visible) {
   } else if (!mainw->multitrack && scratch == SCRATCH_NONE && IS_NORMAL_CLIP(mainw->playing_file)
              && ((spare_cycles > 0ul && last_spare_cycles > 0ul) || (getahead > -1 && mainw->pred_frame != -getahead))) {
 #ifdef SHOW_CACHE_PREDICTIONS
-    //g_print("PRELOADING (%d %d %lu):", sfile->frameno, dropped, spare_cycles);
+    //g_print("PRELOADING (%d %d %lu %p):", sfile->frameno, dropped, spare_cycles, mainw->frame_layer_preload);
 #endif
 #ifdef ENABLE_PRECACHE
     if (!mainw->frame_layer_preload) {
@@ -1789,7 +1791,6 @@ int process_one(boolean visible) {
         mainw->pred_clip = mainw->playing_file;
         if (getahead > -1) mainw->pred_frame = getahead;
         else {
-          /// TODO - need to check
           if (sfile->pb_fps > 0.)
             mainw->pred_frame = sfile->frameno + 1 + dropped;
           else
@@ -1822,7 +1823,9 @@ int process_one(boolean visible) {
               mainw->force_show = TRUE;
             }
 	    // *INDENT-OFF*
-	  }}}}
+	  }}
+	else mainw->pred_frame = 0;
+      }}
 #ifdef SHOW_CACHE_PREDICTIONS
     //g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif

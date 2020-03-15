@@ -431,7 +431,7 @@ void create_LiVES(void) {
   lives_widget_show(mainw->start_image);  // needed to get size
   lives_widget_show(mainw->end_image);  // needed to get size
 
-  /* lives_widget_set_app_paintable(mainw->start_image, TRUE); */
+  lives_widget_set_app_paintable(mainw->start_image, TRUE);
   lives_widget_set_app_paintable(mainw->end_image, TRUE);
 
   if (palette->style & STYLE_1) {
@@ -4015,7 +4015,7 @@ void make_play_window(void) {
   if (mainw->multitrack != NULL) lives_window_set_decorated(LIVES_WINDOW(mainw->play_window), FALSE);
   gtk_window_set_skip_taskbar_hint(LIVES_WINDOW(mainw->play_window), TRUE);
   gtk_window_set_skip_pager_hint(LIVES_WINDOW(mainw->play_window), TRUE);
-
+  lives_widget_set_app_paintable(mainw->play_window, TRUE);
 
   if (prefs->show_gui) {
     lives_window_set_transient_for(LIVES_WINDOW(mainw->play_window), get_transient_full());
@@ -4235,7 +4235,8 @@ void resize_play_window(void) {
           lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x +
                             (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2,
                             mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2);
-        } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x, mainw->mgeom[pmonitor - 1].y);
+        } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x,
+                                   mainw->mgeom[pmonitor - 1].y);
       }
       sched_yield();
       // leave this alone * !
@@ -4244,6 +4245,7 @@ void resize_play_window(void) {
         lives_window_fullscreen_on_monitor(LIVES_WINDOW(mainw->play_window), screen, monitor);
         gdk_window_set_fullscreen_mode(GdkWindow * window, GDK_FULLSCREEN_ON_ALL_MONITORS)
 #else
+        lives_widget_set_bg_color(mainw->play_window, LIVES_WIDGET_STATE_NORMAL, &palette->black);
         lives_window_fullscreen(LIVES_WINDOW(mainw->play_window));
 #endif
         lives_window_resize(LIVES_WINDOW(mainw->play_window), mainw->pwidth, mainw->pheight);
@@ -4341,7 +4343,7 @@ void resize_play_window(void) {
 #endif
         }
 
-        lives_widget_context_update();
+        //lives_widget_context_update();
 
         if ((mainw->vpp->init_screen == NULL) || ((*mainw->vpp->init_screen)
             (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,

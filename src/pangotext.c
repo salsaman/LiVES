@@ -527,11 +527,12 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
-  int gamma = weed_layer_get_gamma(layer);
+  int gamma;
   // do cairo and pango things
 
   cr = layer_to_lives_painter(layer);
   if (cr == NULL) return layer; ///< error occured
+  gamma = weed_layer_get_gamma(layer);
 
   layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, top, 0, width, height);
   if (layout != NULL && LINGO_IS_LAYOUT(layout)) lingo_painter_show_layout(cr, layout);

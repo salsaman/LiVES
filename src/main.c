@@ -5465,7 +5465,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
 #ifdef PNG_BIO
   png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
-  png_set_sig_bytes(png_ptr, 0);
+  png_set_sig_bytes(png_ptr, 8);
 #else
   png_init_io(png_ptr, fp);
   png_set_sig_bytes(png_ptr, bsize);
@@ -5773,6 +5773,7 @@ static boolean weed_layer_create_from_file_progressive(weed_layer_t *layer, cons
 
 #ifdef PNG_BIO
   fd = lives_open_buffered_rdonly(fname);
+  if (fd < 0) return FALSE;
 #ifndef VALGRIND_ON
   if (!strcmp(img_ext, LIVES_FILE_EXT_PNG)) is_png = TRUE;
   if (is_png) lives_buffered_rdonly_slurp(fd, 8);
@@ -5982,17 +5983,20 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
     } else if (clip == mainw->scrap_file) {
       boolean res = load_from_scrap_file(layer, frame);
       if (!res) {
+        create_blank_layer(layer, image_ext, width, height, target_palette);
         return FALSE;
       }
       weed_leaf_delete(layer, WEED_LEAF_HOST_PIXBUF_SRC);
       weed_leaf_delete(layer, WEED_LEAF_HOST_SURFACE_SRC);
       // clip width and height may vary dynamically
-      sfile->hsize = weed_layer_get_width(layer);
-      sfile->vsize = weed_layer_get_height(layer);
+      if (LIVES_IS_PLAYING) {
+        sfile->hsize = weed_layer_get_width(layer);
+        sfile->vsize = weed_layer_get_height(layer);
+      }
       // realign
       copy_pixel_data(layer, NULL, mainw->rowstride_alignment);
       mainw->osc_block = FALSE;
-      return res;
+      return TRUE;
     } else {
       if (sfile->clip_type == CLIP_TYPE_FILE && sfile->frame_index != NULL && frame > 0 &&
           frame <= sfile->frames && is_virtual_frame(clip, frame)) {
@@ -6006,7 +6010,10 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         if (weed_plant_has_leaf(layer, WEED_LEAF_HOST_DECODER)) {
           dplug = (lives_decoder_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_DECODER, NULL);
         } else dplug = (lives_decoder_t *)sfile->ext_src;
-        if (dplug == NULL || dplug->cdata == NULL) return FALSE;
+        if (dplug == NULL || dplug->cdata == NULL) {
+          create_blank_layer(layer, image_ext, width, height, target_palette);
+          return FALSE;
+        }
         if (target_palette != dplug->cdata->current_palette) {
           // try to switch palette
           if (decplugin_supports_palette(dplug, target_palette)) {
@@ -6057,7 +6064,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         if (create_empty_pixel_data(layer, TRUE, TRUE))
           pixel_data = weed_layer_get_pixel_data(layer, NULL);
         else {
-          create_blank_layer(layer, image_ext, 4, 4, target_palette);
+          create_blank_layer(layer, image_ext, width, height, target_palette);
           return FALSE;
         }
         if (pixel_data == NULL || pixel_data[0] == NULL) {
@@ -6066,6 +6073,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
                                               dplug->cdata->YUV_clamping, dplug->cdata->YUV_subspace));
           LIVES_WARN(msg);
           lives_free(msg);
+          create_blank_layer(layer, image_ext, width, height, target_palette);
           return FALSE;
         }
 
@@ -6078,7 +6086,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           if (!is_thread) {
             weed_layer_pixel_data_free(layer);
             if (!create_empty_pixel_data(layer, TRUE, TRUE)) {
-              create_blank_layer(layer, image_ext, 4, 4, target_palette);
+              create_blank_layer(layer, image_ext, width, height, target_palette);
               return FALSE;
             }
           }
@@ -6140,7 +6148,10 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         weed_layer_set_gamma(layer, sfile->gamma_type);
 
         mainw->osc_block = FALSE;
-        if (!ret) return FALSE;
+        if (!ret) {
+          create_blank_layer(layer, image_ext, width, height, target_palette);
+          return FALSE;
+        }
       }
     }
     break;
@@ -6197,6 +6208,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   return TRUE;
   default:
     mainw->osc_block = FALSE;
+    create_blank_layer(layer, image_ext, width, height, target_palette);
     return FALSE;
   }
   mainw->osc_block = FALSE;
@@ -6966,7 +6978,6 @@ void load_frame_image(int frame) {
 
       do {
 	wait_for_cleaner();
-
         if (mainw->frame_layer != NULL) {
           // free the old mainw->frame_layer
 	  check_layer_ready(mainw->frame_layer); // ensure all threads are complete
@@ -7100,10 +7111,17 @@ void load_frame_image(int frame) {
               /*         mainw->pred_frame, mainw->actual_frame, delta); */
               if (delta <= 0 || (mainw->pred_frame < 0 && delta > 0)) {
                 check_layer_ready(mainw->frame_layer_preload);
-                //g_print("YAH !\n");
-                got_preload = TRUE;
-                if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
-                mainw->frame_layer = weed_layer_copy(NULL, mainw->frame_layer_preload);
+                if (weed_layer_get_pixel_data_packed(mainw->frame_layer_preload) != NULL) {
+                  //g_print("YAH !\n");
+                  got_preload = TRUE;
+                  if (mainw->pred_frame < 0) {
+                    if (mainw->frame_layer != NULL) weed_layer_free(mainw->frame_layer);
+                    mainw->frame_layer = weed_layer_copy(NULL, mainw->frame_layer_preload);
+                  } else {
+                    weed_layer_copy(mainw->frame_layer, mainw->frame_layer_preload);
+                    weed_layer_nullify_pixel_data(mainw->frame_layer_preload);
+                  }
+                }
               }
               if (prefs->show_dev_opts) {
                 if (delta < 0) g_printerr("cached frame    TOO LATE, got %d, wanted %d !!!\n",

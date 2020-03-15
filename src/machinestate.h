@@ -25,6 +25,8 @@ typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*malloc_and_copy_f)(size_t, const void *);
 typedef void (*unmalloc_and_copy_f)(size_t, void *);
 
+void lives_free_check(void *p);
+
 #ifndef lives_malloc
 #define lives_malloc malloc
 #endif

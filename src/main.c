@@ -242,9 +242,9 @@ void defer_sigint(int signum) {
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
 #ifdef QUICK_EXIT
-  shoatend();
-  fprintf(stderr, "shoatt end");
-  fflush(stderr);
+  /* shoatend(); */
+  /* fprintf(stderr, "shoatt end"); */
+  /* fflush(stderr); */
   //exit(signum);
 #endif
   if (mainw != NULL) {
@@ -1357,6 +1357,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->play_sequence = 0;
 
   mainw->record_frame = -1;
+
+  mainw->debug_ptr = NULL;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);

@@ -1624,7 +1624,7 @@ void break_me(void);
 
 #ifdef _lives_malloc
 #undef  lives_malloc
-#define lives_malloc _test_malloc
+#define lives_malloc _lives_malloc
 #endif
 #ifdef _lives_realloc
 #undef  lives_realloc
@@ -1632,7 +1632,7 @@ void break_me(void);
 #endif
 #ifdef _lives_free
 #undef  lives_free
-#define lives_free _test_free
+#define lives_free _lives_free
 #endif
 #ifdef _lives_memcpy
 #undef  lives_memcpy

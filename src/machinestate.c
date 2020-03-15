@@ -495,6 +495,13 @@ void _ext_free(void *p) {
   if (p) lives_free(p);
 }
 
+
+void lives_free_check(void *p) {
+  if (mainw && p == mainw->debug_ptr) break_me();
+  free(p);
+}
+
+
 void *_ext_free_and_return(void *p) {
   _ext_free(p);
   return NULL;
@@ -1283,10 +1290,11 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   LiVESList *list = (LiVESList *)thread;
   thrd_work_t *work = (thrd_work_t *)lives_calloc(1, sizeof(thrd_work_t));
   if (!thread) list = (LiVESList *)lives_calloc(1, sizeof(LiVESList));
+  else list->next = list->prev = NULL;
   list->data = work;
-  list->prev = NULL;
   work->func = func;
   work->arg = arg;
+
   if (!thread || (attr && (*attr & LIVES_THRDATTR_AUTODELETE))) work->flags |= LIVES_THRDFLAG_AUTODELETE;
 
   pthread_mutex_lock(&twork_mutex);

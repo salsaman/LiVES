@@ -733,7 +733,6 @@ static void renumber_from_backup_layout_numbering(lives_mt *mt) {
   }
 
   fd = lives_open_buffered_rdonly(aload_file);
-
   if (fd != -1) {
     while (1) {
       offs = restart;

@@ -1430,6 +1430,7 @@ typedef struct {
 
   boolean go_away;
   boolean debug; ///< debug crashes and asserts
+  void *debug_ptr;
 
   char *subt_save_file; ///< name of file to save subtitles to
 

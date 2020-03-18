@@ -8846,7 +8846,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_get_int_value(layer, WEED_LEAF_WIDTH, &error);
   height = weed_get_int_value(layer, WEED_LEAF_HEIGHT, &error);
 
-  //  #define DEBUG_PCONV
+  //    #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -11070,7 +11070,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //  #define DEBUG_RESIZE
+    #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -11340,7 +11340,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     } else {
 #endif
 
-#ifdef DEBUG_RESIZE
+      //#ifdef DEBUG_RESIZE
     g_print("before resize with swscale: layer size %d X %d with palette %s to %d X %d, hinted %s,\n"
             "masquerading as %s (avpixfmt %d to avpixfmt %d)\n",
             iwidth, iheight, weed_palette_get_name_full(palette, iclamping, 0), width, height, weed_palette_get_name_full(opal_hint,

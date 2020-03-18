@@ -106,6 +106,7 @@ weed_plant_t *weed_channel_get_template(weed_plant_t *channel);
 void weed_channel_set_width(weed_plant_t *channel, int width);
 void weed_channel_set_height(weed_plant_t *channel, int height);
 void weed_channel_set_size(weed_plant_t *channel, int width, int height);
+  void weed_channel_set_palette(weed_plant_t *channel, int palette);
 
 /// only sets value; no conversion of pixel_data done
 weed_plant_t *weed_channel_set_gamma_type(weed_plant_t *channel, int gamma_type);

@@ -4349,7 +4349,7 @@ void resize_play_window(void) {
             (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
              mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
              fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
-          mainw->force_show = TRUE;
+          //mainw->force_show = TRUE;
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
           // start key polling from ext plugin

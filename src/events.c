@@ -4870,12 +4870,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // crash recovery -> backup the event list
   if (prefs->crash_recovery) {
     /// pretty simple now to run any function in a thread !
-    info = weed_plant_new(WEED_PLANT_THREAD_INFO);
-    weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, backup_recording);
-    weed_set_voidptr_value(info, WEED_LEAF_THREAD_PARAM0, &esave_file);
-    weed_set_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, &asave_file);
-    weed_set_boolean_value(info, WEED_LEAF_NOTIFY, WEED_TRUE);
-    run_as_thread(info);
+    info = lives_proc_thread_create((lives_funcptr_t)backup_recording, -1, "vv", &esave_file, &asave_file);
   }
 
   do {
@@ -4931,8 +4926,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
       }
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (info) {
-        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-        weed_plant_free(info);
+        //lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
+	lives_proc_thread_join(info);
         info = NULL;
       }
       if (!render_to_clip(TRUE)) render_choice = RENDER_CHOICE_PREVIEW;
@@ -4953,8 +4948,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     case RENDER_CHOICE_SAME_CLIP:
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
       if (info) {
-        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-        weed_plant_free(info);
+	lives_proc_thread_join(info);
         info = NULL;
       }
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
@@ -4979,8 +4973,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->unordered_blocks = TRUE;
       pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
       if (info) {
-        lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-        weed_plant_free(info);
+	lives_proc_thread_join(info);
         info = NULL;
       }
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {
@@ -5016,8 +5009,8 @@ boolean deal_with_render_choice(boolean add_deinit) {
   } while (render_choice == RENDER_CHOICE_PREVIEW);
 
   if (info) {
-    lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-    weed_plant_free(info);
+    lives_proc_thread_join(info);
+    info = NULL;
   }
 
   if (esave_file != NULL) lives_rm(esave_file);

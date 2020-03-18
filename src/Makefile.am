@@ -136,10 +136,6 @@ if NEED_LOCAL_WEED_COMPAT
 libweed_compat_CFLAGS = -DNEED_LOCAL_WEED_COMPAT=1
 endif
 
-#if ENABLE_DIAGNOSTICS
-#diag_SOURCES = diagnostics.c diagnostics.h
-#endif
-
 if HAVE_PULSE_AUDIO
 pulse_LDADD = @PULSE_LIBS@
 pulse_CFLAGS = @PULSE_LIBS@ -DHAVE_PULSE_AUDIO=1
@@ -215,7 +211,7 @@ lives_exe_SOURCES = \
 	pangotext.c pangotext.h \
 	machinestate.c machinestate.h \
 	weed-effects-utils.c weed-effects-utils.h \
-	$(diag_SOURCES) \
+	diagnostics.c diagnostics..h \
 	$(transcode_SOURCES) \
 	$(unicap_SOURCES) \
 	$(jack_SOURCES) \

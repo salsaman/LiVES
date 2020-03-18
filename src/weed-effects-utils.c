@@ -321,6 +321,11 @@ WEED_GLOBAL_INLINE void weed_channel_set_size(weed_plant_t *channel, int width, 
   weed_set_int_value(channel, WEED_LEAF_HEIGHT, height);
 }
 
+WEED_GLOBAL_INLINE void weed_channel_set_palette(weed_plant_t *channel, int palette) {
+  if (!WEED_PLANT_IS_CHANNEL(channel)) return;
+  weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
+}
+
 WEED_GLOBAL_INLINE int weed_channel_get_palette(weed_plant_t *channel) {
   if (!WEED_PLANT_IS_CHANNEL(channel)) return WEED_PALETTE_NONE;
   return weed_get_int_value(channel, WEED_LEAF_CURRENT_PALETTE, NULL);

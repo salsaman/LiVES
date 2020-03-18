@@ -92,7 +92,10 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
 
 
 static void stream_overflow_callback(pa_stream *s, void *userdata) {
+  pa_operation *paop;
   fprintf(stderr, "Stream overrun.\n");
+  paop = pa_stream_flush(s, NULL, NULL);
+  pa_operation_unref(paop);
 }
 
 
@@ -431,7 +434,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
             tc = 0;
           }
           //g_print("xseek vals is %ld %ld %ld %d\n", xseek, mainw->currticks, msg->tc, pulsed->in_arate);
-          xseek += ((double)(tc - msg->tc + tc2 * .5) / TICKS_PER_SECOND_DBL)
+          xseek += ((double)(tc - msg->tc + tc2 * 2.) / TICKS_PER_SECOND_DBL)
                    * pulsed->tscale * pulsed->in_arate * afile->achans * afile->asampsize / 8;
           msg->tc = 0;
           xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
@@ -1676,9 +1679,13 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pavol = pa_sw_volume_from_linear(pdriver->volume_linear);
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 
-    pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY |
-                               PA_STREAM_INTERPOLATE_TIMING | PA_STREAM_START_CORKED | PA_STREAM_NOT_MONOTONIC |
-                               PA_STREAM_AUTO_TIMING_UPDATE),
+    pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY
+										      | PA_STREAM_RELATIVE_VOLUME
+										      | PA_STREAM_INTERPOLATE_TIMING
+										      | PA_STREAM_START_CORKED
+										      | PA_STREAM_START_UNMUTED
+										      | PA_STREAM_NOT_MONOTONIC
+										      | PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
 
@@ -1722,9 +1729,11 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_stream_set_buffer_attr_callback(pdriver->pstream, stream_buffer_attr_callback, pdriver);
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
-                             (pa_stream_flags_t)(PA_STREAM_START_CORKED | PA_STREAM_ADJUST_LATENCY | PA_STREAM_INTERPOLATE_TIMING |
-                                 PA_STREAM_AUTO_TIMING_UPDATE |
-                                 PA_STREAM_NOT_MONOTONIC));
+                             (pa_stream_flags_t)(PA_STREAM_START_CORKED
+						 | PA_STREAM_ADJUST_LATENCY
+						 | PA_STREAM_INTERPOLATE_TIMING
+						 | PA_STREAM_AUTO_TIMING_UPDATE
+						 | PA_STREAM_NOT_MONOTONIC));
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
@@ -1854,7 +1863,7 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   tscalex = tscaleu = 0.;
 }
 
-
+#define TSC_AVG_WINDOW 16
 ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since either playback started
   volatile aserver_message_t *msg = pulsed->msgq;
@@ -1903,7 +1912,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
           tscaleu += (double)(usec - last_usec);
           tscalex += (double)(pulsed->extrausec - last_extra);
           //g_print("TSC1ss1 is %f %f %f\n", pulsed->tscale, tscaleu, tscalex);
-          if (tscaleu > 100000. && tscalex > 100000.) {
+          if (tscaleu > 1000000. && tscalex > 1000000.) {
             tscalev = tscaleu / tscalex;
             //g_print("TSC11 is %f %f %f %d\n", pulsed->tscale, tscaleu, tscalex, nsc);
             if (nsc > 1) {
@@ -1912,7 +1921,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
             pulsed->tscale += tscalev;
             //g_print("txxxscssssxx is %f %f %d\n" , pulsed->tscale, tscalev, nsc);
             pulsed->tscale /= nsc + 1;
-            if (nsc < 15) nsc++;
+            if (nsc < TSC_AVG_WINDOW - 1) nsc++;
             //g_print("TSC is %f\n", pulsed->tscale);
             tscaleu = tscalex = 0.;
           }

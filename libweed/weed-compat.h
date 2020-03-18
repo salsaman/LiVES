@@ -114,9 +114,8 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
   case 0x76757963: // cyuv - ???
     return WEED_PALETTE_UYVY;
   case 0x32595559: // YUY2
-  case 0x56595559: // YUYV - tested and OK
+  case 0x56595559: // YUYV
   case 0x564E5559: // YUNV
-  case 0x31313259: // Y211 - ???
     return WEED_PALETTE_YUYV;
   case 0x59455247: // grey
     if (clamping != NULL) *clamping = WEED_YUV_CLAMPING_UNCLAMPED;
@@ -162,11 +161,12 @@ int fourccp_to_weedp(unsigned int fourcc, int bpp, int *interlaced, int *samplin
 
   case 0x39565559: // YUV9 - 410 planar palette
   case 0x30313449: // I410 - 410 planar palette
+  case 0x31313259: // Y211 - ???
 
   case 0x31313449: // I411 - 411 planar palette
   case 0x30343449: // I440 - 440 planar palette
   case 0x30343450: // J440 - 440 planar palette unclamped
-
+  case 0x56555941: // - YUVA8888 but with alpha first, ie. AYUV8888
   // no match
   default:
     return WEED_PALETTE_END;

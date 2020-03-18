@@ -534,15 +534,16 @@ LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
     xsize = DEF_ALIGN;
     nmemb = (totsize / xsize) + 1;
   }
-  return lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize);
+  return __builtin_assume_aligned(lives_calloc(nmemb + (EXTRA_BYTES / xsize), xsize), DEF_ALIGN);
 }
 
 LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) {
   /// realloc from omemb * size to nmemb * size
   /// memory allocated via calloc, with DEF_ALIGN alignment and EXTRA_BYTES extra padding
-  void *np = lives_calloc_safety(nmemb, xsize);
+  void *np = __builtin_assume_aligned(lives_calloc_safety(nmemb, xsize), DEF_ALIGN);
+  void *op = __builtin_assume_aligned(p, DEF_ALIGN);
   if (omemb > nmemb) omemb = nmemb;
-  lives_memcpy(np, p, omemb * xsize);
+  lives_memcpy(np, op, omemb * xsize);
   lives_free(p);
   return np;
 }
@@ -742,6 +743,7 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
 }
 
 
+
 uint64_t get_fs_free(const char *dir) {
   // get free space in bytes for volume containing directory dir
   // return 0 if we cannot create/write to dir
@@ -772,6 +774,35 @@ getfserr:
   if (must_delete) lives_rmdir(dir, FALSE);
 
   return bytes;
+}
+
+
+size_t _get_usage(void) {
+  char buff[256];
+  char *com = lives_strdup_printf("%s -sb \"%s\"", EXEC_DU, prefs->workdir);
+  mainw->com_failed = FALSE;
+  lives_popen(com, 256, buff, TRUE);
+  if (mainw->com_failed) {
+    mainw->com_failed = FALSE;
+    return 0;
+  }
+  return atoll(buff);
+}
+
+  
+boolean  get_ds_used(uint64_t *bytes) {
+  /// returns bytes used for the workdir
+  /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
+  /// read value in bytes
+  /// once a new value is obtained TRUE is returned and bytes will reflect the updated val
+  boolean ret = TRUE;
+  static uint64_t _bytes = 0;
+  static lives_proc_thread_t running = NULL;
+  if (!running) running = lives_proc_thread_create((lives_funcptr_t)_get_usage, 5, "");
+  if (!lives_proc_thread_check(running)) ret = FALSE;
+  else _bytes = lives_proc_thread_join_int64(running);
+  if (bytes) *bytes = _bytes;
+  return ret;
 }
 
 
@@ -1194,21 +1225,18 @@ void lives_threadpool_init(void) {
 }
 
 
-#define GETARG(type, n) weed_get_##type##_value(info, "thrd_param" n, NULL)
-
-typedef boolean(*funcptr_bool_t)();
-
-
 void *_plant_thread_func(void *args) {
   weed_plant_t *info = (weed_plant_t *)args;
   weed_funcptr_t func = NULL;
   funcptr_bool_t funcb = NULL;
+  funcptr_int64_t funci64 = NULL;
   uint64_t funcsig = 0;
   int nargs, ret_type;
 
-  ret_type = weed_leaf_seed_type(info, "return_value");
+  ret_type = weed_leaf_seed_type(info, WEED_LEAF_RETURN_VALUE);
   switch (ret_type) {
   case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  case WEED_SEED_INT64: funci64 = (funcptr_int64_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
   default:
     func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
   }
@@ -1231,18 +1259,24 @@ void *_plant_thread_func(void *args) {
   }
 
   switch (funcsig) {
-  case 0: (*func)(); break;
+  case 0:
+    if (ret_type == WEED_SEED_INT64) {
+      weed_set_int64_value(info, WEED_LEAF_RETURN_VALUE, (*funci64)());
+      break;
+    }
+    (*func)(); break;
   case 0x01: // int
     (*func)(GETARG(int, "0")); break;
   case 0x15: // int, int64
-    (*func)(GETARG(int, "0"), GETARG(int64, "1")); break;
+    (*func)(GETARG(int, "0"), GETARG(int64, "0")); break;
   case 0xDD: // void *. void *
     (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1")); break;
   case 0xE3: // weed_plant_t *, boolean
     (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1")); break;
   case 0xED5: // weed_plant_t *, void *, int64
     if (ret_type == WEED_SEED_BOOLEAN) {
-      weed_set_boolean_value(info, "return_value", (*funcb)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")));
+      weed_set_boolean_value(info, WEED_LEAF_RETURN_VALUE, (*funcb)(GETARG(plantptr, "0"),
+								    GETARG(voidptr, "1"), GETARG(int64, "2")));
       break;
     }
     (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
@@ -1250,7 +1284,8 @@ void *_plant_thread_func(void *args) {
     /// etc for all 8 ** 16 + 8 ** 15 + ... param combinations * (8 + 1) return types ~= 2.9 * 10 ** 15
   }
 
-  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL)) weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
+  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE)
+    weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
   else if (!ret_type) weed_plant_free(info);
   return NULL;
 }
@@ -1262,6 +1297,99 @@ boolean run_as_thread(weed_plant_t *info) {
   lives_thread_attr_t attr = LIVES_THRDATTR_AUTODELETE;
   lives_thread_create(thread, &attr, _plant_thread_func, (void *)info);
   return TRUE;
+}
+
+typedef weed_plantptr_t lives_proc_thread_t;
+
+lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_type, const char *args_fmt, ...) {
+  va_list xargs;
+  int p = 0;
+  const char *c;
+  weed_plant_t *thread_info = weed_plant_new(WEED_PLANT_THREAD_INFO);
+  if (!thread_info) return NULL;
+  weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
+  if (return_type) {
+    if (return_type == -1) weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
+    else weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
+  }
+#define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
+  
+  va_start(xargs, args_fmt);
+  c = args_fmt;
+  for (c = args_fmt; *c; c++) {
+    char *pkey = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, p++);
+    switch(*c) {
+    case 'i':
+      weed_set_int_value(thread_info, pkey, va_arg(xargs, int)); break;
+    case 'd':
+      weed_set_double_value(thread_info, pkey, va_arg(xargs, double)); break;
+    case 'b':
+      weed_set_boolean_value(thread_info, pkey, va_arg(xargs, int)); break;
+    case 's':
+      weed_set_string_value(thread_info, pkey, va_arg(xargs, char *)); break;
+    case 'I':
+      weed_set_int64_value(thread_info, pkey, va_arg(xargs, int64_t)); break;
+    case 'F':
+      weed_set_funcptr_value(thread_info, pkey, va_arg(xargs, weed_funcptr_t)); break;
+    case 'V': case 'v':
+      weed_set_voidptr_value(thread_info, pkey, va_arg(xargs, void *)); break;
+    case 'P':
+      weed_set_plantptr_value(thread_info, pkey, va_arg(xargs, weed_plantptr_t)); break;
+    default:
+      weed_plant_free(thread_info);
+      return NULL;
+    }
+    lives_free(pkey);
+  }
+  va_end(xargs);
+  run_as_thread(thread_info);
+  return thread_info;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
+  return (weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE) > 0
+	  || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
+}
+
+
+#ifdef LIVES_GNU
+// needs testing...
+#define foo(plant) \
+  __builtin_choose_expr ( \
+			 weed_leaf_seed_type(plant, WEED_LEAF_RETURN_VALUE) == 3, proc_thread_join_boolean(plant), \
+			 weed_leaf_seed_type(plant. WEED_LEAF_RETURN_VALUE) == 1, proc_thread_join_int(plant), \
+			 proc_thread_join(plant)}
+#endif
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
+  lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
+  weed_plant_free(tinfo);
+}
+
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) {
+  int retval;
+  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
+  retval = weed_get_boolean_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
+  weed_plant_free(tinfo);
+  return retval;
+}
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) {
+  int retval;
+  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
+  retval = weed_get_int_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
+  weed_plant_free(tinfo);
+  return retval;
+}
+
+LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {
+  int64_t retval;
+  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
+  retval = weed_get_int64_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
+  weed_plant_free(tinfo);
+  return retval;
 }
 
 
@@ -1634,15 +1762,17 @@ void update_effort(int nthings, boolean badthings) {
     flowlen++;
   }
 
+  //g_print("vals2x %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
+  
   if (!badthingcount) {
     /// no badthings, good
     if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
-    mainw->effort = -goodthingcount;
+    if (--mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
   } else {
     if (badthingcount > EFFORT_RANGE_MAX) badthingcount = EFFORT_RANGE_MAX;
     mainw->effort = badthingcount;
   }
-  //g_print("vals2 %d %d %d\n", mainw->effort, badthingcount, goodthingcount);
+  //g_print("vals2 %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
 
   if (mainw->effort < 0) {
     if (struggling > -EFFORT_RANGE_MAX) {
@@ -1659,7 +1789,7 @@ void update_effort(int nthings, boolean badthings) {
     }
   }
 
-  if (mainw->effort > EFFORT_LIMIT_LOW) {
+  if (mainw->effort > 0) {
     if (prefs->pb_quality > future_prefs->pb_quality) {
       prefs->pb_quality = future_prefs->pb_quality;
       mainw->blend_palette = WEED_PALETTE_END;
@@ -1673,15 +1803,15 @@ void update_effort(int nthings, boolean badthings) {
       if (struggling < EFFORT_RANGE_MAX) struggling++;
       if (struggling == EFFORT_RANGE_MAX) {
         if (prefs->pb_quality > PB_QUALITY_LOW) {
-          prefs->pb_quality--;
+          prefs->pb_quality = PB_QUALITY_LOW;
           mainw->blend_palette = WEED_PALETTE_END;
         }
-        if (mainw->effort > EFFORT_LIMIT_MED) {
-          if (prefs->pb_quality > PB_QUALITY_LOW) {
-            prefs->pb_quality--;
-            mainw->blend_palette = WEED_PALETTE_END;
-          }
-        }
+        else if (mainw->effort > EFFORT_LIMIT_MED) {
+	    if (prefs->pb_quality > PB_QUALITY_MED) {
+	      prefs->pb_quality--;
+	      mainw->blend_palette = WEED_PALETTE_END;
+	    }
+	  }
       } else {
         if (prefs->pb_quality > future_prefs->pb_quality) {
           prefs->pb_quality = future_prefs->pb_quality;

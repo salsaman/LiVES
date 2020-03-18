@@ -334,11 +334,14 @@ typedef struct {
   int bigendbug;
 
   // these are default values; actual values can be adjusted in Preferences
-#define DEF_DS_WARN_LEVEL "2500000000"  // 2.5 GB
+#define DEF_DS_WARN_LEVEL 2500000000  // 2.5 GB
   uint64_t ds_warn_level; ///< diskspace warn level bytes
-#define DEF_DS_CRIT_LEVEL "250000000" // 250MB
+#define DEF_DS_CRIT_LEVEL 250000000 // 250MB
   uint64_t ds_crit_level; ///< diskspace critical level bytes
 
+#define DEF_DISK_QUOTA (50 * 1024 * 1024)
+  int64_t disk_quota; /// max space we can use for all our files ( means not set, -1 means unlimited (up to ds_crti))
+  
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000
 
@@ -854,6 +857,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 /////////////////// integer64 values
 #define PREF_DS_WARN_LEVEL "ds_warn_level"
 #define PREF_DS_CRIT_LEVEL "ds_crit_level"
+#define PREF_DISK_QUOTA "disk_quota"
 
 /////////////////// integer32 values
 #define PREF_STARTUP_PHASE "startup_phase"

@@ -1131,7 +1131,10 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   }
   if ((vpp->render_frame = (boolean(*)(int, int, int64_t, void **, void **, weed_plant_t **))
                            dlsym(handle, "render_frame")) == NULL) {
-    OK = FALSE;
+    if ((vpp->play_frame = (boolean(*)(int, int, int *, int64_t, void **, void **, weed_plant_t **))
+	 dlsym(handle, "play_frame")) == NULL) {
+      OK = FALSE;
+    }
   }
   if ((vpp->get_fps_list = (const char *(*)(int))dlsym(handle, "get_fps_list")) != NULL) {
     if ((vpp->set_fps = (boolean(*)(double))dlsym(handle, "set_fps")) == NULL) {

@@ -887,7 +887,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
   is_alpha = weed_palette_is_alpha(palette);
   is_yuv = !is_alpha && !is_rgb;
 
-  for (int i = 1; i < num_palettes; i++) {
+  for (int i = 0; i < num_palettes; i++) {
     if (palette_list[i] == palette) {
       /// exact match - return it
       return palette;
@@ -901,16 +901,20 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
     case WEED_PALETTE_RGB24:
     case WEED_PALETTE_BGR24:
       if (palette == WEED_PALETTE_RGB24 || palette == WEED_PALETTE_BGR24) return palette_list[i];
+
       if ((is_rgb || mismatch) && (!weed_palette_has_alpha(palette) || best_palette == WEED_PALETTE_RGBAFLOAT ||
-                                   best_palette == WEED_PALETTE_RGBFLOAT))
+                                   best_palette == WEED_PALETTE_RGBFLOAT)
+	  && !(best_palette == WEED_PALETTE_RGB24 || best_palette == WEED_PALETTE_BGR24))
         best_palette = palette_list[i];
       break;
     case WEED_PALETTE_RGBA32:
     case WEED_PALETTE_BGRA32:
-      if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) return palette_list[i];
+      if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_BGRA32) best_palette = palette_list[i];
     case WEED_PALETTE_ARGB32:
       if ((is_rgb || mismatch) && (has_alpha || best_palette == WEED_PALETTE_RGBFLOAT
-                                   || best_palette == WEED_PALETTE_RGBAFLOAT))
+                                   || best_palette == WEED_PALETTE_RGBAFLOAT)
+	  && best_palette != WEED_PALETTE_RGBA32
+	  && !(palette == WEED_PALETTE_ARGB32 && best_palette == WEED_PALETTE_BGRA32))
         best_palette = palette_list[i];
       break;
     case WEED_PALETTE_RGBAFLOAT:
@@ -4426,9 +4430,9 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
 
   weed_set_string_value(xhost_info, WEED_LEAF_LAYOUT_SCHEMES, "rfx");
 
-  if (0 && fxname != NULL && !strcmp(fxname, "ladspa")) {
+  if (fxname != NULL && !strcmp(fxname, "projectM")) {
     //  weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)weed_leaf_set_monitor);
-    //weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
+    weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_DEBUG);
   } else
     weed_set_int_value(xhost_info, WEED_LEAF_VERBOSITY, WEED_VERBOSITY_WARN);
 
@@ -7359,8 +7363,8 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   }
 
   filter = weed_instance_get_filter(inst, FALSE);
-  filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, NULL);
-  chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
+  filter_flags = weed_filter_get_flags(filter);
+  chantmpl = weed_channel_get_template(channel);
   palette_list = weed_chantmpl_get_palette_list(filter, chantmpl, &npals);
   palette = WEED_PALETTE_END;
 
@@ -7421,7 +7425,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   if (palette == WEED_PALETTE_END) palette = palette_list[0];
 
   lives_free(palette_list);
-  weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
+  weed_channel_set_palette(channel, palette);
 
   if (weed_plant_has_leaf(filter, WEED_LEAF_ALIGNMENT_HINT)) {
     int rowstride_alignment_hint = weed_get_int_value(filter, WEED_LEAF_ALIGNMENT_HINT, NULL);
@@ -7435,9 +7439,9 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
   }
 
   if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+    weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
   else
-    weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_SRGB);
+    weed_channel_set_gamma_type(channel, WEED_GAMMA_SRGB);
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_IN_CHANNELS)) {
     int num_inc;
@@ -7472,15 +7476,14 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     // check out channel sizes, they may be wrong now
     channel = get_enabled_channel(inst, 0, TRUE);
 
-    width = weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL);
-    height = weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL);
+    width = weed_channel_get_width(channel);
+    height = weed_channel_get_height(channel);
 
     for (i = 0; (channel = get_enabled_channel(inst, i, FALSE)) != NULL; i++) {
-      if (width != weed_get_int_value(channel, WEED_LEAF_WIDTH, NULL) ||
-          height != weed_get_int_value(channel, WEED_LEAF_HEIGHT, NULL)) {
+      if (width != weed_channel_get_width(channel) ||
+          height != weed_channel_get_height(channel)) {
         weed_layer_pixel_data_free(channel);
-        weed_set_int_value(channel, WEED_LEAF_WIDTH, width);
-        weed_set_int_value(channel, WEED_LEAF_HEIGHT, height);
+        weed_channel_set_size(channel, width, height);
         if (i == 0 && mainw->current_file == mainw->playing_file) {
           cfile->hsize = width;
           cfile->vsize = height;
@@ -7494,9 +7497,9 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
         }
         if (!create_empty_pixel_data(channel, FALSE, TRUE)) return NULL;
         if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, WEED_GAMMA_LINEAR);
+          weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
         else
-          weed_set_int_value(channel, WEED_LEAF_GAMMA_TYPE, cfile->gamma_type);
+          weed_channel_set_gamma_type(channel, cfile->gamma_type);
       }
     }
 
@@ -7612,7 +7615,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   filter = weed_instance_get_filter(inst, FALSE);
   filter_name = weed_get_string_value(filter, WEED_LEAF_NAME, &error);
 
-  if (mainw->current_file > 0 && cfile->frames == 0) {
+  if (CURRENT_CLIP_IS_VALID && !CURRENT_CLIP_HAS_VIDEO) {
     // audio clip - we will init the generator as fg video in the same clip
     // otherwise known as "showoff mode"
     cfile->frames = 1;

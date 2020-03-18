@@ -62,6 +62,9 @@ typedef struct {
   boolean(*render_frame)(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                          weed_plant_t **play_params);
 
+  boolean(*play_frame)(int hsize, int vsize, int *rowstrides, int64_t timecode, void **pixel_data, void **return_data,
+		       weed_plant_t **play_params);
+
   // optional
   boolean(*init_screen)(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
   void (*exit_screen)(uint16_t mouse_x, uint16_t mouse_y);

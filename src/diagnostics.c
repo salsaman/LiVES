@@ -4,10 +4,118 @@
 // released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
+#ifndef _DIAGNOSTICS_H
+#define _DIAGNOSTICS_H
+
 #include "diagnostics.h"
+#include "callbacks.h"
 
-#ifdef WEED_STARTUP_TEST
+#define STATS_TC (TICKS_PER_SECOND_DBL)
+static double inst_fps = 0.;
 
+LIVES_GLOBAL_INLINE double get_inst_fps(void) {
+  get_stats_msg(TRUE);
+  return inst_fps;
+}
+
+
+char *get_stats_msg(boolean calc_only) {
+  double avsync = 1.0;
+  static int last_play_sequence = -1;
+  static ticks_t last_curr_tc = 0, currticks;
+  static ticks_t last_mini_ticks = 0;
+  static frames_t last_mm = 0;
+  boolean have_avsync = FALSE;
+  char *msg, *audmsg = NULL, *bgmsg = NULL, *fgpal = NULL;
+  char *tmp, *tmp2;
+
+  if (!LIVES_IS_PLAYING) return NULL;
+
+  if (CURRENT_CLIP_HAS_AUDIO) {
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      if (mainw->jackd != NULL && mainw->jackd->in_use) avsync = lives_jack_get_pos(mainw->jackd);
+      have_avsync = TRUE;
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE) {
+      if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = lives_pulse_get_pos(mainw->pulsed);
+      have_avsync = TRUE;
+    }
+#endif
+    if (have_avsync) {
+      avsync -= ((double)cfile->frameno - 1.) / cfile->fps
+	+ (double)(mainw->currticks  - mainw->startticks)
+	/ TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
+    }
+  }
+  ///currticks = lives_get_current_ticks();
+  currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+  if (mainw->play_sequence > last_play_sequence) {
+    last_curr_tc = currticks;
+    last_play_sequence = mainw->play_sequence;
+    inst_fps = cfile->pb_fps;
+    return NULL;
+  }
+  if (currticks > last_curr_tc + STATS_TC) {
+    if (mainw->fps_mini_ticks == last_mini_ticks) {
+      inst_fps = (double)(mainw->fps_mini_measure - last_mm
+			  + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
+	/ ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+    }
+    last_curr_tc = currticks;
+    last_mini_ticks = mainw->fps_mini_ticks;
+    last_mm = mainw->fps_mini_measure;
+  }
+
+  if (calc_only) return NULL;
+
+  if (have_avsync) {
+    audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
+				 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));
+    lives_free(tmp);
+  }
+  else
+    audmsg = lives_strdup(_("Clip has no audio.\n"));
+    
+  if (mainw->blend_file != mainw->current_file && mainw->blend_file != -1) {
+    char *bgpal = get_palette_name_for_clip(mainw->blend_file);
+    bgmsg = lives_strdup_printf(_("Bg clip: %d X %d, frame: %d / %d, palette: %s\n"),
+				mainw->files[mainw->blend_file]->hsize,
+				mainw->files[mainw->blend_file]->vsize,
+				mainw->files[mainw->blend_file]->frameno,
+				mainw->files[mainw->blend_file]->frames,
+				bgpal);
+    lives_free(bgpal);
+  }
+
+  fgpal = get_palette_name_for_clip(mainw->current_file);
+  
+  msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
+			      "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
+			      "Fg clip: %d X %d, palette: %s\n%s"),
+			    audmsg ? audmsg : "",
+			    mainw->actual_frame, cfile->frames,
+			    inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+			    mainw->effort, EFFORT_RANGE_MAX,
+			    prefs->pb_quality,
+			    tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low") : prefs->pb_quality == 2 ? _("Med") : _("High")),
+			    tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
+			    get_cache_stats(),
+			    cfile->hsize, cfile->vsize,
+			    fgpal, bgmsg ? bgmsg : ""
+			    );
+  lives_freep((void **)&bgmsg);
+  lives_freep((void **)&audmsg);
+  lives_freep((void **)&tmp);
+  lives_freep((void **)&tmp2);
+
+  return msg;
+}
+
+
+#ifdef WEED_STARTUP_TESTS
 
 ticks_t timerinfo;
 
@@ -366,11 +474,11 @@ int run_weed_startup_tests(void) {
   ptr = weed_get_voidptr_value(plant, "nullbasic", &werr);
   fprintf(stderr, "get null basic voidptr 0 returned (%p) %d\n", ptr, werr);
 
-  /* werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL); */
-  /* fprintf(stderr, "set null string returned %d\n", werr); */
+  werr = weed_leaf_set(plant, "nullbasic", WEED_SEED_VOIDPTR, 1, NULL);
+  fprintf(stderr, "set null string returned %d\n", werr);
 
-  /* ptr = weed_get_voidptr_value(plant, "nullbasic", &werr); */
-  /* fprintf(stderr, "get null string returned (%p) %d\n", ptr, werr); */
+  ptr = weed_get_voidptr_value(plant, "nullbasic", &werr);
+  fprintf(stderr, "get null string returned (%p) %d\n", ptr, werr);
 
   ptr2 = NULL;
   werr = weed_leaf_set(plant, "indirect", WEED_SEED_VOIDPTR, 1, &ptr2);
@@ -511,6 +619,20 @@ int run_weed_startup_tests(void) {
   weed_plant_free(plant);
   g_print("done\n");
 
+  weed_threadsafe = FALSE;
+  plant = weed_plant_new(0);
+  if (weed_leaf_set_private_data(plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY) {
+    weed_threadsafe = TRUE;
+    g_print("libweed built with FULL threadsafety\n");
+  }
+  else {
+    weed_threadsafe = FALSE;
+    g_print("libweed built with PARTIAL threadsafety\n");
+  }
+  weed_plant_free(plant);
+
+  g_print
+  
   return 0;
 }
 
@@ -530,4 +652,4 @@ int test_palette_conversions(void) {
   return 0;
 }
 
-
+#endif

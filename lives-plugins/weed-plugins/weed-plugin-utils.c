@@ -71,88 +71,87 @@
 #include <stdio.h>
 // *INDENT-OFF*
 ///////////////////////////////////////////////////////////
-static int wtrue = WEED_TRUE;
-#define _leaf_has_value(plant, key) ((weed_leaf_num_elements(plant, key) > 0) ? 1 : 0)
-#define general_get(plant, what, idx, val) (plant ? (weed_leaf_get(plant, what, idx, val) == WEED_SUCCESS) ? val : NULL : NULL)
-NOT_EXPORTED int general_get_int(weed_plant_t *plant, const char *what) {
-int v, *vp = (int *)general_get(plant, what, 0, &v); return vp ? v : 0;}
-NOT_EXPORTED weed_plant_t *general_get_plantptr(weed_plant_t *plant, const char *what, int idx) {
-  weed_plant_t *v, **vp = (weed_plant_t **)general_get(plant, what, idx, &v); return vp ? v : 0;}
-NOT_EXPORTED int64_t general_get_i64(weed_plant_t *plant, const char *what) {
-  int64_t v, *vp = (int64_t *)general_get(plant, what, 0, &v); return vp ? v : 0;}
-EXPORTS int weed_plant_get_type(weed_plant_t *plant) {return general_get_int(plant, WEED_LEAF_TYPE);}
+static int wtrue=WEED_TRUE;
+#define wlne(p,k) weed_leaf_num_elements((p),(k))
+#define wlg(p,w,i,v) weed_leaf_get((p),(w),(i),(v))
+#define _leaf_has_value(plant,key) ((wlne(plant,key) > 0) ? 1 : 0)
+#define general_get(plant,what,idx,val) (plant ? (wlg(plant,what,idx,val) == WEED_SUCCESS) ? val : NULL : NULL)
+#define gg(p,w,z,v) general_get((p),(w),(z),(v))
+NOT_EXPORTED int general_get_int(weed_plant_t *plant,const char *what){int v,*vp=(int *)gg(plant,what,0,&v); return vp ? v : 0;}
+#define gg_i(p,w) general_get_int((p),(w))
+#define general_get_boolean(p,w) gg_i((p),(w))
+#define gg_b(p,w) general_get_boolean((p),(w))
+NOT_EXPORTED weed_plant_t *general_get_plantptr(weed_plant_t *plant,const char *what,int idx){
+  weed_plant_t *v,**vp=(weed_plant_t **)gg(plant,what,idx,&v); return vp ? v : 0;}
+#define gg_p(p,w,z) general_get_plantptr((p),(w),(z))
+NOT_EXPORTED int64_t general_get_i64(weed_plant_t *plant,const char *what){
+int64_t v,*vp=(int64_t *)gg(plant,what,0,&v); return vp ? v : 0;}
+#define gg_i64(p,w) general_get_i64((p),(w))
+EXPORTS int weed_plant_get_type(weed_plant_t *plant){return gg_i(plant,WEED_LEAF_TYPE);}
 
-NOT_EXPORTED weed_plant_t *_weed_get_gui(weed_plant_t *plant) {
-  weed_plant_t *gui = NULL;
-  int type = weed_plant_get_type(plant);
+NOT_EXPORTED weed_plant_t *_weed_get_gui(weed_plant_t *plant){
+  weed_plant_t *gui=NULL;
+  int type=weed_plant_get_type(plant);
   if (type != WEED_PLANT_FILTER_CLASS && type != WEED_PLANT_PARAMETER_TEMPLATE
-      && type != WEED_PLANT_PARAMETER) return NULL;
-  general_get(plant, WEED_LEAF_GUI, 0, (void *)&gui);
-  if (!gui) {
-    gui = weed_plant_new(WEED_PLANT_GUI);
-    weed_leaf_set(plant, WEED_LEAF_GUI, WEED_SEED_PLANTPTR, 1, &gui);
-  }
-  return gui;
-}
-NOT_EXPORTED double general_get_dbl(weed_plant_t *plant, const char *what) {
-  double v, *vp = (double *)general_get(plant, what, 0, &v); return vp ? v : 0;}
-EXPORTS int weed_get_api_version(weed_plant_t *plugin_info) {weed_plant_t *host_info;
-  weed_leaf_get(plugin_info, WEED_LEAF_HOST_INFO, 0, &host_info);
-  return general_get_int(host_info, WEED_LEAF_FILTER_API_VERSION);}
-NOT_EXPORTED void _weed_plant_set_flags(weed_plant_t *plant, int flags) {int type = weed_plant_get_type(plant);
+&& type != WEED_PLANT_PARAMETER) return NULL;
+  gg(plant,WEED_LEAF_GUI,0,(void *)&gui);
+  if (!gui){gui=weed_plant_new(WEED_PLANT_GUI);weed_leaf_set(plant,WEED_LEAF_GUI,WEED_SEED_PLANTPTR,1,&gui);} return gui;}
+NOT_EXPORTED double general_get_dbl(weed_plant_t *plant,const char *what){
+  double v,*vp=(double *)gg(plant,what,0,&v); return vp ? v : 0;}
+#define gg_dbl(p,w) general_get_int((p),(w))
+EXPORTS int weed_get_api_version(weed_plant_t *plugin_info){weed_plant_t *host_info;
+  wlg(plugin_info,WEED_LEAF_HOST_INFO,0,&host_info); return gg_i(host_info,WEED_LEAF_FILTER_API_VERSION);}
+NOT_EXPORTED void _weed_plant_set_flags(weed_plant_t *plant,int flags){int type=weed_plant_get_type(plant);
   if (type == WEED_PLANT_FILTER_CLASS || type == WEED_PLANT_PARAMETER_TEMPLATE
       || type == WEED_PLANT_CHANNEL_TEMPLATE || type == WEED_PLANT_GUI)
-    weed_leaf_set(plant, WEED_LEAF_FLAGS, WEED_SEED_INT, 1, &flags);}
-EXPORTS void weed_filter_set_flags(weed_plant_t *filter, int flags) {_weed_plant_set_flags(filter, flags);}
-EXPORTS void weed_chantmpl_set_flags(weed_plant_t *chantmpl, int flags) {_weed_plant_set_flags(chantmpl, flags);}
-EXPORTS void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl, int flags) {  _weed_plant_set_flags(paramtmpl, flags);}
-EXPORTS void weed_gui_set_flags(weed_plant_t *gui, int flags) {  _weed_plant_set_flags(gui, flags);}
-NOT_EXPORTED void _weed_plant_set_name(weed_plant_t *plant, const char *name) {
-  int type = weed_plant_get_type(plant);
+    weed_leaf_set(plant,WEED_LEAF_FLAGS,WEED_SEED_INT,1,&flags);}
+EXPORTS void weed_filter_set_flags(weed_plant_t *filter,int flags){_weed_plant_set_flags(filter,flags);}
+EXPORTS void weed_chantmpl_set_flags(weed_plant_t *chantmpl,int flags){_weed_plant_set_flags(chantmpl,flags);}
+EXPORTS void weed_paramtmpl_set_flags(weed_plant_t *paramtmpl,int flags){  _weed_plant_set_flags(paramtmpl,flags);}
+EXPORTS void weed_gui_set_flags(weed_plant_t *gui,int flags){  _weed_plant_set_flags(gui,flags);}
+NOT_EXPORTED void _weed_plant_set_name(weed_plant_t *plant,const char *name){
+  int type=weed_plant_get_type(plant);
   if (type == WEED_PLANT_FILTER_CLASS || type == WEED_PLANT_PARAMETER_TEMPLATE
-      || type == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(plant, WEED_LEAF_NAME, WEED_SEED_STRING, 1, &name);}
-EXPORTS void weed_filter_set_name(weed_plant_t *filter, const char *name) {  _weed_plant_set_name(filter, name);}
-EXPORTS void weed_chantmpl_set_name(weed_plant_t *chantmpl, const char *name) { _weed_plant_set_name(chantmpl, name);}
-EXPORTS void weed_paramtmpl_set_name(weed_plant_t *paramtmpl, const char *name) { _weed_plant_set_name(paramtmpl, name);}
-EXPORTS weed_plant_t *weed_filter_get_gui(weed_plant_t *filter) {return _weed_get_gui(filter);}
-EXPORTS weed_plant_t *weed_param_get_gui(weed_plant_t *param) {return _weed_get_gui(param);}
-EXPORTS weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt) {return _weed_get_gui(paramt);}
-EXPORTS weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info) {weed_plant_t *host_info;
-  return *((weed_plant_t **)(general_get(plugin_info, WEED_LEAF_HOST_INFO, 0, (void *)&host_info)));}
-EXPORTS int weed_get_host_verbosity(weed_plant_t *host_info) {return general_get_int(host_info, WEED_LEAF_VERBOSITY);}
+      || type == WEED_PLANT_CHANNEL_TEMPLATE) weed_leaf_set(plant,WEED_LEAF_NAME,WEED_SEED_STRING,1,&name);}
+EXPORTS void weed_filter_set_name(weed_plant_t *filter,const char *name){  _weed_plant_set_name(filter,name);}
+EXPORTS void weed_chantmpl_set_name(weed_plant_t *chantmpl,const char *name){ _weed_plant_set_name(chantmpl,name);}
+EXPORTS void weed_paramtmpl_set_name(weed_plant_t *paramtmpl,const char *name){ _weed_plant_set_name(paramtmpl,name);}
+EXPORTS weed_plant_t *weed_filter_get_gui(weed_plant_t *filter){return _weed_get_gui(filter);}
+EXPORTS weed_plant_t *weed_param_get_gui(weed_plant_t *param){return _weed_get_gui(param);}
+EXPORTS weed_plant_t *weed_paramtmpl_get_gui(weed_plant_t *paramt){return _weed_get_gui(paramt);}
+EXPORTS weed_plant_t *weed_get_host_info(weed_plant_t *plugin_info){weed_plant_t *host_info;
+  return *((weed_plant_t **)(gg(plugin_info,WEED_LEAF_HOST_INFO,0,(void *)&host_info)));}
+EXPORTS int weed_get_host_verbosity(weed_plant_t *host_info){return gg_i(host_info,WEED_LEAF_VERBOSITY);}
 //EXPORTS char *weed_get_host_name(weed_plant_t *host_info)
 //EXPORTS char *weed_get_host_version(weed_plant_t *host_info)
-//EXPORTS char **weed_get_host_layout_schemes(weed_plant_t *host_info, int *nvals)
-NOT_EXPORTED int _weed_plant_get_flags(weed_plant_t *plant) {return general_get_int(plant, WEED_LEAF_FLAGS);}
-EXPORTS int weed_host_get_flags(weed_plant_t *host_info) {return _weed_plant_get_flags(host_info);}
-EXPORTS int weed_filter_get_flags(weed_plant_t *filter) {return _weed_plant_get_flags(filter);}
-EXPORTS int weed_chantmpl_get_flags(weed_plant_t *chantmpl) {return _weed_plant_get_flags(chantmpl);}
-EXPORTS int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl) {return _weed_plant_get_flags(paramtmpl);}
-EXPORTS int weed_instance_get_flags(weed_plant_t *instance) {return _weed_plant_get_flags(instance);}
-EXPORTS int weed_host_supports_linear_gamma(weed_plant_t *host_info) {
-  return (weed_host_get_flags(host_info) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
-EXPORTS int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info) {
+//EXPORTS char **weed_get_host_layout_schemes(weed_plant_t *host_info,int *nvals)
+NOT_EXPORTED int _weed_plant_get_flags(weed_plant_t *plant){return gg_i(plant,WEED_LEAF_FLAGS);}
+EXPORTS int weed_host_get_flags(weed_plant_t *host_info){return _weed_plant_get_flags(host_info);}
+EXPORTS int weed_filter_get_flags(weed_plant_t *filter){return _weed_plant_get_flags(filter);}
+EXPORTS int weed_chantmpl_get_flags(weed_plant_t *chantmpl){return _weed_plant_get_flags(chantmpl);}
+EXPORTS int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl){return _weed_plant_get_flags(paramtmpl);}
+EXPORTS int weed_instance_get_flags(weed_plant_t *instance){return _weed_plant_get_flags(instance);}
+EXPORTS int weed_host_supports_linear_gamma(weed_plant_t *host_info){
+ return (weed_host_get_flags(host_info) & WEED_HOST_SUPPORTS_LINEAR_GAMMA);}
+EXPORTS int weed_host_supports_premultiplied_alpha(weed_plant_t *host_info){
 return (weed_host_get_flags(host_info) & WEED_HOST_SUPPORTS_PREMULTIPLIED_ALPHA);}
-EXPORTS weed_plant_t *weed_instance_get_filter(weed_plant_t *inst) {
-  weed_plant_t *filter; return *((weed_plant_t **)general_get(inst, WEED_LEAF_FILTER_CLASS, 0, (void *)&filter));}
-EXPORTS weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx) {
-  return general_get_plantptr(inst, WEED_LEAF_IN_CHANNELS, idx);}
-EXPORTS weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx) {
-  return general_get_plantptr(inst, WEED_LEAF_OUT_CHANNELS, idx);}
-EXPORTS void *weed_channel_get_pixel_data(weed_plant_t *channel) {
-  void *pd; return *((void **)(general_get(channel, WEED_LEAF_PIXEL_DATA, 0, (void *)&pd)));}
-EXPORTS int weed_channel_get_width(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_WIDTH);}
-EXPORTS int weed_channel_get_height(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_HEIGHT);}
-EXPORTS int weed_channel_get_palette(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_CURRENT_PALETTE);}
-EXPORTS int weed_channel_get_yuv_clamping(weed_plant_t *channel) {
-  return general_get_int(channel, WEED_LEAF_YUV_CLAMPING);}
-EXPORTS int weed_channel_get_stride(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_ROWSTRIDES);}
-EXPORTS int weed_channel_get_offset(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_OFFSET);}
-EXPORTS int weed_channel_get_true_height(weed_plant_t *channel) {int height;
-return *((int *)(general_get(channel, WEED_LEAF_HEIGHT, weed_leaf_num_elements(channel, WEED_LEAF_HEIGHT) - 1, &height)));}
-EXPORTS int weed_channel_is_disabled(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_DISABLED);}
-EXPORTS weed_plant_t *weed_param_get_template(weed_plant_t *param) {
-  weed_plant_t *paramtmpl; return *((weed_plant_t **)(general_get(param, WEED_LEAF_TEMPLATE, 0, (void *)&paramtmpl)));}
+EXPORTS weed_plant_t *weed_instance_get_filter(weed_plant_t *inst){
+  weed_plant_t *filter; return *((weed_plant_t **)gg(inst,WEED_LEAF_FILTER_CLASS,0,(void *)&filter));}
+EXPORTS weed_plant_t *weed_get_in_channel(weed_plant_t *inst,int idx){return gg_p(inst,WEED_LEAF_IN_CHANNELS,idx);}
+EXPORTS weed_plant_t *weed_get_out_channel(weed_plant_t *inst,int idx){return gg_p(inst,WEED_LEAF_OUT_CHANNELS,idx);}
+EXPORTS void *weed_channel_get_pixel_data(weed_plant_t *channel){
+  void *pd; return *((void **)(gg(channel,WEED_LEAF_PIXEL_DATA,0,(void *)&pd)));}
+EXPORTS int weed_channel_get_width(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_WIDTH);}
+EXPORTS int weed_channel_get_height(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_HEIGHT);}
+EXPORTS int weed_channel_get_palette(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_CURRENT_PALETTE);}
+EXPORTS int weed_channel_get_yuv_clamping(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_YUV_CLAMPING);}
+EXPORTS int weed_channel_get_stride(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_ROWSTRIDES);}
+EXPORTS int weed_channel_get_offset(weed_plant_t *channel){return gg_i(channel,WEED_LEAF_OFFSET);}
+EXPORTS int weed_channel_get_true_height(weed_plant_t *channel){int height;
+return *((int *)(gg(channel,WEED_LEAF_HEIGHT,wlne(channel,WEED_LEAF_HEIGHT) - 1,&height)));}
+EXPORTS int weed_channel_is_disabled(weed_plant_t *channel){return gg_b(channel,WEED_LEAF_DISABLED);}
+EXPORTS weed_plant_t *weed_param_get_template(weed_plant_t *param){
+  weed_plant_t *paramtmpl; return *((weed_plant_t **)(gg(param,WEED_LEAF_TEMPLATE,0,(void *)&paramtmpl)));}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -248,8 +247,7 @@ EXPORTS weed_plant_t *weed_plugin_info_init(weed_bootstrap_f weed_boot, int32_t 
 EXPORTS weed_plant_t *weed_channel_template_init(const char *name, int flags) {
   weed_plant_t *chantmpl = weed_plant_new(WEED_PLANT_CHANNEL_TEMPLATE);
   if (chantmpl == NULL || name == NULL) return NULL;
-  weed_chantmpl_set_name(chantmpl, name);
-  weed_chantmpl_set_flags(chantmpl, flags);
+  weed_chantmpl_set_name(chantmpl, name); weed_chantmpl_set_flags(chantmpl, flags);
   return chantmpl;
 }
 
@@ -536,9 +534,9 @@ EXPORTS weed_plant_t *weed_out_param_colRGBd_init(const char *name, double red, 
 ///////////////////////////////////////////////////////////////////////
 
 #ifdef NEED_AUDIO
-EXPORTS int weed_channel_get_audio_rate(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_AUDIO_RATE);}
-EXPORTS int weed_channel_get_naudchans(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_AUDIO_CHANNELS);}
-EXPORTS int weed_channel_get_audio_length(weed_plant_t *channel) {return general_get_int(channel, WEED_LEAF_AUDIO_DATA_LENGTH);}
+EXPORTS int weed_channel_get_audio_rate(weed_plant_t *channel) {return gg_i(channel, WEED_LEAF_AUDIO_RATE);}
+EXPORTS int weed_channel_get_naudchans(weed_plant_t *channel) {return gg_i(channel, WEED_LEAF_AUDIO_CHANNELS);}
+EXPORTS int weed_channel_get_audio_length(weed_plant_t *channel) {return gg_i(channel, WEED_LEAF_AUDIO_DATA_LENGTH);}
 
 #ifdef __WEED_UTILS_H__
 EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudchans) {
@@ -575,15 +573,15 @@ EXPORTS int *weed_channel_get_rowstrides(weed_plant_t *channel, int *nplanes) {
   return weed_get_int_array_counted(channel, WEED_LEAF_ROWSTRIDES, nplanes);}
 #endif
 
-EXPORTS int weed_param_get_value_int(weed_plant_t *param) {return general_get_int(param, WEED_LEAF_VALUE);}
+EXPORTS int weed_param_get_value_int(weed_plant_t *param) {return gg_i(param, WEED_LEAF_VALUE);}
 EXPORTS int weed_param_get_value_boolean(weed_plant_t *param) {return weed_param_get_value_int(param);}
-EXPORTS double weed_param_get_value_double(weed_plant_t *param) {return general_get_dbl(param, WEED_LEAF_VALUE);}
-EXPORTS int64_t weed_param_get_value_int64(weed_plant_t *param) {return general_get_i64(param, WEED_LEAF_VALUE);}
+EXPORTS double weed_param_get_value_double(weed_plant_t *param) {return gg_dbl(param, WEED_LEAF_VALUE);}
+EXPORTS int64_t weed_param_get_value_int64(weed_plant_t *param) {return gg_i64(param, WEED_LEAF_VALUE);}
 EXPORTS char *weed_param_get_value_string(weed_plant_t *param) {
   char *value;
   return (!weed_leaf_num_elements(param, WEED_LEAF_VALUE)
           || !(value = (char *)weed_malloc(weed_leaf_element_size(param, WEED_LEAF_VALUE, 0) + 1))) ? NULL
-         : *((char **)general_get(param, WEED_LEAF_VALUE, 0, (void *)&value));}
+         : *((char **)gg(param, WEED_LEAF_VALUE, 0, (void *)&value));}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -597,7 +595,7 @@ static void _weed_clone_leaf(weed_plant_t *from, const char *key, weed_plant_t *
   weed_funcptr_t *dataf;
   weed_plant_t **datap;
   int32_t seed_type = weed_leaf_seed_type(from, key);
-  weed_size_t stlen, num = weed_leaf_num_elements(from, key);
+  weed_size_t stlen, num = wlne(from, key);
   if (num == 0) weed_leaf_set(to, key, seed_type, 0, NULL);
   else {
     switch (seed_type) {
@@ -789,9 +787,12 @@ EXPORTS INLINE int weed_palette_is_alpha(int pal) {return (pal >= 1024 && pal < 
 EXPORTS INLINE int weed_palette_is_rgb(int pal) {return (pal < 512) ? WEED_TRUE : WEED_FALSE;}
 EXPORTS INLINE int weed_palette_is_yuv(int pal) {return (pal >= 512 && pal < 1024) ? WEED_TRUE : WEED_FALSE;}
 EXPORTS INLINE int weed_palette_get_nplanes(int pal) {
-  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 ||
-      pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV411 ||
-      pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_A8 ||
+  if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 \
+      || pal == WEED_PALETTE_BGRA32 ||
+      pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 \
+      || pal == WEED_PALETTE_YUV411 ||
+      pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT \
+      || pal == WEED_PALETTE_A8 ||
       pal == WEED_PALETTE_A1 || pal == WEED_PALETTE_RGBFLOAT || pal == WEED_PALETTE_RGBAFLOAT) return 1;
   if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P ||
       pal == WEED_PALETTE_YUV444P) return 3;
@@ -799,7 +800,7 @@ EXPORTS INLINE int weed_palette_get_nplanes(int pal) {
   return 0; // unknown palette
 }
 
-EXPORTS INLINE int weed_palette_is_valid(int pal) {if (weed_palette_get_nplanes(pal) == 0) return WEED_FALSE; return WEED_TRUE;}
+EXPORTS INLINE int weed_palette_is_valid(int pal) {return weed_palette_get_nplanes(pal) ? WEED_TRUE : WEED_FALSE;}
 
 EXPORTS INLINE int weed_palette_is_float_palette(int pal) {
   return (pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT

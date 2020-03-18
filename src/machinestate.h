@@ -201,6 +201,12 @@ void *_ext_memmove(void *, const void *, size_t);
 void *_ext_realloc(void *, size_t);
 void *_ext_calloc(size_t, size_t);
 
+#if defined _GNU_SOURCE
+#define LIVES_GNU
+#define lives_malloc_auto(size) __builtin_alloc(size)
+#define lives_malloc_auto_aligned(size, align) __builtin_alloc_with_align(size, align)
+#endif
+
 size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
 boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT;
 boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT;
@@ -241,6 +247,7 @@ char *get_md5sum(const char *filename);
 char *lives_format_storage_space_string(uint64_t space);
 lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, uint64_t *dsval);
 uint64_t get_fs_free(const char *dir);
+boolean get_ds_used(uint64_t *bytes);
 
 ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
@@ -290,6 +297,7 @@ typedef struct {
 #define WEED_LEAF_NOTIFY "notify"
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
+#define WEED_LEAF_RETURN_VALUE "return_value"
 
 #define WEED_LEAF_THREAD_PARAM "thrd_param"
 #define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
@@ -311,6 +319,20 @@ void lives_threadpool_finish(void);
 int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
-boolean run_as_thread(weed_plant_t *info);
+typedef weed_plantptr_t lives_proc_thread_t;
+
+#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+
+typedef int(*funcptr_bool_t)();
+typedef int64_t(*funcptr_int64_t)();
+
+ boolean run_as_thread(weed_plant_t *info); ///< already depracated
+
+lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
+boolean lives_proc_thread_check(lives_proc_thread_t);
+ void lives_proc_thread_join(lives_proc_thread_t);
+int lives_proc_thread_join_boolean(lives_proc_thread_t);
+int lives_proc_thread_join_int(lives_proc_thread_t);
+ int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 #endif

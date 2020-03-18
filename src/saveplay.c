@@ -5125,13 +5125,24 @@ int save_to_scrap_file(weed_layer_t *layer) {
   pdata_size = weed_plant_serialise(fd, mainw->frame_layer, NULL);
   scrapfile->f_size += pdata_size;
 
-  // check free space every 1024 frames or every 10 MB of audio (TODO ****)
-  if ((scrapfile->frames & 0x3FF) == 0) {
+  // check free space every 256 frames or every 10 MB of audio (TODO ****)
+  if ((scrapfile->frames & 0xFF) == 0) {
     char *dir = lives_build_filename(prefs->workdir, scrapfile->handle, NULL);
     free_mb = (double)get_fs_free(dir) / 1000000.;
     if (free_mb == 0) writeable = is_writeable_dir(dir);
     lives_free(dir);
   }
+  if (prefs->disk_quota > -1) {
+    g_print("ptaa1\n");
+    /// check every 64 frames for quota overrun, because its a background task
+    if ((scrapfile->frames & 0x3F) == 0) {
+    g_print("ptaa12\n");
+      size_t ds_used;
+      if (get_ds_used(&ds_used)) {
+	g_print("FS used is %ld\n", ds_used);
+	// *INDENT-OFF*
+      }}}
+  // *INDENT-OM*
 
   if ((!mainw->fs || (prefs->play_monitor != prefs->gui_monitor && capable->nmonitors > 1)) && !prefs->hide_framebar &&
       !mainw->faded) {

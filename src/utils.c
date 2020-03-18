@@ -1253,6 +1253,19 @@ off_t lives_buffered_offset(int fd) {
 }
 
 
+size_t lives_buffered_writer_orig_size(int fd) {
+  lives_file_buffer_t *fbuff;
+
+  if ((fbuff = find_in_file_buffers(fd)) == NULL) {
+    LIVES_DEBUG("lives_buffered_offset: no file buffer found");
+    return lseek(fd, 0, SEEK_CUR);
+  }
+
+  if (fbuff->read) return 0;
+  return fbuff->orig_size;
+}
+
+
 /////////////////////////////////////////////
 
 int lives_chdir(const char *path, boolean allow_fail) {
@@ -1881,7 +1894,7 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
     nloops = nframe / selrange;
     if (mainw->ping_pong && (dir == LIVES_DIRECTION_BACKWARD || (clip_can_reverse(fileno)))) {
       dir += nloops;
-      dir &= 1;
+      dir = LIVES_DIRECTION_PAR(dir);
       if (dir == LIVES_DIRECTION_BACKWARD && !clip_can_reverse(fileno))
         dir = LIVES_DIRECTION_FORWARD;
     }
@@ -1946,7 +1959,6 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
   }
   if (fileno == mainw->playing_file) {
     if (mainw->scratch != SCRATCH_NONE) {
-      g_print("SCR is %d\n", mainw->scratch);
       sfile->last_frameno = nframe;
       mainw->scratch = SCRATCH_JUMP_NORESYNC;
     }

@@ -24,6 +24,7 @@
 #include "paramwindow.h"
 #include "ce_thumbs.h"
 #include "startup.h"
+#include "diagnostics.h"
 
 #ifdef LIBAV_TRANSCODE
 #include "transcode.h"
@@ -10706,7 +10707,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack != NULL
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
       || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
-
+  
   if (!state) {
     // lock OFF
     prefs->audio_opts |= (AUDIO_OPTS_FOLLOW_CLIPS & future_prefs->audio_opts);
@@ -10724,100 +10725,72 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
-#define STATS_TC (TICKS_PER_SECOND_DBL)
-static double inst_fps = 0.;
-
-double get_inst_fps(void) {
-  mainw->lockstats = TRUE;
-  show_sync_callback(NULL, NULL, 0, 0, LIVES_INT_TO_POINTER(1));
-  return inst_fps;
-}
+ char *get_palette_name_for_clip(int clipno) {
+   lives_clip_t *sfile;
+   char *palname = NULL;
+   if (!IS_VALID_CLIP(clipno)) return NULL;
+   sfile = mainw->files[clipno];
+   if (IS_NORMAL_CLIP(clipno)) {
+    if (is_virtual_frame(mainw->current_file, mainw->actual_frame)) {
+      lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
+      palname = lives_strdup(weed_palette_get_name_full(cdata->current_palette, cdata->YUV_clamping, cdata->YUV_subspace));
+    }
+    else {
+      palname = lives_strdup(weed_palette_get_name((sfile->bpp == 24 ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32)));
+    }
+  }
+  else switch (sfile->clip_type) {
+    case CLIP_TYPE_GENERATOR: {
+      weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
+      if (inst) {
+	weed_plant_t * channel = get_enabled_channel(inst, 0, FALSE); 
+	if (channel) {
+	  int clamping, subspace, pal;
+	  pal = weed_channel_get_palette_yuv(channel, &clamping, NULL, &subspace);
+	  palname = lives_strdup(weed_palette_get_name_full(pal, clamping, subspace));
+	}
+      }
+    }
+      break;
+    case CLIP_TYPE_VIDEODEV: {
+#ifdef HAVE_UNICAP
+      lives_vdev_t *ldev = (lives_vdev_t *)sfile->ext_src;
+      palname = lives_strdup(weed_palette_get_name_full(ldev->current_palette, ldev->YUV_clamping, 0));
+#endif
+    }
+      break;
+    default:
+      break;
+    }
+   if (!palname) palname = lives_strdup("??????");
+   return palname;
+ }
 
 
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer keybd) {
-  double avsync = 1.0;
-  static double tick_ratio = 0.;
-  static int last_play_sequence = -1;
-  static ticks_t last_clock_tc = 0;
-  static ticks_t last_curr_tc = 0;
-  static ticks_t last_mini_ticks = 0;
-  static frames_t last_mm = 0;
-  int last_dprint_file;
-
-  if (mainw->playing_file < 0) return FALSE;
-  if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
-  if (!CURRENT_CLIP_HAS_AUDIO || !CURRENT_CLIP_HAS_VIDEO) return FALSE;
-  if (prefs->show_dev_opts)
-    if (!keybd) mainw->lockstats = !mainw->lockstats;
-  if (!mainw->lockstats) return FALSE;
-
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-    if (mainw->jackd != NULL && mainw->jackd->in_use) avsync = (double)mainw->jackd->seek_pos /
-          cfile->arate / cfile->achans / cfile->asampsize * 8;
-    else return FALSE;
-#else
-    return FALSE;
-#endif
-  } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-    if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = lives_pulse_get_pos(mainw->pulsed);
-    else return FALSE;
-#else
-    return FALSE;
-#endif
-  } else return FALSE;
-
-  avsync -= (double)(cfile->frameno - 1.) / cfile->fps
-            + (double)(mainw->currticks  - mainw->startticks)
-            / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
-
-  last_dprint_file = mainw->last_dprint_file;
-  mainw->no_switch_dprint = TRUE;
+  if (!LIVES_IS_PLAYING) return FALSE;
+  if (!CURRENT_CLIP_HAS_VIDEO || CURRENT_CLIP_IS_CLIPBOARD) return FALSE;
 
   if (!prefs->show_dev_opts) {
+    int last_dprint_file = mainw->last_dprint_file;
+    mainw->no_switch_dprint = TRUE;
     d_print_urgency(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
                     mainw->actual_frame, cfile->frames, cfile->pb_fps);
-  } else {
-    if (mainw->play_sequence > last_play_sequence) {
-      last_clock_tc = lives_get_current_ticks();
-      last_curr_tc = mainw->currticks;
-      last_play_sequence = mainw->play_sequence;
-      inst_fps = cfile->pb_fps;
-      tick_ratio = 1.;
-    } else {
-      if (mainw->currticks > last_curr_tc + STATS_TC) {
-        ticks_t clock_ticks = lives_get_current_ticks();
-        if (clock_ticks > last_clock_tc) {
-          tick_ratio = (double)(mainw->currticks - last_curr_tc) / (double)(clock_ticks - last_clock_tc);
-        }
-        if (mainw->fps_mini_ticks == last_mini_ticks) {
-          inst_fps = (double)(mainw->fps_mini_measure - last_mm) / ((double)(mainw->currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
-        }
-        last_clock_tc = clock_ticks;
-        last_curr_tc = mainw->currticks;
-        last_mini_ticks = mainw->fps_mini_ticks;
-        last_mm = mainw->fps_mini_measure;
-      }
-      lives_freep((void **)&mainw->urgency_msg);
-      mainw->urgency_msg
-        = lives_strdup_printf(
-            _("Audio is %s video by %.4f secs.\nat frame %d / %d, with fps %.3f (target: %.3f)\n"
-              "Current effort = %d / %d, quality = %d (%s)\n%s\nClock ratio = %.5f"),
-            (avsync >= 0. ? "ahead of" : "behind"), fabsf(avsync), mainw->actual_frame, cfile->frames,
-            inst_fps * sig(cfile->pb_fps), cfile->pb_fps, mainw->effort, EFFORT_RANGE_MAX,
-            prefs->pb_quality, prefs->pb_quality == 1 ? "Low" : prefs->pb_quality == 2 ? "Med" : "High",
-            get_cache_stats(), tick_ratio);
-    }
+    mainw->no_switch_dprint = FALSE;
+    mainw->last_dprint_file = last_dprint_file;
+    return FALSE;
   }
 
-  mainw->no_switch_dprint = FALSE;
-  mainw->last_dprint_file = last_dprint_file;
-  return TRUE;
+  if (!keybd) mainw->lockstats = !mainw->lockstats;
+  if (!mainw->lockstats) return FALSE;
+
+    lives_freep((void **)&mainw->urgency_msg);
+    mainw->urgency_msg = get_stats_msg(FALSE);
+    return FALSE;
 }
 
-
+  
 boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   // ctrl-fn key will store a clip for higher switching

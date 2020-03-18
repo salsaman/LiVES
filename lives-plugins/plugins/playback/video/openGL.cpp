@@ -33,11 +33,14 @@
 
 static char plugin_version[64] = "LiVES openGL playback engine version 1.1";
 
-static boolean(*render_fn)(int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data);
-static boolean render_frame_unknown(int hsize, int vsize, void **pixel_data, void **return_data);
+static const uint16_t RGB2ARGB[8] =  {0, 1, 1, 2, 2, 3, 4, 0};
+static const uint16_t RGB2BGR[4] = {0, 2, 2, 0};
 
-static int palette_list[5];
+static boolean(*play_fn)(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
+static boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
+static boolean play_frame_unknown(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
+
+static int palette_list[6];
 static int mypalette;
 
 static boolean inited;
@@ -128,10 +131,12 @@ static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
 }
 
 // size of img inside texture
+static volatile uint32_t imgRow;
 static volatile uint32_t imgWidth;
 static volatile uint32_t imgHeight;
 
 // size of texture
+static volatile uint32_t texRow;
 static volatile uint32_t texWidth;
 static volatile uint32_t texHeight;
 
@@ -231,7 +236,7 @@ const char *module_check_init(void) {
     //use_pbo=TRUE;
   }
 
-  render_fn = &render_frame_unknown;
+  play_fn = &play_frame_unknown;
 
   inited = false;
 
@@ -281,7 +286,7 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", WEED_CHANNEL_OPTIONAL, palette_list), NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("mode", "Trigger _Mode", 0, modes), weed_string_list_init("color", "_Color", 0, patterns), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("openGL player", "salsaman", 1, 0, init_screen,
-                               render_frame, exit_screen, in_chantmpls, out_chantmpls, in_params, NULL);
+                               play_frame, exit_screen, in_chantmpls, out_chantmpls, in_params, NULL);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 
@@ -323,9 +328,15 @@ const weed_plant_t **get_play_params(weed_bootstrap_f weed_boot) {
 
 const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
-  palette_list[0] = WEED_PALETTE_RGB24;
-  palette_list[1] = WEED_PALETTE_RGBA32;
+  palette_list[0] = WEED_PALETTE_RGBA32;
+  palette_list[1] = WEED_PALETTE_RGB24;
   palette_list[2] = WEED_PALETTE_END;
+
+  /// these are disabled until somebody figures out how to do texbuf palette conversions in openGL
+  // palette_list[2] = WEED_PALETTE_BGRA32;
+  // palette_list[3] = WEED_PALETTE_BGR24;
+  // palette_list[4] = WEED_PALETTE_ARGB32;
+  // palette_list[5] = WEED_PALETTE_END;
   return palette_list;
 }
 
@@ -347,20 +358,21 @@ static int get_size_for_type(int type) {
 
 
 boolean set_palette(int palette) {
+  pthread_mutex_lock(&rthread_mutex);
   if (palette == WEED_PALETTE_RGBA32 || palette == WEED_PALETTE_RGB24 ||
-      palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_BGRA32) {
-    render_fn = &render_frame_rgba;
+      palette == WEED_PALETTE_BGR24 || palette == WEED_PALETTE_ARGB32 || palette == WEED_PALETTE_BGRA32) {
+    play_fn = &play_frame_rgba;
     mypalette = palette;
 
     type = GL_RGBA;
-    if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
-    else if (mypalette == WEED_PALETTE_BGR24) type = GL_BGR;
-    else if (mypalette == WEED_PALETTE_BGRA32) type = GL_BGRA;
-
+    if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
     typesize = get_size_for_type(type);
+    pthread_mutex_unlock(&rthread_mutex);
+
     return TRUE;
   }
   // invalid palette
+  pthread_mutex_unlock(&rthread_mutex);
   return FALSE;
 }
 
@@ -536,13 +548,21 @@ static int next_pot(int val) {
 }
 
 
-static void render_to_gpumem_inner(int tnum, int width, int height, int type, int typesize, volatile uint8_t *texturebuf) {
+static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
   int texID = get_texture_texID(tnum);
-
   glEnable(m_TexTarget);
 
   glBindTexture(m_TexTarget, texID);
+
+  // if (mypalette == WEED_PALETTE_BGR24)
+  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+  
+  // if (mypalette == WEED_PALETTE_BGRA32)
+  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+
+  // if (mypalette == WEED_PALETTE_ARGB32)
+  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGB2ARGB);
 
   glTexImage2D(m_TexTarget, mipMapLevel, type, width, height, 0, type, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
 
@@ -552,11 +572,9 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, in
 
   tnum = get_real_tnum(tnum, FALSE);
 
-  textures[tnum].width = width;
-  textures[tnum].height = height;
-
-  textures[tnum].type = type;
-  textures[tnum].typesize = typesize;
+  // textures[tnum].width = row;
+  // textures[tnum].height = height;
+  // textures[tnum].type = type;
 }
 
 
@@ -613,7 +631,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   has_new_texture = FALSE;
   texturebuf = NULL;
 
-  imgWidth = imgHeight = texWidth = texHeight = 0;
+  imgRow = imgWidth = imgHeight = texRow = texWidth = texHeight = 0;
 
   pthread_mutex_init(&cond_mutex, NULL);
   pthread_cond_init(&cond, NULL);
@@ -874,12 +892,10 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glFlush();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
-  type = GL_RGBA;
-  if (mypalette == WEED_PALETTE_RGB24) type = GL_RGB;
-  else if (mypalette == WEED_PALETTE_BGR24) type = GL_BGR;
-  else if (mypalette == WEED_PALETTE_BGRA32) type = GL_BGRA;
+  // type = GL_RGBA;
+  // if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
 
-  typesize = get_size_for_type(type);
+  //typesize = get_size_for_type(type);
 
   rquad = 0.;
 
@@ -946,13 +962,13 @@ static int Upload(void) {
     if (ctexture == nbuf) ctexture = 0;
     if (ntextures < nbuf) ntextures++;
     has_new_texture = FALSE;
-    render_to_gpumem_inner(0, texWidth, texHeight, type, typesize, texturebuf);
+    render_to_gpumem_inner(0, texRow / typesize, texHeight, type, texturebuf);
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
 
   aspect = (float)imgWidth / (float)imgHeight;
-  scalex = (float)imgWidth / (float)texWidth;
+  scalex = (float)(imgWidth * typesize) / (float)texRow;
   scaley = (float)imgHeight / (float)texHeight;
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
@@ -1918,20 +1934,22 @@ static void *render_thread_func(void *data) {
 }
 
 
-boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void **return_data) {
   int i;
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   static int otypesize = typesize;
-
+  int row = rs[0], rowz;
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
-  imgWidth = hsize;
+  imgRow = row; // bytes
+  imgWidth = hsize;  // pix
   imgHeight = vsize;
 
   if (!npot) {
     hsize = next_pot(hsize);
     vsize = next_pot(vsize);
   }
+  rowz = hsize * typesize;
 
   if (return_data != NULL) {
     XWindowAttributes attr;
@@ -1951,12 +1969,12 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
       weed_free((void *)texturebuf);
     }
 
-    if (imgWidth == texWidth && imgHeight == texHeight) {
+    if (rowz == texRow && imgHeight == texHeight) {
       texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     } else {
-      texturebuf = (uint8_t *)weed_malloc(hsize * vsize * typesize);
+      texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize,
+        weed_memcpy((uint8_t *)texturebuf + i * rowz, (uint8_t *)pixel_data[0] + i * row,
                     imgWidth * typesize);
       }
     }
@@ -1964,7 +1982,8 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     return_ready = FALSE;
     dst = (uint8_t *)(retdata = (uint8_t *)return_data[0]); // host created space for return data
 
-    texWidth = hsize;
+    texRow = rowz;
+    texWidth = imgWidth;
     texHeight = vsize;
 
     // window size must not change here
@@ -1990,27 +2009,28 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
     // texture is upside-down compared to image
     for (i = 0; i < window_height; i++) {
       weed_memcpy(dst, src, twidth);
-      dst += twidth;
+      dst += row;
       src -= twidth;
     }
     has_new_texture = TRUE;
     pthread_mutex_unlock(dblbuf ? &retthread_mutex : &rthread_mutex); // unlock render thread
   } else {
-    if (imgWidth != texWidth || imgHeight != texHeight || texturebuf == NULL || typesize != otypesize) {
+    if (imgRow != texRow || imgHeight != texHeight || texturebuf == NULL) {
       if (texturebuf != NULL) {
         weed_free((void *)texturebuf);
       }
-      texturebuf = (uint8_t *)weed_malloc(hsize * vsize * typesize);
+      texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
     }
 
+    texRow = rowz;
     texWidth = hsize;
     texHeight = vsize;
 
-    if (texWidth == imgWidth && texHeight == imgHeight) {
-      weed_memcpy((void *)texturebuf, pixel_data[0], texWidth * texHeight * typesize);
+    if (texRow == imgRow && texHeight >= imgHeight) {
+      weed_memcpy((void *)texturebuf, pixel_data[0], imgRow * imgHeight);
     } else {
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * hsize * typesize, (uint8_t *)pixel_data[0] + i * imgWidth * typesize,
+        weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data[0] + i * imgRow,
                     imgWidth * typesize);
       }
     }
@@ -2027,7 +2047,7 @@ boolean render_frame_rgba(int hsize, int vsize, void **pixel_data, void **return
 }
 
 
-boolean render_frame_unknown(int hsize, int vsize, void **pixel_data, void **return_data) {
+boolean play_frame_unknown(int hsize, int vsize, int *rs, void **pixel_data, void **return_data) {
   fprintf(stderr, "openGL plugin error: No palette was set !\n");
   return FALSE;
 }
@@ -2071,15 +2091,11 @@ void decode_pparams(weed_plant_t **pparams) {
 }
 
 
-boolean render_frame(int hsize, int vsize, int64_t tc, void **pixel_data, void **return_data, void **pp) {
+boolean play_frame(int hsize, int vsize, int* rowstrides, int64_t tc, void **pixel_data, void **return_data, void **pp) {
   // call the function which was set in set_palette
   weed_plant_t **pparams = (weed_plant_t **)pp;
-
-  if (pparams != NULL) {
-    decode_pparams(pparams);
-  }
-
-  return render_fn(hsize, vsize, pixel_data, return_data);
+  if (pparams != NULL) decode_pparams(pparams);
+  return play_fn(hsize, vsize, rowstrides, pixel_data, return_data);
 }
 
 

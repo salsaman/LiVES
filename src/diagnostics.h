@@ -10,11 +10,12 @@
 #include "main.h"
 #include "mainwindow.h"
 
-#ifdef WEED_STARTUP_TEST
+char *get_stats_msg(boolean calc_only);
+double get_inst_fps(void);
+
+#ifdef WEED_STARTUP_TESTS
 int run_weed_startup_tests(void);
-#endif
-
 int test_palette_conversions(void);
-
 #endif
 
+#endif

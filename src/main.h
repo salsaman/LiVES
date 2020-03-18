@@ -605,6 +605,24 @@ typedef enum {
 
 #define CURRENT_CLIP_IS_CLIPBOARD (mainw->current_file == 0)
 
+/// use REVERSE / FORWARD when a sign is used, BACKWARD / FORWARD when a parity is used
+typedef enum {
+  LIVES_DIRECTION_REVERSE = -1,
+  LIVES_DIRECTION_BACKWARD,
+  LIVES_DIRECTION_FORWARD,
+  LIVES_DIRECTION_LEFT,
+  LIVES_DIRECTION_RIGHT,
+  LIVES_DIRECTION_UP,
+  LIVES_DIRECTION_DOWN,
+  LIVES_DIRECTION_IN,
+  LIVES_DIRECTION_OUT,
+} lives_direction_t;
+
+#define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sig(dir))  /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((dir) & 1)) /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
+#define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
+					      ? (dir2) == LIVES_DIR_FORWARD : ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
+					      ? (dir1) == LIVES_DIR_FORWARD : sig(dir1) != sig(dir2))
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
   // basic info (saved during backup)
@@ -1385,6 +1403,7 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
 off_t lives_buffered_offset(int fd);
+size_t lives_buffered_writer_orig_size(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);

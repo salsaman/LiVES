@@ -355,8 +355,8 @@ boolean transcode(int start, int end) {
 
     if (!info) info = weed_plant_new(WEED_PLANT_THREAD_INFO);
     else {
-      lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, "return_value"));
-      error = weed_get_boolean_value(info, "error_return", NULL);
+      lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, WEED_LEAF_RETURN_VALUE));
+      error = weed_get_boolean_value(info, WEED_LEAF_RETURN_VALUE, NULL);
     }
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
@@ -366,7 +366,7 @@ boolean transcode(int start, int end) {
       weed_set_plantptr_value(info, WEED_LEAF_THREAD_PARAM0, copy_frame_layer);
       weed_set_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, vpp);
       weed_set_int64_value(info, WEED_LEAF_THREAD_PARAM2, currticks);
-      weed_leaf_set(info, "return_value", WEED_SEED_BOOLEAN, 0, NULL);
+      weed_leaf_set(info, WEED_LEAF_RETURN_VALUE, WEED_SEED_BOOLEAN, 0, NULL);
       run_as_thread(info);
     }
 

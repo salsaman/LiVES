@@ -372,6 +372,7 @@ enum {
 #define EXEC_MD5SUM "md5sum"
 #define EXEC_WMCTRL "wmctrl"
 #define EXEC_GZIP "gzip"
+#define EXEC_DU "du"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"

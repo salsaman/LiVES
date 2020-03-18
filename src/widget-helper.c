@@ -11200,10 +11200,9 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 50
-#define LOOP_LIMIT 16
+#define LOOP_LIMIT 8
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
-  //boolean lm_needs_idlefunc = FALSE;
   int nulleventcount = 0;
   int loops = 0;
 
@@ -11235,7 +11234,6 @@ boolean lives_widget_context_update(void) {
     }
 #ifdef GUI_GTK
     g_main_context_acquire(g_main_context_get_thread_default());
-    //g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
         g_main_context_iteration(NULL, FALSE);
@@ -11249,7 +11247,7 @@ boolean lives_widget_context_update(void) {
           /// try to slow down big GUI updates. This is to try to prevent audio underflows, caused by the video thread
           /// doing lots of interface changes. However, if the delay is too long then we start to build up events since
           /// we will be hurrying to draw the next frame; too slow and there is insufficient reduction in CPU load.
-          lives_nanosleep(1000);
+          lives_nanosleep(100);
         }
         if (!mainw->multitrack && loops > LOOP_LIMIT) break;
       }

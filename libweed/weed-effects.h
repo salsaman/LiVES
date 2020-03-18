@@ -133,6 +133,7 @@ typedef struct {
 #define WEED_ERROR_FILTER_INVALID			65
 #define WEED_ERROR_TOO_MANY_INSTANCES	66
 #define WEED_ERROR_REINIT_NEEDED               	67
+#define WEED_ERROR_NOT_READY		               	68
 
 #define WEED_VERBOSITY_SILENT	 	-2 ///< no output
 #define WEED_VERBOSITY_CRITICAL	-1 ///< only critical errors which prevent the plugin / filter from operating AT ALL

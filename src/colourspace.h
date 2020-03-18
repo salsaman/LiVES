@@ -17,6 +17,8 @@
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
 #define WEED_LEAF_PIXEL_BITS "pixel_bits"
+#define WEED_LEAF_RESIZE_THREAD "res_thread"
+#define WEED_LEAF_PROGSCAN "progscan"
 
 #define DEF_SCREEN_GAMMA 2.2
 
@@ -189,8 +191,6 @@ boolean rowstrides_differ(int n1, int *n1_array, int n2, int *n2_array);
 boolean weed_palette_is_painter_palette(int pal);
 lives_painter_t *layer_to_lives_painter(weed_layer_t *);
 boolean lives_painter_to_layer(lives_painter_t *cairo, weed_layer_t *);
-
-#define WEED_LEAF_PROGSCAN "progscan"
 
 // pixbuf functions
 #define weed_palette_is_pixbuf_palette(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_RGBA32) ? TRUE : FALSE)

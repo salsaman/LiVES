@@ -117,8 +117,13 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
 /// otherwise it can be ignored
-boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+  boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
+
+  /// the same as render frame, but extra padding bytes are allowed, the values in bytes are set in rowstrides
+  /// return_data will have the same rs values as pixel_data
+  boolean play_frame(int hsize, int vsize, int *rowstrides, int64_t timecode, void **pixel_data, void **return_data,
+			void **play_params);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)
 void exit_screen(int16_t mouse_x, int16_t mouse_y);

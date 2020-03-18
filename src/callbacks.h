@@ -385,6 +385,8 @@ boolean nervous_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVES
 boolean aud_lock_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
                           livespointer statep);
 
+char *get_palette_name_for_clip(int clipno);
+
 boolean show_sync_callback(LiVESAccelGroup *, LiVESWidgetObject *, uint32_t, LiVESXModifierType, livespointer clip_number);
 
 boolean on_save_set_activate(LiVESMenuItem *, livespointer);

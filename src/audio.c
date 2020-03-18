@@ -1234,7 +1234,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 #ifdef DEBUG_ARENDER
     g_print("writing to %s\n", outfilename);
 #endif
-    out_fd = lives_open_buffered_writer(outfilename, S_IRUSR | S_IWUSR, TRUE);
+    out_fd = lives_open_buffered_writer(outfilename, S_IRUSR | S_IWUSR, FALSE);
     lives_free(outfilename);
 
     if (out_fd < 0) {
@@ -1244,7 +1244,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       return 0l;
     }
 
-    cur_size = lives_buffered_offset(out_fd);
+    cur_size = lives_buffered_writer_orig_size(out_fd);
 
     if (opvol_start == opvol_end && opvol_start == 0.) ins_pt = tc_end / TICKS_PER_SECOND_DBL;
     ins_pt *= out_achans * out_arate * out_asamps;
@@ -1255,8 +1255,11 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       out_reverse_endian = TRUE;
     else out_reverse_endian = FALSE;
 
-    // fill to ins_pt with zeros
-    pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
+    if (ins_size > cur_size) {
+      // fill to ins_pt with zeros
+      pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
+    }
+    else lives_lseek_buffered_writer(out_fd, ins_size);
 
     if (opvol_start == opvol_end && opvol_start == 0.) {
       lives_close_buffered(out_fd);

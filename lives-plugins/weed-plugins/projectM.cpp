@@ -12,6 +12,7 @@ static int package_version = 1; // version of this package
 //////////////////////////////////////////////////////////////////
 
 #define NEED_AUDIO
+#define NEED_PALETTE_UTILS
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -59,6 +60,9 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 
 static int copies = 0;
 
+static const GLushort RGB2ARGB[8] =  {0, 1, 1, 2, 2, 3, 4, 0};
+static const GLushort RGB2BGR[4] = {0, 2, 2, 0};
+
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct timespec ts;
@@ -67,8 +71,9 @@ typedef struct {
   projectM *globalPM;
   GLubyte *fbuffer;
   int textureHandle;
-  int width;
-  int height;
+  int width, height, texsize;
+  int palette, psize;
+  int rowstride;
   volatile bool worker_ready;
   volatile bool worker_active;
   volatile int pidx;
@@ -76,7 +81,6 @@ typedef struct {
   volatile int nprs;
   char **volatile prnames;  // volatile ptr to non-volatile strings !!
   pthread_mutex_t mutex;
-  pthread_mutex_t frame_mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
   volatile int audio_frames;
@@ -86,10 +90,15 @@ typedef struct {
   volatile bool die;
   volatile bool failed;
   volatile bool update_size;
+  volatile bool update_psize;
+  volatile bool needs_more;
   volatile bool rendering;
+  volatile bool needs_update;
+  volatile bool set_update;
 #ifdef HAVE_SDL2
   SDL_Window *win;
   SDL_GLContext glCtx;
+  Display *dpy;
 #endif
 } _sdata;
 
@@ -142,13 +151,14 @@ static int resize_display(int width, int height) {
 static int change_size(_sdata *sdata) {
   int ret = 0;
   sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
-  if (sdata->fbuffer != NULL) weed_free(sdata->fbuffer);
+
+  // TODO: cane we change the texture size ?
+  //settings.textureSize = sd->width;
 #ifdef HAVE_SDL2
   SDL_SetWindowSize(sdata->win, sdata->width, sdata->height);
 #else
   ret = resize_display(sdata->width, sdata->height);
 #endif
-  sdata->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sdata->width * sdata->height * 3, 1);
   return ret;
 }
 
@@ -170,8 +180,12 @@ static int init_display(_sdata *sd) {
   SDL_GetDisplayBounds(0, &rect);
   maxwidth = rect.w;
   maxheight = rect.h;
+  if (verbosity >= WEED_VERBOSITY_DEBUG)
+    fprintf(stderr, "ProjectM running with SDL 2\n");
 #else
   const SDL_VideoInfo *info = SDL_GetVideoInfo();
+  if (verbosity >= WEED_VERBOSITY_DEBUG)
+    fprintf(stderr, "ProjectM running with SDL 1\n");
   if (!info) {
     /* This should probably never happen. */
     fprintf(stderr, "Video query failed: %s\n",
@@ -186,8 +200,8 @@ static int init_display(_sdata *sd) {
   if (verbosity >= WEED_VERBOSITY_DEBUG)
     printf("Screen Resolution: %d x %d\n", maxwidth, maxheight);
 
-  // if (defwidth > maxwidth) defwidth = maxwidth;
-  // if (defheight > maxheight) defheight = maxheight;
+  if (defwidth > maxwidth) defwidth = maxwidth;
+  if (defheight > maxheight) defheight = maxheight;
 
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
@@ -197,6 +211,7 @@ static int init_display(_sdata *sd) {
   sd->win = SDL_CreateWindow("projectM", SDL_WINDOWPOS_UNDEFINED , SDL_WINDOWPOS_UNDEFINED, defwidth, defheight,
                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
   sd->glCtx = SDL_GL_CreateContext(sd->win);
+
 #else
   if (resize_display(defwidth, defheight)) return 3;
 #endif
@@ -206,15 +221,45 @@ static int init_display(_sdata *sd) {
 }
 
 
-static int render_frame(_sdata *sdata) {
-  sdata->globalPM->renderFrame();
+static int render_frame(_sdata *sd) {
+  float scaley = sd->height / sd->texsize;
+  float scalex = sd->width / sd->texsize;
+
+  if (sd->needs_update) {
+    sd->needs_update = false;
+    while (!sd->set_update) usleep(100);
+    sd->set_update = false;
+    if (sd->update_size) {
+      change_size(sd);
+      sd->update_size = false;
+    }
+    if (sd->update_psize) {
+      if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
+      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height, 1);
+      glPixelStorei(GL_UNPACK_ROW_LENGTH, sd->rowstride / sd->psize);
+      if (sd->psize == 4) {
+        if (sd->palette == WEED_PALETTE_BGRA32) {
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+        } else if (sd->palette == WEED_PALETTE_ARGB32) {
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGB2ARGB);
+        }
+      } else {
+        if (sd->palette == WEED_PALETTE_BGR24) {
+          glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+        }
+      }
+      sd->update_psize = false;
+    }
+  }
 
   glClear(GL_COLOR_BUFFER_BIT);
   glClear(GL_DEPTH_BUFFER_BIT);
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  glViewport(0, 0, sdata->width, sdata->height);
+  glViewport(0, 0, sd->width, sd->height);
+
+  sd->globalPM->renderFrame();
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -231,18 +276,23 @@ static int render_frame(_sdata *sdata) {
   glMatrixMode(GL_TEXTURE);
   glLoadIdentity();
 
-  glBindTexture(GL_TEXTURE_2D, sdata->textureHandle);
+  glBindTexture(GL_TEXTURE_2D, sd->textureHandle);
   glColor4d(1.0, 1.0, 1.0, 1.0);
+
+  yscale = (float)sd->height / (float)sd->width * 2.;
 
   glBegin(GL_QUADS);
   glTexCoord2d(0, 1);
   glVertex3d(-1, -1, 0);
+
   glTexCoord2d(0, 0);
-  glVertex3d(-1, 1, 0);
+  glVertex3d(-1, yscale - 1., 0);
+
   glTexCoord2d(1, 0);
-  glVertex3d(1, 1, 0);
+  glVertex3d(xscale, yscale - 1., 0);
+
   glTexCoord2d(1, 1);
-  glVertex3d(1, -1, 0);
+  glVertex3d(xscale, -1, 0);
   glEnd();
 
   glDisable(GL_TEXTURE_2D);
@@ -251,20 +301,19 @@ static int render_frame(_sdata *sdata) {
   glDisable(GL_DEPTH_TEST);
   glFlush();
 
+  if (sd->needs_more) {
 #if USE_DBLBUF
-  pthread_mutex_lock(&sdata->frame_mutex);
-  glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
-  pthread_mutex_unlock(&sdata->frame_mutex);
 #ifdef HAVE_SDL2
-  SDL_GL_SwapWindow(sdata->win);
+    SDL_GL_SwapWindow(sd->win);
 #else
-  SDL_GL_SwapBuffers();
+    SDL_GL_SwapBuffers();
 #endif
-#else
-  pthread_mutex_lock(&sdata->frame_mutex);
-  glReadPixels(0, 0, sdata->width, sdata->height, GL_RGB, GL_UNSIGNED_BYTE, sdata->fbuffer);
-  pthread_mutex_unlock(&sdata->frame_mutex);
 #endif
+
+    glReadPixels(0, 0, sd->rowstride / sd->psize, sd->height, sd->psize == 4
+                 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
+    sd->needs_more = false;
+  }
   return 0;
 }
 
@@ -318,7 +367,7 @@ static void *worker(void *data) {
   settings.fps = 0;//sd->fps;
   settings.smoothPresetDuration = 2;
   settings.presetDuration = 10;
-  settings.beatSensitivity = .5;
+  settings.beatSensitivity = .6;
   settings.aspectCorrection = 1;
   settings.softCutRatingsEnabled = 0;
   settings.shuffleEnabled = 1;
@@ -326,7 +375,11 @@ static void *worker(void *data) {
   settings.menuFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf";
   settings.titleFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
   settings.easterEgg = 1;
-  settings.textureSize = DEF_TEXTURESIZE;
+
+  if (sd->width >= sd->height)
+    settings.textureSize = sd->texsize = sd->width;
+  else
+    settings.textureSize = sd->texsize = sd->height;
 
   // can fail here
   sd->globalPM = new projectM(settings, 0);
@@ -377,13 +430,6 @@ static void *worker(void *data) {
       sd->audio_frames = 0;
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
-
-    pthread_mutex_lock(&sd->frame_mutex);
-    if (sd->update_size) {
-      change_size(sd);
-      sd->update_size = false;
-    }
-    pthread_mutex_unlock(&sd->frame_mutex);
     render_frame(sd);
   }
   pthread_mutex_unlock(&sd->mutex);
@@ -419,12 +465,13 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       int rc = 0;
       int width = weed_channel_get_width(out_channel);
       int height = weed_channel_get_height(out_channel);
-      int count = 0;
-
+      int rowstride = weed_channel_get_stride(out_channel);
+      int palette = weed_channel_get_palette(out_channel);
+      int psize = pixel_size(palette);
       sd = (_sdata *)weed_malloc(sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
-      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * width * height * 3, 1);
+      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * rowstride * height, 1);
 
       if (!sd->fbuffer) {
         weed_free(sd);
@@ -444,13 +491,17 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->die = false;
       sd->failed = false;
       sd->update_size = false;
-
+      sd->update_psize = true;
+      sd->needs_more = true;
+      sd->rowstride = rowstride;
+      sd->palette = palette;
+      sd->psize = psize;
+      sd->needs_update = sd->set_update = true;
       sd->audio = (float *)weed_calloc(4096,  sizeof(float));
       sd->audio_frames = 0;
       sd->achans = 0;
 
       pthread_mutex_init(&sd->mutex, NULL);
-      pthread_mutex_init(&sd->frame_mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
 
       sd->nprs = 0;
@@ -496,34 +547,66 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
 static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timestamp) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  weed_plant_t *in_channel = weed_get_plantptr_value(inst, WEED_LEAF_IN_CHANNELS, NULL);
-  weed_plant_t *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
-  weed_plant_t *inparam = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  unsigned char *dst = (unsigned char *)weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *ptrs, *end;
+  weed_plant_t *in_channel = weed_get_in_channel(inst, 0);
+  weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
+  weed_plant_t **inparams = weed_get_in_params(inst, NULL);
+  weed_plant_t *inparam = inparams[0];
+  unsigned char *dst = (unsigned char *)weed_channel_get_pixel_data(out_channel);
 
-  int width = weed_get_int_value(out_channel, WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(out_channel, WEED_LEAF_HEIGHT, NULL);
+  int width = weed_channel_get_width(out_channel);
+  int height = weed_channel_get_height(out_channel);
 
-  //int palette=weed_get_int_value(out_channel,WEED_LEAF_CURRENT_PALETTE,NULL);
-
-  int rowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
-
-  int widthx = width * 3;
-
+  int palette = weed_channel_get_palette(out_channel);
+  int psize = pixel_size(palette);
+  int rowstride = weed_channel_get_stride(out_channel);
+  bool did_update = false, got_buffer = false;
   register int j;
 
+  weed_free(inparams);
   if (sd == NULL || sd->failed) return WEED_ERROR_PLUGIN_INVALID;
 
-  if (sd->width != width || sd->height != height) {
-    sd->width = width;
-    sd->height = height;
-    if (sd->width > maxwidth) sd->width = maxwidth;
-    if (sd->height > maxheight) sd->height = maxheight;
-    sd->update_size = true;
+  if (width > maxwidth) width = maxwidth;
+  if (height > maxheight) height = maxheight;
+
+  if (sd->width != width || sd->height != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
+    /// we must update size / pal
+    sd->needs_update = TRUE;
+    /// wait for worker thread to finish rendering
+    while (sd->needs_update) usleep(100);
+    //   // set new values and update_size
+    if (sd->width != width || sd->height != height) {
+      sd->height = height;
+      sd->width = width;
+      sd->update_size = true;
+    }
+    if (sd->palette != palette || sd->rowstride != rowstride) {
+      sd->update_psize = true;
+      sd->psize = psize;
+      sd->palette = palette;
+      sd->rowstride = rowstride;
+    }
+    sd->set_update = true;
+    did_update = true;
   }
 
-  if (sd->update_size || sd->fbuffer == NULL) return WEED_SUCCESS;
+
+  if (!sd->needs_more) {
+    // if the buffer is ready now we will copy it, otherwise we will try again at the end
+    // copy sd->fbuffer -> dst
+    //if (rowstride == widthx && width == sd->width && height == sd->height) {
+    weed_memcpy(dst, sd->fbuffer, rowstride * height);
+    // } else {
+    //   uint8_y *ptr = sd->fbuffer;
+    //   for (end = dst + height * rowstride; dst < end; dst += rowstride) {
+    // 	weed_memcpy(dst, ptr, widthx);
+    // 	ptr += widthx;
+    //   }
+    // }
+    sd->needs_more = true;
+    got_buffer = true;
+  }
+
+  /// update audio
 
   // ex. nprs = 10, we have 9 programs 1 - 9 and 0 is random
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
@@ -533,23 +616,21 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
 
   if (0) {
+    /// TODO - we can control the player with fake keystrokes
     projectMEvent evt;
     projectMKeycode key;
     projectMModifier mod;
-
     evt = PROJECTM_KEYDOWN;
     //mod=PROJECTM_KMOD_LSHIFT;
     key = PROJECTM_K_n;
-
     // send any keystrokes to projectM
     sd->globalPM->key_handler(evt, key, mod);
   }
 
   if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
 
-  /// fill the audio buffer for the next frame, then get the frame
-
   if (in_channel != NULL) {
+    /// fill the audio buffer for the next frame, then get the frame
     int achans;
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
@@ -589,30 +670,33 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     if (adata != NULL) weed_free(adata);
   }
 
-  //if (palette==WEED_PALETTE_RGBA32) widthx=width*4;
-
-  ptrs = sd->fbuffer;
-
-  pthread_mutex_lock(&sd->frame_mutex);
-
-  // copy sd->fbuffer -> dst
-  if (rowstride == widthx && width == sd->width && height == sd->height) {
-    weed_memcpy(dst, ptrs, widthx * height);
-  } else {
-    for (end = dst + height * rowstride; dst < end; dst += rowstride) {
-      weed_memcpy(dst, ptrs, widthx);
-      ptrs += widthx;
-    }
+  if (did_update) {
+    while (sd->needs_more) usleep(100);
   }
 
-  pthread_mutex_unlock(&sd->frame_mutex);
+  /// we did all the updates so...
 
+  if (!got_buffer) {
+    // if the buffer is ready now we will copy it, otherwise we will return with no data
+    // if (rowstride == widthx && width == sd->width && height == sd->height) {
+    weed_memcpy(dst, sd->fbuffer, rowstride * height);
+    // } else {
+    //   uint8_y *ptr = sd->fbuffer;
+    //   for (end = dst + height * rowstride; dst < end; dst += rowstride) {
+    // 	weed_memcpy(dst, ptr, widthx);
+    // 	ptr += widthx;
+    //   }
+    // }
+    sd->needs_more = true;
+  }
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGB24, WEED_PALETTE_BGR24, WEED_PALETTE_END};
+  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_BGR24, WEED_PALETTE_ARGB32, WEED_PALETTE_END
+                       };
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
@@ -628,6 +712,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
+  fprintf(stderr, "Verbosity was set to %d\n", verbosity);
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   statsd = NULL;
   XInitThreads();
@@ -648,7 +733,6 @@ WEED_DESETUP_START {
       weed_free(statsd->prnames);
     }
     pthread_mutex_destroy(&statsd->mutex);
-    pthread_mutex_destroy(&statsd->frame_mutex);
     pthread_mutex_destroy(&statsd->pcm_mutex);
     weed_free(statsd);
     statsd = NULL;

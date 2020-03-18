@@ -31,14 +31,13 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static char plugin_version[64] = "LiVES openGL playback engine version 1.1";
+static char plugin_version[64] = "LiVES openGL playback engine version 1.2";
 
-static const uint16_t RGB2ARGB[8] =  {0, 1, 1, 2, 2, 3, 4, 0};
-static const uint16_t RGB2BGR[4] = {0, 2, 2, 0};
+static const uint16_t RGBA2RGB[8] =  {1, 0, 2, 1, 3, 2, 0, 3};
 
-static boolean(*play_fn)(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
-static boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
-static boolean play_frame_unknown(int hsize, int vsize, int *rs, void **pixel_data, void **return_data);
+static boolean(*play_fn)(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
+static boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
+static boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 
 static int palette_list[6];
 static int mypalette;
@@ -131,14 +130,16 @@ static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
 }
 
 // size of img inside texture
-static volatile uint32_t imgRow;
-static volatile uint32_t imgWidth;
-static volatile uint32_t imgHeight;
+static uint32_t imgRow;
+static uint32_t imgWidth;
+static uint32_t imgHeight;
+static int32_t xoffs;
+static int32_t yoffs;
 
 // size of texture
-static volatile uint32_t texRow;
-static volatile uint32_t texWidth;
-static volatile uint32_t texHeight;
+static  uint32_t texRow;
+static  uint32_t texWidth;
+static  uint32_t texHeight;
 
 static GLenum m_TexTarget = GL_TEXTURE_2D;
 
@@ -162,6 +163,7 @@ typedef struct {
   char **argv;
 } _xparms;
 
+static _xparms xparms;
 
 typedef struct {
   int width;
@@ -225,7 +227,7 @@ static int get_texture_texID(int tnum) {
 
 
 const char *module_check_init(void) {
-  npot = FALSE;
+  npot = TRUE;
 
   XInitThreads();
 
@@ -330,13 +332,9 @@ const int *get_palette_list(void) {
   // return palettes in order of preference, ending with WEED_PALETTE_END
   palette_list[0] = WEED_PALETTE_RGBA32;
   palette_list[1] = WEED_PALETTE_RGB24;
-  palette_list[2] = WEED_PALETTE_END;
-
-  /// these are disabled until somebody figures out how to do texbuf palette conversions in openGL
-  // palette_list[2] = WEED_PALETTE_BGRA32;
-  // palette_list[3] = WEED_PALETTE_BGR24;
-  // palette_list[4] = WEED_PALETTE_ARGB32;
-  // palette_list[5] = WEED_PALETTE_END;
+  palette_list[2] = WEED_PALETTE_BGRA32;
+  palette_list[3] = WEED_PALETTE_BGR24;
+  palette_list[4] = WEED_PALETTE_END;
   return palette_list;
 }
 
@@ -509,14 +507,14 @@ static void setFullScreen(void) {
 }
 
 
-static volatile uint8_t *buffer_free(volatile uint8_t *retbuf) {
+static  uint8_t *buffer_free(volatile uint8_t *retbuf) {
   if (retbuf == NULL) return NULL;
   weed_free((void *)retbuf);
   return NULL;
 }
 
 
-static uint8_t *render_to_mainmem(int type, int window_width, int window_height) {
+static uint8_t *render_to_mainmem(int type, int row, int window_width, int window_height) {
   // copy GL drawing buffer to main mem
   uint8_t *xretbuf;
 
@@ -525,6 +523,7 @@ static uint8_t *render_to_mainmem(int type, int window_width, int window_height)
 
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, row);
 
   if (1 || !use_pbo) {
     xretbuf = (uint8_t *)weed_malloc(window_width * window_height * get_size_for_type(type));
@@ -551,20 +550,25 @@ static int next_pot(int val) {
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
   int texID = get_texture_texID(tnum);
+  int intype = type;
+
   glEnable(m_TexTarget);
 
   glBindTexture(m_TexTarget, texID);
 
-  // if (mypalette == WEED_PALETTE_BGR24)
-  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
-  
-  // if (mypalette == WEED_PALETTE_BGRA32)
-  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
+  if (mypalette == WEED_PALETTE_BGR24)
+    intype = GL_BGR;
 
-  // if (mypalette == WEED_PALETTE_ARGB32)
-  //   glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGB2ARGB);
+  if (mypalette == WEED_PALETTE_BGRA32)
+    intype = GL_BGRA;
 
-  glTexImage2D(m_TexTarget, mipMapLevel, type, width, height, 0, type, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
+  /// does NOT work !!!
+  if (mypalette == WEED_PALETTE_ARGB32) {
+    glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 8, RGBA2RGB);
+    intype = GL_RGBA;
+  }
+
+  glTexImage2D(m_TexTarget, mipMapLevel, type, width, height, 0, intype, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
 
   glGenerateMipmap(m_TexTarget);
 
@@ -579,8 +583,6 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
 
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
-  _xparms xparms;
-
   register int i;
 
   if (mypalette == WEED_PALETTE_END) {
@@ -968,8 +970,8 @@ static int Upload(void) {
   pthread_mutex_unlock(&rthread_mutex);
 
   aspect = (float)imgWidth / (float)imgHeight;
-  scalex = (float)(imgWidth * typesize) / (float)texRow;
-  scaley = (float)imgHeight / (float)texHeight;
+  scalex = (float)((imgWidth - 2 * xoffs) * typesize) / (float)texRow;
+  scaley = (float)(imgHeight - 2 * yoffs) / (float)texHeight;
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
 
@@ -1029,15 +1031,18 @@ static int Upload(void) {
     glBindTexture(m_TexTarget, texID);
     glColor4d(1.0, 1.0, 1.0, 1.0);
 
+    float xoffsf = 1. - (float)xoffs / (float)xparms.width;
+    float yoffsf = 1. - (float)yoffs / (float)xparms.height;
+
     glBegin(GL_QUADS);
     glTexCoord2d(0, scaley);
-    glVertex3d(-1, -1, 0);
+    glVertex3d(-xoffsf, -yoffsf, 0);
     glTexCoord2d(0, 0);
-    glVertex3d(-1, 1, 0);
+    glVertex3d(-xoffsf, yoffsf, 0);
     glTexCoord2d(scalex, 0);
-    glVertex3d(1, 1, 0);
+    glVertex3d(xoffsf, yoffsf, 0);
     glTexCoord2d(scalex, scaley);
-    glVertex3d(1, -1, 0);
+    glVertex3d(xoffsf, -yoffsf, 0);
     glEnd();
 
     glDisable(m_TexTarget);
@@ -1879,7 +1884,7 @@ static int Upload(void) {
       buffer_free(retbuf);
     }
 
-    retbuf = render_to_mainmem(type, window_width, window_height);
+    retbuf = render_to_mainmem(type, imgRow, window_width, window_height);
     return_ready = TRUE;
     pthread_mutex_unlock(&retthread_mutex);
 
@@ -1934,11 +1939,23 @@ static void *render_thread_func(void *data) {
 }
 
 
-boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void **return_data) {
-  int i;
+boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
+  //int hsize, int vsize, int xoffs, int yoffs, int *rs, void **pixel_data, void **return_data) {
   // within the mutex lock we set imgWidth, imgHwight, texWidth, texHeight, texbuffer
   static int otypesize = typesize;
-  int row = rs[0], rowz;
+  /// until we get libweed-layer
+  int hsize = weed_channel_get_width(frame);
+  int vsize = weed_channel_get_height(frame);
+  int xoffs = weed_get_int_value(frame, "x_offset", NULL);
+  int yoffs = weed_get_int_value(frame, "y_offset", NULL);
+  int row = weed_channel_get_stride(frame);
+  int rowz, mwidth;
+  void **return_data = NULL;
+  void *pixel_data = weed_channel_get_pixel_data(frame);
+  register int i;
+
+  if (ret) return_data = weed_get_voidptr_array(ret, WEED_LEAF_PIXEL_DATA, NULL);
+
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
   imgRow = row; // bytes
@@ -1970,11 +1987,11 @@ boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void *
     }
 
     if (rowz == texRow && imgHeight == texHeight) {
-      texturebuf = (uint8_t *)pixel_data[0]; // no memcpy needed, as we will not free pixel_data until render_thread has used it
+      texturebuf = (uint8_t *)pixel_data; // no memcpy needed, as we will not free pixel_data until render_thread has used it
     } else {
       texturebuf = (uint8_t *)weed_malloc(rowz * vsize);
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * rowz, (uint8_t *)pixel_data[0] + i * row,
+        weed_memcpy((uint8_t *)texturebuf + i * rowz, (uint8_t *)pixel_data + i * row,
                     imgWidth * typesize);
       }
     }
@@ -2002,10 +2019,11 @@ boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void *
 
     retdata = NULL;
 
-    if (texturebuf == (uint8_t *)pixel_data[0]) texturebuf = NULL;
+    if (texturebuf == (uint8_t *)pixel_data) texturebuf = NULL;
 
     src = (uint8_t *)retbuf + (window_height - 1) * twidth;
-
+    mwidth = twidth;
+    if (mwidth > imgWidth * typesize) mwidth = imgWidth * typesize;
     // texture is upside-down compared to image
     for (i = 0; i < window_height; i++) {
       weed_memcpy(dst, src, twidth);
@@ -2027,10 +2045,10 @@ boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void *
     texHeight = vsize;
 
     if (texRow == imgRow && texHeight >= imgHeight) {
-      weed_memcpy((void *)texturebuf, pixel_data[0], imgRow * imgHeight);
+      weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
     } else {
       for (i = 0; i < imgHeight; i++) {
-        weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data[0] + i * imgRow,
+        weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
                     imgWidth * typesize);
       }
     }
@@ -2043,11 +2061,12 @@ boolean play_frame_rgba(int hsize, int vsize, int *rs, void **pixel_data, void *
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
   otypesize = typesize;
+  if (return_data != NULL) weed_free(return_data);
   return TRUE;
 }
 
 
-boolean play_frame_unknown(int hsize, int vsize, int *rs, void **pixel_data, void **return_data) {
+boolean play_frame_unknown(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   fprintf(stderr, "openGL plugin error: No palette was set !\n");
   return FALSE;
 }
@@ -2091,11 +2110,11 @@ void decode_pparams(weed_plant_t **pparams) {
 }
 
 
-boolean play_frame(int hsize, int vsize, int* rowstrides, int64_t tc, void **pixel_data, void **return_data, void **pp) {
+boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   // call the function which was set in set_palette
-  weed_plant_t **pparams = (weed_plant_t **)pp;
+  weed_plant_t **pparams = weed_get_plantptr_array(frame, WEED_LEAF_IN_PARAMETERS, NULL);
   if (pparams != NULL) decode_pparams(pparams);
-  return play_fn(hsize, vsize, rowstrides, pixel_data, return_data);
+  return play_fn(frame, tc, ret);
 }
 
 

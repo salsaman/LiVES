@@ -5136,10 +5136,10 @@ int save_to_scrap_file(weed_layer_t *layer) {
     g_print("ptaa1\n");
     /// check every 64 frames for quota overrun, because its a background task
     if ((scrapfile->frames & 0x3F) == 0) {
-    g_print("ptaa12\n");
+      g_print("ptaa12\n");
       size_t ds_used;
       if (get_ds_used(&ds_used)) {
-	g_print("FS used is %ld\n", ds_used);
+        g_print("FS used is %ld\n", ds_used);
 	// *INDENT-OFF*
       }}}
   // *INDENT-OM*

@@ -341,7 +341,7 @@ typedef struct {
 
 #define DEF_DISK_QUOTA (50 * 1024 * 1024)
   int64_t disk_quota; /// max space we can use for all our files ( means not set, -1 means unlimited (up to ds_crti))
-  
+
 #define DEF_MSG_TEXTSIZE 4 // LIVES_FONTSIZE_LARGE (via lives_textsize_to_string())
 #define DEF_MAX_MSGS 10000
 

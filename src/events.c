@@ -4927,7 +4927,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->play_start = 1; ///< new clip frames always start  at 1
       if (info) {
         //lives_nanosleep_until_nonzero(weed_get_boolean_value(info, WEED_LEAF_DONE, NULL));
-	lives_proc_thread_join(info);
+        lives_proc_thread_join(info);
         info = NULL;
       }
       if (!render_to_clip(TRUE)) render_choice = RENDER_CHOICE_PREVIEW;
@@ -4948,7 +4948,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
     case RENDER_CHOICE_SAME_CLIP:
       cfile->undo_start = mainw->play_start = oplay_start; ///< same clip frames start where recording started
       if (info) {
-	lives_proc_thread_join(info);
+        lives_proc_thread_join(info);
         info = NULL;
       }
       if (!render_to_clip(FALSE)) render_choice = RENDER_CHOICE_PREVIEW;
@@ -4973,7 +4973,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
       mainw->unordered_blocks = TRUE;
       pref_factory_int(PREF_SEPWIN_TYPE, future_prefs->sepwin_type, FALSE);
       if (info) {
-	lives_proc_thread_join(info);
+        lives_proc_thread_join(info);
         info = NULL;
       }
       if (on_multitrack_activate(NULL, (weed_plant_t *)mainw->event_list)) {

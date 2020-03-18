@@ -1411,11 +1411,11 @@ int process_one(boolean visible) {
 
 
 #define ENABLE_PRECACHE
-#define SHOW_CACHE_PREDICTIONS
+  //#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
-#define DROPFRAME_TRIGGER 3
+#define DROPFRAME_TRIGGER 4
 #define JUMPFRAME_TRIGGER 9999 // we should retain cdata->jump_limit from the initial file open
 
   if (LIVES_IS_PLAYING) sfile = mainw->files[mainw->playing_file];
@@ -1545,17 +1545,17 @@ int process_one(boolean visible) {
           if (dropped < 0) dropped = 0;
         }
         if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-	  if (requested_frame != last_req_frame) {
-	    /// update the effort calculation with dropped frames and spare_cycles
-	    if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
-	    update_effort(spare_cycles + 1, FALSE);
-	  }
-	}
+          if (requested_frame != last_req_frame) {
+            /// update the effort calculation with dropped frames and spare_cycles
+            if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
+            update_effort(spare_cycles + 1, FALSE);
+          }
+        }
 #ifdef ENABLE_PRECACHE
         if (getahead > -1) {
           if (mainw->pred_frame == -getahead) {
-	    if (is_layer_ready(mainw->frame_layer_preload))
-	      sfile->frameno = mainw->pred_frame = -mainw->pred_frame;
+            if (is_layer_ready(mainw->frame_layer_preload))
+              sfile->frameno = mainw->pred_frame = -mainw->pred_frame;
           } else {
             if (mainw->pred_frame == getahead) {
               if ((sfile->pb_fps > 0. && sfile->frameno >= getahead)
@@ -1571,7 +1571,7 @@ int process_one(boolean visible) {
             }
           }
         } else {
-	  lives_direction_t dir;
+          lives_direction_t dir;
           if (sfile->clip_type == CLIP_TYPE_FILE && scratch == SCRATCH_NONE
               && is_virtual_frame(mainw->playing_file, sfile->frameno)
               && dropped > 0 && ((sfile->pb_fps < 0. && !clip_can_reverse(mainw->playing_file))
@@ -1587,9 +1587,9 @@ int process_one(boolean visible) {
               }
             }
 #endif
-	    dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
+            dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
             if (bungle_frames <= -dir || bungle_frames == 0) bungle_frames = dir;
-	    //bungle_frames += requested_frame - mainw->actual_frame - dir;
+            //bungle_frames += requested_frame - mainw->actual_frame - dir;
             test_getahead = requested_frame + bungle_frames * dir;
             if (test_getahead < 1 || test_getahead > sfile->frames) test_getahead = -1;
             else {
@@ -1635,7 +1635,7 @@ int process_one(boolean visible) {
                 && (getahead > -1 || is_layer_ready(mainw->frame_layer_preload)))
               sfile->frameno = pframe;
             if (mainw->pred_frame == sfile->frameno) cache_hits++;
-	    else if (getahead == -1) {
+            else if (getahead == -1) {
               if ((sfile->pb_fps > 0. && pframe <= mainw->actual_frame)
                   || (sfile->pb_fps < 0. && pframe >= mainw->actual_frame)) {
                 cleanup_preload = TRUE;
@@ -1661,31 +1661,31 @@ int process_one(boolean visible) {
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
       if (mainw->pwidth != last_pwidth || mainw->pheight != last_pheight) {
-	mainw->pred_frame = 0;
-	cleanup_preload = TRUE;
-	getahead = -1;
+        mainw->pred_frame = 0;
+        cleanup_preload = TRUE;
+        getahead = -1;
       }
       last_pwidth = mainw->pwidth;
       last_pheight = mainw->pheight;
       if (mainw->force_show || (sfile->frameno != mainw->actual_frame
 #ifdef ENABLE_PRECACHE
-				&& getahead < 0)
-	  || (getahead > -1 && mainw->frame_layer_preload != NULL && !cleanup_preload && requested_frame != last_req_frame)
+                                && getahead < 0)
+          || (getahead > -1 && mainw->frame_layer_preload != NULL && !cleanup_preload && requested_frame != last_req_frame)
 #endif
-	  ) {
+         ) {
         spare_cycles = 0;
         mainw->record_frame = requested_frame;
 
-	if (mainw->pred_frame == 0 && dropped > 0 && scratch == SCRATCH_NONE
-	    && is_virtual_frame(mainw->playing_file, sfile->frameno)) {
-	  lives_direction_t dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
-	  mainw->startticks -= (double)dir * (double)(sfile->frameno - mainw->actual_frame - 1) / sfile->pb_fps;
-	  sfile->frameno = mainw->actual_frame + dir;
-	}
-	
+        if (mainw->pred_frame == 0 && dropped > 0 && scratch == SCRATCH_NONE
+            && is_virtual_frame(mainw->playing_file, sfile->frameno)) {
+          lives_direction_t dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
+          mainw->startticks -= (double)dir * (double)(sfile->frameno - mainw->actual_frame - 1) / sfile->pb_fps;
+          sfile->frameno = mainw->actual_frame + dir;
+        }
+
         // load and display the new frame
 #ifdef SHOW_CACHE_PREDICTIONS
-        g_print("playing frame %d\n", sfile->frameno);
+        g_print("playing frame %d / %d\n", sfile->frameno, requested_frame);
 #endif
         load_frame_image(sfile->frameno);
 
@@ -1726,9 +1726,9 @@ int process_one(boolean visible) {
         if (IS_VALID_CLIP(aplay_file)) {
           int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
           mainw->files[aplay_file]->aseek_pos = mainw->jackd->real_seek_pos
-	    - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-	    * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans
-	    * mainw->files[aplay_file]->asampsize / 8;
+                                                - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+                                                * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans
+                                                * mainw->files[aplay_file]->asampsize / 8;
           mainw->files[aplay_file]->aseek_pos = ALIGN_CEIL64((int64_t)mainw->files[aplay_file]->aseek_pos, qnt);
         }
       }
@@ -1741,8 +1741,8 @@ int process_one(boolean visible) {
         if (IS_VALID_CLIP(aplay_file)) {
           int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
           mainw->files[aplay_file]->aseek_pos = mainw->pulsed->real_seek_pos
-	     - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-	    * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8;
+                                                - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+                                                * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8;
           mainw->files[aplay_file]->aseek_pos = ALIGN_CEIL64((int64_t)mainw->files[aplay_file]->aseek_pos, qnt);
         }
       }

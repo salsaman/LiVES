@@ -10707,7 +10707,7 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   if (!LIVES_IS_PLAYING || !is_realtime_aplayer(prefs->audio_player) || mainw->multitrack != NULL
       || mainw->is_rendering || mainw->preview || mainw->agen_key != 0 || mainw->agen_needs_reinit
       || prefs->audio_src == AUDIO_SRC_EXT) return TRUE;
-  
+
   if (!state) {
     // lock OFF
     prefs->audio_opts |= (AUDIO_OPTS_FOLLOW_CLIPS & future_prefs->audio_opts);
@@ -10725,46 +10725,44 @@ boolean aud_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
 }
 
 
- char *get_palette_name_for_clip(int clipno) {
-   lives_clip_t *sfile;
-   char *palname = NULL;
-   if (!IS_VALID_CLIP(clipno)) return NULL;
-   sfile = mainw->files[clipno];
-   if (IS_NORMAL_CLIP(clipno)) {
+char *get_palette_name_for_clip(int clipno) {
+  lives_clip_t *sfile;
+  char *palname = NULL;
+  if (!IS_VALID_CLIP(clipno)) return NULL;
+  sfile = mainw->files[clipno];
+  if (IS_NORMAL_CLIP(clipno)) {
     if (is_virtual_frame(mainw->current_file, mainw->actual_frame)) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
       palname = lives_strdup(weed_palette_get_name_full(cdata->current_palette, cdata->YUV_clamping, cdata->YUV_subspace));
-    }
-    else {
+    } else {
       palname = lives_strdup(weed_palette_get_name((sfile->bpp == 24 ? WEED_PALETTE_RGB24 : WEED_PALETTE_RGBA32)));
     }
-  }
-  else switch (sfile->clip_type) {
+  } else switch (sfile->clip_type) {
     case CLIP_TYPE_GENERATOR: {
       weed_plant_t *inst = (weed_plant_t *)sfile->ext_src;
       if (inst) {
-	weed_plant_t * channel = get_enabled_channel(inst, 0, FALSE); 
-	if (channel) {
-	  int clamping, subspace, pal;
-	  pal = weed_channel_get_palette_yuv(channel, &clamping, NULL, &subspace);
-	  palname = lives_strdup(weed_palette_get_name_full(pal, clamping, subspace));
-	}
+        weed_plant_t *channel = get_enabled_channel(inst, 0, FALSE);
+        if (channel) {
+          int clamping, subspace, pal;
+          pal = weed_channel_get_palette_yuv(channel, &clamping, NULL, &subspace);
+          palname = lives_strdup(weed_palette_get_name_full(pal, clamping, subspace));
+        }
       }
     }
-      break;
+    break;
     case CLIP_TYPE_VIDEODEV: {
 #ifdef HAVE_UNICAP
       lives_vdev_t *ldev = (lives_vdev_t *)sfile->ext_src;
       palname = lives_strdup(weed_palette_get_name_full(ldev->current_palette, ldev->YUV_clamping, 0));
 #endif
     }
-      break;
+    break;
     default:
       break;
     }
-   if (!palname) palname = lives_strdup("??????");
-   return palname;
- }
+  if (!palname) palname = lives_strdup("??????");
+  return palname;
+}
 
 
 boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
@@ -10785,12 +10783,12 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!keybd) mainw->lockstats = !mainw->lockstats;
   if (!mainw->lockstats) return FALSE;
 
-    lives_freep((void **)&mainw->urgency_msg);
-    mainw->urgency_msg = get_stats_msg(FALSE);
-    return FALSE;
+  lives_freep((void **)&mainw->urgency_msg);
+  mainw->urgency_msg = get_stats_msg(FALSE);
+  return FALSE;
 }
 
-  
+
 boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer clip_number) {
   // ctrl-fn key will store a clip for higher switching

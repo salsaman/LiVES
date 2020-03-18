@@ -59,11 +59,10 @@ typedef struct {
   boolean(*set_palette)(int palette);
   uint64_t (*get_capabilities)(int palette);
 
-  boolean(*render_frame)(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+  boolean(*render_frame)(int hsize, int vsize, ticks_t timecode, void **pixel_data, void **return_data,
                          weed_plant_t **play_params);
 
-  boolean(*play_frame)(int hsize, int vsize, int *rowstrides, int64_t timecode, void **pixel_data, void **return_data,
-		       weed_plant_t **play_params);
+  boolean(*play_frame)(weed_layer_t *frame, ticks_t tc, weed_layer_t *ret);
 
   // optional
   boolean(*init_screen)(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
@@ -110,6 +109,8 @@ typedef struct {
 #define VPP_CAN_RETURN    (1<<1)
 #define VPP_LOCAL_DISPLAY (1<<2)
 #define VPP_LINEAR_GAMMA  (1<<3)
+#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  (1<<5)
 
   int fwidth, fheight; /// width in pixels, but converted to macropixels for the player
 

@@ -39,8 +39,8 @@ extern "C"
 #endif /* __cplusplus */
 
 /* some nice macros, e.g
- double x = WEED_LEAF_GET(myplant, "mykey", double);
- */
+  double x = WEED_LEAF_GET(myplant, "mykey", double);
+*/
 #define WEED_LEAF_GET(plant, key, type) weed_get_##type##_value(plant, key, NULL)
 #define WEED_LEAF_GET_ARRAY_COUNTED(plant, key, type, counter) weed_get_##type##_array_counted(plant, key, &count)
 #define WEED_LEAF_SET(plant, key, type, value) weed_set_##type##_value(plant, key, value)

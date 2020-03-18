@@ -904,7 +904,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
 
       if ((is_rgb || mismatch) && (!weed_palette_has_alpha(palette) || best_palette == WEED_PALETTE_RGBAFLOAT ||
                                    best_palette == WEED_PALETTE_RGBFLOAT)
-	  && !(best_palette == WEED_PALETTE_RGB24 || best_palette == WEED_PALETTE_BGR24))
+          && !(best_palette == WEED_PALETTE_RGB24 || best_palette == WEED_PALETTE_BGR24))
         best_palette = palette_list[i];
       break;
     case WEED_PALETTE_RGBA32:
@@ -913,8 +913,8 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
     case WEED_PALETTE_ARGB32:
       if ((is_rgb || mismatch) && (has_alpha || best_palette == WEED_PALETTE_RGBFLOAT
                                    || best_palette == WEED_PALETTE_RGBAFLOAT)
-	  && best_palette != WEED_PALETTE_RGBA32
-	  && !(palette == WEED_PALETTE_ARGB32 && best_palette == WEED_PALETTE_BGRA32))
+          && best_palette != WEED_PALETTE_RGBA32
+          && !(palette == WEED_PALETTE_ARGB32 && best_palette == WEED_PALETTE_BGRA32))
         best_palette = palette_list[i];
       break;
     case WEED_PALETTE_RGBAFLOAT:
@@ -1968,6 +1968,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     opwidth = maxinwidth;
     opheight = maxinheight;
+    if (pb_quality == PB_QUALITY_LOW) {
+      if (((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt))
+          && CURRENT_CLIP_IS_VALID) {
+        int lbwidth = cfile->hsize;
+        int lbheight = cfile->vsize;
+        calc_maxspect(opwidth, opheight, &lbwidth, &lbheight);
+        opwidth = lbwidth;
+        opheight = lbheight;
+      }
+    }
   }
 
   opwidth = (opwidth >> 1) << 1;

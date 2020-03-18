@@ -1680,12 +1680,12 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 
     pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY
-										      | PA_STREAM_RELATIVE_VOLUME
-										      | PA_STREAM_INTERPOLATE_TIMING
-										      | PA_STREAM_START_CORKED
-										      | PA_STREAM_START_UNMUTED
-										      | PA_STREAM_NOT_MONOTONIC
-										      | PA_STREAM_AUTO_TIMING_UPDATE),
+                               | PA_STREAM_RELATIVE_VOLUME
+                               | PA_STREAM_INTERPOLATE_TIMING
+                               | PA_STREAM_START_CORKED
+                               | PA_STREAM_START_UNMUTED
+                               | PA_STREAM_NOT_MONOTONIC
+                               | PA_STREAM_AUTO_TIMING_UPDATE),
                                &pdriver->volume, NULL);
 #endif
 
@@ -1730,10 +1730,10 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 
     pa_stream_connect_record(pdriver->pstream, NULL, &pa_battr,
                              (pa_stream_flags_t)(PA_STREAM_START_CORKED
-						 | PA_STREAM_ADJUST_LATENCY
-						 | PA_STREAM_INTERPOLATE_TIMING
-						 | PA_STREAM_AUTO_TIMING_UPDATE
-						 | PA_STREAM_NOT_MONOTONIC));
+                                 | PA_STREAM_ADJUST_LATENCY
+                                 | PA_STREAM_INTERPOLATE_TIMING
+                                 | PA_STREAM_AUTO_TIMING_UPDATE
+                                 | PA_STREAM_NOT_MONOTONIC));
 
     while (pa_stream_get_state(pdriver->pstream) != PA_STREAM_READY) {
       sched_yield();
@@ -1928,7 +1928,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
         }
         // res: 0
         pulsed->extrausec -= (usec - last_usec);
-        //if (pulsed->extrausec < 0) pulsed->extrausec = 0;
+        if (pulsed->extrausec < 0) pulsed->extrausec = 0;
       } else if (usec > 0) pulsed->extrausec = 0;
       if (usec + pulsed->extrausec == last_usec + last_extra)
         paclock += (usec - last_usec) / pulsed->tscale;

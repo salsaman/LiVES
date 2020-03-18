@@ -46,8 +46,8 @@ char *get_stats_msg(boolean calc_only) {
 #endif
     if (have_avsync) {
       avsync -= ((double)cfile->frameno - 1.) / cfile->fps
-	+ (double)(mainw->currticks  - mainw->startticks)
-	/ TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
+                + (double)(mainw->currticks  - mainw->startticks)
+                / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
     }
   }
   ///currticks = lives_get_current_ticks();
@@ -61,8 +61,8 @@ char *get_stats_msg(boolean calc_only) {
   if (currticks > last_curr_tc + STATS_TC) {
     if (mainw->fps_mini_ticks == last_mini_ticks) {
       inst_fps = (double)(mainw->fps_mini_measure - last_mm
-			  + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
-	/ ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+                          + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
+                 / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
     }
     last_curr_tc = currticks;
     last_mini_ticks = mainw->fps_mini_ticks;
@@ -73,39 +73,38 @@ char *get_stats_msg(boolean calc_only) {
 
   if (have_avsync) {
     audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
-				 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));
+                                 tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));
     lives_free(tmp);
-  }
-  else
+  } else
     audmsg = lives_strdup(_("Clip has no audio.\n"));
-    
+
   if (mainw->blend_file != mainw->current_file && mainw->blend_file != -1) {
     char *bgpal = get_palette_name_for_clip(mainw->blend_file);
     bgmsg = lives_strdup_printf(_("Bg clip: %d X %d, frame: %d / %d, palette: %s\n"),
-				mainw->files[mainw->blend_file]->hsize,
-				mainw->files[mainw->blend_file]->vsize,
-				mainw->files[mainw->blend_file]->frameno,
-				mainw->files[mainw->blend_file]->frames,
-				bgpal);
+                                mainw->files[mainw->blend_file]->hsize,
+                                mainw->files[mainw->blend_file]->vsize,
+                                mainw->files[mainw->blend_file]->frameno,
+                                mainw->files[mainw->blend_file]->frames,
+                                bgpal);
     lives_free(bgpal);
   }
 
   fgpal = get_palette_name_for_clip(mainw->current_file);
-  
+
   msg = lives_strdup_printf(_("%sFrame %d / %d, fps %.3f (target: %.3f)\n"
-			      "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
-			      "Fg clip: %d X %d, palette: %s\n%s"),
-			    audmsg ? audmsg : "",
-			    mainw->actual_frame, cfile->frames,
-			    inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
-			    mainw->effort, EFFORT_RANGE_MAX,
-			    prefs->pb_quality,
-			    tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low") : prefs->pb_quality == 2 ? _("Med") : _("High")),
-			    tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
-			    get_cache_stats(),
-			    cfile->hsize, cfile->vsize,
-			    fgpal, bgmsg ? bgmsg : ""
-			    );
+                              "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
+                              "Fg clip: %d X %d, palette: %s\n%s"),
+                            audmsg ? audmsg : "",
+                            mainw->actual_frame, cfile->frames,
+                            inst_fps * sig(cfile->pb_fps), cfile->pb_fps,
+                            mainw->effort, EFFORT_RANGE_MAX,
+                            prefs->pb_quality,
+                            tmp = lives_strdup(prefs->pb_quality == 1 ? _("Low") : prefs->pb_quality == 2 ? _("Med") : _("High")),
+                            tmp2 = lives_strdup(prefs->pbq_adaptive ? _("adaptive") : _("fixed")),
+                            get_cache_stats(),
+                            cfile->hsize, cfile->vsize,
+                            fgpal, bgmsg ? bgmsg : ""
+                           );
   lives_freep((void **)&bgmsg);
   lives_freep((void **)&audmsg);
   lives_freep((void **)&tmp);
@@ -624,15 +623,14 @@ int run_weed_startup_tests(void) {
   if (weed_leaf_set_private_data(plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY) {
     weed_threadsafe = TRUE;
     g_print("libweed built with FULL threadsafety\n");
-  }
-  else {
+  } else {
     weed_threadsafe = FALSE;
     g_print("libweed built with PARTIAL threadsafety\n");
   }
   weed_plant_free(plant);
 
   g_print
-  
+
   return 0;
 }
 

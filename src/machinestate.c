@@ -789,7 +789,7 @@ size_t _get_usage(void) {
   return atoll(buff);
 }
 
-  
+
 boolean  get_ds_used(uint64_t *bytes) {
   /// returns bytes used for the workdir
   /// because this may take some time on some OS, a background thread is run and  FALSE is returned along with the last
@@ -1276,7 +1276,7 @@ void *_plant_thread_func(void *args) {
   case 0xED5: // weed_plant_t *, void *, int64
     if (ret_type == WEED_SEED_BOOLEAN) {
       weed_set_boolean_value(info, WEED_LEAF_RETURN_VALUE, (*funcb)(GETARG(plantptr, "0"),
-								    GETARG(voidptr, "1"), GETARG(int64, "2")));
+                             GETARG(voidptr, "1"), GETARG(int64, "2")));
       break;
     }
     (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
@@ -1313,12 +1313,12 @@ lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_ty
     else weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
 #define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
-  
+
   va_start(xargs, args_fmt);
   c = args_fmt;
   for (c = args_fmt; *c; c++) {
     char *pkey = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, p++);
-    switch(*c) {
+    switch (*c) {
     case 'i':
       weed_set_int_value(thread_info, pkey, va_arg(xargs, int)); break;
     case 'd':
@@ -1349,7 +1349,7 @@ lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_ty
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   return (weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE) > 0
-	  || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
+          || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
 }
 
 
@@ -1763,7 +1763,7 @@ void update_effort(int nthings, boolean badthings) {
   }
 
   //g_print("vals2x %d %d %d %d\n", mainw->effort, badthingcount, goodthingcount, struggling);
-  
+
   if (!badthingcount) {
     /// no badthings, good
     if (goodthingcount > EFFORT_RANGE_MAX) goodthingcount = EFFORT_RANGE_MAX;
@@ -1805,13 +1805,12 @@ void update_effort(int nthings, boolean badthings) {
         if (prefs->pb_quality > PB_QUALITY_LOW) {
           prefs->pb_quality = PB_QUALITY_LOW;
           mainw->blend_palette = WEED_PALETTE_END;
+        } else if (mainw->effort > EFFORT_LIMIT_MED) {
+          if (prefs->pb_quality > PB_QUALITY_MED) {
+            prefs->pb_quality--;
+            mainw->blend_palette = WEED_PALETTE_END;
+          }
         }
-        else if (mainw->effort > EFFORT_LIMIT_MED) {
-	    if (prefs->pb_quality > PB_QUALITY_MED) {
-	      prefs->pb_quality--;
-	      mainw->blend_palette = WEED_PALETTE_END;
-	    }
-	  }
       } else {
         if (prefs->pb_quality > future_prefs->pb_quality) {
           prefs->pb_quality = future_prefs->pb_quality;

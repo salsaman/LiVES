@@ -1258,8 +1258,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
     if (ins_size > cur_size) {
       // fill to ins_pt with zeros
       pad_with_silence(out_fd, NULL, cur_size, ins_size, out_asamps, out_unsigned, out_bendian);
-    }
-    else lives_lseek_buffered_writer(out_fd, ins_size);
+    } else lives_lseek_buffered_writer(out_fd, ins_size);
 
     if (opvol_start == opvol_end && opvol_start == 0.) {
       lives_close_buffered(out_fd);

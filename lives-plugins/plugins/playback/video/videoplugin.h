@@ -12,10 +12,14 @@ extern "C"
 #endif /* __cplusplus */
 
 #ifndef NEED_LOCAL_WEED
+#include <weed/weed.h>
 #include <weed/weed-palettes.h>
 #else
+#include "../../../../libweed/weed.h"
 #include "../../../../libweed/weed-palettes.h"
 #endif
+
+typedef weed_plant_t weed_layer_t;
 
 #include <inttypes.h>
 
@@ -103,6 +107,7 @@ uint64_t get_capabilities(int palette);
 #define VPP_LOCAL_DISPLAY                    (1<<2)
 #define VPP_LINEAR_GAMMA                    (1<<3)
 #define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
+#define VPP_CAN_LETTERBOX                  (1<<5)
 
 /// ready the screen to play (optional)
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
@@ -117,13 +122,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
 /// otherwise it can be ignored
-  boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
+boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
 
-  /// the same as render frame, but extra padding bytes are allowed, the values in bytes are set in rowstrides
-  /// return_data will have the same rs values as pixel_data
-  boolean play_frame(int hsize, int vsize, int *rowstrides, int64_t timecode, void **pixel_data, void **return_data,
-			void **play_params);
+/// the same as render frame, but extra padding bytes are allowed, the values in bytes are set in rowstrides
+/// return_data will have the same rs values as pixel_data
+boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)
 void exit_screen(int16_t mouse_x, int16_t mouse_y);

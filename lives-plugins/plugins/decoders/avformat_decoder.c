@@ -68,7 +68,7 @@ static pthread_mutex_t avcodec_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // tune this so small jumps forward are efficient (this is done now !)
 #define JUMP_FRAMES_SLOW 64   /// if seek is slow, how many frames to read forward rather than seek
-#define JUMP_FRAMES_FAST 1 /// if seek is fast, how many frames to read forward rather than seek
+#define JUMP_FRAMES_FAST 16 /// if seek is fast, how many frames to read forward rather than seek
 
 static void lives_avcodec_lock(void) {
   pthread_mutex_lock(&avcodec_mutex);
@@ -1080,24 +1080,24 @@ int begin_caching(const lives_clip_data_t *cdata, int maxframes) {
 boolean chill_out(const lives_clip_data_t *cdata) {
   // free buffers because we are going to chill out for a while
   // (seriously, host can call this to free any buffers when we arent palying sequentially)
-  if (cdata != NULL) {
-    lives_av_priv_t *priv = cdata->priv;
-    if (priv != NULL) {
-      AVStream *s = priv->ic->streams[priv->vstream];
-      if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
-      priv->pFrame = NULL;
-      if (s != NULL) {
-        AVCodecContext *cc = s->codec;
-        if (cc != NULL) {
-          //avcodec_flush_buffers(cc);
-        }
-      }
-    }
-  }
+  /* if (cdata != NULL) { */
+  /*   lives_av_priv_t *priv = cdata->priv; */
+  /*   if (priv != NULL) { */
+  /*     AVStream *s = priv->ic->streams[priv->vstream]; */
+  /*     if (priv->pFrame != NULL) av_frame_unref(priv->pFrame); */
+  /*     priv->pFrame = NULL; */
+  /*     if (s != NULL) { */
+  /*       AVCodecContext *cc = s->codec; */
+  /*       if (cc != NULL) { */
+  /*         //avcodec_flush_buffers(cc); */
+  /*       } */
+  /*     } */
+  /*   } */
+  /* } */
   return TRUE;
 }
 
-
+#define DEBUG
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 
@@ -1201,18 +1201,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   if (priv->pFrame != NULL) goto framedone2;
 #endif
 
-  if (priv->pFrame == NULL || tframe != priv->last_frame) {
+  if (tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
     // same frame -> we reuse priv-pFrame if we have it; otherwise we do this
 
 #ifdef DEBUG
     fprintf(stderr, "pt a1 %d %ld\n", priv->last_frame, tframe);
 #endif
 
-    if (priv->pFrame == NULL || tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
+    if (tframe < priv->last_frame || tframe - priv->last_frame > jump_limit) {
       int64_t xtarget_pts;
       // seek to new frame
-      if (priv->pFrame != NULL) av_frame_unref(priv->pFrame);
-      priv->pFrame = NULL;
+      if (priv->pFrame != NULL) {
+        av_frame_unref(priv->pFrame);
+        priv->pFrame = NULL;
+      }
 
       // try to seek straight to keyframe
       if (!(cdata->seek_flag & LIVES_SEEK_FAST) && tframe < priv->last_frame && priv->found_pts != -1
@@ -1225,93 +1227,97 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       seek_target = av_rescale_q(xtarget_pts, AV_TIME_BASE_Q, s->time_base);
       if (seek_target < -priv->ic->start_time) seek_target = 0;
 
-      av_seek_frame(priv->ic, priv->vstream, seek_target, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(priv->ic, priv->vstream, seek_target, tframe < priv->last_frame ? AVSEEK_FLAG_BACKWARD : 0);
 #ifdef DEBUG
       fprintf(stderr, "new seek: %d %ld %ld\n", priv->last_frame, seek_target, priv->ic->start_time);
 #endif
       avcodec_flush_buffers(cc);
-      priv->black_fill = FALSE;
-      MyPts = -1;
-      priv->needs_packet = TRUE;
-      //did_seek = TRUE;
-    } else {
-      MyPts = (priv->last_frame + 1.) / cdata->fps * (double)AV_TIME_BASE;
+    }
+    priv->black_fill = FALSE;
+    MyPts = -1;
+    priv->needs_packet = TRUE;
+    //did_seek = TRUE;
+  } else {
+    MyPts = (priv->last_frame + 1.) / cdata->fps * (double)AV_TIME_BASE;
+  }
+
+  //
+  do {
+    if (priv->needs_packet) {
+      do {
+        av_packet_unref(&priv->packet);
+        av_init_packet(&priv->packet);
+        ret = av_read_frame(priv->ic, &priv->packet);
+
+#ifdef DEBUG
+        fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
+#endif
+        if (ret < 0) {
+          priv->needs_packet = TRUE;
+          priv->last_frame = tframe;
+          if (pixel_data == NULL) return FALSE;
+          priv->black_fill = TRUE;
+          goto framedone;
+        }
+      } while (priv->packet.stream_index != priv->vstream);
     }
 
-    //
-    do {
-      if (priv->needs_packet) {
-        do {
-          av_packet_unref(&priv->packet);
-          av_init_packet(&priv->packet);
-          ret = av_read_frame(priv->ic, &priv->packet);
+    if (MyPts == -1) {
+      MyPts = priv->packet.pts;
+      MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
+      priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
+    }
 
 #ifdef DEBUG
-          fprintf(stderr, "ret was %d for tframe %ld\n", ret, tframe);
+    fprintf(stderr, "pt b1 %ld %ld %ld\n", MyPts, target_pts, seek_target);
 #endif
-          if (ret < 0) {
-            priv->needs_packet = TRUE;
-            priv->last_frame = tframe;
-            return FALSE;
-          }
-        } while (priv->packet.stream_index != priv->vstream);
-      }
-
-      if (MyPts == -1) {
-        MyPts = priv->packet.pts;
-        MyPts = av_rescale_q(MyPts, s->time_base, AV_TIME_BASE_Q) - priv->ic->start_time;
-        priv->found_pts = MyPts; // PTS of start of frame, set so start_time is zero
-      }
-
-#ifdef DEBUG
-      fprintf(stderr, "pt b1 %ld %ld %ld\n", MyPts, target_pts, seek_target);
-#endif
-      // decode any frames from this packet
-      if (priv->pFrame == NULL) priv->pFrame = av_frame_alloc();
+    // decode any frames from this packet
+    if (priv->pFrame == NULL) priv->pFrame = av_frame_alloc();
 
 #if LIBAVCODEC_VERSION_MAJOR >= 52
-      ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
-      if (ret < 0) return FALSE;
-      ret = FFMIN(ret, priv->packet.size);
-      priv->packet.data += ret;
-      priv->packet.size -= ret;
+    ret = avcodec_decode_video2(cc, priv->pFrame, &gotFrame, &priv->packet);
+    if (ret < 0) return FALSE;
+    ret = FFMIN(ret, priv->packet.size);
+    priv->packet.data += ret;
+    priv->packet.size -= ret;
 #else
-      ret = avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
-      priv->packet.size = 0;
+    ret = avcodec_decode_video(cc, priv->pFrame, &gotFrame, priv->packet.data, priv->packet.size);
+    priv->packet.size = 0;
 #endif
 
 #ifdef DEBUG
-      fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0,
-              priv->pFrame->color_trc, priv->pFrame->color_range);
+    fprintf(stderr, "pt 1 %ld %d %ld %ld %d %d\n", tframe, gotFrame, MyPts, gotFrame ? priv->pFrame->best_effort_timestamp : 0,
+            priv->pFrame->color_trc, priv->pFrame->color_range);
 #endif
 
 #ifdef TEST_CACHING
-      if (gotFrame && priv->cachemax > 0) {
-        add_to_cache(priv, MyPts);
-        fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
-      }
+    if (gotFrame && priv->cachemax > 0) {
+      add_to_cache(priv, MyPts);
+      fprintf(stderr, "adding to cache: %ld %p %p\n", MyPts, priv->pFrame, priv->pFrame->data);
+    }
 #endif
 
-      if (priv->packet.size == 0) {
-        priv->needs_packet = TRUE;
-      }
+    if (priv->packet.size == 0) {
+      priv->needs_packet = TRUE;
+    }
 
-      if (MyPts >= target_pts - 100) hit_target = TRUE;
+    if (MyPts >= target_pts - 100) hit_target = TRUE;
 
-      if (hit_target && gotFrame) break;
+    if (hit_target && gotFrame) break;
 
-      // otherwise discard this frame
-      if (gotFrame) {
-        MyPts += (double)AV_TIME_BASE / cdata->fps;
-        //#ifndef TEST_CACHING
-        av_frame_unref(priv->pFrame);
-        //#endif
-        priv->pFrame = NULL;
-      }
-      loops++;
-    } while (!(hit_target && gotFrame));
-  }
+    // otherwise discard this frame
+    if (gotFrame) {
+      MyPts += (double)AV_TIME_BASE / cdata->fps;
+      //#ifndef TEST_CACHING
+      //av_frame_unref(priv->pFrame);
+      //#endif
+      priv->pFrame = NULL;
+    }
+    loops++;
+  } while (!(hit_target && gotFrame));
 
+
+framedone:
   timex = get_current_ticks() - timex;
   if (timex / loops > FAST_SEEK_LIMIT)((lives_clip_data_t *)cdata)->seek_flag = LIVES_SEEK_NEEDS_CALCULATION;
 

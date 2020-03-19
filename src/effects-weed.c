@@ -1796,29 +1796,27 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
     layer = layers[in_tracks[i]];
 
-    /// wait for thread to pull layer pixel_data
-    check_layer_ready(layer);
-
     if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL) {
-      /// we got no pixel_data for some reason
-      frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
-      if (frame == 0) {
-        /// temp disable channels if we can
-        channel = in_channels[k];
-        chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
-        if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl))) {
-          if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_FALSE)
-            weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
-        } else {
-          weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
-          retval = FILTER_ERROR_BLANK_FRAME;
-          goto done_video;
-        }
-      }
-    }
-
+      /// wait for thread to pull layer pixel_data
+      if (is_layer_ready(layer)) {
+        check_layer_ready(layer);
+        frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
+        if (frame == 0) {
+          /// temp disable channels if we can
+          channel = in_channels[k];
+          chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
+          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl))) {
+            if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_FALSE)
+              weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
+          } else {
+            weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
+            retval = FILTER_ERROR_BLANK_FRAME;
+            goto done_video;
+	    // *INDENT-OFF*
+	  }}}}
     k++;
   }
+  // *INDENT-ON*
 
   /// ensure all chantmpls NOT marked "optional" have at least one corresponding enabled channel
   /// e.g. we could have disabled all channels from a template with "max_repeats" that is not optional
@@ -1904,15 +1902,23 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
 
     // check_layer_ready() should have done this, but let's check again
-
-    if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL) {
-      /// pull_frame will set pixel_data,width,height,current_palette and rowstrides
-      if (!pull_frame(layer, get_image_ext_for_type(mainw->files[clip]->img_type), tc)) {
+    if (!weed_layer_get_pixel_data_packed(layer)) {
+      check_layer_ready(layer);
+      /*       /\* /// wait for thread to pull layer pixel_data *\/ */
+      /*       if (!is_layer_ready(layer)) { */
+      /* #define FX_WAIT_LIM 10000 // microseconds * 10 */
+      /* 	for (register int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) { */
+      /* 	  lives_nanosleep(10000); */
+      /* 	} */
+      /* 	if (!is_layer_ready(layer)) { */
+      /* 	  retval = FILTER_ERROR_MISSING_FRAME; */
+      /* 	  goto done_video; */
+      /* 	} */
+      if (!weed_layer_get_pixel_data_packed(layer)) {
         retval = FILTER_ERROR_MISSING_FRAME;
         goto done_video;
       }
-      /// wait for thread to pull layer pixel_data
-      check_layer_ready(layer);
+      //}
     }
     // we apply only transitions and compositors to the scrap file
     if (clip == mainw->scrap_file && num_in_tracks <= 1 && num_out_tracks <= 1) {
@@ -2084,13 +2090,13 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     int tgamma = WEED_GAMMA_UNKNOWN;
     if (i > 0) def_palette = weed_channel_get_palette(def_channel);
 
-    channel = get_enabled_channel(inst, i, FALSE);
+    channel = get_enabled_channel(inst, i, TRUE);
     if (channel != NULL) {
       chantmpl = weed_channel_get_template(channel);
       channel_flags = weed_chantmpl_get_flags(chantmpl);
     }
 
-    channel = get_enabled_channel(inst, i, TRUE);
+    //channel = get_enabled_channel(inst, i, TRUE);
     if (weed_get_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, NULL) == WEED_TRUE) continue;
 
     inpalette = weed_channel_get_palette(channel);
@@ -2464,7 +2470,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
         retval = FILTER_ERROR_MEMORY_ERROR;
         goto done_video;
       }
-
       if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
         weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
       else {
@@ -2522,7 +2527,6 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
   //...finally we are ready to apply the filter
 
   // TODO - better error handling
-
   //...finally we are ready to apply the filter
   retval = run_process_func(inst, tc, key);
 
@@ -2589,7 +2593,9 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 done_video:
 
   for (i = 0; i < num_in_tracks; i++) {
-    weed_plant_t *dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
+    weed_plant_t *dupe;
+    check_layer_ready(layers[in_tracks[i]]);
+    dupe = weed_get_plantptr_value(layers[in_tracks[i]], WEED_LEAF_DUPLICATE, NULL);
     if (dupe != NULL) weed_layer_nullify_pixel_data(dupe);
     weed_layer_free(dupe);
   }
@@ -4178,7 +4184,7 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
-weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) {
+weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *values) {
   // change even immutable leaves
   weed_error_t err;
   if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
@@ -4195,7 +4201,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, int32_t se
 }
 
 
-/* weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems, void *values) { */
+/* weed_error_t weed_leaf_set_plugin(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *values) { */
 /*   fprintf(stderr, "pl setting %s\n", key); */
 /*   return _weed_leaf_set(plant, key, seed_type, num_elems, values); */
 /* } */
@@ -4224,7 +4230,7 @@ void lives_monitor_free(void *p) {
 }
 
 
-weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems,
+weed_error_t weed_leaf_set_monitor(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems,
                                    void *values) {
   weed_error_t err;
   err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
@@ -7567,6 +7573,10 @@ procfunc1:
   return channel;
 }
 
+static boolean lets_playall(livespointer data) {
+  on_playall_activate(NULL, NULL);
+  return FALSE;
+}
 
 int weed_generator_start(weed_plant_t *inst, int key) {
   // key here is zero based
@@ -7744,7 +7754,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     filter_mutex_unlock(key);
 
     weed_instance_unref(inst);  // release ref from weed_instance_from_filter, normally we would do this on return
-    play_file();
+    //play_file();
 
     //filter_mutex_lock(key);
     // need to set this after playback ends; this stops the key from being activated (again) in effects.c
@@ -7754,6 +7764,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     if (mainw->play_window != NULL) {
       lives_widget_queue_draw(mainw->play_window);
     }
+    lives_timer_add(0, lets_playall, NULL);
     return 0;
   } else {
     // already playing

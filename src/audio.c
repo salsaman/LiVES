@@ -1244,7 +1244,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       return 0l;
     }
 
-    cur_size = lives_buffered_writer_orig_size(out_fd);
+    cur_size = lives_buffered_orig_size(out_fd);
 
     if (opvol_start == opvol_end && opvol_start == 0.) ins_pt = tc_end / TICKS_PER_SECOND_DBL;
     ins_pt *= out_achans * out_arate * out_asamps;

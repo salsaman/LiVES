@@ -241,12 +241,16 @@ void defer_sigint(int signum) {
 #define QUICK_EXIT
 void catch_sigint(int signum) {
   // trap for ctrl-C and others
-#ifdef QUICK_EXIT
+#ifdef QUICK_EXITz
   /* shoatend(); */
   /* fprintf(stderr, "shoatt end"); */
   /* fflush(stderr); */
-  //exit(signum);
+  exit(signum);
 #endif
+  if (capable && !pthread_equal(capable->main_thread, pthread_self())) {
+    sleep(3600);
+    pthread_exit(NULL);
+  }
   if (mainw != NULL) {
     if (LIVES_MAIN_WINDOW_WIDGET != NULL) {
       if (mainw->foreign) {
@@ -283,6 +287,9 @@ void catch_sigint(int signum) {
 #ifdef LIVES_NO_DEBUG
         }
 #endif
+#endif
+#ifndef GDB_ON
+        _exit(signum);
 #endif
       }
 
@@ -615,8 +622,6 @@ static boolean pre_init(void) {
       lives_free(msg);
     }
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
-
-
 
   future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
 
@@ -3561,7 +3566,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   capable = (capability *)lives_malloc(sizeof(capability));
   capable->startup_msg[0] = '\0';
-
+  capable->main_thread = pthread_self();
   capable->has_perl = TRUE;
   capable->has_smogrify = TRUE;
   capable->smog_version_correct = TRUE;
@@ -5960,7 +5965,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   // target_palette is also a hint
 
   // if we pull from a decoder plugin, then we may also deinterlace
-
+  static int64_t last = -100000000000;
   weed_plant_t *vlayer;
   lives_clip_t *sfile = NULL;
   int clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
@@ -6096,6 +6101,8 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         rowstrides = weed_layer_get_rowstrides(layer, NULL);
 
         // try to pull frame from decoder plugin
+        if ((int64_t)(sfile->frame_index[frame - 1]) < last) break_me();
+        last = ((int64_t)(sfile->frame_index[frame - 1]));
         if (!(*dplug->decoder->get_frame)(dplug->cdata, (int64_t)(sfile->frame_index[frame - 1]),
                                           rowstrides, sfile->vsize, pixel_data)) {
           // if get_frame fails, return a black frame
@@ -6325,7 +6332,7 @@ static void *pft_thread(void *in) {
     lives_free(in);
 
     /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
-    if (mainw->blend_file != -1 && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
+    if (0 && mainw->blend_file != -1 && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
 	&& weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
       int tgamma = WEED_GAMMA_UNKNOWN;
       if (mainw->blend_palette != WEED_PALETTE_END) {
@@ -6371,20 +6378,21 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
     pull_frame(layer, img_ext, tc);
     return;
 #else
-    lives_thread_attr_t attr = LIVES_THRDATTR_PRIORITY;
-    pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
-    lives_thread_t *frame_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-    weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
-    weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
-    weed_set_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, (void *)frame_thread);
     weed_set_boolean_value(layer, "thread_processing", WEED_TRUE);
-    in->img_ext = img_ext;
-    in->layer = layer;
-    in->width = width;
-    in->height = height;
-    in->tc = tc;
-
-    lives_thread_create(frame_thread, &attr, pft_thread, (void *)in);
+    if (1) {
+      lives_thread_attr_t attr = LIVES_THRDATTR_PRIORITY;
+      pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
+      lives_thread_t *frame_thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+      weed_set_int64_value(layer, WEED_LEAF_HOST_TC, tc);
+      weed_set_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, WEED_FALSE);
+      weed_set_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, (void *)frame_thread);
+      in->img_ext = img_ext;
+      in->layer = layer;
+      in->width = width;
+      in->height = height;
+      in->tc = tc;
+      lives_thread_create(frame_thread, &attr, pft_thread, (void *)in);
+    }
 #endif
   }
 
@@ -7271,8 +7279,6 @@ void load_frame_image(int frame) {
                weed_palette_get_pixels_per_macropixel(weed_layer_get_palette(mainw->frame_layer));
       int hl = weed_layer_get_height(mainw->frame_layer);
       if ((wl != cfile->hsize && wl != mainw->pwidth) || (hl != cfile->vsize && hl != mainw->pheight)) {
-        if (prefs->show_dev_opts)
-          g_print("CF %d X %d and %d X %d %d %d\n", wl, hl, cfile->hsize, cfile->vsize, mainw->pwidth, mainw->pheight);
         mainw->size_warn = mainw->current_file;
         size_ok = FALSE;
       }

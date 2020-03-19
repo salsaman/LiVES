@@ -1,4 +1,4 @@
-// projectM.c
+// projectM.cpp
 // weed plugin
 // (c) G. Finch (salsaman) 2014 - 2020
 //
@@ -7,7 +7,7 @@
 
 ///////////////////////////////////////////////////////////////////
 
-static int package_version = 1; // version of this package
+static int package_version = 1.1; // version of this package
 
 //////////////////////////////////////////////////////////////////
 
@@ -63,9 +63,13 @@ static int copies = 0;
 static const GLushort RGB2ARGB[8] =  {0, 1, 1, 2, 2, 3, 4, 0};
 static const GLushort RGB2BGR[4] = {0, 2, 2, 0};
 
+static pthread_mutex_t buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct timespec ts;
+
+static int count = 0;
+static int pcount = 0;
 
 typedef struct {
   projectM *globalPM;
@@ -76,30 +80,33 @@ typedef struct {
   int rowstride;
   volatile bool worker_ready;
   volatile bool worker_active;
-  volatile int pidx;
+  int pidx;
   int opidx;
-  volatile int nprs;
-  char **volatile prnames;  // volatile ptr to non-volatile strings !!
+  int nprs;
+  char **prnames;  // volatile ptr to non-volatile strings !!
   pthread_mutex_t mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
-  volatile int audio_frames;
+  int audio_frames;
   int achans;
   float *audio;
   float fps;
   volatile bool die;
   volatile bool failed;
-  volatile bool update_size;
-  volatile bool update_psize;
+  bool updating;
+  bool received_update;
+  bool update_size;
+  bool update_psize;
   volatile bool needs_more;
   volatile bool rendering;
   volatile bool needs_update;
-  volatile bool set_update;
+  bool got_first;
+  bool set_update;
 #ifdef HAVE_SDL2
   SDL_Window *win;
   SDL_GLContext glCtx;
-  Display *dpy;
 #endif
+  int error;
 } _sdata;
 
 static _sdata *statsd;
@@ -137,7 +144,8 @@ static int resize_display(int width, int height) {
 
   // 0 : use current bits per pixel
   if (!SDL_SetVideoMode(width, height, 0, flags)) {
-    fprintf(stderr, "Video mode set failed: %s\n", SDL_GetError());
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      fprintf(stderr, "{ProjectM plugin: Video mode set failed: %s\n", SDL_GetError());
     return 1;
   }
 
@@ -152,7 +160,7 @@ static int change_size(_sdata *sdata) {
   int ret = 0;
   sdata->globalPM->projectM_resetGL(sdata->width, sdata->height);
 
-  // TODO: cane we change the texture size ?
+  // TODO: can we change the texture size ?
   //settings.textureSize = sd->width;
 #ifdef HAVE_SDL2
   SDL_SetWindowSize(sdata->win, sdata->width, sdata->height);
@@ -169,8 +177,9 @@ static int init_display(_sdata *sd) {
 
   /* First, initialize SDL's video subsystem. */
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    fprintf(stderr, "Video initialization failed: %s\n",
-            SDL_GetError());
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      fprintf(stderr, "{ProjectM plugin: Video initialization failed: %s\n",
+              SDL_GetError());
     return 1;
   }
 
@@ -188,9 +197,9 @@ static int init_display(_sdata *sd) {
     fprintf(stderr, "ProjectM running with SDL 1\n");
   if (!info) {
     /* This should probably never happen. */
-    fprintf(stderr, "Video query failed: %s\n",
-            SDL_GetError());
-
+    if (verbosity >= WEED_VERBOSITY_CRITICAL)
+      fprintf(stderr, "ProjectM plugin: Video query failed: %s\n",
+              SDL_GetError());
     return 2;
   }
   maxwidth = info->current_w;
@@ -221,21 +230,57 @@ static int init_display(_sdata *sd) {
 }
 
 
-static int render_frame(_sdata *sd) {
-  float scaley = sd->height / sd->texsize;
-  float scalex = sd->width / sd->texsize;
+bool resize_buffer(_sdata *sd) {
+  size_t align = 1;
+  if ((sd->rowstride & 0X01) == 0) align = 2;
+  if ((sd->rowstride & 0X03) == 0) align = 4;
+  if ((sd->rowstride & 0X07) == 0) align = 8;
+  if ((sd->rowstride & 0X0F) == 0) align = 16;
+  if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
+  sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height / align, align);
+  if (!sd->fbuffer) return FALSE;
+  return true;
+}
 
-  if (sd->needs_update) {
-    sd->needs_update = false;
-    while (!sd->set_update) usleep(100);
-    sd->set_update = false;
-    if (sd->update_size) {
-      change_size(sd);
-      sd->update_size = false;
+
+static int render_frame(_sdata *sd) {
+  float yscale = sd->height / sd->texsize;
+  float xscale = sd->width / sd->texsize;
+
+  if (sd->needs_update || !sd->got_first) {
+    if (sd->needs_update) {
+      sd->needs_update = false;
+      while (!sd->updating) {
+        pthread_mutex_lock(&cond_mutex);
+        pthread_cond_signal(&cond);
+        pthread_mutex_unlock(&cond_mutex);
+      }
+      sd->updating = false;
+      while (!sd->set_update) {
+        pthread_mutex_lock(&cond_mutex);
+        pthread_cond_wait(&cond, &cond_mutex);
+        pthread_mutex_unlock(&cond_mutex);
+      }
+      sd->set_update = false;
+      sd->received_update = true;
+      if (sd->update_size) {
+        change_size(sd);
+        sd->update_size = false;
+      }
+      if (sd->update_psize) {
+        if (!resize_buffer(sd)) {
+          sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+          sd->update_psize = false;
+          sd->needs_more = false;
+          pthread_mutex_lock(&cond_mutex);
+          pthread_cond_signal(&cond);
+          pthread_mutex_unlock(&cond_mutex);
+          return 1;
+        }
+      }
     }
-    if (sd->update_psize) {
-      if (sd->fbuffer != NULL) weed_free(sd->fbuffer);
-      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * sd->rowstride * sd->height, 1);
+    if (sd->update_psize || !sd->got_first) {
+      sd->update_psize = false;
       glPixelStorei(GL_UNPACK_ROW_LENGTH, sd->rowstride / sd->psize);
       if (sd->psize == 4) {
         if (sd->palette == WEED_PALETTE_BGRA32) {
@@ -248,9 +293,10 @@ static int render_frame(_sdata *sd) {
           glPixelMapusv(GL_PIXEL_MAP_I_TO_I, 4, RGB2BGR);
         }
       }
-      sd->update_psize = false;
     }
   }
+
+  glFlush();
 
   glClear(GL_COLOR_BUFFER_BIT);
   glClear(GL_DEPTH_BUFFER_BIT);
@@ -258,50 +304,53 @@ static int render_frame(_sdata *sd) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glViewport(0, 0, sd->width, sd->height);
-
   sd->globalPM->renderFrame();
+  pcount++;
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glFrustum(-1, 1, -1, 1, 2, 10);
+  if (sd->needs_more || !sd->got_first) {
 
-  glEnable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glFrustum(-1, 1, -1, 1, 2, 10);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+    glEnable(GL_DEPTH_TEST);
 
-  glTranslatef(.0, .0, -2);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-  glEnable(GL_TEXTURE_2D);
-  glMatrixMode(GL_TEXTURE);
-  glLoadIdentity();
+    glTranslatef(.0, .0, -2);
 
-  glBindTexture(GL_TEXTURE_2D, sd->textureHandle);
-  glColor4d(1.0, 1.0, 1.0, 1.0);
+    glEnable(GL_TEXTURE_2D);
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
 
-  yscale = (float)sd->height / (float)sd->width * 2.;
+    glBindTexture(GL_TEXTURE_2D, sd->textureHandle);
+    glColor4d(1.0, 1.0, 1.0, 1.0);
 
-  glBegin(GL_QUADS);
-  glTexCoord2d(0, 1);
-  glVertex3d(-1, -1, 0);
+    yscale = (float)sd->height / (float)sd->width * 2.;
 
-  glTexCoord2d(0, 0);
-  glVertex3d(-1, yscale - 1., 0);
+    glBegin(GL_QUADS);
+    glTexCoord2d(0, 1);
+    glVertex3d(-1, -1, 0);
 
-  glTexCoord2d(1, 0);
-  glVertex3d(xscale, yscale - 1., 0);
+    glTexCoord2d(0, 0);
+    glVertex3d(-1, yscale - 1., 0);
 
-  glTexCoord2d(1, 1);
-  glVertex3d(xscale, -1, 0);
-  glEnd();
+    glTexCoord2d(1, 0);
+    glVertex3d(xscale, yscale - 1., 0);
 
-  glDisable(GL_TEXTURE_2D);
+    glTexCoord2d(1, 1);
+    glVertex3d(xscale, -1, 0);
+    glEnd();
 
-  glMatrixMode(GL_MODELVIEW);
-  glDisable(GL_DEPTH_TEST);
-  glFlush();
+    glDisable(GL_TEXTURE_2D);
+
+    glMatrixMode(GL_MODELVIEW);
+    glDisable(GL_DEPTH_TEST);
+  }
 
   if (sd->needs_more) {
+    glFlush();
 #if USE_DBLBUF
 #ifdef HAVE_SDL2
     SDL_GL_SwapWindow(sd->win);
@@ -309,10 +358,15 @@ static int render_frame(_sdata *sd) {
     SDL_GL_SwapBuffers();
 #endif
 #endif
-
+    pthread_mutex_lock(&buffer_mutex);
     glReadPixels(0, 0, sd->rowstride / sd->psize, sd->height, sd->psize == 4
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
+    sd->got_first = true;
+    pthread_mutex_unlock(&buffer_mutex);
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
   }
   return 0;
 }
@@ -367,7 +421,7 @@ static void *worker(void *data) {
   settings.fps = 0;//sd->fps;
   settings.smoothPresetDuration = 2;
   settings.presetDuration = 10;
-  settings.beatSensitivity = .6;
+  settings.beatSensitivity = .4;
   settings.aspectCorrection = 1;
   settings.softCutRatingsEnabled = 0;
   settings.shuffleEnabled = 1;
@@ -403,13 +457,20 @@ static void *worker(void *data) {
     if (!sd->rendering) {
       // deinit() will only exit once the mutex is unlocked, we need to make sure we are idling
       // else we can pick up the wm response for the playback plugin and cause it to hang
-      pthread_mutex_unlock(&sd->mutex);
       sd->worker_active = false;
-      usleep(10000);
-      rerand = true;
+      pthread_mutex_unlock(&sd->mutex);
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+      sd->worker_active = true;
       pthread_mutex_lock(&sd->mutex);
+      if (sd->die) break;
+      rerand = true;
       continue;
     }
+
+    sd->worker_active = true;
+
     if (sd->pidx == -1) {
       if (rerand) sd->globalPM->selectRandom(true);
       rerand = false;
@@ -430,12 +491,24 @@ static void *worker(void *data) {
       sd->audio_frames = 0;
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
-    render_frame(sd);
+    if (render_frame(sd)) {
+      if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+        sd->rendering = false;
+      }
+    }
   }
   pthread_mutex_unlock(&sd->mutex);
 
+  if (sd->globalPM) delete(sd->globalPM);
+  sd->globalPM = NULL;
+  sd->worker_ready = false;
+
+  while (inited) {
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+  }
   // TODO : segfault
-  //if (sd->globalPM != NULL) delete(sd->globalPM);
 
   SDL_Quit();
   return NULL;
@@ -447,6 +520,25 @@ static weed_error_t projectM_deinit(weed_plant_t *inst) {
   if (sd) sd->rendering = false;
   pthread_mutex_lock(&sd->mutex);
   pthread_mutex_unlock(&sd->mutex);
+  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+    sd->die = true;
+    while (sd->worker_ready && !sd->worker_active) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_wait(&cond, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
+
+    weed_free(sd);
+    weed_set_voidptr_value(inst, "plugin_internal", NULL);
+    inited = 0;
+  } else if (sd->failed) {
+    weed_free(sd);
+    inited = 0;
+  }
   copies--;
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
   return WEED_SUCCESS;
@@ -459,25 +551,21 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     _sdata *sd;
     weed_plant_t *out_channel = weed_get_out_channel(inst, 0);
     weed_plant_t **iparams = weed_get_in_params(inst, NULL);
+    int height = weed_channel_get_height(out_channel);
+    int rowstride = weed_channel_get_stride(out_channel);
+    int width = weed_channel_get_width(out_channel);
+    int palette = weed_channel_get_palette(out_channel);
+    int psize = pixel_size(palette);
+
     copies++;
 
     if (!inited) {
       int rc = 0;
-      int width = weed_channel_get_width(out_channel);
-      int height = weed_channel_get_height(out_channel);
-      int rowstride = weed_channel_get_stride(out_channel);
-      int palette = weed_channel_get_palette(out_channel);
-      int psize = pixel_size(palette);
       sd = (_sdata *)weed_malloc(sizeof(_sdata));
       if (!sd) return WEED_ERROR_MEMORY_ALLOCATION;
 
-      sd->fbuffer = (GLubyte *)weed_calloc(sizeof(GLubyte) * rowstride * height, 1);
-
-      if (!sd->fbuffer) {
-        weed_free(sd);
-        return WEED_ERROR_MEMORY_ALLOCATION;
-      }
-
+      sd->error = WEED_SUCCESS;
+      sd->fbuffer = NULL;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
 
       sd->pidx = sd->opidx = -1;
@@ -485,30 +573,20 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->fps = TARGET_FPS;
       if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
 
-      sd->width = width;
-      sd->height = height;
-
-      sd->die = false;
-      sd->failed = false;
-      sd->update_size = false;
-      sd->update_psize = true;
-      sd->needs_more = true;
-      sd->rowstride = rowstride;
-      sd->palette = palette;
-      sd->psize = psize;
-      sd->needs_update = sd->set_update = true;
-      sd->audio = (float *)weed_calloc(4096,  sizeof(float));
-      sd->audio_frames = 0;
-      sd->achans = 0;
-
       pthread_mutex_init(&sd->mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
 
+      sd->audio = (float *)weed_calloc(4096,  sizeof(float));
       sd->nprs = 0;
       sd->prnames = NULL;
       sd->worker_ready = false;
       sd->worker_active = false;
       sd->rendering = false;
+      sd->die = sd->failed = false;
+      sd->rendering = false;
+      sd->width = width;
+      sd->height = height;
+      sd->rowstride = rowstride;
 
       // kick off a thread to init screean and render
       pthread_create(&sd->thread, NULL, worker, sd);
@@ -523,6 +601,17 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
         pthread_mutex_unlock(&cond_mutex);
       }
 
+      if (sd->failed) {
+        projectM_deinit(inst);
+        return WEED_ERROR_PLUGIN_INVALID;
+      }
+
+      if (!weed_plant_has_leaf(iparams[0], WEED_LEAF_GUI)) {
+        weed_plant_t *iparamgui = weed_param_get_gui(iparams[0]);
+        weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
+      }
+      weed_free(iparams);
+
       if (rc == ETIMEDOUT && !sd->worker_ready) {
         // if we timedout then die
         projectM_deinit(inst);
@@ -530,16 +619,37 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       }
       statsd = sd;
       inited = 1;
-    } else sd = statsd;
-
-    sd->rendering = true;
-    weed_set_voidptr_value(inst, "plugin_internal", sd);
-
-    if (!weed_plant_has_leaf(iparams[0], WEED_LEAF_GUI)) {
-      weed_plant_t *iparamgui = weed_param_get_gui(iparams[0]);
-      weed_set_string_array(iparamgui, WEED_LEAF_CHOICES, sd->nprs, (char **)sd->prnames);
+    } else {
+      sd = statsd;
+      weed_set_voidptr_value(inst, "plugin_internal", sd);
     }
-    weed_free(iparams);
+    sd->rendering = false;
+
+    if (!sd->fbuffer || sd->height != height || sd->rowstride != rowstride) {
+      if (!resize_buffer(sd) && sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+        projectM_deinit(inst);
+        return WEED_ERROR_MEMORY_ALLOCATION;
+      }
+    }
+
+    sd->got_first = false;
+    sd->width = width;
+    sd->height = height;
+    sd->psize = psize;
+    sd->palette = palette;
+    sd->rowstride = rowstride;
+    sd->update_size = false;
+    sd->update_psize = false;
+    sd->needs_more = true;
+    sd->needs_update = sd->set_update = false;
+    sd->updating = sd->received_update = false;
+    sd->audio_frames = 0;
+    pcount = count = 0;
+    sd->rendering = true;
+
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
   }
   return WEED_SUCCESS;
 }
@@ -560,59 +670,93 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   int psize = pixel_size(palette);
   int rowstride = weed_channel_get_stride(out_channel);
   bool did_update = false, got_buffer = false;
+  static double ltt;
   register int j;
 
+  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+    projectM_deinit(inst);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
+  if (verbosity >= WEED_VERBOSITY_DEBUG) {
+    count++;
+    if (count == 1 || count == 101) {
+      double tt;
+      int ppcount = pcount;
+      pcount = 0;
+      clock_gettime(CLOCK_REALTIME, &ts);
+      tt = (double)(ts.tv_sec * 1000000000 + ts.tv_nsec);
+      if (count == 101) {
+        double period = (tt - ltt) / 1000000000.;
+        if (period > 0.)
+          fprintf(stderr, "projectM running at display rate of %f fps, engine rendering at %f fps\n", 100. / period, ppcount / period);
+        count = 1;
+      }
+      ltt = tt;
+    }
+  }
+
   weed_free(inparams);
-  if (sd == NULL || sd->failed) return WEED_ERROR_PLUGIN_INVALID;
+
+  if (sd->die) return WEED_ERROR_REINIT_NEEDED;
+
+  while (!sd->worker_active) {
+    sd->rendering = true;
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
+  }
 
   if (width > maxwidth) width = maxwidth;
   if (height > maxheight) height = maxheight;
 
   if (sd->width != width || sd->height != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
-    /// we must update size / pal
+    /// we must update size / pal, this has to be done before reading the buffer
     sd->needs_update = TRUE;
-    /// wait for worker thread to finish rendering
-    while (sd->needs_update) usleep(100);
-    //   // set new values and update_size
+    /// wait for worker thread to aknowledge the update request
+    while (sd->needs_update) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+    sd->updating = true;
+    /// now we can set new values
     if (sd->width != width || sd->height != height) {
       sd->height = height;
       sd->width = width;
       sd->update_size = true;
     }
-    if (sd->palette != palette || sd->rowstride != rowstride) {
+    if (sd->palette != palette || sd->rowstride != rowstride || sd->psize != psize) {
       sd->update_psize = true;
       sd->psize = psize;
       sd->palette = palette;
       sd->rowstride = rowstride;
     }
+    /// let the worker thread know that the values have been updated
     sd->set_update = true;
+    sd->needs_more = true;
+    while (!sd->received_update) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+    sd->received_update = false;
     did_update = true;
   }
 
-
   if (!sd->needs_more) {
-    // if the buffer is ready now we will copy it, otherwise we will try again at the end
+    // if the buffer is ready now we will copy it, otherwise we will try again at the end after copying the audio
     // copy sd->fbuffer -> dst
-    //if (rowstride == widthx && width == sd->width && height == sd->height) {
+    /// we don't need to lock the buffer_mutex if needs_more is false
     weed_memcpy(dst, sd->fbuffer, rowstride * height);
-    // } else {
-    //   uint8_y *ptr = sd->fbuffer;
-    //   for (end = dst + height * rowstride; dst < end; dst += rowstride) {
-    // 	weed_memcpy(dst, ptr, widthx);
-    // 	ptr += widthx;
-    //   }
-    // }
-    sd->needs_more = true;
     got_buffer = true;
   }
 
-  /// update audio
-
-  // ex. nprs = 10, we have 9 programs 1 - 9 and 0 is random
+  /// get the program number:
+  // ex. if nprs == 10, we have 9 programs 1 - 9 and 0 is random
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
   // 0 - 9, we just use the value - 1
   // else val % (nprs - 1) .e.g 9 mod 9 is 0, 10 mod 9 is 1, etc
-
   sd->pidx = (weed_param_get_value_int(inparam) - 1) % (sd->nprs - 1);
 
   if (0) {
@@ -627,10 +771,13 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     sd->globalPM->key_handler(evt, key, mod);
   }
 
+  /// read the fps value from the player if we have that
   if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
 
+  /// update audio
+
   if (in_channel != NULL) {
-    /// fill the audio buffer for the next frame, then get the frame
+    /// fill the audio buffer for the next frame
     int achans;
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
@@ -670,39 +817,51 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     if (adata != NULL) weed_free(adata);
   }
 
+  /// if we got the buffer already, ask the worker thread for another, after updating audio
+  if (got_buffer) sd->needs_more = true;
+
   if (did_update) {
-    while (sd->needs_more) usleep(100);
+    /// if we updated we MUST wait for the buffer resize to finish before reading
+    /// optionally we could return WEED_ERROR_NOT_READY
+    while (sd->needs_more) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+    }
+  }
+
+  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+    projectM_deinit(inst);
+    return WEED_ERROR_MEMORY_ALLOCATION;
   }
 
   /// we did all the updates so...
 
   if (!got_buffer) {
-    // if the buffer is ready now we will copy it, otherwise we will return with no data
-    // if (rowstride == widthx && width == sd->width && height == sd->height) {
+    /// ...if we didnt get data at the start we will copy the buffer now, whether we have a new frame or not
+    /// optionally we could return WEED_ERROR_NOT_READY
+    //if (!sd->got_first) return WEED_ERROR_NOT_READY;
+    pthread_mutex_lock(&buffer_mutex);
     weed_memcpy(dst, sd->fbuffer, rowstride * height);
-    // } else {
-    //   uint8_y *ptr = sd->fbuffer;
-    //   for (end = dst + height * rowstride; dst < end; dst += rowstride) {
-    // 	weed_memcpy(dst, ptr, widthx);
-    // 	ptr += widthx;
-    //   }
-    // }
     sd->needs_more = true;
+    pthread_mutex_unlock(&buffer_mutex);
   }
+
+  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+    projectM_deinit(inst);
+    return WEED_ERROR_MEMORY_ALLOCATION;
+  }
+
   return WEED_SUCCESS;
 }
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
-                        WEED_PALETTE_BGR24, WEED_PALETTE_ARGB32, WEED_PALETTE_END
-                       };
+  int palette_list[] = ALL_RGB_PALETTES;
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
-  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0",
-                                   WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE), NULL
-                                  };
+  weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, 0, palette_list, projectM_init,
                                projectM_process, projectM_deinit, in_chantmpls, out_chantmpls, in_params, NULL);
   weed_plant_t *gui = weed_paramtmpl_get_gui(in_params[0]);
@@ -712,7 +871,6 @@ WEED_SETUP_START(200, 200) {
   weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
-  fprintf(stderr, "Verbosity was set to %d\n", verbosity);
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
   statsd = NULL;
   XInitThreads();

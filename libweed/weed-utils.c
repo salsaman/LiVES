@@ -127,14 +127,14 @@ weed_error_t weed_set_plantptr_value(weed_plant_t *plant, const char *key, weed_
 }
 
 
-weed_error_t weed_set_custom_value(weed_plant_t *plant, const char *key, int32_t seed_type, weed_voidptr_t value) {
+weed_error_t weed_set_custom_value(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_voidptr_t value) {
   return weed_leaf_set(plant, key, seed_type, 1, (weed_voidptr_t)&value);
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline weed_error_t weed_leaf_check(weed_plant_t *plant, const char *key, int32_t seed_type) {
+static inline weed_error_t weed_leaf_check(weed_plant_t *plant, const char *key, uint32_t seed_type) {
   weed_error_t err;
   if ((err = weed_check_leaf(plant, key)) != WEED_SUCCESS) return err;
   if (weed_leaf_seed_type(plant, key) != seed_type) return WEED_ERROR_WRONG_SEED_TYPE;
@@ -142,7 +142,7 @@ static inline weed_error_t weed_leaf_check(weed_plant_t *plant, const char *key,
 }
 
 
-static inline weed_error_t weed_value_get(weed_plant_t *plant, const char *key, int32_t seed_type, weed_voidptr_t retval) {
+static inline weed_error_t weed_value_get(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_voidptr_t retval) {
   weed_error_t err;
   if ((err = weed_leaf_check(plant, key, seed_type)) != WEED_SUCCESS) return err;
   return weed_get_value(plant, key, retval);
@@ -233,7 +233,7 @@ weed_plant_t *weed_get_plantptr_value(weed_plant_t *plant, const char *key, weed
 }
 
 
-weed_voidptr_t weed_get_custom_value(weed_plant_t *plant, const char *key, int32_t seed_type, weed_error_t *error) {
+weed_voidptr_t weed_get_custom_value(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_error_t *error) {
   weed_voidptr_t retval = NULL;
   weed_error_t err = weed_value_get(plant, key, seed_type, &retval);
   if (error) *error = err;
@@ -266,7 +266,7 @@ static inline weed_error_t weed_get_values(weed_plant_t *plant, const char *key,
 
 
 static inline weed_voidptr_t weed_get_arrayx(weed_plant_t *plant, const char *key,
-    int32_t seed_type, weed_size_t typelen, weed_error_t *error, int *elems) {
+    uint32_t seed_type, weed_size_t typelen, weed_error_t *error, int *elems) {
   char *retvals = NULL;
   weed_error_t err = weed_leaf_check(plant, key, seed_type);
   if (err != WEED_SUCCESS) {
@@ -375,10 +375,10 @@ weed_plant_t **weed_get_plantptr_array(weed_plant_t *plant, const char *key, wee
   return (weed_plant_t **)(weed_get_arrayx(plant, key, WEED_SEED_PLANTPTR, WEED_VOIDPTR_SIZE, error, NULL));
 }
 
-weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *plant, const char *key, int32_t seed_type, int *count) {
+weed_voidptr_t *weed_get_custom_array_counted(weed_plant_t *plant, const char *key, uint32_t seed_type, int *count) {
   return (weed_voidptr_t *)(weed_get_arrayx(plant, key, seed_type, WEED_VOIDPTR_SIZE, NULL, count));
 }
-weed_voidptr_t *weed_get_custom_array(weed_plant_t *plant, const char *key, int32_t seed_type, weed_error_t *error) {
+weed_voidptr_t *weed_get_custom_array(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_error_t *error) {
   return (weed_voidptr_t *)(weed_get_arrayx(plant, key, seed_type, WEED_VOIDPTR_SIZE, error, NULL));
 }
 
@@ -416,7 +416,7 @@ weed_error_t weed_set_plantptr_array(weed_plant_t *plant, const char *key, weed_
   return weed_leaf_set(plant, key, WEED_SEED_PLANTPTR, num_elems, (weed_voidptr_t)values);
 }
 
-weed_error_t weed_set_custom_array(weed_plant_t *plant, const char *key, int32_t seed_type, weed_size_t num_elems,
+weed_error_t weed_set_custom_array(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems,
                                    weed_voidptr_t *values) {
   return weed_leaf_set(plant, key, seed_type, num_elems, (weed_voidptr_t)values);
 }
@@ -439,7 +439,7 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
   // may return the standard errors:
   // WEED_SUCCESS, WEED_ERROR_MEMORY_ALLOCATION, WEED_ERROR_IMMUTABLE, WEED_ERROR_WRONG_SEED_TYPE
   weed_error_t err;
-  int32_t seed_type;
+  uint32_t seed_type;
   int num, count;
 
   if (!dst || !src) return WEED_SUCCESS;

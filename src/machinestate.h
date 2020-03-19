@@ -18,6 +18,7 @@ typedef void *(*malloc_f)(size_t);
 typedef void (*free_f)(void *);
 typedef void *(*free_and_return_f)(void *); // like free() but returns NULL
 typedef void *(*memcpy_f)(void *, const void *, size_t);
+typedef int (*memcmp_f)(const void *, const void *, size_t);
 typedef void *(*memset_f)(void *, int, size_t);
 typedef void *(*memmove_f)(void *, const void *, size_t);
 typedef void *(*realloc_f)(void *, size_t);
@@ -38,6 +39,9 @@ void lives_free_check(void *p);
 #endif
 #ifndef lives_memcpy
 #define lives_memcpy memcpy
+#endif
+#ifndef lives_memcmp
+#define lives_memcmp memcmp
 #endif
 #ifndef lives_memset
 #define lives_memset memset
@@ -63,6 +67,9 @@ void lives_free_check(void *p);
 #endif
 #ifdef _lives_memcpy
 #undef _lives_memcpy
+#endif
+#ifdef _lives_memcmp
+#undef _lives_memcmp
 #endif
 #ifdef _lives_memset
 #undef _lives_memset

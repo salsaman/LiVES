@@ -511,6 +511,10 @@ void *_ext_memcpy(void *dest, const void *src, size_t n) {
   return lives_memcpy(dest, src, n);
 }
 
+int _ext_memcmp(const void *s1, const void *s2, size_t n) {
+  return lives_memcmp(s1, s2, n);
+}
+
 void *_ext_memset(void *p, int i, size_t n) {
   return lives_memset(p, i, n);
 }

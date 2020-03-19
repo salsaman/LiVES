@@ -623,8 +623,18 @@ typedef enum {
 #define LIVES_DIRECTION_OPPOSITE(dir1, dir2) (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED) \
 					      ? (dir2) == LIVES_DIR_FORWARD : ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED) \
 					      ? (dir1) == LIVES_DIR_FORWARD : sig(dir1) != sig(dir2))
+
+typedef union _binval {
+  uint64_t num;
+  const char chars[8];
+  size_t size;
+} binval;
+
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
+  binval binfmt_check;
+  binval binfmt_version;
+  binval binfmt_bytes;
   // basic info (saved during backup)
   int bpp; ///< bits per pixel of the image frames, 24 or 32
   double fps;  /// framerate of the clip
@@ -904,7 +914,7 @@ typedef struct {
   int byte_order;
 
   pid_t mainpid;
-
+  pthread_t main_thread;
   mode_t umask;
 
   // machine load estimates
@@ -1189,6 +1199,7 @@ void do_text_window(const char *title, const char *text);
 boolean read_file_details(const char *file_name, boolean only_check_for_audio, boolean open_image);
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
+boolean restore_clip_binfmt(int clipno);
 boolean reload_clip(int fileno, int maxframe);
 void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
@@ -1260,6 +1271,7 @@ void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 
 #define is_layer_ready(layer) (weed_get_boolean_value((layer), "thread_processing", NULL) == WEED_FALSE)
+#define is_layer_processing(layer) (weed_plant_has_leaf((layer), "thread_processing"))
 
 boolean pull_frame(weed_layer_t *layer, const char *image_ext, ticks_t tc);
 void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, ticks_t tc, int width, int height);
@@ -1403,7 +1415,7 @@ off_t lives_lseek_buffered_writer(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly(int fd, off_t offset);
 off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset);
 off_t lives_buffered_offset(int fd);
-size_t lives_buffered_writer_orig_size(int fd);
+size_t lives_buffered_orig_size(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
@@ -1656,6 +1668,10 @@ void break_me(void);
 #ifdef _lives_memcpy
 #undef  lives_memcpy
 #define lives_memcpy _lives_memcpy
+#endif
+#ifdef _lives_memcmp
+#undef  lives_memcmp
+#define lives_memcmp _lives_memcmp
 #endif
 #ifdef _lives_memset
 #undef  lives_memset

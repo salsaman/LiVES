@@ -96,24 +96,23 @@ boolean set_palette(int palette);
 /// host will call this
 uint64_t get_capabilities(int palette);
 
-/// for future use
 #define LIVES_INTENTION_PLAY               	1
 #define LIVES_INTENTION_STREAM          	2
 #define LIVES_INTENTION_TRANSCODE    	3
 
-//#define VPP_CAN                         (1<<0)   /// can resize the image to fit the play window
-#define VPP_CAN_RESIZE                         (1<<0)   /// can resize the image to fit the play window
-#define VPP_CAN_RETURN                       (1<<1)
-#define VPP_LOCAL_DISPLAY                    (1<<2)
-#define VPP_LINEAR_GAMMA                    (1<<3)
-#define VPP_CAN_RESIZE_WINDOW          (1<<4)   /// can resize the image to fit the play window
-#define VPP_CAN_LETTERBOX                  (1<<5)
+#define VPP_CAN_RESIZE				(1<<0)   ///< can resize the image to fit the play window / letterbox
+#define VPP_CAN_RETURN			(1<<1)   ///< can return pixel_data after playing
+#define VPP_LOCAL_DISPLAY			(1<<2)   ///< displays to the local monitor
+#define VPP_LINEAR_GAMMA			(1<<3)   ///< input RGB data should be in linear gamma (not v. useful)
+#define VPP_CAN_RESIZE_WINDOW          (1<<4)   ///< can resize the play window on the fly (without init_screen / exit_screen)
+#define VPP_CAN_LETTERBOX                  (1<<5)   ///< player can center at xoffset, yoffset (values set in frame in play_frame)
+// bit combinations: 0 & 5: can resize and letterbox; 5 without 0: cannot resize image, but it can offset the top left pixel
 
 /// ready the screen to play (optional)
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv);
 
 /// display one frame, adding effects if you like,
-/// and resizing it to screen size if possible (VPP_CAN_RESIZE)
+/// and resizing it to screen size if possible (VPP_CAN_RESIZE) or to letterbox size
 ///
 /// if return_data is non-NULL, you should either fill it with the effected,
 /// unresized data (VPP_CAN_RETURN) or set it to NULL if you can't
@@ -121,12 +120,12 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 /// hsize and vsize are width and height of the pixel data (in macropixels)
 /// no extra padding (rowstrides) is allowed
 /// play_params should be cast to weed_plant_t ** (if the plugin exports get_play_paramtmpls() )
-/// otherwise it can be ignored
+/// otherwise it can be ignored (deprectaed)
 boolean render_frame(int hsize, int vsize, int64_t timecode, void **pixel_data, void **return_data,
                      void **play_params);
 
-/// the same as render frame, but extra padding bytes are allowed, the values in bytes are set in rowstrides
-/// return_data will have the same rs values as pixel_data
+/// updated version of render_frame: input is a weed_layer and timecode, if ret is non NULL, return pixel_data in ret
+/// any player params are now in paramters for the layer, which acts like a filter channel
 boolean play_frame(weed_layer_t *frame, int64_t tc, weed_layer_t *ret);
 
 /// destroy the screen, return mouse to original posn., allow the host GUI to take over (optional)

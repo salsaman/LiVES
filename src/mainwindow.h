@@ -413,6 +413,8 @@ enum {
 #define LIVES_FILE_EXT_RFX_SCRIPT "script"
 
 // file names
+#define TOTALSAVE_NAME "totalsave"
+#define CLIP_BINFMT_CHECK "LiVESXXX"
 #define CLIP_AUDIO_FILENAME "audio"
 #define CLIP_TEMP_AUDIO_FILENAME "audiodump." LIVES_FILE_EXT_PCM
 

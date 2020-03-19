@@ -93,16 +93,16 @@ struct _weed_data {
 typedef struct _weed_leaf weed_leaf_t;
 #ifdef __LIBWEED__
 #define _CACHE_SIZE_ 64 /// altering _CACHE_SIZE_ requires recompiling libweed
-#define _DATA_SIZE_ (12+sizeof(weed_size_t) +sizeof(weed_leaf_t *)+sizeof(char *)+sizeof(weed_data_t **)+sizeof(void *))
+#define _DATA_SIZE_ (12+sizeof(weed_size_t)+sizeof(weed_leaf_t *)+sizeof(char *)+sizeof(weed_data_t **)+sizeof(void *))
 /* N.B. padbytes are not wasted, they may be used to store key names provided they fit */
-#define padbytes ((_CACHE_SIZE_ - _DATA_SIZE_) % _CACHE_SIZE_)
+#define padbytes ((_CACHE_SIZE_-_DATA_SIZE_)%_CACHE_SIZE_)
 struct _weed_leaf {
   uint32_t	key_hash;
   weed_leaf_t *next;
   const char *key;
   char padding[padbytes];
   weed_size_t num_elements;
-  int32_t  seed_type, flags;
+  uint32_t  seed_type, flags;
   weed_data_t **data;
   void *private_data;
 };
@@ -114,7 +114,7 @@ struct _weed_leaf {
 typedef weed_leaf_t weed_plant_t;
 #endif
 
-typedef weed_plant_t *weed_plantptr_t;
+typedef weed_plant_t * weed_plantptr_t;
 
 typedef void *(*weed_malloc_f)(size_t);
 typedef void (*weed_free_f)(void *);
@@ -128,19 +128,19 @@ typedef void *(*weed_memmove_f)(void *, const void *, size_t);
 
 typedef weed_plant_t *(*weed_plant_new_f)(int32_t plant_type);
 typedef char **(*weed_plant_list_leaves_f)(weed_plant_t *, weed_size_t *nleaves);
-typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, int32_t seed_type, weed_size_t num_elems,
+typedef weed_error_t (*weed_leaf_set_f)(weed_plant_t *, const char *key, uint32_t seed_type, weed_size_t num_elems,
                                         weed_voidptr_t values);
 typedef weed_error_t (*weed_leaf_get_f)(weed_plant_t *, const char *key, int32_t idx, weed_voidptr_t value);
 typedef weed_size_t (*weed_leaf_num_elements_f)(weed_plant_t *, const char *key);
 typedef weed_size_t (*weed_leaf_element_size_f)(weed_plant_t *, const char *key, int32_t idx);
-typedef int32_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
-typedef int32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
+typedef uint32_t (*weed_leaf_seed_type_f)(weed_plant_t *, const char *key);
+typedef uint32_t (*weed_leaf_get_flags_f)(weed_plant_t *, const char *key);
 typedef weed_error_t (*weed_plant_free_f)(weed_plant_t *);
 typedef weed_error_t (*weed_leaf_delete_f)(weed_plant_t *, const char *key);
 
 #if defined (__WEED_HOST__) || defined (__LIBWEED__)
 /* host only functions */
-typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, int32_t flags);
+typedef weed_error_t (*weed_leaf_set_flags_f)(weed_plant_t *, const char *key, uint32_t flags);
 typedef weed_error_t (*weed_leaf_set_private_data_f)(weed_plant_t *, const char *key, void *data);
 typedef weed_error_t (*weed_leaf_get_private_data_f)(weed_plant_t *, const char *key, void **data_return);
 

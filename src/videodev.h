@@ -1,7 +1,10 @@
 // LiVES - videodev input
-// (c) G. Finch 2010 - 2015 <salsaman@gmail.com>
+// (c) G. Finch 2010 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
+
+#ifndef _VIDEODEV_H
+#define _VIDEODEV_H
 
 #ifdef HAVE_UNICAP
 
@@ -21,7 +24,6 @@ typedef struct {
   boolean is_really_grey; ///< for greyscale we lie and say it is YUV444P (i.e we add U and V planes)
 } lives_vdev_t;
 
-
 #define MAX_DEVICES 1024
 #define MAX_FORMATS 1024
 
@@ -29,6 +31,5 @@ boolean on_open_vdev_activate(LiVESMenuItem *, livespointer devname);
 boolean weed_layer_set_from_lvdev(weed_layer_t *layer, lives_clip_t *sfile, double timeoutsecs);
 void lives_vdev_free(lives_vdev_t *);
 
-
 #endif
-
+#endif

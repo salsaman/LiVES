@@ -11200,7 +11200,7 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 50
-#define LOOP_LIMIT 8
+#define LOOP_LIMIT 16
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0;
@@ -11233,7 +11233,8 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
-    g_main_context_acquire(g_main_context_get_thread_default());
+    //g_main_context_acquire(g_main_context_get_thread_default());
+    g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
         g_main_context_iteration(NULL, FALSE);
@@ -11284,7 +11285,8 @@ boolean lives_widget_context_update(void) {
       lives_nanosleep(1000);
     }
   }
-  g_main_context_iteration(NULL, FALSE);
+
+  //g_main_context_release(g_main_context_get_thread_default());
   if (!mainw->is_exiting && mt_needs_idlefunc) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }

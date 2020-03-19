@@ -3438,6 +3438,9 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->is_loaded = is_loaded;
 
   // any cfile (clip) initialisation goes in here
+  lives_memcpy((void *)&cfile->binfmt_check.chars, "LiVESXXX", 8);
+  cfile->binfmt_version.num = make_version_hash(LiVES_VERSION);
+  cfile->binfmt_bytes.size = sizeof(lives_clip_t);
   cfile->menuentry = NULL;
   cfile->start = cfile->end = 0;
   cfile->old_frames = cfile->opening_frames = cfile->frames = 0;
@@ -5516,8 +5519,50 @@ manual_locate:
   return TRUE;
 }
 
+#define _RELOAD(field) sfile->field = loaded->field
+#define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
-boolean recover_files(char *recovery_file, boolean auto_recover) {
+boolean restore_clip_binfmt(int clipno) {
+   if (IS_NORMAL_CLIP(clipno)) {
+     lives_clip_t *sfile = mainw->files[clipno];
+     char *fname = lives_build_filename(prefs->workdir, sfile->handle, TOTALSAVE_NAME, NULL);
+     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+       int fd;
+       size_t fsize;
+       lives_clip_t *loaded = (lives_clip_t *)lives_malloc(sizeof(lives_clip_t));
+       fd = lives_open_buffered_rdonly(fname);
+       fsize = lives_buffered_orig_size(fd);
+       lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
+       lives_close_buffered(fd);
+       lives_rm(fname);
+       mainw->com_failed = FALSE;
+       if (mainw->read_failed == fd + 1) {
+	 mainw->read_failed = 0;
+	 lives_free(loaded);
+	 return FALSE;
+       }
+       if (!lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
+	 uint64_t ver = loaded->binfmt_version.num;
+	 if (ver <= (uint64_t)atoll(mainw->version_hash)) {
+	   if (fsize == loaded->binfmt_bytes.size) {
+	     _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
+	     _RELOAD(pointer_time); _RELOAD(real_pointer_time); _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
+	     if (sfile->start < 1) sfile->start = 1;
+	     if (sfile->end > sfile->frames) sfile->end = sfile->frames;
+	     if (sfile->start > sfile->end) sfile->start = sfile->end;
+	     if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
+	     if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
+	     if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
+	     lives_free(loaded);
+	     return TRUE;
+	   }}}}}
+   return FALSE;
+ }
+
+#undef _RELOAD
+#undef _RELOAD_STRING
+
+ boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;
 
   char buff[256], *buffptr;
@@ -5851,7 +5896,10 @@ boolean recover_files(char *recovery_file, boolean auto_recover) {
       lives_rm(cfile->info_file);
       set_main_title(cfile->name, 0);
 
+      restore_clip_binfmt(mainw->current_file);
+
       if (cfile->frameno > cfile->frames) cfile->frameno = cfile->last_frameno = 1;
+
       if (mainw->multitrack == NULL) {
         resize(1);
         lives_signal_handler_block(mainw->spinbutton_start, mainw->spin_start_func);

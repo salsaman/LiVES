@@ -70,23 +70,24 @@ static weed_error_t chroma_deinit(weed_plant_t *inst) {
 static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t timecode) {
   _sdata *sdata = NULL;
 
-  weed_plant_t **in_channels = weed_get_plantptr_array(inst, WEED_LEAF_IN_CHANNELS, NULL),
-                 *out_channel = weed_get_plantptr_value(inst, WEED_LEAF_OUT_CHANNELS, NULL);
+  weed_plant_t **in_channels = weed_get_in_channels(inst, NULL),
+                 *out_channel = weed_get_out_channel(inst, 0);
   weed_plant_t *in_param;
 
-  unsigned char *src1 = weed_get_voidptr_value(in_channels[0], WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *src2 = weed_get_voidptr_value(in_channels[1], WEED_LEAF_PIXEL_DATA, NULL);
-  unsigned char *dst = weed_get_voidptr_value(out_channel, WEED_LEAF_PIXEL_DATA, NULL);
+  unsigned char *src1 = weed_channel_get_pixel_data(in_channels[0]);
+  unsigned char *src2 = weed_channel_get_pixel_data(in_channels[1]);
+
+  unsigned char *dst = weed_channel_get_pixel_data(out_channel);
 
   unsigned char blendneg;
   unsigned char blend_factor;
 
-  int width = weed_get_int_value(in_channels[0], WEED_LEAF_WIDTH, NULL);
-  int height = weed_get_int_value(in_channels[0], WEED_LEAF_HEIGHT, NULL);
-  int pal = weed_get_int_value(in_channels[0], WEED_LEAF_CURRENT_PALETTE, NULL);
-  int irowstride1 = weed_get_int_value(in_channels[0], WEED_LEAF_ROWSTRIDES, NULL);
-  int irowstride2 = weed_get_int_value(in_channels[1], WEED_LEAF_ROWSTRIDES, NULL);
-  int orowstride = weed_get_int_value(out_channel, WEED_LEAF_ROWSTRIDES, NULL);
+  int width = weed_channel_get_width(in_channels[0]);
+  int height = weed_channel_get_height(in_channels[0]);
+  int pal = weed_channel_get_palette(in_channels[0]);
+  int irowstride1 = weed_channel_get_stride(in_channels[0]);
+  int irowstride2 = weed_channel_get_stride(in_channels[1]);
+  int orowstride = weed_channel_get_stride(out_channel);
   int inplace = (src1 == dst);
   int bf, psize = 4;
   int start = 0, row = 0;
@@ -101,8 +102,8 @@ static weed_error_t common_process(int type, weed_plant_t *inst, weed_timecode_t
 
   width *= psize;
 
-  in_param = weed_get_plantptr_value(inst, WEED_LEAF_IN_PARAMETERS, NULL);
-  bf = weed_get_int_value(in_param, WEED_LEAF_VALUE, NULL);
+  in_param = weed_get_in_param(inst, 0);
+  bf = weed_param_get_value_int(in_param);
 
   blend_factor = (unsigned char)bf;
   blendneg = blend_factor ^ 0xFF;

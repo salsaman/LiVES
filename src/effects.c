@@ -845,7 +845,7 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
   }
 
   if (mainw->num_tr_applied && mainw->blend_file != mainw->current_file &&
-      mainw->blend_file != -1 && mainw->files[mainw->blend_file] != NULL && resize_instance == NULL) {
+      IS_VALID_CLIP(mainw->blend_file) && resize_instance == NULL) {
     layers[1] = get_blend_layer(tc);
   } else layers[1] = NULL;
 

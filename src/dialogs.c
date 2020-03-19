@@ -1411,7 +1411,7 @@ int process_one(boolean visible) {
 
 
 #define ENABLE_PRECACHE
-  //#define SHOW_CACHE_PREDICTIONS
+#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
@@ -1474,7 +1474,8 @@ int process_one(boolean visible) {
           /// of caching further frames..'bungle frames' is a rough estimate of how far ahead we need to jump so that we land exaclty
           /// on the player's frame. 'getahead' is the target frame.
           /// 'test_getahead' is used so that we can sometime recalibrate withour actually jumping the frame
-          int delta = (test_getahead - requested_frame) * sig(sfile->pb_fps);
+          int dir = sig(sfile->pb_fps);
+          int delta = (test_getahead - requested_frame) * dir;
 #ifdef SHOW_CACHE_PREDICTIONS
           g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
                   sfile->frameno, requested_frame,
@@ -1487,6 +1488,7 @@ int process_one(boolean visible) {
           if (delta == 0)  bungle_frames++;
           if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
           else bungle_frames += requested_frame - test_getahead;
+          if (bungle_frames <= -dir) bungle_frames = 0;
         }
         recalc_bungle_frames = FALSE;
         test_getahead = -1;
@@ -1815,10 +1817,13 @@ int process_one(boolean visible) {
         }
         if (mainw->pred_frame > 0 && mainw->pred_frame < sfile->frames) {
           const char *img_ext = get_image_ext_for_type(sfile->img_type);
-          mainw->frame_layer_preload = weed_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
-          if (!is_virtual_frame(mainw->pred_clip, mainw->pred_frame))
+          if (!is_virtual_frame(mainw->pred_clip, mainw->pred_frame)) {
+            mainw->frame_layer_preload = weed_layer_new_for_frame(mainw->pred_clip, mainw->pred_frame);
             pull_frame_threaded(mainw->frame_layer_preload, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
-          else {
+          } else {
+            // if the target is a clip-frame we have to decode it now, since we cannot simply decode 2 frames simultaneously
+            // although it could be possible to have 2 clone decoders and have them leapfrog
+            mainw->frame_layer_preload = weed_layer_new_for_frame(mainw->pred_clip, sfile->frame_index[mainw->pred_frame]);
             if (!pull_frame_at_size(mainw->frame_layer_preload, img_ext,
                                     (weed_timecode_t)mainw->currticks,
                                     sfile->hsize, sfile->vsize, WEED_PALETTE_END)) {

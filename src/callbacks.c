@@ -404,6 +404,12 @@ void lives_exit(int signum) {
                 lives_system(com, FALSE);
                 threaded_dialog_spin(0.);
                 lives_free(com);
+                if (IS_NORMAL_CLIP(i)) {
+                  char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle, TOTALSAVE_NAME, NULL);
+                  int fd = lives_create_buffered(fname, S_IRUSR | S_IWUSR);
+                  lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
+                  lives_close_buffered(fd);
+                }
               }
               if (mainw->files[i]->frameno != mainw->files[i]->saved_frameno) {
                 save_clip_value(i, CLIP_DETAILS_PB_FRAMENO, &mainw->files[i]->frameno);
@@ -5839,6 +5845,7 @@ boolean reload_set(const char *set_name) {
     cfile->changed = TRUE;
     lives_rm(cfile->info_file);
     set_main_title(cfile->name, 0);
+    restore_clip_binfmt(mainw->current_file);
 
     if (mainw->multitrack == NULL) {
       resize(1);

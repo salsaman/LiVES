@@ -1798,22 +1798,21 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (weed_get_voidptr_value(layer, WEED_LEAF_PIXEL_DATA, NULL) == NULL) {
       /// wait for thread to pull layer pixel_data
-      if (is_layer_ready(layer)) {
-        check_layer_ready(layer);
-        frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
-        if (frame == 0) {
-          /// temp disable channels if we can
-          channel = in_channels[k];
-          chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
-          if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl))) {
-            if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_FALSE)
-              weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
-          } else {
-            weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
-            retval = FILTER_ERROR_BLANK_FRAME;
-            goto done_video;
-	    // *INDENT-OFF*
-	  }}}}
+      check_layer_ready(layer);
+      frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
+      if (frame == 0) {
+        /// temp disable channels if we can
+        channel = in_channels[k];
+        chantmpl = weed_get_plantptr_value(channel, WEED_LEAF_TEMPLATE, NULL);
+        if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl))) {
+          if (weed_get_boolean_value(channel, WEED_LEAF_DISABLED, NULL) == WEED_FALSE)
+            weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
+        } else {
+          weed_set_boolean_value(channel, WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
+          retval = FILTER_ERROR_BLANK_FRAME;
+          goto done_video;
+	  // *INDENT-OFF*
+	}}}
     k++;
   }
   // *INDENT-ON*

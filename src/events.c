@@ -4816,7 +4816,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // any incoming network messages
 
   // return TRUE if we rendered to a new clip
-  weed_plant_t *info = NULL;
+  lives_proc_thread_t *info = NULL;
 
   LiVESWidget *e_rec_dialog;
   LiVESWidget *elist_dialog;

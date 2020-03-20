@@ -327,19 +327,19 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
 typedef weed_plantptr_t lives_proc_thread_t;
-
-#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+typedef uint64_t funcsig_t;
 
 typedef int(*funcptr_bool_t)();
 typedef int64_t(*funcptr_int64_t)();
 
-boolean run_as_thread(weed_plant_t *info); ///< already depracated
-
 lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
+
 void lives_proc_thread_join(lives_proc_thread_t);
 int lives_proc_thread_join_boolean(lives_proc_thread_t);
 int lives_proc_thread_join_int(lives_proc_thread_t);
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
+
+boolean resubmit_thread(lives_proc_thread_t thread_info);
 
 #endif

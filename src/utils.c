@@ -29,7 +29,7 @@ static int get_hex_digit(const char c) GNU_CONST;
 
   in case of error function returns val
 
-  if fd is a buffered file then the function just returns the know name,
+  if fd is a buffered file then the function just returns the known name,
   else the name is procured from /proc
 
   call like: foo = filename_from_fd(foo,fd); lives_free(foo);
@@ -618,22 +618,17 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
 
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  weed_plant_t *info;
+  lives_proc_thread_t *slurper;
   if (!fbuff || fbuff->slurping) return;
-  info = weed_plant_new(WEED_PLANT_THREAD_INFO);
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
-  weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, _lives_buffered_rdonly_slurp);
-  weed_set_int_value(info, WEED_LEAF_THREAD_PARAM0, fd);
-  weed_set_int64_value(info, WEED_LEAF_THREAD_PARAM1, skip);
-  run_as_thread(info);
+  slurper = lives_proc_thread_create((lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
   lives_nanosleep_until_nonzero(fbuff->offset | fbuff->eof);
 }
 
 
 LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-
   if (fbuff == NULL) {
     // normal non-buffered file
     LIVES_DEBUG("lives_buffered_readonly_set_reversed: no file buffer found");

@@ -2863,7 +2863,11 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       pthread_mutex_unlock(&priv->idxc->mutex);
       nextframe = dts_to_frame(cdata, idx->dts);
       if (got_eof) return FALSE;
-      avcodec_flush_buffers(priv->ctx);
+
+      if ((priv->last_frame == -1 || (tframe < priv->last_frame) || priv->picture == NULL ||
+           (tframe - priv->last_frame > rescan_limit)) && priv->picture != NULL) {
+        avcodec_flush_buffers(priv->ctx);
+      }
 #ifdef DEBUG_KFRAMES
       if (idx != NULL) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif

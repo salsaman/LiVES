@@ -653,12 +653,10 @@ typedef struct _lives_clip_t {
 
   int gamma_type;
 
-  // TODO: make 1024 (to handle flv for example)
   char title[256];
   char author[256];
-  char comment[256];
-
-  char keywords[256];
+  char comment[1024];
+  char keywords[1024];
   ////////////////
 
   lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)

@@ -4242,20 +4242,23 @@ static int validate_values(weed_plant_t *param, int is_list, weed_size_t nvalues
 
 
 
-
-
-
-
-
 Appendix A. Weed Utlity functions:
 
 For the HOST:
+
+#define WEED_LEAF_GET(plant, key, type) weed_get_##type##_value(plant, key, NULL)
+#define WEED_LEAF_GET_ARRAY_COUNTED(plant, key, type, counter) weed_get_##type##_array_counted(plant, key, &count)
+#define WEED_LEAF_SET(plant, key, type, value) weed_set_##type##_value(plant, key, value)
+#define WEED_LEAF_SET_ARRAY(plant, key, type, nvals, array) weed_set_##type##_array(plant, key, nvals, array)
 
 /* check if leaf exists and has a value */
 int weed_plant_has_leaf(weed_plant_t *, const char *key);
 
 /* check if leaf exists; may have a seed_type but no value set */
 int weed_leaf_exists(weed_plant_t *, const char *key);
+
+void weed_utils_set_custom_memfuncs(weed_malloc_f malloc_func, weed_calloc_f calloc_func, weed_memcpy_f memcpy_func,
+                                    weed_memcmp_f memcmp_func, weed_free_f free_func);
 
 weed_error_t weed_set_int_value(weed_plant_t *, const char *key, int32_t value);
 weed_error_t weed_set_double_value(weed_plant_t *, const char *key, double value);

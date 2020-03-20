@@ -5546,7 +5546,7 @@ boolean restore_clip_binfmt(int clipno) {
 	 if (ver <= (uint64_t)atoll(mainw->version_hash)) {
 	   if (fsize == loaded->binfmt_bytes.size) {
 	     _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
-	     _RELOAD(pointer_time); _RELOAD(real_pointer_time); _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
+	     _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
 	     if (sfile->start < 1) sfile->start = 1;
 	     if (sfile->end > sfile->frames) sfile->end = sfile->frames;
 	     if (sfile->start > sfile->end) sfile->start = sfile->end;

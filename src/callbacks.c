@@ -10738,7 +10738,7 @@ char *get_palette_name_for_clip(int clipno) {
   if (!IS_VALID_CLIP(clipno)) return NULL;
   sfile = mainw->files[clipno];
   if (IS_NORMAL_CLIP(clipno)) {
-    if (is_virtual_frame(mainw->current_file, mainw->actual_frame)) {
+    if (is_virtual_frame(clipno, sfile->frameno)) {
       lives_clip_data_t *cdata = ((lives_decoder_t *)sfile->ext_src)->cdata;
       palname = lives_strdup(weed_palette_get_name_full(cdata->current_palette, cdata->YUV_clamping, cdata->YUV_subspace));
     } else {
@@ -10764,8 +10764,7 @@ char *get_palette_name_for_clip(int clipno) {
 #endif
     }
     break;
-    default:
-      break;
+    default: break;
     }
   if (!palname) palname = lives_strdup("??????");
   return palname;

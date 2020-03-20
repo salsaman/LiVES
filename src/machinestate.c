@@ -1108,6 +1108,219 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
   return hash;
 }
 
+
+/**
+  lives  proc_threads API
+  - the only requirements are to call lives_proc_thread_create() which will generate a lives_proc_thread_t and run it,
+  and then (depending on the return_type parameter, call one of the lives_proc_thread_join_*() functions
+
+  (see that function for more comments)
+*/
+
+typedef weed_plantptr_t lives_proc_thread_t;
+
+/// create the specific plant which defines a background task to be run
+/// - func is any function of a recognised type, with 0 - 16 parameters, and a value of type <return type> which may be retrieved by
+/// later calling the appropriate lives_proc_thread_join_*() function
+/// - args_fmt is a 0 terminated string describing the arguments of func, i ==int, d == double, b == boolean (int),
+/// s == string (0 terminated), I == uint64_t, int64_t, P = weed_plant_t *, V / v == (void *), F == weed_funcptr_t
+/// return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
+/// will free its own resources and NULL is returned from this function (fire and forget)
+/// return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
+/// lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
+/// and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
+/// for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
+/// task and return a copy of the actual return value of the func
+/// alternatively, if return_type is non-zero, then the returned value from this function may be reutlised by passing it as the parameter
+/// to run_as_thread().
+
+lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_type, const char *args_fmt, ...) {
+  va_list xargs;
+  int p = 0;
+  const char *c;
+  weed_plant_t *thread_info = weed_plant_new(WEED_PLANT_THREAD_INFO);
+  if (!thread_info) return NULL;
+  weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
+  if (return_type) {
+    if (return_type) weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
+    else weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
+  }
+#define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
+  va_start(xargs, args_fmt);
+  c = args_fmt;
+  for (c = args_fmt; *c; c++) {
+    char *pkey = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, p++);
+    switch (*c) {
+    case 'i': weed_set_int_value(thread_info, pkey, va_arg(xargs, int)); break;
+    case 'd': weed_set_double_value(thread_info, pkey, va_arg(xargs, double)); break;
+    case 'b': weed_set_boolean_value(thread_info, pkey, va_arg(xargs, int)); break;
+    case 's': weed_set_string_value(thread_info, pkey, va_arg(xargs, char *)); break;
+    case 'I': weed_set_int64_value(thread_info, pkey, va_arg(xargs, int64_t)); break;
+    case 'F': weed_set_funcptr_value(thread_info, pkey, va_arg(xargs, weed_funcptr_t)); break;
+    case 'V': case 'v': weed_set_voidptr_value(thread_info, pkey, va_arg(xargs, void *)); break;
+    case 'P': weed_set_plantptr_value(thread_info, pkey, va_arg(xargs, weed_plantptr_t)); break;
+    default: weed_plant_free(thread_info); return NULL;
+    }
+    lives_free(pkey);
+  }
+
+  va_end(xargs);
+  resubmit_thread(thread_info);
+  if (!return_type) return NULL;
+  return thread_info;
+}
+
+
+#define _RV_ WEED_LEAF_RETURN_VALUE
+static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
+  /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
+  /// however since there are almost 3 quadrillion posibilities (nargs < 16 * all return types)
+  /// it is not feasable to add every one
+  weed_funcptr_t func = NULL;
+  funcptr_bool_t funcb = NULL;
+  funcptr_int64_t funci64 = NULL;
+  uint64_t funcsig = 0;
+  uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
+  switch (ret_type) {
+  case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  case WEED_SEED_INT64: funci64 = (funcptr_int64_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  default: func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
+  }
+
+#define FUNCSIG_VOID								0X00000000
+#define FUNCSIG_INT 								0X00000001
+#define FUNCSIG_INT_INT64 							0X00000015
+#define FUNCSIG_VOIDP_VOIDP 				       		0X000000DD
+#define FUNCSIG_PLANTP_BOOL 				       		0X000000E3
+#define FUNCSIG_PLANTP_VOIDP_INT 		        		0X00000ED5
+
+  // Note: C compilers don't care about the type / number of function args., (else it would be impossible to alias any function pointer)
+  // just the type / number must be correct at runtime;
+  // However it DOES care about the return type. The funcsigs are a guide so that the correct cast / number of args. can be
+  // determined in the code., the first argument to the GETARG macro is set by this.
+  // return_type determines which function flavour to call, e.g func, funcb, funci
+  /// the second argument to GETARG relates to the internal structure of the lives_proc_thread;
+
+#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+  switch (funcsig) {
+  case FUNCSIG_VOID:
+    switch (ret_type) {
+    case WEED_SEED_INT64: weed_set_int64_value(info, _RV_, (*funci64)()); break;
+    default: (*func)(); break;
+    }
+    break;
+  case FUNCSIG_INT: (*func)(GETARG(int, "0")); break;
+  case FUNCSIG_INT_INT64: (*func)(GETARG(int, "0"), GETARG(int64, "0")); break;
+  case FUNCSIG_VOIDP_VOIDP: (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1")); break;
+  case FUNCSIG_PLANTP_BOOL: (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1")); break;
+  case FUNCSIG_PLANTP_VOIDP_INT:
+    switch (ret_type) {
+    case WEED_SEED_BOOLEAN:
+      weed_set_boolean_value(info, _RV_, (*funcb)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2"))); break;
+    default: (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
+    }
+  default: break;
+  }
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
+  /// returns FALSE while the thread is running, TRUE once it has finished
+  return (weed_leaf_num_elements(tinfo, _RV_) > 0
+          || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
+}
+
+/* #ifdef LIVES_GNU */
+/* // needs testing... */
+/* #define foo(plant) \ */
+/*   __builtin_choose_expr ( \ */
+/* 			 weed_leaf_seed_type(plant, _RV_) == 3, proc_thread_join_boolean(plant), \ */
+/* 			 weed_leaf_seed_type(plant. _RV_) == 1, proc_thread_join_int(plant), \ */
+/* 			 proc_thread_join(plant)} */
+/* #endif */
+
+#define _join(ctype, stype)  ctype retval;			      \
+  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
+  retval = weed_get_##stype##_value(tinfo, _RV_, NULL);		      \
+  weed_plant_free(tinfo);					      \
+  return retval;
+#define _join_t(type) _join(type, type)
+
+
+LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
+  lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
+  weed_plant_free(tinfo);
+}
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) {
+  _join(int, boolean)
+}
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) {
+  _join_t(int)
+}
+
+LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {
+  _join(int64_t, int64)
+}
+
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_double(lives_proc_thread_t tinfo) {
+  _join_t(double)
+}
+
+/**
+   create a funcsig from a lives_proc_thread_t object
+   the returned value can be passed to run_funcsig, along with the original lives_proc_thread_t
+*/
+static funcsig_t make_funcsig(lives_proc_thread_t func_info) {
+  funcsig_t funcsig = 0;
+  for (register int nargs = 0; nargs < 16; nargs++) {
+    char *lname = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, nargs);
+    int st = weed_leaf_seed_type(func_info, lname);
+    lives_free(lname);
+    if (!st) break;
+    funcsig <<= 4;  /// 4 bits per argtype, hence up to 16 args in a uint64_t
+    if (st < 12) funcsig |= st; // 1 == int, 2 == double, 3 == boolean (int), 4 == char *, 5 == int64_t
+    else {
+      switch (st) {
+      case WEED_SEED_FUNCPTR: funcsig |= 0XC; break;
+      case WEED_SEED_VOIDPTR: funcsig |= 0XD; break;
+      case WEED_SEED_PLANTPTR: funcsig |= 0XE; break;
+      default: funcsig |= 0XF; break;
+      }
+    }
+  }
+  return funcsig;
+}
+
+static void *_plant_thread_func(void *args) {
+  lives_proc_thread_t info = (lives_proc_thread_t)args;
+  uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
+  funcsig_t sig = make_funcsig(info);
+  call_funcsig(sig, info);
+  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE)
+    weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
+  else if (!ret_type) weed_plant_free(info);
+  return NULL;
+}
+#undef _RV_
+
+
+
+/// (re)submission point, the function call is added to the threadpool tasklist
+/// if we have sufficient threads the task will be run at once, if all threads are busy then MINPOOLTHREADS new threads will be created
+/// and added to the pool
+boolean resubmit_thread(lives_proc_thread_t thread_info) {
+  /// run any function as a lives_thread
+  lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
+  /// tell the thread to clean up after itself [but it won't delete thread_info]
+  lives_thread_attr_t attr = LIVES_THRDATTR_AUTODELETE;
+  lives_thread_create(thread, &attr, _plant_thread_func, (void *)thread_info);
+  return TRUE;
+}
+
+
+//////// worker thread pool //////////////////////////////////////////
+
 ///////// thread pool ////////////////////////
 #define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
@@ -1128,7 +1341,6 @@ static boolean mtuned = FALSE;
 static pthread_mutex_t tuner_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MALLOPT_WAIT_MAX 30
 #endif
-
 
 
 boolean do_something_useful(uint64_t myidx) {
@@ -1227,175 +1439,6 @@ void lives_threadpool_init(void) {
     pthread_create(poolthrds[i], NULL, thrdpool, LIVES_INT_TO_POINTER(i));
   }
 }
-
-
-void *_plant_thread_func(void *args) {
-  weed_plant_t *info = (weed_plant_t *)args;
-  weed_funcptr_t func = NULL;
-  funcptr_bool_t funcb = NULL;
-  funcptr_int64_t funci64 = NULL;
-  uint64_t funcsig = 0;
-  int nargs, ret_type;
-
-  ret_type = weed_leaf_seed_type(info, WEED_LEAF_RETURN_VALUE);
-  switch (ret_type) {
-  case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  case WEED_SEED_INT64: funci64 = (funcptr_int64_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  default:
-    func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  }
-
-  for (nargs = 0; nargs < 16; nargs++) {
-    char *lname = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, nargs);
-    int st = weed_leaf_seed_type(info, lname);
-    lives_free(lname);
-    if (!st) break;
-    funcsig <<= 4;
-    if (st < 12) funcsig |= st; // 1 == int, 2 == double, 3 == boolean (int), 4 == char *, 5 == int64_t
-    else {
-      switch (st) {
-      case WEED_SEED_FUNCPTR: funcsig |= 0XC; break;
-      case WEED_SEED_VOIDPTR: funcsig |= 0XD; break;
-      case WEED_SEED_PLANTPTR: funcsig |= 0XE; break;
-      default: funcsig |= 0XF; break;
-      }
-    }
-  }
-
-  switch (funcsig) {
-  case 0:
-    if (ret_type == WEED_SEED_INT64) {
-      weed_set_int64_value(info, WEED_LEAF_RETURN_VALUE, (*funci64)());
-      break;
-    }
-    (*func)(); break;
-  case 0x01: // int
-    (*func)(GETARG(int, "0")); break;
-  case 0x15: // int, int64
-    (*func)(GETARG(int, "0"), GETARG(int64, "0")); break;
-  case 0xDD: // void *. void *
-    (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1")); break;
-  case 0xE3: // weed_plant_t *, boolean
-    (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1")); break;
-  case 0xED5: // weed_plant_t *, void *, int64
-    if (ret_type == WEED_SEED_BOOLEAN) {
-      weed_set_boolean_value(info, WEED_LEAF_RETURN_VALUE, (*funcb)(GETARG(plantptr, "0"),
-                             GETARG(voidptr, "1"), GETARG(int64, "2")));
-      break;
-    }
-    (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
-  default: break;
-    /// etc for all 8 ** 16 + 8 ** 15 + ... param combinations * (8 + 1) return types ~= 2.9 * 10 ** 15
-  }
-
-  if (weed_get_boolean_value(info, WEED_LEAF_NOTIFY, NULL) == WEED_TRUE)
-    weed_set_boolean_value(info, WEED_LEAF_DONE, WEED_TRUE);
-  else if (!ret_type) weed_plant_free(info);
-  return NULL;
-}
-
-
-boolean run_as_thread(weed_plant_t *info) {
-  /// run any function as a thread
-  lives_thread_t *thread = (lives_thread_t *)lives_calloc(1, sizeof(lives_thread_t));
-  lives_thread_attr_t attr = LIVES_THRDATTR_AUTODELETE;
-  lives_thread_create(thread, &attr, _plant_thread_func, (void *)info);
-  return TRUE;
-}
-
-typedef weed_plantptr_t lives_proc_thread_t;
-
-lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_type, const char *args_fmt, ...) {
-  va_list xargs;
-  int p = 0;
-  const char *c;
-  weed_plant_t *thread_info = weed_plant_new(WEED_PLANT_THREAD_INFO);
-  if (!thread_info) return NULL;
-  weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
-  if (return_type) {
-    if (return_type == -1) weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
-    else weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
-  }
-#define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
-
-  va_start(xargs, args_fmt);
-  c = args_fmt;
-  for (c = args_fmt; *c; c++) {
-    char *pkey = lives_strdup_printf("%s%d", WEED_LEAF_THREAD_PARAM, p++);
-    switch (*c) {
-    case 'i':
-      weed_set_int_value(thread_info, pkey, va_arg(xargs, int)); break;
-    case 'd':
-      weed_set_double_value(thread_info, pkey, va_arg(xargs, double)); break;
-    case 'b':
-      weed_set_boolean_value(thread_info, pkey, va_arg(xargs, int)); break;
-    case 's':
-      weed_set_string_value(thread_info, pkey, va_arg(xargs, char *)); break;
-    case 'I':
-      weed_set_int64_value(thread_info, pkey, va_arg(xargs, int64_t)); break;
-    case 'F':
-      weed_set_funcptr_value(thread_info, pkey, va_arg(xargs, weed_funcptr_t)); break;
-    case 'V': case 'v':
-      weed_set_voidptr_value(thread_info, pkey, va_arg(xargs, void *)); break;
-    case 'P':
-      weed_set_plantptr_value(thread_info, pkey, va_arg(xargs, weed_plantptr_t)); break;
-    default:
-      weed_plant_free(thread_info);
-      return NULL;
-    }
-    lives_free(pkey);
-  }
-  va_end(xargs);
-  run_as_thread(thread_info);
-  return thread_info;
-}
-
-
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
-  return (weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE) > 0
-          || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
-}
-
-
-#ifdef LIVES_GNU
-// needs testing...
-#define foo(plant) \
-  __builtin_choose_expr ( \
-			 weed_leaf_seed_type(plant, WEED_LEAF_RETURN_VALUE) == 3, proc_thread_join_boolean(plant), \
-			 weed_leaf_seed_type(plant. WEED_LEAF_RETURN_VALUE) == 1, proc_thread_join_int(plant), \
-			 proc_thread_join(plant)}
-#endif
-
-LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
-  lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
-  weed_plant_free(tinfo);
-}
-
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) {
-  int retval;
-  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
-  retval = weed_get_boolean_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
-  weed_plant_free(tinfo);
-  return retval;
-}
-
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) {
-  int retval;
-  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
-  retval = weed_get_int_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
-  weed_plant_free(tinfo);
-  return retval;
-}
-
-LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {
-  int64_t retval;
-  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, WEED_LEAF_RETURN_VALUE));
-  retval = weed_get_int64_value(tinfo, WEED_LEAF_RETURN_VALUE, NULL);
-  weed_plant_free(tinfo);
-  return retval;
-}
-
 
 void lives_threadpool_finish(void) {
   threads_die = TRUE;

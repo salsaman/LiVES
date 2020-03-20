@@ -4530,6 +4530,12 @@ static boolean clip_ebox_pressed(LiVESWidget * eventbox, LiVESXEventButton * eve
   sfile = mainw->files[file];
 
   if (event->button == 3) {
+    double timesecs;
+    lives_widget_get_pointer((LiVESXDevice *)mainw->mgeom[prefs->gui_monitor > 0 ? prefs->gui_monitor - 1 : 0].mouse_device,
+                             mt->timeline, &mt->sel_x, &mt->sel_y);
+    timesecs = get_time_from_x(mt, mt->sel_x);
+    lives_ruler_set_value(LIVES_RULER(mt->timeline), timesecs);
+    lives_widget_queue_draw(mt->timeline);
     do_clip_context(mt, event, sfile);
     return FALSE;
   }

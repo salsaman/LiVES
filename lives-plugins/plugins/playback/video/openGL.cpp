@@ -975,10 +975,6 @@ static int Upload(void) {
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
 
-  // time sync
-  clock_gettime(CLOCK_MONOTONIC, &now);
-  ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
-
   texID = get_texture_texID(0);
 
   if (zmode != -1) mode = zmode;
@@ -1157,6 +1153,9 @@ static int Upload(void) {
     float tx = 0.0, ty;
 
     float vz;
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     ty = sin(ticks * 0.001) * 0.2;
 
@@ -1251,6 +1250,10 @@ static int Upload(void) {
   break;
 
   case 4: {
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
     // landscape:
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
@@ -1365,6 +1368,10 @@ static int Upload(void) {
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -1.0);
 
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
     // turn the cube
     glRotatef(ticks * 0.07, 0, 1, 0);
     glRotatef(ticks * 0.08, 0, 0, 1);
@@ -1413,6 +1420,10 @@ static int Upload(void) {
 
   case 6: {
     // cube:
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
+
     glMatrixMode(GL_PROJECTION);  // use the projection mode
     glLoadIdentity();
     gluPerspective(60.0, aspect, 0.01, 1135.0);
@@ -1492,6 +1503,9 @@ static int Upload(void) {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -2.3);
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     // turn the cube
     glRotatef(cos((ticks % 5000)*M_PI / 5000.0) * 45 + 45, 0, 1, 0);
@@ -1543,6 +1557,9 @@ static int Upload(void) {
     // tunnel:
 
     float tx = 0.0, ty;
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     ty = (ticks % 2000) * 0.0005;
 
@@ -1644,6 +1661,9 @@ static int Upload(void) {
 
     static PARTICLE parts[NOF_PARTS]; // particle array
     static int parts_init = FALSE; // have been inited?
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     if (!parts_init) {
       for (int i = 0; i < NOF_PARTS; i++) parts[i].start_time = NOT_CREATED;
@@ -1765,6 +1785,9 @@ static int Upload(void) {
     static PARTICLE parts[NOF_PARTS2]; // particle array
 
     static int parts_init = FALSE; // have been inited?
+    // time sync
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ticks = now.tv_sec * 1000 + now.tv_nsec / 1000000;
 
     if (!parts_init) {
       for (int i = 0; i < NOF_PARTS2; i++) parts[i].start_time = NOT_CREATED;

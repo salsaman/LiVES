@@ -49,27 +49,18 @@ boolean transcode(int start, int end) {
   _vid_playback_plugin *vpp, *ovpp;
   _vppaw *vppa;
   weed_plant_t *frame_layer = NULL;
-  weed_plant_t *info = NULL;
+  lives_proc_thread_t coder = NULL;
   lives_rfx_t *rfx = NULL;
-
   void *abuff = NULL;
-
   short *sbuff = NULL;
-
   float **fltbuf = NULL;
-
   ticks_t currticks;
-
   ssize_t in_bytes;
-
   LiVESList *retvals = NULL;
-
   const char *img_ext = NULL;
-
   char *afname = NULL;
   char *pname = NULL;
   char *msg = NULL, *tmp, * fnamex;
-
   double spf = 0., ospf;
 
   boolean audio = FALSE;
@@ -353,21 +344,14 @@ boolean transcode(int start, int end) {
 
     gamma_convert_layer(tgamma, frame_layer);
 
-    if (!info) info = weed_plant_new(WEED_PLANT_THREAD_INFO);
-    else {
-      lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, WEED_LEAF_RETURN_VALUE));
-      error = weed_get_boolean_value(info, WEED_LEAF_RETURN_VALUE, NULL);
+    if (coder) {
+      error = lives_proc_thread_join_boolean(coder);
     }
     if (!error) {
       weed_plant_t *copy_frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(copy_frame_layer, frame_layer);
       weed_layer_nullify_pixel_data(frame_layer);
-      weed_set_funcptr_value(info, WEED_LEAF_THREADFUNC, send_layer);
-      weed_set_plantptr_value(info, WEED_LEAF_THREAD_PARAM0, copy_frame_layer);
-      weed_set_voidptr_value(info, WEED_LEAF_THREAD_PARAM1, vpp);
-      weed_set_int64_value(info, WEED_LEAF_THREAD_PARAM2, currticks);
-      weed_leaf_set(info, WEED_LEAF_RETURN_VALUE, WEED_SEED_BOOLEAN, 0, NULL);
-      run_as_thread(info);
+      coder = lives_proc_thread_create((lives_funcptr_t)send_layer, WEED_SEED_BOOLEAN, "PVI", copy_frame_layer, vpp, currticks);
     }
 
     //error = send_layer(frame_layer, vpp, currticks);
@@ -392,11 +376,9 @@ tr_err:
 
   mainw->fx1_bool = fx1_bool;
 
-  if (info) {
+  if (coder) {
     // do b4 exit_screen
-    lives_nanosleep_until_nonzero(weed_leaf_num_elements(info, "return_value"));
-    error = weed_get_boolean_value(info, "return_value", NULL);
-    weed_plant_free(info);
+    error = lives_proc_thread_join_boolean(coder);
   }
 
   // flush streams, write headers, plugin cleanup

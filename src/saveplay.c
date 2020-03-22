@@ -3021,7 +3021,19 @@ void play_file(void) {
         resize_play_window();
         mainw->playing_file = -1;
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-        //mainw->noswitch = TRUE;
+
+	if (mainw->preview_box == NULL) {
+	  // create the preview box that shows frames
+	  make_preview_box();
+	}
+	// and add it the play window
+	if (lives_widget_get_parent(mainw->preview_box) == NULL && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
+	  lives_widget_queue_draw(mainw->play_window);
+	  lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+	  lives_widget_grab_focus(mainw->preview_spinbutton);
+	  play_window_set_title();
+	  load_preview_image(FALSE);
+	}
 
         lives_widget_context_update();
         if (mainw->play_window != NULL) {

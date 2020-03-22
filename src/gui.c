@@ -3656,7 +3656,6 @@ void make_preview_box(void) {
                        LIVES_INT_TO_POINTER(3));
 
   mainw->preview_image = lives_image_new_from_pixbuf(NULL);
-  lives_widget_show(mainw->preview_image);
   lives_container_add(LIVES_CONTAINER(eventbox), mainw->preview_image);
   lives_widget_set_app_paintable(eventbox, TRUE);
 
@@ -3740,8 +3739,6 @@ void make_preview_box(void) {
   lives_button_set_relief(LIVES_BUTTON(mainw->p_rewindbutton), LIVES_RELIEF_NONE);
   lives_container_add(LIVES_CONTAINER(mainw->p_rewindbutton), rewind_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_rewindbutton, TRUE, TRUE, 0);
-  lives_widget_show(mainw->p_rewindbutton);
-  lives_widget_show(rewind_img);
   lives_widget_set_tooltip_text(mainw->p_rewindbutton, _("Rewind"));
   lives_widget_set_sensitive(mainw->p_rewindbutton, CURRENT_CLIP_IS_VALID && cfile->pointer_time > 0.);
   lives_widget_set_focus_on_click(mainw->p_rewindbutton, FALSE);
@@ -3752,8 +3749,6 @@ void make_preview_box(void) {
   lives_button_set_relief(LIVES_BUTTON(mainw->p_playbutton), LIVES_RELIEF_NONE);
   lives_container_add(LIVES_CONTAINER(mainw->p_playbutton), play_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playbutton, TRUE, TRUE, 0);
-  lives_widget_show(mainw->p_playbutton);
-  lives_widget_show(play_img);
   lives_widget_set_tooltip_text(mainw->p_playbutton, _("Play all"));
   lives_widget_set_focus_on_click(mainw->p_playbutton, FALSE);
 
@@ -3763,8 +3758,6 @@ void make_preview_box(void) {
   lives_button_set_relief(LIVES_BUTTON(mainw->p_playselbutton), LIVES_RELIEF_NONE);
   lives_container_add(LIVES_CONTAINER(mainw->p_playselbutton), playsel_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_playselbutton, TRUE, TRUE, 0);
-  lives_widget_show(mainw->p_playselbutton);
-  lives_widget_show(playsel_img);
   lives_widget_set_tooltip_text(mainw->p_playselbutton, _("Play Selection"));
   lives_widget_set_sensitive(mainw->p_playselbutton, CURRENT_CLIP_IS_VALID && cfile->frames > 0);
   lives_widget_set_focus_on_click(mainw->p_playselbutton, FALSE);
@@ -3775,8 +3768,6 @@ void make_preview_box(void) {
   lives_button_set_relief(LIVES_BUTTON(mainw->p_loopbutton), LIVES_RELIEF_NONE);
   lives_button_set_image(LIVES_BUTTON(mainw->p_loopbutton), loop_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_loopbutton, TRUE, TRUE, 0);
-  lives_widget_show(mainw->p_loopbutton);
-  lives_widget_show(loop_img);
   lives_widget_set_tooltip_text(mainw->p_loopbutton, _("Loop On/Off"));
   lives_widget_set_sensitive(mainw->p_loopbutton, TRUE);
   lives_widget_set_focus_on_click(mainw->p_loopbutton, FALSE);
@@ -3792,8 +3783,6 @@ void make_preview_box(void) {
   lives_button_set_relief(LIVES_BUTTON(mainw->p_mutebutton), LIVES_RELIEF_NONE);
   lives_container_add(LIVES_CONTAINER(mainw->p_mutebutton), mainw->p_mute_img);
   lives_box_pack_start(LIVES_BOX(hbox_buttons), mainw->p_mutebutton, TRUE, TRUE, 0);
-  lives_widget_show(mainw->p_mutebutton);
-  lives_widget_show(mainw->p_mute_img);
   lives_widget_set_focus_on_click(mainw->p_mutebutton, FALSE);
 
   if (!mainw->mute) lives_widget_set_tooltip_text(mainw->p_mutebutton, _("Mute the audio (z)"));

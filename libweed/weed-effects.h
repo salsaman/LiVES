@@ -227,7 +227,6 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_OUT_PARAMETER_TEMPLATES "out_param_tmpls"
 #define WEED_LEAF_IN_CHANNEL_TEMPLATES "in_chan_tmpls"
 #define WEED_LEAF_OUT_CHANNEL_TEMPLATES "out_chan_tmpls"
-#define WEED_LEAF_TARGET_FPS "target_fps"
 #define WEED_LEAF_GUI "gui"
 #define WEED_LEAF_EXTRA_AUTHORS "extra_authors"
 #define WEED_LEAF_ICON "icon"
@@ -284,6 +283,7 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_IN_CHANNELS "in_channels"
 #define WEED_LEAF_OUT_CHANNELS "out_channels"
 #define WEED_LEAF_FPS "fps"
+#define WEED_LEAF_TARGET_FPS "target_fps"
 
 // experimental
 #define WEED_LEAF_EASE_OUT "ease_out" // host request val, >= WEED_LEAF_PLUGIN_EASING

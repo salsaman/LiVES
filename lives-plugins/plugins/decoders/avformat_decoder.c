@@ -1097,7 +1097,7 @@ boolean chill_out(const lives_clip_data_t *cdata) {
   return TRUE;
 }
 
-#define DEBUG
+//#define DEBUG
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame, and return pixel_data
 

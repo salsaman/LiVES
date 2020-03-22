@@ -9,9 +9,6 @@ TODO: - plugin parameter interpolation
 
       - zero copy for generators - host supplies buffer to be filled between process_func() calls
 
-YUYV422,
- AV_PIX_FMT_UYYVYY411, /
-
 
 Weed API Version Changes
 ------------------------
@@ -364,6 +361,7 @@ Weed provides the following 'fundamental' types:
 
 WEED_SEED_FIRST_CUSTOM	[1024]
 Types >= 1024 are reserved for custom use. Custom seeds MUST be pointer types.
+(A future version of the API may allow for non pointer custom types)
 
 
 
@@ -1023,9 +1021,10 @@ e.g.
 
 For portabilty, the standerd library does not implement any kind of mutex locking.
 
-** a fully threadsafe version is currently in test phase (see below). This does, however introduce a dependency on libpthread.
+** a fully threadsafe version is currently in test phase and thus far is working very well (see below).
+This does, however require linking the library with libpthread.
 
-
+The following applies to the NON-threadsafe version
 In general the following rules should be observed:
 - two threads attempting to set a leaf value at the same time SHOULD be reasonably safe, the only risk is
   if one thread updates the leaf's num_elements between the other thread reading it and writing it - in this case num_elements
@@ -1076,18 +1075,20 @@ This version requires compilation with libpthread. It utilizes the leaf "private
 
 The implementation details are as follows:
 
-- any read operations will first obtain a read lock on the plant
+- any read operations first obtain a read lock on the plant
 (when referring to 'plant' here, it should be understood to mean the manfatory "type" leaf; 'leaf' in this context means
 any of the other leaves)
 
 - once a leaf is located, either a read or write lock on the leaf is obtained and the plant read lock is subsequently released
 
 - reading a leaf value, number of elements, seed_type or flags requires a read lock on the leaf
-- updating a leaf value or flags requires first obtaining a write lock on the leaf
+
+- when updating a leaf value, a write lock on the plant is first obtained, If the leaf is located then a write lock on the leaf is obtained
+  and the plant lock released. If the leaf does not exist, the plant write lock is maintained until the new leaf has been added.
 
 - listing the plant leaves requires a plant read lock
 
-- adding a new leaf requires a write lock on the plant (type leaf)
+- adding a new leaf requires a write lock on the plant
 
 - deleting a leaf requires both a write lock on the plant, and write lock on the leaf. Once both are obtained, the leaf write lock
   is relinquished and the leaf deleted.
@@ -1892,10 +1893,9 @@ Mandatory for filters with video channels
 
  * "license"      : WEED_SEED_STRING : license of filter, free text
 
- * "target_fps"   : WEED_SEED_DOUBLE : plugin can hint to the host the ideal target fps rate(s) for the
-                                       host to run the plugin. This may not alweays be possible, but the host should set "fps"
-				       for the filter instance if this leaf is present.
-
+ * "preferred_fps"   : WEED_SEED_DOUBLE : plugin may hint to the host the preferred display rate for the
+                                       host to run the plugin; for example if the plugin is designed to run best at 25 fps, then the value 25.0
+				       may be set. Note that this is only a hint to the host
 
  * "gui" : WEED_SEED_PLANTPTR : pointer to a plant
            type GUI [see below - GUI plants]. The plugin may optionally create and populate one GUI plant per filter in weed_setup().
@@ -2539,12 +2539,18 @@ The following are MANDATORY if there are corresponding templates in the filter c
 
 
 
-The following leaf is MANDATORY if the plugin set "target_fps" for the filter_class.
+The following is optional but recommended, particularly if the plugin set "preferred_fps" for the filter_class.
 
- * "fps" : WEED_SEED_DOUBLE : the current target fps of the host running the instance
+ * "fps" : WEED_SEED_DOUBLE : the "display" fps of the host running the instance
    (i.e best guess at frequency at which it attempts to call process_func() ).
 
 
+ * "target_fps" : WEED_SEED_DOUBLE : for plugins which generate video, the rate at which they run internally may differ from
+                       the actual display rate. The host may set this leaf to indicate to the plugin the desired frame generation rate
+		       (which may be higher than the actual display rate - 
+		       In this way, the generation of frames will appear smooth even if the display rate varies.) If this leaf is set
+		       then it is MANDATORY for the host to set the "fps" leaf so that the plugin may estimate how many internal
+		       frames to generate per display frame.
 
 
 * "flags" : WEED_SEED_INT : a bitmap of flags informing the plugin it may perform certain updates (see below for definitions)
@@ -3743,14 +3749,15 @@ WEED_PALETTE_YUVA4444P   545
 [Unofficial, like YUV444P but with an additional Alpha plane. Planar version of YUVA8888]
 
 
-WEED_PALETTE_UYVY         WEED_PALETTE_UYVY8888     WEED_PALETTE_Y422    WEED_PALETTE_HDYC 564
+WEED_PALETTE_UYVY         WEED_PALETTE_UYVY8888     WEED_PALETTE_Y422    WEED_PALETTE_UYVY422
+			  			    WEED_PALETTE_HDYC 564
 [YUV 4:2:2 (Y sample at every pixel, U and V sampled at alternate
    pixels horizontally on each line). A macropixel of 4 bytes expands to 2 pixels when converted to RGB.
 Uses same bandwith as YUV422P
 The sampling locations of the U and V values relative to the Y values may vary
    Packed. If the "YUV_subspace" is set to bt709, this becomes HDYC.]
 
-WEED_PALETTE_YUYV         WEED_PALETTE_YUYV8888          WEED_PALETTE_YUY2     565
+WEED_PALETTE_YUYV         WEED_PALETTE_YUYV8888          WEED_PALETTE_YUY2      WEED_PALETTE_YUYV422    565
 [Like UYVY but with different component ordering within the macropixel. Packed. Also known as YUY2]
 
 
@@ -3763,7 +3770,7 @@ WEED_PALETTE_YUVA8888                                        589
 Packed YUV palette YUV888 with an alpha channel. No subsampling.
 
 
-WEED_PALETTE_YUV411                   WEED_PALETTE_IYU1        595
+WEED_PALETTE_YUV411                   WEED_PALETTE_IYU1           WEED_PALETTE_UYYVYY411                    595
 [IEEE 1394 Digital Camera 1.04 spec. Is packed YUV format with a 6 byte macropixel structure which converts to 4 RGB pixels.
 Ordering in the macropixel is U2 Y0 Y1 V2 Y2 Y3. Uses same bandwith as YUV420P
 Used for SMPTE DV NTSC / DVCPRO PAL (???)]
@@ -3785,7 +3792,7 @@ The range for AFLOAT when used to hold transparency values is 0.0 (fully transpa
 Such channels may also be used to hold other types of float data arrays, in which case the range may differ.
 
 
-Palette numbers >=2048 are reserved for custom palettes.
+Palette numbers >=8192 are reserved for custom palettes.
 
 
 ==== Gamma types (api 200 and above) ====
@@ -3796,9 +3803,9 @@ Palette numbers >=2048 are reserved for custom palettes.
 
  * WEED_GAMMA_SRGB 1 (IEC 61966-2-4)
 
- * WEED_GAMMA_BT709 512 (should this be BT.1886 ?)
+ * WEED_GAMMA_BT709 2 (should this be BT.1886 ?)
 
-Gamma types >=1024 are reserved for custom color gamma types.
+Gamma types >=512 are reserved for custom gamma types.
 
 
 ==== YUV sampling types ====
@@ -3825,7 +3832,7 @@ Gamma types >=1024 are reserved for custom color gamma types.
    horizontal frequency but is aligned horizontally with luma samples
    (YUV 4:2:2 / YUV 4:1:1) [similar to mpeg, but vertically aligned] (top left)
 
-Sampling types >= 1024 are reserved for custom samplings.
+Sampling types >= 512 are reserved for custom samplings.
 
 
 

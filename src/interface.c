@@ -715,10 +715,6 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (which == 0) {
     // playback cursors
-    /* if (LIVES_IS_PLAYING) { */
-    /*   draw_little_bars((cfile->frameno - 1.) / cfile->fps, 0); */
-    /* } */
-
     if (!LIVES_IS_PLAYING || (mainw->switch_during_pb && !mainw->faded)) {
       if (CURRENT_CLIP_TOTAL_TIME > 0.) {
         // set the range of the timeline
@@ -742,21 +738,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
         draw_little_bars(cfile->real_pointer_time, 2);
         draw_little_bars(cfile->real_pointer_time, 3);
 
-        if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
-          if (mainw->preview_box == NULL) {
-            // create the preview box that shows frames
-            make_preview_box();
-          }
-          // and add it the play window
-          if (lives_widget_get_parent(mainw->preview_box) == NULL && (cfile->clip_type == CLIP_TYPE_DISK ||
-              cfile->clip_type == CLIP_TYPE_FILE) && !mainw->is_rendering) {
-            lives_widget_queue_draw(mainw->play_window);
-            lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-            lives_widget_grab_focus(mainw->preview_spinbutton);
-            play_window_set_title();
-            load_preview_image(FALSE);
-          }
-        }
+
       }
       show_playbar_labels(mainw->current_file);
     } else {

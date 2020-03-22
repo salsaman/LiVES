@@ -5354,7 +5354,7 @@ LIVES_GLOBAL_INLINE LiVESInterpType get_interp_value(short quality) {
   if ((mainw->is_rendering || (mainw->multitrack != NULL && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     return LIVES_INTERP_BEST;
   if (mainw->multitrack != NULL) return LIVES_INTERP_FAST;
-  if (quality == PB_QUALITY_LOW) return LIVES_INTERP_FAST;
+  if (quality <= PB_QUALITY_LOW) return LIVES_INTERP_FAST;
   else if (quality == PB_QUALITY_MED) return LIVES_INTERP_NORMAL;
   return LIVES_INTERP_BEST;
 }

@@ -2875,7 +2875,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       nextframe = priv->last_frame + 1;
     }
 
-    //priv->ctx->skip_frame=AVDISCARD_NONKEY;
+    //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
     priv->last_frame = tframe;
     if (priv->picture == NULL) priv->picture = av_frame_alloc();

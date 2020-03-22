@@ -350,7 +350,6 @@ static int render_frame(_sdata *sd) {
   }
 
   if (sd->needs_more) {
-    glFlush();
 #if USE_DBLBUF
 #ifdef HAVE_SDL2
     SDL_GL_SwapWindow(sd->win);
@@ -362,11 +361,11 @@ static int render_frame(_sdata *sd) {
     glReadPixels(0, 0, sd->rowstride / sd->psize, sd->height, sd->psize == 4
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
-    sd->got_first = true;
     pthread_mutex_unlock(&buffer_mutex);
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
+    sd->got_first = true;
   }
   return 0;
 }
@@ -689,7 +688,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       if (count == 101) {
         double period = (tt - ltt) / 1000000000.;
         if (period > 0.)
-          fprintf(stderr, "projectM running at display rate of %f fps, engine rendering at %f fps\n", 100. / period, ppcount / period);
+          fprintf(stderr, "projectM running at display rate of %f fps (%f), engine rendering at %f fps\n",
+		  100. / period, sd->fps, ppcount / period);
         count = 1;
       }
       ltt = tt;

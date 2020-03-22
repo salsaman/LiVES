@@ -4897,7 +4897,7 @@ void load_start_image(int frame) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
-
+    
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
@@ -5653,8 +5653,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
       weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
       lives_free(resl_thrd);
     }
-    // convert RGBA -> YUVA4444P or RGB -> 444P or 420
-    gamma_convert_layer_variant(1./ file_gamma, layer);
+    gamma_convert_layer_variant(1. / file_gamma, layer);
+    weed_layer_set_gamma(layer, WEED_GAMMA_LINEAR);
+    gamma_convert_layer(WEED_GAMMA_SRGB, layer);
   }
 
 
@@ -5963,7 +5964,7 @@ static weed_plant_t *render_subs_from_file(lives_clip_t *sfile, double xtime, we
   col_white = lives_rgba_col_new(65535, 65535, 65535, 65535);
   col_black_a = lives_rgba_col_new(0, 0, 0, SUB_OPACITY);
 
-  if (prefs->apply_gamma && mainw->effort < 0) {
+  if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
     // make it look nicer by dimming relative to luma
     gamma_convert_layer(WEED_GAMMA_LINEAR, layer);
   }
@@ -6135,7 +6136,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         lives_free(pixel_data);
         lives_free(rowstrides);
         if (res) {
-          if (prefs->apply_gamma && mainw->effort <= 0) {
+          if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
             if (dplug->cdata->frame_gamma != WEED_GAMMA_UNKNOWN) {
               weed_layer_set_gamma(layer, dplug->cdata->frame_gamma);
             } else if (dplug->cdata->YUV_subspace == WEED_YUV_SUBSPACE_BT709) {
@@ -6149,7 +6150,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
                                        dplug->cdata->YUV_clamping,
                                        dplug->cdata->YUV_sampling,
                                        dplug->cdata->YUV_subspace);
-            if (prefs->apply_gamma && mainw->effort <= 0) {
+            if (prefs->apply_gamma && prefs->pb_quality == PB_QUALITY_HIGH) {
               if (weed_get_int_value(layer, WEED_LEAF_GAMMA_TYPE, NULL) == WEED_GAMMA_BT709) {
                 weed_set_int_value(layer, WEED_LEAF_YUV_SUBSPACE, WEED_YUV_SUBSPACE_BT709);
               }

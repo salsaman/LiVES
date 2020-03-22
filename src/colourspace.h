@@ -170,6 +170,16 @@ typedef struct {
   size_t bitsize[MAXPPLANES];
 } macropixel_t;
 
+/// for fun / testing
+#define LIVES_PALETTE_RGB48		9001
+#define LIVES_PALETTE_RGBA64		9003
+#define LIVES_PALETTE_YUVA420P		9512
+#define LIVES_PALETTE_YVU422P		9522
+#define LIVES_PALETTE_AYUV8888		9545
+#define LIVES_PALETTE_YUVFLOAT		9564
+#define LIVES_PALETTE_YUVAFLOAT	9565
+#define LIVES_PALETTE_YUV121010		121010
+
 void init_colour_engine(void);
 
 const macropixel_t *get_advanced_palette(int weed_palette);

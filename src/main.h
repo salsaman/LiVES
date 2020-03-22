@@ -1268,8 +1268,8 @@ void showclipimgs(void);
 void load_preview_image(boolean update_always);
 boolean resize_message_area(livespointer data);
 
-#define is_layer_ready(layer) (weed_get_boolean_value((layer), "thread_processing", NULL) == WEED_FALSE)
-#define is_layer_processing(layer) (weed_plant_has_leaf((layer), "thread_processing"))
+#define is_layer_ready(layer) (weed_get_boolean_value((layer), WEED_LEAF_THREAD_PROCESSING, NULL) == WEED_FALSE \
+			       && weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL) == NULL)
 
 boolean pull_frame(weed_layer_t *layer, const char *image_ext, ticks_t tc);
 void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, ticks_t tc, int width, int height);

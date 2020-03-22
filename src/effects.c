@@ -868,7 +868,6 @@ weed_plant_t *on_rte_apply(weed_layer_t *layer, int opwidth, int opheight, weed_
     if (layers[i] != retlayer) weed_layer_free(layers[i]);
   }
   lives_free(layers);
-
   return retlayer;
 }
 

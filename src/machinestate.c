@@ -802,7 +802,7 @@ boolean  get_ds_used(uint64_t *bytes) {
   boolean ret = TRUE;
   static uint64_t _bytes = 0;
   static lives_proc_thread_t running = NULL;
-  if (!running) running = lives_proc_thread_create((lives_funcptr_t)_get_usage, 5, "");
+  if (!running) running = lives_proc_thread_create((lives_funcptr_t)_get_usage, WEED_SEED_INT64, "");
   if (!lives_proc_thread_check(running)) ret = FALSE;
   else _bytes = lives_proc_thread_join_int64(running);
   if (bytes) *bytes = _bytes;
@@ -988,10 +988,11 @@ int check_for_bad_ffmpeg(void) {
 
 
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
-#define getnulpos(nulmask) ((nulmask & 2155905152ul) ? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) :\
-						      (((nulmask & 8388608ul) ? 2 : 3))) : ((nulmask & 141287244169216ul) ? \
-											  ((nulmask & 549755813888ul) ? 4 : 5) : \
-											  ((nulmask & 36028797018963968ul) ? 6 : 7)))
+#define getnulpos(nulmask) ((nulmask & 2155905152ul)	?		\
+			    ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
+			     (((nulmask & 8388608ul) ? 2 : 3))) : ((nulmask & 141287244169216ul) ? \
+								   ((nulmask & 549755813888ul) ? 4 : 5) : \
+								   ((nulmask & 36028797018963968ul) ? 6 : 7)))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   if (!s) return 0;
@@ -1005,8 +1006,6 @@ LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
       if ((void *)pi == (void *)p) {
         while (!(nulmask = hasNulByte(*pi))) ++pi;
         if ((void *)pi - (void *)s + getnulpos(nulmask) != strlen(s)) {
-          g_print("len of %s (%ld) is of course %ld + %d, i.e. %ld %lx   \n", s, strlen(s),
-                  (void *)pi - (void *)s, getnulpos(nulmask), (void *)pi - (void *)s + getnulpos(nulmask), nulmask);
           return (void *)pi - (void *)s + getnulpos(nulmask) ;
         }
       }
@@ -1142,8 +1141,8 @@ lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_ty
   if (!thread_info) return NULL;
   weed_set_funcptr_value(thread_info, WEED_LEAF_THREADFUNC, func);
   if (return_type) {
-    if (return_type) weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
-    else weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
+    weed_set_boolean_value(thread_info, WEED_LEAF_NOTIFY, WEED_TRUE);
+    if (return_type > 0)  weed_leaf_set(thread_info, WEED_LEAF_RETURN_VALUE, return_type, 0, NULL);
   }
 #define WSV(p, k, wt, t, x) weed_set_##wt_value(p. k, va_args(x, t))
   va_start(xargs, args_fmt);
@@ -1179,7 +1178,6 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   weed_funcptr_t func = NULL;
   funcptr_bool_t funcb = NULL;
   funcptr_int64_t funci64 = NULL;
-  uint64_t funcsig = 0;
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
   switch (ret_type) {
   case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
@@ -1202,7 +1200,7 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   /// the second argument to GETARG relates to the internal structure of the lives_proc_thread;
 
 #define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
-  switch (funcsig) {
+  switch (sig) {
   case FUNCSIG_VOID:
     switch (ret_type) {
     case WEED_SEED_INT64: weed_set_int64_value(info, _RV_, (*funci64)()); break;
@@ -1780,7 +1778,7 @@ void reset_effort(void) {
 
 void update_effort(int nthings, boolean badthings) {
   int spcycles;
-
+  short pb_quality = prefs->pb_quality;
   if (!inited) reset_effort();
   if (!nthings) return;
   //g_print("VALS %d %d %d %d %d\n", nthings, badthings, mainw->effort, badthingcount, goodthingcount);
@@ -1826,19 +1824,19 @@ void update_effort(int nthings, boolean badthings) {
       struggling--;
     }
     if (mainw->effort < -EFFORT_LIMIT_MED) {
-      if (struggling == -EFFORT_RANGE_MAX && prefs->pb_quality < PB_QUALITY_HIGH) {
-        prefs->pb_quality++;
+      if (struggling == -EFFORT_RANGE_MAX && pb_quality < PB_QUALITY_HIGH) {
+        pb_quality++;
         mainw->blend_palette = WEED_PALETTE_END;
-      } else if (struggling < -EFFORT_LIMIT_MED && prefs->pb_quality < PB_QUALITY_MED) {
-        prefs->pb_quality++;
+      } else if (struggling < -EFFORT_LIMIT_MED && pb_quality < PB_QUALITY_MED) {
+        pb_quality++;
         mainw->blend_palette = WEED_PALETTE_END;
       }
     }
   }
 
   if (mainw->effort > 0) {
-    if (prefs->pb_quality > future_prefs->pb_quality) {
-      prefs->pb_quality = future_prefs->pb_quality;
+    if (pb_quality > future_prefs->pb_quality) {
+      pb_quality = future_prefs->pb_quality;
       mainw->blend_palette = WEED_PALETTE_END;
       return;
     }
@@ -1849,26 +1847,30 @@ void update_effort(int nthings, boolean badthings) {
     if (mainw->effort > EFFORT_LIMIT_MED || (struggling && (mainw->effort > EFFORT_LIMIT_LOW))) {
       if (struggling < EFFORT_RANGE_MAX) struggling++;
       if (struggling == EFFORT_RANGE_MAX) {
-        if (prefs->pb_quality > PB_QUALITY_LOW) {
-          prefs->pb_quality = PB_QUALITY_LOW;
+        if (pb_quality > PB_QUALITY_LOW) {
+          pb_quality = PB_QUALITY_LOW;
           mainw->blend_palette = WEED_PALETTE_END;
         } else if (mainw->effort > EFFORT_LIMIT_MED) {
-          if (prefs->pb_quality > PB_QUALITY_MED) {
-            prefs->pb_quality--;
+          if (pb_quality > PB_QUALITY_MED) {
+            pb_quality--;
             mainw->blend_palette = WEED_PALETTE_END;
           }
         }
       } else {
-        if (prefs->pb_quality > future_prefs->pb_quality) {
-          prefs->pb_quality = future_prefs->pb_quality;
+        if (pb_quality > future_prefs->pb_quality) {
+          pb_quality = future_prefs->pb_quality;
           mainw->blend_palette = WEED_PALETTE_END;
         } else if (future_prefs->pb_quality > PB_QUALITY_LOW) {
-          prefs->pb_quality = future_prefs->pb_quality - 1;
-          mainw->blend_palette = WEED_PALETTE_END;
+          pb_quality = future_prefs->pb_quality - 1;
         }
 	// *INDENT-OFF*
       }}}
   // *INDENT-ON*
+  if (pb_quality != prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
+					  || is_layer_ready(mainw->frame_layer_preload))) {
+    prefs->pb_quality = pb_quality;
+    mainw->blend_palette = WEED_PALETTE_END;
+  }
   //g_print("STRG %d and %d %d %d\n", struggling, mainw->effort, dfcount, prefs->pb_quality);
 }
 

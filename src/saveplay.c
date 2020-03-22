@@ -5136,7 +5136,6 @@ int save_to_scrap_file(weed_layer_t *layer) {
     lives_free(dir);
   }
   if (prefs->disk_quota > -1) {
-    g_print("ptaa1\n");
     /// check every 64 frames for quota overrun, because its a background task
     if ((scrapfile->frames & 0x3F) == 0) {
       g_print("ptaa12\n");

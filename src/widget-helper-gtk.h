@@ -279,6 +279,8 @@ typedef gint(*LiVESCompareFunc)(gconstpointer a, gconstpointer b);
 #define lives_locale_to_utf8(a, b, c, d, e) g_locale_to_utf8(a, b, c, d, e)
 #endif
 
+#define lives_charset_convert(String, from, to) (g_convert(String, -1, from, to, NULL, NULL, NULL))
+
 #define U82L(String) (g_locale_from_utf8(String, -1, NULL, NULL, NULL))
 #define L2U8(String) (g_locale_to_utf8(String, -1, NULL, NULL, NULL))
 

@@ -618,11 +618,10 @@ boolean _lives_buffered_rdonly_slurp(int fd, off_t skip) {
 
 void lives_buffered_rdonly_slurp(int fd, off_t skip) {
   lives_file_buffer_t *fbuff = find_in_file_buffers(fd);
-  lives_proc_thread_t *slurper;
   if (!fbuff || fbuff->slurping) return;
   fbuff->slurping = TRUE;
   fbuff->bytes = fbuff->offset = 0;
-  slurper = lives_proc_thread_create((lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
+  lives_proc_thread_create((lives_funcptr_t)_lives_buffered_rdonly_slurp, 0, "iI", fd, skip);
   lives_nanosleep_until_nonzero(fbuff->offset | fbuff->eof);
 }
 

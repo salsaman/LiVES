@@ -49,7 +49,8 @@ typedef struct {
 typedef enum {
   LIVES_TEXT_MODE_FOREGROUND_ONLY,
   LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND,
-  LIVES_TEXT_MODE_BACKGROUND_ONLY
+  LIVES_TEXT_MODE_BACKGROUND_ONLY,
+  LIVES_TEXT_MODE_PRECALCULATE
 } lives_text_mode_t;
 
 char **get_font_list(void);
@@ -62,7 +63,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg_col, lives_colRGBA64_t *bg_col,
-                               boolean center, boolean rising, double top, int start, double dwidth, double dheight);
+                               boolean center, boolean rising, double *top, int *start, int dwidth, int *dheight);
 
 void layout_to_lives_painter(LingoLayout *layout, lives_painter_t *cr, lives_text_mode_t mode, lives_colRGBA64_t *fg,
                              lives_colRGBA64_t *bg, int dwidth, int dheight, double x_bg, double y_bg, double x_text, double y_text);
@@ -72,6 +73,7 @@ LingoLayout *layout_nth_message_at_bottom(int n, int width, int height, LiVESWid
 /// subtitles
 
 #define SRT_DEF_CHARSET "Windows-1252"
+#define LIVES_CHARSET_UTF8 "UTF-8"
 
 typedef struct _lives_clip_t lives_clip_t;
 

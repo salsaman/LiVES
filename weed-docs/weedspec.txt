@@ -9,6 +9,9 @@ TODO: - plugin parameter interpolation
 
       - zero copy for generators - host supplies buffer to be filled between process_func() calls
 
+YUYV422,
+ AV_PIX_FMT_UYYVYY411, /
+
 
 Weed API Version Changes
 ------------------------
@@ -1772,8 +1775,12 @@ The following may be set inside the weed_bootstrap() function from the values su
 
 
 
-In case of a fatal error during weed_setup() e.g. a needed library is missing, the plugin MUST still return the plugin_info to the host,
-with all of the mandatory leaves set; "filters" should be set to NULL. In addition it may set one or both of the error leaves:
+In case of a fatal error during weed_setup() e.g. a needed library is missing, there are various things the plugin can do:
+1) check the host verbosity, and if it is greater than WEED_VERBOSITY_SILENT, write an error message to STDERR
+2) return a NULL plugin_info
+or:
+3) return a plugin_info with "filters" absent or set to NULL
+and set one or both of the following leaves in the plugin_info:
 
 "error_code" : WEED_SEED_INT :: a standard Weed error code, possible values include: WEED_ERROR_MEMORY_ALLOCATION,
 	       		     	WEED_ERROR_BADVERSION, WEED_ERROR_PLUGIN_INVALID, WEED_ERROR_FILTER_INVALID,
@@ -1781,10 +1788,12 @@ with all of the mandatory leaves set; "filters" should be set to NULL. In additi
 
 "error_text" : WEED_SEED_STRING : free form text describing the error, e.g "Unable to find configuration files"
 	       			       	    	 	    May contain multiple elements, in which case each value may be prefixed by an IETF language
-							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf=8: bar"
+							    code followed a colon and a space, eg. "en_US: foo", "pt_BR.utf-8: bar"
 
 
-
+Option 1 is highly recommended, regardless of the other choices.
+Option 4 allows for a more precise definition of the failure reason, as well as internationalization of the error text.
+If neither of these are considered necessary then option 2 provides a simpler alternative.
 
 
 
@@ -3737,7 +3746,8 @@ WEED_PALETTE_YUVA4444P   545
 WEED_PALETTE_UYVY         WEED_PALETTE_UYVY8888     WEED_PALETTE_Y422    WEED_PALETTE_HDYC 564
 [YUV 4:2:2 (Y sample at every pixel, U and V sampled at alternate
    pixels horizontally on each line). A macropixel of 4 bytes expands to 2 pixels when converted to RGB.
- The sampling locations of the U and V values relative to the Y values may vary
+Uses same bandwith as YUV422P
+The sampling locations of the U and V values relative to the Y values may vary
    Packed. If the "YUV_subspace" is set to bt709, this becomes HDYC.]
 
 WEED_PALETTE_YUYV         WEED_PALETTE_YUYV8888          WEED_PALETTE_YUY2     565

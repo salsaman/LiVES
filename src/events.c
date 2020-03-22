@@ -3819,7 +3819,7 @@ lives_render_error_t render_events(boolean reset) {
             if (!was_lbox)
               gamma_convert_layer(cfile->gamma_type, layer);
             else
-              gamma_convert_sub_layer(cfile->gamma_type, layer, (cfile->hsize - width) / 2, (cfile->vsize - height) / 2,
+              gamma_convert_sub_layer(cfile->gamma_type, 1.0, layer, (cfile->hsize - width) / 2, (cfile->vsize - height) / 2,
                                       width, height);
 
             if (weed_plant_has_leaf(event, WEED_LEAF_OVERLAY_TEXT)) {
@@ -4816,7 +4816,7 @@ boolean deal_with_render_choice(boolean add_deinit) {
   // any incoming network messages
 
   // return TRUE if we rendered to a new clip
-  lives_proc_thread_t *info = NULL;
+  lives_proc_thread_t info = NULL;
 
   LiVESWidget *e_rec_dialog;
   LiVESWidget *elist_dialog;

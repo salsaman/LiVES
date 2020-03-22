@@ -3496,12 +3496,15 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // allow us to free undeletable plants (plugins cant')
   weed_plant_free = weed_plant_free_host;
 
+  init_colour_engine();
+
   weed_threadsafe = FALSE;
   test_plant = weed_plant_new(0);
   if (weed_leaf_set_private_data(test_plant, WEED_LEAF_TYPE, NULL) == WEED_ERROR_CONCURRENCY)
     weed_threadsafe = TRUE;
   else weed_threadsafe = FALSE;
   weed_plant_free(test_plant);
+
   widget_helper_init();
 
   /* TRANSLATORS: localised name may be used here */
@@ -3710,7 +3713,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
             capable->can_write_to_workdir = FALSE;
             break;
           }
-
           continue;
         }
 
@@ -5366,7 +5368,7 @@ static void png_init(png_structp png_ptr) {
   }
 #endif
 
-  if (prefs->show_dev_opts) {
+  if (prefs->show_dev_opts && mask != 0) {
     g_printerr("enabling png opts %lu\n", mask);
   }
 
@@ -5423,7 +5425,9 @@ static void reslayer_thread(weed_layer_t *layer, int twidth, int theight, LiVESI
 boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int tpalette, boolean prog) {
   png_structp png_ptr;
   png_infop info_ptr;
-
+  double file_gamma;
+  int gval;
+  lives_thread_t *resl_thrd;
 #ifndef PNG_BIO
   unsigned char ibuff[8];
   FILE *fp = fdopen(fd, "rb");
@@ -5512,6 +5516,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   color_type = png_get_color_type(png_ptr, info_ptr);
   bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  gval = png_get_gAMA(png_ptr, info_ptr, &file_gamma);
 
   // want to convert everything (greyscale, RGB, RGBA64 etc.) to RGBA32 (or RGB24)
   if (color_type == PNG_COLOR_TYPE_PALETTE)
@@ -5593,8 +5598,9 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     } else {
       if (color_type == PNG_COLOR_TYPE_RGB_ALPHA) {
         weed_layer_set_palette(layer, WEED_PALETTE_RGBA32);
-      } else
+      } else {
         weed_layer_set_palette(layer, WEED_PALETTE_RGB24);
+      }
     }
 
     weed_layer_pixel_data_free(layer);
@@ -5640,6 +5646,18 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
 
   png_destroy_read_struct(&png_ptr, &info_ptr, (png_infopp)NULL);
 
+  if (gval == PNG_INFO_gAMA) {
+    /// img needs gamma converting
+    if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
+      lives_thread_join(*resl_thrd, NULL);
+      weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+      lives_free(resl_thrd);
+    }
+    // convert RGBA -> YUVA4444P or RGB -> 444P or 420
+    gamma_convert_layer_variant(1./ file_gamma, layer);
+  }
+
+
   if (is16bit) {
     int clamping, sampling, subspace;
     lives_thread_t *resl_thrd;
@@ -5652,6 +5670,7 @@ boolean layer_from_png(int fd, weed_layer_t *layer, int twidth, int theight, int
     if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
       lives_thread_join(*resl_thrd, NULL);
       weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+      lives_free(resl_thrd);
     }
     // convert RGBA -> YUVA4444P or RGB -> 444P or 420
     // 16 bit conversion
@@ -5965,7 +5984,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
   // target_palette is also a hint
 
   // if we pull from a decoder plugin, then we may also deinterlace
-  static int64_t last = -100000000000;
   weed_plant_t *vlayer;
   lives_clip_t *sfile = NULL;
   int clip = weed_get_int_value(layer, WEED_LEAF_CLIP, NULL);
@@ -6101,8 +6119,6 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
         rowstrides = weed_layer_get_rowstrides(layer, NULL);
 
         // try to pull frame from decoder plugin
-        if ((int64_t)(sfile->frame_index[frame - 1]) < last) break_me();
-        last = ((int64_t)(sfile->frame_index[frame - 1]));
         if (!(*dplug->decoder->get_frame)(dplug->cdata, (int64_t)(sfile->frame_index[frame - 1]),
                                           rowstrides, sfile->vsize, pixel_data)) {
           // if get_frame fails, return a black frame
@@ -6163,6 +6179,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
             lives_thread_join(*resl_thrd, NULL);
             weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
+	    lives_free(resl_thrd);
           }
         }
         lives_free(fname);
@@ -6285,15 +6302,20 @@ LIVES_GLOBAL_INLINE boolean pull_frame(weed_layer_t *layer, const char *image_ex
 boolean check_layer_ready(weed_layer_t *layer) {
   int clip;
   lives_clip_t *sfile;
+  lives_thread_t *thrd;
 
   if (layer == NULL) return FALSE;
-  lives_thread_t *frame_thread = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
-  if (frame_thread) {
-    lives_thread_join(*frame_thread, NULL);
-    weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
-    lives_free(frame_thread);
-  }
 
+  thrd = (lives_thread_t *)weed_get_voidptr_value(layer, WEED_LEAF_HOST_PTHREAD, NULL);
+  if (thrd) {
+    lives_thread_join(*thrd, NULL);
+    weed_leaf_delete(layer, WEED_LEAF_HOST_PTHREAD);
+    lives_free(thrd);
+  }
+  while ((thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
+    lives_nanosleep(100);
+  }
+ 
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
     weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
     deinterlace_frame(layer, tc);
@@ -6332,37 +6354,36 @@ static void *pft_thread(void *in) {
     lives_free(in);
 
     /// if loading the blend frame in clip editor, then we recall the palette details and size @ injection, and prepare it in this thread
-    if (0 && mainw->blend_file != -1 && LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
+    if (mainw->blend_file != -1 && mainw->blend_palette != WEED_PALETTE_END
+	&& LIVES_IS_PLAYING && mainw->multitrack == NULL && mainw->blend_file != mainw->current_file
 	&& weed_get_int_value(layer, WEED_LEAF_CLIP, NULL) == mainw->blend_file) {
       int tgamma = WEED_GAMMA_UNKNOWN;
-      if (mainw->blend_palette != WEED_PALETTE_END) {
-        short interp = get_interp_value(prefs->pb_quality);
-        pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
-	if (is_layer_ready(layer)) {
-	  resize_layer(layer, mainw->blend_width,
-		       mainw->blend_height, interp, mainw->blend_palette, mainw->blend_clamping);
-	}
+      short interp = get_interp_value(prefs->pb_quality);
+      pull_frame_at_size(layer, img_ext, tc, mainw->blend_width, mainw->blend_height, mainw->blend_palette);
+      if (is_layer_ready(layer)) {
+        resize_layer(layer, mainw->blend_width,
+      	       mainw->blend_height, interp, mainw->blend_palette, mainw->blend_clamping);
       }
       if (mainw->blend_palette != WEED_PALETTE_END) {
         if (weed_palette_is_rgb(mainw->blend_palette))
-	  tgamma = mainw->blend_gamma;
+      	  tgamma = mainw->blend_gamma;
       }
       if (mainw->blend_palette != WEED_PALETTE_END) {
-	if (is_layer_ready(layer) && weed_layer_get_width(layer) == mainw->blend_width
-	    && weed_layer_get_height(layer) == mainw->blend_height) {
-	  convert_layer_palette_full(layer, mainw->blend_palette, mainw->blend_clamping, mainw->blend_sampling,
-				     mainw->blend_subspace, tgamma);
-	}
+      	if (is_layer_ready(layer) && weed_layer_get_width(layer) == mainw->blend_width
+      	    && weed_layer_get_height(layer) == mainw->blend_height) {
+      	  convert_layer_palette_full(layer, mainw->blend_palette, mainw->blend_clamping, mainw->blend_sampling,
+      				     mainw->blend_subspace, tgamma);
+      	}
       }
       if (tgamma != WEED_GAMMA_UNKNOWN && is_layer_ready(layer)
-	  && weed_layer_get_width(layer) == mainw->blend_width
-	    && weed_layer_get_height(layer) == mainw->blend_height
-	  && weed_layer_get_palette(layer) == mainw->blend_palette)
-	gamma_convert_layer(mainw->blend_gamma, layer);
+      	  && weed_layer_get_width(layer) == mainw->blend_width
+      	    && weed_layer_get_height(layer) == mainw->blend_height
+      	  && weed_layer_get_palette(layer) == mainw->blend_palette)
+      	gamma_convert_layer(mainw->blend_gamma, layer);
     } else {
       pull_frame_at_size(layer, img_ext, tc, width, height, WEED_PALETTE_END);
     }
-    weed_set_boolean_value(layer, "thread_processing", WEED_FALSE);
+    weed_set_boolean_value(layer, WEED_LEAF_THREAD_PROCESSING, WEED_FALSE);
     return NULL;
 }
 
@@ -6373,12 +6394,11 @@ void pull_frame_threaded(weed_layer_t *layer, const char *img_ext, weed_timecode
 
     // done in a threaded fashion
     // call check_layer_ready() to block until the frame thread is completed
-
 #ifdef NO_FRAME_THREAD
     pull_frame(layer, img_ext, tc);
     return;
 #else
-    weed_set_boolean_value(layer, "thread_processing", WEED_TRUE);
+    weed_set_boolean_value(layer, WEED_LEAF_THREAD_PROCESSING, WEED_TRUE);
     if (1) {
       lives_thread_attr_t attr = LIVES_THRDATTR_PRIORITY;
       pft_priv_data *in = (pft_priv_data *)lives_malloc(sizeof(pft_priv_data));
@@ -7156,6 +7176,7 @@ void load_frame_image(int frame) {
             }
             if (!got_preload) {
               pull_frame_threaded(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks, 0, 0);
+              //pull_frame(mainw->frame_layer, img_ext, (weed_timecode_t)mainw->currticks);
             }
           }
         }
@@ -7711,7 +7732,7 @@ void load_frame_image(int frame) {
         if (!was_letterboxed) {
           gamma_convert_layer(tgamma, frame_layer);
         } else {
-          gamma_convert_sub_layer(tgamma, frame_layer, (pwidth - lb_width) / 2, (pheight - lb_height) / 2,
+          gamma_convert_sub_layer(tgamma, 1.0, frame_layer, (pwidth - lb_width) / 2, (pheight - lb_height) / 2,
                                   lb_width, lb_height);
         }
 
@@ -7804,6 +7825,7 @@ void load_frame_image(int frame) {
 
     if (!convert_layer_palette_full(mainw->frame_layer, cpal, 0, 0, 0,
                                     prefs->gamma_srgb ? WEED_GAMMA_SRGB : WEED_GAMMA_MONITOR)) goto lfi_done;
+
     //g_print("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
     if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
@@ -8886,6 +8908,7 @@ lfi_done:
     }
 
     if (new_file == mainw->blend_file) {
+      check_layer_ready(mainw->blend_layer);
       mainw->blend_file = old_file;
     }
 

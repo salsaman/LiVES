@@ -3586,8 +3586,10 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
   lives_colRGBA64_t fg, bg;
   LingoLayout *layout = NULL;
   lives_painter_surface_t *surface;
-
   char *text = lives_text_view_get_text(LIVES_TEXT_VIEW(widget));
+  double top = 0;
+  int offsx = 0;
+  int height = lives_widget_get_allocation_height(widget);
 
   lives_signal_handler_block(widget, expt);
 
@@ -3601,8 +3603,8 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
   widget_color_to_lives_rgba(&bg, &bgcol);
 
   layout = render_text_to_cr(widget, cr, text, "", 0.0,
-                             LIVES_TEXT_MODE_FOREGROUND_ONLY, &fg, &bg, FALSE, FALSE, 0., 0.,
-                             lives_widget_get_allocation_width(widget), lives_widget_get_allocation_height(widget));
+                             LIVES_TEXT_MODE_FOREGROUND_ONLY, &fg, &bg, FALSE, FALSE, &top, &offsx,
+                             lives_widget_get_allocation_width(widget), &height);
 
   lives_free(text);
 
@@ -3614,7 +3616,7 @@ static boolean exposetview(LiVESWidget * widget, lives_painter_t *cr, livespoint
     //if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
   }
 
-  lives_painter_fill(cr);
+  //lives_painter_fill(cr);
 
   lives_signal_handler_unblock(widget, expt);
 

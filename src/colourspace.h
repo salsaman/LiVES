@@ -127,6 +127,52 @@ typedef struct {
 } lives_sw_params;
 
 #endif
+/// intended for future use:
+
+#define MAXPPLANES 16
+
+#define CHAN_TYPE_red			1
+#define CHAN_TYPE_green		2
+#define CHAN_TYPE_blue			3
+
+#define CHAN_TYPE_Y			512
+#define CHAN_TYPE_U			513
+#define CHAN_TYPE_V			514
+
+#define CHAN_TYPE_alpha		1024
+
+#define CHAN_TYPE_grey			2048
+#define CHAN_TYPE_mono_b		2049
+#define CHAN_TYPE_mono_w		2050
+
+#define CHAN_TYPE_c			3000
+#define CHAN_TYPE_y			3001
+#define CHAN_TYPE_m			3002
+#define CHAN_TYPE_k			3003
+
+#define CHAN_TYPE_xx			4000
+#define CHAN_TYPE_yy			4001
+#define CHAN_TYPE_zz			4002
+
+#define CHAN_BASE_RGB 1
+#define CHAN_BASE_YUV 512
+#define CHAN_BASE_ALPHA 1024
+
+typedef struct {
+  int weed_palette;
+  uint16_t chantype[MAXPPLANES]; /// [0] == 0 or e.g. {CHAN_TYPE_U, CHAN_TYPE_Y, CHAN_TYPE_V, CHAN_TYPE_Y)
+  boolean is_planar;
+  int hsub[MAXPPLANES];  /// horiz. subsampling, 0 or 1 means no subsampling, 2 means halved etc. (planar only)
+  int vsub[MAXPPLANES];  /// vert subsampling
+  int pixels; ///< npixels per macro: 0,1 == 1
+  /// allowance for extended palettes
+  boolean is_fp;
+  size_t bitsize[MAXPPLANES];
+} macropixel_t;
+
+void init_colour_engine(void);
+
+const macropixel_t *get_advanced_palette(int weed_palette);
 
 int32_t round_special(int32_t val);
 
@@ -164,13 +210,15 @@ void pixel_data_planar_from_membuf(void **pixel_data, void *data, size_t size, i
 void weed_layer_pixel_data_free(weed_layer_t *);
 
 #define WEED_GAMMA_MONITOR 1024
+#define WEED_GAMMA_VARIANT 2048
 #define WEED_LAYER_ALPHA_PREMULT 1
 
 // layer transformation functions
 void alpha_unpremult(weed_layer_t *, boolean un);
 boolean copy_pixel_data(weed_layer_t *dst, weed_layer_t *src_or_null, size_t alignment);
 boolean gamma_convert_layer(int gamma_type, weed_layer_t *);
-boolean gamma_convert_sub_layer(int gamma_type, weed_layer_t *, int x, int y, int width, int height);
+boolean gamma_convert_layer_variant(double file_gamma, weed_layer_t *);
+boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *, int x, int y, int width, int height);
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);

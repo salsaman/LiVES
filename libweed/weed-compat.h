@@ -743,7 +743,6 @@ enum PixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
     return WEED_PALETTE_END;
   }
 }
-
 enum AVPixelFormat weed_palette_to_avi_pix_fmt(int pal, int *clamped) {
   switch (pal) {
   case WEED_PALETTE_RGB24:

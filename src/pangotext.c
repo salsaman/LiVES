@@ -24,7 +24,7 @@ static void fill_bckg(lives_painter_t *cr, double x, double y, double dx, double
 }
 
 
-static void getxypos(LingoLayout *layout, double *px, double *py, int width, int height, boolean cent, double *pw, double *ph) {
+static void getxypos(LingoLayout *layout, int *px, int *py, int width, int height, boolean cent, double *pw, double *ph) {
   // calc coords of text, text will fit so it goes to bottom. Set cent to center text.
 
   // width and height are frame width / height in pixels
@@ -42,12 +42,12 @@ static void getxypos(LingoLayout *layout, double *px, double *py, int width, int
   if (ph) *ph = d;
 
   // ypos (adjusted so text goes to bottom)
-  if (py) *py = height - (int)d;
+  if (py) *py = height - (int)*ph;
 
   d = ((double)w_) / (double)LINGO_SCALE;
   if (pw) *pw = d;
 
-  if (px) *px = cent ? (double)(width >> 1) - d / 2. : 0.;
+  if (px) *px = cent ? (width - (int)d) >> 1 : 0.;
 }
 
 
@@ -415,7 +415,7 @@ static int font_cmp(const void *p1, const void *p2) {
 
 LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const char *text, const char *fontname,
                                double size, lives_text_mode_t mode, lives_colRGBA64_t *fg, lives_colRGBA64_t *bg,
-                               boolean center, boolean rising, double top, int offs_x, double dwidth, double dheight) {
+                               boolean center, boolean rising, double *top, int *offs_x, int dwidth, int *dheight) {
   // fontname may be eg. "Sans"
 
   // size is in device units, i.e. pixels
@@ -433,7 +433,8 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 
   LingoLayout *layout;
 
-  double x_pos = 0., y_pos = 0., lwidth = dwidth, lheight = dheight;
+  int x_pos = 0, y_pos = 0;
+  double lwidth = (double)dwidth, lheight = (double)*dheight;
 
   if (cr == NULL) return NULL;
 
@@ -462,12 +463,14 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 #ifndef GUI_QT
   if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
 #endif
-
-    getxypos(layout, &x_pos, &y_pos, dwidth, dheight, center, &lwidth, &lheight);
-
-  if (!rising) y_pos = dheight * top;
-
-  if (!center) x_pos += offs_x;
+    
+    getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
+  
+  if (!rising) y_pos = (double)*dheight * *top;
+  if (!center) {
+    x_pos += *offs_x;
+    *offs_x = x_pos;
+  }
 
   /*  lives_painter_new_path(cr);
     lives_painter_rectangle(cr,offs_x,0,width,height);
@@ -476,13 +479,18 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   if (center) lingo_layout_set_alignment(layout, LINGO_ALIGN_CENTER);
   else lingo_layout_set_alignment(layout, LINGO_ALIGN_LEFT);
 
-  layout_to_lives_painter(layout, cr, mode, fg, bg, lwidth, lheight, x_pos, y_pos, x_pos, y_pos);
-
 #ifdef GUI_GTK
   if (font != NULL) {
     pango_font_description_free(font);
   }
 #endif
+
+  if (mode == LIVES_TEXT_MODE_PRECALCULATE) {
+    *dheight = lheight;
+    return layout;
+  }
+
+  layout_to_lives_painter(layout, cr, mode, fg, bg, lwidth, lheight, x_pos, y_pos, x_pos, y_pos);
 
   return layout;
 }
@@ -522,29 +530,64 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
   // original layer is freed in the process and should not be used
 
   lives_painter_t *cr;
-
   LingoLayout *layout;
-
+  weed_layer_t *test_layer, *layer_slice;
+  uint8_t *src, *pd;
+  int row = weed_layer_get_rowstride(layer);
+  double ztop = 0.;
+  int pal = weed_layer_get_palette(layer);
   int width = weed_layer_get_width(layer);
   int height = weed_layer_get_height(layer);
-  int gamma;
-  // do cairo and pango things
+  int lheight = height;
+  int gamma = WEED_GAMMA_UNKNOWN, offsx = 0;
 
-  cr = layer_to_lives_painter(layer);
-  if (cr == NULL) return layer; ///< error occured
-  gamma = weed_layer_get_gamma(layer);
+  if (weed_palette_is_rgb(pal)) {
+    // test first to get the layout coords
+    gamma = weed_layer_get_gamma(layer);
 
-  layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, top, 0, width, height);
-  if (layout != NULL && LINGO_IS_LAYOUT(layout)) lingo_painter_show_layout(cr, layout);
+    lheight = height;
+    weed_layer_set_height(layer, 4);
+    test_layer = weed_layer_copy(NULL, layer);
+    weed_layer_set_height(layer, height);
+    cr = layer_to_lives_painter(test_layer);
+    layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
+			       fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
+    if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
+    weed_layer_free(test_layer);
 
-  // do not !!
-  //lives_painter_paint(cr);
+    src = weed_layer_get_pixel_data_packed(layer);
+    weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
+    weed_layer_set_height(layer, lheight);
+    layer_slice =weed_layer_copy(NULL, layer);
+    weed_layer_set_height(layer, height);
+    weed_layer_set_pixel_data_packed(layer, src);
+  
+    cr = layer_to_lives_painter(layer_slice);
+    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
+    if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
+      lingo_painter_show_layout(cr, layout);
+      lives_widget_object_unref(layout);
+    }
 
-  lives_painter_to_layer(cr, layer);
+    // frees pd
+    lives_painter_to_layer(cr, layer_slice);
+    convert_layer_palette(layer_slice, pal, 0);
+    pd = weed_layer_get_pixel_data_packed(layer_slice);
+    lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
+    weed_layer_free(layer_slice);
+  }
+  else {
+    cr = layer_to_lives_painter(layer);
+    if (cr == NULL) return layer; ///< error occured
+    layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);
+    if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
+      lingo_painter_show_layout(cr, layout);
+      if (layout) lives_widget_object_unref(layout);
+    }
+    lives_painter_to_layer(cr, layer);
+  }
+
   weed_layer_set_gamma(layer, gamma);
-
-  if (layout) lives_widget_object_unref(layout);
-
   return layer;
 }
 
@@ -806,7 +849,7 @@ boolean get_subt_text(lives_clip_t *sfile, double xtime) {
       if (!sfile->subt->text) {
         if (sfile->subt->type == SUBTITLE_TYPE_SRT) {
           char *tmp = srt_read_text(sfile->subt->tfile, curr);
-          sfile->subt->text = g_convert(tmp, -1, "UTF-8", SRT_DEF_CHARSET, NULL, NULL, NULL);
+          sfile->subt->text = lives_charset_convert(tmp, LIVES_CHARSET_UTF8, SRT_DEF_CHARSET);
           lives_free(tmp);
         } else if (sfile->subt->type == SUBTITLE_TYPE_SUB) sfile->subt->text = sub_read_text(sfile->subt->tfile, curr);
       }
@@ -831,7 +874,7 @@ boolean get_subt_text(lives_clip_t *sfile, double xtime) {
   if (curr->start_time <= xtime && curr->end_time >= xtime) {
     if (sfile->subt->type == SUBTITLE_TYPE_SRT) {
       char *tmp = srt_read_text(sfile->subt->tfile, curr);
-      sfile->subt->text = g_convert(tmp, -1, "UTF-8", SRT_DEF_CHARSET, NULL, NULL, NULL);
+      sfile->subt->text = lives_charset_convert(tmp, LIVES_CHARSET_UTF8, SRT_DEF_CHARSET);
       lives_free(tmp);
     } else if (sfile->subt->type == SUBTITLE_TYPE_SUB) sfile->subt->text = sub_read_text(sfile->subt->tfile, curr);
   }

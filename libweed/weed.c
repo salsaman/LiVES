@@ -158,14 +158,12 @@ static uint32_t weed_hash(const char *) GNU_PURE;
 #define weed_malloc_and_copy(size, src) memcpy(malloc(size), src, size)
 #endif
 
-#define weed_strdup(oldstring, size) (oldstring == NULL ? (char *)NULL : size < padbytes ? memcpy(leaf->padding, key, size + 1) : \
+#define weed_strdup(oldstring, size) (!oldstring ? (char *)NULL : size < padbytes ? memcpy(leaf->padding, key, size + 1) : \
 				(char *)(weed_malloc_and_copy(weed_strlen(oldstring) + 1, oldstring)))
 
 #define IS_VALID_SEED_TYPE(seed_type) ((seed_type >=64 || (seed_type >= 1 && seed_type <= 5) ? WEED_TRUE : WEED_FALSE))
 
-EXPORTED int32_t weed_get_abi_version(void) {
-  return _abi_;
-}
+EXPORTED int32_t weed_get_abi_version(void) {return _abi_;}
 
 EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
   // this is called by the host in order for it to set its version of the functions
@@ -211,56 +209,38 @@ EXPORTED weed_error_t weed_init(int32_t abi, uint64_t init_flags) {
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
 static inline weed_size_t weed_strlen(const char *s) {
   if (!s) return 0;
+  if (stdstringfuncs) return strlen(s);
   else {
-    if (stdstringfuncs) return strlen(s);
     const char *p = s;
     int64_t *pi = (int64_t *)p;
-    while (*p) {
-      if ((void *)pi == (void *)p) {
-        while (!hasNulByte(*pi)) pi++;
-        if (!(*((p = (const char *)pi)))) break;
-      }
-      p++;
-    }
+    while (*p) {if ((void *)pi == (void *)p) {while (!hasNulByte(*pi)) pi++; if (!(*((p = (const char *)pi)))) break;} p++;}
     return p - s;
   }
 }
 
 static inline int weed_strcmp(const char *st1, const char *st2) {
   if (!st1 || !st2) return (st1 != st2);
+  if (stdstringfuncs) return strcmp(st1, st2);
   else {
-    if (stdstringfuncs) return strcmp(st1, st2);
-    else {
-      int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
-      while (1) {
-        if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
-          while (1) {
-            if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {
-              if (hasNulByte(d1)) {
-                if (!hasNulByte(d2)) return 1;
-                break;
-              }
-            } else {
-              if (!hasNulByte(d1) || !(hasNulByte(d2))) return 1;
-              break;
-            }
-          }
-          st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
-        }
-        if (*st1 != *st2 || !(*st1)) break;
-        st1++; st2++;
+    int64_t d1, d2, *ip1 = (int64_t *)st1, *ip2 = (int64_t *)st2;
+    while (1) {
+      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
+	while (1) {
+	  if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {if (hasNulByte(d1)) {if (!hasNulByte(d2)) return 1; break;}}
+	  else {if (!hasNulByte(d1) || !(hasNulByte(d2))) return 1; break;}
+	}
+	st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
       }
-    }
-  }
+      if (*st1 != *st2 || !(*st1)) break;
+      st1++; st2++;
+    }}
   return (*st2 != 0);
 }
 
 #define HASHROOT 5381
 
 static inline uint32_t weed_hash(const char *string) {
-  uint32_t hash;
-  for (hash = HASHROOT; *string; hash += (hash << 5) + * (string++));
-  return hash;
+  for (register uint32_t hash = HASHROOT;; hash += (hash << 5) + *(string++)) if (!(*string)) return hash;
 }
 
 #define weed_seed_is_ptr(seed_type) (seed_type >= 64 ? 1 : 0)
@@ -292,7 +272,7 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
     weed_funcptr_t *valuef = (weed_funcptr_t *)values;
     int is_ptr = (weed_seed_is_ptr(seed_type));
     for (register int i = 0; i < num_elems; i++) {
-      if ((data[i] = weed_malloc_sizeof(weed_data_t)) == NULL) return weed_data_free(data, --i, num_elems, seed_type);
+      if (!(data[i] = weed_malloc_sizeof(weed_data_t))) return weed_data_free(data, --i, num_elems, seed_type);
       if (seed_type == WEED_SEED_STRING) {
         data[i]->value.voidptr = (weed_voidptr_t)(((data[i]->size = weed_strlen(valuec[i])) > 0) ?
                                  (weed_voidptr_t)weed_malloc_and_copy(data[i]->size, valuec[i]) : NULL);
@@ -302,20 +282,17 @@ static inline weed_data_t **weed_data_new(uint32_t seed_type, weed_size_t num_el
         else {
           if (is_ptr) memcpy(&data[i]->value.voidptr, &valuep[i], WEED_VOIDPTR_SIZE);
           else data[i]->value.voidptr = (weed_voidptr_t)(weed_malloc_and_copy(data[i]->size, (char *)values + i * data[i]->size));
-        }
-      }
-      if (!is_ptr && data[i]->value.voidptr == NULL && data[i]->size > 0) // memory error
+        }}
+      if (!is_ptr && !data[i]->value.voidptr && data[i]->size > 0) // memory error
         return weed_data_free(data, --i, num_elems, seed_type);
-    }
-  }
+    }}
   return data;
 }
 
 static inline weed_leaf_t *weed_find_leaf(weed_plant_t *leaf, const char *key, uint32_t *hash_ret) {
   uint32_t hash = WEED_MAGIC_HASH;
-  if (*key) {
+  if (*key)
     for (hash = weed_hash(key); leaf && (hash != leaf->key_hash || weed_strcmp((char *)leaf->key, (char *)key)); leaf = leaf->next);
-  }
   if (hash_ret) *hash_ret = hash;
   return leaf;
 }
@@ -337,13 +314,10 @@ static inline void *weed_leaf_free(weed_leaf_t *leaf) {
 
 static inline weed_leaf_t *weed_leaf_new(const char *key, uint32_t seed_type, uint32_t hash) {
   weed_leaf_t *leaf;
-  if ((leaf = weed_malloc_sizeof(weed_leaf_t)) == NULL) return NULL;
+  if (!(leaf = weed_malloc_sizeof(weed_leaf_t))) return NULL;
   leaf->key_hash = hash;
   leaf->next = NULL;
-  if ((leaf->key = weed_strdup(key, weed_strlen(key))) == NULL) {
-    weed_unmalloc_sizeof(weed_leaf_t, leaf);
-    return NULL;
-  }
+  if (!(leaf->key = weed_strdup(key, weed_strlen(key)))) {weed_unmalloc_sizeof(weed_leaf_t, leaf); return NULL;}
   leaf->num_elements = 0;
   leaf->seed_type = seed_type;
   leaf->flags = 0;
@@ -373,15 +347,14 @@ static weed_error_t _weed_plant_free(weed_plant_t *plant) {
   if (plant == NULL) return WEED_SUCCESS;
   rw_writelock(plant);
   if (plant->flags & WEED_FLAG_UNDELETABLE) return_unlock(plant, WEED_ERROR_UNDELETABLE);
-  while ((leaf = leafprev->next) != NULL) {
+  while ((leaf = leafprev->next)) {
     if (leaf->flags & WEED_FLAG_UNDELETABLE) leafprev = leaf;
     else {
       leafprev->next = leaf->next;
       rw_writelock(leaf);
       weed_leaf_free(leaf);
-    }
-  }
-  if (plant->next == NULL) return_unlock(plant, WEED_SUCCESS);
+    }}
+  if (!plant->next) return_unlock(plant, WEED_SUCCESS);
   return_unlock(plant, WEED_ERROR_UNDELETABLE);
 }
 
@@ -389,7 +362,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf, *leafprev;
   uint32_t hash = weed_hash(key);
   rw_writelock(plant);
-  for (leafprev = leaf = plant;  leaf != NULL; leaf = leaf->next) {
+  for (leafprev = leaf = plant;  leaf; leaf = leaf->next) {
     if (leaf->key_hash == hash && !weed_strcmp((char *)leaf->key, (char *)key)) {
       if (leaf != plant) rw_writelock(leaf);
       if (leaf->flags & WEED_FLAG_UNDELETABLE) {
@@ -406,8 +379,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
       /// use an atomic function to update leafprev->next only if leafprev->next == leaf
       /// this eliminates the race condition risk.
-      if (__sync_val_compare_and_swap(&leafprev->next, leaf, leaf->next) != leaf)
-        return WEED_ERROR_CONCURRENCY;
+      if (__sync_val_compare_and_swap(&leafprev->next, leaf, leaf->next) != leaf) return WEED_ERROR_CONCURRENCY;
 #else
       if (leafprev->next == leaf) leafprev->next = leaf->next;
       else return WEED_ERROR_CONCURRENCY;
@@ -424,7 +396,7 @@ static weed_error_t _weed_leaf_delete(weed_plant_t *plant, const char *key) {
 static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, uint32_t flags) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
   rw_swaplock_write(leaf, plant);
   leaf->flags = flags;
   return_unlock(leaf, WEED_SUCCESS);
@@ -433,7 +405,7 @@ static weed_error_t _weed_leaf_set_flags(weed_plant_t *plant, const char *key, u
 static weed_error_t _weed_leaf_set_private_data(weed_plant_t *plant, const char *key, void *data) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
 #ifdef _BUILD_THREADSAFE_
   return_unlock(plant, WEED_ERROR_CONCURRENCY);
 #endif
@@ -458,14 +430,13 @@ static char **_weed_plant_list_leaves(weed_plant_t *plant, weed_size_t *nleaves)
   if (nleaves) *nleaves = 0;
   rw_readlock(plant);
   for (; leaf != NULL; i++) leaf = leaf->next;
-  if ((leaflist = (char **)malloc(i * sizeof(char *))) == NULL) return_unlock(plant, NULL);
+  if (!(leaflist = (char **)malloc(i * sizeof(char *)))) return_unlock(plant, NULL);
   for (leaf = plant; leaf != NULL; leaf = leaf->next) {
-    if ((leaflist[j++] = strdup(leaf->key)) == NULL) {
+    if (!(leaflist[j++] = strdup(leaf->key))) {
       for (--j; j > 0; free(leaflist[--j]));
       free(leaflist);
       return_unlock(plant, NULL);
-    }
-  }
+    }}
   leaflist[j] = NULL;
   if (nleaves) *nleaves = j;
   return_unlock(plant, leaflist);
@@ -479,14 +450,11 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, uint32_
   int isnew = WEED_FALSE;
   weed_size_t old_num_elems = 0;
   weed_data_t **old_data = NULL;
-
-  if (plant == NULL) return WEED_ERROR_NOSUCH_LEAF;
+  if (!plant) return WEED_ERROR_NOSUCH_LEAF;
   if (IS_VALID_SEED_TYPE(seed_type) == WEED_FALSE) return WEED_ERROR_WRONG_SEED_TYPE;
   rw_writelock(plant);
-  leaf = weed_find_leaf(plant, key, &hash);
-
-  if (leaf == NULL) {
-    if ((leaf = weed_leaf_new(key, seed_type, hash)) == NULL) return_unlock(plant, WEED_ERROR_MEMORY_ALLOCATION);
+  if (!(leaf = weed_find_leaf(plant, key, &hash))) {
+    if (!(leaf = weed_leaf_new(key, seed_type, hash))) return_unlock(plant, WEED_ERROR_MEMORY_ALLOCATION);
     isnew = WEED_TRUE;
   } else {
     rw_swaplock_write(leaf, plant);
@@ -495,71 +463,60 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, uint32_
     if (leaf->flags & WEED_FLAG_IMMUTABLE) return_unlock(leaf, WEED_ERROR_IMMUTABLE);
     if (leaf == plant && num_elems != 1)
       return_unlock(plant, WEED_ERROR_NOSUCH_ELEMENT);  ///< type leaf must always have exactly 1 value
-
 #ifdef _BUILD_THREADSAFE_
     old_data = leaf->data;
 #else
-    if ((old_data = leaf->data) != NULL && old_num_elems == 0) {
+    if ((old_data = leaf->data) && !old_num_elems) {
       /// the data SHOULD be NULL if num_elements is 0. In this case either the memory is corrupted or some other thread
       /// set num_elements to zero and is about to nullify data, so we'll exit
       return WEED_ERROR_CONCURRENCY;
     }
 #endif
-
 #ifdef _BUILD_THREADSAFE_
   }
 #else
 #if 0
-    {{
+  {{
 #endif
-        /// possible race condition (a), try to minimise it by setting num_elements to zero
+      /// possible race condition (a), try to minimise it by setting num_elements to zero
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
-        /// if possible we use gcc buiiltin __sync_val_compare_and_swap:
-        /// "if the current value of *ptr is oldval, then write newval into *ptr...and return the value of *ptr before the operation"
-        /// here we read the value and swap it with 0 iff the current value is still the value we read earlier
-        /// otherwise we'll get some other value back, in which case we exit with error
-        if (__sync_val_compare_and_swap(&leaf->num_elements, old_num_elems, 0) != old_num_elems) {
-          return WEED_ERROR_CONCURRENCY;
-        }
-#else
-        /// otherwise we'll do it the normal way
-        if (old_num_elems != leaf->num_elements) {
-          return WEED_ERROR_CONCURRENCY;
-        }
-        leaf->num_elements = 0;
-#endif
-        if (old_num_elems > 0) {
-#if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
-          /// we should be the only thread with non-zero old_num_elems, but just in case we'll nullify leaf->data whilst fetching the current
-          /// value; if the current value was not what we expected that means another thread changed it, so we'll exit with error
-          if (__sync_val_compare_and_swap(&leaf->data, old_data, NULL) != old_data) {
-            return WEED_ERROR_CONCURRENCY;
-          }
-#else
-          if (leaf->data != old_data) {
-            return WEED_ERROR_CONCURRENCY;
-          }
-          leaf->data = NULL;
-#endif
-        }
+      /// if possible we use gcc buiiltin __sync_val_compare_and_swap:
+      /// "if the current value of *ptr is oldval, then write newval into *ptr...and return the value of *ptr before the operation"
+      /// here we read the value and swap it with 0 iff the current value is still the value we read earlier
+      /// otherwise we'll get some other value back, in which case we exit with error
+      if (__sync_val_compare_and_swap(&leaf->num_elements, old_num_elems, 0) != old_num_elems) {
+	return WEED_ERROR_CONCURRENCY;
       }
+#else
+      /// otherwise we'll do it the normal way
+      if (old_num_elems != leaf->num_elements) return WEED_ERROR_CONCURRENCY;
+      leaf->num_elements = 0;
 #endif
-
-  if (num_elems > 0 && ((data = (weed_data_t **)weed_data_new(seed_type, num_elems, values)) == NULL)) {
-    // memory failure...
-    if (old_data != NULL) {
+      if (old_num_elems > 0) {
+#if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
+	/// we should be the only thread with non-zero old_num_elems, but just in case we'll nullify leaf->data whilst fetching the current
+	/// value; if the current value was not what we expected that means another thread changed it, so we'll exit with error
+	if (__sync_val_compare_and_swap(&leaf->data, old_data, NULL) != old_data) return WEED_ERROR_CONCURRENCY;
+#else
+	if (leaf->data != old_data) return WEED_ERROR_CONCURRENCY;
+	leaf->data = NULL;
+#endif
+      }}
+#endif
+    if (num_elems > 0 && ((data = (weed_data_t **)weed_data_new(seed_type, num_elems, values)) == NULL)) {
+      // memory failure...
+      if (!old_data) {
 #ifdef _BUILD_THREADSAFE_
-      leaf->data = old_data;
-      leaf->num_elements = old_num_elems;
-    }
+	leaf->data = old_data;
+	leaf->num_elements = old_num_elems;
+      }
 #else
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
       /// restore the old value of data iff current val is NULL, and if it was NULL, set old_num_elems
-      if (__sync_val_compare_and_swap(&leaf->data, (weed_data_t **)NULL, old_data) == NULL) {
-        leaf->num_elements = old_num_elems;
-      } else return WEED_ERROR_CONCURRENCY;
+      if (!(__sync_val_compare_and_swap(&leaf->data, (weed_data_t **)NULL, old_data)) leaf->num_elements = old_num_elems;
+      else return WEED_ERROR_CONCURRENCY;
 #else
-      if (leaf->data == NULL) {
+      if (!leaf->data) {
         leaf->data = old_data;
         leaf->num_elements = old_num_elements;
       } else return WEED_ERROR_CONCURRENCY;
@@ -574,40 +531,43 @@ static weed_error_t _weed_leaf_set(weed_plant_t *plant, const char *key, uint32_
   leaf->num_elements = num_elems;
 #else
   /// possible race condition  here: if another thread updates num_elements between reading and updating it
-  if (leaf->num_elements == 0) {
+  if (!leaf->num_elements) {
 #if defined __GNUC__ && !defined WEED_IGN_GNUC_OPT
     /// restore the old value of data if it's NULL and if it was NULL, set old_num_elems
-    if (__sync_val_compare_and_swap(&leaf->data, (weed_data_t **)NULL, data) == NULL) {
+    if (!(__sync_val_compare_and_swap(&leaf->data, (weed_data_t **)NULL, data)) {
 #else
-    if (leaf->data == NULL) {
-      leaf->data = data;
+      if (!leaf->data) {
+	leaf->data = data;
 #endif
-      leaf->num_elements = num_elems;
+	leaf->num_elements = num_elems;
 #endif
-  if (isnew == WEED_TRUE) {
+	if (isnew == WEED_TRUE) {
 #ifdef _BUILD_THREADSAFE_
-    weed_leaf_append(plant, leaf);
+	  weed_leaf_append(plant, leaf);
 #else
-    if (weed_leaf_append(plant, leaf) == WEED_ERROR_CONCURRENCY) return WEED_ERROR_CONCURRENCY;
+	  if (weed_leaf_append(plant, leaf) == WEED_ERROR_CONCURRENCY) {
+	    weed_leaf_free(leaf);
+	    return WEED_ERROR_CONCURRENCY;
+	  }
 #endif
-  }
-  if (old_data != NULL) weed_data_free(old_data, old_num_elems, old_num_elems, seed_type);
+	}
+	if (old_data) weed_data_free(old_data, old_num_elems, old_num_elems, seed_type);
 #ifndef _BUILD_THREADSAFE_
-} else {
-  weed_leaf_free(leaf);
-  return WEED_ERROR_CONCURRENCY;
-}
-} else {
-  weed_leaf_free(leaf);
-  return WEED_ERROR_CONCURRENCY;
-}
+      } else {
+	weed_leaf_free(leaf);
+	return WEED_ERROR_CONCURRENCY;
+      }
+    } else {
+      weed_leaf_free(leaf);
+      return WEED_ERROR_CONCURRENCY;
+    }
 #if 0
-}
+  }
 #endif
 #endif
-if (isnew == WEED_TRUE) rw_unlock(plant);
-else rw_unlock(leaf);
-return WEED_SUCCESS;
+  if (isnew == WEED_TRUE) rw_unlock(plant);
+  else rw_unlock(leaf);
+  return WEED_SUCCESS;
 }
 
 static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t idx, weed_voidptr_t value) {
@@ -615,35 +575,34 @@ static weed_error_t _weed_leaf_get(weed_plant_t *plant, const char *key, int32_t
   uint32_t type;
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
   if (leaf != plant) rw_swaplock(leaf, plant);
   if (idx >= leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
-  if (value == NULL) return_unlock(leaf, WEED_SUCCESS);
+  if (!value) return_unlock(leaf, WEED_SUCCESS);
   type = leaf->seed_type;
 #ifndef _BUILD_THREADSAFE_
-  if ((data = leaf->data) == NULL) return WEED_ERROR_CONCURRENCY;
+  if (!(data = leaf->data)) return WEED_ERROR_CONCURRENCY;
 #else
   data = leaf->data;
 #endif
-  if (type == WEED_SEED_FUNCPTR) {
-    memcpy(value, &(data[idx])->value.funcptr, WEED_FUNCPTR_SIZE);
-  } else if (weed_seed_is_ptr(type)) {
-    memcpy(value, &(data[idx])->value.voidptr, WEED_VOIDPTR_SIZE);
-  } else {
-    if (type == WEED_SEED_STRING) {
-      size_t size = (size_t)data[idx]->size;
-      char **valuecharptrptr = (char **)value;
-      if (size > 0) memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
-      (*valuecharptrptr)[size] = 0;
-    } else memcpy(value, data[idx]->value.voidptr, leaf->data[idx]->size);
-  }
+  if (type == WEED_SEED_FUNCPTR) memcpy(value, &(data[idx])->value.funcptr, WEED_FUNCPTR_SIZE);
+  else {
+    if (weed_seed_is_ptr(type)) memcpy(value, &(data[idx])->value.voidptr, WEED_VOIDPTR_SIZE);
+    else {
+      if (type == WEED_SEED_STRING) {
+	size_t size = (size_t)data[idx]->size;
+	char **valuecharptrptr = (char **)value;
+	if (size > 0) memcpy(*valuecharptrptr, data[idx]->value.voidptr, size);
+	(*valuecharptrptr)[size] = 0;
+      } else memcpy(value, data[idx]->value.voidptr, leaf->data[idx]->size);
+    }}
   return_unlock(leaf, WEED_SUCCESS);
 }
 
 static weed_size_t _weed_leaf_num_elements(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, 0);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, 0);
   rw_swaplock(leaf, plant);
   return_unlock(leaf, leaf->num_elements);
 }
@@ -651,7 +610,7 @@ static weed_size_t _weed_leaf_num_elements(weed_plant_t *plant, const char *key)
 static weed_size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key, int32_t idx) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, 0);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, 0);
   rw_swaplock(leaf, plant);
   if (idx > leaf->num_elements) return_unlock(leaf, 0);
   return_unlock(leaf, leaf->data[idx]->size);
@@ -660,14 +619,14 @@ static weed_size_t _weed_leaf_element_size(weed_plant_t *plant, const char *key,
 static uint32_t _weed_leaf_seed_type(weed_plant_t *plant, const char *key) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_SEED_INVALID);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, WEED_SEED_INVALID);
   return_unlock(plant, leaf->seed_type);
 }
 
 static uint32_t _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
-  weed_leaf_t *leaf = weed_find_leaf(plant, key, NULL);
+  weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, 0);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, 0);
   rw_swaplock(leaf, plant);
   return_unlock(leaf, leaf->flags);
 }
@@ -675,11 +634,10 @@ static uint32_t _weed_leaf_get_flags(weed_plant_t *plant, const char *key) {
 static weed_error_t _weed_leaf_get_private_data(weed_plant_t *plant, const char *key, void **data_return) {
   weed_leaf_t *leaf;
   rw_readlock(plant);
-  if ((leaf = weed_find_leaf(plant, key, NULL)) == NULL) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
+  if (!(leaf = weed_find_leaf(plant, key, NULL))) return_unlock(plant, WEED_ERROR_NOSUCH_LEAF);
 #ifdef _BUILD_THREADSAFE_
   return_unlock(plant, WEED_ERROR_CONCURRENCY);
 #endif
   if (data_return) data_return = leaf->private_data;
   return WEED_SUCCESS;
 }
-

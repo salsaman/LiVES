@@ -304,6 +304,7 @@ typedef struct {
 #define WEED_LEAF_NOTIFY "notify"
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
+#define WEED_LEAF_THREAD_PROCESSING "t_processing"
 #define WEED_LEAF_RETURN_VALUE "return_value"
 
 #define WEED_LEAF_THREAD_PARAM "thrd_param"

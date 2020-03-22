@@ -1260,7 +1260,8 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
         lives_colRGBA64_t col_white, col_black;
         LingoLayout *layout;
         lives_painter_surface_t *surface;
-
+	double top = 0.2;
+	int height = lives_widget_get_allocation_height(eventbox);
         int text_start = offset_start + 2, text_end = offset_end;
 
         if (text_start < 2) text_start = 2;
@@ -1272,8 +1273,8 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
         col_black.red = col_black.green = col_black.blue = 0;
 
         layout = render_text_to_cr(NULL, cr, fname, sfont, 10.,
-                                   LIVES_TEXT_MODE_FOREGROUND_ONLY, &col_white, &col_white, FALSE, FALSE, 0.2, text_start,
-                                   text_end - text_start, lives_widget_get_allocation_height(eventbox));
+                                   LIVES_TEXT_MODE_FOREGROUND_ONLY, &col_white, &col_white, FALSE, FALSE, &top, &text_start,
+                                   text_end - text_start, &height);
 
         lingo_painter_show_layout(cr, layout);
 

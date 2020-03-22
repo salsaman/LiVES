@@ -1392,7 +1392,7 @@ int process_one(boolean visible) {
           ticks_t ldt = mainw->last_display_ticks;
           cfile->next_event = process_events(cfile->next_event, FALSE, mainw->currticks + mainw->offsetticks);
           if (cfile->next_event == NULL) mainw->cancelled = CANCEL_EVENT_LIST_END;
-          else if (mainw->last_display_ticks != ldt) {
+          else if (prefs->pbq_adaptive && mainw->last_display_ticks != ldt) {
             update_effort(spare_cycles + 1, FALSE);
             spare_cycles = 0ul;
           }
@@ -1411,7 +1411,7 @@ int process_one(boolean visible) {
 
 
 #define ENABLE_PRECACHE
-#define SHOW_CACHE_PREDICTIONS
+  //#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
@@ -1546,13 +1546,6 @@ int process_one(boolean visible) {
           dropped = ABS(requested_frame - mainw->actual_frame) - 1;
           if (dropped < 0) dropped = 0;
         }
-        if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
-          if (requested_frame != last_req_frame) {
-            /// update the effort calculation with dropped frames and spare_cycles
-            if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
-            update_effort(spare_cycles + 1, FALSE);
-          }
-        }
 #ifdef ENABLE_PRECACHE
         if (getahead > -1) {
           if (mainw->pred_frame == -getahead) {
@@ -1659,6 +1652,14 @@ int process_one(boolean visible) {
 #endif
       }
 
+      if (prefs->pbq_adaptive && scratch == SCRATCH_NONE) {
+	if (requested_frame != last_req_frame) {
+	  /// update the effort calculation with dropped frames and spare_cycles
+	  if (dropped > 0) update_effort(abs(requested_frame - last_req_frame - 1), TRUE);
+	  update_effort(spare_cycles + 1, FALSE);
+	}
+      }
+
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("dropped = %d, %d scyc = %ld %d %d\n", dropped, mainw->effort, spare_cycles, requested_frame, sfile->frameno);
 #endif
@@ -1669,7 +1670,7 @@ int process_one(boolean visible) {
       }
       last_pwidth = mainw->pwidth;
       last_pheight = mainw->pheight;
-      if (mainw->force_show || (sfile->frameno != mainw->actual_frame
+      if (mainw->force_show || ((sfile->frameno != mainw->actual_frame || (sfile->frames == 1 && sfile->frameno == 1))
 #ifdef ENABLE_PRECACHE
                                 && getahead < 0)
           || (getahead > -1 && mainw->frame_layer_preload != NULL && !cleanup_preload && requested_frame != last_req_frame)
@@ -1687,7 +1688,7 @@ int process_one(boolean visible) {
 
         // load and display the new frame
 #ifdef SHOW_CACHE_PREDICTIONS
-        g_print("playing frame %d / %d\n", sfile->frameno, requested_frame);
+        //g_print("playing frame %d / %d\n", sfile->frameno, requested_frame);
 #endif
         load_frame_image(sfile->frameno);
 

@@ -2102,6 +2102,8 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (weed_palette_is_alpha(inpalette)) continue;
 
     layer = layers[in_tracks[i]];
+    check_layer_ready(layer);
+
     cpalette = opalette = weed_layer_get_palette(layer);
     if (weed_palette_is_alpha(opalette)) continue;
 
@@ -2302,7 +2304,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     }
 
     // check palette again in case it changed during resize
-    cpalette = weed_get_int_value(layer, WEED_LEAF_CURRENT_PALETTE, NULL);
+    cpalette = weed_layer_get_palette(layer);
 
     if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
       // apply gamma conversion if plugin requested it
@@ -11015,7 +11017,6 @@ static int realign_typeleaf(int fd, weed_plant_t *plant) {
     }
     lives_memmove(buff + 7 - len, buff + 8 - len, len + 4);
     if (lives_read_buffered(fd, &buff[11], 1, TRUE) < 1) return 0;
-    //g_print("buff is %s\n", buff);
   }
   return 0;
 }
@@ -11087,7 +11088,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
 
     if (check_key && len != lives_strlen(key)) {
-      g_print("len for %s was %d\n", key, len);
+      if (prefs->show_dev_opts) 
+	g_print("len for %s was %d\n", key, len);
       return -9;
     }
     if (len > MAX_WEED_STRLEN) return -10;

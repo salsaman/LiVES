@@ -6743,7 +6743,7 @@ deinit2:
     }
 
     if (playing_file == -1 && mainw->gen_started_play) {
-      return FALSE;
+      return TRUE;
     }
 
     // weed_generator_start can change the instance
@@ -7549,11 +7549,17 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     fill_audio_channel(filter, achan);
   }
 
-  if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
-    weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
+  if (prefs->pb_quality == PB_QUALITY_LOW && mainw->inst_fps > 0. && mainw->inst_fps
+      < weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL))
+    weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, mainw->inst_fps);
+  else {
+    if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
+      weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
+    else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS))
+      weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
+  }
 
-  if (CURRENT_CLIP_IS_VALID)
-    weed_set_double_value(inst, WEED_LEAF_FPS, cfile->pb_fps);
+  if (CURRENT_CLIP_IS_VALID) weed_set_double_value(inst, WEED_LEAF_FPS, mainw->inst_fps);
 
   cwd = cd_to_plugin_dir(filter);
 procfunc1:

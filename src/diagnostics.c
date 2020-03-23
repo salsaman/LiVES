@@ -14,7 +14,7 @@
 static double inst_fps = 0.;
 
 LIVES_GLOBAL_INLINE double get_inst_fps(void) {
-  get_stats_msg(TRUE);
+  if (!mainw->lockstats) get_stats_msg(TRUE);
   return inst_fps;
 }
 
@@ -63,6 +63,7 @@ char *get_stats_msg(boolean calc_only) {
       inst_fps = (double)(mainw->fps_mini_measure - last_mm
                           + (double)(currticks - mainw->startticks) / TICKS_PER_SECOND_DBL / cfile->pb_fps)
                  / ((double)(currticks - last_curr_tc) / TICKS_PER_SECOND_DBL);
+      mainw->inst_fps = inst_fps;
     }
     last_curr_tc = currticks;
     last_mini_ticks = mainw->fps_mini_ticks;
@@ -70,7 +71,6 @@ char *get_stats_msg(boolean calc_only) {
   }
 
   if (calc_only) return NULL;
-
   if (have_avsync) {
     audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
                                  tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));

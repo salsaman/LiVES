@@ -88,7 +88,7 @@ void lives_free_check(void *p);
 // the same values are passed into realtime fx plugins via Weed function overloading
 #ifdef HAVE_OPENCV
 #ifndef NO_OPENCV_MEMFUNCS
-#define _lives_malloc  fastMalloc
+#define _lives_malloc(sz)  alignPtr(sz, 64);
 #define _lives_free    fastFree
 #define _lives_realloc proxy_realloc
 #endif

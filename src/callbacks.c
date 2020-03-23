@@ -4352,12 +4352,16 @@ void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     play_file();
 
-    if (cfile->play_paused) cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
-    lives_ce_update_timeline(0, cfile->real_pointer_time);
-  } else {
-    // TODO: non-functional yet, needs more.
-    cfile->play_paused = TRUE;
-    mainw->cancelled = CANCEL_USER;
+    if (CURRENT_CLIP_IS_VALID) {
+      if (cfile->play_paused) {
+	cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
+	lives_ce_update_timeline(0, cfile->real_pointer_time);
+      } else {
+	// TODO: non-functional yet, needs more.
+	cfile->play_paused = TRUE;
+	mainw->cancelled = CANCEL_USER;
+      }
+    }
   }
 }
 
@@ -5010,6 +5014,7 @@ boolean prevclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   // type = 2 bg only
 
   if (!mainw->interactive) return TRUE;
+  if (mainw->go_away) return TRUE;
 
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
       mainw->cliplist == NULL) return TRUE;
@@ -5054,7 +5059,7 @@ boolean nextclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint
   int type = 0; ///< auto (switch bg if a transition is active, otherwise foreground)
 
   if (!mainw->interactive) return TRUE;
-
+  if (mainw->go_away) return TRUE;
   // next clip
   // if the effect is a transition, this will change the background clip
   if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||

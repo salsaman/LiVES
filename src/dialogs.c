@@ -1235,6 +1235,7 @@ int process_one(boolean visible) {
   frames_t requested_frame = 0;
   boolean show_frame = FALSE;
   lives_clip_t *sfile = cfile;
+  int delta = 0;
 
 #ifdef RT_AUDIO
   double audio_stretch = 1.0;
@@ -1475,11 +1476,11 @@ int process_one(boolean visible) {
           /// on the player's frame. 'getahead' is the target frame.
           /// 'test_getahead' is used so that we can sometime recalibrate withour actually jumping the frame
           int dir = sig(sfile->pb_fps);
-          int delta = (test_getahead - requested_frame) * dir;
+          delta = (test_getahead - requested_frame) * dir;
 #ifdef SHOW_CACHE_PREDICTIONS
           g_print("gah (%d) %d, act %d %d, bungle %d, shouldabeen %d %s", mainw->effort, test_getahead,
                   sfile->frameno, requested_frame,
-                  bungle_frames, bungle_frames - test_getahead + requested_frame, getahead == -1 ? "(calibrating)" : "");
+                  bungle_frames, bungle_frames - delta, getahead == -1 ? "(calibrating)" : "");
           if (delta < 0) g_print(" !!!!!\n");
           if (delta == 0) g_print(" EXACT\n");
           if (delta > 0) g_print(" >>>>\n");
@@ -1537,13 +1538,17 @@ int process_one(boolean visible) {
     if (show_frame) {
       // time to show a new frame
       last_spare_cycles = spare_cycles;
-
       if (LIVES_IS_PLAYING && (mainw->event_list == NULL || mainw->record ||
                                mainw->preview_rendering)) {
         /// calculate dropped frames, this is ABS(frame - last_frame) - 1
         if (scratch != SCRATCH_NONE || getahead > -1) dropped = 0;
         else {
-          dropped = ABS(requested_frame - mainw->actual_frame) - 1;
+	  if (mainw->frame_layer_preload && !cleanup_preload && mainw->pred_clip == mainw->playing_file
+	      && mainw->pred_frame != 0 && (abs(mainw->pred_frame) - mainw->actual_frame) * sig(sfile->pb_fps) > 0
+	      && is_layer_ready(mainw->frame_layer_preload))
+	    dropped = ABS(requested_frame - mainw->pred_frame) - 1;
+	  else
+	    dropped = ABS(requested_frame - mainw->actual_frame) - 1;
           if (dropped < 0) dropped = 0;
         }
 #ifdef ENABLE_PRECACHE
@@ -1592,7 +1597,7 @@ int process_one(boolean visible) {
               g_print("getahead jumping to %d\n", test_getahead);
 #endif
               recalc_bungle_frames = TRUE;
-              if (dropped > 0 && ((sfile->pb_fps < 0. && (!clip_can_reverse(mainw->current_file)))
+              if (dropped > 0 && delta <= 0 && ((sfile->pb_fps < 0. && (!clip_can_reverse(mainw->current_file)))
                                   || (abs(sfile->frameno - sfile->last_vframe_played) >= JUMPFRAME_TRIGGER)
                                   || dropped >= DROPFRAME_TRIGGER)) {
                 getahead = test_getahead;
@@ -1691,7 +1696,7 @@ int process_one(boolean visible) {
         //g_print("playing frame %d / %d\n", sfile->frameno, requested_frame);
 #endif
         load_frame_image(sfile->frameno);
-
+	mainw->inst_fps = get_inst_fps();
         mainw->actual_frame = sfile->frameno;
         if (prefs->show_dev_opts) mainw->fps_mini_measure++;
       } // end load_frame_image()

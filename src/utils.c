@@ -3284,10 +3284,13 @@ void find_when_to_stop(void) {
   // v>a    stop on video end    stop on video end           no stop
   // generator start - not playing : stop on vid_end, unless pure audio;
   if (mainw->alives_pgid > 0) mainw->whentostop = NEVER_STOP;
-  else if (cfile->clip_type == CLIP_TYPE_GENERATOR || (mainw->aud_rec_fd != -1 &&
-           mainw->ascrap_file == -1)) mainw->whentostop = STOP_ON_VID_END;
+  else if (mainw->aud_rec_fd != -1 &&
+           mainw->ascrap_file == -1) mainw->whentostop = STOP_ON_VID_END;
   else if (mainw->multitrack != NULL && CURRENT_CLIP_HAS_VIDEO) mainw->whentostop = STOP_ON_VID_END;
-  else if (!CURRENT_CLIP_IS_NORMAL) mainw->whentostop = NEVER_STOP;
+  else if (!CURRENT_CLIP_IS_NORMAL) {
+    if (mainw->loop_cont) mainw->whentostop = NEVER_STOP;
+    else mainw->whentostop = STOP_ON_VID_END;
+  }
   else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop = STOP_ON_VID_END;
   else if (!mainw->preview && (mainw->loop_cont)) mainw->whentostop = NEVER_STOP;

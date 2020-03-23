@@ -2189,7 +2189,7 @@ None.
   For more details, see the definitions in filter_class.
 
   NOTE:
-  "hstep", "vstep" and "rowstride_alignment" can ONLY be set in the filter_class, and may not be overriden for
+  "hstep", "vstep" and "alignment_hint" can ONLY be set in the filter_class, and may not be overriden for
   individual channels.
 
 

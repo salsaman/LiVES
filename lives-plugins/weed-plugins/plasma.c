@@ -157,7 +157,7 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("plasma", "salsaman/w.p van paasen", 1, filter_flags, palette_list,
                                         plasma_init, plasma_process, plasma_deinit, NULL, out_chantmpls, NULL, NULL);
 
-  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 25.); // set reasonable default fps
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
 

@@ -624,7 +624,9 @@ static boolean pre_init(void) {
   } else mainw->ds_status = LIVES_STORAGE_STATUS_UNKNOWN;
 
   future_prefs->nfx_threads = prefs->nfx_threads = get_int_prefd(PREF_NFX_THREADS, capable->ncpus);
-
+#ifndef VALGRIND_ON
+  prefs->nfx_threads = 1;
+#endif
   lives_threadpool_init();
 
   // get some prefs we need to set menu options
@@ -1380,6 +1382,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->record_frame = -1;
 
   mainw->debug_ptr = NULL;
+
+  mainw->inst_fps = 0.;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -4903,6 +4907,7 @@ void load_start_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
+	weed_layer_free(layer);
         return;
       }
       start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
@@ -5106,12 +5111,13 @@ void load_end_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
+	weed_layer_free(layer);
         return;
       }
       end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
 
-    weed_plant_free(layer);
+    weed_layer_free(layer);
 
     if (LIVES_IS_PIXBUF(end_pixbuf)) {
       set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->end_image), end_pixbuf, NULL);
@@ -5258,11 +5264,12 @@ void load_preview_image(boolean update_always) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
+	weed_layer_free(layer);
         return;
       }
       pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
     }
-    weed_plant_free(layer);
+    weed_layer_free(layer);
   }
 
   set_ce_frame_from_pixbuf(LIVES_IMAGE(mainw->preview_image), pixbuf, NULL);
@@ -5403,6 +5410,7 @@ static void *res_thrdfunc(void *arg) {
   resl_priv_data *priv = (resl_priv_data *)arg;
   resize_layer(priv->layer, priv->width, priv->height, priv->interp, priv->pal, priv->clamp);
   weed_set_voidptr_value(priv->layer, WEED_LEAF_RESIZE_THREAD, NULL);
+  lives_free(priv);
   return NULL;
 }
 
@@ -8247,7 +8255,7 @@ lfi_done:
     // no other clips
     mainw->current_file = mainw->blend_file = -1;
     set_main_title(NULL, 0);
-
+    
     lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
     lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
     lives_widget_set_sensitive(mainw->export_proj, FALSE);
@@ -8264,25 +8272,27 @@ lfi_done:
 
     if (!mainw->is_ready || mainw->recovering_files) return;
 
-    if (!LIVES_IS_PLAYING && mainw->play_window != NULL) {
-      // if the clip is loaded
-      if (mainw->preview_box == NULL) {
-        // create the preview box that shows frames...
-        make_preview_box();
-      }
-      // add it the play window...
-      if (lives_widget_get_parent(mainw->preview_box) == NULL) {
-        lives_widget_queue_draw(mainw->play_window);
-        lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-        lives_widget_grab_focus(mainw->preview_spinbutton);
-      }
+    if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
+    
+    /* if (!LIVES_IS_PLAYING && mainw->play_window != NULL) { */
+    /*   // if the clip is loaded */
+    /*   if (mainw->preview_box == NULL) { */
+    /*     // create the preview box that shows frames... */
+    /*     make_preview_box(); */
+    /*   } */
+    /*   // add it the play window... */
+    /*   if (lives_widget_get_parent(mainw->preview_box) == NULL) { */
+    /*     lives_widget_queue_draw(mainw->play_window); */
+    /*     lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box); */
+    /*     lives_widget_grab_focus(mainw->preview_spinbutton); */
+    /*   } */
 
-      lives_widget_hide(mainw->preview_controls);
+    /*   lives_widget_hide(mainw->preview_controls); */
 
-      // and resize it
-      resize_play_window();
-      load_preview_image(FALSE);
-    }
+    /*   // and resize it */
+    /*   resize_play_window(); */
+    /*   load_preview_image(FALSE); */
+    /* } */
 
     if (mainw->multitrack == NULL) {
       //resize(1);

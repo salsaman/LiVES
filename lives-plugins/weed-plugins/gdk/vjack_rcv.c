@@ -19,7 +19,6 @@
 #include "../../../libweed/weed-plugin.h"
 #endif
 
-
 ///////////////////////////////////////////////////////////////////
 
 static int num_versions = 1; // number of different weed api versions supported
@@ -320,7 +319,7 @@ int vjack_rcv_init(weed_plant_t *inst) {
 
   jack_sample_rate = jack_get_sample_rate(sd->client);
 
-  weed_set_double_value(inst, WEED_LEAF_TARGET_FPS, jack_sample_rate); // set reasonable value
+  weed_set_double_value(inst, WEED_LEAF_PREFERRED_FPS, jack_sample_rate); // set reasonable value
   return WEED_SUCCESS;
 }
 

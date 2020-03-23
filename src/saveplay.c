@@ -2409,6 +2409,8 @@ void play_file(void) {
   mainw->currticks = 0;
   mainw->effort = -EFFORT_RANGE_MAX;
 
+  find_when_to_stop();
+
   // reinit all active effects
   if (!mainw->preview && !mainw->is_rendering && !mainw->foreign) weed_reinit_all();
 
@@ -2544,8 +2546,6 @@ void play_file(void) {
 #endif
     }
   }
-
-  find_when_to_stop();
 
   // set in case audio lock gets actioned
   future_prefs->audio_opts = prefs->audio_opts;
@@ -2967,7 +2967,7 @@ void play_file(void) {
 
     if (mainw->sep_win) add_to_playframe();
 
-    if (cfile->frames > 0) {
+    if (CURRENT_CLIP_HAS_VIDEO) {
       resize(1.);
       lives_widget_show_all(mainw->playframe);
       lives_frame_set_label(LIVES_FRAME(mainw->playframe), "");
@@ -5546,6 +5546,7 @@ boolean restore_clip_binfmt(int clipno) {
        lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
        lives_close_buffered(fd);
        lives_rm(fname);
+       lives_free(fname);
        mainw->com_failed = FALSE;
        if (mainw->read_failed == fd + 1) {
 	 mainw->read_failed = 0;
@@ -5566,9 +5567,11 @@ boolean restore_clip_binfmt(int clipno) {
 	     if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
 	     lives_free(loaded);
 	     return TRUE;
-	   }}}}}
+	   }}}}
+     lives_free(fname);
+   }
    return FALSE;
- }
+}
 
 #undef _RELOAD
 #undef _RELOAD_STRING

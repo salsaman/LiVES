@@ -855,7 +855,6 @@ WEED_SETUP_START(200, 200) {
 
         switch (f0rinfo.plugin_type) {
         case F0R_PLUGIN_TYPE_SOURCE:
-          weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.); // set reasonable default fps
           weed_set_voidptr_value(filter_class, "plugin_f0r_update", f0r_update);
           break;
         case F0R_PLUGIN_TYPE_FILTER:

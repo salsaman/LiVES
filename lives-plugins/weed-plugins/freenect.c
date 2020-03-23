@@ -329,7 +329,7 @@ WEED_SETUP_START(200, 200) {
   weed_set_int_array(out_chantmpls[0], WEED_LEAF_PALETTE_LIST, sizeof(palette_list) / 4, palette_list);
   weed_set_int_array(out_chantmpls[1], WEED_LEAF_PALETTE_LIST, sizeof(apalette_list) / 4, apalette_list);
 
-  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 25.);
+  weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 25.);
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);
 }

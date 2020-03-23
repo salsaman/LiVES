@@ -2482,27 +2482,33 @@ void create_LiVES(void) {
                                       (LiVESAccelFlags)0,
                                       lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(4), NULL));
             if (FX_KEYS_PHYSICAL > 5) {
-              lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_6, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+              lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_6,
+					LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                                         lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(6), NULL));
               lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_6, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                         (LiVESAccelFlags)0,
                                         lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(5), NULL));
               if (FX_KEYS_PHYSICAL > 6) {
-                lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_7, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_7,
+					  LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                                           lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(7), NULL));
                 lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_7, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                           (LiVESAccelFlags)0,
                                           lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(6), NULL));
                 if (FX_KEYS_PHYSICAL > 7) {
-                  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_8, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_8,
+					    LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                                             lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(8), NULL));
-                  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_8, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
+                  lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_8,
+					    LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                             (LiVESAccelFlags)0,
                                             lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(7), NULL));
                   if (FX_KEYS_PHYSICAL > 8) {
-                    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
+                    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group),
+					      LIVES_KEY_9, LIVES_CONTROL_MASK, (LiVESAccelFlags)0,
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(rte_on_off_callback), LIVES_INT_TO_POINTER(9), NULL));
-                    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9, LIVES_CONTROL_MASK | LIVES_ALT_MASK,
+                    lives_accel_group_connect(LIVES_ACCEL_GROUP(mainw->accel_group), LIVES_KEY_9,
+					      LIVES_CONTROL_MASK | LIVES_ALT_MASK,
                                               (LiVESAccelFlags)0,
                                               lives_cclosure_new(LIVES_GUI_CALLBACK(grabkeys_callback), LIVES_INT_TO_POINTER(8), NULL));
 		    // *INDENT-OFF*

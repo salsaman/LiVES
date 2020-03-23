@@ -312,7 +312,7 @@ WEED_SETUP_START(200, 200) {
     filter_class = weed_filter_class_init(fullname, "Team libvisual", 1, filter_flags, palette_list, libvis_init, libvis_process,
                                           libvis_deinit,
                                           in_chantmpls, out_chantmpls, in_params, NULL);
-    weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, 50.); // set reasonable default fps
+    weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 50.); // set reasonable default fps
 
     list = add_to_list_sorted(list, filter_class, (const char *)name);
   }

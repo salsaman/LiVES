@@ -54,7 +54,7 @@ static int verbosity = WEED_VERBOSITY_ERROR;
 #include <X11/extensions/Xrender.h>
 #include <X11/Xatom.h>
 
-#define TARGET_FPS 50.
+#define PREF_FPS 50.
 #define MESHSIZE 128
 #define DEF_TEXTURESIZE 1024
 
@@ -90,7 +90,8 @@ typedef struct {
   int audio_frames;
   int achans;
   float *audio;
-  float fps;
+  float fps, tfps;
+  float ncycs;
   volatile bool die;
   volatile bool failed;
   bool updating;
@@ -246,6 +247,7 @@ bool resize_buffer(_sdata *sd) {
 static int render_frame(_sdata *sd) {
   float yscale = sd->height / sd->texsize;
   float xscale = sd->width / sd->texsize;
+  sd->ncycs--;
 
   if (sd->needs_update || !sd->got_first) {
     if (sd->needs_update) {
@@ -294,6 +296,7 @@ static int render_frame(_sdata *sd) {
         }
       }
     }
+    sd->needs_more = true;
   }
 
   glFlush();
@@ -307,8 +310,7 @@ static int render_frame(_sdata *sd) {
   sd->globalPM->renderFrame();
   pcount++;
 
-  if (sd->needs_more || !sd->got_first) {
-
+  if (sd->needs_more) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-1, 1, -1, 1, 2, 10);
@@ -365,7 +367,10 @@ static int render_frame(_sdata *sd) {
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
+    if (sd->ncycs > 1. || sd->ncycs < 0.) sd->ncycs = 0.;
     sd->got_first = true;
+    if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
+    if (sd->ncycs < 0.) sd->ncycs = 0.;
   }
   return 0;
 }
@@ -469,7 +474,6 @@ static void *worker(void *data) {
     }
 
     sd->worker_active = true;
-
     if (sd->pidx == -1) {
       if (rerand) sd->globalPM->selectRandom(true);
       rerand = false;
@@ -490,9 +494,11 @@ static void *worker(void *data) {
       sd->audio_frames = 0;
     }
     pthread_mutex_unlock(&sd->pcm_mutex);
-    if (render_frame(sd)) {
-      if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
-        sd->rendering = false;
+    if (sd->needs_update || sd->needs_more || !sd->got_first || sd->ncycs > 1.) {
+      if (render_frame(sd)) {
+	if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+	  sd->rendering = false;
+	}
       }
     }
   }
@@ -569,7 +575,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       sd->pidx = sd->opidx = -1;
 
-      sd->fps = TARGET_FPS;
+      sd->fps = PREF_FPS;
       if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
 
       pthread_mutex_init(&sd->mutex, NULL);
@@ -645,6 +651,8 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->audio_frames = 0;
     pcount = count = 0;
     sd->rendering = true;
+    sd->tfps = 0.;
+    sd->ncycs = 0.;
 
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
@@ -773,6 +781,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   /// read the fps value from the player if we have that
   if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
+  if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->tfps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
 
   /// update audio
 
@@ -868,7 +877,7 @@ WEED_SETUP_START(200, 200) {
   weed_gui_set_flags(gui, WEED_GUI_CHOICES_SET_ON_INIT);
   weed_set_int_value(in_chantmpls[0], WEED_LEAF_MAX_AUDIO_LENGTH, 2048);
   weed_set_int_value(in_params[0], WEED_LEAF_MAX, INT_MAX);
-  weed_set_double_value(filter_class, WEED_LEAF_TARGET_FPS, TARGET_FPS); // set reasonable default fps
+  weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, PREF_FPS); // set reasonable default fps
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   verbosity = weed_get_host_verbosity(weed_get_host_info(plugin_info));
   weed_set_int_value(plugin_info, WEED_LEAF_VERSION, package_version);

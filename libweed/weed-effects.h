@@ -233,12 +233,13 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_LICENSE "license"
 #define WEED_LEAF_COPYRIGHT "copyright"
 
-/* optional for filters with video channels (maybe overriden in channel templates depending on filter_class flags) */
+/* optional for filters with video channels */
+#define WEED_LEAF_PREFERRED_FPS "target_fps"
 #define WEED_LEAF_HSTEP "hstep"
 #define WEED_LEAF_VSTEP "vstep"
 #define WEED_LEAF_ALIGNMENT_HINT "alignment_hint"
 
-/* optional for filters with video channels (maybe overriden in channel templates depending on filter_class flags) */
+/* optional for filters with video channels (may be overriden in channel templates depending on filter_class flags) */
 #define WEED_LEAF_WIDTH "width"
 #define WEED_LEAF_HEIGHT "height"
 #define WEED_LEAF_MAXWIDTH "maxwidth"
@@ -282,10 +283,12 @@ typedef weed_error_t (*weed_interpolate_f)(weed_plant_t **in_values, weed_plant_
 #define WEED_LEAF_OUT_PARAMETERS "out_parameters"
 #define WEED_LEAF_IN_CHANNELS "in_channels"
 #define WEED_LEAF_OUT_CHANNELS "out_channels"
+  // optional
 #define WEED_LEAF_FPS "fps"
 #define WEED_LEAF_TARGET_FPS "target_fps"
 
 // experimental
+#define WEED_LEAF_EASE_IN "ease_in" // host request val, >= WEED_LEAF_PLUGIN_EASING
 #define WEED_LEAF_EASE_OUT "ease_out" // host request val, >= WEED_LEAF_PLUGIN_EASING
 #define WEED_LEAF_PLUGIN_EASING "plugin_easing" // min or current frames for plugin to ease out
 

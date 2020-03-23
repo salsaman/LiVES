@@ -1826,10 +1826,8 @@ void update_effort(int nthings, boolean badthings) {
     if (mainw->effort < -EFFORT_LIMIT_MED) {
       if (struggling == -EFFORT_RANGE_MAX && pb_quality < PB_QUALITY_HIGH) {
         pb_quality++;
-        mainw->blend_palette = WEED_PALETTE_END;
       } else if (struggling < -EFFORT_LIMIT_MED && pb_quality < PB_QUALITY_MED) {
         pb_quality++;
-        mainw->blend_palette = WEED_PALETTE_END;
       }
     }
   }
@@ -1837,8 +1835,7 @@ void update_effort(int nthings, boolean badthings) {
   if (mainw->effort > 0) {
     if (pb_quality > future_prefs->pb_quality) {
       pb_quality = future_prefs->pb_quality;
-      mainw->blend_palette = WEED_PALETTE_END;
-      return;
+      goto tryset;
     }
     if (!struggling) {
       struggling = 1;
@@ -1849,23 +1846,21 @@ void update_effort(int nthings, boolean badthings) {
       if (struggling == EFFORT_RANGE_MAX) {
         if (pb_quality > PB_QUALITY_LOW) {
           pb_quality = PB_QUALITY_LOW;
-          mainw->blend_palette = WEED_PALETTE_END;
         } else if (mainw->effort > EFFORT_LIMIT_MED) {
           if (pb_quality > PB_QUALITY_MED) {
             pb_quality--;
-            mainw->blend_palette = WEED_PALETTE_END;
           }
         }
       } else {
         if (pb_quality > future_prefs->pb_quality) {
           pb_quality = future_prefs->pb_quality;
-          mainw->blend_palette = WEED_PALETTE_END;
         } else if (future_prefs->pb_quality > PB_QUALITY_LOW) {
           pb_quality = future_prefs->pb_quality - 1;
         }
 	// *INDENT-OFF*
       }}}
-  // *INDENT-ON*
+  // *INDENT-ON
+ tryset:
   if (pb_quality != prefs->pb_quality && (!mainw->frame_layer_preload || mainw->pred_frame == -1
 					  || is_layer_ready(mainw->frame_layer_preload))) {
     prefs->pb_quality = pb_quality;

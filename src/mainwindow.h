@@ -587,6 +587,7 @@ typedef struct {
   double fps_measure; ///< show fps stats after playback
   frames_t fps_mini_measure; ///< show fps stats during playback
   ticks_t fps_mini_ticks;
+  double inst_fps;
   // flags
   boolean save_with_sound;
   boolean ccpd_with_sound;

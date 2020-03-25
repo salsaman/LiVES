@@ -7308,7 +7308,6 @@ void load_frame_image(int frame) {
     // *INDENT-ON*
 
     //g_print("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
-    check_layer_ready(mainw->frame_layer);
 
     ////////////////////////
     if (!mainw->video_seek_ready) {
@@ -8819,7 +8818,7 @@ lfi_done:
 
     mainw->current_file = new_file;
 
-    if (prefs->pb_adaptive && area > 0 && CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
+    if (prefs->pbq_adaptive && area > 0 && CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
       if (cfile->hsize * cfile->vsize * cfile->pb_fps < area) {
         reset_effort();
       }

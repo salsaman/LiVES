@@ -473,7 +473,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     uint64_t pulseFramesAvailable = nsamples;
     uint64_t inputFramesAvailable = 0;
     uint64_t numFramesToWrite = 0;
-    double in_framesd = 9.;
+    double in_framesd = 0.;
 #ifdef DEBUG_PULSE
     int64_t in_frames = 0;
 #endif

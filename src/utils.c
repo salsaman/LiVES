@@ -1456,10 +1456,10 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
     current = clock_ticks;
   }
 
-  if (lastt != *tsource) {
-    g_print("t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, mainw->adjticks,
-            delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks);
-  }
+  //if (lastt != *tsource) {
+  /* g_print("t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, mainw->adjticks, */
+  /*         delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
+  //}
 
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
     if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
@@ -1471,19 +1471,16 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
   clock_ticks -= mainw->cadjticks;
 
   if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
-    /// cr +adj = ct -cadj
-    //g_print("CLOCK vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
     if (lastt == LIVES_TIME_SOURCE_SYSTEM) mainw->adjticks = clock_ticks + mainw->cadjticks - current;
-    //g_print("CLOCK2 vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
     current += mainw->adjticks;
-  } //else     g_print("CLOCK3 vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
+  }
 
   delta = clock_ticks - current;
 
-  if (lastt != *tsource) {
-    g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks,
-            mainw->adjticks, delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks);
-  }
+  /* if (lastt != *tsource) { */
+  /*   g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, */
+  /*           mainw->adjticks, delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
+  /* } */
 
   lastt = *tsource;
   return current;

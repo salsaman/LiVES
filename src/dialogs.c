@@ -1373,7 +1373,6 @@ int process_one(boolean visible) {
   }
 
   if (mainw->new_clip != -1) {
-    int aplay_file;
     mainw->deltaticks = 0;
 
     if (IS_VALID_CLIP(mainw->playing_file)) {
@@ -1471,7 +1470,7 @@ int process_one(boolean visible) {
   // free playback
 
 #define ENABLE_PRECACHE
-#define SHOW_CACHE_PREDICTIONS
+  //#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
 
   /// Values may need tuning for each clip - possible future targets for the autotuner
@@ -1519,8 +1518,6 @@ int process_one(boolean visible) {
     if (new_ticks != mainw->startticks && requested_frame != last_req_frame) {
       //g_print("%ld %ld %ld %d %d %d\n", mainw->currticks, mainw->startticks, new_ticks,
       //sfile->last_frameno, requested_frame, last_req_frame);
-
-      //show_frame = TRUE;
       if (mainw->fixed_fpsd <= 0. && (mainw->vpp == NULL ||
                                       mainw->vpp->fixed_fpsd <= 0. || !mainw->ext_playback)) {
         show_frame = TRUE;
@@ -1775,11 +1772,10 @@ int process_one(boolean visible) {
         aplay_file = mainw->jackd->playing_file;
         if (IS_VALID_CLIP(aplay_file)) {
           int qnt = mainw->files[aplay_file]->achans * (mainw->files[aplay_file]->asampsize >> 3);
-          mainw->files[aplay_file]->aseek_pos = mainw->jackd->real_seek_pos
-                                                - (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                                                * mainw->files[aplay_file]->arate * mainw->files[aplay_file]->achans
-                                                * mainw->files[aplay_file]->asampsize / 8;
-          mainw->files[aplay_file]->aseek_pos = ALIGN_CEIL64((int64_t)mainw->files[aplay_file]->aseek_pos, qnt);
+          mainw->files[aplay_file]->aseek_pos =
+            (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps
+                             / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8)
+                             * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps * mainw->files[aplay_file]->arps * qnt;
         }
       }
 #endif
@@ -1793,10 +1789,9 @@ int process_one(boolean visible) {
           //g_print("SPOS = %ld %d %d %ld %f\n", mainw->currticks, mainw->files[aplay_file]->frameno,
           //requested_frame, mainw->pulsed->seek_pos,
           //	  (double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps / 4. * mainw->files[aplay_file]->fps + 1.);
-
           mainw->files[aplay_file]->aseek_pos =
             (double)((off_t)((double) mainw->pulsed->seek_pos / (double)mainw->files[aplay_file]->arps
-                             / (sfile->achans * sfile->asampsize / 8)
+                             / (mainw->files[aplay_file]->achans * mainw->files[aplay_file]->asampsize / 8)
                              * mainw->files[aplay_file]->fps + .5)) / mainw->files[aplay_file]->fps * mainw->files[aplay_file]->arps * qnt;
         }
       }
@@ -2333,7 +2328,7 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
     process_events(NULL, FALSE, 0);
   }
 
-  if (prefs->pbw_adaptive) reset_effort();
+  if (prefs->pbq_adaptive) reset_effort();
   if (mainw->multitrack && !mainw->multitrack->is_rendering) mainw->effort = EFFORT_RANGE_MAX;
   getahead = -1;
   bungle_frames = -1;

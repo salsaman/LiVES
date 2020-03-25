@@ -9429,6 +9429,7 @@ sub weed {
     if (@left) {
 	print STDERR "leaving the following files for manual removal\n";
 	print STDERR join("\n", @left);
+	print "\n";
     }
     return @left;
 }

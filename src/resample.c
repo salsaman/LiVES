@@ -31,19 +31,12 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   return (ticks_t)0;
 }
 
-/* LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) { */
-/*   if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps - .000001) / fps) * */
-/* 		 TICKS_PER_SECOND; // quantise to frame timing */
-/*   return 0; */
-/* } */
 
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  if (in != (ticks_t)0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps) /
-                                  (double)fps) *
-                                 (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
-  return (ticks_t)0;
+  if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps - .000001) / fps) *
+                        TICKS_PER_SECOND; // quantise to frame timing
+  return 0;
 }
-
 
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {

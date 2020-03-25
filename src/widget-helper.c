@@ -11237,7 +11237,7 @@ boolean lives_widget_context_update(void) {
       }
     }
 #ifdef GUI_GTK
-    //g_main_context_acquire(g_main_context_get_thread_default());
+    g_main_context_acquire(g_main_context_get_thread_default());
     g_main_context_iteration(NULL, FALSE);
     while (!mainw->is_exiting && g_main_context_pending(NULL)) {
       if (mainw->gui_fooey) {
@@ -11290,7 +11290,7 @@ boolean lives_widget_context_update(void) {
     }
   }
 
-  //g_main_context_release(g_main_context_get_thread_default());
+  g_main_context_release(g_main_context_get_thread_default());
   if (!mainw->is_exiting && mt_needs_idlefunc) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }

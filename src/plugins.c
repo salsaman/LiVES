@@ -1045,21 +1045,27 @@ boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer) {
     for (i = 0; pal_list[i] != WEED_PALETTE_END; i++) {
       if (pal_list[i] == palette) break;
     }
-    if (pal_list[i] == palette) {
+    if (pal_list[i] == WEED_PALETTE_END) {
+      if (!i) return FALSE;
+      palette = check_weed_palette_list(pal_list, i, palette);
+    }
+    if (palette == WEED_PALETTE_END) return FALSE;
+    if (palette != vpp->palette) {
       if (!(*vpp->set_palette)(palette)) {
         return FALSE;
       }
-      vpp->palette = palette;
-      if (weed_palette_is_yuv(palette) && vpp->get_yuv_palette_clamping != NULL) {
-        int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
-        int lclamping = weed_layer_get_yuv_clamping(layer);
-        for (i = 0; yuv_clamping_types[i] != -1; i++) {
-          if (yuv_clamping_types[i] == lclamping) {
-            if ((*vpp->set_yuv_palette_clamping)(lclamping))
-              vpp->YUV_clamping = lclamping;
-            break;
-	    // *INDENT-OFF*
-	  }}}}}
+    }
+    vpp->palette = palette;
+    if (weed_palette_is_yuv(palette) && vpp->get_yuv_palette_clamping != NULL) {
+      int *yuv_clamping_types = (*vpp->get_yuv_palette_clamping)(vpp->palette);
+      int lclamping = weed_layer_get_yuv_clamping(layer);
+      for (i = 0; yuv_clamping_types[i] != -1; i++) {
+        if (yuv_clamping_types[i] == lclamping) {
+          if ((*vpp->set_yuv_palette_clamping)(lclamping))
+            vpp->YUV_clamping = lclamping;
+          break;
+	  // *INDENT-OFF*
+	}}}}
   // *INDENT-ON*
   return FALSE;
 }

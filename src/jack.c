@@ -439,21 +439,6 @@ static int audio_process(nframes_t nframes, void *arg) {
     case ASERVER_CMD_FILE_SEEK:
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
-      if (xseek < 0) xseek = 0;
-      if (mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) {
-        ticks_t tc = 0, tc2 = 0;
-        if (!mainw->video_seek_ready) {
-          xseek -= 2. / afile->fps * afile->arate * afile->achans * afile->asampsize / 8;
-        } else if (LIVES_IS_PLAYING) tc2 = lives_get_current_ticks();
-        if (tc2 != 0) {
-          tc = lives_get_current_ticks();
-          tc2 = tc - tc2;
-          if (msg->tc == 0) tc = 0;
-          xseek += ((double)(tc - msg->tc + tc2 * 2.) / TICKS_PER_SECOND_DBL)
-                   * jackd->sample_in_rate * afile->achans * afile->asampsize / 8;
-          msg->tc = 0;
-        }
-      }
       xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
       if (xseek < 0) xseek = 0;
       jackd->seek_pos = jackd->real_seek_pos = xseek;
@@ -544,7 +529,6 @@ static int audio_process(nframes_t nframes, void *arg) {
     uint64_t in_bytes = 0, xin_bytes = 0;
     float shrink_factor = 1.f;
     double vol;
-
     lives_clip_t *xfile = afile;
 
 #ifdef DEBUG_AJACK
@@ -569,19 +553,16 @@ static int audio_process(nframes_t nframes, void *arg) {
 
     if (!mainw->audio_seek_ready) {
       if (!mainw->video_seek_ready) {
-        //mainw->startticks = mainw->currticks;
-        output_silence();
-        //sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * pulsed->out_asamps >> 3, xbytes);
+        output_silence(0, nframes, jackd, out_buffer);
       }
 
       fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
 
-      shrink_factor = (float)jackd->sample_in_rate / (float)jackd->sample_out_rate / mainw->audio_stretch;
-      in_framesd = fabs((double)shrink_factor * (double)jackFramesAvailable);
-
       // preload the buffer for first read
-      in_bytes = (size_t)(in_framesd * jackd->in_achans * (jackd->in_asamps >> 3));
-      lives_read_buffered(jackd->fd, NULL, in_bytes * 8, TRUE);
+      in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate *
+                                   (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64))))
+                 * jackd->num_input_channels * jackd->bytes_per_channel;
+      push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor);
       mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
@@ -742,8 +723,10 @@ static int audio_process(nframes_t nframes, void *arg) {
         numFramesToWrite = MIN(jackFramesAvailable, inputFramesAvailable);
 
 #ifdef DEBUG_AJACK
-        lives_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld, jackd->num_output_channels == %ld, nf2w %ld, in_bytes %d, sf %.8f\n",
-                       nframes, jackFramesAvailable, jackd->num_input_channels, jackd->num_output_channels, numFramesToWrite, in_bytes, shrink_factor);
+        lives_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld,"
+                       "jackd->num_output_channels == %ld, nf2w %ld, in_bytes %d, sf %.8f\n",
+                       nframes, jackFramesAvailable, jackd->num_input_channels, jackd->num_output_channels,
+                       numFramesToWrite, in_bytes, shrink_factor);
 #endif
         jackd->frames_written += numFramesToWrite;
         jackFramesAvailable -= numFramesToWrite; /* take away what was written */
@@ -1722,8 +1705,7 @@ volatile aserver_message_t *jack_get_msgq(jack_driver_t *jackd) {
 
 void jack_time_reset(jack_driver_t *jackd, int64_t offset) {
   jackd->nframes_start = jack_frame_time(jackd->client) + (jack_nframes_t)((float)(offset / USEC_TO_TICKS) *
-                         (jack_get_sample_rate(
-                            jackd->client) / 1000000.));
+                         (jack_get_sample_rate(jackd->client) / 1000000.));
   jackd->frames_written = 0;
   mainw->currticks = offset;
   mainw->deltaticks = mainw->startticks = 0;

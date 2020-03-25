@@ -31,12 +31,20 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   return (ticks_t)0;
 }
 
+/* LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) { */
+/*   if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps - .000001) / fps) * */
+/* 		 TICKS_PER_SECOND; // quantise to frame timing */
+/*   return 0; */
+/* } */
+
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
   if (in != (ticks_t)0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * (double)fps) /
                                   (double)fps) *
                                  (ticks_t)TICKS_PER_SECOND; // quantise to frame timing
   return (ticks_t)0;
 }
+
+
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
@@ -1166,8 +1174,6 @@ void on_resample_audio_activate(LiVESMenuItem * menuitem, livespointer user_data
 void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
   char *com;
 
-  boolean noswitch = mainw->noswitch;
-
   int arate, achans, asampsize, arps;
   int asigned = 1, aendian = 1;
   int cur_signed, cur_endian;
@@ -1186,7 +1192,6 @@ void on_resaudio_ok_clicked(LiVESButton * button, LiVESEntry * entry) {
 
     lives_widget_destroy(resaudw->dialog);
     lives_widget_context_update();
-    mainw->noswitch = noswitch;
     lives_free(resaudw);
 
     if (arate <= 0) {

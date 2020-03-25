@@ -39,23 +39,6 @@ static boolean via_shortcut = FALSE;
 
 // TODO: replace mainw->osc_block with filter_mutex_lock()
 
-static boolean osc_playall(livespointer data) {
-  mainw->osc_auto = 1; ///< request notifiction of success
-  on_playall_activate(NULL, NULL);
-  mainw->osc_auto = 0;
-  return FALSE;
-}
-
-
-static boolean osc_playsel(livespointer data) {
-  mainw->osc_auto = 1; ///< request notifiction of success
-  if (mainw->multitrack == NULL) on_playsel_activate(NULL, NULL);
-  else multitrack_play_sel(NULL, mainw->multitrack);
-  mainw->osc_auto = 0;
-  return FALSE;
-}
-
-
 static boolean osc_init_generator(livespointer data) {
   // do this via an idle function, as it will trigger playback and hang
   mainw->osc_auto = 1; ///< request notifiction of success
@@ -454,7 +437,7 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
                         sttd);
   }
 
-  lives_timer_add(0, osc_playall, NULL);
+  play_start_timer(3);
 
   return TRUE;
 }
@@ -463,7 +446,7 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
 boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
-    lives_timer_add(0, osc_playsel, NULL);
+    play_start_timer(4);
   }
   return TRUE;
 }
@@ -498,7 +481,7 @@ boolean lives_osc_cb_play_forward(void *context, int arglen, const void *vargs, 
     if (mainw->playing_file == 1) return lives_osc_notify_failure();
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
-    lives_timer_add(0, osc_playall, NULL);
+    play_start_timer(3);
     return TRUE;
   } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps < 0 || (cfile->play_paused && cfile->freeze_fps < 0))
@@ -519,7 +502,7 @@ boolean lives_osc_cb_play_backward(void *context, int arglen, const void *vargs,
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->reverse_pb = TRUE;
-    lives_timer_add(0, osc_playall, NULL);
+    play_start_timer(3);
     return TRUE;
   } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps > 0 || (cfile->play_paused && cfile->freeze_fps > 0))
@@ -580,7 +563,8 @@ boolean lives_osc_cb_play_reset(void *context, int arglen, const void *vargs, OS
 
   fps_reset_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
   if (cfile->pb_fps < 0 || (cfile->play_paused &&
-                            cfile->freeze_fps < 0)) dirchange_callback(NULL, NULL, 0, (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
+                            cfile->freeze_fps < 0)) dirchange_callback(NULL, NULL, 0,
+                                  (LiVESXModifierType)0, LIVES_INT_TO_POINTER(SCREEN_AREA_FOREGROUND));
   if (cfile->play_paused) freeze_callback(NULL, NULL, 0, (LiVESXModifierType)0, NULL);
 
   return lives_osc_notify_success(NULL);

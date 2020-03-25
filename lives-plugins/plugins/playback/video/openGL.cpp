@@ -646,11 +646,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   ts.tv_sec += 300;
 
   // wait for render thread ready
+  pthread_mutex_lock(&cond_mutex);
   while (!rthread_ready && rc == 0) {
-    pthread_mutex_lock(&cond_mutex);
     rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
-    pthread_mutex_unlock(&cond_mutex);
   }
+  pthread_mutex_unlock(&cond_mutex);
 
   if (!playing || (rc == ETIMEDOUT && !rthread_ready)) {
     std::cerr << "openGL plugin error: Failed to start render thread" << std::endl;
@@ -1939,16 +1939,16 @@ static void *render_thread_func(void *data) {
   pthread_mutex_unlock(&cond_mutex);
 
   while (playing) {
+    pthread_mutex_lock(&cond_mutex);
     while (!has_new_texture && playing) {
-      pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
       if (!playing) {
         rthread_ready = FALSE;
-        pthread_mutex_unlock(&cond_mutex);
         break;
       }
-      pthread_mutex_unlock(&cond_mutex);
     }
+    pthread_mutex_unlock(&cond_mutex);
+    if (!playing) break;
     Upload();
   }
 

@@ -166,7 +166,6 @@ void lives_exit(int signum) {
 #endif
 
     // recursive
-    while (!pthread_mutex_unlock(&mainw->gtk_mutex));
     while (!pthread_mutex_unlock(&mainw->instance_ref_mutex));
     while (!pthread_mutex_unlock(&mainw->abuf_mutex));
 
@@ -4316,10 +4315,8 @@ void on_lock_selwidth_activate(LiVESMenuItem * menuitem, livespointer user_data)
 }
 
 
-void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+void play_all(boolean from_menu) {
   if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
-
-  if (menuitem != NULL && mainw->go_away) return;
 
   if (mainw->multitrack != NULL) {
     if (!LIVES_IS_PLAYING) {
@@ -4330,7 +4327,7 @@ void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
   if (!LIVES_IS_PLAYING) {
-    if (cfile->proc_ptr != NULL && menuitem != NULL) {
+    if (cfile->proc_ptr != NULL && from_menu) {
       on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
       return;
     }
@@ -4342,7 +4339,6 @@ void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
       } else {
         mainw->play_start = calc_frame_from_time4(mainw->current_file,
                             cfile->pointer_time);
-
       }
       mainw->play_end = cfile->frames;
     }
@@ -4354,27 +4350,25 @@ void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
     if (CURRENT_CLIP_IS_VALID) {
       if (cfile->play_paused) {
-	cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
-	lives_ce_update_timeline(0, cfile->real_pointer_time);
+        cfile->pointer_time = (cfile->last_frameno - 1.) / cfile->fps;
+        lives_ce_update_timeline(0, cfile->real_pointer_time);
       } else {
-	// TODO: non-functional yet, needs more.
-	cfile->play_paused = TRUE;
-	mainw->cancelled = CANCEL_USER;
+        // TODO: non-functional yet, needs more.
+        cfile->play_paused = TRUE;
+        mainw->cancelled = CANCEL_USER;
       }
     }
   }
 }
 
 
-void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  // play part of a clip (in clip editor)
-  if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
+void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (menuitem != NULL && mainw->go_away) return;
+  play_start_timer(menuitem ? 8 : 0);
+}
 
-  if (cfile->proc_ptr != NULL && menuitem != NULL) {
-    on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
-    return;
-  }
 
+void play_sel(void) {
   if (!mainw->is_rendering) {
     mainw->play_start = cfile->start;
     mainw->play_end = cfile->end;
@@ -4404,13 +4398,26 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 }
 
 
+void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  // play part of a clip (in clip editor)
+  if (!CURRENT_CLIP_IS_VALID || CURRENT_CLIP_IS_CLIPBOARD) return;
+
+  if (cfile->proc_ptr != NULL && menuitem != NULL) {
+    on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
+    return;
+  }
+  play_start_timer(1);
+}
+
+
 void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // play the clipboard
-  int current_file = mainw->current_file;
-  boolean oloop = mainw->loop;
-  boolean oloop_cont = mainw->loop_cont;
-
+  int current_file;
   if (mainw->multitrack != NULL) return;
+
+  current_file = mainw->pre_play_file = mainw->current_file;
+  mainw-> oloop = mainw->loop;
+  mainw->oloop_cont = mainw->loop_cont;
 
   // switch to the clipboard
   switch_to_file(current_file, 0);
@@ -4424,20 +4431,8 @@ void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->loop = FALSE;
 
   lives_rm(cfile->info_file);
-  play_file();
-  mainw->loop = oloop;
-  mainw->loop_cont = oloop_cont;
 
-  if (current_file > -1) {
-    switch_to_file(0, current_file);
-  } else {
-    mainw->current_file = current_file;
-    close_current_file(0);
-  }
-  if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
-    handle_audio_timeout();
-    mainw->cancelled = CANCEL_ERROR;
-  }
+  play_start_timer(5);
 }
 
 
@@ -4845,15 +4840,12 @@ void on_insertwsound_toggled(LiVESToggleButton * togglebutton, livespointer user
 
 /// stored values for loop locking
 static int loop_lock_frame = -1;
-static boolean oloop;
-static boolean oloop_cont;
-static boolean oping_pong;
 static lives_direction_t ofwd;
 
 void unlock_loop_lock(void) {
-  mainw->loop = oloop;
-  mainw->loop_cont = oloop_cont;
-  mainw->ping_pong = oping_pong;
+  mainw->loop = mainw->oloop;
+  mainw->loop_cont = mainw->oloop_cont;
+  mainw->ping_pong = mainw->oping_pong;
   mainw->loop_locked = FALSE;
   if (CURRENT_CLIP_IS_NORMAL) {
     mainw->play_start = cfile->start;
@@ -4937,9 +4929,9 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
         mainw->play_end = mainw->actual_frame;
     }
     if (!mainw->loop_locked) {
-      oloop = mainw->loop;
-      oloop_cont = mainw->loop_cont;
-      oping_pong = mainw->ping_pong;
+      mainw->oloop = mainw->loop;
+      mainw->oloop_cont = mainw->loop_cont;
+      mainw->oping_pong = mainw->ping_pong;
       /// store original direction so when we unlock loop lock we come out with original
       /// this is reversed because we already had one reversal
       ofwd = cfile->pb_fps < 0. ? LIVES_DIRECTION_FORWARD : LIVES_DIRECTION_BACKWARD;
@@ -6367,8 +6359,6 @@ void switch_clip(int type, int newclip, boolean force) {
     mainw->blend_palette = WEED_PALETTE_END;
     return;
   }
-
-
 
   // switch fg clip
 
@@ -7916,22 +7906,12 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && LIVES_IS_PLAYING && mainw->jackd != NULL) {
-
-    if (mainw->jackd->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
-      if (!jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, cfile)) {
-        if (jack_try_reconnect()) jack_audio_seek_bytes(mainw->jackd, mainw->jackd->seek_pos, cfile);
-      }
-    }
+    mainw->jackd->mute = mainw->mute;
   }
 #endif
 #ifdef HAVE_PULSE_AUDIO
   if (prefs->audio_player == AUD_PLAYER_PULSE && LIVES_IS_PLAYING && mainw->pulsed != NULL) {
     mainw->pulsed->mute = mainw->mute;
-    if (mainw->pulsed->playing_file == mainw->current_file && CURRENT_CLIP_HAS_AUDIO && !mainw->is_rendering) {
-      if (!pulse_audio_seek_bytes(mainw->pulsed, mainw->pulsed->seek_pos, cfile)) {
-        handle_audio_timeout();
-      } else mainw->pulsed->in_use = TRUE;
-    }
   }
 #endif
 }

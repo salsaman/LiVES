@@ -1,4 +1,3 @@
-
 // utils.c
 // LiVES
 // (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
@@ -651,7 +650,7 @@ int lives_open_buffered_writer(const char *pathname, int mode, boolean append) {
 int lives_close_buffered(int fd) {
   lives_file_buffer_t *fbuff;
   boolean should_close = TRUE;
-  int ret = 0;
+  int ret = 0, dummy;
 
   if (IS_VALID_CLIP(mainw->scrap_file) && mainw->files[mainw->scrap_file]->ext_src &&
       fd == LIVES_POINTER_TO_INT(mainw->files[mainw->scrap_file]->ext_src))
@@ -679,8 +678,8 @@ int lives_close_buffered(int fd) {
       if (!allow_fail && ret < bytes) return ret; // this is correct, as flush will have called close again with should_close=FALSE;
     }
 #ifdef HAVE_POSIX_FALLOCATE
-    /* int dummy =  ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size)); */
-    /* (void)dummy; */
+    dummy = ftruncate(fbuff->fd, MAX(fbuff->offset, fbuff->orig_size));
+    (void)dummy;
     /* //g_print("truncated  at %ld bytes in %d\n", MAX(fbuff->offset, fbuff->orig_size), fbuff->fd); */
 #endif
   }
@@ -710,6 +709,13 @@ static ssize_t file_buffer_fill(lives_file_buffer_t *fbuff, size_t min) {
   if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) bufsize = smedbytes;
   else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) bufsize = medbytes;
   else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) bufsize = bigbytes;
+  else if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
+    if (fbuff->buffer) bufsize = fbuff->ptr - fbuff->buffer + fbuff->bytes;
+    else {
+      bufsize = fbuff->bytes;
+      fbuff->bytes = 0;
+    }
+  }
 
   if (fbuff->reversed) delta = (bufsize >> 2) * 3;
   if (delta > fbuff->offset) delta = fbuff->offset;
@@ -841,7 +847,7 @@ off_t lives_lseek_buffered_rdonly_absolute(int fd, off_t offset) {
 
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less) {
   lives_file_buffer_t *fbuff;
-  ssize_t retval = 0, res;
+  ssize_t retval = 0, res = 0;
   size_t ocount = count;
   uint8_t *ptr = (uint8_t *)buf;
   int bufsztype;
@@ -864,7 +870,7 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   bufsztype = fbuff->bufsztype;
 
 #ifdef AUTOTUNE
-  if (!fbuff->slurping) {
+  if (!fbuff->slurping && fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM) {
     cost = 1. / (1. + (double)fbuff->nseqreads);
     if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
       if (!tuneds && !tuners) tuners = weed_plant_new(31338);
@@ -881,6 +887,21 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
     }
   }
 #endif
+  if (!buf) {
+    /// function can be called with buf == NULL to preload a buffer with at least (count) bytes
+    lives_freep((void **)&fbuff->buffer);
+    if (allow_less) {
+      bufsztype = BUFF_SIZE_READ_SMALL;
+      if (ocount >= (smbytes >> 2) || count > smbytes) bufsztype = BUFF_SIZE_READ_SMALLMED;
+      if (ocount >= (smedbytes >> 2) || count > smedbytes) bufsztype = BUFF_SIZE_READ_MED;
+      if (ocount >= (medbytes >> 1) || count > medbytes) bufsztype = BUFF_SIZE_READ_LARGE;
+      fbuff->bufsztype = bufsztype;
+    } else {
+      fbuff->bufsztype = BUFF_SIZE_READ_CUSTOM;
+      fbuff->bytes = count;
+    }
+    return file_buffer_fill(fbuff, count);
+  }
 
   fbuff->totops++;
 
@@ -907,8 +928,9 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
         pthread_rwlock_unlock(&mainw->mallopt_lock);
         return retval;
       }
+      fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+      if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
       fbuff->buffer = NULL;
-      fbuff->offset -= fbuff->bytes;
       file_buffer_fill(fbuff, fbuff->bytes);
       fbuff->invalid = FALSE;
     }
@@ -937,20 +959,24 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
 
   /// buffer used up
 
-  if (count <= bigbytes) {
-    fbuff->bufsztype = BUFF_SIZE_READ_SMALL;
-    if (ocount >= (smbytes >> 2) || count > smbytes) fbuff->bufsztype = BUFF_SIZE_READ_SMALLMED;
-    if (ocount >= (smedbytes >> 2) || count > smedbytes) fbuff->bufsztype = BUFF_SIZE_READ_MED;
-    if (ocount >= (medbytes >> 1) || count > medbytes) fbuff->bufsztype = BUFF_SIZE_READ_LARGE;
-    if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
-
+  if (count <= bigbytes || fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) {
+    if (fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM) {
+      bufsztype = BUFF_SIZE_READ_SMALL;
+      if (ocount >= (smbytes >> 2) || count > smbytes) bufsztype = BUFF_SIZE_READ_SMALLMED;
+      if (ocount >= (smedbytes >> 2) || count > smedbytes) bufsztype = BUFF_SIZE_READ_MED;
+      if (ocount >= (medbytes >> 1) || count > medbytes) bufsztype = BUFF_SIZE_READ_LARGE;
+      if (fbuff->bufsztype < bufsztype) fbuff->bufsztype = bufsztype;
+    } else bufsztype = BUFF_SIZE_READ_CUSTOM;
     pthread_rwlock_rdlock(&mainw->mallopt_lock);
     if (fbuff->invalid) {
       if (mainw->is_exiting) {
         pthread_rwlock_unlock(&mainw->mallopt_lock);
         return retval;
       }
+      fbuff->offset -= (fbuff->ptr - fbuff->buffer + fbuff->bytes);
+      if (fbuff->bufsztype == BUFF_SIZE_READ_CUSTOM) fbuff->bytes = (fbuff->ptr - fbuff->buffer + fbuff->bytes);
       fbuff->buffer = NULL;
+      file_buffer_fill(fbuff, fbuff->bytes);
       fbuff->invalid = FALSE;
     } else {
       if (fbuff->bufsztype != bufsztype) {
@@ -1168,7 +1194,7 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 #ifdef HAVE_POSIX_FALLOCATE
       // pre-allocate space for next buffer, we need to ftruncate this when closing the file
       //g_print("alloc space in %d from %ld to %ld\n", fbuff->fd, fbuff->offset, fbuff->offset + buffsize);
-      /* posix_fallocate(fbuff->fd, fbuff->offset, buffsize); */
+      posix_fallocate(fbuff->fd, fbuff->offset, buffsize);
       /* lseek(fbuff->fd, fbuff->offset, SEEK_SET); */
 #endif
     }
@@ -1343,32 +1369,48 @@ LIVES_GLOBAL_INLINE uint64_t get_near2pow(uint64_t val) {
   return high;
 }
 
+static lives_time_source_t lastt = LIVES_TIME_SOURCE_NONE;
+static ticks_t delta = 0;
+
+void reset_playback_clock(void) {
+  mainw->cadjticks = mainw->adjticks = 0;
+  lastt = LIVES_TIME_SOURCE_NONE;
+  delta = 0;
+}
+
 
 ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
+  lives_time_source_t *tsource, xtsource = LIVES_TIME_SOURCE_NONE;
+  ticks_t clock_ticks, current = -1;
 
-  if (time_source != NULL && *time_source == LIVES_TIME_SOURCE_EXTERNAL) *time_source = LIVES_TIME_SOURCE_NONE;
+  if (time_source) tsource = time_source;
+  else tsource = &xtsource;
+
+  clock_ticks = lives_get_relative_ticks(origsecs, origusecs);
+
+  if (*tsource == LIVES_TIME_SOURCE_EXTERNAL) *tsource = LIVES_TIME_SOURCE_NONE;
 
   if (mainw->foreign || prefs->force_system_clock || (prefs->vj_mode && (prefs->audio_src == AUDIO_SRC_EXT))) {
-    if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
-    return lives_get_relative_ticks(origsecs, origusecs) + mainw->adjticks;
+    *tsource = LIVES_TIME_SOURCE_SYSTEM;
+    current = clock_ticks;
   }
 
-  if (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE) {
+  if (*tsource == LIVES_TIME_SOURCE_NONE) {
 #ifdef ENABLE_JACK_TRANSPORT
     if (mainw->jack_can_stop && (prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) &&
         (prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT) && !(mainw->record && !(prefs->rec_opts & REC_FRAMES))) {
       // calculate the time from jack transport
-      if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_EXTERNAL;
-      return jack_transport_get_time() * TICKS_PER_SECOND_DBL + mainw->adjticks;
+      *tsource = LIVES_TIME_SOURCE_EXTERNAL;
+      current = jack_transport_get_time() * TICKS_PER_SECOND_DBL;
     }
 #endif
   }
 
-  if (is_realtime_aplayer(prefs->audio_player) && (time_source == NULL || *time_source == LIVES_TIME_SOURCE_NONE ||
-      *time_source == LIVES_TIME_SOURCE_SOUNDCARD)) {
+  if (is_realtime_aplayer(prefs->audio_player) && (*tsource == LIVES_TIME_SOURCE_NONE ||
+      *tsource == LIVES_TIME_SOURCE_SOUNDCARD)) {
     if ((!mainw->is_rendering || (mainw->multitrack != NULL && !cfile->opening && !mainw->multitrack->is_rendering)) &&
         (!(mainw->fixed_fpsd > 0. || (mainw->vpp != NULL && mainw->vpp->fixed_fpsd > 0. && mainw->ext_playback)))) {
       // get time from soundcard
@@ -1387,10 +1429,11 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
           ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd != NULL && mainw->jackd->in_use &&
             IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) ||
            (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read != NULL && mainw->jackd_read->in_use))) {
-        if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+        *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          return lives_jack_get_time(mainw->jackd_read) + mainw->adjticks;
-        return lives_jack_get_time(mainw->jackd) + mainw->adjticks;
+          current = lives_jack_get_time(mainw->jackd_read);
+        else
+          current = lives_jack_get_time(mainw->jackd);
       }
 #endif
 
@@ -1399,19 +1442,52 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
           ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed != NULL && mainw->pulsed->in_use &&
             IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->achans > 0) ||
            (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read != NULL && mainw->pulsed_read->in_use))) {
-        if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SOUNDCARD;
+        *tsource = LIVES_TIME_SOURCE_SOUNDCARD;
         if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          return lives_pulse_get_time(mainw->pulsed_read);
-        return lives_pulse_get_time(mainw->pulsed) + mainw->adjticks;
+          current = lives_pulse_get_time(mainw->pulsed_read);
+        else current = lives_pulse_get_time(mainw->pulsed);
       }
 #endif
     }
   }
 
-  if (time_source != NULL) *time_source = LIVES_TIME_SOURCE_SYSTEM;
-  return lives_get_relative_ticks(origsecs, origusecs) + mainw->adjticks;
-}
+  if (*tsource == LIVES_TIME_SOURCE_NONE) {
+    *tsource = LIVES_TIME_SOURCE_SYSTEM;
+    current = clock_ticks;
+  }
 
+  if (lastt != *tsource) {
+    g_print("t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, mainw->adjticks,
+            delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks);
+  }
+
+  if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
+    if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
+      mainw->cadjticks = delta + mainw->cadjticks;
+    }
+    current -= mainw->cadjticks;
+  }
+
+  clock_ticks -= mainw->cadjticks;
+
+  if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
+    /// cr +adj = ct -cadj
+    //g_print("CLOCK vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
+    if (lastt == LIVES_TIME_SOURCE_SYSTEM) mainw->adjticks = clock_ticks + mainw->cadjticks - current;
+    //g_print("CLOCK2 vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
+    current += mainw->adjticks;
+  } //else     g_print("CLOCK3 vals %d %d %ld %ld %ld\n", *tsource, lastt, clock_ticks, current, mainw->adjticks);
+
+  delta = clock_ticks - current;
+
+  if (lastt != *tsource) {
+    g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks,
+            mainw->adjticks, delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks);
+  }
+
+  lastt = *tsource;
+  return current;
+}
 
 
 /** set alarm for now + delta ticks (10 nanosec)
@@ -1472,8 +1548,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
 
   // alarm time was never set !
   if (alarm->lastcheck == 0) {
-    break_me();
-    LIVES_WARN("Alarm time not set");
+    //LIVES_WARN("Alarm time not set");
     return 0;
   }
 
@@ -1765,9 +1840,9 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   // nframe is our new frame
   if (fps >= 0)
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .5);
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .0001);
   else
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .5);
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .0001);
 
   if (fileno == mainw->playing_file) {
     /// if we are scratching we do the following:
@@ -3290,8 +3365,7 @@ void find_when_to_stop(void) {
   else if (!CURRENT_CLIP_IS_NORMAL) {
     if (mainw->loop_cont) mainw->whentostop = NEVER_STOP;
     else mainw->whentostop = STOP_ON_VID_END;
-  }
-  else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
+  } else if (cfile->opening_only_audio) mainw->whentostop = STOP_ON_AUD_END;
   else if (cfile->opening_audio) mainw->whentostop = STOP_ON_VID_END;
   else if (!mainw->preview && (mainw->loop_cont)) mainw->whentostop = NEVER_STOP;
   else if (!CURRENT_CLIP_HAS_VIDEO || (mainw->loop && cfile->achans > 0 && !mainw->is_rendering

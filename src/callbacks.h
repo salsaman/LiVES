@@ -15,7 +15,8 @@ void lives_notify(int msgnumber, const char *msgstring);
 
 void lives_notify_int(int msgnumber, int msgint);
 
-double get_inst_fps(void);
+void play_all(boolean from_menu);
+void play_sel(void);
 
 void lock_set_file(const char *set_name);
 void unlock_set_file(const char *set_name);

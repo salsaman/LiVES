@@ -94,8 +94,6 @@ typedef struct {
   float ncycs;
   volatile bool die;
   volatile bool failed;
-  bool updating;
-  bool received_update;
   bool update_size;
   bool update_psize;
   volatile bool needs_more;
@@ -251,20 +249,14 @@ static int render_frame(_sdata *sd) {
 
   if (sd->needs_update || !sd->got_first) {
     if (sd->needs_update) {
+      pthread_mutex_lock(&cond_mutex);
       sd->needs_update = false;
-      while (!sd->updating) {
-        pthread_mutex_lock(&cond_mutex);
-        pthread_cond_signal(&cond);
-        pthread_mutex_unlock(&cond_mutex);
-      }
-      sd->updating = false;
+      pthread_cond_signal(&cond);
       while (!sd->set_update) {
-        pthread_mutex_lock(&cond_mutex);
         pthread_cond_wait(&cond, &cond_mutex);
-        pthread_mutex_unlock(&cond_mutex);
       }
+      pthread_mutex_unlock(&cond_mutex);
       sd->set_update = false;
-      sd->received_update = true;
       if (sd->update_size) {
         change_size(sd);
         sd->update_size = false;
@@ -364,9 +356,6 @@ static int render_frame(_sdata *sd) {
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
     pthread_mutex_unlock(&buffer_mutex);
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
     if (sd->ncycs > 1. || sd->ncycs < 0.) sd->ncycs = 0.;
     sd->got_first = true;
     if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
@@ -496,9 +485,9 @@ static void *worker(void *data) {
     pthread_mutex_unlock(&sd->pcm_mutex);
     if (sd->needs_update || sd->needs_more || !sd->got_first || sd->ncycs > 1.) {
       if (render_frame(sd)) {
-	if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
-	  sd->rendering = false;
-	}
+        if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+          sd->rendering = false;
+        }
       }
     }
   }
@@ -600,11 +589,11 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       ts.tv_sec += 30;
 
       // wait for worker thread ready
+      pthread_mutex_lock(&cond_mutex);
       while (!sd->worker_ready && rc == 0) {
-        pthread_mutex_lock(&cond_mutex);
         rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
-        pthread_mutex_unlock(&cond_mutex);
       }
+      pthread_mutex_unlock(&cond_mutex);
 
       if (sd->failed) {
         projectM_deinit(inst);
@@ -647,7 +636,6 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
     sd->update_psize = false;
     sd->needs_more = true;
     sd->needs_update = sd->set_update = false;
-    sd->updating = sd->received_update = false;
     sd->audio_frames = 0;
     pcount = count = 0;
     sd->rendering = true;
@@ -680,6 +668,8 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   static double ltt;
   register int j;
 
+  weed_free(in_params);
+
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
     projectM_deinit(inst);
     return WEED_ERROR_MEMORY_ALLOCATION;
@@ -697,14 +687,12 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
         double period = (tt - ltt) / 1000000000.;
         if (period > 0.)
           fprintf(stderr, "projectM running at display rate of %f fps (%f), engine rendering at %f fps\n",
-		  100. / period, sd->fps, ppcount / period);
+                  100. / period, sd->fps, ppcount / period);
         count = 1;
       }
       ltt = tt;
     }
   }
-
-  weed_free(inparams);
 
   if (sd->die) return WEED_ERROR_REINIT_NEEDED;
 
@@ -720,14 +708,14 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   if (sd->width != width || sd->height != height || sd->psize != psize || sd->rowstride != rowstride || sd->palette != palette) {
     /// we must update size / pal, this has to be done before reading the buffer
+    pthread_mutex_lock(&cond_mutex);
     sd->needs_update = TRUE;
     /// wait for worker thread to aknowledge the update request
     while (sd->needs_update) {
-      pthread_mutex_lock(&cond_mutex);
       pthread_cond_wait(&cond, &cond_mutex);
-      pthread_mutex_unlock(&cond_mutex);
     }
-    sd->updating = true;
+    pthread_mutex_unlock(&cond_mutex);
+    //sd->updating = true;
     /// now we can set new values
     if (sd->width != width || sd->height != height) {
       sd->height = height;
@@ -741,14 +729,11 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
       sd->rowstride = rowstride;
     }
     /// let the worker thread know that the values have been updated
-    sd->set_update = true;
     sd->needs_more = true;
-    while (!sd->received_update) {
-      pthread_mutex_lock(&cond_mutex);
-      pthread_cond_signal(&cond);
-      pthread_mutex_unlock(&cond_mutex);
-    }
-    sd->received_update = false;
+    pthread_mutex_lock(&cond_mutex);
+    sd->set_upate = true;
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
     did_update = true;
   }
 

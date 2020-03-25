@@ -1260,8 +1260,8 @@ static void draw_block(lives_mt * mt, lives_painter_t *cairo,
         lives_colRGBA64_t col_white, col_black;
         LingoLayout *layout;
         lives_painter_surface_t *surface;
-	double top = 0.2;
-	int height = lives_widget_get_allocation_height(eventbox);
+        double top = 0.2;
+        int height = lives_widget_get_allocation_height(eventbox);
         int text_start = offset_start + 2, text_end = offset_end;
 
         if (text_start < 2) text_start = 2;
@@ -17314,7 +17314,8 @@ void multitrack_playall(lives_mt * mt) {
         // otherwise jack transport set us out of range
 
         if (mt->playing_sel)
-          mt->pb_loop_event = get_frame_event_at(mt->event_list, q_gint64(mt->region_start * TICKS_PER_SECOND_DBL, mt->fps), NULL, TRUE);
+          mt->pb_loop_event = get_frame_event_at(mt->event_list,
+                                                 q_gint64(mt->region_start * TICKS_PER_SECOND_DBL, mt->fps), NULL, TRUE);
         else if (mt->is_paused) mt->pb_loop_event = pb_loop_event;
 
         on_preview_clicked(NULL, LIVES_INT_TO_POINTER(1));

@@ -42,7 +42,7 @@ static void getxypos(LingoLayout *layout, int *px, int *py, int width, int heigh
   if (ph) *ph = d;
 
   // ypos (adjusted so text goes to bottom)
-  if (py) *py = height - (int)*ph;
+  if (py) *py = height - (int) * ph;
 
   d = ((double)w_) / (double)LINGO_SCALE;
   if (pw) *pw = d;
@@ -434,7 +434,7 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
   LingoLayout *layout;
 
   int x_pos = 0, y_pos = 0;
-  double lwidth = (double)dwidth, lheight = (double)*dheight;
+  double lwidth = (double)dwidth, lheight = (double) * dheight;
 
   if (cr == NULL) return NULL;
 
@@ -463,10 +463,10 @@ LingoLayout *render_text_to_cr(LiVESWidget *widget, lives_painter_t *cr, const c
 #ifndef GUI_QT
   if (rising || center || mode == LIVES_TEXT_MODE_FOREGROUND_AND_BACKGROUND)
 #endif
-    
+
     getxypos(layout, &x_pos, &y_pos, dwidth, *dheight, center, &lwidth, &lheight);
-  
-  if (!rising) y_pos = (double)*dheight * *top;
+
+  if (!rising) y_pos = (double) * dheight * *top;
   if (!center) {
     x_pos += *offs_x;
     *offs_x = x_pos;
@@ -551,17 +551,17 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     weed_layer_set_height(layer, height);
     cr = layer_to_lives_painter(test_layer);
     layout = render_text_to_cr(NULL, cr, text, fontname, size, LIVES_TEXT_MODE_PRECALCULATE,
-			       fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
+                               fg_col, bg_col, center, rising, &top, &offsx, width, &lheight);
     if (LIVES_IS_WIDGET_OBJECT(layout)) lives_widget_object_unref(layout);
     weed_layer_free(test_layer);
 
     src = weed_layer_get_pixel_data_packed(layer);
     weed_layer_set_pixel_data_packed(layer, src + (int)(top * height) * row);
     weed_layer_set_height(layer, lheight);
-    layer_slice =weed_layer_copy(NULL, layer);
+    layer_slice = weed_layer_copy(NULL, layer);
     weed_layer_set_height(layer, height);
     weed_layer_set_pixel_data_packed(layer, src);
-  
+
     cr = layer_to_lives_painter(layer_slice);
     layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, FALSE, &ztop, &offsx, width, &height);
     if (layout != NULL && LINGO_IS_LAYOUT(layout)) {
@@ -575,8 +575,7 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     pd = weed_layer_get_pixel_data_packed(layer_slice);
     lives_memcpy(src + (int)(top * height) * row, pd, lheight * row);
     weed_layer_free(layer_slice);
-  }
-  else {
+  } else {
     cr = layer_to_lives_painter(layer);
     if (cr == NULL) return layer; ///< error occured
     layout = render_text_to_cr(NULL, cr, text, fontname, size, mode, fg_col, bg_col, center, rising, &top, &offsx, width, &height);

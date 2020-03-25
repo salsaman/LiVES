@@ -1904,20 +1904,20 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     // check_layer_ready() should have done this, but let's check again
     if (!weed_layer_get_pixel_data_packed(layer)) {
       //check_layer_ready(layer);
-            /* /// wait for thread to pull layer pixel_data */
+      /* /// wait for thread to pull layer pixel_data */
       if (!is_layer_ready(layer)) {
 #define FX_WAIT_LIM 10000 // microseconds * 10
-      	for (register int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
-      	  lives_nanosleep(10000);
-      	}
-      	if (!is_layer_ready(layer)) {
-      	  retval = FILTER_ERROR_MISSING_FRAME;
-      	  goto done_video;
-      	}
-	if (!weed_layer_get_pixel_data_packed(layer)) {
-	  retval = FILTER_ERROR_MISSING_FRAME;
-	  goto done_video;
-	}
+        for (register int tt = 0; tt < FX_WAIT_LIM && !is_layer_ready(layer); tt++) {
+          lives_nanosleep(10000);
+        }
+        if (!is_layer_ready(layer)) {
+          retval = FILTER_ERROR_MISSING_FRAME;
+          goto done_video;
+        }
+        if (!weed_layer_get_pixel_data_packed(layer)) {
+          retval = FILTER_ERROR_MISSING_FRAME;
+          goto done_video;
+        }
       }
     }
     // we apply only transitions and compositors to the scrap file
@@ -1938,31 +1938,31 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (maxinheight == 4 && inheight > 4) maxinheight = inheight;
 
       if (!svary) {
-	if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-	  /// manual adjustment for letterboxing. We want to avoid the situation where some layers are letterboxing in
-	  /// one dimension and others are letterboxing in the other, however this is unavoidable with frames of different sizes.
-	  /// the best we can do is to make sure that one layer sets the collective size and the others will get letterboxed to that size.
-	  /// thus -
-	  /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
-	  // otherwise, we will aspect ratio it to fit the max size. Since we know at least one of the dimensions was
-	  // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
-	  if (inwidth >= maxinwidth && inheight >= maxinheight) {
-	    maxinwidth = inwidth;
-	    maxinheight = inheight;
-	  }
-	} else {
-	  if (inwidth > maxinwidth) maxinwidth = inwidth;
-	  if (inheight > maxinheight) maxinheight = inheight;
-	}
+        if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
+          /// manual adjustment for letterboxing. We want to avoid the situation where some layers are letterboxing in
+          /// one dimension and others are letterboxing in the other, however this is unavoidable with frames of different sizes.
+          /// the best we can do is to make sure that one layer sets the collective size and the others will get letterboxed to that size.
+          /// thus -
+          /// if this layer is the first, or it engulfs all of the previous layers, then we let it set the width and height
+          // otherwise, we will aspect ratio it to fit the max size. Since we know at least one of the dimensions was
+          // within the current bounds (otherwise it would engulf), we will end up with 2 edges touching and two letterboxed
+          if (inwidth >= maxinwidth && inheight >= maxinheight) {
+            maxinwidth = inwidth;
+            maxinheight = inheight;
+          }
+        } else {
+          if (inwidth > maxinwidth) maxinwidth = inwidth;
+          if (inheight > maxinheight) maxinheight = inheight;
+        }
       }
     } else {
       // for low quality we pick the smallest dimensions
       if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-	// for letterboxing this works in reverse: both dimensions must be smaller
-	if ((inwidth >= maxinwidth || inheight >= maxinheight) && maxinwidth > 4 && maxinheight > 4) {
-	  j++;
-	  continue;
-	}
+        // for letterboxing this works in reverse: both dimensions must be smaller
+        if ((inwidth >= maxinwidth || inheight >= maxinheight) && maxinwidth > 4 && maxinheight > 4) {
+          j++;
+          continue;
+        }
       }
       if (maxinwidth == 4 || inwidth < maxinwidth)
         if (inwidth > 4) maxinwidth = inwidth;
@@ -2279,16 +2279,16 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (inwidth != width || inheight != height) {
       short interp = get_interp_value(pb_quality);
       if ((mainw->multitrack != NULL && prefs->letterbox_mt) || (prefs->letterbox && !mainw->multitrack)) {
-	// if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
-	// if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,
-	/// but the player size would have been adjusted to the letterboxed size in any case).
-	/// However, when mixing channels, all will have
-	// the same size, which was set by largest / smallest engulfing channel. [unless the filter set WEED_FILTER_SIZES_MAY_VARY]
-	// Depending on the quality setting, this may be the largest or the smallest.
-	// thus one layer / channel will fill the image, whilst all others may get letterboxed
-	// another alternative would be to resize all of the layers, and ignore letterboxing for the intermediate stages,
-	//// but for now we assume if the user wants letterboxing then it applies
-	// to all layers
+        // if we are letterboxing, as well as letterboxing the final output in the player, we will also letterbox each layer into its channel
+        // if we only have 1 layer this is irrelevant since the channel size == layer size, (or in high quality, channel size == player size,
+        /// but the player size would have been adjusted to the letterboxed size in any case).
+        /// However, when mixing channels, all will have
+        // the same size, which was set by largest / smallest engulfing channel. [unless the filter set WEED_FILTER_SIZES_MAY_VARY]
+        // Depending on the quality setting, this may be the largest or the smallest.
+        // thus one layer / channel will fill the image, whilst all others may get letterboxed
+        // another alternative would be to resize all of the layers, and ignore letterboxing for the intermediate stages,
+        //// but for now we assume if the user wants letterboxing then it applies
+        // to all layers
         calc_maxspect(cpixwidth, height, &xwidth, &xheight);
         if (xwidth != cpixwidth || height != xheight) {
           if (!letterbox_layer(layer, cpixwidth, height, xwidth, xheight, interp, opalette, oclamping)) {
@@ -2354,10 +2354,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
 
     if (tgamma != WEED_GAMMA_UNKNOWN) {
       if (letterboxed)
-	gamma_convert_sub_layer(tgamma, 1.0, layer, (cpixwidth - xwidth) / 2, (height - xheight) / 2,
-				xwidth, xheight);
+        gamma_convert_sub_layer(tgamma, 1.0, layer, (cpixwidth - xwidth) / 2, (height - xheight) / 2,
+                                xwidth, xheight);
       else
-	gamma_convert_layer(tgamma, layer);
+        gamma_convert_layer(tgamma, layer);
     }
 
     /// since layers and channels are interchangeable, we just call weed_layer_copy(channel, layer)
@@ -7604,10 +7604,6 @@ procfunc1:
   return channel;
 }
 
-static boolean lets_playall(livespointer data) {
-  on_playall_activate(NULL, NULL);
-  return FALSE;
-}
 
 int weed_generator_start(weed_plant_t *inst, int key) {
   // key here is zero based
@@ -7627,15 +7623,12 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   // create a virtual clip
   int new_file = 0;
   boolean is_bg = FALSE;
-  boolean noswitch = mainw->noswitch;
 
   //weed_instance_ref(inst);
   //filter_mutex_lock(key);
 
   if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR && mainw->num_tr_applied == 0) {
-    mainw->noswitch = FALSE;
     close_current_file(0);
-    mainw->noswitch = noswitch;
     old_file = -1;
   }
 
@@ -7714,9 +7707,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (num_channels  == 0) {
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
-    mainw->noswitch = FALSE;
     close_current_file(mainw->pre_src_file);
-    mainw->noswitch = noswitch;
     return 4;
   }
 
@@ -7724,9 +7715,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     lives_free(out_channels);
     filter_mutex_unlock(key);
     cfile->ext_src = NULL;
-    mainw->noswitch = FALSE;
     close_current_file(mainw->pre_src_file);
-    mainw->noswitch = noswitch;
     return 5;
   }
   lives_free(out_channels);
@@ -7785,17 +7774,19 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     filter_mutex_unlock(key);
 
     weed_instance_unref(inst);  // release ref from weed_instance_from_filter, normally we would do this on return
-    //play_file();
-
-    //filter_mutex_lock(key);
-    // need to set this after playback ends; this stops the key from being activated (again) in effects.c
-    // also stops the (now defunt instance being unreffed)
-    mainw->gen_started_play = TRUE;
 
     if (mainw->play_window != NULL) {
       lives_widget_queue_draw(mainw->play_window);
     }
-    lives_timer_add(0, lets_playall, NULL);
+
+    if (!mainw->osc_auto) play_start_timer(6);
+    else {
+      on_playall_activate(NULL, NULL);
+      // need to set this after playback ends; this stops the key from being activated (again) in effects.c
+      // also stops the (now defunct instance being unreffed)
+      mainw->gen_started_play = TRUE;
+    }
+
     return 0;
   } else {
     // already playing
@@ -7809,12 +7800,12 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       if (mainw->current_file == -1) mainw->current_file = new_file;
 
       if (new_file != old_file) {
-        //mainw->new_clip = new_file;
+        mainw->new_clip = new_file;
 
-        filter_mutex_unlock(key); // else we get stuck pulling a frame
-        do_quick_switch(new_file);
-        filter_mutex_lock(key);
-        mainw->force_show = TRUE;
+        /* filter_mutex_unlock(key); // else we get stuck pulling a frame */
+        /* do_quick_switch(new_file); */
+        /* filter_mutex_lock(key); */
+        /* mainw->force_show = TRUE; */
 
         // switch audio clip
         /* if (is_realtime_aplayer(prefs->audio_player) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) */
@@ -7883,7 +7874,6 @@ void weed_generator_end(weed_plant_t *inst) {
   lives_whentostop_t wts = mainw->whentostop;
   boolean is_bg = FALSE;
   boolean clip_switched = mainw->clip_switched;
-  boolean noswitch = mainw->noswitch;
   int current_file = mainw->current_file, pre_src_file = mainw->pre_src_file;
 
   if (inst == NULL) {
@@ -7976,9 +7966,7 @@ void weed_generator_end(weed_plant_t *inst) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
-      mainw->noswitch = FALSE;
       close_current_file(mainw->pre_src_file);
-      mainw->noswitch = noswitch;
     }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {
@@ -7988,10 +7976,7 @@ void weed_generator_end(weed_plant_t *inst) {
     } else {
       cfile->ext_src = NULL;
       if (cfile->achans == 0) {
-        boolean noswitch = mainw->noswitch;
-        mainw->noswitch = FALSE;
         close_current_file(mainw->pre_src_file);
-        mainw->noswitch = noswitch;
       }
     }
     if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
@@ -11118,8 +11103,8 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
     }
 
     if (check_key && len != lives_strlen(key)) {
-      if (prefs->show_dev_opts) 
-	g_print("len for %s was %d\n", key, len);
+      if (prefs->show_dev_opts)
+        g_print("len for %s was %d\n", key, len);
       return -9;
     }
     if (len > MAX_WEED_STRLEN) return -10;

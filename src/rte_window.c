@@ -2071,11 +2071,6 @@ static LiVESTreeModel *rte_window_fx_model(void) {
   if (tstore != NULL) return (LiVESTreeModel *)tstore;
 
   tstore = lives_tree_store_new(NUM_COLUMNS, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING, LIVES_COL_TYPE_STRING);
-#ifdef GUI_GTK
-  // supposedly speeds things up a bit...
-  gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(tstore), GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID,
-                                       GTK_SORT_ASCENDING);
-#endif
   while (list != NULL) {
     weed_plant_t *filter = get_weed_filter(weed_get_idx_for_hashname((char *)phash_list->data, TRUE));
     int filter_flags = weed_get_int_value(filter, WEED_LEAF_FLAGS, &error);
@@ -2511,10 +2506,7 @@ void on_assign_rte_keys_activate(LiVESMenuItem * menuitem, livespointer user_dat
 
 void rtew_set_keych(int key, boolean on) {
   lives_signal_handler_block(key_checks[key], ch_fns[key]);
-  if (!pthread_mutex_trylock(&mainw->gtk_mutex)) {
-    lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
-    pthread_mutex_unlock(&mainw->gtk_mutex);
-  }
+  lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(key_checks[key]), on);
   lives_signal_handler_unblock(key_checks[key], ch_fns[key]);
   lives_widget_object_set_data(LIVES_WIDGET_OBJECT(key_checks[key]), "active", LIVES_INT_TO_POINTER(on));
 }

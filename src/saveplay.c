@@ -19,6 +19,87 @@
 
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
+
+static boolean _play_start_timer(livespointer data) {
+  int new_file, old_file;
+  int play_type = LIVES_POINTER_TO_INT(data);
+  switch (play_type) {
+  case 8: case 6: case 0:
+    /// normal play
+    play_all(play_type == 8);
+    if (play_type == 6) {
+      /// triggered by generator
+      // need to set this after playback ends; this stops the key from being activated (again) in effects.c
+      // also stops the (now defunct instance being unreffed)
+      mainw->gen_started_play = TRUE;
+    }
+    break;
+  case 1:
+    /// play selection
+    if (mainw->multitrack == NULL) play_sel();
+    else multitrack_play_sel(NULL, mainw->multitrack);
+    break;
+  case 2:
+    /// play stream
+    mainw->play_start = 1;
+    mainw->play_end = INT_MAX;
+    play_file();
+    break;
+  case 3:
+    /// osc playall
+    mainw->osc_auto = 1; ///< request notifiction of success
+    play_all(FALSE);
+    mainw->osc_auto = 0;
+    break;
+  case 4:
+    /// osc playsel
+    mainw->osc_auto = 1; ///< request notifiction of success
+    if (mainw->multitrack == NULL) play_sel();
+    else multitrack_play_sel(NULL, mainw->multitrack);
+    mainw->osc_auto = 0;
+    break;
+  case 5:
+    /// clipboard
+    play_file();
+    mainw->loop = mainw->oloop;
+    mainw->loop_cont = mainw->oloop_cont;
+
+    if (mainw->pre_play_file > 0) {
+      switch_to_file(0, mainw->pre_play_file);
+    } else {
+      mainw->current_file = -1;
+      close_current_file(0);
+    }
+    if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
+      handle_audio_timeout();
+      mainw->cancelled = CANCEL_ERROR;
+    }
+    break;
+  case 7:
+    /// yuv4mpeg
+    new_file = mainw->current_file;
+    old_file = mainw->pre_play_file;
+    play_file();
+    if (mainw->current_file != old_file && mainw->current_file != new_file)
+      old_file = mainw->current_file; // we could have rendered to a new file
+    mainw->current_file = new_file;
+    // close this temporary clip
+    close_current_file(old_file);
+    mainw->pre_play_file = -1;
+    break;
+  default:
+    /// do nothing
+    break;
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE void play_start_timer(int type) {
+  lives_timer_add(0, _play_start_timer, LIVES_INT_TO_POINTER(type));
+}
+
+
 boolean save_clip_values(int which) {
   char *lives_header_new;
 
@@ -209,8 +290,6 @@ static boolean rip_audio_cancelled(int old_file, weed_plant_t *mt_pb_start_event
   d_print_cancelled();
   close_current_file(old_file);
 
-  mainw->noswitch = FALSE;
-
   if (mainw->multitrack != NULL) {
     mainw->multitrack->pb_start_event = mt_pb_start_event;
     mainw->multitrack->has_audio_file = mt_has_audio_file;
@@ -280,7 +359,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       withsound = 0;
     }
 
-    //mainw->noswitch = TRUE;
     mainw->current_file = new_file;
 
     /// probe the file to see what it might be...
@@ -305,7 +383,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       if (cfile->frames == 0) {
         d_print_failed();
         close_current_file(old_file);
-        mainw->noswitch = FALSE;
         if (mainw->multitrack != NULL) {
           mainw->multitrack->pb_start_event = mt_pb_start_event;
           mainw->multitrack->has_audio_file = mt_has_audio_file;
@@ -614,7 +691,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
           if (!do_warning_dialog_with_check(warn, WARN_MASK_FSIZE)) {
             lives_free(warn);
             close_current_file(old_file);
-            mainw->noswitch = FALSE;
             if (mainw->multitrack != NULL) {
               mainw->multitrack->pb_start_event = mt_pb_start_event;
               mainw->multitrack->has_audio_file = mt_has_audio_file;
@@ -712,7 +788,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         lives_freep((void **)&mainw->file_open_params);
         mainw->cancelled = CANCEL_NONE;
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-        mainw->noswitch = FALSE;
         return 0;
       }
     }
@@ -729,32 +804,30 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     msgstr = lives_strdup_printf(_("Opening %s"), file_name);
 
     if (cfile->ext_src == NULL && mainw->toy_type != LIVES_TOY_TV) {
+      mainw->cs_permitted = TRUE;
       if (!do_progress_dialog(TRUE, TRUE, msgstr)) {
         // user cancelled or switched to another clip
+        mainw->cs_permitted = FALSE;
 
         lives_free(msgstr);
-
-        cfile->opening_frames = -1;
         mainw->effects_paused = FALSE;
 
         if (mainw->cancelled == CANCEL_NO_PROPOGATE) {
           mainw->cancelled = CANCEL_NONE;
           lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-          mainw->noswitch = FALSE;
           return 0;
         }
 
         // cancelled
         // clean up our temp files
+        if (IS_VALID_CLIP(current_file)) mainw->current_file = current_file;
         lives_kill_subprocesses(cfile->handle, TRUE);
-
         lives_freep((void **)&mainw->file_open_params);
         close_current_file(old_file);
         if (mainw->multitrack != NULL) {
           mainw->multitrack->pb_start_event = mt_pb_start_event;
           mainw->multitrack->has_audio_file = mt_has_audio_file;
         }
-        mainw->noswitch = FALSE;
         lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
 
         // mainw->error is TRUE if we could not open the file
@@ -765,6 +838,7 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
         showclipimgs();
         return 0;
       }
+      mainw->cs_permitted = FALSE;
     }
     lives_free(msgstr);
   }
@@ -795,7 +869,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
     do_blocking_error_dialog(mainw->msg);
     d_print_failed();
     close_current_file(old_file);
-    mainw->noswitch = FALSE;
     lives_freep((void **)&mainw->file_open_params);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return 0;
@@ -864,7 +937,6 @@ ulong open_file_sel(const char *file_name, double start, int frames) {
       do_error_dialog(msg);
       d_print_failed();
       close_current_file(old_file);
-      mainw->noswitch = FALSE;
       if (mainw->multitrack != NULL) {
         mainw->multitrack->pb_start_event = mt_pb_start_event;
         mainw->multitrack->has_audio_file = mt_has_audio_file;
@@ -1004,8 +1076,6 @@ img_load:
       lives_spin_button_set_value(LIVES_SPIN_BUTTON(mainw->spinbutton_start), cfile->start);
       lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
       lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
-      mainw->noswitch = FALSE;
-
       return 0;
     }
   }
@@ -1013,15 +1083,12 @@ img_load:
   // set new style file details
   if (!save_clip_values(current_file)) {
     close_current_file(old_file);
-    mainw->noswitch = FALSE;
     return 0;
   }
 
   if (prefs->crash_recovery) add_to_recovery_file(cfile->handle);
 
 load_done:
-  mainw->noswitch = FALSE;
-
   if (mainw->multitrack == NULL) {
     // update widgets
     switch_to_file((mainw->current_file = 0), current_file);
@@ -2057,11 +2124,19 @@ void play_file(void) {
 
   int asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
   int aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);
-
   int current_file = mainw->current_file;
+
   int audio_end = 0;
 
   int loop = 0;
+
+  /// from now on we can only switch at the designated SWITCH POINT
+  mainw->noswitch = TRUE;
+
+  asigned = !(cfile->signed_endian & AFORM_UNSIGNED);
+  aendian = !(cfile->signed_endian & AFORM_BIG_ENDIAN);
+  current_file = mainw->current_file;
+  if (mainw->pre_play_file == -1) mainw->pre_play_file = current_file;
 
   if (!is_realtime_aplayer(audio_player)) mainw->aud_file_to_kill = mainw->current_file;
   else mainw->aud_file_to_kill = -1;
@@ -2296,9 +2371,7 @@ void play_file(void) {
         /// needed
         if (mainw->multitrack == NULL) {
           block_expose();
-          //mainw->noswitch = TRUE;
           lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
-          mainw->noswitch = FALSE;
           unblock_expose();
         } else {
           /// this doesn't get called if we don't call resize_play_window()
@@ -2636,14 +2709,13 @@ void play_file(void) {
             mainw->abufs_to_fill = 0;
             pthread_mutex_unlock(&mainw->abuf_mutex);
             if (mainw->event_list != NULL) {
-              mainw->pulsed->is_paused = mainw->pulsed->in_use = TRUE;
+              mainw->pulsed->in_use = TRUE;
             }
           }
 #endif
-          // let transport roll
-          mainw->video_seek_ready = TRUE;
         }
       }
+      if (!mainw->foreign) mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
 
       if (mainw->multitrack == NULL || mainw->multitrack->pb_start_event == NULL) {
         do_progress_dialog(FALSE, FALSE, NULL);
@@ -2750,7 +2822,7 @@ void play_file(void) {
 
   // play completed
 
-  mainw->video_seek_ready = FALSE;
+  mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
   mainw->osc_auto = 0;
 
   if (mainw->loop_locked) unlock_loop_lock();
@@ -2854,8 +2926,6 @@ void play_file(void) {
   mainw->actual_frame = 0;
 
   lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
-
-  mainw->video_seek_ready = FALSE;
 
   // stop the audio players
 #ifdef ENABLE_JACK
@@ -3022,18 +3092,18 @@ void play_file(void) {
         mainw->playing_file = -1;
         lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
 
-	if (mainw->preview_box == NULL) {
-	  // create the preview box that shows frames
-	  make_preview_box();
-	}
-	// and add it the play window
-	if (lives_widget_get_parent(mainw->preview_box) == NULL && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
-	  lives_widget_queue_draw(mainw->play_window);
-	  lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
-	  lives_widget_grab_focus(mainw->preview_spinbutton);
-	  play_window_set_title();
-	  load_preview_image(FALSE);
-	}
+        if (mainw->preview_box == NULL) {
+          // create the preview box that shows frames
+          make_preview_box();
+        }
+        // and add it the play window
+        if (lives_widget_get_parent(mainw->preview_box) == NULL && CURRENT_CLIP_IS_NORMAL && !mainw->is_rendering) {
+          lives_widget_queue_draw(mainw->play_window);
+          lives_container_add(LIVES_CONTAINER(mainw->play_window), mainw->preview_box);
+          lives_widget_grab_focus(mainw->preview_spinbutton);
+          play_window_set_title();
+          load_preview_image(FALSE);
+        }
 
         lives_widget_context_update();
         if (mainw->play_window != NULL) {
@@ -3164,6 +3234,13 @@ void play_file(void) {
     lives_freep((void **)&mainw->bad_aud_file);
   }
 
+  if (mainw->new_vpp) {
+    mainw->noswitch = FALSE;
+    mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
+    mainw->new_vpp = NULL;
+    mainw->noswitch = TRUE;
+  }
+
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {
     if (!mainw->preview && cfile->clip_type == CLIP_TYPE_GENERATOR) {
@@ -3174,12 +3251,13 @@ void play_file(void) {
       wge_inner(inst);
       mainw->osc_block = FALSE;
     }
+    mainw->noswitch = FALSE;
     deal_with_render_choice(TRUE); ///< will finish closing the generator if applicable
   }
 
   mainw->record_paused = mainw->record_starting = FALSE;
 
-  if (!mainw->preview && mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+  if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
     mainw->osc_block = TRUE;
     weed_generator_end((weed_plant_t *)cfile->ext_src);
     mainw->osc_block = FALSE;
@@ -3191,11 +3269,11 @@ void play_file(void) {
     }
   }
 
-  if (!mainw->preview && (mainw->current_file == -1 || !cfile->opening)) {
+  if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
     sensitize();
   }
 
-  if (mainw->current_file > -1 && cfile->opening) {
+  if (CURRENT_CLIP_IS_VALID && cfile->opening) {
     lives_widget_set_sensitive(mainw->mute_audio, cfile->achans > 0);
     lives_widget_set_sensitive(mainw->loop_continue, TRUE);
     lives_widget_set_sensitive(mainw->loop_video, cfile->achans > 0 && cfile->frames > 0);
@@ -3223,7 +3301,7 @@ void play_file(void) {
 
   lives_menu_item_set_accel_path(LIVES_MENU_ITEM(mainw->quit), LIVES_ACCEL_PATH_QUIT);
 
-  if (mainw->multitrack == NULL && mainw->current_file > -1)
+  if (mainw->multitrack == NULL && CURRENT_CLIP_IS_VALID)
     set_main_title(cfile->name, 0);
 
   if (mainw->multitrack == NULL && !mainw->foreign && CURRENT_CLIP_IS_VALID && (!cfile->opening ||
@@ -3237,17 +3315,13 @@ void play_file(void) {
     /// the screen grew too much...remaximise it
     lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    //mainw->noswitch = TRUE;
     lives_widget_context_update();
-    //mainw->noswitch = FALSE;
     lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
     if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
     if (prefs->open_maximised)
       lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    //mainw->noswitch = TRUE;
     lives_widget_context_update();
-    mainw->noswitch = FALSE;
   }
   if (mainw->multitrack == NULL) {
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
@@ -3260,6 +3334,9 @@ void play_file(void) {
   }
 
   lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+
+  /// re-enable generic clip switching
+  mainw->noswitch = FALSE;
 }
 
 
@@ -3885,7 +3962,6 @@ void wait_for_stop(const char *stop_command) {
   boolean sent_second_stop = FALSE;
 
   // send another stop if necessary
-  //mainw->noswitch = TRUE;
   while (!(infofile = fopen(cfile->info_file, "r"))) {
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_usleep(prefs->sleep_time);
@@ -3901,7 +3977,6 @@ void wait_for_stop(const char *stop_command) {
       break;
     }
   }
-  //mainw->noswitch = FALSE;
   if (infofile) fclose(infofile);
 }
 

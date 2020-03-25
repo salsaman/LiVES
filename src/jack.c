@@ -34,6 +34,8 @@ static uint8_t jrbuf[JACK_READ_BYTES * 2];
 
 static size_t jrb = 0;
 
+static off_t fwd_seek_pos = 0;
+
 static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int fileno,
                                int nframes, double out_scale, boolean rev_endian, boolean out_unsigned, size_t rbytes);
 
@@ -305,7 +307,7 @@ static jack_driver_t indev[JACK_MAX_INDEVICES];
 void jack_get_rec_avals(jack_driver_t *jackd) {
   mainw->rec_aclip = jackd->playing_file;
   if (mainw->rec_aclip != -1) {
-    mainw->rec_aseek = (double)jackd->real_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
+    mainw->rec_aseek = (double)fwd_seek_pos / (double)(afile->arps * afile->achans * afile->asampsize / 8);
     mainw->rec_avel = (afile->adirection == LIVES_DIRECTION_FORWARD ? fabsf((double)jackd->sample_in_rate / (double)afile->arps)
                        : -fabsf((double)jackd->sample_in_rate / (double)afile->arps));
   }
@@ -405,14 +407,13 @@ static int audio_process(nframes_t nframes, void *arg) {
   aserver_message_t *msg;
   int64_t xseek;
   int new_file;
+  boolean got_cmd = FALSE;
   boolean from_memory = FALSE;
   boolean wait_cache_buffer = FALSE;
   boolean pl_error = FALSE; ///< flag tells if we had an error during plugin processing
   size_t nbytes, rbytes;
 
   register int i;
-
-  jackd->real_seek_pos = jackd->seek_pos;
 
 #ifdef DEBUG_AJACK
   lives_printerr("nframes %ld, sizeof(float) == %d\n", (int64_t)nframes, sizeof(float));
@@ -422,13 +423,14 @@ static int audio_process(nframes_t nframes, void *arg) {
 
   /* process one message */
   while ((msg = (aserver_message_t *)jackd->msgq) != NULL) {
-    // TODO - set seek_pos after setting record params
+    got_cmd = TRUE;
     switch (msg->command) {
     case ASERVER_CMD_FILE_OPEN:
       new_file = atoi((char *)msg->data);
       if (jackd->playing_file != new_file) {
         jackd->playing_file = new_file;
       }
+      jackd->seek_pos = jackd->real_seek_pos = 0;
       break;
     case ASERVER_CMD_FILE_CLOSE:
       jackd->playing_file = -1;
@@ -437,12 +439,25 @@ static int audio_process(nframes_t nframes, void *arg) {
     case ASERVER_CMD_FILE_SEEK:
       if (jackd->playing_file < 0) break;
       xseek = atol((char *)msg->data);
-      if (msg->tc) {
-        xseek += (lives_get_current_ticks() - msg->tc) / TICKS_PER_SECOND_DBL * afile->arps * afile->achans * afile->asampsize / 8;
-        xseek = align_ceilng(xseek, afile->achans * (afile->asampsize >> 3));
-        msg->tc = 0;
+      if (xseek < 0) xseek = 0;
+      if (mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) {
+        ticks_t tc = 0, tc2 = 0;
+        if (!mainw->video_seek_ready) {
+          xseek -= 2. / afile->fps * afile->arate * afile->achans * afile->asampsize / 8;
+        } else if (LIVES_IS_PLAYING) tc2 = lives_get_current_ticks();
+        if (tc2 != 0) {
+          tc = lives_get_current_ticks();
+          tc2 = tc - tc2;
+          if (msg->tc == 0) tc = 0;
+          xseek += ((double)(tc - msg->tc + tc2 * 2.) / TICKS_PER_SECOND_DBL)
+                   * jackd->sample_in_rate * afile->achans * afile->asampsize / 8;
+          msg->tc = 0;
+        }
       }
+      xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
+      if (xseek < 0) xseek = 0;
       jackd->seek_pos = jackd->real_seek_pos = xseek;
+      push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
       jackd->in_use = TRUE;
       break;
     default:
@@ -457,6 +472,12 @@ static int audio_process(nframes_t nframes, void *arg) {
     jackd->msgq = msg->next;
     if (jackd->msgq != NULL && jackd->msgq->next == jackd->msgq) jackd->msgq->next = NULL;
   }
+  if (got_cmd) {
+    output_silence(0, nframes, jackd, out_buffer);
+    return 0;
+  }
+
+  fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
 
   if (nframes == 0) return 0;
 
@@ -481,6 +502,31 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (cache_buffer->fileno == -1) jackd->playing_file = -1;
     }
     if (cache_buffer != NULL && cache_buffer->in_achans > 0 && !cache_buffer->is_ready) wait_cache_buffer = TRUE;
+  }
+
+  if (!mainw->audio_seek_ready) {
+    size_t qnt;
+    if (!mainw->video_seek_ready) {
+      output_silence(0, nframes, jackd, out_buffer);
+      return 0;
+    }
+    xseek = (int64_t)(((mainw->actual_frame - 1.) / afile->fps
+                       + (LIVES_IS_PLAYING ? (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
+                          * (jackd->sample_in_rate >= 0. ? 1.0 : - 1.0) : 0.))
+                      * (double)afile->arate) * afile->achans * afile->asampsize / 8;
+
+    if (xseek < 0) xseek = 0;
+    if (xseek > afile->afilesize) xseek = afile->afilesize;
+
+    qnt = afile->achans * (afile->asampsize >> 3);
+    xseek = ALIGN_CEIL64((off_t)xseek, qnt);
+    jackd->real_seek_pos = jackd->seek_pos = afile->aseek_pos = xseek;
+    push_cache_buffer(cache_buffer, jackd, 0, 0, 1.);
+    lives_nanosleep_until_nonzero(cache_buffer->is_ready);
+    pthread_mutex_lock(&mainw->avseek_mutex);
+    mainw->audio_seek_ready = TRUE;
+    pthread_cond_signal(&mainw->avseek_cond);
+    pthread_mutex_unlock(&mainw->avseek_mutex);
   }
 
   jackd->state = jack_transport_query(jackd->client, &pos);
@@ -520,6 +566,34 @@ static int audio_process(nframes_t nframes, void *arg) {
     }
 
     jackd->is_silent = FALSE;
+
+    if (!mainw->audio_seek_ready) {
+      if (!mainw->video_seek_ready) {
+        //mainw->startticks = mainw->currticks;
+        output_silence();
+        //sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * pulsed->out_asamps >> 3, xbytes);
+      }
+
+      fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos;
+
+      shrink_factor = (float)jackd->sample_in_rate / (float)jackd->sample_out_rate / mainw->audio_stretch;
+      in_framesd = fabs((double)shrink_factor * (double)jackFramesAvailable);
+
+      // preload the buffer for first read
+      in_bytes = (size_t)(in_framesd * jackd->in_achans * (jackd->in_asamps >> 3));
+      lives_read_buffered(jackd->fd, NULL, in_bytes * 8, TRUE);
+      mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+      mainw->fps_mini_ticks = mainw->currticks;
+      mainw->fps_mini_measure = 0;
+
+      /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, jackd->seek_pos, */
+      /* 	      ((double)jackd->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
+
+      pthread_mutex_lock(&mainw->avseek_mutex);
+      mainw->audio_seek_ready = TRUE;
+      pthread_cond_signal(&mainw->avseek_cond);
+      pthread_mutex_unlock(&mainw->avseek_mutex);
+    }
 
     if (LIVES_LIKELY(jackFramesAvailable > 0)) {
       /* (bytes of data) / (2 bytes(16 bits) * X input channels) == frames */
@@ -929,11 +1003,11 @@ static int audio_process(nframes_t nframes, void *arg) {
       if (shrink_factor > 0.) jackd->seek_pos += xin_bytes / 4 * jackd->bytes_per_channel;
     }
 
-    /*    jackd->jack_pulse[0]=set_pulse(out_buffer[0],jack->buffer_size,8);
+    /*    jackd->jack_jack[0]=set_jack(out_buffer[0],jack->buffer_size,8);
       if (jackd->num_output_channels>1) {
-      jackd->jack_pulse[1]=set_pulse(out_buffer[1],jackd->buffer_size,8);
+      jackd->jack_jack[1]=set_jack(out_buffer[1],jackd->buffer_size,8);
       }
-      else jackd->jack_pulse[1]=jackd->jack_pulse[0];
+      else jackd->jack_jack[1]=jackd->jack_jack[0];
     */
 
     if (jackFramesAvailable > 0) {
@@ -969,15 +1043,15 @@ static int audio_process(nframes_t nframes, void *arg) {
 
 
 int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg) {
-  boolean seek_ready;
-
   // mainw->video_seek_ready is generally FALSE
   // if we are not playing, the transport poll should start playing which will set set
-  // mainw->video_seek_ready to true, as soon as the audio seeks to the right place
+  // mainw->video_seek_ready to true, as soon as the video is at the right place
 
   // if we are playing, we set mainw->scratch
   // this will either force a resync of audio in free playback
   // or reset the event_list position in multitrack playback
+
+  /// TODO ****::   NEEDS retesting !!!!!
 
   // go away until the app has started up properly
   if (mainw->go_away) {
@@ -987,23 +1061,15 @@ int lives_start_ready_callback(jack_transport_state_t state, jack_position_t *po
   }
 
   if (!(prefs->jack_opts & JACK_OPTS_TRANSPORT_CLIENT)) return TRUE;
-
   if (jack_transport_client == NULL) return TRUE;
-
   if (state != JackTransportStarting) return TRUE;
-
-  //seek_ready=mainw->video_seek_ready;
-  seek_ready = TRUE;
 
   if (LIVES_IS_PLAYING && prefs->jack_opts & JACK_OPTS_TIMEBASE_CLIENT) {
     // trigger audio resync
     mainw->scratch = SCRATCH_JUMP;
   }
 
-  // reset for next seek (???)
-  if (seek_ready) mainw->video_seek_ready = FALSE;
-
-  return seek_ready;
+  return (mainw->video_seek_ready & mainw->audio_seek_ready);
 }
 
 
@@ -1749,6 +1815,8 @@ int64_t jack_audio_seek_bytes(jack_driver_t *jackd, int64_t bytes, lives_clip_t 
 
   ticks_t timeout;
   lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+
+  fwd_seek_pos = bytes;
 
   seek_err = FALSE;
 

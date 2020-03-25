@@ -565,7 +565,10 @@ typedef struct {
 #define MAX_SET_NAME_LEN 128
   char set_name[256];   // actually 128 is the (soft) limit now, filesystem encoding
 
-  // playback
+  // playback state
+  boolean playing_sel;
+  boolean preview;
+  boolean preview_rendering;
   boolean faded;
   boolean double_size;
   boolean sep_win;
@@ -573,16 +576,17 @@ typedef struct {
   boolean loop;
   volatile boolean loop_cont;
   volatile boolean ping_pong;
+  boolean oloop;
+  boolean oloop_cont;
+  boolean oping_pong;
   boolean loop_locked;
   boolean mute;
-  int audio_start;
-  int audio_end;
+  int audio_start, audio_end;
 
   boolean ext_playback; ///< using external video playback plugin
   volatile boolean ext_audio; ///< using external video playback plugin to stream audio
 
-  int ptr_x;
-  int ptr_y;
+  int ptr_x, ptr_y;
 
   double fps_measure; ///< show fps stats after playback
   frames_t fps_mini_measure; ///< show fps stats during playback
@@ -603,10 +607,9 @@ typedef struct {
 
   boolean in_fs_preview;
   volatile lives_cancel_t cancelled;
+  lives_cancel_type_t cancel_type;
 
   boolean error;
-
-  lives_cancel_type_t cancel_type;
 
   weed_plant_t *event_list; ///< current event_list, for recording
   weed_plant_t *stored_event_list; ///< stored mt -> clip editor
@@ -624,17 +627,7 @@ typedef struct {
 
   short endian;
 
-  int pwidth; ///< playback width in RGB pixels
-  int pheight; ///< playback height
-
-  volatile lives_whentostop_t whentostop;
-
-  int play_start;
-  int play_end;
-  boolean playing_sel;
-  boolean preview;
-  boolean preview_rendering;
-
+  /// states
   boolean is_processing;
   boolean is_rendering;
   boolean resizing;
@@ -659,14 +652,17 @@ typedef struct {
 #endif
 
   LiVESXWindow *foreign_window;
-  int foreign_width;
-  int foreign_height;
+  int foreign_width, foreign_height;
   int foreign_bpp;
   char *foreign_visual;
 
-  /// some VJ effects
+  /// some VJ effects / toys
   boolean nervous;
+  int swapped_clip; ///< maintains the current cliplist postion even if we swap fg and bg clips
+  lives_toy_t toy_type;
+  boolean toy_go_wild; ///< some silliness
 
+  /// rendered fx
   lives_rfx_t *rendered_fx;
   int num_rendered_effects_builtin;
   int num_rendered_effects_custom;
@@ -681,37 +677,16 @@ typedef struct {
 
   volatile uint64_t rte; ///< current max for VJ mode == 64 effects on fg clip
 
-  uint32_t last_grabbable_effect;
+  uint32_t last_grabbable_effect; // (spelt wrong but I like it this way)
   int rte_keys; ///< which effect is bound to keyboard (m) modechange and ctrl-alt-up-arrow / ctrl-alt-down-arrow param changes
   int num_tr_applied; ///< number of transitions active
   double blend_factor; ///< keyboard control parameter
-
-  int blend_file;
-  int last_blend_file;
-  volatile int blend_palette;
-  int blend_width;
-  int blend_height;
-  int blend_clamping;
-  int blend_sampling;
-  int blend_subspace;
-  int blend_gamma;
 
   int scrap_file; ///< we throw odd sized frames here when recording in real time; used if a source is a generator or stream
 
   int ascrap_file; ///< scrap file for recording audio scraps
 
-  /// which number file we are playing (or -1)
-  volatile int playing_file;
-
-  int pre_src_file; ///< video file we were playing before any ext input started
-  int pre_src_audio_file; ///< audio file we were playing before any ext input started
-
-  int swapped_clip; ///< maintains the current cliplist postion even if we swap fg and bg clips
-
-  lives_toy_t toy_type;
   lives_pgid_t alives_pgid; // 0, or procid for autolives
-
-  boolean toy_go_wild;
 
   // copy/paste
   boolean insert_after;
@@ -729,18 +704,15 @@ typedef struct {
 
   // prefs (Save on exit)
   int prefs_changed;
-
   boolean prefs_need_restart;
 
   /// default sizes for when no file is loaded
-  int def_width;
-  int def_height;
+  int def_width, def_height;
 
   /////////////////////////////////////////////////
 
   // end of static-ish info
-  int old_scr_width;
-  int old_scr_height;
+  int old_scr_width, old_scr_height;
 
   boolean leave_files;  ///< TRUE to leave clip files on disk even when closing (default FALSE)
   boolean was_set;
@@ -752,19 +724,79 @@ typedef struct {
   int last_dprint_file;
   boolean no_switch_dprint;
 
-  /// actual frame being displayed
+  int aud_file_to_kill; ///< # of audio file to kill on crash
+
+  boolean reverse_pb; ///< used in osc.c
+
+  /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
+  /// this field may even be totally / partially redundant now since mainw->noswitch has been re-implemented
+  /// combined with filter_mutex_lock()
+  boolean osc_block;
+
+  int osc_auto; ///< bypass user choices automatically
+
+  /// encode width, height and fps set externally
+  int osc_enc_width, osc_enc_height;
+  float osc_enc_fps;
+
+  /// PLAYBACK
+
+  int pwidth; ///< playback width in RGB pixels
+  int pheight; ///< playback height
+
+  volatile lives_whentostop_t whentostop;
+
+  int play_start, play_end;
+
+  // for jack transport
+  boolean jack_can_stop, jack_can_start;
+
+  // a/v seek synchronisation
+  pthread_cond_t avseek_cond;
+  pthread_mutex_t avseek_mutex;
+  volatile boolean video_seek_ready;
+  volatile boolean audio_seek_ready;
+
+  /// which number file we are playing (or -1) [generally mainw->current_file]
+  int playing_file;
+
+  /// actual / last frame being displayed
   frames_t actual_frame;
 
   /// and the audio 'frame' for when we are looping
   double aframeno;
 
-  frames_t record_frame; /// frame number to insert in recording
+  frames_t record_frame; ///< frame number to insert in recording
+
+  volatile int rec_aclip;
+  volatile double rec_avel;
+  volatile double rec_aseek;
+
+  int pre_src_file; ///< video file we were playing before any ext input started
+  int pre_src_audio_file; ///< audio file we were playing before any ext input started
+  int pre_play_file; ///< the current file before playback started
+
+  int blend_file, last_blend_file, new_blend_file;
+
+  /// here we can store the details of the blend file at the insertion point, if nothing changes we can target this to optimise
+  volatile int blend_palette;
+  int blend_width, blend_height;
+  int blend_clamping, blend_sampling, blend_subspace;
+  int blend_gamma;
+
+  /// stored clips
+  int clipstore[FN_KEYS - 1][2];
+
+  /// fixed fps playback; usually fixed_fpsd==0.
+  int fixed_fps_numer, fixed_fps_denom;
+  double fixed_fpsd; ///< <=0. means free playback
 
   // ticks are measured in 1/TICKS_PER_SECOND_DBL of a second (by defalt a tick is 10 nano seconds)
 
   // for the internal player
   double period; ///< == 1./cfile->pb_fps (unless cfile->pb_fps is 0.)
-  volatile ticks_t startticks; ///< effective ticks when last frame was (should have been) displayed
+  volatile ticks_t startticks; ///< effective ticks when current frame was (should have been) displayed
+  ticks_t last_startticks; ///< effective ticks when lasty frame was (should have been) displayed
   ticks_t timeout_ticks; ///< incremented if effect/rendering is paused/previewed
   ticks_t origsecs; ///< playback start seconds - subtracted from all other ticks to keep numbers smaller
   ticks_t origusecs; ///< usecs at start of playback - ditto
@@ -772,6 +804,7 @@ typedef struct {
   volatile ticks_t currticks; ///< current playback ticks (relative)
   ticks_t deltaticks; ///< deltaticks for scratching
   ticks_t adjticks; ///< used to equalise the timecode between alternate timer sources
+  ticks_t cadjticks; ///< used to equalise the timecode between alternate timer sources
   ticks_t firstticks; ///< ticks when audio started playing (for non-realtime audio plugins)
   ticks_t stream_ticks;  ///< ticks since first frame sent to playback plugin
   ticks_t last_display_ticks; /// currticks when last display was shown (used for fixed fps)
@@ -781,39 +814,22 @@ typedef struct {
 
   int size_warn; ///< warn the user that incorrectly sized frames were found
 
-  /// set to TRUE during frame load/display operation. If TRUE we should not switch clips,
-  /// close the current clip, or call load_frame_image()
-  volatile boolean noswitch;
-  int new_clip;
-
-  int aud_file_to_kill; ///< # of audio file to kill on crash
-
-  boolean reverse_pb; ///< used in osc.c
-
-  /// TODO - make this a mutex and more finely grained : things we need to block are (clip switches, clip closure, effects on/off, etc)
-  boolean osc_block;
-
-  int osc_auto; ///< bypass user choices automatically
-
-  /// encode width, height and fps set externally
-  int osc_enc_width;
-  int osc_enc_height;
-  float osc_enc_fps;
-
-  /// fixed fps playback; usually fixed_fpsd==0.
-  int fixed_fps_numer;
-  int fixed_fps_denom;
-  double fixed_fpsd; ///< <=0. means free playback
-
-  /// video playback plugin was updated; write settings to a file
-  boolean write_vpp_file;
+  boolean noswitch; ///< value set automatically to prevent inopportune clip switching
+  boolean cs_permitted; ///< set to TRUE to allow overriding of noswitch in limited circumstances
+  boolean cs_is_permitted; ///< set automatically when cs_permitted can update the clip
+  int new_clip; ///< clip we should switch to during playback; switch will happen at the designated SWITCH POINT
 
   volatile short scratch;
 #define SCRATCH_NONE 0
 #define SCRATCH_BACK -1
 #define SCRATCH_FWD 1
-#define SCRATCH_JUMP 2
-#define SCRATCH_JUMP_NORESYNC 3
+#define SCRATCH_JUMP 2  ///< jump and resybc audio
+#define SCRATCH_JUMP_NORESYNC 3 ///< jump with no audio resync
+
+  /////
+
+  /// video playback plugin was updated; write settings to a file on exit
+  boolean write_vpp_file;
 
   /// internal fx
   boolean internal_messaging;
@@ -821,35 +837,12 @@ typedef struct {
 
   volatile boolean threaded_dialog;
 
-  // fx controls
-  double fx1_val;
-  double fx2_val;
-  double fx3_val;
-  double fx4_val;
-  double fx5_val;
-  double fx6_val;
-
-  int fx1_start;
-  int fx2_start;
-  int fx3_start;
-  int fx4_start;
-
-  int fx1_step;
-  int fx2_step;
-  int fx3_step;
-  int fx4_step;
-
-  int fx1_end;
-  int fx2_end;
-  int fx3_end;
-  int fx4_end;
-
-  boolean fx1_bool;
-  boolean fx2_bool;
-  boolean fx3_bool;
-  boolean fx4_bool;
-  boolean fx5_bool;
-  boolean fx6_bool;
+  // fx controls (mostly unused - should be removed and replaced with generic toggle callbacks)
+  double fx1_val, fx2_val, fx3_val, fx4_val, fx5_val, fx6_val;
+  int fx1_start, fx2_start, fx3_start, fx4_start;
+  int fx1_step, fx2_step, fx3_step, fx4_step;
+  int fx1_end, fx2_end, fx3_end, fx4_end;
+  boolean fx1_bool, fx2_bool, fx3_bool, fx4_bool, fx5_bool, fx6_bool;
 
   boolean effects_paused;
   boolean did_rfx_preview;
@@ -877,27 +870,18 @@ typedef struct {
   ulong sw_func; ///< scrolledwindow expose func
   ulong vj_mode_func;
 
-  lives_funcptr_t abort_hook_func;
-
-  // for jack transport
-  boolean jack_can_stop;
-  boolean jack_can_start;
-
-  volatile boolean video_seek_ready;
+  lives_funcptr_t abort_hook_func; ///< can be set to point to a function to be run before abort, for critical functions
 
   // selection pointers
   ulong mouse_fn1;
   boolean mouse_blocked;
-
-  /// stored clips
-  int clipstore[FN_KEYS - 1][2];
 
   /// key function for autorepeat ctrl-arrows
   uint32_t ksnoop;
 
   lives_mt *multitrack;
 
-  int new_blend_file;
+  /// WIDGETS
 
   LiVESWidget *frame1;
   LiVESWidget *frame2;
@@ -1190,8 +1174,7 @@ typedef struct {
   LiVESWidget *menubar;
 
   // separate window
-  int opwx;
-  int opwy;
+  int opwx, opwy;
 
   // sepwin buttons
   LiVESWidget *preview_controls;
@@ -1307,14 +1290,9 @@ typedef struct {
 
   mt_opts multi_opts; ///< some multitrack options that survive between mt calls
 
-  volatile int rec_aclip;
-  volatile double rec_avel;
-  volatile double rec_aseek;
-
   LiVESMemVTable alt_vtable;
 
-  pthread_mutex_t gtk_mutex;  ///< gtk drawing mutex - no longer used
-
+  /// mutices
   pthread_mutex_t abuf_mutex;  ///< used to synch audio buffer request count - shared between audio and video threads
   pthread_mutex_t abuf_frame_mutex;  ///< used to synch audio buffer for generators
   pthread_mutex_t fx_mutex[FX_KEYS_MAX];  ///< used to prevent fx processing when it is scheduled for deinit
@@ -1385,6 +1363,7 @@ typedef struct {
   LiVESWidget *textwidget_focus;
 
   _vid_playback_plugin *vpp;
+  const char *new_vpp;
 
   /// multi-head support
   lives_mgeometry_t *mgeom;
@@ -1423,10 +1402,7 @@ typedef struct {
   LiVESIOChannel *iochan;
   LiVESTextView *optextview;
 
-  boolean has_custom_effects;
-  boolean has_custom_tools;
-  boolean has_custom_gens;
-  boolean has_custom_utilities;
+  boolean has_custom_effects, has_custom_tools,  has_custom_gens, has_custom_utilities;
 
   /// decoders
   boolean decoders_loaded;
@@ -1471,9 +1447,9 @@ typedef struct {
 
   /// TODO ***: these all need to be per thread
   boolean com_failed;
-  int write_failed;
-  int read_failed;
+  int write_failed, read_failed;
   boolean chdir_failed;
+  ///
 
   boolean add_clear_ds_button;
   boolean add_clear_ds_adv;
@@ -1486,19 +1462,14 @@ typedef struct {
 
   boolean draw_blocked; // block drawing of timeline bars : prevents an infinite loop
 
-  int ce_frame_height;
-  int ce_frame_width;
+  int ce_frame_width, ce_frame_height;
 
   /// TODO: need to be per-thread
-  char *read_failed_file;
-  char *write_failed_file;
-  char *bad_aud_file;
+  char *read_failed_file, *write_failed_file, *bad_aud_file;
 
   lives_render_error_t render_error;
 
   uint64_t next_ds_warn_level; ///< current disk space warning level for the tempdir
-
-  float sepwin_scale;
 
   lives_pconnect_t *pconx; ///< list of out -> in param connections
   lives_cconnect_t *cconx; ///< list of out -> in alpha channel connections
@@ -1507,8 +1478,8 @@ typedef struct {
   int rowstride_alignment;   // used to align the rowstride bytesize in create_empty_pixel_data
   int rowstride_alignment_hint;
 
-  int sepwin_minwidth;
-  int sepwin_minheight;
+  int sepwin_minwidth, sepwin_minheight;
+  float sepwin_scale;
 
   uint32_t signal_caught;
   boolean signals_deferred;
@@ -1540,7 +1511,6 @@ typedef struct {
   int afbuffer_clients_read; /// current read count. When this reaches abuffer_clients, we swap the read / write buffers
 
   pthread_t *libthread;  /// GUI thread for liblives
-  ulong id; /// ???
 
   boolean interactive; /// if set to FALSE then interaction via the GUI (mouse / keypresses) should be disabled. Mainly for liblives.
 
@@ -1566,7 +1536,7 @@ typedef struct {
 
   boolean recovering_files;
 
-  ticks_t flush_audio_tc;
+  ticks_t flush_audio_tc; ///< when rendering, we can use this to force audio to be rendered up to tc; designed for previews
 
   // main window resizing, no longer very important
   int assumed_width;

@@ -6143,6 +6143,12 @@ WIDGET_HELPER_GLOBAL_INLINE LiVESTreeStore *lives_tree_store_new(int ncols, ...)
     }
     tstore = gtk_tree_store_newv(ncols, types);
   }
+#ifdef GUI_GTK
+  // supposedly speeds things up a bit...
+  gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(tstore),
+                                       GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID,
+                                       GTK_SORT_ASCENDING);
+#endif
 #endif
 
 #ifdef GUI_QT
@@ -11203,21 +11209,19 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #define LOOP_LIMIT 16
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
-  int nulleventcount = 0;
-  int loops = 0;
+  int nulleventcount = 0, loops = 0;
+  boolean noswitch = mainw->noswitch;
+
+  if (!pthread_equal(capable->main_thread, pthread_self())) return FALSE;
 
   if (mainw->no_context_update) return FALSE;
-  mainw->noswitch = TRUE;
+
+  /// clip switching is not permitted during these "artificial" context updates
+  /// except under very specific conditions, e.g.
+  mainw->noswitch = mainw->cs_is_permitted;
 
   if (mainw->multitrack != NULL && mainw->multitrack->idlefunc > 0) {
-#ifdef GUI_GTK
-    lives_source_remove(mainw->multitrack->idlefunc);
-#endif
-
-#ifdef GUI_QT
     lives_timer_remove(mainw->multitrack->idlefunc);
-#endif
-
     mainw->multitrack->idlefunc = 0;
     mt_needs_idlefunc = TRUE;
   }
@@ -11282,7 +11286,7 @@ boolean lives_widget_context_update(void) {
     }
 #endif
     if (!mainw->is_exiting && LIVES_IS_PLAYING && loops > 2) {
-      lives_nanosleep(1000);
+      lives_nanosleep(10000);
     }
   }
 
@@ -11291,7 +11295,9 @@ boolean lives_widget_context_update(void) {
     mainw->multitrack->idlefunc = mt_idle_add(mainw->multitrack);
   }
 
-  mainw->noswitch = FALSE;
+  /// re-enable clip switching. It should be possible during "natural" context updates (i.e outside of callbacks)
+  /// (unless we are playing, in which case noswitch is FALSE)
+  mainw->noswitch = noswitch;
   return TRUE;
 }
 

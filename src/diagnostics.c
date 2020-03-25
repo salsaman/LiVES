@@ -40,14 +40,13 @@ char *get_stats_msg(boolean calc_only) {
 #endif
 #ifdef HAVE_PULSE_AUDIO
     if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = lives_pulse_get_pos(mainw->pulsed);
+      if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = (double)mainw->pulsed->seek_pos
+            / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
       have_avsync = TRUE;
     }
 #endif
     if (have_avsync) {
-      avsync -= ((double)cfile->frameno - 1.) / cfile->fps
-                + (double)(mainw->currticks  - mainw->startticks)
-                / TICKS_PER_SECOND_DBL * sig(cfile->pb_fps);
+      avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps;
     }
   }
   ///currticks = lives_get_current_ticks();

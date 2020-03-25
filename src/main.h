@@ -519,6 +519,9 @@ typedef enum {
   /// an error occured, retry the operation
   CANCEL_RETRY,
 
+  /// software error: e.g set mainw->current_file directly during pb instead of mainw->new_clip
+  CANCEL_INTERNAL_ERROR,
+
   /// special cancel for TV toy
   CANCEL_KEEP_LOOPING = CANCEL_NONE + 100
 } lives_cancel_t;
@@ -1212,6 +1215,7 @@ boolean get_handle_from_info_file(int index);
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
 void save_file(int clip, int start, int end, const char *filename);
 void play_file(void);
+void play_start_timer(int type);
 void save_frame(LiVESMenuItem *menuitem, livespointer user_data);
 boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc);
 void wait_for_stop(const char *stop_command);
@@ -1374,6 +1378,7 @@ ssize_t lives_read_le(int fd, void *buf, size_t count, boolean allow_less);
 #define BUFF_SIZE_READ_SMALLMED 1
 #define BUFF_SIZE_READ_MED 2
 #define BUFF_SIZE_READ_LARGE 3
+#define BUFF_SIZE_READ_CUSTOM -1
 
 #define BUFF_SIZE_WRITE_SMALL 0
 #define BUFF_SIZE_WRITE_SMALLMED 1
@@ -1461,6 +1466,7 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...);
 
 char *filename_from_fd(char *val, int fd);
 
+void reset_playback_clock(void);
 ticks_t lives_get_current_playback_ticks(ticks_t origsecs, ticks_t origusecs, lives_time_source_t *time_source);
 
 lives_alarm_t lives_alarm_set(ticks_t ticks);

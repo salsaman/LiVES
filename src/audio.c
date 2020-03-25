@@ -2485,11 +2485,15 @@ boolean resync_audio(double frameno) {
           0))
     return FALSE;
 
+  if (CURRENT_CLIP_HAS_VIDEO) mainw->video_seek_ready = FALSE;
+  mainw->audio_seek_ready = FALSE;
+
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
     if (!mainw->is_rendering) {
       if (mainw->jackd->playing_file != -1 && !jack_audio_seek_frame(mainw->jackd, frameno)) {
         if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frameno);
+        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
       if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
         jack_get_rec_avals(mainw->jackd);
@@ -2504,6 +2508,7 @@ boolean resync_audio(double frameno) {
     if (!mainw->is_rendering) {
       if (mainw->pulsed->playing_file != -1 && !pulse_audio_seek_frame(mainw->pulsed, frameno)) {
         if (pulse_try_reconnect()) pulse_audio_seek_frame(mainw->pulsed, frameno);
+        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
       if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && prefs->audio_src == AUDIO_SRC_INT) {
         pulse_get_rec_avals(mainw->pulsed);
@@ -3602,12 +3607,14 @@ LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
     else {
       mainw->aplayer_broken = TRUE;
       switch_aud_to_none(FALSE);
+      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     }
 #endif
   } else {
     do_blocking_error_dialog(msg);
     mainw->aplayer_broken = TRUE;
     switch_aud_to_none(FALSE);
+    mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
   }
   lives_free(msg);
   lives_free(msg2);

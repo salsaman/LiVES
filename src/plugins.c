@@ -1071,24 +1071,26 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   // if in_use is TRUE, it is our active vpp
 
   // TODO - if in_use, get fixed_fps,fwidth,fheight,palette,argc and argv from a file
-  // TODO - dirsep
 
-  char *plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
-                                       PLUGIN_VID_PLAYBACK,
-                                       name);
-  int dlflags = RTLD_NOW | RTLD_GLOBAL;
-  void *handle;
-  boolean OK = TRUE;
-  char *msg, *tmp;
+  _vid_playback_plugin *vpp;
   char **array;
   const char *fps_list;
   const char *pl_error;
+  void *handle;
   int *palette_list;
-  _vid_playback_plugin *vpp;
+  char *msg, *tmp;
+  char *plugname;
+  int dlflags = RTLD_NOW | RTLD_GLOBAL;
+  boolean OK = TRUE;
 
-  /* #ifdef RTLD_DEEPBIND */
-  /*   dlflags |= RTLD_DEEPBIND; */
-  /* #endif */
+  if (in_use && LIVES_IS_PLAYING && mainw->noswitch) {
+    mainw->new_vpp = name;
+    return NULL;
+  }
+
+  plugname = lives_strdup_printf("%s%s%s" LIVES_DIR_SEP "%s." DLL_NAME, prefs->lib_dir, PLUGIN_EXEC_DIR,
+                                 PLUGIN_VID_PLAYBACK,
+                                 name);
 
   handle = dlopen(plugname, dlflags);
 
@@ -1360,10 +1362,6 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
   lives_free(tmp);
 
   lives_free(plugname);
-
-  while (mainw->noswitch) {
-    lives_usleep(prefs->sleep_time);
-  }
 
   if (mainw->is_ready && in_use && mainw->vpp != NULL) {
     close_vid_playback_plugin(mainw->vpp);

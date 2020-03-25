@@ -479,7 +479,7 @@ static boolean add_sizes(LiVESBox *vbox, boolean add_fps, boolean has_param, liv
 
       if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS)) def_fps = weed_get_double_value(filter, WEED_LEAF_HOST_FPS, &error);
       else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS))
-	def_fps = weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, &error);
+        def_fps = weed_get_double_value(filter, WEED_LEAF_PREFERRED_FPS, &error);
 
       if (def_fps == 0.) def_fps = prefs->default_fps;
 

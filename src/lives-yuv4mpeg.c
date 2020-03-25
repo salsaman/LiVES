@@ -375,8 +375,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   if (!strlen(prefs->yuvin)) {
     filename = choose_file(NULL, NULL, NULL, LIVES_FILE_CHOOSER_ACTION_OPEN, _("Open _yuv4mpeg stream (fifo)"), NULL);
     if (filename == NULL) return;
-  } else
-    filename = lives_strdup(prefs->yuvin);
+  } else filename = lives_strdup(prefs->yuvin);
 
   mkfifo(filename, S_IRUSR | S_IWUSR);
 
@@ -435,10 +434,10 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     lives_free(tmp);
 
+    mainw->pre_play_file = old_file;
     // start playing
-    play_file();
-
-    mainw->noswitch = FALSE;
+    play_start_timer(7);
+    return;
   }
   // TODO - else...
 

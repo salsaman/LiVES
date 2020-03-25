@@ -666,6 +666,10 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->audio_filewriteend_mutex, NULL);
   pthread_mutex_init(&mainw->exit_mutex, NULL);
   pthread_mutex_init(&mainw->fbuffer_mutex, NULL);
+  pthread_mutex_init(&mainw->avseek_mutex, NULL);
+
+  // conds
+  pthread_cond_init(&mainw->avseek_cond, NULL);
 
   // rwlocks
   pthread_rwlock_init(&mainw->mallopt_lock, NULL);
@@ -1074,7 +1078,7 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->fixed_fps_numer = -1;
   mainw->fixed_fps_denom = 1;
   mainw->fixed_fpsd = -1.;
-  mainw->noswitch = FALSE;
+  mainw->noswitch = mainw->cs_permitted = mainw->cs_is_permitted = FALSE;
   mainw->osc_block = FALSE;
 
   mainw->cancelled = CANCEL_NONE;
@@ -1123,7 +1127,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->jack_can_stop = FALSE;
   mainw->jack_can_start = TRUE;
 
-  mainw->video_seek_ready = FALSE;
+  if (!mainw->foreign) mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+  else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
 
   mainw->filter_map = NULL; // filter map for video rendering
   mainw->afilter_map = NULL; // filter map for audio rendering
@@ -1384,6 +1389,8 @@ static void lives_init(_ign_opts *ign_opts) {
   mainw->debug_ptr = NULL;
 
   mainw->inst_fps = 0.;
+
+  mainw->pre_play_file = -1;
   /////////////////////////////////////////////////// add new stuff just above here ^^
 
   lives_memset(mainw->set_name, 0, 1);
@@ -3555,7 +3562,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   pthread_mutexattr_init(&mattr);
   pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-  pthread_mutex_init(&mainw->gtk_mutex, &mattr);
 
   init_random();
 
@@ -4118,7 +4124,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   lives_memset(start_file, 0, 1);
 
   mainw->libthread = gtk_thread;
-  mainw->id = id;
 
   // what's my name ?
   capable->myname_full = lives_find_program_in_path(argv[0]);
@@ -4139,6 +4144,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // lives [opts] [filename [start_time] [frames]]
 
   // need to do this here, before lives_startup but afer setting ign_opts
+  mainw->new_vpp = NULL;
   mainw->vpp = NULL;
   lives_memset(future_prefs->vpp_name, 0, 64);
   future_prefs->vpp_argv = NULL;
@@ -4901,13 +4907,13 @@ void load_start_image(int frame) {
         virtual_to_images(mainw->current_file, frame, frame, FALSE, NULL);
       }
     }
-    
+
     layer = weed_layer_new_for_frame(mainw->current_file, frame);
     if (pull_frame_at_size(layer, get_image_ext_for_type(cfile->img_type), tc, width, height, WEED_PALETTE_RGB24)) {
       interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-	weed_layer_free(layer);
+        weed_layer_free(layer);
         return;
       }
       start_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
@@ -5111,7 +5117,7 @@ void load_end_image(int frame) {
       interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, width, height, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-	weed_layer_free(layer);
+        weed_layer_free(layer);
         return;
       }
       end_pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
@@ -5264,7 +5270,7 @@ void load_preview_image(boolean update_always) {
       LiVESInterpType interp = get_interp_value(prefs->pb_quality);
       if (!resize_layer(layer, mainw->pwidth, mainw->pheight, interp, WEED_PALETTE_RGB24, 0) ||
           !convert_layer_palette(layer, WEED_PALETTE_RGB24, 0)) {
-	weed_layer_free(layer);
+        weed_layer_free(layer);
         return;
       }
       pixbuf = layer_to_pixbuf(layer, TRUE, TRUE);
@@ -6188,7 +6194,7 @@ boolean pull_frame_at_size(weed_layer_t *layer, const char *image_ext, weed_time
           if ((resl_thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
             lives_thread_join(*resl_thrd, NULL);
             weed_set_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL);
-	    lives_free(resl_thrd);
+            lives_free(resl_thrd);
           }
         }
         lives_free(fname);
@@ -6324,7 +6330,7 @@ boolean check_layer_ready(weed_layer_t *layer) {
   while ((thrd = weed_get_voidptr_value(layer, WEED_LEAF_RESIZE_THREAD, NULL)) != NULL) {
     lives_nanosleep(100);
   }
- 
+
   if (weed_get_boolean_value(layer, WEED_LEAF_HOST_DEINTERLACE, NULL) == WEED_TRUE) {
     weed_timecode_t tc = weed_get_int64_value(layer, WEED_LEAF_HOST_TC, NULL);
     deinterlace_frame(layer, tc);
@@ -6650,19 +6656,18 @@ static void do_cleanup(weed_layer_t *layer, int success) {
       ///mainw->frame_layer_postload = mainw->frame_layer;
       weed_layer_free(layer);
     }
-
-    //mainw->noswitch = noswitch;
 }
+
 
 static weed_plant_t *cleaner = NULL;
 
-void wait_for_cleaner(void) {
-  if (cleaner) {
-    lives_nanosleep_until_nonzero(weed_get_boolean_value(cleaner, WEED_LEAF_DONE, NULL));
-    weed_plant_free(cleaner);
-    cleaner = NULL;
-  }
-}
+/* void wait_for_cleaner(void) { */
+/*   if (cleaner) { */
+/*     lives_nanosleep_until_nonzero(weed_get_boolean_value(cleaner, WEED_LEAF_DONE, NULL)); */
+/*     weed_plant_free(cleaner); */
+/*     cleaner = NULL; */
+/*   } */
+/* } */
 
 
 void load_frame_image(int frame) {
@@ -6675,7 +6680,6 @@ void load_frame_image(int frame) {
     // NOTE: we should be careful if load_frame_image() is called from anywhere inside load_frame_image()
     // e.g. by calling g_main_context_iteration() --> user presses sepwin button --> load_frame_image() is called
     // this is because mainw->frame_layer is global and gets freed() before exit from load_frame_image()
-    // - we should never call load_frame_image() if mainw->noswitch is TRUE
 
     void **pd_array, **retdata = NULL;
     LiVESPixbuf *pixbuf = NULL;
@@ -6691,10 +6695,10 @@ void load_frame_image(int frame) {
 
     boolean was_preview = FALSE;
     boolean rec_after_pb = FALSE;
-    boolean noswitch = mainw->noswitch;
     boolean success = FALSE;
     boolean size_ok = TRUE;
     boolean acc_rs = FALSE;
+    boolean wait_for_audio_seek = FALSE;
 
     int retval;
     int layer_palette, cpal;
@@ -6751,36 +6755,9 @@ void load_frame_image(int frame) {
 
         if (LIVES_UNLIKELY(mainw->nervous)) {
           // nervous mode
-
           if ((mainw->actual_frame += (-10 + (int)(21.*rand() / (RAND_MAX + 1.0)))) > cfile->frames ||
               mainw->actual_frame < 1) mainw->actual_frame = frame;
-          else {
-            frame = mainw->actual_frame;
-#ifdef ENABLE_JACK
-            if (prefs->audio_player == AUD_PLAYER_JACK && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
-                mainw->jackd != NULL && CURRENT_CLIP_HAS_AUDIO &&
-                !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
-              if (mainw->jackd->playing_file == mainw->playing_file && !jack_audio_seek_frame(mainw->jackd, frame)) {
-                if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, frame);
-              }
-              if (mainw->record && !mainw->record_paused && mainw->jackd->playing_file == mainw->playing_file) {
-                jack_get_rec_avals(mainw->jackd);
-              }
-            }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-            if (prefs->audio_player == AUD_PLAYER_PULSE && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) &&
-                mainw->pulsed != NULL && CURRENT_CLIP_HAS_AUDIO &&
-                !(prefs->audio_src == AUDIO_SRC_EXT || mainw->agen_key != 0)) {
-              if (mainw->pulsed->playing_file == mainw->playing_file && !pulse_audio_seek_frame(mainw->pulsed, frame)) {
-                mainw->cancelled = handle_audio_timeout();
-              }
-              if (mainw->record && !mainw->record_paused && mainw->pulsed->playing_file == mainw->playing_file) {
-                pulse_get_rec_avals(mainw->pulsed);
-              }
-            }
-#endif
-          }
+          else resync_audio(mainw->actual_frame);
         }
 
         if (mainw->opening_loc || !CURRENT_CLIP_IS_NORMAL) {
@@ -6788,8 +6765,6 @@ void load_frame_image(int frame) {
         } else {
           framecount = lives_strdup_printf("%9d/%d", mainw->actual_frame, cfile->frames);
         }
-
-        //mainw->noswitch = TRUE;
 
         /////////////////////////////////////////////////
 
@@ -6826,7 +6801,6 @@ void load_frame_image(int frame) {
 
           if (mainw->record_starting) {
             // mark record start
-            //pthread_mutex_lock(&mainw->event_list_mutex);
             event_list = append_marker_event(mainw->event_list, actual_ticks, EVENT_MARKER_RECORD_START);
             if (mainw->event_list == NULL) mainw->event_list = event_list;
 
@@ -6834,15 +6808,15 @@ void load_frame_image(int frame) {
               // add init events and pchanges for all active fx
               add_filter_init_events(mainw->event_list, actual_ticks);
             }
-            //pthread_mutex_unlock(&mainw->event_list_mutex);
 
 #ifdef ENABLE_JACK
             if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL &&
                 (prefs->rec_opts & REC_AUDIO) && prefs->audio_src == AUDIO_SRC_INT && mainw->rec_aclip != mainw->ascrap_file) {
               // get current seek postion
 	      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
+
 	      while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
-		// wait for seek
+		// wait for audio player message queue clearing
 		sched_yield();
 		lives_usleep(prefs->sleep_time);
 	      }
@@ -6856,7 +6830,7 @@ void load_frame_image(int frame) {
               // get current seek postion
 	      alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
 	      while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
-		// wait for seek
+		// wait for audio player message queue clearing
 		sched_yield();
 		lives_usleep(prefs->sleep_time);
 	      }
@@ -7031,7 +7005,7 @@ void load_frame_image(int frame) {
       }
 
       do {
-	wait_for_cleaner();
+	//wait_for_cleaner();
         if (mainw->frame_layer != NULL) {
           // free the old mainw->frame_layer
 	  check_layer_ready(mainw->frame_layer); // ensure all threads are complete
@@ -7128,7 +7102,6 @@ void load_frame_image(int frame) {
         if (mainw->internal_messaging) {
           // this happens if we are calling from multitrack, or apply rte.  We get our mainw->frame_layer and exit.
           // DO NOT goto lfi_done, as that will free mainw->frame_layer.
-          mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
           lives_freep((void **)&info_file);
           return;
@@ -7210,7 +7183,6 @@ void load_frame_image(int frame) {
 
         if (mainw->internal_messaging) {
           // here we are rendering to an effect or timeline, need to keep mainw->frame_layer and return
-          mainw->noswitch = noswitch;
           lives_freep((void **)&framecount);
           lives_freep((void **)&info_file);
           check_layer_ready(mainw->frame_layer);
@@ -7336,46 +7308,46 @@ void load_frame_image(int frame) {
     // *INDENT-ON*
 
     //g_print("rte done @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
+    check_layer_ready(mainw->frame_layer);
 
     ////////////////////////
+    if (!mainw->video_seek_ready) {
 #ifdef ENABLE_JACK
-    if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
-      /// try to improve sync by delaying audio pb start
-      if (LIVES_UNLIKELY((mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
-                          && !mainw->record_paused && mainw->jackd->is_paused))) {
-        mainw->jackd->is_paused = FALSE;
+      if (!mainw->foreign && mainw->jackd != NULL && prefs->audio_player == AUD_PLAYER_JACK) {
+        /// try to improve sync by delaying audio pb start
+        if (mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
+            && !mainw->record_paused && mainw->jackd->is_paused) {
+          mainw->video_seek_ready = TRUE;
+        } else wait_for_audio_seek = TRUE;
       }
-      if (LIVES_UNLIKELY(jack_get_msgq(mainw->jackd))) {
-        alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-        while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
-          // wait for seek
-          lives_nanosleep(1000);
-        }
-        lives_alarm_clear(alarm_handle);
-      }
-    }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
-      /// try to improve sync by delaying audio pb start
-      if (LIVES_UNLIKELY(mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
-                         && !mainw->record_paused && mainw->pulsed->is_paused)) {
-        mainw->pulsed->is_paused = FALSE;
+      if (!mainw->foreign && mainw->pulsed != NULL && prefs->audio_player == AUD_PLAYER_PULSE) {
+        /// try to improve sync by delaying audio pb start
+        if (LIVES_UNLIKELY(mainw->event_list != NULL && LIVES_IS_PLAYING && !mainw->record
+                           && !mainw->record_paused && mainw->pulsed->is_paused)) {
+          mainw->video_seek_ready = TRUE;
+        } else wait_for_audio_seek = TRUE;
       }
-      if (LIVES_UNLIKELY(pulse_get_msgq(mainw->pulsed))) {
-        alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-        while ((audio_timed_out = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
-          // wait for seek
-          lives_nanosleep(1000);
-        }
-        lives_alarm_clear(alarm_handle);
-      }
-    }
 #endif
+    }
 
-    if (LIVES_UNLIKELY(audio_timed_out == 0)) {
-      mainw->cancelled = handle_audio_timeout();
-      goto lfi_done;
+    if (wait_for_audio_seek) {
+      struct timespec ts;
+      clock_gettime(CLOCK_REALTIME, &ts);
+      ts.tv_sec += (LIVES_SHORTEST_TIMEOUT * 10. / TICKS_PER_SECOND_DBL + .5);
+      check_layer_ready(mainw->frame_layer);
+      pthread_mutex_lock(&mainw->avseek_mutex);
+      mainw->video_seek_ready = TRUE;
+      while (!mainw->audio_seek_ready) {
+        int rc = pthread_cond_timedwait(&mainw->avseek_cond, &mainw->avseek_mutex, &ts);
+        if (rc == ETIMEDOUT) {
+          pthread_mutex_unlock(&mainw->avseek_mutex);
+          mainw->cancelled = handle_audio_timeout();
+          goto lfi_done;
+        }
+      }
+      pthread_mutex_unlock(&mainw->avseek_mutex);
     }
 
     // save to scrap_file now if we have to
@@ -7406,6 +7378,7 @@ void load_frame_image(int frame) {
 
       //g_print("clr1 start  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
       check_layer_ready(mainw->frame_layer);
+      mainw->video_seek_ready = TRUE;
       //g_print("clr1 done  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
@@ -7568,6 +7541,7 @@ void load_frame_image(int frame) {
       if (mainw->vpp->play_frame != NULL) acc_rs = TRUE;
 
       check_layer_ready(mainw->frame_layer);
+      mainw->video_seek_ready = TRUE;
       //g_print("clr2  @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
       layer_palette = weed_layer_get_palette(mainw->frame_layer);
@@ -7788,6 +7762,7 @@ void load_frame_image(int frame) {
     // local display of its own
     //g_print("clr @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     check_layer_ready(mainw->frame_layer); // wait for all threads to complete
+    mainw->video_seek_ready = TRUE;
     //g_print("clr end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
     if (weed_layer_get_width(mainw->frame_layer) == 0) return;
     if ((mainw->sep_win && !prefs->show_playwin) || (!mainw->sep_win && !prefs->show_gui)) {
@@ -8186,7 +8161,7 @@ lfi_done:
             if (!LIVES_IS_PLAYING) {
               switch_to_file((mainw->current_file = 0), file_to_switch_to);
               d_print("");
-            } else do_quick_switch(file_to_switch_to);
+            } else mainw->new_clip = file_to_switch_to;
           } else if (old_file != mainw->multitrack->render_file) {
             mt_clip_select(mainw->multitrack, TRUE);
           }
@@ -8211,7 +8186,7 @@ lfi_done:
             if (!LIVES_IS_PLAYING) {
               switch_to_file((mainw->current_file = 0), index);
               d_print("");
-            } else do_quick_switch(index);
+            } else mainw->new_clip = index;
             if (need_new_blend_file) mainw->blend_file = mainw->current_file;
           } else {
             mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8226,7 +8201,7 @@ lfi_done:
                 if (!LIVES_IS_PLAYING) {
                   switch_to_file((mainw->current_file = 0), i);
                   d_print("");
-                } else do_quick_switch(index);
+                } else mainw->new_clip = index;
                 if (need_new_blend_file) mainw->blend_file = mainw->current_file;
               } else {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8241,7 +8216,7 @@ lfi_done:
                 if (!LIVES_IS_PLAYING) {
                   switch_to_file((mainw->current_file = 0), i);
                   d_print("");
-                } else do_quick_switch(index);
+                } else mainw->new_clip = index;
                 if (need_new_blend_file) mainw->blend_file = mainw->current_file;
               } else {
                 mainw->multitrack->clip_selected = -mainw->multitrack->clip_selected;
@@ -8255,7 +8230,7 @@ lfi_done:
     // no other clips
     mainw->current_file = mainw->blend_file = -1;
     set_main_title(NULL, 0);
-    
+
     lives_widget_set_sensitive(mainw->vj_save_set, FALSE);
     lives_widget_set_sensitive(mainw->vj_load_set, TRUE);
     lives_widget_set_sensitive(mainw->export_proj, FALSE);
@@ -8273,7 +8248,7 @@ lfi_done:
     if (!mainw->is_ready || mainw->recovering_files) return;
 
     if (LIVES_IS_PLAYING) mainw->cancelled = CANCEL_GENERATOR_END;
-    
+
     /* if (!LIVES_IS_PLAYING && mainw->play_window != NULL) { */
     /*   // if the clip is loaded */
     /*   if (mainw->preview_box == NULL) { */
@@ -8347,7 +8322,7 @@ lfi_done:
     if (mainw->multitrack != NULL) return;
 
     if (LIVES_IS_PLAYING) {
-      do_quick_switch(new_file);
+      mainw->new_clip = new_file;
       return;
     }
 
@@ -8600,6 +8575,8 @@ lfi_done:
         if (mainw->ping_pong) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
         else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
 
+        mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+
         // tell jack server to open audio file and start playing it
 
         jack_message.command = ASERVER_CMD_FILE_OPEN;
@@ -8627,6 +8604,7 @@ lfi_done:
         mainw->rec_aclip = mainw->playing_file;
         mainw->rec_avel = 0.;
         mainw->rec_aseek = 0.;
+        mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
       }
       event = get_last_frame_event(mainw->event_list);
       insert_audio_event_at(event, -1, mainw->rec_aclip, mainw->rec_aseek, mainw->rec_avel);
@@ -8712,6 +8690,8 @@ lfi_done:
           if (mainw->ping_pong) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
           else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
 
+          mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+
           // tell pulse server to open audio file and start playing it
 
           pulse_message.command = ASERVER_CMD_FILE_OPEN;
@@ -8732,6 +8712,7 @@ lfi_done:
                                            / (mainw->files[new_file]->achans * mainw->files[new_file]->asampsize / 8))
                                   / (double)mainw->files[new_file]->arps);
         } else {
+          mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
           mainw->rec_aclip = mainw->playing_file;
           mainw->rec_avel = 0.;
           mainw->rec_aseek = 0.;
@@ -8772,9 +8753,6 @@ lfi_done:
   void do_quick_switch(int new_file) {
     // handle clip switching during playback
     // calling this function directly is now deprecated in favour of switch_clip()
-
-    //
-
     boolean osc_block;
     int old_file = mainw->current_file, area = 0;
 
@@ -8833,14 +8811,15 @@ lfi_done:
       /*   /// the time we would shown the last frame at using the new fps */
       /*   mainw->startticks = mainw->currticks - (delta_ticks >> 1); */
       /* } else mainw->startticks = mainw->currticks; */
-
-      mainw->startticks = mainw->currticks;
-      if (mainw->effort > 0) area = cfile->hsize * cfile->vsize * cfile->pb_fps;
+      if (prefs->pbq_adaptive) {
+        mainw->startticks = mainw->currticks;
+        if (mainw->effort > 0) area = cfile->hsize * cfile->vsize * cfile->pb_fps;
+      }
     }
 
     mainw->current_file = new_file;
 
-    if (area > 0 && CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
+    if (prefs->pb_adaptive && area > 0 && CURRENT_CLIP_IS_VALID && mainw->effort > 0) {
       if (cfile->hsize * cfile->vsize * cfile->pb_fps < area) {
         reset_effort();
       }

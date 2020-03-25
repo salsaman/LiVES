@@ -640,10 +640,8 @@ void lives2lives_read_stream(const char *host, int port) {
 
   // if not playing, start playing
   if (!LIVES_IS_PLAYING) {
-    mainw->play_start = 1;
-    mainw->play_end = INT_MAX;
-    play_file();
-    mainw->noswitch = FALSE;
+    play_start_timer(2);
+    return;
   }
   // TODO - else...
 

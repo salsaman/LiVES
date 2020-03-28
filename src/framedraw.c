@@ -613,21 +613,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
       cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
                       cfile->start, cfile->end, FALSE, NULL);
     }
-
   }
-
-  /*   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT); */
-  /*   do { */
-  /*     lives_widget_context_update(); */
-  /*     if (!virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL)) { */
-  /*       return; */
-  /*     } */
-  /*     vend++; */
-  /*     timeout = lives_alarm_check(alarm_handle); */
-  /*   } while (vend <= cfile->end && timeout > 0 && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL); */
-  /*   cfile->fx_frame_pump = vend; */
-  /*   lives_alarm_clear(alarm_handle); */
-  /* } */
 
   if (mainw->cancelled) {
     if (cfile->pumper) {
@@ -640,26 +626,10 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     return;
   }
 
-  //
-
   // get message from back end processor
   while (!(infofile = fopen(cfile->info_file, "r")) && !mainw->cancelled) {
     // wait until we get at least 1 frame
     lives_widget_context_update();
-    /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump <= cfile->end) { */
-    /*   // if we have a virtual clip (frames inside a video file) */
-    /*   // pull some more frames to images to get us started */
-    /*   if (cfile->fx_frame_pump > 0) { */
-    /*     if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) { */
-    /*       return; */
-    /*     } */
-    /*     if (cfile->fx_frame_pump == cfile->end) cfile->fx_frame_pump = 0; */
-    /*     else cfile->fx_frame_pump++; */
-    /*   } */
-    /* } else { */
-    /*   // otherwise wait */
-    /*   lives_usleep(prefs->sleep_time); */
-    /* } */
     lives_nanosleep(MILLIONS(10));
   }
 

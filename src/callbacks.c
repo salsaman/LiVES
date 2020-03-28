@@ -4364,7 +4364,7 @@ void play_all(boolean from_menu) {
 
 void on_playall_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   if (menuitem != NULL && mainw->go_away) return;
-  play_start_timer(menuitem ? 8 : 0);
+  start_playback_async(menuitem ? 8 : 0);
 }
 
 
@@ -4406,7 +4406,10 @@ void on_playsel_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     on_preview_clicked(LIVES_BUTTON(cfile->proc_ptr->preview_button), NULL);
     return;
   }
-  play_start_timer(1);
+  if (LIVES_POINTER_TO_INT(user_data))
+    play_file();
+  else
+    start_playback_async(1);
 }
 
 
@@ -4432,7 +4435,7 @@ void on_playclip_activate(LiVESMenuItem * menuitem, livespointer user_data) {
 
   lives_rm(cfile->info_file);
 
-  play_start_timer(5);
+  start_playback_async(5);
 }
 
 
@@ -9886,7 +9889,7 @@ void on_preview_clicked(LiVESButton * button, livespointer user_data) {
     resize(1);
 
     // play the clip
-    on_playsel_activate(NULL, NULL);
+    on_playsel_activate(NULL, LIVES_INT_TO_POINTER(TRUE));
 
     if (current_file != mainw->current_file) {
       if (cfile->proc_ptr != NULL) {

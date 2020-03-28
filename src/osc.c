@@ -437,7 +437,7 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
                         sttd);
   }
 
-  play_start_timer(3);
+  start_playback_async(3);
 
   return TRUE;
 }
@@ -446,7 +446,7 @@ boolean lives_osc_cb_play(void *context, int arglen, const void *vargs, OSCTimeT
 boolean lives_osc_cb_playsel(void *context, int arglen, const void *vargs, OSCTimeTag when, NetworkReturnAddressPtr ra) {
   if (mainw->go_away) return lives_osc_notify_failure();
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
-    play_start_timer(4);
+    start_playback_async(4);
   }
   return TRUE;
 }
@@ -481,7 +481,7 @@ boolean lives_osc_cb_play_forward(void *context, int arglen, const void *vargs, 
     if (mainw->playing_file == 1) return lives_osc_notify_failure();
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
-    play_start_timer(3);
+    start_playback_async(3);
     return TRUE;
   } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps < 0 || (cfile->play_paused && cfile->freeze_fps < 0))
@@ -502,7 +502,7 @@ boolean lives_osc_cb_play_backward(void *context, int arglen, const void *vargs,
 
   if (!LIVES_IS_PLAYING && mainw->current_file > 0 && !mainw->is_processing) {
     mainw->reverse_pb = TRUE;
-    play_start_timer(3);
+    start_playback_async(3);
     return TRUE;
   } else if (mainw->playing_file > 0) {
     if (cfile->pb_fps > 0 || (cfile->play_paused && cfile->freeze_fps > 0))

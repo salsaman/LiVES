@@ -1989,7 +1989,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
         if (pulsed->extrausec < 0) pulsed->extrausec = 0;
       } else if (usec > 0) pulsed->extrausec = 0;
       if (usec + pulsed->extrausec == last_usec + last_extra)
-        paclock += (usec - last_usec) / pulsed->tscale;
+        paclock += (usec - last_usec);// / pulsed->tscale;
       else
         paclock = usec + pulsed->extrausec;
     }

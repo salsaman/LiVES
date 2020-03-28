@@ -20,7 +20,7 @@
 #define AV_TRACK_MIN_DIFF 0.001 ///< ignore track time differences < this (seconds)
 
 
-static boolean _play_start_timer(livespointer data) {
+boolean _start_playback(livespointer data) {
   int new_file, old_file;
   int play_type = LIVES_POINTER_TO_INT(data);
   switch (play_type) {
@@ -95,10 +95,9 @@ static boolean _play_start_timer(livespointer data) {
 }
 
 
-LIVES_GLOBAL_INLINE void play_start_timer(int type) {
-  lives_timer_add(0, _play_start_timer, LIVES_INT_TO_POINTER(type));
-}
+LIVES_GLOBAL_INLINE void start_playback_async(int type) {lives_timer_add(0, _start_playback, LIVES_INT_TO_POINTER(type));}
 
+LIVES_GLOBAL_INLINE boolean start_playback(int type) {return  _start_playback(LIVES_INT_TO_POINTER(type));}
 
 boolean save_clip_values(int which) {
   char *lives_header_new;
@@ -2715,7 +2714,10 @@ void play_file(void) {
 #endif
         }
       }
-      if (!mainw->foreign) mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+      if (!mainw->foreign && !mainw->multitrack)
+        mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+      else
+        mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
 
       if (mainw->multitrack == NULL || mainw->multitrack->pb_start_event == NULL) {
         do_progress_dialog(FALSE, FALSE, NULL);

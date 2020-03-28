@@ -970,7 +970,6 @@ static int Upload(void) {
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
-  fprintf(stderr, "XXVALS %d %d %d\n", imgHeight, yoffs, texHeight);
   aspect = (float)imgWidth / (float)imgHeight;
   scalex = (float)((imgWidth - 2 * xoffs) * typesize) / (float)texRow;
   scaley = (float)(imgHeight - 2 * yoffs) / (float)texHeight;
@@ -1028,11 +1027,6 @@ static int Upload(void) {
 
     glBindTexture(m_TexTarget, texID);
     glColor4d(1.0, 1.0, 1.0, 1.0);
-
-    float xoffsf = 1. - (float)xoffs / (float)xparms.width;
-    float yoffsf = 1. - (float)yoffs / (float)xparms.height;
-
-    fprintf(stderr, "%f %f %f %f\n", xoffsf, scalex, yoffsf, scaley);
 
     glBegin(GL_QUADS);
     glTexCoord2d(0, 1);

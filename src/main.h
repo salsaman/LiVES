@@ -1221,6 +1221,8 @@ boolean get_handle_from_info_file(int index);
 lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded);
 void save_file(int clip, int start, int end, const char *filename);
 void play_file(void);
+void start_playback_async(int type);
+boolean start_playback(int type);
 void play_start_timer(int type);
 void save_frame(LiVESMenuItem *menuitem, livespointer user_data);
 boolean save_frame_inner(int clip, int frame, const char *file_name, int width, int height, boolean from_osc);
@@ -1698,7 +1700,7 @@ void break_me(void);
 
 #endif
 
-#define VALGRIND_ON
+//#define VALGRIND_ON
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

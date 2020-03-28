@@ -5773,7 +5773,7 @@ check_prcache:
 
 #ifdef PNG_BIO
       png_set_read_fn(png_ptr, LIVES_INT_TO_POINTER(fd), png_read_func);
-      png_set_sig_bytes(png_ptr, 0);
+      png_set_sig_bytes(png_ptr, 8);
 #else
       png_init_io(png_ptr, fp);
       png_set_sig_bytes(png_ptr, bsize);
@@ -6325,7 +6325,7 @@ fndone:
               frame <= sfile->frames && is_virtual_frame(clip, frame)) {
             // pull frame from video clip
             ///
-            int nplanes;
+            //int nplanes;
             void **pixel_data;
             boolean res = TRUE;
             int *rowstrides;
@@ -7621,8 +7621,10 @@ void load_frame_image(int frame) {
               && (mainw->current_file != mainw->scrap_file || mainw->multitrack != NULL)) {
             int lb_width = opwidth;
             int lb_height = opheight;
-            if ((mainw->multitrack != NULL && !mainw->multitrack->is_rendering && prefs->letterbox_mt)
-                || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering || mainw->preview_rendering))) {
+            if (prefs->pb_quality == PB_QUALITY_HIGH && ((mainw->multitrack != NULL &&
+                !mainw->multitrack->is_rendering && prefs->letterbox_mt)
+                || (!mainw->multitrack && prefs->letterbox && (!mainw->is_rendering
+                    || mainw->preview_rendering)))) {
               /// if letterboxing we adjust the player size to the inner rectangle. This avoids problems with varying quality levels
               boolean can_resize = FALSE;
               int pwidth = opwidth;
@@ -7765,8 +7767,13 @@ void load_frame_image(int frame) {
 
           if (return_layer != NULL) weed_leaf_dup(return_layer, frame_layer, WEED_LEAF_GAMMA_TYPE);
           pd_array = weed_layer_get_pixel_data(frame_layer, NULL);
-          lb_width = lwidth = weed_layer_get_width(frame_layer);
-          lb_height = lheight = weed_layer_get_height(frame_layer);
+          if (prefs->pb_quality == PB_QUALITY_LOW) {
+            lb_width = cfile->hsize;
+            lb_height = cfile->vsize;
+          } else {
+            lb_width = lwidth = weed_layer_get_width(frame_layer);
+            lb_height = lheight = weed_layer_get_height(frame_layer);
+          }
           pwidth = mainw->pwidth;
           pheight = mainw->pheight;
           if ((!mainw->multitrack && prefs->letterbox) || (mainw->multitrack && prefs->letterbox_mt)) {
@@ -7777,6 +7784,8 @@ void load_frame_image(int frame) {
           }
 
           if (!avsync_check()) goto lfi_done;
+
+          lwidth = weed_layer_get_width(frame_layer);
 
           if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
               || (!player_v2 && !(*mainw->vpp->render_frame)(lwidth, weed_layer_get_height(frame_layer),

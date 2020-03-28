@@ -521,6 +521,8 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
 
+    if (sfile->pumper && weed_get_boolean_value(sfile->pumper, "cancelled", NULL) == WEED_TRUE) break;
+
     if (update_progress) {
       threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));
       lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);

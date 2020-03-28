@@ -1074,7 +1074,7 @@ LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
 LIVES_GLOBAL_INLINE int weed_palette_get_nplanes(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   register int i = 0;
-  if (mpx) for (i = 0; i < MAXPPLANES && !mpx->chantype[i]; i++);
+  if (mpx) for (i = 0; i < MAXPPLANES && mpx->chantype[i]; i++);
   return i;
 }
 

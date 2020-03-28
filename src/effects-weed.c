@@ -1366,7 +1366,7 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
   int slices, slices_per_thread, to_use;
   int heights[2], *xheights;
   int offset = 0;
-  int dheight, height, xheight = 0;
+  int dheight, height, xheight = 0, cheight;
   int nthreads = 0;
 
   register int i, j;
@@ -1386,8 +1386,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
     for (j = 0; j < weed_palette_get_nplanes(pal); j++) {
       vrt = weed_palette_get_plane_ratio_vertical(pal, j);
-      height *= vrt;
-      if (xheight == 0 || height < xheight) xheight = height;
+      cheight = height * vrt;
+      if (xheight == 0 || cheight < xheight) xheight = cheight;
     }
   }
 
@@ -7778,7 +7778,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       lives_widget_queue_draw(mainw->play_window);
     }
 
-    if (!mainw->osc_auto) play_start_timer(6);
+    if (!mainw->osc_auto) start_playback_async(6);
     else {
       on_playall_activate(NULL, NULL);
       // need to set this after playback ends; this stops the key from being activated (again) in effects.c

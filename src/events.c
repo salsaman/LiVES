@@ -4878,8 +4878,10 @@ boolean deal_with_render_choice(boolean add_deinit) {
     lives_widget_show_all(e_rec_dialog);
     lives_dialog_run(LIVES_DIALOG(e_rec_dialog));
     lives_widget_destroy(e_rec_dialog);
+    mainw->gui_fooey = TRUE;
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
     lives_widget_context_update();
+    mainw->gui_fooey = FALSE;
     switch (render_choice) {
     case RENDER_CHOICE_DISCARD:
       if (CURRENT_CLIP_IS_VALID) cfile->redoable = FALSE;

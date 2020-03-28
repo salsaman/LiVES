@@ -33,15 +33,17 @@ char *get_stats_msg(boolean calc_only) {
 
   if (CURRENT_CLIP_HAS_AUDIO) {
 #ifdef ENABLE_JACK
-    if (prefs->audio_player == AUD_PLAYER_JACK) {
-      if (mainw->jackd != NULL && mainw->jackd->in_use) avsync = lives_jack_get_pos(mainw->jackd);
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL && mainw->jackd->in_use &&
+        IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->arate != 0) {
+      avsync = lives_jack_get_pos(mainw->jackd);
       have_avsync = TRUE;
     }
 #endif
 #ifdef HAVE_PULSE_AUDIO
-    if (prefs->audio_player == AUD_PLAYER_PULSE) {
-      if (mainw->pulsed != NULL && mainw->pulsed->in_use) avsync = (double)mainw->pulsed->seek_pos
-            / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL && mainw->pulsed->in_use &&
+        IS_VALID_CLIP(mainw->pulsed->playing_file) && mainw->files[mainw->pulsed->playing_file]->arate != 0) {
+      avsync = (double)mainw->pulsed->seek_pos
+               / (double)mainw->files[mainw->pulsed->playing_file]->arate / 4.; //lives_pulse_get_pos(mainw->pulsed);
       have_avsync = TRUE;
     }
 #endif

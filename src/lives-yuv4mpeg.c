@@ -436,7 +436,7 @@ void on_open_yuv4m_activate(LiVESMenuItem *menuitem, livespointer user_data) {
 
     mainw->pre_play_file = old_file;
     // start playing
-    play_start_timer(7);
+    start_playback_async(7);
     return;
   }
   // TODO - else...

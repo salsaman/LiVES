@@ -847,12 +847,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_VID_SAVE_DIR "vid_save_dir"
 #define PREF_VID_LOAD_DIR "vid_load_dir"
 
-#define _PREF_RECENT(n) "recent" n
-#define PREF_RECENT _PREF_RECENT()
-#define PREF_RECENT1 _PREF_RECENT("1")
-#define PREF_RECENT2 _PREF_RECENT("2")
-#define PREF_RECENT3 _PREF_RECENT("3")
-#define PREF_RECENT4 _PREF_RECENT("4")
+#define PREF_RECENT "recent"
 
 /////////////////// integer64 values
 #define PREF_DS_WARN_LEVEL "ds_warn_level"

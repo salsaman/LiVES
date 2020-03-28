@@ -21,14 +21,24 @@
 #include "pulse.h"
 #endif
 
+#define BILLIONS(n) (n##000000000l)
+#define ONE_BILLION BILLIONS(1)
+#define MILLIONS(n) (n##000000l)
+#define ONE_MILLION MILLIONS(1)
+
+#define BILLIONS_DBL(n) (n##000000000.f)
+#define ONE_BILLION_DBL BILLIONS_DBL(1)
+#define MILLIONS_DBL(n) (n##000000.)
+#define ONE_MILLION_DBL MILLIONS_DBL(1)
+
 // hardware related prefs
 
 /// fraction of a second quantisation for event timing
 ///
 /// > 10**8 is not recommended, since we sometimes store seconds in a double
-#define TICKS_PER_SECOND_DBL ((double)100000000.)   ///< actually microseconds / 100.
-#define TICKS_PER_SECOND (int64_t)100000000 ///< ticks per second
-#define USEC_TO_TICKS (TICKS_PER_SECOND / 1000000l) ///< how many TICKS in a microsecond [default 100]
+#define TICKS_PER_SECOND_DBL ((double)MILLIONS(100))   ///< actually microseconds / 100.
+#define TICKS_PER_SECOND ((ticks_t)MILLIONS(100)) ///< ticks per second
+#define USEC_TO_TICKS (TICKS_PER_SECOND / ONE_MILLION) ///< how many TICKS in a microsecond [default 100]
 
 #define LIVES_SHORTEST_TIMEOUT  (2. * TICKS_PER_SECOND_DBL) // 2 sec timeout
 #define LIVES_SHORT_TIMEOUT  (5. * TICKS_PER_SECOND_DBL) // 5 sec timeout
@@ -1586,17 +1596,12 @@ typedef struct {
 #define MAX_CBSTORES 8
   int ncbstores;
   lives_clip_t *cbstores[8];
+
+  /// caches for start / end / preview images. This avoids having to reload / reread them from the source, which could disrupt playback.
+  weed_layer_t *st_fcache, *en_fcache, *pr_fcache;
+  /// these are freed when the clip is switched or closed, or when the frame changes or is updated
   ////////////////////
 } mainwindow;
-
-// weed plants with type >= 512 are reserved for custom use, so let's take advantage of that
-#define WEED_PLANT_LIVES 31337
-
-#define WEED_LEAF_LIVES_SUBTYPE "subtype"
-#define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
-
-#define LIVES_WEED_SUBTYPE_MESSAGE 1
-#define LIVES_WEED_SUBTYPE_WIDGET 2
 
 extern _palette *palette;
 

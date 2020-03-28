@@ -77,7 +77,7 @@ char *get_stats_msg(boolean calc_only) {
   } else
     audmsg = lives_strdup(_("Clip has no audio.\n"));
 
-  if (mainw->blend_file != mainw->current_file && mainw->blend_file != -1) {
+  if (mainw->blend_file != mainw->current_file && IS_VALID_CLIP(mainw->blend_file)) {
     char *bgpal = get_palette_name_for_clip(mainw->blend_file);
     bgmsg = lives_strdup_printf(_("Bg clip: %d X %d, frame: %d / %d, palette: %s\n"),
                                 mainw->files[mainw->blend_file]->hsize,

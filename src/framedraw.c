@@ -402,7 +402,7 @@ weed_plant_t *framedraw_redraw(lives_special_framedraw_rect_t *framedraw, weed_l
       img_ext = get_image_ext_for_type(cfile->img_type);
     }
 
-    layer = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+    layer = lives_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
     if (!pull_frame(layer, img_ext, 0)) {
       weed_plant_free(layer);
       return NULL;
@@ -608,48 +608,70 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   mainw->write_failed = FALSE;
 
   if (cfile->clip_type == CLIP_TYPE_FILE && vend <= cfile->end && mainw->framedraw_frame > vend - FX_FRAME_PUMP_VAL) {
-    // pull some frames for up to 5 seconds
-    alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT);
-    do {
-      lives_widget_context_update();
-      if (!virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL)) {
-        return;
-      }
-      vend++;
-      timeout = lives_alarm_check(alarm_handle);
-    } while (vend <= cfile->end && timeout > 0 && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL);
-    cfile->fx_frame_pump = vend;
-    lives_alarm_clear(alarm_handle);
+    // pull frames in background
+    if (!cfile->pumper) {
+      cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
+                      cfile->start, cfile->end, FALSE, NULL);
+    }
+
   }
 
+  /*   alarm_handle = lives_alarm_set(LIVES_SHORT_TIMEOUT); */
+  /*   do { */
+  /*     lives_widget_context_update(); */
+  /*     if (!virtual_to_images(mainw->current_file, vend, vend, FALSE, NULL)) { */
+  /*       return; */
+  /*     } */
+  /*     vend++; */
+  /*     timeout = lives_alarm_check(alarm_handle); */
+  /*   } while (vend <= cfile->end && timeout > 0 && !mainw->cancelled && vend < cfile->fx_frame_pump + FX_FRAME_PUMP_VAL); */
+  /*   cfile->fx_frame_pump = vend; */
+  /*   lives_alarm_clear(alarm_handle); */
+  /* } */
+
   if (mainw->cancelled) {
+    if (cfile->pumper) {
+      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
+      lives_proc_thread_join(cfile->pumper);
+      weed_plant_free(cfile->pumper);
+      cfile->pumper = NULL;
+    }
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     return;
   }
+
+  //
 
   // get message from back end processor
   while (!(infofile = fopen(cfile->info_file, "r")) && !mainw->cancelled) {
     // wait until we get at least 1 frame
     lives_widget_context_update();
-    if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump <= cfile->end) {
-      // if we have a virtual clip (frames inside a video file)
-      // pull some more frames to images to get us started
-      if (cfile->fx_frame_pump > 0) {
-        if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) {
-          return;
-        }
-        if (cfile->fx_frame_pump == cfile->end) cfile->fx_frame_pump = 0;
-        else cfile->fx_frame_pump++;
-      }
-    } else {
-      // otherwise wait
-      lives_usleep(prefs->sleep_time);
-    }
+    /* if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump <= cfile->end) { */
+    /*   // if we have a virtual clip (frames inside a video file) */
+    /*   // pull some more frames to images to get us started */
+    /*   if (cfile->fx_frame_pump > 0) { */
+    /*     if (!virtual_to_images(mainw->current_file, cfile->fx_frame_pump, cfile->fx_frame_pump, FALSE, NULL)) { */
+    /*       return; */
+    /*     } */
+    /*     if (cfile->fx_frame_pump == cfile->end) cfile->fx_frame_pump = 0; */
+    /*     else cfile->fx_frame_pump++; */
+    /*   } */
+    /* } else { */
+    /*   // otherwise wait */
+    /*   lives_usleep(prefs->sleep_time); */
+    /* } */
+    lives_nanosleep(MILLIONS(10));
   }
 
   if (mainw->cancelled) {
     if (infofile) fclose(infofile);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+    if (cfile->pumper) {
+      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
+      lives_proc_thread_join(cfile->pumper);
+      weed_plant_free(cfile->pumper);
+      cfile->pumper = NULL;
+    }
     return;
   }
 
@@ -703,7 +725,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     }
   }
 
-  layer = weed_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
+  layer = lives_layer_new_for_frame(mainw->current_file, mainw->framedraw_frame);
   if (rfx->num_in_channels > 0 && !(rfx->props & RFX_PROPS_MAY_RESIZE)) {
     img_ext = LIVES_FILE_EXT_PRE;
   } else {
@@ -719,8 +741,6 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     redraw_framedraw_image(mainw->fd_layer);
   }
   mainw->current_file = current_file;
-  // add an idlefunc to pull more frames
-  //mainw->framepump_idle = lives_idle_add(pull_frame_idle, NULL); // TODO
 }
 
 

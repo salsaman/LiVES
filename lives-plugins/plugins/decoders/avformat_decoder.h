@@ -23,7 +23,6 @@ typedef struct  {
   AVPacket packet;
 
   boolean fps_avg;
-  boolean black_fill;
   boolean inited;
   boolean longer_seek;
   boolean needs_packet;

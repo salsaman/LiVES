@@ -234,7 +234,7 @@ typedef struct {
 
   char title[256];
   char author[256];
-  char comment[256];
+  char comment[1024];
 
   /// plugin should init this to 0 if URI changes
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
@@ -244,6 +244,7 @@ typedef struct {
   int height;
   int64_t nframes;
   lives_interlace_t interlace;
+  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
@@ -258,7 +259,7 @@ typedef struct {
 
   float fps;
   float max_decode_fps; ///< theoretical value with no memcpy
-
+  int64_t fwd_seek_time;
   int64_t jump_limit; ///< for plugin internal use
 
   // TODO use fix sized array
@@ -346,9 +347,6 @@ void close_decoder_plugin(lives_decoder_t *);
 lives_decoder_sys_t *open_decoder_plugin(const char *plname);
 void get_mime_type(char *text, int maxlen, const lives_clip_data_t *);
 void unload_decoder_plugins(void);
-
-boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette);
-
 lives_decoder_t *clone_decoder(int fileno);
 
 // RFX plugins

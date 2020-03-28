@@ -47,8 +47,12 @@ int32_t weed_plant_get_type(weed_plant_t *);
 
 // set flags for each leaf in a plant. If ign_prefix is not NULL, ignore leaves with keys that begin with ign_prefix
 // this enables a host to do: weed_add_plant_flags(plant, WEED_FLAG_IMMUTABLE | WEED_FLAG_UNDELETABLE, "plugin_")
-void weed_add_plant_flags(weed_plant_t *, int32_t flags, const char *ign_prefix);
-void weed_clear_plant_flags(weed_plant_t *t, int32_t flags, const char *ign_prefix);
+void weed_add_plant_flags(weed_plant_t *, uint32_t flags, const char *ign_prefix);
+void weed_clear_plant_flags(weed_plant_t *t, uint32_t flags, const char *ign_prefix);
+
+// add / clear bits for leaf flags, returns value of flags before alteration
+uint32_t weed_leaf_set_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< value ORed with flags
+uint32_t weed_leaf_clear_flagbits(weed_plant_t *, const char *leaf, uint32_t flagbits); ///< ~value ANDed with flags
 
 /* PLUGIN_INFO functions */
 char *weed_plugin_info_get_package_name(weed_plant_t *pinfo);
@@ -129,7 +133,7 @@ char *weed_paramtmpl_get_name(weed_plant_t *paramtmpl);
 int weed_paramtmpl_get_hint(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_variable_size(weed_plant_t *paramtmpl);
 int weed_paramtmpl_has_value_perchannel(weed_plant_t *paramtmpl);
-int weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
+uint32_t weed_paramtmpl_value_type(weed_plant_t *paramtmpl);
 int weed_paramtmpl_does_wrap(weed_plant_t *paramtmpl);
 int weed_paramtmpl_hints_string_choice(weed_plant_t *paramtmpl);
 int weed_paramtmpl_hints_hidden(weed_plant_t *paramtmpl);
@@ -159,7 +163,7 @@ int weed_param_get_nchoices(weed_plant_t *param);
 int weed_gui_get_flags(weed_plant_t *gui);
 
 // utils
-char *weed_seed_type_to_text(int32_t seed_type) WARN_UNUSED;
+char *weed_seed_type_to_text(uint32_t seed_type) WARN_UNUSED;
 char *weed_error_to_text(weed_error_t error) WARN_UNUSED;
 char *weed_palette_get_name_full(int pal, int clamping, int subspace) WARN_UNUSED;
 
@@ -167,32 +171,57 @@ const char *weed_palette_get_name(int pal);
 const char *weed_yuv_clamping_get_name(int clamping);
 const char *weed_yuv_subspace_get_name(int subspace);
 
-int weed_palette_get_bits_per_macropixel(int pal);
 double weed_palette_get_compression_ratio(int pal);
+
+#ifndef WEED_ADVANCED_PALETTES
+
+int weed_palette_get_bits_per_macropixel(int pal);
 
 #define weed_palette_is_alpha(pal) ((((pal >= 1024) && (pal < 2048))) ? WEED_TRUE : WEED_FALSE)
 #define weed_palette_is_rgb(pal) (pal >0 && pal < 512 ? WEED_TRUE : WEED_FALSE)
 #define weed_palette_is_yuv(pal) (pal >= 512 && pal < 1024 ? WEED_TRUE : WEED_FALSE)
 
-#define weed_palette_is_float(pal) ((pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_RGBFLOAT) ? WEED_TRUE : WEED_FALSE)
+#define weed_palette_is_float(pal) ((pal == WEED_PALETTE_RGBAFLOAT || pal == WEED_PALETTE_AFLOAT || \
+				     pal == WEED_PALETTE_RGBFLOAT) ? WEED_TRUE : WEED_FALSE)
 
+/// This is actually the MACRO pixel size in bytes, to get the real pixel size, divide by weed_palette_pixles_per_macropixel()
 #define pixel_size(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_YUV888) ? 3 : \
 			 (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || \
 			  pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 4 : 1)
 
-#define weed_palette_has_alpha(pal) ((pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_RGBAFLOAT || weed_palette_is_alpha(pal)) ? WEED_TRUE : WEED_FALSE)
+#define weed_palette_has_alpha(pal) ((pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || \
+				      pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUVA8888 || \
+				      pal == WEED_PALETTE_RGBAFLOAT || weed_palette_is_alpha(pal)) ? WEED_TRUE : WEED_FALSE)
 
 // return ratio of plane[n] width/plane[0] width
-#define weed_palette_get_plane_ratio_horizontal(pal, plane) ((double)(plane == 0 ? 1.0 : (plane == 1 || plane == 2) ? (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) ? 1.0 : (pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) ? 0.5 : plane == 3 ? pal == WEED_PALETTE_YUVA4444P ? 1.0 : 0.0 : 0.0 : 0.0))
+#define weed_palette_get_plane_ratio_horizontal(pal, plane) ((double)(plane == 0 ? 1.0 : (plane == 1 || plane == 2) ? \
+								      (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) ? 1.0 : \
+								      (pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV420P || \
+								       pal == WEED_PALETTE_YVU420P) ? 0.5 : plane == 3 ? \
+								      pal == WEED_PALETTE_YUVA4444P ? 1.0 : 0.0 : 0.0 : 0.0))
 
 // return ratio of plane[n] height/plane[n] height
-#define weed_palette_get_plane_ratio_vertical(pal, plane) ((double)(plane == 0 ? 1.0 : (plane == 1 || plane == 2) ? (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_YUV422P) ? 1.0 : (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P) ? 0.5 : plane == 3 ? pal == WEED_PALETTE_YUVA4444P ? 1.0 : 0.0 : 0.0 : 0.0))
+#define weed_palette_get_plane_ratio_vertical(pal, plane) ((double)(plane == 0 ? 1.0 : (plane == 1 || plane == 2) ? \
+								    (pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P || \
+								     pal == WEED_PALETTE_YUV422P) ? 1.0 : (pal == WEED_PALETTE_YUV420P || \
+													   pal == WEED_PALETTE_YVU420P) ? 0.5 : plane == 3 ? \
+								    pal == WEED_PALETTE_YUVA4444P ? 1.0 : 0.0 : 0.0 : 0.0))
 
-#define weed_palette_get_nplanes(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV411 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT || pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_A1 || pal == WEED_PALETTE_RGBFLOAT || pal == WEED_PALETTE_RGBAFLOAT) ? 1 : (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) ? 3 : pal == WEED_PALETTE_YUVA4444P ? 4 : 0)
+#define weed_palette_get_nplanes(pal) ((pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24 || \
+					pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 || \
+					pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV || pal == WEED_PALETTE_YUV411 || \
+					pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888 || pal == WEED_PALETTE_AFLOAT || \
+					pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_A1 || pal == WEED_PALETTE_RGBFLOAT || \
+					pal == WEED_PALETTE_RGBAFLOAT) ? 1 : (pal == WEED_PALETTE_YUV420P || \
+									      pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P || \
+									      pal == WEED_PALETTE_YUV444P) ? 3 : pal == WEED_PALETTE_YUVA4444P ? 4 : 0)
+
+#define weed_palette_get_pixels_per_macropixel(pal) ((pal == WEED_PALETTE_UYVY || pal == WEED_PALETTE_YUYV) ? 2 : \
+						     (pal == WEED_PALETTE_YUV411) ? 4 : (weed_palette_is_valid(pal) ? 1 : 0))
 
 #define weed_palette_is_valid(pal) (weed_palette_get_nplanes(pal) == 0 ? WEED_FALSE : WEED_TRUE)
 
-#define weed_palette_get_pixels_per_macropixel(pal) ((pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888) ? 2 : (pal == WEED_PALETTE_YUV411) ? 4 : (weed_palette_is_valid(pal) ? 1 : 0))
+#endif
 
 #ifdef __cplusplus
 }

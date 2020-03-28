@@ -78,8 +78,10 @@ static void pulse_success_cb(pa_stream *stream, int i, void *userdata) {
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#define RESEEK_ENABLE
+
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
-  //pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
+  pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
   // we get isolated cases when the GUI is very busy, for example right after playback
   // we should ignore these isolated cases, except in DEBUG mode.
   // otherwise - increase tlen ?
@@ -89,14 +91,30 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
     fprintf(stderr, "PA Stream underrun.\n");
   }
   mainw->uflow_count++;
+#ifdef RESEEK_ENABLE
+  if (pulsed->is_output && CLIP_HAS_VIDEO(pulsed->playing_file)
+      && !afile->play_paused && pulsed->in_use && !pulsed->is_paused) {
+    avsync_force();
+  }
+#endif
 }
 
 
 static void stream_overflow_callback(pa_stream *s, void *userdata) {
   pa_operation *paop;
+  pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
   fprintf(stderr, "Stream overrun.\n");
   paop = pa_stream_flush(s, NULL, NULL);
   pa_operation_unref(paop);
+#ifdef RESEEK_ENABLE
+  if (pulsed->is_output && CLIP_HAS_VIDEO(pulsed->playing_file)
+      && !afile->play_paused && pulsed->in_use && !pulsed->is_paused) {
+    if (!pthread_mutex_trylock(&mainw->avseek_mutex)) {
+      mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+      pthread_mutex_unlock(&mainw->avseek_mutex);
+    }
+  }
+#endif
 }
 
 
@@ -528,12 +546,14 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     if (!mainw->audio_seek_ready) {
       if (!mainw->video_seek_ready) {
         int64_t xusec = pulsed->extrausec;
-        //mainw->startticks = mainw->currticks;
         sample_silence_pulse(pulsed, nsamples * pulsed->out_achans * pulsed->out_asamps >> 3, xbytes);
+        pulsed->seek_pos += xbytes;
+        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
         pulsed->extrausec = xusec;
         return;
       }
 
+      pulsed->seek_pos = ALIGN_CEIL64(pulsed->seek_pos - qnt, qnt);
       lives_lseek_buffered_rdonly_absolute(pulsed->fd, pulsed->seek_pos);
       fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos;
 
@@ -553,8 +573,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
 
-      /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos, */
-      /* 	      ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
+      g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos,
+              ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks);
 
       pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->audio_seek_ready = TRUE;
@@ -1671,6 +1691,9 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN;
     pa_battr.tlength = LIVES_PA_BUFF_TARGET;
     pa_battr.minreq = LIVES_PA_BUFF_MINREQ;
+
+    /// TODO: kick off a thread to call the audio loop peridically (to receive command messages), on audio_seek == FALSE,
+    // seek and fill the prefbuffer, then kill the thread loop and let pa take over. Must do the same on underflow though
     pa_battr.prebuf = 0;  /// must set this to zero else we hang, since pa is waiting for the buffer to be filled first
   } else {
     pa_battr.maxlength = LIVES_PA_BUFF_MAXLEN * 2;
@@ -1712,7 +1735,7 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
     pavol = pa_sw_volume_from_linear(pdriver->volume_linear);
     pa_cvolume_set(&pdriver->volume, pdriver->out_achans, pavol);
 
-    pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(PA_STREAM_ADJUST_LATENCY
+    pa_stream_connect_playback(pdriver->pstream, NULL, &pa_battr, (pa_stream_flags_t)(0
                                | PA_STREAM_RELATIVE_VOLUME
                                | PA_STREAM_INTERPOLATE_TIMING
                                | PA_STREAM_START_CORKED
@@ -2004,9 +2027,9 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
                             * (pulsed->in_arate >= 0. ? 1.0 : - 1.0) : 0.))
                         * (double)afile->arps) * afile->achans * afile->asampsize / 8;
 
-  /* g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate); */
-  /*   g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart, */
-  /*           (double)seekstart / (double)afile->arate / 4.); */
+  g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate);
+  g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart,
+          (double)seekstart / (double)afile->arate / 4.);
   pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;
 }

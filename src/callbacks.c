@@ -4970,8 +4970,9 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   }
 
   if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-    resync_audio((double)cfile->frameno + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL)
-                 - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->pb_fps);
+    resync_audio(((double)cfile->frameno));
+    /* + (double)(lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL) */
+    /* - mainw->startticks) / TICKS_PER_SECOND_DBL * cfile->pb_fps); */
   }
 
   // change play direction
@@ -9258,6 +9259,13 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
     mainw->selwidth_locked = TRUE;
   }
   update_sel_menu();
+
+  if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
+    /// load this first in case of caching - it is likely to be larger and higher quality
+    if (mainw->prv_link == PRV_START && mainw->preview_frame != cfile->start)
+      load_preview_image(FALSE);
+  }
+
   load_start_image(cfile->start);
 
   if (cfile->start > cfile->end) {
@@ -9271,10 +9279,6 @@ void on_spinbutton_start_value_changed(LiVESSpinButton * spinbutton, livespointe
       redraw_timer_bars((double)(ostart - 1.) / cfile->fps, (double)cfile->start / cfile->fps, 0);
   }
 
-  if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
-    if (mainw->prv_link == PRV_START && mainw->preview_frame != cfile->start)
-      load_preview_image(FALSE);
-  }
   lives_signal_handler_unblock(mainw->spinbutton_start, mainw->spin_start_func);
   updated = FALSE;
 }
@@ -9321,6 +9325,13 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
     mainw->selwidth_locked = TRUE;
   }
   update_sel_menu();
+
+  if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
+    /// load this first in case of caching - it is likely to be larger and higher quality
+    if (mainw->prv_link == PRV_END && mainw->preview_frame != cfile->end)
+      load_preview_image(FALSE);
+  }
+
   load_end_image(cfile->end);
 
   if (cfile->end < cfile->start) {
@@ -9335,10 +9346,6 @@ void on_spinbutton_end_value_changed(LiVESSpinButton * spinbutton, livespointer 
       redraw_timer_bars((double)cfile->end / cfile->fps, (double)(oend + 1) / cfile->fps, 0);
   }
 
-  if (!LIVES_IS_PLAYING && mainw->play_window != NULL && cfile->is_loaded) {
-    if (mainw->prv_link == PRV_END && mainw->preview_frame != cfile->end)
-      load_preview_image(FALSE);
-  }
   lives_signal_handler_unblock(mainw->spinbutton_end, mainw->spin_end_func);
   updated = FALSE;
 }

@@ -1,6 +1,6 @@
 // audio.h
 // LiVES (lives-exe)
-// (c) G. Finch (salsaman+lives@gmail.com) 2005 - 2019
+// (c) G. Finch (salsaman+lives@gmail.com) 2005 - 2020
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -30,23 +30,23 @@
 #define MAX_ACHANS 2
 
 // keep first N audio_in filesysten handles open - multitrack only
-#define NSTOREDFDS 16
+#define NSTOREDFDS 64
 
 /// TODO ** - make configurable - audio buffer size for rendering
-#define MAX_AUDIO_MEM 8*1024*1024
+#define MAX_AUDIO_MEM 32 * 1024 * 1024
 
 /// chunk size for interpolate/effect cycle
 #define RENDER_BLOCK_SIZE 1024
 
 /// size of silent block in bytes
-#define SILENCE_BLOCK_SIZE 65536
+#define SILENCE_BLOCK_SIZE BUFFER_FILL_BYTES_LARGE
 
 /// buffer size (output samples) for (semi) realtime audio (bytes == XSAMPLES * achans * samp. size)
 /// this is shared across prefs->num_rtaudiobufs buffers (default 4)
 /// used when we have an event_list (i.e multitrack or previewing a recording in CE)
-#define XSAMPLES 327680
+#define XSAMPLES 393216
 
-#define AUD_WRITTEN_CHECK 100000000 ///< after recording this many bytes we check disk space (default 100MB)
+#define AUD_WRITTEN_CHECK MILLIONS(100) ///< after recording this many bytes we check disk space (default 100MB)
 
 /////////////////////////////////////
 /// asynch msging
@@ -146,12 +146,12 @@ typedef enum lives_audio_loop {
   AUDIO_LOOP_PINGPONG
 } lives_audio_loop_t;
 
-float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans);
+float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) GNU_HOT;
 boolean audiofile_is_silent(int fnum, double start, double end);
 
 void sample_silence_dS(float *dst, uint64_t nsamples);
 
-void sample_silence_stream(int nchans, int nframes);
+void sample_silence_stream(int nchans, int64_t nframes);
 
 boolean pad_with_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
                          boolean big_endian);
@@ -160,7 +160,8 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d16(short *dst, short *src,
-                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian, int swap_sign) GNU_HOT;
+                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_endian,
+                         int swap_sign) GNU_HOT;
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
                         uint64_t nsamples, size_t tbytes, float scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
@@ -211,6 +212,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
 void wake_audio_thread(void);
 
 boolean resync_audio(double frameno);
+void avsync_force(void);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
     weed_timecode_t fill_tc, int what_to_get, boolean exact);
@@ -234,7 +236,7 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 
 boolean apply_rte_audio_init(void);
 void apply_rte_audio_end(boolean del);
-boolean apply_rte_audio(int nframes);
+boolean apply_rte_audio(int64_t nframes);
 
 void init_audio_frame_buffers(short aplayer);
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);

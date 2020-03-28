@@ -873,17 +873,17 @@ ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less)
   if (!fbuff->slurping && fbuff->bufsztype != BUFF_SIZE_READ_CUSTOM) {
     cost = 1. / (1. + (double)fbuff->nseqreads);
     if (fbuff->bufsztype == BUFF_SIZE_READ_SMALL) {
-      if (!tuneds && !tuners) tuners = weed_plant_new(31338);
-      autotune_u64(tuners, 8, 512, 64, cost);
+      if (!tuneds && (!tuners || (tunedsm && !tunedm))) tuners = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 3);
+      autotune_u64(tuners, 8, smedbytes / 4, 16, cost);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_SMALLMED) {
-      if (!tunedsm && !tunersm) tunersm = weed_plant_new(31339);
+      if (tuneds && !tunedsm && !tunersm) tunersm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 4);
       autotune_u64(tunersm, smbytes * 4, 32768, 16, cost);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
-      if (!tunedm && !tunerm) tunerm = weed_plant_new(31340);
-      autotune_u64(tunerm, smedbytes * 4, 65536, 32, cost);
+      if (tunedsm && !tunedm && !tunerm) tunerm = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 5);
+      autotune_u64(tunerm, smedbytes * 4, 65536 * 2, 32, cost);
     } else if (fbuff->bufsztype == BUFF_SIZE_READ_LARGE) {
-      if (!tunedl && !tunerl) tunerl = weed_plant_new(31341);
-      autotune_u64(tunerl, medbytes * 4, 512 * 1024, 256, cost);
+      if (tunedm && !tunedl && !tunerl) tunerl = lives_plant_new_with_index(LIVES_WEED_SUBTYPE_TUNABLE, 6);
+      autotune_u64(tunerl, medbytes * 4, 8192 * 1024, 256, cost);
     }
   }
 #endif
@@ -1043,6 +1043,11 @@ rd_done:
       if (!tunersm) {
         tunedsm = TRUE;
         smedbytes = get_near2pow(smedbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(smedbytes)));
+          lives_free(tmp);
+        }
       }
     }
   } else if (fbuff->bufsztype == BUFF_SIZE_READ_MED) {
@@ -1051,6 +1056,11 @@ rd_done:
       if (!tunerm) {
         tunedm = TRUE;
         medbytes = get_near2pow(medbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(medbytes)));
+          lives_free(tmp);
+        }
       }
     }
   } else {
@@ -1059,6 +1069,11 @@ rd_done:
       if (!tunerl) {
         tunedl = TRUE;
         bigbytes = get_near2pow(bigbytes);
+        if (prefs->show_dev_opts) {
+          char *tmp;
+          g_printerr("value rounded to %s\n", (tmp = lives_format_storage_space_string(bigbytes)));
+          lives_free(tmp);
+        }
       }
     }
   }
@@ -4338,89 +4353,46 @@ int lives_list_strcmp_index(LiVESList * list, livesconstpointer data, boolean ca
 }
 
 
-void add_to_recent(const char *filename, double start, int frames, const char *extra_params) {
+void add_to_recent(const char *filename, double start, frames_t frames, const char *extra_params) {
   const char *mtext;
-  char *file;
+  char *file, *prefname;
+  register int i;
 
   if (frames > 0) {
-    if (extra_params == NULL || (!(*extra_params))) file = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
+    if (!extra_params || (!(*extra_params))) file = lives_strdup_printf("%s|%.2f|%d", filename, start, frames);
     else file = lives_strdup_printf("%s|%.2f|%d\n%s", filename, start, frames, extra_params);
   } else {
-    if (extra_params == NULL || (!(*extra_params))) file = lives_strdup(filename);
+    if (!extra_params || (!(*extra_params))) file = lives_strdup(filename);
     else file = lives_strdup_printf("%s\n%s", filename, extra_params);
   }
 
-  mtext = lives_menu_item_get_text(mainw->recent[0]);
-  if (strcmp(file, mtext)) {
-    mtext = lives_menu_item_get_text(mainw->recent[1]);
-    if (strcmp(file, mtext)) {
-      mtext = lives_menu_item_get_text(mainw->recent[2]);
-      if (strcmp(file, mtext)) {
-        // not in list, or at pos 4
-        mtext = lives_menu_item_get_text(mainw->recent[2]);
-        lives_menu_item_set_text(mainw->recent[3], mtext, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[3], mtext, FALSE);
-        set_utf8_pref(PREF_RECENT4, mtext);
-
-        mtext = lives_menu_item_get_text(mainw->recent[1]);
-        lives_menu_item_set_text(mainw->recent[2], mtext, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[2], mtext, FALSE);
-        set_utf8_pref(PREF_RECENT3, mtext);
-
-        mtext = lives_menu_item_get_text(mainw->recent[0]);
-        lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-        set_utf8_pref(PREF_RECENT2, mtext);
-
-        lives_menu_item_set_text(mainw->recent[0], file, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-        set_utf8_pref(PREF_RECENT1, file);
-      } else {
-        // #3 in list
-        mtext = lives_menu_item_get_text(mainw->recent[1]);
-        lives_menu_item_set_text(mainw->recent[2], mtext, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[2], mtext, FALSE);
-        set_utf8_pref(PREF_RECENT3, mtext);
-
-        mtext = lives_menu_item_get_text(mainw->recent[0]);
-        lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-        set_utf8_pref(PREF_RECENT2, mtext);
-
-        lives_menu_item_set_text(mainw->recent[0], file, FALSE);
-        if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-        set_utf8_pref(PREF_RECENT1, file);
-      }
-    } else {
-      // #2 in list
-      mtext = lives_menu_item_get_text(mainw->recent[0]);
-      lives_menu_item_set_text(mainw->recent[1], mtext, FALSE);
-      if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[1], mtext, FALSE);
-      set_utf8_pref(PREF_RECENT2, mtext);
-
-      lives_menu_item_set_text(mainw->recent[0], file, FALSE);
-      if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
-      set_utf8_pref(PREF_RECENT1, file);
-    }
-  } else {
-    // I'm number 1, so why change ;-)
+  for (i = 0; i < N_RECENT_FILES; i++) {
+    mtext = lives_menu_item_get_text(mainw->recent[i]);
+    if (!lives_strcmp(file, mtext)) break;
   }
 
-  mtext = lives_menu_item_get_text(mainw->recent[0]);
-  if (*mtext) {
-    lives_widget_show(mainw->recent[0]);
+  if (i == 0) return;
+
+  if (i == N_RECENT_FILES) --i;
+
+  for (; i > 0; i--) {
+    mtext = lives_menu_item_get_text(mainw->recent[i - 1]);
+    lives_menu_item_set_text(mainw->recent[i], mtext, FALSE);
+    if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[i], mtext, FALSE);
+    prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
+    set_utf8_pref(prefname, mtext);
+    lives_free(prefname);
   }
-  mtext = lives_menu_item_get_text(mainw->recent[1]);
-  if (*mtext) {
-    lives_widget_show(mainw->recent[1]);
-  }
-  mtext = lives_menu_item_get_text(mainw->recent[2]);
-  if (*mtext) {
-    lives_widget_show(mainw->recent[2]);
-  }
-  mtext = lives_menu_item_get_text(mainw->recent[3]);
-  if (*mtext) {
-    lives_widget_show(mainw->recent[3]);
+
+  lives_menu_item_set_text(mainw->recent[0], file, FALSE);
+  if (mainw->multitrack != NULL) lives_menu_item_set_text(mainw->multitrack->recent[0], file, FALSE);
+  prefname = lives_strdup_printf("%s%d", PREF_RECENT, 1);
+  set_utf8_pref(prefname, file);
+  lives_free(prefname);
+
+  for (; i < N_RECENT_FILES; i++) {
+    mtext = lives_menu_item_get_text(mainw->recent[i]);
+    if (*mtext) lives_widget_show(mainw->recent[i]);
   }
 
   lives_free(file);

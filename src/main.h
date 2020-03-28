@@ -46,7 +46,7 @@
 // Have fun, and let's fight for Free Speech, Open Media and True Creativity !
 // - Salsaman
 
-// note: preferred coding style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC128 -xL -p -o -Q -xp
+// note: preferred formatting style is: astyle --style=java -H -Y -s2 -U -k3 -W3 -xC128 -xL -p -o -O -Q -xp
 
 #ifndef HAS_LIVES_MAIN_H
 #define HAS_LIVES_MAIN_H
@@ -343,6 +343,8 @@ typedef struct {
   uint16_t alpha;
 } lives_colRGBA64_t;
 
+#define WEED_ADVANCED_PALETTES
+
 #if NEED_LOCAL_WEED
 #include "../libweed/weed-host.h"
 #include "../libweed/weed.h"
@@ -426,7 +428,7 @@ typedef struct {
 #include "lbindings.h"
 #endif
 
-#define N_RECENT_FILES 4
+#define N_RECENT_FILES 16
 
 typedef enum {
   UNDO_NONE = 0,
@@ -786,6 +788,8 @@ typedef struct _lives_clip_t {
 
   frames_t *frame_index_back; ///< for undo
 
+  lives_proc_thread_t pumper;
+
   frames_t fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
 #define FX_FRAME_PUMP_VAL 50 ///< how many frames to prime the pump for realtime effects and resampler
@@ -874,6 +878,8 @@ typedef struct {
   boolean has_wmctrl;
   boolean has_ssh_askpass;
   boolean has_youtube_dl;
+  boolean has_du;
+  boolean has_md5sum;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
@@ -1692,7 +1698,7 @@ void break_me(void);
 
 #endif
 
-//#define VALGRIND_ON
+#define VALGRIND_ON
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS

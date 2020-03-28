@@ -77,7 +77,6 @@ typedef struct {
   realloc_f *ext_realloc;
   calloc_f  *ext_calloc;
 
-  // TODO use fix sized array
   char *URI; ///< the URI of this cdata
 
   int nclips; ///< number of clips (titles) in container
@@ -85,7 +84,7 @@ typedef struct {
 
   char title[256];
   char author[256];
-  char comment[256];
+  char comment[1024];
 
   /// plugin should init this to 0 if URI changes
   int current_clip; ///< current clip number in container (starts at 0, MUST be <= nclips) [rw host]
@@ -95,6 +94,7 @@ typedef struct {
   int height;
   int64_t nframes;
   lives_interlace_t interlace;
+  int *rec_rowstrides; ///< if non-NULL, plugin can set recommended vals
 
   /// x and y offsets of picture within frame
   /// for primary pixel plane
@@ -109,7 +109,7 @@ typedef struct {
 
   float fps;
   float max_decode_fps; ///< theoretical value with no memcpy
-
+  int64_t fwd_seek_time;
   int64_t jump_limit; ///< for internal use
 
   // TODO use fix sized array
@@ -118,10 +118,12 @@ typedef struct {
   /// plugin should init this to palettes[0] if URI changes
   int current_palette;  ///< current palette [rw host]; must be contained in palettes
 
+  /// plugin can change per frame
   int YUV_sampling;
   int YUV_clamping;
   int YUV_subspace;
   int frame_gamma; ///< values WEED_GAMMA_UNKNOWN (0), WEED_GAMMA_SRGB (1), WEED_GAMMA_LINEAR (2)
+
   char video_name[512]; ///< name of video codec, e.g. "theora" or NULL
 
   /* audio data */
@@ -132,6 +134,7 @@ typedef struct {
   boolean ainterleaf;
   char audio_name[512]; ///< name of audio codec, e.g. "vorbis" or NULL
 
+  /// plugin can change per frame
   int seek_flag; ///< bitmap of seek properties
 
 #define SYNC_HINT_AUDIO_TRIM_START (1<<0)
@@ -212,6 +215,7 @@ static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip
   clone->height = cdata->height;
   clone->nframes = cdata->nframes;
   clone->interlace = cdata->interlace;
+  clone->rec_rowstrides = NULL;
   clone->offs_x = cdata->offs_x;
   clone->offs_y = cdata->offs_y;
   clone->frame_width = cdata->frame_width;
@@ -220,6 +224,7 @@ static lives_clip_data_t *clone_cdata(lives_clip_data_t *clone, const lives_clip
   clone->frame_gamma = WEED_GAMMA_UNKNOWN;
   clone->fps = cdata->fps;
   clone->max_decode_fps = cdata->max_decode_fps;
+  clone->fwd_seek_time = cdata->fwd_seek_time;
   clone->jump_limit = cdata->jump_limit;
   if (cdata->palettes != NULL) clone->palettes[0] = cdata->palettes[0];
   clone->current_palette = cdata->current_palette;

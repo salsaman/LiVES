@@ -2172,7 +2172,7 @@ boolean cconx_convert_pixel_data(weed_plant_t *dchan, weed_plant_t *schan) {
     /// see if dest chan supports the source chan palette
     int num_palettes = weed_leaf_num_elements(dtmpl, WEED_LEAF_PALETTE_LIST);
     int *palettes = weed_get_int_array(dtmpl, WEED_LEAF_PALETTE_LIST, &error);
-    if (check_weed_palette_list(palettes, num_palettes, ipal) == ipal) pal_ok = TRUE; ///< yes
+    if (best_palette_match(palettes, num_palettes, ipal) == ipal) pal_ok = TRUE; ///< yes
     else pal_ok = FALSE; ///<no
     oflags = weed_get_int_value(dtmpl, WEED_LEAF_FLAGS, &error);
     if (ipal != opal && (oflags & WEED_CHANNEL_REINIT_ON_PALETTE_CHANGE)) needs_reinit = TRUE;

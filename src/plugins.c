@@ -1047,7 +1047,7 @@ boolean vpp_try_match_palette(_vid_playback_plugin *vpp, weed_layer_t *layer) {
     }
     if (pal_list[i] == WEED_PALETTE_END) {
       if (!i) return FALSE;
-      palette = check_weed_palette_list(pal_list, i, palette);
+      palette = best_palette_match(pal_list, i, palette);
     }
     if (palette == WEED_PALETTE_END) return FALSE;
     if (palette != vpp->palette) {
@@ -2036,14 +2036,6 @@ LiVESList *filter_encoders_by_img_ext(LiVESList * encoders, const char *img_ext)
 
 //////////////////////////////////////////////////////
 // decoder plugins
-
-boolean decplugin_supports_palette(const lives_decoder_t *dplug, int palette) {
-  register int i = 0;
-  int cpal;
-  while ((cpal = dplug->cdata->palettes[i++]) != WEED_PALETTE_END) if (cpal == palette) return TRUE;
-  return FALSE;
-}
-
 
 boolean decoder_plugin_move_to_first(const char *name) {
   LiVESList *decoder_plugin, *last_decoder_plugin = NULL;

@@ -11206,13 +11206,19 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "ce_thumbs.h"
 
 #define MAX_NULL_EVENTS 50
-#define LOOP_LIMIT 16
+#define LOOP_LIMIT 32
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;
   boolean noswitch = mainw->noswitch;
 
-  if (!pthread_equal(capable->main_thread, pthread_self())) return FALSE;
+  if (!pthread_equal(capable->main_thread, pthread_self())) {
+    if (prefs->show_dev_opts) {
+      g_printerr("Bad thread, tried to wiggle our widgets !\n");
+      break_me();
+    }
+    return FALSE;
+  }
 
   if (mainw->no_context_update) return FALSE;
 

@@ -2761,7 +2761,6 @@ void multitrack_view_in_out(LiVESMenuItem * menuitem, livespointer user_data) {
 
 static char *time_to_string(double secs) {
   int hours, mins, rest;
-  char *rests;
   char timestring[TIMECODE_LENGTH];
 
   hours = secs / 3600;
@@ -2770,10 +2769,7 @@ static char *time_to_string(double secs) {
   secs -= mins * 60.;
   rest = (secs - ((int)secs) * 1.) * 100. + .5;
   secs = (int)secs * 1.;
-  if (rest < 10) rests = lives_strdup_printf("%d0", rest);
-  else rests = lives_strdup_printf("%d", rest);
-  lives_snprintf(timestring, TIMECODE_LENGTH, "%02d:%02d:%02d.%s", hours, mins, (int)secs, rests);
-  lives_free(rests);
+  lives_snprintf(timestring, TIMECODE_LENGTH, "%02d:%02d:%02d.%02d", hours, mins, (int)secs, rest);
   return lives_strdup(timestring);
 }
 
@@ -3202,7 +3198,7 @@ void mt_show_current_frame(lives_mt * mt, boolean return_layer) {
 
   if (mt->is_rendering && actual_frame <= cfile->frames) {
     // get the actual frame if it has already been rendered
-    mainw->frame_layer = weed_layer_new_for_frame(mainw->current_file, actual_frame);
+    mainw->frame_layer = lives_layer_new_for_frame(mainw->current_file, actual_frame);
     pull_frame(mainw->frame_layer, get_image_ext_for_type(cfile->img_type), curr_tc);
   } else {
     weed_plant_t *live_inst = NULL;
@@ -6707,21 +6703,13 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   lives_memset(buff, 0, 1);
   widget_opts.mnemonic_label = FALSE;
 
-  get_utf8_pref(PREF_RECENT1, buff, 32768);
-
-  mt->recent[0] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT2, buff, 32768);
-
-  mt->recent[1] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT3, buff, 32768);
-
-  mt->recent[2] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT4, buff, 32768);
-
-  mt->recent[3] = lives_standard_menu_item_new_with_label(buff);
+  for (i = 0; i < N_RECENT_FILES; i++) {
+    char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
+    get_utf8_pref(prefname, buff, PATH_MAX * 2);
+    lives_free(prefname);
+    mt->recent[i] = lives_standard_menu_item_new_with_label(buff);
+    lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[i]);
+  }
 
   widget_opts.mnemonic_label = TRUE;
 
@@ -18233,6 +18221,10 @@ static void draw_soundwave(LiVESWidget * ebox, lives_painter_surface_t *surf, in
       if (secs > (chnum == 0 ? mainw->files[fnum]->laudio_time : mainw->files[fnum]->raudio_time)) break;
 
       // seek and read
+      if (afd == -1) {
+        mainw->read_failed = -2;
+        return;
+      }
       ypos = get_float_audio_val_at_time(fnum, afd, secs, chnum, cfile->achans) * .5;
 
       lives_painter_move_to(cr, i, (float)lives_widget_get_allocation_height(ebox) / 2.);

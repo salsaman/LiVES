@@ -3696,7 +3696,7 @@ lives_render_error_t render_events(boolean reset) {
                 mainw->scrap_pixbuf = NULL;
               }
               old_scrap_frame = mainw->frame_index[scrap_track];
-              layer = weed_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
+              layer = lives_layer_new_for_frame(mainw->clip_index[scrap_track], mainw->frame_index[scrap_track]);
               offs = weed_get_int64_value(event, WEED_LEAF_HOST_SCRAP_FILE_OFFSET, &weed_error);
               if (mainw->files[mainw->scrap_file]->ext_src == NULL) load_from_scrap_file(NULL, -1);
               lives_lseek_buffered_rdonly_absolute(LIVES_POINTER_TO_INT(mainw->files[mainw->clip_index[scrap_track]]->ext_src), offs);
@@ -3720,7 +3720,7 @@ lives_render_error_t render_events(boolean reset) {
 
             for (i = 0; i < mainw->num_tracks; i++) {
               if (mainw->clip_index[i] > 0 && mainw->frame_index[i] > 0 && mainw->multitrack != NULL) is_blank = FALSE;
-              layers[i] = weed_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
+              layers[i] = lives_layer_new_for_frame(mainw->clip_index[i], mainw->frame_index[i]);
               weed_layer_nullify_pixel_data(layers[i]);
 
               if ((oclip = mainw->old_active_track_list[i]) != (nclip = mainw->active_track_list[i])) {

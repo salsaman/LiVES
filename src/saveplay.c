@@ -3572,6 +3572,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   cfile->layout_map = NULL;
   cfile->frame_index = cfile->frame_index_back = NULL;
   cfile->fx_frame_pump = 0;
+  cfile->pumper = NULL;
   cfile->stored_layout_frame = 0;
   cfile->stored_layout_audio = 0.;
   cfile->stored_layout_fps = 0.;

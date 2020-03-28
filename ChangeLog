@@ -5,6 +5,7 @@ Configuration directory can now be specified from the commandline (-configdir)
 Implement a thread pool with generic worker threads, eliminating time consumed by thread thread startup / shutdown.
 Implement auto gamma correction, (sRGB, Linear, bt.709). Conversion is done via the threadpool.
 Implement threading for swscale; also using the threadpool.
+Added a predictive caching mechanism to the player,
 Update the plugin architecture (libweed) to version 2.0, update the specs. for Weed, Weed Effects, Weed Audio Effects.
 libweed is now totally threadsafe.
 Some performance critical parameters are now tuned automatically using a time - cost minimisation function.
@@ -17,6 +18,9 @@ The playback engine now implements an intelligent predictive pre-caching systen.
 Preview quality can now be set to "adaptive", allowing the quality to vary depending on the player engine load.
 A / V sync drift has been reduced to a maximum of 1 frame
 Fix screen / window sizing issues.
+The renderer now uses a separate thread for saving frames to disk, making rendering much faster.
+The openGL playback plugin can now handle letterboxing itself, reducing the overhead when playing fullscreen with letterboxing.
+Created lives_proc_thread functionality, which allows literally any function to be run as a background thread.
 Audio caching for multitrack is now done in a separate thread, eliminating the jitters during playback.
 Audio effects now have automatic clipping prevention, using a dynamic volume adjustment.
 Fix data connections window so it shows the correct out parameter.
@@ -38,6 +42,7 @@ Decoder plugins now free their internal buffers when not in use, resulting in lo
 Subcategorise and sort all effects menus by package and type.
 Allow choice of "solo" or non solo mode when editing effect parameters in multitrack.
 Bookmark keys (F1 - F11) now record / set the frame position as well as the clip.
+Increased the size of the "recent files" list to 16.
 Multitrack parameter window now also has a "Reset to Defaults" button.
 Stop multitrack parameters from getting reset after an autobackup, or when switching channels, e.g. in the compositor.
 Smooth out playback by interpolating using sample counts between soundcard timing updates.

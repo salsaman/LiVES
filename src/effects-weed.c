@@ -876,7 +876,7 @@ weed_plant_t *add_filter_init_events(weed_plant_t *event_list, weed_timecode_t t
     check if palette is in the palette_list
     if not, return next best palette to use, using a heuristic method
     num_palettes is the size of the palette list */
-int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
+int best_palette_match(int *palette_list, int num_palettes, int palette) {
   int best_palette = palette_list[0];
   boolean has_alpha, is_rgb, is_alpha, is_yuv, mismatch;
 
@@ -887,7 +887,7 @@ int check_weed_palette_list(int *palette_list, int num_palettes, int palette) {
   is_alpha = weed_palette_is_alpha(palette);
   is_yuv = !is_alpha && !is_rgb;
 
-  for (int i = 0; i < num_palettes; i++) {
+  for (int i = 0; (num_palettes > 0 && i < num_palettes) || (num_palettes <= 0 && palette_list[i] != WEED_PALETTE_END); i++) {
     if (palette_list[i] == palette) {
       /// exact match - return it
       return palette;
@@ -1381,9 +1381,8 @@ static lives_filter_error_t process_func_threaded(weed_plant_t *inst, weed_plant
 
   for (i = 0; i < nchannels; i++) {
     /// min height for slices (in all planes) is SLICE_ALIGN, unless an out channel has a larger vstep set
-    height = weed_get_int_value(out_channels[i], WEED_LEAF_HEIGHT, &error);
-
-    pal = weed_get_int_value(out_channels[i], WEED_LEAF_CURRENT_PALETTE, &error);
+    height = weed_channel_get_height(out_channels[i]);
+    pal = weed_channel_get_palette(out_channels[i]);
 
     for (j = 0; j < weed_palette_get_nplanes(pal); j++) {
       vrt = weed_palette_get_plane_ratio_vertical(pal, j);
@@ -2139,7 +2138,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (opalette != inpalette) {
       /// check which of the plugin's allowed palettes is closest to our target palette
       palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
-      palette = check_weed_palette_list(palettes, num_palettes, opalette);
+      palette = best_palette_match(palettes, num_palettes, opalette);
       if (i > 0 && !pvary && palette != def_palette) {
         lives_freep((void **)&palettes);
         lives_freep((void **)&rowstrides);
@@ -2230,7 +2229,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
               if (opalette != palette) {
                 /// check which of the plugin's allowed palettes is closest to our target palette
                 palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
-                opalette = check_weed_palette_list(palettes, num_palettes, opalette);
+                opalette = best_palette_match(palettes, num_palettes, opalette);
               }
             }
             needs_reinit = TRUE;
@@ -2421,7 +2420,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
           /// INPLACE
           palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
           palette = weed_channel_get_palette(def_channel);
-          if (check_weed_palette_list(palettes, num_palettes, palette) == palette) {
+          if (best_palette_match(palettes, num_palettes, palette) == palette) {
             if (weed_layer_copy(channel, def_channel) == NULL) {
               retval = FILTER_ERROR_COPYING_FAILED;
               goto done_video;
@@ -2450,7 +2449,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
       if (palette != outpalette) {
         // palette change needed; try to change channel palette
         palettes = weed_chantmpl_get_palette_list(filter, chantmpl, &num_palettes);
-        if ((outpalette = check_weed_palette_list(palettes, num_palettes, palette)) == palette) {
+        if ((outpalette = best_palette_match(palettes, num_palettes, palette)) == palette) {
           weed_set_int_value(channel, WEED_LEAF_CURRENT_PALETTE, palette);
         } else {
           lives_freep((void **)&palettes);
@@ -10998,7 +10997,8 @@ static int32_t weed_plant_mutate(weed_plantptr_t plant, int32_t newtype) {
 
 
 #define REALIGN_MAX (40 * 1024 * 1024)  /// 40 MiB "should be enough for anyone"
-#define MAX_FRAME_SIZE 1000000000
+#define MAX_FRAME_SIZE MILLIONS(100)
+#define MAX_FRAME_SIZE64 3019898880
 
 static int realign_typeleaf(int fd, weed_plant_t *plant) {
   uint8_t buff[12];
@@ -11250,6 +11250,15 @@ static int weed_leaf_deserialise(int fd, weed_plant_t *plant, const char *key, u
             bytes = lives_read_le_buffered(fd, &vlen64[p], 8, TRUE);
             vlen64_tot += vlen64[p];
           }
+
+          if (vlen64_tot > MAX_FRAME_SIZE64) {
+            values = NULL;
+            type = -11;
+            lives_free(rs);
+            lives_free(vlen64);
+            goto done;
+          }
+
           weed_layer_set_rowstrides(layer, rs, nplanes);
 
           lives_free(rs);

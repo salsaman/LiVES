@@ -47,26 +47,44 @@ WEED_GLOBAL_INLINE int32_t weed_plant_get_type(weed_plant_t *plant) {
   return weed_get_int_value(plant, WEED_LEAF_TYPE, NULL);
 }
 
-void weed_add_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
+WEED_GLOBAL_INLINE uint32_t weed_leaf_set_flagbits(weed_plant_t *plant, const char *leaf, uint32_t flagbits) {
+  uint32_t flags = 0;
+  if (plant) {
+    flags = weed_leaf_get_flags(plant, leaf);
+    weed_leaf_set_flags(plant, leaf, flags | flagbits);
+  }
+  return flags;
+}
+
+WEED_GLOBAL_INLINE uint32_t weed_leaf_clear_flagbits(weed_plant_t *plant, const char *leaf, uint32_t flagbits) {
+  uint32_t flags = 0;
+  if (plant) {
+    flags = weed_leaf_get_flags(plant, leaf);
+    weed_leaf_set_flags(plant, leaf, flags & ~flagbits);
+  }
+  return flags;
+}
+
+void weed_add_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
   size_t ign_prefix_len = 0;
   char **leaves = weed_plant_list_leaves(plant, NULL);
   if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
   for (int i = 0; leaves[i] != NULL; i++) {
     if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
+      weed_leaf_set_flagbits(plant, leaves[i], flags);
     }
     free(leaves[i]);
   }
   if (leaves != NULL) free(leaves);
 }
 
-void weed_clear_plant_flags(weed_plant_t *plant, int32_t flags, const char *ign_prefix) {
+void weed_clear_plant_flags(weed_plant_t *plant, uint32_t flags, const char *ign_prefix) {
   size_t ign_prefix_len = 0;
   char **leaves = weed_plant_list_leaves(plant, NULL);
   if (ign_prefix != NULL) ign_prefix_len = strlen(ign_prefix);
   for (int i = 0; leaves[i] != NULL; i++) {
     if (ign_prefix == NULL || strncmp(leaves[i], ign_prefix, ign_prefix_len)) {
-      weed_leaf_set_flags(plant, leaves[i], (weed_leaf_get_flags(plant, leaves[i]) | flags) ^ flags);
+      weed_leaf_clear_flagbits(plant, leaves[i], flags);
     }
     free(leaves[i]);
   }
@@ -184,7 +202,7 @@ WEED_GLOBAL_INLINE int weed_paramtmpl_get_flags(weed_plant_t *paramtmpl) {
   return weed_get_int_value(paramtmpl, WEED_LEAF_FLAGS, NULL);
 }
 
-WEED_GLOBAL_INLINE int weed_paramtmpl_value_type(weed_plant_t *paramtmpl) {
+WEED_GLOBAL_INLINE uint32_t weed_paramtmpl_value_type(weed_plant_t *paramtmpl) {
   if (!WEED_PLANT_IS_PARAMETER_TEMPLATE(paramtmpl)) return WEED_SEED_INVALID;
   if (weed_paramtmpl_has_variable_size(paramtmpl) && weed_plant_has_leaf(paramtmpl, WEED_LEAF_NEW_DEFAULT))
     return weed_leaf_seed_type(paramtmpl, WEED_LEAF_NEW_DEFAULT);
@@ -549,7 +567,7 @@ char *weed_error_to_text(weed_error_t error) {
   return strdup("No error");
 }
 
-char *weed_seed_type_to_text(int32_t seed_type) {
+char *weed_seed_type_to_text(uint32_t seed_type) {
   switch (seed_type) {
   case WEED_SEED_INT:
     return strdup("integer");
@@ -650,12 +668,15 @@ const char *weed_gamma_get_name(int gamma) {
   return "unknown";
 }
 
+#ifndef WEED_ADVANCED_PALETTES
+
 WEED_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_A8 || pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P ||
       pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P || pal == WEED_PALETTE_YUVA4444P) return 8;
   if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) return 24;
   if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32 ||
-      pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888)
+      pal == WEED_PALETTE_UYVY8888 || pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888
+      || pal == WEED_PALETTE_YUVA8888)
     return 32;
   if (pal == WEED_PALETTE_YUV411) return 48;
   if (pal == WEED_PALETTE_AFLOAT) return sizeof(float);
@@ -664,6 +685,8 @@ WEED_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
   if (pal == WEED_PALETTE_RGBAFLOAT) return (4 * sizeof(float));
   return 0; // unknown palette
 }
+
+#endif
 
 // just as an example: 1.0 == RGB(A), 0.5 == compressed to 50%, etc
 

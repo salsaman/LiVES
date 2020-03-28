@@ -170,25 +170,23 @@ typedef enum {
   LIVES_STORAGE_STATUS_OFFLINE
 } lives_storage_status_t;
 
-///// load testing (experimental - not ready for production)
-#define INIT_LOAD_CHECK_COUNT 100 // initial loops to get started
-#define N_QUICK_CHECKS 3 // how many times we should run with quick checks after that
-#define QUICK_CHECK_TIME .1 // the time in sec.s between quick checks
-#define TARGET_CHECK_TIME 1. // how often we should check after that
+//void shoatend(void);
 
-// ignore variance outside these limits
-#define VAR_MAX 1.2
-#define VAR_MIN .8
-#define ME_DELAY 2.
+#define WEED_LEAF_MD5SUM "md5sum"
 
-#define LOAD_SCALING (100000. / ME_DELAY) // scale factor to get reasonable values
+// weed plants with type >= 16384 are reserved for custom use, so let's take advantage of that
+#define WEED_PLANT_LIVES 31337
 
-#define WEED_SEED_MEMBLOCK 65536
+#define WEED_LEAF_LIVES_SUBTYPE "subtype"
+#define WEED_LEAF_LIVES_MESSAGE_STRING "message_string"
 
-void shoatend(void);
+#define LIVES_WEED_SUBTYPE_MESSAGE 1
+#define LIVES_WEED_SUBTYPE_WIDGET 2
+#define LIVES_WEED_SUBTYPE_TUNABLE 3
+#define LIVES_WEED_SUBTYPE_PROC_THREAD 4
 
-
-
+weed_plant_t *lives_plant_new(int subtype);
+weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 
 // internal memory allocator (not used yet)
 typedef struct memheader {
@@ -260,11 +258,11 @@ ticks_t lives_get_relative_ticks(ticks_t origsecs, ticks_t orignsecs);
 ticks_t lives_get_current_ticks(void);
 char *lives_datetime(struct timeval *tv);
 
-#define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / 1000000000; \
-    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * 1000000000; while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+#define lives_nanosleep(nanosec) {struct timespec ts; ts.tv_sec = (uint64_t)nanosec / ONE_BILLION; \
+    ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && errno != ETIMEDOUT);}
 
 #define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
-    ts.tv_nsec = 100; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno == EINTR);}
+    ts.tv_nsec = 100; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno != ETIMEDOUT);}
 
 int check_dev_busy(char *devstr);
 
@@ -299,13 +297,12 @@ typedef struct {
   void *ret;
 } thrd_work_t;
 
-#define WEED_PLANT_THREAD_INFO 55555
-
 #define WEED_LEAF_NOTIFY "notify"
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
 #define WEED_LEAF_THREAD_PROCESSING "t_processing"
 #define WEED_LEAF_RETURN_VALUE "return_value"
+
 
 #define WEED_LEAF_THREAD_PARAM "thrd_param"
 #define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
@@ -330,15 +327,28 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval);
 typedef weed_plantptr_t lives_proc_thread_t;
 typedef uint64_t funcsig_t;
 
+typedef int(*funcptr_int_t)();
+typedef double(*funcptr_dbl_t)();
 typedef int(*funcptr_bool_t)();
+typedef char *(*funcptr_string_t)();
 typedef int64_t(*funcptr_int64_t)();
+typedef weed_funcptr_t(*funcptr_funcptr_t)();
+typedef void *(*funcptr_voidptr_t)();
+typedef weed_plant_t(*funcptr_plantptr_t)();
 
 lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
 
 void lives_proc_thread_join(lives_proc_thread_t);
-int lives_proc_thread_join_boolean(lives_proc_thread_t);
 int lives_proc_thread_join_int(lives_proc_thread_t);
+double lives_proc_thread_join_double(lives_proc_thread_t);
+int lives_proc_thread_join_boolean(lives_proc_thread_t);
+char *lives_proc_thread_join_string(lives_proc_thread_t);
+weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t);
+void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
+weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
+
+
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 boolean resubmit_thread(lives_proc_thread_t thread_info);

@@ -714,6 +714,20 @@ boolean pref_factory_bool(const char *prefidx, boolean newval, boolean permanent
 
   if (prefsw != NULL) prefsw->ignore_apply = TRUE;
 
+  // show recent
+  if (!lives_strcmp(prefidx, PREF_SHOW_RECENT_FILES)) {
+    if (prefs->show_recent == newval) goto fail2;
+    prefs->show_recent = newval;
+    if (newval) {
+      lives_widget_show(mainw->recent_menu);
+      if (mainw->multitrack != NULL) lives_widget_show(mainw->multitrack->recent_menu);
+    } else {
+      lives_widget_hide(mainw->recent_menu);
+      if (mainw->multitrack != NULL) lives_widget_hide(mainw->multitrack->recent_menu);
+    }
+    if (prefsw != NULL) lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(prefsw->recent_check), newval);
+  }
+
   if (!lives_strcmp(prefidx, PREF_MSG_PBDIS)) {
     if (prefs->msgs_pbdis == newval) goto fail2;
     prefs->msgs_pbdis = newval;
@@ -1851,18 +1865,7 @@ boolean apply_prefs(boolean skip_warn) {
     set_boolean_pref(PREF_STREAM_AUDIO_OUT, stream_audio_out);
   }
 
-  // show recent
-  if (prefs->show_recent != show_recent) {
-    prefs->show_recent = show_recent;
-    set_boolean_pref(PREF_SHOW_RECENT_FILES, show_recent);
-    if (prefs->show_recent) {
-      lives_widget_show(mainw->recent_menu);
-      if (mainw->multitrack != NULL) lives_widget_show(mainw->multitrack->recent_menu);
-    } else {
-      lives_widget_hide(mainw->recent_menu);
-      if (mainw->multitrack != NULL) lives_widget_hide(mainw->multitrack->recent_menu);
-    }
-  }
+  pref_factory_bool(PREF_SHOW_RECENT_FILES, show_recent, TRUE);
 
   // midi synch
   if (prefs->midisynch != midisynch) {
@@ -2299,10 +2302,11 @@ void save_future_prefs(void) {
 
   // show_recent is a special case, future prefs has our original value
   if (!prefs->show_recent && future_prefs->show_recent) {
-    set_string_pref(PREF_RECENT1, "");
-    set_string_pref(PREF_RECENT2, "");
-    set_string_pref(PREF_RECENT3, "");
-    set_string_pref(PREF_RECENT4, "");
+    for (register int i = 1; i < + N_RECENT_FILES; i++)  {
+      char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i);
+      set_string_pref(prefname, "");
+      lives_free(prefname);
+    }
   }
 
   if ((*future_prefs->workdir)) {
@@ -5245,9 +5249,7 @@ _prefsw *create_prefs_dialog(LiVESWidget *saved_dialog) {
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->fs_max_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(prefsw->recent_check), LIVES_WIDGET_TOGGLED_SIGNAL,
-                       LIVES_GUI_CALLBACK(apply_button_set_enabled),
-                       NULL);
+  ACTIVE(recent_check, TOGGLED);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->stop_screensaver_check), LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(apply_button_set_enabled), NULL);
   lives_signal_connect(LIVES_GUI_OBJECT(prefsw->open_maximised_check), LIVES_WIDGET_TOGGLED_SIGNAL,

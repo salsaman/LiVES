@@ -105,10 +105,8 @@ typedef enum {
 #define WEED_LEAF_HOST_COMPOUND_CLASS "host_compound_class" // for chain plugins
 #define WEED_LEAF_HOST_CHANNEL_CONNECTION "host_channel_connection" // special value for text widgets
 
-// layer only values
-
-#define WEED_LEAF_CLIP "clip"
-#define WEED_LEAF_FRAME "frame"
+// custom leaf flags, may evolve
+#define LIVES_FLAG_MANTAIN_VALUE (1 << 16)
 
 weed_plant_t *get_weed_filter(int filter_idx); // TODO: make const
 char *weed_filter_idx_get_package_name(int filter_idx) WARN_UNUSED;
@@ -154,7 +152,7 @@ boolean has_audio_filters(lives_af_t af_type);
 #endif
 
 boolean has_usable_palette(weed_plant_t *chantmpl);
-int check_weed_palette_list(int *palette_list, int num_palettes, int palette);
+int best_palette_match(int *palete_list, int num_palettes, int palette);
 
 // instances
 weed_error_t weed_call_init_func(weed_plant_t *instance);
@@ -338,8 +336,10 @@ void fill_param_vals_to(weed_plant_t *param, weed_plant_t *ptmpl, int fill_slot)
 
 //#define DEBUG_FILTER_MUTEXES
 #ifdef DEBUG_FILTER_MUTEXES
-#define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->fx_mutex[key]); g_print("done\n");}
-#define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
+#define filter_mutex_lock(key) {g_print ("lock %d at line %d in file %s\n",key,__LINE__,__FILE__); \
+    if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_lock(&mainw->fx_mutex[key]); g_print("done\n");}
+#define filter_mutex_unlock(key) {g_print ("unlock %d at line %d in file %s\n\n",key,__LINE__,__FILE__); \
+    if (key >= 0 && key < FX_KEYS_MAX) pthread_mutex_unlock(&mainw->fx_mutex[key]); g_print("done\n");}
 #endif
 
 //#define DEBUG_REFCOUNT
@@ -360,6 +360,8 @@ weed_plant_t *weed_instance_obtain(int key, int mode);
 #endif
 
 #define WEED_ERROR_NOSUCH_PLANT 65536
+
+#define LIVES_FLAG_MAINTAIN_VALUE (1 << 16)
 
 weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data);
 

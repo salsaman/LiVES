@@ -212,6 +212,10 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   if (cfile->clip_type == CLIP_TYPE_FILE && rfx->status != RFX_STATUS_WEED) {
     // start decoding frames for the rendered effect plugins to start processing
     cfile->fx_frame_pump = cfile->start;
+    if (!cfile->pumper) {
+      cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
+                      cfile->start, cfile->end, FALSE, NULL);
+    }
   } else cfile->fx_frame_pump = 0;
 
   if (is_preview) {
@@ -298,6 +302,12 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
   }
 
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
+    if (cfile->pumper) {
+      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
+      lives_proc_thread_join(cfile->pumper);
+      weed_plant_free(cfile->pumper);
+      cfile->pumper = NULL;
+    }
     mainw->last_dprint_file = ldfile;
     mainw->show_procd = TRUE;
     mainw->keep_pre = FALSE;
@@ -629,7 +639,7 @@ lives_render_error_t realfx_progress(boolean reset) {
   if (has_video_filters(FALSE) || resize_instance != NULL) {
     frameticks = (i - cfile->start + 1.) / cfile->fps * TICKS_PER_SECOND;
     mainw->rowstride_alignment_hint = 4;
-    layer = weed_layer_new_for_frame(mainw->current_file, i);
+    layer = lives_layer_new_for_frame(mainw->current_file, i);
     if (!pull_frame(layer, get_image_ext_for_type(cfile->img_type), frameticks)) {
       // do_read_failed_error_s() cannot be used here as we dont know the filename
       lives_snprintf(mainw->msg, MAINW_MSG_SIZE, "error|missing image %d", i);
@@ -944,9 +954,9 @@ weed_plant_t *get_blend_layer(weed_timecode_t tc) {
   }
 
   if (is_virtual_frame(mainw->blend_file, blend_file->frameno))
-    mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frame_index[blend_file->frameno]);
+    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frame_index[blend_file->frameno]);
   else
-    mainw->blend_layer = weed_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
+    mainw->blend_layer = lives_layer_new_for_frame(mainw->blend_file, blend_file->frameno);
   pull_frame_threaded(mainw->blend_layer, get_image_ext_for_type(blend_file->img_type), blend_tc, 0, 0);
   return mainw->blend_layer;
 }

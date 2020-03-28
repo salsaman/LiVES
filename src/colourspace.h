@@ -13,6 +13,8 @@
 #define USE_EXTEND
 #endif
 
+#define WEED_LEAF_CLIP "clip"
+#define WEED_LEAF_FRAME "frame"
 #define WEED_LEAF_HOST_PIXEL_DATA_CONTIGUOUS "host_contiguous"
 #define WEED_LEAF_HOST_PIXBUF_SRC "host_pixbuf_src"
 #define WEED_LEAF_HOST_SURFACE_SRC "host_surface_src"
@@ -127,8 +129,10 @@ typedef struct {
 } lives_sw_params;
 
 #endif
-/// intended for future use:
 
+#ifdef WEED_ADVANCED_PALETTES
+
+/// intended for future use:
 #define MAXPPLANES 8
 
 #define WEED_VCHAN_red 		1
@@ -178,9 +182,23 @@ typedef struct {
 #define LIVES_PALETTE_YUVAFLOAT	9565
 #define LIVES_PALETTE_YUV121010		121010
 
-void init_colour_engine(void);
-
 const weed_macropixel_t *get_advanced_palette(int weed_palette);
+boolean weed_palette_is_valid(int pal);
+int get_simple_palette(weed_macropixel_t *mpx);
+size_t pixel_size(int pal);
+int weed_palette_get_pixels_per_macropixel(int pal);
+int weed_palette_get_bits_per_macropixel(int pal);
+int weed_palette_get_nplanes(int pal);
+boolean weed_palette_is_rgb(int pal);
+boolean weed_palette_is_yuv(int pal);
+boolean weed_palette_is_alpha(int pal);
+boolean weed_palette_has_alpha(int pal);
+boolean weed_palette_is_float(int pal);
+double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
+double weed_palette_get_plane_ratio_vertical(int pal, int plane);
+#endif
+
+void init_colour_engine(void);
 
 int32_t round_special(int32_t val);
 
@@ -207,8 +225,14 @@ weed_layer_t *weed_layer_create_full(int width, int height, int *rowstrides, int
 weed_layer_t *weed_layer_copy(weed_layer_t *dlayer, weed_layer_t *slayer);
 void *weed_layer_free(weed_layer_t *);
 
-/// move to weed events ?
-weed_layer_t *weed_layer_new_for_frame(int clip, int frame);
+// lives specific
+weed_layer_t *lives_layer_new_for_frame(int clip, frames_t frame);
+
+void lives_layer_set_clip(weed_layer_t *, int clip);
+void lives_layer_set_frame(weed_layer_t *, frames_t frame);
+
+int lives_layer_get_clip(weed_layer_t *);
+frames_t lives_layer_get_frame(weed_layer_t *);
 
 // pixel_data
 /// layer should be pre-set with palette, width in MACROPIXELS, and height
@@ -277,10 +301,6 @@ int weed_layer_get_height(weed_layer_t *);
 int weed_layer_get_palette(weed_layer_t *);
 int weed_layer_get_gamma(weed_layer_t *);
 int weed_layer_get_flags(weed_layer_t *);
-
-// lives specific
-int lives_layer_get_clip(weed_layer_t *);
-frames_t lives_layer_get_frame(weed_layer_t *);
 
 // weed_layer_get_rowstride
 

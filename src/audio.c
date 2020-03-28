@@ -261,6 +261,10 @@ boolean audiofile_is_silent(int fnum, double start, double end) {
   lives_free(filename);
   while (atime <= end) {
     for (c = 0; c < afile->achans; c++) {
+      if (afd == -1) {
+        mainw->read_failed = -2;
+        return TRUE;
+      }
       if ((xx = get_float_audio_val_at_time(fnum, afd, atime, c, afile->achans)) != 0.) {
         lives_close_buffered(afd);
         return FALSE;
@@ -275,29 +279,20 @@ boolean audiofile_is_silent(int fnum, double start, double end) {
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) {
   // return audio level between -1.0 and +1.0
-
   // afd must be opened with lives_open_buffered_rdonly()
-
   lives_clip_t *afile = mainw->files[fnum];
-  int64_t bytes;
   off_t apos;
   uint8_t val8, val8b;
   uint16_t val16;
   float val;
+  size_t quant = afile->achans * afile->asampsize / 8;
+  size_t bytes = (size_t)(secs * (double)afile->arate) * quant;
 
-  bytes = secs * afile->arate * afile->achans * afile->asampsize / 8;
-  if (bytes == 0) return 0.;
+  if (!bytes) return 0.;
 
-  apos = ((int64_t)(bytes / afile->achans / (afile->asampsize / 8))) * afile->achans * (afile->asampsize / 8); // quantise
-
-  if (afd == -1) {
-    // deal with read errors after drawing a whole block
-    mainw->read_failed = -2;
-    return 0.;
-  }
+  apos = ((size_t)(bytes / quant) * quant); // quantise
 
   apos += afile->asampsize / 8 * chnum;
-
   lives_lseek_buffered_rdonly_absolute(afd, apos);
 
   if (afile->asampsize == 8) {
@@ -315,7 +310,6 @@ float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int
     else val = val16 - 32767;
     val /= 32767.;
   }
-
   //printf("val is %f\n",val);
   return val;
 }
@@ -327,7 +321,7 @@ LIVES_GLOBAL_INLINE void sample_silence_dS(float *dst, uint64_t nsamples) {
 }
 
 
-void sample_silence_stream(int nchans, int nframes) {
+void sample_silence_stream(int nchans, int64_t nframes) {
   float **fbuff = (float **)lives_calloc(nchans, sizeof(float *));
   boolean memok = TRUE;
   int i;
@@ -2302,7 +2296,7 @@ void fill_abuffer_from(lives_audio_buf_t *abuf, weed_plant_t *event_list, weed_p
     // get channel volumes from the mixer
     for (i = 0; i < nfiles; i++) {
       if (mainw->multitrack != NULL && mainw->multitrack->audio_vols != NULL) {
-        chvols[i] = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols, i)) / 1000000.;
+        chvols[i] = (double)LIVES_POINTER_TO_INT(lives_list_nth_data(mainw->multitrack->audio_vols, i)) / ONE_MILLION_DBL;
       }
     }
   } else chvols[0] = 1.;
@@ -2446,6 +2440,18 @@ void free_pulse_audio_buffers(void) {
 #endif
 }
 
+
+LIVES_GLOBAL_INLINE void avsync_force(void) {
+  /// force realignment of video and audio at current file->frameno / player->seek_pos
+  pthread_mutex_lock(&mainw->avseek_mutex);
+  if (mainw->audio_seek_ready && mainw->video_seek_ready) {
+    mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
+    mainw->force_show = TRUE;
+  }
+  pthread_mutex_unlock(&mainw->avseek_mutex);
+}
+
+
 /**
    @brief resync audio playback to the current video frame
 
@@ -2485,8 +2491,9 @@ boolean resync_audio(double frameno) {
           0))
     return FALSE;
 
-  if (CURRENT_CLIP_HAS_VIDEO) mainw->video_seek_ready = FALSE;
-  mainw->audio_seek_ready = FALSE;
+  if (CURRENT_CLIP_HAS_VIDEO) {
+    avsync_force();
+  }
 
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -3138,7 +3145,7 @@ void apply_rte_audio_end(boolean del) {
 }
 
 
-boolean apply_rte_audio(int nframes) {
+boolean apply_rte_audio(int64_t nframes) {
   // CALLED When we are rendering audio to a file
 
   // - read nframes from clip or generator
@@ -3652,7 +3659,7 @@ int64_t nullaudio_update_seek_posn() {
   if (!CURRENT_CLIP_HAS_AUDIO) return mainw->nullaudio_seek_posn;
   else {
     ticks_t current_ticks = lives_get_current_ticks();
-    mainw->nullaudio_seek_posn += ((int64_t)((double)(current_ticks - mainw->nullaudio_start_ticks) / USEC_TO_TICKS / 1000000. *
+    mainw->nullaudio_seek_posn += ((int64_t)((double)(current_ticks - mainw->nullaudio_start_ticks) / USEC_TO_TICKS / ONE_MILLION. *
                                    mainw->nullaudio_arate)) * afile->achans * (afile->asampsize >> 3);
     mainw->nullaudo_startticks = current_ticks;
     if (mainw->nullaudio_seek_posn < 0) {

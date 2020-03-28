@@ -262,7 +262,7 @@ const char *get_description(void) {
 
 
 uint64_t get_capabilities(int palette) {
-  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY;
+  return VPP_CAN_RESIZE | VPP_CAN_RETURN | VPP_LOCAL_DISPLAY | VPP_CAN_LETTERBOX;
 }
 
 
@@ -953,12 +953,14 @@ static int Upload(void) {
   int texID;
   int window_width, window_height;
 
-  float aspect, scalex, scaley;
+  float aspect, scalex, scaley, offsxf, offsyf;
 
   // scaling for particles
   float partx, party = 2. / (float)imgHeight;
 
-  pthread_mutex_lock(&rthread_mutex);
+  offsyf =
+
+    pthread_mutex_lock(&rthread_mutex);
   if (has_new_texture) {
     ctexture++;
     if (ctexture == nbuf) ctexture = 0;
@@ -968,7 +970,7 @@ static int Upload(void) {
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
-
+  fprintf(stderr, "XXVALS %d %d %d\n", imgHeight, yoffs, texHeight);
   aspect = (float)imgWidth / (float)imgHeight;
   scalex = (float)((imgWidth - 2 * xoffs) * typesize) / (float)texRow;
   scaley = (float)(imgHeight - 2 * yoffs) / (float)texHeight;
@@ -1030,15 +1032,17 @@ static int Upload(void) {
     float xoffsf = 1. - (float)xoffs / (float)xparms.width;
     float yoffsf = 1. - (float)yoffs / (float)xparms.height;
 
+    fprintf(stderr, "%f %f %f %f\n", xoffsf, scalex, yoffsf, scaley);
+
     glBegin(GL_QUADS);
-    glTexCoord2d(0, scaley);
-    glVertex3d(-xoffsf, -yoffsf, 0);
+    glTexCoord2d(0, 1);
+    glVertex3d(-scalex, -scaley, 0);
     glTexCoord2d(0, 0);
-    glVertex3d(-xoffsf, yoffsf, 0);
-    glTexCoord2d(scalex, 0);
-    glVertex3d(xoffsf, yoffsf, 0);
-    glTexCoord2d(scalex, scaley);
-    glVertex3d(xoffsf, -yoffsf, 0);
+    glVertex3d(-scalex, scaley, 0);
+    glTexCoord2d(1., 0);
+    glVertex3d(scalex, scaley, 0);
+    glTexCoord2d(1., 1.);
+    glVertex3d(scalex, -scaley, 0);
     glEnd();
 
     glDisable(m_TexTarget);
@@ -1969,8 +1973,6 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   /// until we get libweed-layer
   int hsize = weed_channel_get_width(frame);
   int vsize = weed_channel_get_height(frame);
-  int xoffs = weed_get_int_value(frame, "x_offset", NULL);
-  int yoffs = weed_get_int_value(frame, "y_offset", NULL);
   int row = weed_channel_get_stride(frame);
   int rowz, mwidth;
   void **return_data = NULL;
@@ -1981,10 +1983,12 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
+  xoffs = weed_get_int_value(frame, "x_offset", NULL);
+  yoffs = weed_get_int_value(frame, "y_offset", NULL);
+
   imgRow = row; // bytes
   imgWidth = hsize;  // pix
   imgHeight = vsize;
-
   if (!npot) {
     hsize = next_pot(hsize);
     vsize = next_pot(vsize);
@@ -2043,7 +2047,6 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     retdata = NULL;
 
     if (texturebuf == (uint8_t *)pixel_data) texturebuf = NULL;
-
     src = (uint8_t *)retbuf + (window_height - 1) * twidth;
     mwidth = twidth;
     if (mwidth > imgWidth * typesize) mwidth = imgWidth * typesize;

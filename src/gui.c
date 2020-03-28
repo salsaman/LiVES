@@ -672,27 +672,20 @@ void create_LiVES(void) {
   mainw->recent_submenu = lives_menu_new();
   lives_menu_item_set_submenu(LIVES_MENU_ITEM(mainw->recent_menu), mainw->recent_submenu);
 
-  lives_memset(buff, 0, 1);
-
-  get_utf8_pref(PREF_RECENT1, buff, 32768);
-
+  buff[0] = 0;
   widget_opts.mnemonic_label = FALSE;
-  mainw->recent[0] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT2, buff, 32768);
-  mainw->recent[1] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT3, buff, 32768);
-  mainw->recent[2] = lives_standard_menu_item_new_with_label(buff);
-
-  get_utf8_pref(PREF_RECENT4, buff, 32768);
-  mainw->recent[3] = lives_standard_menu_item_new_with_label(buff);
+  for (i = 0; i < N_RECENT_FILES; i++) {
+    char *prefname = lives_strdup_printf("%s%d", PREF_RECENT, i + 1);
+    get_utf8_pref(prefname, buff, PATH_MAX * 2);
+    lives_free(prefname);
+    mainw->recent[i] = lives_standard_menu_item_new_with_label(buff);
+    lives_widget_set_no_show_all(mainw->recent[i], TRUE);
+    lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[i]);
+    lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[i]), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_recent_activate),
+                         LIVES_INT_TO_POINTER(i + 1));
+  }
   widget_opts.mnemonic_label = TRUE;
-
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[0]);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[1]);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[2]);
-  lives_container_add(LIVES_CONTAINER(mainw->recent_submenu), mainw->recent[3]);
 
   lives_menu_add_separator(LIVES_MENU(mainw->files_menu));
 
@@ -2584,18 +2577,6 @@ void create_LiVES(void) {
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->send_lives2lives), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_send_lives2lives_activate),
                        NULL);
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[0]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(1));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[1]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(2));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[2]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(3));
-  lives_signal_connect(LIVES_GUI_OBJECT(mainw->recent[3]), LIVES_WIDGET_ACTIVATE_SIGNAL,
-                       LIVES_GUI_CALLBACK(on_recent_activate),
-                       LIVES_INT_TO_POINTER(4));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->backup), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_backup_activate),
                        NULL);
@@ -3120,7 +3101,7 @@ void show_lives(void) {
 
   for (i = 0; i < N_RECENT_FILES; i++) {
     mtext = lives_menu_item_get_text(mainw->recent[i]);
-    if (!strlen(mtext)) lives_widget_hide(mainw->recent[i]);
+    if (*mtext) lives_widget_show(mainw->recent[i]);
   }
 
   if (!capable->has_composite || !capable->has_convert) {
@@ -4344,7 +4325,7 @@ void resize_play_window(void) {
             (mainw->vpp->fwidth > 0 ? mainw->vpp->fwidth : mainw->pwidth,
              mainw->vpp->fheight > 0 ? mainw->vpp->fheight : mainw->pheight,
              fullscreen, xwinid, mainw->vpp->extra_argc, mainw->vpp->extra_argv))) {
-          //mainw->force_show = TRUE;
+          mainw->force_show = TRUE;
           mainw->ext_playback = TRUE;
           // the play window is still visible (in case it was 'always on top')
           // start key polling from ext plugin

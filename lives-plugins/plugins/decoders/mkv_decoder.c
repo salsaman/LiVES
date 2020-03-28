@@ -90,6 +90,13 @@ static pthread_mutex_t indices_mutex;
 
 ////////////////////////////////////////////////////////////////////////////
 
+static int64_t get_current_ticks(void) {
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+}
+
+
 static double lives_int2dbl(int64_t v) {
   if ((uint64_t)v + v > 0xFFEULL << 52)
     return NAN;
@@ -1169,12 +1176,10 @@ static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
   }
   idxdts = idx->dts;
   pthread_mutex_unlock(&priv->idxc->mutex);
-
   got_eof = FALSE;
 
   while (1) {
     //read frames until we hit the second seek frame
-
     if (priv->avpkt.data != NULL) {
       free(priv->avpkt.data);
       priv->avpkt.data = NULL;
@@ -2347,56 +2352,6 @@ lives_clip_data_t *get_clip_data(const char *URI, lives_clip_data_t *cdata) {
 }
 
 
-static size_t write_black_pixel(unsigned char *idst, int pal, int npixels, int y_black) {
-  unsigned char *dst = idst;
-  register int i;
-
-  for (i = 0; i < npixels; i++) {
-    switch (pal) {
-    case WEED_PALETTE_RGBA32:
-    case WEED_PALETTE_BGRA32:
-      dst[0] = dst[1] = dst[2] = 0;
-      dst[3] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_ARGB32:
-      dst[1] = dst[2] = dst[3] = 0;
-      dst[0] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_UYVY8888:
-      dst[1] = dst[3] = y_black;
-      dst[0] = dst[2] = 128;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUYV8888:
-      dst[0] = dst[2] = y_black;
-      dst[1] = dst[3] = 128;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUV888:
-      dst[0] = y_black;
-      dst[1] = dst[2] = 128;
-      dst += 3;
-      break;
-    case WEED_PALETTE_YUVA8888:
-      dst[0] = y_black;
-      dst[1] = dst[2] = 128;
-      dst[3] = 255;
-      dst += 4;
-      break;
-    case WEED_PALETTE_YUV411:
-      dst[0] = dst[3] = 128;
-      dst[1] = dst[2] = dst[4] = dst[5] = y_black;
-      dst += 6;
-    default:
-      break;
-    }
-  }
-  return idst - dst;
-}
-
-
 /*
    Put one packet in an application-supplied AVPacket struct.
    Returns 0 on success or -1 on failure.
@@ -2792,19 +2747,17 @@ boolean chill_out(const lives_clip_data_t *cdata) {
 
 boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstrides, int height, void **pixel_data) {
   // seek to frame,
-
   int64_t target_pts = frame_to_dts(cdata, tframe);
   int64_t nextframe = 0;
+  int64_t timex;
   lives_mkv_priv_t *priv = cdata->priv;
   int xheight = cdata->frame_height, pal = cdata->current_palette, nplanes = 1, dstwidth = cdata->width, psize = 1;
-  int rowstride;
-  int btop = cdata->offs_y, bbot = xheight - 1 - btop;
+  int rowstride, xrowstride, loops = 0;
+  int btop = cdata->offs_y, bbot = xheight - btop;
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int rescan_limit = 16; // pick some arbitrary value
-  int y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
-  boolean got_picture = FALSE, retval = TRUE;
+  boolean got_picture = FALSE;
   unsigned char *dst, *src;
-  unsigned char black[4] = {0, 0, 0, 255};
   index_entry *idx;
   register int i, p;
 
@@ -2818,25 +2771,13 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
   if (pixel_data != NULL) {
     if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P
-        || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) {
-      nplanes = 3;
-      black[0] = y_black;
-      black[1] = black[2] = 128;
-    } else if (pal == WEED_PALETTE_YUVA4444P) {
-      nplanes = 4;
-      black[0] = y_black;
-      black[1] = black[2] = 128;
-      black[3] = 255;
-    }
-
+        || pal == WEED_PALETTE_YUV422P || pal == WEED_PALETTE_YUV444P) nplanes = 3;
+    else if (pal == WEED_PALETTE_YUVA4444P) nplanes = 4;
     if (pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) psize = 3;
-
     if (pal == WEED_PALETTE_RGBA32 || pal == WEED_PALETTE_BGRA32 || pal == WEED_PALETTE_ARGB32
         || pal == WEED_PALETTE_UYVY8888 ||
         pal == WEED_PALETTE_YUYV8888 || pal == WEED_PALETTE_YUV888 || pal == WEED_PALETTE_YUVA8888) psize = 4;
-
     if (pal == WEED_PALETTE_YUV411) psize = 6;
-
     if (pal == WEED_PALETTE_A1) dstwidth >>= 3;
 
     dstwidth *= psize;
@@ -2845,7 +2786,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // host ignores vertical border
       btop = 0;
       xheight = cdata->height;
-      bbot = xheight - 1;
+      bbot = xheight;
     }
 
     if (cdata->frame_width > cdata->width && rowstrides[0] < cdata->frame_width * psize) {
@@ -2855,25 +2796,28 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   }
   ////////////////////////////////////////////////////////////////////
 
-  if (tframe != priv->last_frame || priv->picture == NULL) {
+  if (tframe == priv->last_frame && priv->picture != NULL) goto framedone;
+  else {
     if (priv->last_frame == -1 || (tframe < priv->last_frame) || priv->picture == NULL ||
         (tframe - priv->last_frame > rescan_limit)) {
+      timex = -get_current_ticks();
       pthread_mutex_lock(&priv->idxc->mutex);
       idx = matroska_read_seek(cdata, target_pts);
       pthread_mutex_unlock(&priv->idxc->mutex);
       nextframe = dts_to_frame(cdata, idx->dts);
-      if (got_eof) return FALSE;
+      if (got_eof) goto cleanup;
 
       if ((priv->last_frame == -1 || (tframe < priv->last_frame) || priv->picture == NULL ||
            (tframe - priv->last_frame > rescan_limit)) && priv->picture != NULL) {
         avcodec_flush_buffers(priv->ctx);
       }
+      timex += get_current_ticks();
+      fprintf(stderr, "mkv_dec: seek of %ld frames took %ld usec\n", tframe - priv->last_frame, timex);
 #ifdef DEBUG_KFRAMES
       if (idx != NULL) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif
-    } else {
-      nextframe = priv->last_frame + 1;
-    }
+    } else nextframe = priv->last_frame + 1;
+    timex = -get_current_ticks();
 
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
@@ -2894,10 +2838,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
         matroska_read_packet(cdata, &priv->avpkt);
 
-        if (got_eof) {
-          retval = FALSE;
-          goto cleanup;
-        }
+        if (got_eof) goto cleanup;
 
 #ifdef AV_NEW_VER
         int ret = avcodec_send_packet(priv->ctx, &priv->avpkt);
@@ -2921,24 +2862,22 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
 
       nextframe++;
 
-      if (nextframe > cdata->nframes) {
-        retval = FALSE;
-        goto cleanup;
-      }
+      if (nextframe > cdata->nframes) goto cleanup;
+      loops++;
     } while (nextframe <= tframe);
+    timex += get_current_ticks();
+    fprintf(stderr, "mkv_dec: vplay of %d frames took %ld usec (%ld per frame)\n", loops, timex, timex / loops);
 
     /////////////////////////////////////////////////////
   }
 
+framedone:
   priv->last_frame = tframe;
 
 #ifdef TEST_CACHING
 framedone2:
 #endif
-  if (priv->picture == NULL || pixel_data == NULL) {
-    retval = FALSE;
-    goto cleanup;
-  }
+  if (priv->picture == NULL || pixel_data == NULL) goto cleanup;
 
   // we are allowed to cast away const-ness for
   // yuv_subspace, yuv_clamping, yuv_sampling, frame_gamma and interlace
@@ -2968,7 +2907,6 @@ framedone2:
     ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_UNCLAMPED;
   else
     ((lives_clip_data_t *)cdata)->YUV_clamping = WEED_YUV_CLAMPING_CLAMPED;
-  y_black = (cdata->YUV_clamping == WEED_YUV_CLAMPING_CLAMPED) ? 16 : 0;
 
   ((lives_clip_data_t *)cdata)->frame_gamma = WEED_GAMMA_SRGB;
   if (priv->picture->color_trc == AVCOL_TRC_LINEAR)
@@ -2979,61 +2917,42 @@ framedone2:
   for (p = 0; p < nplanes; p++) {
     dst = pixel_data[p];
     src = priv->picture->data[p];
-    if ((rowstride = rowstrides[p]) > 0) {
-      rowstride -= dstwidth + (bleft + bright) * psize;
-      if (rowstride < 0) {
-        bleft += rowstride / (psize * 2);
-        bright += rowstride / (psize * 2);
-        if (bleft < 0 && bright > 0) {
-          bright += bleft;
-          bleft = 0;
-        }
-        if (bright < 0 && bleft > 0) {
-          bleft += bright;
-          bright = 0;
-        }
-        if (bleft < 0 || bright < 0) {
-          dstwidth += (bleft + bright) * psize;
-          bleft = bright = 0;
-        }
+
+    if (src == NULL) {
+      fprintf(stderr, "avformat decoder: src pixel data was NULL for frame %ld plane %d\n", tframe, p);
+      goto cleanup;
+    }
+    if ((rowstride = rowstrides[p]) <= 0) {
+      fprintf(stderr, "avformat decoder: rowstride was %d for frame %ld plane %d\n", rowstride, tframe, p);
+      goto cleanup;
+    }
+
+    xrowstride = rowstride - dstwidth + (bleft + bright) * psize;
+    if (xrowstride < 0) {
+      bleft += xrowstride / (psize * 2);
+      bright += xrowstride / (psize * 2);
+      if (bleft < 0 && bright > 0) {
+        bright += bleft;
+        bleft = 0;
+      }
+      if (bright < 0 && bleft > 0) {
+        bleft += bright;
+        bright = 0;
+      }
+      if (bleft < 0 || bright < 0) {
+        dstwidth += (bleft + bright) * psize;
+        bleft = bright = 0;
       }
     }
 
-    if (rowstrides[p] == priv->picture->linesize[p]) {
-      (*cdata->ext_memcpy)(dst, src, rowstrides[p] * xheight);
+    dst += bleft * psize + btop * rowstride;
+    xheight = bbot - btop;
+
+    if (rowstride == priv->picture->linesize[p]) {
+      (*cdata->ext_memcpy)(dst, src, rowstride * xheight);
     } else {
       for (i = 0; i < xheight; i++) {
-        if (i < btop || i > bbot) {
-          // top or bottom border, copy black row
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
-              || pal == WEED_PALETTE_YUV444P ||
-              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-            memset(dst, black[p], dstwidth + (bleft + bright)*psize);
-            dst += dstwidth + (bleft + bright) * psize;
-          } else dst += write_black_pixel(dst, pal, dstwidth / psize + bleft + bright, y_black);
-          continue;
-        }
-
-        if (bleft > 0) {
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
-              || pal == WEED_PALETTE_YUV444P ||
-              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-            memset(dst, black[p], bleft * psize);
-            dst += bleft * psize;
-          } else dst += write_black_pixel(dst, pal, bleft, y_black);
-        }
-
         (*cdata->ext_memcpy)(dst, src, dstwidth);
-        dst += dstwidth;
-
-        if (bright > 0) {
-          if (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P || pal == WEED_PALETTE_YUV422P
-              || pal == WEED_PALETTE_YUV444P ||
-              pal == WEED_PALETTE_YUVA4444P || pal == WEED_PALETTE_RGB24 || pal == WEED_PALETTE_BGR24) {
-            memset(dst, black[p], bright * psize);
-            dst += bright * psize;
-          } else dst += write_black_pixel(dst, pal, bright, y_black);
-        }
         dst += rowstride;
         src += priv->picture->linesize[p];
       }
@@ -3044,11 +2963,11 @@ framedone2:
       bright >>= 1;
     }
     if (p == 0 && (pal == WEED_PALETTE_YUV420P || pal == WEED_PALETTE_YVU420P)) {
-      xheight >>= 1;
       btop >>= 1;
       bbot >>= 1;
     }
   }
+  return TRUE;
 
 cleanup:
   if (priv->avpkt.data != NULL) {
@@ -3056,7 +2975,7 @@ cleanup:
     priv->avpkt.data = NULL;
     priv->avpkt.size = 0;
   }
-  return retval;
+  return FALSE;
 }
 
 

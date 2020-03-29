@@ -1165,7 +1165,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       // seek to same frame - we need to ensure we go back at least one frame, else we will
       // read the next packets and be one frame ahead
       if (cdata->fps)
-	time = (tframe >= 0 ? (double)tframe - 1. : tframe) / cdata->fps;
+        time = (tframe >= 0 ? (double)tframe - 1. : tframe) / cdata->fps;
       xtarget_pts = time * (double)AV_TIME_BASE;
     } else {
       // try to seek straight to keyframe
@@ -1278,20 +1278,20 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       priv->pFrame = NULL;
 
       if (did_seek && loops > 3) {
-	int64_t now = get_current_ticks();
-	timex += now;
-	((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
-	loops = 0;
-	did_seek = FALSE;
-	if (cdata->max_decode_fps && tframe > priv->last_frame) {
-	  int64_t jump_limit = (double)cdata->fwd_seek_time / cdata->max_decode_fps;
-	  if (jump_limit < 2) jump_limit = 2;
-	  ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
-	  /* fprintf(stderr, "avformat_dec: seek took %ld, millis, jump_limit set to %ld\n", timex / 1000, cdata->jump_limit); */
-	  /* fprintf(stderr, "avformat_dec: to jump to (frame - 1) would take %.2f usec\n", cdata->fwd_seek_time */
-	  /* 	  + (double)(fss - 3) / cdata->max_decode_fps); */
-	}
-	timex = - now;
+        int64_t now = get_current_ticks();
+        timex += now;
+        ((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
+        loops = 0;
+        did_seek = FALSE;
+        if (cdata->max_decode_fps && tframe > priv->last_frame) {
+          int64_t jump_limit = (double)cdata->fwd_seek_time / cdata->max_decode_fps;
+          if (jump_limit < 2) jump_limit = 2;
+          ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
+          /* fprintf(stderr, "avformat_dec: seek took %ld, millis, jump_limit set to %ld\n", timex / 1000, cdata->jump_limit); */
+          /* fprintf(stderr, "avformat_dec: to jump to (frame - 1) would take %.2f usec\n", cdata->fwd_seek_time */
+          /* 	  + (double)(fss - 3) / cdata->max_decode_fps); */
+        }
+        timex = - now;
       }
     }
   } while (!(hit_target && gotFrame));
@@ -1305,8 +1305,8 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       ((lives_clip_data_t *)cdata)->seek_flag |= ~LIVES_SEEK_FAST;
     }
     ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
-    fprintf(stderr, "avformat_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex,
-	    timex / loops, mdf, cdata->max_decode_fps);
+    /* fprintf(stderr, "avformat_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex, */
+    /* 	    timex / loops, mdf, cdata->max_decode_fps); */
   }
 framedone:
   priv->last_frame = tframe;

@@ -16,7 +16,7 @@ boolean do_startup_tests(boolean tshoot);
 void do_startup_interface_query(void);
 
 void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
-void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data);
+void explain_missing_activate(LiVESMenuItem *menuitem, livespointer user_data);
 
 void do_bad_dir_perms_error(const char *dirname);
 void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean allow_retry);

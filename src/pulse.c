@@ -564,8 +564,8 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
       mainw->fps_mini_ticks = mainw->currticks;
       mainw->fps_mini_measure = 0;
 
-      g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos,
-              ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks);
+      /* g_print("@ SYNC %d seek pos %ld = %f  ct %ld   st %ld\n", mainw->actual_frame, pulsed->seek_pos, */
+      /*         ((double)pulsed->seek_pos / (double)afile->arps / 4. * afile->fps + 1.), mainw->currticks, mainw->startticks); */
 
       pthread_mutex_lock(&mainw->avseek_mutex);
       mainw->audio_seek_ready = TRUE;
@@ -2018,9 +2018,9 @@ boolean pulse_audio_seek_frame(pulse_driver_t *pulsed, double frame) {
                             * (pulsed->in_arate >= 0. ? 1.0 : - 1.0) : 0.))
                         * (double)afile->arps) * afile->achans * afile->asampsize / 8;
 
-  g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate);
-  g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart,
-          (double)seekstart / (double)afile->arate / 4.);
+  /* g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate); */
+  /* g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart, */
+  /*         (double)seekstart / (double)afile->arate / 4.); */
   pulse_audio_seek_bytes(pulsed, seekstart, afile);
   return TRUE;
 }

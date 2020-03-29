@@ -1371,7 +1371,7 @@ boolean resubmit_thread(lives_proc_thread_t thread_info) {
 ///////// thread pool ////////////////////////
 #ifndef VALGRIND_ON
 #define TUNE_MALLOPT 1
-#define MINPOOLTHREADS 4
+#define MINPOOLTHREADS 16
 #else
 #define MINPOOLTHREADS 2
 #endif
@@ -1398,6 +1398,7 @@ boolean do_something_useful(uint64_t myidx) {
   /// yes, why don't you lend a hand instead of just lying around nanosleeping...
   LiVESList *list;
   thrd_work_t *mywork;
+  uint64_t myflags = 0;
 
   pthread_mutex_lock(&twork_mutex);
   if ((list = twork_last) == NULL) {
@@ -1411,11 +1412,12 @@ boolean do_something_useful(uint64_t myidx) {
   pthread_mutex_unlock(&twork_mutex);
 
   mywork = (thrd_work_t *)list->data;
-
+  mywork->busy = myidx + 1;
+  myflags = mywork->flags;
 #ifdef TUNE_MALLOPT
   if (!pthread_mutex_trylock(&tuner_mutex)) {
     if (mtuner) {
-      mywork->flags |= LIVES_THRDFLAG_TUNING;
+      myflags |= LIVES_THRDFLAG_TUNING;
       autotune_u64(mtuner, 1, npoolthreads * 4, 128, (16. + (double)narenas * 2.
                    + (double)(mainw->effort > 0 ? mainw->effort : 0) / 16));
     }
@@ -1424,8 +1426,15 @@ boolean do_something_useful(uint64_t myidx) {
 
   (*mywork->func)(mywork->arg);
 
+  if (myflags & LIVES_THRDFLAG_AUTODELETE) {
+    lives_free(mywork);
+    lives_free(list);
+  } else {
+    mywork->done = myidx + 1;
+  }
+
 #ifdef TUNE_MALLOPT
-  if (mywork->flags & LIVES_THRDFLAG_TUNING) {
+  if (myflags & LIVES_THRDFLAG_TUNING) {
     if (mtuner) {
       size_t onarenas = narenas;
       narenas = autotune_u64_end(&mtuner, narenas);
@@ -1443,19 +1452,12 @@ boolean do_something_useful(uint64_t myidx) {
       }
     }
     pthread_mutex_unlock(&tuner_mutex);
-    mywork->flags = 0;
   }
 #endif
 
   pthread_mutex_lock(&twork_count_mutex);
   ntasks--;
   pthread_mutex_unlock(&twork_count_mutex);
-  if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
-    lives_free(mywork);
-    lives_free(list);
-  } else {
-    mywork->done = myidx + 1;
-  }
   return TRUE;
 }
 
@@ -1590,6 +1592,12 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
   if (task->flags & LIVES_THRDFLAG_AUTODELETE) {
     LIVES_FATAL("lives_thread_join() called on an autodelete thread");
     return 0;
+  }
+
+  while (!task->busy) {
+    pthread_mutex_lock(&tcond_mutex);
+    pthread_cond_signal(&tcond);
+    pthread_mutex_unlock(&tcond_mutex);
   }
 
   lives_nanosleep_until_nonzero(task->done);

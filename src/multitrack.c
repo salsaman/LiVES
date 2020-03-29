@@ -17142,7 +17142,7 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
     lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
-			      (LiVESXModifierType)LIVES_CONTROL_MASK,
+                              (LiVESXModifierType)LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0, freeze_closure);
 
   } else {

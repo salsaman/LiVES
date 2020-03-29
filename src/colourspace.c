@@ -308,7 +308,7 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
           // a + 1 = 1.055, b = 0.0031308, c = 12.92, d = 0.04045, G = 2.4
           // x <= b ? c * x : a * powf(x, 1 / G) - (a - 1)
           x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, GAMMA_CONSTA) - 0.055;
-	  break;
+          break;
         default:
           break;
         }

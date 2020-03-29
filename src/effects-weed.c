@@ -2325,7 +2325,7 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
       // apply gamma conversion if plugin requested it
       if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-	tgamma = WEED_GAMMA_LINEAR;
+        tgamma = WEED_GAMMA_LINEAR;
       else
         tgamma = cfile->gamma_type;
     }
@@ -3408,6 +3408,7 @@ weed_plant_t *weed_apply_effects(weed_plant_t **layers, weed_plant_t *filter_map
             continue;
           }
           filter = weed_instance_get_filter(instance, TRUE);
+
           if (is_pure_audio(filter, TRUE)) {
             weed_instance_unref(instance);
             continue;
@@ -6547,7 +6548,7 @@ boolean weed_init_effect(int hotkey) {
         //////////////////////////////////// switch from one generator to another: keep playing and stop the old one
         weed_generator_end((weed_plant_t *)cfile->ext_src);
         fg_generator_key = fg_generator_clip = fg_generator_mode = -1;
-        if (mainw->current_file > -1 && (cfile->achans == 0 || cfile->frames > 0)) {
+        if (CURRENT_CLIP_IS_VALID && (cfile->achans == 0 || cfile->frames > 0)) {
           // in case we switched to bg clip, and bg clip was gen
           // otherwise we will get killed in generator_start
           mainw->current_file = -1;
@@ -7775,6 +7776,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     if (mainw->play_window != NULL) {
       lives_widget_queue_draw(mainw->play_window);
     }
+    mainw->gen_started_play = TRUE;
 
     if (!mainw->osc_auto) start_playback_async(6);
     else {
@@ -7783,7 +7785,6 @@ int weed_generator_start(weed_plant_t *inst, int key) {
       // also stops the (now defunct instance being unreffed)
       mainw->gen_started_play = TRUE;
     }
-
     return 0;
   } else {
     // already playing
@@ -7794,7 +7795,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
     }
 
     if (!is_bg || old_file == -1 || old_file == new_file) {
-      if (mainw->current_file == -1) mainw->current_file = new_file;
+      //if (mainw->current_file == -1) mainw->current_file = new_file;
 
       if (new_file != old_file) {
         mainw->new_clip = new_file;
@@ -7924,7 +7925,7 @@ void weed_generator_end(weed_plant_t *inst) {
     bg_gen_to_start = bg_generator_key = bg_generator_mode = -1;
     pre_src_file = mainw->pre_src_file;
     mainw->pre_src_file = mainw->current_file;
-    mainw->current_file = mainw->blend_file;
+    //mainw->new_clip = mainw->blend_file;
   } else {
     if (mainw->frame_layer != NULL) check_layer_ready(mainw->frame_layer);
     //filter_mutex_lock(fg_generator_key);
@@ -7955,25 +7956,43 @@ void weed_generator_end(weed_plant_t *inst) {
     return;
   }
 
-  if (mainw->new_blend_file != -1 && is_bg) {
+  /// here we must be very careful, because we are about to close the clip which is either playing as fg or bg
+  /// in the case of background, we just switch to it very briefly to close it, then back to the fg clip
+  /// in case the generator was ended by a change of bg clip, we restore the new bg clip
+  ///
+  /// in the case of the fg clip we close it and try to switch to another valid clip
+  /// we switch back to the old (invalid) clip after this, while setting mainw->new_clip to the new one
+  /// the player will detect the invalid clip and jump to the switch point to handle the changeover cleanly
+  if (is_bg) {
+    mainw->current_file = mainw->blend_file;
+    mainw->rte ^= (GU641 << bg_generator_key);
     mainw->blend_file = mainw->new_blend_file;
     mainw->new_blend_file = -1;
     // close generator file and switch to original file if possible
     if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
+      break_me();
       LIVES_WARN("Close non-generator file");
+      mainw->current_file = mainw->pre_src_file;
     } else {
       cfile->ext_src = NULL;
       close_current_file(mainw->pre_src_file);
+      if (mainw->playing_file != mainw->pre_src_file) {
+        mainw->scratch = SCRATCH_JUMP;
+      }
     }
     if (mainw->ce_thumbs && mainw->active_sa_clips == SCREEN_AREA_BACKGROUND) ce_thumbs_update_current_clip();
   } else {
     // close generator file and switch to original file if possible
+    mainw->rte ^= (GU641 << fg_generator_key);
     if (cfile == NULL || cfile->clip_type != CLIP_TYPE_GENERATOR) {
       LIVES_WARN("Close non-generator file");
     } else {
       cfile->ext_src = NULL;
       if (cfile->achans == 0) {
+        current_file = mainw->current_file;
         close_current_file(mainw->pre_src_file);
+        mainw->new_clip = mainw->pre_src_file;
+        mainw->current_file = current_file;
       }
     }
     if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;
@@ -9578,9 +9597,7 @@ void rte_swap_fg_bg(void) {
 }
 
 
-LIVES_GLOBAL_INLINE int weed_get_sorted_filter(int i) {
-  return LIVES_POINTER_TO_INT(lives_list_nth_data(weed_fx_sorted_list, i));
-}
+LIVES_GLOBAL_INLINE int weed_get_sorted_filter(int i) {return LIVES_POINTER_TO_INT(lives_list_nth_data(weed_fx_sorted_list, i));}
 
 
 LiVESList *weed_get_all_names(lives_fx_list_t list_type) {

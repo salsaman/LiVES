@@ -3985,6 +3985,7 @@ lives_render_error_t render_events(boolean reset) {
         }
 
         if (saveargs->pixbuf != NULL && saveargs->pixbuf != pixbuf) {
+          if (saveargs->pixbuf == mainw->scrap_pixbuf) mainw->scrap_pixbuf = NULL;
           lives_widget_object_unref(saveargs->pixbuf);
           saveargs->pixbuf = NULL;
         }

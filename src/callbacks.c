@@ -2089,7 +2089,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             maybe_add_mt_idlefunc();
           }
           lives_free(set_name);
-	  mainw->only_close = mainw->is_exiting = FALSE;
+          mainw->only_close = mainw->is_exiting = FALSE;
           return;
         }
         legal_set_name = FALSE;
@@ -4350,7 +4350,7 @@ void play_all(boolean from_menu) {
     }
 
     mainw->playing_sel = FALSE;
-    lives_rm(cfile->info_file);
+    if (CURRENT_CLIP_IS_NORMAL) lives_rm(cfile->info_file);
 
     play_file();
 
@@ -10280,7 +10280,7 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (LIVES_IS_PLAYING) {
     if (cfile->frames > 0) {
       cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file,
-								  giw_timeline_get_value(GIW_TIMELINE(widget)));
+                                             giw_timeline_get_value(GIW_TIMELINE(widget)));
       mainw->scratch = SCRATCH_JUMP;
     }
     return;
@@ -10842,14 +10842,14 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
     }/*  else { */
-  /*     if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
-  /*       if (mainw->current_file != mainw->clipstore[clip][0]) { */
-  /*         if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file)) */
-  /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
-  /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
-  /*         } */
-  /*       } else { */
-  /*         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno); */
+    /*     if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
+    /*       if (mainw->current_file != mainw->clipstore[clip][0]) { */
+    /*         if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file)) */
+    /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
+    /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
+    /*         } */
+    /*       } else { */
+    /*         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno); */
   /* 	  // *INDENT-OFF* */
   /*       }}}} */
   /* // *INDENT-ON* */

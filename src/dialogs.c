@@ -1367,12 +1367,15 @@ int process_one(boolean visible) {
     return FALSE;
   }
 
-  mainw->noswitch = FALSE;
   if (mainw->new_vpp) {
     mainw->vpp = open_vid_playback_plugin(mainw->new_vpp, TRUE);
     mainw->new_vpp = NULL;
     old_vpp = mainw->vpp;
   }
+
+switch_point:
+
+  mainw->noswitch = FALSE;
 
   if (mainw->new_clip != -1) {
     mainw->deltaticks = 0;
@@ -1388,11 +1391,26 @@ int process_one(boolean visible) {
       sfile->frameno = sfile->last_frameno = last_req_frame;
     }
 
+    if (mainw->frame_layer_preload) {
+      check_layer_ready(mainw->frame_layer_preload);
+      weed_layer_free(mainw->frame_layer_preload);
+      mainw->frame_layer_preload = NULL;
+      cleanup_preload = FALSE;
+    }
+
     do_quick_switch(mainw->new_clip);
     mainw->startticks = mainw->currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
 
+    if (!IS_VALID_CLIP(mainw->playing_file)) {
+      if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
+      mainw->cancelled = CANCEL_INTERNAL_ERROR;
+      cancel_process(visible);
+      return ONE_MILLION + mainw->cancelled;
+    }
+
     sfile = mainw->files[mainw->playing_file];
     sfile->last_frameno = sfile->frameno;
+
     /* if (sfile->arate) */
     /* 	g_print("HIB2 %d %d %d %d %ld %f %f %ld %ld %d %f\n", sfile->frameno, last_req_frame, */
     /* 		mainw->playing_file, aplay_file, sfile->aseek_pos, */
@@ -1404,8 +1422,8 @@ int process_one(boolean visible) {
     mainw->force_show = TRUE;
     mainw->actual_frame = mainw->files[mainw->new_clip]->frameno;
     mainw->new_clip = -1;
-    cleanup_preload = TRUE;
     mainw->blend_palette = WEED_PALETTE_END;
+    getahead = -1;
     if (prefs->pbq_adaptive) reset_effort();
     // TODO: add a few to bungle_frames in case of decoder unchilling
 
@@ -1511,7 +1529,6 @@ int process_one(boolean visible) {
 
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
-      break_me();
       getahead = test_getahead = -1;
       cleanup_preload = TRUE;
       mainw->pred_frame = -1;
@@ -1631,9 +1648,9 @@ int process_one(boolean visible) {
                   drop_off = FALSE;
                 }
               } else {
-		sfile->frameno = getahead;
-	      }
-	    }
+                sfile->frameno = getahead;
+              }
+            }
           }
         } else {
           lives_direction_t dir;
@@ -1699,7 +1716,7 @@ int process_one(boolean visible) {
                   (pframe >= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))))
                 && ((getahead > -1 || pframe == requested_frame || is_layer_ready(mainw->frame_layer_preload)))) {
               sfile->frameno = pframe;
-	    }
+            }
             if (pframe == sfile->frameno) cache_hits++;
             else if (getahead == -1) {
               if ((sfile->pb_fps > 0. && pframe <= mainw->actual_frame)
@@ -1858,8 +1875,10 @@ int process_one(boolean visible) {
     if (mainw->frame_layer_preload) {
       if (getahead > -1 || is_layer_ready(mainw->frame_layer_preload)) {
         //wait_for_cleaner();
-        check_layer_ready(mainw->frame_layer_preload);
-        weed_layer_free(mainw->frame_layer_preload);
+        if (mainw->pred_clip > 0) {
+          check_layer_ready(mainw->frame_layer_preload);
+          weed_layer_free(mainw->frame_layer_preload);
+        }
         mainw->frame_layer_preload = NULL;
         mainw->pred_frame = 0;
         mainw->pred_clip = 0;
@@ -1874,7 +1893,7 @@ int process_one(boolean visible) {
     mainw->startticks = mainw->currticks;
     mainw->video_seek_ready = TRUE;
   } else {
-    if (!mainw->multitrack && scratch == SCRATCH_NONE && IS_NORMAL_CLIP(mainw->playing_file)
+    if (!mainw->multitrack && scratch == SCRATCH_NONE && IS_NORMAL_CLIP(mainw->playing_file) && mainw->playing_file > 0
         && ((spare_cycles > 0ul && last_spare_cycles > 0ul) || (getahead > -1 && mainw->pred_frame != -getahead))) {
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("PRELOADING (%d %d %lu %p):", sfile->frameno, dropped, spare_cycles, mainw->frame_layer_preload);
@@ -1986,6 +2005,11 @@ refresh:
     if (mainw->cs_is_permitted) {
       mainw->cs_is_permitted = FALSE;
       if (mainw->current_file != old_current_file) mainw->cancelled = CANCEL_NO_PROPOGATE;
+    }
+
+    if (!CURRENT_CLIP_IS_VALID) {
+      if (IS_VALID_CLIP(mainw->new_clip)) goto switch_point;
+      mainw->cancelled = CANCEL_INTERNAL_ERROR;
     }
 
     if (mainw->cancelled != CANCEL_NONE) {

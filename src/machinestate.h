@@ -262,7 +262,7 @@ char *lives_datetime(struct timeval *tv);
     ts.tv_nsec = (uint64_t)nanosec - ts.tv_sec * ONE_BILLION; while (nanosleep(&ts, &ts) == -1 && errno != ETIMEDOUT);}
 
 #define lives_nanosleep_until_nonzero(var) {struct timespec ts; ts.tv_sec =0; \
-    ts.tv_nsec = 100; while (!(var)) while (nanosleep(&ts, &ts) == -1 && errno != ETIMEDOUT);}
+    ts.tv_nsec = 100; while (!(var)) nanosleep(&ts, &ts);}
 
 int check_dev_busy(char *devstr);
 
@@ -293,6 +293,7 @@ typedef struct {
   lives_funcptr_t func;
   void *arg;
   uint64_t flags;
+  volatile uint64_t busy;
   volatile uint64_t done;
   void *ret;
 } thrd_work_t;

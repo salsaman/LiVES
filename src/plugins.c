@@ -2237,8 +2237,7 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
   if (decoder_plugin == NULL) {
     lives_freep((void **)&dplug);
-  }
-  else {
+  } else {
     dplug->cdata->rec_rowstrides = NULL;
   }
 

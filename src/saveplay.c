@@ -2162,7 +2162,7 @@ void play_file(void) {
                             (LiVESXModifierType)(LIVES_CONTROL_MASK | LIVES_ALT_MASK),
                             (LiVESAccelFlags)0, (bg_freeze_closure = lives_cclosure_new(LIVES_GUI_CALLBACK(freeze_callback),
                                 LIVES_INT_TO_POINTER(SCREEN_AREA_BACKGROUND), NULL)));
-  
+
   /// disable ctrl-q since it can be activated by user error
   lives_accel_path_disconnect(mainw->accel_group, LIVES_ACCEL_PATH_QUIT);
 
@@ -2808,8 +2808,10 @@ void play_file(void) {
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
     weed_call_deinit_func(mainw->files[mainw->blend_file]->ext_src);
   }
-  if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
-    weed_call_deinit_func(cfile->ext_src);
+  if (CURRENT_CLIP_IS_VALID) {
+    if (mainw->current_file >= 1 && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+      weed_call_deinit_func(cfile->ext_src);
+    }
   }
 
   if (mainw->ext_playback) {
@@ -3001,7 +3003,7 @@ void play_file(void) {
     lives_freep((void **)&com2);
   }
 
-  if (mainw->current_file > -1) {
+  if (CURRENT_CLIP_IS_NORMAL) {
     stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME, NULL);
     lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
     lives_free(stfile);
@@ -3136,7 +3138,7 @@ void play_file(void) {
     unhide_cursor(lives_widget_get_xwindow(mainw->playarea));
   }
 
-  if (mainw->current_file > -1) cfile->play_paused = FALSE;
+  if (CURRENT_CLIP_IS_VALID) cfile->play_paused = FALSE;
 
   if (mainw->blend_file != -1 && mainw->blend_file != mainw->current_file && mainw->files[mainw->blend_file] != NULL &&
       mainw->files[mainw->blend_file]->clip_type == CLIP_TYPE_GENERATOR) {
@@ -3182,7 +3184,7 @@ void play_file(void) {
   if (prefs->volume != (double)future_prefs->volume) pref_factory_float(PREF_MASTER_VOLUME, future_prefs->volume, TRUE);
 
   // TODO - ????
-  if (mainw->current_file > -1 && cfile->clip_type == CLIP_TYPE_DISK && cfile->frames == 0 && mainw->record_perf) {
+  if (CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_DISK && cfile->frames == 0 && mainw->record_perf) {
     lives_signal_handler_block(mainw->record_perf, mainw->record_perf_func);
     lives_check_menu_item_set_active(LIVES_CHECK_MENU_ITEM(mainw->record_perf), FALSE);
     lives_signal_handler_unblock(mainw->record_perf, mainw->record_perf_func);
@@ -3246,7 +3248,7 @@ void play_file(void) {
 
   /// need to do this here, in case we want to preview with only a generator and no other clips (which will close to -1)
   if (mainw->record) {
-    if (!mainw->preview && cfile->clip_type == CLIP_TYPE_GENERATOR) {
+    if (!mainw->preview && CURRENT_CLIP_IS_VALID && cfile->clip_type == CLIP_TYPE_GENERATOR) {
       /// deinit the generator here, to possibly save CPU cycles in case it's running in a thread
       weed_plant_t *inst = (weed_plant_t *)cfile->ext_src;
       mainw->osc_block = TRUE;

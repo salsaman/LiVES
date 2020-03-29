@@ -133,8 +133,8 @@ static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
 static uint32_t imgRow;
 static uint32_t imgWidth;
 static uint32_t imgHeight;
-static int32_t xoffs;
-static int32_t yoffs;
+static double x_range;
+static double y_range;
 
 // size of texture
 static  uint32_t texRow;
@@ -953,14 +953,12 @@ static int Upload(void) {
   int texID;
   int window_width, window_height;
 
-  float aspect, scalex, scaley, offsxf, offsyf;
+  float aspect, scalex, scaley, offs_x, offs_y;
 
   // scaling for particles
   float partx, party = 2. / (float)imgHeight;
 
-  offsyf =
-
-    pthread_mutex_lock(&rthread_mutex);
+  pthread_mutex_lock(&rthread_mutex);
   if (has_new_texture) {
     ctexture++;
     if (ctexture == nbuf) ctexture = 0;
@@ -971,8 +969,8 @@ static int Upload(void) {
   }
   pthread_mutex_unlock(&rthread_mutex);
   aspect = (float)imgWidth / (float)imgHeight;
-  scalex = (float)((imgWidth - 2 * xoffs) * typesize) / (float)texRow;
-  scaley = (float)(imgHeight - 2 * yoffs) / (float)texHeight;
+  scalex = (float)(imgWidth * typesize) / (float)texRow;
+  scaley = (float)imgHeight / (float)texHeight;
   partx = 2. / (float)imgWidth;
   party = 2. / (float)imgHeight;
 
@@ -1003,46 +1001,44 @@ static int Upload(void) {
   case 0: {
     // flat:
     glMatrixMode(GL_PROJECTION);
+    glOrtho(0, 1, 0, 1, -1, 1);
     glLoadIdentity();
-    glFrustum(-1, 1, -1, 1, 2, 10);
-
-    glEnable(GL_DEPTH_TEST);
+    // glFrustum(-1, 1, -1, 1, 2, 10);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    glTranslatef(.0, .0, -2);
+    // glTranslatef(.0, .0, -2);
 
     glEnable(m_TexTarget);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
 
-    /*	glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-      glTexParameteri( m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+    glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-      glTexParameteri( m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-      glTexParameteri( m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri(m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);*/
+    //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
+    // tex coords go from 0,0 -> 1,1 (loadidentity ???)
+    // window (vertex) goes from -1, -1 to +1, +1 (glFrustum ???)
+    glClear(GL_COLOR_BUFFER_BIT);
     glBindTexture(m_TexTarget, texID);
-    glColor4d(1.0, 1.0, 1.0, 1.0);
-
+    glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glTexCoord2d(0, 1);
-    glVertex3d(-scalex, -scaley, 0);
-    glTexCoord2d(0, 0);
-    glVertex3d(-scalex, scaley, 0);
-    glTexCoord2d(1., 0);
-    glVertex3d(scalex, scaley, 0);
-    glTexCoord2d(1., 1.);
-    glVertex3d(scalex, -scaley, 0);
+    glTexCoord2i(0, 0);
+    glVertex2d(-x_range, y_range);
+    glTexCoord2i(0, 1);
+    glVertex2d(-x_range, -y_range);
+    glTexCoord2i(1, 1);
+    glVertex2d(x_range, -y_range);
+    glTexCoord2i(1, 0);
+    glVertex2d(x_range, y_range);
     glEnd();
 
-    glDisable(m_TexTarget);
-
-    glMatrixMode(GL_MODELVIEW);
-    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
   }
   break;
 
@@ -1977,8 +1973,8 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
 
   pthread_mutex_lock(&rthread_mutex); // wait for lockout of render thread
 
-  xoffs = weed_get_int_value(frame, "x_offset", NULL);
-  yoffs = weed_get_int_value(frame, "y_offset", NULL);
+  x_range = weed_get_double_value(frame, "x_range", NULL);
+  y_range = weed_get_double_value(frame, "y_range", NULL);
 
   imgRow = row; // bytes
   imgWidth = hsize;  // pix

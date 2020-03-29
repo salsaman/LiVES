@@ -517,7 +517,7 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
   int progress = 1;
 
   if (sfile->pumper) lives_proc_thread_set_cancellable(sfile->pumper);
-  
+
   if (sframe < 1) sframe = 1;
 
   for (i = sframe; i <= eframe; i++) {

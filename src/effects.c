@@ -1160,7 +1160,7 @@ boolean swap_fg_bg_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint
     else mainw->swapped_clip = mainw->pre_src_file;
   } else mainw->swapped_clip = -1;
 
-  rte_swap_fg_bg();
+  //rte_swap_fg_bg();
 
   mainw->new_clip = blend_file;
   //do_quick_switch(blend_file); // will set mainw->blend_file

@@ -147,21 +147,25 @@ WEED_GLOBAL_INLINE char *weed_filter_get_name(weed_plant_t *filter) {
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_in_chantmpls(weed_plant_t *filter, int *ntmpls) {
+  if (ntmpls) *ntmpls = 0;
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_CHANNEL_TEMPLATES, ntmpls);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_out_chantmpls(weed_plant_t *filter, int *ntmpls) {
+  if (ntmpls) *ntmpls = 0;
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_CHANNEL_TEMPLATES, ntmpls);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_in_paramtmpls(weed_plant_t *filter, int *ntmpls) {
+  if (ntmpls) *ntmpls = 0;
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_IN_PARAMETER_TEMPLATES, ntmpls);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_filter_get_out_paramtmpls(weed_plant_t *filter, int *ntmpls) {
+  if (ntmpls) *ntmpls = 0;
   if (!WEED_PLANT_IS_FILTER_CLASS(filter)) return NULL;
   return weed_get_plantptr_array_counted(filter, WEED_LEAF_OUT_PARAMETER_TEMPLATES, ntmpls);
 }
@@ -302,6 +306,7 @@ WEED_GLOBAL_INLINE void *weed_channel_get_pixel_data(weed_plant_t *channel) {
 }
 
 WEED_GLOBAL_INLINE void **weed_channel_get_pixel_data_planar(weed_plant_t *channel, int *nplanes) {
+  if (nplanes) *nplanes = 0;
   if (!WEED_PLANT_IS_CHANNEL(channel)) return NULL;
   return weed_get_voidptr_array_counted(channel, WEED_LEAF_PIXEL_DATA, NULL);
 }
@@ -482,21 +487,25 @@ WEED_GLOBAL_INLINE void weed_instance_set_flags(weed_plant_t *inst, int flags) {
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_in_channels(weed_plant_t *instance, int *nchans) {
+  if (nchans) *nchans = 0;
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_IN_CHANNELS, nchans);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_out_channels(weed_plant_t *instance, int *nchans) {
+  if (nchans) *nchans = 0;
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_CHANNELS, nchans);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_in_params(weed_plant_t *instance, int *nparams) {
+  if (nparams) *nparams = 0;
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_IN_PARAMETERS, nparams);
 }
 
 WEED_GLOBAL_INLINE weed_plant_t **weed_instance_get_out_params(weed_plant_t *instance, int *nparams) {
+  if (nparams) *nparams = 0;
   if (!WEED_PLANT_IS_FILTER_INSTANCE(instance)) return NULL;
   return weed_get_plantptr_array_counted(instance, WEED_LEAF_OUT_PARAMETERS, nparams);
 }

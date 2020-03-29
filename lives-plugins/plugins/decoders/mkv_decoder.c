@@ -907,10 +907,10 @@ static int matroska_merge_packets(const lives_clip_data_t *cdata, AVPacket *out,
   if (!newdata)
     return AVERROR(ENOMEM);
   out->data = newdata;
-    if (cdata->ext_memcpy)
-      (*cdata->ext_memcpy)(out->data + out->size, in->data, in->size);
-    else
-      memcpy(out->data + out->size, in->data, in->size);
+  if (cdata->ext_memcpy)
+    (*cdata->ext_memcpy)(out->data + out->size, in->data, in->size);
+  else
+    memcpy(out->data + out->size, in->data, in->size);
   out->size += in->size;
   av_packet_unref(in);
   av_free(in);
@@ -2154,6 +2154,10 @@ const char *version(void) {
 
 
 static lives_clip_data_t *init_cdata(void) {
+  static malloc_f  ext_malloc  = (malloc_f)  malloc;
+  static memcpy_f  ext_memcpy  = (memcpy_f)  memcpy;
+  static realloc_f ext_realloc = (realloc_f) realloc;
+
   lives_mkv_priv_t *priv;
   lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
 
@@ -2181,6 +2185,10 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->frame_gamma = WEED_GAMMA_UNKNOWN;
 
   cdata->video_start_time = 0.;
+
+  cdata->ext_malloc = &ext_malloc;
+  cdata->ext_memcpy = &ext_memcpy;
+  cdata->ext_realloc = &ext_realloc;
 
   priv->idxc = NULL;
 
@@ -2571,10 +2579,10 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       if (offset)
         memcpy(pkt->data, encodings->compression.settings.data, offset);
 
-    if (cdata->ext_memcpy)
-      (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
-    else
-      memcpy(pkt->data + offset, pkt_data, pkt_size);
+      if (cdata->ext_memcpy)
+        (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
+      else
+        memcpy(pkt->data + offset, pkt_data, pkt_size);
 
       if (pkt_data != data)
         free(pkt_data);
@@ -2864,18 +2872,17 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       if (nextframe > cdata->nframes) goto cleanup;
       loops++;
       if (did_seek) {
-	int64_t now = get_current_ticks();
-	timex += now;
-	((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
-	loops = 0;
-	did_seek = FALSE;
-	timex = - now;
-	if (cdata->max_decode_fps && tframe > priv->last_frame) {
-	  int64_t jump_limit = cdata->fwd_seek_time / cdata->max_decode_fps;
-	  if (jump_limit < 2) jump_limit = 2;
-	  ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
-	  fprintf(stderr, "mkv_dec: jump_limit set to %ld\n", cdata->jump_limit);
-	}
+        int64_t now = get_current_ticks();
+        timex += now;
+        ((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
+        loops = 0;
+        did_seek = FALSE;
+        timex = - now;
+        if (cdata->max_decode_fps && tframe > priv->last_frame) {
+          int64_t jump_limit = cdata->fwd_seek_time / cdata->max_decode_fps;
+          if (jump_limit < 2) jump_limit = 2;
+          ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
+        }
       }
     } while (nextframe <= tframe);
     timex += get_current_ticks();

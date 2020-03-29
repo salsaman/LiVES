@@ -354,35 +354,42 @@ enum {
 };
 
 // executables
+// mandatory
 #define EXEC_SMOGRIFY "smogrify"
 #define EXEC_PERL "perl"
-#define EXEC_PYTHON "python"
-#define EXEC_YOUTUBE_DL "youtube-dl"
 #define EXEC_MPLAYER "mplayer"
 #define EXEC_MPLAYER2 "mplayer2"
 #define EXEC_MPV "mpv"
-#define EXEC_JACKD "jackd"
+
+// recommended
+#define EXEC_SOX "sox"
 #define EXEC_PULSEAUDIO "pulseaudio"
 #define EXEC_CONVERT "convert"
 #define EXEC_COMPOSITE "composite"
 #define EXEC_IDENTIFY "identify"
-#define EXEC_PLAY "play"
-#define EXEC_SOX "sox"
+#define EXEC_FFPROBE "ffprobe"
+#define EXEC_FILE "file"
+#define EXEC_YOUTUBE_DL "youtube-dl"
+#define EXEC_MD5SUM "md5sum"
+#define EXEC_GZIP "gzip"
+#define EXEC_DU "du"
+
+// optional
+#define EXEC_PYTHON "python"
+#define EXEC_AUTOLIVES_PL "autolives.pl" ///< shipped
+#define EXEC_MIDISTART "midistart" ///< shipped
+#define EXEC_MIDISTOP "midistop" ///< shipped
+#define EXEC_JACKD "jackd" ///< recommended if (!have_pulseaudio)
 #define EXEC_DVGRAB "dvgrab"
 #define EXEC_CDDA2WAV "cdda2wav"
 #define EXEC_ICEDAX "icedax"
 #define EXEC_GDB "gdb"
-#define EXEC_SSH_ASKPASS "ssh-askpass"
+#define EXEC_SSH_ASKPASS "ssh-askpass" ///< recommended if (have_youtube_dl)
 #define EXEC_XWININFO "xwininfo"
 #define EXEC_GCONFTOOL_2 "gconftool-2"
 #define EXEC_XDG_SCREENSAVER "xdg-screensaver"
-#define EXEC_MIDISTART "midistart"
-#define EXEC_MIDISTOP "midistop"
-#define EXEC_AUTOLIVES_PL "autolives.pl"
-#define EXEC_MD5SUM "md5sum"
 #define EXEC_WMCTRL "wmctrl"
-#define EXEC_GZIP "gzip"
-#define EXEC_DU "du"
+#define EXEC_PLAY "play"
 
 // image types (string)
 #define LIVES_IMAGE_TYPE_JPEG "jpeg"
@@ -1038,6 +1045,7 @@ typedef struct {
   LiVESWidget *show_devopts;
   LiVESWidget *mt_menu;
   LiVESWidget *troubleshoot;
+  LiVESWidget *expl_missing;
   LiVESWidget *export_custom_rfx;
   LiVESWidget *delete_custom_rfx;
   LiVESWidget *edit_test_rfx;

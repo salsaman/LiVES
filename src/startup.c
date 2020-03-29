@@ -1005,6 +1005,67 @@ void do_startup_interface_query(void) {
 }
 
 
-void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {
-  do_startup_tests(TRUE);
+void on_troubleshoot_activate(LiVESMenuItem *menuitem, livespointer user_data) {do_startup_tests(TRUE);}
+
+
+static char *explain_missing(const char *exe) {
+  char *pt2, *pt1 = lives_strdup_printf(_("\t'%s' was not found on your system.\n"
+					  "Installation is recommended as it provides the following features\n\t- "), exe);
+  if (!lives_strcmp(exe, EXEC_FILE)) pt2 = lives_strdup(_("Enables easier identification of file types,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_GZIP)) pt2 = lives_strdup(_("Enables reduction in file size for some files,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_DU)) pt2 = lives_strdup(_("Enables measuring of disk space used,\n\n"));
+  else if (!lives_strcmp(exe, EXEC_FFPROBE)) pt2 = lives_strdup(_("Assists in the identification of video clips\n\n"));
+  else if (!lives_strcmp(exe, EXEC_IDENTIFY)) pt2 = lives_strdup(_("Assists in the identification of image files\n\n"));
+  else if (!lives_strcmp(exe, EXEC_CONVERT)) pt2 = lives_strdup(_("Required for many rendered effects in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_COMPOSITE)) pt2 = lives_strdup(_("Enables clip mergeing in the clip editor.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_PYTHON)) pt2 = lives_strdup(_("Allows use of some additional encoder plugins\n\n"));
+  else if (!lives_strcmp(exe, EXEC_MD5SUM)) pt2 = lives_strdup(_("Allows checking for file changes, "
+									"enabing additional files to be cached in memory.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_YOUTUBE_DL)) pt2 = lives_strdup(_("Enables download and import of files from "
+									    "Youtube and other sites.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_SSH_ASKPASS)) pt2 = lives_strdup(_("Required for secure password entry when "
+									     "needed to update youtube-dl.\n\n"));
+  else if (!lives_strcmp(exe, EXEC_XWININFO)) pt2 = lives_strdup(_("Enables identification of external windows "
+									  "so that they can be recorded.\n\n"));
+  else return lives_strdup_free(pt1, "");
+  return lives_concat(pt1, pt2);
 }
+
+
+#define ADD_TO_TEXT(what, exec)   if (!capable->has_##what) {	\
+    text = lives_concat(text, explain_missing(exec)) ;\
+}
+
+void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  char *title = lives_strdup(_("What is missing ?")), *text = lives_strdup("");
+
+  if (capable->has_file == UNCHECKED) capable->has_file = has_executable(EXEC_FILE);
+
+  ADD_TO_TEXT(file, EXEC_FILE);
+  ADD_TO_TEXT(du,  EXEC_DU);
+  ADD_TO_TEXT(identify, EXEC_IDENTIFY);
+  ADD_TO_TEXT(md5sum, EXEC_MD5SUM);
+  ADD_TO_TEXT(ffprobe, EXEC_FFPROBE);
+  ADD_TO_TEXT(convert, EXEC_CONVERT);
+  ADD_TO_TEXT(composite, EXEC_COMPOSITE);
+  ADD_TO_TEXT(python, EXEC_PYTHON);
+  ADD_TO_TEXT(gzip, EXEC_GZIP);
+  ADD_TO_TEXT(youtube_dl, EXEC_YOUTUBE_DL);
+  if (capable->has_youtube_dl)
+    ADD_TO_TEXT(ssh_askpass, EXEC_SSH_ASKPASS);
+  ADD_TO_TEXT(xwininfo, EXEC_XWININFO);
+  if (!(*text)) {
+    lives_free(title); lives_free(text);
+    do_info_dialog(_("All optional components located\n"));
+    return;
+  }
+  text = lives_concat(text, lives_strdup(_("\n\nIf you DO have any of these missing components, please ensure they are "
+					   "located in your $PATH before restarting LiVES"))); 
+  widget_opts.expand = LIVES_EXPAND_EXTRA_WIDTH | LIVES_EXPAND_DEFAULT_HEIGHT;
+  create_text_window(title, text, NULL);
+  widget_opts.expand = LIVES_EXPAND_DEFAULT;;
+  lives_free(title);
+  lives_free(text);
+}
+#undef ADD_TO_TEXT
+

@@ -3359,7 +3359,7 @@ if (defined($ARGV[0])) {
 	    }
 
 	    #append silence to pad to end
-	    print STDERR "filling audio to $audio_end\n";
+	    #print STDERR "filling audio to $audio_end\n";
 
 	    &append_silence(0, &align($audio_end * $arate * $align), $asamps, $achans, $asigned, $aendian);
 	    if ($panic) {

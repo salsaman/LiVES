@@ -2442,6 +2442,7 @@ void free_pulse_audio_buffers(void) {
 
 
 LIVES_GLOBAL_INLINE void avsync_force(void) {
+#ifdef RESEEK_ENABLE
   /// force realignment of video and audio at current file->frameno / player->seek_pos
   pthread_mutex_lock(&mainw->avseek_mutex);
   if (mainw->audio_seek_ready && mainw->video_seek_ready) {
@@ -2449,6 +2450,7 @@ LIVES_GLOBAL_INLINE void avsync_force(void) {
     mainw->force_show = TRUE;
   }
   pthread_mutex_unlock(&mainw->avseek_mutex);
+#endif
 }
 
 

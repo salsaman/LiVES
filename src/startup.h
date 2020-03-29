@@ -1,6 +1,6 @@
-// plugins.h
+// startup.h
 // LiVES
-// (c) G. Finch 2010 - 2016 <salsaman+lives@gmail.com>
+// (c) G. Finch 2010 - 2020 <salsaman+lives@gmail.com>
 // released under the GNU GPL 3 or later
 // see file ../COPYING or www.gnu.org for licensing details
 
@@ -16,7 +16,7 @@ boolean do_startup_tests(boolean tshoot);
 void do_startup_interface_query(void);
 
 void on_troubleshoot_activate(LiVESMenuItem *, livespointer);
-
+void explain_missing_activate(LiVESMenuItem * menuitem, livespointer user_data);
 
 void do_bad_dir_perms_error(const char *dirname);
 void dir_toolong_error(char *dirname, const char *dirtype, size_t max, boolean allow_retry);

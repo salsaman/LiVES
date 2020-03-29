@@ -581,13 +581,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   // load a preview of an rfx (rendered effect) in clip editor
   weed_layer_t *layer;
   FILE *infofile = NULL;
-
-  ticks_t timeout;
-
-  lives_alarm_t alarm_handle;
-
   int tot_frames = 0;
-  int vend = cfile->fx_frame_pump;
   int retval;
   int current_file = mainw->current_file;
 
@@ -607,18 +601,15 @@ void load_rfx_preview(lives_rfx_t *rfx) {
   clear_mainw_msg();
   mainw->write_failed = FALSE;
 
-  if (cfile->clip_type == CLIP_TYPE_FILE && vend <= cfile->end && mainw->framedraw_frame > vend - FX_FRAME_PUMP_VAL) {
+  if (cfile->clip_type == CLIP_TYPE_FILE && cfile->fx_frame_pump && !cfile->pumper) {
     // pull frames in background
-    if (!cfile->pumper) {
-      cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
-                      cfile->start, cfile->end, FALSE, NULL);
-    }
+    cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
+					     cfile->undo_start, cfile->undo_end, FALSE, NULL);
   }
 
   if (mainw->cancelled) {
     if (cfile->pumper) {
-      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
-      lives_proc_thread_join(cfile->pumper);
+      lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
       weed_plant_free(cfile->pumper);
       cfile->pumper = NULL;
     }
@@ -637,8 +628,7 @@ void load_rfx_preview(lives_rfx_t *rfx) {
     if (infofile) fclose(infofile);
     lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
     if (cfile->pumper) {
-      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
-      lives_proc_thread_join(cfile->pumper);
+      lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
       weed_plant_free(cfile->pumper);
       cfile->pumper = NULL;
     }

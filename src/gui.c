@@ -1592,6 +1592,11 @@ void create_LiVES(void) {
   mainw->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->troubleshoot);
 
+  mainw->expl_missing = lives_standard_menu_item_new_with_label(_("Check for Missing Features"));
+  if (!prefs->vj_mode) lives_container_add(LIVES_CONTAINER(mainw->help_menu), mainw->expl_missing);
+
+  lives_menu_add_separator(LIVES_MENU(mainw->help_menu));
+
   about = lives_standard_menu_item_new_with_label(_("_About"));
   lives_container_add(LIVES_CONTAINER(mainw->help_menu), about);
 
@@ -2919,6 +2924,10 @@ void create_LiVES(void) {
                        LIVES_GUI_CALLBACK(on_troubleshoot_activate),
                        NULL);
 
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->expl_missing), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(explain_missing_activate),
+                       NULL);
+
   lives_signal_connect(LIVES_GUI_OBJECT(show_manual), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(show_manual_activate),
                        NULL);
@@ -3432,6 +3441,7 @@ void unfade_background(void) {
     lives_widget_add_accelerator(mainw->full_screen, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_f, (LiVESXModifierType)0,
                                  LIVES_ACCEL_VISIBLE);
+
     lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), sepwin_closure);
     lives_widget_add_accelerator(mainw->sepwin, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                  LIVES_KEY_s, (LiVESXModifierType)0,
@@ -3452,6 +3462,7 @@ void unfade_background(void) {
       lives_widget_add_accelerator(mainw->loop_video, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                    LIVES_KEY_l, (LiVESXModifierType)0,
                                    LIVES_ACCEL_VISIBLE);
+
       lives_accel_group_disconnect(LIVES_ACCEL_GROUP(mainw->accel_group), loop_cont_closure);
       lives_widget_add_accelerator(mainw->loop_continue, LIVES_WIDGET_ACTIVATE_SIGNAL, mainw->accel_group,
                                    LIVES_KEY_o, (LiVESXModifierType)0,

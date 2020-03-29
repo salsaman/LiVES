@@ -585,8 +585,8 @@ weed_plant_t *render_text_to_layer(weed_layer_t *layer, const char *text, const 
     }
     lives_painter_to_layer(cr, layer);
   }
-
-  weed_layer_set_gamma(layer, gamma);
+  if (gamma != WEED_GAMMA_UNKNOWN)
+    weed_layer_set_gamma(layer, gamma);
   return layer;
 }
 

@@ -2325,12 +2325,10 @@ lives_filter_error_t weed_apply_instance(weed_plant_t *inst, weed_plant_t *init_
     if (prefs->apply_gamma && weed_palette_is_rgb(opalette)) {
       // apply gamma conversion if plugin requested it
       if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
-        tgamma = WEED_GAMMA_LINEAR;
-      else {
+	tgamma = WEED_GAMMA_LINEAR;
+      else
         tgamma = cfile->gamma_type;
-      }
     }
-
     if (cpalette != opalette) {
       if (!convert_layer_palette_full(layer, opalette, oclamping, osampling, osubspace, tgamma)) {
         retval = FILTER_ERROR_INVALID_PALETTE_CONVERSION;
@@ -7475,7 +7473,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     return NULL;
   }
 
-  if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
+  if ((filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA))
     weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
   else
     weed_channel_set_gamma_type(channel, WEED_GAMMA_SRGB);

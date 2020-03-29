@@ -308,6 +308,7 @@ static inline uint8_t *create_gamma_lut(double fileg, int gamma_from, int gamma_
           // a + 1 = 1.055, b = 0.0031308, c = 12.92, d = 0.04045, G = 2.4
           // x <= b ? c * x : a * powf(x, 1 / G) - (a - 1)
           x = (a <= 0.0031308) ? 12.92 * a : 1.055 * powf(a, GAMMA_CONSTA) - 0.055;
+	  break;
         default:
           break;
         }
@@ -1087,7 +1088,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_alpha(int pal) {
 LIVES_GLOBAL_INLINE boolean weed_palette_is_rgb(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
-    for (register int i = 0; i < MAXPPLANES && !mpx->chantype[i]; i++)
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
       if (is_rgbchan(mpx->chantype[i])) return TRUE;
   }
   return FALSE;
@@ -1096,7 +1097,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_rgb(int pal) {
 LIVES_GLOBAL_INLINE boolean weed_palette_is_yuv(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
-    for (register int i = 0; i < MAXPPLANES && !mpx->chantype[i]; i++)
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
       if (is_yuvchan(mpx->chantype[i])) return TRUE;
   }
   return FALSE;
@@ -1105,7 +1106,7 @@ LIVES_GLOBAL_INLINE boolean weed_palette_is_yuv(int pal) {
 LIVES_GLOBAL_INLINE boolean weed_palette_has_alpha(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   if (mpx) {
-    for (register int i = 0; i < MAXPPLANES && !mpx->chantype[i]; i++)
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
       if (mpx->chantype[0] == WEED_VCHAN_alpha) return TRUE;
   }
   return FALSE;

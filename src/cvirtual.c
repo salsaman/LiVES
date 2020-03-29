@@ -506,7 +506,7 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
 
   // should be threadsafe apart from progress update
 
-  // if pbr is non-null, it will be set to point to the pulled pixbuf (
+  // if pbr is non-null, it will be set to point to the pulled pixbuf
 
   // return FALSE on write error
 
@@ -516,12 +516,14 @@ boolean virtual_to_images(int sfileno, frames_t sframe, frames_t eframe, boolean
 
   int progress = 1;
 
+  if (sfile->pumper) lives_proc_thread_set_cancellable(sfile->pumper);
+  
   if (sframe < 1) sframe = 1;
 
   for (i = sframe; i <= eframe; i++) {
     if (i > sfile->frames) break;
 
-    if (sfile->pumper && weed_get_boolean_value(sfile->pumper, "cancelled", NULL) == WEED_TRUE) break;
+    if (sfile->pumper && lives_proc_thread_cancelled(sfile->pumper)) break;
 
     if (update_progress) {
       threaded_dialog_spin((double)(i - sframe) / (double)(eframe - sframe + 1));

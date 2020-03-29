@@ -88,7 +88,7 @@ void lives_free_check(void *p);
 // the same values are passed into realtime fx plugins via Weed function overloading
 #ifdef HAVE_OPENCV
 #ifndef NO_OPENCV_MEMFUNCS
-#define _lives_malloc(sz)  alignPtr(sz, 64);
+#define _lives_malloc(sz)  alignPtr(sz, DEF_ALIGN);
 #define _lives_free    fastFree
 #define _lives_realloc proxy_realloc
 #endif
@@ -158,8 +158,9 @@ void lives_free_check(void *p);
 
 /// TODO: this file should be split into at least: memory functions, thread functions, file utils
 
-void *lives_calloc_safety(size_t nmemb, size_t xsize);
-void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize);
+void *lives_free_and_return(void *p);
+void *lives_calloc_safety(size_t nmemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
+void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
 
 /// disk/storage status values
 typedef enum {
@@ -195,16 +196,16 @@ typedef struct memheader {
   size_t align;
 } memheader_t;
 
-void *_ext_malloc(size_t n);
-void *_ext_malloc_and_copy(size_t, const void *);
+void *_ext_malloc(size_t n) GNU_MALLOC;
+void *_ext_malloc_and_copy(size_t, const void *) GNU_MALLOC_SIZE(1);
 void _ext_unmalloc_and_copy(size_t, void *);
 void _ext_free(void *);
 void *_ext_free_and_return(void *);
 void *_ext_memcpy(void *, const void *, size_t);
 void *_ext_memset(void *, int, size_t);
 void *_ext_memmove(void *, const void *, size_t);
-void *_ext_realloc(void *, size_t);
-void *_ext_calloc(size_t, size_t);
+void *_ext_realloc(void *, size_t) GNU_MALLOC_SIZE(2);
+void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
 
 #if defined _GNU_SOURCE
 #define LIVES_GNU
@@ -213,9 +214,10 @@ void *_ext_calloc(size_t, size_t);
 #endif
 
 size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
-boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT;
-boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT;
-int lives_strcmp_ordered(const char *st1, const char *st2) GNU_HOT;
+boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT GNU_PURE;
+boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT GNU_PURE;
+int lives_strcmp_ordered(const char *st1, const char *st2) GNU_HOT GNU_PURE;
+char *lives_concat(char *st, char *x) GNU_HOT;
 
 void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
 void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;
@@ -234,8 +236,6 @@ void *quick_malloc(size_t alloc_size) GNU_MALLOC;
 void init_random(void);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
-
-int load_measure_idle(void *data);
 
 #ifdef ENABLE_ORC
 void *lives_orc_memcpy(void *dest, const void *src, size_t n);
@@ -301,6 +301,8 @@ typedef struct {
 #define WEED_LEAF_DONE "done"
 #define WEED_LEAF_THREADFUNC "tfunction"
 #define WEED_LEAF_THREAD_PROCESSING "t_processing"
+#define WEED_LEAF_THREAD_CANCELLABLE "t_can_cancel"
+#define WEED_LEAF_THREAD_CANCELLED "t_cancelled"
 #define WEED_LEAF_RETURN_VALUE "return_value"
 
 
@@ -338,6 +340,11 @@ typedef weed_plant_t(*funcptr_plantptr_t)();
 
 lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
+
+void lives_proc_thread_set_cancellable(lives_proc_thread_t);
+boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
+boolean lives_proc_thread_cancel(lives_proc_thread_t);
+boolean lives_proc_thread_cancelled(lives_proc_thread_t);
 
 void lives_proc_thread_join(lives_proc_thread_t);
 int lives_proc_thread_join_int(lives_proc_thread_t);

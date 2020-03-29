@@ -99,8 +99,8 @@ typedef struct {
   volatile bool needs_more;
   volatile bool rendering;
   volatile bool needs_update;
-  bool got_first;
   bool set_update;
+  bool got_first;
 #ifdef HAVE_SDL2
   SDL_Window *win;
   SDL_GLContext glCtx;
@@ -356,6 +356,9 @@ static int render_frame(_sdata *sd) {
                  ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, sd->fbuffer);
     sd->needs_more = false;
     pthread_mutex_unlock(&buffer_mutex);
+    pthread_mutex_lock(&cond_mutex);
+    pthread_cond_signal(&cond);
+    pthread_mutex_unlock(&cond_mutex);
     if (sd->ncycs > 1. || sd->ncycs < 0.) sd->ncycs = 0.;
     sd->got_first = true;
     if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
@@ -409,12 +412,12 @@ static void *worker(void *data) {
 
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
-  settings.meshX = MESHSIZE;
+  settings.meshX = sd->width / 8;
   settings.meshY = settings.meshX * hwratio;
   settings.fps = 0;//sd->fps;
   settings.smoothPresetDuration = 2;
   settings.presetDuration = 10;
-  settings.beatSensitivity = .4;
+  settings.beatSensitivity = .5;
   settings.aspectCorrection = 1;
   settings.softCutRatingsEnabled = 0;
   settings.shuffleEnabled = 1;
@@ -668,7 +671,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   static double ltt;
   register int j;
 
-  weed_free(in_params);
+  weed_free(inparams);
 
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
     projectM_deinit(inst);
@@ -731,7 +734,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     /// let the worker thread know that the values have been updated
     sd->needs_more = true;
     pthread_mutex_lock(&cond_mutex);
-    sd->set_upate = true;
+    sd->set_update = true;
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
     did_update = true;

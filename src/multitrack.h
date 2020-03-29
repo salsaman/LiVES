@@ -328,6 +328,7 @@ struct _mt {
   LiVESWidget *add_vid_front;
   LiVESWidget *quit;
   LiVESWidget *troubleshoot;
+  LiVESWidget *expl_missing;
   LiVESWidget *show_devopts;
   LiVESWidget *fx_params_label;
   LiVESWidget *solo_check;

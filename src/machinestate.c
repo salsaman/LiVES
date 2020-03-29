@@ -520,28 +520,21 @@ void *_ext_free_and_return(void *p) {
   return NULL;
 }
 
-void *_ext_memcpy(void *dest, const void *src, size_t n) {
-  return lives_memcpy(dest, src, n);
-}
+void *_ext_memcpy(void *dest, const void *src, size_t n) {return lives_memcpy(dest, src, n);}
 
-int _ext_memcmp(const void *s1, const void *s2, size_t n) {
-  return lives_memcmp(s1, s2, n);
-}
+int _ext_memcmp(const void *s1, const void *s2, size_t n) {return lives_memcmp(s1, s2, n);}
 
-void *_ext_memset(void *p, int i, size_t n) {
-  return lives_memset(p, i, n);
-}
+void *_ext_memset(void *p, int i, size_t n) {return lives_memset(p, i, n);}
 
-void *_ext_memmove(void *dest, const void *src, size_t n) {
-  return lives_memmove(dest, src, n);
-}
+void *_ext_memmove(void *dest, const void *src, size_t n) {return lives_memmove(dest, src, n);}
 
-void *_ext_realloc(void *p, size_t n) {
-  return lives_realloc(p, n);
-}
+void *_ext_realloc(void *p, size_t n) {return lives_realloc(p, n);}
 
-void *_ext_calloc(size_t nmemb, size_t msize) {
-  return lives_calloc(nmemb, msize);
+void *_ext_calloc(size_t nmemb, size_t msize) {return lives_calloc(nmemb, msize);}
+
+LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {
+  lives_free(p);
+  return NULL;
 }
 
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
@@ -716,12 +709,6 @@ char *get_md5sum(const char *filename) {
   md5 = lives_strdup(array[0]);
   lives_strfreev(array);
   return md5;
-}
-
-
-LIVES_GLOBAL_INLINE lives_proc_thread_t md5sum_thread(const char *filename) {
-  /// create a proc_thread to calculate md5sum and place in buffer
-  return lives_proc_thread_create((lives_funcptr_t)get_md5sum, WEED_SEED_STRING, "s");
 }
 
 
@@ -1006,6 +993,15 @@ int check_for_bad_ffmpeg(void) {
 }
 
 
+LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
+  size_t s1 = lives_strlen(st), s2 = lives_strlen(x);
+  char *tmp = (char *)lives_realloc(st, ++s2 + s1);
+  lives_memcpy(tmp + s1, x, s2);
+  lives_free(x);
+  return tmp;
+}
+
+
 #define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
 #define getnulpos(nulmask) ((nulmask & 2155905152ul)	?		\
 			    ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
@@ -1286,6 +1282,25 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   return retval;
 #define _join_t(type) _join(type, type)
 
+LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t tinfo) {
+  weed_set_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLABLE, WEED_TRUE);
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_cancellable(lives_proc_thread_t tinfo) {
+  return weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLABLE, NULL) == WEED_TRUE ? TRUE : FALSE;
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancel(lives_proc_thread_t tinfo) {
+  if (!lives_proc_thread_get_cancellable(tinfo)) return FALSE;
+  weed_set_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, WEED_TRUE);
+  lives_proc_thread_join(tinfo);
+  return TRUE;
+}
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinfo) {
+  return weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE ? TRUE : FALSE;
+}
+
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
@@ -1354,8 +1369,12 @@ boolean resubmit_thread(lives_proc_thread_t thread_info) {
 //////// worker thread pool //////////////////////////////////////////
 
 ///////// thread pool ////////////////////////
+#ifndef VALGRIND_ON
 #define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
+#else
+#define MINPOOLTHREADS 2
+#endif
 static int npoolthreads;
 static pthread_t **poolthrds;
 static pthread_cond_t tcond  = PTHREAD_COND_INITIALIZER;
@@ -1539,6 +1558,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
   pthread_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
   pthread_mutex_unlock(&tcond_mutex);
+#ifndef VALGRIND_ON
   if (ntasks > npoolthreads) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
@@ -1559,6 +1579,7 @@ int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives
     }
 #endif
   }
+#endif
   return 0;
 }
 

@@ -2013,6 +2013,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   // stop if playing
   if (LIVES_IS_PLAYING) {
     mainw->cancelled = CANCEL_APP_QUIT;
+    mainw->only_close = mainw->is_exiting = FALSE;
     return;
   }
 
@@ -2038,7 +2039,10 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
   }
 
   if (mainw->stored_event_list != NULL && mainw->stored_event_list_changed) {
-    if (!check_for_layout_del(NULL, FALSE)) return;
+    if (!check_for_layout_del(NULL, FALSE)) {
+      mainw->only_close = mainw->is_exiting = FALSE;
+      return;
+    }
   } else if (mainw->stored_layout_undos != NULL) {
     stored_event_list_free_undos();
   }
@@ -2058,11 +2062,12 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
       if (resp == LIVES_RESPONSE_CANCEL) {
         lives_widget_destroy(cdsw->dialog);
         lives_free(cdsw);
-        mainw->is_exiting = FALSE;
+        mainw->only_close = mainw->is_exiting = FALSE;
         if (mainw->multitrack != NULL) {
           mt_sensitise(mainw->multitrack);
           maybe_add_mt_idlefunc();
         }
+        mainw->only_close = mainw->is_exiting = FALSE;
         return;
       }
       if (resp == 2) {
@@ -2084,6 +2089,7 @@ void on_quit_activate(LiVESMenuItem *menuitem, livespointer user_data) {
             maybe_add_mt_idlefunc();
           }
           lives_free(set_name);
+	  mainw->only_close = mainw->is_exiting = FALSE;
           return;
         }
         legal_set_name = FALSE;
@@ -4598,14 +4604,14 @@ boolean record_toggle_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj,
 
 
 void on_rewind_activate(LiVESMenuItem * menuitem, livespointer user_data) {
+  if (LIVES_IS_PLAYING) return;
+
   if (mainw->multitrack != NULL) {
     mt_tl_move(mainw->multitrack, 0.);
     return;
   }
 
   cfile->pointer_time = lives_ce_update_timeline(0, 0.);
-  cfile->frameno = 1;
-  cfile->aseek_pos = 0;
   lives_widget_queue_draw_if_visible(mainw->hruler);
   lives_widget_set_sensitive(mainw->rewind, FALSE);
   lives_widget_set_sensitive(mainw->m_rewindbutton, FALSE);
@@ -5209,15 +5215,10 @@ static LiVESResponseType rewrite_orderfile(boolean is_append, boolean add, boole
 
 
 boolean on_save_set_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-
   // here is where we save clipsets
-
   // SAVE CLIPSET FUNCTION
-
   // also handles migration and merging of sets
-
   // new_set_name can be passed in userdata, it should be in filename encoding
-
   // TODO - caller to do end_threaded_dialog()
 
   char new_set_name[MAX_SET_NAME_LEN] = {0};
@@ -6139,9 +6140,7 @@ void on_cleardisk_advanced_clicked(LiVESWidget * widget, livespointer user_data)
 }
 
 
-void on_show_keys_activate(LiVESMenuItem * menuitem, livespointer user_data) {
-  do_keys_window();
-}
+void on_show_keys_activate(LiVESMenuItem * menuitem, livespointer user_data) {do_keys_window();}
 
 
 void on_vj_realize_activate(LiVESMenuItem * menuitem, livespointer user_data) {
@@ -10278,9 +10277,17 @@ void on_hrule_value_changed(LiVESWidget * widget, livespointer user_data) {
   if (!mainw->interactive) return;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return;
 
+  if (LIVES_IS_PLAYING) {
+    if (cfile->frames > 0) {
+      cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file,
+								  giw_timeline_get_value(GIW_TIMELINE(widget)));
+      mainw->scratch = SCRATCH_JUMP;
+    }
+    return;
+  }
+
   cfile->pointer_time = lives_ce_update_timeline(0, giw_timeline_get_value(GIW_TIMELINE(widget)));
   if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
-  if (LIVES_IS_PLAYING) mainw->scratch = SCRATCH_JUMP;
 
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10305,7 +10312,7 @@ boolean on_hrule_update(LiVESWidget * widget, LiVESXEventMotion * event, livespo
   LiVESXModifierType modmask;
   LiVESXDevice *device;
   int x;
-
+  if (LIVES_IS_PLAYING) return TRUE;
   if (!mainw->interactive) return TRUE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return TRUE;
 
@@ -10327,6 +10334,7 @@ boolean on_hrule_reset(LiVESWidget * widget, LiVESXEventButton  * event, livespo
   //button release
   int x;
 
+  if (LIVES_IS_PLAYING) return FALSE;
   if (!mainw->interactive) return FALSE;
   if (CURRENT_CLIP_IS_CLIPBOARD || !CURRENT_CLIP_IS_VALID) return FALSE;
 
@@ -10336,7 +10344,7 @@ boolean on_hrule_reset(LiVESWidget * widget, LiVESXEventButton  * event, livespo
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
   if (cfile->frames > 0) {
-    cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+    cfile->last_frameno = cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
   }
   if (cfile->pointer_time > 0.) {
     lives_widget_set_sensitive(mainw->rewind, TRUE);
@@ -10370,7 +10378,8 @@ boolean on_hrule_set(LiVESWidget * widget, LiVESXEventButton * event, livespoint
   cfile->pointer_time = lives_ce_update_timeline(0,
                         (double)x / (double)(lives_widget_get_allocation_width(widget) - 1)
                         * CLIP_TOTAL_TIME(mainw->current_file));
-  if (cfile->frames > 0) cfile->frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (cfile->frames > 0) cfile->frameno = cfile->last_frameno = calc_frame_from_time(mainw->current_file, cfile->pointer_time);
+  if (LIVES_IS_PLAYING) mainw->scratch = SCRATCH_JUMP;
   return TRUE;
 }
 
@@ -10823,6 +10832,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     lives_clip_t *sfile = mainw->files[mainw->clipstore[clip][0]];
     if (LIVES_IS_PLAYING) {
       sfile->frameno = sfile->last_frameno = mainw->clipstore[clip][1];
+      mainw->scratch = SCRATCH_JUMP;
     }
     if ((LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->playing_file)
         || (!LIVES_IS_PLAYING && mainw->clipstore[clip][0] != mainw->current_file)) {
@@ -10831,21 +10841,19 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     if (!LIVES_IS_PLAYING) {
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
-    } else {
-      if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
-        if (mainw->current_file != mainw->clipstore[clip][0]) {
-          if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file))
-              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-              && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) {
-            // if we are playing the switch is delayed so we need this to resync audio
-            mainw->scratch = SCRATCH_JUMP;
-          }
-        } else {
-          if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno);
-	  // *INDENT-OFF*
-        }}}}
-  // *INDENT-ON*
-
+    }/*  else { */
+  /*     if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
+  /*       if (mainw->current_file != mainw->clipstore[clip][0]) { */
+  /*         if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file)) */
+  /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
+  /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
+  /*         } */
+  /*       } else { */
+  /*         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno); */
+  /* 	  // *INDENT-OFF* */
+  /*       }}}} */
+  /* // *INDENT-ON* */
+  }
   return TRUE;
 }
 

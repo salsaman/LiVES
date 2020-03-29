@@ -902,12 +902,15 @@ static void matroska_fix_ass_packet(MatroskaDemuxContext *matroska,
 }
 
 
-static int matroska_merge_packets(AVPacket *out, AVPacket *in) {
+static int matroska_merge_packets(const lives_clip_data_t *cdata, AVPacket *out, AVPacket *in) {
   void *newdata = av_realloc(out->data, out->size + in->size);
   if (!newdata)
     return AVERROR(ENOMEM);
   out->data = newdata;
-  memcpy(out->data + out->size, in->data, in->size);
+    if (cdata->ext_memcpy)
+      (*cdata->ext_memcpy)(out->data + out->size, in->data, in->size);
+    else
+      memcpy(out->data + out->size, in->data, in->size);
   out->size += in->size;
   av_packet_unref(in);
   av_free(in);
@@ -1063,15 +1066,9 @@ static void matroska_execute_seekhead(const lives_clip_data_t *cdata) {
 
 //////////////////////////////////////////////
 
-static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {
-  return (int64_t)((double)(frame) * 1000. / cdata->fps);
-}
+static int64_t frame_to_dts(const lives_clip_data_t *cdata, int64_t frame) {return (int64_t)((double)(frame) * 1000. / cdata->fps);}
 
-
-static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) {
-  return (int64_t)((double)dts / 1000.*cdata->fps + .5);
-}
-
+static int64_t dts_to_frame(const lives_clip_data_t *cdata, int64_t dts) { return (int64_t)((double)dts / 1000.*cdata->fps + .5);}
 
 //////////////////////////////////////////////////////////////////
 
@@ -1207,7 +1204,7 @@ static uint32_t calc_dts_delta(const lives_clip_data_t *cdata) {
 
   // divide 2nd dts by nframes, this gives delta dts
 
-  deltadts = ((double)(idxdts - origdts) / (double)(frames) + .5);
+  deltadts = ((double)(idxdts - origdts) / (double)frames + .5);
 
   return deltadts;
 }
@@ -1699,7 +1696,7 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
         !strcmp(indices[i]->clients[0]->URI, cdata->URI)) {
       idxc = indices[i];
       // append cdata to clients
-      idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
+      idxc->clients = (lives_clip_data_t **)(*cdata->ext_realloc)(idxc->clients, (idxc->nclients + 1) * sizeof(lives_clip_data_t *));
       idxc->clients[idxc->nclients] = cdata;
       idxc->nclients++;
       //
@@ -1708,16 +1705,16 @@ static index_container_t *idxc_for(lives_clip_data_t *cdata) {
     }
   }
 
-  indices = (index_container_t **)realloc(indices, (nidxc + 1) * sizeof(index_container_t *));
+  indices = (index_container_t **)((*cdata->ext_realloc)(indices, (nidxc + 1) * sizeof(index_container_t *)));
 
   // match not found, create a new index container
-  idxc = (index_container_t *)malloc(sizeof(index_container_t));
+  idxc = (index_container_t *)(*cdata->ext_malloc)(sizeof(index_container_t));
 
   idxc->idxhh = NULL;
   idxc->idxht = NULL;
 
   idxc->nclients = 1;
-  idxc->clients = (lives_clip_data_t **)malloc(sizeof(lives_clip_data_t *));
+  idxc->clients = (lives_clip_data_t **)(*cdata->ext_malloc)(sizeof(lives_clip_data_t *));
   idxc->clients[0] = cdata;
   pthread_mutex_init(&idxc->mutex, NULL);
 
@@ -1742,18 +1739,18 @@ static void idxc_release(lives_clip_data_t *cdata) {
   if (idxc->nclients == 1) {
     // remove this index
     index_free(idxc->idxhh);
-    free(idxc->clients);
+    (*cdata->ext_free)(idxc->clients);
     for (i = 0; i < nidxc; i++) {
       if (indices[i] == idxc) {
         nidxc--;
         for (j = i; j < nidxc; j++) {
           indices[j] = indices[j + 1];
         }
-        free(idxc);
+        (*cdata->ext_free)(idxc);
         if (nidxc == 0) {
-          free(indices);
+          (*cdata->ext_free)(indices);
           indices = NULL;
-        } else indices = (index_container_t **)realloc(indices, nidxc * sizeof(index_container_t *));
+        } else indices = (index_container_t **)(*cdata->ext_realloc)(indices, nidxc * sizeof(index_container_t *));
         break;
       }
     }
@@ -1766,7 +1763,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
         for (j = i; j < idxc->nclients; j++) {
           idxc->clients[j] = idxc->clients[j + 1];
         }
-        idxc->clients = (lives_clip_data_t **)realloc(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
+        idxc->clients = (lives_clip_data_t **)(*cdata->ext_realloc)(idxc->clients, idxc->nclients * sizeof(lives_clip_data_t *));
         break;
       }
     }
@@ -1778,9 +1775,7 @@ static void idxc_release(lives_clip_data_t *cdata) {
 
 
 static void idxc_release_all(void) {
-  register int i;
-
-  for (i = 0; i < nidxc; i++) {
+  for (register int i = 0; i < nidxc; i++) {
     index_free(indices[i]->idxhh);
     free(indices[i]->clients);
     free(indices[i]);
@@ -2160,7 +2155,7 @@ const char *version(void) {
 
 static lives_clip_data_t *init_cdata(void) {
   lives_mkv_priv_t *priv;
-  lives_clip_data_t *cdata = (lives_clip_data_t *)malloc(sizeof(lives_clip_data_t));
+  lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
 
   cdata->URI = NULL;
 
@@ -2361,7 +2356,10 @@ static int matroska_deliver_packet(const lives_clip_data_t *cdata, AVPacket *pkt
   MatroskaDemuxContext *matroska = &priv->matroska;
 
   if (matroska->num_packets > 0) {
-    memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
+    if (cdata->ext_memcpy)
+      (*cdata->ext_memcpy)(pkt, matroska->packets[0], sizeof(AVPacket));
+    else
+      memcpy(pkt, matroska->packets[0], sizeof(AVPacket));
     free(matroska->packets[0]);
     if (matroska->num_packets > 1) {
       void *newpackets;
@@ -2573,6 +2571,9 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
       if (offset)
         memcpy(pkt->data, encodings->compression.settings.data, offset);
 
+    if (cdata->ext_memcpy)
+      (*cdata->ext_memcpy)(pkt->data + offset, pkt_data, pkt_size);
+    else
       memcpy(pkt->data + offset, pkt_data, pkt_size);
 
       if (pkt_data != data)
@@ -2602,7 +2603,7 @@ static int matroska_parse_block(const lives_clip_data_t *cdata, uint8_t *data,
           matroska->prev_pkt->pts == timecode &&
           matroska->prev_pkt->stream_index == st->index &&
           st->codec->codec_id == AV_CODEC_ID_SSA)
-        matroska_merge_packets(matroska->prev_pkt, pkt);
+        matroska_merge_packets(cdata, matroska->prev_pkt, pkt);
       else {
         lives_dynarray_add(&matroska->packets, &matroska->num_packets, pkt);
         matroska->prev_pkt = pkt;
@@ -2757,6 +2758,7 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
   int bleft = cdata->offs_x, bright = cdata->frame_width - cdata->width - bleft;
   int rescan_limit = 16; // pick some arbitrary value
   boolean got_picture = FALSE;
+  boolean did_seek = FALSE;
   unsigned char *dst, *src;
   index_entry *idx;
   register int i, p;
@@ -2811,17 +2813,15 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
            (tframe - priv->last_frame > rescan_limit)) && priv->picture != NULL) {
         avcodec_flush_buffers(priv->ctx);
       }
-      timex += get_current_ticks();
-      fprintf(stderr, "mkv_dec: seek of %ld frames took %ld usec\n", tframe - priv->last_frame, timex);
 #ifdef DEBUG_KFRAMES
       if (idx != NULL) printf("got kframe %ld for frame %ld\n", dts_to_frame(cdata, idx->dts), tframe);
 #endif
+      did_seek = TRUE;
     } else nextframe = priv->last_frame + 1;
     timex = -get_current_ticks();
 
     //priv->ctx->skip_frame=AVDISCARD_NONREF;
 
-    priv->last_frame = tframe;
     if (priv->picture == NULL) priv->picture = av_frame_alloc();
 
     // do this until we reach target frame //////////////
@@ -2861,13 +2861,30 @@ boolean get_frame(const lives_clip_data_t *cdata, int64_t tframe, int *rowstride
       }
 
       nextframe++;
-
       if (nextframe > cdata->nframes) goto cleanup;
       loops++;
+      if (did_seek) {
+	int64_t now = get_current_ticks();
+	timex += now;
+	((lives_clip_data_t *)cdata)->fwd_seek_time = (cdata->fwd_seek_time + timex) / 2;
+	loops = 0;
+	did_seek = FALSE;
+	timex = - now;
+	if (cdata->max_decode_fps && tframe > priv->last_frame) {
+	  int64_t jump_limit = cdata->fwd_seek_time / cdata->max_decode_fps;
+	  if (jump_limit < 2) jump_limit = 2;
+	  ((lives_clip_data_t *)cdata)->jump_limit = jump_limit;
+	  fprintf(stderr, "mkv_dec: jump_limit set to %ld\n", cdata->jump_limit);
+	}
+      }
     } while (nextframe <= tframe);
     timex += get_current_ticks();
-    fprintf(stderr, "mkv_dec: vplay of %d frames took %ld usec (%ld per frame)\n", loops, timex, timex / loops);
-
+    if (timex && loops) {
+      double mdf = (double)(1000000 * loops) / (double)timex;
+      ((lives_clip_data_t *)cdata)->max_decode_fps = (((lives_clip_data_t *)cdata)->max_decode_fps + mdf) / 2.;
+      /* fprintf(stderr, "mkv_dec: vplay of %d frames took %ld usec (%ld per frame / %.4f / %.4f fps)\n", loops, timex, */
+      /* 	      timex / loops, mdf, cdata->max_decode_fps); */
+    }
     /////////////////////////////////////////////////////
   }
 
@@ -2947,6 +2964,10 @@ framedone2:
 
     dst += bleft * psize + btop * rowstride;
     xheight = bbot - btop;
+
+    if (cdata->rec_rowstrides) {
+      ((lives_clip_data_t *)cdata)->rec_rowstrides[p] = priv->picture->linesize[p];
+    }
 
     if (rowstride == priv->picture->linesize[p]) {
       (*cdata->ext_memcpy)(dst, src, rowstride * xheight);

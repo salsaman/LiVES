@@ -7800,6 +7800,11 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
   mt->troubleshoot = lives_standard_menu_item_new_with_label(_("_Troubleshoot"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), mt->troubleshoot);
 
+  mt->expl_missing = lives_standard_menu_item_new_with_label(_("Check for Missing Features"));
+  if (!prefs->vj_mode) lives_container_add(LIVES_CONTAINER(mainw->help_menu), mt->expl_missing);
+
+  lives_menu_add_separator(LIVES_MENU(mt->help_menu));
+
   about = lives_standard_menu_item_new_with_label(_("_About"));
   lives_container_add(LIVES_CONTAINER(mt->help_menu), about);
 
@@ -7984,6 +7989,10 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
 
   lives_signal_connect(LIVES_GUI_OBJECT(mt->troubleshoot), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_troubleshoot_activate),
+                       NULL);
+
+  lives_signal_connect(LIVES_GUI_OBJECT(mt->expl_missing), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(explain_missing_activate),
                        NULL);
 
   lives_signal_connect(LIVES_GUI_OBJECT(show_mt_keys), LIVES_WIDGET_ACTIVATE_SIGNAL,
@@ -16955,7 +16964,8 @@ void mt_desensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->close, FALSE);
   lives_widget_set_sensitive(mt->capture, FALSE);
   lives_widget_set_sensitive(mt->gens_submenu, FALSE);
-  lives_widget_set_sensitive(mainw->troubleshoot, FALSE);
+  lives_widget_set_sensitive(mt->troubleshoot, FALSE);
+  lives_widget_set_sensitive(mt->expl_missing, FALSE);
 
   lives_widget_set_sensitive(mt->fx_region, FALSE);
   lives_widget_set_sensitive(mt->ins_gap_sel, FALSE);
@@ -17017,7 +17027,8 @@ void mt_sensitise(lives_mt * mt) {
   lives_widget_set_sensitive(mt->recent_menu, TRUE);
   lives_widget_set_sensitive(mt->capture, TRUE);
   lives_widget_set_sensitive(mt->gens_submenu, TRUE);
-  lives_widget_set_sensitive(mainw->troubleshoot, TRUE);
+  lives_widget_set_sensitive(mt->troubleshoot, TRUE);
+  lives_widget_set_sensitive(mt->expl_missing, TRUE);
 
   lives_widget_set_sensitive(mainw->m_mutebutton, TRUE);
 
@@ -17130,7 +17141,8 @@ void mt_swap_play_pause(lives_mt * mt, boolean put_pause) {
     lives_widget_set_tooltip_text(mainw->m_playbutton, _("Pause (p)"));
     lives_widget_set_sensitive(mt->playall, TRUE);
     lives_widget_set_sensitive(mainw->m_playbutton, TRUE);
-    lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace, (LiVESXModifierType)LIVES_CONTROL_MASK,
+    lives_accel_group_connect(LIVES_ACCEL_GROUP(mt->accel_group), LIVES_KEY_BackSpace,
+			      (LiVESXModifierType)LIVES_CONTROL_MASK,
                               (LiVESAccelFlags)0, freeze_closure);
 
   } else {

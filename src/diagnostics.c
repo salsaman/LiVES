@@ -51,8 +51,9 @@ char *get_stats_msg(boolean calc_only) {
       avsync -= ((double)mainw->files[mainw->pulsed->playing_file]->frameno - 1.) / mainw->files[mainw->pulsed->playing_file]->fps;
     }
   }
-  ///currticks = lives_get_current_ticks();
+  //currticks = lives_get_current_ticks();
   currticks = lives_get_current_playback_ticks(mainw->origsecs, mainw->origusecs, NULL);
+
   if (mainw->play_sequence > last_play_sequence) {
     last_curr_tc = currticks;
     last_play_sequence = mainw->play_sequence;

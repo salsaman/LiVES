@@ -3108,12 +3108,13 @@ void get_location(const char *exe, char *val, int maxlen) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean has_executable(const char *exe) {
+LIVES_GLOBAL_INLINE lives_presence_t has_executable(const char *exe) {
   char *loc;
   if ((loc = lives_find_program_in_path(exe)) != NULL) {
     lives_free(loc);
-    return TRUE;
+    return PRESENT;
   }
+  // for now we don't return MISSING (requires code update to differentiate MISSING / UNCHECKED / PRESENT)
   return FALSE;
 }
 

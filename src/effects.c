@@ -214,7 +214,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
     cfile->fx_frame_pump = cfile->start;
     if (!cfile->pumper) {
       cfile->pumper = lives_proc_thread_create((lives_funcptr_t)virtual_to_images, -1, "iiibV", mainw->current_file,
-                      cfile->start, cfile->end, FALSE, NULL);
+                      cfile->undo_start, cfile->undo_end, FALSE, NULL);
     }
   } else cfile->fx_frame_pump = 0;
 
@@ -303,8 +303,7 @@ boolean do_effect(lives_rfx_t *rfx, boolean is_preview) {
 
   if (!do_progress_dialog(TRUE, TRUE, effectstring) || mainw->error) {
     if (cfile->pumper) {
-      weed_set_boolean_value(cfile->pumper, "cancelled", WEED_TRUE);
-      lives_proc_thread_join(cfile->pumper);
+      lives_nanosleep_until_nonzero(lives_proc_thread_cancel(cfile->pumper));
       weed_plant_free(cfile->pumper);
       cfile->pumper = NULL;
     }

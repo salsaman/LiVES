@@ -61,7 +61,10 @@
 #  define GNU_DEPRECATED(msg)  __attribute__((deprecated(msg)))
 #  define GNU_CONST  __attribute__((const))
 #  define GNU_MALLOC  __attribute__((malloc))
-#  define GNU_ALIGN(x) __attribute__((alloc_align(x)))
+#  define GNU_MALLOC_SIZE(argx) __attribute__((alloc_size(argx)))
+#  define GNU_MALLOC_SIZE2(argx, argy) __attribute__((alloc_size(argx, argy)))
+#  define GNU_ALIGN(argx) __attribute__((alloc_align(argx)))
+#  define GNU_ALIGNED(sizex) __attribute__((assume_aligned(sizex)))
 #  define GNU_NORETURN __attribute__((noreturn))
 #  define GNU_FLATTEN  __attribute__((flatten)) // inline all function calls
 #  define GNU_HOT  __attribute__((hot))
@@ -70,8 +73,11 @@
 #  define GNU_PURE
 #  define GNU_CONST
 #  define GNU_MALLOC
+#  define GNU_MALLOC_SIZE(x)
+#  define GNU_MALLOC_SIZE2(x, y)
 #  define GNU_DEPRECATED(msg)
 #  define GNU_ALIGN(x)
+#  define GNU_ALIGNED(x)
 #  define GNU_NORETURN
 #  define GNU_FLATTEN
 #  define GNU_HOT
@@ -843,9 +849,41 @@ typedef struct _lives_clip_t {
   char md5sum[64];
 } lives_clip_t;
 
+
+typedef enum {
+  MISSING = -1,
+  UNCHECKED,
+  PRESENT
+} lives_presence_t;
+
+#ifdef NEW_CHECKSTATUS
+typedef enum {
+  CONFLICTING = -1,
+  MANDATORY,
+  RECOMMENDED,
+  OPTIONAL
+} lives_importance_t;
+
 typedef struct {
-  // the following can be assumed TRUE, they are checked on startup
-  boolean has_smogrify;
+  lives_presence_t present;
+  lives_importance_t import;
+} lives_checkstatus_t;
+
+#define XCAPABLE(foo, EXE_FOO) ((!capable->has_##foo->present ? ((capable->has_##foo->present = \
+							 (has_executable(EXE_FOO) ? PRESENT : MISSING))) : capable->has_##foo->present) == PRESENT)
+#define GET_EXE(foo) QUOTEME(foo)
+#define PRESENT(foo) XCAPABLE(foo, GET_EXE(foo))
+//TODO:
+// #define GET_EXE(mplayer) EXEC_MPLAYER
+// etc.
+// then: if (capable->has_mplayer) => if (PRESENT(mplayer)) etc.
+#else
+typedef lives_presence_t lives_checkstatus_t;
+#endif
+
+typedef struct {
+  // the following can be assumed TRUE / PRESENT, they are checked on startup
+  lives_checkstatus_t has_smogrify;
   boolean smog_version_correct;
   boolean can_read_from_config;
   boolean can_write_to_config;
@@ -854,32 +892,34 @@ typedef struct {
   boolean can_write_to_workdir;
 
   // the following may need checking before use
-  boolean has_perl;
-  boolean has_dvgrab;
-  boolean has_sox_play;
-  boolean has_sox_sox;
-  boolean has_autolives;
-  boolean has_mplayer;
-  boolean has_mplayer2;
-  boolean has_mpv;
-  boolean has_convert;
-  boolean has_composite;
-  boolean has_identify;
-  boolean has_cdda2wav;
-  boolean has_icedax;
-  boolean has_midistartstop;
-  boolean has_jackd;
-  boolean has_pulse_audio;
-  boolean has_xwininfo;
-  boolean has_gdb;
-  boolean has_gzip;
-  boolean has_gconftool_2;
-  boolean has_xdg_screensaver;
-  boolean has_wmctrl;
-  boolean has_ssh_askpass;
-  boolean has_youtube_dl;
-  boolean has_du;
-  boolean has_md5sum;
+  lives_checkstatus_t has_perl;
+  lives_checkstatus_t has_file;
+  lives_checkstatus_t has_dvgrab;
+  lives_checkstatus_t has_sox_play;
+  lives_checkstatus_t has_sox_sox;
+  lives_checkstatus_t has_autolives;
+  lives_checkstatus_t has_mplayer;
+  lives_checkstatus_t has_mplayer2;
+  lives_checkstatus_t has_mpv;
+  lives_checkstatus_t has_convert;
+  lives_checkstatus_t has_composite;
+  lives_checkstatus_t has_identify;
+  lives_checkstatus_t has_ffprobe;
+  lives_checkstatus_t has_cdda2wav;
+  lives_checkstatus_t has_icedax;
+  lives_checkstatus_t has_midistartstop;
+  lives_checkstatus_t has_jackd;
+  lives_checkstatus_t has_pulse_audio;
+  lives_checkstatus_t has_xwininfo;
+  lives_checkstatus_t has_gdb;
+  lives_checkstatus_t has_gzip;
+  lives_checkstatus_t has_gconftool_2;
+  lives_checkstatus_t has_xdg_screensaver;
+  lives_checkstatus_t has_wmctrl;
+  lives_checkstatus_t has_ssh_askpass;
+  lives_checkstatus_t has_youtube_dl;
+  lives_checkstatus_t has_du;
+  lives_checkstatus_t has_md5sum;
 
   /// home directory - default location for config file - locale encoding
   char home_dir[PATH_MAX];
@@ -903,9 +943,9 @@ typedef struct {
   char startup_msg[1024];
 
   // plugins
-  boolean has_encoder_plugins;
+  lives_checkstatus_t has_encoder_plugins;
 
-  boolean has_python;
+  lives_checkstatus_t has_python;
   uint64_t python_version;
 
   short cpu_bits;
@@ -1700,10 +1740,13 @@ void break_me(void);
 
 #endif
 
-//#define VALGRIND_ON
+//#define VALGRIND_ON  ///< define this to ease debugging with valgrind
 #ifdef VALGRIND_ON
 #define QUICK_EXIT
 #define STD_STRINGFUNCS
+#else
+#define USE_REC_RS
+#define RESEEK_ENABLE
 #endif
 
 #endif // #ifndef HAS_LIVES_MAIN_H

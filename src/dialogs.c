@@ -1415,7 +1415,7 @@ int process_one(boolean visible) {
 
     mainw->audio_stretch = SWITCH_COMPENSATION;
     scratch = SCRATCH_JUMP_NORESYNC;
-    drop_off = FALSE;
+    drop_off = TRUE;
     last_req_frame = sfile->frameno - 1;
     /// playing file should == current_file, but just in case store separate values.
     old_current_file = mainw->current_file;
@@ -1511,6 +1511,7 @@ int process_one(boolean visible) {
 
 #ifdef ENABLE_PRECACHE
     if (scratch != SCRATCH_NONE) {
+      break_me();
       getahead = test_getahead = -1;
       cleanup_preload = TRUE;
       mainw->pred_frame = -1;
@@ -1552,7 +1553,7 @@ int process_one(boolean visible) {
           if (delta > 0 && delta < 3 && bungle_frames > 1) bungle_frames--;
           else bungle_frames += requested_frame - test_getahead;
           if (bungle_frames <= -dir) bungle_frames = 0;
-          if (delta >= 0) drop_off = TRUE;
+          if (delta >= 0 && getahead > -1) drop_off = TRUE;
         }
         recalc_bungle_frames = FALSE;
         test_getahead = -1;
@@ -1629,8 +1630,10 @@ int process_one(boolean visible) {
                   sfile->last_frameno = requested_frame;
                   drop_off = FALSE;
                 }
-              } else sfile->frameno = getahead;
-            }
+              } else {
+		sfile->frameno = getahead;
+	      }
+	    }
           }
         } else {
           lives_direction_t dir;
@@ -1694,8 +1697,9 @@ int process_one(boolean visible) {
                   (pframe <= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))) ||
                  (sfile->pb_fps < 0. && pframe <= mainw->actual_frame &&
                   (pframe >= requested_frame || is_virtual_frame(mainw->playing_file, sfile->frameno))))
-                && ((getahead > -1 || pframe == requested_frame || is_layer_ready(mainw->frame_layer_preload))))
+                && ((getahead > -1 || pframe == requested_frame || is_layer_ready(mainw->frame_layer_preload)))) {
               sfile->frameno = pframe;
+	    }
             if (pframe == sfile->frameno) cache_hits++;
             else if (getahead == -1) {
               if ((sfile->pb_fps > 0. && pframe <= mainw->actual_frame)
@@ -1746,18 +1750,12 @@ int process_one(boolean visible) {
         spare_cycles = 0;
         mainw->record_frame = requested_frame;
 
-        /* if (mainw->pred_frame == 0 && dropped > 0 && scratch == SCRATCH_NONE */
-        /*     && is_virtual_frame(mainw->playing_file, sfile->frameno)) { */
-        /*   lives_direction_t dir = LIVES_DIRECTION_SIG(sfile->pb_fps); */
-        /*   mainw->startticks -= (double)dir * (double)(sfile->frameno - mainw->actual_frame - 1) / sfile->pb_fps; */
-        /*   sfile->frameno = mainw->actual_frame + dir; */
-        /* } */
-
         // load and display the new frame
-#ifndef SHOW_CACHE_PREDICTIONS
+#ifdef SHOW_CACHE_PREDICTIONS
         g_print("playing frame %d / %d at %ld (%ld : %ld)\n", sfile->frameno, requested_frame, mainw->currticks,
                 mainw->startticks, new_ticks);
 #endif
+
         load_frame_image(sfile->frameno);
         mainw->inst_fps = get_inst_fps();
 

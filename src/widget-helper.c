@@ -11205,8 +11205,8 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
-#define MAX_NULL_EVENTS 50
-#define LOOP_LIMIT 32
+#define MAX_NULL_EVENTS 500
+#define LOOP_LIMIT 64
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;

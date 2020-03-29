@@ -1,6 +1,6 @@
 // pulse.c
 // LiVES (lives-exe)
-// (c) G. Finch <salsaman+lives@gmail.com> 2005 - 2018
+// (c) G. Finch <salsaman+lives@gmail.com> 2005 - 2020
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -78,8 +78,6 @@ static void pulse_success_cb(pa_stream *stream, int i, void *userdata) {
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#define RESEEK_ENABLE
-
 static void stream_underflow_callback(pa_stream *s, void *userdata) {
   pulse_driver_t *pulsed = (pulse_driver_t *)userdata;
   // we get isolated cases when the GUI is very busy, for example right after playback
@@ -91,12 +89,10 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
     fprintf(stderr, "PA Stream underrun.\n");
   }
   mainw->uflow_count++;
-#ifdef RESEEK_ENABLE
   if (pulsed->is_output && CLIP_HAS_VIDEO(pulsed->playing_file)
       && !afile->play_paused && pulsed->in_use && !pulsed->is_paused) {
     avsync_force();
   }
-#endif
 }
 
 
@@ -106,15 +102,10 @@ static void stream_overflow_callback(pa_stream *s, void *userdata) {
   fprintf(stderr, "Stream overrun.\n");
   paop = pa_stream_flush(s, NULL, NULL);
   pa_operation_unref(paop);
-#ifdef RESEEK_ENABLE
   if (pulsed->is_output && CLIP_HAS_VIDEO(pulsed->playing_file)
       && !afile->play_paused && pulsed->in_use && !pulsed->is_paused) {
-    if (!pthread_mutex_trylock(&mainw->avseek_mutex)) {
-      mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
-      pthread_mutex_unlock(&mainw->avseek_mutex);
-    }
+    avsync_force();
   }
-#endif
 }
 
 

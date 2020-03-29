@@ -2165,6 +2165,7 @@ lives_decoder_t *clone_decoder(int fileno) {
   dplug->decoder = dpsys;
   dplug->cdata = cdata;
   set_cdata_memfuncs((lives_clip_data_t *)cdata);
+  cdata->rec_rowstrides = NULL;
   return dplug;
 }
 
@@ -2236,6 +2237,9 @@ static lives_decoder_t *try_decoder_plugins(char *file_name, LiVESList * disable
 
   if (decoder_plugin == NULL) {
     lives_freep((void **)&dplug);
+  }
+  else {
+    dplug->cdata->rec_rowstrides = NULL;
   }
 
   return dplug;
@@ -2321,8 +2325,13 @@ void close_decoder_plugin(lives_decoder_t *dplug) {
 
   cdata = dplug->cdata;
 
-  if (cdata != NULL)(*dplug->decoder->clip_data_free)(cdata);
-
+  if (cdata != NULL) {
+    if (cdata->rec_rowstrides) {
+      lives_free(cdata->rec_rowstrides);
+      cdata->rec_rowstrides = NULL;
+    }
+    (*dplug->decoder->clip_data_free)(cdata);
+  }
   lives_free(dplug);
 }
 

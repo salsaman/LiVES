@@ -3689,11 +3689,11 @@ if (defined($ARGV[0])) {
 		open (my $fh, "youtube-dl --no-playlist -F '$url' |");
 		while (defined(my $line = <$fh>)) {
 		    if ($debug) {
-			print "WE GOT $line.";
+			print STDERR "WE GOT $line.";
 		    }
 		    my ($fcode, $ext, $reso, @notes) = split ' ', $line;
 		    my $note = join(" ", @notes);
-		    next if ($reso eq "downloading");
+		    next if ($reso eq "downloading" || $reso eq "Downloading");
 
 		    if ($formreq eq "webm" && $ext ne $formreq) {
 		        $hasalts = 1;

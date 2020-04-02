@@ -162,6 +162,8 @@ void *lives_free_and_return(void *p);
 void *lives_calloc_safety(size_t nmemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
 void *lives_recalloc(void *p, size_t nmemb, size_t omemb, size_t xsize) GNU_ALIGNED(DEF_ALIGN);
 
+size_t get_max_align(size_t req_size, size_t align_max);
+
 /// disk/storage status values
 typedef enum {
   LIVES_STORAGE_STATUS_UNKNOWN = 0,
@@ -213,11 +215,14 @@ void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
 #define lives_malloc_auto_aligned(size, align) __builtin_alloc_with_align(size, align)
 #endif
 
-size_t lives_strlen(const char *s) GNU_HOT GNU_PURE;
-boolean lives_strcmp(const char *st1, const char *st2) GNU_HOT GNU_PURE;
-boolean lives_strncmp(const char *st1, const char *st2, size_t) GNU_HOT GNU_PURE;
-int lives_strcmp_ordered(const char *st1, const char *st2) GNU_HOT GNU_PURE;
-char *lives_concat(char *st, char *x) GNU_HOT;
+size_t lives_strlen(const char *) GNU_HOT GNU_PURE;
+boolean lives_strcmp(const char *, const char *) GNU_HOT GNU_PURE;
+boolean lives_strncmp(const char *, const char *, size_t) GNU_HOT GNU_PURE;
+int lives_strcmp_ordered(const char *, const char *) GNU_HOT GNU_PURE;
+char *lives_concat(char *, char *) GNU_HOT;
+char *lives_strstop(char *, const char term) GNU_HOT;
+const char *lives_strappend(const char *string, int len, const char *xnew);
+const char *lives_strappendf(const char *string, int len, const char *fmt, ...);
 
 void swab2(const void *from, const void *to, size_t granularity) 	GNU_HOT;
 void swab4(const void *from, const void *to, size_t granularity) 	GNU_HOT;
@@ -236,6 +241,11 @@ void *quick_malloc(size_t alloc_size) GNU_MALLOC;
 void init_random(void);
 void lives_srandom(unsigned int seed);
 uint64_t lives_random(void);
+
+uint64_t fastrand(void) GNU_PURE GNU_HOT;
+void fastrand_add(uint64_t entropy);
+double fastrand_dbl(double range);
+uint32_t fastrand_int(uint32_t range);
 
 #ifdef ENABLE_ORC
 void *lives_orc_memcpy(void *dest, const void *src, size_t n);
@@ -306,7 +316,6 @@ typedef struct {
 #define WEED_LEAF_THREAD_CANCELLED "t_cancelled"
 #define WEED_LEAF_RETURN_VALUE "return_value"
 
-
 #define WEED_LEAF_THREAD_PARAM "thrd_param"
 #define _WEED_LEAF_THREAD_PARAM(n) WEED_LEAF_THREAD_PARAM  n
 #define WEED_LEAF_THREAD_PARAM0 _WEED_LEAF_THREAD_PARAM("0")
@@ -327,6 +336,10 @@ void lives_threadpool_finish(void);
 int lives_thread_create(lives_thread_t *thread, lives_thread_attr_t *attr, lives_funcptr_t func, void *arg);
 uint64_t lives_thread_join(lives_thread_t work, void **retval);
 
+// lives_proc_thread_t //////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define _RV_ WEED_LEAF_RETURN_VALUE
+
 typedef weed_plantptr_t lives_proc_thread_t;
 typedef uint64_t funcsig_t;
 
@@ -338,6 +351,59 @@ typedef int64_t(*funcptr_int64_t)();
 typedef weed_funcptr_t(*funcptr_funcptr_t)();
 typedef void *(*funcptr_voidptr_t)();
 typedef weed_plant_t(*funcptr_plantptr_t)();
+
+#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+
+#define ARGS1(t1) GETARG(t1, "0")
+#define ARGS2(t1, t2) ARGS1(t1), GETARG(t2, "1")
+#define ARGS3(t1, t2, t3) ARGS2(t1, t2), GETARG(t3, "2")
+#define ARGS4(t1, t2, t3, t4) ARGS3(t1, t2, t3), GETARG(t4, "3")
+#define ARGS5(t1, t2, t3, t4, t5) ARGS4(t1, t2, t3, t4), GETARG(t5, "4")
+#define ARGS6(t1, t2, t3, t4, t5, t6) ARGS5(t1, t2, t3, t4, t5), GETARG(t6, "5")
+#define ARGS7(t1, t2, t3, t4, t5, t6, t7) ARGS6(t1, t2, t3, t4, t5, t6), GETARG(t7, "6")
+#define ARGS8(t1, t2, t3, t4, t5, t6, t7, t8) ARGS7(t1, t2, t3, t4, t5, t6, t7), GETARG(t8, "7")
+#define ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9) ARGS8(t1, t2, t3, t4, t5, t6, t7. t8), GETARG(t9, "8")
+#define ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9), GETARG(t10, "9")
+
+#define CALL_VOID_10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) (*thefunc->func)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10))
+#define CALL_VOID_9(t1, t2, t3, t4, t5, t6, t7, t8, t9) (*thefunc->func)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9))
+#define CALL_VOID_8(t1, t2, t3, t4, t5, t6, t7, t8) (*thefunc->func)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t8))
+#define CALL_VOID_7(t1, t2, t3, t4, t5, t6, t7) (*thefunc->func)(ARGS7(t1, t2, t3, t4, t5, t6, t7))
+#define CALL_VOID_6(t1, t2, t3, t4, t5, t6) (*thefunc->func)(ARGS6(t1, t2, t3, t4, t5, t6))
+#define CALL_VOID_5(t1, t2, t3, t4, t5) (*thefunc->func)(ARGS5(t1, t2, t3, t4, t5))
+#define CALL_VOID_4(t1, t2, t3, t4) (*thefunc->func)(ARGS4(t1, t2, t3, t4))
+#define CALL_VOID_3(t1, t2, t3) (*thefunc->func)(ARGS3(t1, t2, t3))
+#define CALL_VOID_2(t1, t2) (*thefunc->func)(ARGS2(t1, t2))
+#define CALL_VOID_1(t1) (*thefunc->func)(ARGS1(t1))
+#define CALL_VOID_0() (*thefunc->func)()
+
+#define CALL_10(ret, t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) weed_set_##ret##_value(info, _RV_, \
+										     (*thefunc->func##ret)(ARGS10(t1, t2, t3, t4, t5, t6, t7, t8, t9, t19)))
+#define CALL_9(ret, t1, t2, t3, t4, t5, t6, t7, t8, t9) weed_set_##ret##_value(info, _RV_, \
+									       (*thefunc->func##ret)(ARGS9(t1, t2, t3, t4, t5, t6, t7, t8, t9)))
+#define CALL_8(ret, t1, t2, t3, t4, t5, t6, t7, t8) weed_set_##ret##_value(info, _RV_, \
+									   (*thefunc->func##ret)(ARGS8(t1, t2, t3, t4, t5, t6, t7, t7)))
+#define CALL_7(ret, t1, t2, t3, t4, t5, t6, t7) weed_set_##ret##_value(info, _RV_, \
+								       (*thefunc->func##ret)(ARGS7(t1, t2, t3, t4, t5, t6, t7)))
+#define CALL_6(ret, t1, t2, t3, t4, t5, t6) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS6(t1, t2, t3, t4, t5, t6)))
+#define CALL_5(ret, t1, t2, t3, t4, t5) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS5(t1, t2, t3, t4, t5)))
+#define CALL_4(ret, t1, t2, t3, t4) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS4(t1, t2, t3, t4)))
+#define CALL_3(ret, t1, t2, t3) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS3(t1, t2, t3)))
+#define CALL_2(ret, t1, t2) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS2(t1, t2)))
+#define CALL_1(ret, t1) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)(ARGS1(t1)))
+#define CALL_0(ret) weed_set_##ret##_value(info, _RV_, (*thefunc->func##ret)())
+
+typedef union {
+  weed_funcptr_t func;
+  funcptr_int_t funcint;
+  funcptr_dbl_t funcdouble;
+  funcptr_bool_t funcboolean;
+  funcptr_int64_t funcint64;
+  funcptr_string_t funcstring;
+  funcptr_funcptr_t funcfuncptr;
+  funcptr_voidptr_t funcvoidptr;
+  funcptr_plantptr_t funcplantptr;
+} allfunc_t;
 
 lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t, int return_type, const char *args_fmt, ...);
 boolean lives_proc_thread_check(lives_proc_thread_t);
@@ -355,8 +421,6 @@ char *lives_proc_thread_join_string(lives_proc_thread_t);
 weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t);
 void *lives_proc_thread_join_voidptr(lives_proc_thread_t);
 weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t) ;
-
-
 int64_t lives_proc_thread_join_int64(lives_proc_thread_t);
 
 boolean resubmit_thread(lives_proc_thread_t thread_info);

@@ -319,6 +319,13 @@ boolean pl_key_function(boolean down, uint16_t unicode, uint16_t keymod) {
     }
   }
 
+  if (down && (unicode == LIVES_KEY_Less || unicode == LIVES_KEY_Greater)) {
+    cached_key = unicode;
+    if (keymod & LIVES_SHIFT_MASK) {
+      cached_mod |= LIVES_SHIFT_MASK;
+    }
+  }
+
   if (mainw->rte_textparm != NULL) {
     if (unicode == LIVES_KEY_Return || unicode == 13) unicode = '\n'; // CR
     if (unicode == LIVES_KEY_BackSpace) unicode = 8; // bs
@@ -408,6 +415,24 @@ boolean skip_forward_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, ui
   // special flagbit we add, we want to generate these events from the player not from a real key
   if (LIVES_IS_PLAYING && !(mod & LIVES_SPECIAL_MASK)) return TRUE;
   on_forward_pressed(NULL, user_data);
+  return TRUE;
+}
+
+
+boolean volup_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                       livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
+  on_volch_pressed(NULL, LIVES_INT_TO_POINTER(LIVES_DIRECTION_UP));
+  return TRUE;
+}
+
+
+boolean voldown_callback(LiVESAccelGroup *group, LiVESWidgetObject *obj, uint32_t keyval, LiVESXModifierType mod,
+                         livespointer user_data) {
+  // special flagbit we add, we want to generate these events from the player not from a real key
+  if (!(mod & LIVES_SPECIAL_MASK)) return TRUE;
+  on_volch_pressed(NULL, LIVES_INT_TO_POINTER(LIVES_DIRECTION_DOWN));
   return TRUE;
 }
 

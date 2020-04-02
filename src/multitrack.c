@@ -8688,7 +8688,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                      LIVES_GUI_CALLBACK(in_out_start_changed),
                      mt);
 
-  mt->check_start_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->checkbutton_start_anchored), LIVES_WIDGET_TOGGLED_SIGNAL,
+  mt->check_start_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->checkbutton_start_anchored),
+                         LIVES_WIDGET_TOGGLED_SIGNAL,
                          LIVES_GUI_CALLBACK(in_anchor_toggled),
                          mt);
 
@@ -8738,7 +8739,8 @@ lives_mt *multitrack(weed_plant_t *event_list, int orig_file, double fps) {
                       LIVES_GUI_CALLBACK(in_out_end_changed),
                       mt);
 
-  mt->check_end_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->checkbutton_end_anchored), LIVES_WIDGET_TOGGLED_SIGNAL,
+  mt->check_end_func = lives_signal_connect_after(LIVES_GUI_OBJECT(mt->checkbutton_end_anchored),
+                       LIVES_WIDGET_TOGGLED_SIGNAL,
                        LIVES_GUI_CALLBACK(out_anchor_toggled),
                        mt);
 

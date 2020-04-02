@@ -2931,6 +2931,11 @@ void play_file(void) {
 
   lives_notify(LIVES_OSC_NOTIFY_PLAYBACK_STOPPED, "");
 
+  if (mainw->new_clip != -1) {
+    mainw->current_file = mainw->new_clip;
+    mainw->new_clip = -1;
+  }
+
   // stop the audio players
 #ifdef ENABLE_JACK
   if (audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
@@ -3274,6 +3279,22 @@ void play_file(void) {
     }
   }
 
+  if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
+                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
+                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
+    /// the screen grew too much...remaximise it
+    lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    /// must not call this again after calling sensitize(), else we can pick up keypresses
+    lives_widget_context_update();
+    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
+    if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
+    if (prefs->open_maximised)
+      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
+    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
+    lives_widget_context_update();
+  }
+
   if (!mainw->preview && (mainw->current_file == -1 || (CURRENT_CLIP_IS_VALID && !cfile->opening))) {
     sensitize();
   }
@@ -3314,20 +3335,6 @@ void play_file(void) {
     showclipimgs();
   }
 
-  if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
-                          (lives_widget_get_allocation_height(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_HEIGHT ||
-                           lives_widget_get_allocation_width(LIVES_MAIN_WINDOW_WIDGET) > GUI_SCREEN_WIDTH))) {
-    /// the screen grew too much...remaximise it
-    lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
-    lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
-    if (prefs->gui_monitor == 0) lives_window_move(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), 0, 0);
-    if (prefs->open_maximised)
-      lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
-    lives_widget_queue_draw(LIVES_MAIN_WINDOW_WIDGET);
-    lives_widget_context_update();
-  }
   if (mainw->multitrack == NULL) {
     lives_table_set_column_homogeneous(LIVES_TABLE(mainw->pf_grid), FALSE);
   }
@@ -3534,7 +3541,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
   // any cfile (clip) initialisation goes in here
   lives_memcpy((void *)&cfile->binfmt_check.chars, "LiVESXXX", 8);
   cfile->binfmt_version.num = make_version_hash(LiVES_VERSION);
-  cfile->binfmt_bytes.size = sizeof(lives_clip_t);
+  cfile->binfmt_bytes.size = (size_t)((void *)&cfile->binfmt_end - (void *)cfile);
   cfile->menuentry = NULL;
   cfile->start = cfile->end = 0;
   cfile->old_frames = cfile->opening_frames = cfile->frames = 0;
@@ -3605,6 +3612,7 @@ lives_clip_t *create_cfile(int new_file, const char *handle, boolean is_loaded) 
 
   cfile->event_list = cfile->event_list_back = NULL;
   cfile->next_event = NULL;
+  cfile->vol = 1.;
 
   lives_memset(cfile->name, 0, 1);
   lives_memset(cfile->mime_type, 0, 1);
@@ -5614,48 +5622,70 @@ manual_locate:
 #define _RELOAD(field) sfile->field = loaded->field
 #define _RELOAD_STRING(field, len) lives_snprintf(sfile->field, len, "%s", loaded->field)
 
-boolean restore_clip_binfmt(int clipno) {
+static lives_clip_t *_restore_binfmt(int clipno, boolean forensic) {
    if (IS_NORMAL_CLIP(clipno)) {
      lives_clip_t *sfile = mainw->files[clipno];
      char *fname = lives_build_filename(prefs->workdir, sfile->handle, TOTALSAVE_NAME, NULL);
      if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
+       size_t fsize, dsize;
        int fd;
-       size_t fsize;
+       boolean badsize = FALSE;
        lives_clip_t *loaded = (lives_clip_t *)lives_malloc(sizeof(lives_clip_t));
+       dsize = (size_t)((void *)&loaded->binfmt_end - (void *)loaded);
        fd = lives_open_buffered_rdonly(fname);
        fsize = lives_buffered_orig_size(fd);
-       lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
+       if (fsize < dsize) badsize = TRUE;
+       else lives_read_buffered(fd, loaded, sizeof(lives_clip_t), TRUE);
        lives_close_buffered(fd);
-       lives_rm(fname);
+       if (!forensic) lives_rm(fname);
        lives_free(fname);
+
+       if (badsize) {
+	   lives_free(loaded);
+	   return FALSE;
+       }
+
        mainw->com_failed = FALSE;
        if (mainw->read_failed == fd + 1) {
 	 mainw->read_failed = 0;
 	 lives_free(loaded);
-	 return FALSE;
+	 return NULL;
        }
+
        if (!lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
 	 uint64_t ver = loaded->binfmt_version.num;
 	 if (ver <= (uint64_t)atoll(mainw->version_hash)) {
-	   if (fsize == loaded->binfmt_bytes.size) {
+	   if (dsize == loaded->binfmt_bytes.size) {
+	     if (forensic) return loaded;
 	     _RELOAD_STRING(save_file_name, PATH_MAX);  _RELOAD(start); _RELOAD(end); _RELOAD(is_untitled); _RELOAD(was_in_set);
 	     _RELOAD(ratio_fps); _RELOAD_STRING(mime_type, 256);
+	     _RELOAD(changed); _RELOAD(deinterlace); _RELOAD(op_ds_warn_level); _RELOAD(vol);
 	     if (sfile->start < 1) sfile->start = 1;
 	     if (sfile->end > sfile->frames) sfile->end = sfile->frames;
 	     if (sfile->start > sfile->end) sfile->start = sfile->end;
 	     if (lives_strlen(sfile->save_file_name) > PATH_MAX) lives_memset(sfile->save_file_name, 0, PATH_MAX);
 	     if (sfile->pointer_time > sfile->video_time) sfile->pointer_time = 0.;
 	     if (sfile->real_pointer_time > CLIP_TOTAL_TIME(clipno)) sfile->real_pointer_time = sfile->pointer_time;
-	     lives_free(loaded);
-	     return TRUE;
+	     return loaded;
 	   }}}}
      lives_free(fname);
    }
-   return FALSE;
+   return NULL;
 }
 
 #undef _RELOAD
 #undef _RELOAD_STRING
+
+ boolean restore_clip_binfmt(int clipno) {
+   lives_clip_t *recov = _restore_binfmt(clipno, FALSE);
+   if (!recov) return FALSE;
+   lives_free(recov);
+   return TRUE;
+ }
+
+ lives_clip_t *clip_forensic(int clipno) {
+   return  _restore_binfmt(clipno, TRUE);
+ }
 
  boolean recover_files(char *recovery_file, boolean auto_recover) {
   FILE *rfile = NULL;

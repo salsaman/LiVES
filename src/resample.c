@@ -31,13 +31,11 @@ LIVES_GLOBAL_INLINE ticks_t q_gint64(ticks_t in, double fps) {
   return (ticks_t)0;
 }
 
-
 LIVES_GLOBAL_INLINE ticks_t q_gint64_floor(ticks_t in, double fps) {
-  if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps - .000001) / fps) *
+  if (in != 0) return ((ticks_t)((double)in / (double)TICKS_PER_SECOND_DBL * fps) / fps) *
                         TICKS_PER_SECOND; // quantise to frame timing
   return 0;
 }
-
 
 LIVES_GLOBAL_INLINE ticks_t q_dbl(double in, double fps) {
   // quantise (double)in to fps
@@ -479,6 +477,31 @@ static boolean copy_with_check(weed_plant_t *event, weed_plant_t *out_list, weed
 }
 
 
+/* weed_plant_t *pre_analyse(weed_plant_t *elist) { */
+/*   weed_plant_t *event = get_first_event(elist), *nevent; */
+/*   weed_timecode_t stc; */
+/*   lives_audio_track_state_t *astate; */
+/*   if (!WEED_EVENT_IS_AUDIO_FRAME(event)) event = get_next_audio_frame(event); */
+/*   if (event) { */
+/*     stc = weed_event_get_timecode(event); */
+/*     atstate = aframe_to_atstate(event); */
+/*     /// get the next audio frame */
+/*     nevent = get_next_audio_frame(event); */
+/*     if (nevent) { */
+/*       ntc = weed_event_get_timecode(event); */
+/*       ntstate = aframe_to_atstate(event); */
+
+/*       /// analyse velocity and seek values */
+
+
+
+/*     } */
+/*   } */
+/* } */
+
+
+
+
 /**
    @brief quantise from event_list_t *in_list to *out_list at the new rate of qfps
 
@@ -575,6 +598,12 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
     lives_free(what);
     return NULL;
   }
+
+  /* if (old_fps == 0.) { */
+  /*   /// in pre-analysis, we will look at the audio frames, and instead of correcting the audio veloicity, we will */
+  /*   /// attempt to slightly modify (scale) the frame timings such that the audio hits the precise seek point  */
+  /*   in_list = pre_analyse(in_list); */
+  /* } */
 
   weed_set_voidptr_value(out_list, WEED_LEAF_FIRST, NULL);
   weed_set_voidptr_value(out_list, WEED_LEAF_LAST, NULL);
@@ -924,6 +953,7 @@ weed_plant_t *quantise_events(weed_plant_t *in_list, double qfps, boolean allow_
           prev_aframe = get_prev_frame_event(newframe);
           for (i = 0; i < natracks; i += 2) {
             boolean gottrack = FALSE;
+            if (naseeks[i + 1] == 0.) continue; ///< audio was off, currently we don't store the seek point there (we should: TODO)
             for (k = 0; k < xatracks; k += 2) {
               if (xaclips[k] == naclips[i]) {
                 //. track is in xatracks, so there must be a prev audio frame for the track; if the clips match then we will find

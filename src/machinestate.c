@@ -12,9 +12,25 @@
 #include "support.h"
 #include "callbacks.h"
 
+static uint64_t fastrand_val = 0;
+
+LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
+  fastrand_val ^= fastrand_val << 13; fastrand_val ^= fastrand_val >> 7; return (fastrand_val ^= fastrand_val << 17);
+}
+
+LIVES_GLOBAL_INLINE void fastrand_add(uint64_t entropy) {fastrand_val += entropy;}
+
+LIVES_GLOBAL_INLINE double fastrand_dbl(double range) {
+  static const double divd = (double)(0xFFFFFFFFFFFFFFFF); return (double)fastrand() / divd * range;
+}
+
+/// pick a pseudo random uint between 0 and range (inclusive)
+LIVES_GLOBAL_INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fastrand_dbl((double)(++range)));}
+
+
 void init_random() {
   ssize_t randres = -1;
-  uint64_t rseed;
+  uint64_t rseed = 32749;
   int randfd;
 
   // try to get randomness from /dev/urandom
@@ -22,13 +38,13 @@ void init_random() {
 
   if (randfd > -1) {
     randres = read(randfd, &rseed, 8);
+    (void)randres;
     close(randfd);
   }
 
-  gettimeofday(&tv, NULL);
-  rseed += tv.tv_sec + tv.tv_usec;
+  rseed ^= lives_get_current_ticks();
 
-  lives_srandom((uint32_t)(rseed & 0xFFFFFFFF));
+  lives_srandom((uint32_t)((rseed >> 13) & 0xFFFFFFFF));
 
   randfd = lives_open2("/dev/urandom", O_RDONLY);
 
@@ -37,12 +53,11 @@ void init_random() {
     close(randfd);
   }
 
-  if (randres != 8) {
-    gettimeofday(&tv, NULL);
-    rseed = tv.tv_sec + tv.tv_usec;
-  }
+  rseed ^= lives_get_current_ticks();
 
-  fastsrand(rseed);
+  do {
+    fastrand_val += rseed + 1073741789;
+  } while (fastrand_val == 0);
 }
 
 
@@ -139,7 +154,6 @@ void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials,
 }
 
 #define NCYCS 16
-
 
 uint64_t nxtval(uint64_t val, uint64_t lim, boolean less) {
   // to avoid only checking powers of 2, we want some number which is (2 ** i) * (6 ** j)
@@ -373,38 +387,38 @@ uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val) {
 
 ////// memory funcs ////
 
+/// debug functions
+//LiVESList *mblocks = NULL;
+/// debug functions
+/* void *test_malloc(size_t size) { */
+/*   void *ptr = malloc(size); */
+/*   mblocks = lives_list_prepend(mblocks, ptr); */
+/*   return ptr; */
+/* } */
+
+/* void test_free(void *ptr) { */
+/*   LiVESList *list; */
+/*   for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) { */
+/*     if ((void *)mblocks->data == ptr) { */
+/*       if (list->data == ptr) { */
+/*         if (list->prev) list->prev->next = list->next; */
+/*         else mblocks = list; */
+/*         if (list->next) list->next->prev = list->prev; */
+/*       } */
+/*     } */
+/*   } */
+/* } */
+
+/* void shoatend(void) { */
+/*   LiVESList *list; */
+/*   for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) { */
+/*     g_print("%p in list\n", list->data); */
+/*   } */
+/* } */
+
+
 /// susbtitute memory functions. These must be real functions and not #defines since we need fn pointers
 #define OIL_MEMCPY_MAX_BYTES 12288 // this can be tuned to provide optimal performance
-
-LiVESList *mblocks = NULL;
-
-void *test_malloc(size_t size) {
-  void *ptr = malloc(size);
-  mblocks = lives_list_prepend(mblocks, ptr);
-  return ptr;
-}
-
-void test_free(void *ptr) {
-  LiVESList *list;
-  for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) {
-    if ((void *)mblocks->data == ptr) {
-      if (list->data == ptr) {
-        if (list->prev) list->prev->next = list->next;
-        else mblocks = list;
-        if (list->next) list->next->prev = list->prev;
-      }
-    }
-  }
-}
-
-void shoatend(void) {
-  LiVESList *list;
-  for (list = mblocks; mblocks != NULL; mblocks = mblocks->next) {
-    g_print("%p in list\n", list->data);
-  }
-}
-
-
 
 #ifdef ENABLE_ORC
 livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n) {
@@ -483,9 +497,7 @@ livespointer proxy_realloc(livespointer ptr, size_t new_size) {
 #define _cpy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
 
 // functions with fixed pointers that we can pass to plugins ///
-void *_ext_malloc(size_t n) {
-  return (n == 0 ? NULL : lives_malloc(n));
-}
+void *_ext_malloc(size_t n) {return (n == 0 ? NULL : lives_malloc(n));}
 
 void *_ext_malloc_and_copy(size_t bsize, const void *block) {
   if (!block || bsize == 0) return NULL;
@@ -504,9 +516,7 @@ void _ext_unmalloc_and_copy(size_t bsize, void *p) {
 #endif
 }
 
-void _ext_free(void *p) {
-  if (p) lives_free(p);
-}
+void _ext_free(void *p) {if (p) lives_free(p);}
 
 
 void lives_free_check(void *p) {
@@ -536,6 +546,14 @@ LIVES_GLOBAL_INLINE void *lives_free_and_return(void *p) {
   lives_free(p);
   return NULL;
 }
+
+
+LIVES_GLOBAL_INLINE size_t get_max_align(size_t req_size, size_t align_max) {
+  size_t align = 1;
+  while (align < align_max && !(req_size & align)) align *= 2;
+  return align;
+}
+
 
 LIVES_GLOBAL_INLINE void *lives_calloc_safety(size_t nmemb, size_t xsize) {
   size_t totsize = nmemb * xsize;
@@ -652,7 +670,6 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
 //}
 
 
-
 LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
   /// there will be a block of size M.
   /// there will be n leaf nodes. The block is subdivided.into n equally sized  sub-blocks of size m
@@ -751,7 +768,6 @@ lives_storage_status_t get_storage_status(const char *dir, uint64_t warn_level, 
   if (ds < warn_level) return LIVES_STORAGE_STATUS_WARNING;
   return LIVES_STORAGE_STATUS_NORMAL;
 }
-
 
 
 uint64_t get_fs_free(const char *dir) {
@@ -1001,33 +1017,50 @@ LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
   return tmp;
 }
 
+LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
+  /// see also: lives_concat()
+  size_t sz = lives_strlen(string);
+  lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
+  return string;
+}
 
-#define hasNulByte(x) ((x - 0x0101010101010101) & ~x & 0x8080808080808080)
-#define getnulpos(nulmask) ((nulmask & 2155905152ul)	?		\
-			    ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
-			     (((nulmask & 8388608ul) ? 2 : 3))) : ((nulmask & 141287244169216ul) ? \
-								   ((nulmask & 549755813888ul) ? 4 : 5) : \
-								   ((nulmask & 36028797018963968ul) ? 6 : 7)))
+LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, const char *fmt, ...) {
+  va_list xargs;
+  char *text;
+
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+
+  lives_strappend(string, len, text);
+  lives_free(text);
+  return string;
+}
+
+/// each byte B can be thought of as a signed char, subtracting 1 sets bit 7 if B was <= 0, then AND with ~B clears bit 7 if it
+/// was already set (i.e B was < 0), thus bit 7 only remains set if the byte started as 0.
+#define hasNulByte(x) (((x) - 0x0101010101010101) & ~(x) & 0x8080808080808080)
+
+/// here we simply use a binary if / then to locate the 0x80 byte, the order we check ensures we go from 0 -> 7
+#define getnulpos(nulmask) ((nulmask & 2155905152ul)	? ((nulmask & 32896ul) ? ((nulmask & 128ul) ? 0 : 1) : \
+							   ((nulmask & 8388608ul) ? 2 : 3)) : (nulmask & 141287244169216ul) ? \
+			    ((nulmask & 549755813888ul) ? 4 : 5) : ((nulmask & 36028797018963968ul) ? 6 : 7))
+
+#define getnulpos_be(nulmask) ((nulmask & 9259542121117908992ul) ? ((nulmask & 9259400833873739776ul) ? \
+								    ((nulmask & 9223372036854775808ul) ? 0 : 1) : ((nulmask & 140737488355328ul) ? 2 : 3)) \
+			       : (nulmask & 2155872256ul) ? ((nulmask & 2147483648ul) ? 4 : 5) : ((nulmask & 32768ul) ? 6 : 7))
 
 LIVES_GLOBAL_INLINE size_t lives_strlen(const char *s) {
   if (!s) return 0;
   else {
-#ifdef STD_STRINGFUNCS
-    return strlen(s);
-#else
-    const char *p = s;
-    uint64_t *pi = (uint64_t *)p, nulmask;
-    while (*p) {
-      if ((void *)pi == (void *)p) {
-        while (!(nulmask = hasNulByte(*pi))) ++pi;
-        if ((void *)pi - (void *)s + getnulpos(nulmask) != strlen(s)) {
-          return (void *)pi - (void *)s + getnulpos(nulmask) ;
-        }
-      }
-      p++;
+#ifndef STD_STRINGFUNCS
+    uint64_t *pi = (uint64_t *)s, nulmask;
+    if ((void *)pi == (void *)s) {
+      while (!(nulmask = hasNulByte(*pi))) pi++;
+      return (char *)pi - s + (capable->byte_order == LIVES_LITTLE_ENDIAN ? getnulpos(nulmask) : getnulpos_be(nulmask));
     }
-    return p - s;
 #endif
+    return strlen(s);
   }
 }
 
@@ -1042,23 +1075,19 @@ LIVES_GLOBAL_INLINE boolean lives_strcmp(const char *st1, const char *st2) {
     while (1) {
       if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
         while (1) {
-          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {
-            if (hasNulByte(d1)) {
-              if (!hasNulByte(d2)) return TRUE;
-              break;
-            }
-          } else {
-            if (!hasNulByte(d1) || !(hasNulByte(d2))) return TRUE;
+          if ((d1 = *(ip1++)) == (d2 = *(ip2++))) {if (hasNulByte(d1)) return FALSE;}
+          else {
+            if (!hasNulByte(d1 | d2)) return TRUE;
             break;
           }
         }
         st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
       }
-      if (*st1 != *st2 || !(*st1)) break;
-      st1++; st2++;
+      if (*st1 != *(st2++)) return TRUE;
+      if (!(*(st1++))) return FALSE;
     }
   }
-  return (*st2 != 0);
+  return FALSE;
 }
 
 LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
@@ -1069,7 +1098,7 @@ LIVES_GLOBAL_INLINE int lives_strcmp_ordered(const char *st1, const char *st2) {
 #endif
     uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
-      if ((const char *)ip1 == st1 && (const char *)ip2 == st2) {
+      if ((void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
         do {
           d1 = *(ip1++);
           d2 = *(ip2++);
@@ -1093,7 +1122,7 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
     size_t xlen = len >> 3;
     uint64_t d1, d2, *ip1 = (uint64_t *)st1, *ip2 = (uint64_t *)st2;
     while (1) {
-      if (xlen && (const char *)ip1 == st1 && (const char *)ip2 == st2) {
+      if (xlen && (void *)ip1 == (void *)st1 && (void *)ip2 == (void *)st2) {
         do {
           d1 = *(ip1++);
           d2 = *(ip2++);
@@ -1103,23 +1132,26 @@ LIVES_GLOBAL_INLINE boolean lives_strncmp(const char *st1, const char *st2, size
           ip1--;
           ip2--;
         }
-        st1 = (const char *)ip1; st2 = (const char *)ip2;
+        st1 = (void *)ip1; st2 = (void *)ip2;
         len -= ((len >> 3) - xlen) << 3;
       }
       if (!(len--)) return FALSE;
-      if (*st1 != *st2 || !(*st1)) break;
-      st1++; st2++;
+      if (*st1 != *(st2++)) return TRUE;
+      if (!(*(st1++))) return FALSE;
     }
   }
   return (*st1 != *st2);
 }
 
+#define HASHROOT 5381
+LIVES_GLOBAL_INLINE uint32_t string_hash(const char *st) {
+  if (st) for (register uint32_t hash = HASHROOT;; hash += (hash << 5) + * (st++)) if (!(*st)) return hash;
+  return 0;
+}
 
-LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
-  uint32_t hash = 5381;
-  if (!string) return 0;
-  for (char c; (c = *(string++)) != 0; hash += (hash << 5) + c);
-  return hash;
+LIVES_GLOBAL_INLINE char *lives_strstop(char *st, const char term) {
+  if (st && term) for (char *p = (char *)st; *p; p++) if (*p == term) {*p = 0; return st;}
+  return st;
 }
 
 
@@ -1133,20 +1165,21 @@ LIVES_GLOBAL_INLINE uint32_t string_hash(const char *string) {
 
 typedef weed_plantptr_t lives_proc_thread_t;
 
-/// create the specific plant which defines a background task to be run
-/// - func is any function of a recognised type, with 0 - 16 parameters, and a value of type <return type> which may be retrieved by
-/// later calling the appropriate lives_proc_thread_join_*() function
-/// - args_fmt is a 0 terminated string describing the arguments of func, i ==int, d == double, b == boolean (int),
-/// s == string (0 terminated), I == uint64_t, int64_t, P = weed_plant_t *, V / v == (void *), F == weed_funcptr_t
-/// return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
-/// will free its own resources and NULL is returned from this function (fire and forget)
-/// return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
-/// lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
-/// and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
-/// for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
-/// task and return a copy of the actual return value of the func
-/// alternatively, if return_type is non-zero, then the returned value from this function may be reutlised by passing it as the parameter
-/// to run_as_thread().
+/**
+   create the specific plant which defines a background task to be run
+   - func is any function of a recognised type, with 0 - 16 parameters, and a value of type <return type> which may be retrieved by
+   later calling the appropriate lives_proc_thread_join_*() function
+   - args_fmt is a 0 terminated string describing the arguments of func, i ==int, d == double, b == boolean (int),
+   s == string (0 terminated), I == uint64_t, int64_t, P = weed_plant_t *, V / v == (void *), F == weed_funcptr_t
+   return_type is enumerated, e.g WEED_SEED_INT64. Return_type of 0 indicates no return value (void), then the thread
+   will free its own resources and NULL is returned from this function (fire and forget)
+   return_type of -1 has a special meaning, in this case no result is returned, but the thread can be monitored by calling:
+   lives_proc_thread_check() with the return : - this function is guaranteed to return FALSE whilst the thread is running
+   and TRUE thereafter, the proc_thread should be freed once TRUE id returned and not before.
+   for the other return_types, the appropriate join function should be called and it will block until the thread has completed its
+   task and return a copy of the actual return value of the func
+   alternatively, if return_type is non-zero, then the returned value from this function may be reutlised by passing it as the parameter
+   to run_as_thread(). */
 lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_type, const char *args_fmt, ...) {
   va_list xargs;
   int p = 0;
@@ -1183,35 +1216,15 @@ lives_proc_thread_t lives_proc_thread_create(lives_funcptr_t func, int return_ty
   return thread_info;
 }
 
-
-#define _RV_ WEED_LEAF_RETURN_VALUE
 static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   /// funcsigs define the signature of any function we may wish to call via lives_proc_thread
   /// however since there are almost 3 quadrillion posibilities (nargs < 16 * all return types)
   /// it is not feasable to add every one; new funcsigs can be added as needed; then the only remaining thing is to
   /// ensure the matching case is handled in the switch statement
-  weed_funcptr_t func = NULL;
-  //funcptr_int_t funci = NULL;
-  //funcptr_dbl_t funcd = NULL;
-  funcptr_bool_t funcb = NULL;
-  funcptr_int64_t funci64 = NULL;
-  funcptr_string_t funcstr = NULL;
-  //funcptr_funcptr_t funcf = NULL;
-  //funcptr_voidptr_t funcv= NULL;
-  //funcptr_plantptr_t funcp;
-
   uint32_t ret_type = weed_leaf_seed_type(info, _RV_);
-  switch (ret_type) {
-  //case WEED_SEED_INT: funci = (funcptr_int_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  //case WEED_SEED_DOUBLE: funcd = (funcptr_dbl_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  case WEED_SEED_BOOLEAN: funcb = (funcptr_bool_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  case WEED_SEED_STRING: funcstr = (funcptr_string_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  case WEED_SEED_INT64: funci64 = (funcptr_int64_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  //case WEED_SEED_FUNCPTR: funcf = (funcptr_funcptr_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  //case WEED_SEED_VOIDPTR: funcv = (funcptr_voidptr_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  // case WEED_SEED_PLANTPTR: funcp = (funcptr_plantptr_t)weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  default: func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL); break;
-  }
+  allfunc_t *thefunc = (allfunc_t *)lives_malloc(sizeof(allfunc_t));
+
+  thefunc->func = weed_get_funcptr_value(info, WEED_LEAF_THREADFUNC, NULL);
 
 #define FUNCSIG_VOID								0X00000000
 #define FUNCSIG_INT 								0X00000001
@@ -1229,58 +1242,55 @@ static void call_funcsig(funcsig_t sig, lives_proc_thread_t info) {
   // return_type determines which function flavour to call, e.g func, funcb, funci
   /// the second argument to GETARG relates to the internal structure of the lives_proc_thread;
 
-#define GETARG(type, n) WEED_LEAF_GET(info, _WEED_LEAF_THREAD_PARAM(n), type)
+
+  /// LIVES_PROC_THREADS ////////////////////////////////////////
+
+  /// to make any function usable by lives_proc_thread, the _ONLY REQUIREMENT_ is to ensure that there is a function call
+  /// corresponding the function arguments (i.e the funcsig) and return value here below
+  /// (use of the FUNCSIG_* symbols is optional, they exist only to make it clearer what the function parameters should be)
+
   switch (sig) {
   case FUNCSIG_VOID:
     switch (ret_type) {
-    case WEED_SEED_INT64: weed_set_int64_value(info, _RV_, (*funci64)()); break;
-    default: (*func)(); break;
+    case WEED_SEED_INT64: CALL_0(int64); break;
+    default: CALL_VOID_0(); break;
     }
     break;
-  case FUNCSIG_INT: (*func)(GETARG(int, "0")); break;
+
+  case FUNCSIG_INT: CALL_VOID_1(int); break;
+
   case FUNCSIG_STRING:
     switch (ret_type) {
-    case WEED_SEED_STRING:
-      weed_set_string_value(info, _RV_, (*funcstr)(GETARG(string, "0"))); break;
-    default: (*func)(GETARG(string, "0")); break;
+    case WEED_SEED_STRING: CALL_1(string, string); break;
+    default: CALL_VOID_1(string); break;
     }
-  case FUNCSIG_INT_INT64: (*func)(GETARG(int, "0"), GETARG(int64, "1")); break;
-  case FUNCSIG_VOIDP_VOIDP: (*func)(GETARG(voidptr, "0"), GETARG(voidptr, "1")); break;
-  case FUNCSIG_PLANTP_BOOL: (*func)(GETARG(plantptr, "0"), GETARG(boolean, "1")); break;
+
+  case FUNCSIG_INT_INT64: CALL_VOID_2(int, int64); break;
+
+  case FUNCSIG_VOIDP_VOIDP: CALL_VOID_2(voidptr, voidptr); break;
+
+  case FUNCSIG_PLANTP_BOOL: CALL_VOID_2(plantptr, boolean); break;
+
   case FUNCSIG_PLANTP_VOIDP_INT64:
     switch (ret_type) {
-    case WEED_SEED_BOOLEAN:
-      weed_set_boolean_value(info, _RV_, (*funcb)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2"))); break;
-    default: (*func)(GETARG(plantptr, "0"), GETARG(voidptr, "1"), GETARG(int64, "2")); break;
+    case WEED_SEED_BOOLEAN: CALL_3(boolean, plantptr, voidptr, int64); break;
+    default: CALL_VOID_3(plantptr, voidptr, int64); break;
     }
     break;
-  case FUNCSIG_INT_INT_INT_BOOL_VOIDP: (*func)(GETARG(int, "0"), GETARG(int, "1"), GETARG(int, "2"), GETARG(boolean, "3"),
-        GETARG(voidptr, "4")); break;
+
+  case FUNCSIG_INT_INT_INT_BOOL_VOIDP: CALL_VOID_5(int, int, int, boolean, voidptr); break;
   default: break;
   }
+
+  lives_free(thefunc);
 }
+
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_check(lives_proc_thread_t tinfo) {
   /// returns FALSE while the thread is running, TRUE once it has finished
   return (weed_leaf_num_elements(tinfo, _RV_) > 0
           || weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE);
 }
-
-/* #ifdef LIVES_GNU */
-/* // needs testing... */
-/* #define foo(plant) \ */
-/*   __builtin_choose_expr ( \ */
-/* 			 weed_leaf_seed_type(plant, _RV_) == 3, proc_thread_join_boolean(plant), \ */
-/* 			 weed_leaf_seed_type(plant. _RV_) == 1, proc_thread_join_int(plant), \ */
-/* 			 proc_thread_join(plant)} */
-/* #endif */
-
-#define _join(ctype, stype)  ctype retval;			      \
-  lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
-  retval = weed_get_##stype##_value(tinfo, _RV_, NULL);		      \
-  weed_plant_free(tinfo);					      \
-  return retval;
-#define _join_t(type) _join(type, type)
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_set_cancellable(lives_proc_thread_t tinfo) {
   weed_set_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLABLE, WEED_TRUE);
@@ -1301,19 +1311,21 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_cancelled(lives_proc_thread_t tinf
   return weed_get_boolean_value(tinfo, WEED_LEAF_THREAD_CANCELLED, NULL) == WEED_TRUE ? TRUE : FALSE;
 }
 
+#define _join(stype) lives_nanosleep_until_nonzero(weed_leaf_num_elements(tinfo, _RV_)); \
+  return weed_get_##stype##_value(tinfo, _RV_, NULL);
 
 LIVES_GLOBAL_INLINE void lives_proc_thread_join(lives_proc_thread_t tinfo) {
   lives_nanosleep_until_nonzero((weed_get_boolean_value(tinfo, WEED_LEAF_DONE, NULL) == WEED_TRUE));
   weed_plant_free(tinfo);
 }
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join_t(int);}
-LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t tinfo) {_join_t(double);}
-LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) { _join(int, boolean);}
-LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {_join(int64_t, int64);}
-LIVES_GLOBAL_INLINE char *lives_proc_thread_join_string(lives_proc_thread_t tinfo) {_join(char *, string);}
-LIVES_GLOBAL_INLINE weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t tinfo) {_join(weed_funcptr_t, funcptr);}
-LIVES_GLOBAL_INLINE void *lives_proc_thread_join_voidptr(lives_proc_thread_t tinfo) {_join(void *, voidptr);}
-LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t tinfo) {_join(weed_plantptr_t, plantptr);}
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_int(lives_proc_thread_t tinfo) { _join(int);}
+LIVES_GLOBAL_INLINE double lives_proc_thread_join_double(lives_proc_thread_t tinfo) {_join(double);}
+LIVES_GLOBAL_INLINE int lives_proc_thread_join_boolean(lives_proc_thread_t tinfo) { _join(boolean);}
+LIVES_GLOBAL_INLINE int64_t lives_proc_thread_join_int64(lives_proc_thread_t tinfo) {_join(int64);}
+LIVES_GLOBAL_INLINE char *lives_proc_thread_join_string(lives_proc_thread_t tinfo) {_join(string);}
+LIVES_GLOBAL_INLINE weed_funcptr_t lives_proc_thread_join_funcptr(lives_proc_thread_t tinfo) {_join(funcptr);}
+LIVES_GLOBAL_INLINE void *lives_proc_thread_join_voidptr(lives_proc_thread_t tinfo) {_join(voidptr);}
+LIVES_GLOBAL_INLINE weed_plantptr_t lives_proc_thread_join_plantptr(lives_proc_thread_t tinfo) {_join(plantptr);}
 
 /**
    create a funcsig from a lives_proc_thread_t object
@@ -1371,7 +1383,7 @@ boolean resubmit_thread(lives_proc_thread_t thread_info) {
 ///////// thread pool ////////////////////////
 #ifndef VALGRIND_ON
 #define TUNE_MALLOPT 1
-#define MINPOOLTHREADS 16
+#define MINPOOLTHREADS 4
 #else
 #define MINPOOLTHREADS 2
 #endif
@@ -1598,6 +1610,8 @@ uint64_t lives_thread_join(lives_thread_t work, void **retval) {
     pthread_mutex_lock(&tcond_mutex);
     pthread_cond_signal(&tcond);
     pthread_mutex_unlock(&tcond_mutex);
+    if (task->busy) break;
+    lives_nanosleep(1000);
   }
 
   lives_nanosleep_until_nonzero(task->done);
@@ -1617,7 +1631,11 @@ LIVES_GLOBAL_INLINE uint64_t lives_random(void) {
 }
 
 LIVES_GLOBAL_INLINE pid_t lives_getpid(void) {
+#ifdef IS_MINGW
+  return GetCurrentProcessId(),
+#else
   return getpid();
+#endif
 }
 
 LIVES_GLOBAL_INLINE int lives_getuid(void) {
@@ -1709,7 +1727,7 @@ LIVES_GLOBAL_INLINE void swab8(const void *from, const void *to, size_t gran) {
 
 LIVES_GLOBAL_INLINE void reverse_bytes(char *buff, size_t count, size_t gran) {
   if (count == 2) swab2(buff, buff, 1);
-  if (count == 4) swab4(buff, buff, gran);
+  else if (count == 4) swab4(buff, buff, gran);
   else if (count == 8) swab8(buff, buff, gran);
 }
 

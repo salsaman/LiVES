@@ -77,8 +77,10 @@ char *get_stats_msg(boolean calc_only) {
     audmsg = lives_strdup_printf(_("Audio is %s video by %.4f secs.\n"),
                                  tmp = lives_strdup(avsync >= 0. ? _("ahead of") : _("behind")), fabsf(avsync));
     lives_free(tmp);
-  } else
-    audmsg = lives_strdup(_("Clip has no audio.\n"));
+  } else {
+    if (prefs->audio_src == AUDIO_SRC_INT) audmsg = lives_strdup(_("Clip has no audio.\n"));
+    else audmsg = lives_strdup(_("Audio source external.\n"));
+  }
 
   if (mainw->blend_file != mainw->current_file && IS_VALID_CLIP(mainw->blend_file)) {
     char *bgpal = get_palette_name_for_clip(mainw->blend_file);

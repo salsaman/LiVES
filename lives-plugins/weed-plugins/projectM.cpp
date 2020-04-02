@@ -13,6 +13,7 @@ static int package_version = 1.1; // version of this package
 
 #define NEED_AUDIO
 #define NEED_PALETTE_UTILS
+#define NEED_RANDOM
 
 #ifndef NEED_LOCAL_WEED_PLUGIN
 #include <weed/weed-plugin.h>
@@ -26,6 +27,8 @@ static int package_version = 1.1; // version of this package
 
 static int verbosity = WEED_VERBOSITY_ERROR;
 
+#define MAX_AUDLEN 2048
+#define DEF_SENS 3.0 /// beat sensitivity 0. -> 5.  (lower is more sensitive)
 /////////////////////////////////////////////////////////////
 
 #define USE_DBLBUF 1
@@ -70,6 +73,7 @@ static struct timespec ts;
 
 static int count = 0;
 static int pcount = 0;
+static int blanks = 0;
 
 typedef struct {
   projectM *globalPM;
@@ -84,10 +88,15 @@ typedef struct {
   int opidx;
   int nprs;
   char **prnames;  // volatile ptr to non-volatile strings !!
+  uint8_t *bad_programs;
+  int program;
+  bool bad_prog;
+  bool check;
   pthread_mutex_t mutex;
   pthread_mutex_t pcm_mutex;
   pthread_t thread;
   int audio_frames;
+  size_t audio_offs, abufsize;
   int achans;
   float *audio;
   float fps, tfps;
@@ -106,6 +115,9 @@ typedef struct {
   SDL_GLContext glCtx;
 #endif
   int error;
+  double timer;
+  weed_timecode_t timestamp;
+  int cycadj;
 } _sdata;
 
 static _sdata *statsd;
@@ -211,8 +223,13 @@ static int init_display(_sdata *sd) {
   if (defwidth > maxwidth) defwidth = maxwidth;
   if (defheight > maxheight) defheight = maxheight;
 
+  //SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+  SDL_GL_SetAttribute(SDL_GL_BUFFER_SIZE, 32);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, USE_DBLBUF);
 
 #ifdef HAVE_SDL2
@@ -243,9 +260,9 @@ bool resize_buffer(_sdata *sd) {
 
 
 static int render_frame(_sdata *sd) {
-  float yscale = sd->height / sd->texsize;
-  float xscale = sd->width / sd->texsize;
-  sd->ncycs--;
+  float yscale = (float)sd->height / sd->texsize * 2.;
+  float xscale = (float)sd->width / sd->texsize * 2.;
+  bool checked_audio = false;
 
   if (sd->needs_update || !sd->got_first) {
     if (sd->needs_update) {
@@ -295,55 +312,57 @@ static int render_frame(_sdata *sd) {
 
   glClear(GL_COLOR_BUFFER_BIT);
   glClear(GL_DEPTH_BUFFER_BIT);
-
+  //glEnable(GL_DEPTH_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
 
   glViewport(0, 0, sd->width, sd->height);
+
+  if (sd->needs_more) {
+    size_t audlen = MAX_AUDLEN;
+    pthread_mutex_lock(&sd->pcm_mutex);
+    if (sd->audio_frames - sd->audio_offs < audlen)
+      audlen = sd->audio_frames - sd->audio_offs;
+    if (audlen) {
+      sd->globalPM->pcm()->addPCMfloat(sd->audio + sd->audio_offs, audlen);
+      sd->audio_offs += audlen;
+    }
+    pthread_mutex_unlock(&sd->pcm_mutex);
+    checked_audio = true;
+    if (sd->ncycs > 1.) sd->cycadj = -(int)(sd->ncycs);
+  }
+
   sd->globalPM->renderFrame();
   pcount++;
 
-  if (sd->needs_more) {
+  if (sd->needs_more && checked_audio) {
     glMatrixMode(GL_PROJECTION);
+    glOrtho(0, 1, 0, 1, -1, 1);
     glLoadIdentity();
-    glFrustum(-1, 1, -1, 1, 2, 10);
-
-    glEnable(GL_DEPTH_TEST);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    glTranslatef(.0, .0, -2);
 
     glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_TEXTURE);
     glLoadIdentity();
 
     glBindTexture(GL_TEXTURE_2D, sd->textureHandle);
-    glColor4d(1.0, 1.0, 1.0, 1.0);
-
-    yscale = (float)sd->height / (float)sd->width * 2.;
 
     glBegin(GL_QUADS);
-    glTexCoord2d(0, 1);
-    glVertex3d(-1, -1, 0);
-
-    glTexCoord2d(0, 0);
-    glVertex3d(-1, yscale - 1., 0);
-
-    glTexCoord2d(1, 0);
-    glVertex3d(xscale, yscale - 1., 0);
-
-    glTexCoord2d(1, 1);
-    glVertex3d(xscale, -1, 0);
+    glTexCoord2i(0, 0);
+    glVertex2d(-1., yscale - 1.);
+    glTexCoord2i(0, 1);
+    glVertex2i(-1, -1);
+    glTexCoord2i(1, 1);
+    glVertex2d(xscale - 1., -1.);
+    glTexCoord2i(1, 0);
+    glVertex2d(xscale - 1., yscale - 1.);
     glEnd();
 
     glDisable(GL_TEXTURE_2D);
-
     glMatrixMode(GL_MODELVIEW);
-    glDisable(GL_DEPTH_TEST);
-  }
 
-  if (sd->needs_more) {
 #if USE_DBLBUF
 #ifdef HAVE_SDL2
     SDL_GL_SwapWindow(sd->win);
@@ -359,10 +378,32 @@ static int render_frame(_sdata *sd) {
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
     pthread_mutex_unlock(&cond_mutex);
-    if (sd->ncycs > 1. || sd->ncycs < 0.) sd->ncycs = 0.;
     sd->got_first = true;
     if (sd->fps > 0.) sd->ncycs += sd->tfps / sd->fps - 1.;
+    sd->ncycs += sd->cycadj;
     if (sd->ncycs < 0.) sd->ncycs = 0.;
+    if (sd->pidx == -1 && sd->check) {
+      register int i;
+      ssize_t frmsize = sd->rowstride * sd->height;
+      if (sd->psize == 4) {
+        for (i = 0; i < frmsize;
+             i += sd->psize) if (((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) & sd->fbuffer[i + 3]) > 0) break;
+      } else {
+        for (i = 0; i < frmsize; i += sd->psize) if ((sd->fbuffer[i] | sd->fbuffer[i + 1] | sd->fbuffer[i + 2]) > 0) break;
+      }
+      if (i >= frmsize) blanks++;
+      else {
+        blanks = 0;
+        sd->check = false;
+        sd->bad_programs[sd->program] = 2;
+      }
+      if (blanks > 1) sd->bad_prog = true;
+    }
+  } else {
+    if (sd->ncycs > 1.) {
+      sd->ncycs--;
+      if (sd->ncycs < 1. && sd->cycadj < 0) sd->cycadj++;
+    }
   }
   return 0;
 }
@@ -401,26 +442,17 @@ static void *worker(void *data) {
 
   atexit(do_exit);
 
-  // if (verbosity < WEED_VERBOSITY_INFO) {
-  //   new_stdout = dup(1);
-  //   new_stderr = dup(2);
-  //   close(1);
-  //   close(2);
-  //   new_stdout = new_stdout;
-  //   new_stderr = new_stderr;
-  // }
-
   settings.windowWidth = sd->width;
   settings.windowHeight = sd->height;
-  settings.meshX = sd->width / 8;
+  settings.meshX = sd->width / 64;
   settings.meshY = settings.meshX * hwratio;
-  settings.fps = 0;//sd->fps;
-  settings.smoothPresetDuration = 2;
-  settings.presetDuration = 10;
-  settings.beatSensitivity = .5;
+  settings.fps = sd->fps;
+  settings.smoothPresetDuration = .5;
+  settings.presetDuration = 60;
+  settings.beatSensitivity = DEF_SENS;
   settings.aspectCorrection = 1;
-  settings.softCutRatingsEnabled = 0;
-  settings.shuffleEnabled = 1;
+  settings.softCutRatingsEnabled = 1;
+  settings.shuffleEnabled = 0;
   settings.presetURL = "/usr/share/projectM/presets";
   settings.menuFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf";
   settings.titleFontURL = "/usr/share/fonts/truetype/ttf-dejavu/DejaVuSansMono.ttf";
@@ -433,42 +465,69 @@ static void *worker(void *data) {
 
   // can fail here
   sd->globalPM = new projectM(settings, 0);
+  sd->globalPM->setPresetLock(true);
   sd->textureHandle = sd->globalPM->initRenderToTexture();
   sd->nprs = sd->globalPM->getPlaylistSize() + 1;
+  sd->check = true;
+  sd->cycadj = 0;
 
   sd->prnames = (char **volatile)weed_malloc(sd->nprs * sizeof(char *));
-  sd->prnames[0] = strdup("- Random -");
+  if (!sd->prnames) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+  else sd->bad_programs = (uint8_t *)weed_calloc((sd->nprs - 1), 1);
+  if (!sd->prnames) sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) sd->rendering = false;
+  else {
+    sd->prnames[0] = strdup("- Random -");
+    for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+  }
 
-  for (int i = 1; i < sd->nprs; i++) sd->prnames[i] = strdup((sd->globalPM->getPresetName(i - 1)).c_str());
+  pthread_mutex_lock(&sd->mutex);
+  sd->worker_ready = true;
 
   // tell main thread we are ready
   pthread_mutex_lock(&cond_mutex);
   pthread_cond_signal(&cond);
   pthread_mutex_unlock(&cond_mutex);
 
-  sd->worker_ready = true;
-  pthread_mutex_lock(&sd->mutex);
-
   while (!sd->die) {
     if (!sd->rendering) {
       // deinit() will only exit once the mutex is unlocked, we need to make sure we are idling
       // else we can pick up the wm response for the playback plugin and cause it to hang
       sd->worker_active = false;
-      pthread_mutex_unlock(&sd->mutex);
+      sd->timer = 0;
+      sd->timestamp = 0;
       pthread_mutex_lock(&cond_mutex);
+      pthread_mutex_unlock(&sd->mutex);
       pthread_cond_wait(&cond, &cond_mutex);
       pthread_mutex_unlock(&cond_mutex);
-      sd->worker_active = true;
       pthread_mutex_lock(&sd->mutex);
       if (sd->die) break;
+      sd->worker_active = true;
       rerand = true;
       continue;
     }
 
     sd->worker_active = true;
+    if (sd->timer > 10.) {
+      sd->timer = 0.;
+      rerand = true;
+    }
     if (sd->pidx == -1) {
-      if (rerand) sd->globalPM->selectRandom(true);
-      rerand = false;
+      if (rerand) {
+        sd->cycadj = 0;
+        while (1) {
+          sd->program = fastrand_int(sd->nprs - 2);
+          if (sd->bad_programs[sd->program] != 1) {
+            sd->globalPM->selectPreset(sd->program, sd->bad_prog);
+            break;
+          }
+          //sd->globalPM->selectRandom(true);
+        }
+        rerand = false;
+        sd->bad_prog = false;
+        blanks = 0;
+        if (sd->bad_programs[sd->program] == 0) sd->check = true;
+      }
     } else if (sd->pidx != sd->opidx) {
       sd->globalPM->setPresetLock(true);
       sd->globalPM->selectPreset(sd->pidx);
@@ -476,65 +535,60 @@ static void *worker(void *data) {
 
     sd->opidx = sd->pidx;
 
-    pthread_mutex_lock(&sd->pcm_mutex);
-    if (sd->audio_frames > 0) {
-      if (sd->achans == 1) {
-        sd->globalPM->pcm()->addPCMfloat(sd->audio, sd->audio_frames);
-      }
-      //else
-      //sd->globalPM->pcm()->addPCMfloat_2ch(sd->audio, sd->audio_frames);
-      sd->audio_frames = 0;
-    }
-    pthread_mutex_unlock(&sd->pcm_mutex);
     if (sd->needs_update || sd->needs_more || !sd->got_first || sd->ncycs > 1.) {
       if (render_frame(sd)) {
         if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
           sd->rendering = false;
         }
+      } else if (sd->pidx == -1) {
+        if (sd->bad_prog) {
+          sd->bad_programs[sd->program] = 1;
+          rerand = true;
+        }
       }
     }
   }
+  sd->worker_active = false;
   pthread_mutex_unlock(&sd->mutex);
 
   if (sd->globalPM) delete(sd->globalPM);
   sd->globalPM = NULL;
-  sd->worker_ready = false;
-
-  while (inited) {
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_signal(&cond);
-    pthread_mutex_unlock(&cond_mutex);
-  }
-  // TODO : segfault
-
   SDL_Quit();
+
+  pthread_mutex_lock(&cond_mutex);
+  pthread_cond_signal(&cond);
+  pthread_mutex_unlock(&cond_mutex);
+
   return NULL;
 }
 
 
 static weed_error_t projectM_deinit(weed_plant_t *inst) {
   _sdata *sd = (_sdata *)weed_get_voidptr_value(inst, "plugin_internal", NULL);
-  if (sd) sd->rendering = false;
-  pthread_mutex_lock(&sd->mutex);
-  pthread_mutex_unlock(&sd->mutex);
-  if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
-    sd->die = true;
-    while (sd->worker_ready && !sd->worker_active) {
+  if (sd) {
+    sd->rendering = false;
+    pthread_mutex_lock(&sd->mutex);
+    pthread_mutex_unlock(&sd->mutex);
+    if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
+      sd->die = true;
       pthread_mutex_lock(&cond_mutex);
       pthread_cond_signal(&cond);
       pthread_mutex_unlock(&cond_mutex);
+
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_wait(&cond, &cond_mutex);
+      pthread_mutex_unlock(&cond_mutex);
+      if (sd->audio) weed_free(sd->audio);
+      if (sd->bad_programs) weed_free(sd->bad_programs);
+      weed_free(sd);
+      weed_set_voidptr_value(inst, "plugin_internal", NULL);
+      inited = 0;
+    } else {
+      if (sd->failed) {
+        weed_free(sd);
+        inited = 0;
+      }
     }
-
-    pthread_mutex_lock(&cond_mutex);
-    pthread_cond_wait(&cond, &cond_mutex);
-    pthread_mutex_unlock(&cond_mutex);
-
-    weed_free(sd);
-    weed_set_voidptr_value(inst, "plugin_internal", NULL);
-    inited = 0;
-  } else if (sd->failed) {
-    weed_free(sd);
-    inited = 0;
   }
   copies--;
   weed_set_voidptr_value(inst, "plugin_internal", NULL);
@@ -569,11 +623,11 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       sd->fps = PREF_FPS;
       if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
+      if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
 
       pthread_mutex_init(&sd->mutex, NULL);
       pthread_mutex_init(&sd->pcm_mutex, NULL);
 
-      sd->audio = (float *)weed_calloc(4096,  sizeof(float));
       sd->nprs = 0;
       sd->prnames = NULL;
       sd->worker_ready = false;
@@ -584,6 +638,7 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       sd->width = width;
       sd->height = height;
       sd->rowstride = rowstride;
+      sd->bad_programs = NULL;
 
       // kick off a thread to init screean and render
       pthread_create(&sd->thread, NULL, worker, sd);
@@ -593,10 +648,15 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
 
       // wait for worker thread ready
       pthread_mutex_lock(&cond_mutex);
-      while (!sd->worker_ready && rc == 0) {
+      while (!sd->worker_ready && rc != ETIMEDOUT) {
         rc = pthread_cond_timedwait(&cond, &cond_mutex, &ts);
       }
       pthread_mutex_unlock(&cond_mutex);
+
+      if (rc == ETIMEDOUT && !sd->worker_ready) {
+        // if we timedout then die
+        sd->failed = true;
+      }
 
       if (sd->failed) {
         projectM_deinit(inst);
@@ -609,17 +669,13 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       }
       weed_free(iparams);
 
-      if (rc == ETIMEDOUT && !sd->worker_ready) {
-        // if we timedout then die
-        projectM_deinit(inst);
-        return WEED_ERROR_PLUGIN_INVALID;
-      }
       statsd = sd;
       inited = 1;
     } else {
       sd = statsd;
       weed_set_voidptr_value(inst, "plugin_internal", sd);
     }
+
     sd->rendering = false;
 
     if (!sd->fbuffer || sd->height != height || sd->rowstride != rowstride) {
@@ -629,21 +685,34 @@ static weed_error_t projectM_init(weed_plant_t *inst) {
       }
     }
 
+    sd->audio = (float *)weed_calloc(4096,  sizeof(float));
+    if (!sd->audio) {
+      projectM_deinit(inst);
+      return WEED_ERROR_MEMORY_ALLOCATION;
+    }
+    sd->abufsize = 4096;
+
     sd->got_first = false;
     sd->width = width;
     sd->height = height;
     sd->psize = psize;
     sd->palette = palette;
-    sd->rowstride = rowstride;
+    sd->rowstride = 0;
     sd->update_size = false;
     sd->update_psize = false;
-    sd->needs_more = true;
+    sd->needs_more = false;
     sd->needs_update = sd->set_update = false;
-    sd->audio_frames = 0;
+    sd->audio_frames = sd->audio_offs = 0;
     pcount = count = 0;
     sd->rendering = true;
     sd->tfps = 0.;
     sd->ncycs = 0.;
+    sd->bad_prog = false;
+    sd->timer = 0.;
+    sd->timestamp = 0.;
+
+    pthread_mutex_lock(&sd->mutex);
+    pthread_mutex_unlock(&sd->mutex);
 
     pthread_mutex_lock(&cond_mutex);
     pthread_cond_signal(&cond);
@@ -667,9 +736,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   int palette = weed_channel_get_palette(out_channel);
   int psize = pixel_size(palette);
   int rowstride = weed_channel_get_stride(out_channel);
-  bool did_update = false, got_buffer = false;
+  bool did_update = false;
   static double ltt;
-  register int j;
+  double timer;
 
   weed_free(inparams);
 
@@ -740,14 +809,6 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     did_update = true;
   }
 
-  if (!sd->needs_more) {
-    // if the buffer is ready now we will copy it, otherwise we will try again at the end after copying the audio
-    // copy sd->fbuffer -> dst
-    /// we don't need to lock the buffer_mutex if needs_more is false
-    weed_memcpy(dst, sd->fbuffer, rowstride * height);
-    got_buffer = true;
-  }
-
   /// get the program number:
   // ex. if nprs == 10, we have 9 programs 1 - 9 and 0 is random
   // first we shift the vals. down by 1, so -1 is random and prgs 0 - 8
@@ -771,60 +832,47 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
   if (weed_plant_has_leaf(inst, WEED_LEAF_FPS)) sd->fps = weed_get_double_value(inst, WEED_LEAF_FPS, NULL);
   if (weed_plant_has_leaf(inst, WEED_LEAF_TARGET_FPS)) sd->tfps = weed_get_double_value(inst, WEED_LEAF_TARGET_FPS, NULL);
 
+  if (sd->fps) {
+    sd->timer += 1. / sd->fps;
+  } else {
+    if (sd->timestamp > 0) sd->timer += (double)(timestamp - sd->timestamp) / 100000000.;
+  }
+  timer = sd->timer;
+  if (sd->timer < timer) sd->timer = timer;
+  sd->timestamp = timestamp;
   /// update audio
 
   if (in_channel != NULL) {
-    /// fill the audio buffer for the next frame
+    /// fill the audio buffer for the following frame(s)
     int achans;
     int adlen = weed_get_int_value(in_channel, WEED_LEAF_AUDIO_DATA_LENGTH, NULL);
     float **adata = (float **)weed_channel_get_audio_data(in_channel, &achans);
+    pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata != NULL && adata[0] != NULL) {
-      int offset = 0, sdf;
-      int overflow;
-      achans = 1; /// 2 needs newer version of projM
-      pthread_mutex_lock(&sd->pcm_mutex);
-      if (achans != sd->achans) {
-        sd->audio_frames = 0;
-        sd->achans = achans;
-      }
-      /// there is no point sending more than 2048 samples per channel ysince projectM will not use more
-      /// so we use the buffer like a sliding window which will contain at most 2048 samples per channel
-      sdf = sd->audio_frames / achans;
-      overflow = sdf + adlen - 2048;
-      //fprintf(stderr, "projm %d %d %d\n", sdf, adlen, overflow);
-      if (overflow >= sdf) {
-        /// adlen >= 2048, write the last 2048 samples from buffer
-        sd->audio_frames = 0;
-        offset = adlen - 2048;
-        adlen = 2048;
-      } else if (overflow > 0) {
-        /// make space by shifting the old audio
-        weed_memmove((void *)sd->audio, (char *)sd->audio + overflow * achans * sizeof(float), (sdf - overflow) * sizeof(float));
-        sd->audio_frames -= overflow * achans;
-      }
-      //fprintf(stderr, "projm2 %p %p %f\n", adata, adata ? adata[0] : 0, (float)adata[0][0]);
-      for (int i = 0; i < adlen; i ++) {
-        for (j = 0; j < achans; j++) {
-          sd->audio[sd->audio_frames + i * achans + j] = adata[j][i + offset];
+      if (!sd->audio || (sd->abufsize < (size_t)adlen)) {
+        sd->audio = (float *)weed_calloc(adlen, 4);
+        if (!sd->audio) {
+          sd->error = WEED_ERROR_MEMORY_ALLOCATION;
+          pthread_mutex_unlock(&sd->pcm_mutex);
+          projectM_deinit(inst);
+          return WEED_ERROR_MEMORY_ALLOCATION;
         }
       }
-      sd->audio_frames += adlen * achans;
-      pthread_mutex_unlock(&sd->pcm_mutex);
-    }
+      sd->abufsize = adlen;
+      weed_memcpy(sd->audio, adata[0], adlen * 4);
+    } else adlen = 0;
+    sd->audio_frames = adlen;
+    sd->audio_offs = 0;
+    pthread_mutex_unlock(&sd->pcm_mutex);
     if (adata != NULL) weed_free(adata);
   }
 
-  /// if we got the buffer already, ask the worker thread for another, after updating audio
-  if (got_buffer) sd->needs_more = true;
-
   if (did_update) {
     /// if we updated we MUST wait for the buffer resize to finish before reading
-    /// optionally we could return WEED_ERROR_NOT_READY
-    while (sd->needs_more) {
-      pthread_mutex_lock(&cond_mutex);
-      pthread_cond_wait(&cond, &cond_mutex);
-      pthread_mutex_unlock(&cond_mutex);
-    }
+    /// (optionally we could return WEED_ERROR_NOT_READY)
+    pthread_mutex_lock(&cond_mutex);
+    while (sd->needs_more) pthread_cond_wait(&cond, &cond_mutex);
+    pthread_mutex_unlock(&cond_mutex);
   }
 
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
@@ -834,15 +882,14 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
   /// we did all the updates so...
 
-  if (!got_buffer) {
-    /// ...if we didnt get data at the start we will copy the buffer now, whether we have a new frame or not
-    /// optionally we could return WEED_ERROR_NOT_READY
-    //if (!sd->got_first) return WEED_ERROR_NOT_READY;
-    pthread_mutex_lock(&buffer_mutex);
-    weed_memcpy(dst, sd->fbuffer, rowstride * height);
-    sd->needs_more = true;
-    pthread_mutex_unlock(&buffer_mutex);
-  }
+  /// copy the buffer now, whether we have a new frame or not
+  /// optionally we could return WEED_ERROR_NOT_READY if there is no new frame
+  //if (!sd->got_first) return WEED_ERROR_NOT_READY;
+
+  pthread_mutex_lock(&buffer_mutex);
+  weed_memcpy(dst, sd->fbuffer, rowstride * height);
+  sd->needs_more = true;
+  pthread_mutex_unlock(&buffer_mutex);
 
   if (sd->error == WEED_ERROR_MEMORY_ALLOCATION) {
     projectM_deinit(inst);
@@ -854,7 +901,9 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
 
 
 WEED_SETUP_START(200, 200) {
-  int palette_list[] = ALL_RGB_PALETTES;
+  int palette_list[] = {WEED_PALETTE_RGBA32, WEED_PALETTE_RGB24, WEED_PALETTE_BGRA32,
+                        WEED_PALETTE_BGR24, WEED_PALETTE_END
+                       };
   const char *xlist[3] = {"- Random -", "Choose...", NULL};
   weed_plant_t *in_params[] = {weed_string_list_init("preset", "_Preset", 0, xlist), NULL};
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
@@ -878,6 +927,11 @@ WEED_SETUP_END;
 WEED_DESETUP_START {
   if (inited && statsd != NULL) {
     statsd->die = true;
+    if (!statsd->rendering) {
+      pthread_mutex_lock(&cond_mutex);
+      pthread_cond_signal(&cond);
+      pthread_mutex_unlock(&cond_mutex);
+    }
     pthread_join(statsd->thread, NULL);
     if (statsd->fbuffer != NULL) weed_free(statsd->fbuffer);
     if (statsd->audio != NULL) weed_free(statsd->audio);
@@ -887,6 +941,7 @@ WEED_DESETUP_START {
       }
       weed_free(statsd->prnames);
     }
+    if (statsd->bad_programs) weed_free(statsd->bad_programs);
     pthread_mutex_destroy(&statsd->mutex);
     pthread_mutex_destroy(&statsd->pcm_mutex);
     weed_free(statsd);

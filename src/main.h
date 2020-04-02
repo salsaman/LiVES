@@ -284,6 +284,8 @@ typedef int lives_pgid_t;
 #endif
 #endif
 
+#define URL_MAX 2048
+
 #define strip_ext(fname) lives_strdup((char *)(fname ? strrchr(fname, '.') ? lives_memset(strrchr(fname, '.'), 0, 1) \
 					       ? fname : fname : fname : NULL))
 
@@ -643,81 +645,139 @@ typedef union _binval {
 
 /// corresponds to one clip in the GUI
 typedef struct _lives_clip_t {
-  binval binfmt_check;
-  binval binfmt_version;
-  binval binfmt_bytes;
+  binval binfmt_check, binfmt_version, binfmt_bytes;
+
+  uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
+  char handle[256];
+
+  char md5sum[64];
+  char type[64];
+
+  lives_clip_type_t clip_type;
+  lives_image_type_t img_type;
+
   // basic info (saved during backup)
-  int bpp; ///< bits per pixel of the image frames, 24 or 32
+  frames_t frames;  ///< number of video frames
+  frames_t start, end;
+
   double fps;  /// framerate of the clip
+  boolean ratio_fps; ///< if the fps was set by a ratio
+
   int hsize; ///< frame width (horizontal) in pixels (NOT macropixels !)
   int vsize; ///< frame height (vertical) in pixels
-  int arps; ///< audio physical sample rate (i.e the "normal" sample rate of the clip when played at 1,0 X velocity)
-  uint32_t signed_endian; ///< bitfield
-
-  int arate; ///< current audio playback rate (varies if the clip rate is changed)
-  uint64_t unique_id;    ///< this and the handle can be used to uniquely id a file
-  int achans; ///< number of audio channels (0, 1 or 2)
-  int asampsize; ///< audio sample size in bits (8 or 16)
-
-  /////////////////
-  frames_t frames;  ///< number of video frames
-
-  int gamma_type;
-
-  char title[256];
-  char author[256];
-  char comment[1024];
-  char keywords[1024];
-  ////////////////
 
   lives_interlace_t interlace; ///< interlace type (if known - none, topfirst, bottomfirst or : see plugins.h)
 
+  int bpp; ///< bits per pixel of the image frames, 24 or 32
+
+  int gamma_type;
+
+  int arps; ///< audio physical sample rate (i.e the "normal" sample rate of the clip when played at 1,0 X velocity)
+  int arate; ///< current audio playback rate (varies if the clip rate is changed)
+  int achans; ///< number of audio channels (0, 1 or 2)
+  int asampsize; ///< audio sample size in bits (8 or 16)
+  uint32_t signed_endian; ///< bitfield
+  float vol; ///< relative volume level / gain; sizeof array will be equal to achans
+
+  size_t afilesize;
+  size_t f_size;
+
+  boolean changed;
+  boolean was_in_set;
+
+  /////////////////
+  char title[256], author[256], comment[1024], keywords[1024];
+  ////////////////
+
+  char name[CLIP_NAME_MAXLEN];  ///< the display name
+  char file_name[PATH_MAX]; ///< input file
+  char save_file_name[PATH_MAX];
+
+  boolean is_untitled, orig_file_name, was_renamed;
+
+  // various times; total time is calculated as the longest of video, laudio and raudio
+  double video_time, laudio_time, raudio_time;
+
+  double pointer_time;  ///< pointer time in timeline, also the playback start position for clipeditor (unless playing the selection)
+  double real_pointer_time;  ///< pointer time in timeline, can extend beyond video, for audio
+
+  frames_t frameno, last_frameno;
+
+  char mime_type[256]; ///< not important
+
+  boolean deinterlace; ///< auto deinterlace
+
+  uint64_t op_ds_warn_level; ///< current disk space warning level for any output direcditory
+
   // extended info (not saved)
   int header_version;
-
 #define LIVES_CLIP_HEADER_VERSION 101
+
+  //opening/restoring status
+  boolean opening, opening_audio, opening_only_audio, opening_loc;
+  frames_t opening_frames;
+  boolean restoring;
+  boolean is_loaded;  ///< should we continue loading if we come back to this clip
+
+  ///undo
+  lives_undo_t undo_action;
+
+  frames_t undo_start, undo_end;
+  frames_t insert_start, insert_end;
+
+  char undo_text[32], redo_text[32];
+
+  boolean undoable, redoable;
+
+  // used for storing undo values
+  int undo1_int, undo2_int, undo3_int, undo4_int;
+  uint32_t undo1_uint;
+  double undo1_dbl, undo2_dbl;
+  boolean undo1_boolean, undo2_boolean, undo3_boolean;
+
+  int undo_arate; ///< audio playback rate
+  int undo_achans;
+  int undo_asampsize;
+  int undo_arps;
+  uint32_t undo_signed_endian;
+
+  int ohsize, ovsize;
+
+  frames_t old_frames; ///< for deordering, etc.
+
+  // used only for insert_silence, holds pre-padding length for undo
+  double old_laudio_time, old_raudio_time;
+
+  char binfmt_rsvd[4096];
+  uint64_t binfmt_end; ///< marks the end of anything "interesring" we may want to save via binfmt extension
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  /// index of frames for CLIP_TYPE_FILE
+  /// >0 means corresponding frame within original clip
+  /// -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
+  /// size must be >= frames, MUST be contiguous in memory
+  frames_t *frame_index;
+  frames_t *frame_index_back; ///< for undo
+
+  double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
+
+  char info_file[PATH_MAX];
+
+  char *op_dir;
 
   /// the processing window
   xprocess *proc_ptr;
 
-  char handle[256];
-  int ohsize;
-  int ovsize;
-  int64_t f_size;
-  int64_t afilesize;
-  frames_t old_frames; ///< for deordering, etc.
-  char file_name[PATH_MAX]; ///< input file
-  char info_file[PATH_MAX];
-  char name[CLIP_NAME_MAXLEN];  ///< the display name
-  char save_file_name[PATH_MAX];
-  char type[64];
-  frames_t start;
-  frames_t end;
-  frames_t insert_start;
-  frames_t insert_end;
   frames_t progress_start;
   frames_t progress_end;
-  boolean changed;
   LiVESWidget *menuentry;
   ulong menuentry_func;
-  boolean orig_file_name;
-  boolean was_renamed;
-  boolean is_untitled;
-  double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
   double freeze_fps; ///< pb_fps for paused / frozen clips
   boolean play_paused;
-  boolean was_in_set;
+
   lives_direction_t
   adirection; ///< audio play directiion during playback. Normally eithr forwards or the same as pb_fps, but it may vary
-
-  //opening/restoring status
-  boolean opening;
-  boolean opening_audio;
-  boolean opening_only_audio;
-  boolean opening_loc;
-  boolean restoring;
-  boolean is_loaded;  ///< should we continue loading if we come back to this clip
-  frames_t opening_frames;
 
   /// don't show preview/pause buttons on processing
   boolean nopreview;
@@ -725,20 +785,7 @@ typedef struct _lives_clip_t {
   /// don't show the 'keep' button - e.g. for operations which resize frames
   boolean nokeep;
 
-  // various times; total time is calculated as the longest of video, laudio and raudio
-  double video_time; // TODO: deprecate, calculate CLIP_VIDEO_TIME from frames and fps
-  double laudio_time;
-  double raudio_time;
-  double pointer_time;  ///< pointer time in timeline, also the playback start position for clipeditor (unless playing the selection)
-  double real_pointer_time;  ///< pointer time in timeline, can extend beyond video, for audio
-
-  // used only for insert_silence, holds pre-padding length for undo
-  double old_laudio_time;
-  double old_raudio_time;
-
   // current and last played index frames for internal player
-  frames_t frameno;
-  frames_t last_frameno;
   frames_t saved_frameno;
 
   /////////////////////////////////////////////////////////////
@@ -754,65 +801,16 @@ typedef struct _lives_clip_t {
   LiVESList *layout_map;
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  ///undo
-  lives_undo_t undo_action;
-
-  frames_t undo_start;
-  frames_t undo_end;
-  char undo_text[32];
-  char redo_text[32];
-  boolean undoable;
-  boolean redoable;
-
-  // used for storing undo values
-  int undo1_int;
-  int undo2_int;
-  int undo3_int;
-  int undo4_int;
-  uint32_t undo1_uint;
-  double undo1_dbl;
-  double undo2_dbl;
-  boolean undo1_boolean;
-  boolean undo2_boolean;
-  boolean undo3_boolean;
-
-  int undo_arate; ///< audio playback rate
-  uint32_t undo_signed_endian;
-  int undo_achans;
-  int undo_asampsize;
-  int undo_arps; ///< audio sample rate
-
-  lives_clip_type_t clip_type;
-
   void *ext_src; ///< points to opaque source for non-disk types
 
-  /// index of frames for CLIP_TYPE_FILE
-  /// >0 means corresponding frame within original clip
-  /// -1 means corresponding image file (equivalent to CLIP_TYPE_DISK)
-  /// size must be >= frames, MUST be contiguous in memory
-  frames_t *frame_index;
-
-  frames_t *frame_index_back; ///< for undo
-
   lives_proc_thread_t pumper;
-
   frames_t fx_frame_pump; ///< rfx frame pump for virtual clips (CLIP_TYPE_FILE)
 
-#define FX_FRAME_PUMP_VAL 50 ///< how many frames to prime the pump for realtime effects and resampler
-
 #define IMG_BUFF_SIZE 262144  ///< 256 * 1024 < chunk size for reading images
-
-  boolean ratio_fps; ///< if the fps was set by a ratio
 
   volatile off64_t aseek_pos; ///< audio seek posn. (bytes) for when we switch clips
 
   // decoder data
-
-  char mime_type[256];
-
-  boolean deinterlace; ///< auto deinterlace
-
-  lives_image_type_t img_type;
 
   frames_t last_vframe_played;
 
@@ -824,31 +822,24 @@ typedef struct _lives_clip_t {
 
   lives_subtitles_t *subt;
 
-  char *op_dir;
-  uint64_t op_ds_warn_level; ///< current disk space warning level for any output direcditory
-
   boolean no_proc_sys_errors; ///< skip system error dialogs in processing
   boolean no_proc_read_errors; ///< skip read error dialogs in processing
   boolean no_proc_write_errors; ///< skip write error dialogs in processing
 
   boolean keep_without_preview; ///< allow keep, even when nopreview is set - TODO use only nopreview and nokeep
 
-  lives_painter_surface_t *laudio_drawable;
-  lives_painter_surface_t *raudio_drawable;
+  lives_painter_surface_t *laudio_drawable, *raudio_drawable;
 
   int cb_src; ///< source clip for clipboard
 
   boolean needs_update; ///< loaded values were incorrect, update header
   boolean needs_silent_update; ///< needs internal update, we shouldn't concern the user
 
-  boolean checked_for_old_header;
-  boolean has_old_header;
+  boolean checked_for_old_header, has_old_header;
 
   float **audio_waveform; ///< values for drawing the audio wave
-  int *aw_sizes; ///< size of each audio_waveform in floats
-  char md5sum[64];
+  size_t *aw_sizes; ///< size of each audio_waveform in units of floats (i.e 4 bytes)
 } lives_clip_t;
-
 
 typedef enum {
   MISSING = -1,
@@ -963,11 +954,6 @@ typedef struct {
   pid_t mainpid;
   pthread_t main_thread;
   mode_t umask;
-
-  // machine load estimates
-  double time_per_idle;
-  double load_value;
-  double avg_load;
 } capability;
 
 /// some shared structures
@@ -1238,6 +1224,7 @@ void d_print_enough(int frames);
 void d_print_file_error_failed(void);
 
 boolean d_print_urgency(double timeout_seconds, const char *fmt, ...);
+boolean d_print_overlay(double timeout_seconds, const char *fmt, ...);
 
 // general
 void do_text_window(const char *title, const char *text);
@@ -1247,6 +1234,7 @@ boolean read_file_details(const char *file_name, boolean only_check_for_audio, b
 boolean add_file_info(const char *check_handle, boolean aud_only);
 boolean save_file_comments(int fileno);
 boolean restore_clip_binfmt(int clipno);
+lives_clip_t *clip_forensic(int clipno);
 boolean reload_clip(int fileno, int maxframe);
 void wait_for_bg_audio_sync(int fileno);
 ulong deduce_file(const char *filename, double start_time, int end);
@@ -1637,9 +1625,6 @@ char *subst(const char *string, const char *from, const char *to);
 char *insert_newlines(const char *text, int maxwidth);
 
 int hextodec(const char *string);
-
-uint64_t fastrand(void) GNU_PURE;
-void fastsrand(uint64_t seed);
 
 #include "osc_notify.h"
 

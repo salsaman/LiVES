@@ -14,30 +14,41 @@
 // e.g 00000001.jpg or 00000010.png etc.
 
 #include "resample.h"
-
+#include "cvirtual.h"
 
 /** count virtual frames between start and end (inclusive) */
 frames_t count_virtual_frames(frames_t *findex, frames_t start, frames_t end) {
-  register int i;
   frames_t count = 0;
-  for (i = start - 1; i < end; i++) if (findex[i] != -1) count++;
+  for (register int i = start - 1; i < end; i++) if (findex[i] != -1) count++;
   return count;
 }
 
 
-void create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes) {
-  register int i;
+boolean create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes) {
   lives_clip_t *sfile = mainw->files[fileno];
-  if (sfile == NULL || sfile->frame_index != NULL) return;
+  size_t idxsize = (ALIGN_CEIL(nframes * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
+  if (!IS_VALID_CLIP(fileno) || sfile->frame_index) return FALSE;
+  sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
+  if (!sfile->frame_index) return FALSE;
+  if (init) for (register int i = 0; i < sfile->frames; i++) sfile->frame_index[i] = i + start_offset;
+  return TRUE;
+}
 
-  sfile->frame_index = (frames_t *)lives_malloc(nframes * sizeof(frames_t));
-  if (sfile->frame_index == NULL) return;
 
-  if (init) {
-    for (i = 0; i < sfile->frames; i++) {
-      sfile->frame_index[i] = i + start_offset;
-    }
+static boolean extend_frame_index(int fileno, frames_t start, frames_t end) {
+  lives_clip_t *sfile = mainw->files[fileno];
+  size_t idxsize = (ALIGN_CEIL(end * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
+  if (!IS_VALID_CLIP(fileno) || start > end) return FALSE;
+  if (sfile->frame_index_back) lives_free(sfile->frame_index_back);
+  sfile->frame_index_back = sfile->frame_index;
+  sfile->frame_index = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
+  if (!sfile->frame_index) {
+    sfile->frame_index = sfile->frame_index_back;
+    sfile->frame_index_back = NULL;
+    return FALSE;
   }
+  for (register int i = start; i < end; i++) sfile->frame_index[i] = -1;
+  return TRUE;
 }
 
 
@@ -52,8 +63,8 @@ boolean save_frame_index(int fileno) {
 
   if (sfile == NULL || sfile->frame_index == NULL) return FALSE;
 
-  fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index.back", NULL);
-  fname_new = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
+  fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
+  fname_new = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
 
   do {
     retval = 0;
@@ -115,7 +126,7 @@ frames_t load_frame_index(int fileno) {
 
   lives_freep((void **)&sfile->frame_index);
 
-  fname = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
+  fname = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
   filesize = sget_file_size(fname);
 
   if (filesize == 0) {
@@ -124,7 +135,7 @@ frames_t load_frame_index(int fileno) {
   }
 
   if (filesize >> 2 > (size_t)sfile->frames) sfile->frames = (frames_t)(filesize >> 2);
-  fname_back = lives_build_filename(prefs->workdir, sfile->handle, "file_index.back", NULL);
+  fname_back = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME "." LIVES_FILE_EXT_BACK, NULL);
 
   do {
     retval = 0;
@@ -206,7 +217,7 @@ void del_frame_index(lives_clip_t *sfile) {
   }
 
   if (sfile != clipboard) {
-    idxfile = lives_build_filename(prefs->workdir, sfile->handle, "file_index", NULL);
+    idxfile = lives_build_filename(prefs->workdir, sfile->handle, FRAME_INDEX_FNAME, NULL);
     lives_rm(idxfile);
     lives_free(idxfile);
   }
@@ -226,7 +237,7 @@ static frames_t scan_frames(lives_clip_t *sfile, frames_t vframes, frames_t last
 
 
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe) {
-  lives_clip_t *sfile = mainw->files[fileno];
+  lives_clip_t *sfile = mainw->files[fileno], *binf = NULL;
 
   lives_image_type_t empirical_img_type = sfile->img_type;
 
@@ -244,6 +255,11 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   // also check sfile->frame_index to make sure all frames are present
 
   // return FALSE if we find any omissions/inconsistencies
+
+  /* if (sfile->frames > maxframe) { */
+  /*   has_missing_frames = TRUE; */
+  /*   sfile->frames = maxframe; */
+  /* } */
 
   // check the image type
   for (i = sfile->frames - 1; i >= 0; i--) {
@@ -380,8 +396,22 @@ boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_
   return TRUE;
 
 mismatch:
-  // something mismatched - trust the disk version
-  if (cdata != NULL)((lives_clip_data_t *)cdata)->fps = sfile->pb_fps = sfile->fps;
+  // something mismatched - commence further investigation
+
+  if ((binf = clip_forensic(mainw->current_file))) {
+    if (has_missing_frames) {
+      if (cdata) {
+        if (binf->frames == cdata->nframes  && binf->frames < sfile->frames) sfile->frames = binf->frames;
+        else if (binf->frames == sfile->frames && binf->frames < sfile->frames) {
+          if (sfile->frames > cdata->nframes) if (!extend_frame_index(fileno, cdata->nframes, sfile->frames)) return FALSE;
+          ((lives_clip_data_t *)cdata)->nframes = sfile->frames;
+        }
+      } else if (binf->frames <= sfile->frames) sfile->frames = binf->frames;
+    }
+    if (binf->fps == cdata->fps)  {
+      ((lives_clip_data_t *)cdata)->fps =  sfile->pb_fps = sfile->fps;
+    }
+  }
 
   sfile->img_type = empirical_img_type;
 
@@ -389,10 +419,10 @@ mismatch:
 
   sfile->afilesize = reget_afilesize_inner(fileno);
 
-  if (has_missing_frames && sfile->frame_index != NULL) {
+  if (has_missing_frames && sfile->frame_index) {
+    if (sfile->frames > maxframe) extend_frame_index(fileno, maxframe, sfile->frames);
     save_frame_index(fileno);
   }
-
   return FALSE;
 }
 
@@ -836,12 +866,9 @@ frames_t *frame_index_copy(frames_t *findex, frames_t nframes, frames_t offset) 
   // no checking is done to make sure nframes is in range
 
   // start at frame offset
-
-  frames_t *findexc = (frames_t *)lives_malloc(sizeof(frames_t) * nframes);
-  register frames_t i;
-
-  for (i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
-
+  size_t idxsize = (ALIGN_CEIL(nframes * sizeof(frames_t), DEF_ALIGN)) / DEF_ALIGN;
+  frames_t *findexc = (frames_t *)lives_calloc(idxsize, DEF_ALIGN);
+  for (register int i = 0; i < nframes; i++) findexc[i] = findex[i + offset];
   return findexc;
 }
 

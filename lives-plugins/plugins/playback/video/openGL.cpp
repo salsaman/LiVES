@@ -1,5 +1,5 @@
 // LiVES - openGL playback engine
-// (c) G. Finch 2012 - 2019 <salsaman@gmail.com>
+// (c) G. Finch 2012 - 2020 <salsaman+lives@gmail.com>
 // (c) OpenGL effects by Antti Silvast, 2012 <antti.silvast@iki.fi>
 // released under the GNU GPL 3 or later
 // see file COPYING or www.gnu.org for details
@@ -125,6 +125,8 @@ static pthread_mutex_t cond_mutex;
 
 static void *render_thread_func(void *data);
 
+static boolean ready = false;
+
 static boolean WaitForNotify(Display *dpy, XEvent *event, XPointer arg) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
@@ -227,8 +229,6 @@ static int get_texture_texID(int tnum) {
 
 
 const char *module_check_init(void) {
-  npot = TRUE;
-
   XInitThreads();
 
   pbo_available = FALSE;
@@ -539,18 +539,13 @@ static uint8_t *render_to_mainmem(int type, int row, int window_width, int windo
   return xretbuf;
 }
 
-
-static int next_pot(int val) {
-  int i = 2;
-  while (i < val) i *= 2;
-  return i;
-}
-
+static int next_pot(int val) {for (register int i = 2;; i *= 2) if (i >= val) return i;;}
 
 static void render_to_gpumem_inner(int tnum, int width, int height, int type, volatile uint8_t *texturebuf) {
   int mipMapLevel = 0;
   int texID = get_texture_texID(tnum);
   int intype = type;
+  int xwidth = width / typesize;
 
   glEnable(m_TexTarget);
 
@@ -568,7 +563,7 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
     intype = GL_RGBA;
   }
 
-  glTexImage2D(m_TexTarget, mipMapLevel, type, width, height, 0, intype, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
+  glTexImage2D(m_TexTarget, mipMapLevel, GL_RGBA, xwidth, height, 0, intype, GL_UNSIGNED_BYTE, (const GLvoid *)texturebuf);
 
   glGenerateMipmap(m_TexTarget);
 
@@ -584,6 +579,8 @@ static void render_to_gpumem_inner(int tnum, int width, int height, int type, vo
 
 boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_id, int argc, char **argv) {
   register int i;
+  int rc = 0;
+  struct timespec ts;
 
   if (mypalette == WEED_PALETTE_END) {
     fprintf(stderr, "openGL plugin error: No palette was set !\n");
@@ -610,7 +607,7 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
       if (argc > 2) {
         //nbuf = atoi(argv[2]);
         if (argc > 3) {
-          dblbuf = atoi(argv[3]);
+          //dblbuf = atoi(argv[3]);
           if (argc > 4) {
             fsover = atoi(argv[4]);
           }
@@ -633,6 +630,9 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
   has_new_texture = FALSE;
   texturebuf = NULL;
 
+  /// check for npot
+  if (GLAD_GL_ARB_texture_non_power_of_two) npot = true;
+
   imgRow = imgWidth = imgHeight = texRow = texWidth = texHeight = 0;
 
   pthread_mutex_init(&cond_mutex, NULL);
@@ -640,8 +640,6 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
 
   pthread_create(&rthread, NULL, render_thread_func, &xparms);
 
-  int rc = 0;
-  struct timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts);
   ts.tv_sec += 300;
 
@@ -657,6 +655,11 @@ boolean init_screen(int width, int height, boolean fullscreen, uint64_t window_i
     return FALSE;
   }
 
+  if (!ready) {
+    ready = true;
+    exit_screen(0, 0);
+    init_screen(width, height, fullscreen, window_id, argc, argv);
+  }
   return TRUE;
 }
 
@@ -894,6 +897,10 @@ static boolean init_screen_inner(int width, int height, boolean fullscreen, uint
   glFlush();
   if (dblbuf) glXSwapBuffers(dpy, glxWin);
 
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glFlush();
+
   // type = GL_RGBA;
   // if (mypalette == WEED_PALETTE_RGB24 || mypalette == WEED_PALETTE_BGR24) type = GL_RGB;
 
@@ -954,6 +961,7 @@ static int Upload(void) {
   int window_width, window_height;
 
   float aspect, scalex, scaley, offs_x, offs_y;
+  double x_stretch = (double)(imgWidth * typesize) / (double)texRow;
 
   // scaling for particles
   float partx, party = 2. / (float)imgHeight;
@@ -964,7 +972,7 @@ static int Upload(void) {
     if (ctexture == nbuf) ctexture = 0;
     if (ntextures < nbuf) ntextures++;
     has_new_texture = FALSE;
-    render_to_gpumem_inner(0, texRow / typesize, texHeight, type, texturebuf);
+    render_to_gpumem_inner(0, texRow, texHeight, type, texturebuf);
     //set_priorities();
   }
   pthread_mutex_unlock(&rthread_mutex);
@@ -1003,11 +1011,9 @@ static int Upload(void) {
     glMatrixMode(GL_PROJECTION);
     glOrtho(0, 1, 0, 1, -1, 1);
     glLoadIdentity();
-    // glFrustum(-1, 1, -1, 1, 2, 10);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    // glTranslatef(.0, .0, -2);
 
     glEnable(m_TexTarget);
     glMatrixMode(GL_TEXTURE);
@@ -1016,24 +1022,27 @@ static int Upload(void) {
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(m_TexTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-    glTexParameteri(m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(m_TexTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m_TexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     //glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
-    // tex coords go from 0,0 -> 1,1 (loadidentity ???)
-    // window (vertex) goes from -1, -1 to +1, +1 (glFrustum ???)
+    // screen coords go from 0,0 -> 1,1
+    // tex coords goes from -1, -1 to +1, +1
+    // img coords also
+    // texcoord: maps img -> texture
+    // vertex: maps texture -> screen (e.g. for letterbox, we map to a smaller part of screen)
     glClear(GL_COLOR_BUFFER_BIT);
     glBindTexture(m_TexTarget, texID);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
-    glTexCoord2i(0, 0);
+    glTexCoord2d(0, 0);
     glVertex2d(-x_range, y_range);
-    glTexCoord2i(0, 1);
+    glTexCoord2d(0, 1);
     glVertex2d(-x_range, -y_range);
-    glTexCoord2i(1, 1);
+    glTexCoord2d(x_stretch, 1);
     glVertex2d(x_range, -y_range);
-    glTexCoord2i(1, 0);
+    glTexCoord2d(x_stretch, 0);
     glVertex2d(x_range, y_range);
     glEnd();
 
@@ -1384,6 +1393,7 @@ static int Upload(void) {
     glEnable(m_TexTarget);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     // draw the cube with the texture
     for (int i = 0; i < 6; i++) {
@@ -1979,11 +1989,16 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
   imgRow = row; // bytes
   imgWidth = hsize;  // pix
   imgHeight = vsize;
+
+  rowz = (int)(imgRow / typesize) * typesize;
+
   if (!npot) {
     hsize = next_pot(hsize);
     vsize = next_pot(vsize);
+    if (hsize * typesize > rowz) rowz = hsize * typesize;
   }
-  rowz = hsize * typesize;
+
+  if (rowz < imgRow) rowz = (int)((((imgRow >> 1) + typesize - 1) << 1) / typesize) * typesize;
 
   if (return_data != NULL) {
     XWindowAttributes attr;
@@ -2063,6 +2078,7 @@ boolean play_frame_rgba(weed_layer_t *frame, int64_t tc, weed_layer_t *ret) {
     if (texRow == imgRow && texHeight >= imgHeight) {
       weed_memcpy((void *)texturebuf, pixel_data, imgRow * imgHeight);
     } else {
+      /// !!!!! imgRow is +2 too big after first init_screen / exit_screen !!!!!
       for (i = 0; i < imgHeight; i++) {
         weed_memcpy((uint8_t *)texturebuf + i * texRow, (uint8_t *)pixel_data + i * imgRow,
                     imgWidth * typesize);

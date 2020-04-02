@@ -193,6 +193,8 @@ FN_DECL int weed_chantmpl_get_flags(weed_plant_t *chantmpl);
 // inst
 FN_DECL weed_plant_t *weed_get_in_channel(weed_plant_t *inst, int idx);
 FN_DECL weed_plant_t *weed_get_out_channel(weed_plant_t *inst, int idx);
+FN_DECL weed_plant_t *weed_get_in_param(weed_plant_t *inst, int idx);
+FN_DECL weed_plant_t *weed_get_out_param(weed_plant_t *inst, int idx);
 FN_DECL int weed_instance_get_flags(weed_plant_t *inst);
 FN_DECL weed_plant_t *weed_instance_get_filter(weed_plant_t *inst);
 
@@ -257,7 +259,9 @@ FN_DECL int is_big_endian(void);
 // functions for process_func()
 
 #if defined(NEED_RANDOM) || defined(__LIBWEED_PLUGIN_UTILS__)
-FN_DECL uint64_t fastrand(uint64_t oldval);
+FN_DECL uint64_t fastrand(uint64_t notused);
+FN_DECL double fastrand_dbl(double range);
+FN_DECL uint32_t fastrand_int(uint32_t range);
 #endif
 
 #if defined (NEED_ALPHA_SORT) || defined(__LIBWEED_PLUGIN_UTILS__) // for wrappers, use this to sort filters alphabetically

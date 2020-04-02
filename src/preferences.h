@@ -270,6 +270,7 @@ typedef struct {
   boolean force_single_monitor;
 
   boolean show_urgency_msgs;
+  boolean show_overlay_msgs;
   boolean render_overlay;
 
   int midi_check_rate;
@@ -737,6 +738,7 @@ typedef struct {
   short sepwin_type;
   volatile float volume; ///< audio volume level (for jack and pulse)
   boolean vj_mode;
+  boolean ar_clipset;
 } _future_prefs;
 
 _prefs *prefs;
@@ -953,6 +955,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_APPLY_GAMMA "apply_gamma"
 #define PREF_SHOW_TOOLTIPS "show_tooltips"
 #define PREF_SHOW_URGENCY "show_urgency_messages"
+#define PREF_SHOW_OVERLAY_MSGS "show_overlay_messages"
 #define PREF_UNSTABLE_FX "allow_unstable_effects"
 #define PREF_ALLOW_EASING "allow_easing"
 #define PREF_SHOW_DEVOPTS "show_developer_options"

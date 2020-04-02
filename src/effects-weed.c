@@ -1531,8 +1531,7 @@ static lives_filter_error_t check_cconx(weed_plant_t *inst, int nchans, boolean 
     if (weed_get_voidptr_value(in_channels[i], WEED_LEAF_PIXEL_DATA, &error) == NULL) {
       weed_plant_t *chantmpl = weed_get_plantptr_value(in_channels[i], WEED_LEAF_TEMPLATE, &error);
       if (weed_plant_has_leaf(chantmpl, WEED_LEAF_MAX_REPEATS) || (weed_chantmpl_is_optional(chantmpl)))
-        if (!weed_plant_has_leaf(in_channels[i], WEED_LEAF_DISABLED) ||
-            weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, &error) == WEED_FALSE)
+        if (weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, &error) == WEED_FALSE)
           weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_TRUE);
         else weed_set_boolean_value(in_channels[i], WEED_LEAF_HOST_TEMP_DISABLED, WEED_FALSE);
       // WEED_LEAF_DISABLED will serve instead
@@ -4204,6 +4203,17 @@ weed_error_t weed_plant_free_host(weed_plant_t *plant) {
 }
 
 
+weed_error_t weed_leaf_delete_host(weed_plant_t *plant, const char *key) {
+  // delete even undeletable leaves
+  weed_error_t err;
+  if (plant == NULL) return WEED_ERROR_NOSUCH_PLANT;
+  err = _weed_leaf_delete(plant, key);
+  if (err == WEED_SUCCESS) return err;
+  weed_leaf_clear_flagbits(plant, key, WEED_FLAG_UNDELETABLE);
+  return _weed_leaf_delete(plant, key);
+}
+
+
 weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, uint32_t seed_type, weed_size_t num_elems, void *values) {
   // change even immutable leaves
   weed_error_t err;
@@ -4454,12 +4464,13 @@ weed_plant_t *host_info_cb(weed_plant_t *xhost_info, void *data) {
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_MALLOC_FUNC, (weed_funcptr_t)monitor_malloc);
   //weed_set_funcptr_value(xhost_info, WEED_LEAF_FREE_FUNC, (weed_funcptr_t)monitor_free);
 
-  // since we redefined weed_leaf_set and weed_plant_free for ourselves,
+  // since we redefined weed_leaf_set, weed_leaf_delete and weed_plant_free for ourselves,
   // we need to reset the plugin versions, since it will inherit ours by default when calling setup_func()
 
   weed_set_funcptr_value(xhost_info, WEED_LEAF_SET_FUNC, (weed_funcptr_t)_weed_leaf_set);
+  weed_set_funcptr_value(xhost_info, WEED_LEAF_DELETE_FUNC, (weed_funcptr_t)_weed_leaf_delete);
   weed_set_funcptr_value(xhost_info, WEED_PLANT_FREE_FUNC, (weed_funcptr_t)_weed_plant_free);
-  weed_set_funcptr_value(xhost_info, WEED_LEAF_NUM_ELEMENTS_FUNC, (weed_funcptr_t)_weed_leaf_num_elements);
+  //weed_set_funcptr_value(xhost_info, WEED_LEAF_NUM_ELEMENTS_FUNC, (weed_funcptr_t)_weed_leaf_num_elements);
 
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_NAME, "LiVES");
   weed_set_string_value(xhost_info, WEED_LEAF_HOST_VERSION, LiVES_VERSION);
@@ -6610,10 +6621,16 @@ boolean weed_init_effect(int hotkey) {
 
   // record the key so we know whose parameters to record later
   weed_set_int_value(new_instance, WEED_LEAF_HOST_KEY, hotkey);
-  // handle compound fx
+
   inst = new_instance;
 
+  if (weed_plant_has_leaf(filter, WEED_LEAF_HOST_FPS))
+    weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_HOST_FPS);
+  else if (weed_plant_has_leaf(filter, WEED_LEAF_PREFERRED_FPS))
+    weed_leaf_copy(inst, WEED_LEAF_TARGET_FPS, filter, WEED_LEAF_PREFERRED_FPS);
+
   while (weed_plant_has_leaf(inst, WEED_LEAF_HOST_NEXT_INSTANCE)) {
+    // handle compound fx
     inst = weed_get_plantptr_value(inst, WEED_LEAF_HOST_NEXT_INSTANCE, &error);
     weed_set_int_value(inst, WEED_LEAF_HOST_KEY, hotkey);
   }
@@ -7474,7 +7491,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     return NULL;
   }
 
-  if ((filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA))
+  if (filter_flags & WEED_FILTER_PREF_LINEAR_GAMMA)
     weed_channel_set_gamma_type(channel, WEED_GAMMA_LINEAR);
   else
     weed_channel_set_gamma_type(channel, WEED_GAMMA_SRGB);
@@ -7483,7 +7500,7 @@ weed_plant_t *weed_layer_create_from_generator(weed_plant_t *inst, weed_timecode
     int num_inc;
     weed_plant_t **in_channels = weed_get_plantptr_array_counted(inst, WEED_LEAF_IN_CHANNELS, &num_inc);
     for (i = 0; i < num_inc; i++) {
-      if (weed_palette_is_alpha(weed_get_int_value(in_channels[i], WEED_LEAF_CURRENT_PALETTE, NULL)) &&
+      if (weed_palette_is_alpha(weed_channel_get_palette(in_channels[i])) &&
           !(weed_plant_has_leaf(in_channels[i], WEED_LEAF_DISABLED) &&
             weed_get_boolean_value(in_channels[i], WEED_LEAF_DISABLED, NULL) == WEED_TRUE))
         num_in_alpha++;
@@ -7573,6 +7590,8 @@ procfunc1:
       ret = (*process_func)(inst, tc);
   }
   lives_free(out_channels);
+
+  //if (weed_palette_has_alpha(palette)) lives_layer_set_opaque(channel);
 
   if (achan != NULL) {
     int nachans;
@@ -7991,8 +8010,10 @@ void weed_generator_end(weed_plant_t *inst) {
       if (cfile->achans == 0) {
         current_file = mainw->current_file;
         close_current_file(mainw->pre_src_file);
-        mainw->new_clip = mainw->pre_src_file;
-        mainw->current_file = current_file;
+        if (LIVES_IS_PLAYING) {
+          mainw->new_clip = mainw->pre_src_file;
+          mainw->current_file = current_file;
+        }
       }
     }
     if (mainw->current_file == current_file) mainw->clip_switched = clip_switched;

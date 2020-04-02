@@ -186,6 +186,8 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
     pthread_mutex_trylock(&mainw->fbuffer_mutex);
     pthread_mutex_unlock(&mainw->fbuffer_mutex);
+    pthread_mutex_trylock(&mainw->alarmlist_mutex);
+    pthread_mutex_unlock(&mainw->alarmlist_mutex);
     // filter mutexes are unlocked in weed_unload_all
 
     if (pthread_mutex_trylock(&mainw->exit_mutex)) pthread_exit(NULL);
@@ -1120,7 +1122,8 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
       if (mainw->cancelled) d_print_cancelled();
       else if (mainw->error) {
         d_print_failed();
-        do_blocking_error_dialog(mainw->msg);
+        do_blocking_error_dialogf(_("Unable to download media from the requested URL:\n%s\n\n"
+                                    "NB: Obtaining the address by right clicking on the target itself can sometimes work better\n"), req->URI);
       }
       mainw->error = FALSE;
       mainw->cancelled = CANCEL_RETRY;
@@ -1154,8 +1157,8 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
       } else {
 #ifdef ALLOW_NONFREE_CODECS
         if (do_yesno_dialog(
-              _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an allternate "
-                "format selction ?"))) {
+              _("\nLiVES was unable to download the clip in the desired format\nWould you like to try using an alternate "
+                "format selection ?"))) {
           mainw->error = FALSE;
           mainw->cancelled = CANCEL_RETRY;
           req->allownf = TRUE;
@@ -1220,7 +1223,7 @@ lives_remote_clip_request_t *on_utube_select(lives_remote_clip_request_t *req) {
         d_print_failed();
         do_blocking_error_dialog(
           _("\nLiVES was unable to download the clip.\nPlease check the clip URL and make sure you have \n"
-            "the latest youtube-dl installed.\n"));
+            "the latest youtube-dl installed.\n(Note: try right-clicking on the clip itself to copy its address)\n"));
         mainw->error = FALSE;
       }
 
@@ -4958,6 +4961,20 @@ boolean dirchange_lock_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj
 }
 
 
+void on_volch_pressed(LiVESButton * button, livespointer user_data) {
+  lives_direction_t dirn = LIVES_POINTER_TO_INT(user_data);
+  if (!CURRENT_CLIP_IS_VALID || mainw->preview || (mainw->is_processing && cfile->is_loaded) ||
+      mainw->cliplist == NULL) return;
+  if (dirn == LIVES_DIRECTION_UP) cfile->vol += .01;
+  else cfile->vol -= .01;
+  if (cfile->vol > 2.) cfile->vol = 2.;
+  if (cfile->vol < 0.) cfile->vol = 0.;
+  future_prefs->volume = lives_vol_from_linear(cfile->vol) * prefs->volume;
+  if (prefs->show_overlay_msgs && !(mainw->urgency_msg && prefs->show_urgency_msgs))
+    d_print_overlay(.5, _("Clip volume: %.2f"), cfile->vol);
+}
+
+
 boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uint32_t keyval, LiVESXModifierType mod,
                            livespointer area_enum) {
   // reset playback fps (cfile->pb_fps) to normal fps (cfile->fps)
@@ -5801,6 +5818,9 @@ boolean reload_set(const char *set_name) {
 
     /// read the playback fps, play frame, and name
     open_set_file(clipnum); ///< must do before calling save_clip_values()
+
+    /// if this is set then it means we are auto reloading the clipset from the previous session, so restore full details
+    if (future_prefs->ar_clipset) restore_clip_binfmt(mainw->current_file);
 
     threaded_dialog_spin(0.);
     cfile->was_in_set = TRUE;
@@ -10783,18 +10803,19 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!prefs->show_dev_opts) {
     int last_dprint_file = mainw->last_dprint_file;
     mainw->no_switch_dprint = TRUE;
-    d_print_urgency(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
+    d_print_overlay(2.0, _("Playing frame %d / %d, at fps %.3f\n"),
                     mainw->actual_frame, cfile->frames, cfile->pb_fps);
     mainw->no_switch_dprint = FALSE;
     mainw->last_dprint_file = last_dprint_file;
     return FALSE;
   }
 
+  lives_freep((void **)&mainw->overlay_msg);
+
   if (!keybd) mainw->lockstats = !mainw->lockstats;
   if (!mainw->lockstats) return FALSE;
 
-  lives_freep((void **)&mainw->urgency_msg);
-  mainw->urgency_msg = get_stats_msg(FALSE);
+  mainw->overlay_msg = get_stats_msg(FALSE);
   return FALSE;
 }
 

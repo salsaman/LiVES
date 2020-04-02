@@ -735,18 +735,25 @@ static INLINE double drand(double max)
 {return (double)(drand48() * max);}
 #endif
 
+static INLINE uint64_t xorshift(uint64_t x) {x ^= x << 13; x ^= x >> 7; return x ^ (x << 17);}
+
 EXPORTS INLINE uint64_t fastrand(uint64_t oldval) {
   // pseudo-random number generator
-#define rand_a 1073741789L
-#define rand_c 32749L
-  if (oldval == 0) {
+  static uint64_t val = 0;
+  if (!val) {
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
-    uint32_t rval, rval2; rand_s(&rval); rand_s(&rval2);
-    return fastrand(((uint64_t)rval << 32) | (uint64_t)rval2);}
+    uint32_t rval, rval2; val++; rand_s(&rval); rand_s(&rval2); val = fastrand(((uint64_t)rval << 32) | (uint64_t)rval2) + 1;
 #else
-    return fastrand(((uint64_t)lrand48() << 32) ^ (uint64_t)lrand48());}
+    val++; val = fastrand(((uint64_t)lrand48() << 32) ^ (uint64_t)lrand48()) + 1;
 #endif
-  return (rand_a * oldval + rand_c);}
+  }
+  return (val = xorshift(val));
+}
+
+EXPORTS INLINE double fastrand_dbl(double range) {
+  static const double divd = (double)(0xFFFFFFFFFFFFFFFF); return (double)fastrand(1) / divd * range;}
+EXPORTS INLINE uint32_t fastrand_int(uint32_t range) {return (uint32_t)(fastrand_dbl((double)(++range)));}
+
 #endif
 
 //utilities

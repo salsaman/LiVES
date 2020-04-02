@@ -9,7 +9,9 @@
 #ifndef HAS_LIVES_CVIRTUAL_H
 #define HAS_LIVES_CVIRTUAL_H
 
-void create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes);
+#define FRAME_INDEX_FNAME "file_index"
+
+boolean create_frame_index(int fileno, boolean init, frames_t start_offset, frames_t nframes);
 boolean save_frame_index(int fileno);
 frames_t load_frame_index(int fileno) WARN_UNUSED;
 boolean check_clip_integrity(int fileno, const lives_clip_data_t *cdata, frames_t maxframe);

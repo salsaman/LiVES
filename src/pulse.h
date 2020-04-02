@@ -16,8 +16,8 @@
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 #define LIVES_PA_BUFF_MAXLEN 16384
-#define LIVES_PA_BUFF_TARGET 2048
-#define LIVES_PA_BUFF_MINREQ 1024
+#define LIVES_PA_BUFF_TARGET 4096
+#define LIVES_PA_BUFF_MINREQ 2048
 #define LIVES_PA_BUFF_FRAGSIZE 4096
 
 #define PA_SAMPSIZE 16
@@ -140,7 +140,7 @@ volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg
 
 int64_t pulse_audio_seek_bytes(pulse_driver_t *, int64_t bytes, lives_clip_t *);
 
-void pa_time_reset(pulse_driver_t *, int64_t offset);
+boolean pa_time_reset(pulse_driver_t *, int64_t offset);
 
 ticks_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 

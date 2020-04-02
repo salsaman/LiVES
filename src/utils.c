@@ -1093,6 +1093,7 @@ ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_le
   ssize_t retval = lives_read_buffered(fd, buf, count, allow_less);
   if (retval < (ssize_t)count) return retval;
   if (capable->byte_order == LIVES_BIG_ENDIAN && !prefs->bigendbug) {
+    g_print("Im a biggie !\n");
     reverse_bytes((char *)buf, count, count);
   }
   return retval;
@@ -1476,21 +1477,41 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
   /*         delta, clock_ticks + mainw->cadjticks, current + mainw->adjticks); */
   //}
 
+  /// synchronised timing
+  /// it can be helpful to imagine a virtual clock which is at currrent time:
+  /// clock time - cadjticks = virtual time = other time + adjticks
+  /// cadjticks and adjticks are only set when we switch from one source to another, i.e the virtual clock will run @ different rates
+  /// depending on the source. This is fine as it enables sync with the clock source, provided the time doesn't jump when moving
+  /// from one source to another.
+  /// Thus, at each call we calculate delta = (clock ticks - cadjticks) - (source ticks + adjticks)
+  /// when the source changes we then alter either cadjticks or adjticks so that the initial timing matches
+  /// e.g when switching to clock source, cadjticks and adjticks will have diverged. So we want to set new cadjtick s.t:
+  /// clock ticks - cadjticks == source ticks + adjticks. i.e cadjticks = clock ticks - (source ticks + adjticks).
+  /// we use the delta calculated the last time, since the other source may longer be available.
+  /// this should not be a concern since this function is called very frequently
+  /// recalling cadjticks_new = clock_ticks - (source_ticks + adjticks), and substituting for delta we get:
+  // cadjticks_new = clock_ticks - (source_ticks + adjticks) = delta + cadjticks_old
+  /// conversely, when switching from clock to source, adjticks_new = clock_ticks - cadjticks - source_ticks
+  /// again, this just delta + adjticks; in this case we can use current delta since it is assumed that the system clock is always available
+
   if (*tsource == LIVES_TIME_SOURCE_SYSTEM)  {
     if (lastt != LIVES_TIME_SOURCE_SYSTEM && lastt != LIVES_TIME_SOURCE_NONE) {
-      mainw->cadjticks = delta + mainw->cadjticks;
+      mainw->cadjticks += delta;
     }
     current -= mainw->cadjticks;
   }
 
   clock_ticks -= mainw->cadjticks;
 
+  delta = clock_ticks - current;
+
   if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
-    if (lastt == LIVES_TIME_SOURCE_SYSTEM) mainw->adjticks = clock_ticks + mainw->cadjticks - current;
     current += mainw->adjticks;
   }
 
-  delta = clock_ticks - current;
+  if (*tsource != LIVES_TIME_SOURCE_SYSTEM) {
+    if (lastt == LIVES_TIME_SOURCE_SYSTEM) mainw->adjticks += delta;
+  }
 
   /* if (lastt != *tsource) { */
   /*   g_print("aft t1 = %ld, t2 = %ld cadj =%ld, adj = %ld del =%ld %ld %ld\n", clock_ticks, current, mainw->cadjticks, */
@@ -1499,6 +1520,25 @@ ticks_t lives_get_current_playback_ticks(int64_t origsecs, int64_t origusecs, li
 
   lastt = *tsource;
   return current;
+}
+
+
+LIVES_GLOBAL_INLINE lives_alarm_t lives_alarm_reset(lives_alarm_t alarm_handle, ticks_t ticks) {
+  // set to now + offset
+  // invalid alarm number
+  lives_timeout_t *alarm;
+  if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
+    LIVES_WARN("Invalid alarm handle");
+    break_me();
+    return -1;
+  }
+
+  // offset of 1 was added for caller
+  alarm = &mainw->alarms[--alarm_handle];
+
+  alarm->lastcheck = lives_get_current_ticks();
+  alarm->tleft = ticks;
+  return ++alarm_handle;
 }
 
 
@@ -1512,23 +1552,28 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
   int i;
 
   // we will assign [this] next
-  lives_alarm_t ret = mainw->next_free_alarm;
+  lives_alarm_t ret;
+
+  pthread_mutex_lock(&mainw->alarmlist_mutex);
+
+  ret = mainw->next_free_alarm;
 
   if (ret > LIVES_MAX_USER_ALARMS) ret--;
   else {
     // no alarm slots left
     if (mainw->next_free_alarm == ALL_USED) {
+      pthread_mutex_unlock(&mainw->alarmlist_mutex);
       LIVES_WARN("No alarms left");
       return ALL_USED;
     }
   }
 
-  // set to now + offset
-  mainw->alarms[ret].lastcheck = lives_get_current_ticks();
-  mainw->alarms[ret].tleft = ticks;
-
   // system alarms
-  if (ret >= LIVES_MAX_USER_ALARMS) return ++ret;
+  if (ret >= LIVES_MAX_USER_ALARMS) {
+    lives_alarm_reset(++ret, ticks);
+    pthread_mutex_unlock(&mainw->alarmlist_mutex);
+    return ret;
+  }
 
   i = ++mainw->next_free_alarm;
 
@@ -1537,8 +1582,10 @@ lives_alarm_t lives_alarm_set(ticks_t ticks) {
 
   if (i == LIVES_MAX_USER_ALARMS) mainw->next_free_alarm = ALL_USED; // no more alarm slots
   else mainw->next_free_alarm = i; // OK
+  lives_alarm_reset(++ret, ticks);
+  pthread_mutex_unlock(&mainw->alarmlist_mutex);
 
-  return ++ret;
+  return ret;
 }
 
 
@@ -1552,6 +1599,7 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
   // invalid alarm number
   if (alarm_handle <= 0 || alarm_handle > LIVES_MAX_ALARMS) {
     LIVES_WARN("Invalid alarm handle");
+    break_me();
     return -1;
   }
 
@@ -1560,14 +1608,15 @@ ticks_t lives_alarm_check(lives_alarm_t alarm_handle) {
 
   // alarm time was never set !
   if (alarm->lastcheck == 0) {
-    //LIVES_WARN("Alarm time not set");
+    LIVES_WARN("Alarm time not set");
     return 0;
   }
 
   curticks = lives_get_current_ticks();
 
   if (prefs->show_dev_opts) {
-    // guard against long interrupts (in gdb for example)
+    /// guard against long interrupts (when debugging for example)
+    // if the last check was > 5 seconds ago, we ignore the time jump, updating the check time but not reducing the time left
     if (curticks - alarm->lastcheck > 5 * TICKS_PER_SECOND) {
       alarm->lastcheck = curticks;
       return alarm->tleft;
@@ -1605,47 +1654,15 @@ boolean lives_alarm_clear(lives_alarm_t alarm_handle) {
 
 
 
-LIVES_GLOBAL_INLINE const char *lives_strappend(const char *string, int len, const char *xnew) {
-  size_t sz = lives_strlen(string);
-  lives_snprintf((char *)(string + sz), len - sz, "%s", xnew);
-  return string;
-}
-
-
-LIVES_GLOBAL_INLINE const char *lives_strappendf(const char *string, int len, const char *fmt, ...) {
-  va_list xargs;
-  char *text;
-
-  va_start(xargs, fmt);
-  text = lives_strdup_vprintf(fmt, xargs);
-  va_end(xargs);
-
-  lives_strappend(string, len, text);
-  lives_free(text);
-  return string;
-}
-
-
 /* convert to/from a big endian 32 bit float for internal use */
 LIVES_GLOBAL_INLINE float LEFloat_to_BEFloat(float f) {
-  char *b = (char *)(&f);
-  if (capable->byte_order == LIVES_LITTLE_ENDIAN) {
-    float fl;
-    uint8_t rev[4];
-    rev[0] = b[3];
-    rev[1] = b[2];
-    rev[2] = b[1];
-    rev[3] = b[0];
-    fl = *(float *)rev;
-    return fl;
-  }
-  return f;
+  float fl = f;
+  if (capable->byte_order == LIVES_LITTLE_ENDIAN) swab4(&f, &fl, 1);
+  return fl;
 }
 
 
-LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, int frame) {
-  return (frame - 1.) / mainw->files[clip]->fps;
-}
+LIVES_GLOBAL_INLINE double calc_time_from_frame(int clip, int frame) {return (frame - 1.) / mainw->files[clip]->fps;}
 
 
 LIVES_GLOBAL_INLINE int calc_frame_from_time(int filenum, double time) {
@@ -1852,9 +1869,9 @@ int64_t calc_new_playback_position(int fileno, ticks_t otc, ticks_t *ntc) {
 
   // nframe is our new frame
   if (fps >= 0)
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .0001);
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps + .00001);
   else
-    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .0001);
+    nframe = cframe + (int)((double)dtc / TICKS_PER_SECOND_DBL * fps - .00001);
 
   if (fileno == mainw->playing_file) {
     /// if we are scratching we do the following:
@@ -2130,10 +2147,10 @@ void init_clipboard(void) {
 
 
 weed_plant_t *get_nth_info_message(int n) {
-  const char *leaf;
-  int m = 0;
-  int error;
   weed_plant_t *msg = mainw->msg_list;
+  const char *leaf;
+  weed_error_t error;
+  int m = 0;
 
   if (n < 0) return NULL;
 
@@ -2341,6 +2358,25 @@ boolean d_print_urgency(double timeout, const char *fmt, ...) {
     mainw->next_free_alarm = nfa;
     mainw->urgency_msg = lives_strdup(text);
     lives_free(text);
+    return TRUE;
+  }
+  lives_free(text);
+  return FALSE;
+}
+
+
+boolean d_print_overlay(double timeout, const char *fmt, ...) {
+  // overlay a message on playback frame
+  va_list xargs;
+  char *text;
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  if (LIVES_IS_PLAYING && prefs->show_overlay_msgs && !(mainw->urgency_msg && prefs->show_urgency_msgs)) {
+    lives_freep((void **)&mainw->overlay_msg);
+    mainw->overlay_msg = lives_strdup(text);
+    lives_free(text);
+    lives_alarm_reset(mainw->overlay_alarm, timeout * TICKS_PER_SECOND_DBL);
     return TRUE;
   }
   lives_free(text);
@@ -2944,7 +2980,7 @@ boolean lives_string_ends_with(const char *string, const char *fmt, ...) {
 void get_dirname(char *filename) {
   char *tmp;
   // get directory name from a file
-  //filename should point to char[PATH_MAX]
+  // filename should point to char[PATH_MAX]
   // WARNING: will change contents of filename
 
   lives_snprintf(filename, PATH_MAX, "%s%s", (tmp = lives_path_get_dirname(filename)), LIVES_DIR_SEP);
@@ -2968,7 +3004,7 @@ char *get_dir(const char *filename) {
 }
 
 
-void get_basename(char *filename) {
+LIVES_GLOBAL_INLINE void get_basename(char *filename) {
   // get basename from a file
   // (filename without directory)
   // filename should point to char[PATH_MAX]
@@ -2979,15 +3015,16 @@ void get_basename(char *filename) {
 }
 
 
-void get_filename(char *filename, boolean strip_dir) {
+LIVES_GLOBAL_INLINE void get_filename(char *filename, boolean strip_dir) {
   // get filename (part without extension) of a file
   //filename should point to char[PATH_MAX]
   // WARNING: will change contents of filename
-  char *ptr;
   if (strip_dir) get_basename(filename);
-  ptr = strrchr(filename, '.');
-  if (ptr != NULL) lives_memset((void *)ptr, 0, 1);
+  lives_strstop(filename, '.');
 }
+
+/// return filename (no dir, no .ext)
+LIVES_GLOBAL_INLINE char *lives_get_filename(char *uri) {return lives_strstop(lives_path_get_basename(uri), '.');}
 
 
 char *get_extension(const char *filename) {
@@ -5279,11 +5316,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   xtoffs = mbtowc(NULL, NULL, 0); // reset read state
 
-  if (!(req_size & 1)) {
-    if (req_size & 2) align = 2;
-    else if (req_size & 4) align = 4;
-    else if (req_size & 8) align = 8;
-  }
+  align = get_max_align(req_size, DEF_ALIGN);
 
   retstr = (char *)lives_calloc(req_size / align, align);
   req_size = 0; // reuse as a ptr to offset in retstr
@@ -5337,20 +5370,6 @@ LIVES_GLOBAL_INLINE int hextodec(const char *string) {
   int tot = 0;
   for (char c = *string; c; c = *(++string)) tot = (tot << 4) + get_hex_digit(c);
   return tot;
-}
-
-
-static uint64_t fastrand_val;
-
-LIVES_GLOBAL_INLINE uint64_t fastrand(void) {
-#define rand_a 1073741789L
-#define rand_c 32749L
-  return ((fastrand_val = rand_a * fastrand_val + rand_c));
-}
-
-
-void fastsrand(uint64_t seed) {
-  fastrand_val = seed;
 }
 
 

@@ -665,6 +665,7 @@ static boolean pre_init(void) {
   pthread_mutex_init(&mainw->exit_mutex, NULL);
   pthread_mutex_init(&mainw->fbuffer_mutex, NULL);
   pthread_mutex_init(&mainw->avseek_mutex, NULL);
+  pthread_mutex_init(&mainw->alarmlist_mutex, NULL);
 
   // conds
   pthread_cond_init(&mainw->avseek_cond, NULL);
@@ -811,6 +812,7 @@ static boolean pre_init(void) {
   prefs->show_tooltips = get_boolean_prefd(PREF_SHOW_TOOLTIPS, TRUE);
 
   prefs->show_urgency_msgs = get_boolean_prefd(PREF_SHOW_URGENCY, TRUE);
+  prefs->show_overlay_msgs = get_boolean_prefd(PREF_SHOW_OVERLAY_MSGS, TRUE);
 
   prefs->allow_easing = get_boolean_prefd(PREF_ALLOW_EASING, TRUE);
 
@@ -1349,7 +1351,7 @@ static void lives_init(_ign_opts *ign_opts) {
 
   mainw->swapped_clip = -1;
 
-  mainw->urgency_msg = NULL;
+  mainw->urgency_msg = mainw->overlay_msg = NULL;
 
   mainw->xlays = NULL;
 
@@ -1578,9 +1580,11 @@ static void lives_init(_ign_opts *ign_opts) {
     prefs->auto_deint = get_boolean_prefd(PREF_AUTO_DEINTERLACE, TRUE);
     prefs->auto_nobord = get_boolean_prefd(PREF_AUTO_CUT_BORDERS, FALSE);
 
+    future_prefs->ar_clipset = FALSE;
+
     if (!ign_opts->ign_clipset) {
       get_string_prefd(PREF_AR_CLIPSET, prefs->ar_clipset_name, 128, "");
-      if (strlen(prefs->ar_clipset_name)) prefs->ar_clipset = TRUE;
+      if (strlen(prefs->ar_clipset_name)) future_prefs->ar_clipset = prefs->ar_clipset = TRUE;
       else prefs->ar_clipset = FALSE;
     } else set_string_pref(PREF_AR_CLIPSET, "");
 
@@ -2524,12 +2528,6 @@ capability *get_capabilities(void) {
   capable->cpu_bits = 32;
   if (sizeof(void *) == 8) capable->cpu_bits = 64;
 
-  // _runtime_ byte order
-  if (IS_BIG_ENDIAN)
-    capable->byte_order = LIVES_BIG_ENDIAN;
-  else
-    capable->byte_order = LIVES_LITTLE_ENDIAN;
-
   capable->mainpid = lives_getpid();
 
   get_location("cp", capable->cp_cmd, PATH_MAX);
@@ -3289,6 +3287,7 @@ static boolean lives_startup(livespointer data) {
       set_string_pref(PREF_AR_CLIPSET, "");
       prefs->ar_clipset = FALSE;
     }
+    future_prefs->ar_clipset = FALSE;
   }
 
 #ifdef ENABLE_OSC
@@ -3375,6 +3374,8 @@ static boolean lives_startup(livespointer data) {
     lives_idle_add(render_choice_idle, NULL);
   }
 
+  mainw->overlay_alarm = lives_alarm_set(0);
+
   if (mainw->multitrack == NULL)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
   else
@@ -3450,6 +3451,16 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   }
 #endif
 #endif
+
+  capable = (capability *)lives_malloc(sizeof(capability));
+
+  // _runtime_ byte order, needed for lives_strlen and other things
+  if (IS_BIG_ENDIAN)
+    capable->byte_order = LIVES_BIG_ENDIAN;
+  else
+    capable->byte_order = LIVES_LITTLE_ENDIAN;
+
+  capable->main_thread = pthread_self();
 
   zargc = argc;
   zargv = argv;
@@ -3538,6 +3549,9 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   // allow us to set immutable values (plugins can't)
   weed_leaf_set = weed_leaf_set_host;
 
+  // allow us to delete undeletable leaves (plugins can't)
+  weed_leaf_delete = weed_leaf_delete_host;
+
   // allow us to set immutable values (plugins can't)
   //weed_leaf_get = weed_leaf_get_monitor;
 
@@ -3614,9 +3628,7 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
 
   prefs->max_modes_per_key = atoi(DEF_FX_KEYMODES);
 
-  capable = (capability *)lives_malloc(sizeof(capability));
   capable->startup_msg[0] = '\0';
-  capable->main_thread = pthread_self();
   capable->has_perl = TRUE;
   capable->has_smogrify = TRUE;
   capable->smog_version_correct = TRUE;
@@ -3625,8 +3637,6 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   capable->can_write_to_config_backup = TRUE;
   capable->can_write_to_config_new = TRUE;
   capable->can_write_to_workdir = TRUE;
-  capable->time_per_idle = capable->load_value = -1.;
-  capable->avg_load = 0.;
 
   // this is the version we should pass into mkdir
   capable->umask = umask(0);
@@ -4958,7 +4968,7 @@ check_stcache:
               weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
 	      // *INDENT-OFF*
 	    }}}
-        else lives_layer_set_frame(layer, xpf);
+        lives_layer_set_frame(layer, xpf);
       }}
     // *INDENT-ON*
 
@@ -5079,7 +5089,7 @@ check_stcache:
               weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
 	    // *INDENT-OFF*
 	  }}}
-      else lives_layer_set_frame(layer, xpf);
+      lives_layer_set_frame(layer, xpf);
     }}
   // *INDENT-ON*
 
@@ -5270,7 +5280,7 @@ check_encache:
                 weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
 	    // *INDENT-OFF*
 	    }}}
-	else lives_layer_set_frame(layer, xpf);
+	lives_layer_set_frame(layer, xpf);
       }}
     // *INDENT-ON*
 
@@ -5386,7 +5396,7 @@ check_encache:
                 weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
 	    // *INDENT-OFF*
 	  }}}
-      else lives_layer_set_frame(layer, xpf);
+      lives_layer_set_frame(layer, xpf);
     }}
   // *INDENT-OFF*
 
@@ -5594,7 +5604,7 @@ void load_preview_image(boolean update_always) {
                   weed_set_string_value(layer, WEED_LEAF_MD5SUM, xmd5sum);
 	      // *INDENT-OFF*
 	    }}}
-	else lives_layer_set_frame(layer, xpf);
+	lives_layer_set_frame(layer, xpf);
       }}}
   // *INDENT-ON*
 
@@ -6923,7 +6933,6 @@ static void get_player_size(int *opwidth, int *opheight) {
 
 void init_track_decoders(void) {
   register int i;
-
   for (i = 0; i < MAX_TRACKS; i++) {
     mainw->track_decoders[i] = NULL;
     mainw->old_active_track_list[i] = mainw->active_track_list[i] = 0;
@@ -6932,10 +6941,8 @@ void init_track_decoders(void) {
 }
 
 
-void free_track_decoders(void) {
-  register int i;
-
-  for (i = 0; i < MAX_TRACKS; i++) {
+LIVES_GLOBAL_INLINE void free_track_decoders(void) {
+  for (register int i = 0; i < MAX_TRACKS; i++) {
     if (mainw->track_decoders[i] != NULL &&
 	(mainw->active_track_list[i] <= 0 || mainw->track_decoders[i] != mainw->files[mainw->active_track_list[i]]->ext_src))
       close_decoder_plugin(mainw->track_decoders[i]);
@@ -6943,13 +6950,23 @@ void free_track_decoders(void) {
 }
 
 
-static boolean check_for_urgency_msg(weed_layer_t *layer) {
-  if (mainw->urgency_msg != NULL || mainw->lockstats) {
-    if (mainw->lockstats) {
+static boolean check_for_overlay_text(weed_layer_t *layer) {
+  if (mainw->urgency_msg && prefs->show_urgency_msgs) {
+    ticks_t timeout = lives_alarm_check(LIVES_URGENCY_ALARM);
+    if (!timeout) {
       lives_freep((void **)&mainw->urgency_msg);
+      return FALSE;
+    }
+    render_text_overlay(layer, mainw->urgency_msg);
+    return TRUE;
+  }
+
+  if ((mainw->overlay_msg && prefs->show_overlay_msgs) || mainw->lockstats) {
+    if (mainw->lockstats) {
+      lives_freep((void **)&mainw->overlay_msg);
       show_sync_callback(NULL, NULL, 0, 0, LIVES_INT_TO_POINTER(1));
-      if (mainw->urgency_msg) {
-	render_text_overlay(layer, mainw->urgency_msg);
+      if (mainw->overlay_msg) {
+	render_text_overlay(layer, mainw->overlay_msg);
 	if (prefs->render_overlay && mainw->record && !mainw->record_paused) {
 	  weed_plant_t *event = get_last_event(mainw->event_list);
 	  if (WEED_EVENT_IS_FRAME(event)) weed_set_string_value(event, WEED_LEAF_OVERLAY_TEXT, mainw->urgency_msg);
@@ -6959,14 +6976,14 @@ static boolean check_for_urgency_msg(weed_layer_t *layer) {
     }
     else {
       if (!mainw->preview_rendering) {
-	ticks_t timeout = lives_alarm_check(LIVES_URGENCY_ALARM);
+	ticks_t timeout = lives_alarm_check(mainw->overlay_alarm);
 	if (timeout == 0) {
-	  lives_freep((void **)&mainw->urgency_msg);
+	  lives_freep((void **)&mainw->overlay_msg);
 	  return FALSE;
 	}
       }
-      render_text_overlay(layer, mainw->urgency_msg);
-      if (mainw->preview_rendering) lives_freep((void **)&mainw->urgency_msg);
+      render_text_overlay(layer, mainw->overlay_msg);
+      if (mainw->preview_rendering) lives_freep((void **)&mainw->overlay_msg);
       return TRUE;
     }
   }
@@ -7008,7 +7025,7 @@ static void do_cleanup(weed_layer_t *layer, int success) {
 }
 
 
-static weed_plant_t *cleaner = NULL;
+//static weed_plant_t *cleaner = NULL;
 
 /* void wait_for_cleaner(void) { */
 /*   if (cleaner) { */
@@ -7022,7 +7039,8 @@ static boolean avsync_check(void) {
   int count = 5000, rc = 0;
   struct timespec ts;
 
-  if (mainw->foreign || !LIVES_IS_PLAYING || (mainw->event_list != NULL && !(mainw->record || mainw->record_paused))) {
+  if (mainw->foreign || !LIVES_IS_PLAYING || prefs->audio_src == AUDIO_SRC_EXT
+      || (mainw->event_list != NULL && !(mainw->record || mainw->record_paused))) {
     mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
     return TRUE;
   }
@@ -7762,7 +7780,7 @@ void load_frame_image(int frame) {
           } else frame_layer = mainw->frame_layer;
 
           if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
-            if (!prefs->show_urgency_msgs || !check_for_urgency_msg(frame_layer)) {
+            if (!check_for_overlay_text(frame_layer)) {
               if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
                 frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
               }
@@ -7859,6 +7877,10 @@ void load_frame_image(int frame) {
           }
 
           if (!avsync_check()) goto lfi_done;
+
+          /* int rs = weed_layer_get_rowstride(frame_layer); */
+          /* weed_layer_set_rowstride(frame_layer, rs - 2); */
+          /* g_print("RS is %d\n", weed_layer_get_rowstride(frame_layer)); */
 
           lwidth = weed_layer_get_width(frame_layer);
           if ((player_v2 && !(*mainw->vpp->play_frame)(frame_layer, mainw->currticks - mainw->stream_ticks, return_layer))
@@ -8024,7 +8046,7 @@ void load_frame_image(int frame) {
       pheight = weed_layer_get_height(frame_layer);
 
       if (mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) {
-        if (!prefs->show_urgency_msgs || !check_for_urgency_msg(frame_layer)) {
+        if (!check_for_overlay_text(frame_layer)) {
           if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
             frame_layer = render_text_overlay(frame_layer, mainw->multitrack->timestring);
           }
@@ -8198,7 +8220,7 @@ void load_frame_image(int frame) {
 
     //g_print("clp end @ %f\n", lives_get_current_ticks() / TICKS_PER_SECOND_DBL);
 
-    if (!prefs->show_urgency_msgs || !check_for_urgency_msg(mainw->frame_layer)) {
+    if (!check_for_overlay_text(mainw->frame_layer)) {
       if (mainw->multitrack != NULL && mainw->multitrack->opts.overlay_timecode) {
         mainw->frame_layer = render_text_overlay(mainw->frame_layer, mainw->multitrack->timestring);
       }
@@ -8330,18 +8352,12 @@ void load_frame_image(int frame) {
       // we also animate the timeline and frame counters
       // if success is TRUE we may send an OSC FRAME_SYNCH notification
 
-      if (cleaner) {
-	lives_nanosleep_until_nonzero(weed_get_boolean_value(cleaner, WEED_LEAF_DONE, NULL));
-	weed_plant_free(cleaner);
-	cleaner = NULL;
-      }
+      /* if (cleaner) { */
+      /* 	lives_nanosleep_until_nonzero(weed_get_boolean_value(cleaner, WEED_LEAF_DONE, NULL)); */
+      /* 	weed_plant_free(cleaner); */
+      /* 	cleaner = NULL; */
+      /* } */
 
-      /* cleaner = weed_plant_new(WEED_PLANT_THREAD_INFO); */
-      /* weed_set_plantptr_value(cleaner, WEED_LEAF_THREAD_PARAM0, mainw->frame_layer); */
-      /* weed_set_boolean_value(cleaner, WEED_LEAF_THREAD_PARAM1, success); */
-      /* weed_set_funcptr_value(cleaner, WEED_LEAF_THREADFUNC, do_cleanup); */
-      /* weed_set_boolean_value(cleaner, WEED_LEAF_NOTIFY, WEED_TRUE); */
-      /* run_as_thread(cleaner); */
       do_cleanup(mainw->frame_layer, success);
       mainw->rowstride_alignment_hint = 0;
       lives_freep((void **)&framecount);
@@ -9175,18 +9191,15 @@ void load_frame_image(int frame) {
 
         mainw->blend_palette = WEED_PALETTE_END;
 
-        if (CURRENT_CLIP_IS_VALID &&  new_file != mainw->current_file && mainw->current_file != mainw->blend_file
+        if (CURRENT_CLIP_IS_VALID && new_file != mainw->current_file && mainw->current_file != mainw->blend_file
             && !mainw->is_rendering) {
           if (cfile->clip_type == CLIP_TYPE_GENERATOR && cfile->ext_src != NULL) {
             if (new_file != mainw->blend_file) {
               // switched from generator to another clip, end the generator
-              //int key;
-              //weed_plant_t *inst = cfile->ext_src;
+              weed_plant_t *inst = cfile->ext_src;
               mainw->gen_started_play = FALSE;
-              /* if (IS_NORMAL_CLIP(new_file)) mainw->pre_src_file = new_file; */
-              /* key = weed_get_int_value(inst, WEED_LEAF_HOST_KEY, NULL); */
-              /* rte_key_on_off(key + 1, FALSE); */
-              /* return; */
+              mainw->whentostop = NEVER_STOP;
+              weed_generator_end(inst);
             } else {
               rte_swap_fg_bg();
             }

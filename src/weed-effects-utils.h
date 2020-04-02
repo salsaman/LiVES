@@ -28,20 +28,25 @@ extern "C"
 /* general Weed functions and definitions */
 int32_t weed_plant_get_type(weed_plant_t *);
 
-#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_PLUGIN_INFO ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_PLUGIN_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_PLUGIN_INFO ? WEED_TRUE : \
+					  WEED_FALSE)
 
 #define WEED_PLANT_IS_HOST_INFO(plant) (weed_plant_get_type(plant) == WEED_PLANT_HOST_INFO ? WEED_TRUE : WEED_FALSE)
 
-#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_CLASS ? WEED_TRUE : WEED_FALSE)
-#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_INSTANCE ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_FILTER_CLASS(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_CLASS ? WEED_TRUE : \
+					   WEED_FALSE)
+#define WEED_PLANT_IS_FILTER_INSTANCE(plant) (weed_plant_get_type(plant) == WEED_PLANT_FILTER_INSTANCE ? WEED_TRUE : \
+					      WEED_FALSE)
 
 #define WEED_PLANT_IS_CHANNEL(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL ? WEED_TRUE : WEED_FALSE)
 
-#define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL_TEMPLATE ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_CHANNEL_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_CHANNEL_TEMPLATE ? \
+					       WEED_TRUE : WEED_FALSE)
 
 #define WEED_PLANT_IS_PARAMETER(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER ? WEED_TRUE : WEED_FALSE)
 
-#define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? WEED_TRUE : WEED_FALSE)
+#define WEED_PLANT_IS_PARAMETER_TEMPLATE(plant) (weed_plant_get_type(plant) == WEED_PLANT_PARAMETER_TEMPLATE ? \
+						 WEED_TRUE : WEED_FALSE)
 
 #define WEED_PLANT_IS_GUI(plant) (weed_plant_get_type(plant) == WEED_PLANT_GUI ? WEED_TRUE : WEED_FALSE)
 
@@ -222,6 +227,8 @@ int weed_palette_get_bits_per_macropixel(int pal);
 #define weed_palette_is_valid(pal) (weed_palette_get_nplanes(pal) == 0 ? WEED_FALSE : WEED_TRUE)
 
 #endif
+
+#define weed_palette_is_planar(pal) (weed_palette_get_nplanes(pal) > 1)
 
 #ifdef __cplusplus
 }

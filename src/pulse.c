@@ -1879,9 +1879,11 @@ ticks_t sysclock;
 double tscaleu, tscalex;
 int nsc;
 
-void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
+boolean pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   pa_usec_t usec;
   pa_operation *pa_op;
+
+  if (!pulsed->pstream) return FALSE;
 
   pa_mloop_lock();
   pa_op = pa_stream_update_timing_info(pulsed->pstream, pulse_success_cb, pa_mloop);
@@ -1903,6 +1905,7 @@ void pa_time_reset(pulse_driver_t *pulsed, int64_t offset) {
   nsc = 1;
   sysclock = 0;
   tscalex = tscaleu = 0.;
+  return TRUE;
 }
 
 
@@ -1980,7 +1983,7 @@ ticks_t lives_pulse_get_time(pulse_driver_t *pulsed) {
         if (pulsed->extrausec < 0) pulsed->extrausec = 0;
       } else if (usec > 0) pulsed->extrausec = 0;
       if (usec + pulsed->extrausec == last_usec + last_extra)
-        paclock += (usec - last_usec);// / pulsed->tscale;
+        paclock += (usec - last_usec) / pulsed->tscale;
       else
         paclock = usec + pulsed->extrausec;
     }

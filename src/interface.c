@@ -313,7 +313,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
   if (cfile->audio_waveform == NULL && cfile->achans > 0) {
     cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
-    cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
+    cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizint);
   }
 
   if (!LIVES_IS_PLAYING) {
@@ -432,7 +432,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
 
     if (cfile->audio_waveform == NULL) {
       cfile->audio_waveform = (float **)lives_calloc(cfile->achans, sizeof(float *));
-      cfile->aw_sizes = (int *)lives_calloc(cfile->achans, sizint);
+      cfile->aw_sizes = (size_t *)lives_calloc(cfile->achans, sizint);
     }
 
     start = offset_end;
@@ -3590,10 +3590,9 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
           labelk = lives_standard_label_new(key);
           labelm = lives_standard_label_new(" ");
           kalign = .5;
-        }
-      }
-    }
-  }
+	  // *INDENT-OFF*
+        }}}}
+  // *INDENT-ON*
 
   align = lives_alignment_new(kalign, .5, 1., 0.);
   lives_container_add(LIVES_CONTAINER(align), labelk);
@@ -3651,7 +3650,8 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
   ADD_KEYDEF(_("ctrl-shift-space"), _("reverse direction (background clip)"));
   ADD_KEYDEF(_("ctrl-alt-space"),
-             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\nctrl-space, ctrl-enter, or switching clips clears)"));
+             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\n"
+               "ctrl-space, ctrl-enter, or switching clips clears)"));
   ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
   ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
   ADD_KEYDEF("a", _("audio lock on: play audio from current foreground clip, and ignore video clip switches"));
@@ -3928,6 +3928,15 @@ static void utsense(LiVESToggleButton * togglebutton, livespointer user_data) {
   if (aspect != NULL) lives_widget_set_sensitive(aspect->lockbutton, sensitive);
 }
 
+static void dl_url_changed(LiVESWidget * urlw, livespointer user_data) {
+  LiVESWidget *namew = (LiVESWidget *)user_data;
+  if (!(*(lives_entry_get_text(LIVES_ENTRY(namew))))) {
+    char *defname = lives_strstop(lives_path_get_basename(lives_entry_get_text(LIVES_ENTRY(urlw))), '.');
+    lives_entry_set_text(LIVES_ENTRY(namew), lives_strstop(defname, '?'));
+    lives_free(defname);
+  }
+}
+
 
 // prompt for the following:
 // - URL
@@ -4042,12 +4051,15 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, TRUE, widget_opts.packing_height);
 
-  url_entry = lives_standard_entry_new(_("Clip URL : "), req ? req->URI : "", LONG_ENTRY_WIDTH, 32768, LIVES_BOX(hbox), NULL);
+  url_entry = lives_standard_entry_new(_("Clip URL : "), req ? req->URI : "", LONG_ENTRY_WIDTH, URL_MAX, LIVES_BOX(hbox), NULL);
 
   hbox = lives_hbox_new(FALSE, 0);
-  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 1);
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height);
 
-  ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
+  if (only_free)
+    ext_label = lives_standard_label_new("." LIVES_FILE_EXT_WEBM);
+  else
+    ext_label = lives_standard_label_new("." LIVES_FILE_EXT_MP4);
 
 #ifdef ALLOW_NONFREE_CODECS
   label = lives_standard_label_new(_("Format selection:"));
@@ -4056,12 +4068,11 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
   radiobutton_free = lives_standard_radio_button_new((tmp = lives_strdup(_("_Free (eg. vp9 / opus / webm)"))), &radiobutton_group,
                      LIVES_BOX(hbox),
-                     (tmp2 = lives_strdup(_("Download clip using Free codecs"))));
+                     (tmp2 = lives_strdup(_("Download clip using Free codecs and support the community"))));
 
   lives_free(tmp);
   lives_free(tmp2);
 
-  toggle_toggles_var(LIVES_TOGGLE_BUTTON(radiobutton_free), &only_free, FALSE);
   add_fill_to_box(LIVES_BOX(hbox));
 
 #endif
@@ -4069,6 +4080,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                                         SHORT_ENTRY_WIDTH, PATH_MAX, LIVES_BOX(hbox), NULL);
 
   lives_box_pack_start(LIVES_BOX(hbox), ext_label, FALSE, FALSE, 0);
+  lives_signal_connect(LIVES_GUI_OBJECT(url_entry), LIVES_WIDGET_CHANGED_SIGNAL,
+                       LIVES_GUI_CALLBACK(dl_url_changed), name_entry);
 
 #ifdef ALLOW_NONFREE_CODECS
   //
@@ -4082,7 +4095,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
   radiobutton_nonfree = lives_standard_radio_button_new((tmp = lives_strdup(_("_Non-free (eg. h264 / aac / mp4)"))),
                         &radiobutton_group,
                         LIVES_BOX(hbox),
-                        (tmp2 = lives_strdup(_("Download clip using non-free codecs"))));
+                        (tmp2 = lives_strdup(_("Download clip using non-free codecs and support commercial interests"))));
 
   lives_toggle_button_set_active(LIVES_TOGGLE_BUTTON(radiobutton_nonfree), !only_free);
 
@@ -4094,6 +4107,8 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
                        (livespointer)ext_label);
 
 #endif
+
+  toggle_toggles_var(LIVES_TOGGLE_BUTTON(radiobutton_free), &only_free, FALSE);
 
   hbox = lives_hbox_new(FALSE, 0);
   lives_box_pack_start(LIVES_BOX(dialog_vbox), hbox, TRUE, FALSE, widget_opts.packing_height * 3);
@@ -4244,7 +4259,7 @@ lives_remote_clip_request_t *run_youtube_dialog(lives_remote_clip_request_t *req
 
     url = lives_strdup(lives_entry_get_text(LIVES_ENTRY(url_entry)));
 
-    if (!strlen(url)) {
+    if (!(*url)) {
       lives_free(url);
       do_error_dialog_with_check_transient(_("Please enter a valid URL for the download.\n"), TRUE, 0, LIVES_WINDOW(dialog));
       continue;

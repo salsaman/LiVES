@@ -226,6 +226,8 @@ boolean config_event2(LiVESWidget *, LiVESXEventConfigure *, livespointer);
 
 void changed_fps_during_pb(LiVESSpinButton *, livespointer);
 
+void on_volch_pressed(LiVESButton *, livespointer dirny);
+
 boolean on_mouse_scroll(LiVESWidget *, LiVESXEventScroll *, livespointer);
 
 boolean on_mouse_sel_update(LiVESWidget *, LiVESXEventMotion *, livespointer);

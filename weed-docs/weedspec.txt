@@ -2550,7 +2550,9 @@ The following is optional but recommended, particularly if the plugin set "prefe
 		       (which may be higher than the actual display rate - 
 		       In this way, the generation of frames will appear smooth even if the display rate varies.) If this leaf is set
 		       then it is MANDATORY for the host to set the "fps" leaf so that the plugin may estimate how many internal
-		       frames to generate per display frame.
+		       frames to generate per display frame. It is recommended that the host set this value BEFORE calling the
+		       init_func() for the filter; the value may also be updated by the host between calls to process_func(), however
+		       it may not always be possible for a plugin to comply with such changes after the first init_func() has been called.
 
 
 * "flags" : WEED_SEED_INT : a bitmap of flags informing the plugin it may perform certain updates (see below for definitions)

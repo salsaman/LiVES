@@ -2048,7 +2048,7 @@ static void clock_upd(GdkFrameClock * clock, gpointer user_data) {
 #endif
 
 
-static void reset_timebase(void) {
+static boolean reset_timebase(void) {
   // [IMPORTANT] we subtract these from every calculation to make the numbers smaller
 #if _POSIX_TIMERS
   struct timespec ts;
@@ -2072,10 +2072,18 @@ static void reset_timebase(void) {
 #endif
 
 #ifdef HAVE_PULSE_AUDIO
-  if (mainw->pulsed != NULL) {
-    pa_time_reset(mainw->pulsed, 0);
+  if (prefs->audio_player == AUD_PLAYER_PULSE) {
+    boolean pa_reset = FALSE;
+    if (prefs->audio_src == AUDIO_SRC_INT) {
+      if (mainw->pulsed != NULL && pa_time_reset(mainw->pulsed, 0)) pa_reset = TRUE;
+    } else {
+      if (mainw->pulsed_read != NULL && pa_time_reset(mainw->pulsed_read, 0)) pa_reset = TRUE;
+    }
+    if (!pa_reset) {
+      handle_audio_timeout();
+      return FALSE;
+    }
   }
-  if (mainw->pulsed_read != NULL) pa_time_reset(mainw->pulsed_read, 0);
 #endif
 
 #ifdef ENABLE_JACK
@@ -2088,6 +2096,7 @@ static void reset_timebase(void) {
 #endif
 
   reset_playback_clock();
+  return TRUE;
 }
 
 
@@ -2240,7 +2249,10 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   last_time_source = LIVES_TIME_SOURCE_NONE;
 
   /////////////////////////
-  reset_timebase();
+  if (!reset_timebase()) {
+    mainw->cancelled = CANCEL_INTERNAL_ERROR;
+    return FALSE;
+  }
   //////////////////////////
 
   if (visible) {

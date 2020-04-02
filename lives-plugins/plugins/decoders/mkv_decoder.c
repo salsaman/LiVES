@@ -2157,6 +2157,7 @@ static lives_clip_data_t *init_cdata(void) {
   static malloc_f  ext_malloc  = (malloc_f)  malloc;
   static memcpy_f  ext_memcpy  = (memcpy_f)  memcpy;
   static realloc_f ext_realloc = (realloc_f) realloc;
+  static free_f ext_free = (free_f) free;
 
   lives_mkv_priv_t *priv;
   lives_clip_data_t *cdata = (lives_clip_data_t *)calloc(1, sizeof(lives_clip_data_t));
@@ -2189,6 +2190,7 @@ static lives_clip_data_t *init_cdata(void) {
   cdata->ext_malloc = &ext_malloc;
   cdata->ext_memcpy = &ext_memcpy;
   cdata->ext_realloc = &ext_realloc;
+  cdata->ext_free = &ext_free;
 
   priv->idxc = NULL;
 

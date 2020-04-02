@@ -409,6 +409,7 @@ enum {
 #define LIVES_FILE_EXT_SCRAP "scrap"
 #define LIVES_FILE_EXT_TEXT "txt"
 #define LIVES_FILE_EXT_BAK "bak"
+#define LIVES_FILE_EXT_BACK "back"
 #define LIVES_FILE_EXT_WEBM "webm"
 #define LIVES_FILE_EXT_MP4 "mp4"
 
@@ -1324,6 +1325,7 @@ typedef struct {
   pthread_mutex_t exit_mutex; ///< prevent multiple threads trying to run cleanup
   pthread_rwlock_t mallopt_lock; ///< write locked to allow mallopt updates (may be uneccessary)
   pthread_mutex_t fbuffer_mutex; /// append / remove wirh file_buffer list
+  pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
 
   volatile lives_rfx_t *vrfx_update;
 
@@ -1455,6 +1457,9 @@ typedef struct {
   int next_free_alarm;
 
   char *urgency_msg;
+  char *overlay_msg;
+
+  lives_alarm_t overlay_alarm;
 
   // stuff specific to audio gens (will be extended to all rt audio fx)
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)

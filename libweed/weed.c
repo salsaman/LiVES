@@ -232,7 +232,7 @@ static inline int weed_strcmp(const char *st1, const char *st2) {
 	}
 	st1 = (const char *)(--ip1); st2 = (const char *)(--ip2);
       }
-      if (*st1 != *st2 || !(*st1)) break;
+      if (*st1 != *(st2++)) return 1;
       st1++; st2++;
     }}
   return (*st2 != 0);

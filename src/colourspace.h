@@ -196,6 +196,9 @@ boolean weed_palette_has_alpha(int pal);
 boolean weed_palette_is_float(int pal);
 double weed_palette_get_plane_ratio_horizontal(int pal, int plane);
 double weed_palette_get_plane_ratio_vertical(int pal, int plane);
+
+boolean weed_palette_get_alpha_plane(int pal);
+boolean weed_palette_get_alpha_offset(int pal);
 #endif
 
 void init_colour_engine(void);
@@ -254,10 +257,11 @@ boolean gamma_convert_sub_layer(int gamma_type, double fileg, weed_layer_t *, in
 boolean convert_layer_palette(weed_layer_t *, int outpl, int op_clamping);
 boolean convert_layer_palette_with_sampling(weed_layer_t *, int outpl, int out_sampling);
 boolean convert_layer_palette_full(weed_layer_t *, int outpl, int oclamping, int osampling, int osubspace, int tgamma);
+void lives_layer_set_opaque(weed_layer_t *);
 
 /// widths in PIXELS
 boolean resize_layer(weed_layer_t *, int width, int height, LiVESInterpType interp, int opal_hint, int oclamp_hint);
-boolean letterbox_layer(weed_layer_t *layer, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
+boolean letterbox_layer(weed_layer_t *, int nwidth, int nheight, int width, int height, LiVESInterpType interp, int tpal,
                         int tclamp);
 boolean compact_rowstrides(weed_layer_t *);
 

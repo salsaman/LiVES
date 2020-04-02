@@ -1052,10 +1052,12 @@ LIVES_LOCAL_INLINE boolean is_yuvchan(uint16_t ctype) {
 LIVES_GLOBAL_INLINE size_t pixel_size(int pal) {
   /// This is actually the MACRO pixel size om bytes, to get the real pixel size, divide by weed_palette_pixles_per_macropixel()
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
-  size_t psize = 0;
-  if (!psize) return 0;
-  for (register int i = 0; i < MAXPPLANES && mpx->bitsize[i]; i++) psize += mpx->bitsize[i];
-  return psize / 8;
+  if (!mpx) return 0;
+  else {
+    size_t psize = 0;
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++) psize += mpx->bitsize[i] == 0 ? 1 : mpx->bitsize[i] / 8;
+    return psize;
+  }
 }
 
 LIVES_GLOBAL_INLINE int weed_palette_get_pixels_per_macropixel(int pal) {
@@ -1075,9 +1077,13 @@ LIVES_GLOBAL_INLINE int weed_palette_get_bits_per_macropixel(int pal) {
 LIVES_GLOBAL_INLINE int weed_palette_get_nplanes(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
   register int i = 0;
-  if (mpx) for (i = 0; i < MAXPPLANES && mpx->chantype[i]; i++);
+  if (mpx) {
+    if (!(mpx->flags & WEED_VCHAN_DESC_PLANAR)) return 1;
+    for (i = 0; i < MAXPPLANES && mpx->chantype[i]; i++);
+  }
   return i;
 }
+
 
 LIVES_GLOBAL_INLINE boolean weed_palette_is_alpha(int pal) {
   const weed_macropixel_t *mpx = get_advanced_palette(pal);
@@ -1133,7 +1139,26 @@ LIVES_GLOBAL_INLINE double weed_palette_get_plane_ratio_vertical(int pal, int pl
   return 1.;
 }
 
+LIVES_LOCAL_INLINE int _get_alpha(int pal) {
+  const weed_macropixel_t *mpx = get_advanced_palette(pal);
+  if (mpx) {
+    for (register int i = 0; i < MAXPPLANES && mpx->chantype[i]; i++)
+      if (mpx->chantype[0] == WEED_VCHAN_alpha) return i;
+  }
+  return -1;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palette_get_alpha_plane(int pal) {
+  if (weed_palette_is_planar(pal)) return _get_alpha(pal);
+  return -1;
+}
+
+LIVES_GLOBAL_INLINE boolean weed_palette_get_alpha_offset(int pal) {
+  if (!weed_palette_is_planar(pal)) return _get_alpha(pal);
+  return -1;
+}
 #endif
+
 
 void init_colour_engine(void) {
   init_RGB_to_YUV_tables();
@@ -9189,7 +9214,7 @@ boolean convert_layer_palette_full(weed_layer_t *layer, int outpl, int oclamping
   width = weed_layer_get_width(layer);
   height = weed_layer_get_height(layer);
 
-  // #define DEBUG_PCONV
+  //   #define DEBUG_PCONV
 #ifdef DEBUG_PCONV
   g_print("converting %d X %d palette %s(%s) to %s(%s)\n", width, height, weed_palette_get_name(inpl),
           weed_yuv_clamping_get_name(iclamping),
@@ -11325,6 +11350,44 @@ void lives_pixbuf_set_opaque(LiVESPixbuf * pixbuf) {
 }
 
 
+void lives_layer_set_opaque(weed_layer_t *layer) {
+  int offs;
+  boolean planar = FALSE;
+  int pal = weed_layer_get_palette(layer);
+  if (weed_palette_is_planar(pal)) {
+    offs = weed_palette_get_alpha_plane(pal);
+    planar = TRUE;
+  } else offs = weed_palette_get_alpha_offset(pal);
+
+  if (offs >= 0) {
+    int width = weed_layer_get_width(layer);
+    int height = weed_layer_get_height(layer);
+    int rowstride;
+
+    if (planar) {
+      int *rowstrides = weed_layer_get_rowstrides(layer, NULL);
+      void **pixel_data = weed_layer_get_pixel_data(layer, NULL);
+      rowstride = rowstrides[offs];
+      height *= weed_palette_get_plane_ratio_vertical(pal, offs);
+      lives_memset(pixel_data, 255, rowstride * height);
+      lives_free(rowstrides);
+      lives_free(pixel_data);
+    } else {
+      ssize_t frsize, psize = pixel_size(pal);
+      uint8_t *pixel_data = weed_layer_get_pixel_data_packed(layer);
+      rowstride = weed_layer_get_rowstride(layer);
+      frsize = height * rowstride;
+      width *= psize;
+      for (register int i = 0; i < frsize; i += rowstride) {
+        for (register int j = offs; j < width; j += psize) {
+          pixel_data[i + j] = 255;
+	  // *INDENT-OFF*
+	}}}}
+  // *INDENT-ON*
+
+}
+
+
 boolean compact_rowstrides(weed_layer_t *layer) {
   // remove any extra padding after the image data
   weed_layer_t *old_layer;
@@ -11463,7 +11526,7 @@ boolean resize_layer(weed_layer_t *layer, int width, int height, LiVESInterpType
     lives_free(msg);
     return FALSE;
   }
-  //    #define DEBUG_RESIZE
+  //      #define DEBUG_RESIZE
 #ifdef DEBUG_RESIZE
   g_print("resizing layer size %d X %d with palette %s to %d X %d, hinted %s\n", iwidth, iheight,
           weed_palette_get_name_full(palette,
@@ -12258,7 +12321,7 @@ boolean pixbuf_to_layer(weed_layer_t *layer, LiVESPixbuf * pixbuf) {
   }
 
   framesize = ALIGN_CEIL(rowstride * height, 32);
-  pixel_data = lives_calloc(framesize >> 4, 16);
+  pixel_data = lives_calloc(framesize >> 5, 32);
 
   if (pixel_data != NULL) {
     in_pixel_data = (void *)lives_pixbuf_get_pixels_readonly(pixbuf);

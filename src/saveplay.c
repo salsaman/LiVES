@@ -2090,6 +2090,85 @@ void save_file(int clip, int start, int end, const char *filename) {
 }
 
 
+char *prep_audio_player(char *com2, char *com3, frames_t audio_end, int arate, int asigned, int aendian) {
+  char *stfile = NULL;
+  char *stopcom = NULL, *com;
+  short audio_player = prefs->audio_player;
+  int loop = 0;
+
+  if (cfile->achans > 0) {
+    cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    if (mainw->playing_sel) {
+      off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                     (cfile->asampsize / 8);
+      if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
+    }
+    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+    if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
+  }
+  // start up our audio player (jack or pulse)
+  if (audio_player == AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd != NULL) jack_aud_pb_ready(mainw->current_file);
+    return NULL;
+#endif
+  } else if (audio_player == AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed != NULL) pulse_aud_pb_ready(mainw->current_file);
+    return NULL;
+#endif
+  } else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
+    // sox or mplayer audio - run as background process
+    if (com3) {
+      if (mainw->loop_cont) {
+        // tell audio to loop forever
+        loop = -1;
+      }
+
+      stfile = lives_build_filename(prefs->workdir, cfile->handle, ".stoploop", NULL);
+      lives_rm(stfile);
+
+      if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
+        if (loop) {
+          lives_free(com3);
+          com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd, stfile, prefs->cmd_log);
+        }
+
+        if (com2 != NULL) {
+          if (cfile->achans > 0) {
+            com2 = lives_strdup_printf("%s stop_audio %s", prefs->backend_sync, cfile->handle);
+          }
+          stopcom = lives_strconcat(com3, com2, NULL);
+        }
+      }
+    }
+
+    lives_freep((void **)&stfile);
+
+    stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME".play", NULL);
+
+    lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
+    lives_free(stfile);
+    if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
+
+    // PLAY
+
+    if (cfile->clip_type == CLIP_TYPE_DISK && cfile->opening) {
+      com = lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d", prefs->backend,
+                                cfile->handle, cfile->fps, mainw->audio_start, audio_end, 0,
+                                arate, cfile->achans, cfile->asampsize, asigned, aendian);
+    } else {
+      // this is only used now for sox or mplayer audio player
+      com = lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d", prefs->backend, cfile->handle,
+                                cfile->fps, mainw->audio_start, audio_end, loop,
+                                arate, cfile->achans, cfile->asampsize, asigned, aendian);
+    }
+    if (mainw->multitrack == NULL && com != NULL) lives_system(com, FALSE);
+  }
+  return stopcom;
+}
+
+
 /// play the current clip from 'mainw->play_start' to 'mainw->play_end'
 void play_file(void) {
   LiVESWidgetClosure *freeze_closure, *bg_freeze_closure;
@@ -2126,8 +2205,6 @@ void play_file(void) {
   int current_file = mainw->current_file;
 
   int audio_end = 0;
-
-  int loop = 0;
 
   /// from now on we can only switch at the designated SWITCH POINT
   mainw->noswitch = TRUE;
@@ -2489,70 +2566,7 @@ void play_file(void) {
   if (!mainw->foreign && (!(prefs->audio_src == AUDIO_SRC_EXT &&
                             (audio_player == AUD_PLAYER_JACK ||
                              audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE)))) {
-    if (cfile->achans > 0) {
-      cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
-      if (mainw->playing_sel) {
-        off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
-                       (cfile->asampsize / 8);
-        if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
-      }
-      if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
-      if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
-    }
-    // start up our audio player (jack or pulse)
-    if (audio_player == AUD_PLAYER_JACK) {
-#ifdef ENABLE_JACK
-      if (mainw->jackd != NULL) jack_aud_pb_ready(mainw->current_file);
-#endif
-    } else if (audio_player == AUD_PLAYER_PULSE) {
-#ifdef HAVE_PULSE_AUDIO
-      if (mainw->pulsed != NULL) pulse_aud_pb_ready(mainw->current_file);
-#endif
-    } else if (audio_player != AUD_PLAYER_NONE && cfile->achans > 0) {
-      // sox or mplayer audio - run as background process
-
-      if (mainw->loop_cont) {
-        // tell audio to loop forever
-        loop = -1;
-      }
-
-      stfile = lives_build_filename(prefs->workdir, cfile->handle, ".stoploop", NULL);
-      lives_rm(stfile);
-
-      if (cfile->achans > 0 || (!cfile->is_loaded && !mainw->is_generating)) {
-        if (loop) {
-          lives_free(com3);
-          com3 = lives_strdup_printf("%s \"%s\" 2>\"%s\" 1>&2", capable->touch_cmd, stfile, prefs->cmd_log);
-        }
-
-        if (cfile->achans > 0) {
-          com2 = lives_strdup_printf("%s stop_audio %s", prefs->backend_sync, cfile->handle);
-        }
-        stopcom = lives_strconcat(com3, com2, NULL);
-      }
-
-      lives_free(stfile);
-
-      stfile = lives_build_filename(prefs->workdir, cfile->handle, LIVES_STATUS_FILE_NAME".play", NULL);
-
-      lives_snprintf(cfile->info_file, PATH_MAX, "%s", stfile);
-      lives_free(stfile);
-      if (cfile->clip_type == CLIP_TYPE_DISK) lives_rm(cfile->info_file);
-
-      // PLAY
-
-      if (cfile->clip_type == CLIP_TYPE_DISK && cfile->opening) {
-        com = lives_strdup_printf("%s play_opening_preview \"%s\" %.3f %d %d %d %d %d %d %d %d", prefs->backend,
-                                  cfile->handle, cfile->fps, mainw->audio_start, audio_end, 0,
-                                  arate, cfile->achans, cfile->asampsize, asigned, aendian);
-      } else {
-        // this is only used now for sox or mplayer audio player
-        com = lives_strdup_printf("%s play %s %.3f %d %d %d %d %d %d %d %d", prefs->backend, cfile->handle,
-                                  cfile->fps, mainw->audio_start, audio_end, loop,
-                                  arate, cfile->achans, cfile->asampsize, asigned, aendian);
-      }
-      if (mainw->multitrack == NULL && com != NULL) lives_system(com, FALSE);
-    }
+    stopcom = prep_audio_player(com2, com3, audio_end, arate, asigned, aendian);
   }
 
   lives_free(com3);
@@ -3277,6 +3291,11 @@ void play_file(void) {
         showclipimgs();
       }
     }
+  }
+
+  if (!mainw->multitrack && cfile->achans > 0) {
+    update_timer_bars(0, 0, 0, 0, 2);
+    update_timer_bars(0, 0, 0, 0, 3);
   }
 
   if (prefs->show_gui && ((mainw->multitrack == NULL && mainw->double_size) ||
@@ -5212,7 +5231,7 @@ int save_to_scrap_file(weed_layer_t *layer) {
     lives_mkdir_with_parents(dirname, capable->umask);
     lives_free(dirname);
 
-    fd = lives_create_buffered(oname, S_IRUSR | S_IWUSR);
+    fd = lives_create_buffered(oname, DEF_FILE_PERMS);
     lives_free(oname);
 
     if (fd < 0) return scrapfile->frames;

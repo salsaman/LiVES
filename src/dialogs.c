@@ -2304,7 +2304,8 @@ boolean do_progress_dialog(boolean visible, boolean cancellable, const char *tex
   // re-seek to new playback start
 #ifdef ENABLE_JACK
   if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
-      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL && mainw->jackd->playing_file > -1) {
+      !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL
+      && mainw->jackd->playing_file > -1) {
     if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
       if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
       else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;

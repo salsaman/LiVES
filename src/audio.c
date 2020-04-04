@@ -18,8 +18,7 @@ static boolean storedfdsset = FALSE;
 
 
 static void audio_reset_stored_fnames(void) {
-  int i;
-  for (i = 0; i < NSTOREDFDS; i++) {
+  for (register int i = 0; i < NSTOREDFDS; i++) {
     storedfnames[i] = NULL;
     storedfds[i] = -1;
   }
@@ -394,8 +393,7 @@ void sample_move_d8_d16(short *dst, uint8_t *src,
       nDstCount--;
 
       ptr = src + ccount + src_offset_i;
-      ptr = ptr > src
-            ? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
+      ptr = ptr > src ? (ptr < (src_end + ccount) ? ptr : (src_end + ccount)) : src;
 
       if (!swap_sign) *(dst++) = *(ptr) << 8;
       else if (swap_sign == SWAP_U_TO_S) *(dst++) = ((short)(*(ptr)) - 128) << 8;
@@ -1212,6 +1210,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
 
   float *float_buffer[out_achans * nfiles];
   float *chunk_float_buffer[out_achans * nfiles];
+  float clip_vol;
 
   if (out_achans * nfiles * tsamples == 0) return 0l;
 
@@ -1493,11 +1492,14 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
       zavel = zzavel;
       lives_free(in_buff);
-
+      /// if we are previewing a rendering, we would get double the volume adjustment, once from the rendering and again from
+      /// the audio player, so in that case we skip the adjustment here
+      if (!mainw->preview_rendering) clip_vol = lives_vol_from_linear(mainw->files[from_files[track]]->vol);
+      else clip_vol = 1.;
       for (c = 0; c < out_achans; c++) {
         /// now we convert to holding_buff to float in float_buffer and adjust the track volume
         sample_move_d16_float(float_buffer[c + track * out_achans], holding_buff + c, nframes,
-                              out_achans, in_unsigned[track], FALSE, use_live_chvols ? 1. : chvol[track]);
+                              out_achans, in_unsigned[track], FALSE, clip_vol * (use_live_chvols ? 1. : chvol[track]));
       }
     }
 
@@ -1679,6 +1681,191 @@ void aud_fade(int fileno, double startt, double endt, double startv, double endv
     do_read_failed_error_s(infilename, NULL);
     lives_free(infilename);
   }
+}
+
+
+void preview_audio(void) {
+  // start a minimalistic player with only audio
+  mainw->play_start = cfile->start;
+  mainw->play_end = cfile->end;
+  mainw->playing_sel = TRUE;
+
+  if (cfile->achans > 0) {
+    cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    if (mainw->playing_sel) {
+      off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * cfile->arate) * cfile->achans *
+                     (cfile->asampsize / 8);
+      if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
+    }
+    if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
+    if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
+  }
+  // start up our audio player (jack or pulse)
+  if (prefs->audio_player == AUD_PLAYER_JACK) {
+#ifdef ENABLE_JACK
+    if (mainw->jackd != NULL) jack_aud_pb_ready(mainw->current_file);
+#endif
+  } else if (prefs->audio_player == AUD_PLAYER_PULSE) {
+#ifdef HAVE_PULSE_AUDIO
+    if (mainw->pulsed != NULL) pulse_aud_pb_ready(mainw->current_file);
+#endif
+
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK) {
+      mainw->write_abuf = 0;
+
+      // fill our audio buffers now
+      // this will also get our effects state
+      pthread_mutex_lock(&mainw->abuf_mutex);
+      mainw->jackd->read_abuf = 0;
+      mainw->abufs_to_fill = 0;
+      pthread_mutex_unlock(&mainw->abuf_mutex);
+      if (mainw->event_list != NULL)
+        mainw->jackd->is_paused = mainw->jackd->in_use = TRUE;
+    }
+#endif
+    mainw->playing_file = mainw->current_file;
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && cfile->achans > 0 && cfile->laudio_time > 0. &&
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->jackd != NULL
+        && mainw->jackd->playing_file > -1) {
+      if (!jack_audio_seek_frame(mainw->jackd, mainw->aframeno)) {
+        if (jack_try_reconnect()) jack_audio_seek_frame(mainw->jackd, mainw->aframeno);
+        else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+      }
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && cfile->achans > 0 && cfile->laudio_time > 0. &&
+        !mainw->is_rendering && !(cfile->opening && !mainw->preview) && mainw->pulsed != NULL
+        && mainw->pulsed->playing_file > -1) {
+      if (!pulse_audio_seek_frame(mainw->pulsed, mainw->aframeno)) {
+        handle_audio_timeout();
+        return;
+      }
+    }
+#endif
+
+    while (mainw->cancelled == CANCEL_NONE) {
+      int count = 0;
+      mainw->video_seek_ready = TRUE;
+      if ((count++ & 0XFF) == 0) lives_widget_context_update();
+      lives_nanosleep(1000);
+    }
+    mainw->playing_file = -1;
+
+    // reset audio buffers
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd != NULL) {
+      // must do this before deinit fx
+      pthread_mutex_lock(&mainw->abuf_mutex);
+      mainw->jackd->read_abuf = -1;
+      mainw->jackd->in_use = FALSE;
+      pthread_mutex_unlock(&mainw->abuf_mutex);
+    }
+#endif
+
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed != NULL) {
+      pthread_mutex_lock(&mainw->abuf_mutex);
+      mainw->pulsed->read_abuf = -1;
+      mainw->pulsed->in_use = FALSE;
+      pthread_mutex_unlock(&mainw->abuf_mutex);
+    }
+#endif
+
+    mainw->playing_sel = FALSE;
+    lives_ce_update_timeline(0, cfile->real_pointer_time);
+    if (mainw->cancelled == CANCEL_AUDIO_ERROR) {
+      handle_audio_timeout();
+    }
+
+#ifdef ENABLE_JACK
+    if (prefs->audio_player == AUD_PLAYER_JACK && (mainw->jackd != NULL || mainw->jackd_read != NULL)) {
+      // tell jack client to close audio file
+      if (mainw->jackd != NULL && mainw->jackd->playing_file > 0) {
+        ticks_t timeout = 0;
+        if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
+          lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+          while ((timeout = lives_alarm_check(alarm_handle)) > 0 && jack_get_msgq(mainw->jackd) != NULL) {
+            sched_yield(); // wait for seek
+            lives_usleep(prefs->sleep_time);
+          }
+          lives_alarm_clear(alarm_handle);
+        }
+        if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
+        jack_message.command = ASERVER_CMD_FILE_CLOSE;
+        jack_message.data = NULL;
+        jack_message.next = NULL;
+        mainw->jackd->msgq = &jack_message;
+        if (timeout == 0) handle_audio_timeout();
+      }
+    }
+#endif
+#ifdef HAVE_PULSE_AUDIO
+    if (prefs->audio_player == AUD_PLAYER_PULSE && (mainw->pulsed != NULL || mainw->pulsed_read != NULL)) {
+      // tell pulse client to close audio file
+      if (mainw->pulsed != NULL) {
+        if (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0) {
+          ticks_t timeout = 0;
+          if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
+            lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
+            while ((timeout = lives_alarm_check(alarm_handle)) > 0 && pulse_get_msgq(mainw->pulsed) != NULL) {
+              sched_yield(); // wait for seek
+              lives_usleep(prefs->sleep_time);
+            }
+            lives_alarm_clear(alarm_handle);
+          }
+          if (mainw->cancelled == CANCEL_AUDIO_ERROR) mainw->cancelled = CANCEL_ERROR;
+          pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+          pulse_message.data = NULL;
+          pulse_message.next = NULL;
+          mainw->pulsed->msgq = &pulse_message;
+          if (timeout == 0)  {
+            handle_audio_timeout();
+            mainw->pulsed->playing_file = -1;
+            mainw->pulsed->fd = -1;
+          } else {
+            while (mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0) {
+              sched_yield();
+              lives_usleep(prefs->sleep_time);
+            }
+            pulse_driver_cork(mainw->pulsed);
+          }
+        } else {
+          pulse_driver_cork(mainw->pulsed);
+        }
+      }
+    }
+#endif
+  }
+}
+
+
+void preview_aud_vol(void) {
+  float ovol = cfile->vol;
+  cfile->vol = (float)mainw->fx1_val;
+  preview_audio();
+  cfile->vol = ovol;
+  mainw->cancelled = CANCEL_NONE;
+  mainw->error = FALSE;
+}
+
+
+boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup) {
+  double dvol = (double)newvol;
+  if (make_backup) {
+    char *com = lives_strdup_printf("%s backup_audio \"%s\"", prefs->backend_sync, cfile->handle);
+    mainw->com_failed = FALSE;
+    lives_system(com, FALSE);
+    lives_free(com);
+    if (mainw->com_failed) {
+      mainw->com_failed = FALSE;
+      return FALSE;
+    }
+  }
+  aud_fade(fileno, 0., CLIP_AUDIO_TIME(fileno), dvol, dvol);
+  return TRUE;
 }
 
 
@@ -3234,7 +3421,7 @@ boolean apply_rte_audio(int64_t nframes) {
       lives_memset(fltbuf[i], 0, nframes * sizeof(float));
       if (nframes > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nframes, cfile->achans, \
                                                (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
-                                               1.0);
+                                               lives_vol_from_linear(cfile->vol));
     }
   } else {
     // read from plugin. This should already be float.
@@ -3400,12 +3587,12 @@ boolean push_audio_to_channel(weed_plant_t *filter, weed_plant_t *achan, lives_a
         if (!abuf->in_interleaf) {
           abuf->bufferf[i] = (float *)lives_calloc_safety(abuf->samples_filled, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][offs], samps, 1,
-                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
+                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, lives_vol_from_linear(cfile->vol));
           offs += abuf->samples_filled;
         } else {
           abuf->bufferf[i] = (float *)lives_calloc_safety(samps / abuf->out_achans, sizeof(float));
           sample_move_d16_float(abuf->bufferf[i], &abuf->buffer16[0][i], samps / abuf->in_achans, abuf->in_achans,
-                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, 1.0);
+                                (abuf->s16_signed ? AFORM_SIGNED : AFORM_UNSIGNED), abuf->swap_endian, lives_vol_from_linear(cfile->vol));
         }
       }
       abuf->out_interleaf = FALSE;

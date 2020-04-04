@@ -1,6 +1,6 @@
 // interface.c
 // LiVES
-// (c) G. Finch 2003 - 2019 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -9,6 +9,7 @@
 #include "interface.h"
 #include "paramwindow.h"
 #include "merge.h"
+#include "resample.h"
 #include "startup.h"
 #include "support.h"
 #include "omc-learn.h" // for OSC_NOTIFY mapping
@@ -461,7 +462,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
             return;
           }
           atime = (double)i / scalex;
-          cfile->audio_waveform[0][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
+          cfile->audio_waveform[0][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 0, cfile->achans) * 2.;
         }
 
         lives_close_buffered(afd);
@@ -608,7 +609,7 @@ void update_timer_bars(int posx, int posy, int width, int height, int which) {
           return;
         }
         atime = (double)i / scalex;
-        cfile->audio_waveform[1][i] = get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
+        cfile->audio_waveform[1][i] = cfile->vol * get_float_audio_val_at_time(mainw->current_file, afd, atime, 1, cfile->achans) * 2.;
       }
 
       lives_close_buffered(afd);
@@ -2725,6 +2726,230 @@ LiVESWidget *create_cdtrack_dialog(int type, livespointer user_data) {
 }
 
 
+static void on_avolch_ok(LiVESButton * button, livespointer data) {
+  if (fabs(cfile->vol - mainw->fx1_val) > .005) {
+    uint32_t chk_mask = WARN_MASK_LAYOUT_ALTER_AUDIO;
+    char *tmp = lives_strdup(_("Changing the audio volume"));
+    lives_general_button_clicked(button, NULL);
+    if (check_for_layout_errors(tmp, mainw->current_file, 1,
+                                calc_frame_from_time4(mainw->current_file, CLIP_AUDIO_TIME(mainw->current_file)), &chk_mask)) {
+      d_print(_("Adjusting clip volume..."));
+      lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
+      if (!adjust_clip_volume(mainw->current_file, lives_vol_from_linear(mainw->fx1_val), !prefs->conserve_space)) {
+        d_print_failed();
+        unbuffer_lmap_errors(FALSE);
+        lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+        return;
+      }
+      set_undoable(_("Volume Adjustment"), TRUE);
+      cfile->undo_action = UNDO_AUDIO_VOL;
+      update_timer_bars(0, 0, 0, 0, 2);
+      update_timer_bars(0, 0, 0, 0, 3);
+      d_print(_("clip volume adjusted by a factor of %.2f\n"), cfile->vol);
+      cfile->vol = 1.;
+    } else d_print_cancelled();
+    lives_free(tmp);
+    lives_set_cursor_style(LIVES_CURSOR_NORMAL, NULL);
+  }
+}
+
+//static void preview_aud_vol_cb(LiVESButton * button, livespointer data) {preview_aud_vol();}
+
+void create_new_pb_speed(short type) {
+  // type 1 = change speed
+  // type 2 = resample
+  // type 3 = clip audio volume
+
+  LiVESWidget *new_pb_speed;
+  LiVESWidget *dialog_vbox;
+  LiVESWidget *vbox;
+  LiVESWidget *hbox;
+  LiVESWidget *ca_hbox;
+  LiVESWidget *label;
+  LiVESWidget *label2;
+  LiVESWidget *radiobutton1 = NULL;
+  LiVESWidget *radiobutton2 = NULL;
+  LiVESWidget *spinbutton_pb_speed;
+  LiVESWidget *spinbutton_pb_time = NULL;
+  LiVESWidget *cancelbutton;
+  LiVESWidget *change_pb_ok;
+  LiVESWidget *change_audio_speed;
+
+  LiVESAccelGroup *accel_group;
+
+  LiVESSList *rbgroup = NULL;
+
+  char label_text[256];
+
+  char *title = NULL;
+
+  if (type == 1) {
+    title = lives_strdup(_("Change Playback Speed"));
+  } else if (type == 2) {
+    title = lives_strdup(_("Resample Video"));
+  } else {
+    title = lives_strdup(_("Adjust Clip Volume"));
+  }
+
+  new_pb_speed = lives_standard_dialog_new(title, FALSE, -1, -1);
+  lives_signal_handlers_disconnect_by_func(new_pb_speed, return_true, NULL);
+  lives_free(title);
+
+  accel_group = LIVES_ACCEL_GROUP(lives_accel_group_new());
+  lives_window_add_accel_group(LIVES_WINDOW(new_pb_speed), accel_group);
+
+  dialog_vbox = lives_dialog_get_content_area(LIVES_DIALOG(new_pb_speed));
+
+  vbox = lives_vbox_new(FALSE, widget_opts.packing_height * 2);
+
+  lives_box_pack_start(LIVES_BOX(dialog_vbox), vbox, TRUE, TRUE, 0);
+
+  if (type == 1) {
+    lives_snprintf(label_text, 256,
+                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the desired playback speed\nin _frames per second"),
+                   cfile->fps);
+  } else if (type == 2) {
+    lives_snprintf(label_text, 256,
+                   _("Current playback speed is %.3f frames per second.\n\nPlease enter the _resampled rate\nin frames per second"),
+                   cfile->fps);
+  } else if (type == 3) {
+    lives_snprintf(label_text, 256,
+                   _("Current volume level for this clip is %.2f.\n\nYou may select a new  _volume level here.\n\n"
+                     "Please note that the volume can also be varied during playback\nusing the %s and %s keys.\nChanging it here will make "
+                     "the adjustment permanent.\n"), "'<'", "'>'", cfile->vol);
+  }
+
+  label = lives_standard_label_new_with_mnemonic_widget(label_text, NULL);
+
+  hbox = lives_hbox_new(FALSE, 0);
+  lives_box_pack_start(LIVES_BOX(vbox), label, FALSE, FALSE, widget_opts.packing_height);
+  lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+  if (type == 3) {
+    add_fill_to_box(LIVES_BOX(hbox));
+    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, (double)cfile->vol, 0., 4., .01, .01, 2, LIVES_BOX(hbox), NULL);
+    add_fill_to_box(LIVES_BOX(hbox));
+  } else if (type == 2) {
+    add_fill_to_box(LIVES_BOX(hbox));
+    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
+    add_fill_to_box(LIVES_BOX(hbox));
+  } else {
+    radiobutton1 = lives_standard_radio_button_new(NULL, &rbgroup, LIVES_BOX(hbox), NULL);
+
+    spinbutton_pb_speed = lives_standard_spin_button_new(NULL, cfile->fps, 1., FPS_MAX, .01, .1, 3, LIVES_BOX(hbox), NULL);
+
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    add_fill_to_box(LIVES_BOX(hbox));
+
+    label2 = lives_standard_label_new_with_mnemonic_widget(_("OR enter the desired clip length in _seconds"), NULL);
+    lives_box_pack_start(LIVES_BOX(hbox), label2, TRUE, TRUE, widget_opts.packing_width);
+
+    add_fill_to_box(LIVES_BOX(hbox));
+
+    hbox = lives_hbox_new(FALSE, 0);
+    lives_box_pack_start(LIVES_BOX(vbox), hbox, FALSE, FALSE, widget_opts.packing_height);
+
+    radiobutton2 = lives_standard_radio_button_new(NULL, &rbgroup, LIVES_BOX(hbox), NULL);
+
+    spinbutton_pb_time = lives_standard_spin_button_new(NULL,
+                         (double)((int)(cfile->frames / cfile->fps * 100.)) / 100.,
+                         1. / FPS_MAX, cfile->frames, 1., 10., 2, LIVES_BOX(hbox), NULL);
+
+    lives_label_set_mnemonic_widget(LIVES_LABEL(label2), spinbutton_pb_time);
+  }
+
+  lives_label_set_mnemonic_widget(LIVES_LABEL(label), spinbutton_pb_speed);
+
+  add_fill_to_box(LIVES_BOX(vbox));
+
+  if (type < 3) {
+    ca_hbox = lives_hbox_new(FALSE, 0);
+    change_audio_speed = lives_standard_check_button_new
+                         (_("Change the _audio speed as well"), FALSE, LIVES_BOX(ca_hbox), NULL);
+
+    lives_box_pack_start(LIVES_BOX(vbox), ca_hbox, TRUE, TRUE, widget_opts.packing_height);
+
+    add_fill_to_box(LIVES_BOX(vbox));
+
+    if (type != 1 || cfile->achans == 0) lives_widget_set_no_show_all(ca_hbox, TRUE);
+  }
+
+  cancelbutton = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), LIVES_STOCK_CANCEL, NULL,
+                 LIVES_RESPONSE_CANCEL);
+
+  lives_widget_add_accelerator(cancelbutton, LIVES_WIDGET_CLICKED_SIGNAL, accel_group,
+                               LIVES_KEY_Escape, (LiVESXModifierType)0, (LiVESAccelFlags)0);
+
+  /// TODO: needs more work to enable easy playback of audio without the video
+  /* if (type == 3) { */
+  /*   char *tmp; */
+  /*   LiVESWidget *playbutt = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), */
+  /*                           LIVES_STOCK_MEDIA_PLAY, */
+  /*                           (tmp = (cfile->real_pointer_time > 0. || (cfile->start == 1 && cfile->end == cfile->frames) ? */
+  /*                                   lives_strdup(_("Preview audio")) : */
+  /*                                   lives_strdup(_("Preview audio in selected range")))), */
+  /*                           LIVES_RESPONSE_CANCEL); */
+  /*   lives_free(tmp); */
+  /*   lives_signal_connect(LIVES_GUI_OBJECT(playbutt), LIVES_WIDGET_CLICKED_SIGNAL, */
+  /*                        LIVES_GUI_CALLBACK(preview_aud_vol_cb), */
+  /*                        NULL); */
+  /* } */
+
+  change_pb_ok = lives_dialog_add_button_from_stock(LIVES_DIALOG(new_pb_speed), LIVES_STOCK_OK, NULL,
+                 LIVES_RESPONSE_OK);
+
+  lives_button_grab_default_special(change_pb_ok);
+  lives_widget_grab_focus(spinbutton_pb_speed);
+
+  if (type < 3) {
+    reorder_leave_back_set(FALSE);
+    lives_signal_connect(LIVES_GUI_OBJECT(change_audio_speed), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_boolean_toggled),
+                         &mainw->fx1_bool);
+  }
+  lives_signal_connect(LIVES_GUI_OBJECT(cancelbutton), LIVES_WIDGET_CLICKED_SIGNAL,
+                       LIVES_GUI_CALLBACK(lives_general_button_clicked),
+                       NULL);
+  if (type == 1) {
+    lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_change_speed_ok_clicked),
+                         NULL);
+  } else if (type == 2) {
+    lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_resample_vid_ok),
+                         NULL);
+
+  } else if (type == 3) {
+    lives_signal_connect(LIVES_GUI_OBJECT(change_pb_ok), LIVES_WIDGET_CLICKED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_avolch_ok),
+                         NULL);
+  }
+
+  lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_pb_speed), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                             LIVES_GUI_CALLBACK(on_spin_value_changed),
+                             LIVES_INT_TO_POINTER(1));
+
+  if (type == 1) {
+    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_pb_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(on_spin_value_changed),
+                               LIVES_INT_TO_POINTER(2));
+    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_pb_speed), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(widget_act_toggle),
+                               radiobutton1);
+    lives_signal_connect_after(LIVES_GUI_OBJECT(spinbutton_pb_time), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
+                               LIVES_GUI_CALLBACK(widget_act_toggle),
+                               radiobutton2);
+    lives_signal_connect(LIVES_GUI_OBJECT(radiobutton2), LIVES_WIDGET_TOGGLED_SIGNAL,
+                         LIVES_GUI_CALLBACK(on_boolean_toggled),
+                         &mainw->fx2_bool);
+  }
+
+  lives_widget_show_all(new_pb_speed);
+}
+
+
 static void rb_aud_sel_pressed(LiVESButton * button, livespointer user_data) {
   aud_dialog_t *audd = (aud_dialog_t *)user_data;
   audd->is_sel = !audd->is_sel;
@@ -3620,7 +3845,8 @@ static void pair_add(LiVESWidget * table, const char *key, const char *meaning) 
 }
 
 
-#define ADD_KEYDEF(key, desc) pair_add(textwindow->table, (tmp = lives_strdup(key)), (tmp2 = lives_strdup(desc))); lives_free(tmp); lives_free(tmp2)
+#define ADD_KEYDEF(key, desc) pair_add(textwindow->table, (tmp = lives_strdup(key)), (tmp2 = lives_strdup(desc))); \
+  lives_free(tmp); lives_free(tmp2)
 
 void do_keys_window(void) {
   char *tmp = lives_strdup(_("Show Keys")), *tmp2;
@@ -3637,47 +3863,50 @@ void do_keys_window(void) {
   ADD_KEYDEF(_("You can use the following keys during playback to control LiVES:-"), NULL);
   ADD_KEYDEF(NULL, NULL);
   ADD_KEYDEF(NULL, _("Recordable keys (press 'r' before playback to make a recording)"));
-  ADD_KEYDEF(_("ctrl-left"), _("skip back"));
-  ADD_KEYDEF(_("ctrl-right"), _("skip forwards"));
+  ADD_KEYDEF(_("ctrl-left"), _("skip / scratch backwards (video only)\nWhen not playing moves the playback cursor"));
+  ADD_KEYDEF(_("ctrl-right"), _("skip / scratch forwards (video only)\nWhen not playing moves the playback cursor"));
   ADD_KEYDEF(_("ctrl-up"), _("play faster"));
   ADD_KEYDEF(_("ctrl-down"), _("play slower"));
   ADD_KEYDEF(_("ctrl-shift-up"), _("background clip play faster"));
   ADD_KEYDEF(_("ctrl-shift-down"), _("background clip play slower"));
   ADD_KEYDEF(_("ctrl-alt-up"), _("increase effect parameter for keygrabbed effect"));
   ADD_KEYDEF(_("ctrl-alt-down"), _("decrease effect parameter for keybrabbed effect"));
-  ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate"));
+  ADD_KEYDEF(_("ctrl-enter"), _("reset frame rate / resync audio (foreground clip)"));
   ADD_KEYDEF(_("ctrl-shift-enter"), _("reset frame rate (background clip)"));
-  ADD_KEYDEF(_("ctrl-space"), _("reverse direction"));
+  ADD_KEYDEF(_("ctrl-space"), _("reverse direction (foreground clip)"));
   ADD_KEYDEF(_("ctrl-shift-space"), _("reverse direction (background clip)"));
   ADD_KEYDEF(_("ctrl-alt-space"),
-             _("reverse direction with lock\n(press once to mark IN point, again to mark OUT point;\n"
+             _("Loop Lock\n(press once to mark IN point, then again to mark OUT point;\n"
                "ctrl-space, ctrl-enter, or switching clips clears)"));
-  ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame"));
-  ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip)"));
-  ADD_KEYDEF("a", _("audio lock on: play audio from current foreground clip, and ignore video clip switches"));
-  ADD_KEYDEF("A", _("audio lock off; audio follows the foreground video clip"));
-  ADD_KEYDEF("n", _("nervous"));
+  ADD_KEYDEF(_("ctrl-backspace"), _("freeze frame (forground and background)"));
+  ADD_KEYDEF(_("ctrl-alt-backspace"), _("freeze frame (background clip only)"));
+  ADD_KEYDEF("a", _("audio lock ON: lock audio to the current foreground clip; ignore video clip switches"));
+  ADD_KEYDEF("A", _("audio lock OFF; audio follows the foreground video clip (unless overridden in Preferences)"));
+  ADD_KEYDEF("n", _("nervous mode"));
   ADD_KEYDEF(_("ctrl-page-up"), _("previous clip"));
   ADD_KEYDEF(_("ctrl-page-down"), _("next clip"));
   ADD_KEYDEF("", "");
   ADD_KEYDEF(_("ctrl-1"), _("toggle real-time effect 1"));
   ADD_KEYDEF(_("ctrl-2"), _("toggle real-time effect 2"));
   ADD_KEYDEF(_("...etc..."), "");
-  ADD_KEYDEF(_("ctrl-0"), _("real-time effects off"));
-  ADD_KEYDEF("x", _("swap background/foreground"));
+  ADD_KEYDEF(_("ctrl-9"), _("toggle real-time effect 9"));
+  ADD_KEYDEF(_("ctrl-0"), _("real-time effects (1 - 9) OFF"));
+  ADD_KEYDEF(_("ctrl-minus"), _("toggle real-time effect 10 (unaffected by ctrl-0)"));
+  ADD_KEYDEF(_("ctrl-equals"), _("toggle real-time effect 11 (unaffected by ctrl-0)"));
+  ADD_KEYDEF("x", _("swap background / foreground clips"));
   ADD_KEYDEF("", "");
-  ADD_KEYDEF("k", _("grab keyboard for last activated effect key (affects m, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
+  ADD_KEYDEF("k", _("grab keyboard for last activated effect key (affects m, M, t, tab and ctrl-alt-up, ctrl-alt-down keys)"));
   ADD_KEYDEF("m", _("next effect mode (for whichever key has keyboard grab)"));
   ADD_KEYDEF("M", _("previous effect mode (for whichever key has keyboard grab)"));
   ADD_KEYDEF(_("ctrl-alt-1"), _("grab keyboard for effect key 1 (similar to k key)"));
   ADD_KEYDEF(_("ctrl-alt-2"), _("grab keyboard for effect key 2"));
   ADD_KEYDEF(_("...etc..."), "");
   ADD_KEYDEF("t", _("enter text parameter (when effect has keyboard grab)"));
-  ADD_KEYDEF(_("tab"), _("leave text parameter (when effect has keyboard grab)"));
-  ADD_KEYDEF(_("f1"), _("store/switch to clip mnemonic 1"));
-  ADD_KEYDEF(_("f2"), _("store/switch to clip mnemonic 2"));
+  ADD_KEYDEF(_("TAB"), _("leave text parameter (reverse of 't')"));
+  ADD_KEYDEF(_("F1"), _("store/switch to bookmark 1 (first press stores clip and frame)"));
+  ADD_KEYDEF(_("F2"), _("store/switch to bookmark 2"));
   ADD_KEYDEF(_("...etc..."), "");
-  ADD_KEYDEF(_("f12"), _("clear function keys"));
+  ADD_KEYDEF(_("F12"), _("clear function keys (bookmarks)"));
   ADD_KEYDEF("", "");
   ADD_KEYDEF(NULL, _("Other playback keys"));
   ADD_KEYDEF("p", _("play all"));
@@ -3685,9 +3914,15 @@ void do_keys_window(void) {
   ADD_KEYDEF("q", _("stop"));
   ADD_KEYDEF("f", _("fullscreen"));
   ADD_KEYDEF("s", _("separate window"));
-  ADD_KEYDEF("d", _("double size"));
-  ADD_KEYDEF("g", _("ping pong loops"));
-  ADD_KEYDEF("w", _("display a/v sync status"));
+  ADD_KEYDEF("d", _("double sized playarea (only in clip edit mode)"));
+  ADD_KEYDEF("r", _("toggle recording mode (clip edit mode only)"));
+  ADD_KEYDEF("b", _("blank / unblank the interface background (clip editor only)"));
+  ADD_KEYDEF("o", _("activate / deactivate continuous looping"));
+  ADD_KEYDEF("g", _("enable / disable ping pong looping"));
+  ADD_KEYDEF("l", _("enable / disable stop on audio end (ignored if continuous loop is active)"));
+  ADD_KEYDEF("<", _("lower the volume of current audio clip"));
+  ADD_KEYDEF(">", _("increase the volume of current audio clip"));
+  ADD_KEYDEF("w", _("display a/v sync status (developer mode)"));
   ADD_KEYDEF("", "");
 }
 

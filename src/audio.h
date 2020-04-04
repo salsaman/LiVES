@@ -186,6 +186,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
                              ticks_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
 
 void aud_fade(int fileno, double startt, double endt, double startv, double endv); ///< fade in/fade out
+boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 
 typedef enum {
   RECA_MONITOR = 0,
@@ -229,6 +230,8 @@ void free_pulse_audio_buffers(void);
 void audio_free_fnames(void);
 
 #define is_realtime_aplayer(ptype) ((ptype == AUD_PLAYER_JACK || ptype == AUD_PLAYER_PULSE || ptype == AUD_PLAYER_NONE))
+
+void preview_aud_vol(void);
 
 lives_audio_buf_t *audio_cache_init(void);
 void audio_cache_end(void);

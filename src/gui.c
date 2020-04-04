@@ -1227,12 +1227,16 @@ void create_LiVES(void) {
 
   lives_menu_add_separator(LIVES_MENU(mainw->audio_menu));
 
+  mainw->voladj = lives_standard_menu_item_new_with_label(_("Change clip volume..."));
+  lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->voladj);
+
   mainw->fade_aud_in = lives_standard_menu_item_new_with_label(_("Fade Audio _In..."));
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->fade_aud_in);
 
   mainw->fade_aud_out = lives_standard_menu_item_new_with_label(_("Fade Audio _Out..."));
   lives_container_add(LIVES_CONTAINER(mainw->audio_menu), mainw->fade_aud_out);
 
+  lives_widget_set_sensitive(mainw->voladj, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
 
@@ -2789,6 +2793,9 @@ void create_LiVES(void) {
                        LIVES_INT_TO_POINTER(1));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->delsel_audio), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_del_audio_activate),
+                       LIVES_INT_TO_POINTER(0));
+  lives_signal_connect(LIVES_GUI_OBJECT(mainw->voladj), LIVES_WIDGET_ACTIVATE_SIGNAL,
+                       LIVES_GUI_CALLBACK(on_voladj_activate),
                        LIVES_INT_TO_POINTER(0));
   lives_signal_connect(LIVES_GUI_OBJECT(mainw->fade_aud_in), LIVES_WIDGET_ACTIVATE_SIGNAL,
                        LIVES_GUI_CALLBACK(on_fade_audio_activate),

@@ -407,7 +407,7 @@ void lives_exit(int signum) {
                 lives_free(com);
                 if (IS_NORMAL_CLIP(i)) {
                   char *fname = lives_build_filename(prefs->workdir, mainw->files[i]->handle, TOTALSAVE_NAME, NULL);
-                  int fd = lives_create_buffered(fname, S_IRUSR | S_IWUSR);
+                  int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
                   lives_write_buffered(fd, (const char *)mainw->files[i], sizeof(lives_clip_t), TRUE);
                   lives_close_buffered(fd);
                 }
@@ -2506,7 +2506,7 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
   }
 
   if (cfile->undo_action == UNDO_AUDIO_RESAMPLE || cfile->undo_action == UNDO_REC_AUDIO ||
-      cfile->undo_action == UNDO_FADE_AUDIO ||
+      cfile->undo_action == UNDO_FADE_AUDIO || cfile->undo_action == UNDO_AUDIO_VOL ||
       cfile->undo_action == UNDO_TRIM_AUDIO || cfile->undo_action == UNDO_APPEND_AUDIO ||
       (cfile->undo_action == UNDO_ATOMIC_RESAMPLE_RESIZE && cfile->arate != cfile->undo1_int)) {
     lives_rm(cfile->info_file);
@@ -2531,7 +2531,6 @@ void on_undo_activate(LiVESWidget *menuitem, livespointer user_data) {
 
   if ((cfile->undo_action == UNDO_AUDIO_RESAMPLE) || (cfile->undo_action == UNDO_ATOMIC_RESAMPLE_RESIZE &&
       cfile->arate != cfile->undo1_int)) {
-
     cfile->arate += cfile->undo1_int;
     cfile->undo1_int = cfile->arate - cfile->undo1_int;
     cfile->arate -= cfile->undo1_int;
@@ -2828,7 +2827,7 @@ void on_redo_activate(LiVESWidget *menuitem, livespointer user_data) {
   }
 
   if (cfile->undo_action == UNDO_REC_AUDIO || cfile->undo_action == UNDO_FADE_AUDIO
-      || cfile->undo_action == UNDO_TRIM_AUDIO ||
+      || cfile->undo_action == UNDO_TRIM_AUDIO || cfile->undo_action == UNDO_AUDIO_VOL ||
       cfile->undo_action == UNDO_APPEND_AUDIO) {
     com = lives_strdup_printf("%s undo_audio \"%s\"", prefs->backend_sync, cfile->handle);
     lives_rm(cfile->info_file);
@@ -3022,6 +3021,7 @@ void on_copy_activate(LiVESMenuItem *menuitem, livespointer user_data) {
     clipboard->arate = cfile->arate;
     clipboard->arps = cfile->arps;
     clipboard->signed_endian = cfile->signed_endian;
+
     reget_afilesize(0);
   }
 
@@ -3376,7 +3376,7 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
     } else {
       if ((cfile->achans * cfile->arps * cfile->asampsize > 0)
           && clipboard->achans > 0 && (cfile->achans != clipboard->achans ||
-                                       cfile->arps != clipboard->arps ||
+                                       cfile->arps != clipboard->arps || clipboard->vol != 1. || cfile->vol != 1. ||
                                        cfile->asampsize != clipboard->asampsize ||
                                        cfile_signed != clipboard_signed ||
                                        cfile_endian != clipboard_endian || cfile->arate != clipboard->arate)) {
@@ -3397,11 +3397,13 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
                 char *fnameto = lives_get_audio_file_name(mainw->current_file);
                 char *fnamefrom = lives_get_audio_file_name(0);
                 int zero = 0;
+                float volx = 1.;
                 double chvols = 1.;
                 double avels = -1.;
                 double aseeks = (double)clipboard->afilesize / (double)(-clipboard->arate * clipboard->asampsize / 8 * clipboard->achans);
                 ticks_t tc = (ticks_t)(aseeks * TICKS_PER_SECOND_DBL);
-                render_audio_segment(1, &zero, mainw->current_file, &avels, &aseeks, 0, tc, &chvols, 1., 1., NULL);
+                if (cfile->vol > 0.001) volx = clipboard->vol / cfile->vol;
+                render_audio_segment(1, &zero, mainw->current_file, &avels, &aseeks, 0, tc, &chvols, volx, volx, NULL);
                 reget_afilesize(0);
                 reget_afilesize(mainw->current_file);
                 if (cfile->afilesize == clipboard->afilesize) {
@@ -3896,18 +3898,56 @@ void on_insert_activate(LiVESButton *button, livespointer user_data) {
   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
 }
 
+/**
+   @brief check for layout errors, using in_mask as a guide
+   (mask values are taken from prefs->warn_mask, but with opposite sense)
 
+   This function should ALWAYS be called before any operations are performed which may do any of the following:
+   - delete frames, shift frames, alter frames (e.g. insert, delete, resample, apply rendered effects).
+   - delete audio, shift audio, alter audio (e.g. insert / delete with audio, resample, adjust the volume)
+   - (deletion includes closing the clip)
+
+   - some operations are exempt (i.e resizing frames, converting the frame / sample format, appending after the end, temporary
+   changes which affect only playback such as applying real time effects, letterboxing, altering the playback rate)
+
+   -- changing clip audio volume is somewhat undefined as this is a new feature and can be both a playback change and / or
+   permanent change. However fade in / out and insert silence are more permanent and should call this function.
+
+   - the order of priority for both frames and audio is always: delete > shift > alter
+     the default settings are to warn on delete / shift and not to warn on alter; however the user preferences may override this
+
+   start and end represent frame values for the affected region.
+   For audio, the values should approximate the start and end points,
+   (though normally they would be the correct points) and end may extend beyond the actual frame count.
+
+   After checking, in_mask is set (reduced) to to any 'trangressions' found - this will be the intersection (AND) of the check_mask,
+   AND detected transgressions AND the conjunction of non-disabled warnings.
+
+   if the resulting set is non-empty, then prior to returning, a warning dialog is displayed.
+   'operation' is a descriptive word / phrase for what the operation intends to be doing, e.g "deletion", "cutting", "pasting" which
+   used in the dialog message.
+
+   if the user cancels, FALSE is returned. and the caller should abort whatever operation.
+
+   if the user chooses to continue, warnings are added to the layout errors buffer am TRUE is returned.
+   (within the buffer, errors of the same type are collated and organised by priority,
+   so there is no harm in calling this function multiple times).
+
+   If no warnings are shown (either because there were no conflicts, or because the user disabled the warnings) then TRUE is also
+   returned, and in this case chk_mask will be 0.
+
+   After return from this function, if the return value is TRUE the operation may proceed, but the following must be observed:
+
+   - If the operation fails or is cancelled. any buffered warnings should be cleared by calling:  unbuffer_lmap_errors(FALSE);
+   (this function may always be called, even if chk_mask was returned as 0)
+
+   Otherwise, after the operation completes something like the following must be done:
+
+   if (chk_mask != 0) popup_lmap_errors(NULL, LIVES_INT_TO_POINTER(chk_mask));
+
+   this latter function must be called if and only if chk_mask was returned with a non-zero value.
+*/
 boolean check_for_layout_errors(const char *operation, int fileno, int start, int end, uint32_t *in_mask) {
-  // check for layout errors, using in_mask as a guide (values taken from prefs->warn_mask, but with opposite sense)
-  // after checking, in_mask is set to to any trangressions found
-
-  // if the user cancelled, returns FALSE
-
-  // operation is a descriptive word for what the operation intends to be doing, e.g "deleting", "cutting", "pasting"
-
-
-  // TODO: only insert errors if the operation completes
-
   lives_clip_t *sfile;
   LiVESList *xlays = NULL;
   uint32_t ret_mask = 0, mask = *in_mask;
@@ -4969,7 +5009,6 @@ void on_volch_pressed(LiVESButton * button, livespointer user_data) {
   else cfile->vol -= .01;
   if (cfile->vol > 2.) cfile->vol = 2.;
   if (cfile->vol < 0.) cfile->vol = 0.;
-  future_prefs->volume = lives_vol_from_linear(cfile->vol) * prefs->volume;
   if (prefs->show_overlay_msgs && !(mainw->urgency_msg && prefs->show_urgency_msgs))
     d_print_overlay(.5, _("Clip volume: %.2f"), cfile->vol);
 }
@@ -10012,7 +10051,8 @@ void vj_mode_toggled(LiVESCheckMenuItem * menuitem, livespointer user_data) {
                                        "Clips willl reload without audio (although the audio files will remain on the disk).\n"
                                        "Additionally, when playing external audio, iVES to use the system clock for frame timings\n"
                                        "(rather than the soundcard) which may allow for slighly smoother playback.\n"
-                                       "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected during the reload.)\n\n"
+                                       "\n - only the lightest of checks will be done when reloading clips (unless a problem is detected "
+                                       "during the reload.)\n\n"
                                        "Startup  will be almost instantaneous, however in the rare occurance of corruption to\n"
                                        "           a clip audio file, this will not be detected, as the file will not be loaded.\n"
                                        "\nOn startup, LiVES will grab the keyboard and screen focus if it can,\n"
@@ -10456,7 +10496,6 @@ boolean frame_context(LiVESWidget * widget, LiVESXEventButton * event, livespoin
 
     if (capable->has_convert && capable->has_composite)
       lives_container_add(LIVES_CONTAINER(menu), save_frame_as);
-
   }
 
   lives_widget_show_all(menu);
@@ -10862,18 +10901,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     if (!LIVES_IS_PLAYING) {
       cfile->real_pointer_time = (mainw->clipstore[clip][1] - 1.) / cfile->fps;
       lives_ce_update_timeline(0, cfile->real_pointer_time);
-    }/*  else { */
-    /*     if ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) || (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
-    /*       if (mainw->current_file != mainw->clipstore[clip][0]) { */
-    /*         if ((mainw->blend_file == -1 || (!IS_NORMAL_CLIP(mainw->blend_file) && mainw->blend_file != mainw->playing_file)) */
-    /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
-    /*             && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)) { */
-    /*         } */
-    /*       } else { */
-    /*         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) resync_audio(cfile->frameno); */
-  /* 	  // *INDENT-OFF* */
-  /*       }}}} */
-  /* // *INDENT-ON* */
+    }
   }
   return TRUE;
 }
@@ -10992,7 +11020,8 @@ void on_capture_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   prefs->show_gui = FALSE;
 
   if (!(do_warning_dialog(
-          _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\nClick 'Cancel' to cancel\n\n")))) {
+          _("Capture an External Window:\n\nClick on 'OK', then click on any window to capture it\n"
+            "Click 'Cancel' to cancel\n\n")))) {
     if (sgui) {
       prefs->show_gui = TRUE;
       lives_widget_show(LIVES_MAIN_WINDOW_WIDGET);
@@ -11558,6 +11587,7 @@ boolean on_trim_audio_activate(LiVESMenuItem * menuitem, livespointer user_data)
   return TRUE;
 }
 
+void on_voladj_activate(LiVESMenuItem * menuitem, livespointer user_data) {create_new_pb_speed(3);}
 
 void on_fade_audio_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   // type == 0 fade in

@@ -1242,6 +1242,19 @@ ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allo
 }
 
 
+ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...) {
+  ssize_t ret;
+  va_list xargs;
+  char *text;
+  va_start(xargs, fmt);
+  text = lives_strdup_vprintf(fmt, xargs);
+  va_end(xargs);
+  ret = lives_write_buffered(fd, text, lives_strlen(text), allow_fail);
+  lives_free(text);
+  return ret;
+}
+
+
 ssize_t lives_write_le_buffered(int fd, const void *buf, size_t count, boolean allow_fail) {
   if (capable->byte_order == LIVES_BIG_ENDIAN && (prefs->bigendbug != 1)) {
     reverse_bytes((char *)buf, count, count);
@@ -2407,8 +2420,9 @@ void d_print(const char *fmt, ...) {
   if (mainw->current_file != mainw->last_dprint_file && mainw->current_file != 0 && mainw->multitrack == NULL &&
       (mainw->current_file == -1 || (cfile != NULL && cfile->clip_type != CLIP_TYPE_GENERATOR)) && !mainw->no_switch_dprint) {
     if (mainw->current_file > 0) {
-      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"), tmp = get_menu_name(cfile,
-                                         TRUE));
+      char *swtext = lives_strdup_printf(_("\n==============================\nSwitched to clip %s\n"),
+                                         tmp = get_menu_name(cfile,
+                                             TRUE));
       lives_free(tmp);
       add_messages_to_list(swtext);
       lives_free(swtext);

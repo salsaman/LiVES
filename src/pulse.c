@@ -483,6 +483,7 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
     uint64_t inputFramesAvailable = 0;
     uint64_t numFramesToWrite = 0;
     double in_framesd = 0.;
+    float clip_vol = 1.;
 #ifdef DEBUG_PULSE
     int64_t in_frames = 0;
 #endif
@@ -1042,16 +1043,16 @@ static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *a
 #endif
 
         // playback from memory or file
-
-        if (future_prefs->volume != pulsed->volume_linear) {
+        if (pulsed->playing_file > -1) clip_vol = lives_vol_from_linear(afile->vol);
+        if (future_prefs->volume * clip_vol != pulsed->volume_linear) {
           // TODO: pa_threaded_mainloop_once_unlocked() (pa 13.0 +) ??
           pa_operation *paop;
-          pavol = pa_sw_volume_from_linear(future_prefs->volume);
+          pavol = pa_sw_volume_from_linear(future_prefs->volume * clip_vol);
           pa_cvolume_set(&pulsed->volume, pulsed->out_achans, pavol);
           paop = pa_context_set_sink_input_volume(pulsed->con,
                                                   pa_stream_get_index(pulsed->pstream), &pulsed->volume, NULL, NULL);
           pa_operation_unref(paop);
-          pulsed->volume_linear = future_prefs->volume;
+          pulsed->volume_linear = future_prefs->volume * clip_vol;
         }
 
 #ifdef CACHE_TEST

@@ -11205,20 +11205,20 @@ boolean lives_tree_store_find_iter(LiVESTreeStore *tstore, int col, const char *
 #include "rte_window.h"
 #include "ce_thumbs.h"
 
-#define MAX_NULL_EVENTS 500
+#define MAX_NULL_EVENTS 512
 #define LOOP_LIMIT 64
 boolean lives_widget_context_update(void) {
   boolean mt_needs_idlefunc = FALSE;
   int nulleventcount = 0, loops = 0;
   boolean noswitch = mainw->noswitch;
 
-  if (!pthread_equal(capable->main_thread, pthread_self())) {
-    if (prefs->show_dev_opts) {
-      g_printerr("Bad thread, tried to wiggle our widgets !\n");
-      break_me();
-    }
-    return FALSE;
-  }
+  /* if (!pthread_equal(capable->main_thread, pthread_self() && !pthread_equal(capable->gui_thread, pthread_self()))) { */
+  /*   if (prefs->show_dev_opts) { */
+  /*     g_printerr("Bad thread, tried to wiggle our widgets !\n"); */
+  /*     break_me(); */
+  /*   } */
+  /*   return FALSE; */
+  /* } */
 
   if (mainw->no_context_update) return FALSE;
 

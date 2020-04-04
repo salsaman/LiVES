@@ -26,16 +26,34 @@ typedef void *(*calloc_f)(size_t, size_t);
 typedef void *(*malloc_and_copy_f)(size_t, const void *);
 typedef void (*unmalloc_and_copy_f)(size_t, void *);
 
+#ifdef USE_LIVES_MFUNCS
+void *quick_malloc(size_t sz);
+void quick_free(void *p);
+void *quick_calloc(size_t nm, size_t sz);
+#endif
+
 void lives_free_check(void *p);
 
 #ifndef lives_malloc
+#ifdef USE_LIVES_MFUNCS
+#define lives_malloc quick_malloc
+#else
 #define lives_malloc malloc
 #endif
+#endif
 #ifndef lives_realloc
+#ifdef USE_LIVES_MFUNCS
+#define lives_realloc proxy_realloc
+#else
 #define lives_realloc realloc
 #endif
+#endif
 #ifndef lives_free
+#ifdef USE_LIVES_MFUNCS
+#define lives_free quick_free
+#else
 #define lives_free free
+#endif
 #endif
 #ifndef lives_memcpy
 #define lives_memcpy memcpy
@@ -50,7 +68,11 @@ void lives_free_check(void *p);
 #define lives_memmove memmove
 #endif
 #ifndef lives_calloc
+#ifdef USE_LIVES_MFUNCS
+#define lives_calloc quick_calloc
+#else
 #define lives_calloc calloc
+#endif
 #endif
 
 #ifdef _lives_malloc
@@ -191,13 +213,6 @@ typedef enum {
 weed_plant_t *lives_plant_new(int subtype);
 weed_plant_t *lives_plant_new_with_index(int subtype, int64_t index);
 
-// internal memory allocator (not used yet)
-typedef struct memheader {
-  unsigned int size;
-  struct memheader *next;
-  size_t align;
-} memheader_t;
-
 void *_ext_malloc(size_t n) GNU_MALLOC;
 void *_ext_malloc_and_copy(size_t, const void *) GNU_MALLOC_SIZE(1);
 void _ext_unmalloc_and_copy(size_t, void *);
@@ -208,6 +223,8 @@ void *_ext_memset(void *, int, size_t);
 void *_ext_memmove(void *, const void *, size_t);
 void *_ext_realloc(void *, size_t) GNU_MALLOC_SIZE(2);
 void *_ext_calloc(size_t, size_t) GNU_MALLOC_SIZE2(1, 2) GNU_ALIGN(2);
+
+void make_memtree(void);
 
 #if defined _GNU_SOURCE
 #define LIVES_GNU
@@ -233,10 +250,6 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) 	GNU_HOT;
 uint64_t nxtval(uint64_t val, uint64_t lim, boolean less);
 uint64_t autotune_u64_end(weed_plant_t **tuner, uint64_t val);
 void autotune_u64(weed_plant_t *tuner,  uint64_t min, uint64_t max, int ntrials, double cost);
-
-// TODO
-void quick_free(memheader_t *bp);
-void *quick_malloc(size_t alloc_size) GNU_MALLOC;
 
 void init_random(void);
 void lives_srandom(unsigned int seed);

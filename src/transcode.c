@@ -291,11 +291,12 @@ boolean transcode(int start, int end) {
           // convert to float
           if (cfile->asampsize == 16) {
             sample_move_d16_float(fltbuf[j], (short *)abuff, (uint64_t)nsamps,
-                                  cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian, 1.0);
+                                  cfile->achans, asigned ? AFORM_SIGNED : AFORM_UNSIGNED, swap_endian, lives_vol_from_linear(cfile->vol));
           } else {
             sample_move_d8_d16(sbuff, (uint8_t *)abuff, (uint64_t)nsamps, in_bytes,
                                1.0, cfile->achans, cfile->achans, !asigned ? SWAP_U_TO_S : 0);
-            sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE, 1.0);
+            sample_move_d16_float(fltbuf[j], sbuff, (uint64_t)nsamps, cfile->achans, AFORM_SIGNED, FALSE,
+                                  lives_vol_from_linear(cfile->vol));
           }
         }
 

@@ -40,6 +40,8 @@ ticks_t q_gint64(ticks_t in, double fps);
 ticks_t q_gint64_floor(ticks_t in, double fps);
 ticks_t q_dbl(double in, double fps);
 
+void reorder_leave_back_set(boolean val);
+
 size_t quant_asamps(double seek, int arate);
 double quant_aseek(double seek, int arate);
 off_t quant_abytes(double seek, int arate, int achans, int asampsize);
@@ -56,8 +58,6 @@ int count_resampled_frames(int in_frames, double orig_fps, double resampled_fps)
 /////////////////////////////////////////
 
 // GUI functions
-/// window change speed from Tools menu
-void create_new_pb_speed(short type);
 
 /// resample audio window
 ///

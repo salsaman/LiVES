@@ -37,7 +37,7 @@ typedef struct _lives_subtitle_t {
 
 typedef struct {
   lives_subtitle_type_t type;
-  FILE *tfile;
+  int tfile;
   char *text;
   lives_subtitle_t *current; ///< pointer to current entry in index
   lives_subtitle_t *first;

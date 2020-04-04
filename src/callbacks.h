@@ -317,6 +317,8 @@ void on_volume_slider_value_changed(LiVESScaleButton *, livespointer);
 void on_volume_slider_value_changed(LiVESRange *, livespointer);
 #endif
 
+void on_voladj_activate(LiVESMenuItem *, livespointer);
+
 void on_fade_audio_activate(LiVESMenuItem *, livespointer);
 
 void on_resample_video_activate(LiVESMenuItem *, livespointer);

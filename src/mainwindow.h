@@ -1014,6 +1014,7 @@ typedef struct {
   LiVESWidget *delsel_audio;
   LiVESWidget *delall_audio;
   LiVESWidget *ins_silence;
+  LiVESWidget *voladj;
   LiVESWidget *fade_aud_in;
   LiVESWidget *fade_aud_out;
   LiVESWidget *resample_audio;

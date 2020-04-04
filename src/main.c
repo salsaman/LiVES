@@ -2525,8 +2525,7 @@ capability *get_capabilities(void) {
   capable->has_perl = TRUE;
 
   // this is _compile time_ bits, not runtime bits
-  capable->cpu_bits = 32;
-  if (sizeof(void *) == 8) capable->cpu_bits = 64;
+  capable->cpu_bits = (sizeof(void *)) * 8;
 
   capable->mainpid = lives_getpid();
 
@@ -2994,6 +2993,8 @@ static boolean lives_startup(livespointer data) {
   boolean got_files = FALSE;
   boolean layout_recovered = FALSE;
 
+  capable->gui_thread = pthread_self();
+
   // check the working directory
   if ((prefs->startup_phase == 1 || prefs->startup_phase == -1)) {
     needs_workdir = TRUE;
@@ -3422,6 +3423,10 @@ int real_main(int argc, char *argv[], pthread_t *gtk_thread, ulong id) {
   pthread_mutexattr_t mattr;
 #ifndef IS_LIBLIVES
   weed_plant_t *test_plant;
+#endif
+
+#ifdef USE_LIVES_MFUNCS
+  make_memtree();
 #endif
 
 #ifdef GUI_QT
@@ -4401,6 +4406,7 @@ void sensitize(void) {
   lives_widget_set_sensitive(mainw->recaudio_sel, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_VIDEO);
   lives_widget_set_sensitive(mainw->append_audio, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->trim_submenu, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
+  lives_widget_set_sensitive(mainw->voladj, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_in, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->fade_aud_out, !CURRENT_CLIP_IS_CLIPBOARD && CURRENT_CLIP_HAS_AUDIO);
   lives_widget_set_sensitive(mainw->trim_audio, !CURRENT_CLIP_IS_CLIPBOARD
@@ -4591,6 +4597,7 @@ void desensitize(void) {
   lives_widget_set_sensitive(mainw->troubleshoot, FALSE);
   lives_widget_set_sensitive(mainw->expl_missing, FALSE);
   lives_widget_set_sensitive(mainw->resample_audio, FALSE);
+  lives_widget_set_sensitive(mainw->voladj, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_in, FALSE);
   lives_widget_set_sensitive(mainw->fade_aud_out, FALSE);
   lives_widget_set_sensitive(mainw->ins_silence, FALSE);
@@ -5845,7 +5852,6 @@ void load_preview_image(boolean update_always) {
       png_set_sig_bytes(png_ptr, bsize);
 #endif
 
-
       // read header info
       png_read_info(png_ptr, info_ptr);
 
@@ -6629,7 +6635,7 @@ fndone:
 
       if (!is_thread) {
         // render subtitles from file
-        if (prefs->show_subtitles && sfile->subt != NULL && sfile->subt->tfile != NULL) {
+        if (prefs->show_subtitles && sfile->subt != NULL && sfile->subt->tfile > 0) {
           double xtime = (double)(frame - 1) / sfile->fps;
           layer = render_subs_from_file(sfile, xtime, layer);
         }
@@ -6701,7 +6707,7 @@ fndone:
         if (IS_VALID_CLIP(clip)) {
           sfile = mainw->files[clip];
           // render subtitles from file
-          if (sfile->subt != NULL && sfile->subt->tfile != NULL && prefs->show_subtitles) {
+          if (sfile->subt && sfile->subt->tfile >= 0 && prefs->show_subtitles) {
             frames_t frame = weed_get_int_value(layer, WEED_LEAF_FRAME, NULL);
             double xtime = (double)(frame - 1) / sfile->fps;
             layer = render_subs_from_file(sfile, xtime, layer);
@@ -8843,6 +8849,7 @@ void load_frame_image(int frame) {
           lives_widget_set_sensitive(mainw->delall_audio, (CURRENT_CLIP_HAS_VIDEO && CURRENT_CLIP_HAS_AUDIO));
           lives_widget_set_sensitive(mainw->sa_button, CURRENT_CLIP_HAS_VIDEO && (cfile->start > 1 || cfile->end < cfile->frames));
           lives_widget_set_sensitive(mainw->resample_audio, (CURRENT_CLIP_HAS_AUDIO && capable->has_sox_sox));
+          lives_widget_set_sensitive(mainw->voladj, CURRENT_CLIP_HAS_AUDIO);
           lives_widget_set_sensitive(mainw->fade_aud_in, CURRENT_CLIP_HAS_AUDIO);
           lives_widget_set_sensitive(mainw->fade_aud_out, CURRENT_CLIP_HAS_AUDIO);
           lives_widget_set_sensitive(mainw->loop_video, (CURRENT_CLIP_HAS_AUDIO && CURRENT_CLIP_HAS_VIDEO));

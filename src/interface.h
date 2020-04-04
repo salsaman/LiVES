@@ -1,6 +1,6 @@
 // interface.h
 // LiVES
-// (c) G. Finch 2003 - 2018 <salsaman+lives@gmail.com>
+// (c) G. Finch 2003 - 2020 <salsaman+lives@gmail.com>
 // Released under the GNU GPL 3 or later
 // see file ../COPYING for licensing details
 
@@ -43,6 +43,9 @@ LiVESWidget *create_encoder_prep_dialog(const char *text1, const char *text2, bo
 
 void widget_add_preview(LiVESWidget *widget, LiVESBox *for_preview, LiVESBox *for_button,
                         LiVESBox *for_deinterlace, int preview_type);  ///< for fileselector preview
+
+/// window change speed from Tools menu
+void create_new_pb_speed(short type);
 
 boolean do_audio_choice_dialog(short startup_phase);
 

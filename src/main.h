@@ -394,6 +394,8 @@ weed_leaf_delete_f _weed_leaf_delete;
 #include "weed-effects-utils.h"
 
 #include "widget-helper.h"
+
+#define USE_LIVES_MFUNCS
 #include "machinestate.h"
 
 boolean weed_threadsafe;
@@ -462,6 +464,7 @@ typedef enum {
   UNDO_RENDER,
 
   UNDO_FADE_AUDIO,
+  UNDO_AUDIO_VOL,
 
   /// record audio to selection
   UNDO_REC_AUDIO,
@@ -953,6 +956,7 @@ typedef struct {
 
   pid_t mainpid;
   pthread_t main_thread;
+  pthread_t gui_thread;
   mode_t umask;
 } capability;
 
@@ -1457,6 +1461,7 @@ off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
 ssize_t lives_write_buffered(int fd, const char *buf, size_t count, boolean allow_fail);
+ssize_t lives_buffered_write_printf(int fd, boolean allow_fail, const char *fmt, ...);
 ssize_t lives_write_le_buffered(int fd, livesconstpointer buf, size_t count, boolean allow_fail);
 ssize_t lives_read_buffered(int fd, void *buf, size_t count, boolean allow_less);
 ssize_t lives_read_le_buffered(int fd, void *buf, size_t count, boolean allow_less);

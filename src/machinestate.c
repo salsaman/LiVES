@@ -483,17 +483,6 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 }
 #endif
 
-
-livespointer proxy_realloc(livespointer ptr, size_t new_size) {
-  livespointer nptr = lives_malloc(new_size);
-  if (nptr && ptr) {
-    lives_memmove(nptr, ptr, new_size);
-    lives_free(ptr);
-  }
-  return nptr;
-}
-
-
 #define _cpy_if_nonnull(d, s, size) (d ? lives_memcpy(d, s, size) : d)
 
 // functions with fixed pointers that we can pass to plugins ///
@@ -576,42 +565,6 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
   return np;
 }
 
-
-// slice allocator //// TODO
-
-/* static memheader_t base;           /\* Zero sized block to get us started. *\/ */
-/* static memheader_t *freep = &base; /\* Points to first free block of memory. *\/ */
-/* static memheader_t *usedp;         /\* Points to first used block of memory. *\/ */
-
-/*
-   Scan the free list and look for a place to put the block. Basically, we're
-   looking for any block the to be freed block might have been partitioned from.
-*/
-/* void quick_free(memheader_t *bp) { */
-/*   memheader_t *p; */
-
-/*   for (p = freep; !(bp > p && bp < p->next); p = p->next) */
-/*     if (p >= p->next && (bp > p || bp < p->next)) */
-/*       break; */
-
-/*   if (bp + bp->size == p->next) { */
-/*     bp->size += p->next->size; */
-/*     bp->next = p->next->next; */
-/*   } else */
-/*     bp->next = p->next; */
-
-/*   if (p + p->size == bp) { */
-/*     p->size += bp->size; */
-/*     p->next = bp->next; */
-/*   } else */
-/*     p->next = bp; */
-
-/*   freep = p; */
-/* } */
-
-
-#define MIN_ALLOC_SIZE 4096     /* We allocate blocks in page sized chunks. */
-
 /*
    Request more memory from the kernel.
 */
@@ -631,83 +584,408 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *p, size_t nmemb, size_t omemb, si
 /*   return freep; */
 /* } */
 
+#ifdef USE_LIVES_MFUNCS
 
-/* /\* */
-/*    Find a chunk from the free list and put it in the used list. */
-/* *\/ */
+static pthread_mutex_t memo_mutex = PTHREAD_MUTEX_INITIALIZER;
+static boolean nomut = FALSE;
 
-/* static void *memblock; */
+///< array of leaves. bits 31 and 30 => 00 = unasigned, 10 = assigned from left, 01 = assigned from right, left unass.
+/// 11 = left assigned (1 block) and right assigned
+/// remaining bits give the size (left or right) in blocks
+/// IF left assigned only, and size is 1 block, then right size can be obtained using peek_size + 1, but parent will have correct val
 
-/* void make_mem_tree(size_t blocksize, size_t gran) { */
-/* int nnodes = blocksize / gran / 2; */
-/* void *ptr; */
-/* ptr = memblock = lives_malloc(blocksize); */
-/* for (i = 0; i < nnodes; i+=2) { */
-/*   nodel = memnode_new(ptr, NULL, NULL, gran); */
-/*   ptr += 2 * gran; */
-/*   noder = memnode_new(ptr, NULL. NULL, gran); */
-/*   ptr += 2 * gran; */
-/*   nodeup = memnode_new(NULL, nodel. noder, gran); */
-/*   if (i > 0 && (i & 2) == 2) { */
-/*     weed_set_voidptr_value(plant0, "ptr", nodeup); */
-/*   } */
-/*   else { */
-/*     nodeup = memnode_new(NULL, weed_get_voidptr_value(plant0, "ptr", nodeup), nodeyp, gran * 2); */
-/*     if (i > 0 && (i & 8) */
+static uint32_t *memleaves;
 
+#define L_ASSG 0x80000000
+#define R_ASSG 0x40000000
+#define MSIZE(s) ((s) & 0x2FFFFFFF)
 
-/*   nodell = make_memnode(gran, ptr); */
-/*   /\* ptr += gran * 4; *\/ */
-/*   /\* noderr = make_memnode(gran, ptr); *\/ */
-/*   /\* ptr += gran * 4; *\/ */
-/*   /\* nodelll = memnode_new(NULL, nodell. noderr, gran * 2);  *\/ */
-/*   /\* nodell = make_memnode(gran, ptr); *\/ */
-/*   /\* ptr += gran * 4; *\/ */
-/*   /\* noderr = make_memnode(gran, ptr); *\/ */
-/*   /\* ptr += gran * 4; *\/ */
-/*   /\* noderrr = memnode_new(NULL, nodell. noderr, gran * 2);  *\/ */
+#define IS_LASS(s) ((s) & L_ASSG ? TRUE : FALSE)
+#define IS_RASS(s) ((s) & R_ASSG ? TRUE : FALSE)
 
-//}
+typedef struct {
+  uint32_t left, right;
+} memdec_t;
 
+/// array of decision nodes. each entry holds a struct memdec. The first list relates to 2 leaf nodes; the next list
+/// relates to 2 entries in list 0, and so on until we reach the root.
+static memdec_t **dnodes;
+static int nlevels;
 
-LIVES_INLINE void *_quick_malloc(size_t alloc_size, size_t align) {
-  /// there will be a block of size M.
-  /// there will be n leaf nodes. The block is subdivided.into n equally sized  sub-blocks of size m
-  // Each leaf has a pointer   and 2 sizes, sleft and sright
-  /// if a request (bsize) arrives: if bsize <= sleft, and its a left requst, sleft is set to zero and ptr is returned
-  // else, if bsize <= sright, and it's a right requrst. sright is set to zero and ptr + m returned
-  // else, if bsize <= sleft + sright, amd iits a left reqest both sleft and sright are set to zero and pleft is returned
-  // else OOM is returned
-  //
-  // above the lead node is the first tree proper layer. each tree node has 2 pointers and 3 sizes
-  // pleft, pright, sleft, smid, sright. set to values When a request (bsize) arrives:
-  // if bsize <= sleft, a ;eft requst for bsize is sent to to node left, sleft is set to zero, and the ptr.from lleaf returned
-  // else if bsize <= srigth, a right req for bsize is sent to lright, sright is set to zero and the ptr from lright returned
-  // else if bsize <= srmid, a left req for bsize / 2 is sent to l;;eft, a left req for bsize /2 to ltight, smid set to zero and ptr from left return
-  // else if bsize <= sleft + smid, a left req of 2 / 3 bsize is snet ot lleft, a left req of bsize / 3 sent to lright and ptr from lleft ret
-  // else if bsize <= smid + srigtht, r req of bsize / 3sent to lleft, 2./ 3 bsize ent to lright
-  // else if bsize <= sleft + smid _sright, left req of bsize / 2 sent to lleft, left req of bsize / 2 to right, ptr from left ret.
-  /// else OOM
+#define BSIZE 64
+#define NBLOCKS 2 * 1024 * 256
+static uint32_t maxsize, occ, maxocc;
+ssize_t squeeze;
+static void *arena = NULL;
 
-  /// next level up nodes point to level + 1. sleft = sleft + smid / 2.   } smid etc.
-  return NULL;
+static void create_leafnodes(void) {
+  /// split the arena into nblocks segments of size bsize; each leaf node manages 2 segments
+  /// starting from the left, sizes are initialized to msize, msize - bsize * 2, msize - bsize * 4, msize - bsize * 6 etc
+  /// nblocks, bsize must be powers of 2
+  uint32_t val = NBLOCKS;
+  arena = calloc(NBLOCKS, BSIZE);
+  memleaves = (uint32_t *)calloc(NBLOCKS >> 1, 4);
+  for (register int i = 0; val > 0; val -= 2) memleaves[i++] = val;
 }
 
-/* void *quick_malloc(size_t alloc_size) { */
-/*   return _quick_malloc(alloc_size, 1); */
-/* } */
+static boolean create_decnodes(int level) {
+  int nnodes = NBLOCKS >> (level + 2);
+  uint32_t val = NBLOCKS, bs = 1 << (level + 1), bs2 = bs * 2;
+  memdec_t *node;
+  register int i = 0;
+  dnodes = (memdec_t **)realloc(dnodes, (level + 1) * sizeof(memdec_t *));
+  dnodes[level] = (memdec_t *)malloc(nnodes * sizeof(memdec_t));
+  g_print("lev %d has %d nodes\n", level, nnodes);
+  for (; val > 0; val -= bs2) {
+    node = &dnodes[level][i++];
+    node->left = val;
+    node->right = val - bs;
+  }
+  if (nnodes == 1) return FALSE;
+  return TRUE;
+}
 
-/* void *quick_calloc(size_t nmemb, size_t size) { */
-/*   return _quick_malloc(nmemb * size, size); */
-/* } */
+static inline int memdecide(uint32_t req, int level, int idx) {
+  memdec_t *node = &dnodes[level][idx];
+  if ((node->right <= node->left || req > node->left) && req <= node->right) return 1;
+  if (node->left >= req) return -1;
+  return 0;
+}
 
-/*   quick_calloc(); */
+static void inf_parent(int level, int idx, uint32_t nsize, int lorr) {
+  // after an alloc we report new size to the parent node
+  // it will pass MAX(left, right) up the chain to root
+  // if the value is > maxsize, we update that
+  // if lorr is 0, its the left branch, 1 for right
+  memdec_t *node = &dnodes[level][idx];
+  uint32_t max = node->left > node->right ? node->left : node->right;
+  if (lorr) node->right = nsize;
+  else node->left = nsize;
+  if (level < nlevels) {
+    if (nsize > max) inf_parent(++level, idx >> 1, nsize, idx & 1);
+    else {
+      uint32_t nmax = node->left > node->right ? node->left : node->right;
+      if (nmax < max) inf_parent(++level, idx >> 1, nmax, idx & 1);
+    }
+  } else {
+    maxsize = node->left > node->right ? node->left : node->right;
+  }
+}
 
-/* quick_memcpy(); */
+static void leaf_update(int idx, uint32_t nsize) {
+  // a leaf to the right allocated or freed one or both blocks, now we must update our size, then inform the node to the left
+  /// if bit 31 is set then it was a free, and we add the value
+  /// otherwise it was a malloc and we replace the value
+  uint32_t *leaf = &memleaves[idx];
 
-/* quick_memmove(); */
+  /// if right assigned we do nothing
+  /// else if left assigned we add 1 block to size and inform parent
+  /// if neither assigned, we add 2 blocks, inform parent and pass left,
 
-/* quick_memset(); */
+  if (IS_RASS(*leaf)) return;
+  if (!IS_LASS(*leaf)) nsize++;
+  if (++nsize == MSIZE(*leaf)) return;
+
+  *leaf = (*leaf & (L_ASSG | R_ASSG)) | nsize;
+
+  inf_parent(0, idx >> 1, nsize, idx & 1);
+
+  if (idx && !IS_LASS(*leaf)) leaf_update(--idx, nsize);
+}
+
+static void *leaf_malloc(int idx, uint32_t req, boolean orig) {
+  // a request has arrived at a leaf. We will assign one or both blocks, then pass the remainder to the right
+  // then we will update leaves to the left
+  // and finally pass size up to parent
+
+  // req is rounded up to the next nearest block
+
+  uint32_t *leaf = &memleaves[idx];
+  void *ptr = arena + (idx << 1) * BSIZE;
+  uint32_t nsize = 1;
+
+  if (req == 1 && !IS_LASS(*leaf)) {
+    /// assign single left
+    if (!IS_RASS(*leaf)) {
+      *leaf = *leaf - 1;
+      inf_parent(0, idx >> 1, MSIZE(*leaf), idx & 1);
+    } else inf_parent(0, idx >> 1, 0, idx & 1);
+    *leaf |= L_ASSG;
+  } else {
+    if ((IS_LASS(*leaf) || (orig && (req & 1) && req < (MSIZE(*leaf))))) {
+      /// assign from right
+      ptr += BSIZE;
+      *leaf = ((*leaf & L_ASSG) | R_ASSG) | req;
+      if (IS_LASS(*leaf)) inf_parent(0, idx >> 1, 0, idx & 1);
+      else inf_parent(0, idx >> 1, 1, idx & 1);
+    } else {
+      /// assign from left
+      *leaf = L_ASSG | req--;
+      inf_parent(0, idx >> 1, 0, idx & 1);
+    }
+  }
+
+  /// assign remainder
+  if (--req) leaf_malloc(idx + 1, req, FALSE);
+
+  if (IS_LASS(*leaf)) nsize = 0;
+  else nsize = 1;
+  /// now the size (0, or 1) shall be passed left
+  if (orig && idx) leaf_update(--idx, nsize);
+  return ptr;
+}
+
+static inline uint32_t peek_size(int idx) {
+  uint32_t *leaf = &memleaves[idx];
+  if (IS_LASS(*leaf)) return 0;
+  if (IS_RASS(*leaf)) return 1;
+  return MSIZE(*leaf);
+}
+
+static uint32_t memleaf_free(int idx, int lorr) {
+  /// if lorr == 2, its the same as 0, but we return our size instead of updating left nodes
+
+  /// if ptr is left then if right assd., we dont update size, just clear the bit, inf. parent (1), pass left or return 1
+  /// if ptr is left and not right assd we clear the bit, add 1 to size, inform parent, and pass size left or return
+  /// if ptr is right and left ass, update our size, dont pass or return
+  /// if ptr is right and not left, update size and return or pass
+  ///
+  /// if ptr is left and size is 2, clear the bit, peek size of next leaf, and add 2 to it, inf parent,  then pass left or return
+  /// if ptr is right and size is 1, clear bit, peek size of next node, and add 1 to it if left assd. else add 2, inf p.
+  /// sub 1 from sz (bcaus left already counted), pass or ret
+  // if ptr left and size > 2 or ptr right  and size > 1, we call memleaf_free(). and add ret value to size,
+  uint32_t *leaf = &memleaves[idx];
+  uint32_t xsize = MSIZE(*leaf), nsize;
+
+  if (lorr == 1) {
+    /// clear right block
+    occ -= xsize;
+    if (idx < (NBLOCKS >> 1) - 1) {
+      if (xsize == 1) nsize = peek_size(idx + 1) + 1;
+      else nsize = memleaf_free(idx + 1, 2) + 1;
+    } else {
+      nsize = 1;
+    }
+    if (IS_LASS(*leaf)) {
+      *leaf = L_ASSG | nsize;
+      inf_parent(0, idx >> 1, nsize, idx & 1);
+      occ -= nsize;
+      /// dont update left leaves
+      return 0;
+    } else {
+      nsize++;
+      *leaf = nsize;
+    }
+  } else {
+    /// clear left
+    if (IS_RASS(*leaf)) {
+      nsize = 1;
+      *leaf ^= L_ASSG;
+    } else {
+      if (idx < (NBLOCKS >> 1) - 1) {
+        if (xsize <= 2) nsize = peek_size(idx + 1) + 2;
+        else nsize = memleaf_free(idx + 1, 2) + 2;
+      } else nsize = 2;
+      *leaf = nsize;
+    }
+  }
+
+  inf_parent(0, idx >> 1, nsize, idx & 1);
+  if (lorr != 2) {
+    occ -= nsize;
+    if (idx) leaf_update(--idx, nsize);
+  }
+  return nsize;
+}
+
+
+void quick_free(void *p) {
+  /// we will determine which leaf node owns the pointer, then free the memory
+  ssize_t offs = p - arena;
+  if (offs < 0 || offs > NBLOCKS * BSIZE) free(p);
+  else {
+    int idx = offs / BSIZE;
+    if (!nomut) pthread_mutex_lock(&memo_mutex);
+    memleaf_free(idx >> 1, idx & 1);
+    if (!nomut) pthread_mutex_unlock(&memo_mutex);
+  }
+}
+
+
+void *quick_malloc(size_t sz) {
+  if (sz < BSIZE) return malloc(sz);
+  else {
+    void *ptr;
+    uint32_t req = (uint32_t)((sz + BSIZE - 1) / (size_t)BSIZE);
+    int idx = 0;
+    if (!nomut) pthread_mutex_lock(&memo_mutex);
+    if (squeeze == -1 || maxsize - req < squeeze) {
+      squeeze = maxsize - req;
+      fprintf(stderr, "SQUEEZE is %ld\n", squeeze);
+    }
+    if ((uint32_t)req > (uint32_t)maxsize) abort(); /// OOM - TODO !!
+    for (register int i = nlevels; i >= 0; i--) {
+      int md = memdecide(req, i, idx);
+      if (!md) abort();  /// OOM !!!
+      idx <<= 1;
+      if (md == 1) idx++;
+    }
+    ptr = leaf_malloc(idx, req, TRUE);
+    occ += req;
+    if (occ > maxocc) maxocc = occ;
+    if (!nomut) pthread_mutex_unlock(&memo_mutex);
+    if ((uint64_t)ptr & 63) {
+      fprintf(stderr, "ALIGN is %ld\n", (uint64_t)ptr & 63);
+    }
+    return ptr;
+  }
+}
+
+
+void *quick_calloc(size_t nm, size_t sz) {
+  if (1 || (nm * sz < BSIZE)) return calloc(nm, sz);
+  else {
+    uint32_t siz = nm * sz;
+    uint64_t remd, remdb;
+    void *ptr;
+    pthread_mutex_lock(&memo_mutex);
+    nomut = TRUE;
+    ptr = quick_malloc(siz + sz);
+    remd = (uint64_t)ptr % sz;
+    if (remd) {
+      if (remd < BSIZE) {
+        ptr += remd;
+        lives_memset(ptr, 0, nm * sz);
+        nomut = TRUE;
+        pthread_mutex_unlock(&memo_mutex);
+        return ptr;
+      } else {
+        ssize_t offs = ptr - arena;
+        int idx = offs / BSIZE;
+        remdb = remd / BSIZE;
+        remd -= remdb * BSIZE;
+        nomut = TRUE;
+        quick_free(ptr);
+        sz -= BSIZE * remdb;
+        idx += remdb / 2;
+        remdb &= 1;
+        if (remdb == 1) {
+          if (idx & 1) {
+            //remd -= BSIZE;
+            idx++;
+            ptr = leaf_malloc(idx >> 1, (sz + remd + BSIZE - 1) / BSIZE, TRUE);
+          } else {
+            //void *lptrr;
+            uint32_t *leaf = &memleaves[idx >> 1];
+            ptr = leaf_malloc(idx >> 1, (sz + remd + BSIZE - 1) / BSIZE, TRUE);
+            *leaf = (*leaf - 1) | R_ASSG;
+            quick_free(ptr);
+            remd -= BSIZE;
+            ptr += BSIZE;
+          }
+        } else {
+          if (!(idx & 1)) {
+            ptr = leaf_malloc(idx >> 1, (sz + remd + BSIZE - 1) / BSIZE, TRUE);
+          } else {
+            ptr = leaf_malloc(idx >> 1, (sz + remd + BSIZE - 1) / BSIZE, TRUE);
+            /* *leaf = (*leaf - 1) | R_ASSG; */
+            /* quick_free(ptr); */
+            /* ptr += BSIZE; */
+          }
+        }
+        nomut = FALSE;
+        ptr += remd;
+      }
+    } else {
+      // no remdr, just shrink
+      //nomut = TRUE;
+      //pthread_mutex_unlock(&memo_mutex);
+      //ptr = proxy_realloc(ptr, siz); /// unlocks memo_mutex
+      //lives_memset(ptr, 0, nm * sz);
+      //return ptr;
+    }
+    /// clr
+    nomut = FALSE;
+    pthread_mutex_unlock(&memo_mutex);
+    lives_memset(ptr, 0, nm * sz);
+    return ptr;
+  }
+}
+
+
+void make_memtree(void) {
+  register int idx = 0, gap;
+  create_leafnodes();
+  for (nlevels = 0; create_decnodes(nlevels); nlevels++);
+  maxsize = NBLOCKS >> 1;
+  gap = NBLOCKS >> 2;
+  while (gap > 4) {
+    idx += gap;
+    leaf_malloc(idx - 1, 2, TRUE);
+    gap >>= 1;
+  }
+  leaf_malloc((NBLOCKS >> 1) - 1, 2, TRUE);
+  arena += BSIZE - ((uint64_t)arena & (BSIZE - 1));
+  occ = maxocc = 0;
+  squeeze = -1;
+  fprintf(stderr, "Using LiVES memory allocator - assigned %d blocks of size %d, with tree level %d\n", NBLOCKS, BSIZE, nlevels);
+}
+
+#endif
+
+
+livespointer proxy_realloc(livespointer ptr, size_t new_size) {
+#ifndef USE_LIVES_MFUNCS
+  livespointer nptr = lives_malloc(new_size);
+  if (nptr && ptr) {
+    lives_memcpy(nptr, ptr, new_size);
+    lives_free(ptr);
+  }
+  return nptr;
+#else
+  ssize_t offs = ptr - arena;
+  if (offs < 0 || offs > NBLOCKS * BSIZE) return realloc(ptr, new_size);
+  else {
+    /// get the old size
+    int idx = offs / BSIZE;
+    uint32_t *leaf = &memleaves[idx >> 1];
+    memdec_t *node = &dnodes[0][idx >> 2];
+    size_t osz;
+    void *nptr;
+    if (!nomut) pthread_mutex_lock(&memo_mutex);
+    nomut = TRUE;
+    if (idx & 1) osz = MSIZE(*leaf);
+    else {
+      idx >>= 1;
+      if (IS_LASS(*leaf) && IS_RASS(*leaf)) osz = 1;
+      else {
+        osz = MSIZE(*leaf);
+        if (idx & 1) {
+          if (node->right == 1) osz = 1;
+        } else {
+          if (node->left == 1) osz = 1;
+        }
+      }
+    }
+    quick_free(ptr);
+    /* if (idx & 1) sz = node->right; */
+    /* else sz = node->left; */
+    /* if (sz * BSIZE >= new_size) { */
+    /* 	nptr = leaf_malloc(idx >> 1, (new_size + BSIZE - 1) / BSIZE, TRUE); */
+    /* 	occ += new_size; */
+    /* 	if (occ > maxocc) maxocc = occ; */
+    /* 	nomut = FALSE; */
+    /* 	pthread_mutex_unlock(&memo_mutex); */
+    /* 	return nptr; */
+    /* } */
+    nptr = malloc(new_size); //yquick_malloc(new_size);
+    lives_memcpy(nptr, ptr, osz);
+    nomut = FALSE;
+    pthread_mutex_unlock(&memo_mutex);
+    return nptr;
+  }
+#endif
+}
 
 
 char *get_md5sum(const char *filename) {
@@ -1010,6 +1288,7 @@ int check_for_bad_ffmpeg(void) {
 
 
 LIVES_GLOBAL_INLINE char *lives_concat(char *st, char *x) {
+  /// nb: lives strconcat
   size_t s1 = lives_strlen(st), s2 = lives_strlen(x);
   char *tmp = (char *)lives_realloc(st, ++s2 + s1);
   lives_memcpy(tmp + s1, x, s2);
@@ -1382,7 +1661,7 @@ boolean resubmit_thread(lives_proc_thread_t thread_info) {
 
 ///////// thread pool ////////////////////////
 #ifndef VALGRIND_ON
-#define TUNE_MALLOPT 1
+//#define TUNE_MALLOPT 1
 #define MINPOOLTHREADS 4
 #else
 #define MINPOOLTHREADS 2

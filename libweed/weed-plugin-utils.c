@@ -69,6 +69,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 // *INDENT-OFF*
 ///////////////////////////////////////////////////////////
 static int wtrue=WEED_TRUE;
@@ -529,7 +530,7 @@ EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudcha
 #endif
 
 EXPORTS int weed_is_threading(weed_plant_t *inst) {if (inst) {weed_plant_t *ochan = weed_get_out_channel(inst, 0);
-    return (ochan && weed_plant_has_leaf(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;}}
+    return (ochan && weed_plant_has_leaf(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;} return WEED_FALSE;}
 
 #ifdef __WEED_UTILS_H__
 EXPORTS int *weed_param_get_array_int(weed_plant_t *param, int *nvalues) {
@@ -677,44 +678,47 @@ struct dlink_list {
 };
 
 EXPORTS dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name) {
-  dlink_list_t *lptr = list;
   dlink_list_t *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
-  if (entry == NULL) return list;
+  if (!entry) return list;
   entry->filter = filter;
   entry->name = strdup(name);
-  entry->next = entry->prev = NULL;
-  if (list == NULL) return entry;
-  while (lptr != NULL) {
-    if (strncasecmp(lptr->name, name, 256) > 0) {
-      // lptr is after entry, insert entry before
-      if (lptr->prev != NULL) {
-        lptr->prev->next = entry;
-        entry->prev = lptr->prev;
-      }
-      lptr->prev = entry;
-      entry->next = lptr;
-      if (entry->prev == NULL) list = entry;
-      break;
-    }
-    if (lptr->next == NULL) {
-      lptr->next = entry;
-      entry->prev = lptr;
-      break;
-    }
-    lptr = lptr->next;
-  }
-  return list;
+  entry->prev = NULL;
+  entry->next = list;
+  if (list) list->prev = entry;
+  return entry;
 }
 
 EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list) {
-  int count;
-  for (count = 0; list != NULL; count++) {
-    dlink_list_t *listnext = list->next;
-    weed_plugin_info_add_filter_class(plugin_info, list->filter);
-    weed_free((void *)list->name);
-    weed_free(list);
-    list = listnext;
+  // convert list to array, then apply qsort
+  dlink_list_t *listprev;
+  size_t ptrsize = sizeof(weed_plant_t *), stlen;
+  register int count = 1;
+  dlink_list_t *listp = list;
+  char **carr;
+  if (!list) return 0;
+  for (; listp->next; listp = listp->next) count++;
+  carr = (char **)weed_malloc(count * sizeof(char *));
+  if (!carr) return 0;
+  for (; listp; listp = listprev) {
+    listprev = list->prev;
+    carr[--count] = weed_malloc(256 + ptrsize);
+    stlen = strlen((char *)listp->name);
+    if (stlen > 255) stlen = 255;
+    weed_memcpy(carr[count], listp->name, stlen + 1);
+    weed_memcpy((void *)&carr[count][256], (void *)&listp->filter, ptrsize);
+    free((void *)listp->name);
+    weed_free(listp);
   }
+
+  qsort((void *)carr, count, 256 + ptrsize, (__compar_fn_t)strcasecmp); 
+
+  for (register int i = 0; i < count; i++) {
+    weed_plant_t *filter;
+    weed_memcpy((void *)&filter, (void *)(&carr[i][256]), ptrsize);
+    weed_plugin_info_add_filter_class(plugin_info, filter);
+    weed_free(carr[i]);
+  }
+  weed_free(carr);
   return count;
 }
 #endif
@@ -725,6 +729,8 @@ EXPORTS int add_filters_from_list(weed_plant_t *plugin_info, dlink_list_t *list)
 #ifndef _CRT_RAND_S
 #define _CRT_RAND_S
 #endif
+#else
+#include <sys/time.h>
 #endif
 #include <stdlib.h>
 
@@ -744,7 +750,10 @@ EXPORTS INLINE uint64_t fastrand(uint64_t oldval) {
 #if defined _WIN32 || defined __CYGWIN__ || defined IS_MINGW
     uint32_t rval, rval2; val++; rand_s(&rval); rand_s(&rval2); val = fastrand(((uint64_t)rval << 32) | (uint64_t)rval2) + 1;
 #else
-    val++; val = fastrand(((uint64_t)lrand48() << 32) ^ (uint64_t)lrand48()) + 1;
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    srand48(t.tv_sec & 0xFFFFFFFFFFFF);
+    val =((uint64_t)(lrand48() << 32) ^ (uint64_t)(lrand48())) + 1;
 #endif
   }
   return (val = xorshift(val));

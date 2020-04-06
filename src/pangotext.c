@@ -1064,7 +1064,7 @@ boolean save_sub_subtitles(lives_clip_t *sfile, double start_time, double end_ti
     ptr = (lives_subtitle_t *)ptr->next;
   }
 
-  y  lives_close_buffered(fd);
+  lives_close_buffered(fd);
   if (!num_saves) // don't keep the empty file
     lives_rm(filename);
 

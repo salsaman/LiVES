@@ -336,8 +336,8 @@ WEED_SETUP_START(200, 200) {
   filter_class = weed_filter_class_init("livetext_generator", "salsaman", 1, 0, palette_list,
                                         NULL, livetext_process, NULL, NULL,
                                         (clone1 = weed_clone_plants(out_chantmpls)), (clone2 = weed_clone_plants(in_params)), NULL);
-  weed_free(clone1);
-  weed_free(clone2);
+  //weed_free(clone1);
+  //weed_free(clone2);
 
   weed_plugin_info_add_filter_class(plugin_info, filter_class);
   weed_set_double_value(filter_class, WEED_LEAF_PREFERRED_FPS, 25.); // set reasonable default fps

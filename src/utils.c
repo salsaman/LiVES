@@ -5307,6 +5307,7 @@ char *insert_newlines(const char *text, int maxwidth) {
   //pass 1, get the required size
   for (i = 0; i < tlen; i += xtoffs) {
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
+    if (!xtoffs) break;
     if (xtoffs == -1) {
       LIVES_WARN("mbtowc returned -1");
       return lives_strdup(text);
@@ -5341,6 +5342,7 @@ char *insert_newlines(const char *text, int maxwidth) {
 
   for (i = 0; i < tlen; i += xtoffs) {
     xtoffs = mbtowc(&utfsym, &text[i], 4); // get next utf8 wchar
+    if (!xtoffs) break;
     if (*(text + i) == '\n') runlen = 0; // is a newline (in any encoding)
     else {
       runlen++;

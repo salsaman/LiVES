@@ -569,7 +569,7 @@ WEED_SETUP_START(200, 200) {
 
           if (ninchs == 0) stcount2 = 3;
           else stcount2 = 4;
-          rfx_strings = weed_malloc((ninps + stcount2 + stcount) * sizeof(char *));
+          rfx_strings = weed_malloc((ninps + stcount2 + stcount+1000) * sizeof(char *));
           for (pnum = 0; pnum < ninps + stcount2 + stcount; pnum++) {
             rfx_strings[pnum] = (char *)weed_malloc(256);
           }

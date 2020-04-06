@@ -87,6 +87,7 @@ static void stream_underflow_callback(pa_stream *s, void *userdata) {
 
   if (prefs->show_dev_opts) {
     fprintf(stderr, "PA Stream underrun.\n");
+    //break_me();
   }
   mainw->uflow_count++;
   if (pulsed->is_output && CLIP_HAS_VIDEO(pulsed->playing_file)

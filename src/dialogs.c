@@ -4,6 +4,8 @@
 // Released under the GPL 3 or later
 // see file ../COPYING for licensing details
 
+/// TODO: split into player, progress, dialogs
+
 #include "main.h"
 
 #include <fcntl.h>
@@ -379,12 +381,12 @@ boolean do_warning_dialogf(const char *fmt, ...) {
 }
 
 
-boolean do_warning_dialog(const char *text) {
+LIVES_GLOBAL_INLINE boolean do_warning_dialog(const char *text) {
   return do_warning_dialog_with_check(text, 0);
 }
 
 
-boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+LIVES_GLOBAL_INLINE boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   if (!prefs->show_gui) {
     return do_warning_dialog_with_check_transient(text, warn_mask_number, NULL);
   } else {
@@ -393,7 +395,7 @@ boolean do_warning_dialog_with_check(const char *text, uint64_t warn_mask_number
 }
 
 
-boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+LIVES_GLOBAL_INLINE boolean do_yesno_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   return do_yesno_dialog_with_check_transient(text, warn_mask_number, NULL);
 }
 
@@ -452,7 +454,7 @@ boolean do_yesno_dialog_with_check_transient(const char *text, uint64_t warn_mas
 }
 
 
-LiVESWindow *get_transient_full(void) {
+LIVES_GLOBAL_INLINE LiVESWindow *get_transient_full(void) {
   LiVESWindow *transient = NULL;
   if (prefs == NULL) return NULL;
   if (prefs->show_gui) {
@@ -624,7 +626,7 @@ LIVES_GLOBAL_INLINE LiVESResponseType do_info_dialog(const char *text) {
 }
 
 
-LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_error_dialog_with_check(const char *text, uint64_t warn_mask_number) {
   // show warning box
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, FALSE, warn_mask_number, transient);
@@ -661,7 +663,7 @@ LiVESResponseType do_blocking_info_dialogf(const char *fmt, ...) {
 }
 
 
-LiVESResponseType do_blocking_error_dialog(const char *text) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_error_dialog(const char *text) {
   // show error box - blocks until OK is pressed
   LiVESWindow *transient = get_transient_full();
   return do_error_dialog_with_check_transient(text, TRUE, 0, transient);
@@ -675,13 +677,14 @@ static LiVESResponseType _do_blocking_info_dialog(const char *text,  const char 
 }
 
 
-LiVESResponseType do_blocking_info_dialog(const char *text) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog(const char *text) {
   // show info box - blocks until OK is pressed
   return _do_blocking_info_dialog(text, NULL, NULL);
 }
 
 
-LiVESResponseType do_blocking_info_dialog_with_expander(const char *text, const char *exp_text, LiVESList *list) {
+LIVES_GLOBAL_INLINE LiVESResponseType do_blocking_info_dialog_with_expander(const char *text,
+									    const char *exp_text, LiVESList *list) {
   // show info box - blocks until OK is pressed
   return _do_blocking_info_dialog(text, exp_text, list);
 }
@@ -690,7 +693,6 @@ LiVESResponseType do_blocking_info_dialog_with_expander(const char *text, const 
 LiVESResponseType do_error_dialog_with_check_transient(const char *text, boolean is_blocking, uint64_t warn_mask_number,
     LiVESWindow *transient) {
   // show error box
-
   LiVESWidget *err_box;
 
   LiVESResponseType ret = LIVES_RESPONSE_NONE;
@@ -776,7 +778,7 @@ LIVES_GLOBAL_INLINE void do_clip_divergence_error(int fileno) {
 }
 
 
-void do_aud_during_play_error(void) {
+LIVES_GLOBAL_INLINE void do_aud_during_play_error(void) {
   do_blocking_error_dialog(_("Audio players cannot be switched during playback."));
 }
 
@@ -2773,11 +2775,8 @@ boolean do_save_clipset_warn(void) {
 }
 
 
-void too_many_files(void) {
-  char *warn = lives_strdup_printf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."),
-                                   MAX_FILES);
-  do_error_dialog(warn);
-  lives_free(warn);
+LIVES_GLOBAL_INLINE void too_many_files(void) {
+  do_error_dialogf(_("\nSorry, LiVES can only open %d files at once.\nPlease close a file and then try again."), MAX_FILES);
 }
 
 
@@ -2794,48 +2793,50 @@ void workdir_warning(void) {
 }
 
 
-void do_no_mplayer_sox_error(void) {
+LIVES_GLOBAL_INLINE void do_no_mplayer_sox_error(void) {
   do_blocking_error_dialog(_("\nLiVES currently requires either 'mplayer', 'mplayer2', or 'sox' to function. "
                              "Please install one or other of these, and try again.\n"));
 }
 
 
-void do_need_mplayer_dialog(void) {
+LIVES_GLOBAL_INLINE void do_need_mplayer_dialog(void) {
   do_error_dialog(
     _("\nThis function requires either mplayer or mplayer2 to operate.\nYou may wish to install one or other of these and try again.\n"));
 }
 
 
-void do_need_mplayer_mpv_dialog(void) {
+LIVES_GLOBAL_INLINE void do_need_mplayer_mpv_dialog(void) {
   do_error_dialog(
-    _("\nThis function requires either mplayer, mplayer2 or mpv to operate.\nYou may wish to install one or other of these and try again.\n"));
+    _("\nThis function requires either mplayer, mplayer2 or mpv to operate.\nYou may wish to install one or other of these "
+      "and try again.\n"));
 }
 
 
-void do_audio_warning(void) {
+LIVES_GLOBAL_INLINE void do_audio_warning(void) {
   do_error_dialog(_("Audio was not loaded; please install mplayer or mplayer2 if you expected audio for this clip.\n"));
 }
 
 
-void do_encoder_sox_error(void) {
+LIVES_GLOBAL_INLINE void do_encoder_sox_error(void) {
   do_error_dialog(
-    _("Audio resampling is required for this format.\nPlease install 'sox'\nOr switch to another encoder format in Tools | Preferences | Encoding\n"));
+    _("Audio resampling is required for this format.\nPlease install 'sox'\nOr switch to another encoder format in "
+      "Tools | Preferences | Encoding\n"));
 }
 
 
-void do_encoder_acodec_error(void) {
+LIVES_GLOBAL_INLINE void do_encoder_acodec_error(void) {
   do_error_dialog(
     _("\n\nThis encoder/format cannot use the requested audio codec.\nPlease set the audio codec in Tools|Preferences|Encoding\n"));
 }
 
 
-void do_layout_scrap_file_error(void) {
+LIVES_GLOBAL_INLINE void do_layout_scrap_file_error(void) {
   do_blocking_error_dialog(
     _("This layout includes generated frames.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
 
 
-void do_layout_ascrap_file_error(void) {
+LIVES_GLOBAL_INLINE void do_layout_ascrap_file_error(void) {
   do_blocking_error_dialog(
     _("This layout includes generated or recorded audio.\nIt cannot be saved, you must render it to a clip first.\n"));
 }
@@ -3032,7 +3033,7 @@ boolean do_encoder_restrict_dialog(int width, int height, double fps, int fps_nu
 }
 
 
-void perf_mem_warning(void) {
+LIVES_GLOBAL_INLINE void perf_mem_warning(void) {
   do_error_dialog(
     _("\n\nLiVES was unable to record a performance. There is currently insufficient memory available.\n"
       "Try recording for just a selection of the file."));
@@ -3130,7 +3131,7 @@ boolean do_comments_dialog(int fileno, char *filename) {
 }
 
 
-void do_messages_window(void) {
+LIVES_GLOBAL_INLINE void do_messages_window(void) {
   char *text = dump_messages(-1, -1);
   widget_opts.expand = LIVES_EXPAND_EXTRA;
   create_text_window(_("Message History"), text, NULL);
@@ -3139,7 +3140,7 @@ void do_messages_window(void) {
 }
 
 
-void do_upgrade_error_dialog(void) {
+LIVES_GLOBAL_INLINE void do_upgrade_error_dialog(void) {
   char *tmp;
   char *msg = lives_strdup_printf(
                 _("After upgrading/installing, you may need to adjust the <prefix_dir> setting in your %s file"),
@@ -3150,7 +3151,7 @@ void do_upgrade_error_dialog(void) {
 }
 
 
-void do_rendered_fx_dialog(void) {
+LIVES_GLOBAL_INLINE void do_rendered_fx_dialog(void) {
   char *tmp;
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES could not find any rendered effect plugins.\nPlease make sure you have them installed in\n"
@@ -3191,7 +3192,7 @@ void do_audio_import_error(void) {
 }
 
 
-boolean prompt_remove_layout_files(void) {
+LIVES_GLOBAL_INLINE boolean prompt_remove_layout_files(void) {
   return (do_yesno_dialog(
             _("\nDo you wish to remove the layout files associated with this set ?\n(They will not be usable without the set).\n")));
 }
@@ -3208,13 +3209,13 @@ boolean do_set_duplicate_warning(const char *new_set) {
 }
 
 
-boolean do_layout_alter_frames_warning(void) {
+LIVES_GLOBAL_INLINE boolean do_layout_alter_frames_warning(void) {
   return do_warning_dialog(
            _("\nFrames from this clip are used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
 
 
-boolean do_layout_alter_audio_warning(void) {
+LIVES_GLOBAL_INLINE boolean do_layout_alter_audio_warning(void) {
   return do_warning_dialog(
            _("\nAudio from this clip is used in some multitrack layouts.\nAre you sure you wish to continue ?\n."));
 }
@@ -3235,49 +3236,46 @@ LiVESResponseType do_original_lost_warning(const char *fname) {
 }
 
 
-void do_no_decoder_error(const char *fname) {
+LIVES_GLOBAL_INLINE void do_no_decoder_error(const char *fname) {
   do_blocking_error_dialogf(
     _("\n\nLiVES could not find a required decoder plugin for the clip\n%s\nThe clip could not be loaded.\n"), fname);
 }
 
 
-void do_no_loadfile_error(const char *fname) {
+LIVES_GLOBAL_INLINE void do_no_loadfile_error(const char *fname) {
   do_blocking_error_dialogf(_("\n\nThe file\n%s\nCould not be found.\n"), fname);
 }
 
 
 #ifdef ENABLE_JACK
-void do_jack_noopen_warn(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn(void) {
   do_blocking_error_dialogf(_("\nUnable to start up jack. Please ensure that %s is set up correctly on your machine\n"
                               "and also that the soundcard is not in use by another program\nAutomatic jack startup will be disabled now.\n"),
                             JACK_DRIVER_NAME);
 }
 
 
-void do_jack_noopen_warn3(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn3(void) {
   do_blocking_error_dialog(_("\nUnable to connect to jack server. Please start jack before starting LiVES\n"));
 }
 
 
-void do_jack_noopen_warn4(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn4(void) {
 #ifdef HAVE_PULSE_AUDIO
   const char *otherbit = "\"lives -aplayer pulse\"";
 #else
   const char *otherbit = "\"lives -aplayer sox\"";
 #endif
-  char *msg = lives_strdup_printf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"),
-                                  otherbit);
-  do_blocking_info_dialog(msg);
-  lives_free(msg);
+  do_blocking_info_dialogf(_("\nAlternatively, try to start lives with either:\n\n\"lives -jackopts 16\", or\n\n%s\n"), otherbit);
 }
 
 
-void do_jack_noopen_warn2(void) {
+LIVES_GLOBAL_INLINE void do_jack_noopen_warn2(void) {
   do_blocking_info_dialog(_("\nAlternately, you can restart LiVES and select another audio player.\n"));
 }
 #endif
 
-void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
+LIVES_GLOBAL_INLINE void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
   char *msg = lives_strdup_printf(
                 _("\n\nLiVES needs more backup space for this layout.\nYou can increase the value in Preferences/Multitrack.\n"
                   "It is recommended to increase it to at least %d MB"),
@@ -3287,14 +3285,14 @@ void do_mt_backup_space_error(lives_mt * mt, int memreq_mb) {
 }
 
 
-boolean do_set_rename_old_layouts_warning(const char *new_set) {
+LIVES_GLOBAL_INLINE boolean do_set_rename_old_layouts_warning(const char *new_set) {
   return do_yesno_dialogf(
            _("\nSome old layouts for the set %s already exist.\nIt is recommended that you delete them.\nDo you wish to delete them ?\n"),
            new_set);
 }
 
 
-void do_mt_undo_mem_error(void) {
+LIVES_GLOBAL_INLINE void do_mt_undo_mem_error(void) {
   do_error_dialog(
     _("\nLiVES was unable to reserve enough memory for multitrack undo.\n"
       "Either close some other applications, or reduce the undo memory\n"
@@ -3302,13 +3300,13 @@ void do_mt_undo_mem_error(void) {
 }
 
 
-void do_mt_undo_buf_error(void) {
+LIVES_GLOBAL_INLINE void do_mt_undo_buf_error(void) {
   do_error_dialog(_("\nOut of memory for undo.\nYou may need to increase the undo memory\n"
                     "using Preferences/Multitrack/Undo Memory\n"));
 }
 
 
-void do_mt_set_mem_error(boolean has_mt, boolean trans) {
+LIVES_GLOBAL_INLINE void do_mt_set_mem_error(boolean has_mt, boolean trans) {
   char *msg1 = (_("\nLiVES was unable to reserve enough memory for the multitrack undo buffer.\n"));
   char *msg2;
   char *msg3 = (_("or enter a smaller value.\n"));
@@ -3324,19 +3322,19 @@ void do_mt_set_mem_error(boolean has_mt, boolean trans) {
 }
 
 
-void do_mt_audchan_error(int warn_mask) {
+LIVES_GLOBAL_INLINE void do_mt_audchan_error(int warn_mask) {
   do_error_dialog_with_check_transient(
     _("Multitrack is set to 0 audio channels, but this layout has audio.\nYou should adjust the audio settings from the Tools menu.\n"),
     warn_mask, FALSE, NULL);
 }
 
 
-void do_mt_no_audchan_error(void) {
+LIVES_GLOBAL_INLINE void do_mt_no_audchan_error(void) {
   do_error_dialog(_("The current layout has audio, so audio channels may not be set to zero.\n"));
 }
 
 
-void do_mt_no_jack_error(int warn_mask) {
+LIVES_GLOBAL_INLINE void do_mt_no_jack_error(int warn_mask) {
   do_error_dialog_with_check(
     _("Multitrack audio preview is only available with the\n\"jack\" or \"pulseaudio\" audio player.\n"
       "You can set this in Tools|Preferences|Playback."),
@@ -3344,7 +3342,7 @@ void do_mt_no_jack_error(int warn_mask) {
 }
 
 
-boolean do_mt_rect_prompt(void) {
+LIVES_GLOBAL_INLINE boolean do_mt_rect_prompt(void) {
   return do_yesno_dialog(
            _("Errors were detected in the layout (which may be due to transferring from another system, "
              "or from an older version of LiVES).\n"
@@ -3352,97 +3350,90 @@ boolean do_mt_rect_prompt(void) {
 }
 
 
-void do_bad_layout_error(void) {
+LIVES_GLOBAL_INLINE void do_bad_layout_error(void) {
   do_error_dialog(_("LiVES was unable to load the layout.\nSorry.\n"));
 }
 
 
-void do_program_not_found_error(const char *progname) {
-  char *msg = lives_strdup_printf(_("The program %s is required to use this feature.\nPlease install it and try again."),
-                                  progname);
-  do_blocking_error_dialog(msg);
-  lives_free(msg);
+LIVES_GLOBAL_INLINE void do_program_not_found_error(const char *progname) {
+  do_blocking_error_dialogf(_("The program %s is required to use this feature.\nPlease install it and try again."), progname);
 }
 
 
-void do_lb_composite_error(void) {
+LIVES_GLOBAL_INLINE void do_lb_composite_error(void) {
   do_blocking_error_dialog(
     _("LiVES currently requires composite from ImageMagick to do letterboxing.\nPlease install 'imagemagick' and try again."));
 }
 
 
-void do_lb_convert_error(void) {
+LIVES_GLOBAL_INLINE void do_lb_convert_error(void) {
   do_blocking_error_dialog(
     _("LiVES currently requires convert from ImageMagick to do letterboxing.\nPlease install 'imagemagick' and try again."));
 }
 
 
-void do_ra_convert_error(void) {
+LIVES_GLOBAL_INLINE void do_ra_convert_error(void) {
   do_blocking_error_dialog(
     _("LiVES currently requires convert from ImageMagick resize frames.\nPlease install 'imagemagick' and try again."));
 }
 
 
-void do_audrate_error_dialog(void) {
+LIVES_GLOBAL_INLINE void do_audrate_error_dialog(void) {
   do_error_dialog(_("\n\nAudio rate must be greater than 0.\n"));
 }
 
 
-boolean do_event_list_warning(void) {
+LIVES_GLOBAL_INLINE boolean do_event_list_warning(void) {
   return do_yesno_dialog(
            _("\nEvent list will be very large\nand may take a long time to display.\nAre you sure you wish to view it ?\n"));
 }
 
 
-void do_dvgrab_error(void) {
+LIVES_GLOBAL_INLINE void do_dvgrab_error(void) {
   do_error_dialog(_("\n\nYou must install 'dvgrab' to use this function.\n"));
 }
 
 
-void do_nojack_rec_error(void) {
+LIVES_GLOBAL_INLINE void do_nojack_rec_error(void) {
   do_error_dialog(
     _("\n\nAudio recording can only be done using either\nthe \"jack\" or the \"pulseaudio\" audio player.\n"
       "You may need to select one of these in Tools/Preferences/Playback.\n"));
 }
 
 
-void do_vpp_palette_error(void) {
+LIVES_GLOBAL_INLINE void do_vpp_palette_error(void) {
   do_error_dialog_with_check_transient(_("Video playback plugin failed to initialise palette !\n"), TRUE, 0,
                                        prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 }
 
 
-void do_decoder_palette_error(void) {
+LIVES_GLOBAL_INLINE void do_decoder_palette_error(void) {
   do_blocking_error_dialog(_("Decoder plugin failed to initialise palette !\n"));
 }
 
 
-void do_vpp_fps_error(void) {
+LIVES_GLOBAL_INLINE void do_vpp_fps_error(void) {
   do_error_dialog_with_check_transient(_("Unable to set framerate of video plugin\n"), TRUE, 0,
                                        prefsw != NULL ? LIVES_WINDOW(prefsw->prefs_dialog) : LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
 }
 
 
-void do_after_crash_warning(void) {
+LIVES_GLOBAL_INLINE void do_after_crash_warning(void) {
   do_error_dialog_with_check(_("After a crash, it is advisable to clean up the disk with\nFile|Clean up disk space\n"),
                              WARN_MASK_CLEAN_AFTER_CRASH);
 }
 
 
-void do_after_invalid_warning(void) {
+LIVES_GLOBAL_INLINE void do_after_invalid_warning(void) {
   do_error_dialog_with_check(_("Invalid clips were detected during reaload.\nIt is advisable to clean up the disk with\n"
                                "File|Clean up disk space\n"),
                              WARN_MASK_CLEAN_INVALID);
 }
 
 
-void do_rmem_max_error(int size) {
-  char *msg = lives_strdup_printf((
-                                    _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
-                                      "echo %d > /proc/sys/net/core/rmem_max\n")),
-                                  size);
-  do_error_dialog(msg);
-  lives_free(msg);
+LIVES_GLOBAL_INLINE void do_rmem_max_error(int size) {
+  do_error_dialogf( _("Stream frame size is too large for your network buffers.\nYou should do the following as root:\n\n"
+		      "echo %d > /proc/sys/net/core/rmem_max\n"), size);
 }
 
 
@@ -3450,11 +3441,9 @@ void threaded_dialog_spin(double fraction) {
   double timesofar;
   int progress;
 
-  if (mainw->splash_window != NULL) {
-    return;
-  }
+  if (mainw->splash_window) return;
 
-  if (procw == NULL || !procw->is_ready || !prefs->show_gui) return;
+  if (!procw || !procw->is_ready || !prefs->show_gui) return;
 
   if (fraction > 0.) {
     timesofar = (double)(lives_get_current_ticks() - sttime) / TICKS_PER_SECOND_DBL;
@@ -3463,8 +3452,8 @@ void threaded_dialog_spin(double fraction) {
     lives_widget_process_updates(procw->processing, TRUE);
     lives_widget_process_updates(LIVES_MAIN_WINDOW_WIDGET, TRUE);
   } else {
-    if (!CURRENT_CLIP_IS_VALID || cfile->progress_start == 0 || cfile->progress_end == 0 ||
-        *(mainw->msg) || (progress = atoi(mainw->msg)) == 0) {
+    if (!CURRENT_CLIP_IS_VALID || !cfile->progress_start || !cfile->progress_end ||
+        *(mainw->msg) || !(progress = atoi(mainw->msg))) {
       // pulse the progress bar
       //#define GDB
 #ifndef GDB
@@ -3905,23 +3894,20 @@ void do_encoder_img_fmt_error(render_details * rdet) {
 }
 
 
-void do_card_in_use_error(void) {
+LIVES_GLOBAL_INLINE void do_card_in_use_error(void) {
   do_blocking_error_dialog(_("\nThis card is already in use and cannot be opened multiple times.\n"));
 }
 
 
-void do_dev_busy_error(const char *devstr) {
-  char *msg = lives_strdup_printf(
-                _("\nThe device %s is in use or unavailable.\n- Check the device permissions\n"
-                  "- Check if this device is in use by another program.\n"
-                  "- Check if the device actually exists.\n"),
-                devstr);
-  do_blocking_error_dialog(msg);
-  lives_free(msg);
+LIVES_GLOBAL_INLINE void do_dev_busy_error(const char *devstr) {
+  do_blocking_error_dialogf(_("\nThe device %s is in use or unavailable.\n- Check the device permissions\n"
+			      "- Check if this device is in use by another program.\n"
+			      "- Check if the device actually exists.\n"),
+			    devstr);
 }
 
 
-boolean do_existing_subs_warning(void) {
+LIVES_GLOBAL_INLINE boolean do_existing_subs_warning(void) {
   return do_yesno_dialog(_("\nThis file already has subtitles loaded.\nDo you wish to overwrite the existing subtitles ?\n"));
 }
 
@@ -3952,7 +3938,7 @@ void do_invalid_subs_error(void) {
 }
 
 
-boolean do_erase_subs_warning(void) {
+LIVES_GLOBAL_INLINE boolean do_erase_subs_warning(void) {
   return do_yesno_dialog(_("\nErase all subtitles from this clip.\nAre you sure ?\n"));
 }
 
@@ -3968,41 +3954,42 @@ boolean do_sub_type_warning(const char *ext, const char *type_ext) {
 }
 
 
-boolean do_move_workdir_dialog(void) {
+LIVES_GLOBAL_INLINE boolean do_move_workdir_dialog(void) {
   return do_yesno_dialog(_("\nDo you wish to move the current clip sets to the new directory ?\n(If unsure, click Yes)\n"));
 }
 
 
-boolean do_set_locked_warning(const char *setname) {
+LIVES_GLOBAL_INLINE boolean do_set_locked_warning(const char *setname) {
   return do_yesno_dialogf(
            _("\nWarning - the set %s\nis in use by another copy of LiVES.\nYou are strongly advised to close the other copy before clicking Yes to continue\n.\nClick No to cancel loading the set.\n"),
            setname);
 }
 
 
-void do_no_in_vdevs_error(void) {
+LIVES_GLOBAL_INLINE void do_no_in_vdevs_error(void) {
   do_error_dialog(_("\nNo video input devices could be found.\n"));
 }
 
 
-void do_locked_in_vdevs_error(void) {
+LIVES_GLOBAL_INLINE void do_locked_in_vdevs_error(void) {
   do_error_dialog(_("\nAll video input devices are already in use.\n"));
 }
 
 
-void do_do_not_close_d(void) {
-  char *msg = lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR CLOSE LIVES !\n"));
+LIVES_GLOBAL_INLINE void do_do_not_close_d(void) {
+  char *msg = lives_strdup(_("\n\nCLEANING AND COPYING FILES. THIS MAY TAKE SOME TIME.\nDO NOT SHUT DOWN OR "
+			     "CLOSE LIVES !\n"));
   create_info_error_dialog(LIVES_DIALOG_WARN, msg, NULL, 0, FALSE);
   lives_free(msg);
 }
 
 
-void do_bad_theme_error(const char *themefile) {
+LIVES_GLOBAL_INLINE void do_bad_theme_error(const char *themefile) {
   do_error_dialogf(_("\nThe theme file %s has missing elements.\nThe theme could not be loaded correctly.\n"), themefile);
 }
 
 
-void do_set_noclips_error(const char *setname) {
+LIVES_GLOBAL_INLINE void do_set_noclips_error(const char *setname) {
   char *msg = lives_strdup_printf(
                 _("No clips were recovered for set (%s).\nPlease check the spelling of the set name and try again.\n"),
                 setname);
@@ -4011,7 +3998,7 @@ void do_set_noclips_error(const char *setname) {
 }
 
 
-char *get_upd_msg(void) {
+LIVES_GLOBAL_INLINE char *get_upd_msg(void) {
   LIVES_DEBUG("upd msg !");
   // TRANSLATORS: make sure the menu text matches what is in gui.c
   char *msg = lives_strdup_printf(_("\nWelcome to LiVES version %s\n\nAfter upgrading, you are advised to run:"
@@ -4020,39 +4007,39 @@ char *get_upd_msg(void) {
 }
 
 
-void do_no_autolives_error(void) {
+LIVES_GLOBAL_INLINE void do_no_autolives_error(void) {
   do_error_dialogf(_("\nYou must have %s installed and in your path to use this toy.\nConsult your package distributor.\n"),
                    EXEC_AUTOLIVES_PL);
 }
 
 
-void do_autolives_needs_clips_error(void) {
+LIVES_GLOBAL_INLINE void do_autolives_needs_clips_error(void) {
   do_error_dialog(_("\nYou must have a minimum of one clip loaded to use this toy.\n"));
 }
 
 
-void do_jack_lost_conn_error(void) {
+LIVES_GLOBAL_INLINE void do_jack_lost_conn_error(void) {
   do_error_dialog(_("\nLiVES lost its connection to jack and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
 
 
-void do_pulse_lost_conn_error(void) {
+LIVES_GLOBAL_INLINE void do_pulse_lost_conn_error(void) {
   do_error_dialog(
     _("\nLiVES lost its connection to pulseaudio and was unable to reconnect.\nRestarting LiVES is recommended.\n"));
 }
 
 
-void do_cd_error_dialog(void) {
+LIVES_GLOBAL_INLINE void do_cd_error_dialog(void) {
   do_error_dialog(_("Please set your CD play device in Tools | Preferences | Misc\n"));
 }
 
 
-void do_bad_theme_import_error(const char *theme_file) {
+LIVES_GLOBAL_INLINE void do_bad_theme_import_error(const char *theme_file) {
   do_error_dialogf(_("\nLiVES was unable to import the theme file\n%s\n(Theme name not found).\n"), theme_file);
 }
 
 
-boolean do_theme_exists_warn(const char *themename) {
+LIVES_GLOBAL_INLINE boolean do_theme_exists_warn(const char *themename) {
   return do_yesno_dialogf(_("\nA custom theme with the name\n%s\nalready exists. Would you like to overwrite it ?\n"), themename);
 }
 
@@ -4092,7 +4079,7 @@ boolean ask_permission_dialog(int what) {
 }
 
 
-boolean do_layout_recover_dialog(void) {
+LIVES_GLOBAL_INLINE boolean do_layout_recover_dialog(void) {
   if (!do_yesno_dialog(
         _("\nLiVES has detected a multitrack layout from a previous session.\nWould you like to try and recover it ?\n"))) {
     recover_layout_cancelled(TRUE);

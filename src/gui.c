@@ -4724,7 +4724,6 @@ void splash_init(void) {
 #endif
 
   if (prefs->show_splash) {
-
 #ifdef GUI_GTK
     gtk_window_set_type_hint(LIVES_WINDOW(mainw->splash_window), GDK_WINDOW_TYPE_HINT_SPLASHSCREEN);
 #endif
@@ -4773,7 +4772,8 @@ void splash_init(void) {
 
     lives_window_center(LIVES_WINDOW(mainw->splash_window));
     lives_window_present(LIVES_WINDOW(mainw->splash_window));
-    if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0) lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
+    if (mainw && LIVES_MAIN_WINDOW_WIDGET && prefs && prefs->startup_phase != 0)
+      lives_widget_hide(LIVES_MAIN_WINDOW_WIDGET);
 
     lives_widget_context_update();
     lives_set_cursor_style(LIVES_CURSOR_BUSY, mainw->splash_window);

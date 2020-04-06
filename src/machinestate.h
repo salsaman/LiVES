@@ -27,9 +27,10 @@ typedef void *(*malloc_and_copy_f)(size_t, const void *);
 typedef void (*unmalloc_and_copy_f)(size_t, void *);
 
 #ifdef USE_LIVES_MFUNCS
-void *quick_malloc(size_t sz);
+void *quick_malloc(size_t sz) GNU_MALLOC;;
 void quick_free(void *p);
 void *quick_calloc(size_t nm, size_t sz);
+void show_memstats(void);
 #endif
 
 void lives_free_check(void *p);

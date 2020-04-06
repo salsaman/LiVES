@@ -10849,6 +10849,10 @@ boolean show_sync_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     return FALSE;
   }
 
+#ifdef USE_LIVES_MFUNCS
+  show_memstats();
+#endif
+
   lives_freep((void **)&mainw->overlay_msg);
 
   if (!keybd) mainw->lockstats = !mainw->lockstats;

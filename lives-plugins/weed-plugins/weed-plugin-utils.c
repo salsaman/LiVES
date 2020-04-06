@@ -69,6 +69,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 // *INDENT-OFF*
 ///////////////////////////////////////////////////////////
 static int wtrue=WEED_TRUE;
@@ -529,7 +530,7 @@ EXPORTS  float **weed_channel_get_audio_data(weed_plant_t *channel, int *naudcha
 #endif
 
 EXPORTS int weed_is_threading(weed_plant_t *inst) {if (inst) {weed_plant_t *ochan = weed_get_out_channel(inst, 0);
-    return (ochan && weed_plant_has_leaf(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;}}
+    return (ochan && weed_plant_has_leaf(ochan, WEED_LEAF_OFFSET)) ? WEED_TRUE : WEED_FALSE;} return WEED_FALSE;}
 
 #ifdef __WEED_UTILS_H__
 EXPORTS int *weed_param_get_array_int(weed_plant_t *param, int *nvalues) {
@@ -677,32 +678,41 @@ struct dlink_list {
 };
 
 EXPORTS dlink_list_t *add_to_list_sorted(dlink_list_t *list, weed_plant_t *filter, const char *name) {
-  dlink_list_t *lptr = list;
-  dlink_list_t *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
-  if (entry == NULL) return list;
+  // entries are added in sort order - this is not very efficient: O(2) at worst. A better solution would be to sort
+  // all the entries at the end using qsort or similar, however this is hard since we sort on name field but add using the filter field
+  // in the best case, the entries are already sorted and then this becomes just O(1) since last and first are checked first
+  dlink_list_t *lptr = list, *entry = (dlink_list_t *)weed_malloc(sizeof(dlink_list_t));
+  if (!entry) return list;
+
   entry->filter = filter;
   entry->name = strdup(name);
   entry->next = entry->prev = NULL;
-  if (list == NULL) return entry;
-  while (lptr != NULL) {
+  if (!list) return entry;
+
+  // prev from first entry points to end of list, we will check that first
+  lptr = list->prev;
+  if (lptr && (strncasecmp(lptr->name, name, 256) <= 0)) {
+    // end of list is before or equal, append to end
+    lptr->next = entry;
+    entry->prev = lptr;
+    return list;
+  }
+  
+  for (lptr = list; lptr; lptr = lptr->next) {
     if (strncasecmp(lptr->name, name, 256) > 0) {
       // lptr is after entry, insert entry before
-      if (lptr->prev != NULL) {
-        lptr->prev->next = entry;
+      if (lptr->prev) {
+        if (lptr != list) lptr->prev->next = entry;
         entry->prev = lptr->prev;
       }
-      lptr->prev = entry;
+      else entry->prev = lptr; /// prev points to last
       entry->next = lptr;
-      if (entry->prev == NULL) list = entry;
-      break;
+      lptr->prev = entry;
+      if (lptr == list) list = entry;
+      return list;
     }
-    if (lptr->next == NULL) {
-      lptr->next = entry;
-      entry->prev = lptr;
-      break;
-    }
-    lptr = lptr->next;
   }
+  // should never reach here
   return list;
 }
 

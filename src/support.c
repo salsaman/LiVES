@@ -20,6 +20,7 @@
 
 #ifdef ENABLE_NLS
 LIVES_INLINE char *translate(const char *String) {
+  if (!String) return NULL;
   if (trString != NULL) free(trString); // be very careful, as trString is free()d automatically here
   if (strlen(String)) trString = lives_locale_to_utf8(dgettext(PACKAGE, String), -1, NULL, NULL, NULL);
   else trString = strdup(String);

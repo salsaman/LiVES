@@ -4301,7 +4301,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
     if (LIVES_IS_WIDGET(mainw->run_test_rfx_menu)) lives_widget_destroy(mainw->run_test_rfx_menu);
   }
 
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY)
+    threaded_dialog_spin(0.);
 
   // reset / reload values
   if (status == RFX_STATUS_ANY)
@@ -4343,7 +4344,8 @@ void add_rfx_effects(lives_rfx_status_t status) {
 
   rfx_list_length = rfx_builtin_list_length + rfx_custom_list_length + rfx_test_list_length;
 
-  threaded_dialog_spin(0.);
+  if (status != RFX_STATUS_ANY)
+    threaded_dialog_spin(0.);
 
   rendered_fx = (lives_rfx_t *)lives_malloc((rfx_list_length + 1) * sizeof(lives_rfx_t));
 

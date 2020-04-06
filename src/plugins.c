@@ -1113,7 +1113,7 @@ _vid_playback_plugin *open_vid_playback_plugin(const char *name, boolean in_use)
     return NULL;
   }
 
-  vpp = (_vid_playback_plugin *) lives_malloc(sizeof(_vid_playback_plugin));
+  vpp = (_vid_playback_plugin *) lives_calloc(sizeof(_vid_playback_plugin), 1);
 
   vpp->play_paramtmpls = NULL;
   vpp->get_init_rfx = NULL;

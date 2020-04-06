@@ -2728,6 +2728,9 @@ void play_file(void) {
 #endif
         }
       }
+
+      mainw->gui_fooey = TRUE;
+      
       if (!mainw->foreign && !mainw->multitrack)
         mainw->video_seek_ready = mainw->audio_seek_ready = FALSE;
       else

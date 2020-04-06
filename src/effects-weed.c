@@ -5003,16 +5003,16 @@ void weed_load_all(void) {
 
   for (i = 0; i < FX_KEYS_MAX; i++) {
     if (i < FX_KEYS_MAX_VIRTUAL) key_to_instance[i] = (weed_plant_t **)
-          lives_malloc(prefs->max_modes_per_key * sizeof(weed_plant_t *));
-    else key_to_instance[i] = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *));
+          malloc(prefs->max_modes_per_key * sizeof(weed_plant_t *));
+    else key_to_instance[i] = (weed_plant_t **)malloc(sizeof(weed_plant_t *));
 
-    key_to_instance_copy[i] = (weed_plant_t **)lives_malloc(sizeof(weed_plant_t *));
+    key_to_instance_copy[i] = (weed_plant_t **)malloc(sizeof(weed_plant_t *));
 
-    if (i < FX_KEYS_MAX_VIRTUAL) key_to_fx[i] = (int *)lives_malloc(prefs->max_modes_per_key * sizint);
-    else key_to_fx[i] = (int *)lives_malloc(sizint);
+    if (i < FX_KEYS_MAX_VIRTUAL) key_to_fx[i] = (int *)malloc(prefs->max_modes_per_key * sizint);
+    else key_to_fx[i] = (int *)malloc(sizint);
 
     if (i < FX_KEYS_MAX_VIRTUAL)
-      key_defaults[i] = (weed_plant_t ** *)lives_malloc(prefs->max_modes_per_key * sizeof(weed_plant_t **));
+      key_defaults[i] = (weed_plant_t ** *)malloc(prefs->max_modes_per_key * sizeof(weed_plant_t **));
 
     key_modes[i] = 0; // current active mode of each key
     filter_map[i] = NULL; // maps effects in order of application for multitrack rendering
